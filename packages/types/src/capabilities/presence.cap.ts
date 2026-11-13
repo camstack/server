@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Presence cap. Models HA `person.*` and `device_tracker.*` entities
@@ -74,6 +75,19 @@ export const presenceCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Presence', 'Presenza'),
+    order: 5170,
+    state: [
+      {
+        kind: 'value',
+        field: 'state',
+        label: t('Where', 'Posizione'),
+        phrase: t('When {device} is at {value}', 'Quando {device} è in {value}'),
+        icon: 'map-pin',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IPresenceProvider = InferProvider<typeof presenceCapability>

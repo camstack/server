@@ -17,6 +17,7 @@ import {
   LlmGenerateResultSchema,
   LlmImageSchema,
 } from './llm-shared.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * A companion artifact that MUST land beside the main GGUF: the `mmproj`
@@ -311,18 +312,24 @@ export const llmRuntimeCapability = {
      * managed-local generation kept running on the node to its own timeout.
      * Idempotent: an unknown or finished id is a no-op.
      */
-    cancel: method(LlmRuntimeCancelInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    cancel: method(LlmRuntimeCancelInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     /**
      * This node's Apple Foundation Models state, answered from a mirror the
      * node refreshes in the background — it never waits on a probe.
      */
-    appleAvailability: method(z.object({}), AppleFmAvailabilitySchema, { auth: 'admin' }),
+    appleAvailability: method(z.object({}), AppleFmAvailabilitySchema, {
+      auth: 'admin',
+    }),
     completeApple: method(LlmRuntimeAppleCompleteInputSchema, LlmGenerateResultSchema, {
       kind: 'mutation',
       auth: 'admin',
       timeoutMs: AI_CAP_TRANSPORT_TIMEOUT_MS,
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type ILlmRuntimeProvider = InferProvider<typeof llmRuntimeCapability>

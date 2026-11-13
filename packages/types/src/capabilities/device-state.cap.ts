@@ -198,7 +198,11 @@ export const deviceStateCapability = {
      * index entry — the index self-heals through this method.
      */
     releaseClaim: method(
-      z.object({ deviceId: z.number(), capName: z.string(), owner: z.string().min(1) }),
+      z.object({
+        deviceId: z.number(),
+        capName: z.string(),
+        owner: z.string().min(1),
+      }),
       ClaimOutcomeSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -233,5 +237,8 @@ export const deviceStateCapability = {
         slice: z.record(z.string(), z.unknown()),
       }),
     ),
+  },
+  vocabulary: {
+    notOperatorFacing: 'the runtime-state mirror every trigger already reads through',
   },
 } as const satisfies CapabilityDefinition

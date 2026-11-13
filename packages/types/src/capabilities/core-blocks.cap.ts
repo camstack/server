@@ -20,6 +20,7 @@ import {
   RawSecretMigrationInputSchema,
   RawSecretMigrationReportSchema,
 } from './raw-secret-migration.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * core-blocks — user-authored TypeScript, stored in the kernel and executed in
@@ -288,7 +289,10 @@ export function coreBlockComposition(block: Pick<CoreBlock, 'source'>): Composit
 
 /** What the composer said, or that it could not be asked. Unknown never looks like absent (D315). */
 export const CompositionStateReadSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('answered'), state: CompositionBlockStateSchema.nullable() }),
+  z.object({
+    kind: z.literal('answered'),
+    state: CompositionBlockStateSchema.nullable(),
+  }),
   z.object({ kind: z.literal('unreachable'), error: z.string() }),
 ])
 export type CompositionStateRead = z.infer<typeof CompositionStateReadSchema>
@@ -305,17 +309,26 @@ export type CompositionView = z.infer<typeof CompositionViewSchema>
  * table has not been READ: an empty answer then would make "not yet known"
  * look like "none", and invite the operator to recreate what exists (D315).
  */
-const CompositionsNotLoadedSchema = z.object({ state: z.literal('not-loaded'), reason: z.string() })
+const CompositionsNotLoadedSchema = z.object({
+  state: z.literal('not-loaded'),
+  reason: z.string(),
+})
 
 export const CompositionListReadSchema = z.discriminatedUnion('state', [
-  z.object({ state: z.literal('loaded'), views: z.array(CompositionViewSchema) }),
+  z.object({
+    state: z.literal('loaded'),
+    views: z.array(CompositionViewSchema),
+  }),
   CompositionsNotLoadedSchema,
 ])
 export type CompositionListRead = z.infer<typeof CompositionListReadSchema>
 
 export const CompositionGetReadSchema = z.discriminatedUnion('state', [
   /** `view` null: the table was read and holds no composition with this id. */
-  z.object({ state: z.literal('loaded'), view: CompositionViewSchema.nullable() }),
+  z.object({
+    state: z.literal('loaded'),
+    view: CompositionViewSchema.nullable(),
+  }),
   CompositionsNotLoadedSchema,
 ])
 export type CompositionGetRead = z.infer<typeof CompositionGetReadSchema>
@@ -323,7 +336,10 @@ export type CompositionGetRead = z.infer<typeof CompositionGetReadSchema>
 /** The customization of one existing device, found by its TARGET, or `not-loaded` (D315). */
 export const CompositionCustomizationReadSchema = z.discriminatedUnion('state', [
   /** `view` null: the table was read and no composition customizes this device. */
-  z.object({ state: z.literal('loaded'), view: CompositionViewSchema.nullable() }),
+  z.object({
+    state: z.literal('loaded'),
+    view: CompositionViewSchema.nullable(),
+  }),
   CompositionsNotLoadedSchema,
 ])
 export type CompositionCustomizationRead = z.infer<typeof CompositionCustomizationReadSchema>
@@ -375,7 +391,9 @@ export const coreBlocksCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
-    list: method(z.object({}), z.object({ blocks: z.array(CoreBlockSchema) }), { auth: 'admin' }),
+    list: method(z.object({}), z.object({ blocks: z.array(CoreBlockSchema) }), {
+      auth: 'admin',
+    }),
     get: method(
       z.object({ blockId: z.string() }),
       z.object({ block: CoreBlockSchema.nullable() }),
@@ -394,7 +412,10 @@ export const coreBlocksCapability = {
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
     update: method(
-      z.object({ blockId: z.string(), block: CoreBlockInputFieldsSchema.partial() }),
+      z.object({
+        blockId: z.string(),
+        block: CoreBlockInputFieldsSchema.partial(),
+      }),
       z.object({ block: CoreBlockSchema }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
@@ -510,7 +531,9 @@ export const coreBlocksCapability = {
     getComposition: method(z.object({ blockId: z.string() }), CompositionGetReadSchema, {
       auth: 'admin',
     }),
-    listCompositions: method(z.object({}), CompositionListReadSchema, { auth: 'admin' }),
+    listCompositions: method(z.object({}), CompositionListReadSchema, {
+      auth: 'admin',
+    }),
     /**
      * The composition that customizes an existing device (D663), found by its
      * TARGET — never by the block's derived name. One per device at most.
@@ -537,7 +560,10 @@ export const coreBlocksCapability = {
      * for its body size; it writes nothing, so its access is `view`.
      */
     validateComposition: method(
-      z.object({ composition: CompositionSchema, blockId: z.string().optional() }),
+      z.object({
+        composition: CompositionSchema,
+        blockId: z.string().optional(),
+      }),
       CompositionValidationSchema,
       { kind: 'mutation', auth: 'admin', access: 'view' },
     ),
@@ -582,10 +608,14 @@ export const coreBlocksCapability = {
     /** An automation's run traces, newest last. The operator's read. */
     getTraces: method(
       z.object({ blockId: z.string().min(1) }),
-      z.object({ traces: z.array(AutomationRunTraceSchema), lastError: z.string().nullable() }),
+      z.object({
+        traces: z.array(AutomationRunTraceSchema),
+        lastError: z.string().nullable(),
+      }),
       { auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type ICoreBlocksProvider = InferProvider<typeof coreBlocksCapability>

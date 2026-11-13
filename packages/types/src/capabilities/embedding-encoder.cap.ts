@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * Embedding output. `embedding` is wire-encoded as `number[]` so the
@@ -167,7 +168,12 @@ export function embeddingRefusalOf(err: unknown): EmbeddingRefusal | null {
   if (!code.success || !tower.success || match[2] === undefined || match[4] === undefined) {
     return null
   }
-  return { code: code.data, modelId: match[2], tower: tower.data, nodeId: match[4] }
+  return {
+    code: code.data,
+    modelId: match[2],
+    tower: tower.data,
+    nodeId: match[4],
+  }
 }
 
 /** True when `err` is the crashed-tower refusal. */
@@ -208,7 +214,11 @@ export const embeddingEncoderCapability = {
      * `addon-post-analysis`, never tRPC.
      */
     encode: method(
-      z.object({ crop: z.instanceof(Uint8Array), width: z.number(), height: z.number() }),
+      z.object({
+        crop: z.instanceof(Uint8Array),
+        width: z.number(),
+        height: z.number(),
+      }),
       EmbeddingResultSchema,
       { auth: 'admin' },
     ),
@@ -236,6 +246,7 @@ export const embeddingEncoderCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type IEmbeddingEncoderProvider = InferProvider<typeof embeddingEncoderCapability>

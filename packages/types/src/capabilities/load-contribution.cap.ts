@@ -60,6 +60,7 @@
 
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * The load families an addon can report. Kept as a tuple so the Zod enum and
@@ -165,6 +166,7 @@ export const loadContributionCapability = {
   },
   /** In-process only — enumerated through `addons.listCapabilityProviders`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type ILoadContributionProvider = InferProvider<typeof loadContributionCapability>

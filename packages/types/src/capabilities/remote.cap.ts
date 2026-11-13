@@ -74,7 +74,10 @@ export const RemoteSendResultSchema = z.discriminatedUnion('status', [
     sends: z.number().int().min(1),
   }),
   /** A power command the device is already in the state of: nothing was sent. */
-  z.object({ status: z.literal('skipped'), reason: z.literal('already-in-state') }),
+  z.object({
+    status: z.literal('skipped'),
+    reason: z.literal('already-in-state'),
+  }),
   z.object({
     status: z.literal('refused'),
     reason: RemoteRefusalReasonSchema,
@@ -157,7 +160,9 @@ export const remoteCapability = {
         auth: 'admin',
       },
     ),
-    listCommands: method(deviceInput, RemoteCommandListSchema, { auth: 'protected' }),
+    listCommands: method(deviceInput, RemoteCommandListSchema, {
+      auth: 'protected',
+    }),
     sendCommand: method(
       deviceInput.extend({
         role: RemoteRoleSchema,
@@ -196,6 +201,10 @@ export const remoteCapability = {
     ),
   },
   customize: remoteCustomize,
+  vocabulary: {
+    notOperatorFacing:
+      'the per-device remote setup — authored in the Customize remote editor, sent through the remote UI',
+  },
 } as const satisfies CapabilityDefinition
 
 export type IRemoteProvider = InferProvider<typeof remoteCapability>

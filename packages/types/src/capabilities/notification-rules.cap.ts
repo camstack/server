@@ -606,7 +606,10 @@ export const NcSystemEventDeliverySchema = z.discriminatedUnion('mode', [
     onDeactivation: z.boolean(),
     /** A state summary at the end of each window; absent = no summary. */
     onSchedule: z
-      .object({ schedule: NcScheduleSchema, grouping: NcStateSummarySplitSchema })
+      .object({
+        schedule: NcScheduleSchema,
+        grouping: NcStateSummarySplitSchema,
+      })
       .optional(),
   }),
 ])
@@ -2094,25 +2097,46 @@ export const NC_CONDITION_CATALOG: readonly NcConditionDescriptor[] = [
       { value: 'node-offline', label: 'Node offline' },
       { value: 'node-restarting', label: 'Node restarting' },
       { value: 'node-updating', label: 'Node updating (restart imminent)' },
-      { value: 'node-inference-unavailable', label: 'Node has no usable inference device' },
+      {
+        value: 'node-inference-unavailable',
+        label: 'Node has no usable inference device',
+      },
       { value: 'detection-blind', label: 'Camera detecting nothing' },
       { value: 'motion-noisy', label: 'Camera motion constant, no subject' },
       { value: 'motion-calm', label: 'Camera motion calm again' },
       { value: 'package-llm-silent', label: 'Package confirm not answering' },
-      { value: 'package-llm-answered', label: 'Package confirm answering again' },
+      {
+        value: 'package-llm-answered',
+        label: 'Package confirm answering again',
+      },
       { value: 'recording-stalled', label: 'Recording stalled' },
       { value: 'recording-healthy', label: 'Recording healthy again' },
-      { value: 'recording-degraded', label: 'Recording degraded (restart storm)' },
+      {
+        value: 'recording-degraded',
+        label: 'Recording degraded (restart storm)',
+      },
       { value: 'device-attention-required', label: 'Device needs attention' },
-      { value: 'device-attention-resolved', label: 'Device attention resolved' },
+      {
+        value: 'device-attention-resolved',
+        label: 'Device attention resolved',
+      },
       { value: 'device-command', label: 'Command given to a device' },
       { value: 'storage-location-low', label: 'Storage location low' },
-      { value: 'storage-location-critical', label: 'Storage location critical' },
+      {
+        value: 'storage-location-critical',
+        label: 'Storage location critical',
+      },
       { value: 'storage-location-ok', label: 'Storage location ok again' },
-      { value: 'addon-crash-loop', label: 'Addon stopped after repeated crashes' },
+      {
+        value: 'addon-crash-loop',
+        label: 'Addon stopped after repeated crashes',
+      },
       { value: 'addon-update-available', label: 'Addon update available' },
       { value: 'server-update-available', label: 'Server update available' },
-      { value: 'wrapper-update-available', label: 'Container / app update available' },
+      {
+        value: 'wrapper-update-available',
+        label: 'Container / app update available',
+      },
       { value: 'addon-updated', label: 'Addons updated' },
       { value: 'server-updated', label: 'Server updated' },
       { value: 'device-battery-low', label: 'Battery low' },
@@ -2127,7 +2151,10 @@ export const NC_CONDITION_CATALOG: readonly NcConditionDescriptor[] = [
       { value: 'rule-broken', label: 'Notification rule broken' },
       { value: 'rule-repaired', label: 'Notification rule repaired' },
       { value: 'alarm-arm-refused', label: 'Alarm arm refused' },
-      { value: 'alarm-check-failed', label: 'Alarm check failed (armed anyway)' },
+      {
+        value: 'alarm-check-failed',
+        label: 'Alarm check failed (armed anyway)',
+      },
       { value: 'alarm-arming', label: 'Alarm arming (exit delay)' },
       { value: 'alarm-armed', label: 'Alarm armed' },
       { value: 'alarm-pending', label: 'Alarm entry delay started' },
@@ -2233,9 +2260,17 @@ export const NC_CONDITION_CATALOG: readonly NcConditionDescriptor[] = [
     // `value ?? ''`). Serving `enter` instead left that viewer with no way
     // back to entering. Editors show `''` as Entering and write it as absent.
     options: [
-      { value: '', label: 'Entering', hint: 'Entries and ordinary movement; never an exit.' },
+      {
+        value: '',
+        label: 'Entering',
+        hint: 'Entries and ordinary movement; never an exit.',
+      },
       { value: 'exit', label: 'Leaving', hint: 'Only an exit from a zone.' },
-      { value: 'any', label: 'Entering or leaving', hint: 'Entries, exits and ordinary movement.' },
+      {
+        value: 'any',
+        label: 'Entering or leaving',
+        hint: 'Entries, exits and ordinary movement.',
+      },
     ],
     operator: 'in',
     // Immediate only: a crossing is a per-event fact; a closed track carries
@@ -2802,10 +2837,9 @@ export const NcAlarmModeDelaysSchema = z.object({
 })
 export type NcAlarmModeDelays = z.infer<typeof NcAlarmModeDelaysSchema>
 
-const NcAlarmModeDelaysListSchema = z
-  .array(NcAlarmModeDelaysSchema)
-  .max(8)
-  .refine(uniqueModes, { message: 'modeDelays: at most one entry per arm mode' })
+const NcAlarmModeDelaysListSchema = z.array(NcAlarmModeDelaysSchema).max(8).refine(uniqueModes, {
+  message: 'modeDelays: at most one entry per arm mode',
+})
 
 /**
  * One mode's EDIT in a patch: a number sets the override, `null` removes it (the mode inherits
@@ -2832,7 +2866,9 @@ export type NcAlarmModeDelaysEdit = z.infer<typeof NcAlarmModeDelaysEditSchema>
 const NcAlarmModeDelaysEditListSchema = z
   .array(NcAlarmModeDelaysEditSchema)
   .max(8)
-  .refine(uniqueModes, { message: 'modeDelays: at most one edit per arm mode' })
+  .refine(uniqueModes, {
+    message: 'modeDelays: at most one edit per arm mode',
+  })
 
 /** One switch of the alarm table: put ONE device on, or take it off, ONE mode's list. */
 export const NcAlarmNonBlockingEditSchema = z.object({
@@ -2899,10 +2935,9 @@ export type NcAlarmSecureOnArmOff = z.infer<typeof NcAlarmSecureOnArmOffSchema>
  * meaning a reader could agree on (union? the last one?), so they are refused
  * at the boundary rather than interpreted.
  */
-const NcAlarmNonBlockingListSchema = z
-  .array(NcAlarmNonBlockingSchema)
-  .max(8)
-  .refine(uniqueModes, { message: 'nonBlocking: at most one list per arm mode' })
+const NcAlarmNonBlockingListSchema = z.array(NcAlarmNonBlockingSchema).max(8).refine(uniqueModes, {
+  message: 'nonBlocking: at most one list per arm mode',
+})
 
 const NcAlarmBlockingListSchema = z
   .array(NcAlarmBlockingSchema)
@@ -2912,7 +2947,9 @@ const NcAlarmBlockingListSchema = z
 const NcAlarmSecureOnArmOffListSchema = z
   .array(NcAlarmSecureOnArmOffSchema)
   .max(8)
-  .refine(uniqueModes, { message: 'secureOnArmOff: at most one list per arm mode' })
+  .refine(uniqueModes, {
+    message: 'secureOnArmOff: at most one list per arm mode',
+  })
 
 /**
  * The three durations — global, and per mode since D697 — the panel's state
@@ -3361,7 +3398,9 @@ export const notificationRulesCapability = {
      * keeps the plan it has, and a plan that has never arrived is UNKNOWN
      * rather than empty (D49: a read that fails changes nothing).
      */
-    getClipRetentionAsks: method(z.object({}), NcClipRetentionPlanSchema, { auth: 'admin' }),
+    getClipRetentionAsks: method(z.object({}), NcClipRetentionPlanSchema, {
+      auth: 'admin',
+    }),
 
     /**
      * PERMANENT per-camera mute — the notifications half of the per-camera
@@ -3464,7 +3503,11 @@ export const notificationRulesCapability = {
      * scoping on the same method.
      */
     getHistory: method(
-      z.object({ filter: NcHistoryFilterSchema.default({ limit: NC_HISTORY_LIMIT_DEFAULT }) }),
+      z.object({
+        filter: NcHistoryFilterSchema.default({
+          limit: NC_HISTORY_LIMIT_DEFAULT,
+        }),
+      }),
       z.object({ entries: z.array(NcHistoryEntrySchema) }),
       { auth: 'admin' },
     ),
@@ -3476,7 +3519,9 @@ export const notificationRulesCapability = {
      * answer FAILS the call rather than answering "nothing ran". Admin-only,
      * like `getHistory`, of which it is a projection.
      */
-    getRuleLastRuns: method(z.object({}), NcRuleLastRunsSchema, { auth: 'admin' }),
+    getRuleLastRuns: method(z.object({}), NcRuleLastRunsSchema, {
+      auth: 'admin',
+    }),
     /**
      * Mint a fresh, externally-reachable URL for one artefact a history row
      * named in {@link NcHistoryEntrySchema.shape.artifactIds} — the SAME
@@ -3542,7 +3587,9 @@ export const notificationRulesCapability = {
      * that arms nothing, which is the failure this whole surface exists to
      * make visible.
      */
-    getAlarmConfig: method(z.object({}), NcAlarmConfigSchema, { auth: 'admin' }),
+    getAlarmConfig: method(z.object({}), NcAlarmConfigSchema, {
+      auth: 'admin',
+    }),
     /**
      * Patch the settings (durations — global and per mode —, recipients,
      * per-mode non-blocking lists or one membership edit; `announceArm` is
@@ -3593,7 +3640,12 @@ export const notificationRulesCapability = {
      * caller names the ids (the household openings it already holds); at most
      * `NC_ALARM_SENSORS_MAX`.
      */
-    getAlarmSensors: method(NcAlarmSensorsInputSchema, NcAlarmSensorsSchema, { auth: 'admin' }),
+    getAlarmSensors: method(NcAlarmSensorsInputSchema, NcAlarmSensorsSchema, {
+      auth: 'admin',
+    }),
+  },
+  vocabulary: {
+    notOperatorFacing: 'notification rules — authored on their own page',
   },
 } as const satisfies CapabilityDefinition
 

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { RequiredAddonUpdateSchema, UnmetRequirementSchema } from '../addon/package-requires.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * server-management — per-NODE singleton capability for a node's ROOT
@@ -480,7 +481,9 @@ export const serverManagementCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
-    getServerPackageStatus: method(z.void(), ServerPackageStatusSchema, { auth: 'admin' }),
+    getServerPackageStatus: method(z.void(), ServerPackageStatusSchema, {
+      auth: 'admin',
+    }),
     checkServerUpdate: method(z.void(), ServerUpdateCheckResultSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -551,7 +554,9 @@ export const serverManagementCapability = {
      * `node` process is started with, or `null` when none is set (the closure's
      * computed default applies). Read from the node's own data dir.
      */
-    getLaunchOverrides: method(z.void(), LaunchOverridesSchema, { auth: 'admin' }),
+    getLaunchOverrides: method(z.void(), LaunchOverridesSchema, {
+      auth: 'admin',
+    }),
     /**
      * Set or clear (`null`) the node's heap-ceiling (`heapMb`) and hub-main RSS
      * budget (`rssBudgetMb`) overrides; the budget wins over its env. It is
@@ -565,6 +570,7 @@ export const serverManagementCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition
 
 export type IServerManagementProvider = InferProvider<typeof serverManagementCapability>

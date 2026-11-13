@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Generic on-screen-display (video overlay) cap. Each camera exposes
@@ -93,6 +94,7 @@ export const osdCapability = {
         deviceId: z.number(),
         status: OsdStatusSchema,
       }),
+      notOperatorFacing: 'an overlay setting changed — configuration, not a happening',
     },
   },
   status: {
@@ -129,6 +131,10 @@ export const osdCapability = {
         },
       },
     ],
+  },
+  vocabulary: {
+    noun: t('On-screen text', 'Testo in sovrimpressione'),
+    order: 3190,
   },
 } as const satisfies CapabilityDefinition
 

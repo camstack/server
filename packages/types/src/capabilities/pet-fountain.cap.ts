@@ -3,6 +3,7 @@ import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import type { ConsumableItem } from './consumables.cap.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Pet water-fountain cap. Models the telemetry and the control surface of a
@@ -86,6 +87,22 @@ export const petFountainCapability = {
     setPump: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'petFountain.pumpOn',
+          label: t('Pump on', 'Pompa accesa'),
+          phrase: t('Start the pump of {device}', 'Avvia la pompa di {device}'),
+          icon: 'play',
+          args: { on: true },
+        },
+        {
+          id: 'petFountain.pumpOff',
+          label: t('Pump off', 'Pompa spenta'),
+          phrase: t('Stop the pump of {device}', 'Ferma la pompa di {device}'),
+          icon: 'square',
+          args: { on: false },
+        },
+      ],
     }),
   },
   status: {
@@ -108,6 +125,34 @@ export const petFountainCapability = {
       waterLevel: { kind: 'gauge', unit: '%', deadband: 1 },
       waterVolume: { kind: 'gauge', unit: 'L' },
     },
+  },
+  vocabulary: {
+    noun: t('Pet fountain', 'Fontana per animali'),
+    order: 2040,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'empty',
+        label: t('Tank empty', 'Serbatoio vuoto'),
+        whenTrue: t(
+          'When the tank of {device} is empty',
+          'Quando il serbatoio di {device} è vuoto',
+        ),
+        whenFalse: t(
+          'When the tank of {device} is refilled',
+          'Quando il serbatoio di {device} viene riempito',
+        ),
+        icon: 'droplet',
+      },
+      {
+        kind: 'numeric',
+        field: 'waterLevel',
+        quantity: t('the water level', 'il livello dell’acqua'),
+        label: t('Water level', 'Livello dell’acqua'),
+        unit: '%',
+        icon: 'droplets',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

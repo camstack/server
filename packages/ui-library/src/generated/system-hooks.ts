@@ -200,14 +200,14 @@ export const useAddonWidgetsListWidgets: typeof trpc.addonWidgets.listWidgets.us
 /** Generated alias around `trpc.airQualitySensor.getStatus.useQuery`. */
 export const useAirQualitySensorGetStatus: typeof trpc.airQualitySensor.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.airQualitySensor.getStatus.useQuery)
 
-/** Generated alias around `trpc.alarmPanel.arm.useMutation`. */
-export const useAlarmPanelArm: typeof trpc.alarmPanel.arm.useMutation = /*#__PURE__*/ alias(() => trpc.alarmPanel.arm.useMutation)
+/** Generated alias around `trpc.alarmPanel.trigger.useMutation`. */
+export const useAlarmPanelTrigger: typeof trpc.alarmPanel.trigger.useMutation = /*#__PURE__*/ alias(() => trpc.alarmPanel.trigger.useMutation)
 
 /** Generated alias around `trpc.alarmPanel.disarm.useMutation`. */
 export const useAlarmPanelDisarm: typeof trpc.alarmPanel.disarm.useMutation = /*#__PURE__*/ alias(() => trpc.alarmPanel.disarm.useMutation)
 
-/** Generated alias around `trpc.alarmPanel.trigger.useMutation`. */
-export const useAlarmPanelTrigger: typeof trpc.alarmPanel.trigger.useMutation = /*#__PURE__*/ alias(() => trpc.alarmPanel.trigger.useMutation)
+/** Generated alias around `trpc.alarmPanel.arm.useMutation`. */
+export const useAlarmPanelArm: typeof trpc.alarmPanel.arm.useMutation = /*#__PURE__*/ alias(() => trpc.alarmPanel.arm.useMutation)
 
 /** Generated alias around `trpc.alarmPanel.getStatus.useQuery`. */
 export const useAlarmPanelGetStatus: typeof trpc.alarmPanel.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.alarmPanel.getStatus.useQuery)
@@ -488,12 +488,6 @@ export const useCarbonMonoxideGetStatus: typeof trpc.carbonMonoxide.getStatus.us
 /** Generated alias around `trpc.climateControl.setMode.useMutation`. */
 export const useClimateControlSetMode: typeof trpc.climateControl.setMode.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setMode.useMutation)
 
-/** Generated alias around `trpc.climateControl.setFanMode.useMutation`. */
-export const useClimateControlSetFanMode: typeof trpc.climateControl.setFanMode.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setFanMode.useMutation)
-
-/** Generated alias around `trpc.climateControl.setPreset.useMutation`. */
-export const useClimateControlSetPreset: typeof trpc.climateControl.setPreset.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setPreset.useMutation)
-
 /** Generated alias around `trpc.climateControl.setTarget.useMutation`. */
 export const useClimateControlSetTarget: typeof trpc.climateControl.setTarget.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setTarget.useMutation)
 
@@ -502,6 +496,12 @@ export const useClimateControlSetTargetRange: typeof trpc.climateControl.setTarg
 
 /** Generated alias around `trpc.climateControl.setTargetHumidity.useMutation`. */
 export const useClimateControlSetTargetHumidity: typeof trpc.climateControl.setTargetHumidity.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setTargetHumidity.useMutation)
+
+/** Generated alias around `trpc.climateControl.setFanMode.useMutation`. */
+export const useClimateControlSetFanMode: typeof trpc.climateControl.setFanMode.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setFanMode.useMutation)
+
+/** Generated alias around `trpc.climateControl.setPreset.useMutation`. */
+export const useClimateControlSetPreset: typeof trpc.climateControl.setPreset.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setPreset.useMutation)
 
 /** Generated alias around `trpc.climateControl.setSwingVertical.useMutation`. */
 export const useClimateControlSetSwingVertical: typeof trpc.climateControl.setSwingVertical.useMutation = /*#__PURE__*/ alias(() => trpc.climateControl.setSwingVertical.useMutation)
@@ -1766,9 +1766,6 @@ export const useMediaPlayerNext: typeof trpc.mediaPlayer.next.useMutation = /*#_
 /** Generated alias around `trpc.mediaPlayer.previous.useMutation`. */
 export const useMediaPlayerPrevious: typeof trpc.mediaPlayer.previous.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.previous.useMutation)
 
-/** Generated alias around `trpc.mediaPlayer.seek.useMutation`. */
-export const useMediaPlayerSeek: typeof trpc.mediaPlayer.seek.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.seek.useMutation)
-
 /** Generated alias around `trpc.mediaPlayer.setVolume.useMutation`. */
 export const useMediaPlayerSetVolume: typeof trpc.mediaPlayer.setVolume.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.setVolume.useMutation)
 
@@ -1783,6 +1780,9 @@ export const useMediaPlayerSetRepeat: typeof trpc.mediaPlayer.setRepeat.useMutat
 
 /** Generated alias around `trpc.mediaPlayer.selectSource.useMutation`. */
 export const useMediaPlayerSelectSource: typeof trpc.mediaPlayer.selectSource.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.selectSource.useMutation)
+
+/** Generated alias around `trpc.mediaPlayer.seek.useMutation`. */
+export const useMediaPlayerSeek: typeof trpc.mediaPlayer.seek.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.seek.useMutation)
 
 /** Generated alias around `trpc.mediaPlayer.playMedia.useMutation`. */
 export const useMediaPlayerPlayMedia: typeof trpc.mediaPlayer.playMedia.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.playMedia.useMutation)
@@ -2174,17 +2174,17 @@ export const usePetFeederFeed: typeof trpc.petFeeder.feed.useMutation = /*#__PUR
 /** Generated alias around `trpc.petFeeder.cancelFeed.useMutation`. */
 export const usePetFeederCancelFeed: typeof trpc.petFeeder.cancelFeed.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.cancelFeed.useMutation)
 
-/** Generated alias around `trpc.petFeeder.resetDesiccant.useMutation`. */
-export const usePetFeederResetDesiccant: typeof trpc.petFeeder.resetDesiccant.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.resetDesiccant.useMutation)
-
-/** Generated alias around `trpc.petFeeder.markFoodReplenished.useMutation`. */
-export const usePetFeederMarkFoodReplenished: typeof trpc.petFeeder.markFoodReplenished.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.markFoodReplenished.useMutation)
-
 /** Generated alias around `trpc.petFeeder.callPet.useMutation`. */
 export const usePetFeederCallPet: typeof trpc.petFeeder.callPet.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.callPet.useMutation)
 
 /** Generated alias around `trpc.petFeeder.playSound.useMutation`. */
 export const usePetFeederPlaySound: typeof trpc.petFeeder.playSound.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.playSound.useMutation)
+
+/** Generated alias around `trpc.petFeeder.resetDesiccant.useMutation`. */
+export const usePetFeederResetDesiccant: typeof trpc.petFeeder.resetDesiccant.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.resetDesiccant.useMutation)
+
+/** Generated alias around `trpc.petFeeder.markFoodReplenished.useMutation`. */
+export const usePetFeederMarkFoodReplenished: typeof trpc.petFeeder.markFoodReplenished.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.markFoodReplenished.useMutation)
 
 /** Generated alias around `trpc.petFeeder.setChildLock.useMutation`. */
 export const usePetFeederSetChildLock: typeof trpc.petFeeder.setChildLock.useMutation = /*#__PURE__*/ alias(() => trpc.petFeeder.setChildLock.useMutation)
@@ -2915,8 +2915,8 @@ export const usePtzMove: typeof trpc.ptz.move.useMutation = /*#__PURE__*/ alias(
 /** Generated alias around `trpc.ptz.continuousMove.useMutation`. */
 export const usePtzContinuousMove: typeof trpc.ptz.continuousMove.useMutation = /*#__PURE__*/ alias(() => trpc.ptz.continuousMove.useMutation)
 
-/** Generated alias around `trpc.ptz.stop.useMutation`. */
-export const usePtzStop: typeof trpc.ptz.stop.useMutation = /*#__PURE__*/ alias(() => trpc.ptz.stop.useMutation)
+/** Generated alias around `trpc.ptz.goHome.useMutation`. */
+export const usePtzGoHome: typeof trpc.ptz.goHome.useMutation = /*#__PURE__*/ alias(() => trpc.ptz.goHome.useMutation)
 
 /** Generated alias around `trpc.ptz.getPresets.useQuery`. */
 export const usePtzGetPresets: typeof trpc.ptz.getPresets.useQuery = /*#__PURE__*/ alias(() => trpc.ptz.getPresets.useQuery)
@@ -2933,8 +2933,8 @@ export const usePtzDeletePreset: typeof trpc.ptz.deletePreset.useMutation = /*#_
 /** Generated alias around `trpc.ptz.getOptions.useQuery`. */
 export const usePtzGetOptions: typeof trpc.ptz.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.ptz.getOptions.useQuery)
 
-/** Generated alias around `trpc.ptz.goHome.useMutation`. */
-export const usePtzGoHome: typeof trpc.ptz.goHome.useMutation = /*#__PURE__*/ alias(() => trpc.ptz.goHome.useMutation)
+/** Generated alias around `trpc.ptz.stop.useMutation`. */
+export const usePtzStop: typeof trpc.ptz.stop.useMutation = /*#__PURE__*/ alias(() => trpc.ptz.stop.useMutation)
 
 /** Generated alias around `trpc.ptz.getHomePreset.useQuery`. */
 export const usePtzGetHomePreset: typeof trpc.ptz.getHomePreset.useQuery = /*#__PURE__*/ alias(() => trpc.ptz.getHomePreset.useQuery)
@@ -3863,14 +3863,14 @@ export const useVideoclipsDialClipStream: typeof trpc.videoclips.dialClipStream.
 /** Generated alias around `trpc.videoclips.getPlaybackOptions.useQuery`. */
 export const useVideoclipsGetPlaybackOptions: typeof trpc.videoclips.getPlaybackOptions.useQuery = /*#__PURE__*/ alias(() => trpc.videoclips.getPlaybackOptions.useQuery)
 
-/** Generated alias around `trpc.waterHeater.setTargetTemp.useMutation`. */
-export const useWaterHeaterSetTargetTemp: typeof trpc.waterHeater.setTargetTemp.useMutation = /*#__PURE__*/ alias(() => trpc.waterHeater.setTargetTemp.useMutation)
-
 /** Generated alias around `trpc.waterHeater.setOperationMode.useMutation`. */
 export const useWaterHeaterSetOperationMode: typeof trpc.waterHeater.setOperationMode.useMutation = /*#__PURE__*/ alias(() => trpc.waterHeater.setOperationMode.useMutation)
 
 /** Generated alias around `trpc.waterHeater.setAway.useMutation`. */
 export const useWaterHeaterSetAway: typeof trpc.waterHeater.setAway.useMutation = /*#__PURE__*/ alias(() => trpc.waterHeater.setAway.useMutation)
+
+/** Generated alias around `trpc.waterHeater.setTargetTemp.useMutation`. */
+export const useWaterHeaterSetTargetTemp: typeof trpc.waterHeater.setTargetTemp.useMutation = /*#__PURE__*/ alias(() => trpc.waterHeater.setTargetTemp.useMutation)
 
 /** Generated alias around `trpc.waterHeater.getStatus.useQuery`. */
 export const useWaterHeaterGetStatus: typeof trpc.waterHeater.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.waterHeater.getStatus.useQuery)

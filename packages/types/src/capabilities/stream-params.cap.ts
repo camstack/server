@@ -6,6 +6,7 @@ import {
   method,
 } from './capability-definition.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /** One of the camera's stream profiles. */
 export const StreamProfileSchema = z.enum(['main', 'sub', 'ext'])
@@ -161,6 +162,10 @@ export const streamParamsCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Stream parameters', 'Parametri dei flussi'),
+    order: 3310,
+  },
 } as const satisfies CapabilityDefinition
 
 export type IStreamParamsProvider = InferNativeProvider<typeof streamParamsCapability>

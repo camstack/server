@@ -27,7 +27,10 @@ export const displayPaletteCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
-    getPalette: method(z.void(), paletteResultSchema, { auth: 'protected', role: 'viewer' }),
+    getPalette: method(z.void(), paletteResultSchema, {
+      auth: 'protected',
+      role: 'viewer',
+    }),
     listPresets: method(z.void(), z.array(presetSummarySchema).readonly(), {
       auth: 'protected',
       role: 'viewer',
@@ -36,6 +39,10 @@ export const displayPaletteCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+  },
+  vocabulary: {
+    notOperatorFacing:
+      'the cluster display palette — one colour table for every client, not a device action',
   },
 } as const satisfies CapabilityDefinition
 

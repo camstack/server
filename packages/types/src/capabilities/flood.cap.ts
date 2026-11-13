@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Water leak / moisture sensor. Boolean "is liquid currently
@@ -50,6 +51,20 @@ export const floodCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Leak sensor', 'Sensore di allagamento'),
+    order: 5070,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'flooded',
+        label: t('Leak', 'Perdita'),
+        whenTrue: t('When {device} detects a leak', 'Quando {device} rileva una perdita'),
+        whenFalse: t('When {device} is dry again', 'Quando {device} torna asciutto'),
+        icon: 'droplets',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IFloodProvider = InferProvider<typeof floodCapability>

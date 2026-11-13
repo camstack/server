@@ -3,6 +3,8 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /**
  * Battery status snapshot. Emitted by providers whose device is
@@ -137,7 +139,13 @@ const batteryCustomize = {
           valueKinds: ['number', 'string'],
           transforms: [
             { kind: 'identity' },
-            { kind: 'linear', defaultScale: 1, defaultOffset: 0, clampMin: 0, clampMax: 100 },
+            {
+              kind: 'linear',
+              defaultScale: 1,
+              defaultOffset: 0,
+              clampMin: 0,
+              clampMax: 100,
+            },
           ],
         },
       ],
@@ -185,7 +193,11 @@ export const batteryCapability = {
         awoke: z.boolean(),
         durationMs: z.number(),
       }),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing:
+          'a stream consumer wakes a sleeping camera to watch it; an automation that wants footage asks for the footage',
+      },
     ),
   },
   /**
@@ -209,6 +221,8 @@ export const batteryCapability = {
         deviceId: z.number(),
         status: BatteryStatusSchema,
       }),
+      notOperatorFacing:
+        'the level / sleeping / charging state triggers each read one field of this change',
     },
   },
   status: {
@@ -217,7 +231,12 @@ export const batteryCapability = {
     // Unknown, never 0 % (D315, D663): the same cold-seed defect this schema's
     // `level` doc already explains. No live consumer reads this as a
     // number — `device-aggregation.ts` only checks its presence (D663).
-    empty: { level: null, charging: 'unknown', sleeping: false, lastUpdated: 0 },
+    empty: {
+      level: null,
+      charging: 'unknown',
+      sleeping: false,
+      lastUpdated: 0,
+    },
   },
   /**
    * Runtime-state slice — every provider that registers this cap
@@ -250,6 +269,69 @@ export const batteryCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastUpdated'],
+  vocabulary: {
+    noun: t('Battery', 'Batteria'),
+    order: 5240,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'level',
+        quantity: t('the battery level', 'il livello della batteria'),
+        label: t('Battery', 'Batteria'),
+        unit: '%',
+        icon: 'battery',
+      },
+      {
+        kind: 'boolean',
+        field: 'sleeping',
+        label: t('Asleep', 'In sospensione'),
+        whenTrue: t('When {device} goes to sleep', 'Quando {device} va in sospensione'),
+        whenFalse: t('When {device} wakes up', 'Quando {device} si risveglia'),
+        icon: 'moon',
+      },
+      {
+        kind: 'enum',
+        field: 'charging',
+        label: t('Charging', 'Ricarica'),
+        values: [
+          {
+            value: 'dc',
+            label: t('Charging from mains', 'In carica da rete'),
+            phrase: t('When {device} starts charging', 'Quando {device} inizia a caricarsi'),
+          },
+          {
+            value: 'solar',
+            label: t('Charging from solar', 'In carica dal pannello solare'),
+            phrase: t(
+              'When {device} charges from its solar panel',
+              'Quando {device} si carica dal pannello solare',
+            ),
+          },
+          {
+            value: 'none',
+            label: t('Not charging', 'Non in carica'),
+            phrase: t('When {device} stops charging', 'Quando {device} smette di caricarsi'),
+          },
+          { value: 'unknown', label: t('Unknown', 'Sconosciuto') },
+        ],
+        icon: 'battery-charging',
+      },
+    ],
+    extraEvents: [
+      {
+        category: EventCategory.DeviceAwake,
+        label: t('Woke up', 'Risvegliato'),
+        phrase: t('When {device} wakes up', 'Quando {device} si risveglia'),
+        icon: 'sun',
+      },
+      {
+        category: EventCategory.DeviceSleeping,
+        label: t('Went to sleep', 'In sospensione'),
+        phrase: t('When {device} goes to sleep', 'Quando {device} va in sospensione'),
+        icon: 'moon',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IBatteryProvider = InferProvider<typeof batteryCapability>

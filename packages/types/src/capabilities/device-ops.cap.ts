@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { CamProfileSchema } from './schemas/streaming-shared.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * device-ops — device-scoped cap that unifies the per-IDevice operations
@@ -100,7 +101,11 @@ export const deviceOpsCapability = {
         input: z.unknown(),
       }),
       z.unknown(),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing:
+          'a provider-defined custom action whose id and input only the addon knows; it reaches the picker through the custom-actions surface, not a fixed phrase',
+      },
     ),
 
     /**
@@ -141,6 +146,10 @@ export const deviceOpsCapability = {
     getRawState: method(z.object({ deviceId: z.number() }), RawStateResultSchema.nullable(), {
       auth: 'protected',
     }),
+  },
+  vocabulary: {
+    noun: t('Device operations', 'Operazioni del dispositivo'),
+    order: 3110,
   },
 } as const satisfies CapabilityDefinition
 

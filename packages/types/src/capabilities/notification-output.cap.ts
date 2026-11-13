@@ -501,6 +501,9 @@ export const notificationOutputCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: {
+    notOperatorFacing: 'notification delivery — reached through notifier devices and rules',
+  },
 } as const satisfies CapabilityDefinition
 
 export type INotificationOutputProvider = InferProvider<typeof notificationOutputCapability>

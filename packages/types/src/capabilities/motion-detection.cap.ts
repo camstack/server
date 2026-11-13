@@ -3,6 +3,7 @@ import { DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { BoundingBoxSchema, FrameInputSchema } from './schemas/detection-shared.js'
 import { FrameHandleSchema } from './schemas/streaming-shared.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 const MotionRegionSchema = z.object({
   bbox: BoundingBoxSchema,
@@ -48,13 +49,23 @@ export const motionDetectionCapability = {
         frameHandle: FrameHandleSchema.optional(),
       }),
       MotionAnalysisResultSchema,
-      { role: 'admin', kind: 'mutation' },
+      {
+        role: 'admin',
+        kind: 'mutation',
+        notOperatorFacing:
+          'the pipeline feeds it frames — an internal stage, never called by a person',
+      },
     ),
     removeCamera: method(z.object({ deviceId: z.number() }), z.void(), {
       role: 'admin',
       kind: 'mutation',
+      notOperatorFacing: 'pipeline housekeeping when a camera leaves',
     }),
-    reset: method(z.void(), z.void(), { role: 'admin', kind: 'mutation' }),
+    reset: method(z.void(), z.void(), {
+      role: 'admin',
+      kind: 'mutation',
+      notOperatorFacing: 'pipeline housekeeping',
+    }),
   },
   events: {
     onMotion: {
@@ -63,7 +74,13 @@ export const motionDetectionCapability = {
         detected: z.boolean(),
         regionCount: z.number(),
       }),
+      notOperatorFacing:
+        'the analyzer’s raw verdict; the operator signal is the `motion` cap’s `detected` state',
     },
+  },
+  vocabulary: {
+    noun: t('Motion analysis', 'Analisi del movimento'),
+    order: 3160,
   },
 } as const satisfies CapabilityDefinition
 

@@ -79,9 +79,9 @@
 | `adminUi.getVersion` | query | admin | admin-ui |
 | `airQualitySensor.getStatus` | query | protected | air-quality-sensor (auto) |
 | `alarmPanel.getStatus` | query | protected | alarm-panel (auto) |
-| `alarmPanel.arm` | mutation | protected | alarm-panel |
-| `alarmPanel.disarm` | mutation | protected | alarm-panel |
 | `alarmPanel.trigger` | mutation | protected | alarm-panel |
+| `alarmPanel.disarm` | mutation | protected | alarm-panel |
+| `alarmPanel.arm` | mutation | protected | alarm-panel |
 | `alerts.emit` | mutation | protected | alerts |
 | `alerts.update` | mutation | protected | alerts |
 | `alerts.list` | query | protected | alerts |
@@ -181,11 +181,11 @@
 | `carbonMonoxide.getStatus` | query | protected | carbon-monoxide (auto) |
 | `climateControl.getStatus` | query | protected | climate-control (auto) |
 | `climateControl.setMode` | mutation | protected | climate-control |
-| `climateControl.setFanMode` | mutation | protected | climate-control |
-| `climateControl.setPreset` | mutation | protected | climate-control |
 | `climateControl.setTarget` | mutation | protected | climate-control |
 | `climateControl.setTargetRange` | mutation | protected | climate-control |
 | `climateControl.setTargetHumidity` | mutation | protected | climate-control |
+| `climateControl.setFanMode` | mutation | protected | climate-control |
+| `climateControl.setPreset` | mutation | protected | climate-control |
 | `climateControl.setSwingVertical` | mutation | protected | climate-control |
 | `climateControl.setSwingHorizontal` | mutation | protected | climate-control |
 | `clusterUpdate.previewClusterUpdate` | query | admin | cluster-update |
@@ -667,12 +667,12 @@
 | `mediaPlayer.stop` | mutation | protected | media-player |
 | `mediaPlayer.next` | mutation | protected | media-player |
 | `mediaPlayer.previous` | mutation | protected | media-player |
-| `mediaPlayer.seek` | mutation | protected | media-player |
 | `mediaPlayer.setVolume` | mutation | protected | media-player |
 | `mediaPlayer.setMute` | mutation | protected | media-player |
 | `mediaPlayer.setShuffle` | mutation | protected | media-player |
 | `mediaPlayer.setRepeat` | mutation | protected | media-player |
 | `mediaPlayer.selectSource` | mutation | protected | media-player |
+| `mediaPlayer.seek` | mutation | protected | media-player |
 | `mediaPlayer.playMedia` | mutation | protected | media-player |
 | `meshNetwork.getStatus` | query | protected | mesh-network |
 | `meshNetwork.join` | mutation | protected | mesh-network |
@@ -828,10 +828,10 @@
 | `petFeeder.getStatus` | query | protected | pet-feeder (auto) |
 | `petFeeder.feed` | mutation | protected | pet-feeder |
 | `petFeeder.cancelFeed` | mutation | protected | pet-feeder |
-| `petFeeder.resetDesiccant` | mutation | protected | pet-feeder |
-| `petFeeder.markFoodReplenished` | mutation | protected | pet-feeder |
 | `petFeeder.callPet` | mutation | protected | pet-feeder |
 | `petFeeder.playSound` | mutation | protected | pet-feeder |
+| `petFeeder.resetDesiccant` | mutation | protected | pet-feeder |
+| `petFeeder.markFoodReplenished` | mutation | protected | pet-feeder |
 | `petFeeder.setChildLock` | mutation | protected | pet-feeder |
 | `petFeeder.setIndicatorLight` | mutation | protected | pet-feeder |
 | `petFeeder.setFeedSound` | mutation | protected | pet-feeder |
@@ -1075,13 +1075,13 @@
 | `ptz.getStatus` | query | protected | ptz (auto) |
 | `ptz.move` | mutation | protected | ptz |
 | `ptz.continuousMove` | mutation | protected | ptz |
-| `ptz.stop` | mutation | protected | ptz |
+| `ptz.goHome` | mutation | protected | ptz |
 | `ptz.getPresets` | query | protected | ptz |
 | `ptz.goToPreset` | mutation | protected | ptz |
 | `ptz.savePreset` | mutation | admin | ptz |
 | `ptz.deletePreset` | mutation | admin | ptz |
 | `ptz.getOptions` | query | protected | ptz |
-| `ptz.goHome` | mutation | protected | ptz |
+| `ptz.stop` | mutation | protected | ptz |
 | `ptz.getHomePreset` | query | protected | ptz |
 | `ptz.setHomePreset` | mutation | admin | ptz |
 | `ptz.captureHomeHere` | mutation | admin | ptz |
@@ -1472,9 +1472,9 @@
 | `viewerUi.getStaticDir` | query | admin | viewer-ui |
 | `viewerUi.getVersion` | query | admin | viewer-ui |
 | `waterHeater.getStatus` | query | protected | water-heater (auto) |
-| `waterHeater.setTargetTemp` | mutation | protected | water-heater |
 | `waterHeater.setOperationMode` | mutation | protected | water-heater |
 | `waterHeater.setAway` | mutation | protected | water-heater |
+| `waterHeater.setTargetTemp` | mutation | protected | water-heater |
 | `weather.getStatus` | query | protected | weather (auto) |
 | `webrtcSession.listStreams` | query | protected | webrtc-session |
 | `webrtcSession.createSession` | mutation | protected | webrtc-session |
@@ -1505,7 +1505,7 @@
 
 ### `accessories` → `accessories.*`
 
-- **Source:** `packages/types/src/capabilities/accessories.cap.ts:38`
+- **Source:** `packages/types/src/capabilities/accessories.cap.ts:39`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, switch, light, sensor, climate, cover, lock, fan, media-player, alarm-panel, generic`
 - **Archetypes:** status(command-driven)
 - **Provider interface:** `IAccessoriesProvider`
@@ -1518,7 +1518,7 @@
 
 ### `action-source` → `actionSource.*`
 
-- **Source:** `packages/types/src/capabilities/action-source.cap.ts:22`
+- **Source:** `packages/types/src/capabilities/action-source.cap.ts:23`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IActionSourceProvider`
@@ -1553,7 +1553,7 @@
 
 ### `addon-pages` → `addonPages.*`
 
-- **Source:** `packages/types/src/capabilities/addon-pages.cap.ts:39`
+- **Source:** `packages/types/src/capabilities/addon-pages.cap.ts:40`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IAddonPagesAggregatorProvider`
@@ -1564,7 +1564,7 @@
 
 ### `addon-pages-source` → `addonPagesSource.*`
 
-- **Source:** `packages/types/src/capabilities/addon-pages-source.cap.ts:50`
+- **Source:** `packages/types/src/capabilities/addon-pages-source.cap.ts:51`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IAddonPagesSourceProvider`
@@ -1575,7 +1575,7 @@
 
 ### `addon-routes` → `addonRoutes.*`
 
-- **Source:** `packages/types/src/capabilities/addon-routes.cap.ts:55`
+- **Source:** `packages/types/src/capabilities/addon-routes.cap.ts:56`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `IAddonRoutesProvider`
@@ -1587,7 +1587,7 @@
 
 ### `addon-settings` → `addonSettings.*`
 
-- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:86`
+- **Source:** `packages/types/src/capabilities/addon-settings.cap.ts:87`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonSettingsProvider`
@@ -1605,7 +1605,7 @@
 
 ### `addon-widgets` → `addonWidgets.*`
 
-- **Source:** `packages/types/src/capabilities/addon-widgets.cap.ts:27`
+- **Source:** `packages/types/src/capabilities/addon-widgets.cap.ts:28`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IAddonWidgetsAggregatorProvider`
@@ -1616,7 +1616,7 @@
 
 ### `addon-widgets-source` → `addonWidgetsSource.*`
 
-- **Source:** `packages/types/src/capabilities/addon-widgets-source.cap.ts:141`
+- **Source:** `packages/types/src/capabilities/addon-widgets-source.cap.ts:142`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IAddonWidgetsSourceProvider`
@@ -1627,7 +1627,7 @@
 
 ### `addons` → `addons.*`
 
-- **Source:** `packages/types/src/capabilities/addons.cap.ts:365`
+- **Source:** `packages/types/src/capabilities/addons.cap.ts:366`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `IAddonsProvider`
@@ -1669,7 +1669,7 @@
 
 ### `admin-ui` → `adminUi.*`
 
-- **Source:** `packages/types/src/capabilities/admin-ui.cap.ts:7`
+- **Source:** `packages/types/src/capabilities/admin-ui.cap.ts:8`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IAdminUiProvider`
@@ -1681,7 +1681,7 @@
 
 ### `air-quality-sensor` → `airQualitySensor.*`
 
-- **Source:** `packages/types/src/capabilities/air-quality-sensor.cap.ts:32`
+- **Source:** `packages/types/src/capabilities/air-quality-sensor.cap.ts:33`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IAirQualitySensorProvider`
@@ -1693,7 +1693,7 @@
 
 ### `alarm-panel` → `alarmPanel.*`
 
-- **Source:** `packages/types/src/capabilities/alarm-panel.cap.ts:65`
+- **Source:** `packages/types/src/capabilities/alarm-panel.cap.ts:66`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `alarm-panel`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IAlarmPanelProvider`
@@ -1702,9 +1702,9 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `alarmPanel.getStatus` | query | protected | `{ deviceId: number }` | `AlarmPanelStatusSchema` |
-| arm | `alarmPanel.arm` | mutation | protected | `{ deviceId: number; mode: AlarmArmModeSchema; code?: string }` | `void` |
-| disarm | `alarmPanel.disarm` | mutation | protected | `{ deviceId: number; code?: string }` | `void` |
 | trigger | `alarmPanel.trigger` | mutation | protected | `{ deviceId: number }` | `void` |
+| disarm | `alarmPanel.disarm` | mutation | protected | `{ deviceId: number; code?: string }` | `void` |
+| arm | `alarmPanel.arm` | mutation | protected | `{ deviceId: number; mode: AlarmArmModeSchema; code?: string }` | `void` |
 
 ### `alerts` → `alerts.*`
 
@@ -1725,7 +1725,7 @@
 
 ### `ambient-light-sensor` → `ambientLightSensor.*`
 
-- **Source:** `packages/types/src/capabilities/ambient-light-sensor.cap.ts:23`
+- **Source:** `packages/types/src/capabilities/ambient-light-sensor.cap.ts:24`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IAmbientLightSensorProvider`
@@ -1737,7 +1737,7 @@
 
 ### `audio-analysis` → `audioAnalysis.*`
 
-- **Source:** `packages/types/src/capabilities/audio-analysis.cap.ts:27`
+- **Source:** `packages/types/src/capabilities/audio-analysis.cap.ts:28`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `IAudioAnalysisProvider`
@@ -1752,7 +1752,7 @@
 
 ### `audio-analyzer` → `audioAnalyzer.*`
 
-- **Source:** `packages/types/src/capabilities/audio-analyzer.cap.ts:144`
+- **Source:** `packages/types/src/capabilities/audio-analyzer.cap.ts:145`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IAudioAnalyzerProvider`
@@ -1769,7 +1769,7 @@
 
 ### `audio-codec` → `audioCodec.*`
 
-- **Source:** `packages/types/src/capabilities/audio-codec.cap.ts:84`
+- **Source:** `packages/types/src/capabilities/audio-codec.cap.ts:85`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · preferredProvider: `decoder-nodeav`
 - **Archetypes:** —
 - **Provider interface:** `IAudioCodecCapProvider`
@@ -1790,7 +1790,7 @@
 
 ### `audio-metrics` → `audioMetrics.*`
 
-- **Source:** `packages/types/src/capabilities/audio-metrics.cap.ts:109`
+- **Source:** `packages/types/src/capabilities/audio-metrics.cap.ts:110`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `camera`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IAudioMetricsProvider`
@@ -1803,7 +1803,7 @@
 
 ### `auth-provider` → `authProvider.*`
 
-- **Source:** `packages/types/src/capabilities/auth-provider.cap.ts:19`
+- **Source:** `packages/types/src/capabilities/auth-provider.cap.ts:20`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `IAuthProvider`
@@ -1817,7 +1817,7 @@
 
 ### `automation-control` → `automationControl.*`
 
-- **Source:** `packages/types/src/capabilities/automation-control.cap.ts:34`
+- **Source:** `packages/types/src/capabilities/automation-control.cap.ts:35`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `automation`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IAutomationControlProvider`
@@ -1832,7 +1832,7 @@
 
 ### `backup` → `backup.*`
 
-- **Source:** `packages/types/src/capabilities/backup.cap.ts:321`
+- **Source:** `packages/types/src/capabilities/backup.cap.ts:327`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IBackupProvider`
@@ -1862,7 +1862,7 @@
 
 ### `battery` → `battery.*`
 
-- **Source:** `packages/types/src/capabilities/battery.cap.ts:155`
+- **Source:** `packages/types/src/capabilities/battery.cap.ts:163`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, pet-feeder, container, climate, event-emitter`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IBatteryProvider`
@@ -1876,7 +1876,7 @@
 
 ### `binary` → `binary.*`
 
-- **Source:** `packages/types/src/capabilities/binary.cap.ts:24`
+- **Source:** `packages/types/src/capabilities/binary.cap.ts:25`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IBinaryProvider`
@@ -1888,7 +1888,7 @@
 
 ### `board-key-source` → `boardKeySource.*`
 
-- **Source:** `packages/types/src/capabilities/board-key-source.cap.ts:60`
+- **Source:** `packages/types/src/capabilities/board-key-source.cap.ts:64`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IBoardKeySourceProvider`
@@ -1901,7 +1901,7 @@
 
 ### `brightness` → `brightness.*`
 
-- **Source:** `packages/types/src/capabilities/brightness.cap.ts:27`
+- **Source:** `packages/types/src/capabilities/brightness.cap.ts:28`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `light`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IBrightnessProvider`
@@ -1931,7 +1931,7 @@
 
 ### `button` → `button.*`
 
-- **Source:** `packages/types/src/capabilities/button.cap.ts:15`
+- **Source:** `packages/types/src/capabilities/button.cap.ts:16`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `button`
 - **Archetypes:** —
 - **Provider interface:** `IButtonProvider`
@@ -1942,7 +1942,7 @@
 
 ### `calendar-source` → `calendarSource.*`
 
-- **Source:** `packages/types/src/capabilities/calendar-source.cap.ts:64`
+- **Source:** `packages/types/src/capabilities/calendar-source.cap.ts:65`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `calendar`
 - **Archetypes:** internal
 - **Provider interface:** `ICalendarSourceProvider`
@@ -1968,7 +1968,7 @@
 
 ### `camera-credentials` → `cameraCredentials.*`
 
-- **Source:** `packages/types/src/capabilities/camera-credentials.cap.ts:76`
+- **Source:** `packages/types/src/capabilities/camera-credentials.cap.ts:77`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(command-driven)
 - **Provider interface:** `ICameraCredentialsProvider`
@@ -1980,7 +1980,7 @@
 
 ### `camera-grid-layout` → `cameraGridLayout.*`
 
-- **Source:** `packages/types/src/capabilities/camera-grid-layout.cap.ts:151`
+- **Source:** `packages/types/src/capabilities/camera-grid-layout.cap.ts:152`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `ICameraGridLayoutProvider`
@@ -1995,7 +1995,7 @@
 
 ### `camera-pipeline-config` → `cameraPipelineConfig.*`
 
-- **Source:** `packages/types/src/capabilities/camera-pipeline-config.cap.ts:33`
+- **Source:** `packages/types/src/capabilities/camera-pipeline-config.cap.ts:34`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `ICameraPipelineConfigProvider`
@@ -2008,7 +2008,7 @@
 
 ### `camera-streams` → `cameraStreams.*`
 
-- **Source:** `packages/types/src/capabilities/camera-streams.cap.ts:210`
+- **Source:** `packages/types/src/capabilities/camera-streams.cap.ts:211`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** runtimeState · wrapper(defaultActive)
 - **Provider interface:** `ICameraStreamsProvider`
@@ -2025,7 +2025,7 @@
 
 ### `carbon-monoxide` → `carbonMonoxide.*`
 
-- **Source:** `packages/types/src/capabilities/carbon-monoxide.cap.ts:17`
+- **Source:** `packages/types/src/capabilities/carbon-monoxide.cap.ts:18`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ICarbonMonoxideProvider`
@@ -2037,7 +2037,7 @@
 
 ### `climate-control` → `climateControl.*`
 
-- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:113`
+- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:114`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IClimateControlProvider`
@@ -2047,17 +2047,17 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `climateControl.getStatus` | query | protected | `{ deviceId: number }` | `ClimateControlStatusSchema` |
 | setMode | `climateControl.setMode` | mutation | protected | `{ deviceId: number; mode: HvacModeSchema }` | `void` |
-| setFanMode | `climateControl.setFanMode` | mutation | protected | `{ deviceId: number; fanMode: string }` | `void` |
-| setPreset | `climateControl.setPreset` | mutation | protected | `{ deviceId: number; preset: string }` | `void` |
 | setTarget | `climateControl.setTarget` | mutation | protected | `{ deviceId: number; target: number }` | `void` |
 | setTargetRange | `climateControl.setTargetRange` | mutation | protected | `{ deviceId: number; targetLow: number; targetHigh: number }` | `void` |
 | setTargetHumidity | `climateControl.setTargetHumidity` | mutation | protected | `{ deviceId: number; targetHumidity: number }` | `void` |
+| setFanMode | `climateControl.setFanMode` | mutation | protected | `{ deviceId: number; fanMode: string }` | `void` |
+| setPreset | `climateControl.setPreset` | mutation | protected | `{ deviceId: number; preset: string }` | `void` |
 | setSwingVertical | `climateControl.setSwingVertical` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
 | setSwingHorizontal | `climateControl.setSwingHorizontal` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
 
 ### `cluster-update` → `clusterUpdate.*`
 
-- **Source:** `packages/types/src/capabilities/cluster-update.cap.ts:144`
+- **Source:** `packages/types/src/capabilities/cluster-update.cap.ts:145`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IClusterUpdateProvider`
@@ -2070,7 +2070,7 @@
 
 ### `color` → `color.*`
 
-- **Source:** `packages/types/src/capabilities/color.cap.ts:76`
+- **Source:** `packages/types/src/capabilities/color.cap.ts:80`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `light`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IColorProvider`
@@ -2096,7 +2096,7 @@
 
 ### `connectivity` → `connectivity.*`
 
-- **Source:** `packages/types/src/capabilities/connectivity.cap.ts:22`
+- **Source:** `packages/types/src/capabilities/connectivity.cap.ts:23`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IConnectivityProvider`
@@ -2108,7 +2108,7 @@
 
 ### `consumables` → `consumables.*`
 
-- **Source:** `packages/types/src/capabilities/consumables.cap.ts:236`
+- **Source:** `packages/types/src/capabilities/consumables.cap.ts:248`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, hub, light, siren, switch, sensor, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, container, image, pet-feeder, pet-fountain, dishwasher, washer, dryer, gateway, heat-pump`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `IConsumablesProvider`
@@ -2121,7 +2121,7 @@
 
 ### `contact` → `contact.*`
 
-- **Source:** `packages/types/src/capabilities/contact.cap.ts:26`
+- **Source:** `packages/types/src/capabilities/contact.cap.ts:27`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IContactProvider`
@@ -2133,7 +2133,7 @@
 
 ### `control` → `control.*`
 
-- **Source:** `packages/types/src/capabilities/control.cap.ts:81`
+- **Source:** `packages/types/src/capabilities/control.cap.ts:82`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `control`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IControlProvider`
@@ -2146,7 +2146,7 @@
 
 ### `core-blocks` → `coreBlocks.*`
 
-- **Source:** `packages/types/src/capabilities/core-blocks.cap.ts:373`
+- **Source:** `packages/types/src/capabilities/core-blocks.cap.ts:389`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ICoreBlocksProvider`
@@ -2179,7 +2179,7 @@
 
 ### `cover` → `cover.*`
 
-- **Source:** `packages/types/src/capabilities/cover.cap.ts:51`
+- **Source:** `packages/types/src/capabilities/cover.cap.ts:52`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `cover`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ICoverProvider`
@@ -2196,7 +2196,7 @@
 
 ### `custom-model-registry` → `customModelRegistry.*`
 
-- **Source:** `packages/types/src/capabilities/custom-model-registry.cap.ts:92`
+- **Source:** `packages/types/src/capabilities/custom-model-registry.cap.ts:93`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `ICustomModelRegistryProvider`
@@ -2208,7 +2208,7 @@
 
 ### `data-store-provider` → `dataStoreProvider.*`
 
-- **Source:** `packages/types/src/capabilities/data-store-provider.cap.ts:76`
+- **Source:** `packages/types/src/capabilities/data-store-provider.cap.ts:77`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IDataStoreProvider`
@@ -2236,7 +2236,7 @@
 
 ### `database-snapshot` → `databaseSnapshot.*`
 
-- **Source:** `packages/types/src/capabilities/database-snapshot.cap.ts:123`
+- **Source:** `packages/types/src/capabilities/database-snapshot.cap.ts:126`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IDatabaseSnapshotProvider`
@@ -2248,7 +2248,7 @@
 
 ### `day-night` → `dayNight.*`
 
-- **Source:** `packages/types/src/capabilities/day-night.cap.ts:83`
+- **Source:** `packages/types/src/capabilities/day-night.cap.ts:84`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IDayNightProvider`
@@ -2262,7 +2262,7 @@
 
 ### `decoder` → `decoder.*`
 
-- **Source:** `packages/types/src/capabilities/decoder.cap.ts:50`
+- **Source:** `packages/types/src/capabilities/decoder.cap.ts:54`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · preferredProvider: `decoder-nodeav`
 - **Archetypes:** —
 - **Provider interface:** `IDecoderCapProvider`
@@ -2274,7 +2274,7 @@
 
 ### `detection-pipeline` → `detectionPipeline.*`
 
-- **Source:** `packages/types/src/capabilities/detection-pipeline.cap.ts:26`
+- **Source:** `packages/types/src/capabilities/detection-pipeline.cap.ts:27`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `IDetectionPipelineProvider`
@@ -2287,7 +2287,7 @@
 
 ### `device-admin-link` → `deviceAdminLink.*`
 
-- **Source:** `packages/types/src/capabilities/device-admin-link.cap.ts:107`
+- **Source:** `packages/types/src/capabilities/device-admin-link.cap.ts:108`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceAdminLinkProvider`
@@ -2316,7 +2316,7 @@
 
 ### `device-credentials` → `deviceCredentials.*`
 
-- **Source:** `packages/types/src/capabilities/device-credentials.cap.ts:39`
+- **Source:** `packages/types/src/capabilities/device-credentials.cap.ts:40`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceCredentialsProvider`
@@ -2358,7 +2358,7 @@
 
 ### `device-extension` → `deviceExtension.*`
 
-- **Source:** `packages/types/src/capabilities/device-extension.cap.ts:194`
+- **Source:** `packages/types/src/capabilities/device-extension.cap.ts:195`
 - **Meta:** scope: `device` · mode: `collection` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** deviceConfig(widget) · wrapper(defaultActive)
 - **Provider interface:** `IDeviceExtensionProvider`
@@ -2372,7 +2372,7 @@
 
 ### `device-history` → `deviceHistory.*`
 
-- **Source:** `packages/types/src/capabilities/device-history.cap.ts:279`
+- **Source:** `packages/types/src/capabilities/device-history.cap.ts:295`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceHistoryProvider`
@@ -2506,7 +2506,7 @@
 
 ### `device-ops` → `deviceOps.*`
 
-- **Source:** `packages/types/src/capabilities/device-ops.cap.ts:48`
+- **Source:** `packages/types/src/capabilities/device-ops.cap.ts:49`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceOpsProvider`
@@ -2523,7 +2523,7 @@
 
 ### `device-provider` → `deviceProvider.*`
 
-- **Source:** `packages/types/src/capabilities/device-provider.cap.ts:208`
+- **Source:** `packages/types/src/capabilities/device-provider.cap.ts:209`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceProvider`
@@ -2549,7 +2549,7 @@
 
 ### `device-removal-hook` → `deviceRemovalHook.*`
 
-- **Source:** `packages/types/src/capabilities/device-removal-hook.cap.ts:78`
+- **Source:** `packages/types/src/capabilities/device-removal-hook.cap.ts:79`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `IDeviceRemovalHookProvider`
@@ -2561,7 +2561,7 @@
 
 ### `device-runs` → `deviceRuns.*`
 
-- **Source:** `packages/types/src/capabilities/device-runs.cap.ts:104`
+- **Source:** `packages/types/src/capabilities/device-runs.cap.ts:105`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `washer, dryer, dishwasher`
 - **Archetypes:** wrapper(defaultActive)
 - **Provider interface:** `IDeviceRunsProvider`
@@ -2594,7 +2594,7 @@
 
 ### `device-status` → `deviceStatus.*`
 
-- **Source:** `packages/types/src/capabilities/device-status.cap.ts:35`
+- **Source:** `packages/types/src/capabilities/device-status.cap.ts:37`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IDeviceStatusProvider`
@@ -2607,7 +2607,7 @@
 
 ### `device-transitions` → `deviceTransitions.*`
 
-- **Source:** `packages/types/src/capabilities/device-transitions.cap.ts:62`
+- **Source:** `packages/types/src/capabilities/device-transitions.cap.ts:63`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera, light, siren, switch, sensor, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, image, pet-feeder, pet-fountain, dishwasher, washer, dryer, gateway, heat-pump`
 - **Archetypes:** wrapper(defaultActive)
 - **Provider interface:** `IDeviceTransitionsProvider`
@@ -2622,7 +2622,7 @@
 
 ### `dishwasher` → `dishwasher.*`
 
-- **Source:** `packages/types/src/capabilities/dishwasher.cap.ts:190`
+- **Source:** `packages/types/src/capabilities/dishwasher.cap.ts:191`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `dishwasher`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IDishwasherProvider`
@@ -2661,7 +2661,7 @@
 
 ### `do-not-disturb` → `doNotDisturb.*`
 
-- **Source:** `packages/types/src/capabilities/do-not-disturb.cap.ts:22`
+- **Source:** `packages/types/src/capabilities/do-not-disturb.cap.ts:23`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IDoNotDisturbProvider`
@@ -2674,7 +2674,7 @@
 
 ### `doorbell` → `doorbell.*`
 
-- **Source:** `packages/types/src/capabilities/doorbell.cap.ts:72`
+- **Source:** `packages/types/src/capabilities/doorbell.cap.ts:74`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `button, camera`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IDoorbellProvider`
@@ -2687,7 +2687,7 @@
 
 ### `embedding-encoder` → `embeddingEncoder.*`
 
-- **Source:** `packages/types/src/capabilities/embedding-encoder.cap.ts:197`
+- **Source:** `packages/types/src/capabilities/embedding-encoder.cap.ts:203`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IEmbeddingEncoderProvider`
@@ -2701,7 +2701,7 @@
 
 ### `enum-sensor` → `enumSensor.*`
 
-- **Source:** `packages/types/src/capabilities/enum-sensor.cap.ts:33`
+- **Source:** `packages/types/src/capabilities/enum-sensor.cap.ts:34`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IEnumSensorProvider`
@@ -2713,7 +2713,7 @@
 
 ### `event-emitter` → `eventEmitter.*`
 
-- **Source:** `packages/types/src/capabilities/event-emitter.cap.ts:44`
+- **Source:** `packages/types/src/capabilities/event-emitter.cap.ts:46`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `event-emitter`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IEventEmitterProvider`
@@ -2752,7 +2752,7 @@
 
 ### `failure-contribution` → `failureContribution.*`
 
-- **Source:** `packages/types/src/capabilities/failure-contribution.cap.ts:116`
+- **Source:** `packages/types/src/capabilities/failure-contribution.cap.ts:117`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `IFailureContributionProvider`
@@ -2763,7 +2763,7 @@
 
 ### `fan-control` → `fanControl.*`
 
-- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:267`
+- **Source:** `packages/types/src/capabilities/fan-control.cap.ts:277`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `fan`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IFanControlProvider`
@@ -2780,7 +2780,7 @@
 
 ### `fan-presets` → `fanPresets.*`
 
-- **Source:** `packages/types/src/capabilities/fan-presets.cap.ts:137`
+- **Source:** `packages/types/src/capabilities/fan-presets.cap.ts:140`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IFanPresetsProvider`
@@ -2794,7 +2794,7 @@
 
 ### `feature-probe` → `featureProbe.*`
 
-- **Source:** `packages/types/src/capabilities/feature-probe.cap.ts:65`
+- **Source:** `packages/types/src/capabilities/feature-probe.cap.ts:66`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IFeatureProbeProvider`
@@ -2807,7 +2807,7 @@
 
 ### `filesystem-browse` → `filesystemBrowse.*`
 
-- **Source:** `packages/types/src/capabilities/filesystem-browse.cap.ts:24`
+- **Source:** `packages/types/src/capabilities/filesystem-browse.cap.ts:25`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IFilesystemBrowseProvider`
@@ -2820,7 +2820,7 @@
 
 ### `flood` → `flood.*`
 
-- **Source:** `packages/types/src/capabilities/flood.cap.ts:22`
+- **Source:** `packages/types/src/capabilities/flood.cap.ts:23`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IFloodProvider`
@@ -2832,7 +2832,7 @@
 
 ### `gas` → `gas.*`
 
-- **Source:** `packages/types/src/capabilities/gas.cap.ts:18`
+- **Source:** `packages/types/src/capabilities/gas.cap.ts:19`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IGasProvider`
@@ -2844,7 +2844,7 @@
 
 ### `group-active` → `groupActive.*`
 
-- **Source:** `packages/types/src/capabilities/group-active.cap.ts:24`
+- **Source:** `packages/types/src/capabilities/group-active.cap.ts:25`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `cover, valve, lock, media-player, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IGroupActiveProvider`
@@ -2856,7 +2856,7 @@
 
 ### `group-commands` → `groupCommands.*`
 
-- **Source:** `packages/types/src/capabilities/group-commands.cap.ts:37`
+- **Source:** `packages/types/src/capabilities/group-commands.cap.ts:38`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `switch, light, fan, cover, valve, lock, media-player, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IGroupCommandsProvider`
@@ -2868,7 +2868,7 @@
 
 ### `group-status` → `groupStatus.*`
 
-- **Source:** `packages/types/src/capabilities/group-status.cap.ts:38`
+- **Source:** `packages/types/src/capabilities/group-status.cap.ts:39`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor, switch, light, fan, cover, valve, lock, media-player, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IGroupStatusProvider`
@@ -2880,7 +2880,7 @@
 
 ### `heat-pump-control` → `heatPumpControl.*`
 
-- **Source:** `packages/types/src/capabilities/heat-pump-control.cap.ts:18`
+- **Source:** `packages/types/src/capabilities/heat-pump-control.cap.ts:19`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `heat-pump`
 - **Archetypes:** —
 - **Provider interface:** `IHeatPumpControlProvider`
@@ -2904,7 +2904,7 @@
 
 ### `heat-pump-status` → `heatPumpStatus.*`
 
-- **Source:** `packages/types/src/capabilities/heat-pump-status.cap.ts:131`
+- **Source:** `packages/types/src/capabilities/heat-pump-status.cap.ts:132`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `heat-pump`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHeatPumpStatusProvider`
@@ -2916,7 +2916,7 @@
 
 ### `heating-valve` → `heatingValve.*`
 
-- **Source:** `packages/types/src/capabilities/heating-valve.cap.ts:15`
+- **Source:** `packages/types/src/capabilities/heating-valve.cap.ts:16`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHeatingValveProvider`
@@ -2941,7 +2941,7 @@
 
 ### `humidifier` → `humidifier.*`
 
-- **Source:** `packages/types/src/capabilities/humidifier.cap.ts:47`
+- **Source:** `packages/types/src/capabilities/humidifier.cap.ts:48`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `humidifier`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHumidifierProvider`
@@ -2956,7 +2956,7 @@
 
 ### `humidity-sensor` → `humiditySensor.*`
 
-- **Source:** `packages/types/src/capabilities/humidity-sensor.cap.ts:28`
+- **Source:** `packages/types/src/capabilities/humidity-sensor.cap.ts:29`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IHumiditySensorProvider`
@@ -2968,7 +2968,7 @@
 
 ### `image` → `image.*`
 
-- **Source:** `packages/types/src/capabilities/image.cap.ts:30`
+- **Source:** `packages/types/src/capabilities/image.cap.ts:31`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `image`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IImageProvider`
@@ -2980,7 +2980,7 @@
 
 ### `image-settings` → `imageSettings.*`
 
-- **Source:** `packages/types/src/capabilities/image-settings.cap.ts:139`
+- **Source:** `packages/types/src/capabilities/image-settings.cap.ts:140`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IImageSettingsProvider`
@@ -2994,7 +2994,7 @@
 
 ### `integration-instances` → `integrationInstances.*`
 
-- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:203`
+- **Source:** `packages/types/src/capabilities/integration-instances.cap.ts:209`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationInstancesProvider`
@@ -3013,7 +3013,7 @@
 
 ### `integrations` → `integrations.*`
 
-- **Source:** `packages/types/src/capabilities/integrations.cap.ts:166`
+- **Source:** `packages/types/src/capabilities/integrations.cap.ts:167`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IIntegrationsProvider`
@@ -3029,7 +3029,7 @@
 
 ### `intercom` → `intercom.*`
 
-- **Source:** `packages/types/src/capabilities/intercom.cap.ts:64`
+- **Source:** `packages/types/src/capabilities/intercom.cap.ts:65`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IIntercomProvider`
@@ -3048,7 +3048,7 @@
 
 ### `ir-transmitter` → `irTransmitter.*`
 
-- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:140`
+- **Source:** `packages/types/src/capabilities/ir-transmitter.cap.ts:141`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `generic`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IIrTransmitterProvider`
@@ -3062,7 +3062,7 @@
 
 ### `keychain` → `keychain.*`
 
-- **Source:** `packages/types/src/capabilities/keychain.cap.ts:87`
+- **Source:** `packages/types/src/capabilities/keychain.cap.ts:98`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IKeychainProvider`
@@ -3079,7 +3079,7 @@
 
 ### `keychain-admin` → `keychainAdmin.*`
 
-- **Source:** `packages/types/src/capabilities/keychain-admin.cap.ts:157`
+- **Source:** `packages/types/src/capabilities/keychain-admin.cap.ts:158`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IKeychainAdminProvider`
@@ -3102,7 +3102,7 @@
 
 ### `lawn-mower-control` → `lawnMowerControl.*`
 
-- **Source:** `packages/types/src/capabilities/lawn-mower-control.cap.ts:48`
+- **Source:** `packages/types/src/capabilities/lawn-mower-control.cap.ts:49`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `lawn-mower`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILawnMowerControlProvider`
@@ -3117,7 +3117,7 @@
 
 ### `llm` → `llm.*`
 
-- **Source:** `packages/types/src/capabilities/llm.cap.ts:336`
+- **Source:** `packages/types/src/capabilities/llm.cap.ts:341`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · nodeIdMode: `data` · providerKind: `ai`
 - **Archetypes:** —
 - **Provider interface:** `ILlmProvider`
@@ -3143,7 +3143,7 @@
 
 ### `llm-runtime` → `llmRuntime.*`
 
-- **Source:** `packages/types/src/capabilities/llm-runtime.cap.ts:249`
+- **Source:** `packages/types/src/capabilities/llm-runtime.cap.ts:250`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `ILlmRuntimeProvider`
@@ -3164,7 +3164,7 @@
 
 ### `load-contribution` → `loadContribution.*`
 
-- **Source:** `packages/types/src/capabilities/load-contribution.cap.ts:153`
+- **Source:** `packages/types/src/capabilities/load-contribution.cap.ts:154`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `ILoadContributionProvider`
@@ -3175,7 +3175,7 @@
 
 ### `local-network` → `localNetwork.*`
 
-- **Source:** `packages/types/src/capabilities/local-network.cap.ts:382`
+- **Source:** `packages/types/src/capabilities/local-network.cap.ts:387`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `hub-only`
 - **Archetypes:** —
 - **Provider interface:** `ILocalNetworkProvider`
@@ -3209,7 +3209,7 @@
 
 ### `lock-control` → `lockControl.*`
 
-- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:84`
+- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:85`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `lock`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILockControlProvider`
@@ -3224,7 +3224,7 @@
 
 ### `log-channels` → `logChannels.*`
 
-- **Source:** `packages/types/src/capabilities/log-channels.cap.ts:59`
+- **Source:** `packages/types/src/capabilities/log-channels.cap.ts:60`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `ILogChannelsProvider`
@@ -3236,7 +3236,7 @@
 
 ### `log-destination` → `logDestination.*`
 
-- **Source:** `packages/types/src/capabilities/log-destination.cap.ts:131`
+- **Source:** `packages/types/src/capabilities/log-destination.cap.ts:132`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `ILogDestinationProvider`
@@ -3250,7 +3250,7 @@
 
 ### `login-method` → `loginMethod.*`
 
-- **Source:** `packages/types/src/capabilities/login-method.cap.ts:130`
+- **Source:** `packages/types/src/capabilities/login-method.cap.ts:131`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `ILoginMethodProvider`
@@ -3261,7 +3261,7 @@
 
 ### `media-player` → `mediaPlayer.*`
 
-- **Source:** `packages/types/src/capabilities/media-player.cap.ts:143`
+- **Source:** `packages/types/src/capabilities/media-player.cap.ts:144`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `media-player`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMediaPlayerProvider`
@@ -3281,17 +3281,17 @@
 | stop | `mediaPlayer.stop` | mutation | protected | `{ deviceId: number }` | `void` |
 | next | `mediaPlayer.next` | mutation | protected | `{ deviceId: number }` | `void` |
 | previous | `mediaPlayer.previous` | mutation | protected | `{ deviceId: number }` | `void` |
-| seek | `mediaPlayer.seek` | mutation | protected | `{ deviceId: number; position: number }` | `void` |
 | setVolume | `mediaPlayer.setVolume` | mutation | protected | `{ deviceId: number; volumeLevel: number }` | `void` |
 | setMute | `mediaPlayer.setMute` | mutation | protected | `{ deviceId: number; muted: boolean }` | `void` |
 | setShuffle | `mediaPlayer.setShuffle` | mutation | protected | `{ deviceId: number; shuffle: boolean }` | `void` |
 | setRepeat | `mediaPlayer.setRepeat` | mutation | protected | `{ deviceId: number; repeat: MediaPlayerRepeatSchema }` | `void` |
 | selectSource | `mediaPlayer.selectSource` | mutation | protected | `{ deviceId: number; source: string }` | `void` |
+| seek | `mediaPlayer.seek` | mutation | protected | `{ deviceId: number; position: number }` | `void` |
 | playMedia | `mediaPlayer.playMedia` | mutation | protected | `{ deviceId: number; mediaId: string; mediaType: string }` | `void` |
 
 ### `mesh-network` → `meshNetwork.*`
 
-- **Source:** `packages/types/src/capabilities/mesh-network.cap.ts:176`
+- **Source:** `packages/types/src/capabilities/mesh-network.cap.ts:177`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `mesh`
 - **Archetypes:** —
 - **Provider interface:** `IMeshNetworkProvider`
@@ -3307,7 +3307,7 @@
 
 ### `meter` → `meter.*`
 
-- **Source:** `packages/types/src/capabilities/meter.cap.ts:21`
+- **Source:** `packages/types/src/capabilities/meter.cap.ts:22`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMeterProvider`
@@ -3319,7 +3319,7 @@
 
 ### `metrics-provider` → `metricsProvider.*`
 
-- **Source:** `packages/types/src/capabilities/metrics-provider.cap.ts:390`
+- **Source:** `packages/types/src/capabilities/metrics-provider.cap.ts:391`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IMetricsProvider`
@@ -3340,7 +3340,7 @@
 
 ### `migrations` → `migrations.*`
 
-- **Source:** `packages/types/src/capabilities/migrations.cap.ts:27`
+- **Source:** `packages/types/src/capabilities/migrations.cap.ts:28`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IMigrationsProvider`
@@ -3363,7 +3363,7 @@
 
 ### `model-convert` → `modelConvert.*`
 
-- **Source:** `packages/types/src/capabilities/model-convert.cap.ts:18`
+- **Source:** `packages/types/src/capabilities/model-convert.cap.ts:19`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IModelConvertProvider`
@@ -3374,7 +3374,7 @@
 
 ### `model-distributor` → `modelDistributor.*`
 
-- **Source:** `packages/types/src/capabilities/model-distributor.cap.ts:38`
+- **Source:** `packages/types/src/capabilities/model-distributor.cap.ts:39`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IModelDistributorProvider`
@@ -3385,7 +3385,7 @@
 
 ### `motion` → `motion.*`
 
-- **Source:** `packages/types/src/capabilities/motion.cap.ts:142`
+- **Source:** `packages/types/src/capabilities/motion.cap.ts:146`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IMotionProvider`
@@ -3399,7 +3399,7 @@
 
 ### `motion-detection` → `motionDetection.*`
 
-- **Source:** `packages/types/src/capabilities/motion-detection.cap.ts:25`
+- **Source:** `packages/types/src/capabilities/motion-detection.cap.ts:26`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `IMotionDetectionProvider`
@@ -3416,7 +3416,7 @@
 
 ### `motion-trigger` → `motionTrigger.*`
 
-- **Source:** `packages/types/src/capabilities/motion-trigger.cap.ts:49`
+- **Source:** `packages/types/src/capabilities/motion-trigger.cap.ts:50`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `light, siren, switch`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `IMotionTriggerProvider`
@@ -3430,7 +3430,7 @@
 
 ### `motion-zones` → `motionZones.*`
 
-- **Source:** `packages/types/src/capabilities/motion-zones.cap.ts:56`
+- **Source:** `packages/types/src/capabilities/motion-zones.cap.ts:57`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `IMotionZonesProvider`
@@ -3444,7 +3444,7 @@
 
 ### `mqtt-broker` → `mqttBroker.*`
 
-- **Source:** `packages/types/src/capabilities/mqtt-broker.cap.ts:119`
+- **Source:** `packages/types/src/capabilities/mqtt-broker.cap.ts:120`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `broker`
 - **Archetypes:** status(poll)
 - **Provider interface:** `IMqttBrokerProvider`
@@ -3461,7 +3461,7 @@
 
 ### `native-object-detection` → `nativeObjectDetection.*`
 
-- **Source:** `packages/types/src/capabilities/native-object-detection.cap.ts:112`
+- **Source:** `packages/types/src/capabilities/native-object-detection.cap.ts:114`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `INativeObjectDetectionProvider`
@@ -3477,7 +3477,7 @@
 
 ### `navigation` → `navigation.*`
 
-- **Source:** `packages/types/src/capabilities/navigation.cap.ts:278`
+- **Source:** `packages/types/src/capabilities/navigation.cap.ts:359`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `INavigationProvider`
@@ -3500,7 +3500,7 @@
 
 ### `network-access` → `networkAccess.*`
 
-- **Source:** `packages/types/src/capabilities/network-access.cap.ts:62`
+- **Source:** `packages/types/src/capabilities/network-access.cap.ts:63`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `ingress`
 - **Archetypes:** —
 - **Provider interface:** `INetworkAccessProvider`
@@ -3515,7 +3515,7 @@
 
 ### `network-link` → `networkLink.*`
 
-- **Source:** `packages/types/src/capabilities/network-link.cap.ts:78`
+- **Source:** `packages/types/src/capabilities/network-link.cap.ts:79`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, light, lock, siren`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `INetworkLinkProvider`
@@ -3528,7 +3528,7 @@
 
 ### `network-quality` → `networkQuality.*`
 
-- **Source:** `packages/types/src/capabilities/network-quality.cap.ts:46`
+- **Source:** `packages/types/src/capabilities/network-quality.cap.ts:47`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `INetworkQualityProvider`
@@ -3541,7 +3541,7 @@
 
 ### `node-certificates` → `nodeCertificates.*`
 
-- **Source:** `packages/types/src/capabilities/node-certificates.cap.ts:44`
+- **Source:** `packages/types/src/capabilities/node-certificates.cap.ts:45`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `INodeCertificatesProvider`
@@ -3559,7 +3559,7 @@
 
 ### `node-removal-hook` → `nodeRemovalHook.*`
 
-- **Source:** `packages/types/src/capabilities/node-removal-hook.cap.ts:55`
+- **Source:** `packages/types/src/capabilities/node-removal-hook.cap.ts:56`
 - **Meta:** scope: `system` · mode: `collection` · mount: `skip`
 - **Archetypes:** internal
 - **Provider interface:** `INodeRemovalHookProvider`
@@ -3570,7 +3570,7 @@
 
 ### `nodes` → `nodes.*`
 
-- **Source:** `packages/types/src/capabilities/nodes.cap.ts:219`
+- **Source:** `packages/types/src/capabilities/nodes.cap.ts:220`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided` · nodeIdMode: `data`
 - **Archetypes:** —
 - **Provider interface:** `INodesProvider`
@@ -3609,7 +3609,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3314`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3351`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`
@@ -3646,7 +3646,7 @@
 
 ### `notifier` → `notifier.*`
 
-- **Source:** `packages/types/src/capabilities/notifier.cap.ts:108`
+- **Source:** `packages/types/src/capabilities/notifier.cap.ts:109`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `notifier`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `INotifierProvider`
@@ -3661,7 +3661,7 @@
 
 ### `numeric-sensor` → `numericSensor.*`
 
-- **Source:** `packages/types/src/capabilities/numeric-sensor.cap.ts:30`
+- **Source:** `packages/types/src/capabilities/numeric-sensor.cap.ts:31`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `INumericSensorProvider`
@@ -3673,7 +3673,7 @@
 
 ### `oauth-integration` → `oauthIntegration.*`
 
-- **Source:** `packages/types/src/capabilities/oauth-integration.cap.ts:145`
+- **Source:** `packages/types/src/capabilities/oauth-integration.cap.ts:146`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IOauthIntegrationProvider`
@@ -3684,7 +3684,7 @@
 
 ### `osd` → `osd.*`
 
-- **Source:** `packages/types/src/capabilities/osd.cap.ts:67`
+- **Source:** `packages/types/src/capabilities/osd.cap.ts:68`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(command-driven) · settings(1 binding(s))
 - **Provider interface:** `IOsdProvider`
@@ -3697,7 +3697,7 @@
 
 ### `osd-manager` → `osdManager.*`
 
-- **Source:** `packages/types/src/capabilities/osd-manager.cap.ts:145`
+- **Source:** `packages/types/src/capabilities/osd-manager.cap.ts:146`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IOsdManagerProvider`
@@ -3719,7 +3719,7 @@
 
 ### `pet-feeder` → `petFeeder.*`
 
-- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:137`
+- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:138`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-feeder`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IPetFeederProvider`
@@ -3730,10 +3730,10 @@
 | getStatus _(auto)_ | `petFeeder.getStatus` | query | protected | `{ deviceId: number }` | `PetFeederStatusSchema` |
 | feed | `petFeeder.feed` | mutation | protected | `{ deviceId: number; grams?: number; hopper1?: number; hopper2?: number }` | `void` |
 | cancelFeed | `petFeeder.cancelFeed` | mutation | protected | `{ deviceId: number }` | `void` |
-| resetDesiccant | `petFeeder.resetDesiccant` | mutation | protected | `{ deviceId: number }` | `void` |
-| markFoodReplenished | `petFeeder.markFoodReplenished` | mutation | protected | `{ deviceId: number }` | `void` |
 | callPet | `petFeeder.callPet` | mutation | protected | `{ deviceId: number }` | `void` |
 | playSound | `petFeeder.playSound` | mutation | protected | `{ deviceId: number; soundId: number }` | `void` |
+| resetDesiccant | `petFeeder.resetDesiccant` | mutation | protected | `{ deviceId: number }` | `void` |
+| markFoodReplenished | `petFeeder.markFoodReplenished` | mutation | protected | `{ deviceId: number }` | `void` |
 | setChildLock | `petFeeder.setChildLock` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
 | setIndicatorLight | `petFeeder.setIndicatorLight` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
 | setFeedSound | `petFeeder.setFeedSound` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
@@ -3741,7 +3741,7 @@
 
 ### `pet-fountain` → `petFountain.*`
 
-- **Source:** `packages/types/src/capabilities/pet-fountain.cap.ts:77`
+- **Source:** `packages/types/src/capabilities/pet-fountain.cap.ts:78`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-fountain`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPetFountainProvider`
@@ -3754,7 +3754,7 @@
 
 ### `pipeline-analytics` → `pipelineAnalytics.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2713`
+- **Source:** `packages/types/src/capabilities/pipeline-analytics.cap.ts:2735`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** exposesDeviceSettings · wrapper(defaultActive)
 - **Provider interface:** `IPipelineAnalyticsProvider`
@@ -3854,7 +3854,7 @@
 
 ### `pipeline-executor` → `pipelineExecutor.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-executor.cap.ts:432`
+- **Source:** `packages/types/src/capabilities/pipeline-executor.cap.ts:433`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IPipelineExecutorProvider`
@@ -3894,7 +3894,7 @@
 
 ### `pipeline-orchestrator` → `pipelineOrchestrator.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:725`
+- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:726`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `IPipelineOrchestratorProvider`
@@ -3968,7 +3968,7 @@
 
 ### `pipeline-runner` → `pipelineRunner.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-runner.cap.ts:1188`
+- **Source:** `packages/types/src/capabilities/pipeline-runner.cap.ts:1219`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IPipelineRunnerProvider`
@@ -4023,7 +4023,7 @@
 
 ### `platform-probe` → `platformProbe.*`
 
-- **Source:** `packages/types/src/capabilities/platform-probe.cap.ts:208`
+- **Source:** `packages/types/src/capabilities/platform-probe.cap.ts:209`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IPlatformProbeProvider`
@@ -4038,7 +4038,7 @@
 
 ### `power-meter` → `powerMeter.*`
 
-- **Source:** `packages/types/src/capabilities/power-meter.cap.ts:115`
+- **Source:** `packages/types/src/capabilities/power-meter.cap.ts:116`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor, switch, light, fan, climate, humidifier, water-heater, media-player, washer, dryer, dishwasher, vacuum, lawn-mower, pet-feeder`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `IPowerMeterProvider`
@@ -4050,7 +4050,7 @@
 
 ### `power-source` → `powerSource.*`
 
-- **Source:** `packages/types/src/capabilities/power-source.cap.ts:139`
+- **Source:** `packages/types/src/capabilities/power-source.cap.ts:140`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `gateway, camera, sensor, media-player, vacuum, generic, washer, dryer, dishwasher, pet-fountain, fan, humidifier, climate, water-heater`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IPowerSourceProvider`
@@ -4065,7 +4065,7 @@
 
 ### `presence` → `presence.*`
 
-- **Source:** `packages/types/src/capabilities/presence.cap.ts:47`
+- **Source:** `packages/types/src/capabilities/presence.cap.ts:48`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `presence`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPresenceProvider`
@@ -4077,7 +4077,7 @@
 
 ### `pressure-sensor` → `pressureSensor.*`
 
-- **Source:** `packages/types/src/capabilities/pressure-sensor.cap.ts:26`
+- **Source:** `packages/types/src/capabilities/pressure-sensor.cap.ts:27`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPressureSensorProvider`
@@ -4089,7 +4089,7 @@
 
 ### `privacy-mask` → `privacyMask.*`
 
-- **Source:** `packages/types/src/capabilities/privacy-mask.cap.ts:130`
+- **Source:** `packages/types/src/capabilities/privacy-mask.cap.ts:131`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(widget)
 - **Provider interface:** `IPrivacyMaskProvider`
@@ -4104,7 +4104,7 @@
 
 ### `ptz` → `ptz.*`
 
-- **Source:** `packages/types/src/capabilities/ptz.cap.ts:195`
+- **Source:** `packages/types/src/capabilities/ptz.cap.ts:196`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(command-driven) · deviceConfig(widget)
 - **Provider interface:** `IPtzProvider`
@@ -4114,13 +4114,13 @@
 | getStatus _(auto)_ | `ptz.getStatus` | query | protected | `{ deviceId: number }` | `PtzStatusSchema` |
 | move | `ptz.move` | mutation | protected | `{ pan?: number; tilt?: number; zoom?: number; speed?: number; deviceId: number }` | `void` |
 | continuousMove | `ptz.continuousMove` | mutation | protected | `{ pan?: number; tilt?: number; zoom?: number; speed?: number; deviceId: number }` | `void` |
-| stop | `ptz.stop` | mutation | protected | `{ deviceId: number }` | `void` |
+| goHome | `ptz.goHome` | mutation | protected | `{ deviceId: number }` | `void` |
 | getPresets | `ptz.getPresets` | query | protected | `{ deviceId: number }` | `PtzPresetSchema[]` |
 | goToPreset | `ptz.goToPreset` | mutation | protected | `{ deviceId: number; presetId: string }` | `void` |
 | savePreset | `ptz.savePreset` | mutation | admin | `{ deviceId: number; presetId: string; name: string }` | `void` |
 | deletePreset | `ptz.deletePreset` | mutation | admin | `{ deviceId: number; presetId: string }` | `void` |
 | getOptions | `ptz.getOptions` | query | protected | `{ deviceId: number }` | `PtzOptionsSchema` |
-| goHome | `ptz.goHome` | mutation | protected | `{ deviceId: number }` | `void` |
+| stop | `ptz.stop` | mutation | protected | `{ deviceId: number }` | `void` |
 | getHomePreset | `ptz.getHomePreset` | query | protected | `{ deviceId: number }` | `PtzHomePresetSchema` |
 | setHomePreset | `ptz.setHomePreset` | mutation | admin | `{ deviceId: number; presetId: string \| null }` | `void` |
 | captureHomeHere | `ptz.captureHomeHere` | mutation | admin | `{ deviceId: number }` | `void` |
@@ -4131,7 +4131,7 @@
 
 ### `ptz-autotrack` → `ptzAutotrack.*`
 
-- **Source:** `packages/types/src/capabilities/ptz-autotrack.cap.ts:109`
+- **Source:** `packages/types/src/capabilities/ptz-autotrack.cap.ts:110`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(command-driven) · runtimeState · deviceConfig(widget) · wrapper
 - **Provider interface:** `IPtzAutotrackProvider`
@@ -4147,7 +4147,7 @@
 
 ### `pump-cycle` → `pumpCycle.*`
 
-- **Source:** `packages/types/src/capabilities/pump-cycle.cap.ts:36`
+- **Source:** `packages/types/src/capabilities/pump-cycle.cap.ts:37`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-fountain`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IPumpCycleProvider`
@@ -4162,7 +4162,7 @@
 
 ### `reboot` → `reboot.*`
 
-- **Source:** `packages/types/src/capabilities/reboot.cap.ts:19`
+- **Source:** `packages/types/src/capabilities/reboot.cap.ts:20`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, switch, gateway`
 - **Archetypes:** —
 - **Provider interface:** `IRebootProvider`
@@ -4173,7 +4173,7 @@
 
 ### `record-entries` → `recordEntries.*`
 
-- **Source:** `packages/types/src/capabilities/record-entries.cap.ts:46`
+- **Source:** `packages/types/src/capabilities/record-entries.cap.ts:47`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IRecordEntriesProvider`
@@ -4187,7 +4187,7 @@
 
 ### `recording` → `recording.*`
 
-- **Source:** `packages/types/src/capabilities/recording.cap.ts:276`
+- **Source:** `packages/types/src/capabilities/recording.cap.ts:277`
 - **Meta:** scope: `device` · mode: `collection` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** wrapper(defaultActive)
 - **Provider interface:** `IRecordingProvider`
@@ -4202,7 +4202,7 @@
 
 ### `recording-archive` → `recordingArchive.*`
 
-- **Source:** `packages/types/src/capabilities/recording-archive.cap.ts:449`
+- **Source:** `packages/types/src/capabilities/recording-archive.cap.ts:452`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** status(command-driven) · exposesDeviceSettings
 - **Provider interface:** `IRecordingArchiveProvider`
@@ -4246,7 +4246,7 @@
 
 ### `recording-export` → `recordingExport.*`
 
-- **Source:** `packages/types/src/capabilities/recording-export.cap.ts:524`
+- **Source:** `packages/types/src/capabilities/recording-export.cap.ts:526`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IRecordingExportProvider`
@@ -4263,7 +4263,7 @@
 
 ### `recording-onboard` → `recordingOnboard.*`
 
-- **Source:** `packages/types/src/capabilities/recording-onboard.cap.ts:351`
+- **Source:** `packages/types/src/capabilities/recording-onboard.cap.ts:359`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IRecordingOnboardProvider`
@@ -4277,7 +4277,7 @@
 
 ### `recording-signal` → `recordingSignal.*`
 
-- **Source:** `packages/types/src/capabilities/recording-signal.cap.ts:52`
+- **Source:** `packages/types/src/capabilities/recording-signal.cap.ts:53`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IRecordingSignalProvider`
@@ -4289,7 +4289,7 @@
 
 ### `records` → `records.*`
 
-- **Source:** `packages/types/src/capabilities/records.cap.ts:150`
+- **Source:** `packages/types/src/capabilities/records.cap.ts:157`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IRecordsProvider`
@@ -4316,7 +4316,7 @@
 
 ### `remote` → `remote.*`
 
-- **Source:** `packages/types/src/capabilities/remote.cap.ts:146`
+- **Source:** `packages/types/src/capabilities/remote.cap.ts:149`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IRemoteProvider`
@@ -4343,7 +4343,7 @@
 
 ### `running-state` → `runningState.*`
 
-- **Source:** `packages/types/src/capabilities/running-state.cap.ts:112`
+- **Source:** `packages/types/src/capabilities/running-state.cap.ts:114`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, hub, light, siren, switch, sensor, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, container, image, pet-feeder, pet-fountain, dishwasher, washer, dryer, gateway, heat-pump`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IRunningStateProvider`
@@ -4356,7 +4356,7 @@
 
 ### `scene-monitor` → `sceneMonitor.*`
 
-- **Source:** `packages/types/src/capabilities/scene-monitor.cap.ts:299`
+- **Source:** `packages/types/src/capabilities/scene-monitor.cap.ts:301`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** status(push) · runtimeState · wrapper(defaultActive)
 - **Provider interface:** `ISceneMonitorProvider`
@@ -4397,7 +4397,7 @@
 
 ### `script-runner` → `scriptRunner.*`
 
-- **Source:** `packages/types/src/capabilities/script-runner.cap.ts:32`
+- **Source:** `packages/types/src/capabilities/script-runner.cap.ts:33`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `script`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IScriptRunnerProvider`
@@ -4411,7 +4411,7 @@
 
 ### `server-management` → `serverManagement.*`
 
-- **Source:** `packages/types/src/capabilities/server-management.cap.ts:478`
+- **Source:** `packages/types/src/capabilities/server-management.cap.ts:479`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IServerManagementProvider`
@@ -4429,7 +4429,7 @@
 
 ### `settings-store` → `settingsStore.*`
 
-- **Source:** `packages/types/src/capabilities/settings-store.cap.ts:239`
+- **Source:** `packages/types/src/capabilities/settings-store.cap.ts:240`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ISettingsStoreProvider`
@@ -4456,7 +4456,7 @@
 
 ### `smoke` → `smoke.*`
 
-- **Source:** `packages/types/src/capabilities/smoke.cap.ts:22`
+- **Source:** `packages/types/src/capabilities/smoke.cap.ts:23`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ISmokeProvider`
@@ -4468,7 +4468,7 @@
 
 ### `smtp-provider` → `smtpProvider.*`
 
-- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:70`
+- **Source:** `packages/types/src/capabilities/smtp-provider.cap.ts:71`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection` · providerKind: `email`
 - **Archetypes:** internal
 - **Provider interface:** `ISmtpProvider`
@@ -4480,7 +4480,7 @@
 
 ### `snapshot` → `snapshot.*`
 
-- **Source:** `packages/types/src/capabilities/snapshot.cap.ts:59`
+- **Source:** `packages/types/src/capabilities/snapshot.cap.ts:60`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · exposesDeviceSettings · wrapper(defaultActive)
 
@@ -4498,7 +4498,7 @@
 
 ### `sso-bridge` → `ssoBridge.*`
 
-- **Source:** `packages/types/src/capabilities/sso-bridge.cap.ts:104`
+- **Source:** `packages/types/src/capabilities/sso-bridge.cap.ts:105`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `ISsoBridgeProvider`
@@ -4510,7 +4510,7 @@
 
 ### `storage` → `storage.*`
 
-- **Source:** `packages/types/src/capabilities/storage.cap.ts:29`
+- **Source:** `packages/types/src/capabilities/storage.cap.ts:30`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IStorageCapProvider`
@@ -4537,7 +4537,7 @@
 
 ### `storage-admin` → `storageAdmin.*`
 
-- **Source:** `packages/types/src/capabilities/storage-admin.cap.ts:102`
+- **Source:** `packages/types/src/capabilities/storage-admin.cap.ts:106`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IStorageAdminProvider`
@@ -4554,7 +4554,7 @@
 
 ### `storage-evictable` → `storageEvictable.*`
 
-- **Source:** `packages/types/src/capabilities/storage-evictable.cap.ts:33`
+- **Source:** `packages/types/src/capabilities/storage-evictable.cap.ts:34`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IStorageEvictableProvider`
@@ -4566,7 +4566,7 @@
 
 ### `storage-migration` → `storageMigration.*`
 
-- **Source:** `packages/types/src/capabilities/storage-migration.cap.ts:20`
+- **Source:** `packages/types/src/capabilities/storage-migration.cap.ts:21`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IStorageMigrationProvider`
@@ -4588,7 +4588,7 @@
 
 ### `storage-occupancy` → `storageOccupancy.*`
 
-- **Source:** `packages/types/src/capabilities/storage-occupancy.cap.ts:51`
+- **Source:** `packages/types/src/capabilities/storage-occupancy.cap.ts:52`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IStorageOccupancyProvider`
@@ -4599,7 +4599,7 @@
 
 ### `storage-provider` → `storageProvider.*`
 
-- **Source:** `packages/types/src/capabilities/storage-provider.cap.ts:121`
+- **Source:** `packages/types/src/capabilities/storage-provider.cap.ts:122`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 
@@ -4624,7 +4624,7 @@
 
 ### `stream-broker` → `streamBroker.*`
 
-- **Source:** `packages/types/src/capabilities/stream-broker.cap.ts:467`
+- **Source:** `packages/types/src/capabilities/stream-broker.cap.ts:471`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `IStreamBrokerProvider`
@@ -4673,7 +4673,7 @@
 
 ### `stream-catalog` → `streamCatalog.*`
 
-- **Source:** `packages/types/src/capabilities/stream-catalog.cap.ts:94`
+- **Source:** `packages/types/src/capabilities/stream-catalog.cap.ts:95`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IStreamCatalogProvider`
@@ -4685,7 +4685,7 @@
 
 ### `stream-params` → `streamParams.*`
 
-- **Source:** `packages/types/src/capabilities/stream-params.cap.ts:93`
+- **Source:** `packages/types/src/capabilities/stream-params.cap.ts:94`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(poll) · runtimeState · deviceConfig(derived-form)
 - **Provider interface:** `IStreamParamsProvider`
@@ -4700,7 +4700,7 @@
 
 ### `stream-signals` → `streamSignals.*`
 
-- **Source:** `packages/types/src/capabilities/stream-signals.cap.ts:61`
+- **Source:** `packages/types/src/capabilities/stream-signals.cap.ts:62`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, hub, light, siren, switch, sensor, climate, button, event-emitter, update, generic, notifier, script, automation, lock, cover, valve, humidifier, water-heater, fan, media-player, alarm-panel, control, presence, weather, vacuum, lawn-mower, container, image, pet-feeder, pet-fountain, dishwasher, washer, dryer, gateway, heat-pump`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IStreamSignalsProvider`
@@ -4712,7 +4712,7 @@
 
 ### `switch` → `switch.*`
 
-- **Source:** `packages/types/src/capabilities/switch.cap.ts:24`
+- **Source:** `packages/types/src/capabilities/switch.cap.ts:25`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `switch, siren, light, fan`
 - **Archetypes:** status(command-driven) · runtimeState · settings(1 binding(s))
 - **Provider interface:** `ISwitchProvider`
@@ -4726,7 +4726,7 @@
 
 ### `system` → `system.*`
 
-- **Source:** `packages/types/src/capabilities/system.cap.ts:608`
+- **Source:** `packages/types/src/capabilities/system.cap.ts:609`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `ISystemProvider`
@@ -4752,7 +4752,7 @@
 
 ### `tamper` → `tamper.*`
 
-- **Source:** `packages/types/src/capabilities/tamper.cap.ts:19`
+- **Source:** `packages/types/src/capabilities/tamper.cap.ts:20`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ITamperProvider`
@@ -4764,7 +4764,7 @@
 
 ### `temperature-sensor` → `temperatureSensor.*`
 
-- **Source:** `packages/types/src/capabilities/temperature-sensor.cap.ts:30`
+- **Source:** `packages/types/src/capabilities/temperature-sensor.cap.ts:31`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor, climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ITemperatureSensorProvider`
@@ -4776,7 +4776,7 @@
 
 ### `template` → `template.*`
 
-- **Source:** `packages/types/src/capabilities/template.cap.ts:53`
+- **Source:** `packages/types/src/capabilities/template.cap.ts:56`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `ITemplateProvider`
@@ -4791,7 +4791,7 @@
 
 ### `terminal-session` → `terminalSession.*`
 
-- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:108`
+- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:113`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ITerminalSessionProvider`
@@ -4810,7 +4810,7 @@
 
 ### `timed-run` → `timedRun.*`
 
-- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:181`
+- **Source:** `packages/types/src/capabilities/timed-run.cap.ts:185`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `device-scoped` · deviceTypes: `switch, pet-fountain`
 - **Archetypes:** status(push) · runtimeState · deviceConfig(derived-form) · wrapper(defaultActive)
 - **Provider interface:** `ITimedRunProvider`
@@ -4826,7 +4826,7 @@
 
 ### `toast` → `toast.*`
 
-- **Source:** `packages/types/src/capabilities/toast.cap.ts:34`
+- **Source:** `packages/types/src/capabilities/toast.cap.ts:35`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IToastProvider`
@@ -4837,7 +4837,7 @@
 
 ### `training` → `training.*`
 
-- **Source:** `packages/types/src/capabilities/training.cap.ts:270`
+- **Source:** `packages/types/src/capabilities/training.cap.ts:275`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `hub-only`
 - **Archetypes:** —
 
@@ -4859,7 +4859,7 @@
 
 ### `training-provider` → `trainingProvider.*`
 
-- **Source:** `packages/types/src/capabilities/training-provider.cap.ts:182`
+- **Source:** `packages/types/src/capabilities/training-provider.cap.ts:186`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `ITrainingCloudProvider`
@@ -4882,7 +4882,7 @@
 
 ### `turn-provider` → `turnProvider.*`
 
-- **Source:** `packages/types/src/capabilities/turn-provider.cap.ts:27`
+- **Source:** `packages/types/src/capabilities/turn-provider.cap.ts:28`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** —
 - **Provider interface:** `ITurnProvider`
@@ -4893,7 +4893,7 @@
 
 ### `update` → `update.*`
 
-- **Source:** `packages/types/src/capabilities/update.cap.ts:29`
+- **Source:** `packages/types/src/capabilities/update.cap.ts:30`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `update`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IUpdateProvider`
@@ -4906,7 +4906,7 @@
 
 ### `user-management` → `userManagement.*`
 
-- **Source:** `packages/types/src/capabilities/user-management.cap.ts:115`
+- **Source:** `packages/types/src/capabilities/user-management.cap.ts:116`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IUserManagementProvider`
@@ -4939,7 +4939,7 @@
 
 ### `user-passkeys` → `userPasskeys.*`
 
-- **Source:** `packages/types/src/capabilities/user-passkeys.cap.ts:68`
+- **Source:** `packages/types/src/capabilities/user-passkeys.cap.ts:69`
 - **Meta:** scope: `system` · mode: `collection` · mount: `collection`
 - **Archetypes:** internal
 - **Provider interface:** `IUserPasskeysProvider`
@@ -4959,7 +4959,7 @@
 
 ### `vacuum-control` → `vacuumControl.*`
 
-- **Source:** `packages/types/src/capabilities/vacuum-control.cap.ts:61`
+- **Source:** `packages/types/src/capabilities/vacuum-control.cap.ts:62`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `vacuum`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IVacuumControlProvider`
@@ -4977,7 +4977,7 @@
 
 ### `valve` → `valve.*`
 
-- **Source:** `packages/types/src/capabilities/valve.cap.ts:44`
+- **Source:** `packages/types/src/capabilities/valve.cap.ts:45`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `valve`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IValveProvider`
@@ -4993,7 +4993,7 @@
 
 ### `vector-store` → `vectorStore.*`
 
-- **Source:** `packages/types/src/capabilities/vector-store.cap.ts:315`
+- **Source:** `packages/types/src/capabilities/vector-store.cap.ts:316`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IVectorStoreProvider`
@@ -5012,7 +5012,7 @@
 
 ### `vibration` → `vibration.*`
 
-- **Source:** `packages/types/src/capabilities/vibration.cap.ts:17`
+- **Source:** `packages/types/src/capabilities/vibration.cap.ts:18`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `sensor`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IVibrationProvider`
@@ -5024,7 +5024,7 @@
 
 ### `videoclips` → `videoclips.*`
 
-- **Source:** `packages/types/src/capabilities/videoclips.cap.ts:768`
+- **Source:** `packages/types/src/capabilities/videoclips.cap.ts:771`
 - **Meta:** scope: `device` · mode: `collection` · mount: `device-scoped` · deviceTypes: `camera`
 - **Archetypes:** deviceConfig(widget) · wrapper(defaultActive)
 - **Provider interface:** `IVideoclipsProvider`
@@ -5041,7 +5041,7 @@
 
 ### `viewer-ui` → `viewerUi.*`
 
-- **Source:** `packages/types/src/capabilities/viewer-ui.cap.ts:14`
+- **Source:** `packages/types/src/capabilities/viewer-ui.cap.ts:15`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** internal
 - **Provider interface:** `IViewerUiProvider`
@@ -5053,7 +5053,7 @@
 
 ### `water-heater` → `waterHeater.*`
 
-- **Source:** `packages/types/src/capabilities/water-heater.cap.ts:50`
+- **Source:** `packages/types/src/capabilities/water-heater.cap.ts:51`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `water-heater`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IWaterHeaterProvider`
@@ -5062,13 +5062,13 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `waterHeater.getStatus` | query | protected | `{ deviceId: number }` | `WaterHeaterStatusSchema` |
-| setTargetTemp | `waterHeater.setTargetTemp` | mutation | protected | `{ deviceId: number; temp: number }` | `void` |
 | setOperationMode | `waterHeater.setOperationMode` | mutation | protected | `{ deviceId: number; mode: string }` | `void` |
 | setAway | `waterHeater.setAway` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
+| setTargetTemp | `waterHeater.setTargetTemp` | mutation | protected | `{ deviceId: number; temp: number }` | `void` |
 
 ### `weather` → `weather.*`
 
-- **Source:** `packages/types/src/capabilities/weather.cap.ts:47`
+- **Source:** `packages/types/src/capabilities/weather.cap.ts:48`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `weather`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IWeatherProvider`
@@ -5080,7 +5080,7 @@
 
 ### `webrtc-session` → `webrtcSession.*`
 
-- **Source:** `packages/types/src/capabilities/webrtc-session.cap.ts:275`
+- **Source:** `packages/types/src/capabilities/webrtc-session.cap.ts:276`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `server-provided` · preferredProvider: `stream-broker` · deviceTypes: `camera`
 - **Archetypes:** wrapper(defaultActive)
 - **Provider interface:** `IWebrtcSessionProvider`
@@ -5101,7 +5101,7 @@
 
 ### `zone-analytics` → `zoneAnalytics.*`
 
-- **Source:** `packages/types/src/capabilities/zone-analytics.cap.ts:201`
+- **Source:** `packages/types/src/capabilities/zone-analytics.cap.ts:203`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `camera`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IZoneAnalyticsProvider`
@@ -5117,7 +5117,7 @@
 
 ### `zone-rules` → `zoneRules.*`
 
-- **Source:** `packages/types/src/capabilities/zone-rules.cap.ts:35`
+- **Source:** `packages/types/src/capabilities/zone-rules.cap.ts:36`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `camera`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IZoneRulesProvider`
@@ -5130,7 +5130,7 @@
 
 ### `zones` → `zones.*`
 
-- **Source:** `packages/types/src/capabilities/zones.cap.ts:65`
+- **Source:** `packages/types/src/capabilities/zones.cap.ts:66`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `camera`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IZonesProvider`

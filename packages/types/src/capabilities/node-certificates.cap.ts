@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `node-certificates` - what a node holds and the two renewals the hub drives
@@ -133,6 +134,7 @@ export const nodeCertificatesCapability = {
     ),
   },
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type INodeCertificatesProvider = InferProvider<typeof nodeCertificatesCapability>

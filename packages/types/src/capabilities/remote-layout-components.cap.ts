@@ -22,6 +22,9 @@ export const remoteLayoutComponentsCapability = {
       auth: 'protected',
     }),
   },
+  vocabulary: {
+    notOperatorFacing: 'the palette of the remote template editor — read-only data, never actuated',
+  },
 } as const satisfies CapabilityDefinition
 
 export type IRemoteLayoutComponentsProvider = InferProvider<typeof remoteLayoutComponentsCapability>

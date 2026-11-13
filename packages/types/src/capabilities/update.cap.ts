@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Firmware/software update entity. Installed on a `DeviceType.Update` device.
@@ -33,7 +34,21 @@ export const updateCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Update],
   methods: {
-    installUpdate: method(z.void(), z.void(), { kind: 'mutation', auth: 'admin' }),
+    installUpdate: method(z.void(), z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+      actions: [
+        {
+          id: 'update.install',
+          label: t('Install update', 'Installa l’aggiornamento'),
+          phrase: t(
+            'Install the available update on {device}',
+            'Installa l’aggiornamento disponibile su {device}',
+          ),
+          icon: 'download',
+        },
+      ],
+    }),
   },
   status: { schema: UpdateStatusSchema, kind: 'poll' },
   runtimeState: UpdateStatusSchema,
@@ -49,6 +64,31 @@ export const updateCapability = {
    * History (D850): none — text and state.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Firmware update', 'Aggiornamento firmware'),
+    order: 2170,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'updatable',
+        label: t('Update available', 'Aggiornamento disponibile'),
+        whenTrue: t(
+          'When an update is available for {device}',
+          'Quando è disponibile un aggiornamento per {device}',
+        ),
+        whenFalse: t('When {device} is up to date', 'Quando {device} è aggiornato'),
+        icon: 'download',
+      },
+      {
+        kind: 'boolean',
+        field: 'inProgress',
+        label: t('Updating', 'In aggiornamento'),
+        whenTrue: t('When {device} starts updating', 'Quando {device} inizia ad aggiornarsi'),
+        whenFalse: t('When {device} finishes updating', 'Quando {device} finisce di aggiornarsi'),
+        icon: 'loader',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IUpdateProvider = InferProvider<typeof updateCapability>

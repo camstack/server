@@ -102,6 +102,9 @@ export const alertsCapability = {
       kind: 'mutation',
     }),
   },
+  vocabulary: {
+    notOperatorFacing: 'the alert centre — read and acknowledged on its own page',
+  },
 } as const satisfies CapabilityDefinition
 
 export type IAlertsProvider = InferProvider<typeof alertsCapability>

@@ -6,6 +6,7 @@ import {
   NcScheduleSchema,
 } from './notification-rules.cap.js'
 import { OsdOverlayKindEnum } from './osd.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `osd-manager` — the ORCHESTRATOR over the device-scope `osd` cap.
@@ -277,6 +278,7 @@ export const osdManagerCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.PIPELINE },
 } as const satisfies CapabilityDefinition
 
 export type IOsdManagerProvider = InferProvider<typeof osdManagerCapability>

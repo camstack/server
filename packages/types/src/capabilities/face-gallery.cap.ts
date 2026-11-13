@@ -373,13 +373,19 @@ export const faceGalleryCapability = {
     /** Batch-assign many buffered faces to one identity. Returns per-face results. */
     assignFaces: method(
       z.object({ faceIds: z.array(z.string()).min(1), identityId: z.string() }),
-      z.object({ assigned: z.number().int(), failed: z.array(z.string()).readonly() }),
+      z.object({
+        assigned: z.number().int(),
+        failed: z.array(z.string()).readonly(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
     /** Batch-detach many faces (mass unassign). Returns per-face results. */
     unassignFaces: method(
       z.object({ faceIds: z.array(z.string()).min(1) }),
-      z.object({ unassigned: z.number().int(), failed: z.array(z.string()).readonly() }),
+      z.object({
+        unassigned: z.number().int(),
+        failed: z.array(z.string()).readonly(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
     /** Suggest clusters of look-alike UNASSIGNED faces (cosine on embeddings) for
@@ -425,6 +431,9 @@ export const faceGalleryCapability = {
         .optional(),
       z.array(FaceClusterSchema).readonly(),
     ),
+  },
+  vocabulary: {
+    notOperatorFacing: 'the face gallery — curated on its own page',
   },
 } as const satisfies CapabilityDefinition
 

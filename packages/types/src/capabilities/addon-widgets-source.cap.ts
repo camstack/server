@@ -5,6 +5,7 @@ import {
   type InferProvider,
   type UiContributionRemote,
 } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `addon-widgets-source` — collection cap exposing per-addon raw widget
@@ -156,8 +157,11 @@ export const addonWidgetsSourceCapability = {
      * PUBLIC `auth.listLoginMethods` contribution channel instead) —
      * neither is affected by this change.
      */
-    listWidgets: method(z.void(), z.array(WidgetMetadataSchema).readonly(), { auth: 'admin' }),
+    listWidgets: method(z.void(), z.array(WidgetMetadataSchema).readonly(), {
+      auth: 'admin',
+    }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition
 
 export type IAddonWidgetsSourceProvider = InferProvider<typeof addonWidgetsSourceCapability>

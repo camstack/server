@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Notification delivery cap. Models HA `notify.<service>` plus future
@@ -115,6 +116,41 @@ export const notifierCapability = {
     send: method(NotifierSendInputSchema, NotifierSendResultSchema, {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'notifier.send',
+          label: t('Send a notification', 'Invia una notifica'),
+          phrase: t('Send “{body}” through {device}', 'Invia «{body}» tramite {device}'),
+          icon: 'send',
+          openArgs: [
+            {
+              key: 'title',
+              label: t('Title', 'Titolo'),
+              offer: { kind: 'text' },
+              optional: true,
+            },
+            {
+              key: 'body',
+              label: t('Message', 'Messaggio'),
+              offer: { kind: 'text' },
+            },
+            {
+              key: 'priority',
+              label: t('Priority', 'Priorità'),
+              offer: {
+                kind: 'enum',
+                values: [
+                  { value: 'min', label: t('Minimal', 'Minima') },
+                  { value: 'low', label: t('Low', 'Bassa') },
+                  { value: 'normal', label: t('Normal', 'Normale') },
+                  { value: 'high', label: t('High', 'Alta') },
+                ],
+              },
+              optional: true,
+            },
+          ],
+        },
+      ],
     }),
     cancel: method(
       z.object({
@@ -139,6 +175,8 @@ export const notifierCapability = {
         error: z.string().nullable(),
         acceptedAt: z.number(),
       }),
+      notOperatorFacing:
+        'a delivery receipt of a send this system made — not a fact about the world',
     },
   },
   status: {
@@ -163,6 +201,7 @@ export const notifierCapability = {
    * History (D850): none — `queueDepth` is outbox operational state, not a device trend.
    */
   history: 'none',
+  vocabulary: { noun: t('Notifier', 'Notificatore'), order: 2110 },
 } as const satisfies CapabilityDefinition
 
 export type INotifierProvider = InferProvider<typeof notifierCapability>

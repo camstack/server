@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { RecordKindNameSchema } from '../records/record-kind.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { RecordBodySchema, RecordIdSchema } from './records.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * record-entries - the ONE admin surface for every list of user-created entries
@@ -73,6 +74,7 @@ export const recordEntriesCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IRecordEntriesProvider = InferProvider<typeof recordEntriesCapability>

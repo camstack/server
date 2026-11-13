@@ -11,6 +11,7 @@ import {
   CamStreamResolutionSchema,
 } from './schemas/streaming-shared.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * One publishable camera stream as its OWNING PROVIDER describes it — the same
@@ -125,6 +126,7 @@ export const streamCatalogCapability = {
   /** Clock field: written, but excluded from the compare that decides whether
    *  persisting is worth a SQLite commit — the descriptors are the value. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: { noun: t('Stream catalog', 'Catalogo dei flussi'), order: 3300 },
 } as const satisfies CapabilityDefinition
 
 export type IStreamCatalogProvider = InferNativeProvider<typeof streamCatalogCapability>

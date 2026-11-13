@@ -3,6 +3,7 @@ import { type CapabilityDefinition, type InferProvider } from './capability-defi
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Multi-metric electrical meter. One slice can carry any combination
@@ -151,17 +152,75 @@ export const powerMeterCapability = {
   history: {
     fields: {
       power: { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },
-      energy: { kind: 'counter', unit: 'kWh', deadband: 0.01, minIntervalMs: 60000 },
+      energy: {
+        kind: 'counter',
+        unit: 'kWh',
+        deadband: 0.01,
+        minIntervalMs: 60000,
+      },
       voltage: { kind: 'gauge', unit: 'V', deadband: 1, minIntervalMs: 30000 },
-      current: { kind: 'gauge', unit: 'A', deadband: 0.05, minIntervalMs: 30000 },
-      apparentPower: { kind: 'gauge', unit: 'VA', deadband: 1, minIntervalMs: 30000 },
-      powerFactor: { kind: 'gauge', unit: 'ratio', deadband: 0.01, minIntervalMs: 60000 },
+      current: {
+        kind: 'gauge',
+        unit: 'A',
+        deadband: 0.05,
+        minIntervalMs: 30000,
+      },
+      apparentPower: {
+        kind: 'gauge',
+        unit: 'VA',
+        deadband: 1,
+        minIntervalMs: 30000,
+      },
+      powerFactor: {
+        kind: 'gauge',
+        unit: 'ratio',
+        deadband: 0.01,
+        minIntervalMs: 60000,
+      },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
   customize: powerMeterCustomize,
+  vocabulary: {
+    noun: t('Power meter', 'Misuratore di energia'),
+    order: 5160,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'power',
+        quantity: t('the power draw', 'il consumo'),
+        label: t('Power', 'Potenza'),
+        unit: 'W',
+        icon: 'zap',
+      },
+      {
+        kind: 'numeric',
+        field: 'energy',
+        quantity: t('the energy used', 'l’energia consumata'),
+        label: t('Energy', 'Energia'),
+        unit: 'kWh',
+        icon: 'zap',
+      },
+      {
+        kind: 'numeric',
+        field: 'voltage',
+        quantity: t('the voltage', 'la tensione'),
+        label: t('Voltage', 'Tensione'),
+        unit: 'V',
+        icon: 'zap',
+      },
+      {
+        kind: 'numeric',
+        field: 'current',
+        quantity: t('the current', 'la corrente'),
+        label: t('Current', 'Corrente'),
+        unit: 'A',
+        icon: 'zap',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IPowerMeterProvider = InferProvider<typeof powerMeterCapability>

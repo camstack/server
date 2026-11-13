@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `smtp-provider` — pluggable email delivery surface.
@@ -81,6 +82,7 @@ export const smtpProviderCapability = {
     }),
     getStatus: method(RelayPinSchema, SmtpStatusSchema, { auth: 'admin' }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type ISmtpProvider = InferProvider<typeof smtpProviderCapability>

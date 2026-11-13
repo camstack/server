@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * The signals a device can emit to WAKE its own stream.
@@ -96,6 +97,7 @@ export const streamSignalsCapability = {
      */
     listSignals: method(z.void(), z.array(StreamSignalSchema).readonly()),
   },
+  vocabulary: { noun: t('Stream signals', 'Segnali dei flussi'), order: 3320 },
 } as const satisfies CapabilityDefinition
 
 export type IStreamSignalsProvider = InferProvider<typeof streamSignalsCapability>

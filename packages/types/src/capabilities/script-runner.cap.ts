@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Script-runner cap. Models HA `script.*` entities on
@@ -45,13 +46,32 @@ export const scriptRunnerCapability = {
         variables: z.record(z.string(), z.unknown()).optional(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'script.run',
+            label: t('Run script', 'Esegui lo script'),
+            phrase: t('Run {device}', 'Esegui {device}'),
+            icon: 'scroll-text',
+          },
+        ],
+      },
     ),
     /** Cancel a running script. Provider rejects when the script
      *  isn't currently running. */
     stop: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'script.stop',
+          label: t('Stop script', 'Ferma lo script'),
+          phrase: t('Stop {device}', 'Ferma {device}'),
+          icon: 'square',
+        },
+      ],
     }),
   },
   status: {
@@ -76,6 +96,20 @@ export const scriptRunnerCapability = {
    * History (D850): none — transient; run results belong in a ledger.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Script', 'Script'),
+    order: 2090,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'isRunning',
+        label: t('Running', 'In esecuzione'),
+        whenTrue: t('When {device} starts running', 'Quando {device} parte'),
+        whenFalse: t('When {device} finishes', 'Quando {device} termina'),
+        icon: 'scroll-text',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IScriptRunnerProvider = InferProvider<typeof scriptRunnerCapability>

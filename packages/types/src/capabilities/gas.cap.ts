@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Combustible-gas (LPG / methane / hydrogen) alarm sensor. Drives
@@ -46,6 +47,20 @@ export const gasCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Gas sensor', 'Sensore di gas'),
+    order: 5080,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: t('Detected', 'Rilevato'),
+        whenTrue: t('When {device} detects gas', 'Quando {device} rileva gas'),
+        whenFalse: t('When the gas clears on {device}', 'Quando il gas su {device} rientra'),
+        icon: 'flame',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IGasProvider = InferProvider<typeof gasCapability>

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `addon-pages` — system-scoped singleton aggregator cap. Public-facing
@@ -43,6 +44,7 @@ export const addonPagesCapability = {
   methods: {
     listPages: method(z.void(), z.array(AddonPageInfoSchema).readonly()),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition
 
 export type IAddonPagesAggregatorProvider = InferProvider<typeof addonPagesCapability>

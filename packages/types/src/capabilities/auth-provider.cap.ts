@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const AuthResultSchema = z.object({
   userId: z.string(),
@@ -35,6 +36,7 @@ export const authProviderCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type IAuthProvider = InferProvider<typeof authProviderCapability>

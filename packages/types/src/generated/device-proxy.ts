@@ -453,9 +453,9 @@ export function createDeviceProxy(
   }
 
   const alarmPanelInterface = {
-    arm: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'arm', 'mutation', input),
-    disarm: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'disarm', 'mutation', input),
     trigger: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'trigger', 'mutation', input),
+    disarm: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'disarm', 'mutation', input),
+    arm: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'arm', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'getStatus', 'query', input),
   }
 
@@ -533,11 +533,11 @@ export function createDeviceProxy(
 
   const climateControlInterface = {
     setMode: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setMode', 'mutation', input),
-    setFanMode: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setFanMode', 'mutation', input),
-    setPreset: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setPreset', 'mutation', input),
     setTarget: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setTarget', 'mutation', input),
     setTargetRange: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setTargetRange', 'mutation', input),
     setTargetHumidity: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setTargetHumidity', 'mutation', input),
+    setFanMode: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setFanMode', 'mutation', input),
+    setPreset: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setPreset', 'mutation', input),
     setSwingVertical: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setSwingVertical', 'mutation', input),
     setSwingHorizontal: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setSwingHorizontal', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('climate-control', 'climateControl', 'getStatus', 'query', input),
@@ -782,12 +782,12 @@ export function createDeviceProxy(
     stop: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'stop', 'mutation', input),
     next: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'next', 'mutation', input),
     previous: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'previous', 'mutation', input),
-    seek: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'seek', 'mutation', input),
     setVolume: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setVolume', 'mutation', input),
     setMute: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setMute', 'mutation', input),
     setShuffle: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setShuffle', 'mutation', input),
     setRepeat: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setRepeat', 'mutation', input),
     selectSource: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'selectSource', 'mutation', input),
+    seek: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'seek', 'mutation', input),
     playMedia: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'playMedia', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'getStatus', 'query', input),
   }
@@ -864,10 +864,10 @@ export function createDeviceProxy(
   const petFeederInterface = {
     feed: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'feed', 'mutation', input),
     cancelFeed: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'cancelFeed', 'mutation', input),
-    resetDesiccant: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'resetDesiccant', 'mutation', input),
-    markFoodReplenished: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'markFoodReplenished', 'mutation', input),
     callPet: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'callPet', 'mutation', input),
     playSound: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'playSound', 'mutation', input),
+    resetDesiccant: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'resetDesiccant', 'mutation', input),
+    markFoodReplenished: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'markFoodReplenished', 'mutation', input),
     setChildLock: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setChildLock', 'mutation', input),
     setIndicatorLight: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setIndicatorLight', 'mutation', input),
     setFeedSound: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setFeedSound', 'mutation', input),
@@ -1001,13 +1001,13 @@ export function createDeviceProxy(
   const ptzInterface = {
     move: (input?: unknown) => dispatch('ptz', 'ptz', 'move', 'mutation', input),
     continuousMove: (input?: unknown) => dispatch('ptz', 'ptz', 'continuousMove', 'mutation', input),
-    stop: (input?: unknown) => dispatch('ptz', 'ptz', 'stop', 'mutation', input),
+    goHome: (input?: unknown) => dispatch('ptz', 'ptz', 'goHome', 'mutation', input),
     getPresets: (input?: unknown) => dispatch('ptz', 'ptz', 'getPresets', 'query', input),
     goToPreset: (input?: unknown) => dispatch('ptz', 'ptz', 'goToPreset', 'mutation', input),
     savePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'savePreset', 'mutation', input),
     deletePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'deletePreset', 'mutation', input),
     getOptions: (input?: unknown) => dispatch('ptz', 'ptz', 'getOptions', 'query', input),
-    goHome: (input?: unknown) => dispatch('ptz', 'ptz', 'goHome', 'mutation', input),
+    stop: (input?: unknown) => dispatch('ptz', 'ptz', 'stop', 'mutation', input),
     getHomePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'getHomePreset', 'query', input),
     setHomePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'setHomePreset', 'mutation', input),
     captureHomeHere: (input?: unknown) => dispatch('ptz', 'ptz', 'captureHomeHere', 'mutation', input),
@@ -1167,9 +1167,9 @@ export function createDeviceProxy(
   }
 
   const waterHeaterInterface = {
-    setTargetTemp: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'setTargetTemp', 'mutation', input),
     setOperationMode: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'setOperationMode', 'mutation', input),
     setAway: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'setAway', 'mutation', input),
+    setTargetTemp: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'setTargetTemp', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'getStatus', 'query', input),
   }
 

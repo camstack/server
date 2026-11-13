@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { ZoneRuleSchema } from './schemas/zone-rule.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Stages a {@link ZoneRule} can apply to. Discriminator on the rules
@@ -91,6 +92,7 @@ export const zoneRulesCapability = {
    * History (D850): none — configuration arrays.
    */
   history: 'none',
+  vocabulary: { noun: t('Zone rules', 'Regole delle zone'), order: 3360 },
 } as const satisfies CapabilityDefinition
 
 export type IZoneRulesProvider = InferProvider<typeof zoneRulesCapability>

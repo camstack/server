@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * How a device reaches the network, and how well.
@@ -101,6 +102,7 @@ export const networkLinkCapability = {
         deviceId: z.number(),
         status: NetworkLinkStatusSchema,
       }),
+      notOperatorFacing: 'the signal / link-type state triggers each read one field of this change',
     },
   },
   status: {
@@ -135,6 +137,32 @@ export const networkLinkCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastUpdated'],
+  vocabulary: {
+    noun: t('Network link', 'Collegamento di rete'),
+    order: 5250,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'signal',
+        quantity: t('the signal strength', 'l’intensità del segnale'),
+        label: t('Signal', 'Segnale'),
+        unit: '%',
+        icon: 'wifi',
+      },
+      {
+        kind: 'enum',
+        field: 'type',
+        label: t('Link type', 'Tipo di collegamento'),
+        values: [
+          { value: 'wifi', label: t('Wi-Fi', 'Wi-Fi') },
+          { value: 'ethernet', label: t('Ethernet', 'Ethernet') },
+          { value: 'cellular', label: t('Cellular', 'Rete mobile') },
+          { value: 'unknown', label: t('Unknown', 'Sconosciuto') },
+        ],
+        icon: 'network',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type INetworkLinkProvider = InferProvider<typeof networkLinkCapability>

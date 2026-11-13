@@ -7,6 +7,7 @@ import {
 } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import type { AudioAnalysisSettings } from '../types/io.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * audio-analysis — device-scoped facade over the system `audio-analyzer`.
@@ -51,8 +52,13 @@ export const audioAnalysisCapability = {
         rms: z.number(),
         dbfs: z.number(),
       }),
+      {
+        notOperatorFacing:
+          'a sound-level sample at stream rate; loud-noise rules belong to the detection pipeline',
+      },
     ),
   },
+  vocabulary: { noun: t('Audio analysis', 'Analisi audio'), order: 3010 },
 } as const satisfies CapabilityDefinition
 
 export type IAudioAnalysisProvider = InferProvider<typeof audioAnalysisCapability>

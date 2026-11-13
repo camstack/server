@@ -1061,14 +1061,14 @@ export function createCapRouter_alarmPanel(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
-    arm: protectedProcedure
-      .input(alarmPanelCapability.methods.arm.input.loose())
-      .output(alarmPanelCapability.methods.arm.output)
+    trigger: protectedProcedure
+      .input(alarmPanelCapability.methods.trigger.input.loose())
+      .output(alarmPanelCapability.methods.trigger.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('alarm-panel', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.arm(methodInput as any)
+        return p.trigger(methodInput as any)
       }),
     disarm: protectedProcedure
       .input(alarmPanelCapability.methods.disarm.input.loose())
@@ -1079,14 +1079,14 @@ export function createCapRouter_alarmPanel(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.disarm(methodInput as any)
       }),
-    trigger: protectedProcedure
-      .input(alarmPanelCapability.methods.trigger.input.loose())
-      .output(alarmPanelCapability.methods.trigger.output)
+    arm: protectedProcedure
+      .input(alarmPanelCapability.methods.arm.input.loose())
+      .output(alarmPanelCapability.methods.arm.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('alarm-panel', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.trigger(methodInput as any)
+        return p.arm(methodInput as any)
       }),
   })
 }
@@ -2556,48 +2556,6 @@ export function createCapRouter_climateControl(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setMode(methodInput as any)
       }),
-    setFanMode: protectedProcedure
-      .input(climateControlCapability.methods.setFanMode.input.loose())
-      .output(climateControlCapability.methods.setFanMode.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
-        const fn = p.setFanMode
-        if (typeof fn !== 'function') {
-          throw new TRPCError({
-            code: 'NOT_IMPLEMENTED',
-            message: 'Capability "climate-control" provider does not implement "setFanMode"',
-          })
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return fn.call(p, methodInput as any)
-      }),
-    setPreset: protectedProcedure
-      .input(climateControlCapability.methods.setPreset.input.loose())
-      .output(climateControlCapability.methods.setPreset.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
-        const fn = p.setPreset
-        if (typeof fn !== 'function') {
-          throw new TRPCError({
-            code: 'NOT_IMPLEMENTED',
-            message: 'Capability "climate-control" provider does not implement "setPreset"',
-          })
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return fn.call(p, methodInput as any)
-      }),
     setTarget: protectedProcedure
       .input(climateControlCapability.methods.setTarget.input.loose())
       .output(climateControlCapability.methods.setTarget.output)
@@ -2649,6 +2607,48 @@ export function createCapRouter_climateControl(
           throw new TRPCError({
             code: 'NOT_IMPLEMENTED',
             message: 'Capability "climate-control" provider does not implement "setTargetHumidity"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    setFanMode: protectedProcedure
+      .input(climateControlCapability.methods.setFanMode.input.loose())
+      .output(climateControlCapability.methods.setFanMode.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'climate-control',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        const fn = p.setFanMode
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "climate-control" provider does not implement "setFanMode"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    setPreset: protectedProcedure
+      .input(climateControlCapability.methods.setPreset.input.loose())
+      .output(climateControlCapability.methods.setPreset.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'climate-control',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        const fn = p.setPreset
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "climate-control" provider does not implement "setPreset"',
           })
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -10247,22 +10247,6 @@ export function createCapRouter_mediaPlayer(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return fn.call(p, methodInput as any)
       }),
-    seek: protectedProcedure
-      .input(mediaPlayerCapability.methods.seek.input.loose())
-      .output(mediaPlayerCapability.methods.seek.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
-        const fn = p.seek
-        if (typeof fn !== 'function') {
-          throw new TRPCError({
-            code: 'NOT_IMPLEMENTED',
-            message: 'Capability "media-player" provider does not implement "seek"',
-          })
-        }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return fn.call(p, methodInput as any)
-      }),
     setVolume: protectedProcedure
       .input(mediaPlayerCapability.methods.setVolume.input.loose())
       .output(mediaPlayerCapability.methods.setVolume.output)
@@ -10338,6 +10322,22 @@ export function createCapRouter_mediaPlayer(
           throw new TRPCError({
             code: 'NOT_IMPLEMENTED',
             message: 'Capability "media-player" provider does not implement "selectSource"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    seek: protectedProcedure
+      .input(mediaPlayerCapability.methods.seek.input.loose())
+      .output(mediaPlayerCapability.methods.seek.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('media-player', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.seek
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "media-player" provider does not implement "seek"',
           })
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -12549,24 +12549,6 @@ export function createCapRouter_petFeeder(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelFeed(methodInput as any)
       }),
-    resetDesiccant: protectedProcedure
-      .input(petFeederCapability.methods.resetDesiccant.input.loose())
-      .output(petFeederCapability.methods.resetDesiccant.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('pet-feeder', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.resetDesiccant(methodInput as any)
-      }),
-    markFoodReplenished: protectedProcedure
-      .input(petFeederCapability.methods.markFoodReplenished.input.loose())
-      .output(petFeederCapability.methods.markFoodReplenished.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('pet-feeder', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.markFoodReplenished(methodInput as any)
-      }),
     callPet: protectedProcedure
       .input(petFeederCapability.methods.callPet.input.loose())
       .output(petFeederCapability.methods.callPet.output)
@@ -12584,6 +12566,24 @@ export function createCapRouter_petFeeder(
         const p = resolveProvider('pet-feeder', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.playSound(methodInput as any)
+      }),
+    resetDesiccant: protectedProcedure
+      .input(petFeederCapability.methods.resetDesiccant.input.loose())
+      .output(petFeederCapability.methods.resetDesiccant.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('pet-feeder', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.resetDesiccant(methodInput as any)
+      }),
+    markFoodReplenished: protectedProcedure
+      .input(petFeederCapability.methods.markFoodReplenished.input.loose())
+      .output(petFeederCapability.methods.markFoodReplenished.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('pet-feeder', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.markFoodReplenished(methodInput as any)
       }),
     setChildLock: protectedProcedure
       .input(petFeederCapability.methods.setChildLock.input.loose())
@@ -15607,14 +15607,14 @@ export function createCapRouter_ptz(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.continuousMove(methodInput as any)
       }),
-    stop: protectedProcedure
-      .input(ptzCapability.methods.stop.input.loose())
-      .output(ptzCapability.methods.stop.output)
+    goHome: protectedProcedure
+      .input(ptzCapability.methods.goHome.input.loose())
+      .output(ptzCapability.methods.goHome.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('ptz', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.stop(methodInput as any)
+        return p.goHome(methodInput as any)
       }),
     getPresets: protectedProcedure
       .input(ptzCapability.methods.getPresets.input.loose())
@@ -15661,14 +15661,14 @@ export function createCapRouter_ptz(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOptions(methodInput as any)
       }),
-    goHome: protectedProcedure
-      .input(ptzCapability.methods.goHome.input.loose())
-      .output(ptzCapability.methods.goHome.output)
+    stop: protectedProcedure
+      .input(ptzCapability.methods.stop.input.loose())
+      .output(ptzCapability.methods.stop.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('ptz', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.goHome(methodInput as any)
+        return p.stop(methodInput as any)
       }),
     getHomePreset: protectedProcedure
       .input(ptzCapability.methods.getHomePreset.input.loose())
@@ -21304,15 +21304,6 @@ export function createCapRouter_waterHeater(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
-    setTargetTemp: protectedProcedure
-      .input(waterHeaterCapability.methods.setTargetTemp.input.loose())
-      .output(waterHeaterCapability.methods.setTargetTemp.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider('water-heater', nodeId, () => getProvider(ctx), createRemoteProxy)
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.setTargetTemp(methodInput as any)
-      }),
     setOperationMode: protectedProcedure
       .input(waterHeaterCapability.methods.setOperationMode.input.loose())
       .output(waterHeaterCapability.methods.setOperationMode.output)
@@ -21330,6 +21321,15 @@ export function createCapRouter_waterHeater(
         const p = resolveProvider('water-heater', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAway(methodInput as any)
+      }),
+    setTargetTemp: protectedProcedure
+      .input(waterHeaterCapability.methods.setTargetTemp.input.loose())
+      .output(waterHeaterCapability.methods.setTargetTemp.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('water-heater', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setTargetTemp(methodInput as any)
       }),
   })
 }

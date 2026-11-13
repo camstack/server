@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Smoke alarm sensor — boolean "is smoke currently detected" with
@@ -50,6 +51,20 @@ export const smokeCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Smoke detector', 'Rilevatore di fumo'),
+    order: 5190,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: t('Detected', 'Rilevato'),
+        whenTrue: t('When {device} detects smoke', 'Quando {device} rileva fumo'),
+        whenFalse: t('When smoke clears on {device}', 'Quando il fumo su {device} si dirada'),
+        icon: 'alarm-smoke',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type ISmokeProvider = InferProvider<typeof smokeCapability>

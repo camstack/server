@@ -98,6 +98,9 @@ export const schedulersCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: {
+    notOperatorFacing: 'time schedulers — authored on their own page, not device actions',
+  },
 } as const satisfies CapabilityDefinition
 
 export type ISchedulersProvider = InferProvider<typeof schedulersCapability>

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { HwAccelBackend } from '../interfaces/addon.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * Operator-facing hwaccel selection — wins over `probedBestHwaccel`
@@ -17,7 +18,10 @@ export type HwAccelChoice = 'auto' | 'none' | HwAccelBackend
  * identical everywhere. Order: auto → off → common backends by
  * platform affinity (macOS, NVIDIA, Intel/AMD, Windows, Linux).
  */
-export const HWACCEL_OPTIONS: ReadonlyArray<{ value: HwAccelChoice; label: string }> = [
+export const HWACCEL_OPTIONS: ReadonlyArray<{
+  value: HwAccelChoice
+  label: string
+}> = [
   { value: 'auto', label: 'Auto (defer to probed best)' },
   { value: 'none', label: 'Off (software)' },
   { value: 'videotoolbox', label: 'VideoToolbox (macOS)' },
@@ -91,6 +95,7 @@ export const decoderCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.PIPELINE },
 } as const satisfies CapabilityDefinition
 
 export type IDecoderCapProvider = InferProvider<typeof decoderCapability>

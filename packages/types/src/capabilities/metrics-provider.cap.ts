@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 // ── Snapshot schemas ────────────────────────────────────────────────
 
@@ -461,6 +462,7 @@ export const metricsProviderCapability = {
     // keeps it gone. The heap-space breakdown it used to promise is on every
     // process's periodic `[mem]` line (`kernel/heap-spaces.ts`), free.
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition
 
 export type IMetricsProvider = InferProvider<typeof metricsProviderCapability>

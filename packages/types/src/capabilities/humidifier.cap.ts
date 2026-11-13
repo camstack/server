@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Humidifier / dehumidifier cap. Models HA `humidifier.*` entities —
@@ -58,7 +59,28 @@ export const humidifierCapability = {
         on: z.boolean(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'humidifier.on',
+            label: t('Humidifier on', 'Umidificatore acceso'),
+            phrase: t('Turn on {device}', 'Accendi {device}'),
+            icon: 'power',
+            effect: { field: 'on', value: true },
+            args: { on: true },
+          },
+          {
+            id: 'humidifier.off',
+            label: t('Humidifier off', 'Umidificatore spento'),
+            phrase: t('Turn off {device}', 'Spegni {device}'),
+            icon: 'power-off',
+            effect: { field: 'on', value: false },
+            args: { on: false },
+          },
+        ],
+      },
     ),
     setTargetHumidity: method(
       z.object({
@@ -66,7 +88,29 @@ export const humidifierCapability = {
         humidity: z.number().min(0).max(100),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'humidifier.target',
+            label: t('Set humidity', 'Imposta l’umidità'),
+            phrase: t(
+              'Set {device} to {humidity} humidity',
+              'Imposta {device} al {humidity} di umidità',
+            ),
+            icon: 'droplets',
+            effect: { field: 'targetHumidity', fromArg: 'humidity' },
+            openArgs: [
+              {
+                key: 'humidity',
+                label: t('Humidity', 'Umidità'),
+                offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setMode: method(
       z.object({
@@ -74,7 +118,30 @@ export const humidifierCapability = {
         mode: z.string().min(1),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'humidifier.mode',
+            label: t('Set mode', 'Imposta la modalità'),
+            phrase: t('Set {device} to {mode}', 'Imposta {device} su {mode}'),
+            icon: 'list',
+            effect: { field: 'mode', fromArg: 'mode' },
+            openArgs: [
+              {
+                key: 'mode',
+                label: t('Mode', 'Modalità'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availableModes',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -102,6 +169,28 @@ export const humidifierCapability = {
       currentHumidity: { kind: 'gauge', unit: '%', deadband: 0.5 },
       on: { kind: 'boolean' },
     },
+  },
+  vocabulary: {
+    noun: t('Humidifier', 'Umidificatore'),
+    order: 1090,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'on',
+        label: t('On', 'Acceso'),
+        whenTrue: t('When {device} turns on', 'Quando {device} si accende'),
+        whenFalse: t('When {device} turns off', 'Quando {device} si spegne'),
+        icon: 'power',
+      },
+      {
+        kind: 'numeric',
+        field: 'currentHumidity',
+        quantity: t('the humidity', 'l’umidità'),
+        label: t('Humidity', 'Umidità'),
+        unit: '%',
+        icon: 'droplets',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

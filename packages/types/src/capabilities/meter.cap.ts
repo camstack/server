@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * A monotonic total between resets (D944). Energy uses `power-meter.energy`
@@ -45,6 +46,19 @@ export const meterCapability = {
     },
   },
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Meter', 'Contatore'),
+    order: 5140,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'value',
+        quantity: t('the total', 'il totale'),
+        label: t('Total', 'Totale'),
+        icon: 'gauge',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IMeterProvider = InferProvider<typeof meterCapability>

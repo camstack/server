@@ -5,6 +5,7 @@ import {
   type CapabilityDefinition,
   type InferProvider,
 } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const LogLevelSchema = z.enum(['debug', 'info', 'warn', 'error'])
 
@@ -150,6 +151,7 @@ export const logDestinationCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type ILogDestinationProvider = InferProvider<typeof logDestinationCapability>

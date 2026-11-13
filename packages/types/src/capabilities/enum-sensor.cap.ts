@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Enum-state sensor — a string value picked from a finite option set.
@@ -60,6 +61,18 @@ export const enumSensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt', 'timestamp'],
+  vocabulary: {
+    noun: t('State sensor', 'Sensore di stato'),
+    order: 5060,
+    state: [
+      {
+        kind: 'value',
+        field: 'value',
+        label: t('State', 'Stato'),
+        icon: 'list',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IEnumSensorProvider = InferProvider<typeof enumSensorCapability>

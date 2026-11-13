@@ -115,7 +115,13 @@ const BackupEncryptionStatusSchema = z.object({
   active: z.object({ keyId: z.string(), publicKey: z.string(), createdAt: z.number() }).nullable(),
   /** Every key ever set up, newest first. */
   keys: z
-    .array(z.object({ keyId: z.string(), createdAt: z.number(), retiredAt: z.number().nullable() }))
+    .array(
+      z.object({
+        keyId: z.string(),
+        createdAt: z.number(),
+        retiredAt: z.number().nullable(),
+      }),
+    )
     .readonly(),
 })
 
@@ -372,7 +378,9 @@ export const backupCapability = {
      * phase + byte counters so a runaway build is visible in seconds,
      * not via `du`.
      */
-    listRuns: method(z.void(), z.array(BackupRunSchema).readonly(), { auth: 'admin' }),
+    listRuns: method(z.void(), z.array(BackupRunSchema).readonly(), {
+      auth: 'admin',
+    }),
     /**
      * Stop a backup run. Mirrors `storage-migration.cancel` semantics:
      * id in, `{ cancelled }` out — `false` when the run is unknown or
@@ -387,13 +395,17 @@ export const backupCapability = {
       auth: 'admin',
     }),
     /** Union of every destination's archives, each tagged with `destinationId`. */
-    list: method(z.void(), z.array(BackupEntrySchema).readonly(), { auth: 'admin' }),
+    list: method(z.void(), z.array(BackupEntrySchema).readonly(), {
+      auth: 'admin',
+    }),
     /**
      * Pre-backup snapshot of the well-known locations on disk — sizes
      * + file counts. Powers the opt-in checklist that lets the
      * operator pick which subsections of state get archived.
      */
-    listLocations: method(z.void(), z.array(LocationStatSchema).readonly(), { auth: 'admin' }),
+    listLocations: method(z.void(), z.array(LocationStatSchema).readonly(), {
+      auth: 'admin',
+    }),
     /**
      * Read the embedded `.camstack-backup-manifest.json` from a
      * previously-created archive. The manifest carries the full
@@ -431,7 +443,9 @@ export const backupCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
     /** The encryption setting — public keys only. */
-    getEncryption: method(z.void(), BackupEncryptionStatusSchema, { auth: 'admin' }),
+    getEncryption: method(z.void(), BackupEncryptionStatusSchema, {
+      auth: 'admin',
+    }),
     /**
      * Turn encryption on, or replace the key: generates a new key pair, keeps
      * the PUBLIC key, and returns the SECRET key — once. It is never stored
@@ -525,7 +539,9 @@ export const backupCapability = {
      * computed `nextRunAt`. Powers the Schedules section of the
      * admin-UI Backups page.
      */
-    listSchedules: method(z.void(), z.array(BackupScheduleSchema).readonly(), { auth: 'admin' }),
+    listSchedules: method(z.void(), z.array(BackupScheduleSchema).readonly(), {
+      auth: 'admin',
+    }),
     /**
      * The database files that exist on this hub right now (the owner's open
      * files), so the selection UI can offer all of them and mark a file that
@@ -534,7 +550,10 @@ export const backupCapability = {
      */
     listAvailableDatabases: method(
       z.void(),
-      z.object({ answered: z.boolean(), databases: z.array(DataStoreDatabaseSchema).readonly() }),
+      z.object({
+        answered: z.boolean(),
+        databases: z.array(DataStoreDatabaseSchema).readonly(),
+      }),
       { auth: 'admin' },
     ),
     /**
@@ -562,6 +581,9 @@ export const backupCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+  },
+  vocabulary: {
+    notOperatorFacing: 'system backups — run and restored from the Backups page',
   },
 } as const satisfies CapabilityDefinition
 

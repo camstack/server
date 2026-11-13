@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Water heater / boiler cap. Models HA `water_heater.*` entities — a
@@ -61,21 +62,44 @@ export const waterHeaterCapability = {
     lastField: 'lastActiveMode',
   },
   methods: {
-    setTargetTemp: method(
-      z.object({
-        deviceId: z.number().int().nonnegative(),
-        temp: z.number().finite(),
-      }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
     setOperationMode: method(
       z.object({
         deviceId: z.number().int().nonnegative(),
         mode: z.string().min(1),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'waterHeater.off',
+            label: t('Water heater off', 'Scaldacqua spento'),
+            phrase: t('Turn off {device}', 'Spegni {device}'),
+            icon: 'power-off',
+            effect: { field: 'operationMode', value: 'off' },
+            args: { mode: 'off' },
+          },
+          {
+            id: 'waterHeater.mode',
+            label: t('Set mode', 'Imposta la modalità'),
+            phrase: t('Set {device} to {mode}', 'Imposta {device} su {mode}'),
+            icon: 'list',
+            effect: { field: 'operationMode', fromArg: 'mode' },
+            openArgs: [
+              {
+                key: 'mode',
+                label: t('Mode', 'Modalità'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availableModes',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setAway: method(
       z.object({
@@ -83,7 +107,58 @@ export const waterHeaterCapability = {
         on: z.boolean(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'waterHeater.awayOn',
+            label: t('Water heater away on', 'Scaldacqua in modalità assenza'),
+            phrase: t('Put {device} in away mode', 'Metti {device} in modalità assenza'),
+            icon: 'plane',
+            effect: { field: 'away', value: true },
+            args: { on: true },
+          },
+          {
+            id: 'waterHeater.awayOff',
+            label: t('Water heater away off', 'Scaldacqua fuori dalla modalità assenza'),
+            phrase: t('Take {device} out of away mode', 'Togli {device} dalla modalità assenza'),
+            icon: 'house',
+            effect: { field: 'away', value: false },
+            args: { on: false },
+          },
+        ],
+      },
+    ),
+    setTargetTemp: method(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        temp: z.number().finite(),
+      }),
+      z.void(),
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'waterHeater.target',
+            label: t('Set temperature', 'Imposta la temperatura'),
+            phrase: t(
+              'Heat the water of {device} to {temp}',
+              'Scalda l’acqua di {device} a {temp}',
+            ),
+            icon: 'thermometer',
+            effect: { field: 'targetTemp', fromArg: 'temp' },
+            openArgs: [
+              {
+                key: 'temp',
+                label: t('Temperature', 'Temperatura'),
+                offer: { kind: 'number', step: 1, unit: '°C' },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -112,6 +187,41 @@ export const waterHeaterCapability = {
       currentTemp: { kind: 'gauge', unit: '°C', deadband: 0.5 },
       targetTemp: { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
     },
+  },
+  vocabulary: {
+    noun: t('Water heater', 'Scaldacqua'),
+    order: 1100,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'currentTemp',
+        quantity: t('the water temperature', 'la temperatura dell’acqua'),
+        label: t('Water temperature', 'Temperatura dell’acqua'),
+        unit: '°C',
+        icon: 'thermometer',
+      },
+      {
+        kind: 'boolean',
+        field: 'away',
+        label: t('Away mode', 'Modalità assenza'),
+        whenTrue: t(
+          'When {device} goes into away mode',
+          'Quando {device} entra in modalità assenza',
+        ),
+        whenFalse: t(
+          'When {device} leaves away mode',
+          'Quando {device} esce dalla modalità assenza',
+        ),
+        icon: 'plane',
+      },
+      {
+        kind: 'value',
+        field: 'operationMode',
+        label: t('Mode', 'Modalità'),
+        offer: { kind: 'dynamic', from: 'status', field: 'availableModes' },
+        icon: 'list',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

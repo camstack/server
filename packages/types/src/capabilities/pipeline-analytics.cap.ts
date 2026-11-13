@@ -45,6 +45,8 @@ import { CLUSTER_MODEL_CHOICE_UNREADABLE_REASONS } from '../pipeline/cluster-mod
 import { AudioClassifyOutcomeSchema } from './schemas/detection-shared.js'
 import { ClipSearchStrictnessSchema } from '../types/clip-model.js'
 import { BoundingBoxSchema } from './schemas/detection-shared.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /**
  * pipeline-analytics — device-scoped wrapper cap. Refines raw
@@ -1618,7 +1620,12 @@ export const RetrainCopyRefusalSchema = z.enum([
 export const RetrainFrameSelectionSchema = z.object({
   copied: z.array(RetrainFrameSchema).readonly(),
   refused: z
-    .array(z.object({ sourceMediaId: z.number().int(), reason: RetrainCopyRefusalSchema }))
+    .array(
+      z.object({
+        sourceMediaId: z.number().int(),
+        reason: RetrainCopyRefusalSchema,
+      }),
+    )
     .readonly(),
 })
 export type RetrainFrameSelection = z.infer<typeof RetrainFrameSelectionSchema>
@@ -1755,7 +1762,11 @@ export const RetrainAssistSubjectSchema = z.discriminatedUnion('kind', [
   /** `rfdetr-package` at 0.35 on the ZONE only. Without a zone it refuses. */
   z.object({ kind: z.literal('package'), zone: RetrainBboxSchema.optional() }),
   /** The root detector on the whole frame. */
-  z.object({ kind: z.literal('objects'), modelId: z.string(), minScore: z.number().optional() }),
+  z.object({
+    kind: z.literal('objects'),
+    modelId: z.string(),
+    minScore: z.number().optional(),
+  }),
 ])
 
 /**
@@ -1793,13 +1804,22 @@ export const RetrainCollectionSchema = z.object({
 export type RetrainCollection = z.infer<typeof RetrainCollectionSchema>
 
 export const RetrainCollectionCreateResultSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('created'), collection: RetrainCollectionSchema }),
-  z.object({ kind: z.literal('refused'), reason: z.enum(['empty-name', 'duplicate-name']) }),
+  z.object({
+    kind: z.literal('created'),
+    collection: RetrainCollectionSchema,
+  }),
+  z.object({
+    kind: z.literal('refused'),
+    reason: z.enum(['empty-name', 'duplicate-name']),
+  }),
 ])
 export type RetrainCollectionCreateResult = z.infer<typeof RetrainCollectionCreateResultSchema>
 
 export const RetrainCollectionRenameResultSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('renamed'), collection: RetrainCollectionSchema }),
+  z.object({
+    kind: z.literal('renamed'),
+    collection: RetrainCollectionSchema,
+  }),
   z.object({
     kind: z.literal('refused'),
     reason: z.enum(['empty-name', 'duplicate-name', 'unknown-collection']),
@@ -2263,7 +2283,9 @@ const OverlayDetectionSchema = z.looseObject({
 
 // ── Semantic search (CLIP text→event) ──────────────────────────────
 
-export const ScoredObjectEventSchema = ObjectEventSchema.extend({ score: z.number() })
+export const ScoredObjectEventSchema = ObjectEventSchema.extend({
+  score: z.number(),
+})
 export type ScoredObjectEvent = z.infer<typeof ScoredObjectEventSchema>
 
 const SearchObjectEventsInput = z.object({
@@ -2956,7 +2978,11 @@ export const pipelineAnalyticsCapability = {
      */
     pruneEventsBefore: method(
       z.object({ deviceId: z.number(), cutoffMs: z.number() }),
-      z.object({ motion: z.number().int(), object: z.number().int(), audio: z.number().int() }),
+      z.object({
+        motion: z.number().int(),
+        object: z.number().int(),
+        audio: z.number().int(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
 
@@ -3080,7 +3106,10 @@ export const pipelineAnalyticsCapability = {
         flags: TrackFlagsPatchSchema,
       }),
       TrackFlagsSchema,
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing: 'curating a recorded track in the review UI, not a live step',
+      },
     ),
 
     /**
@@ -3123,10 +3152,12 @@ export const pipelineAnalyticsCapability = {
      */
     setTrackRelation: method(SetTrackRelationInputSchema, TrackRelationSchema, {
       kind: 'mutation',
+      notOperatorFacing: 'curating recorded tracks in the review UI, not a live step',
     }),
     /** Remove the mark between two tracks. */
     clearTrackRelation: method(ClearTrackRelationInputSchema, ClearTrackRelationResultSchema, {
       kind: 'mutation',
+      notOperatorFacing: 'curating recorded tracks in the review UI, not a live step',
     }),
     /**
      * A track that is not ONE subject: `mixed` (two subjects, optionally
@@ -3135,6 +3166,7 @@ export const pipelineAnalyticsCapability = {
      */
     setTrackPurity: method(SetTrackPurityInputSchema, SetTrackPurityResultSchema, {
       kind: 'mutation',
+      notOperatorFacing: 'curating a recorded track in the review UI, not a live step',
     }),
     /** A camera's marks, optionally one track's, windowed by track start. */
     listTrackRelations: method(ListTrackRelationsInputSchema, ListTrackRelationsResultSchema, {
@@ -3203,7 +3235,10 @@ export const pipelineAnalyticsCapability = {
      * per-kind deleted counts.
      */
     pruneEvents: method(
-      z.object({ olderThanMs: z.number(), reason: OpsLogReasonSchema.optional() }),
+      z.object({
+        olderThanMs: z.number(),
+        reason: OpsLogReasonSchema.optional(),
+      }),
       EventPruneCountsSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -3498,7 +3533,11 @@ export const pipelineAnalyticsCapability = {
      *  Deliberately destructive and deliberately explicit — it is the only way
      *  a frame leaves the dataset before export. */
     deselectRetrainFrame: method(
-      z.object({ deviceId: z.number(), trackId: z.string().optional(), frameId: z.string() }),
+      z.object({
+        deviceId: z.number(),
+        trackId: z.string().optional(),
+        frameId: z.string(),
+      }),
       z.object({ removed: z.boolean(), removedAnnotations: z.number().int() }),
       { role: { feature: 'retrain' }, kind: 'mutation', auth: 'admin' },
     ),
@@ -3520,7 +3559,11 @@ export const pipelineAnalyticsCapability = {
      */
     getRetrainFrameImage: method(
       z.object({ frameId: z.string() }),
-      z.object({ base64: z.string(), width: z.number().int(), height: z.number().int() }),
+      z.object({
+        base64: z.string(),
+        width: z.number().int(),
+        height: z.number().int(),
+      }),
       { role: { feature: 'retrain' }, kind: 'query', auth: 'admin' },
     ),
 
@@ -3675,7 +3718,9 @@ export const pipelineAnalyticsCapability = {
      * space (D52).
      */
     getRetrainExportUrl: method(
-      RetrainExportFilterSchema.extend({ layout: RetrainExportLayoutSchema.optional() }),
+      RetrainExportFilterSchema.extend({
+        layout: RetrainExportLayoutSchema.optional(),
+      }),
       z.object({ url: z.string() }),
       { kind: 'query', auth: 'admin' },
     ),
@@ -3722,7 +3767,10 @@ export const pipelineAnalyticsCapability = {
      * to measure as they arrive.
      */
     offerRetrainArchive: method(
-      z.object({ filter: RetrainExportFilterSchema, layout: RetrainExportLayoutSchema }),
+      z.object({
+        filter: RetrainExportFilterSchema,
+        layout: RetrainExportLayoutSchema,
+      }),
       z.object({
         ticket: PeerBytesTicketSchema,
         frames: z.number().int(),
@@ -3834,12 +3882,20 @@ export const pipelineAnalyticsCapability = {
         verdictSubject: RetrainVerdictSubjectSchema.optional(),
       }),
       AddRetrainFrameFromRecordingResultSchema,
-      { role: { feature: 'retrain' }, kind: 'mutation', auth: 'admin', timeoutMs: 60_000 },
+      {
+        role: { feature: 'retrain' },
+        kind: 'mutation',
+        auth: 'admin',
+        timeoutMs: 60_000,
+      },
     ),
 
     /** Add frames already in the dataset to a collection. */
     addRetrainFramesToCollection: method(
-      z.object({ collectionId: z.string(), frameIds: z.array(z.string()).min(1).max(500) }),
+      z.object({
+        collectionId: z.string(),
+        frameIds: z.array(z.string()).min(1).max(500),
+      }),
       z.object({
         added: z.number().int(),
         alreadyMember: z.number().int(),
@@ -4046,6 +4102,7 @@ export const pipelineAnalyticsCapability = {
         frameHeight: z.number(),
         detections: z.array(OverlayDetectionSchema).readonly(),
       }),
+      notOperatorFacing: 'one tracker frame — stream rate, never an automation trigger',
     },
     /** Track entered active state (first-seen). */
     onTrackStarted: {
@@ -4054,6 +4111,15 @@ export const pipelineAnalyticsCapability = {
         trackId: z.string(),
         className: z.string(),
       }),
+      trigger: {
+        category: EventCategory.PipelineAnalyticsTrackStarted,
+        label: t('Subject appeared', 'Soggetto comparso'),
+        phrase: t(
+          'When {device} starts following a subject',
+          'Quando {device} inizia a seguire un soggetto',
+        ),
+        icon: 'scan-eye',
+      },
     },
     /** Track expired (TTL reached after last detection). */
     onTrackEnded: {
@@ -4063,6 +4129,15 @@ export const pipelineAnalyticsCapability = {
         className: z.string(),
         durationMs: z.number(),
       }),
+      trigger: {
+        category: EventCategory.PipelineAnalyticsTrackEnded,
+        label: t('Subject left', 'Soggetto uscito'),
+        phrase: t(
+          'When a subject leaves the view of {device}',
+          'Quando un soggetto esce dall’inquadratura di {device}',
+        ),
+        icon: 'scan-eye',
+      },
     },
     /** Canonical "something happened at device X" event, per-kind. */
     onDetectionEvent: {
@@ -4072,7 +4147,40 @@ export const pipelineAnalyticsCapability = {
         eventId: z.string(),
         timestamp: z.number(),
       }),
+      trigger: {
+        category: EventCategory.PipelineAnalyticsDetectionEvent,
+        label: t('Detection event', 'Evento di rilevamento'),
+        phrase: t(
+          'When {device} records a detection event',
+          'Quando {device} registra un evento di rilevamento',
+        ),
+        icon: 'radar',
+      },
     },
+  },
+  vocabulary: {
+    noun: t('Tracking', 'Tracciamento'),
+    order: 3200,
+    extraEvents: [
+      {
+        category: EventCategory.PipelineAnalyticsPackageDelivered,
+        label: t('Package delivered', 'Pacco consegnato'),
+        phrase: t(
+          'When a package is left in front of {device}',
+          'Quando viene lasciato un pacco davanti a {device}',
+        ),
+        icon: 'package',
+      },
+      {
+        category: EventCategory.PipelineAnalyticsPackagePickedUp,
+        label: t('Package picked up', 'Pacco ritirato'),
+        phrase: t(
+          'When a package is picked up in front of {device}',
+          'Quando viene ritirato un pacco davanti a {device}',
+        ),
+        icon: 'package-open',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

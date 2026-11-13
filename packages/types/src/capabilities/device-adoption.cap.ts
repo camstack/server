@@ -309,9 +309,21 @@ export const deviceAdoptionCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
-    adopt: method(AdoptInputSchema, AdoptResultSchema, { kind: 'mutation', auth: 'admin' }),
-    release: method(ReleaseInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
-    resync: method(ResyncInputSchema, ResyncResultSchema, { kind: 'mutation', auth: 'admin' }),
+    adopt: method(AdoptInputSchema, AdoptResultSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    release: method(ReleaseInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+    resync: method(ResyncInputSchema, ResyncResultSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+  },
+  vocabulary: {
+    notOperatorFacing: 'device adoption — an onboarding flow, not an action',
   },
 } as const satisfies CapabilityDefinition
 

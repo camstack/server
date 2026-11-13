@@ -33,6 +33,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
 import { PipelineEngineChoiceSchema, PipelineStepInputSchema } from './pipeline-executor.cap.js'
 import { RunnerLocalLoadSchema } from './pipeline-runner.cap.js'
 import { CameraMetricsSchema } from './schemas/orchestrator-metrics.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 // ── Per-camera pipeline config ─────────────────────────────────────
 //
@@ -839,7 +840,13 @@ export const pipelineOrchestratorCapability = {
         migrated: z.number(),
         // A camera the pass wanted to move and could not, with why (D650).
         skipped: z
-          .array(z.object({ deviceId: z.number(), targetNodeId: z.string(), reason: z.string() }))
+          .array(
+            z.object({
+              deviceId: z.number(),
+              targetNodeId: z.string(),
+              reason: z.string(),
+            }),
+          )
           .default([]),
       }),
       { kind: 'mutation', auth: 'admin' },
@@ -880,7 +887,11 @@ export const pipelineOrchestratorCapability = {
     getCapabilityBindings: method(z.object({ nodeId: z.string() }), CapabilityBindingsSchema),
     /** Set the addon that implements `capName` on `nodeId`. Emits `capability.binding-changed`. */
     setCapabilityBinding: method(
-      z.object({ nodeId: z.string(), capName: z.string(), addonId: z.string() }),
+      z.object({
+        nodeId: z.string(),
+        capName: z.string(),
+        addonId: z.string(),
+      }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -1188,7 +1199,9 @@ export const pipelineOrchestratorCapability = {
      * enablement, device enablement, pins, recording, notifications, zones and
      * rules are never part of it. `planHash` names exactly this diff.
      */
-    planAutoTune: method(AutoTuneOptionsSchema, AutoTunePlanSchema, { auth: 'admin' }),
+    planAutoTune: method(AutoTuneOptionsSchema, AutoTunePlanSchema, {
+      auth: 'admin',
+    }),
     /**
      * Auto tune (D745) — APPLY the plan the operator confirmed. Recomputes
      * the plan and refuses (`stale`, with the fresh plan) when its hash is not
@@ -1219,7 +1232,9 @@ export const pipelineOrchestratorCapability = {
      * a share election made; and every device pin the session path cannot
      * honour. In memory on the hub — a restart starts a new window.
      */
-    getPlacementStats: method(PlacementStatsInputSchema, PlacementStatsSchema, { auth: 'admin' }),
+    getPlacementStats: method(PlacementStatsInputSchema, PlacementStatsSchema, {
+      auth: 'admin',
+    }),
     /**
      * Load balancing (D748, D755) — shares proportional to each node's
      * capacity in parallel sessions: from the latency table at the models
@@ -1228,14 +1243,18 @@ export const pipelineOrchestratorCapability = {
      * saying so). The automatic shares are exactly this answer. Per device,
      * an ADVISORY session cap. Writes nothing.
      */
-    suggestShares: method(SuggestSharesInputSchema, SuggestSharesResultSchema, { auth: 'admin' }),
+    suggestShares: method(SuggestSharesInputSchema, SuggestSharesResultSchema, {
+      auth: 'admin',
+    }),
     /**
      * Load balancing (D750) — the shares placement reads now: the source
      * (automatic capacity shares or the operator's sliders), each node's and
      * device's configured share, and the effective share after a node or
      * device that cannot take sessions gave its share to the others.
      */
-    getEffectiveShares: method(z.void(), EffectiveSharesSchema, { auth: 'admin' }),
+    getEffectiveShares: method(z.void(), EffectiveSharesSchema, {
+      auth: 'admin',
+    }),
     /**
      * Load balancing (D750, D755) — switch the share source: `hardware`
      * (automatic, from static capacity), `benchmark` (automatic, from node
@@ -1270,12 +1289,17 @@ export const pipelineOrchestratorCapability = {
       NodeBenchmarkPlanSchema,
       z.discriminatedUnion('kind', [
         z.object({ kind: z.literal('started'), runId: z.string() }),
-        z.object({ kind: z.literal('refused'), preflight: NodeBenchmarkPreflightSchema }),
+        z.object({
+          kind: z.literal('refused'),
+          preflight: NodeBenchmarkPreflightSchema,
+        }),
       ]),
       { kind: 'mutation', auth: 'admin' },
     ),
     /** Node benchmark — the active run (or the last one) and the node in benchmark mode. */
-    getNodeBenchmarkStatus: method(z.void(), NodeBenchmarkStatusSchema, { auth: 'admin' }),
+    getNodeBenchmarkStatus: method(z.void(), NodeBenchmarkStatusSchema, {
+      auth: 'admin',
+    }),
     /** Node benchmark — stop the active run; the cluster is restored as it was. */
     abortNodeBenchmark: method(
       z.object({ runId: z.string() }),
@@ -1492,6 +1516,7 @@ export const pipelineOrchestratorCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.PIPELINE },
 } as const satisfies CapabilityDefinition
 
 export type IPipelineOrchestratorProvider = InferProvider<typeof pipelineOrchestratorCapability>

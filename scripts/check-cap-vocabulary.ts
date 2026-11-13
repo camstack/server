@@ -1,7 +1,10 @@
 #!/usr/bin/env tsx
 /**
  * Cap vocabulary guard (D920) — the map of what every capability lets an
- * operator DO to a device and WATCH it for must be complete and true.
+ * operator DO to a device and WATCH it for must be complete and true. The map
+ * is generated from what the caps declare (D1050): an action on its method,
+ * a `notOperatorFacing` reason on a method or event, the rest in the cap's
+ * `vocabulary` block — so every problem below is fixed in a `*.cap.ts`.
  *
  * Fails when a cap has no entry; when an operate method (not a read, not an
  * admin configuration method) has neither an action nor a

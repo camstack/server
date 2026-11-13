@@ -5,6 +5,7 @@ import {
   StartEnrollmentOutputSchema,
 } from '../auth/device-certificate.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 export const DeviceCaStatusSchema = z.discriminatedUnion('state', [
   z.object({ state: z.literal('absent') }),
@@ -117,15 +118,21 @@ export const deviceCredentialsCapability = {
      * The device CA: `absent` until the first enrollment creates it (lazily,
      * never rotated on boot), `unavailable` while the keychain cannot answer.
      */
-    getDeviceCaStatus: method(z.object({}), DeviceCaStatusSchema, { auth: 'admin' }),
+    getDeviceCaStatus: method(z.object({}), DeviceCaStatusSchema, {
+      auth: 'admin',
+    }),
 
     /** Rename a credential (the label only; the certificate is unchanged). */
     renameDeviceCredential: method(
-      z.object({ id: z.string().min(1), deviceName: z.string().min(1).max(80) }),
+      z.object({
+        id: z.string().min(1),
+        deviceName: z.string().min(1).max(80),
+      }),
       z.object({ renamed: z.boolean() }),
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type IDeviceCredentialsProvider = InferProvider<typeof deviceCredentialsCapability>

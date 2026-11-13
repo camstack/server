@@ -62,6 +62,7 @@
  */
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Whose page is it. The distinction is for the OPERATOR, who needs to know
@@ -133,6 +134,7 @@ export const deviceAdminLinkCapability = {
       { auth: 'admin' },
     ),
   },
+  vocabulary: { noun: t('Admin link', 'Link di amministrazione'), order: 3090 },
 } as const satisfies CapabilityDefinition
 
 export type IDeviceAdminLinkProvider = InferProvider<typeof deviceAdminLinkCapability>

@@ -11,6 +11,7 @@ import {
   StorageMigrationResidueSchema,
 } from '../interfaces/relocate.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * The single operator-facing storage migration surface. It coordinates the
@@ -22,7 +23,9 @@ export const storageMigrationCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
-    plan: method(StorageMigrationInputSchema, StorageMigrationPlanSchema, { auth: 'admin' }),
+    plan: method(StorageMigrationInputSchema, StorageMigrationPlanSchema, {
+      auth: 'admin',
+    }),
     start: method(StorageMigrationInputSchema, z.object({ jobId: z.string() }), {
       kind: 'mutation',
       auth: 'admin',
@@ -60,7 +63,10 @@ export const storageMigrationCapability = {
      */
     moverClearance: method(
       z.object({ locationIds: z.array(z.string()).readonly() }),
-      z.object({ clear: z.boolean(), repointLocationId: z.string().optional() }),
+      z.object({
+        clear: z.boolean(),
+        repointLocationId: z.string().optional(),
+      }),
       { auth: 'admin' },
     ),
     /**
@@ -105,6 +111,7 @@ export const storageMigrationCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.STORAGE },
 } as const satisfies CapabilityDefinition
 
 export type IStorageMigrationProvider = InferProvider<typeof storageMigrationCapability>

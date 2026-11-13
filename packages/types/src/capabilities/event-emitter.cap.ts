@@ -3,6 +3,8 @@ import { type CapabilityDefinition, type InferProvider } from './capability-defi
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import { EventVocabularyEntrySchema } from './event-vocabulary.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /**
  * Generic stateless event emitter. Installed on a `DeviceType.EventEmitter`
@@ -48,7 +50,17 @@ export const eventEmitterCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.EventEmitter],
   methods: {},
-  events: { onEvent: { data: EventFireSchema } },
+  events: {
+    onEvent: {
+      data: EventFireSchema,
+      trigger: {
+        category: EventCategory.EventEmitted,
+        label: t('Fired an event', 'Ha generato un evento'),
+        phrase: t('When {device} fires an event', 'Quando {device} genera un evento'),
+        icon: 'zap',
+      },
+    },
+  },
   status: { schema: EventEmitterStatusSchema, kind: 'push' },
   runtimeState: EventEmitterStatusSchema,
 
@@ -63,6 +75,7 @@ export const eventEmitterCapability = {
    * History (D850): none — `eventCountSinceStart` resets with the addon; events live in ledgers.
    */
   history: 'none',
+  vocabulary: { noun: t('Event source', 'Sorgente di eventi'), order: 5280 },
 } as const satisfies CapabilityDefinition
 
 export type IEventEmitterProvider = InferProvider<typeof eventEmitterCapability>

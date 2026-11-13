@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Per-device feature/identity probe slice. Holds the runtime-resolved
@@ -76,6 +77,7 @@ export const featureProbeCapability = {
         deviceId: z.number(),
         status: FeatureProbeStatusSchema,
       }),
+      notOperatorFacing: 'the device’s capabilities were re-probed — plumbing, not a happening',
     },
   },
   status: {
@@ -95,6 +97,7 @@ export const featureProbeCapability = {
    * History (D850): none — static identity and capability probe.
    */
   history: 'none',
+  vocabulary: { noun: t('Feature probe', 'Rilevamento funzioni'), order: 3120 },
 } as const satisfies CapabilityDefinition
 
 export type IFeatureProbeProvider = InferProvider<typeof featureProbeCapability>

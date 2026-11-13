@@ -7,6 +7,7 @@ import {
 } from '../interfaces/storage-location.js'
 import { StorageLocationDeclarationSchema } from '../interfaces/storage-location-declaration.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `storage` — singleton consumer-facing capability owned by the
@@ -47,7 +48,10 @@ export const storageCapability = {
     // `location` is a ref (type or fully-qualified id). The orchestrator
     // resolves the ref to a concrete `StorageLocation` and dispatches.
     resolve: method(
-      z.object({ location: StorageLocationRefSchema, relativePath: z.string() }),
+      z.object({
+        location: StorageLocationRefSchema,
+        relativePath: z.string(),
+      }),
       z.string(),
       { auth: 'admin' },
     ),
@@ -61,22 +65,34 @@ export const storageCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
     read: method(
-      z.object({ location: StorageLocationRefSchema, relativePath: z.string() }),
+      z.object({
+        location: StorageLocationRefSchema,
+        relativePath: z.string(),
+      }),
       z.instanceof(Uint8Array),
       { auth: 'admin' },
     ),
     exists: method(
-      z.object({ location: StorageLocationRefSchema, relativePath: z.string() }),
+      z.object({
+        location: StorageLocationRefSchema,
+        relativePath: z.string(),
+      }),
       z.boolean(),
       { auth: 'admin' },
     ),
     list: method(
-      z.object({ location: StorageLocationRefSchema, prefix: z.string().optional() }),
+      z.object({
+        location: StorageLocationRefSchema,
+        prefix: z.string().optional(),
+      }),
       z.array(z.string()).readonly(),
       { auth: 'admin' },
     ),
     delete: method(
-      z.object({ location: StorageLocationRefSchema, relativePath: z.string() }),
+      z.object({
+        location: StorageLocationRefSchema,
+        relativePath: z.string(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -99,7 +115,11 @@ export const storageCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
     writeChunk: method(
-      z.object({ uploadId: z.string(), offset: z.number(), data: z.instanceof(Uint8Array) }),
+      z.object({
+        uploadId: z.string(),
+        offset: z.number(),
+        data: z.instanceof(Uint8Array),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -112,12 +132,19 @@ export const storageCapability = {
       auth: 'admin',
     }),
     beginDownload: method(
-      z.object({ location: StorageLocationRefSchema, relativePath: z.string() }),
+      z.object({
+        location: StorageLocationRefSchema,
+        relativePath: z.string(),
+      }),
       z.object({ downloadId: z.string(), sizeBytes: z.number() }),
       { kind: 'mutation', auth: 'admin' },
     ),
     readChunk: method(
-      z.object({ downloadId: z.string(), offset: z.number(), length: z.number() }),
+      z.object({
+        downloadId: z.string(),
+        offset: z.number(),
+        length: z.number(),
+      }),
       z.instanceof(Uint8Array),
       { auth: 'admin' },
     ),
@@ -150,6 +177,7 @@ export const storageCapability = {
      */
     listDrainProgress: method(z.void(), z.array(StorageDrainProgressSchema).readonly()),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.STORAGE },
 } as const satisfies CapabilityDefinition
 
 export type IStorageCapProvider = InferProvider<typeof storageCapability>

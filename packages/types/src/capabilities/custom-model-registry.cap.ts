@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { PeerBytesTicketSchema } from '../interfaces/addon-peer-bytes.js'
 import { MODEL_FORMATS, ModelCatalogEntrySchema } from '../types/models.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `custom-model-registry` — collection cap exposing operator-registered
@@ -123,6 +124,7 @@ export const customModelRegistryCapability = {
       timeoutMs: 30 * 60_000,
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type ICustomModelRegistryProvider = InferProvider<typeof customModelRegistryCapability>

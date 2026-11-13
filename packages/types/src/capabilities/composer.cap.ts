@@ -113,6 +113,9 @@ export const composerCapability = {
       { auth: 'admin' },
     ),
   },
+  vocabulary: {
+    notOperatorFacing: 'device composition — an authoring tool, not an action',
+  },
 } as const satisfies CapabilityDefinition
 
 export type IComposerProvider = InferProvider<typeof composerCapability>

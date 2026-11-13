@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * network-quality — system-scoped singleton capability tracking RTT,
@@ -68,6 +69,7 @@ export const networkQualityCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition
 
 export type INetworkQualityProvider = InferProvider<typeof networkQualityCapability>

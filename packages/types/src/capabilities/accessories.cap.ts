@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * List of accessory children linked to a parent device. The cap surfaces
@@ -90,6 +91,7 @@ export const accessoriesCapability = {
         childDeviceIds: z.array(z.number()).readonly(),
         hiddenChildIds: z.array(z.number()).readonly(),
       }),
+      notOperatorFacing: 'the device’s child list changed — administration, not a happening',
     },
     /**
      * Emitted when the operator toggles a child's UI-visibility.
@@ -102,12 +104,14 @@ export const accessoriesCapability = {
         childDeviceId: z.number(),
         hidden: z.boolean(),
       }),
+      notOperatorFacing: 'an operator hid or showed a child — administration, not a happening',
     },
   },
   status: {
     schema: AccessoriesStatusSchema,
     kind: 'command-driven',
   },
+  vocabulary: { noun: t('Accessories', 'Accessori'), order: 3000 },
 } as const satisfies CapabilityDefinition
 
 export type IAccessoriesProvider = InferProvider<typeof accessoriesCapability>

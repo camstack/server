@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Door / window / opening / garage / valve contact sensor. Boolean
@@ -54,6 +55,20 @@ export const contactCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Contact', 'Contatto'),
+    order: 5050,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'entryOpen',
+        label: t('Open', 'Aperto'),
+        whenTrue: t('When {device} opens', 'Quando {device} si apre'),
+        whenFalse: t('When {device} closes', 'Quando {device} si chiude'),
+        icon: 'door-open',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IContactProvider = InferProvider<typeof contactCapability>

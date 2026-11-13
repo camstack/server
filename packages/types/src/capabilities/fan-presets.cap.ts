@@ -69,7 +69,10 @@ export const FanPresetsRefusalSchema = z.enum(FAN_PRESETS_REFUSALS)
 export type FanPresetsRefusal = z.infer<typeof FanPresetsRefusalSchema>
 
 export const FanPresetsSetResultSchema = z.discriminatedUnion('status', [
-  z.object({ status: z.literal('saved'), count: z.number().int().nonnegative() }),
+  z.object({
+    status: z.literal('saved'),
+    count: z.number().int().nonnegative(),
+  }),
   z.object({
     status: z.literal('refused'),
     reason: FanPresetsRefusalSchema,
@@ -139,9 +142,13 @@ export const fanPresetsCapability = {
   scope: 'system',
   mode: 'singleton',
   methods: {
-    getPresets: method(deviceInput, z.array(FanPresetSchema), { auth: 'protected' }),
+    getPresets: method(deviceInput, z.array(FanPresetSchema), {
+      auth: 'protected',
+    }),
     setPresets: method(
-      deviceInput.extend({ presets: z.array(FanPresetSchema).max(FAN_PRESETS_MAX) }),
+      deviceInput.extend({
+        presets: z.array(FanPresetSchema).max(FAN_PRESETS_MAX),
+      }),
       FanPresetsSetResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -163,6 +170,10 @@ export const fanPresetsCapability = {
     ),
   },
   customize: fanPresetsCustomize,
+  vocabulary: {
+    notOperatorFacing:
+      'the per-fan presets — authored in the Customize presets editor, applied through the actions the exports list',
+  },
 } as const satisfies CapabilityDefinition
 
 export type IFanPresetsProvider = InferProvider<typeof fanPresetsCapability>

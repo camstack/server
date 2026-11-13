@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * toast — system-scoped singleton capability that streams toast
@@ -40,6 +41,7 @@ export const toastCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition
 
 export type IToastProvider = InferProvider<typeof toastCapability>

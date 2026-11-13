@@ -25,6 +25,7 @@ import {
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { FrameInputSchema } from './schemas/detection-shared.js'
 import { FrameHandleSchema } from './schemas/streaming-shared.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * A root model's boxes standing in for one crop-kind step's own inference
@@ -574,7 +575,10 @@ export const pipelineExecutorCapability = {
      * reads any media: can this (node, deviceKey) run exactly this model?
      */
     validatePipeline: method(
-      z.object({ steps: z.array(PipelineStepInputSchema), deviceKey: z.string().optional() }),
+      z.object({
+        steps: z.array(PipelineStepInputSchema),
+        deviceKey: z.string().optional(),
+      }),
       PipelineValidationResultSchema,
     ),
 
@@ -582,12 +586,20 @@ export const pipelineExecutorCapability = {
     getCapabilities: method(z.void(), InferenceCapabilitiesBridge),
     getAddonModels: method(z.object({ addonId: z.string() }), ModelAvailabilityListBridge),
     downloadModel: method(
-      z.object({ addonId: z.string(), modelId: z.string(), format: ModelFormatSchema }),
+      z.object({
+        addonId: z.string(),
+        modelId: z.string(),
+        format: ModelFormatSchema,
+      }),
       DownloadModelResultSchema,
       { kind: 'mutation' },
     ),
     deleteModel: method(
-      z.object({ addonId: z.string(), modelId: z.string(), format: ModelFormatSchema }),
+      z.object({
+        addonId: z.string(),
+        modelId: z.string(),
+        format: ModelFormatSchema,
+      }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation' },
     ),
@@ -796,7 +808,9 @@ export const pipelineExecutorCapability = {
     /**
      * Release a cached frame from the Python pool's memory.
      */
-    uncacheFrame: method(z.object({ frameId: z.number().int() }), z.void(), { kind: 'mutation' }),
+    uncacheFrame: method(z.object({ frameId: z.number().int() }), z.void(), {
+      kind: 'mutation',
+    }),
 
     /**
      * The effective provisioning of ONE pool of this node (operator override →
@@ -922,6 +936,7 @@ export const pipelineExecutorCapability = {
     // cameras — it receives `steps`, their models and settings inline on
     // every `runPipeline` call.
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.PIPELINE },
 } as const satisfies CapabilityDefinition
 
 export type IPipelineExecutorProvider = InferProvider<typeof pipelineExecutorCapability>

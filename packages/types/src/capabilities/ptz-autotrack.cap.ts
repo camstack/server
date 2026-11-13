@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * `ptz-autotrack` — sibling cap of `ptz` that exposes the on-camera
@@ -154,6 +155,28 @@ export const ptzAutotrackCapability = {
      */
     setEnabled: method(z.object({ deviceId: z.number(), enabled: z.boolean() }), z.void(), {
       kind: 'mutation',
+      actions: [
+        {
+          id: 'ptz.autotrackOn',
+          label: t('Autotrack on', 'Inseguimento attivo'),
+          phrase: t(
+            'Start autotracking on {device}',
+            'Attiva l’inseguimento automatico su {device}',
+          ),
+          icon: 'crosshair',
+          args: { enabled: true },
+        },
+        {
+          id: 'ptz.autotrackOff',
+          label: t('Autotrack off', 'Inseguimento spento'),
+          phrase: t(
+            'Stop autotracking on {device}',
+            'Disattiva l’inseguimento automatico su {device}',
+          ),
+          icon: 'crosshair',
+          args: { enabled: false },
+        },
+      ],
     }),
     /**
      * Read settings (target type + delays). Mirrors the
@@ -176,7 +199,12 @@ export const ptzAutotrackCapability = {
       }),
       z.void(),
       // Configuration, not operation: admin for a viewer (D921).
-      { role: 'admin', kind: 'mutation' },
+      {
+        role: 'admin',
+        kind: 'mutation',
+        notOperatorFacing:
+          'tracking tuning (target type, delays) — set once on the camera’s PTZ page',
+      },
     ),
   },
   events: {
@@ -185,6 +213,7 @@ export const ptzAutotrackCapability = {
         deviceId: z.number(),
         status: PtzAutotrackStatusSchema,
       }),
+      notOperatorFacing: 'the `enabled` state trigger phrases both edges of this change',
     },
   },
   status: {
@@ -212,6 +241,26 @@ export const ptzAutotrackCapability = {
    * History (D850): none — configuration and capability.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Autotracking', 'Inseguimento automatico'),
+    order: 3230,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Autotracking', 'Inseguimento automatico'),
+        whenTrue: t(
+          'When autotracking is turned on for {device}',
+          'Quando si attiva l’inseguimento automatico di {device}',
+        ),
+        whenFalse: t(
+          'When autotracking is turned off for {device}',
+          'Quando si disattiva l’inseguimento automatico di {device}',
+        ),
+        icon: 'crosshair',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IPtzAutotrackProvider = InferProvider<typeof ptzAutotrackCapability>

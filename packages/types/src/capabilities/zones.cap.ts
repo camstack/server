@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Zone — pure geometry + identity. NO filtering behaviour.
@@ -105,6 +106,7 @@ export const zonesCapability = {
    * History (D850): none — configuration arrays.
    */
   history: 'none',
+  vocabulary: { noun: t('Zones', 'Zone'), order: 3370 },
 } as const satisfies CapabilityDefinition
 
 export type IZonesProvider = InferProvider<typeof zonesCapability>

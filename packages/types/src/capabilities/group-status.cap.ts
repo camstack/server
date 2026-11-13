@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * How many members of a helper group answered (D944). Counts are integers,
@@ -66,6 +67,33 @@ export const groupStatusCapability = {
    */
   durability: 'session',
   history: 'none',
+  vocabulary: {
+    noun: t('Group', 'Gruppo'),
+    order: 5110,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'included',
+        quantity: t('the members reporting', 'i membri che rispondono'),
+        label: t('Reporting', 'Rispondono'),
+        icon: 'users',
+      },
+      {
+        kind: 'numeric',
+        field: 'excluded',
+        quantity: t('the members left out', 'i membri esclusi'),
+        label: t('Excluded', 'Esclusi'),
+        icon: 'users',
+      },
+      {
+        kind: 'numeric',
+        field: 'total',
+        quantity: t('the member count', 'il numero di membri'),
+        label: t('Members', 'Membri'),
+        icon: 'sigma',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IGroupStatusProvider = InferProvider<typeof groupStatusCapability>

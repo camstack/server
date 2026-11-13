@@ -88,27 +88,40 @@ export const brokerCapability = {
      *  clientIdPrefix}`). HA providers MAY return the auth envelope
      *  but typical HA consumers use `publish` / `subscribe` instead.
      *  Returns `null` when the broker id is unknown to the provider. */
-    getBrokerConfig: method(GetInputSchema, SettingsRecordSchema.nullable(), { auth: 'admin' }),
+    getBrokerConfig: method(GetInputSchema, SettingsRecordSchema.nullable(), {
+      auth: 'admin',
+    }),
 
     // ── Pub/sub primitives ───────────────────────────────────────────
-    publish: method(PublishInputSchema, z.unknown(), { kind: 'mutation', auth: 'admin' }),
+    publish: method(PublishInputSchema, z.unknown(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     subscribe: method(SubscribeInputSchema, SubscribeResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
-    unsubscribe: method(UnsubscribeInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    unsubscribe: method(UnsubscribeInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
 
     /** Read the broker's cached state for a key. Returns `null` when
      *  unknown to the broker (never published / unknown entity). */
     // Admin (D634 r3): the raw upstream entity cache — a Home Assistant camera
     // entity carries an `access_token`. Only addons read it, over `ctx.api`.
-    getState: method(GetStateInputSchema, z.unknown().nullable(), { auth: 'admin' }),
+    getState: method(GetStateInputSchema, z.unknown().nullable(), {
+      auth: 'admin',
+    }),
 
     /** Status method — explicit registration with a `z.void()` input so
      *  the codegen-generated tRPC router types its input as
      *  `{addonId?: string, nodeId?: string}` (system-scoped collection
      *  shape) instead of the device-scoped `{deviceId}` fallback. */
     getStatus: method(z.void(), RegistryStatusSchema),
+  },
+  vocabulary: {
+    notOperatorFacing: 'message-broker connections — configured, not actuated',
   },
 } as const satisfies CapabilityDefinition
 

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `mqtt-broker` — broker-registry cap.
@@ -131,19 +132,28 @@ export const mqttBrokerCapability = {
     // them; `listBrokers` and `getStatus` stay open (URL userinfo is masked at
     // the transport boundary for a non-admin).
     listBrokers: method(z.void(), z.array(BrokerInfoSchema)),
-    getBrokerConfig: method(IdInputSchema, BrokerConnectionDetailsSchema, { auth: 'admin' }),
+    getBrokerConfig: method(IdInputSchema, BrokerConnectionDetailsSchema, {
+      auth: 'admin',
+    }),
     addBroker: method(AddBrokerInputSchema, AddBrokerResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
-    removeBroker: method(IdInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    removeBroker: method(IdInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     startEmbeddedBroker: method(StartEmbeddedInputSchema, StartEmbeddedResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
-    stopEmbeddedBroker: method(IdInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    stopEmbeddedBroker: method(IdInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     getStatus: method(z.void(), StatusSchema),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition
 
 export type IMqttBrokerProvider = InferProvider<typeof mqttBrokerCapability>

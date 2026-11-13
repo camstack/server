@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Multi-metric air-quality slice. Covers CO₂, total VOCs, particulate
@@ -64,6 +65,51 @@ export const airQualitySensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Air quality', 'Qualità dell’aria'),
+    order: 5000,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'co2',
+        quantity: t('the CO₂', 'la CO₂'),
+        label: t('CO₂', 'CO₂'),
+        unit: 'ppm',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'voc',
+        quantity: t('the VOC level', 'il livello di COV'),
+        label: t('VOC', 'COV'),
+        unit: 'ppb',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'pm25',
+        quantity: t('the PM2.5', 'il PM2,5'),
+        label: t('PM2.5', 'PM2,5'),
+        unit: 'µg/m³',
+        icon: 'cloud-fog',
+      },
+      {
+        kind: 'numeric',
+        field: 'pm10',
+        quantity: t('the PM10', 'il PM10'),
+        label: t('PM10', 'PM10'),
+        unit: 'µg/m³',
+        icon: 'cloud-fog',
+      },
+      {
+        kind: 'numeric',
+        field: 'aqi',
+        quantity: t('the air quality index', 'l’indice di qualità dell’aria'),
+        label: t('AQI', 'IQA'),
+        icon: 'wind',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IAirQualitySensorProvider = InferProvider<typeof airQualitySensorCapability>

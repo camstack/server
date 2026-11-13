@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { SCOPED_SETTINGS_SCOPES } from '../addon/scoped-settings.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 // ── Zod schemas for ConfigUISchemaWithValues ─────────────────────────
 //
@@ -144,7 +145,11 @@ export const addonSettingsCapability = {
       { auth: 'admin' },
     ),
     unsetStoredSettingsKeys: method(
-      z.object({ addonId: z.string(), nodeId: z.string().optional(), keys: z.array(z.string()) }),
+      z.object({
+        addonId: z.string(),
+        nodeId: z.string().optional(),
+        keys: z.array(z.string()),
+      }),
       z.object({
         removed: z.array(z.string()),
         refused: z.array(z.object({ key: z.string(), reason: z.string() })),
@@ -155,7 +160,11 @@ export const addonSettingsCapability = {
 
     // ── Device-level settings ─────────────────────────────────────────
     getDeviceSettings: method(
-      z.object({ addonId: z.string(), deviceId: z.number(), nodeId: z.string().optional() }),
+      z.object({
+        addonId: z.string(),
+        deviceId: z.number(),
+        nodeId: z.string().optional(),
+      }),
       SettingsSchemaWithValuesSchema.nullable(),
     ),
     updateDeviceSettings: method(
@@ -169,6 +178,7 @@ export const addonSettingsCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ADDON_ADMIN },
 } as const satisfies CapabilityDefinition
 
 export type IAddonSettingsProvider = InferProvider<typeof addonSettingsCapability>

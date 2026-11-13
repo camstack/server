@@ -6,6 +6,7 @@ import {
   AudioClassificationLabelSchema,
   AudioClassifyOutcomeSchema,
 } from './schemas/detection-shared.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const AudioAnalysisResultSchema = z.object({
   level: AudioLevelSchema,
@@ -147,14 +148,19 @@ export const audioAnalyzerCapability = {
   mode: 'singleton',
   methods: {
     analyseChunk: method(
-      z.object({ chunk: AudioChunkInputSchema, settings: AudioAnalysisSettingsSchema }),
+      z.object({
+        chunk: AudioChunkInputSchema,
+        settings: AudioAnalysisSettingsSchema,
+      }),
       AudioAnalysisResultSchema.nullable(),
       { kind: 'mutation' },
     ),
     // ONNX / Apple SoundAnalysis inference can exceed the broker's default
     // 5s requestTimeout on first load or under CPU pressure. 30s covers
     // even the worst-case cold-start without hanging indefinitely.
-    classify: method(AudioChunkInputSchema, AudioClassificationResultSchema, { timeoutMs: 30_000 }),
+    classify: method(AudioChunkInputSchema, AudioClassificationResultSchema, {
+      timeoutMs: 30_000,
+    }),
     /**
      * Start pulling this camera's audio from the broker, in THIS process.
      * Returns as soon as the attachment exists — the first
@@ -191,6 +197,7 @@ export const audioAnalyzerCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.PIPELINE },
 } as const satisfies CapabilityDefinition
 
 export type IAudioAnalyzerProvider = InferProvider<typeof audioAnalyzerCapability>

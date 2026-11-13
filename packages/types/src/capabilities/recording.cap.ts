@@ -47,6 +47,7 @@ import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { CamProfileSchema } from './schemas/streaming-shared.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * OUR recorder's source id. RESERVED: no other provider may return it from
@@ -395,6 +396,7 @@ export const recordingCapability = {
       { kind: 'query', auth: 'protected' },
     ),
   },
+  vocabulary: { noun: t('Recording', 'Registrazione'), order: 3250 },
 } as const satisfies CapabilityDefinition
 
 export type IRecordingProvider = InferProvider<typeof recordingCapability>

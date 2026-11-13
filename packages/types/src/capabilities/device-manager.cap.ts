@@ -605,10 +605,14 @@ export const deviceManagerCapability = {
     ),
 
     /** Register a device in the DB + in-memory registry. Called by DeviceManagerApi.register(). */
-    registerDevice: method(DeviceRegisterPayloadSchema, z.void(), { kind: 'mutation' }),
+    registerDevice: method(DeviceRegisterPayloadSchema, z.void(), {
+      kind: 'mutation',
+    }),
 
     /** Remove a device from the DB + in-memory registry. Called by DeviceManagerApi.remove(). */
-    removeDevice: method(DeviceRemovePayloadSchema, z.void(), { kind: 'mutation' }),
+    removeDevice: method(DeviceRemovePayloadSchema, z.void(), {
+      kind: 'mutation',
+    }),
 
     /** Persist device config blob. Called by DeviceConfig.set/setAll(). */
     //
@@ -726,7 +730,10 @@ export const deviceManagerCapability = {
               /** Whether the text reads the clock (`now`): it changes every minute. */
               readsClock: z.boolean(),
             }),
-            z.object({ ok: z.literal(false), refusal: DeviceTemplateRefusalSchema }),
+            z.object({
+              ok: z.literal(false),
+              refusal: DeviceTemplateRefusalSchema,
+            }),
           ]),
         ),
       }),
@@ -776,7 +783,10 @@ export const deviceManagerCapability = {
      *  re-sync), this survives a re-sync that reallocates the child's numeric
      *  id. `null` clears the override → priority default. Idempotent. */
     setPrimaryChildEntityId: method(
-      z.object({ deviceId: z.number(), primaryChildEntityId: z.string().nullable() }),
+      z.object({
+        deviceId: z.number(),
+        primaryChildEntityId: z.string().nullable(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -787,7 +797,10 @@ export const deviceManagerCapability = {
      *  `setPrimaryChildEntityId`; the layout is parent-only. Persisted,
      *  projected, and preserved across re-register/restore. Idempotent. */
     setChildLayout: method(
-      z.object({ deviceId: z.number(), childLayout: z.array(ChildLayoutEntrySchema).readonly() }),
+      z.object({
+        deviceId: z.number(),
+        childLayout: z.array(ChildLayoutEntrySchema).readonly(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -797,7 +810,10 @@ export const deviceManagerCapability = {
      *  `setChildLayout`; the operator's `primaryChildEntityId` still wins.
      *  Persisted, projected, and preserved across re-register/restore. Idempotent. */
     setPrimaryChildPreference: method(
-      z.object({ deviceId: z.number(), primaryChildPreference: z.array(z.string()).readonly() }),
+      z.object({
+        deviceId: z.number(),
+        primaryChildPreference: z.array(z.string()).readonly(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -808,7 +824,10 @@ export const deviceManagerCapability = {
      *  path's `UNIT_TABLE` lookups always hit canonical spellings. Persisted,
      *  projected, and preserved across re-register/restore. Idempotent. */
     setDisplay: method(
-      z.object({ deviceId: z.number(), display: DeviceDisplayOverrideSchema.nullable() }),
+      z.object({
+        deviceId: z.number(),
+        display: DeviceDisplayOverrideSchema.nullable(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -841,7 +860,10 @@ export const deviceManagerCapability = {
      *  `includeSynthesizable: true` unions in unbound device-scoped caps that
      *  declare `status.empty` and match the device's type. */
     getWireableFields: method(
-      z.object({ deviceId: z.number(), includeSynthesizable: z.boolean().optional() }),
+      z.object({
+        deviceId: z.number(),
+        includeSynthesizable: z.boolean().optional(),
+      }),
       z.object({
         caps: z
           .array(
@@ -987,7 +1009,9 @@ export const deviceManagerCapability = {
      *  same equality the registry uses everywhere. Never the operator's
      *  casing: a case-only rename is a real edit here, and a map keyed on the
      *  displayed spelling would orphan its entry on exactly that edit. */
-    listLocationIcons: method(z.void(), z.array(LocationIconAssignmentSchema), { role: 'viewer' }),
+    listLocationIcons: method(z.void(), z.array(LocationIconAssignmentSchema), {
+      role: 'viewer',
+    }),
 
     /** Set (or clear) the icon of a location label. `icon: null` removes the
      *  assignment. The label need NOT be registered — the registry is a
@@ -1048,7 +1072,9 @@ export const deviceManagerCapability = {
      *  Nothing here touches a device: a camera's zone is derived from its
      *  location, never stored on the row. Grouping rooms must not rewrite the
      *  fleet. */
-    listSiteZones: method(z.void(), z.array(SiteZoneSchema), { role: 'viewer' }),
+    listSiteZones: method(z.void(), z.array(SiteZoneSchema), {
+      role: 'viewer',
+    }),
 
     /** Create a zone, or set the icon of one that exists. `icon: null` clears
      *  the icon and KEEPS the zone — a zone with no icon is a normal zone, and
@@ -1157,7 +1183,9 @@ export const deviceManagerCapability = {
      * See `device-search.ts`. Not in `DEVICE_ENUMERATION_METHODS`: a
      * device-scoped token is refused rather than shown the whole fleet.
      */
-    search: method(DeviceSearchInputSchema, DeviceSearchResultSchema, { role: 'viewer' }),
+    search: method(DeviceSearchInputSchema, DeviceSearchResultSchema, {
+      role: 'viewer',
+    }),
 
     /** Get a single device by numeric deviceId. */
     getDevice: method(z.object({ deviceId: z.number() }), DeviceInfoSchema.nullable()),
@@ -1200,7 +1228,9 @@ export const deviceManagerCapability = {
      * `children-batch-loader.ts`.
      */
     getChildrenBatch: method(
-      z.object({ parentDeviceIds: z.array(z.number()).max(DEVICE_CHILDREN_BATCH_MAX) }),
+      z.object({
+        parentDeviceIds: z.array(z.number()).max(DEVICE_CHILDREN_BATCH_MAX),
+      }),
       z.record(z.string(), z.array(DeviceInfoSchema)),
     ),
 
@@ -1218,7 +1248,10 @@ export const deviceManagerCapability = {
      */
     getLinkedDevices: method(
       z.object({ deviceId: z.number() }),
-      z.object({ mode: LinkedDevicesModeSchema, devices: z.array(LinkedDeviceSchema) }),
+      z.object({
+        mode: LinkedDevicesModeSchema,
+        devices: z.array(LinkedDeviceSchema),
+      }),
       { role: 'viewer' },
     ),
 
@@ -1932,6 +1965,9 @@ export const deviceManagerCapability = {
       z.record(z.string(), z.record(z.string(), z.unknown().nullable())),
       { role: 'viewer' },
     ),
+  },
+  vocabulary: {
+    notOperatorFacing: 'the device registry itself — rename, move and remove are administration',
   },
 } as const satisfies CapabilityDefinition
 

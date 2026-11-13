@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * The last command a helper actuator group sent to each member (D944).
@@ -64,6 +65,7 @@ export const groupCommandsCapability = {
    */
   durability: 'session',
   history: 'none',
+  vocabulary: { noun: t('Group command', 'Comando di gruppo'), order: 5100 },
 } as const satisfies CapabilityDefinition
 
 export type IGroupCommandsProvider = InferProvider<typeof groupCommandsCapability>

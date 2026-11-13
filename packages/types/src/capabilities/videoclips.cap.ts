@@ -8,6 +8,7 @@ import {
   method,
   optionalMethod,
 } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * `videoclips` — the unified, navigable-clip surface for a camera.
@@ -264,7 +265,9 @@ export const ClipSchema = z.object({
    * `unsupported` — this source cannot mint stills at all.
    */
   thumbnailUnavailable: z
-    .object({ reason: z.enum(['sleeping', 'camera-refused', 'no-keyframe', 'unsupported']) })
+    .object({
+      reason: z.enum(['sleeping', 'camera-refused', 'no-keyframe', 'unsupported']),
+    })
     .optional(),
   /**
    * When the catalog this row came from was last CONFIRMED against the device.
@@ -1110,6 +1113,7 @@ export const videoclipsCapability = {
       { kind: 'query', auth: 'protected' },
     ),
   },
+  vocabulary: { noun: t('Video clips', 'Clip video'), order: 3330 },
 } as const satisfies CapabilityDefinition
 
 export type IVideoclipsProvider = InferProvider<typeof videoclipsCapability>

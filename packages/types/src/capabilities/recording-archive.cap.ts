@@ -68,6 +68,7 @@ import {
 } from '../interfaces/relocate.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { RecordingRangeSchema } from './recording.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 export const RecordingStatusSchema = z.object({
   deviceId: z.number(),
@@ -388,7 +389,9 @@ export const LocateSegmentResultSchema = z.discriminatedUnion('kind', [
 export type LocateSegmentResult = z.infer<typeof LocateSegmentResultSchema>
 
 /** Raw bytes of one finalized footage segment (read off disk on the recording node). */
-export const ReadSegmentBytesResultSchema = z.object({ data: z.instanceof(Uint8Array) })
+export const ReadSegmentBytesResultSchema = z.object({
+  data: z.instanceof(Uint8Array),
+})
 export type ReadSegmentBytesResult = z.infer<typeof ReadSegmentBytesResultSchema>
 
 /**
@@ -553,14 +556,22 @@ export const recordingArchiveCapability = {
      *  and an onboard source that ever needs bytes delegates to the
      *  `videoclips` transport its vendor already has (D625 §9.3, §10.5). */
     locateSegment: method(
-      z.object({ deviceId: z.number(), profile: z.string(), epochMs: z.number() }),
+      z.object({
+        deviceId: z.number(),
+        profile: z.string(),
+        epochMs: z.number(),
+      }),
       LocateSegmentResultSchema,
       { kind: 'query', auth: 'admin' },
     ),
     /** Read one finalized segment's raw bytes by its exact `startMs`. Used by a
      *  feeder running in another addon process to pull recorded footage over tRPC. */
     readSegmentBytes: method(
-      z.object({ deviceId: z.number(), profile: z.string(), startMs: z.number() }),
+      z.object({
+        deviceId: z.number(),
+        profile: z.string(),
+        startMs: z.number(),
+      }),
       ReadSegmentBytesResultSchema,
       { kind: 'query', auth: 'admin' },
     ),
@@ -818,6 +829,7 @@ export const recordingArchiveCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.STORAGE },
 } as const satisfies CapabilityDefinition
 
 export type IRecordingArchiveProvider = InferProvider<typeof recordingArchiveCapability>

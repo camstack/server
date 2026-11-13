@@ -1,5 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /**
  * Generic device-level status snapshot. Auto-registered by `BaseDevice`
@@ -46,6 +48,7 @@ export const deviceStatusCapability = {
         deviceId: z.number(),
         status: DeviceStatusSchema,
       }),
+      notOperatorFacing: 'the `online` state trigger phrases both edges of this change',
     },
   },
   status: {
@@ -72,6 +75,34 @@ export const deviceStatusCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Reachability', 'Raggiungibilità'),
+    order: 5260,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'online',
+        label: t('Online', 'Online'),
+        whenTrue: t('When {device} comes back online', 'Quando {device} torna online'),
+        whenFalse: t('When {device} goes offline', 'Quando {device} va offline'),
+        icon: 'wifi',
+      },
+    ],
+    extraEvents: [
+      {
+        category: EventCategory.DeviceOnline,
+        label: t('Came online', 'Tornato online'),
+        phrase: t('When {device} comes back online', 'Quando {device} torna online'),
+        icon: 'wifi',
+      },
+      {
+        category: EventCategory.DeviceOffline,
+        label: t('Went offline', 'Andato offline'),
+        phrase: t('When {device} goes offline', 'Quando {device} va offline'),
+        icon: 'wifi-off',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IDeviceStatusProvider = InferProvider<typeof deviceStatusCapability>

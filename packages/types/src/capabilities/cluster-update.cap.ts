@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * cluster-update — the ONE flow that brings the whole cluster to a release
@@ -170,6 +171,7 @@ export const clusterUpdateCapability = {
     ),
   },
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition
 
 export type IClusterUpdateProvider = InferProvider<typeof clusterUpdateCapability>

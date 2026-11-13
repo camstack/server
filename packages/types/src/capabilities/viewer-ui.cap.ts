@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const StaticDirOutputSchema = z.object({ staticDir: z.string() })
 const VersionOutputSchema = z.object({ version: z.string() })
@@ -35,6 +36,7 @@ export const viewerUiCapability = {
     getStaticDir: method(z.void(), StaticDirOutputSchema, { auth: 'admin' }),
     getVersion: method(z.void(), VersionOutputSchema, { auth: 'admin' }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition
 
 export type IViewerUiProvider = InferProvider<typeof viewerUiCapability>

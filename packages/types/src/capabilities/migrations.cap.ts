@@ -11,6 +11,7 @@ import {
 } from '../migrations/migration.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { DataStoreDatabaseSchema } from './settings-store.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * migrations — the ledger and the controls of the boot-time migration engine
@@ -67,7 +68,10 @@ export const migrationsCapability = {
      * the migrations it predates, so they do not simply run again.
      */
     restorePreMigration: method(
-      z.object({ database: DataStoreDatabaseSchema, snapshotId: z.string().min(1) }),
+      z.object({
+        database: DataStoreDatabaseSchema,
+        snapshotId: z.string().min(1),
+      }),
       z.object({
         scheduled: z.boolean(),
         held: z.array(z.string()),
@@ -83,7 +87,10 @@ export const migrationsCapability = {
      * owner, a body kind the owner cannot run) is refused whole and writes nothing.
      */
     declareOwner: method(
-      z.object({ owner: z.string().min(1), metas: z.array(MigrationMetaSchema) }),
+      z.object({
+        owner: z.string().min(1),
+        metas: z.array(MigrationMetaSchema),
+      }),
       z.object({
         bootId: z.string(),
         snapshot: z.enum(['none', 'written', 'refused']),
@@ -174,6 +181,7 @@ export const migrationsCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IMigrationsProvider = InferProvider<typeof migrationsCapability>

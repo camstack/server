@@ -11,6 +11,7 @@ import {
   MaskRectShapeSchema,
   MaskShapeKindSchema,
 } from './mask-shape.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * PRIVACY — what the camera deliberately does not capture. Two planes:
@@ -134,13 +135,34 @@ export const privacyMaskCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Camera],
   deviceConfig: {
-    ui: { kind: 'widget', widgetId: 'host/privacy-mask-grid', tab: 'image', label: 'Privacy Mask' },
+    ui: {
+      kind: 'widget',
+      widgetId: 'host/privacy-mask-grid',
+      tab: 'image',
+      label: 'Privacy Mask',
+    },
   },
   methods: {
     getOptions: method(z.object({ deviceId: z.number() }), PrivacyMaskOptionsSchema),
     setMask: method(z.object({ deviceId: z.number(), patch: PrivacyMaskPatchSchema }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'privacy.maskOn',
+          label: t('Privacy mask on', 'Maschera privacy attiva'),
+          phrase: t('Cover the privacy zones of {device}', 'Oscura le zone private di {device}'),
+          icon: 'eye-off',
+          args: { patch: { enabled: true } },
+        },
+        {
+          id: 'privacy.maskOff',
+          label: t('Privacy mask off', 'Maschera privacy spenta'),
+          phrase: t('Uncover the privacy zones of {device}', 'Scopri le zone private di {device}'),
+          icon: 'eye',
+          args: { patch: { enabled: false } },
+        },
+      ],
     }),
     /**
      * Turn the camera's microphone on or off, at the camera.
@@ -159,6 +181,22 @@ export const privacyMaskCapability = {
     setAudioEnabled: method(z.object({ deviceId: z.number(), enabled: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'privacy.micOn',
+          label: t('Microphone on', 'Microfono attivo'),
+          phrase: t('Turn on the microphone of {device}', 'Attiva il microfono di {device}'),
+          icon: 'mic',
+          args: { enabled: true },
+        },
+        {
+          id: 'privacy.micOff',
+          label: t('Microphone off', 'Microfono spento'),
+          phrase: t('Turn off the microphone of {device}', 'Disattiva il microfono di {device}'),
+          icon: 'mic-off',
+          args: { enabled: false },
+        },
+      ],
     }),
   },
   status: { schema: PrivacyMaskStatusSchema, kind: 'poll' },
@@ -178,6 +216,40 @@ export const privacyMaskCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Privacy', 'Privacy'),
+    order: 3210,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Privacy mask', 'Maschera privacy'),
+        whenTrue: t(
+          'When the privacy mask of {device} is turned on',
+          'Quando si attiva la maschera privacy di {device}',
+        ),
+        whenFalse: t(
+          'When the privacy mask of {device} is turned off',
+          'Quando si disattiva la maschera privacy di {device}',
+        ),
+        icon: 'eye-off',
+      },
+      {
+        kind: 'boolean',
+        field: 'audioEnabled',
+        label: t('Microphone', 'Microfono'),
+        whenTrue: t(
+          'When the microphone of {device} is turned on',
+          'Quando si attiva il microfono di {device}',
+        ),
+        whenFalse: t(
+          'When the microphone of {device} is turned off',
+          'Quando si disattiva il microfono di {device}',
+        ),
+        icon: 'mic',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IPrivacyMaskProvider = InferNativeProvider<typeof privacyMaskCapability>

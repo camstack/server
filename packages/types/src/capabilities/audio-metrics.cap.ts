@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Per-class audio metrics aggregated over a sliding window.
@@ -156,6 +157,7 @@ export const audioMetricsCapability = {
    * History (D850): none — the level is the addon series `pipeline-analytics/audio-level` (producer `record`); the other numbers move every inference window and duplicate it.
    */
   history: 'none',
+  vocabulary: { noun: t('Audio metrics', 'Metriche audio'), order: 3020 },
 } as const satisfies CapabilityDefinition
 
 export type IAudioMetricsProvider = InferProvider<typeof audioMetricsCapability>

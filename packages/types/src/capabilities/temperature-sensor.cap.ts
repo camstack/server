@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Single-metric temperature reading. Drives Home Assistant `sensor`
@@ -58,6 +59,20 @@ export const temperatureSensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Temperature', 'Temperatura'),
+    order: 5210,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'temperature',
+        quantity: t('the temperature', 'la temperatura'),
+        label: t('Temperature', 'Temperatura'),
+        unit: '°C',
+        icon: 'thermometer',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type ITemperatureSensorProvider = InferProvider<typeof temperatureSensorCapability>

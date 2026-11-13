@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { MODEL_FORMATS } from '../types/models.js'
 import { AcceleratorComputeSchema } from '../pipeline/auto-tune/accelerator-compute.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const ModelFormatSchema = z.enum(MODEL_FORMATS)
 
@@ -245,6 +246,7 @@ export const platformProbeCapability = {
     // the node-local utility (local `ctx.kernel` when unpinned; the admin router
     // forwards to a specific node via `createCapabilityProxy`).
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition
 
 export type IPlatformProbeProvider = InferProvider<typeof platformProbeCapability>

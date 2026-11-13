@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `keychain` — the hub's encrypted store of secret values (D787).
@@ -46,14 +47,24 @@ export type KeychainUnavailableReason = z.infer<typeof KeychainUnavailableReason
 
 export const KeychainStateSchema = z.discriminatedUnion('state', [
   z.object({ state: z.literal('ready') }),
-  z.object({ state: z.literal('locked'), reason: KeychainUnavailableReasonSchema }),
+  z.object({
+    state: z.literal('locked'),
+    reason: KeychainUnavailableReasonSchema,
+  }),
 ])
 export type KeychainState = z.infer<typeof KeychainStateSchema>
 
 export const KeychainResolveEntrySchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('value'), value: z.string(), version: z.number().int() }),
+  z.object({
+    kind: z.literal('value'),
+    value: z.string(),
+    version: z.number().int(),
+  }),
   z.object({ kind: z.literal('missing') }),
-  z.object({ kind: z.literal('unavailable'), reason: KeychainUnavailableReasonSchema }),
+  z.object({
+    kind: z.literal('unavailable'),
+    reason: KeychainUnavailableReasonSchema,
+  }),
   /** The caller does not own this ref. */
   z.object({ kind: z.literal('forbidden') }),
 ])
@@ -137,6 +148,7 @@ export const keychainCapability = {
     /** Whether values can be served — the save path refuses a write while locked. */
     getState: method(z.object({}), KeychainStateSchema, { auth: 'admin' }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type IKeychainProvider = InferProvider<typeof keychainCapability>

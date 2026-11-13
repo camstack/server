@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * A camera's own "record me NOW" LEVEL — a signal the device raises while
@@ -79,6 +80,20 @@ export const recordingSignalCapability = {
    * History (D850): none — recording intent is already in the recordings ledger.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Recording signal', 'Segnale di registrazione'),
+    order: 3270,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'active',
+        label: t('Recording', 'In registrazione'),
+        whenTrue: t('When {device} starts recording', 'Quando {device} inizia a registrare'),
+        whenFalse: t('When {device} stops recording', 'Quando {device} smette di registrare'),
+        icon: 'circle-dot',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IRecordingSignalProvider = InferProvider<typeof recordingSignalCapability>

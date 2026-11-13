@@ -15,6 +15,7 @@ import {
   NodeBenchRunnerInputSchema,
   NodeBenchRunnerStatusSchema,
 } from '../pipeline/node-benchmark/schemas.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * A bounding box in NORMALIZED [0,1] frame coordinates for `getNativeCrop`. The
@@ -304,18 +305,33 @@ const RunStatelessStepResultSchema = z.discriminatedUnion('kind', [
  * the device settings UI (slider min/max/step). Touch one place and
  * both sides stay aligned.
  */
-const motionCooldownMsField = { min: 0, max: 60_000, default: 30_000, step: 500 } as const
+const motionCooldownMsField = {
+  min: 0,
+  max: 60_000,
+  default: 30_000,
+  step: 500,
+} as const
 // Upper bound on how long an on-motion detection session is HELD OPEN past the
 // motion cooldown while a confirmed non-stationary track is still active
 // (orchestrator-side session-hold — a slow subject can evade VMD yet still be
 // tracked). `0` disables the hold entirely (legacy cooldown-only behaviour).
-const maxSessionHoldMsField = { min: 0, max: 600_000, default: 120_000, step: 5_000 } as const
+const maxSessionHoldMsField = {
+  min: 0,
+  max: 600_000,
+  default: 120_000,
+  step: 5_000,
+} as const
 /**
  * Quiet period that closes an `audioMode: 'on-motion'` audio window. Floor of
  * 5s so a rearm can never degenerate into per-event stream churn; default 90s
  * comfortably outlives the gap between two PIR wakes on a battery camera.
  */
-const audioMotionWindowMsField = { min: 5_000, max: 600_000, default: 90_000, step: 5_000 } as const
+const audioMotionWindowMsField = {
+  min: 5_000,
+  max: 600_000,
+  default: 90_000,
+  step: 5_000,
+} as const
 const motionFpsField = { min: 1, max: 30, default: 4, step: 1 } as const
 const detectionFpsField = { min: 1, max: 30, default: 10, step: 1 } as const
 /**
@@ -339,8 +355,18 @@ const detectionFpsField = { min: 1, max: 30, default: 10, step: 1 } as const
 // `occupancyRecheckFrames` inferences. 30 s was tried on 2026-08-13 and reverted —
 // it starved the decode path across the fleet. The cost is paid only while
 // occupancyArmed.
-const occupancyRecheckSecField = { min: 0, max: 300, default: 300, step: 5 } as const
-const occupancyRecheckFramesField = { min: 1, max: 10, default: 4, step: 1 } as const
+const occupancyRecheckSecField = {
+  min: 0,
+  max: 300,
+  default: 300,
+  step: 5,
+} as const
+const occupancyRecheckFramesField = {
+  min: 1,
+  max: 10,
+  default: 4,
+  step: 1,
+} as const
 
 /**
  * Frames one PRE-ROLL catch-up burst may send to inference at session open.
@@ -352,7 +378,12 @@ const occupancyRecheckFramesField = { min: 1, max: 10, default: 4, step: 1 } as 
  * decoded, because that is how the dial reaches a decodable GOP, and is then
  * discarded — the pre-D411 behaviour).
  */
-const preRollInferenceFramesField = { min: 0, max: 30, default: 12, step: 1 } as const
+const preRollInferenceFramesField = {
+  min: 0,
+  max: 30,
+  default: 12,
+  step: 1,
+} as const
 
 /**
  * Source enum for motion signals fed to the runner. Extensible — add
@@ -1569,6 +1600,7 @@ export const pipelineRunnerCapability = {
     // rendered in the admin UI via `NodeAddonsSettingsPanel` instead of
     // the dedicated `NodeTuningTab` that used to call these cap methods.
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.PIPELINE },
 } as const satisfies CapabilityDefinition
 
 export type IPipelineRunnerProvider = InferProvider<typeof pipelineRunnerCapability>

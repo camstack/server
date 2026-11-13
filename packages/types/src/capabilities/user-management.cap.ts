@@ -8,6 +8,7 @@ import {
   RawSecretMigrationReportSchema,
 } from './raw-secret-migration.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const UserSummarySchema = z.object({
   id: z.string(),
@@ -185,7 +186,9 @@ export const userManagementCapability = {
       auth: 'admin',
       access: 'delete',
     }),
-    getTotpStatus: method(z.object({ userId: z.string() }), TotpStatusSchema, { auth: 'admin' }),
+    getTotpStatus: method(z.object({ userId: z.string() }), TotpStatusSchema, {
+      auth: 'admin',
+    }),
     /**
      * D878: move every TOTP seed stored in plaintext into the keychain (owner
      * `system`), leaving a marker in the row. Dry run unless `apply`;
@@ -311,13 +314,16 @@ export const userManagementCapability = {
       { kind: 'mutation', auth: 'admin', access: 'delete' },
     ),
 
-    listOauthSessions: method(z.void(), z.array(OauthSessionSummarySchema), { auth: 'admin' }),
+    listOauthSessions: method(z.void(), z.array(OauthSessionSummarySchema), {
+      auth: 'admin',
+    }),
     revokeOauthSession: method(z.object({ id: z.string() }), z.object({ success: z.boolean() }), {
       kind: 'mutation',
       auth: 'admin',
       access: 'delete',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type IUserManagementProvider = InferProvider<typeof userManagementCapability>

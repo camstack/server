@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Whether a helper actuator group counts as active (D944): at least one
@@ -48,6 +49,7 @@ export const groupActiveCapability = {
    */
   durability: 'session',
   history: 'none',
+  vocabulary: { noun: t('Group state', 'Stato del gruppo'), order: 5090 },
 } as const satisfies CapabilityDefinition
 
 export type IGroupActiveProvider = InferProvider<typeof groupActiveCapability>

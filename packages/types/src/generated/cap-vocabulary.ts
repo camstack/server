@@ -1,0 +1,5149 @@
+// AUTO-GENERATED — do not edit manually.
+// Regenerate with: npx tsx scripts/generate-cap-vocabulary.ts
+/* eslint-disable */
+
+import { DeviceRole, DeviceType } from '../device/device-type.js'
+import type { CapVocabularyMap } from '../device/cap-vocabulary/types.js'
+import { EventCategory } from '../enums/event-category.js'
+
+/**
+ * THE cap vocabulary (D920), projected from the declarations of every
+ * `*.cap.ts` (D1050): 205 caps (104 device, 101 system).
+ * Device caps in their declared picker order, then system caps by name.
+ */
+export const CAP_VOCABULARY: CapVocabularyMap = {
+  'switch': {
+    scope: 'device',
+    noun: { en: 'Switch', it: 'Interruttore' },
+    actions: [
+      {
+        id: 'switch.on',
+        method: 'setState',
+        label: { en: 'Turn on', it: 'Accendi' },
+        phrase: { en: 'Turn on {device}', it: 'Accendi {device}' },
+        icon: 'power',
+        args: { on: true },
+        effect: { field: 'on', value: true },
+      },
+      {
+        id: 'switch.off',
+        method: 'setState',
+        label: { en: 'Turn off', it: 'Spegni' },
+        phrase: { en: 'Turn off {device}', it: 'Spegni {device}' },
+        icon: 'power-off',
+        args: { on: false },
+        effect: { field: 'on', value: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'on',
+        label: { en: 'On', it: 'Acceso' },
+        whenTrue: { en: 'When {device} turns on', it: 'Quando {device} si accende' },
+        whenFalse: { en: 'When {device} turns off', it: 'Quando {device} si spegne' },
+        icon: 'power',
+      },
+    ],
+    events: {
+      onStateChanged: {
+        notOperatorFacing: 'the `on` state trigger phrases both edges of this change',
+      },
+    },
+    overrides: {
+      byType: {
+        [DeviceType.Siren]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Sound', it: 'Fai suonare' },
+              phrase: { en: 'Sound {device}', it: 'Fai suonare {device}' },
+              icon: 'siren',
+            },
+            'switch.off': {
+              label: { en: 'Silence', it: 'Zittisci' },
+              phrase: { en: 'Silence {device}', it: 'Zittisci {device}' },
+              icon: 'volume-x',
+            },
+          },
+          state: {
+            on: {
+              label: { en: 'Sounding', it: 'In funzione' },
+              whenTrue: {
+                en: 'When {device} starts sounding',
+                it: 'Quando {device} inizia a suonare',
+              },
+              whenFalse: {
+                en: 'When {device} falls silent',
+                it: 'Quando {device} smette di suonare',
+              },
+              icon: 'siren',
+            },
+          },
+        },
+        [DeviceType.Light]: {
+          actions: { 'switch.on': { icon: 'lightbulb' }, 'switch.off': { icon: 'lightbulb-off' } },
+          state: { on: { icon: 'lightbulb' } },
+        },
+      },
+      byRole: {
+        [DeviceRole.Siren]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Sound', it: 'Fai suonare' },
+              phrase: { en: 'Sound {device}', it: 'Fai suonare {device}' },
+              icon: 'siren',
+            },
+            'switch.off': {
+              label: { en: 'Silence', it: 'Zittisci' },
+              phrase: { en: 'Silence {device}', it: 'Zittisci {device}' },
+              icon: 'volume-x',
+            },
+          },
+          state: {
+            on: {
+              label: { en: 'Sounding', it: 'In funzione' },
+              whenTrue: {
+                en: 'When {device} starts sounding',
+                it: 'Quando {device} inizia a suonare',
+              },
+              whenFalse: {
+                en: 'When {device} falls silent',
+                it: 'Quando {device} smette di suonare',
+              },
+              icon: 'siren',
+            },
+          },
+        },
+        [DeviceRole.Floodlight]: {
+          actions: { 'switch.on': { icon: 'lightbulb' }, 'switch.off': { icon: 'lightbulb-off' } },
+          state: { on: { icon: 'lightbulb' } },
+        },
+        [DeviceRole.Spotlight]: {
+          actions: { 'switch.on': { icon: 'lightbulb' }, 'switch.off': { icon: 'lightbulb-off' } },
+          state: { on: { icon: 'lightbulb' } },
+        },
+        [DeviceRole.SwitchLight]: {
+          actions: { 'switch.on': { icon: 'lightbulb' }, 'switch.off': { icon: 'lightbulb-off' } },
+          state: { on: { icon: 'lightbulb' } },
+        },
+        [DeviceRole.Chime]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Enable chime', it: 'Attiva il campanello' },
+              phrase: { en: 'Enable the chime {device}', it: 'Attiva il campanello {device}' },
+              icon: 'bell',
+            },
+            'switch.off': {
+              label: { en: 'Mute chime', it: 'Silenzia il campanello' },
+              phrase: { en: 'Mute the chime {device}', it: 'Silenzia il campanello {device}' },
+              icon: 'bell-off',
+            },
+          },
+        },
+        [DeviceRole.PirSensor]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Arm PIR', it: 'Attiva il PIR' },
+              phrase: { en: 'Arm the PIR sensor {device}', it: 'Attiva il sensore PIR {device}' },
+              icon: 'radar',
+            },
+            'switch.off': {
+              label: { en: 'Disarm PIR', it: 'Disattiva il PIR' },
+              phrase: {
+                en: 'Disarm the PIR sensor {device}',
+                it: 'Disattiva il sensore PIR {device}',
+              },
+              icon: 'radar',
+            },
+          },
+        },
+        [DeviceRole.Nightvision]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Night vision on', it: 'Visione notturna attiva' },
+              phrase: {
+                en: 'Turn on night vision on {device}',
+                it: 'Attiva la visione notturna di {device}',
+              },
+              icon: 'moon',
+            },
+            'switch.off': {
+              label: { en: 'Night vision off', it: 'Visione notturna spenta' },
+              phrase: {
+                en: 'Turn off night vision on {device}',
+                it: 'Disattiva la visione notturna di {device}',
+              },
+              icon: 'sun',
+            },
+          },
+        },
+        [DeviceRole.PrivacyMask]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Privacy on', it: 'Privacy attiva' },
+              phrase: { en: 'Turn on privacy on {device}', it: 'Attiva la privacy su {device}' },
+              icon: 'eye-off',
+            },
+            'switch.off': {
+              label: { en: 'Privacy off', it: 'Privacy disattiva' },
+              phrase: { en: 'Turn off privacy on {device}', it: 'Disattiva la privacy su {device}' },
+              icon: 'eye',
+            },
+          },
+        },
+        [DeviceRole.Autotrack]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Autotrack on', it: 'Inseguimento attivo' },
+              phrase: {
+                en: 'Start autotracking on {device}',
+                it: 'Attiva l’inseguimento su {device}',
+              },
+              icon: 'crosshair',
+            },
+            'switch.off': {
+              label: { en: 'Autotrack off', it: 'Inseguimento spento' },
+              phrase: {
+                en: 'Stop autotracking on {device}',
+                it: 'Disattiva l’inseguimento su {device}',
+              },
+              icon: 'crosshair',
+            },
+          },
+        },
+        [DeviceRole.Outlet]: {
+          actions: { 'switch.on': { icon: 'plug-zap' }, 'switch.off': { icon: 'plug' } },
+          state: { on: { icon: 'plug-zap' } },
+        },
+      },
+    },
+  },
+  'brightness': {
+    scope: 'device',
+    noun: { en: 'Brightness', it: 'Luminosità' },
+    actions: [
+      {
+        id: 'brightness.full',
+        method: 'setBrightness',
+        label: { en: 'Full brightness', it: 'Luminosità massima' },
+        phrase: {
+          en: 'Set {device} to full brightness',
+          it: 'Porta {device} alla massima luminosità',
+        },
+        icon: 'sun',
+        args: { level: 100 },
+        effect: { field: 'level', value: 100 },
+      },
+      {
+        id: 'brightness.half',
+        method: 'setBrightness',
+        label: { en: 'Half brightness', it: 'Luminosità a metà' },
+        phrase: { en: 'Dim {device} to half', it: 'Abbassa {device} a metà luminosità' },
+        icon: 'sun-dim',
+        args: { level: 50 },
+        effect: { field: 'level', value: 50 },
+      },
+      {
+        id: 'brightness.off',
+        method: 'setBrightness',
+        label: { en: 'Brightness off', it: 'Luminosità a zero' },
+        phrase: { en: 'Dim {device} to zero', it: 'Abbassa {device} a zero' },
+        icon: 'lightbulb-off',
+        args: { level: 0 },
+        effect: { field: 'level', value: 0 },
+      },
+      {
+        id: 'brightness.set',
+        method: 'setBrightness',
+        label: { en: 'Set brightness', it: 'Imposta la luminosità' },
+        phrase: {
+          en: 'Set the brightness of {device} to {level}',
+          it: 'Imposta la luminosità di {device} a {level}',
+        },
+        icon: 'sun-medium',
+        openArgs: [
+          {
+            key: 'level',
+            label: { en: 'Percentage', it: 'Percentuale' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+        effect: { field: 'level', fromArg: 'level' },
+      },
+    ],
+    state: [
+      {
+        kind: 'numeric',
+        field: 'level',
+        quantity: { en: 'the brightness', it: 'la luminosità' },
+        label: { en: 'Brightness', it: 'Luminosità' },
+        unit: '%',
+        icon: 'sun',
+      },
+    ],
+    events: {
+      onBrightnessChanged: { notOperatorFacing: 'the `level` state trigger reads the same change' },
+    },
+  },
+  'color': {
+    scope: 'device',
+    noun: { en: 'Colour', it: 'Colore' },
+    actions: [
+      {
+        id: 'color.warmWhite',
+        method: 'setColor',
+        label: { en: 'Warm white', it: 'Bianco caldo' },
+        phrase: { en: 'Set {device} to warm white', it: 'Imposta {device} su bianco caldo' },
+        icon: 'sun',
+        args: { color: { mode: 'mired', colorTemperature: 370 } },
+      },
+      {
+        id: 'color.coolWhite',
+        method: 'setColor',
+        label: { en: 'Cool white', it: 'Bianco freddo' },
+        phrase: { en: 'Set {device} to cool white', it: 'Imposta {device} su bianco freddo' },
+        icon: 'snowflake',
+        args: { color: { mode: 'mired', colorTemperature: 200 } },
+      },
+      {
+        id: 'color.red',
+        method: 'setColor',
+        label: { en: 'Red', it: 'Rosso' },
+        phrase: { en: 'Turn {device} red', it: 'Colora {device} di rosso' },
+        icon: 'palette',
+        args: { color: { mode: 'rgb', rgb: { r: 255, g: 0, b: 0 } } },
+      },
+      {
+        id: 'color.green',
+        method: 'setColor',
+        label: { en: 'Green', it: 'Verde' },
+        phrase: { en: 'Turn {device} green', it: 'Colora {device} di verde' },
+        icon: 'palette',
+        args: { color: { mode: 'rgb', rgb: { r: 0, g: 255, b: 0 } } },
+      },
+      {
+        id: 'color.blue',
+        method: 'setColor',
+        label: { en: 'Blue', it: 'Blu' },
+        phrase: { en: 'Turn {device} blue', it: 'Colora {device} di blu' },
+        icon: 'palette',
+        args: { color: { mode: 'rgb', rgb: { r: 0, g: 0, b: 255 } } },
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: { en: 'Colour mode', it: 'Modalità colore' },
+        values: [
+          { value: 'rgb', label: { en: 'RGB colour', it: 'Colore RGB' } },
+          { value: 'hsv', label: { en: 'HSV colour', it: 'Colore HSV' } },
+          { value: 'mired', label: { en: 'White temperature', it: 'Temperatura del bianco' } },
+        ],
+        icon: 'palette',
+      },
+    ],
+    events: {
+      onColorChanged: {
+        notOperatorFacing: 'a colour change is read through the `mode` state trigger',
+      },
+    },
+  },
+  'cover': {
+    scope: 'device',
+    noun: { en: 'Cover', it: 'Copertura' },
+    actions: [
+      {
+        id: 'cover.open',
+        method: 'open',
+        label: { en: 'Open', it: 'Apri' },
+        phrase: { en: 'Open {device}', it: 'Apri {device}' },
+        icon: 'arrow-up-to-line',
+        effect: { field: 'state', value: 'open' },
+      },
+      {
+        id: 'cover.close',
+        method: 'close',
+        label: { en: 'Close', it: 'Chiudi' },
+        phrase: { en: 'Close {device}', it: 'Chiudi {device}' },
+        icon: 'arrow-down-to-line',
+        effect: { field: 'state', value: 'closed' },
+      },
+      {
+        id: 'cover.stop',
+        method: 'stop',
+        label: { en: 'Stop', it: 'Ferma' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'square',
+      },
+      {
+        id: 'cover.position',
+        method: 'setPosition',
+        label: { en: 'Set position', it: 'Imposta la posizione' },
+        phrase: {
+          en: 'Move {device} to {position} open',
+          it: 'Porta {device} al {position} di apertura',
+        },
+        icon: 'blinds',
+        openArgs: [
+          {
+            key: 'position',
+            label: { en: 'Position', it: 'Posizione' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+        effect: { field: 'position', fromArg: 'position' },
+      },
+      {
+        id: 'cover.tilt',
+        method: 'setTiltPosition',
+        label: { en: 'Set tilt', it: 'Imposta l’inclinazione' },
+        phrase: { en: 'Tilt {device} to {tiltPosition}', it: 'Inclina {device} al {tiltPosition}' },
+        icon: 'blinds',
+        openArgs: [
+          {
+            key: 'tiltPosition',
+            label: { en: 'Tilt', it: 'Inclinazione' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+        effect: { field: 'tiltPosition', fromArg: 'tiltPosition' },
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'State', it: 'Stato' },
+        values: [
+          {
+            value: 'open',
+            label: { en: 'Open', it: 'Aperto' },
+            phrase: { en: 'When {device} is fully open', it: 'Quando {device} è tutto aperto' },
+          },
+          {
+            value: 'opening',
+            label: { en: 'Opening', it: 'In apertura' },
+            phrase: { en: 'When {device} starts opening', it: 'Quando {device} inizia ad aprirsi' },
+          },
+          {
+            value: 'closing',
+            label: { en: 'Closing', it: 'In chiusura' },
+            phrase: { en: 'When {device} starts closing', it: 'Quando {device} inizia a chiudersi' },
+          },
+          {
+            value: 'closed',
+            label: { en: 'Closed', it: 'Chiuso' },
+            phrase: { en: 'When {device} is fully closed', it: 'Quando {device} è tutto chiuso' },
+          },
+          {
+            value: 'stopped',
+            label: { en: 'Stopped', it: 'Fermo' },
+            phrase: { en: 'When {device} stops part-way', it: 'Quando {device} si ferma a metà' },
+          },
+        ],
+        icon: 'blinds',
+      },
+      {
+        kind: 'numeric',
+        field: 'position',
+        quantity: { en: 'the opening', it: 'l’apertura' },
+        label: { en: 'Position', it: 'Posizione' },
+        unit: '%',
+        icon: 'blinds',
+      },
+    ],
+    overrides: {
+      byRole: {
+        [DeviceRole.CoverGarage]: {
+          actions: {
+            'cover.open': {
+              phrase: { en: 'Open the garage door {device}', it: 'Apri il garage {device}' },
+              icon: 'warehouse',
+            },
+            'cover.close': {
+              phrase: { en: 'Close the garage door {device}', it: 'Chiudi il garage {device}' },
+              icon: 'warehouse',
+            },
+          },
+        },
+        [DeviceRole.CoverGate]: {
+          actions: {
+            'cover.open': {
+              phrase: { en: 'Open the gate {device}', it: 'Apri il cancello {device}' },
+              icon: 'fence',
+            },
+            'cover.close': {
+              phrase: { en: 'Close the gate {device}', it: 'Chiudi il cancello {device}' },
+              icon: 'fence',
+            },
+          },
+        },
+        [DeviceRole.CoverDoor]: {
+          actions: {
+            'cover.open': {
+              phrase: { en: 'Open the door {device}', it: 'Apri la porta {device}' },
+              icon: 'door-open',
+            },
+            'cover.close': {
+              phrase: { en: 'Close the door {device}', it: 'Chiudi la porta {device}' },
+              icon: 'door-closed',
+            },
+          },
+        },
+        [DeviceRole.CoverWindow]: {
+          actions: {
+            'cover.open': {
+              phrase: { en: 'Open the window {device}', it: 'Apri la finestra {device}' },
+              icon: 'app-window',
+            },
+            'cover.close': {
+              phrase: { en: 'Close the window {device}', it: 'Chiudi la finestra {device}' },
+              icon: 'app-window',
+            },
+          },
+        },
+        [DeviceRole.CoverShutter]: {
+          actions: {
+            'cover.open': {
+              phrase: { en: 'Raise the shutter {device}', it: 'Alza la tapparella {device}' },
+            },
+            'cover.close': {
+              phrase: { en: 'Lower the shutter {device}', it: 'Abbassa la tapparella {device}' },
+            },
+          },
+        },
+        [DeviceRole.CoverAwning]: {
+          actions: {
+            'cover.open': {
+              phrase: { en: 'Extend the awning {device}', it: 'Apri la tenda da sole {device}' },
+            },
+            'cover.close': {
+              phrase: { en: 'Retract the awning {device}', it: 'Chiudi la tenda da sole {device}' },
+            },
+          },
+        },
+      },
+    },
+  },
+  'valve': {
+    scope: 'device',
+    noun: { en: 'Valve', it: 'Valvola' },
+    actions: [
+      {
+        id: 'valve.open',
+        method: 'open',
+        label: { en: 'Open valve', it: 'Apri la valvola' },
+        phrase: { en: 'Open {device}', it: 'Apri {device}' },
+        icon: 'droplets',
+        effect: { field: 'state', value: 'open' },
+      },
+      {
+        id: 'valve.close',
+        method: 'close',
+        label: { en: 'Close valve', it: 'Chiudi la valvola' },
+        phrase: { en: 'Close {device}', it: 'Chiudi {device}' },
+        icon: 'droplet-off',
+        effect: { field: 'state', value: 'closed' },
+      },
+      {
+        id: 'valve.stop',
+        method: 'stop',
+        label: { en: 'Stop valve', it: 'Ferma la valvola' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'square',
+      },
+      {
+        id: 'valve.position',
+        method: 'setPosition',
+        label: { en: 'Set opening', it: 'Imposta l’apertura' },
+        phrase: { en: 'Open {device} to {position}', it: 'Apri {device} al {position}' },
+        icon: 'droplets',
+        openArgs: [
+          {
+            key: 'position',
+            label: { en: 'Opening', it: 'Apertura' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+        effect: { field: 'position', fromArg: 'position' },
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'State', it: 'Stato' },
+        values: [
+          {
+            value: 'open',
+            label: { en: 'Open', it: 'Aperto' },
+            phrase: { en: 'When {device} is fully open', it: 'Quando {device} è tutto aperto' },
+          },
+          {
+            value: 'opening',
+            label: { en: 'Opening', it: 'In apertura' },
+            phrase: { en: 'When {device} starts opening', it: 'Quando {device} inizia ad aprirsi' },
+          },
+          {
+            value: 'closing',
+            label: { en: 'Closing', it: 'In chiusura' },
+            phrase: { en: 'When {device} starts closing', it: 'Quando {device} inizia a chiudersi' },
+          },
+          {
+            value: 'closed',
+            label: { en: 'Closed', it: 'Chiuso' },
+            phrase: { en: 'When {device} is fully closed', it: 'Quando {device} è tutto chiuso' },
+          },
+          {
+            value: 'stopped',
+            label: { en: 'Stopped', it: 'Fermo' },
+            phrase: { en: 'When {device} stops part-way', it: 'Quando {device} si ferma a metà' },
+          },
+        ],
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'position',
+        quantity: { en: 'the opening', it: 'l’apertura' },
+        label: { en: 'Opening', it: 'Apertura' },
+        unit: '%',
+        icon: 'droplets',
+      },
+    ],
+  },
+  'power-source': {
+    scope: 'device',
+    noun: { en: 'Power source', it: 'Alimentazione' },
+    actions: [
+      {
+        id: 'powerSource.on',
+        method: 'powerOn',
+        label: { en: 'Power on', it: 'Dai corrente' },
+        phrase: { en: 'Power on {device}', it: 'Dai corrente a {device}' },
+        icon: 'power',
+      },
+      {
+        id: 'powerSource.off',
+        method: 'powerOff',
+        label: { en: 'Power off', it: 'Togli corrente' },
+        phrase: { en: 'Cut the power of {device}', it: 'Togli la corrente a {device}' },
+        icon: 'power-off',
+      },
+      {
+        id: 'powerSource.forceRestart',
+        method: 'forceRestart',
+        label: { en: 'Force restart', it: 'Riavvio forzato' },
+        phrase: {
+          en: 'Force restart {device} by cutting its power',
+          it: 'Riavvia {device} togliendo la corrente',
+        },
+        icon: 'refresh-cw',
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'switchOn',
+        label: { en: 'Power switch on', it: 'Presa accesa' },
+        whenTrue: {
+          en: 'When the power of {device} comes on',
+          it: 'Quando arriva la corrente a {device}',
+        },
+        whenFalse: {
+          en: 'When the power of {device} is cut',
+          it: 'Quando manca la corrente a {device}',
+        },
+        icon: 'power',
+      },
+    ],
+  },
+  'lock-control': {
+    scope: 'device',
+    noun: { en: 'Lock', it: 'Serratura' },
+    actions: [
+      {
+        id: 'lock.lock',
+        method: 'lock',
+        label: { en: 'Lock', it: 'Chiudi a chiave' },
+        phrase: { en: 'Lock {device}', it: 'Chiudi a chiave {device}' },
+        icon: 'lock',
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'locked' },
+      },
+      {
+        id: 'lock.unlock',
+        method: 'unlock',
+        label: { en: 'Unlock', it: 'Apri la serratura' },
+        phrase: { en: 'Unlock {device}', it: 'Sblocca {device}' },
+        icon: 'lock-open',
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'unlocked' },
+      },
+      {
+        id: 'lock.open',
+        method: 'open',
+        label: { en: 'Open latch', it: 'Apri lo scrocco' },
+        phrase: { en: 'Release the latch of {device}', it: 'Fai scattare lo scrocco di {device}' },
+        icon: 'door-open',
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'Lock state', it: 'Stato della serratura' },
+        values: [
+          {
+            value: 'locked',
+            label: { en: 'Locked', it: 'Chiusa a chiave' },
+            phrase: { en: 'When {device} locks', it: 'Quando {device} si chiude a chiave' },
+          },
+          {
+            value: 'unlocked',
+            label: { en: 'Unlocked', it: 'Sbloccata' },
+            phrase: { en: 'When {device} unlocks', it: 'Quando {device} si sblocca' },
+          },
+          {
+            value: 'locking',
+            label: { en: 'Locking', it: 'In chiusura' },
+            phrase: { en: 'When {device} starts locking', it: 'Quando {device} inizia a chiudersi' },
+          },
+          {
+            value: 'unlocking',
+            label: { en: 'Unlocking', it: 'In apertura' },
+            phrase: {
+              en: 'When {device} starts unlocking',
+              it: 'Quando {device} inizia a sbloccarsi',
+            },
+          },
+          {
+            value: 'jammed',
+            label: { en: 'Jammed', it: 'Inceppata' },
+            phrase: { en: 'When {device} jams', it: 'Quando {device} si inceppa' },
+          },
+          {
+            value: 'door-open',
+            label: { en: 'Door open', it: 'Porta aperta' },
+            phrase: {
+              en: 'When the door of {device} opens',
+              it: 'Quando la porta di {device} si apre',
+            },
+          },
+        ],
+        icon: 'lock',
+      },
+    ],
+  },
+  'climate-control': {
+    scope: 'device',
+    noun: { en: 'Climate', it: 'Clima' },
+    actions: [
+      {
+        id: 'climate.off',
+        method: 'setMode',
+        label: { en: 'Climate off', it: 'Clima spento' },
+        phrase: { en: 'Turn off {device}', it: 'Spegni {device}' },
+        icon: 'power-off',
+        args: { mode: 'off' },
+        effect: { field: 'mode', value: 'off' },
+      },
+      {
+        id: 'climate.heat',
+        method: 'setMode',
+        label: { en: 'Heat', it: 'Riscalda' },
+        phrase: { en: 'Set {device} to heat', it: 'Metti {device} in riscaldamento' },
+        icon: 'flame',
+        args: { mode: 'heat' },
+        effect: { field: 'mode', value: 'heat' },
+      },
+      {
+        id: 'climate.cool',
+        method: 'setMode',
+        label: { en: 'Cool', it: 'Raffresca' },
+        phrase: { en: 'Set {device} to cool', it: 'Metti {device} in raffrescamento' },
+        icon: 'snowflake',
+        args: { mode: 'cool' },
+        effect: { field: 'mode', value: 'cool' },
+      },
+      {
+        id: 'climate.auto',
+        method: 'setMode',
+        label: { en: 'Climate auto', it: 'Clima automatico' },
+        phrase: { en: 'Set {device} to automatic', it: 'Metti {device} in automatico' },
+        icon: 'thermometer',
+        args: { mode: 'auto' },
+        effect: { field: 'mode', value: 'auto' },
+      },
+      {
+        id: 'climate.mode',
+        method: 'setMode',
+        label: { en: 'Set mode', it: 'Imposta la modalità' },
+        phrase: { en: 'Set {device} to {mode}', it: 'Imposta {device} su {mode}' },
+        icon: 'thermometer',
+        openArgs: [
+          {
+            key: 'mode',
+            label: { en: 'Mode', it: 'Modalità' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'off', label: { en: 'Off', it: 'Spento' } },
+                { value: 'heat', label: { en: 'Heat', it: 'Riscaldamento' } },
+                { value: 'cool', label: { en: 'Cool', it: 'Raffrescamento' } },
+                { value: 'auto', label: { en: 'Automatic', it: 'Automatico' } },
+                { value: 'heat_cool', label: { en: 'Heat and cool', it: 'Caldo e freddo' } },
+                { value: 'fan_only', label: { en: 'Fan only', it: 'Solo ventilazione' } },
+                { value: 'dry', label: { en: 'Dry', it: 'Deumidificazione' } },
+              ],
+            },
+          },
+        ],
+        effect: { field: 'mode', fromArg: 'mode' },
+      },
+      {
+        id: 'climate.target',
+        method: 'setTarget',
+        label: { en: 'Set temperature', it: 'Imposta la temperatura' },
+        phrase: { en: 'Set {device} to {target}', it: 'Imposta {device} a {target}' },
+        icon: 'thermometer',
+        openArgs: [
+          {
+            key: 'target',
+            label: { en: 'Temperature', it: 'Temperatura' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+        ],
+        effect: { field: 'target', fromArg: 'target' },
+      },
+      {
+        id: 'climate.targetRange',
+        method: 'setTargetRange',
+        label: { en: 'Set temperature range', it: 'Imposta l’intervallo di temperatura' },
+        phrase: {
+          en: 'Keep {device} between {targetLow} and {targetHigh}',
+          it: 'Mantieni {device} tra {targetLow} e {targetHigh}',
+        },
+        icon: 'thermometer',
+        openArgs: [
+          {
+            key: 'targetLow',
+            label: { en: 'Lowest', it: 'Minima' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+          {
+            key: 'targetHigh',
+            label: { en: 'Highest', it: 'Massima' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+        ],
+      },
+      {
+        id: 'climate.targetHumidity',
+        method: 'setTargetHumidity',
+        label: { en: 'Set humidity', it: 'Imposta l’umidità' },
+        phrase: {
+          en: 'Set the humidity target of {device} to {targetHumidity}',
+          it: 'Imposta l’umidità obiettivo di {device} al {targetHumidity}',
+        },
+        icon: 'droplets',
+        openArgs: [
+          {
+            key: 'targetHumidity',
+            label: { en: 'Humidity', it: 'Umidità' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+        effect: { field: 'targetHumidity', fromArg: 'targetHumidity' },
+      },
+      {
+        id: 'climate.fanMode',
+        method: 'setFanMode',
+        label: { en: 'Set fan mode', it: 'Imposta la ventilazione' },
+        phrase: {
+          en: 'Set the fan of {device} to {fanMode}',
+          it: 'Imposta la ventilazione di {device} su {fanMode}',
+        },
+        icon: 'fan',
+        openArgs: [
+          {
+            key: 'fanMode',
+            label: { en: 'Fan mode', it: 'Ventilazione' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availableFanModes' },
+          },
+        ],
+      },
+      {
+        id: 'climate.preset',
+        method: 'setPreset',
+        label: { en: 'Set preset', it: 'Imposta il preset' },
+        phrase: {
+          en: 'Set {device} to preset {preset}',
+          it: 'Imposta {device} sul preset {preset}',
+        },
+        icon: 'list',
+        openArgs: [
+          {
+            key: 'preset',
+            label: { en: 'Preset', it: 'Preset' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availablePresets' },
+          },
+        ],
+      },
+      {
+        id: 'climate.swingVerticalOn',
+        method: 'setSwingVertical',
+        label: { en: 'Vertical swing on', it: 'Oscillazione verticale attiva' },
+        phrase: {
+          en: 'Start the vertical swing of {device}',
+          it: 'Attiva l’oscillazione verticale di {device}',
+        },
+        icon: 'move-vertical',
+        args: { on: true },
+        effect: { field: 'swingVertical', value: true },
+      },
+      {
+        id: 'climate.swingVerticalOff',
+        method: 'setSwingVertical',
+        label: { en: 'Vertical swing off', it: 'Oscillazione verticale spenta' },
+        phrase: {
+          en: 'Stop the vertical swing of {device}',
+          it: 'Ferma l’oscillazione verticale di {device}',
+        },
+        icon: 'move-vertical',
+        args: { on: false },
+        effect: { field: 'swingVertical', value: false },
+      },
+      {
+        id: 'climate.swingHorizontalOn',
+        method: 'setSwingHorizontal',
+        label: { en: 'Horizontal swing on', it: 'Oscillazione orizzontale attiva' },
+        phrase: {
+          en: 'Start the horizontal swing of {device}',
+          it: 'Attiva l’oscillazione orizzontale di {device}',
+        },
+        icon: 'move-horizontal',
+        args: { on: true },
+        effect: { field: 'swingHorizontal', value: true },
+      },
+      {
+        id: 'climate.swingHorizontalOff',
+        method: 'setSwingHorizontal',
+        label: { en: 'Horizontal swing off', it: 'Oscillazione orizzontale spenta' },
+        phrase: {
+          en: 'Stop the horizontal swing of {device}',
+          it: 'Ferma l’oscillazione orizzontale di {device}',
+        },
+        icon: 'move-horizontal',
+        args: { on: false },
+        effect: { field: 'swingHorizontal', value: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: { en: 'Mode', it: 'Modalità' },
+        values: [
+          {
+            value: 'off',
+            label: { en: 'Off', it: 'Spento' },
+            phrase: { en: 'When {device} turns off', it: 'Quando {device} si spegne' },
+          },
+          {
+            value: 'heat',
+            label: { en: 'Heat', it: 'Riscaldamento' },
+            phrase: {
+              en: 'When {device} starts heating',
+              it: 'Quando {device} passa al riscaldamento',
+            },
+          },
+          {
+            value: 'cool',
+            label: { en: 'Cool', it: 'Raffrescamento' },
+            phrase: {
+              en: 'When {device} starts cooling',
+              it: 'Quando {device} passa al raffrescamento',
+            },
+          },
+          { value: 'auto', label: { en: 'Automatic', it: 'Automatico' } },
+          { value: 'heat_cool', label: { en: 'Heat and cool', it: 'Caldo e freddo' } },
+          { value: 'fan_only', label: { en: 'Fan only', it: 'Solo ventilazione' } },
+          { value: 'dry', label: { en: 'Dry', it: 'Deumidificazione' } },
+        ],
+        icon: 'thermometer',
+      },
+      {
+        kind: 'numeric',
+        field: 'currentTemp',
+        quantity: { en: 'the temperature', it: 'la temperatura' },
+        label: { en: 'Temperature', it: 'Temperatura' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
+      {
+        kind: 'numeric',
+        field: 'currentHumidity',
+        quantity: { en: 'the humidity', it: 'l’umidità' },
+        label: { en: 'Humidity', it: 'Umidità' },
+        unit: '%',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'target',
+        quantity: { en: 'the set temperature', it: 'la temperatura impostata' },
+        label: { en: 'Set temperature', it: 'Temperatura impostata' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
+    ],
+  },
+  'fan-control': {
+    scope: 'device',
+    noun: { en: 'Fan', it: 'Ventilatore' },
+    actions: [
+      {
+        id: 'fan.off',
+        method: 'setPercentage',
+        label: { en: 'Fan off', it: 'Ventilatore spento' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'power-off',
+        args: { speed: 0 },
+        effect: { field: 'speed', value: 0 },
+      },
+      {
+        id: 'fan.full',
+        method: 'setPercentage',
+        label: { en: 'Fan full', it: 'Ventilatore al massimo' },
+        phrase: { en: 'Run {device} at full speed', it: 'Porta {device} alla massima velocità' },
+        icon: 'fan',
+        args: { speed: 100 },
+        effect: { field: 'speed', value: 100 },
+      },
+      {
+        id: 'fan.speed',
+        method: 'setPercentage',
+        label: { en: 'Set speed', it: 'Imposta la velocità' },
+        phrase: {
+          en: 'Set the speed of {device} to {speed}',
+          it: 'Imposta la velocità di {device} al {speed}',
+        },
+        icon: 'fan',
+        openArgs: [
+          {
+            key: 'speed',
+            label: { en: 'Speed', it: 'Velocità' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+        effect: { field: 'speed', fromArg: 'speed' },
+      },
+      {
+        id: 'fan.preset',
+        method: 'setPreset',
+        label: { en: 'Set preset', it: 'Imposta il preset' },
+        phrase: {
+          en: 'Set {device} to preset {preset}',
+          it: 'Imposta {device} sul preset {preset}',
+        },
+        icon: 'list',
+        openArgs: [
+          {
+            key: 'preset',
+            label: { en: 'Preset', it: 'Preset' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availablePresets' },
+          },
+        ],
+      },
+      {
+        id: 'fan.forward',
+        method: 'setDirection',
+        label: { en: 'Spin forward', it: 'Rotazione avanti' },
+        phrase: { en: 'Spin {device} forward', it: 'Fai girare {device} in avanti' },
+        icon: 'refresh-cw',
+        args: { direction: 'forward' },
+        effect: { field: 'direction', value: 'forward' },
+      },
+      {
+        id: 'fan.reverse',
+        method: 'setDirection',
+        label: { en: 'Spin in reverse', it: 'Rotazione inversa' },
+        phrase: { en: 'Spin {device} in reverse', it: 'Fai girare {device} al contrario' },
+        icon: 'rotate-ccw',
+        args: { direction: 'reverse' },
+        effect: { field: 'direction', value: 'reverse' },
+      },
+      {
+        id: 'fan.oscillateOn',
+        method: 'setOscillating',
+        label: { en: 'Oscillate', it: 'Oscillazione attiva' },
+        phrase: { en: 'Make {device} oscillate', it: 'Fai oscillare {device}' },
+        icon: 'move-horizontal',
+        args: { oscillating: true },
+        effect: { field: 'oscillating', value: true },
+      },
+      {
+        id: 'fan.oscillateOff',
+        method: 'setOscillating',
+        label: { en: 'Stop oscillating', it: 'Oscillazione spenta' },
+        phrase: { en: 'Stop {device} oscillating', it: 'Ferma l’oscillazione di {device}' },
+        icon: 'move-horizontal',
+        args: { oscillating: false },
+        effect: { field: 'oscillating', value: false },
+      },
+      {
+        id: 'fan.horizontalOscillateOn',
+        method: 'setOscillationAxis',
+        label: { en: 'Horizontal oscillation on', it: 'Oscillazione orizzontale attiva' },
+        phrase: {
+          en: 'Start the horizontal oscillation of {device}',
+          it: 'Attiva l’oscillazione orizzontale di {device}',
+        },
+        icon: 'move-horizontal',
+        args: { axis: 'horizontal', oscillating: true },
+      },
+      {
+        id: 'fan.horizontalOscillateOff',
+        method: 'setOscillationAxis',
+        label: { en: 'Horizontal oscillation off', it: 'Oscillazione orizzontale spenta' },
+        phrase: {
+          en: 'Stop the horizontal oscillation of {device}',
+          it: 'Ferma l’oscillazione orizzontale di {device}',
+        },
+        icon: 'move-horizontal',
+        args: { axis: 'horizontal', oscillating: false },
+      },
+      {
+        id: 'fan.verticalOscillateOn',
+        method: 'setOscillationAxis',
+        label: { en: 'Vertical oscillation on', it: 'Oscillazione verticale attiva' },
+        phrase: {
+          en: 'Start the vertical oscillation of {device}',
+          it: 'Attiva l’oscillazione verticale di {device}',
+        },
+        icon: 'move-vertical',
+        args: { axis: 'vertical', oscillating: true },
+      },
+      {
+        id: 'fan.verticalOscillateOff',
+        method: 'setOscillationAxis',
+        label: { en: 'Vertical oscillation off', it: 'Oscillazione verticale spenta' },
+        phrase: {
+          en: 'Stop the vertical oscillation of {device}',
+          it: 'Ferma l’oscillazione verticale di {device}',
+        },
+        icon: 'move-vertical',
+        args: { axis: 'vertical', oscillating: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'numeric',
+        field: 'speed',
+        quantity: { en: 'the speed', it: 'la velocità' },
+        label: { en: 'Speed', it: 'Velocità' },
+        unit: '%',
+        icon: 'fan',
+      },
+      {
+        kind: 'boolean',
+        field: 'oscillating',
+        label: { en: 'Oscillating', it: 'Oscillazione' },
+        whenTrue: {
+          en: 'When {device} starts oscillating',
+          it: 'Quando {device} inizia a oscillare',
+        },
+        whenFalse: {
+          en: 'When {device} stops oscillating',
+          it: 'Quando {device} smette di oscillare',
+        },
+        icon: 'move-horizontal',
+      },
+    ],
+  },
+  'humidifier': {
+    scope: 'device',
+    noun: { en: 'Humidifier', it: 'Umidificatore' },
+    actions: [
+      {
+        id: 'humidifier.on',
+        method: 'setOn',
+        label: { en: 'Humidifier on', it: 'Umidificatore acceso' },
+        phrase: { en: 'Turn on {device}', it: 'Accendi {device}' },
+        icon: 'power',
+        args: { on: true },
+        effect: { field: 'on', value: true },
+      },
+      {
+        id: 'humidifier.off',
+        method: 'setOn',
+        label: { en: 'Humidifier off', it: 'Umidificatore spento' },
+        phrase: { en: 'Turn off {device}', it: 'Spegni {device}' },
+        icon: 'power-off',
+        args: { on: false },
+        effect: { field: 'on', value: false },
+      },
+      {
+        id: 'humidifier.target',
+        method: 'setTargetHumidity',
+        label: { en: 'Set humidity', it: 'Imposta l’umidità' },
+        phrase: {
+          en: 'Set {device} to {humidity} humidity',
+          it: 'Imposta {device} al {humidity} di umidità',
+        },
+        icon: 'droplets',
+        openArgs: [
+          {
+            key: 'humidity',
+            label: { en: 'Humidity', it: 'Umidità' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+        effect: { field: 'targetHumidity', fromArg: 'humidity' },
+      },
+      {
+        id: 'humidifier.mode',
+        method: 'setMode',
+        label: { en: 'Set mode', it: 'Imposta la modalità' },
+        phrase: { en: 'Set {device} to {mode}', it: 'Imposta {device} su {mode}' },
+        icon: 'list',
+        openArgs: [
+          {
+            key: 'mode',
+            label: { en: 'Mode', it: 'Modalità' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availableModes' },
+          },
+        ],
+        effect: { field: 'mode', fromArg: 'mode' },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'on',
+        label: { en: 'On', it: 'Acceso' },
+        whenTrue: { en: 'When {device} turns on', it: 'Quando {device} si accende' },
+        whenFalse: { en: 'When {device} turns off', it: 'Quando {device} si spegne' },
+        icon: 'power',
+      },
+      {
+        kind: 'numeric',
+        field: 'currentHumidity',
+        quantity: { en: 'the humidity', it: 'l’umidità' },
+        label: { en: 'Humidity', it: 'Umidità' },
+        unit: '%',
+        icon: 'droplets',
+      },
+    ],
+  },
+  'water-heater': {
+    scope: 'device',
+    noun: { en: 'Water heater', it: 'Scaldacqua' },
+    actions: [
+      {
+        id: 'waterHeater.off',
+        method: 'setOperationMode',
+        label: { en: 'Water heater off', it: 'Scaldacqua spento' },
+        phrase: { en: 'Turn off {device}', it: 'Spegni {device}' },
+        icon: 'power-off',
+        args: { mode: 'off' },
+        effect: { field: 'operationMode', value: 'off' },
+      },
+      {
+        id: 'waterHeater.mode',
+        method: 'setOperationMode',
+        label: { en: 'Set mode', it: 'Imposta la modalità' },
+        phrase: { en: 'Set {device} to {mode}', it: 'Imposta {device} su {mode}' },
+        icon: 'list',
+        openArgs: [
+          {
+            key: 'mode',
+            label: { en: 'Mode', it: 'Modalità' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availableModes' },
+          },
+        ],
+        effect: { field: 'operationMode', fromArg: 'mode' },
+      },
+      {
+        id: 'waterHeater.awayOn',
+        method: 'setAway',
+        label: { en: 'Water heater away on', it: 'Scaldacqua in modalità assenza' },
+        phrase: { en: 'Put {device} in away mode', it: 'Metti {device} in modalità assenza' },
+        icon: 'plane',
+        args: { on: true },
+        effect: { field: 'away', value: true },
+      },
+      {
+        id: 'waterHeater.awayOff',
+        method: 'setAway',
+        label: { en: 'Water heater away off', it: 'Scaldacqua fuori dalla modalità assenza' },
+        phrase: {
+          en: 'Take {device} out of away mode',
+          it: 'Togli {device} dalla modalità assenza',
+        },
+        icon: 'house',
+        args: { on: false },
+        effect: { field: 'away', value: false },
+      },
+      {
+        id: 'waterHeater.target',
+        method: 'setTargetTemp',
+        label: { en: 'Set temperature', it: 'Imposta la temperatura' },
+        phrase: {
+          en: 'Heat the water of {device} to {temp}',
+          it: 'Scalda l’acqua di {device} a {temp}',
+        },
+        icon: 'thermometer',
+        openArgs: [
+          {
+            key: 'temp',
+            label: { en: 'Temperature', it: 'Temperatura' },
+            offer: { kind: 'number', step: 1, unit: '°C' },
+          },
+        ],
+        effect: { field: 'targetTemp', fromArg: 'temp' },
+      },
+    ],
+    state: [
+      {
+        kind: 'numeric',
+        field: 'currentTemp',
+        quantity: { en: 'the water temperature', it: 'la temperatura dell’acqua' },
+        label: { en: 'Water temperature', it: 'Temperatura dell’acqua' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
+      {
+        kind: 'boolean',
+        field: 'away',
+        label: { en: 'Away mode', it: 'Modalità assenza' },
+        whenTrue: {
+          en: 'When {device} goes into away mode',
+          it: 'Quando {device} entra in modalità assenza',
+        },
+        whenFalse: {
+          en: 'When {device} leaves away mode',
+          it: 'Quando {device} esce dalla modalità assenza',
+        },
+        icon: 'plane',
+      },
+      {
+        kind: 'value',
+        field: 'operationMode',
+        label: { en: 'Mode', it: 'Modalità' },
+        offer: { kind: 'dynamic', from: 'status', field: 'availableModes' },
+        icon: 'list',
+      },
+    ],
+  },
+  'heating-valve': {
+    scope: 'device',
+    noun: { en: 'Radiator valve', it: 'Valvola termostatica' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'position',
+        quantity: { en: 'the valve opening', it: 'l’apertura della valvola' },
+        label: { en: 'Valve opening', it: 'Apertura della valvola' },
+        unit: '%',
+        icon: 'heater',
+      },
+    ],
+  },
+  'alarm-panel': {
+    scope: 'device',
+    noun: { en: 'Alarm panel', it: 'Centrale d’allarme' },
+    actions: [
+      {
+        id: 'alarm.trigger',
+        method: 'trigger',
+        label: { en: 'Trigger alarm', it: 'Fai scattare l’allarme' },
+        phrase: { en: 'Trigger the alarm on {device}', it: 'Fai scattare l’allarme su {device}' },
+        icon: 'siren',
+      },
+      {
+        id: 'alarm.disarm',
+        method: 'disarm',
+        label: { en: 'Disarm', it: 'Disinserisci' },
+        phrase: { en: 'Disarm {device}', it: 'Disinserisci {device}' },
+        icon: 'shield-off',
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'disarmed' },
+      },
+      {
+        id: 'alarm.arm.home',
+        method: 'arm',
+        label: { en: 'Arm home', it: 'Inserisci in casa' },
+        phrase: { en: 'Arm {device} for home', it: 'Inserisci {device} in modalità casa' },
+        icon: 'house',
+        args: { mode: 'home' },
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'armed_home' },
+      },
+      {
+        id: 'alarm.arm.away',
+        method: 'arm',
+        label: { en: 'Arm away', it: 'Inserisci fuori casa' },
+        phrase: { en: 'Arm {device} for away', it: 'Inserisci {device} in modalità fuori casa' },
+        icon: 'shield-check',
+        args: { mode: 'away' },
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'armed_away' },
+      },
+      {
+        id: 'alarm.arm.night',
+        method: 'arm',
+        label: { en: 'Arm night', it: 'Inserisci notte' },
+        phrase: { en: 'Arm {device} for the night', it: 'Inserisci {device} in modalità notte' },
+        icon: 'moon',
+        args: { mode: 'night' },
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'armed_night' },
+      },
+      {
+        id: 'alarm.arm.vacation',
+        method: 'arm',
+        label: { en: 'Arm vacation', it: 'Inserisci vacanza' },
+        phrase: { en: 'Arm {device} for vacation', it: 'Inserisci {device} in modalità vacanza' },
+        icon: 'plane',
+        args: { mode: 'vacation' },
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'armed_vacation' },
+      },
+      {
+        id: 'alarm.arm.custom_bypass',
+        method: 'arm',
+        label: { en: 'Arm custom bypass', it: 'Inserisci con esclusioni' },
+        phrase: {
+          en: 'Arm {device} with its custom bypass',
+          it: 'Inserisci {device} con le zone escluse',
+        },
+        icon: 'shield-half',
+        args: { mode: 'custom_bypass' },
+        openArgs: [
+          {
+            key: 'code',
+            label: { en: 'PIN code', it: 'Codice PIN' },
+            offer: { kind: 'text', secret: true },
+            optional: true,
+          },
+        ],
+        effect: { field: 'state', value: 'armed_custom_bypass' },
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'Alarm state', it: 'Stato dell’allarme' },
+        values: [
+          {
+            value: 'disarmed',
+            label: { en: 'Disarmed', it: 'Disinserito' },
+            phrase: { en: 'When {device} is disarmed', it: 'Quando {device} viene disinserito' },
+          },
+          {
+            value: 'armed_home',
+            label: { en: 'Armed home', it: 'Inserito in casa' },
+            phrase: {
+              en: 'When {device} is armed for home',
+              it: 'Quando {device} viene inserito in modalità casa',
+            },
+          },
+          {
+            value: 'armed_away',
+            label: { en: 'Armed away', it: 'Inserito fuori casa' },
+            phrase: {
+              en: 'When {device} is armed for away',
+              it: 'Quando {device} viene inserito in modalità fuori casa',
+            },
+          },
+          {
+            value: 'armed_night',
+            label: { en: 'Armed night', it: 'Inserito notte' },
+            phrase: {
+              en: 'When {device} is armed for the night',
+              it: 'Quando {device} viene inserito in modalità notte',
+            },
+          },
+          { value: 'armed_vacation', label: { en: 'Armed vacation', it: 'Inserito vacanza' } },
+          {
+            value: 'armed_custom_bypass',
+            label: { en: 'Armed with bypass', it: 'Inserito con esclusioni' },
+          },
+          { value: 'arming', label: { en: 'Arming', it: 'In inserimento' } },
+          { value: 'disarming', label: { en: 'Disarming', it: 'In disinserimento' } },
+          { value: 'pending', label: { en: 'Entry delay', it: 'Ritardo d’ingresso' } },
+          {
+            value: 'triggered',
+            label: { en: 'Triggered', it: 'In allarme' },
+            phrase: { en: 'When {device} goes off', it: 'Quando {device} scatta' },
+          },
+        ],
+        icon: 'shield',
+      },
+    ],
+  },
+  'button': {
+    scope: 'device',
+    noun: { en: 'Button', it: 'Pulsante' },
+    actions: [
+      {
+        id: 'button.press',
+        method: 'press',
+        label: { en: 'Press', it: 'Premi' },
+        phrase: { en: 'Press {device}', it: 'Premi {device}' },
+        icon: 'circle-dot',
+      },
+    ],
+  },
+  'ir-transmitter': {
+    scope: 'device',
+    noun: { en: 'IR / RF transmitter', it: 'Trasmettitore IR / RF' },
+    notOperatorFacing: {
+      send: 'a raw pulse train is not something an operator composes in an automation; the remote that owns the command table sends it',
+      learn: 'an interactive capture the operator starts from the source dialog and answers by pressing a physical remote; no automation can supply the signal',
+    },
+  },
+  'control': {
+    scope: 'device',
+    noun: { en: 'Control', it: 'Controllo' },
+    notOperatorFacing: {
+      setValue: 'the value shape depends on the control kind (numeric / select / text / datetime) read from status; a typed picker for it is a follow-up of the automations rework',
+    },
+    state: [
+      {
+        kind: 'value',
+        field: 'value',
+        label: { en: 'Value', it: 'Valore' },
+        offer: { kind: 'dynamic', from: 'status', field: 'options' },
+        icon: 'sliders-horizontal',
+      },
+    ],
+  },
+  'motion-trigger': {
+    scope: 'device',
+    noun: { en: 'Motion trigger', it: 'Attivazione al movimento' },
+    actions: [
+      {
+        id: 'motionTrigger.on',
+        method: 'setMotionTrigger',
+        label: { en: 'Motion trigger on', it: 'Attivazione al movimento attiva' },
+        phrase: { en: 'Let motion trigger {device}', it: 'Fai attivare {device} dal movimento' },
+        icon: 'activity',
+        args: { enabled: true },
+        effect: { field: 'enabled', value: true },
+      },
+      {
+        id: 'motionTrigger.off',
+        method: 'setMotionTrigger',
+        label: { en: 'Motion trigger off', it: 'Attivazione al movimento spenta' },
+        phrase: {
+          en: 'Stop motion triggering {device}',
+          it: 'Non far più attivare {device} dal movimento',
+        },
+        icon: 'activity',
+        args: { enabled: false },
+        effect: { field: 'enabled', value: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: { en: 'Motion trigger', it: 'Attivazione al movimento' },
+        whenTrue: {
+          en: 'When motion triggering is turned on for {device}',
+          it: 'Quando si attiva l’attivazione al movimento di {device}',
+        },
+        whenFalse: {
+          en: 'When motion triggering is turned off for {device}',
+          it: 'Quando si disattiva l’attivazione al movimento di {device}',
+        },
+        icon: 'activity',
+      },
+    ],
+    events: {
+      onMotionTriggerChanged: {
+        notOperatorFacing: 'the `enabled` state trigger phrases both edges of this change',
+      },
+    },
+  },
+  'vacuum-control': {
+    scope: 'device',
+    noun: { en: 'Robot vacuum', it: 'Robot aspirapolvere' },
+    actions: [
+      {
+        id: 'vacuum.start',
+        method: 'start',
+        label: { en: 'Start cleaning', it: 'Avvia la pulizia' },
+        phrase: { en: 'Start {device} cleaning', it: 'Fai partire la pulizia di {device}' },
+        icon: 'play',
+      },
+      {
+        id: 'vacuum.pause',
+        method: 'pause',
+        label: { en: 'Pause', it: 'Metti in pausa' },
+        phrase: { en: 'Pause {device}', it: 'Metti in pausa {device}' },
+        icon: 'pause',
+      },
+      {
+        id: 'vacuum.stop',
+        method: 'stop',
+        label: { en: 'Stop', it: 'Ferma' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'square',
+      },
+      {
+        id: 'vacuum.dock',
+        method: 'returnToBase',
+        label: { en: 'Return to base', it: 'Torna alla base' },
+        phrase: { en: 'Send {device} back to its base', it: 'Rimanda {device} alla base' },
+        icon: 'house',
+      },
+      {
+        id: 'vacuum.locate',
+        method: 'locate',
+        label: { en: 'Locate', it: 'Trova' },
+        phrase: {
+          en: 'Make {device} beep so you can find it',
+          it: 'Fai suonare {device} per trovarlo',
+        },
+        icon: 'map-pin',
+      },
+      {
+        id: 'vacuum.fanSpeed',
+        method: 'setFanSpeed',
+        label: { en: 'Set suction', it: 'Imposta l’aspirazione' },
+        phrase: {
+          en: 'Set the suction of {device} to {speed}',
+          it: 'Imposta l’aspirazione di {device} su {speed}',
+        },
+        icon: 'fan',
+        openArgs: [
+          {
+            key: 'speed',
+            label: { en: 'Suction', it: 'Aspirazione' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availableFanSpeeds' },
+          },
+        ],
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'Activity', it: 'Attività' },
+        values: [
+          { value: 'idle', label: { en: 'Idle', it: 'Inattivo' } },
+          {
+            value: 'cleaning',
+            label: { en: 'Cleaning', it: 'In pulizia' },
+            phrase: { en: 'When {device} starts cleaning', it: 'Quando {device} inizia a pulire' },
+          },
+          { value: 'paused', label: { en: 'Paused', it: 'In pausa' } },
+          {
+            value: 'returning',
+            label: { en: 'Returning', it: 'In rientro' },
+            phrase: {
+              en: 'When {device} heads back to its base',
+              it: 'Quando {device} torna alla base',
+            },
+          },
+          {
+            value: 'docked',
+            label: { en: 'Docked', it: 'Alla base' },
+            phrase: { en: 'When {device} docks', it: 'Quando {device} arriva alla base' },
+          },
+          { value: 'drying', label: { en: 'Drying', it: 'In asciugatura' } },
+          {
+            value: 'error',
+            label: { en: 'Error', it: 'Errore' },
+            phrase: {
+              en: 'When {device} reports an error',
+              it: 'Quando {device} segnala un errore',
+            },
+          },
+        ],
+        icon: 'bot',
+      },
+      {
+        kind: 'numeric',
+        field: 'batteryLevel',
+        quantity: { en: 'the battery level', it: 'il livello della batteria' },
+        label: { en: 'Battery', it: 'Batteria' },
+        unit: '%',
+        icon: 'battery',
+      },
+    ],
+  },
+  'lawn-mower-control': {
+    scope: 'device',
+    noun: { en: 'Robot mower', it: 'Robot tosaerba' },
+    actions: [
+      {
+        id: 'lawnMower.start',
+        method: 'startMowing',
+        label: { en: 'Start mowing', it: 'Avvia il taglio' },
+        phrase: { en: 'Start {device} mowing', it: 'Fai partire il taglio di {device}' },
+        icon: 'play',
+      },
+      {
+        id: 'lawnMower.pause',
+        method: 'pause',
+        label: { en: 'Pause mower', it: 'Metti in pausa il tosaerba' },
+        phrase: { en: 'Pause {device}', it: 'Metti in pausa {device}' },
+        icon: 'pause',
+      },
+      {
+        id: 'lawnMower.dock',
+        method: 'dock',
+        label: { en: 'Dock mower', it: 'Riporta alla base' },
+        phrase: { en: 'Send {device} back to its dock', it: 'Rimanda {device} alla base' },
+        icon: 'house',
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'activity',
+        label: { en: 'Activity', it: 'Attività' },
+        values: [
+          { value: 'idle', label: { en: 'Idle', it: 'Inattivo' } },
+          {
+            value: 'mowing',
+            label: { en: 'Mowing', it: 'In taglio' },
+            phrase: { en: 'When {device} starts mowing', it: 'Quando {device} inizia a tagliare' },
+          },
+          { value: 'paused', label: { en: 'Paused', it: 'In pausa' } },
+          {
+            value: 'docked',
+            label: { en: 'Docked', it: 'Alla base' },
+            phrase: { en: 'When {device} docks', it: 'Quando {device} arriva alla base' },
+          },
+          {
+            value: 'error',
+            label: { en: 'Error', it: 'Errore' },
+            phrase: {
+              en: 'When {device} reports an error',
+              it: 'Quando {device} segnala un errore',
+            },
+          },
+        ],
+        icon: 'bot',
+      },
+      {
+        kind: 'numeric',
+        field: 'batteryLevel',
+        quantity: { en: 'the battery level', it: 'il livello della batteria' },
+        label: { en: 'Battery', it: 'Batteria' },
+        unit: '%',
+        icon: 'battery',
+      },
+    ],
+  },
+  'dishwasher': {
+    scope: 'device',
+    noun: { en: 'Dishwasher', it: 'Lavastoviglie' },
+    actions: [
+      {
+        id: 'dishwasher.start',
+        method: 'start',
+        label: { en: 'Start cycle', it: 'Avvia il lavaggio' },
+        phrase: { en: 'Start {device}', it: 'Avvia {device}' },
+        icon: 'play',
+        openArgs: [
+          {
+            key: 'program',
+            label: { en: 'Programme', it: 'Programma' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availablePrograms' },
+            optional: true,
+          },
+        ],
+      },
+      {
+        id: 'dishwasher.pause',
+        method: 'pause',
+        label: { en: 'Pause', it: 'Metti in pausa' },
+        phrase: { en: 'Pause {device}', it: 'Metti in pausa {device}' },
+        icon: 'pause',
+      },
+      {
+        id: 'dishwasher.resume',
+        method: 'resume',
+        label: { en: 'Resume', it: 'Riprendi' },
+        phrase: { en: 'Resume {device}', it: 'Riprendi il lavaggio di {device}' },
+        icon: 'play',
+      },
+      {
+        id: 'dishwasher.stop',
+        method: 'stop',
+        label: { en: 'Stop', it: 'Ferma' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'square',
+      },
+      {
+        id: 'dishwasher.program',
+        method: 'setProgram',
+        label: { en: 'Choose programme', it: 'Scegli il programma' },
+        phrase: {
+          en: 'Select the {program} programme on {device}',
+          it: 'Seleziona il programma {program} su {device}',
+        },
+        icon: 'list',
+        openArgs: [
+          {
+            key: 'program',
+            label: { en: 'Programme', it: 'Programma' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availablePrograms' },
+          },
+        ],
+      },
+      {
+        id: 'dishwasher.powerOn',
+        method: 'setPower',
+        label: { en: 'Power on', it: 'Accendi' },
+        phrase: { en: 'Turn on {device}', it: 'Accendi {device}' },
+        icon: 'power',
+        args: { on: true },
+      },
+      {
+        id: 'dishwasher.powerOff',
+        method: 'setPower',
+        label: { en: 'Power off', it: 'Spegni' },
+        phrase: { en: 'Turn off {device}', it: 'Spegni {device}' },
+        icon: 'power-off',
+        args: { on: false },
+      },
+      {
+        id: 'dishwasher.halfLoadOn',
+        method: 'setHalfLoad',
+        label: { en: 'Half load on', it: 'Mezzo carico attivo' },
+        phrase: { en: 'Turn on half load on {device}', it: 'Attiva il mezzo carico su {device}' },
+        icon: 'contrast',
+        args: { on: true },
+      },
+      {
+        id: 'dishwasher.halfLoadOff',
+        method: 'setHalfLoad',
+        label: { en: 'Half load off', it: 'Mezzo carico spento' },
+        phrase: {
+          en: 'Turn off half load on {device}',
+          it: 'Disattiva il mezzo carico su {device}',
+        },
+        icon: 'contrast',
+        args: { on: false },
+      },
+      {
+        id: 'dishwasher.hygienePlusOn',
+        method: 'setHygienePlus',
+        label: { en: 'Hygiene Plus on', it: 'Igiene Plus attiva' },
+        phrase: { en: 'Turn on Hygiene Plus on {device}', it: 'Attiva Igiene Plus su {device}' },
+        icon: 'sparkles',
+        args: { on: true },
+      },
+      {
+        id: 'dishwasher.hygienePlusOff',
+        method: 'setHygienePlus',
+        label: { en: 'Hygiene Plus off', it: 'Igiene Plus spenta' },
+        phrase: { en: 'Turn off Hygiene Plus on {device}', it: 'Disattiva Igiene Plus su {device}' },
+        icon: 'sparkles',
+        args: { on: false },
+      },
+      {
+        id: 'dishwasher.extraDryOn',
+        method: 'setExtraDry',
+        label: { en: 'Extra dry on', it: 'Asciugatura extra attiva' },
+        phrase: {
+          en: 'Turn on extra dry on {device}',
+          it: 'Attiva l’asciugatura extra su {device}',
+        },
+        icon: 'sun',
+        args: { on: true },
+      },
+      {
+        id: 'dishwasher.extraDryOff',
+        method: 'setExtraDry',
+        label: { en: 'Extra dry off', it: 'Asciugatura extra spenta' },
+        phrase: {
+          en: 'Turn off extra dry on {device}',
+          it: 'Disattiva l’asciugatura extra su {device}',
+        },
+        icon: 'sun',
+        args: { on: false },
+      },
+      {
+        id: 'dishwasher.intensiveZoneOn',
+        method: 'setIntensiveZone',
+        label: { en: 'Intensive zone on', it: 'Zona intensiva attiva' },
+        phrase: {
+          en: 'Turn on the intensive zone on {device}',
+          it: 'Attiva la zona intensiva su {device}',
+        },
+        icon: 'flame',
+        args: { on: true },
+      },
+      {
+        id: 'dishwasher.intensiveZoneOff',
+        method: 'setIntensiveZone',
+        label: { en: 'Intensive zone off', it: 'Zona intensiva spenta' },
+        phrase: {
+          en: 'Turn off the intensive zone on {device}',
+          it: 'Disattiva la zona intensiva su {device}',
+        },
+        icon: 'flame',
+        args: { on: false },
+      },
+      {
+        id: 'dishwasher.varioSpeedOn',
+        method: 'setVarioSpeedPlus',
+        label: { en: 'Speed boost on', it: 'Lavaggio rapido attivo' },
+        phrase: {
+          en: 'Turn on the speed boost on {device}',
+          it: 'Attiva il lavaggio rapido su {device}',
+        },
+        icon: 'zap',
+        args: { on: true },
+      },
+      {
+        id: 'dishwasher.varioSpeedOff',
+        method: 'setVarioSpeedPlus',
+        label: { en: 'Speed boost off', it: 'Lavaggio rapido spento' },
+        phrase: {
+          en: 'Turn off the speed boost on {device}',
+          it: 'Disattiva il lavaggio rapido su {device}',
+        },
+        icon: 'zap',
+        args: { on: false },
+      },
+      {
+        id: 'dishwasher.childLockOn',
+        method: 'setChildLock',
+        label: { en: 'Child lock on', it: 'Blocco bambini attivo' },
+        phrase: {
+          en: 'Turn on the child lock of {device}',
+          it: 'Attiva il blocco bambini di {device}',
+        },
+        icon: 'lock',
+        args: { on: true },
+      },
+      {
+        id: 'dishwasher.childLockOff',
+        method: 'setChildLock',
+        label: { en: 'Child lock off', it: 'Blocco bambini spento' },
+        phrase: {
+          en: 'Turn off the child lock of {device}',
+          it: 'Disattiva il blocco bambini di {device}',
+        },
+        icon: 'lock-open',
+        args: { on: false },
+      },
+    ],
+    notOperatorFacing: {
+      setOption: 'a raw appliance option key/value; every option worth naming has its own action above',
+    },
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'Cycle', it: 'Ciclo' },
+        values: [
+          { value: 'idle', label: { en: 'Idle', it: 'Inattiva' } },
+          {
+            value: 'running',
+            label: { en: 'Running', it: 'In funzione' },
+            phrase: { en: 'When {device} starts a cycle', it: 'Quando {device} inizia un lavaggio' },
+          },
+          { value: 'paused', label: { en: 'Paused', it: 'In pausa' } },
+          {
+            value: 'finished',
+            label: { en: 'Finished', it: 'Terminato' },
+            phrase: { en: 'When {device} finishes', it: 'Quando {device} finisce il lavaggio' },
+          },
+          {
+            value: 'error',
+            label: { en: 'Error', it: 'Errore' },
+            phrase: {
+              en: 'When {device} reports an error',
+              it: 'Quando {device} segnala un errore',
+            },
+          },
+          { value: 'unavailable', label: { en: 'Unavailable', it: 'Non disponibile' } },
+        ],
+        icon: 'washing-machine',
+      },
+      {
+        kind: 'numeric',
+        field: 'progress',
+        quantity: { en: 'the cycle progress', it: 'l’avanzamento del lavaggio' },
+        label: { en: 'Progress', it: 'Avanzamento' },
+        unit: '%',
+        icon: 'loader',
+      },
+      {
+        kind: 'boolean',
+        field: 'doorOpen',
+        label: { en: 'Door open', it: 'Sportello aperto' },
+        whenTrue: {
+          en: 'When the door of {device} opens',
+          it: 'Quando si apre lo sportello di {device}',
+        },
+        whenFalse: {
+          en: 'When the door of {device} closes',
+          it: 'Quando si chiude lo sportello di {device}',
+        },
+        icon: 'door-open',
+      },
+      {
+        kind: 'boolean',
+        field: 'filterCleaningDue',
+        label: { en: 'Filter cleaning due', it: 'Pulizia filtro da fare' },
+        whenTrue: {
+          en: 'When {device} asks for its filter to be cleaned',
+          it: 'Quando {device} chiede di pulire il filtro',
+        },
+        whenFalse: {
+          en: 'When the filter reminder of {device} clears',
+          it: 'Quando l’avviso filtro di {device} rientra',
+        },
+        icon: 'funnel',
+      },
+      {
+        kind: 'boolean',
+        field: 'machineCareDue',
+        label: { en: 'Machine care due', it: 'Manutenzione da fare' },
+        whenTrue: {
+          en: 'When {device} asks for a machine-care cycle',
+          it: 'Quando {device} chiede un ciclo di manutenzione',
+        },
+        whenFalse: {
+          en: 'When the machine-care reminder of {device} clears',
+          it: 'Quando l’avviso di manutenzione di {device} rientra',
+        },
+        icon: 'wrench',
+      },
+    ],
+  },
+  'pet-feeder': {
+    scope: 'device',
+    noun: { en: 'Pet feeder', it: 'Distributore di cibo' },
+    actions: [
+      {
+        id: 'petFeeder.feed',
+        method: 'feed',
+        label: { en: 'Feed', it: 'Dai da mangiare' },
+        phrase: { en: 'Dispense {grams} from {device}', it: 'Eroga {grams} da {device}' },
+        icon: 'paw-print',
+        openArgs: [
+          {
+            key: 'grams',
+            label: { en: 'Grams', it: 'Grammi' },
+            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g', quantity: 'mass' },
+            optional: true,
+          },
+        ],
+      },
+      {
+        id: 'petFeeder.feedHoppers',
+        method: 'feed',
+        label: { en: 'Feed from both hoppers', it: 'Eroga da entrambi i serbatoi' },
+        phrase: {
+          en: 'Dispense {hopper1} and {hopper2} from {device}',
+          it: 'Eroga {hopper1} e {hopper2} da {device}',
+        },
+        icon: 'paw-print',
+        openArgs: [
+          {
+            key: 'hopper1',
+            label: { en: 'Hopper 1', it: 'Serbatoio 1' },
+            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g', quantity: 'mass' },
+            optional: true,
+          },
+          {
+            key: 'hopper2',
+            label: { en: 'Hopper 2', it: 'Serbatoio 2' },
+            offer: { kind: 'number', min: 4, max: 200, step: 1, unit: 'g', quantity: 'mass' },
+            optional: true,
+          },
+        ],
+      },
+      {
+        id: 'petFeeder.cancelFeed',
+        method: 'cancelFeed',
+        label: { en: 'Cancel feeding', it: 'Annulla l’erogazione' },
+        phrase: { en: 'Cancel the feeding on {device}', it: 'Annulla l’erogazione di {device}' },
+        icon: 'circle-x',
+      },
+      {
+        id: 'petFeeder.callPet',
+        method: 'callPet',
+        label: { en: 'Call pet', it: 'Chiama l’animale' },
+        phrase: { en: 'Call your pet with {device}', it: 'Chiama l’animale con {device}' },
+        icon: 'megaphone',
+      },
+      {
+        id: 'petFeeder.playSound',
+        method: 'playSound',
+        label: { en: 'Play sound', it: 'Riproduci un suono' },
+        phrase: {
+          en: 'Play sound {soundId} on {device}',
+          it: 'Riproduci il suono {soundId} su {device}',
+        },
+        icon: 'volume-2',
+        openArgs: [
+          {
+            key: 'soundId',
+            label: { en: 'Sound', it: 'Suono' },
+            offer: { kind: 'number', min: 0, step: 1 },
+          },
+        ],
+      },
+      {
+        id: 'petFeeder.resetDesiccant',
+        method: 'resetDesiccant',
+        label: { en: 'Desiccant replaced', it: 'Essiccante sostituito' },
+        phrase: {
+          en: 'Mark the desiccant of {device} as replaced',
+          it: 'Segna come sostituito l’essiccante di {device}',
+        },
+        icon: 'refresh-cw',
+      },
+      {
+        id: 'petFeeder.foodReplenished',
+        method: 'markFoodReplenished',
+        label: { en: 'Food refilled', it: 'Cibo ricaricato' },
+        phrase: { en: 'Mark {device} as refilled', it: 'Segna {device} come ricaricato' },
+        icon: 'package',
+      },
+      {
+        id: 'petFeeder.childLockOn',
+        method: 'setChildLock',
+        label: { en: 'Child lock on', it: 'Blocco bambini attivo' },
+        phrase: {
+          en: 'Turn on the child lock of {device}',
+          it: 'Attiva il blocco bambini di {device}',
+        },
+        icon: 'lock',
+        args: { on: true },
+      },
+      {
+        id: 'petFeeder.childLockOff',
+        method: 'setChildLock',
+        label: { en: 'Child lock off', it: 'Blocco bambini spento' },
+        phrase: {
+          en: 'Turn off the child lock of {device}',
+          it: 'Disattiva il blocco bambini di {device}',
+        },
+        icon: 'lock-open',
+        args: { on: false },
+      },
+      {
+        id: 'petFeeder.lightOn',
+        method: 'setIndicatorLight',
+        label: { en: 'Indicator light on', it: 'Spia accesa' },
+        phrase: { en: 'Turn on the indicator light of {device}', it: 'Accendi la spia di {device}' },
+        icon: 'lightbulb',
+        args: { on: true },
+      },
+      {
+        id: 'petFeeder.lightOff',
+        method: 'setIndicatorLight',
+        label: { en: 'Indicator light off', it: 'Spia spenta' },
+        phrase: { en: 'Turn off the indicator light of {device}', it: 'Spegni la spia di {device}' },
+        icon: 'lightbulb-off',
+        args: { on: false },
+      },
+      {
+        id: 'petFeeder.feedSoundOn',
+        method: 'setFeedSound',
+        label: { en: 'Feeding sound on', it: 'Suono di erogazione attivo' },
+        phrase: {
+          en: 'Turn on the feeding sound of {device}',
+          it: 'Attiva il suono di erogazione di {device}',
+        },
+        icon: 'volume-2',
+        args: { on: true },
+      },
+      {
+        id: 'petFeeder.feedSoundOff',
+        method: 'setFeedSound',
+        label: { en: 'Feeding sound off', it: 'Suono di erogazione spento' },
+        phrase: {
+          en: 'Turn off the feeding sound of {device}',
+          it: 'Disattiva il suono di erogazione di {device}',
+        },
+        icon: 'volume-x',
+        args: { on: false },
+      },
+      {
+        id: 'petFeeder.volume',
+        method: 'setVolume',
+        label: { en: 'Set volume', it: 'Imposta il volume' },
+        phrase: {
+          en: 'Set the volume of {device} to {level}',
+          it: 'Imposta il volume di {device} a {level}',
+        },
+        icon: 'volume-2',
+        openArgs: [
+          {
+            key: 'level',
+            label: { en: 'Volume', it: 'Volume' },
+            offer: { kind: 'number', min: 0, step: 1 },
+          },
+        ],
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'lowFood',
+        label: { en: 'Food low', it: 'Cibo in esaurimento' },
+        whenTrue: {
+          en: 'When {device} runs low on food',
+          it: 'Quando il cibo di {device} sta finendo',
+        },
+        whenFalse: {
+          en: 'When {device} has enough food again',
+          it: 'Quando {device} ha di nuovo cibo a sufficienza',
+        },
+        icon: 'package',
+      },
+      {
+        kind: 'boolean',
+        field: 'feeding',
+        label: { en: 'Feeding', it: 'In erogazione' },
+        whenTrue: { en: 'When {device} starts feeding', it: 'Quando {device} inizia a erogare' },
+        whenFalse: {
+          en: 'When {device} finishes feeding',
+          it: 'Quando {device} finisce di erogare',
+        },
+        icon: 'paw-print',
+      },
+      {
+        kind: 'numeric',
+        field: 'desiccantLeftDays',
+        quantity: { en: 'the desiccant life', it: 'la durata dell’essiccante' },
+        label: { en: 'Desiccant', it: 'Essiccante' },
+        unit: 'd',
+        icon: 'calendar-clock',
+      },
+    ],
+  },
+  'pet-fountain': {
+    scope: 'device',
+    noun: { en: 'Pet fountain', it: 'Fontana per animali' },
+    actions: [
+      {
+        id: 'petFountain.pumpOn',
+        method: 'setPump',
+        label: { en: 'Pump on', it: 'Pompa accesa' },
+        phrase: { en: 'Start the pump of {device}', it: 'Avvia la pompa di {device}' },
+        icon: 'play',
+        args: { on: true },
+      },
+      {
+        id: 'petFountain.pumpOff',
+        method: 'setPump',
+        label: { en: 'Pump off', it: 'Pompa spenta' },
+        phrase: { en: 'Stop the pump of {device}', it: 'Ferma la pompa di {device}' },
+        icon: 'square',
+        args: { on: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'empty',
+        label: { en: 'Tank empty', it: 'Serbatoio vuoto' },
+        whenTrue: {
+          en: 'When the tank of {device} is empty',
+          it: 'Quando il serbatoio di {device} è vuoto',
+        },
+        whenFalse: {
+          en: 'When the tank of {device} is refilled',
+          it: 'Quando il serbatoio di {device} viene riempito',
+        },
+        icon: 'droplet',
+      },
+      {
+        kind: 'numeric',
+        field: 'waterLevel',
+        quantity: { en: 'the water level', it: 'il livello dell’acqua' },
+        label: { en: 'Water level', it: 'Livello dell’acqua' },
+        unit: '%',
+        icon: 'droplets',
+      },
+    ],
+  },
+  'pump-cycle': {
+    scope: 'device',
+    noun: { en: 'Pump cycle', it: 'Ciclo della pompa' },
+    actions: [
+      {
+        id: 'pumpCycle.on',
+        method: 'setEnabled',
+        label: { en: 'Pump cycle on', it: 'Ciclo pompa attivo' },
+        phrase: {
+          en: 'Run the pump of {device} on its on/off cycle',
+          it: 'Fai lavorare la pompa di {device} a ciclo acceso/spento',
+        },
+        icon: 'timer',
+        args: { on: true },
+      },
+      {
+        id: 'pumpCycle.off',
+        method: 'setEnabled',
+        label: { en: 'Pump cycle off', it: 'Ciclo pompa spento' },
+        phrase: {
+          en: 'Run the pump of {device} continuously',
+          it: 'Fai lavorare la pompa di {device} in continuo',
+        },
+        icon: 'timer-off',
+        args: { on: false },
+      },
+      {
+        id: 'pumpCycle.onMinutes',
+        method: 'setOnMinutes',
+        label: { en: 'Set pump run time', it: 'Imposta il tempo di lavoro della pompa' },
+        phrase: {
+          en: 'Set the pump of {device} to run {minutes} minutes per cycle',
+          it: 'Imposta la pompa di {device} a lavorare {minutes} minuti per ciclo',
+        },
+        icon: 'timer',
+        openArgs: [
+          {
+            key: 'minutes',
+            label: { en: 'Minutes', it: 'Minuti' },
+            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+          },
+        ],
+      },
+      {
+        id: 'pumpCycle.offMinutes',
+        method: 'setOffMinutes',
+        label: { en: 'Set pump rest time', it: 'Imposta il tempo di riposo della pompa' },
+        phrase: {
+          en: 'Set the pump of {device} to rest {minutes} minutes per cycle',
+          it: 'Imposta la pompa di {device} a riposare {minutes} minuti per ciclo',
+        },
+        icon: 'timer-off',
+        openArgs: [
+          {
+            key: 'minutes',
+            label: { en: 'Minutes', it: 'Minuti' },
+            offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+          },
+        ],
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: { en: 'Pump cycle', it: 'Ciclo pompa' },
+        whenTrue: {
+          en: 'When {device} starts running its pump on a cycle',
+          it: 'Quando {device} inizia a far lavorare la pompa a ciclo',
+        },
+        whenFalse: {
+          en: 'When {device} runs its pump continuously',
+          it: 'Quando {device} fa lavorare la pompa in continuo',
+        },
+        icon: 'timer',
+      },
+    ],
+  },
+  'media-player': {
+    scope: 'device',
+    noun: { en: 'Media player', it: 'Lettore multimediale' },
+    actions: [
+      {
+        id: 'media.turnOn',
+        method: 'turnOn',
+        label: { en: 'Turn on', it: 'Accendi' },
+        phrase: { en: 'Turn on {device}', it: 'Accendi {device}' },
+        icon: 'power',
+      },
+      {
+        id: 'media.turnOff',
+        method: 'turnOff',
+        label: { en: 'Turn off', it: 'Spegni' },
+        phrase: { en: 'Turn off {device}', it: 'Spegni {device}' },
+        icon: 'power',
+      },
+      {
+        id: 'media.volumeUp',
+        method: 'volumeUp',
+        label: { en: 'Volume up', it: 'Alza il volume' },
+        phrase: { en: 'Raise the volume of {device}', it: 'Alza il volume di {device}' },
+        icon: 'volume-2',
+      },
+      {
+        id: 'media.volumeDown',
+        method: 'volumeDown',
+        label: { en: 'Volume down', it: 'Abbassa il volume' },
+        phrase: { en: 'Lower the volume of {device}', it: 'Abbassa il volume di {device}' },
+        icon: 'volume-2',
+      },
+      {
+        id: 'media.channelUp',
+        method: 'channelUp',
+        label: { en: 'Channel up', it: 'Canale successivo' },
+        phrase: {
+          en: 'Go to the next channel on {device}',
+          it: 'Passa al canale successivo su {device}',
+        },
+        icon: 'skip-forward',
+      },
+      {
+        id: 'media.channelDown',
+        method: 'channelDown',
+        label: { en: 'Channel down', it: 'Canale precedente' },
+        phrase: {
+          en: 'Go to the previous channel on {device}',
+          it: 'Torna al canale precedente su {device}',
+        },
+        icon: 'skip-back',
+      },
+      {
+        id: 'media.play',
+        method: 'play',
+        label: { en: 'Play', it: 'Riproduci' },
+        phrase: { en: 'Play on {device}', it: 'Avvia la riproduzione su {device}' },
+        icon: 'play',
+      },
+      {
+        id: 'media.pause',
+        method: 'pause',
+        label: { en: 'Pause media', it: 'Metti in pausa' },
+        phrase: { en: 'Pause {device}', it: 'Metti in pausa {device}' },
+        icon: 'pause',
+      },
+      {
+        id: 'media.stop',
+        method: 'stop',
+        label: { en: 'Stop media', it: 'Ferma la riproduzione' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'square',
+      },
+      {
+        id: 'media.next',
+        method: 'next',
+        label: { en: 'Next track', it: 'Brano successivo' },
+        phrase: {
+          en: 'Skip to the next track on {device}',
+          it: 'Passa al brano successivo su {device}',
+        },
+        icon: 'skip-forward',
+      },
+      {
+        id: 'media.previous',
+        method: 'previous',
+        label: { en: 'Previous track', it: 'Brano precedente' },
+        phrase: {
+          en: 'Go back to the previous track on {device}',
+          it: 'Torna al brano precedente su {device}',
+        },
+        icon: 'skip-back',
+      },
+      {
+        id: 'media.volume',
+        method: 'setVolume',
+        label: { en: 'Set volume', it: 'Imposta il volume' },
+        phrase: {
+          en: 'Set the volume of {device} to {volumeLevel}',
+          it: 'Imposta il volume di {device} al {volumeLevel}',
+        },
+        icon: 'volume-2',
+        openArgs: [
+          {
+            key: 'volumeLevel',
+            label: { en: 'Volume', it: 'Volume' },
+            offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+          },
+        ],
+      },
+      {
+        id: 'media.mute',
+        method: 'setMute',
+        label: { en: 'Mute', it: 'Silenzia' },
+        phrase: { en: 'Mute {device}', it: 'Silenzia {device}' },
+        icon: 'volume-x',
+        args: { muted: true },
+      },
+      {
+        id: 'media.unmute',
+        method: 'setMute',
+        label: { en: 'Unmute', it: 'Riattiva l’audio' },
+        phrase: { en: 'Unmute {device}', it: 'Riattiva l’audio di {device}' },
+        icon: 'volume-2',
+        args: { muted: false },
+      },
+      {
+        id: 'media.shuffleOn',
+        method: 'setShuffle',
+        label: { en: 'Shuffle on', it: 'Riproduzione casuale attiva' },
+        phrase: {
+          en: 'Turn on shuffle on {device}',
+          it: 'Attiva la riproduzione casuale su {device}',
+        },
+        icon: 'shuffle',
+        args: { shuffle: true },
+      },
+      {
+        id: 'media.shuffleOff',
+        method: 'setShuffle',
+        label: { en: 'Shuffle off', it: 'Riproduzione casuale spenta' },
+        phrase: {
+          en: 'Turn off shuffle on {device}',
+          it: 'Disattiva la riproduzione casuale su {device}',
+        },
+        icon: 'shuffle',
+        args: { shuffle: false },
+      },
+      {
+        id: 'media.repeat',
+        method: 'setRepeat',
+        label: { en: 'Set repeat', it: 'Imposta la ripetizione' },
+        phrase: {
+          en: 'Set repeat on {device} to {repeat}',
+          it: 'Imposta la ripetizione di {device} su {repeat}',
+        },
+        icon: 'repeat',
+        openArgs: [
+          {
+            key: 'repeat',
+            label: { en: 'Repeat', it: 'Ripetizione' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'off', label: { en: 'Off', it: 'Disattivata' } },
+                { value: 'all', label: { en: 'All', it: 'Tutti i brani' } },
+                { value: 'one', label: { en: 'One track', it: 'Un brano' } },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: 'media.source',
+        method: 'selectSource',
+        label: { en: 'Select source', it: 'Scegli la sorgente' },
+        phrase: { en: 'Switch {device} to {source}', it: 'Passa {device} alla sorgente {source}' },
+        icon: 'cast',
+        openArgs: [
+          {
+            key: 'source',
+            label: { en: 'Source', it: 'Sorgente' },
+            offer: { kind: 'dynamic', from: 'status', field: 'availableSources' },
+          },
+        ],
+      },
+      {
+        id: 'media.seek',
+        method: 'seek',
+        label: { en: 'Seek', it: 'Vai al punto' },
+        phrase: { en: 'Move {device} to {position}', it: 'Porta {device} al punto {position}' },
+        icon: 'fast-forward',
+        openArgs: [
+          {
+            key: 'position',
+            label: { en: 'Position', it: 'Posizione' },
+            offer: { kind: 'number', min: 0, step: 1000, unit: 'ms' },
+          },
+        ],
+      },
+      {
+        id: 'media.playMedia',
+        method: 'playMedia',
+        label: { en: 'Play media', it: 'Riproduci un contenuto' },
+        phrase: { en: 'Play {mediaId} on {device}', it: 'Riproduci {mediaId} su {device}' },
+        icon: 'music',
+        openArgs: [
+          { key: 'mediaId', label: { en: 'Media', it: 'Contenuto' }, offer: { kind: 'text' } },
+          {
+            key: 'mediaType',
+            label: { en: 'Media type', it: 'Tipo di contenuto' },
+            offer: { kind: 'text' },
+          },
+        ],
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'Playback', it: 'Riproduzione' },
+        values: [
+          {
+            value: 'off',
+            label: { en: 'Off', it: 'Spento' },
+            phrase: { en: 'When {device} turns off', it: 'Quando {device} si spegne' },
+          },
+          {
+            value: 'on',
+            label: { en: 'On', it: 'Acceso' },
+            phrase: { en: 'When {device} turns on', it: 'Quando {device} si accende' },
+          },
+          { value: 'idle', label: { en: 'Idle', it: 'Inattivo' } },
+          {
+            value: 'playing',
+            label: { en: 'Playing', it: 'In riproduzione' },
+            phrase: {
+              en: 'When {device} starts playing',
+              it: 'Quando {device} inizia a riprodurre',
+            },
+          },
+          {
+            value: 'paused',
+            label: { en: 'Paused', it: 'In pausa' },
+            phrase: { en: 'When {device} is paused', it: 'Quando {device} va in pausa' },
+          },
+          { value: 'buffering', label: { en: 'Buffering', it: 'In caricamento' } },
+          { value: 'standby', label: { en: 'Standby', it: 'In standby' } },
+        ],
+        icon: 'music',
+      },
+      {
+        kind: 'numeric',
+        field: 'volumeLevel',
+        quantity: { en: 'the volume', it: 'il volume' },
+        label: { en: 'Volume', it: 'Volume' },
+        unit: '%',
+        icon: 'volume-2',
+      },
+      {
+        kind: 'boolean',
+        field: 'isMuted',
+        label: { en: 'Muted', it: 'Silenziato' },
+        whenTrue: { en: 'When {device} is muted', it: 'Quando {device} viene silenziato' },
+        whenFalse: { en: 'When {device} is unmuted', it: 'Quando l’audio di {device} torna attivo' },
+        icon: 'volume-x',
+      },
+      {
+        kind: 'value',
+        field: 'source',
+        label: { en: 'Source', it: 'Sorgente' },
+        offer: { kind: 'dynamic', from: 'status', field: 'availableSources' },
+        icon: 'cast',
+      },
+    ],
+  },
+  'consumables': {
+    scope: 'device',
+    noun: { en: 'Consumables', it: 'Materiali di consumo' },
+    actions: [
+      {
+        id: 'consumables.reset',
+        method: 'reset',
+        label: { en: 'Mark as replaced', it: 'Segna come sostituito' },
+        phrase: {
+          en: 'Mark {key} as replaced on {device}',
+          it: 'Segna {key} come sostituito su {device}',
+        },
+        icon: 'refresh-cw',
+        openArgs: [
+          {
+            key: 'key',
+            label: { en: 'Consumable', it: 'Materiale' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              field: 'items',
+              valueKey: 'key',
+              labelKey: 'label',
+              where: { key: 'resettable', equals: true },
+            },
+          },
+        ],
+      },
+    ],
+  },
+  'navigation': {
+    scope: 'device',
+    noun: { en: 'Robot movement', it: 'Movimento del robot' },
+    actions: [
+      {
+        id: 'navigation.stop',
+        method: 'stop',
+        label: { en: 'Stop', it: 'Ferma' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'square',
+      },
+      {
+        id: 'navigation.runAction',
+        method: 'runAction',
+        label: { en: 'Run a routine', it: 'Esegui una routine' },
+        phrase: { en: 'Have {device} {actionId}', it: 'Fai eseguire a {device}: {actionId}' },
+        icon: 'bot',
+        openArgs: [
+          {
+            key: 'actionId',
+            label: { en: 'Routine', it: 'Routine' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'goHome', label: { en: 'go home', it: 'torna alla base' } },
+                {
+                  value: 'locate',
+                  label: { en: 'beep so you can find it', it: 'suona per farsi trovare' },
+                },
+                { value: 'spotClean', label: { en: 'clean this spot', it: 'pulisci questo punto' } },
+                { value: 'findPet', label: { en: 'find the pet', it: 'cerca l’animale' } },
+                { value: 'personFollow', label: { en: 'follow a person', it: 'segui una persona' } },
+                { value: 'stop', label: { en: 'stop', it: 'fermati' } },
+                { value: 'startClean', label: { en: 'start cleaning', it: 'inizia a pulire' } },
+                {
+                  value: 'pauseClean',
+                  label: { en: 'pause cleaning', it: 'metti in pausa la pulizia' },
+                },
+                {
+                  value: 'dockWash',
+                  label: { en: 'wash the mop at the dock', it: 'lava il mocio alla base' },
+                },
+                {
+                  value: 'autoEmpty',
+                  label: { en: 'empty the bin at the dock', it: 'svuota il contenitore alla base' },
+                },
+                { value: 'flashOn', label: { en: 'turn the flash on', it: 'accendi il flash' } },
+                { value: 'flashOff', label: { en: 'turn the flash off', it: 'spegni il flash' } },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: 'navigation.playSound',
+        method: 'playSound',
+        label: { en: 'Play sound', it: 'Riproduci un suono' },
+        phrase: { en: 'Play {soundId} on {device}', it: 'Riproduci {soundId} su {device}' },
+        icon: 'volume-2',
+        openArgs: [
+          {
+            key: 'soundId',
+            label: { en: 'Sound', it: 'Suono' },
+            offer: {
+              kind: 'dynamic',
+              from: 'method',
+              method: 'listActions',
+              valueKey: 'soundId',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'sound' },
+              valueKind: 'number',
+            },
+          },
+        ],
+      },
+      {
+        id: 'navigation.lightOn',
+        method: 'setLightOn',
+        label: { en: 'Light on', it: 'Luce accesa' },
+        phrase: { en: 'Turn on the light of {device}', it: 'Accendi la luce di {device}' },
+        icon: 'lightbulb',
+        args: { on: true },
+      },
+      {
+        id: 'navigation.lightOff',
+        method: 'setLightOn',
+        label: { en: 'Light off', it: 'Luce spenta' },
+        phrase: { en: 'Turn off the light of {device}', it: 'Spegni la luce di {device}' },
+        icon: 'lightbulb-off',
+        args: { on: false },
+      },
+      {
+        id: 'navigation.lightAuto',
+        method: 'setLightMode',
+        label: { en: 'Light automatic', it: 'Luce automatica' },
+        phrase: {
+          en: 'Set the light of {device} to automatic',
+          it: 'Metti la luce di {device} in automatico',
+        },
+        icon: 'lightbulb',
+        args: { mode: 'auto' },
+      },
+      {
+        id: 'navigation.lightLevel',
+        method: 'setLightLevel',
+        label: { en: 'Set light level', it: 'Imposta la luce' },
+        phrase: {
+          en: 'Set the light of {device} to {level}',
+          it: 'Imposta la luce di {device} al {level}',
+        },
+        icon: 'sun-medium',
+        openArgs: [
+          {
+            key: 'level',
+            label: { en: 'Level', it: 'Livello' },
+            offer: { kind: 'number', min: 40, max: 100, step: 1, unit: '%' },
+          },
+        ],
+      },
+    ],
+    notOperatorFacing: {
+      move: 'joystick control from the live view — continuous, not a discrete step',
+      goToPoint: 'tap-to-go on the live map — the point only means something on that picture',
+    },
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: { en: 'Activity', it: 'Attività' },
+        values: [
+          { value: 'idle', label: { en: 'Idle', it: 'Inattivo' } },
+          { value: 'cleaning', label: { en: 'Cleaning', it: 'In pulizia' } },
+          { value: 'spot', label: { en: 'Spot cleaning', it: 'Pulizia localizzata' } },
+          { value: 'following', label: { en: 'Following', it: 'In inseguimento' } },
+          { value: 'goto', label: { en: 'Moving to a point', it: 'In movimento verso un punto' } },
+          { value: 'returning', label: { en: 'Returning', it: 'In rientro' } },
+          { value: 'paused', label: { en: 'Paused', it: 'In pausa' } },
+          { value: 'unknown', label: { en: 'Unknown', it: 'Sconosciuto' } },
+        ],
+        icon: 'bot',
+      },
+    ],
+    events: {
+      onStatusChanged: { notOperatorFacing: 'the `mode` state trigger reads the same change' },
+    },
+  },
+  'script-runner': {
+    scope: 'device',
+    noun: { en: 'Script', it: 'Script' },
+    actions: [
+      {
+        id: 'script.run',
+        method: 'run',
+        label: { en: 'Run script', it: 'Esegui lo script' },
+        phrase: { en: 'Run {device}', it: 'Esegui {device}' },
+        icon: 'scroll-text',
+      },
+      {
+        id: 'script.stop',
+        method: 'stop',
+        label: { en: 'Stop script', it: 'Ferma lo script' },
+        phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
+        icon: 'square',
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'isRunning',
+        label: { en: 'Running', it: 'In esecuzione' },
+        whenTrue: { en: 'When {device} starts running', it: 'Quando {device} parte' },
+        whenFalse: { en: 'When {device} finishes', it: 'Quando {device} termina' },
+        icon: 'scroll-text',
+      },
+    ],
+  },
+  'automation-control': {
+    scope: 'device',
+    noun: { en: 'Automation', it: 'Automazione' },
+    actions: [
+      {
+        id: 'haAutomation.enable',
+        method: 'enable',
+        label: { en: 'Enable automation', it: 'Abilita l’automazione' },
+        phrase: { en: 'Enable {device}', it: 'Abilita {device}' },
+        icon: 'toggle-right',
+      },
+      {
+        id: 'haAutomation.disable',
+        method: 'disable',
+        label: { en: 'Disable automation', it: 'Disabilita l’automazione' },
+        phrase: { en: 'Disable {device}', it: 'Disabilita {device}' },
+        icon: 'toggle-left',
+      },
+      {
+        id: 'haAutomation.trigger',
+        method: 'trigger',
+        label: { en: 'Trigger automation', it: 'Avvia l’automazione' },
+        phrase: { en: 'Run {device} now', it: 'Esegui subito {device}' },
+        icon: 'workflow',
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: { en: 'Enabled', it: 'Abilitata' },
+        whenTrue: { en: 'When {device} is enabled', it: 'Quando {device} viene abilitata' },
+        whenFalse: { en: 'When {device} is disabled', it: 'Quando {device} viene disabilitata' },
+        icon: 'toggle-right',
+      },
+      {
+        kind: 'boolean',
+        field: 'isRunning',
+        label: { en: 'Running', it: 'In esecuzione' },
+        whenTrue: { en: 'When {device} starts running', it: 'Quando {device} parte' },
+        whenFalse: { en: 'When {device} finishes', it: 'Quando {device} termina' },
+        icon: 'workflow',
+      },
+    ],
+  },
+  'notifier': {
+    scope: 'device',
+    noun: { en: 'Notifier', it: 'Notificatore' },
+    actions: [
+      {
+        id: 'notifier.send',
+        method: 'send',
+        label: { en: 'Send a notification', it: 'Invia una notifica' },
+        phrase: { en: 'Send “{body}” through {device}', it: 'Invia «{body}» tramite {device}' },
+        icon: 'send',
+        openArgs: [
+          {
+            key: 'title',
+            label: { en: 'Title', it: 'Titolo' },
+            offer: { kind: 'text' },
+            optional: true,
+          },
+          { key: 'body', label: { en: 'Message', it: 'Messaggio' }, offer: { kind: 'text' } },
+          {
+            key: 'priority',
+            label: { en: 'Priority', it: 'Priorità' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'min', label: { en: 'Minimal', it: 'Minima' } },
+                { value: 'low', label: { en: 'Low', it: 'Bassa' } },
+                { value: 'normal', label: { en: 'Normal', it: 'Normale' } },
+                { value: 'high', label: { en: 'High', it: 'Alta' } },
+              ],
+            },
+            optional: true,
+          },
+        ],
+      },
+    ],
+    events: {
+      onSent: {
+        notOperatorFacing: 'a delivery receipt of a send this system made — not a fact about the world',
+      },
+    },
+  },
+  'running-state': {
+    scope: 'device',
+    noun: { en: 'Running', it: 'In funzione' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'running',
+        label: { en: 'Running', it: 'In funzione' },
+        whenTrue: { en: 'When {device} starts', it: 'Quando {device} inizia' },
+        whenFalse: { en: 'When {device} finishes', it: 'Quando {device} finisce' },
+        icon: 'play',
+      },
+    ],
+    events: {
+      onStarted: {
+        category: EventCategory.RunningStarted,
+        label: { en: 'Started running', it: 'Ha iniziato a funzionare' },
+        phrase: { en: 'When {device} starts running', it: 'Quando {device} inizia a funzionare' },
+        icon: 'play',
+      },
+      onFinished: {
+        category: EventCategory.RunningFinished,
+        label: { en: 'Finished', it: 'Ha finito' },
+        phrase: { en: 'When {device} finishes', it: 'Quando {device} finisce' },
+        icon: 'square',
+      },
+    },
+    overrides: {
+      byType: {
+        [DeviceType.Washer]: {
+          state: {
+            running: {
+              whenTrue: { en: 'When the washing machine starts', it: 'Quando la lavatrice inizia' },
+              whenFalse: {
+                en: 'When the washing machine has finished',
+                it: 'Quando la lavatrice ha finito',
+              },
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: { en: 'When the washing machine starts', it: 'Quando la lavatrice inizia' },
+            },
+            onFinished: {
+              phrase: {
+                en: 'When the washing machine has finished',
+                it: 'Quando la lavatrice ha finito',
+              },
+            },
+          },
+        },
+        [DeviceType.Dryer]: {
+          state: {
+            running: {
+              whenTrue: { en: 'When the dryer starts', it: 'Quando l\'asciugatrice inizia' },
+              whenFalse: {
+                en: 'When the dryer has finished',
+                it: 'Quando l\'asciugatrice ha finito',
+              },
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: { en: 'When the dryer starts', it: 'Quando l\'asciugatrice inizia' },
+            },
+            onFinished: {
+              phrase: { en: 'When the dryer has finished', it: 'Quando l\'asciugatrice ha finito' },
+            },
+          },
+        },
+        [DeviceType.Dishwasher]: {
+          state: {
+            running: {
+              whenTrue: { en: 'When the dishwasher starts', it: 'Quando la lavastoviglie inizia' },
+              whenFalse: {
+                en: 'When the dishwasher has finished',
+                it: 'Quando la lavastoviglie ha finito',
+              },
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: { en: 'When the dishwasher starts', it: 'Quando la lavastoviglie inizia' },
+            },
+            onFinished: {
+              phrase: {
+                en: 'When the dishwasher has finished',
+                it: 'Quando la lavastoviglie ha finito',
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+  'device-runs': {
+    scope: 'device',
+    noun: { en: 'Runs', it: 'Esecuzioni' },
+    events: {
+      onRunOpened: {
+        notOperatorFacing: 'the durable record of a run that the running-state start flip already announces',
+      },
+      onRunClosed: {
+        notOperatorFacing: 'the durable record of a run that the running-state finish flip already announces',
+      },
+    },
+  },
+  'device-transitions': { scope: 'device', noun: { en: 'Transitions', it: 'Transizioni' } },
+  'timed-run': {
+    scope: 'device',
+    noun: { en: 'Timed run', it: 'Esecuzione a tempo' },
+    actions: [
+      {
+        id: 'timedRun.runForMinutes',
+        method: 'runFor',
+        label: { en: 'Run for minutes', it: 'Accendi per alcuni minuti' },
+        phrase: {
+          en: 'Run {device} for {duration} minutes, then switch it off',
+          it: 'Tieni acceso {device} per {duration} minuti, poi spegnilo',
+        },
+        icon: 'timer',
+        args: { unit: 'min' },
+        openArgs: [
+          {
+            key: 'duration',
+            label: { en: 'Minutes', it: 'Minuti' },
+            offer: { kind: 'number', min: 1, step: 1, unit: 'min' },
+          },
+        ],
+      },
+      {
+        id: 'timedRun.runForSeconds',
+        method: 'runFor',
+        label: { en: 'Run for seconds', it: 'Accendi per alcuni secondi' },
+        phrase: {
+          en: 'Run {device} for {duration} seconds, then switch it off',
+          it: 'Tieni acceso {device} per {duration} secondi, poi spegnilo',
+        },
+        icon: 'timer',
+        args: { unit: 's' },
+        openArgs: [
+          {
+            key: 'duration',
+            label: { en: 'Seconds', it: 'Secondi' },
+            offer: { kind: 'number', min: 1, step: 1, unit: 's' },
+          },
+        ],
+      },
+      {
+        id: 'timedRun.cancel',
+        method: 'cancel',
+        label: { en: 'Cancel the timer', it: 'Annulla il timer' },
+        phrase: {
+          en: 'Cancel the pending switch-off of {device}',
+          it: 'Annulla lo spegnimento programmato di {device}',
+        },
+        icon: 'timer-off',
+      },
+    ],
+  },
+  'do-not-disturb': {
+    scope: 'device',
+    noun: { en: 'Do not disturb', it: 'Non disturbare' },
+    actions: [
+      {
+        id: 'dnd.on',
+        method: 'setEnabled',
+        label: { en: 'Do not disturb on', it: 'Attiva Non disturbare' },
+        phrase: {
+          en: 'Turn on Do not disturb on {device}',
+          it: 'Attiva Non disturbare su {device}',
+        },
+        icon: 'bell-off',
+        args: { enabled: true },
+      },
+      {
+        id: 'dnd.off',
+        method: 'setEnabled',
+        label: { en: 'Do not disturb off', it: 'Disattiva Non disturbare' },
+        phrase: {
+          en: 'Turn off Do not disturb on {device}',
+          it: 'Disattiva Non disturbare su {device}',
+        },
+        icon: 'bell',
+        args: { enabled: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: { en: 'Do not disturb', it: 'Non disturbare' },
+        whenTrue: {
+          en: 'When Do not disturb turns on on {device}',
+          it: 'Quando {device} attiva Non disturbare',
+        },
+        whenFalse: {
+          en: 'When Do not disturb turns off on {device}',
+          it: 'Quando {device} disattiva Non disturbare',
+        },
+        icon: 'bell-off',
+      },
+    ],
+  },
+  'update': {
+    scope: 'device',
+    noun: { en: 'Firmware update', it: 'Aggiornamento firmware' },
+    actions: [
+      {
+        id: 'update.install',
+        method: 'installUpdate',
+        label: { en: 'Install update', it: 'Installa l’aggiornamento' },
+        phrase: {
+          en: 'Install the available update on {device}',
+          it: 'Installa l’aggiornamento disponibile su {device}',
+        },
+        icon: 'download',
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'updatable',
+        label: { en: 'Update available', it: 'Aggiornamento disponibile' },
+        whenTrue: {
+          en: 'When an update is available for {device}',
+          it: 'Quando è disponibile un aggiornamento per {device}',
+        },
+        whenFalse: { en: 'When {device} is up to date', it: 'Quando {device} è aggiornato' },
+        icon: 'download',
+      },
+      {
+        kind: 'boolean',
+        field: 'inProgress',
+        label: { en: 'Updating', it: 'In aggiornamento' },
+        whenTrue: {
+          en: 'When {device} starts updating',
+          it: 'Quando {device} inizia ad aggiornarsi',
+        },
+        whenFalse: {
+          en: 'When {device} finishes updating',
+          it: 'Quando {device} finisce di aggiornarsi',
+        },
+        icon: 'loader',
+      },
+    ],
+  },
+  'accessories': {
+    scope: 'device',
+    noun: { en: 'Accessories', it: 'Accessori' },
+    events: {
+      onAccessoriesChanged: {
+        notOperatorFacing: 'the device’s child list changed — administration, not a happening',
+      },
+      onChildVisibilityChanged: {
+        notOperatorFacing: 'an operator hid or showed a child — administration, not a happening',
+      },
+    },
+  },
+  'audio-analysis': {
+    scope: 'device',
+    noun: { en: 'Audio analysis', it: 'Analisi audio' },
+    events: {
+      onAudioLevel: {
+        notOperatorFacing: 'a sound-level sample at stream rate; loud-noise rules belong to the detection pipeline',
+      },
+    },
+  },
+  'audio-metrics': { scope: 'device', noun: { en: 'Audio metrics', it: 'Metriche audio' } },
+  'camera-credentials': {
+    scope: 'device',
+    noun: { en: 'Camera credentials', it: 'Credenziali della telecamera' },
+  },
+  'camera-grid-layout': { scope: 'device', noun: { en: 'Grid layout', it: 'Layout a griglia' } },
+  'camera-pipeline-config': {
+    scope: 'device',
+    noun: { en: 'Detection settings', it: 'Impostazioni di rilevamento' },
+  },
+  'camera-streams': {
+    scope: 'device',
+    noun: { en: 'Camera streams', it: 'Flussi della telecamera' },
+    events: {
+      onCamStreamsChanged: {
+        notOperatorFacing: 'the stream catalog was rebuilt — plumbing, not a happening',
+      },
+      onProfileSlotsChanged: {
+        notOperatorFacing: 'stream profiles were reassigned — plumbing, not a happening',
+      },
+    },
+  },
+  'day-night': {
+    scope: 'device',
+    noun: { en: 'Day/night', it: 'Giorno/notte' },
+    actions: [
+      {
+        id: 'dayNight.auto',
+        method: 'setSettings',
+        label: { en: 'Day/night auto', it: 'Giorno/notte automatico' },
+        phrase: {
+          en: 'Let {device} switch day and night by itself',
+          it: 'Fai passare {device} da giorno a notte in automatico',
+        },
+        icon: 'sun-moon',
+        args: { settings: { mode: 'auto' } },
+      },
+      {
+        id: 'dayNight.day',
+        method: 'setSettings',
+        label: { en: 'Day mode', it: 'Modalità giorno' },
+        phrase: { en: 'Force {device} into day mode', it: 'Forza {device} in modalità giorno' },
+        icon: 'sun',
+        args: { settings: { mode: 'day' } },
+      },
+      {
+        id: 'dayNight.night',
+        method: 'setSettings',
+        label: { en: 'Night mode', it: 'Modalità notte' },
+        phrase: { en: 'Force {device} into night mode', it: 'Forza {device} in modalità notte' },
+        icon: 'moon',
+        args: { settings: { mode: 'night' } },
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: { en: 'Day/night mode', it: 'Modalità giorno/notte' },
+        values: [
+          { value: 'auto', label: { en: 'Automatic', it: 'Automatica' } },
+          {
+            value: 'day',
+            label: { en: 'Day', it: 'Giorno' },
+            phrase: {
+              en: 'When {device} switches to day mode',
+              it: 'Quando {device} passa in modalità giorno',
+            },
+          },
+          {
+            value: 'night',
+            label: { en: 'Night', it: 'Notte' },
+            phrase: {
+              en: 'When {device} switches to night mode',
+              it: 'Quando {device} passa in modalità notte',
+            },
+          },
+          { value: 'schedule', label: { en: 'Scheduled', it: 'Programmata' } },
+        ],
+        icon: 'sun-moon',
+      },
+    ],
+  },
+  'detection-pipeline': {
+    scope: 'device',
+    noun: { en: 'Detection pipeline', it: 'Pipeline di rilevamento' },
+  },
+  'device-admin-link': {
+    scope: 'device',
+    noun: { en: 'Admin link', it: 'Link di amministrazione' },
+  },
+  'device-extension': {
+    scope: 'device',
+    noun: { en: 'Device extension', it: 'Estensione del dispositivo' },
+  },
+  'device-ops': {
+    scope: 'device',
+    noun: { en: 'Device operations', it: 'Operazioni del dispositivo' },
+    notOperatorFacing: {
+      runAction: 'a provider-defined custom action whose id and input only the addon knows; it reaches the picker through the custom-actions surface, not a fixed phrase',
+    },
+  },
+  'feature-probe': {
+    scope: 'device',
+    noun: { en: 'Feature probe', it: 'Rilevamento funzioni' },
+    events: {
+      onProbeChanged: {
+        notOperatorFacing: 'the device’s capabilities were re-probed — plumbing, not a happening',
+      },
+    },
+  },
+  'image': { scope: 'device', noun: { en: 'Image', it: 'Immagine' } },
+  'image-settings': {
+    scope: 'device',
+    noun: { en: 'Image settings', it: 'Impostazioni immagine' },
+  },
+  'intercom': {
+    scope: 'device',
+    noun: { en: 'Intercom', it: 'Citofono' },
+    notOperatorFacing: {
+      startSession: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      handleAnswer: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      stopSession: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      startTalkSession: 'two-way talk is a person speaking through the viewer, not an automation step',
+      pushTalkAudio: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      endTalkSession: 'live-stream session plumbing driven by a viewer, never a discrete step',
+    },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'talking',
+        label: { en: 'Talking', it: 'In conversazione' },
+        whenTrue: {
+          en: 'When someone starts talking through {device}',
+          it: 'Quando qualcuno inizia a parlare tramite {device}',
+        },
+        whenFalse: {
+          en: 'When the conversation on {device} ends',
+          it: 'Quando la conversazione su {device} finisce',
+        },
+        icon: 'mic',
+      },
+    ],
+    events: {
+      onStatusChanged: {
+        notOperatorFacing: 'the `talking` state trigger phrases both edges of this change',
+      },
+    },
+  },
+  'motion-detection': {
+    scope: 'device',
+    noun: { en: 'Motion analysis', it: 'Analisi del movimento' },
+    notOperatorFacing: {
+      analyze: 'the pipeline feeds it frames — an internal stage, never called by a person',
+      removeCamera: 'pipeline housekeeping when a camera leaves',
+      reset: 'pipeline housekeeping',
+    },
+    events: {
+      onMotion: {
+        notOperatorFacing: 'the analyzer’s raw verdict; the operator signal is the `motion` cap’s `detected` state',
+      },
+    },
+  },
+  'motion-zones': { scope: 'device', noun: { en: 'Motion zones', it: 'Zone di movimento' } },
+  'native-object-detection': {
+    scope: 'device',
+    noun: { en: 'On-camera detection', it: 'Rilevamento a bordo' },
+    actions: [
+      {
+        id: 'nativeDetection.on',
+        method: 'setEnabled',
+        label: { en: 'On-camera detection on', it: 'Rilevamento a bordo attivo' },
+        phrase: {
+          en: 'Turn on the on-camera detection of {device}',
+          it: 'Attiva il rilevamento a bordo di {device}',
+        },
+        icon: 'scan-eye',
+        args: { enabled: true },
+      },
+      {
+        id: 'nativeDetection.off',
+        method: 'setEnabled',
+        label: { en: 'On-camera detection off', it: 'Rilevamento a bordo spento' },
+        phrase: {
+          en: 'Turn off the on-camera detection of {device}',
+          it: 'Disattiva il rilevamento a bordo di {device}',
+        },
+        icon: 'scan-eye',
+        args: { enabled: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: { en: 'On-camera detection', it: 'Rilevamento a bordo' },
+        whenTrue: {
+          en: 'When the on-camera detection of {device} is turned on',
+          it: 'Quando si attiva il rilevamento a bordo di {device}',
+        },
+        whenFalse: {
+          en: 'When the on-camera detection of {device} is turned off',
+          it: 'Quando si disattiva il rilevamento a bordo di {device}',
+        },
+        icon: 'scan-eye',
+      },
+    ],
+    events: {
+      onDetected: {
+        category: EventCategory.DetectionCameraNative,
+        label: { en: 'Camera spotted something', it: 'La telecamera ha rilevato qualcosa' },
+        phrase: {
+          en: 'When {device} spots something with its own detector',
+          it: 'Quando {device} rileva qualcosa con il proprio rilevatore',
+        },
+        icon: 'scan-eye',
+      },
+    },
+  },
+  'osd': {
+    scope: 'device',
+    noun: { en: 'On-screen text', it: 'Testo in sovrimpressione' },
+    events: {
+      onStatusChanged: {
+        notOperatorFacing: 'an overlay setting changed — configuration, not a happening',
+      },
+    },
+  },
+  'pipeline-analytics': {
+    scope: 'device',
+    noun: { en: 'Tracking', it: 'Tracciamento' },
+    notOperatorFacing: {
+      setTrackFlags: 'curating a recorded track in the review UI, not a live step',
+      setTrackRelation: 'curating recorded tracks in the review UI, not a live step',
+      clearTrackRelation: 'curating recorded tracks in the review UI, not a live step',
+      setTrackPurity: 'curating a recorded track in the review UI, not a live step',
+    },
+    events: {
+      onFrameTracked: {
+        notOperatorFacing: 'one tracker frame — stream rate, never an automation trigger',
+      },
+      onTrackStarted: {
+        category: EventCategory.PipelineAnalyticsTrackStarted,
+        label: { en: 'Subject appeared', it: 'Soggetto comparso' },
+        phrase: {
+          en: 'When {device} starts following a subject',
+          it: 'Quando {device} inizia a seguire un soggetto',
+        },
+        icon: 'scan-eye',
+      },
+      onTrackEnded: {
+        category: EventCategory.PipelineAnalyticsTrackEnded,
+        label: { en: 'Subject left', it: 'Soggetto uscito' },
+        phrase: {
+          en: 'When a subject leaves the view of {device}',
+          it: 'Quando un soggetto esce dall’inquadratura di {device}',
+        },
+        icon: 'scan-eye',
+      },
+      onDetectionEvent: {
+        category: EventCategory.PipelineAnalyticsDetectionEvent,
+        label: { en: 'Detection event', it: 'Evento di rilevamento' },
+        phrase: {
+          en: 'When {device} records a detection event',
+          it: 'Quando {device} registra un evento di rilevamento',
+        },
+        icon: 'radar',
+      },
+    },
+    extraEvents: [
+      {
+        category: EventCategory.PipelineAnalyticsPackageDelivered,
+        label: { en: 'Package delivered', it: 'Pacco consegnato' },
+        phrase: {
+          en: 'When a package is left in front of {device}',
+          it: 'Quando viene lasciato un pacco davanti a {device}',
+        },
+        icon: 'package',
+      },
+      {
+        category: EventCategory.PipelineAnalyticsPackagePickedUp,
+        label: { en: 'Package picked up', it: 'Pacco ritirato' },
+        phrase: {
+          en: 'When a package is picked up in front of {device}',
+          it: 'Quando viene ritirato un pacco davanti a {device}',
+        },
+        icon: 'package-open',
+      },
+    ],
+  },
+  'privacy-mask': {
+    scope: 'device',
+    noun: { en: 'Privacy', it: 'Privacy' },
+    actions: [
+      {
+        id: 'privacy.maskOn',
+        method: 'setMask',
+        label: { en: 'Privacy mask on', it: 'Maschera privacy attiva' },
+        phrase: {
+          en: 'Cover the privacy zones of {device}',
+          it: 'Oscura le zone private di {device}',
+        },
+        icon: 'eye-off',
+        args: { patch: { enabled: true } },
+      },
+      {
+        id: 'privacy.maskOff',
+        method: 'setMask',
+        label: { en: 'Privacy mask off', it: 'Maschera privacy spenta' },
+        phrase: {
+          en: 'Uncover the privacy zones of {device}',
+          it: 'Scopri le zone private di {device}',
+        },
+        icon: 'eye',
+        args: { patch: { enabled: false } },
+      },
+      {
+        id: 'privacy.micOn',
+        method: 'setAudioEnabled',
+        label: { en: 'Microphone on', it: 'Microfono attivo' },
+        phrase: { en: 'Turn on the microphone of {device}', it: 'Attiva il microfono di {device}' },
+        icon: 'mic',
+        args: { enabled: true },
+      },
+      {
+        id: 'privacy.micOff',
+        method: 'setAudioEnabled',
+        label: { en: 'Microphone off', it: 'Microfono spento' },
+        phrase: {
+          en: 'Turn off the microphone of {device}',
+          it: 'Disattiva il microfono di {device}',
+        },
+        icon: 'mic-off',
+        args: { enabled: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: { en: 'Privacy mask', it: 'Maschera privacy' },
+        whenTrue: {
+          en: 'When the privacy mask of {device} is turned on',
+          it: 'Quando si attiva la maschera privacy di {device}',
+        },
+        whenFalse: {
+          en: 'When the privacy mask of {device} is turned off',
+          it: 'Quando si disattiva la maschera privacy di {device}',
+        },
+        icon: 'eye-off',
+      },
+      {
+        kind: 'boolean',
+        field: 'audioEnabled',
+        label: { en: 'Microphone', it: 'Microfono' },
+        whenTrue: {
+          en: 'When the microphone of {device} is turned on',
+          it: 'Quando si attiva il microfono di {device}',
+        },
+        whenFalse: {
+          en: 'When the microphone of {device} is turned off',
+          it: 'Quando si disattiva il microfono di {device}',
+        },
+        icon: 'mic',
+      },
+    ],
+  },
+  'ptz': {
+    scope: 'device',
+    noun: { en: 'Pan / tilt / zoom', it: 'Brandeggio' },
+    actions: [
+      {
+        id: 'ptz.goHome',
+        method: 'goHome',
+        label: { en: 'PTZ go home', it: 'Torna alla posizione iniziale' },
+        phrase: {
+          en: 'Send {device} to its home position',
+          it: 'Riporta {device} alla posizione iniziale',
+        },
+        icon: 'house',
+      },
+      {
+        id: 'ptz.goToPreset',
+        method: 'goToPreset',
+        label: { en: 'PTZ go to preset', it: 'Vai a un preset' },
+        phrase: { en: 'Move {device} to {presetId}', it: 'Sposta {device} su {presetId}' },
+        icon: 'move',
+        openArgs: [
+          {
+            key: 'presetId',
+            label: { en: 'Preset', it: 'Preset' },
+            offer: {
+              kind: 'dynamic',
+              from: 'method',
+              method: 'getPresets',
+              valueKey: 'id',
+              labelKey: 'name',
+            },
+          },
+        ],
+      },
+      {
+        id: 'ptz.stop',
+        method: 'stop',
+        label: { en: 'Stop moving', it: 'Ferma il movimento' },
+        phrase: { en: 'Stop {device} moving', it: 'Ferma il movimento di {device}' },
+        icon: 'square',
+      },
+      {
+        id: 'ptz.autofocusOn',
+        method: 'setAutofocus',
+        label: { en: 'Autofocus on', it: 'Autofocus attivo' },
+        phrase: { en: 'Turn on autofocus on {device}', it: 'Attiva l’autofocus su {device}' },
+        icon: 'focus',
+        args: { enabled: true },
+      },
+      {
+        id: 'ptz.autofocusOff',
+        method: 'setAutofocus',
+        label: { en: 'Autofocus off', it: 'Autofocus spento' },
+        phrase: { en: 'Turn off autofocus on {device}', it: 'Disattiva l’autofocus su {device}' },
+        icon: 'focus',
+        args: { enabled: false },
+      },
+    ],
+    notOperatorFacing: {
+      move: 'a relative nudge from the live-view joystick; a fixed place is a preset',
+      continuousMove: 'joystick motion held until released — continuous, not a discrete step',
+    },
+  },
+  'ptz-autotrack': {
+    scope: 'device',
+    noun: { en: 'Autotracking', it: 'Inseguimento automatico' },
+    actions: [
+      {
+        id: 'ptz.autotrackOn',
+        method: 'setEnabled',
+        label: { en: 'Autotrack on', it: 'Inseguimento attivo' },
+        phrase: {
+          en: 'Start autotracking on {device}',
+          it: 'Attiva l’inseguimento automatico su {device}',
+        },
+        icon: 'crosshair',
+        args: { enabled: true },
+      },
+      {
+        id: 'ptz.autotrackOff',
+        method: 'setEnabled',
+        label: { en: 'Autotrack off', it: 'Inseguimento spento' },
+        phrase: {
+          en: 'Stop autotracking on {device}',
+          it: 'Disattiva l’inseguimento automatico su {device}',
+        },
+        icon: 'crosshair',
+        args: { enabled: false },
+      },
+    ],
+    notOperatorFacing: {
+      setSettings: 'tracking tuning (target type, delays) — set once on the camera’s PTZ page',
+    },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: { en: 'Autotracking', it: 'Inseguimento automatico' },
+        whenTrue: {
+          en: 'When autotracking is turned on for {device}',
+          it: 'Quando si attiva l’inseguimento automatico di {device}',
+        },
+        whenFalse: {
+          en: 'When autotracking is turned off for {device}',
+          it: 'Quando si disattiva l’inseguimento automatico di {device}',
+        },
+        icon: 'crosshair',
+      },
+    ],
+    events: {
+      onStatusChanged: {
+        notOperatorFacing: 'the `enabled` state trigger phrases both edges of this change',
+      },
+    },
+  },
+  'reboot': {
+    scope: 'device',
+    noun: { en: 'Reboot', it: 'Riavvio' },
+    actions: [
+      {
+        id: 'reboot.reboot',
+        method: 'reboot',
+        label: { en: 'Reboot device', it: 'Riavvia il dispositivo' },
+        phrase: { en: 'Reboot {device}', it: 'Riavvia {device}' },
+        icon: 'refresh-cw',
+      },
+    ],
+  },
+  'recording': { scope: 'device', noun: { en: 'Recording', it: 'Registrazione' } },
+  'recording-onboard': {
+    scope: 'device',
+    noun: { en: 'On-camera recording', it: 'Registrazione a bordo' },
+    actions: [
+      {
+        id: 'recordingOnboard.on',
+        method: 'setSettings',
+        label: { en: 'On-camera recording on', it: 'Registrazione a bordo attiva' },
+        phrase: {
+          en: 'Turn on recording to the card of {device}',
+          it: 'Attiva la registrazione sulla scheda di {device}',
+        },
+        icon: 'hard-drive',
+        args: { settings: { enabled: true } },
+      },
+      {
+        id: 'recordingOnboard.off',
+        method: 'setSettings',
+        label: { en: 'On-camera recording off', it: 'Registrazione a bordo spenta' },
+        phrase: {
+          en: 'Turn off recording to the card of {device}',
+          it: 'Disattiva la registrazione sulla scheda di {device}',
+        },
+        icon: 'hard-drive',
+        args: { settings: { enabled: false } },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'recordingToNowhere',
+        label: { en: 'Recording to nowhere', it: 'Registra nel vuoto' },
+        whenTrue: {
+          en: 'When {device} is recording with no card to write to',
+          it: 'Quando {device} registra senza una scheda su cui scrivere',
+        },
+        whenFalse: {
+          en: 'When {device} has a card to record to again',
+          it: 'Quando {device} ha di nuovo una scheda su cui registrare',
+        },
+        icon: 'hard-drive',
+      },
+    ],
+  },
+  'recording-signal': {
+    scope: 'device',
+    noun: { en: 'Recording signal', it: 'Segnale di registrazione' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'active',
+        label: { en: 'Recording', it: 'In registrazione' },
+        whenTrue: {
+          en: 'When {device} starts recording',
+          it: 'Quando {device} inizia a registrare',
+        },
+        whenFalse: {
+          en: 'When {device} stops recording',
+          it: 'Quando {device} smette di registrare',
+        },
+        icon: 'circle-dot',
+      },
+    ],
+  },
+  'scene-monitor': {
+    scope: 'device',
+    noun: { en: 'Scene watch', it: 'Controllo della scena' },
+    actions: [
+      {
+        id: 'sceneMonitor.recheck',
+        method: 'recheckNow',
+        label: { en: 'Re-check a scene', it: 'Ricontrolla una scena' },
+        phrase: {
+          en: 'Re-check {monitorId} on {device} now',
+          it: 'Ricontrolla subito {monitorId} su {device}',
+        },
+        icon: 'scan-search',
+        openArgs: [
+          {
+            key: 'monitorId',
+            label: { en: 'Scene', it: 'Scena' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              field: 'monitors',
+              valueKey: 'id',
+              labelKey: 'label',
+            },
+          },
+        ],
+      },
+    ],
+    extraEvents: [
+      {
+        category: EventCategory.EnrichmentSceneStateChanged,
+        label: { en: 'Scene changed', it: 'Scena cambiata' },
+        phrase: {
+          en: 'When a watched scene on {device} changes',
+          it: 'Quando cambia una scena controllata su {device}',
+        },
+        icon: 'scan-search',
+      },
+    ],
+  },
+  'snapshot': { scope: 'device', noun: { en: 'Snapshot', it: 'Istantanea' } },
+  'stream-catalog': { scope: 'device', noun: { en: 'Stream catalog', it: 'Catalogo dei flussi' } },
+  'stream-params': {
+    scope: 'device',
+    noun: { en: 'Stream parameters', it: 'Parametri dei flussi' },
+  },
+  'stream-signals': { scope: 'device', noun: { en: 'Stream signals', it: 'Segnali dei flussi' } },
+  'videoclips': { scope: 'device', noun: { en: 'Video clips', it: 'Clip video' } },
+  'webrtc-session': {
+    scope: 'device',
+    noun: { en: 'Live session', it: 'Sessione live' },
+    notOperatorFacing: {
+      createSession: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      handleOffer: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      handleAnswer: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      addIceCandidate: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      closeSession: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      applyDownlinkProbe: 'live-stream session plumbing driven by a viewer, never a discrete step',
+    },
+  },
+  'zone-analytics': {
+    scope: 'device',
+    noun: { en: 'Zone occupancy', it: 'Occupazione delle zone' },
+    extraEvents: [
+      {
+        category: EventCategory.ZoneAnalyticsOccupancyChanged,
+        label: { en: 'Zone occupancy changed', it: 'Occupazione della zona cambiata' },
+        phrase: {
+          en: 'When someone enters or leaves a zone of {device}',
+          it: 'Quando qualcuno entra o esce da una zona di {device}',
+        },
+        icon: 'square-dashed',
+      },
+    ],
+  },
+  'zone-rules': { scope: 'device', noun: { en: 'Zone rules', it: 'Regole delle zone' } },
+  'zones': { scope: 'device', noun: { en: 'Zones', it: 'Zone' } },
+  'heat-pump-status': { scope: 'device', noun: { en: 'Heat pump', it: 'Pompa di calore' } },
+  'heat-pump-control': {
+    scope: 'device',
+    noun: { en: 'Heat pump settings', it: 'Impostazioni pompa di calore' },
+    actions: [
+      {
+        id: 'heatPump.silent',
+        method: 'setSilentMode',
+        label: { en: 'Set silent mode', it: 'Imposta la modalità silenziosa' },
+        phrase: {
+          en: 'Set silent mode of {device} to {mode}',
+          it: 'Imposta la modalità silenziosa di {device} su {mode}',
+        },
+        icon: 'volume-x',
+        openArgs: [
+          {
+            key: 'mode',
+            label: { en: 'Silent mode', it: 'Modalità silenziosa' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'off', label: { en: 'Off', it: 'Off' } },
+                { value: 'auto', label: { en: 'Auto', it: 'Auto' } },
+                { value: 'on', label: { en: 'On', it: 'On' } },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.away',
+        method: 'setAwayMode',
+        label: { en: 'Set away mode', it: 'Imposta la modalità assente' },
+        phrase: {
+          en: 'Set away mode of {device} to {mode}',
+          it: 'Imposta la modalità assente di {device} su {mode}',
+        },
+        icon: 'plane',
+        openArgs: [
+          {
+            key: 'mode',
+            label: { en: 'Away mode', it: 'Modalità assente' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'off', label: { en: 'Off', it: 'Off' } },
+                { value: 'on', label: { en: 'On', it: 'On' } },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.additionalHeater',
+        method: 'setAdditionalHeaterMode',
+        label: { en: 'Set additional heater', it: 'Imposta il riscaldatore aggiuntivo' },
+        phrase: {
+          en: 'Set the additional heater of {device} to {mode}',
+          it: 'Imposta il riscaldatore aggiuntivo di {device} su {mode}',
+        },
+        icon: 'flame',
+        openArgs: [
+          {
+            key: 'mode',
+            label: { en: 'Additional heater', it: 'Riscaldatore aggiuntivo' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'off', label: { en: 'Off', it: 'Off' } },
+                { value: 'manual', label: { en: 'Manual', it: 'Manuale' } },
+                { value: 'auto', label: { en: 'Auto', it: 'Auto' } },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.holiday',
+        method: 'setHolidayMode',
+        label: { en: 'Set holiday mode', it: 'Imposta la modalità vacanza' },
+        phrase: {
+          en: 'Set holiday mode of {device} to {mode}',
+          it: 'Imposta la modalità vacanza di {device} su {mode}',
+        },
+        icon: 'tree-palm',
+        openArgs: [
+          {
+            key: 'mode',
+            label: { en: 'Holiday programme', it: 'Programma vacanza' },
+            offer: {
+              kind: 'enum',
+              values: [
+                { value: 'off', label: { en: 'Off', it: 'Off' } },
+                { value: 'hm1', label: { en: 'Programme 1', it: 'Programma 1' } },
+                { value: 'hm2', label: { en: 'Programme 2', it: 'Programma 2' } },
+                { value: 'hm3', label: { en: 'Programme 3', it: 'Programma 3' } },
+                { value: 'hm4', label: { en: 'Programme 4', it: 'Programma 4' } },
+                { value: 'hm5', label: { en: 'Programme 5', it: 'Programma 5' } },
+                { value: 'hm6', label: { en: 'Programme 6', it: 'Programma 6' } },
+                { value: 'hm7', label: { en: 'Programme 7', it: 'Programma 7' } },
+                { value: 'hm8', label: { en: 'Programme 8', it: 'Programma 8' } },
+              ],
+            },
+          },
+        ],
+      },
+    ],
+    notOperatorFacing: {
+      setCircuitOperationMode: 'Needs a circuit: set from the device page, not offered to automations',
+      setCircuitHeatCoolMode: 'Needs a circuit: set from the device page, not offered to automations',
+      setCircuitSummerWinter: 'Needs a circuit: set from the device page, not offered to automations',
+      setCircuitComfortSetpoint: 'Needs a circuit: set from the device page, not offered to automations',
+      setCircuitEcoSetpoint: 'Needs a circuit: set from the device page, not offered to automations',
+      setCircuitMaxFlowTemp: 'Needs a circuit: set from the device page, not offered to automations',
+      setDhwOperationMode: 'Needs a circuit: set from the device page, not offered to automations',
+      setDhwTemperatureLevel: 'Needs a circuit: set from the device page, not offered to automations',
+      setDhwChargeDuration: 'Needs a circuit: set from the device page, not offered to automations',
+      startExtraHotWater: 'Needs a circuit: set from the device page, not offered to automations',
+    },
+  },
+  'air-quality-sensor': {
+    scope: 'device',
+    noun: { en: 'Air quality', it: 'Qualità dell’aria' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'co2',
+        quantity: { en: 'the CO₂', it: 'la CO₂' },
+        label: { en: 'CO₂', it: 'CO₂' },
+        unit: 'ppm',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'voc',
+        quantity: { en: 'the VOC level', it: 'il livello di COV' },
+        label: { en: 'VOC', it: 'COV' },
+        unit: 'ppb',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'pm25',
+        quantity: { en: 'the PM2.5', it: 'il PM2,5' },
+        label: { en: 'PM2.5', it: 'PM2,5' },
+        unit: 'µg/m³',
+        icon: 'cloud-fog',
+      },
+      {
+        kind: 'numeric',
+        field: 'pm10',
+        quantity: { en: 'the PM10', it: 'il PM10' },
+        label: { en: 'PM10', it: 'PM10' },
+        unit: 'µg/m³',
+        icon: 'cloud-fog',
+      },
+      {
+        kind: 'numeric',
+        field: 'aqi',
+        quantity: { en: 'the air quality index', it: 'l’indice di qualità dell’aria' },
+        label: { en: 'AQI', it: 'IQA' },
+        icon: 'wind',
+      },
+    ],
+  },
+  'ambient-light-sensor': {
+    scope: 'device',
+    noun: { en: 'Light level', it: 'Luminosità ambiente' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'illuminance',
+        quantity: { en: 'the light level', it: 'la luminosità' },
+        label: { en: 'Illuminance', it: 'Illuminamento' },
+        unit: 'lx',
+        icon: 'sun',
+      },
+    ],
+  },
+  'binary': {
+    scope: 'device',
+    noun: { en: 'Binary sensor', it: 'Sensore binario' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'on',
+        label: { en: 'On', it: 'Acceso' },
+        whenTrue: { en: 'When {device} turns active', it: 'Quando {device} si attiva' },
+        whenFalse: { en: 'When {device} turns inactive', it: 'Quando {device} si disattiva' },
+        icon: 'toggle-right',
+      },
+    ],
+    overrides: {
+      byRole: {
+        [DeviceRole.MotionSensor]: {
+          state: {
+            on: {
+              label: { en: 'Motion', it: 'Movimento' },
+              whenTrue: {
+                en: 'When {device} detects motion',
+                it: 'Quando {device} rileva movimento',
+              },
+              whenFalse: {
+                en: 'When motion clears on {device}',
+                it: 'Quando il movimento su {device} cessa',
+              },
+              icon: 'activity',
+            },
+          },
+        },
+        [DeviceRole.ContactSensor]: {
+          state: {
+            on: {
+              label: { en: 'Open', it: 'Aperto' },
+              whenTrue: { en: 'When {device} opens', it: 'Quando {device} si apre' },
+              whenFalse: { en: 'When {device} closes', it: 'Quando {device} si chiude' },
+              icon: 'door-open',
+            },
+          },
+        },
+        [DeviceRole.LeakSensor]: {
+          state: {
+            on: {
+              label: { en: 'Leak', it: 'Perdita' },
+              whenTrue: {
+                en: 'When {device} detects a leak',
+                it: 'Quando {device} rileva una perdita',
+              },
+              whenFalse: { en: 'When {device} is dry again', it: 'Quando {device} torna asciutto' },
+              icon: 'droplets',
+            },
+          },
+        },
+        [DeviceRole.SmokeSensor]: {
+          state: {
+            on: {
+              label: { en: 'Smoke', it: 'Fumo' },
+              whenTrue: { en: 'When {device} detects smoke', it: 'Quando {device} rileva fumo' },
+              whenFalse: {
+                en: 'When smoke clears on {device}',
+                it: 'Quando il fumo su {device} si dirada',
+              },
+              icon: 'alarm-smoke',
+            },
+          },
+        },
+        [DeviceRole.COSensor]: {
+          state: {
+            on: {
+              label: { en: 'Carbon monoxide', it: 'Monossido di carbonio' },
+              whenTrue: {
+                en: 'When {device} detects carbon monoxide',
+                it: 'Quando {device} rileva monossido di carbonio',
+              },
+              whenFalse: {
+                en: 'When the carbon monoxide clears on {device}',
+                it: 'Quando il monossido su {device} rientra',
+              },
+              icon: 'cloud-alert',
+            },
+          },
+        },
+        [DeviceRole.GasSensor]: {
+          state: {
+            on: {
+              label: { en: 'Gas', it: 'Gas' },
+              whenTrue: { en: 'When {device} detects gas', it: 'Quando {device} rileva gas' },
+              whenFalse: {
+                en: 'When the gas clears on {device}',
+                it: 'Quando il gas su {device} rientra',
+              },
+              icon: 'flame',
+            },
+          },
+        },
+        [DeviceRole.TamperSensor]: {
+          state: {
+            on: {
+              label: { en: 'Tampered', it: 'Manomesso' },
+              whenTrue: {
+                en: 'When {device} is tampered with',
+                it: 'Quando {device} viene manomesso',
+              },
+              whenFalse: {
+                en: 'When the tamper alert on {device} clears',
+                it: 'Quando l’allarme di manomissione di {device} rientra',
+              },
+              icon: 'shield-alert',
+            },
+          },
+        },
+        [DeviceRole.VibrationSensor]: {
+          state: {
+            on: {
+              label: { en: 'Vibration', it: 'Vibrazione' },
+              whenTrue: { en: 'When {device} vibrates', it: 'Quando {device} vibra' },
+              whenFalse: { en: 'When {device} is still again', it: 'Quando {device} torna fermo' },
+              icon: 'vibrate',
+            },
+          },
+        },
+        [DeviceRole.ConnectivitySensor]: {
+          state: {
+            on: {
+              label: { en: 'Connected', it: 'Connesso' },
+              whenTrue: { en: 'When {device} connects', it: 'Quando {device} si connette' },
+              whenFalse: { en: 'When {device} disconnects', it: 'Quando {device} si disconnette' },
+              icon: 'wifi',
+            },
+          },
+        },
+        [DeviceRole.SoundSensor]: {
+          state: {
+            on: {
+              label: { en: 'Sound', it: 'Suono' },
+              whenTrue: { en: 'When {device} hears a sound', it: 'Quando {device} sente un suono' },
+              whenFalse: {
+                en: 'When {device} is quiet again',
+                it: 'Quando {device} torna silenzioso',
+              },
+              icon: 'ear',
+            },
+          },
+        },
+        [DeviceRole.BatterySensor]: {
+          state: {
+            on: {
+              label: { en: 'Battery low', it: 'Batteria scarica' },
+              whenTrue: {
+                en: 'When the battery of {device} runs low',
+                it: 'Quando la batteria di {device} si scarica',
+              },
+              whenFalse: {
+                en: 'When the battery of {device} is fine again',
+                it: 'Quando la batteria di {device} torna a posto',
+              },
+              icon: 'battery-low',
+            },
+          },
+        },
+        [DeviceRole.BinaryHelper]: {
+          state: {
+            on: {
+              label: { en: 'On', it: 'Acceso' },
+              whenTrue: { en: 'When {device} turns on', it: 'Quando {device} si accende' },
+              whenFalse: { en: 'When {device} turns off', it: 'Quando {device} si spegne' },
+              icon: 'toggle-right',
+            },
+          },
+        },
+      },
+    },
+  },
+  'carbon-monoxide': {
+    scope: 'device',
+    noun: { en: 'Carbon monoxide', it: 'Monossido di carbonio' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: { en: 'Detected', it: 'Rilevato' },
+        whenTrue: {
+          en: 'When {device} detects carbon monoxide',
+          it: 'Quando {device} rileva monossido di carbonio',
+        },
+        whenFalse: {
+          en: 'When the carbon monoxide clears on {device}',
+          it: 'Quando il monossido su {device} rientra',
+        },
+        icon: 'cloud-alert',
+      },
+    ],
+  },
+  'connectivity': {
+    scope: 'device',
+    noun: { en: 'Connectivity', it: 'Connettività' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'connected',
+        label: { en: 'Connected', it: 'Connesso' },
+        whenTrue: { en: 'When {device} connects', it: 'Quando {device} si connette' },
+        whenFalse: { en: 'When {device} disconnects', it: 'Quando {device} si disconnette' },
+        icon: 'wifi',
+      },
+    ],
+  },
+  'contact': {
+    scope: 'device',
+    noun: { en: 'Contact', it: 'Contatto' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'entryOpen',
+        label: { en: 'Open', it: 'Aperto' },
+        whenTrue: { en: 'When {device} opens', it: 'Quando {device} si apre' },
+        whenFalse: { en: 'When {device} closes', it: 'Quando {device} si chiude' },
+        icon: 'door-open',
+      },
+    ],
+  },
+  'enum-sensor': {
+    scope: 'device',
+    noun: { en: 'State sensor', it: 'Sensore di stato' },
+    state: [{ kind: 'value', field: 'value', label: { en: 'State', it: 'Stato' }, icon: 'list' }],
+  },
+  'flood': {
+    scope: 'device',
+    noun: { en: 'Leak sensor', it: 'Sensore di allagamento' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'flooded',
+        label: { en: 'Leak', it: 'Perdita' },
+        whenTrue: { en: 'When {device} detects a leak', it: 'Quando {device} rileva una perdita' },
+        whenFalse: { en: 'When {device} is dry again', it: 'Quando {device} torna asciutto' },
+        icon: 'droplets',
+      },
+    ],
+  },
+  'gas': {
+    scope: 'device',
+    noun: { en: 'Gas sensor', it: 'Sensore di gas' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: { en: 'Detected', it: 'Rilevato' },
+        whenTrue: { en: 'When {device} detects gas', it: 'Quando {device} rileva gas' },
+        whenFalse: {
+          en: 'When the gas clears on {device}',
+          it: 'Quando il gas su {device} rientra',
+        },
+        icon: 'flame',
+      },
+    ],
+  },
+  'group-active': { scope: 'device', noun: { en: 'Group state', it: 'Stato del gruppo' } },
+  'group-commands': { scope: 'device', noun: { en: 'Group command', it: 'Comando di gruppo' } },
+  'group-status': {
+    scope: 'device',
+    noun: { en: 'Group', it: 'Gruppo' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'included',
+        quantity: { en: 'the members reporting', it: 'i membri che rispondono' },
+        label: { en: 'Reporting', it: 'Rispondono' },
+        icon: 'users',
+      },
+      {
+        kind: 'numeric',
+        field: 'excluded',
+        quantity: { en: 'the members left out', it: 'i membri esclusi' },
+        label: { en: 'Excluded', it: 'Esclusi' },
+        icon: 'users',
+      },
+      {
+        kind: 'numeric',
+        field: 'total',
+        quantity: { en: 'the member count', it: 'il numero di membri' },
+        label: { en: 'Members', it: 'Membri' },
+        icon: 'sigma',
+      },
+    ],
+  },
+  'humidity-sensor': {
+    scope: 'device',
+    noun: { en: 'Humidity', it: 'Umidità' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'humidity',
+        quantity: { en: 'the humidity', it: 'l’umidità' },
+        label: { en: 'Humidity', it: 'Umidità' },
+        unit: '%',
+        icon: 'droplets',
+      },
+    ],
+  },
+  'motion': {
+    scope: 'device',
+    noun: { en: 'Motion', it: 'Movimento' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: { en: 'Motion', it: 'Movimento' },
+        whenTrue: { en: 'When {device} detects motion', it: 'Quando {device} rileva movimento' },
+        whenFalse: {
+          en: 'When motion clears on {device}',
+          it: 'Quando il movimento su {device} cessa',
+        },
+        icon: 'activity',
+      },
+    ],
+    events: {
+      onMotionChanged: {
+        notOperatorFacing: 'the `detected` state trigger phrases both edges, from the mirror that survives a dropped event (D49)',
+      },
+    },
+  },
+  'meter': {
+    scope: 'device',
+    noun: { en: 'Meter', it: 'Contatore' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'value',
+        quantity: { en: 'the total', it: 'il totale' },
+        label: { en: 'Total', it: 'Totale' },
+        icon: 'gauge',
+      },
+    ],
+  },
+  'numeric-sensor': {
+    scope: 'device',
+    noun: { en: 'Sensor', it: 'Sensore' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'value',
+        quantity: { en: 'the reading', it: 'il valore' },
+        label: { en: 'Reading', it: 'Valore' },
+        icon: 'gauge',
+      },
+    ],
+  },
+  'power-meter': {
+    scope: 'device',
+    noun: { en: 'Power meter', it: 'Misuratore di energia' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'power',
+        quantity: { en: 'the power draw', it: 'il consumo' },
+        label: { en: 'Power', it: 'Potenza' },
+        unit: 'W',
+        icon: 'zap',
+      },
+      {
+        kind: 'numeric',
+        field: 'energy',
+        quantity: { en: 'the energy used', it: 'l’energia consumata' },
+        label: { en: 'Energy', it: 'Energia' },
+        unit: 'kWh',
+        icon: 'zap',
+      },
+      {
+        kind: 'numeric',
+        field: 'voltage',
+        quantity: { en: 'the voltage', it: 'la tensione' },
+        label: { en: 'Voltage', it: 'Tensione' },
+        unit: 'V',
+        icon: 'zap',
+      },
+      {
+        kind: 'numeric',
+        field: 'current',
+        quantity: { en: 'the current', it: 'la corrente' },
+        label: { en: 'Current', it: 'Corrente' },
+        unit: 'A',
+        icon: 'zap',
+      },
+    ],
+  },
+  'presence': {
+    scope: 'device',
+    noun: { en: 'Presence', it: 'Presenza' },
+    state: [
+      {
+        kind: 'value',
+        field: 'state',
+        label: { en: 'Where', it: 'Posizione' },
+        phrase: { en: 'When {device} is at {value}', it: 'Quando {device} è in {value}' },
+        icon: 'map-pin',
+      },
+    ],
+  },
+  'pressure-sensor': {
+    scope: 'device',
+    noun: { en: 'Pressure', it: 'Pressione' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'pressure',
+        quantity: { en: 'the pressure', it: 'la pressione' },
+        label: { en: 'Pressure', it: 'Pressione' },
+        unit: 'hPa',
+        icon: 'gauge',
+      },
+    ],
+  },
+  'smoke': {
+    scope: 'device',
+    noun: { en: 'Smoke detector', it: 'Rilevatore di fumo' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: { en: 'Detected', it: 'Rilevato' },
+        whenTrue: { en: 'When {device} detects smoke', it: 'Quando {device} rileva fumo' },
+        whenFalse: {
+          en: 'When smoke clears on {device}',
+          it: 'Quando il fumo su {device} si dirada',
+        },
+        icon: 'alarm-smoke',
+      },
+    ],
+  },
+  'tamper': {
+    scope: 'device',
+    noun: { en: 'Tamper', it: 'Manomissione' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'tampered',
+        label: { en: 'Tampered', it: 'Manomesso' },
+        whenTrue: { en: 'When {device} is tampered with', it: 'Quando {device} viene manomesso' },
+        whenFalse: {
+          en: 'When the tamper alert on {device} clears',
+          it: 'Quando l’allarme di manomissione di {device} rientra',
+        },
+        icon: 'shield-alert',
+      },
+    ],
+  },
+  'temperature-sensor': {
+    scope: 'device',
+    noun: { en: 'Temperature', it: 'Temperatura' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'temperature',
+        quantity: { en: 'the temperature', it: 'la temperatura' },
+        label: { en: 'Temperature', it: 'Temperatura' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
+    ],
+  },
+  'vibration': {
+    scope: 'device',
+    noun: { en: 'Vibration', it: 'Vibrazione' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: { en: 'Vibration', it: 'Vibrazione' },
+        whenTrue: { en: 'When {device} vibrates', it: 'Quando {device} vibra' },
+        whenFalse: { en: 'When {device} is still again', it: 'Quando {device} torna fermo' },
+        icon: 'vibrate',
+      },
+    ],
+  },
+  'weather': {
+    scope: 'device',
+    noun: { en: 'Weather', it: 'Meteo' },
+    state: [
+      {
+        kind: 'value',
+        field: 'condition',
+        label: { en: 'Conditions', it: 'Condizioni' },
+        phrase: {
+          en: 'When the weather at {device} turns {value}',
+          it: 'Quando il meteo di {device} diventa {value}',
+        },
+        icon: 'cloud-sun',
+      },
+      {
+        kind: 'numeric',
+        field: 'temperature',
+        quantity: { en: 'the outdoor temperature', it: 'la temperatura esterna' },
+        label: { en: 'Temperature', it: 'Temperatura' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
+      {
+        kind: 'numeric',
+        field: 'humidity',
+        quantity: { en: 'the outdoor humidity', it: 'l’umidità esterna' },
+        label: { en: 'Humidity', it: 'Umidità' },
+        unit: '%',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'windSpeed',
+        quantity: { en: 'the wind speed', it: 'la velocità del vento' },
+        label: { en: 'Wind', it: 'Vento' },
+        unit: 'm/s',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'pressure',
+        quantity: { en: 'the air pressure', it: 'la pressione atmosferica' },
+        label: { en: 'Pressure', it: 'Pressione' },
+        unit: 'hPa',
+        icon: 'gauge',
+      },
+    ],
+  },
+  'battery': {
+    scope: 'device',
+    noun: { en: 'Battery', it: 'Batteria' },
+    notOperatorFacing: {
+      wakeForStream: 'a stream consumer wakes a sleeping camera to watch it; an automation that wants footage asks for the footage',
+    },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'level',
+        quantity: { en: 'the battery level', it: 'il livello della batteria' },
+        label: { en: 'Battery', it: 'Batteria' },
+        unit: '%',
+        icon: 'battery',
+      },
+      {
+        kind: 'boolean',
+        field: 'sleeping',
+        label: { en: 'Asleep', it: 'In sospensione' },
+        whenTrue: { en: 'When {device} goes to sleep', it: 'Quando {device} va in sospensione' },
+        whenFalse: { en: 'When {device} wakes up', it: 'Quando {device} si risveglia' },
+        icon: 'moon',
+      },
+      {
+        kind: 'enum',
+        field: 'charging',
+        label: { en: 'Charging', it: 'Ricarica' },
+        values: [
+          {
+            value: 'dc',
+            label: { en: 'Charging from mains', it: 'In carica da rete' },
+            phrase: {
+              en: 'When {device} starts charging',
+              it: 'Quando {device} inizia a caricarsi',
+            },
+          },
+          {
+            value: 'solar',
+            label: { en: 'Charging from solar', it: 'In carica dal pannello solare' },
+            phrase: {
+              en: 'When {device} charges from its solar panel',
+              it: 'Quando {device} si carica dal pannello solare',
+            },
+          },
+          {
+            value: 'none',
+            label: { en: 'Not charging', it: 'Non in carica' },
+            phrase: {
+              en: 'When {device} stops charging',
+              it: 'Quando {device} smette di caricarsi',
+            },
+          },
+          { value: 'unknown', label: { en: 'Unknown', it: 'Sconosciuto' } },
+        ],
+        icon: 'battery-charging',
+      },
+    ],
+    events: {
+      onStatusChanged: {
+        notOperatorFacing: 'the level / sleeping / charging state triggers each read one field of this change',
+      },
+    },
+    extraEvents: [
+      {
+        category: EventCategory.DeviceAwake,
+        label: { en: 'Woke up', it: 'Risvegliato' },
+        phrase: { en: 'When {device} wakes up', it: 'Quando {device} si risveglia' },
+        icon: 'sun',
+      },
+      {
+        category: EventCategory.DeviceSleeping,
+        label: { en: 'Went to sleep', it: 'In sospensione' },
+        phrase: { en: 'When {device} goes to sleep', it: 'Quando {device} va in sospensione' },
+        icon: 'moon',
+      },
+    ],
+  },
+  'network-link': {
+    scope: 'device',
+    noun: { en: 'Network link', it: 'Collegamento di rete' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'signal',
+        quantity: { en: 'the signal strength', it: 'l’intensità del segnale' },
+        label: { en: 'Signal', it: 'Segnale' },
+        unit: '%',
+        icon: 'wifi',
+      },
+      {
+        kind: 'enum',
+        field: 'type',
+        label: { en: 'Link type', it: 'Tipo di collegamento' },
+        values: [
+          { value: 'wifi', label: { en: 'Wi-Fi', it: 'Wi-Fi' } },
+          { value: 'ethernet', label: { en: 'Ethernet', it: 'Ethernet' } },
+          { value: 'cellular', label: { en: 'Cellular', it: 'Rete mobile' } },
+          { value: 'unknown', label: { en: 'Unknown', it: 'Sconosciuto' } },
+        ],
+        icon: 'network',
+      },
+    ],
+    events: {
+      onStatusChanged: {
+        notOperatorFacing: 'the signal / link-type state triggers each read one field of this change',
+      },
+    },
+  },
+  'device-status': {
+    scope: 'device',
+    noun: { en: 'Reachability', it: 'Raggiungibilità' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'online',
+        label: { en: 'Online', it: 'Online' },
+        whenTrue: { en: 'When {device} comes back online', it: 'Quando {device} torna online' },
+        whenFalse: { en: 'When {device} goes offline', it: 'Quando {device} va offline' },
+        icon: 'wifi',
+      },
+    ],
+    events: {
+      onStatusChanged: {
+        notOperatorFacing: 'the `online` state trigger phrases both edges of this change',
+      },
+    },
+    extraEvents: [
+      {
+        category: EventCategory.DeviceOnline,
+        label: { en: 'Came online', it: 'Tornato online' },
+        phrase: { en: 'When {device} comes back online', it: 'Quando {device} torna online' },
+        icon: 'wifi',
+      },
+      {
+        category: EventCategory.DeviceOffline,
+        label: { en: 'Went offline', it: 'Andato offline' },
+        phrase: { en: 'When {device} goes offline', it: 'Quando {device} va offline' },
+        icon: 'wifi-off',
+      },
+    ],
+  },
+  'doorbell': {
+    scope: 'device',
+    noun: { en: 'Doorbell', it: 'Campanello' },
+    events: {
+      onPressed: {
+        category: EventCategory.DoorbellOnPressed,
+        label: { en: 'Rang', it: 'Ha suonato' },
+        phrase: { en: 'When someone rings {device}', it: 'Quando qualcuno suona a {device}' },
+        icon: 'bell-ring',
+      },
+    },
+  },
+  'event-emitter': {
+    scope: 'device',
+    noun: { en: 'Event source', it: 'Sorgente di eventi' },
+    events: {
+      onEvent: {
+        category: EventCategory.EventEmitted,
+        label: { en: 'Fired an event', it: 'Ha generato un evento' },
+        phrase: { en: 'When {device} fires an event', it: 'Quando {device} genera un evento' },
+        icon: 'zap',
+      },
+    },
+  },
+  'action-source': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'actions': {
+    scope: 'system',
+    notOperatorFacing: 'declared actions — run from the Actions page and from the cameras that link them',
+  },
+  'addon-pages': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+  'addon-pages-source': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+  'addon-routes': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+  'addon-settings': {
+    scope: 'system',
+    notOperatorFacing: 'addon administration — installed and configured from the Addons page',
+  },
+  'addon-widgets': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+  'addon-widgets-source': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+  'addons': {
+    scope: 'system',
+    notOperatorFacing: 'addon administration — installed and configured from the Addons page',
+  },
+  'admin-ui': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+  'alerts': {
+    scope: 'system',
+    notOperatorFacing: 'the alert centre — read and acknowledged on its own page',
+  },
+  'audio-analyzer': {
+    scope: 'system',
+    notOperatorFacing: 'detection pipeline machinery — tuned on the pipeline pages, never actuated per device',
+  },
+  'audio-codec': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'auth-provider': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'backup': {
+    scope: 'system',
+    notOperatorFacing: 'system backups — run and restored from the Backups page',
+  },
+  'board-key-source': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'broker': {
+    scope: 'system',
+    notOperatorFacing: 'message-broker connections — configured, not actuated',
+  },
+  'calendar-source': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'calendars': {
+    scope: 'system',
+    notOperatorFacing: 'calendars feed schedules and conditions, not device actions',
+  },
+  'cluster-update': {
+    scope: 'system',
+    notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'composer': {
+    scope: 'system',
+    notOperatorFacing: 'device composition — an authoring tool, not an action',
+  },
+  'core-blocks': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'custom-model-registry': {
+    scope: 'system',
+    notOperatorFacing: 'model and training machinery — no device action',
+  },
+  'data-store-provider': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'database-snapshot': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'decoder': {
+    scope: 'system',
+    notOperatorFacing: 'detection pipeline machinery — tuned on the pipeline pages, never actuated per device',
+  },
+  'device-adoption': {
+    scope: 'system',
+    notOperatorFacing: 'device adoption — an onboarding flow, not an action',
+  },
+  'device-credentials': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'device-export': {
+    scope: 'system',
+    notOperatorFacing: 'exports to other ecosystems — configured on the export pages',
+  },
+  'device-history': {
+    scope: 'system',
+    notOperatorFacing: 'recorded history of device state — read by charts, not actuated',
+  },
+  'device-manager': {
+    scope: 'system',
+    notOperatorFacing: 'the device registry itself — rename, move and remove are administration',
+  },
+  'device-provider': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'device-removal-hook': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'device-state': {
+    scope: 'system',
+    notOperatorFacing: 'the runtime-state mirror every trigger already reads through',
+  },
+  'display-palette': {
+    scope: 'system',
+    notOperatorFacing: 'the cluster display palette — one colour table for every client, not a device action',
+  },
+  'embedding-encoder': {
+    scope: 'system',
+    notOperatorFacing: 'model and training machinery — no device action',
+  },
+  'face-gallery': {
+    scope: 'system',
+    notOperatorFacing: 'the face gallery — curated on its own page',
+  },
+  'failure-contribution': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'fan-presets': {
+    scope: 'system',
+    notOperatorFacing: 'the per-fan presets — authored in the Customize presets editor, applied through the actions the exports list',
+  },
+  'filesystem-browse': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'hero-layout': {
+    scope: 'system',
+    notOperatorFacing: 'the device hero model — read-only data the UI draws, never actuated',
+  },
+  'integration-instances': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'integrations': {
+    scope: 'system',
+    notOperatorFacing: 'addon administration — installed and configured from the Addons page',
+  },
+  'keychain': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'keychain-admin': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'llm': { scope: 'system', notOperatorFacing: 'model and training machinery — no device action' },
+  'llm-runtime': {
+    scope: 'system',
+    notOperatorFacing: 'model and training machinery — no device action',
+  },
+  'load-contribution': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'local-network': {
+    scope: 'system',
+    notOperatorFacing: 'network administration of the cluster — addresses, mesh, tunnels',
+  },
+  'log-channels': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'log-destination': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'login-method': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'mesh-network': {
+    scope: 'system',
+    notOperatorFacing: 'network administration of the cluster — addresses, mesh, tunnels',
+  },
+  'metrics-provider': {
+    scope: 'system',
+    notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'migrations': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'model-convert': {
+    scope: 'system',
+    notOperatorFacing: 'model and training machinery — no device action',
+  },
+  'model-distributor': {
+    scope: 'system',
+    notOperatorFacing: 'model and training machinery — no device action',
+  },
+  'mqtt-broker': {
+    scope: 'system',
+    notOperatorFacing: 'network administration of the cluster — addresses, mesh, tunnels',
+  },
+  'network-access': {
+    scope: 'system',
+    notOperatorFacing: 'network administration of the cluster — addresses, mesh, tunnels',
+  },
+  'network-quality': {
+    scope: 'system',
+    notOperatorFacing: 'network administration of the cluster — addresses, mesh, tunnels',
+  },
+  'node-certificates': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'node-removal-hook': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'nodes': {
+    scope: 'system',
+    notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'notification-output': {
+    scope: 'system',
+    notOperatorFacing: 'notification delivery — reached through notifier devices and rules',
+  },
+  'notification-rules': {
+    scope: 'system',
+    notOperatorFacing: 'notification rules — authored on their own page',
+  },
+  'oauth-integration': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'osd-manager': {
+    scope: 'system',
+    notOperatorFacing: 'detection pipeline machinery — tuned on the pipeline pages, never actuated per device',
+  },
+  'pipeline-executor': {
+    scope: 'system',
+    notOperatorFacing: 'detection pipeline machinery — tuned on the pipeline pages, never actuated per device',
+  },
+  'pipeline-orchestrator': {
+    scope: 'system',
+    notOperatorFacing: 'detection pipeline machinery — tuned on the pipeline pages, never actuated per device',
+  },
+  'pipeline-runner': {
+    scope: 'system',
+    notOperatorFacing: 'detection pipeline machinery — tuned on the pipeline pages, never actuated per device',
+  },
+  'plate-gallery': {
+    scope: 'system',
+    notOperatorFacing: 'the plate gallery — curated on its own page',
+  },
+  'platform-probe': {
+    scope: 'system',
+    notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'record-entries': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'recording-archive': {
+    scope: 'system',
+    notOperatorFacing: 'storage administration — locations, retention and migrations, not a device action',
+  },
+  'recording-export': {
+    scope: 'system',
+    notOperatorFacing: 'recording exports — requested from the timeline, not an automation step',
+  },
+  'records': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'remote': {
+    scope: 'system',
+    notOperatorFacing: 'the per-device remote setup — authored in the Customize remote editor, sent through the remote UI',
+  },
+  'remote-layout-components': {
+    scope: 'system',
+    notOperatorFacing: 'the palette of the remote template editor — read-only data, never actuated',
+  },
+  'schedulers': {
+    scope: 'system',
+    notOperatorFacing: 'time schedulers — authored on their own page, not device actions',
+  },
+  'server-management': {
+    scope: 'system',
+    notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'settings-store': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'smtp-provider': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'sso-bridge': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'storage': {
+    scope: 'system',
+    notOperatorFacing: 'storage administration — locations, retention and migrations, not a device action',
+  },
+  'storage-admin': {
+    scope: 'system',
+    notOperatorFacing: 'storage administration — locations, retention and migrations, not a device action',
+  },
+  'storage-evictable': {
+    scope: 'system',
+    notOperatorFacing: 'storage administration — locations, retention and migrations, not a device action',
+  },
+  'storage-migration': {
+    scope: 'system',
+    notOperatorFacing: 'storage administration — locations, retention and migrations, not a device action',
+  },
+  'storage-occupancy': {
+    scope: 'system',
+    notOperatorFacing: 'storage administration — locations, retention and migrations, not a device action',
+  },
+  'storage-provider': {
+    scope: 'system',
+    notOperatorFacing: 'storage administration — locations, retention and migrations, not a device action',
+  },
+  'stream-broker': {
+    scope: 'system',
+    notOperatorFacing: 'detection pipeline machinery — tuned on the pipeline pages, never actuated per device',
+  },
+  'system': {
+    scope: 'system',
+    notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'template': {
+    scope: 'system',
+    notOperatorFacing: 'operator-authored templates — edited in their own editor, never actuated',
+  },
+  'terminal-session': {
+    scope: 'system',
+    notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'toast': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+  'training': {
+    scope: 'system',
+    notOperatorFacing: 'model and training machinery — no device action',
+  },
+  'training-provider': {
+    scope: 'system',
+    notOperatorFacing: 'model and training machinery — no device action',
+  },
+  'turn-provider': {
+    scope: 'system',
+    notOperatorFacing: 'network administration of the cluster — addresses, mesh, tunnels',
+  },
+  'user-management': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'user-passkeys': {
+    scope: 'system',
+    notOperatorFacing: 'identity and access administration — users, sign-in and secrets',
+  },
+  'vector-store': {
+    scope: 'system',
+    notOperatorFacing: 'internal plumbing between addons — never operator-facing',
+  },
+  'viewer-ui': {
+    scope: 'system',
+    notOperatorFacing: 'admin UI plumbing — pages, widgets and routes, not something a device does',
+  },
+}

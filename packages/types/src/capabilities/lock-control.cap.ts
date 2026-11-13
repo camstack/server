@@ -7,6 +7,7 @@ import {
 } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Smart-lock cap. Models HA `lock.*` entities — anything with a
@@ -96,7 +97,27 @@ export const lockControlCapability = {
         code: z.string().min(1).optional(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'lock.lock',
+            label: t('Lock', 'Chiudi a chiave'),
+            phrase: t('Lock {device}', 'Chiudi a chiave {device}'),
+            icon: 'lock',
+            effect: { field: 'state', value: 'locked' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+        ],
+      },
     ),
     unlock: method(
       z.object({
@@ -111,14 +132,45 @@ export const lockControlCapability = {
         confirm: z.boolean().optional(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'lock.unlock',
+            label: t('Unlock', 'Apri la serratura'),
+            phrase: t('Unlock {device}', 'Sblocca {device}'),
+            icon: 'lock-open',
+            effect: { field: 'state', value: 'unlocked' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+        ],
+      },
     ),
     open: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'lock.open',
+            label: t('Open latch', 'Apri lo scrocco'),
+            phrase: t('Release the latch of {device}', 'Fai scattare lo scrocco di {device}'),
+            icon: 'door-open',
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -148,6 +200,50 @@ export const lockControlCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Lock', 'Serratura'),
+    order: 1060,
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: t('Lock state', 'Stato della serratura'),
+        values: [
+          {
+            value: 'locked',
+            label: t('Locked', 'Chiusa a chiave'),
+            phrase: t('When {device} locks', 'Quando {device} si chiude a chiave'),
+          },
+          {
+            value: 'unlocked',
+            label: t('Unlocked', 'Sbloccata'),
+            phrase: t('When {device} unlocks', 'Quando {device} si sblocca'),
+          },
+          {
+            value: 'locking',
+            label: t('Locking', 'In chiusura'),
+            phrase: t('When {device} starts locking', 'Quando {device} inizia a chiudersi'),
+          },
+          {
+            value: 'unlocking',
+            label: t('Unlocking', 'In apertura'),
+            phrase: t('When {device} starts unlocking', 'Quando {device} inizia a sbloccarsi'),
+          },
+          {
+            value: 'jammed',
+            label: t('Jammed', 'Inceppata'),
+            phrase: t('When {device} jams', 'Quando {device} si inceppa'),
+          },
+          {
+            value: 'door-open',
+            label: t('Door open', 'Porta aperta'),
+            phrase: t('When the door of {device} opens', 'Quando la porta di {device} si apre'),
+          },
+        ],
+        icon: 'lock',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type ILockControlProvider = InferProvider<typeof lockControlCapability>

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * `navigation` — a device-scoped capability that natively expresses the FULL
@@ -144,20 +145,100 @@ export type NavigationActionEntry = z.infer<typeof NavigationActionEntrySchema>
  * code change).
  */
 export const NAVIGATION_ACTION_CATALOG: readonly NavigationActionEntry[] = [
-  { id: 'startClean', kind: 'action', label: 'Start cleaning', icon: 'play', enabled: true },
-  { id: 'pauseClean', kind: 'action', label: 'Pause cleaning', icon: 'pause', enabled: true },
+  {
+    id: 'startClean',
+    kind: 'action',
+    label: 'Start cleaning',
+    icon: 'play',
+    enabled: true,
+  },
+  {
+    id: 'pauseClean',
+    kind: 'action',
+    label: 'Pause cleaning',
+    icon: 'pause',
+    enabled: true,
+  },
   { id: 'stop', kind: 'action', label: 'Stop', icon: 'hand', enabled: true },
-  { id: 'goHome', kind: 'action', label: 'Return to dock', icon: 'home', enabled: true },
-  { id: 'locate', kind: 'action', label: 'Locate', icon: 'bell', enabled: true },
-  { id: 'spotClean', kind: 'action', label: 'Spot clean here', icon: 'crosshair', enabled: true },
-  { id: 'findPet', kind: 'action', label: 'Find pet', icon: 'paw-print', enabled: true },
-  { id: 'personFollow', kind: 'action', label: 'Follow me', icon: 'footprints', enabled: true },
-  { id: 'dockWash', kind: 'action', label: 'Wash mop', icon: 'droplets', enabled: true },
-  { id: 'autoEmpty', kind: 'action', label: 'Empty dustbin', icon: 'trash-2', enabled: true },
-  { id: 'flashOn', kind: 'action', label: 'Flash on', icon: 'flashlight', enabled: true },
-  { id: 'flashOff', kind: 'action', label: 'Flash off', icon: 'flashlight-off', enabled: true },
-  { id: 'sound:meow', kind: 'sound', label: 'Meow', icon: 'cat', soundId: 684, enabled: true },
-  { id: 'sound:bark', kind: 'sound', label: 'Woof', icon: 'dog', soundId: 685, enabled: true },
+  {
+    id: 'goHome',
+    kind: 'action',
+    label: 'Return to dock',
+    icon: 'home',
+    enabled: true,
+  },
+  {
+    id: 'locate',
+    kind: 'action',
+    label: 'Locate',
+    icon: 'bell',
+    enabled: true,
+  },
+  {
+    id: 'spotClean',
+    kind: 'action',
+    label: 'Spot clean here',
+    icon: 'crosshair',
+    enabled: true,
+  },
+  {
+    id: 'findPet',
+    kind: 'action',
+    label: 'Find pet',
+    icon: 'paw-print',
+    enabled: true,
+  },
+  {
+    id: 'personFollow',
+    kind: 'action',
+    label: 'Follow me',
+    icon: 'footprints',
+    enabled: true,
+  },
+  {
+    id: 'dockWash',
+    kind: 'action',
+    label: 'Wash mop',
+    icon: 'droplets',
+    enabled: true,
+  },
+  {
+    id: 'autoEmpty',
+    kind: 'action',
+    label: 'Empty dustbin',
+    icon: 'trash-2',
+    enabled: true,
+  },
+  {
+    id: 'flashOn',
+    kind: 'action',
+    label: 'Flash on',
+    icon: 'flashlight',
+    enabled: true,
+  },
+  {
+    id: 'flashOff',
+    kind: 'action',
+    label: 'Flash off',
+    icon: 'flashlight-off',
+    enabled: true,
+  },
+  {
+    id: 'sound:meow',
+    kind: 'sound',
+    label: 'Meow',
+    icon: 'cat',
+    soundId: 684,
+    enabled: true,
+  },
+  {
+    id: 'sound:bark',
+    kind: 'sound',
+    label: 'Woof',
+    icon: 'dog',
+    soundId: 685,
+    enabled: true,
+  },
   {
     id: 'sound:footsteps',
     kind: 'sound',
@@ -303,12 +384,25 @@ export const navigationCapability = {
      */
     move: method(NavigationMoveCommandSchema.extend({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
+      notOperatorFacing: 'joystick control from the live view — continuous, not a discrete step',
     }),
     /** Halt all motion immediately (zero drive vector). */
-    stop: method(z.object({ deviceId: z.number() }), z.void(), { kind: 'mutation' }),
+    stop: method(z.object({ deviceId: z.number() }), z.void(), {
+      kind: 'mutation',
+      actions: [
+        {
+          id: 'navigation.stop',
+          label: t('Stop', 'Ferma'),
+          phrase: t('Stop {device}', 'Ferma {device}'),
+          icon: 'square',
+        },
+      ],
+    }),
     /** Send the robot to a point on its live map. */
     goToPoint: method(NavigationPointSchema.extend({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
+      notOperatorFacing:
+        'tap-to-go on the live map — the point only means something on that picture',
     }),
     /**
      * Enumerate the discrete controls THIS device supports (data-driven UI +
@@ -322,11 +416,97 @@ export const navigationCapability = {
     runAction: method(
       z.object({ deviceId: z.number(), actionId: NavigationActionIdSchema }),
       z.void(),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        actions: [
+          {
+            id: 'navigation.runAction',
+            label: t('Run a routine', 'Esegui una routine'),
+            phrase: t('Have {device} {actionId}', 'Fai eseguire a {device}: {actionId}'),
+            icon: 'bot',
+            openArgs: [
+              {
+                key: 'actionId',
+                label: t('Routine', 'Routine'),
+                offer: {
+                  kind: 'enum',
+                  values: [
+                    { value: 'goHome', label: t('go home', 'torna alla base') },
+                    {
+                      value: 'locate',
+                      label: t('beep so you can find it', 'suona per farsi trovare'),
+                    },
+                    {
+                      value: 'spotClean',
+                      label: t('clean this spot', 'pulisci questo punto'),
+                    },
+                    {
+                      value: 'findPet',
+                      label: t('find the pet', 'cerca l’animale'),
+                    },
+                    {
+                      value: 'personFollow',
+                      label: t('follow a person', 'segui una persona'),
+                    },
+                    { value: 'stop', label: t('stop', 'fermati') },
+                    {
+                      value: 'startClean',
+                      label: t('start cleaning', 'inizia a pulire'),
+                    },
+                    {
+                      value: 'pauseClean',
+                      label: t('pause cleaning', 'metti in pausa la pulizia'),
+                    },
+                    {
+                      value: 'dockWash',
+                      label: t('wash the mop at the dock', 'lava il mocio alla base'),
+                    },
+                    {
+                      value: 'autoEmpty',
+                      label: t('empty the bin at the dock', 'svuota il contenitore alla base'),
+                    },
+                    {
+                      value: 'flashOn',
+                      label: t('turn the flash on', 'accendi il flash'),
+                    },
+                    {
+                      value: 'flashOff',
+                      label: t('turn the flash off', 'spegni il flash'),
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     /** Play a sound by its wire id (the `soundId` of a `kind:'sound'` entry). */
     playSound: method(z.object({ deviceId: z.number(), soundId: z.number().int() }), z.void(), {
       kind: 'mutation',
+      actions: [
+        {
+          id: 'navigation.playSound',
+          label: t('Play sound', 'Riproduci un suono'),
+          phrase: t('Play {soundId} on {device}', 'Riproduci {soundId} su {device}'),
+          icon: 'volume-2',
+          openArgs: [
+            {
+              key: 'soundId',
+              label: t('Sound', 'Suono'),
+              offer: {
+                kind: 'dynamic',
+                from: 'method',
+                method: 'listActions',
+                valueKey: 'soundId',
+                labelKey: 'label',
+                where: { key: 'kind', equals: 'sound' },
+                valueKind: 'number',
+              },
+            },
+          ],
+        },
+      ],
     }),
     /**
      * Turn the on-camera fill light on / off (the `OpenFullLight` control —
@@ -334,6 +514,22 @@ export const navigationCapability = {
      */
     setLightOn: method(z.object({ deviceId: z.number(), on: z.boolean() }), z.void(), {
       kind: 'mutation',
+      actions: [
+        {
+          id: 'navigation.lightOn',
+          label: t('Light on', 'Luce accesa'),
+          phrase: t('Turn on the light of {device}', 'Accendi la luce di {device}'),
+          icon: 'lightbulb',
+          args: { on: true },
+        },
+        {
+          id: 'navigation.lightOff',
+          label: t('Light off', 'Luce spenta'),
+          phrase: t('Turn off the light of {device}', 'Spegni la luce di {device}'),
+          icon: 'lightbulb-off',
+          args: { on: false },
+        },
+      ],
     }),
     /**
      * Set the fill-light mode (auto vs manual). `manual` optionally carries the
@@ -352,7 +548,21 @@ export const navigationCapability = {
           .optional(),
       }),
       z.void(),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        actions: [
+          {
+            id: 'navigation.lightAuto',
+            label: t('Light automatic', 'Luce automatica'),
+            phrase: t(
+              'Set the light of {device} to automatic',
+              'Metti la luce di {device} in automatico',
+            ),
+            icon: 'lightbulb',
+            args: { mode: 'auto' },
+          },
+        ],
+      },
     ),
     /** Set the MANUAL fill-light level (40..100). Implies `manual` mode. */
     setLightLevel: method(
@@ -361,7 +571,33 @@ export const navigationCapability = {
         level: z.number().min(NAVIGATION_LIGHT_LEVEL_MIN).max(NAVIGATION_LIGHT_LEVEL_MAX),
       }),
       z.void(),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        actions: [
+          {
+            id: 'navigation.lightLevel',
+            label: t('Set light level', 'Imposta la luce'),
+            phrase: t(
+              'Set the light of {device} to {level}',
+              'Imposta la luce di {device} al {level}',
+            ),
+            icon: 'sun-medium',
+            openArgs: [
+              {
+                key: 'level',
+                label: t('Level', 'Livello'),
+                offer: {
+                  kind: 'number',
+                  min: 40,
+                  max: 100,
+                  step: 1,
+                  unit: '%',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     /**
      * Per-device FEATURE-FLAG report for the general primitives — drives which
@@ -376,6 +612,7 @@ export const navigationCapability = {
         deviceId: z.number(),
         status: NavigationStatusSchema,
       }),
+      notOperatorFacing: 'the `mode` state trigger reads the same change',
     },
   },
   status: {
@@ -401,6 +638,31 @@ export const navigationCapability = {
    * History (D850): none — control state of a robotic camera, configuration-like.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Robot movement', 'Movimento del robot'),
+    order: 2080,
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: t('Activity', 'Attività'),
+        values: [
+          { value: 'idle', label: t('Idle', 'Inattivo') },
+          { value: 'cleaning', label: t('Cleaning', 'In pulizia') },
+          { value: 'spot', label: t('Spot cleaning', 'Pulizia localizzata') },
+          { value: 'following', label: t('Following', 'In inseguimento') },
+          {
+            value: 'goto',
+            label: t('Moving to a point', 'In movimento verso un punto'),
+          },
+          { value: 'returning', label: t('Returning', 'In rientro') },
+          { value: 'paused', label: t('Paused', 'In pausa') },
+          { value: 'unknown', label: t('Unknown', 'Sconosciuto') },
+        ],
+        icon: 'bot',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type INavigationProvider = InferProvider<typeof navigationCapability>

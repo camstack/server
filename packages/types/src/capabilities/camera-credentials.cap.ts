@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * camera-credentials — device-scoped cap exposing the camera's network
@@ -94,6 +95,10 @@ export const cameraCredentialsCapability = {
   status: {
     schema: CameraCredentialsStatusSchema,
     kind: 'command-driven',
+  },
+  vocabulary: {
+    noun: t('Camera credentials', 'Credenziali della telecamera'),
+    order: 3030,
   },
 } as const satisfies CapabilityDefinition
 

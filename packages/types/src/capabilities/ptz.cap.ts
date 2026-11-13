@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * What a preset id DOES on this camera.
@@ -211,17 +212,62 @@ export const ptzCapability = {
   methods: {
     move: method(PtzMoveCommandSchema.extend({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
+      notOperatorFacing: 'a relative nudge from the live-view joystick; a fixed place is a preset',
     }),
     continuousMove: method(PtzMoveCommandSchema.extend({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
+      notOperatorFacing: 'joystick motion held until released — continuous, not a discrete step',
     }),
-    stop: method(z.object({ deviceId: z.number() }), z.void(), { kind: 'mutation' }),
+    /**
+     * Move to the camera's configured home preset. THROWS when
+     * `getHomePreset()` resolves to `none` -- a head that did not move must
+     * never look like a head that went home.
+     */
+    goHome: method(z.object({ deviceId: z.number() }), z.void(), {
+      kind: 'mutation',
+      actions: [
+        {
+          id: 'ptz.goHome',
+          label: t('PTZ go home', 'Torna alla posizione iniziale'),
+          phrase: t(
+            'Send {device} to its home position',
+            'Riporta {device} alla posizione iniziale',
+          ),
+          icon: 'house',
+        },
+      ],
+    }),
     getPresets: method(z.object({ deviceId: z.number() }), z.array(PtzPresetSchema)),
     goToPreset: method(z.object({ deviceId: z.number(), presetId: z.string() }), z.void(), {
       kind: 'mutation',
+      actions: [
+        {
+          id: 'ptz.goToPreset',
+          label: t('PTZ go to preset', 'Vai a un preset'),
+          phrase: t('Move {device} to {presetId}', 'Sposta {device} su {presetId}'),
+          icon: 'move',
+          openArgs: [
+            {
+              key: 'presetId',
+              label: t('Preset', 'Preset'),
+              offer: {
+                kind: 'dynamic',
+                from: 'method',
+                method: 'getPresets',
+                valueKey: 'id',
+                labelKey: 'name',
+              },
+            },
+          ],
+        },
+      ],
     }),
     savePreset: method(
-      z.object({ deviceId: z.number(), presetId: z.string(), name: z.string() }),
+      z.object({
+        deviceId: z.number(),
+        presetId: z.string(),
+        name: z.string(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -230,12 +276,17 @@ export const ptzCapability = {
       auth: 'admin',
     }),
     getOptions: method(z.object({ deviceId: z.number() }), PtzOptionsSchema),
-    /**
-     * Move to the camera's configured home preset. THROWS when
-     * `getHomePreset()` resolves to `none` -- a head that did not move must
-     * never look like a head that went home.
-     */
-    goHome: method(z.object({ deviceId: z.number() }), z.void(), { kind: 'mutation' }),
+    stop: method(z.object({ deviceId: z.number() }), z.void(), {
+      kind: 'mutation',
+      actions: [
+        {
+          id: 'ptz.stop',
+          label: t('Stop moving', 'Ferma il movimento'),
+          phrase: t('Stop {device} moving', 'Ferma il movimento di {device}'),
+          icon: 'square',
+        },
+      ],
+    }),
     /** Which preset `goHome` targets, and who decided it. */
     getHomePreset: method(z.object({ deviceId: z.number() }), PtzHomePresetSchema),
     /**
@@ -307,12 +358,29 @@ export const ptzCapability = {
      *  `getOptions().hasAutofocus` is true. */
     setAutofocus: method(z.object({ deviceId: z.number(), enabled: z.boolean() }), z.void(), {
       kind: 'mutation',
+      actions: [
+        {
+          id: 'ptz.autofocusOn',
+          label: t('Autofocus on', 'Autofocus attivo'),
+          phrase: t('Turn on autofocus on {device}', 'Attiva l’autofocus su {device}'),
+          icon: 'focus',
+          args: { enabled: true },
+        },
+        {
+          id: 'ptz.autofocusOff',
+          label: t('Autofocus off', 'Autofocus spento'),
+          phrase: t('Turn off autofocus on {device}', 'Disattiva l’autofocus su {device}'),
+          icon: 'focus',
+          args: { enabled: false },
+        },
+      ],
     }),
   },
   status: {
     schema: PtzStatusSchema,
     kind: 'command-driven',
   },
+  vocabulary: { noun: t('Pan / tilt / zoom', 'Brandeggio'), order: 3220 },
 } as const satisfies CapabilityDefinition
 
 export type IPtzProvider = InferProvider<typeof ptzCapability>

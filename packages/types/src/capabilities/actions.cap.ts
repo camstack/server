@@ -106,18 +106,30 @@ export const actionsCapability = {
      */
     create: method(
       z.object({ action: ActionInputSchema }),
-      z.object({ action: ActionEntrySchema, warnings: z.array(UnitWarningSchema).optional() }),
+      z.object({
+        action: ActionEntrySchema,
+        warnings: z.array(UnitWarningSchema).optional(),
+      }),
       {
         kind: 'mutation',
         auth: 'admin',
       },
     ),
     update: method(
-      z.object({ actionId: z.string().min(1), action: ActionInputSchema.partial() }),
-      z.object({ action: ActionEntrySchema, warnings: z.array(UnitWarningSchema).optional() }),
+      z.object({
+        actionId: z.string().min(1),
+        action: ActionInputSchema.partial(),
+      }),
+      z.object({
+        action: ActionEntrySchema,
+        warnings: z.array(UnitWarningSchema).optional(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
-    delete: method(ActionIdInput, z.void(), { kind: 'mutation', auth: 'admin' }),
+    delete: method(ActionIdInput, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     /**
      * What a viewer sees under a camera: the actions this camera LINKS, with
      * their variables, and only when the caller may see the camera. The scope
@@ -133,11 +145,18 @@ export const actionsCapability = {
       auth: 'admin',
     }),
     /** Replace a camera's linked actions with what the operator picked. */
-    setLinks: method(ActionLinksSchema, ActionLinksSchema, { kind: 'mutation', auth: 'admin' }),
+    setLinks: method(ActionLinksSchema, ActionLinksSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
   },
   events: {
     /** A run started or ended. Telemetry (D8): `list` is the authority. */
     onRunChanged: { data: ActionRunChangedSchema },
+  },
+  vocabulary: {
+    notOperatorFacing:
+      'declared actions — run from the Actions page and from the cameras that link them',
   },
 } as const satisfies CapabilityDefinition
 

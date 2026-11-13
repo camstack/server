@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 export const HeatingValveStatusSchema = z.object({
   /** Radiator valve opening 0 (closed) .. 100 (open). Null = not yet known. */
@@ -31,6 +32,20 @@ export const heatingValveCapability = {
     },
   },
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Radiator valve', 'Valvola termostatica'),
+    order: 1110,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'position',
+        quantity: t('the valve opening', 'l’apertura della valvola'),
+        label: t('Valve opening', 'Apertura della valvola'),
+        unit: '%',
+        icon: 'heater',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IHeatingValveProvider = InferProvider<typeof heatingValveCapability>

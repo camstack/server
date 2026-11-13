@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `addon-pages-source` — collection cap exposing per-provider raw page
@@ -67,6 +68,7 @@ export const addonPagesSourceCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition
 
 export type IAddonPagesSourceProvider = InferProvider<typeof addonPagesSourceCapability>

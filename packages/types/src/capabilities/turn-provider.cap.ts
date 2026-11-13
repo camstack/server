@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * A single ICE TURN/STUN server entry, shape compatible with
@@ -34,8 +35,11 @@ export const turnProviderCapability = {
      * Implementations may fetch fresh short-lived credentials on each call
      * (e.g. Cloudflare API) — consumers SHOULD call this per-session.
      */
-    getTurnServers: method(z.void(), z.array(TurnServerSchema).readonly(), { role: 'viewer' }),
+    getTurnServers: method(z.void(), z.array(TurnServerSchema).readonly(), {
+      role: 'viewer',
+    }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition
 
 export type ITurnProvider = InferProvider<typeof turnProviderCapability>

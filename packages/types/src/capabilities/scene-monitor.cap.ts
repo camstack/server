@@ -6,6 +6,8 @@ import {
   method,
 } from './capability-definition.js'
 import { MaskRectShapeSchema } from './mask-shape.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /**
  * scene-monitor — device-scoped reference-region state cap. An operator marks
@@ -390,6 +392,30 @@ export const sceneMonitorCapability = {
     recheckNow: method(z.object({ deviceId: z.number(), monitorId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'sceneMonitor.recheck',
+          label: t('Re-check a scene', 'Ricontrolla una scena'),
+          phrase: t(
+            'Re-check {monitorId} on {device} now',
+            'Ricontrolla subito {monitorId} su {device}',
+          ),
+          icon: 'scan-search',
+          openArgs: [
+            {
+              key: 'monitorId',
+              label: t('Scene', 'Scena'),
+              offer: {
+                kind: 'dynamic',
+                from: 'status',
+                field: 'monitors',
+                valueKey: 'id',
+                labelKey: 'label',
+              },
+            },
+          ],
+        },
+      ],
     }),
     /**
      * Clear the latch, re-arm, and — by default — RE-CAPTURE the baseline for
@@ -427,6 +453,21 @@ export const sceneMonitorCapability = {
    * History (D850): none — nested configuration.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Scene watch', 'Controllo della scena'),
+    order: 3280,
+    extraEvents: [
+      {
+        category: EventCategory.EnrichmentSceneStateChanged,
+        label: t('Scene changed', 'Scena cambiata'),
+        phrase: t(
+          'When a watched scene on {device} changes',
+          'Quando cambia una scena controllata su {device}',
+        ),
+        icon: 'scan-search',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type ISceneMonitorProvider = InferNativeProvider<typeof sceneMonitorCapability>

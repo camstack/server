@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `user-passkeys` — per-user WebAuthn (passkey) enrollment + assertion.
@@ -164,6 +165,7 @@ export const userPasskeysCapability = {
       { kind: 'mutation', auth: 'admin', access: 'create' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type IUserPasskeysProvider = InferProvider<typeof userPasskeysCapability>

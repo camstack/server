@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /** Profile-exported FormBuilder schema. Shape is ConfigUISchema at the UI. */
 const ProfileSettingsSchemaBridge = z.unknown().nullable()
@@ -82,7 +83,11 @@ const TerminalLegacyCameraSchema = z.object({
 })
 
 const TerminalOutputEventSchema = z.discriminatedUnion('kind', [
-  z.object({ seq: z.number().int().positive(), kind: z.literal('data'), data: z.string() }),
+  z.object({
+    seq: z.number().int().positive(),
+    kind: z.literal('data'),
+    data: z.string(),
+  }),
   z.object({
     seq: z.number().int().positive(),
     kind: z.literal('exit'),
@@ -120,7 +125,10 @@ export const terminalSessionCapability = {
     }),
     /** Explicitly adopt one legacy monitor camera, retaining its stable id. */
     adoptLegacyMonitor: method(
-      z.object({ stableId: z.string().min(1), name: z.string().trim().min(1).max(160).optional() }),
+      z.object({
+        stableId: z.string().min(1),
+        name: z.string().trim().min(1).max(160).optional(),
+      }),
       TerminalInstanceInfoSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -190,6 +198,7 @@ export const terminalSessionCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition
 
 export type ITerminalSessionProvider = InferProvider<typeof terminalSessionCapability>

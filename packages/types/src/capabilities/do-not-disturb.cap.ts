@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * do-not-disturb - whether a speaker or display holds back its own sounds
@@ -30,6 +31,22 @@ export const doNotDisturbCapability = {
       kind: 'mutation',
       // ACTUATION, like `switch.setState`: the caller's device grant governs it.
       auth: 'protected',
+      actions: [
+        {
+          id: 'dnd.on',
+          label: t('Do not disturb on', 'Attiva Non disturbare'),
+          phrase: t('Turn on Do not disturb on {device}', 'Attiva Non disturbare su {device}'),
+          icon: 'bell-off',
+          args: { enabled: true },
+        },
+        {
+          id: 'dnd.off',
+          label: t('Do not disturb off', 'Disattiva Non disturbare'),
+          phrase: t('Turn off Do not disturb on {device}', 'Disattiva Non disturbare su {device}'),
+          icon: 'bell',
+          args: { enabled: false },
+        },
+      ],
     }),
   },
   status: { schema: DoNotDisturbStatusSchema, kind: 'push' },
@@ -47,6 +64,26 @@ export const doNotDisturbCapability = {
     fields: {
       enabled: { kind: 'boolean' },
     },
+  },
+  vocabulary: {
+    noun: t('Do not disturb', 'Non disturbare'),
+    order: 2160,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Do not disturb', 'Non disturbare'),
+        whenTrue: t(
+          'When Do not disturb turns on on {device}',
+          'Quando {device} attiva Non disturbare',
+        ),
+        whenFalse: t(
+          'When Do not disturb turns off on {device}',
+          'Quando {device} disattiva Non disturbare',
+        ),
+        icon: 'bell-off',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

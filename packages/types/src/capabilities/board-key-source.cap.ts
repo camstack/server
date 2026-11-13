@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * Why a board key could not be read. Typed so a caller reports the cause and
@@ -38,7 +39,10 @@ const BoardKeyFailureSchema = z.object({
 })
 
 const ListBoardsResultSchema = z.discriminatedUnion('ok', [
-  z.object({ ok: z.literal(true), boards: z.array(BoardKeyBoardSchema).readonly() }),
+  z.object({
+    ok: z.literal(true),
+    boards: z.array(BoardKeyBoardSchema).readonly(),
+  }),
   BoardKeyFailureSchema,
 ])
 
@@ -62,15 +66,21 @@ export const boardKeySourceCapability = {
   scope: 'system',
   mode: 'collection',
   methods: {
-    listSources: method(z.void(), z.array(BoardKeySourceSchema).readonly(), { auth: 'admin' }),
+    listSources: method(z.void(), z.array(BoardKeySourceSchema).readonly(), {
+      auth: 'admin',
+    }),
     listBoards: method(z.object({ sourceId: z.string().min(1) }), ListBoardsResultSchema, {
       auth: 'admin',
     }),
     getBoardKey: method(
-      z.object({ sourceId: z.string().min(1), configuration: z.string().min(1) }),
+      z.object({
+        sourceId: z.string().min(1),
+        configuration: z.string().min(1),
+      }),
       GetBoardKeyResultSchema,
       { auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 export type IBoardKeySourceProvider = InferProvider<typeof boardKeySourceCapability>

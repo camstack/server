@@ -7,6 +7,7 @@ import {
   optionalMethod,
 } from './capability-definition.js'
 import { TestConnectionResultSchema } from './integrations.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `integration-instances` - the connection of an addon that holds ONE or SEVERAL
@@ -95,7 +96,12 @@ export const IntegrationInstanceKindSchema = z.object({
    * `connection` widgets write connection values, `model` widgets own the model choice.
    */
   widgets: z
-    .array(z.object({ id: z.string().min(1), placement: z.enum(['connection', 'model']) }))
+    .array(
+      z.object({
+        id: z.string().min(1),
+        placement: z.enum(['connection', 'model']),
+      }),
+    )
     .optional(),
 })
 export type IntegrationInstanceKind = z.infer<typeof IntegrationInstanceKindSchema>
@@ -205,7 +211,9 @@ export const integrationInstancesCapability = {
   scope: 'system',
   mode: 'collection',
   methods: {
-    describe: method(z.void(), IntegrationInstanceDescriptionSchema, { auth: 'admin' }),
+    describe: method(z.void(), IntegrationInstanceDescriptionSchema, {
+      auth: 'admin',
+    }),
     /** The form; `id: null` is the create form. */
     instanceFormSchema: method(
       z.object({
@@ -300,6 +308,7 @@ export const integrationInstancesCapability = {
       { kind: 'mutation', auth: 'protected', caller: 'scoped' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IntegrationInstanceStatus = z.infer<typeof IntegrationInstanceStatusSchema>

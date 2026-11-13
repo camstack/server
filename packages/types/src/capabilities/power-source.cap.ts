@@ -6,6 +6,7 @@ import {
 } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * power-source — a device that hangs is powered by a smart switch, and the
@@ -148,14 +149,41 @@ export const powerSourceCapability = {
     powerOn: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'powerSource.on',
+          label: t('Power on', 'Dai corrente'),
+          phrase: t('Power on {device}', 'Dai corrente a {device}'),
+          icon: 'power',
+        },
+      ],
     }),
     powerOff: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'powerSource.off',
+          label: t('Power off', 'Togli corrente'),
+          phrase: t('Cut the power of {device}', 'Togli la corrente a {device}'),
+          icon: 'power-off',
+        },
+      ],
     }),
     forceRestart: systemMethod(deviceInput, PowerSourceActionResultSchema, {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'powerSource.forceRestart',
+          label: t('Force restart', 'Riavvio forzato'),
+          phrase: t(
+            'Force restart {device} by cutting its power',
+            'Riavvia {device} togliendo la corrente',
+          ),
+          icon: 'refresh-cw',
+        },
+      ],
     }),
   },
   runtimeState: PowerSourceStateSchema,
@@ -169,6 +197,20 @@ export const powerSourceCapability = {
    */
   durability: 'session',
   history: 'none',
+  vocabulary: {
+    noun: t('Power source', 'Alimentazione'),
+    order: 1050,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'switchOn',
+        label: t('Power switch on', 'Presa accesa'),
+        whenTrue: t('When the power of {device} comes on', 'Quando arriva la corrente a {device}'),
+        whenFalse: t('When the power of {device} is cut', 'Quando manca la corrente a {device}'),
+        icon: 'power',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IPowerSourceProvider = InferProvider<typeof powerSourceCapability>

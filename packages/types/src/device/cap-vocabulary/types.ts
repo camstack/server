@@ -394,11 +394,6 @@ export type CapVocabularyMap = {
   readonly [C in VocabCapName]: CapVocabularyEntry<C>
 }
 
-/** A slice of the map, for files that hold a family of caps. */
-export type CapVocabularySlice<K extends VocabCapName> = {
-  readonly [C in K]: CapVocabularyEntry<C>
-}
-
 // ── The loose (string-keyed) view, for the resolver and the guard ──────
 
 /** A dynamic offer with no cap-specific key type. */

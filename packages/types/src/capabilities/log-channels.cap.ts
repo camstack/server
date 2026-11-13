@@ -43,6 +43,7 @@
 import { z } from 'zod'
 import { LogChannelDescriptorSchema, LogChannelWindowSchema } from '../logging/log-channel.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /** What `apply` reports back — enough to log, not enough to be a second state. */
 const LogChannelApplyResultSchema = z.object({
@@ -81,6 +82,7 @@ export const logChannelsCapability = {
   },
   /** In-process only — enumerated through `addons.listCapabilityProviders`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type ILogChannelsProvider = InferProvider<typeof logChannelsCapability>

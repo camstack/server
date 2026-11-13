@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Upstream-system connectivity sensor — distinct from `device-status`,
@@ -48,6 +49,20 @@ export const connectivityCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Connectivity', 'Connettività'),
+    order: 5040,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'connected',
+        label: t('Connected', 'Connesso'),
+        whenTrue: t('When {device} connects', 'Quando {device} si connette'),
+        whenFalse: t('When {device} disconnects', 'Quando {device} si disconnette'),
+        icon: 'wifi',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IConnectivityProvider = InferProvider<typeof connectivityCapability>

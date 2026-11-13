@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * The on/off duty cycle of a pet fountain's pump. Some models run the pump
@@ -44,17 +45,78 @@ export const pumpCycleCapability = {
     setEnabled: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'pumpCycle.on',
+          label: t('Pump cycle on', 'Ciclo pompa attivo'),
+          phrase: t(
+            'Run the pump of {device} on its on/off cycle',
+            'Fai lavorare la pompa di {device} a ciclo acceso/spento',
+          ),
+          icon: 'timer',
+          args: { on: true },
+        },
+        {
+          id: 'pumpCycle.off',
+          label: t('Pump cycle off', 'Ciclo pompa spento'),
+          phrase: t(
+            'Run the pump of {device} continuously',
+            'Fai lavorare la pompa di {device} in continuo',
+          ),
+          icon: 'timer-off',
+          args: { on: false },
+        },
+      ],
     }),
     /** Set how many minutes the pump runs per cycle. */
     setOnMinutes: method(z.object({ deviceId: DeviceIdSchema, minutes: MinutesSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'pumpCycle.onMinutes',
+          label: t('Set pump run time', 'Imposta il tempo di lavoro della pompa'),
+          phrase: t(
+            'Set the pump of {device} to run {minutes} minutes per cycle',
+            'Imposta la pompa di {device} a lavorare {minutes} minuti per ciclo',
+          ),
+          icon: 'timer',
+          openArgs: [
+            {
+              key: 'minutes',
+              label: t('Minutes', 'Minuti'),
+              offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+            },
+          ],
+        },
+      ],
     }),
     /** Set how many minutes the pump rests per cycle. */
     setOffMinutes: method(
       z.object({ deviceId: DeviceIdSchema, minutes: MinutesSchema }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'pumpCycle.offMinutes',
+            label: t('Set pump rest time', 'Imposta il tempo di riposo della pompa'),
+            phrase: t(
+              'Set the pump of {device} to rest {minutes} minutes per cycle',
+              'Imposta la pompa di {device} a riposare {minutes} minuti per ciclo',
+            ),
+            icon: 'timer-off',
+            openArgs: [
+              {
+                key: 'minutes',
+                label: t('Minutes', 'Minuti'),
+                offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -73,6 +135,26 @@ export const pumpCycleCapability = {
   durability: 'session',
   /** History (D850): a duty-cycle setting is not a series worth recording. */
   history: 'none',
+  vocabulary: {
+    noun: t('Pump cycle', 'Ciclo della pompa'),
+    order: 2050,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Pump cycle', 'Ciclo pompa'),
+        whenTrue: t(
+          'When {device} starts running its pump on a cycle',
+          'Quando {device} inizia a far lavorare la pompa a ciclo',
+        ),
+        whenFalse: t(
+          'When {device} runs its pump continuously',
+          'Quando {device} fa lavorare la pompa in continuo',
+        ),
+        icon: 'timer',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IPumpCycleProvider = InferProvider<typeof pumpCycleCapability>

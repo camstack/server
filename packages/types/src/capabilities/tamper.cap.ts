@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Tamper / case-open detection sensor. Drives Home Assistant
@@ -47,6 +48,23 @@ export const tamperCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Tamper', 'Manomissione'),
+    order: 5200,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'tampered',
+        label: t('Tampered', 'Manomesso'),
+        whenTrue: t('When {device} is tampered with', 'Quando {device} viene manomesso'),
+        whenFalse: t(
+          'When the tamper alert on {device} clears',
+          'Quando l’allarme di manomissione di {device} rientra',
+        ),
+        icon: 'shield-alert',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type ITamperProvider = InferProvider<typeof tamperCapability>

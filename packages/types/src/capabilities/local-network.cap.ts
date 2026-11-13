@@ -26,6 +26,7 @@ import { z } from 'zod'
 import { DiscoveryHitSchema, DiscoveryModeSchema } from './device-provider.cap.js'
 import { HUB_ADDRESS_ROLES } from './hub-address.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /** Coarse classification derived from the interface name + IP range. */
 const InterfaceKindEnum = z.enum([
@@ -367,7 +368,11 @@ const ScanStatsSchema = z.object({
   timeouts: z.number().int(),
   byMode: z.record(
     z.string(),
-    z.object({ probed: z.number().int(), hits: z.number().int(), timeouts: z.number().int() }),
+    z.object({
+      probed: z.number().int(),
+      hits: z.number().int(),
+      timeouts: z.number().int(),
+    }),
   ),
 })
 
@@ -588,7 +593,9 @@ export const localNetworkCapability = {
      * when the operator wants to wipe their manual edits and start
      * over from the auto-detected best matches.
      */
-    resetAllowlistToBestMatch: method(z.void(), AllowedAddressesSchema, { kind: 'mutation' }),
+    resetAllowlistToBestMatch: method(z.void(), AllowedAddressesSchema, {
+      kind: 'mutation',
+    }),
 
     /**
      * Live TLS material for the Network → Local access certificate card.
@@ -670,6 +677,7 @@ export const localNetworkCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'hub-only' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition
 
 export type ScanNetworkResult = z.infer<typeof ScanNetworkResultSchema>

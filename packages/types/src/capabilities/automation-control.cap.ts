@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Automation-control cap. Models HA `automation.*` entities on
@@ -41,10 +42,26 @@ export const automationControlCapability = {
     enable: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'haAutomation.enable',
+          label: t('Enable automation', 'Abilita l’automazione'),
+          phrase: t('Enable {device}', 'Abilita {device}'),
+          icon: 'toggle-right',
+        },
+      ],
     }),
     disable: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'haAutomation.disable',
+          label: t('Disable automation', 'Disabilita l’automazione'),
+          phrase: t('Disable {device}', 'Disabilita {device}'),
+          icon: 'toggle-left',
+        },
+      ],
     }),
     trigger: method(
       z.object({
@@ -55,7 +72,18 @@ export const automationControlCapability = {
         skipCondition: z.boolean().optional(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'haAutomation.trigger',
+            label: t('Trigger automation', 'Avvia l’automazione'),
+            phrase: t('Run {device} now', 'Esegui subito {device}'),
+            icon: 'workflow',
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -80,6 +108,28 @@ export const automationControlCapability = {
    * History (D850): none — configuration and transient run state.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Automation', 'Automazione'),
+    order: 2100,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Enabled', 'Abilitata'),
+        whenTrue: t('When {device} is enabled', 'Quando {device} viene abilitata'),
+        whenFalse: t('When {device} is disabled', 'Quando {device} viene disabilitata'),
+        icon: 'toggle-right',
+      },
+      {
+        kind: 'boolean',
+        field: 'isRunning',
+        label: t('Running', 'In esecuzione'),
+        whenTrue: t('When {device} starts running', 'Quando {device} parte'),
+        whenFalse: t('When {device} finishes', 'Quando {device} termina'),
+        icon: 'workflow',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IAutomationControlProvider = InferProvider<typeof automationControlCapability>

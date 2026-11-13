@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { StorageLocationSchema } from '../interfaces/storage-location.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 // ── Provider self-description ───────────────────────────────────────
 //
@@ -177,7 +178,10 @@ export const storageProviderCapability = {
       { auth: 'admin' },
     ),
     list: method(
-      z.object({ location: StorageLocationSchema, prefix: z.string().optional() }),
+      z.object({
+        location: StorageLocationSchema,
+        prefix: z.string().optional(),
+      }),
       z.array(z.string()).readonly(),
       { auth: 'admin' },
     ),
@@ -197,21 +201,33 @@ export const storageProviderCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
-    writeChunk: method(WriteChunkInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    writeChunk: method(WriteChunkInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     finalizeUpload: method(FinalizeUploadInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
     }),
-    abortUpload: method(AbortUploadInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    abortUpload: method(AbortUploadInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
 
     // ── Chunked download ────────────────────────────────────────────
     beginDownload: method(BeginDownloadInputSchema, BeginDownloadResultSchema, {
       kind: 'mutation',
       auth: 'admin',
     }),
-    readChunk: method(ReadChunkInputSchema, z.instanceof(Uint8Array), { auth: 'admin' }),
-    endDownload: method(EndDownloadInputSchema, z.void(), { kind: 'mutation', auth: 'admin' }),
+    readChunk: method(ReadChunkInputSchema, z.instanceof(Uint8Array), {
+      auth: 'admin',
+    }),
+    endDownload: method(EndDownloadInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.STORAGE },
 } as const satisfies CapabilityDefinition
 
 export type IStorageProviderImpl = InferProvider<typeof storageProviderCapability>

@@ -46,7 +46,10 @@ export type TemplateUser = z.infer<typeof TemplateUserSchema>
 export const TemplateDeleteResultSchema = z.discriminatedUnion('status', [
   z.object({ status: z.literal('deleted') }),
   z.object({ status: z.literal('not-found') }),
-  z.object({ status: z.literal('in-use'), devices: z.array(TemplateUserSchema).min(1) }),
+  z.object({
+    status: z.literal('in-use'),
+    devices: z.array(TemplateUserSchema).min(1),
+  }),
 ])
 export type TemplateDeleteResult = z.infer<typeof TemplateDeleteResultSchema>
 
@@ -83,6 +86,9 @@ export const templateCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+  },
+  vocabulary: {
+    notOperatorFacing: 'operator-authored templates — edited in their own editor, never actuated',
   },
 } as const satisfies CapabilityDefinition
 

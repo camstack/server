@@ -3,6 +3,7 @@ import { paramMeta } from '../units/quantity-input.js'
 import { readingMeta } from '../units/quantity.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * PetKit pet-feeder cap. Models the control + telemetry surface of a
@@ -156,29 +157,96 @@ export const petFeederCapability = {
         hopper2: gramsParam.optional(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'petFeeder.feed',
+            label: t('Feed', 'Dai da mangiare'),
+            phrase: t('Dispense {grams} from {device}', 'Eroga {grams} da {device}'),
+            icon: 'paw-print',
+            openArgs: [
+              {
+                key: 'grams',
+                label: t('Grams', 'Grammi'),
+                offer: {
+                  kind: 'number',
+                  min: 4,
+                  max: 200,
+                  step: 1,
+                  unit: 'g',
+                  quantity: 'mass',
+                },
+                optional: true,
+              },
+            ],
+          },
+          {
+            id: 'petFeeder.feedHoppers',
+            label: t('Feed from both hoppers', 'Eroga da entrambi i serbatoi'),
+            phrase: t(
+              'Dispense {hopper1} and {hopper2} from {device}',
+              'Eroga {hopper1} e {hopper2} da {device}',
+            ),
+            icon: 'paw-print',
+            openArgs: [
+              {
+                key: 'hopper1',
+                label: t('Hopper 1', 'Serbatoio 1'),
+                offer: {
+                  kind: 'number',
+                  min: 4,
+                  max: 200,
+                  step: 1,
+                  unit: 'g',
+                  quantity: 'mass',
+                },
+                optional: true,
+              },
+              {
+                key: 'hopper2',
+                label: t('Hopper 2', 'Serbatoio 2'),
+                offer: {
+                  kind: 'number',
+                  min: 4,
+                  max: 200,
+                  step: 1,
+                  unit: 'g',
+                  quantity: 'mass',
+                },
+                optional: true,
+              },
+            ],
+          },
+        ],
+      },
     ),
     /** Cancel an in-progress manual feed. */
     cancelFeed: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-    }),
-    /** Reset the desiccant "days remaining" counter after replacing it. */
-    resetDesiccant: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
-      kind: 'mutation',
-      auth: 'protected',
-    }),
-    /** Tell the PetKit cloud a hopper was refilled so it stops its low-food
-     *  reminders (D4H/D4S/D4SH only — see `supportsMarkRefilled`). It does not
-     *  change any sensor reading. */
-    markFoodReplenished: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
-      kind: 'mutation',
-      auth: 'protected',
+      actions: [
+        {
+          id: 'petFeeder.cancelFeed',
+          label: t('Cancel feeding', 'Annulla l’erogazione'),
+          phrase: t('Cancel the feeding on {device}', 'Annulla l’erogazione di {device}'),
+          icon: 'circle-x',
+        },
+      ],
     }),
     /** Call the pet with the recorded prompt (D3). */
     callPet: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'petFeeder.callPet',
+          label: t('Call pet', 'Chiama l’animale'),
+          phrase: t('Call your pet with {device}', 'Chiama l’animale con {device}'),
+          icon: 'megaphone',
+        },
+      ],
     }),
     /** Play a stored sound by id (D3 / D4H / D4SH). */
     playSound: method(
@@ -187,25 +255,143 @@ export const petFeederCapability = {
         soundId: z.number().int().nonnegative(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'petFeeder.playSound',
+            label: t('Play sound', 'Riproduci un suono'),
+            phrase: t(
+              'Play sound {soundId} on {device}',
+              'Riproduci il suono {soundId} su {device}',
+            ),
+            icon: 'volume-2',
+            openArgs: [
+              {
+                key: 'soundId',
+                label: t('Sound', 'Suono'),
+                offer: { kind: 'number', min: 0, step: 1 },
+              },
+            ],
+          },
+        ],
+      },
     ),
+    /** Reset the desiccant "days remaining" counter after replacing it. */
+    resetDesiccant: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'petFeeder.resetDesiccant',
+          label: t('Desiccant replaced', 'Essiccante sostituito'),
+          phrase: t(
+            'Mark the desiccant of {device} as replaced',
+            'Segna come sostituito l’essiccante di {device}',
+          ),
+          icon: 'refresh-cw',
+        },
+      ],
+    }),
+    /** Tell the PetKit cloud a hopper was refilled so it stops its low-food
+     *  reminders (D4H/D4S/D4SH only — see `supportsMarkRefilled`). It does not
+     *  change any sensor reading. */
+    markFoodReplenished: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'petFeeder.foodReplenished',
+          label: t('Food refilled', 'Cibo ricaricato'),
+          phrase: t('Mark {device} as refilled', 'Segna {device} come ricaricato'),
+          icon: 'package',
+        },
+      ],
+    }),
     /** Toggle the child-lock (manual-lock) setting. */
     setChildLock: method(
       z.object({ deviceId: z.number().int().nonnegative(), on: z.boolean() }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'petFeeder.childLockOn',
+            label: t('Child lock on', 'Blocco bambini attivo'),
+            phrase: t('Turn on the child lock of {device}', 'Attiva il blocco bambini di {device}'),
+            icon: 'lock',
+            args: { on: true },
+          },
+          {
+            id: 'petFeeder.childLockOff',
+            label: t('Child lock off', 'Blocco bambini spento'),
+            phrase: t(
+              'Turn off the child lock of {device}',
+              'Disattiva il blocco bambini di {device}',
+            ),
+            icon: 'lock-open',
+            args: { on: false },
+          },
+        ],
+      },
     ),
     /** Toggle the front indicator light. */
     setIndicatorLight: method(
       z.object({ deviceId: z.number().int().nonnegative(), on: z.boolean() }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'petFeeder.lightOn',
+            label: t('Indicator light on', 'Spia accesa'),
+            phrase: t('Turn on the indicator light of {device}', 'Accendi la spia di {device}'),
+            icon: 'lightbulb',
+            args: { on: true },
+          },
+          {
+            id: 'petFeeder.lightOff',
+            label: t('Indicator light off', 'Spia spenta'),
+            phrase: t('Turn off the indicator light of {device}', 'Spegni la spia di {device}'),
+            icon: 'lightbulb-off',
+            args: { on: false },
+          },
+        ],
+      },
     ),
     /** Toggle the dispense chime. */
     setFeedSound: method(
       z.object({ deviceId: z.number().int().nonnegative(), on: z.boolean() }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'petFeeder.feedSoundOn',
+            label: t('Feeding sound on', 'Suono di erogazione attivo'),
+            phrase: t(
+              'Turn on the feeding sound of {device}',
+              'Attiva il suono di erogazione di {device}',
+            ),
+            icon: 'volume-2',
+            args: { on: true },
+          },
+          {
+            id: 'petFeeder.feedSoundOff',
+            label: t('Feeding sound off', 'Suono di erogazione spento'),
+            phrase: t(
+              'Turn off the feeding sound of {device}',
+              'Disattiva il suono di erogazione di {device}',
+            ),
+            icon: 'volume-x',
+            args: { on: false },
+          },
+        ],
+      },
     ),
     /** Set the speaker / prompt volume level. */
     setVolume: method(
@@ -214,7 +400,28 @@ export const petFeederCapability = {
         level: z.number().int().nonnegative(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'petFeeder.volume',
+            label: t('Set volume', 'Imposta il volume'),
+            phrase: t(
+              'Set the volume of {device} to {level}',
+              'Imposta il volume di {device} a {level}',
+            ),
+            icon: 'volume-2',
+            openArgs: [
+              {
+                key: 'level',
+                label: t('Volume', 'Volume'),
+                offer: { kind: 'number', min: 0, step: 1 },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -251,6 +458,39 @@ export const petFeederCapability = {
       batteryPower: { kind: 'gauge', unit: '%', deadband: 2 },
       desiccantLeftDays: { kind: 'gauge', unit: 's' },
     },
+  },
+  vocabulary: {
+    noun: t('Pet feeder', 'Distributore di cibo'),
+    order: 2030,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'lowFood',
+        label: t('Food low', 'Cibo in esaurimento'),
+        whenTrue: t('When {device} runs low on food', 'Quando il cibo di {device} sta finendo'),
+        whenFalse: t(
+          'When {device} has enough food again',
+          'Quando {device} ha di nuovo cibo a sufficienza',
+        ),
+        icon: 'package',
+      },
+      {
+        kind: 'boolean',
+        field: 'feeding',
+        label: t('Feeding', 'In erogazione'),
+        whenTrue: t('When {device} starts feeding', 'Quando {device} inizia a erogare'),
+        whenFalse: t('When {device} finishes feeding', 'Quando {device} finisce di erogare'),
+        icon: 'paw-print',
+      },
+      {
+        kind: 'numeric',
+        field: 'desiccantLeftDays',
+        quantity: t('the desiccant life', 'la durata dell’essiccante'),
+        label: t('Desiccant', 'Essiccante'),
+        unit: 'd',
+        icon: 'calendar-clock',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

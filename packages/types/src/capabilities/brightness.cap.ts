@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Dimmable-light brightness control. Co-exists with `switch` on the
@@ -37,7 +38,53 @@ export const brightnessCapability = {
         level: z.number().min(0).max(100),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'brightness.full',
+            label: t('Full brightness', 'Luminosità massima'),
+            phrase: t('Set {device} to full brightness', 'Porta {device} alla massima luminosità'),
+            icon: 'sun',
+            effect: { field: 'level', value: 100 },
+            args: { level: 100 },
+          },
+          {
+            id: 'brightness.half',
+            label: t('Half brightness', 'Luminosità a metà'),
+            phrase: t('Dim {device} to half', 'Abbassa {device} a metà luminosità'),
+            icon: 'sun-dim',
+            effect: { field: 'level', value: 50 },
+            args: { level: 50 },
+          },
+          {
+            id: 'brightness.off',
+            label: t('Brightness off', 'Luminosità a zero'),
+            phrase: t('Dim {device} to zero', 'Abbassa {device} a zero'),
+            icon: 'lightbulb-off',
+            effect: { field: 'level', value: 0 },
+            args: { level: 0 },
+          },
+          {
+            id: 'brightness.set',
+            label: t('Set brightness', 'Imposta la luminosità'),
+            phrase: t(
+              'Set the brightness of {device} to {level}',
+              'Imposta la luminosità di {device} a {level}',
+            ),
+            icon: 'sun-medium',
+            effect: { field: 'level', fromArg: 'level' },
+            openArgs: [
+              {
+                key: 'level',
+                label: t('Percentage', 'Percentuale'),
+                offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   events: {
@@ -52,6 +99,7 @@ export const brightnessCapability = {
         level: z.number().min(0).max(100),
         lastChangedAt: z.number(),
       }),
+      notOperatorFacing: 'the `level` state trigger reads the same change',
     },
   },
   status: {
@@ -79,6 +127,20 @@ export const brightnessCapability = {
     fields: {
       level: { kind: 'gauge', unit: '%', minIntervalMs: 0 },
     },
+  },
+  vocabulary: {
+    noun: t('Brightness', 'Luminosità'),
+    order: 1010,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'level',
+        quantity: t('the brightness', 'la luminosità'),
+        label: t('Brightness', 'Luminosità'),
+        unit: '%',
+        icon: 'sun',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

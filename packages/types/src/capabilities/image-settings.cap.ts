@@ -6,6 +6,7 @@ import {
 } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Vendor-neutral image / picture-adjustment cap — the per-camera config
@@ -173,6 +174,10 @@ export const imageSettingsCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Image settings', 'Impostazioni immagine'),
+    order: 3140,
+  },
 } as const satisfies CapabilityDefinition
 
 export type IImageSettingsProvider = InferNativeProvider<typeof imageSettingsCapability>

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Alarm-panel cap. Models HA `alarm_control_panel.*` on
@@ -69,25 +70,6 @@ export const alarmPanelCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.AlarmPanel],
   methods: {
-    arm: method(
-      z.object({
-        deviceId: z.number().int().nonnegative(),
-        mode: AlarmArmModeSchema,
-        /** Optional PIN code. Required when `requiresCode === true`.
-         *  Passed through to the upstream service; never persisted. */
-        code: z.string().min(1).optional(),
-      }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
-    disarm: method(
-      z.object({
-        deviceId: z.number().int().nonnegative(),
-        code: z.string().min(1).optional(),
-      }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
     /**
      * Force the panel into the `triggered` state — used by HA
      * automations to surface external sensor events through the panel
@@ -98,7 +80,142 @@ export const alarmPanelCapability = {
     trigger: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'alarm.trigger',
+          label: t('Trigger alarm', 'Fai scattare l’allarme'),
+          phrase: t('Trigger the alarm on {device}', 'Fai scattare l’allarme su {device}'),
+          icon: 'siren',
+        },
+      ],
     }),
+    disarm: method(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        code: z.string().min(1).optional(),
+      }),
+      z.void(),
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'alarm.disarm',
+            label: t('Disarm', 'Disinserisci'),
+            phrase: t('Disarm {device}', 'Disinserisci {device}'),
+            icon: 'shield-off',
+            effect: { field: 'state', value: 'disarmed' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+        ],
+      },
+    ),
+    arm: method(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        mode: AlarmArmModeSchema,
+        /** Optional PIN code. Required when `requiresCode === true`.
+         *  Passed through to the upstream service; never persisted. */
+        code: z.string().min(1).optional(),
+      }),
+      z.void(),
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'alarm.arm.home',
+            label: t('Arm home', 'Inserisci in casa'),
+            phrase: t('Arm {device} for home', 'Inserisci {device} in modalità casa'),
+            icon: 'house',
+            effect: { field: 'state', value: 'armed_home' },
+            args: { mode: 'home' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+          {
+            id: 'alarm.arm.away',
+            label: t('Arm away', 'Inserisci fuori casa'),
+            phrase: t('Arm {device} for away', 'Inserisci {device} in modalità fuori casa'),
+            icon: 'shield-check',
+            effect: { field: 'state', value: 'armed_away' },
+            args: { mode: 'away' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+          {
+            id: 'alarm.arm.night',
+            label: t('Arm night', 'Inserisci notte'),
+            phrase: t('Arm {device} for the night', 'Inserisci {device} in modalità notte'),
+            icon: 'moon',
+            effect: { field: 'state', value: 'armed_night' },
+            args: { mode: 'night' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+          {
+            id: 'alarm.arm.vacation',
+            label: t('Arm vacation', 'Inserisci vacanza'),
+            phrase: t('Arm {device} for vacation', 'Inserisci {device} in modalità vacanza'),
+            icon: 'plane',
+            effect: { field: 'state', value: 'armed_vacation' },
+            args: { mode: 'vacation' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+          {
+            id: 'alarm.arm.custom_bypass',
+            label: t('Arm custom bypass', 'Inserisci con esclusioni'),
+            phrase: t(
+              'Arm {device} with its custom bypass',
+              'Inserisci {device} con le zone escluse',
+            ),
+            icon: 'shield-half',
+            effect: { field: 'state', value: 'armed_custom_bypass' },
+            args: { mode: 'custom_bypass' },
+            openArgs: [
+              {
+                key: 'code',
+                label: t('PIN code', 'Codice PIN'),
+                offer: { kind: 'text', secret: true },
+                optional: true,
+              },
+            ],
+          },
+        ],
+      },
+    ),
   },
   status: {
     schema: AlarmPanelStatusSchema,
@@ -127,6 +244,65 @@ export const alarmPanelCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Alarm panel', 'Centrale d’allarme'),
+    order: 1120,
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: t('Alarm state', 'Stato dell’allarme'),
+        values: [
+          {
+            value: 'disarmed',
+            label: t('Disarmed', 'Disinserito'),
+            phrase: t('When {device} is disarmed', 'Quando {device} viene disinserito'),
+          },
+          {
+            value: 'armed_home',
+            label: t('Armed home', 'Inserito in casa'),
+            phrase: t(
+              'When {device} is armed for home',
+              'Quando {device} viene inserito in modalità casa',
+            ),
+          },
+          {
+            value: 'armed_away',
+            label: t('Armed away', 'Inserito fuori casa'),
+            phrase: t(
+              'When {device} is armed for away',
+              'Quando {device} viene inserito in modalità fuori casa',
+            ),
+          },
+          {
+            value: 'armed_night',
+            label: t('Armed night', 'Inserito notte'),
+            phrase: t(
+              'When {device} is armed for the night',
+              'Quando {device} viene inserito in modalità notte',
+            ),
+          },
+          {
+            value: 'armed_vacation',
+            label: t('Armed vacation', 'Inserito vacanza'),
+          },
+          {
+            value: 'armed_custom_bypass',
+            label: t('Armed with bypass', 'Inserito con esclusioni'),
+          },
+          { value: 'arming', label: t('Arming', 'In inserimento') },
+          { value: 'disarming', label: t('Disarming', 'In disinserimento') },
+          { value: 'pending', label: t('Entry delay', 'Ritardo d’ingresso') },
+          {
+            value: 'triggered',
+            label: t('Triggered', 'In allarme'),
+            phrase: t('When {device} goes off', 'Quando {device} scatta'),
+          },
+        ],
+        icon: 'shield',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IAlarmPanelProvider = InferProvider<typeof alarmPanelCapability>

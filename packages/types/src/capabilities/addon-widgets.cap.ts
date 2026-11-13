@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { WidgetMetadataSchema } from './addon-widgets-source.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `addon-widgets` — system-scoped singleton aggregator cap. Public-facing
@@ -31,6 +32,7 @@ export const addonWidgetsCapability = {
   methods: {
     listWidgets: method(z.void(), z.array(EnrichedWidgetMetadataSchema).readonly()),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition
 
 export type IAddonWidgetsAggregatorProvider = InferProvider<typeof addonWidgetsCapability>

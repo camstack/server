@@ -7,6 +7,7 @@ import {
 } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * HVAC / climate control cap. Models the full surface of a HA
@@ -130,23 +131,75 @@ export const climateControlCapability = {
         mode: HvacModeSchema,
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
-    setFanMode: optionalMethod(
-      z.object({
-        deviceId: z.number().int().nonnegative(),
-        fanMode: z.string().min(1),
-      }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
-    setPreset: optionalMethod(
-      z.object({
-        deviceId: z.number().int().nonnegative(),
-        preset: z.string().min(1),
-      }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.off',
+            label: t('Climate off', 'Clima spento'),
+            phrase: t('Turn off {device}', 'Spegni {device}'),
+            icon: 'power-off',
+            effect: { field: 'mode', value: 'off' },
+            args: { mode: 'off' },
+          },
+          {
+            id: 'climate.heat',
+            label: t('Heat', 'Riscalda'),
+            phrase: t('Set {device} to heat', 'Metti {device} in riscaldamento'),
+            icon: 'flame',
+            effect: { field: 'mode', value: 'heat' },
+            args: { mode: 'heat' },
+          },
+          {
+            id: 'climate.cool',
+            label: t('Cool', 'Raffresca'),
+            phrase: t('Set {device} to cool', 'Metti {device} in raffrescamento'),
+            icon: 'snowflake',
+            effect: { field: 'mode', value: 'cool' },
+            args: { mode: 'cool' },
+          },
+          {
+            id: 'climate.auto',
+            label: t('Climate auto', 'Clima automatico'),
+            phrase: t('Set {device} to automatic', 'Metti {device} in automatico'),
+            icon: 'thermometer',
+            effect: { field: 'mode', value: 'auto' },
+            args: { mode: 'auto' },
+          },
+          {
+            id: 'climate.mode',
+            label: t('Set mode', 'Imposta la modalità'),
+            phrase: t('Set {device} to {mode}', 'Imposta {device} su {mode}'),
+            icon: 'thermometer',
+            effect: { field: 'mode', fromArg: 'mode' },
+            openArgs: [
+              {
+                key: 'mode',
+                label: t('Mode', 'Modalità'),
+                offer: {
+                  kind: 'enum',
+                  values: [
+                    { value: 'off', label: t('Off', 'Spento') },
+                    { value: 'heat', label: t('Heat', 'Riscaldamento') },
+                    { value: 'cool', label: t('Cool', 'Raffrescamento') },
+                    { value: 'auto', label: t('Automatic', 'Automatico') },
+                    {
+                      value: 'heat_cool',
+                      label: t('Heat and cool', 'Caldo e freddo'),
+                    },
+                    {
+                      value: 'fan_only',
+                      label: t('Fan only', 'Solo ventilazione'),
+                    },
+                    { value: 'dry', label: t('Dry', 'Deumidificazione') },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setTarget: method(
       z.object({
@@ -154,7 +207,26 @@ export const climateControlCapability = {
         target: z.number(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.target',
+            label: t('Set temperature', 'Imposta la temperatura'),
+            phrase: t('Set {device} to {target}', 'Imposta {device} a {target}'),
+            icon: 'thermometer',
+            effect: { field: 'target', fromArg: 'target' },
+            openArgs: [
+              {
+                key: 'target',
+                label: t('Temperature', 'Temperatura'),
+                offer: { kind: 'number', step: 0.5, unit: '°C' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setTargetRange: optionalMethod(
       z.object({
@@ -163,7 +235,33 @@ export const climateControlCapability = {
         targetHigh: z.number(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.targetRange',
+            label: t('Set temperature range', 'Imposta l’intervallo di temperatura'),
+            phrase: t(
+              'Keep {device} between {targetLow} and {targetHigh}',
+              'Mantieni {device} tra {targetLow} e {targetHigh}',
+            ),
+            icon: 'thermometer',
+            openArgs: [
+              {
+                key: 'targetLow',
+                label: t('Lowest', 'Minima'),
+                offer: { kind: 'number', step: 0.5, unit: '°C' },
+              },
+              {
+                key: 'targetHigh',
+                label: t('Highest', 'Massima'),
+                offer: { kind: 'number', step: 0.5, unit: '°C' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setTargetHumidity: optionalMethod(
       z.object({
@@ -171,7 +269,92 @@ export const climateControlCapability = {
         targetHumidity: z.number().min(0).max(100),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.targetHumidity',
+            label: t('Set humidity', 'Imposta l’umidità'),
+            phrase: t(
+              'Set the humidity target of {device} to {targetHumidity}',
+              'Imposta l’umidità obiettivo di {device} al {targetHumidity}',
+            ),
+            icon: 'droplets',
+            effect: { field: 'targetHumidity', fromArg: 'targetHumidity' },
+            openArgs: [
+              {
+                key: 'targetHumidity',
+                label: t('Humidity', 'Umidità'),
+                offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+              },
+            ],
+          },
+        ],
+      },
+    ),
+    setFanMode: optionalMethod(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        fanMode: z.string().min(1),
+      }),
+      z.void(),
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.fanMode',
+            label: t('Set fan mode', 'Imposta la ventilazione'),
+            phrase: t(
+              'Set the fan of {device} to {fanMode}',
+              'Imposta la ventilazione di {device} su {fanMode}',
+            ),
+            icon: 'fan',
+            openArgs: [
+              {
+                key: 'fanMode',
+                label: t('Fan mode', 'Ventilazione'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availableFanModes',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ),
+    setPreset: optionalMethod(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        preset: z.string().min(1),
+      }),
+      z.void(),
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.preset',
+            label: t('Set preset', 'Imposta il preset'),
+            phrase: t('Set {device} to preset {preset}', 'Imposta {device} sul preset {preset}'),
+            icon: 'list',
+            openArgs: [
+              {
+                key: 'preset',
+                label: t('Preset', 'Preset'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availablePresets',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setSwingVertical: optionalMethod(
       z.object({
@@ -179,7 +362,34 @@ export const climateControlCapability = {
         on: z.boolean(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.swingVerticalOn',
+            label: t('Vertical swing on', 'Oscillazione verticale attiva'),
+            phrase: t(
+              'Start the vertical swing of {device}',
+              'Attiva l’oscillazione verticale di {device}',
+            ),
+            icon: 'move-vertical',
+            effect: { field: 'swingVertical', value: true },
+            args: { on: true },
+          },
+          {
+            id: 'climate.swingVerticalOff',
+            label: t('Vertical swing off', 'Oscillazione verticale spenta'),
+            phrase: t(
+              'Stop the vertical swing of {device}',
+              'Ferma l’oscillazione verticale di {device}',
+            ),
+            icon: 'move-vertical',
+            effect: { field: 'swingVertical', value: false },
+            args: { on: false },
+          },
+        ],
+      },
     ),
     setSwingHorizontal: optionalMethod(
       z.object({
@@ -187,7 +397,34 @@ export const climateControlCapability = {
         on: z.boolean(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'climate.swingHorizontalOn',
+            label: t('Horizontal swing on', 'Oscillazione orizzontale attiva'),
+            phrase: t(
+              'Start the horizontal swing of {device}',
+              'Attiva l’oscillazione orizzontale di {device}',
+            ),
+            icon: 'move-horizontal',
+            effect: { field: 'swingHorizontal', value: true },
+            args: { on: true },
+          },
+          {
+            id: 'climate.swingHorizontalOff',
+            label: t('Horizontal swing off', 'Oscillazione orizzontale spenta'),
+            phrase: t(
+              'Stop the horizontal swing of {device}',
+              'Ferma l’oscillazione orizzontale di {device}',
+            ),
+            icon: 'move-horizontal',
+            effect: { field: 'swingHorizontal', value: false },
+            args: { on: false },
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -220,6 +457,63 @@ export const climateControlCapability = {
       targetHigh: { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
       targetLow: { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
     },
+  },
+  vocabulary: {
+    noun: t('Climate', 'Clima'),
+    order: 1070,
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: t('Mode', 'Modalità'),
+        values: [
+          {
+            value: 'off',
+            label: t('Off', 'Spento'),
+            phrase: t('When {device} turns off', 'Quando {device} si spegne'),
+          },
+          {
+            value: 'heat',
+            label: t('Heat', 'Riscaldamento'),
+            phrase: t('When {device} starts heating', 'Quando {device} passa al riscaldamento'),
+          },
+          {
+            value: 'cool',
+            label: t('Cool', 'Raffrescamento'),
+            phrase: t('When {device} starts cooling', 'Quando {device} passa al raffrescamento'),
+          },
+          { value: 'auto', label: t('Automatic', 'Automatico') },
+          { value: 'heat_cool', label: t('Heat and cool', 'Caldo e freddo') },
+          { value: 'fan_only', label: t('Fan only', 'Solo ventilazione') },
+          { value: 'dry', label: t('Dry', 'Deumidificazione') },
+        ],
+        icon: 'thermometer',
+      },
+      {
+        kind: 'numeric',
+        field: 'currentTemp',
+        quantity: t('the temperature', 'la temperatura'),
+        label: t('Temperature', 'Temperatura'),
+        unit: '°C',
+        icon: 'thermometer',
+      },
+      {
+        kind: 'numeric',
+        field: 'currentHumidity',
+        quantity: t('the humidity', 'l’umidità'),
+        label: t('Humidity', 'Umidità'),
+        unit: '%',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'target',
+        quantity: t('the set temperature', 'la temperatura impostata'),
+        label: t('Set temperature', 'Temperatura impostata'),
+        unit: '°C',
+        icon: 'thermometer',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

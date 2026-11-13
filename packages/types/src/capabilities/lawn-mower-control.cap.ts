@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Robotic lawn-mower cap. Models HA `lawn_mower.*` entities — anything
@@ -55,14 +56,38 @@ export const lawnMowerControlCapability = {
     startMowing: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'lawnMower.start',
+          label: t('Start mowing', 'Avvia il taglio'),
+          phrase: t('Start {device} mowing', 'Fai partire il taglio di {device}'),
+          icon: 'play',
+        },
+      ],
     }),
     pause: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'lawnMower.pause',
+          label: t('Pause mower', 'Metti in pausa il tosaerba'),
+          phrase: t('Pause {device}', 'Metti in pausa {device}'),
+          icon: 'pause',
+        },
+      ],
     }),
     dock: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'lawnMower.dock',
+          label: t('Dock mower', 'Riporta alla base'),
+          phrase: t('Send {device} back to its dock', 'Rimanda {device} alla base'),
+          icon: 'house',
+        },
+      ],
     }),
   },
   status: {
@@ -89,6 +114,45 @@ export const lawnMowerControlCapability = {
     fields: {
       batteryLevel: { kind: 'gauge', unit: '%', deadband: 2 },
     },
+  },
+  vocabulary: {
+    noun: t('Robot mower', 'Robot tosaerba'),
+    order: 2010,
+    state: [
+      {
+        kind: 'enum',
+        field: 'activity',
+        label: t('Activity', 'Attività'),
+        values: [
+          { value: 'idle', label: t('Idle', 'Inattivo') },
+          {
+            value: 'mowing',
+            label: t('Mowing', 'In taglio'),
+            phrase: t('When {device} starts mowing', 'Quando {device} inizia a tagliare'),
+          },
+          { value: 'paused', label: t('Paused', 'In pausa') },
+          {
+            value: 'docked',
+            label: t('Docked', 'Alla base'),
+            phrase: t('When {device} docks', 'Quando {device} arriva alla base'),
+          },
+          {
+            value: 'error',
+            label: t('Error', 'Errore'),
+            phrase: t('When {device} reports an error', 'Quando {device} segnala un errore'),
+          },
+        ],
+        icon: 'bot',
+      },
+      {
+        kind: 'numeric',
+        field: 'batteryLevel',
+        quantity: t('the battery level', 'il livello della batteria'),
+        label: t('Battery', 'Batteria'),
+        unit: '%',
+        icon: 'battery',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

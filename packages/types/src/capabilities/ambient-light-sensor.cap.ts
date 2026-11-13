@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Ambient illuminance reading in lux. Drives Home Assistant `sensor`
@@ -45,12 +46,31 @@ export const ambientLightSensorCapability = {
    */
   history: {
     fields: {
-      illuminance: { kind: 'gauge', unit: 'lx', deadbandPct: 10, minIntervalMs: 60000 },
+      illuminance: {
+        kind: 'gauge',
+        unit: 'lx',
+        deadbandPct: 10,
+        minIntervalMs: 60000,
+      },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Light level', 'Luminosità ambiente'),
+    order: 5010,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'illuminance',
+        quantity: t('the light level', 'la luminosità'),
+        label: t('Illuminance', 'Illuminamento'),
+        unit: 'lx',
+        icon: 'sun',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IAmbientLightSensorProvider = InferProvider<typeof ambientLightSensorCapability>

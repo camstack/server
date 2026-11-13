@@ -4,6 +4,7 @@ import { DeviceType } from '../device/device-type.js'
 import { IrTimingsSchema, TransmitSettingsSchema } from '../ir/ir-timings.js'
 import { IrNativeCodeSchema, IrNativeFormatSchema } from '../ir/native.js'
 import { readErrorI18n } from '../i18n/camstack-error.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /** The setting keys a transmitter may declare as settable (`getInfo.settable`). */
 export const TransmitSettingKeySchema = z.enum([
@@ -156,7 +157,12 @@ export const irTransmitterCapability = {
           message: 'send takes exactly one of timings or native',
         }),
       IrSendResultSchema,
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing:
+          'a raw pulse train is not something an operator composes in an automation; the remote that owns the command table sends it',
+      },
     ),
     learn: method(
       z.object({
@@ -169,7 +175,12 @@ export const irTransmitterCapability = {
           .default(IR_LEARN_TIMEOUT_DEFAULT_MS),
       }),
       IrLearnResultSchema,
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing:
+          'an interactive capture the operator starts from the source dialog and answers by pressing a physical remote; no automation can supply the signal',
+      },
     ),
     getInfo: method(
       z.object({ deviceId: z.number().int().nonnegative() }),
@@ -198,6 +209,10 @@ export const irTransmitterCapability = {
   history: 'none',
   /** Clock field: written, but not on its own worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('IR / RF transmitter', 'Trasmettitore IR / RF'),
+    order: 1140,
+  },
 } as const satisfies CapabilityDefinition
 
 export type IIrTransmitterProvider = InferProvider<typeof irTransmitterCapability>

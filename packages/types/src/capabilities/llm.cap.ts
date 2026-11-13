@@ -29,6 +29,7 @@ import {
   LlmImageSchema,
   LlmRetryPolicySchema,
 } from './llm-shared.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * A profile kind is an OPEN id, declared by the provider that serves it
@@ -231,7 +232,11 @@ export type LlmListModelsErrorCode = z.infer<typeof LlmListModelsErrorCodeSchema
 /** A RESULT, never a throw: "wrong key" is an answer the editor renders inline. */
 export const LlmListModelsResultSchema = z.discriminatedUnion('ok', [
   z.object({ ok: z.literal(true), models: z.array(LlmModelInfoSchema) }),
-  z.object({ ok: z.literal(false), code: LlmListModelsErrorCodeSchema, message: z.string() }),
+  z.object({
+    ok: z.literal(false),
+    code: LlmListModelsErrorCodeSchema,
+    message: z.string(),
+  }),
 ])
 export type LlmListModelsResult = z.infer<typeof LlmListModelsResultSchema>
 
@@ -438,6 +443,7 @@ export const llmCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type ILlmProvider = InferProvider<typeof llmCapability>

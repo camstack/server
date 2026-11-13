@@ -1281,6 +1281,15 @@ export type {
   VocabBindingsInput,
   VocabCapName,
   VocabLocale,
+  CapVocabularyDecl,
+  DeviceCapVocabularyDecl,
+  EventVocabularyDecl,
+  LooseMethodActionDecl,
+  MethodActionArgs,
+  MethodActionDecl,
+  MethodActionEffect,
+  MethodActionOpenArg,
+  SystemCapVocabularyDecl,
 } from './device/cap-vocabulary/index.js'
 export {
   actionEffect,
@@ -1299,6 +1308,7 @@ export {
   vocabCall,
   VocabActionError,
   assertDeviceOffers,
+  NOT_A_DEVICE,
 } from './device/cap-vocabulary/index.js'
 // Device-link value transform
 // Device management

@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const AddonHttpRouteSchema = z.object({
   method: z.enum(['GET', 'POST', 'PUT', 'DELETE', 'PATCH']),
@@ -67,10 +68,13 @@ export const addonRoutesCapability = {
      * Local addons can implement it for free with the same helper;
      * the hub bypasses the wire on co-located addons.
      */
-    invoke: method(InvokeRequestSchema, InvokeReplyEnvelopeSchema, { kind: 'mutation' }),
+    invoke: method(InvokeRequestSchema, InvokeReplyEnvelopeSchema, {
+      kind: 'mutation',
+    }),
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.UI_PLUMBING },
 } as const satisfies CapabilityDefinition
 
 export type IAddonRoutesProvider = InferProvider<typeof addonRoutesCapability>

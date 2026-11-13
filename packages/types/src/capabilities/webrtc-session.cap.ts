@@ -3,6 +3,7 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
 import { DeviceType } from '../device/device-type.js'
 import { CamProfileSchema } from './schemas/streaming-shared.js'
 import { BrokerConsumerAttributionSchema } from './stream-broker.cap.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Optional client-side hints sent at session creation to help the provider
@@ -329,7 +330,10 @@ export const webrtcSessionCapability = {
         consumerAttribution: BrokerConsumerAttributionSchema.optional(),
       }),
       z.object({ sessionId: z.string(), sdpOffer: z.string() }),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     /**
      * Accept a CLIENT-generated SDP offer and return the server's
@@ -445,7 +449,10 @@ export const webrtcSessionCapability = {
         talkback: z.boolean().optional(),
       }),
       z.object({ sessionId: z.string(), sdpAnswer: z.string() }),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     handleAnswer: method(
       z.object({
@@ -454,7 +461,10 @@ export const webrtcSessionCapability = {
         sdpAnswer: z.string(),
       }),
       z.void(),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     /**
      * Trickle ICE — add a remote (client) ICE candidate to a live session.
@@ -472,7 +482,10 @@ export const webrtcSessionCapability = {
         sdpMLineIndex: z.number().int().nullable().optional(),
       }),
       z.void(),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     /**
      * Trickle ICE — poll the server's gathered ICE candidates for a session.
@@ -504,7 +517,10 @@ export const webrtcSessionCapability = {
         sessionId: z.string(),
       }),
       z.void(),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     /** Whether the underlying provider supports adaptive bitrate for this profile. */
     hasAdaptiveBitrate: method(
@@ -575,7 +591,10 @@ export const webrtcSessionCapability = {
         tier: CamProfileSchema.nullable(),
         reason: z.string(),
       }),
-      { kind: 'mutation' },
+      {
+        kind: 'mutation',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     /**
      * The SERVER's half of the stream-debug overlay, for one live session.
@@ -604,6 +623,7 @@ export const webrtcSessionCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { noun: t('Live session', 'Sessione live'), order: 3340 },
 } as const satisfies CapabilityDefinition
 
 export type IWebrtcSessionProvider = InferProvider<typeof webrtcSessionCapability>

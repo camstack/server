@@ -58,13 +58,19 @@ export const heroLayoutCapability = {
     }),
     /** The fixed rows of a kind: the type, refined by the role (D1033 — a heater is a switch). */
     getLayout: method(
-      z.object({ deviceType: z.string(), role: z.string().nullable().optional() }),
+      z.object({
+        deviceType: z.string(),
+        role: z.string().nullable().optional(),
+      }),
       HeroLayoutRowsSchema,
       {
         auth: 'protected',
         role: 'viewer',
       },
     ),
+  },
+  vocabulary: {
+    notOperatorFacing: 'the device hero model — read-only data the UI draws, never actuated',
   },
 } as const satisfies CapabilityDefinition
 

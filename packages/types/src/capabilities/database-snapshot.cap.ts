@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { DataStoreDatabaseSchema } from './settings-store.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * The suffix of a verified snapshot, written next to the live database it
@@ -86,7 +87,9 @@ export const DatabaseSnapshotWrittenSchema = DatabaseSnapshotResultSchema.extend
 export type DatabaseSnapshotWritten = z.infer<typeof DatabaseSnapshotWrittenSchema>
 
 /** Which database `writeSnapshot` copies. Required: an unstated ask is not guessed. */
-export const DatabaseSnapshotRequestSchema = z.object({ databaseId: DataStoreDatabaseSchema })
+export const DatabaseSnapshotRequestSchema = z.object({
+  databaseId: DataStoreDatabaseSchema,
+})
 export type DatabaseSnapshotRequest = z.infer<typeof DatabaseSnapshotRequestSchema>
 
 /**
@@ -132,7 +135,9 @@ export const databaseSnapshotCapability = {
      * anything. A file created at runtime is listed from the moment it opens,
      * so no backup can leave it out (D693).
      */
-    listDatabases: method(z.object({}), DatabaseSnapshotTargetsSchema, { auth: 'admin' }),
+    listDatabases: method(z.object({}), DatabaseSnapshotTargetsSchema, {
+      auth: 'admin',
+    }),
     /**
      * Write `<db>.backup-snapshot` for ONE database and return what it holds.
      * Throws — and leaves no file under the final name — when the copy fails
@@ -147,6 +152,7 @@ export const databaseSnapshotCapability = {
       timeoutMs: DATABASE_SNAPSHOT_TIMEOUT_MS,
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IDatabaseSnapshotProvider = InferProvider<typeof databaseSnapshotCapability>

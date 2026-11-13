@@ -39,6 +39,7 @@ import {
   ExtensionSlotValueSchema,
 } from '../generated/extension-slots.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /** Separator between the source and the slot id in a `slotRef`. It is the
  *  D554 routing separator: the dispatcher matches `<source>:` prefixes. */
@@ -234,6 +235,10 @@ export const deviceExtensionCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+  },
+  vocabulary: {
+    noun: t('Device extension', 'Estensione del dispositivo'),
+    order: 3100,
   },
 } as const satisfies CapabilityDefinition
 

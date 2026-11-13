@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Motion-trigger toggle for accessory devices.
@@ -64,7 +65,31 @@ export const motionTriggerCapability = {
       // (a grant on the parent camera reaches it through `includeLinked`),
       // never by `isAdmin`. Was `admin`, which refused a camera's operator
       // before the grant was read. See D403, D918.
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'motionTrigger.on',
+            label: t('Motion trigger on', 'Attivazione al movimento attiva'),
+            phrase: t('Let motion trigger {device}', 'Fai attivare {device} dal movimento'),
+            icon: 'activity',
+            effect: { field: 'enabled', value: true },
+            args: { enabled: true },
+          },
+          {
+            id: 'motionTrigger.off',
+            label: t('Motion trigger off', 'Attivazione al movimento spenta'),
+            phrase: t(
+              'Stop motion triggering {device}',
+              'Non far più attivare {device} dal movimento',
+            ),
+            icon: 'activity',
+            effect: { field: 'enabled', value: false },
+            args: { enabled: false },
+          },
+        ],
+      },
     ),
   },
   events: {
@@ -74,6 +99,7 @@ export const motionTriggerCapability = {
         enabled: z.boolean(),
         lastChangedAt: z.number(),
       }),
+      notOperatorFacing: 'the `enabled` state trigger phrases both edges of this change',
     },
   },
   status: {
@@ -93,6 +119,26 @@ export const motionTriggerCapability = {
    * History (D850): none — configuration switch.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Motion trigger', 'Attivazione al movimento'),
+    order: 1160,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('Motion trigger', 'Attivazione al movimento'),
+        whenTrue: t(
+          'When motion triggering is turned on for {device}',
+          'Quando si attiva l’attivazione al movimento di {device}',
+        ),
+        whenFalse: t(
+          'When motion triggering is turned off for {device}',
+          'Quando si disattiva l’attivazione al movimento di {device}',
+        ),
+        icon: 'activity',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IMotionTriggerProvider = InferProvider<typeof motionTriggerCapability>

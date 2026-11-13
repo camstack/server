@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Robot-vacuum cap. Models HA `vacuum.*` entities — anything with a
@@ -68,22 +69,62 @@ export const vacuumControlCapability = {
     start: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'vacuum.start',
+          label: t('Start cleaning', 'Avvia la pulizia'),
+          phrase: t('Start {device} cleaning', 'Fai partire la pulizia di {device}'),
+          icon: 'play',
+        },
+      ],
     }),
     pause: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'vacuum.pause',
+          label: t('Pause', 'Metti in pausa'),
+          phrase: t('Pause {device}', 'Metti in pausa {device}'),
+          icon: 'pause',
+        },
+      ],
     }),
     stop: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'vacuum.stop',
+          label: t('Stop', 'Ferma'),
+          phrase: t('Stop {device}', 'Ferma {device}'),
+          icon: 'square',
+        },
+      ],
     }),
     returnToBase: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'vacuum.dock',
+          label: t('Return to base', 'Torna alla base'),
+          phrase: t('Send {device} back to its base', 'Rimanda {device} alla base'),
+          icon: 'house',
+        },
+      ],
     }),
     locate: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'vacuum.locate',
+          label: t('Locate', 'Trova'),
+          phrase: t('Make {device} beep so you can find it', 'Fai suonare {device} per trovarlo'),
+          icon: 'map-pin',
+        },
+      ],
     }),
     setFanSpeed: method(
       z.object({
@@ -91,7 +132,32 @@ export const vacuumControlCapability = {
         speed: z.string().min(1),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'vacuum.fanSpeed',
+            label: t('Set suction', 'Imposta l’aspirazione'),
+            phrase: t(
+              'Set the suction of {device} to {speed}',
+              'Imposta l’aspirazione di {device} su {speed}',
+            ),
+            icon: 'fan',
+            openArgs: [
+              {
+                key: 'speed',
+                label: t('Suction', 'Aspirazione'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availableFanSpeeds',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -119,6 +185,51 @@ export const vacuumControlCapability = {
     fields: {
       batteryLevel: { kind: 'gauge', unit: '%', deadband: 2 },
     },
+  },
+  vocabulary: {
+    noun: t('Robot vacuum', 'Robot aspirapolvere'),
+    order: 2000,
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: t('Activity', 'Attività'),
+        values: [
+          { value: 'idle', label: t('Idle', 'Inattivo') },
+          {
+            value: 'cleaning',
+            label: t('Cleaning', 'In pulizia'),
+            phrase: t('When {device} starts cleaning', 'Quando {device} inizia a pulire'),
+          },
+          { value: 'paused', label: t('Paused', 'In pausa') },
+          {
+            value: 'returning',
+            label: t('Returning', 'In rientro'),
+            phrase: t('When {device} heads back to its base', 'Quando {device} torna alla base'),
+          },
+          {
+            value: 'docked',
+            label: t('Docked', 'Alla base'),
+            phrase: t('When {device} docks', 'Quando {device} arriva alla base'),
+          },
+          { value: 'drying', label: t('Drying', 'In asciugatura') },
+          {
+            value: 'error',
+            label: t('Error', 'Errore'),
+            phrase: t('When {device} reports an error', 'Quando {device} segnala un errore'),
+          },
+        ],
+        icon: 'bot',
+      },
+      {
+        kind: 'numeric',
+        field: 'batteryLevel',
+        quantity: t('the battery level', 'il livello della batteria'),
+        label: t('Battery', 'Batteria'),
+        unit: '%',
+        icon: 'battery',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

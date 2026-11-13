@@ -6,6 +6,7 @@ import {
 } from '../records/record-kind.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { RecordQueryInputSchema, RecordQueryResultSchema } from './records.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /** One table of the settings database. */
 export const StorageTableSchema = z.object({
@@ -74,7 +75,10 @@ export const StaleSettingsKeyFindingSchema = z.object({
 export type StaleSettingsKeyFinding = z.infer<typeof StaleSettingsKeyFindingSchema>
 
 /** An addon the audit could not judge, with the reason. Never reported as stale. */
-export const StaleUnknownSchema = z.object({ subject: z.string(), reason: z.string() })
+export const StaleUnknownSchema = z.object({
+  subject: z.string(),
+  reason: z.string(),
+})
 
 export const StaleDataReportSchema = z.object({
   /** Epoch ms of the last finished scan; `null` before the first. */
@@ -129,7 +133,10 @@ export const storageAdminCapability = {
      * owner's, secret fields redacted, audited in the engine log.
      */
     readRecords: method(
-      RecordQueryInputSchema.extend({ owner: z.string().min(1), kind: RecordKindNameSchema }),
+      RecordQueryInputSchema.extend({
+        owner: z.string().min(1),
+        kind: RecordKindNameSchema,
+      }),
       RecordQueryResultSchema,
       { auth: 'admin' },
     ),
@@ -138,9 +145,14 @@ export const storageAdminCapability = {
      * and settings keys no running addon declares. Held in memory; a scan runs
      * at hub boot, every 24 h and on `scanStaleData`.
      */
-    staleDataReport: method(z.object({}), StaleDataReportSchema, { auth: 'admin' }),
+    staleDataReport: method(z.object({}), StaleDataReportSchema, {
+      auth: 'admin',
+    }),
     /** Scan now. Detection only: it logs findings (owner and key, never values) and changes nothing. */
-    scanStaleData: method(z.object({}), StaleDataReportSchema, { kind: 'mutation', auth: 'admin' }),
+    scanStaleData: method(z.object({}), StaleDataReportSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
     /**
      * Drop an ORPHANED kind: its rows, their keychain values, then mark it
      * dropped. The verdict is re-checked at call time; anything not still
@@ -160,10 +172,14 @@ export const storageAdminCapability = {
      */
     unsetStaleSettingsKey: method(
       z.object({ addonId: z.string().min(1), key: z.string().min(1) }),
-      z.object({ removed: z.boolean(), secretsCleared: z.number().int().nonnegative() }),
+      z.object({
+        removed: z.boolean(),
+        secretsCleared: z.number().int().nonnegative(),
+      }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.STORAGE },
 } as const satisfies CapabilityDefinition
 
 export type IStorageAdminProvider = InferProvider<typeof storageAdminCapability>

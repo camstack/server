@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Unified user-settable input cap. Models HA's `number` /
@@ -91,7 +92,12 @@ export const controlCapability = {
         control: ControlSetValueInputSchema,
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing:
+          'the value shape depends on the control kind (numeric / select / text / datetime) read from status; a typed picker for it is a follow-up of the automations rework',
+      },
     ),
   },
   status: {
@@ -116,6 +122,19 @@ export const controlCapability = {
    * History (D850): none — `value` is a number/string union; configuration entity.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Control', 'Controllo'),
+    order: 1150,
+    state: [
+      {
+        kind: 'value',
+        field: 'value',
+        label: t('Value', 'Valore'),
+        offer: { kind: 'dynamic', from: 'status', field: 'options' },
+        icon: 'sliders-horizontal',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IControlProvider = InferProvider<typeof controlCapability>

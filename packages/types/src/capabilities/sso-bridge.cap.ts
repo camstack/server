@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { TokenScopeSchema } from '../schemas/auth-records.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `sso-bridge` — internal hub-only cap that lets SSO-style auth
@@ -142,6 +143,7 @@ export const ssoBridgeCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type ISsoBridgeProvider = InferProvider<typeof ssoBridgeCapability>

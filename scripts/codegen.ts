@@ -159,6 +159,11 @@ const PARALLEL_CAP_STEPS: readonly Step[] = [
     label: 'customize catalog       → packages/types/src/generated/customize-catalog.ts',
     cmd: ['npx', 'tsx', 'scripts/generate-customize-catalog.ts'],
   },
+  {
+    id: 'cap-vocabulary',
+    label: 'cap vocabulary          → packages/types/src/generated/cap-vocabulary.ts',
+    cmd: ['npx', 'tsx', 'scripts/generate-cap-vocabulary.ts'],
+  },
   // generate-core-hooks.ts removed in Phase E (2026-05-06): the 6
   // hand-written core routers are now caps and `generate-system-hooks.ts`
   // covers them via the standard `.cap.ts` walker.

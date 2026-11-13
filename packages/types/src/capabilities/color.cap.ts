@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Color-light cap. Coexists with `switch` (on/off) and `brightness`
@@ -46,7 +47,10 @@ const HsvTripletSchema = z.object({
 const ColorInputSchema = z.discriminatedUnion('mode', [
   z.object({ mode: z.literal('rgb'), rgb: RgbTripletSchema }),
   z.object({ mode: z.literal('hsv'), hsv: HsvTripletSchema }),
-  z.object({ mode: z.literal('mired'), colorTemperature: z.number().int().min(50).max(1000) }),
+  z.object({
+    mode: z.literal('mired'),
+    colorTemperature: z.number().int().min(50).max(1000),
+  }),
 ])
 
 export const ColorStatusSchema = z.object({
@@ -86,7 +90,47 @@ export const colorCapability = {
         color: ColorInputSchema,
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'color.warmWhite',
+            label: t('Warm white', 'Bianco caldo'),
+            phrase: t('Set {device} to warm white', 'Imposta {device} su bianco caldo'),
+            icon: 'sun',
+            args: { color: { mode: 'mired', colorTemperature: 370 } },
+          },
+          {
+            id: 'color.coolWhite',
+            label: t('Cool white', 'Bianco freddo'),
+            phrase: t('Set {device} to cool white', 'Imposta {device} su bianco freddo'),
+            icon: 'snowflake',
+            args: { color: { mode: 'mired', colorTemperature: 200 } },
+          },
+          {
+            id: 'color.red',
+            label: t('Red', 'Rosso'),
+            phrase: t('Turn {device} red', 'Colora {device} di rosso'),
+            icon: 'palette',
+            args: { color: { mode: 'rgb', rgb: { r: 255, g: 0, b: 0 } } },
+          },
+          {
+            id: 'color.green',
+            label: t('Green', 'Verde'),
+            phrase: t('Turn {device} green', 'Colora {device} di verde'),
+            icon: 'palette',
+            args: { color: { mode: 'rgb', rgb: { r: 0, g: 255, b: 0 } } },
+          },
+          {
+            id: 'color.blue',
+            label: t('Blue', 'Blu'),
+            phrase: t('Turn {device} blue', 'Colora {device} di blu'),
+            icon: 'palette',
+            args: { color: { mode: 'rgb', rgb: { r: 0, g: 0, b: 255 } } },
+          },
+        ],
+      },
     ),
   },
   events: {
@@ -104,6 +148,7 @@ export const colorCapability = {
         colorTemperature: z.number().int().optional(),
         lastChangedAt: z.number(),
       }),
+      notOperatorFacing: 'a colour change is read through the `mode` state trigger',
     },
   },
   status: {
@@ -128,6 +173,26 @@ export const colorCapability = {
    * History (D850): none — nested and cosmetic.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Colour', 'Colore'),
+    order: 1020,
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: t('Colour mode', 'Modalità colore'),
+        values: [
+          { value: 'rgb', label: t('RGB colour', 'Colore RGB') },
+          { value: 'hsv', label: t('HSV colour', 'Colore HSV') },
+          {
+            value: 'mired',
+            label: t('White temperature', 'Temperatura del bianco'),
+          },
+        ],
+        icon: 'palette',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IColorProvider = InferProvider<typeof colorCapability>

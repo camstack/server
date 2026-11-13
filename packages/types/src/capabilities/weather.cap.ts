@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Weather provider cap. Models HA `weather.*` entities — a read-only
@@ -80,6 +81,54 @@ export const weatherCapability = {
       pressure: { kind: 'gauge', unit: 'hPa', deadband: 0.5 },
       windSpeed: { kind: 'gauge', unit: 'm/s', deadband: 0.5 },
     },
+  },
+  vocabulary: {
+    noun: t('Weather', 'Meteo'),
+    order: 5230,
+    state: [
+      {
+        kind: 'value',
+        field: 'condition',
+        label: t('Conditions', 'Condizioni'),
+        phrase: t(
+          'When the weather at {device} turns {value}',
+          'Quando il meteo di {device} diventa {value}',
+        ),
+        icon: 'cloud-sun',
+      },
+      {
+        kind: 'numeric',
+        field: 'temperature',
+        quantity: t('the outdoor temperature', 'la temperatura esterna'),
+        label: t('Temperature', 'Temperatura'),
+        unit: '°C',
+        icon: 'thermometer',
+      },
+      {
+        kind: 'numeric',
+        field: 'humidity',
+        quantity: t('the outdoor humidity', 'l’umidità esterna'),
+        label: t('Humidity', 'Umidità'),
+        unit: '%',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'windSpeed',
+        quantity: t('the wind speed', 'la velocità del vento'),
+        label: t('Wind', 'Vento'),
+        unit: 'm/s',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'pressure',
+        quantity: t('the air pressure', 'la pressione atmosferica'),
+        label: t('Pressure', 'Pressione'),
+        unit: 'hPa',
+        icon: 'gauge',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

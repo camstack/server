@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { SourceInfoSchema } from '../device/source-info.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const ProviderStatusSchema = z.object({
   connected: z.boolean(),
@@ -366,6 +367,7 @@ export const deviceProviderCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IDeviceProvider = InferProvider<typeof deviceProviderCapability>

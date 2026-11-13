@@ -6,6 +6,7 @@ import {
 } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Vendor-neutral day/night (IR-cut) control — the per-camera config cap
@@ -94,7 +95,36 @@ export const dayNightCapability = {
     setSettings: method(
       z.object({ deviceId: z.number(), settings: DayNightSettingsPatchSchema }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'dayNight.auto',
+            label: t('Day/night auto', 'Giorno/notte automatico'),
+            phrase: t(
+              'Let {device} switch day and night by itself',
+              'Fai passare {device} da giorno a notte in automatico',
+            ),
+            icon: 'sun-moon',
+            args: { settings: { mode: 'auto' } },
+          },
+          {
+            id: 'dayNight.day',
+            label: t('Day mode', 'Modalità giorno'),
+            phrase: t('Force {device} into day mode', 'Forza {device} in modalità giorno'),
+            icon: 'sun',
+            args: { settings: { mode: 'day' } },
+          },
+          {
+            id: 'dayNight.night',
+            label: t('Night mode', 'Modalità notte'),
+            phrase: t('Force {device} into night mode', 'Forza {device} in modalità notte'),
+            icon: 'moon',
+            args: { settings: { mode: 'night' } },
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -117,6 +147,38 @@ export const dayNightCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Day/night', 'Giorno/notte'),
+    order: 3070,
+    state: [
+      {
+        kind: 'enum',
+        field: 'mode',
+        label: t('Day/night mode', 'Modalità giorno/notte'),
+        values: [
+          { value: 'auto', label: t('Automatic', 'Automatica') },
+          {
+            value: 'day',
+            label: t('Day', 'Giorno'),
+            phrase: t(
+              'When {device} switches to day mode',
+              'Quando {device} passa in modalità giorno',
+            ),
+          },
+          {
+            value: 'night',
+            label: t('Night', 'Notte'),
+            phrase: t(
+              'When {device} switches to night mode',
+              'Quando {device} passa in modalità notte',
+            ),
+          },
+          { value: 'schedule', label: t('Scheduled', 'Programmata') },
+        ],
+        icon: 'sun-moon',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IDayNightProvider = InferNativeProvider<typeof dayNightCapability>

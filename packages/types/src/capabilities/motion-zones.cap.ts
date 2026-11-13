@@ -7,6 +7,7 @@ import {
 import { DeviceType } from '../device/device-type.js'
 import { MaskGridShapeSchema, MaskShapeKindSchema, MaskGridDimsSchema } from './mask-shape.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Motion-zones share the same MaskShape vocabulary as privacy-mask — the
@@ -91,6 +92,7 @@ export const motionZonesCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: { noun: t('Motion zones', 'Zone di movimento'), order: 3170 },
 } as const satisfies CapabilityDefinition
 
 export type IMotionZonesProvider = InferNativeProvider<typeof motionZonesCapability>

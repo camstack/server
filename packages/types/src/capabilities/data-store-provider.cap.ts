@@ -11,6 +11,7 @@ import {
   TransactGuardSchema,
   TransactOpSchema,
 } from './settings-store.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * What one engine says about itself. The orchestrator uses `kind` to pick
@@ -84,7 +85,11 @@ export const dataStoreProviderCapability = {
 
     /** Get a single value by key from a collection. */
     get: method(
-      z.object({ namespace: z.string().optional(), collection: z.string(), key: z.string() }),
+      z.object({
+        namespace: z.string().optional(),
+        collection: z.string(),
+        key: z.string(),
+      }),
       z.unknown(),
       { auth: 'admin' },
     ),
@@ -222,7 +227,11 @@ export const dataStoreProviderCapability = {
 
     /** Delete a record by key/ID. */
     delete: method(
-      z.object({ namespace: z.string().optional(), collection: z.string(), key: z.string() }),
+      z.object({
+        namespace: z.string().optional(),
+        collection: z.string(),
+        key: z.string(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -302,6 +311,7 @@ export const dataStoreProviderCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IDataStoreProvider = InferProvider<typeof dataStoreProviderCapability>

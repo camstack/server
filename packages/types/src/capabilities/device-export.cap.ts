@@ -265,6 +265,9 @@ export const deviceExportCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: {
+    notOperatorFacing: 'exports to other ecosystems — configured on the export pages',
+  },
 } as const satisfies CapabilityDefinition
 
 type DeviceExportInferred = InferProvider<typeof deviceExportCapability>

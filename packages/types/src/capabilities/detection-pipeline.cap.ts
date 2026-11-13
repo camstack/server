@@ -1,5 +1,6 @@
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * detection-pipeline — device-scoped facade over the system
@@ -32,6 +33,10 @@ export const detectionPipelineCapability = {
   deviceTypes: [DeviceType.Camera],
   exposesDeviceSettings: true,
   methods: {},
+  vocabulary: {
+    noun: t('Detection pipeline', 'Pipeline di rilevamento'),
+    order: 3080,
+  },
 } as const satisfies CapabilityDefinition
 
 export type IDetectionPipelineProvider = InferProvider<typeof detectionPipelineCapability>

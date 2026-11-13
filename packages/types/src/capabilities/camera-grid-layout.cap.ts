@@ -6,6 +6,7 @@ import {
   type InferNativeProvider,
   type InferProvider,
 } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * camera-grid-layout — the geometry of a COMPOSITE camera, on the camera's own
@@ -191,6 +192,7 @@ export const cameraGridLayoutCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { noun: t('Grid layout', 'Layout a griglia'), order: 3040 },
 } as const satisfies CapabilityDefinition
 
 /**

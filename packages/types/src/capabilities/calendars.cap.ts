@@ -89,6 +89,9 @@ export const calendarsCapability = {
       caller: 'required',
     }),
   },
+  vocabulary: {
+    notOperatorFacing: 'calendars feed schedules and conditions, not device actions',
+  },
 } as const satisfies CapabilityDefinition
 
 export type ICalendarsProvider = InferProvider<typeof calendarsCapability>

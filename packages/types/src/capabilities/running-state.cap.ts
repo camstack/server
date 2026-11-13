@@ -9,6 +9,8 @@ import {
   RUNNING_POWER_STOP_DELAY_MS,
   RUNNING_POWER_THRESHOLD_WATTS,
 } from '../running-state/defaults.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 export const RunningStateSourceSchema = z.enum(['native', 'assigned'])
 export type RunningStateSource = z.infer<typeof RunningStateSourceSchema>
@@ -119,9 +121,21 @@ export const runningStateCapability = {
   events: {
     onStarted: {
       data: RunningFlipEventDataSchema,
+      trigger: {
+        category: EventCategory.RunningStarted,
+        label: t('Started running', 'Ha iniziato a funzionare'),
+        phrase: t('When {device} starts running', 'Quando {device} inizia a funzionare'),
+        icon: 'play',
+      },
     },
     onFinished: {
       data: RunningFlipEventDataSchema,
+      trigger: {
+        category: EventCategory.RunningFinished,
+        label: t('Finished', 'Ha finito'),
+        phrase: t('When {device} finishes', 'Quando {device} finisce'),
+        icon: 'square',
+      },
     },
   },
   status: {
@@ -137,6 +151,75 @@ export const runningStateCapability = {
   },
   volatileStateFields: ['lastFetchedAt'],
   customize: runningCustomize,
+  vocabulary: {
+    noun: t('Running', 'In funzione'),
+    order: 2120,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'running',
+        label: t('Running', 'In funzione'),
+        whenTrue: t('When {device} starts', 'Quando {device} inizia'),
+        whenFalse: t('When {device} finishes', 'Quando {device} finisce'),
+        icon: 'play',
+      },
+    ],
+    overrides: {
+      byType: {
+        [DeviceType.Washer]: {
+          state: {
+            running: {
+              whenTrue: t('When the washing machine starts', 'Quando la lavatrice inizia'),
+              whenFalse: t(
+                'When the washing machine has finished',
+                'Quando la lavatrice ha finito',
+              ),
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: t('When the washing machine starts', 'Quando la lavatrice inizia'),
+            },
+            onFinished: {
+              phrase: t('When the washing machine has finished', 'Quando la lavatrice ha finito'),
+            },
+          },
+        },
+        [DeviceType.Dryer]: {
+          state: {
+            running: {
+              whenTrue: t('When the dryer starts', "Quando l'asciugatrice inizia"),
+              whenFalse: t('When the dryer has finished', "Quando l'asciugatrice ha finito"),
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: t('When the dryer starts', "Quando l'asciugatrice inizia"),
+            },
+            onFinished: {
+              phrase: t('When the dryer has finished', "Quando l'asciugatrice ha finito"),
+            },
+          },
+        },
+        [DeviceType.Dishwasher]: {
+          state: {
+            running: {
+              whenTrue: t('When the dishwasher starts', 'Quando la lavastoviglie inizia'),
+              whenFalse: t('When the dishwasher has finished', 'Quando la lavastoviglie ha finito'),
+            },
+          },
+          events: {
+            onStarted: {
+              phrase: t('When the dishwasher starts', 'Quando la lavastoviglie inizia'),
+            },
+            onFinished: {
+              phrase: t('When the dishwasher has finished', 'Quando la lavastoviglie ha finito'),
+            },
+          },
+        },
+      },
+    },
+  },
 } as const satisfies CapabilityDefinition
 
 export type IRunningStateProvider = InferProvider<typeof runningStateCapability>

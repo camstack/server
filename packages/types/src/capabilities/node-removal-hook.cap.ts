@@ -35,6 +35,7 @@
 
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /** What a hook is told about the removal. */
 export const NodeRemovedInputSchema = z.object({
@@ -66,6 +67,7 @@ export const nodeRemovalHookCapability = {
   },
   /** In-process only — enumerated through `addons.listCapabilityProviders`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type INodeRemovalHookProvider = InferProvider<typeof nodeRemovalHookCapability>

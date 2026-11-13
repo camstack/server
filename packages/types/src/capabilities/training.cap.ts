@@ -3,6 +3,7 @@ import { TrainingResultSchema, TrainingStageSchema } from '../training/trainer-c
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { RetrainExportLayoutSchema } from './pipeline-analytics.cap.js'
 import { ProviderJobStateSchema, TrainerSourceRefSchema } from './training-provider.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `training` — the cloud-training orchestrator (D805). Hub-only singleton,
@@ -224,7 +225,11 @@ export const TrainingJobSchema = z.object({
   /** Hash of what those frames taught at start (trainer `dataset.annotationHash`). */
   annotationHash: z.string(),
   dataset: z
-    .object({ bytes: z.number().int(), sha256: z.string(), uploadedAt: z.number() })
+    .object({
+      bytes: z.number().int(),
+      sha256: z.string(),
+      uploadedAt: z.number(),
+    })
     .nullable(),
   split: TrainingSplitPlanSchema,
   provider: z.object({
@@ -335,7 +340,9 @@ export const trainingCapability = {
       ]),
       { kind: 'mutation', auth: 'admin', timeoutMs: 120_000 },
     ),
-    listJobs: method(z.object({}), z.array(TrainingJobSchema).readonly(), { auth: 'admin' }),
+    listJobs: method(z.object({}), z.array(TrainingJobSchema).readonly(), {
+      auth: 'admin',
+    }),
     getJob: method(IdInput, TrainingJobSchema.nullable(), { auth: 'admin' }),
     cancelJob: method(IdInput, TrainingJobSchema, {
       kind: 'mutation',
@@ -343,7 +350,9 @@ export const trainingCapability = {
       timeoutMs: 120_000,
     }),
     /** The verified `result.json` of a job in `ready` or later; null before. */
-    getJobResult: method(IdInput, TrainingResultSchema.nullable(), { auth: 'admin' }),
+    getJobResult: method(IdInput, TrainingResultSchema.nullable(), {
+      auth: 'admin',
+    }),
 
     // ── Return flow (never automatic) ────────────────────────────────
     /** The accelerators a canary may pin: every enabled one that runs the root detector. */
@@ -352,13 +361,17 @@ export const trainingCapability = {
     }),
     /** Hand the verified bundle to Model Studio; optionally canary right after. */
     registerResult: method(
-      IdInput.extend({ canaryAccelerators: z.array(TrainingAcceleratorRefSchema).readonly() }),
+      IdInput.extend({
+        canaryAccelerators: z.array(TrainingAcceleratorRefSchema).readonly(),
+      }),
       TrainingJobSchema,
       { kind: 'mutation', auth: 'admin', timeoutMs: 30 * 60_000 },
     ),
     /** Pin the registered model on these accelerators, remembering what it replaced. */
     canaryResult: method(
-      IdInput.extend({ accelerators: z.array(TrainingAcceleratorRefSchema).min(1).readonly() }),
+      IdInput.extend({
+        accelerators: z.array(TrainingAcceleratorRefSchema).min(1).readonly(),
+      }),
       TrainingJobSchema,
       { kind: 'mutation', auth: 'admin', timeoutMs: 120_000 },
     ),
@@ -369,8 +382,12 @@ export const trainingCapability = {
       timeoutMs: 120_000,
     }),
     /** Delete the staged artefacts of an unregistered result. */
-    discardResult: method(IdInput, TrainingJobSchema, { kind: 'mutation', auth: 'admin' }),
+    discardResult: method(IdInput, TrainingJobSchema, {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type ITrainingOrchestrator = InferProvider<typeof trainingCapability>

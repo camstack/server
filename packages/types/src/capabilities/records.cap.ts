@@ -6,6 +6,7 @@ import {
   RecordKindNameSchema,
 } from '../records/record-kind.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * records - an addon's own facts and documents (D881): ledgers, audit rows,
@@ -74,7 +75,9 @@ export const RecordWhereValueSchema = z.union([
       lt: z.union([z.string(), z.number()]).optional(),
       lte: z.union([z.string(), z.number()]).optional(),
     })
-    .refine((r) => Object.keys(r).length > 0, { message: 'name at least one bound' }),
+    .refine((r) => Object.keys(r).length > 0, {
+      message: 'name at least one bound',
+    }),
 ])
 export type RecordWhereValue = z.infer<typeof RecordWhereValueSchema>
 
@@ -141,7 +144,11 @@ export const RecordTransactOpSchema = z.discriminatedUnion('op', [
     expiresAt: z.number().int().nullable().optional(),
     ifRev: z.number().int().min(1).optional(),
   }),
-  z.object({ op: z.literal('delete'), kind: RecordKindNameSchema, id: RecordIdSchema }),
+  z.object({
+    op: z.literal('delete'),
+    kind: RecordKindNameSchema,
+    id: RecordIdSchema,
+  }),
 ])
 export type RecordTransactOp = z.infer<typeof RecordTransactOpSchema>
 
@@ -155,7 +162,9 @@ export const recordsCapability = {
   methods: {
     /** Reconcile this addon's kinds: create the catalog rows and the declared indexes. Additive only. */
     declareKinds: method(
-      z.object({ kinds: z.record(RecordKindNameSchema, RecordKindDeclarationSchema) }),
+      z.object({
+        kinds: z.record(RecordKindNameSchema, RecordKindDeclarationSchema),
+      }),
       z.object({ kinds: z.record(z.string(), DeclareKindResultSchema) }),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -163,13 +172,19 @@ export const recordsCapability = {
       auth: 'admin',
     }),
     getMany: method(
-      z.object({ ...KindShape, ids: z.array(RecordIdSchema).min(1).max(RECORD_BATCH_MAX) }),
+      z.object({
+        ...KindShape,
+        ids: z.array(RecordIdSchema).min(1).max(RECORD_BATCH_MAX),
+      }),
       z.array(RecordViewSchema),
       { auth: 'admin' },
     ),
     /** The keychain refs of the rows' secret fields, by id and concrete path. For the owner's `ctx.secrets`. */
     secretRefs: method(
-      z.object({ ...KindShape, ids: z.array(RecordIdSchema).min(1).max(RECORD_BATCH_MAX) }),
+      z.object({
+        ...KindShape,
+        ids: z.array(RecordIdSchema).min(1).max(RECORD_BATCH_MAX),
+      }),
       RecordSecretRefsSchema,
       { auth: 'admin' },
     ),
@@ -210,13 +225,22 @@ export const recordsCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
     deleteMany: method(
-      z.object({ ...KindShape, ids: z.array(RecordIdSchema).min(1).max(RECORD_BATCH_MAX) }),
+      z.object({
+        ...KindShape,
+        ids: z.array(RecordIdSchema).min(1).max(RECORD_BATCH_MAX),
+      }),
       z.object({ deleted: z.number().int(), secretRefs: SecretRefsList }),
       { kind: 'mutation', auth: 'admin' },
     ),
-    query: method(RecordQueryInputSchema, RecordQueryResultSchema, { auth: 'admin' }),
+    query: method(RecordQueryInputSchema, RecordQueryResultSchema, {
+      auth: 'admin',
+    }),
     count: method(
-      z.object({ ...KindShape, ...TimeWindowShape, where: RecordWhereSchema.optional() }),
+      z.object({
+        ...KindShape,
+        ...TimeWindowShape,
+        where: RecordWhereSchema.optional(),
+      }),
       z.object({ count: z.number().int() }),
       { auth: 'admin' },
     ),
@@ -269,7 +293,9 @@ export const recordsCapability = {
      * `transactFamily` (`records/transact-refused` otherwise). Results are in op order.
      */
     transact: method(
-      z.object({ ops: z.array(RecordTransactOpSchema).min(1).max(RECORD_BATCH_MAX) }),
+      z.object({
+        ops: z.array(RecordTransactOpSchema).min(1).max(RECORD_BATCH_MAX),
+      }),
       z.object({
         results: z.array(z.object({ rev: z.number().int().nullable(), deleted: z.boolean() })),
         releasedRefs: SecretRefsList,
@@ -279,8 +305,14 @@ export const recordsCapability = {
     ),
     /** The D865 hook body: every kind of this addon declared `deviceRemoval: 'delete'`. */
     deleteDevice: method(
-      z.object({ deviceId: z.number().int(), kinds: z.array(RecordKindNameSchema).optional() }),
-      z.object({ deleted: z.record(z.string(), z.number().int()), secretRefs: SecretRefsList }),
+      z.object({
+        deviceId: z.number().int(),
+        kinds: z.array(RecordKindNameSchema).optional(),
+      }),
+      z.object({
+        deleted: z.record(z.string(), z.number().int()),
+        secretRefs: SecretRefsList,
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
     /** A monotonically increasing integer per kind (replaces "resume from the highest"). */
@@ -289,6 +321,7 @@ export const recordsCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IRecordsProvider = InferProvider<typeof recordsCapability>

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Smart-dishwasher cap — program lifecycle, door / remote-start gates and
@@ -205,19 +206,66 @@ export const dishwasherCapability = {
         options: z.record(z.string(), DishwasherValueSchema).optional(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'dishwasher.start',
+            label: t('Start cycle', 'Avvia il lavaggio'),
+            phrase: t('Start {device}', 'Avvia {device}'),
+            icon: 'play',
+            openArgs: [
+              {
+                key: 'program',
+                label: t('Programme', 'Programma'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availablePrograms',
+                },
+                optional: true,
+              },
+            ],
+          },
+        ],
+      },
     ),
     pause: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.pause',
+          label: t('Pause', 'Metti in pausa'),
+          phrase: t('Pause {device}', 'Metti in pausa {device}'),
+          icon: 'pause',
+        },
+      ],
     }),
     resume: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.resume',
+          label: t('Resume', 'Riprendi'),
+          phrase: t('Resume {device}', 'Riprendi il lavaggio di {device}'),
+          icon: 'play',
+        },
+      ],
     }),
     stop: method(z.object({ deviceId: DeviceIdSchema }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.stop',
+          label: t('Stop', 'Ferma'),
+          phrase: t('Stop {device}', 'Ferma {device}'),
+          icon: 'square',
+        },
+      ],
     }),
     /** Select (not start) a program; refused when the appliance does not offer it. */
     setProgram: method(
@@ -226,35 +274,184 @@ export const dishwasherCapability = {
         program: z.string().min(1),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'dishwasher.program',
+            label: t('Choose programme', 'Scegli il programma'),
+            phrase: t(
+              'Select the {program} programme on {device}',
+              'Seleziona il programma {program} su {device}',
+            ),
+            icon: 'list',
+            openArgs: [
+              {
+                key: 'program',
+                label: t('Programme', 'Programma'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availablePrograms',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setPower: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.powerOn',
+          label: t('Power on', 'Accendi'),
+          phrase: t('Turn on {device}', 'Accendi {device}'),
+          icon: 'power',
+          args: { on: true },
+        },
+        {
+          id: 'dishwasher.powerOff',
+          label: t('Power off', 'Spegni'),
+          phrase: t('Turn off {device}', 'Spegni {device}'),
+          icon: 'power-off',
+          args: { on: false },
+        },
+      ],
     }),
     setHalfLoad: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.halfLoadOn',
+          label: t('Half load on', 'Mezzo carico attivo'),
+          phrase: t('Turn on half load on {device}', 'Attiva il mezzo carico su {device}'),
+          icon: 'contrast',
+          args: { on: true },
+        },
+        {
+          id: 'dishwasher.halfLoadOff',
+          label: t('Half load off', 'Mezzo carico spento'),
+          phrase: t('Turn off half load on {device}', 'Disattiva il mezzo carico su {device}'),
+          icon: 'contrast',
+          args: { on: false },
+        },
+      ],
     }),
     setHygienePlus: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.hygienePlusOn',
+          label: t('Hygiene Plus on', 'Igiene Plus attiva'),
+          phrase: t('Turn on Hygiene Plus on {device}', 'Attiva Igiene Plus su {device}'),
+          icon: 'sparkles',
+          args: { on: true },
+        },
+        {
+          id: 'dishwasher.hygienePlusOff',
+          label: t('Hygiene Plus off', 'Igiene Plus spenta'),
+          phrase: t('Turn off Hygiene Plus on {device}', 'Disattiva Igiene Plus su {device}'),
+          icon: 'sparkles',
+          args: { on: false },
+        },
+      ],
     }),
     setExtraDry: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.extraDryOn',
+          label: t('Extra dry on', 'Asciugatura extra attiva'),
+          phrase: t('Turn on extra dry on {device}', 'Attiva l’asciugatura extra su {device}'),
+          icon: 'sun',
+          args: { on: true },
+        },
+        {
+          id: 'dishwasher.extraDryOff',
+          label: t('Extra dry off', 'Asciugatura extra spenta'),
+          phrase: t('Turn off extra dry on {device}', 'Disattiva l’asciugatura extra su {device}'),
+          icon: 'sun',
+          args: { on: false },
+        },
+      ],
     }),
     setIntensiveZone: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.intensiveZoneOn',
+          label: t('Intensive zone on', 'Zona intensiva attiva'),
+          phrase: t(
+            'Turn on the intensive zone on {device}',
+            'Attiva la zona intensiva su {device}',
+          ),
+          icon: 'flame',
+          args: { on: true },
+        },
+        {
+          id: 'dishwasher.intensiveZoneOff',
+          label: t('Intensive zone off', 'Zona intensiva spenta'),
+          phrase: t(
+            'Turn off the intensive zone on {device}',
+            'Disattiva la zona intensiva su {device}',
+          ),
+          icon: 'flame',
+          args: { on: false },
+        },
+      ],
     }),
     setVarioSpeedPlus: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.varioSpeedOn',
+          label: t('Speed boost on', 'Lavaggio rapido attivo'),
+          phrase: t('Turn on the speed boost on {device}', 'Attiva il lavaggio rapido su {device}'),
+          icon: 'zap',
+          args: { on: true },
+        },
+        {
+          id: 'dishwasher.varioSpeedOff',
+          label: t('Speed boost off', 'Lavaggio rapido spento'),
+          phrase: t(
+            'Turn off the speed boost on {device}',
+            'Disattiva il lavaggio rapido su {device}',
+          ),
+          icon: 'zap',
+          args: { on: false },
+        },
+      ],
     }),
     setChildLock: method(z.object({ deviceId: DeviceIdSchema, on: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'dishwasher.childLockOn',
+          label: t('Child lock on', 'Blocco bambini attivo'),
+          phrase: t('Turn on the child lock of {device}', 'Attiva il blocco bambini di {device}'),
+          icon: 'lock',
+          args: { on: true },
+        },
+        {
+          id: 'dishwasher.childLockOff',
+          label: t('Child lock off', 'Blocco bambini spento'),
+          phrase: t(
+            'Turn off the child lock of {device}',
+            'Disattiva il blocco bambini di {device}',
+          ),
+          icon: 'lock-open',
+          args: { on: false },
+        },
+      ],
     }),
     /**
      * Write any option or setting by feature key. Refused when the description does
@@ -268,7 +465,12 @@ export const dishwasherCapability = {
         value: DishwasherValueSchema,
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing:
+          'a raw appliance option key/value; every option worth naming has its own action above',
+      },
     ),
     /** What this appliance can do, from its own description — the UI is derived from it. */
     getOptions: method(z.object({ deviceId: DeviceIdSchema }), DishwasherOptionsSchema, {
@@ -292,6 +494,85 @@ export const dishwasherCapability = {
       doorOpen: { kind: 'boolean' },
       powerOn: { kind: 'boolean' },
     },
+  },
+  vocabulary: {
+    noun: t('Dishwasher', 'Lavastoviglie'),
+    order: 2020,
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: t('Cycle', 'Ciclo'),
+        values: [
+          { value: 'idle', label: t('Idle', 'Inattiva') },
+          {
+            value: 'running',
+            label: t('Running', 'In funzione'),
+            phrase: t('When {device} starts a cycle', 'Quando {device} inizia un lavaggio'),
+          },
+          { value: 'paused', label: t('Paused', 'In pausa') },
+          {
+            value: 'finished',
+            label: t('Finished', 'Terminato'),
+            phrase: t('When {device} finishes', 'Quando {device} finisce il lavaggio'),
+          },
+          {
+            value: 'error',
+            label: t('Error', 'Errore'),
+            phrase: t('When {device} reports an error', 'Quando {device} segnala un errore'),
+          },
+          { value: 'unavailable', label: t('Unavailable', 'Non disponibile') },
+        ],
+        icon: 'washing-machine',
+      },
+      {
+        kind: 'numeric',
+        field: 'progress',
+        quantity: t('the cycle progress', 'l’avanzamento del lavaggio'),
+        label: t('Progress', 'Avanzamento'),
+        unit: '%',
+        icon: 'loader',
+      },
+      {
+        kind: 'boolean',
+        field: 'doorOpen',
+        label: t('Door open', 'Sportello aperto'),
+        whenTrue: t('When the door of {device} opens', 'Quando si apre lo sportello di {device}'),
+        whenFalse: t(
+          'When the door of {device} closes',
+          'Quando si chiude lo sportello di {device}',
+        ),
+        icon: 'door-open',
+      },
+      {
+        kind: 'boolean',
+        field: 'filterCleaningDue',
+        label: t('Filter cleaning due', 'Pulizia filtro da fare'),
+        whenTrue: t(
+          'When {device} asks for its filter to be cleaned',
+          'Quando {device} chiede di pulire il filtro',
+        ),
+        whenFalse: t(
+          'When the filter reminder of {device} clears',
+          'Quando l’avviso filtro di {device} rientra',
+        ),
+        icon: 'funnel',
+      },
+      {
+        kind: 'boolean',
+        field: 'machineCareDue',
+        label: t('Machine care due', 'Manutenzione da fare'),
+        whenTrue: t(
+          'When {device} asks for a machine-care cycle',
+          'Quando {device} chiede un ciclo di manutenzione',
+        ),
+        whenFalse: t(
+          'When the machine-care reminder of {device} clears',
+          'Quando l’avviso di manutenzione di {device} rientra',
+        ),
+        icon: 'wrench',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

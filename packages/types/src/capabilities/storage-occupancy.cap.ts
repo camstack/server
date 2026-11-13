@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `storage-occupancy` — how many bytes an addon actually HOLDS on a storage
@@ -73,6 +74,7 @@ export const storageOccupancyCapability = {
       { auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.STORAGE },
 } as const satisfies CapabilityDefinition
 
 export type IStorageOccupancyProvider = InferProvider<typeof storageOccupancyCapability>

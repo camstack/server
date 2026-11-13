@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const NetworkEndpointSchema = z.object({
   url: z.string(),
@@ -76,6 +77,7 @@ export const networkAccessCapability = {
      */
     listEndpoints: method(z.void(), z.array(NetworkEndpointEntrySchema).readonly()),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition
 
 export type INetworkAccessProvider = InferProvider<typeof networkAccessCapability>

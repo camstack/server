@@ -161,6 +161,7 @@ jobs:
             scripts/check-event-bus-usage.ts \
             scripts/check-event-kind-coverage.ts \
             scripts/check-cap-vocabulary.ts \
+            scripts/check-no-handwritten-cap-vocabulary.ts \
             scripts/check-recording-trigger-fed.ts \
             scripts/check-summary-ladder-reachable.ts \
             scripts/check-log-channel-gated.ts \

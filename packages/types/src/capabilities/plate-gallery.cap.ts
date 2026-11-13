@@ -217,14 +217,23 @@ export const plateGalleryCapability = {
     }),
     assignPlates: method(
       z.object({ plateIds: z.array(z.string()).min(1), vehicleId: z.string() }),
-      z.object({ assigned: z.number().int(), failed: z.array(z.string()).readonly() }),
+      z.object({
+        assigned: z.number().int(),
+        failed: z.array(z.string()).readonly(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
     unassignPlates: method(
       z.object({ plateIds: z.array(z.string()).min(1) }),
-      z.object({ unassigned: z.number().int(), failed: z.array(z.string()).readonly() }),
+      z.object({
+        unassigned: z.number().int(),
+        failed: z.array(z.string()).readonly(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
+  },
+  vocabulary: {
+    notOperatorFacing: 'the plate gallery — curated on its own page',
   },
 } as const satisfies CapabilityDefinition
 

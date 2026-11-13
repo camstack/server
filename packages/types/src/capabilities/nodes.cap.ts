@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * nodes — system-scoped singleton capability for cluster topology
@@ -222,7 +223,9 @@ export const nodesCapability = {
   mode: 'singleton',
   nodeIdMode: 'data',
   methods: {
-    topology: method(z.void(), z.array(TopologyNodeSchema).readonly(), { auth: 'admin' }),
+    topology: method(z.void(), z.array(TopologyNodeSchema).readonly(), {
+      auth: 'admin',
+    }),
     /**
      * The cheap node list for pickers (D637): the hub's in-memory registry plus
      * the durable node history, no per-node RPC. `complete: false` when the
@@ -299,6 +302,7 @@ export const nodesCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition
 
 export type INodesProvider = InferProvider<typeof nodesCapability>

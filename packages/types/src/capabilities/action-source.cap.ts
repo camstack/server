@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { ActionEntrySchema, ActionVariableValueSchema } from '../automation/action.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * action-source — an addon DECLARES runnable actions (a Home Assistant script,
@@ -27,7 +28,9 @@ export const actionSourceCapability = {
   // (an addon's `ctx.api` call is resolved to the provider directly). A viewer
   // reaches an action only through `actions`, which checks the camera link.
   methods: {
-    listActions: method(z.object({}), z.array(ActionEntrySchema), { auth: 'admin' }),
+    listActions: method(z.object({}), z.array(ActionEntrySchema), {
+      auth: 'admin',
+    }),
     runAction: method(
       z.object({
         actionId: z.string().min(1),
@@ -41,6 +44,7 @@ export const actionSourceCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IActionSourceProvider = InferProvider<typeof actionSourceCapability>

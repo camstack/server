@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Atmospheric pressure reading in hectopascals. Drives Home Assistant
@@ -54,6 +55,20 @@ export const pressureSensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Pressure', 'Pressione'),
+    order: 5180,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'pressure',
+        quantity: t('the pressure', 'la pressione'),
+        label: t('Pressure', 'Pressione'),
+        unit: 'hPa',
+        icon: 'gauge',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IPressureSensorProvider = InferProvider<typeof pressureSensorCapability>

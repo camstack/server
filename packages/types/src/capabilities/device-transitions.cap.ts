@@ -11,6 +11,7 @@ import {
   method,
   systemMethod,
 } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * device-transitions - the audit of what changed on a device and who asked
@@ -115,8 +116,11 @@ export const deviceTransitionsCapability = {
       TransitionRecordResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
-    getStatus: systemMethod(z.object({}), TransitionsStatusSchema, { auth: 'admin' }),
+    getStatus: systemMethod(z.object({}), TransitionsStatusSchema, {
+      auth: 'admin',
+    }),
   },
+  vocabulary: { noun: t('Transitions', 'Transizioni'), order: 2140 },
 } as const satisfies CapabilityDefinition
 
 export type IDeviceTransitionsProvider = InferProvider<typeof deviceTransitionsCapability>

@@ -3,6 +3,7 @@ import { type CapabilityDefinition, type InferProvider } from './capability-defi
 import { DeviceType } from '../device/device-type.js'
 import { IconKeySchema } from '../device/icon-catalog.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Heat pump status (D1026): the one main, READ-ONLY cap of a heat pump. Every
@@ -223,6 +224,7 @@ export const heatPumpStatusCapability = {
     },
   },
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: { noun: t('Heat pump', 'Pompa di calore'), order: 4000 },
 } as const satisfies CapabilityDefinition
 
 export type IHeatPumpStatusProvider = InferProvider<typeof heatPumpStatusCapability>

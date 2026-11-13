@@ -23,7 +23,10 @@ const motionCustomize = {
       vocabulary: { cap: 'motion', eventName: 'onMotionChanged' },
       deviceTypes: [DeviceType.Camera],
       apply: 'add',
-      applyAuthority: { kind: 'camera-sensors', timeoutField: 'motionCooldownMs' },
+      applyAuthority: {
+        kind: 'camera-sensors',
+        timeoutField: 'motionCooldownMs',
+      },
       eventName: 'onMotionChanged',
       start: 'rising-edge',
       end: 'falling-edge-or-timeout',
@@ -38,6 +41,7 @@ const motionCustomize = {
 } as const satisfies CapabilityCustomizeSpec
 import { MotionRegionSchema } from './motion-detection.cap.js'
 import { MotionSourceEnum } from './pipeline-runner.cap.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Hardware / firmware motion sensor cap — binary detected state plus
@@ -185,7 +189,11 @@ export const motionCapability = {
      * unchanged) should subscribe to the status subscription via
      * `device-manager.subscribeDeviceStatusAggregate` instead.
      */
-    onMotionChanged: { data: MotionOnMotionChangedDataSchema },
+    onMotionChanged: {
+      data: MotionOnMotionChangedDataSchema,
+      notOperatorFacing:
+        'the `detected` state trigger phrases both edges, from the mirror that survives a dropped event (D49)',
+    },
   },
   status: {
     schema: MotionStatusSchema,
@@ -220,6 +228,20 @@ export const motionCapability = {
     },
   },
   customize: motionCustomize,
+  vocabulary: {
+    noun: t('Motion', 'Movimento'),
+    order: 5130,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: t('Motion', 'Movimento'),
+        whenTrue: t('When {device} detects motion', 'Quando {device} rileva movimento'),
+        whenFalse: t('When motion clears on {device}', 'Quando il movimento su {device} cessa'),
+        icon: 'activity',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IMotionProvider = InferProvider<typeof motionCapability>

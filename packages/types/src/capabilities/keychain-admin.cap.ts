@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { KeychainSecretMetaSchema, KeychainStateSchema } from './keychain.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `keychain-admin` — the operator's view of the keychain (System → Secrets).
@@ -234,7 +235,11 @@ export const keychainAdminCapability = {
     /** The master key, base64. Audited; marks the recovery copy as taken. */
     downloadRecoveryKey: method(
       z.object({}),
-      z.object({ key: z.string(), fingerprint: z.string(), keySource: KeychainKeySourceSchema }),
+      z.object({
+        key: z.string(),
+        fingerprint: z.string(),
+        keySource: KeychainKeySourceSchema,
+      }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
     /**
@@ -245,7 +250,10 @@ export const keychainAdminCapability = {
      */
     resetKeychain: method(
       z.object({ confirm: z.literal(KEYCHAIN_RESET_CONFIRMATION) }),
-      z.object({ archivedCollection: z.string().nullable(), archived: z.number().int() }),
+      z.object({
+        archivedCollection: z.string().nullable(),
+        archived: z.number().int(),
+      }),
       { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
     /**
@@ -268,6 +276,7 @@ export const keychainAdminCapability = {
       caller: 'required',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type IKeychainAdminProvider = InferProvider<typeof keychainAdminCapability>

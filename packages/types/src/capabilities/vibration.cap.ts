@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Vibration / shake / impact sensor. Drives Home Assistant
@@ -45,6 +46,20 @@ export const vibrationCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Vibration', 'Vibrazione'),
+    order: 5220,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: t('Vibration', 'Vibrazione'),
+        whenTrue: t('When {device} vibrates', 'Quando {device} vibra'),
+        whenFalse: t('When {device} is still again', 'Quando {device} torna fermo'),
+        icon: 'vibrate',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IVibrationProvider = InferProvider<typeof vibrationCapability>

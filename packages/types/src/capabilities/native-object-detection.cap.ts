@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /**
  * On-camera AI object detection cap. Surfaces per-device the classes
@@ -125,13 +127,38 @@ export const nativeObjectDetectionCapability = {
   methods: {
     getOptions: method(z.object({ deviceId: z.number() }), NativeObjectDetectionOptionsSchema),
     setSettings: method(
-      z.object({ deviceId: z.number(), settings: NativeObjectDetectionSettingsPatchSchema }),
+      z.object({
+        deviceId: z.number(),
+        settings: NativeObjectDetectionSettingsPatchSchema,
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
     setEnabled: method(z.object({ deviceId: z.number(), enabled: z.boolean() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'nativeDetection.on',
+          label: t('On-camera detection on', 'Rilevamento a bordo attivo'),
+          phrase: t(
+            'Turn on the on-camera detection of {device}',
+            'Attiva il rilevamento a bordo di {device}',
+          ),
+          icon: 'scan-eye',
+          args: { enabled: true },
+        },
+        {
+          id: 'nativeDetection.off',
+          label: t('On-camera detection off', 'Rilevamento a bordo spento'),
+          phrase: t(
+            'Turn off the on-camera detection of {device}',
+            'Disattiva il rilevamento a bordo di {device}',
+          ),
+          icon: 'scan-eye',
+          args: { enabled: false },
+        },
+      ],
     }),
   },
   events: {
@@ -140,6 +167,15 @@ export const nativeObjectDetectionCapability = {
         deviceId: z.number(),
         detection: NativeDetectionSchema,
       }),
+      trigger: {
+        category: EventCategory.DetectionCameraNative,
+        label: t('Camera spotted something', 'La telecamera ha rilevato qualcosa'),
+        phrase: t(
+          'When {device} spots something with its own detector',
+          'Quando {device} rileva qualcosa con il proprio rilevatore',
+        ),
+        icon: 'scan-eye',
+      },
     },
   },
   status: {
@@ -162,6 +198,26 @@ export const nativeObjectDetectionCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('On-camera detection', 'Rilevamento a bordo'),
+    order: 3180,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'enabled',
+        label: t('On-camera detection', 'Rilevamento a bordo'),
+        whenTrue: t(
+          'When the on-camera detection of {device} is turned on',
+          'Quando si attiva il rilevamento a bordo di {device}',
+        ),
+        whenFalse: t(
+          'When the on-camera detection of {device} is turned off',
+          'Quando si disattiva il rilevamento a bordo di {device}',
+        ),
+        icon: 'scan-eye',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type INativeObjectDetectionProvider = InferProvider<typeof nativeObjectDetectionCapability>

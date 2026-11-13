@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * reboot — device-scoped capability for "soft" device reboots (firmware
@@ -26,9 +27,21 @@ export const rebootCapability = {
     reboot: method(
       z.object({ deviceId: z.number().int().nonnegative() }),
       z.object({ success: z.literal(true) }),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'reboot.reboot',
+            label: t('Reboot device', 'Riavvia il dispositivo'),
+            phrase: t('Reboot {device}', 'Riavvia {device}'),
+            icon: 'refresh-cw',
+          },
+        ],
+      },
     ),
   },
+  vocabulary: { noun: t('Reboot', 'Riavvio'), order: 3240 },
 } as const satisfies CapabilityDefinition
 
 export type IRebootProvider = InferProvider<typeof rebootCapability>

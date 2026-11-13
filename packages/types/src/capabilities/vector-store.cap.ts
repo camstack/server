@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * vector-store — the dedicated home for embedding vectors and similarity search.
@@ -327,13 +328,21 @@ export const vectorStoreCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
-    query: method(VectorQueryInputSchema, VectorQueryResultSchema, { auth: 'admin' }),
+    query: method(VectorQueryInputSchema, VectorQueryResultSchema, {
+      auth: 'admin',
+    }),
     /** Metadata by id, no vectors — see {@link VectorGetResultSchema}. */
-    getByIds: method(VectorGetInputSchema, VectorGetResultSchema, { auth: 'admin' }),
+    getByIds: method(VectorGetInputSchema, VectorGetResultSchema, {
+      auth: 'admin',
+    }),
     /** Metadata AND vectors, by named id — see {@link VectorFetchInputSchema}. */
-    fetchByIds: method(VectorFetchInputSchema, VectorFetchResultSchema, { auth: 'admin' }),
+    fetchByIds: method(VectorFetchInputSchema, VectorFetchResultSchema, {
+      auth: 'admin',
+    }),
     /** One page of the whole index, unranked — see {@link VectorScanInputSchema}. */
-    scan: method(VectorScanInputSchema, VectorScanResultSchema, { auth: 'admin' }),
+    scan: method(VectorScanInputSchema, VectorScanResultSchema, {
+      auth: 'admin',
+    }),
     deleteByIds: method(VectorDeleteInputSchema, VectorDeleteResultSchema, {
       kind: 'mutation',
       auth: 'admin',
@@ -342,8 +351,11 @@ export const vectorStoreCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
-    stats: method(VectorStatsInputSchema, VectorStatsResultSchema, { auth: 'admin' }),
+    stats: method(VectorStatsInputSchema, VectorStatsResultSchema, {
+      auth: 'admin',
+    }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IVectorStoreProvider = InferProvider<typeof vectorStoreCapability>

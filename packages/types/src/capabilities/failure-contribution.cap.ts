@@ -55,6 +55,7 @@
 
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const FailureReasonCountSchema = z.object({
   /**
@@ -133,6 +134,7 @@ export const failureContributionCapability = {
   },
   /** In-process only — enumerated through `addons.listCapabilityProviders`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IFailureContributionProvider = InferProvider<typeof failureContributionCapability>

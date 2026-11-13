@@ -5,6 +5,7 @@ import {
   ModelConvertMetadataSchema,
 } from '../types/models.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 export const ModelConvertInputSchema = z.object({
   sourceUrl: z.string(),
@@ -29,6 +30,7 @@ export const modelConvertCapability = {
       timeoutMs: 600_000,
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type IModelConvertProvider = InferProvider<typeof modelConvertCapability>

@@ -7,6 +7,7 @@ import {
 import type { CapabilityCustomizeSpec, ScalarCustomizeTarget } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Fan-control cap. Models HA `fan.*` entity-specific surfaces:
@@ -246,7 +247,13 @@ const PRESET_TARGET: ScalarCustomizeTarget = {
   deviceTypes: FAN_CUSTOMIZE_DEVICE_TYPES,
   apply: 'replace',
   path: 'preset',
-  sources: [{ kind: 'field', valueKinds: ['string'], transforms: [{ kind: 'identity' }] }],
+  sources: [
+    {
+      kind: 'field',
+      valueKinds: ['string'],
+      transforms: [{ kind: 'identity' }],
+    },
+  ],
   sourceReport: { status: 'assignment-status' },
 }
 
@@ -260,7 +267,10 @@ const FAN_CONTROL_TARGETS: readonly ScalarCustomizeTarget[] = [...AXIS_TARGETS, 
  */
 const fanControlCustomize = {
   version: 1,
-  overridable: FAN_CONTROL_TARGETS.map((target) => ({ path: target.path, by: target.id })),
+  overridable: FAN_CONTROL_TARGETS.map((target) => ({
+    path: target.path,
+    by: target.id,
+  })),
   targets: FAN_CONTROL_TARGETS,
 } as const satisfies CapabilityCustomizeSpec
 
@@ -277,7 +287,45 @@ export const fanControlCapability = {
         speed: z.number().min(0).max(100),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'fan.off',
+            label: t('Fan off', 'Ventilatore spento'),
+            phrase: t('Stop {device}', 'Ferma {device}'),
+            icon: 'power-off',
+            effect: { field: 'speed', value: 0 },
+            args: { speed: 0 },
+          },
+          {
+            id: 'fan.full',
+            label: t('Fan full', 'Ventilatore al massimo'),
+            phrase: t('Run {device} at full speed', 'Porta {device} alla massima velocità'),
+            icon: 'fan',
+            effect: { field: 'speed', value: 100 },
+            args: { speed: 100 },
+          },
+          {
+            id: 'fan.speed',
+            label: t('Set speed', 'Imposta la velocità'),
+            phrase: t(
+              'Set the speed of {device} to {speed}',
+              'Imposta la velocità di {device} al {speed}',
+            ),
+            icon: 'fan',
+            effect: { field: 'speed', fromArg: 'speed' },
+            openArgs: [
+              {
+                key: 'speed',
+                label: t('Speed', 'Velocità'),
+                offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setPreset: optionalMethod(
       z.object({
@@ -285,7 +333,29 @@ export const fanControlCapability = {
         preset: z.string().min(1),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'fan.preset',
+            label: t('Set preset', 'Imposta il preset'),
+            phrase: t('Set {device} to preset {preset}', 'Imposta {device} sul preset {preset}'),
+            icon: 'list',
+            openArgs: [
+              {
+                key: 'preset',
+                label: t('Preset', 'Preset'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availablePresets',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setDirection: optionalMethod(
       z.object({
@@ -293,7 +363,28 @@ export const fanControlCapability = {
         direction: FanDirectionSchema,
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'fan.forward',
+            label: t('Spin forward', 'Rotazione avanti'),
+            phrase: t('Spin {device} forward', 'Fai girare {device} in avanti'),
+            icon: 'refresh-cw',
+            effect: { field: 'direction', value: 'forward' },
+            args: { direction: 'forward' },
+          },
+          {
+            id: 'fan.reverse',
+            label: t('Spin in reverse', 'Rotazione inversa'),
+            phrase: t('Spin {device} in reverse', 'Fai girare {device} al contrario'),
+            icon: 'rotate-ccw',
+            effect: { field: 'direction', value: 'reverse' },
+            args: { direction: 'reverse' },
+          },
+        ],
+      },
     ),
     setOscillating: optionalMethod(
       z.object({
@@ -301,7 +392,28 @@ export const fanControlCapability = {
         oscillating: z.boolean(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'fan.oscillateOn',
+            label: t('Oscillate', 'Oscillazione attiva'),
+            phrase: t('Make {device} oscillate', 'Fai oscillare {device}'),
+            icon: 'move-horizontal',
+            effect: { field: 'oscillating', value: true },
+            args: { oscillating: true },
+          },
+          {
+            id: 'fan.oscillateOff',
+            label: t('Stop oscillating', 'Oscillazione spenta'),
+            phrase: t('Stop {device} oscillating', 'Ferma l’oscillazione di {device}'),
+            icon: 'move-horizontal',
+            effect: { field: 'oscillating', value: false },
+            args: { oscillating: false },
+          },
+        ],
+      },
     ),
     /**
      * Sets one oscillation axis: its switch, fixed angle and/or sweep bounds.
@@ -314,7 +426,52 @@ export const fanControlCapability = {
     setOscillationAxis: optionalMethod(
       SetOscillationAxisInputSchema,
       FanOscillationAxisResultSchema,
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'fan.horizontalOscillateOn',
+            label: t('Horizontal oscillation on', 'Oscillazione orizzontale attiva'),
+            phrase: t(
+              'Start the horizontal oscillation of {device}',
+              'Attiva l’oscillazione orizzontale di {device}',
+            ),
+            icon: 'move-horizontal',
+            args: { axis: 'horizontal', oscillating: true },
+          },
+          {
+            id: 'fan.horizontalOscillateOff',
+            label: t('Horizontal oscillation off', 'Oscillazione orizzontale spenta'),
+            phrase: t(
+              'Stop the horizontal oscillation of {device}',
+              'Ferma l’oscillazione orizzontale di {device}',
+            ),
+            icon: 'move-horizontal',
+            args: { axis: 'horizontal', oscillating: false },
+          },
+          {
+            id: 'fan.verticalOscillateOn',
+            label: t('Vertical oscillation on', 'Oscillazione verticale attiva'),
+            phrase: t(
+              'Start the vertical oscillation of {device}',
+              'Attiva l’oscillazione verticale di {device}',
+            ),
+            icon: 'move-vertical',
+            args: { axis: 'vertical', oscillating: true },
+          },
+          {
+            id: 'fan.verticalOscillateOff',
+            label: t('Vertical oscillation off', 'Oscillazione verticale spenta'),
+            phrase: t(
+              'Stop the vertical oscillation of {device}',
+              'Ferma l’oscillazione verticale di {device}',
+            ),
+            icon: 'move-vertical',
+            args: { axis: 'vertical', oscillating: false },
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -343,6 +500,28 @@ export const fanControlCapability = {
       speed: { kind: 'gauge', unit: '%', minIntervalMs: 0 },
       oscillating: { kind: 'boolean' },
     },
+  },
+  vocabulary: {
+    noun: t('Fan', 'Ventilatore'),
+    order: 1080,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'speed',
+        quantity: t('the speed', 'la velocità'),
+        label: t('Speed', 'Velocità'),
+        unit: '%',
+        icon: 'fan',
+      },
+      {
+        kind: 'boolean',
+        field: 'oscillating',
+        label: t('Oscillating', 'Oscillazione'),
+        whenTrue: t('When {device} starts oscillating', 'Quando {device} inizia a oscillare'),
+        whenFalse: t('When {device} stops oscillating', 'Quando {device} smette di oscillare'),
+        icon: 'move-horizontal',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

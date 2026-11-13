@@ -18,6 +18,13 @@ import type { ConfigUISchemaWithValues } from '../interfaces/config-ui.js'
 import type { ExtensionSlotDescriptor } from '../device-extension/slot-descriptor.js'
 import type { MethodRoleDecl } from '../auth/viewer-access.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
+import type {
+  CapVocabularyDecl,
+  EventVocabularyDecl,
+  LooseMethodActionDecl,
+  MethodActionDecl,
+} from '../device/cap-vocabulary/declaration.js'
+import type { VocabEventTrigger } from '../device/cap-vocabulary/types.js'
 
 // ── Method & Event Schemas ───────────────────────────────────────────
 
@@ -181,6 +188,14 @@ export interface CapabilityMethodSchema<
    * the provider input untyped).
    */
   readonly caller?: CapabilityMethodCaller
+  /**
+   * The operator-facing actions this method offers (D1050): what a step, a
+   * remote button or the MCP can make a device do through it. Codegen
+   * projects them into the cap vocabulary (`generated/cap-vocabulary.ts`).
+   */
+  readonly actions?: readonly LooseMethodActionDecl[]
+  /** Why this mutation is never a step (D1050) — the alternative to `actions`. */
+  readonly notOperatorFacing?: string
 }
 
 export const CapabilityEventFromStateSchema = z.object({
@@ -194,6 +209,10 @@ export interface CapabilityEventSchema<TData extends z.ZodType = z.ZodType> {
   readonly data: TData
   /** A strict numeric state advance derives this one-shot event (D670). */
   readonly fromState?: CapabilityEventFromState
+  /** The automation trigger this event is (D1050), phrased. */
+  readonly trigger?: VocabEventTrigger
+  /** Why this event is not an automation trigger (D1050) — the alternative to `trigger`. */
+  readonly notOperatorFacing?: string
 }
 
 // ── Status (live readable machine-state per device) ─────────────────
@@ -866,6 +885,14 @@ export interface CapabilityDefinition<
    */
   readonly history?: CapabilityHistory
   /**
+   * The cap's vocabulary block (D1050): noun, state triggers, wording
+   * overrides, picker order — or, for a system cap, why it is no device's
+   * vocabulary. Actions sit on their methods, event wording on the events.
+   * Mandatory for every cap (`scripts/check-cap-vocabulary.ts`); codegen
+   * projects it into `generated/cap-vocabulary.ts`.
+   */
+  readonly vocabulary?: CapVocabularyDecl
+  /**
    * Generic Customize override (D936). When present, admin-ui offers the
    * declared targets instead of a cap-specific card. Codegen projects it
    * into `generated/customize-catalog.ts`. `scripts/check-customize-declaration.ts`
@@ -1474,6 +1501,7 @@ export type InferRuntimeState<T extends CapabilityDefinition> = T extends {
 /** Options for a capability method definition. */
 export interface CapabilityMethodOptions<
   TKind extends CapabilityMethodKind = CapabilityMethodKind,
+  TIn extends z.ZodType = z.ZodType,
 > {
   /** tRPC procedure kind. Default: 'query'. */
   readonly kind?: TKind
@@ -1492,6 +1520,13 @@ export interface CapabilityMethodOptions<
    * {@link CapabilityMethodSchema.caller}.
    */
   readonly caller?: CapabilityMethodCaller
+  /**
+   * The operator-facing actions this method offers (D1050), typed against
+   * its input: fixed `args` and `openArgs` keys are the input's own keys.
+   */
+  readonly actions?: readonly MethodActionDecl<z.input<NoInfer<TIn>>>[]
+  /** Why this mutation is never a step (D1050) — the alternative to `actions`. */
+  readonly notOperatorFacing?: string
 }
 
 /**
@@ -1510,7 +1545,7 @@ export function method<
 >(
   input: TIn,
   output: TOut,
-  options: CapabilityMethodOptions<TKind> & { readonly caller: 'required' },
+  options: CapabilityMethodOptions<TKind, TIn> & { readonly caller: 'required' },
 ): CapabilityMethodSchema<TIn, TOut, TKind> & { readonly caller: 'required' }
 export function method<
   TIn extends z.ZodType,
@@ -1519,7 +1554,7 @@ export function method<
 >(
   input: TIn,
   output: TOut,
-  options: CapabilityMethodOptions<TKind> & { readonly caller: 'scoped' },
+  options: CapabilityMethodOptions<TKind, TIn> & { readonly caller: 'scoped' },
 ): CapabilityMethodSchema<TIn, TOut, TKind> & { readonly caller: 'scoped' }
 export function method<
   TIn extends z.ZodType,
@@ -1528,7 +1563,7 @@ export function method<
 >(
   input: TIn,
   output: TOut,
-  options?: CapabilityMethodOptions<TKind>,
+  options?: CapabilityMethodOptions<TKind, TIn>,
 ): CapabilityMethodSchema<TIn, TOut, TKind>
 export function method<
   TIn extends z.ZodType,
@@ -1537,7 +1572,7 @@ export function method<
 >(
   input: TIn,
   output: TOut,
-  options?: CapabilityMethodOptions<TKind>,
+  options?: CapabilityMethodOptions<TKind, TIn>,
 ): CapabilityMethodSchema<TIn, TOut, TKind> {
   return {
     input,
@@ -1551,6 +1586,10 @@ export function method<
     ...(options?.access !== undefined ? { access: options.access } : {}),
     ...(options?.role !== undefined ? { role: options.role } : {}),
     ...(options?.caller !== undefined ? { caller: options.caller } : {}),
+    ...(options?.actions !== undefined ? { actions: options.actions } : {}),
+    ...(options?.notOperatorFacing !== undefined
+      ? { notOperatorFacing: options.notOperatorFacing }
+      : {}),
     timeoutMs: options?.timeoutMs,
   }
 }
@@ -1568,7 +1607,7 @@ export function systemMethod<
 >(
   input: TIn,
   output: TOut,
-  options?: CapabilityMethodOptions<TKind>,
+  options?: CapabilityMethodOptions<TKind, TIn>,
 ): CapabilityMethodSchema<TIn, TOut, TKind> & { readonly systemOnly: true } {
   return { ...method(input, output, options), systemOnly: true }
 }
@@ -1586,7 +1625,7 @@ export function optionalMethod<
 >(
   input: TIn,
   output: TOut,
-  options: CapabilityMethodOptions<TKind> & { readonly caller: 'scoped' },
+  options: CapabilityMethodOptions<TKind, TIn> & { readonly caller: 'scoped' },
 ): CapabilityMethodSchema<TIn, TOut, TKind> & {
   readonly providerOptional: true
   readonly caller: 'scoped'
@@ -1598,7 +1637,7 @@ export function optionalMethod<
 >(
   input: TIn,
   output: TOut,
-  options?: CapabilityMethodOptions<TKind>,
+  options?: CapabilityMethodOptions<TKind, TIn>,
 ): CapabilityMethodSchema<TIn, TOut, TKind> & { readonly providerOptional: true }
 export function optionalMethod<
   TIn extends z.ZodType,
@@ -1607,13 +1646,19 @@ export function optionalMethod<
 >(
   input: TIn,
   output: TOut,
-  options?: CapabilityMethodOptions<TKind>,
+  options?: CapabilityMethodOptions<TKind, TIn>,
 ): CapabilityMethodSchema<TIn, TOut, TKind> & { readonly providerOptional: true } {
   return { ...method(input, output, options), providerOptional: true }
 }
 
 /** Shorthand to define an event schema */
-export function event<TData extends z.ZodType>(data: TData): CapabilityEventSchema<TData> {
+export function event<TData extends z.ZodType>(
+  data: TData,
+  vocabulary?: EventVocabularyDecl,
+): CapabilityEventSchema<TData> {
+  if (vocabulary?.trigger !== undefined) return { data, trigger: vocabulary.trigger }
+  if (vocabulary?.notOperatorFacing !== undefined)
+    return { data, notOperatorFacing: vocabulary.notOperatorFacing }
   return { data }
 }
 

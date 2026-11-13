@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Single-metric humidity reading. Drives Home Assistant `sensor`
@@ -56,6 +57,20 @@ export const humiditySensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Humidity', 'Umidità'),
+    order: 5120,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'humidity',
+        quantity: t('the humidity', 'l’umidità'),
+        label: t('Humidity', 'Umidità'),
+        unit: '%',
+        icon: 'droplets',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IHumiditySensorProvider = InferProvider<typeof humiditySensorCapability>

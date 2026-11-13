@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 // ── Schema fragments ─────────────────────────────────────────────────────────
 
@@ -189,6 +190,7 @@ export const audioCodecCapability = {
     // ── Inventory ─────────────────────────────────────────────────────────
     listActiveSessions: method(z.void(), z.array(SessionInventoryEntrySchema).readonly()),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IAudioCodecCapProvider = InferProvider<typeof audioCodecCapability>

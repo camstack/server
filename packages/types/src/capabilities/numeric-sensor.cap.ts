@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Generic numeric sensor — last-resort fallback when no typed numeric
@@ -59,6 +60,19 @@ export const numericSensorCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('Sensor', 'Sensore'),
+    order: 5150,
+    state: [
+      {
+        kind: 'numeric',
+        field: 'value',
+        quantity: t('the reading', 'il valore'),
+        label: t('Reading', 'Valore'),
+        icon: 'gauge',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type INumericSensorProvider = InferProvider<typeof numericSensorCapability>

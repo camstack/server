@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `storage-evictable` — implemented by any addon that owns evictable data on a
@@ -53,11 +54,15 @@ export const storageEvictableCapability = {
      * actually reclaimed + whether it is now exhausted.
      */
     evict: method(
-      z.object({ locationId: z.string(), targetBytes: z.number().int().positive() }),
+      z.object({
+        locationId: z.string(),
+        targetBytes: z.number().int().positive(),
+      }),
       EvictResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.STORAGE },
 } as const satisfies CapabilityDefinition
 
 export type IStorageEvictableProvider = InferProvider<typeof storageEvictableCapability>

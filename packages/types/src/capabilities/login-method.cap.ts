@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { AppLoginPathSchema } from '../auth/app-flow.js'
 import { WidgetRemoteSchema } from './addon-widgets-source.cap.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `login-method` — collection cap through which auth addons contribute
@@ -137,6 +138,7 @@ export const loginMethodCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'skip' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type ILoginMethodProvider = InferProvider<typeof loginMethodCapability>

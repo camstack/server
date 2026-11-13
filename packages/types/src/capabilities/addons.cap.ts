@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { lifecycleJobSchema } from '../lifecycle/job.js'
 import { UnmetRequirementSchema } from '../addon/package-requires.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * addons — system-scoped singleton capability for addon package
@@ -626,7 +627,9 @@ export const addonsCapability = {
     ),
 
     // ── Auto-update ─────────────────────────────────────────────────
-    getAutoUpdateSettings: method(z.void(), AutoUpdateSettingsSchema, { auth: 'admin' }),
+    getAutoUpdateSettings: method(z.void(), AutoUpdateSettingsSchema, {
+      auth: 'admin',
+    }),
     setAutoUpdateSettings: method(
       z.object({
         channel: ChannelSchema,
@@ -658,7 +661,10 @@ export const addonsCapability = {
     // gate their own actions to public/protected/admin/superAdmin.
     // Viewer baseline (D921): the viewer app's own notification rules and
     // snoozes ride this dispatcher; each action's own auth still applies.
-    custom: method(CustomActionInputSchema, z.unknown(), { role: 'viewer', kind: 'mutation' }),
+    custom: method(CustomActionInputSchema, z.unknown(), {
+      role: 'viewer',
+      kind: 'mutation',
+    }),
 
     // ── Lifecycle job engine ─────────────────────────────────────────
     /**
@@ -718,6 +724,7 @@ export const addonsCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ADDON_ADMIN },
 } as const satisfies CapabilityDefinition
 
 export type IAddonsProvider = InferProvider<typeof addonsCapability>

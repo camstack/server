@@ -6,6 +6,7 @@ import {
   method,
   systemMethod,
 } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * A single device snapshot returned as base64 JPEG/PNG.
@@ -260,6 +261,7 @@ export const snapshotCapability = {
     schema: SnapshotStatusSchema,
     kind: 'poll',
   },
+  vocabulary: { noun: t('Snapshot', 'Istantanea'), order: 3290 },
 } as const satisfies CapabilityDefinition
 
 export type ISnapshotOrchestrator = InferProvider<typeof snapshotCapability>

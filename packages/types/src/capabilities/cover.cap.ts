@@ -5,8 +5,9 @@ import {
   type InferProvider,
   optionalMethod,
 } from './capability-definition.js'
-import { DeviceType } from '../device/device-type.js'
+import { DeviceType, DeviceRole } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Window covering / blinds / garage door / valve cap. Models HA
@@ -58,14 +59,40 @@ export const coverCapability = {
     open: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'cover.open',
+          label: t('Open', 'Apri'),
+          phrase: t('Open {device}', 'Apri {device}'),
+          icon: 'arrow-up-to-line',
+          effect: { field: 'state', value: 'open' },
+        },
+      ],
     }),
     close: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'cover.close',
+          label: t('Close', 'Chiudi'),
+          phrase: t('Close {device}', 'Chiudi {device}'),
+          icon: 'arrow-down-to-line',
+          effect: { field: 'state', value: 'closed' },
+        },
+      ],
     }),
     stop: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'cover.stop',
+          label: t('Stop', 'Ferma'),
+          phrase: t('Stop {device}', 'Ferma {device}'),
+          icon: 'square',
+        },
+      ],
     }),
     setPosition: optionalMethod(
       z.object({
@@ -73,7 +100,29 @@ export const coverCapability = {
         position: z.number().min(0).max(100),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'cover.position',
+            label: t('Set position', 'Imposta la posizione'),
+            phrase: t(
+              'Move {device} to {position} open',
+              'Porta {device} al {position} di apertura',
+            ),
+            icon: 'blinds',
+            effect: { field: 'position', fromArg: 'position' },
+            openArgs: [
+              {
+                key: 'position',
+                label: t('Position', 'Posizione'),
+                offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setTiltPosition: optionalMethod(
       z.object({
@@ -81,7 +130,26 @@ export const coverCapability = {
         tiltPosition: z.number().min(0).max(100),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'cover.tilt',
+            label: t('Set tilt', 'Imposta l’inclinazione'),
+            phrase: t('Tilt {device} to {tiltPosition}', 'Inclina {device} al {tiltPosition}'),
+            icon: 'blinds',
+            effect: { field: 'tiltPosition', fromArg: 'tiltPosition' },
+            openArgs: [
+              {
+                key: 'tiltPosition',
+                label: t('Tilt', 'Inclinazione'),
+                offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -112,6 +180,125 @@ export const coverCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Cover', 'Copertura'),
+    order: 1030,
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: t('State', 'Stato'),
+        values: [
+          {
+            value: 'open',
+            label: t('Open', 'Aperto'),
+            phrase: t('When {device} is fully open', 'Quando {device} è tutto aperto'),
+          },
+          {
+            value: 'opening',
+            label: t('Opening', 'In apertura'),
+            phrase: t('When {device} starts opening', 'Quando {device} inizia ad aprirsi'),
+          },
+          {
+            value: 'closing',
+            label: t('Closing', 'In chiusura'),
+            phrase: t('When {device} starts closing', 'Quando {device} inizia a chiudersi'),
+          },
+          {
+            value: 'closed',
+            label: t('Closed', 'Chiuso'),
+            phrase: t('When {device} is fully closed', 'Quando {device} è tutto chiuso'),
+          },
+          {
+            value: 'stopped',
+            label: t('Stopped', 'Fermo'),
+            phrase: t('When {device} stops part-way', 'Quando {device} si ferma a metà'),
+          },
+        ],
+        icon: 'blinds',
+      },
+      {
+        kind: 'numeric',
+        field: 'position',
+        quantity: t('the opening', 'l’apertura'),
+        label: t('Position', 'Posizione'),
+        unit: '%',
+        icon: 'blinds',
+      },
+    ],
+    overrides: {
+      byRole: {
+        [DeviceRole.CoverGarage]: {
+          actions: {
+            'cover.open': {
+              phrase: t('Open the garage door {device}', 'Apri il garage {device}'),
+              icon: 'warehouse',
+            },
+            'cover.close': {
+              phrase: t('Close the garage door {device}', 'Chiudi il garage {device}'),
+              icon: 'warehouse',
+            },
+          },
+        },
+        [DeviceRole.CoverGate]: {
+          actions: {
+            'cover.open': {
+              phrase: t('Open the gate {device}', 'Apri il cancello {device}'),
+              icon: 'fence',
+            },
+            'cover.close': {
+              phrase: t('Close the gate {device}', 'Chiudi il cancello {device}'),
+              icon: 'fence',
+            },
+          },
+        },
+        [DeviceRole.CoverDoor]: {
+          actions: {
+            'cover.open': {
+              phrase: t('Open the door {device}', 'Apri la porta {device}'),
+              icon: 'door-open',
+            },
+            'cover.close': {
+              phrase: t('Close the door {device}', 'Chiudi la porta {device}'),
+              icon: 'door-closed',
+            },
+          },
+        },
+        [DeviceRole.CoverWindow]: {
+          actions: {
+            'cover.open': {
+              phrase: t('Open the window {device}', 'Apri la finestra {device}'),
+              icon: 'app-window',
+            },
+            'cover.close': {
+              phrase: t('Close the window {device}', 'Chiudi la finestra {device}'),
+              icon: 'app-window',
+            },
+          },
+        },
+        [DeviceRole.CoverShutter]: {
+          actions: {
+            'cover.open': {
+              phrase: t('Raise the shutter {device}', 'Alza la tapparella {device}'),
+            },
+            'cover.close': {
+              phrase: t('Lower the shutter {device}', 'Abbassa la tapparella {device}'),
+            },
+          },
+        },
+        [DeviceRole.CoverAwning]: {
+          actions: {
+            'cover.open': {
+              phrase: t('Extend the awning {device}', 'Apri la tenda da sole {device}'),
+            },
+            'cover.close': {
+              phrase: t('Retract the awning {device}', 'Chiudi la tenda da sole {device}'),
+            },
+          },
+        },
+      },
+    },
+  },
 } as const satisfies CapabilityDefinition
 
 export type ICoverProvider = InferProvider<typeof coverCapability>

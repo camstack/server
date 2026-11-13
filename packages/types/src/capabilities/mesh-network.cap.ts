@@ -19,6 +19,7 @@
  */
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * A reachable endpoint on the mesh. A single provider may expose
@@ -228,7 +229,9 @@ export const meshNetworkCapability = {
     /** Leave the mesh. After this the meshIp/magicDnsHostname/etc.
      *  vanish until the next `join`. The bound account stays — a
      *  subsequent `join` reuses it without prompting for a new login. */
-    leave: method(z.void(), z.object({ left: z.literal(true) }), { kind: 'mutation' }),
+    leave: method(z.void(), z.object({ left: z.literal(true) }), {
+      kind: 'mutation',
+    }),
 
     /**
      * Sign out of the mesh account entirely. Distinct from `leave`:
@@ -238,7 +241,9 @@ export const meshNetworkCapability = {
      * credentials — the next `startLogin` MUST go through a fresh
      * browser-redirect flow to bind a new account.
      */
-    logout: method(z.void(), z.object({ loggedOut: z.literal(true) }), { kind: 'mutation' }),
+    logout: method(z.void(), z.object({ loggedOut: z.literal(true) }), {
+      kind: 'mutation',
+    }),
 
     /** Enumerate every peer the daemon currently knows about. */
     listPeers: method(
@@ -258,6 +263,7 @@ export const meshNetworkCapability = {
     // schema as a "Settings" tab next to the generic Status / Peers
     // tabs driven by this cap.
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.NETWORK },
 } as const satisfies CapabilityDefinition
 
 export type IMeshNetworkProvider = InferProvider<typeof meshNetworkCapability>

@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * device-runs - the durable record of ONE run of a device: a washing cycle, a
@@ -132,9 +133,18 @@ export const deviceRunsCapability = {
     getCurrentRun: method(z.object({ deviceId: z.number().int() }), DeviceRunSchema.nullable()),
   },
   events: {
-    onRunOpened: { data: DeviceRunSchema },
-    onRunClosed: { data: DeviceRunSchema },
+    onRunOpened: {
+      data: DeviceRunSchema,
+      notOperatorFacing:
+        'the durable record of a run that the running-state start flip already announces',
+    },
+    onRunClosed: {
+      data: DeviceRunSchema,
+      notOperatorFacing:
+        'the durable record of a run that the running-state finish flip already announces',
+    },
   },
+  vocabulary: { noun: t('Runs', 'Esecuzioni'), order: 2130 },
 } as const satisfies CapabilityDefinition
 
 export type IDeviceRunsProvider = InferProvider<typeof deviceRunsCapability>

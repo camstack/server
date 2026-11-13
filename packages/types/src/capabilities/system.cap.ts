@@ -4,6 +4,7 @@ import { LoadContributionSchema } from './load-contribution.cap.js'
 import { LogChannelDescriptorSchema } from '../logging/log-channel.js'
 import { ServerNameInfoSchema } from '../system/server-name.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * system — system-scoped singleton capability exposing hub-level
@@ -617,12 +618,17 @@ export const systemCapability = {
     // Retention config is opaque on the wire — the analytics-suite owns the
     // schema. `getRetentionConfig` returns null when the analytics addon
     // is not loaded; `setRetentionConfig` accepts a partial patch.
-    getRetentionConfig: method(z.void(), z.unknown().nullable(), { auth: 'admin' }),
+    getRetentionConfig: method(z.void(), z.unknown().nullable(), {
+      auth: 'admin',
+    }),
     setRetentionConfig: method(z.record(z.string(), z.unknown()), z.null(), {
       kind: 'mutation',
       auth: 'admin',
     }),
-    forceRetentionCleanup: method(z.void(), z.void(), { kind: 'mutation', auth: 'admin' }),
+    forceRetentionCleanup: method(z.void(), z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
 
     /**
      * The site coordinates, deriving a default from the hub's public IP on the
@@ -663,7 +669,9 @@ export const systemCapability = {
      *
      * Admin-only: the rows carry source addresses and principal names.
      */
-    getRequestCensus: method(z.void(), RequestCensusStatusSchema, { auth: 'admin' }),
+    getRequestCensus: method(z.void(), RequestCensusStatusSchema, {
+      auth: 'admin',
+    }),
 
     /**
      * Every `load-contribution` an addon on this cluster reports — each
@@ -747,6 +755,7 @@ export const systemCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
 } as const satisfies CapabilityDefinition
 
 export type ISystemProvider = InferProvider<typeof systemCapability>

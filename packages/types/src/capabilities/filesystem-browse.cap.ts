@@ -8,6 +8,7 @@
  */
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 const DirEntrySchema = z.object({
   name: z.string(),
@@ -33,15 +34,20 @@ export const filesystemBrowseCapability = {
   internal: true,
   methods: {
     /** The roots `createDir` is sandboxed to on this node. Browsing is not confined to them. */
-    listAllowedRoots: method(z.void(), z.array(z.string()).readonly(), { auth: 'admin' }),
+    listAllowedRoots: method(z.void(), z.array(z.string()).readonly(), {
+      auth: 'admin',
+    }),
     /** Immediate subdirectories of any absolute `path` + free/total bytes. Read-only. */
-    browse: method(z.object({ path: z.string() }), BrowseResultSchema, { auth: 'admin' }),
+    browse: method(z.object({ path: z.string() }), BrowseResultSchema, {
+      auth: 'admin',
+    }),
     /** Create a subdirectory (within an allowed root). Returns its absolute path. */
     createDir: method(z.object({ path: z.string() }), z.object({ path: z.string() }), {
       kind: 'mutation',
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type IFilesystemBrowseProvider = InferProvider<typeof filesystemBrowseCapability>

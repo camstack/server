@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Image display cap. Models a single still image exposed by an integration —
@@ -57,6 +58,7 @@ export const imageCapability = {
    * History (D850): none — not numeric.
    */
   history: 'none',
+  vocabulary: { noun: t('Image', 'Immagine'), order: 3130 },
 } as const satisfies CapabilityDefinition
 
 export type IImageProvider = InferProvider<typeof imageCapability>

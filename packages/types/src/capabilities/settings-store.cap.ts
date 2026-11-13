@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * Query filter for settings-store collections.
@@ -243,7 +244,11 @@ export const settingsStoreCapability = {
   methods: {
     /** Get a single value by key from a collection. */
     get: method(
-      z.object({ namespace: z.string().optional(), collection: z.string(), key: z.string() }),
+      z.object({
+        namespace: z.string().optional(),
+        collection: z.string(),
+        key: z.string(),
+      }),
       z.unknown(),
       { auth: 'admin' },
     ),
@@ -469,7 +474,11 @@ export const settingsStoreCapability = {
 
     /** Delete a record by key/ID. */
     delete: method(
-      z.object({ namespace: z.string().optional(), collection: z.string(), key: z.string() }),
+      z.object({
+        namespace: z.string().optional(),
+        collection: z.string(),
+        key: z.string(),
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -597,6 +606,7 @@ export const settingsStoreCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.INTERNAL },
 } as const satisfies CapabilityDefinition
 
 export type ISettingsStoreProvider = InferProvider<typeof settingsStoreCapability>

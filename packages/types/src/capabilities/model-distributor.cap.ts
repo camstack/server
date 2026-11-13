@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { ModelCatalogEntrySchema } from '../types/models.js'
 import { MODEL_FORMATS } from '../types/models.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `model-distributor` — singleton, hub-resident. Pushes a model FORMAT that is
@@ -46,6 +47,7 @@ export const modelDistributorCapability = {
       auth: 'admin',
     }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type IModelDistributorProvider = InferProvider<typeof modelDistributorCapability>

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { TokenScopeSchema } from '../schemas/auth-records.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `oauth-integration` — a collection cap by which an addon declares
@@ -157,8 +158,11 @@ export const oauthIntegrationCapability = {
      * capability registry — never through tRPC. `auth: 'admin'` closes the
      * tRPC surface without touching that path.
      */
-    getDescriptor: method(z.void(), OauthIntegrationDescriptorSchema, { auth: 'admin' }),
+    getDescriptor: method(z.void(), OauthIntegrationDescriptorSchema, {
+      auth: 'admin',
+    }),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.IDENTITY },
 } as const satisfies CapabilityDefinition
 
 export type IOauthIntegrationProvider = InferProvider<typeof oauthIntegrationCapability>

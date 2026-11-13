@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { PeerBytesTicketSchema } from '../interfaces/addon-peer-bytes.js'
 import type { ConfigUISchema } from '../interfaces/config-ui.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * `training-provider` — ONE cloud that can run the CamStack trainer.
@@ -176,7 +177,10 @@ export type TrainerSourceRef = z.infer<typeof TrainerSourceRefSchema>
 /** Cloud job identity — route with the owning addon's `addonId` selector. */
 const JobRef = { entryId: z.string().min(1), jobKey: z.string().uuid() }
 
-export const TrainingLogLineSchema = z.object({ ts: z.number(), text: z.string() })
+export const TrainingLogLineSchema = z.object({
+  ts: z.number(),
+  text: z.string(),
+})
 export type TrainingLogLine = z.infer<typeof TrainingLogLineSchema>
 
 export const trainingProviderCapability = {
@@ -249,12 +253,22 @@ export const trainingProviderCapability = {
       { kind: 'mutation', auth: 'admin', timeoutMs: 30 * 60_000 },
     ),
 
-    getJob: method(z.object(JobRef), ProviderJobStatusSchema, { auth: 'admin', timeoutMs: 60_000 }),
+    getJob: method(z.object(JobRef), ProviderJobStatusSchema, {
+      auth: 'admin',
+      timeoutMs: 60_000,
+    }),
 
     /** Stdout/stderr since `cursor` (opaque), oldest first, at most `max` lines. */
     listJobEvents: method(
-      z.object({ ...JobRef, cursor: z.string().optional(), max: z.number().int().min(1).max(500) }),
-      z.object({ lines: z.array(TrainingLogLineSchema).readonly(), cursor: z.string() }),
+      z.object({
+        ...JobRef,
+        cursor: z.string().optional(),
+        max: z.number().int().min(1).max(500),
+      }),
+      z.object({
+        lines: z.array(TrainingLogLineSchema).readonly(),
+        cursor: z.string(),
+      }),
       { auth: 'admin', timeoutMs: 60_000 },
     ),
 
@@ -303,6 +317,7 @@ export const trainingProviderCapability = {
       },
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ML },
 } as const satisfies CapabilityDefinition
 
 export type ITrainingCloudProvider = InferProvider<typeof trainingProviderCapability>

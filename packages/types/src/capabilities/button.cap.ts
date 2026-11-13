@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * button — device-scoped capability for HA `button.*` / `input_button.*`
@@ -22,8 +23,17 @@ export const buttonCapability = {
     press: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'button.press',
+          label: t('Press', 'Premi'),
+          phrase: t('Press {device}', 'Premi {device}'),
+          icon: 'circle-dot',
+        },
+      ],
     }),
   },
+  vocabulary: { noun: t('Button', 'Pulsante'), order: 1130 },
 } as const satisfies CapabilityDefinition
 
 export type IButtonProvider = InferProvider<typeof buttonCapability>

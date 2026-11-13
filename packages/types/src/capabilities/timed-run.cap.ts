@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { DeviceRole, DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * timed-run - run a device for a chosen time, then stop it (D993).
@@ -123,7 +124,10 @@ export type TimedRunQuickRun = z.infer<typeof TimedRunQuickRunSchema>
 export function timedRunQuickRun(limit: TimedRunLimit, stored: number | null): TimedRunQuickRun {
   const max = timedRunMaxIn(limit)
   const usable = stored !== null && Number.isFinite(stored) && stored > 0 ? stored : null
-  return { duration: Math.min(usable ?? limit.quickRunDefault, max), unit: limit.unit }
+  return {
+    duration: Math.min(usable ?? limit.quickRunDefault, max),
+    unit: limit.unit,
+  }
 }
 
 /** Why a request was not carried out. Typed, so a caller can say it in words. */
@@ -196,7 +200,10 @@ export const timedRunCapability = {
      * REFUSED (thrown), like `runFor`: the maximum is a safety bound.
      */
     setSettings: method(
-      z.object({ deviceId: z.number().int(), settings: TimedRunSettingsPatchSchema }),
+      z.object({
+        deviceId: z.number().int(),
+        settings: TimedRunSettingsPatchSchema,
+      }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
@@ -212,12 +219,62 @@ export const timedRunCapability = {
       }),
       TimedRunResultSchema,
       // ACTUATION, like `switch.setState`: the caller's device grant governs it.
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'timedRun.runForMinutes',
+            label: t('Run for minutes', 'Accendi per alcuni minuti'),
+            phrase: t(
+              'Run {device} for {duration} minutes, then switch it off',
+              'Tieni acceso {device} per {duration} minuti, poi spegnilo',
+            ),
+            icon: 'timer',
+            args: { unit: 'min' },
+            openArgs: [
+              {
+                key: 'duration',
+                label: t('Minutes', 'Minuti'),
+                offer: { kind: 'number', min: 1, step: 1, unit: 'min' },
+              },
+            ],
+          },
+          {
+            id: 'timedRun.runForSeconds',
+            label: t('Run for seconds', 'Accendi per alcuni secondi'),
+            phrase: t(
+              'Run {device} for {duration} seconds, then switch it off',
+              'Tieni acceso {device} per {duration} secondi, poi spegnilo',
+            ),
+            icon: 'timer',
+            args: { unit: 's' },
+            openArgs: [
+              {
+                key: 'duration',
+                label: t('Seconds', 'Secondi'),
+                offer: { kind: 'number', min: 1, step: 1, unit: 's' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     /** Stop the run: switch the device off (once) and forget the pending off. Nothing armed: nothing is sent. */
     cancel: method(z.object({ deviceId: z.number().int() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'timedRun.cancel',
+          label: t('Cancel the timer', 'Annulla il timer'),
+          phrase: t(
+            'Cancel the pending switch-off of {device}',
+            'Annulla lo spegnimento programmato di {device}',
+          ),
+          icon: 'timer-off',
+        },
+      ],
     }),
   },
   status: { schema: TimedRunStatusSchema, kind: 'push' },
@@ -228,6 +285,7 @@ export const timedRunCapability = {
    */
   durability: 'session',
   history: 'none',
+  vocabulary: { noun: t('Timed run', 'Esecuzione a tempo'), order: 2150 },
 } as const satisfies CapabilityDefinition
 
 export type ITimedRunProvider = InferProvider<typeof timedRunCapability>

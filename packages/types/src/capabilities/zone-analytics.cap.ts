@@ -1,6 +1,8 @@
 import { z } from 'zod'
 import { DeviceType } from '../device/device-type.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /**
  * Per-zone occupancy aggregation produced by the analytics frame
@@ -282,6 +284,21 @@ export const zoneAnalyticsCapability = {
    * History (D850): none — occupancy is the addon series `pipeline-analytics/occupancy`; the rest is per-zone arrays keyed by runtime ids.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Zone occupancy', 'Occupazione delle zone'),
+    order: 3350,
+    extraEvents: [
+      {
+        category: EventCategory.ZoneAnalyticsOccupancyChanged,
+        label: t('Zone occupancy changed', 'Occupazione della zona cambiata'),
+        phrase: t(
+          'When someone enters or leaves a zone of {device}',
+          'Quando qualcuno entra o esce da una zona di {device}',
+        ),
+        icon: 'square-dashed',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IZoneAnalyticsProvider = InferProvider<typeof zoneAnalyticsCapability>

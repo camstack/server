@@ -15,6 +15,7 @@ import {
   ProfileRtspEntrySchema,
 } from './schemas/streaming-shared.js'
 import { RtspRestreamEntrySchema } from './stream-broker.cap.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 // ── pickStream request / response ─────────────────────────────────────
 //
@@ -288,6 +289,9 @@ export const cameraStreamsCapability = {
         deviceId: z.number().int().nonnegative(),
         camStreams: z.array(CameraStreamSchema).readonly(),
       }),
+      {
+        notOperatorFacing: 'the stream catalog was rebuilt — plumbing, not a happening',
+      },
     ),
     /** Fires on assignProfile / unassignProfile / runtime status change. */
     onProfileSlotsChanged: event(
@@ -295,6 +299,9 @@ export const cameraStreamsCapability = {
         deviceId: z.number().int().nonnegative(),
         profileSlots: z.array(ProfileSlotSchema).readonly(),
       }),
+      {
+        notOperatorFacing: 'stream profiles were reassigned — plumbing, not a happening',
+      },
     ),
   },
   /**
@@ -346,6 +353,10 @@ export const cameraStreamsCapability = {
    * History (D850): none — `online` duplicates device-status.online (one authority); slot data is nested enum/string.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Camera streams', 'Flussi della telecamera'),
+    order: 3060,
+  },
 } as const satisfies CapabilityDefinition
 
 export type ICameraStreamsProvider = InferProvider<typeof cameraStreamsCapability>

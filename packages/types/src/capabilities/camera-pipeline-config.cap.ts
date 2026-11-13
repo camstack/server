@@ -1,5 +1,6 @@
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * camera-pipeline-config — device-scoped wrapper that carries the
@@ -39,6 +40,10 @@ export const cameraPipelineConfigCapability = {
   deviceTypes: [DeviceType.Camera],
   exposesDeviceSettings: true,
   methods: {},
+  vocabulary: {
+    noun: t('Detection settings', 'Impostazioni di rilevamento'),
+    order: 3050,
+  },
 } as const satisfies CapabilityDefinition
 
 export type ICameraPipelineConfigProvider = InferProvider<typeof cameraPipelineConfigCapability>

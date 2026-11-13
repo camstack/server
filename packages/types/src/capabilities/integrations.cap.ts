@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * integrations — system-scoped singleton capability for integration
@@ -190,6 +191,7 @@ export const integrationsCapability = {
   },
   /** BIG PLAN 2: declarative mount hint — read by `@camstack/server/system` `buildCapRouters`. */
   mount: { kind: 'server-provided' },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.ADDON_ADMIN },
 } as const satisfies CapabilityDefinition
 
 export type IIntegrationsProvider = InferProvider<typeof integrationsCapability>

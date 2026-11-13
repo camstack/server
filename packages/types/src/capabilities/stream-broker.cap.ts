@@ -17,6 +17,7 @@ import {
   SubscribeAudioChunksInputSchema,
   SubscribeAudioChunksResultSchema,
 } from './schemas/streaming-shared.js'
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /** Stream delivery format. (Relocated from the retired `streaming-engine` cap.) */
 export const StreamFormatSchema = z.enum(['webrtc', 'hls', 'mjpeg', 'rtsp'])
@@ -285,7 +286,10 @@ export const GetStreamWithCodecInputSchema = z.object({
    *  `video:'copy'` scaling (a copy can't be rescaled), but still used for
    *  source selection. */
   targetResolution: z
-    .object({ width: z.number().int().positive(), height: z.number().int().positive() })
+    .object({
+      width: z.number().int().positive(),
+      height: z.number().int().positive(),
+    })
     .optional(),
   /** Extra ffmpeg output flags appended verbatim by the consumer (in code).
    *  Folded into the pipeline key so different args never share a child. */
@@ -811,7 +815,10 @@ export const streamBrokerCapability = {
     }),
     releaseStreamWithCodec: method(
       z.object({ pipelineKey: z.string() }),
-      z.object({ released: z.boolean(), refcount: z.number().int().nonnegative() }),
+      z.object({
+        released: z.boolean(),
+        refcount: z.number().int().nonnegative(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
     /**
@@ -843,7 +850,10 @@ export const streamBrokerCapability = {
     /** Drop one reference. The child dies when the last holder releases. */
     releaseEgressTranscode: method(
       z.object({ pipelineKey: z.string() }),
-      z.object({ released: z.boolean(), refcount: z.number().int().nonnegative() }),
+      z.object({
+        released: z.boolean(),
+        refcount: z.number().int().nonnegative(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
     /**
@@ -888,7 +898,11 @@ export const streamBrokerCapability = {
     ),
     getPreBufferInfo: method(
       z.object({ brokerId: z.string() }),
-      z.object({ configuredSec: z.number(), bufferedMs: z.number(), packetCount: z.number() }),
+      z.object({
+        configuredSec: z.number(),
+        bufferedMs: z.number(),
+        packetCount: z.number(),
+      }),
     ),
     getRtspPort: method(z.void(), z.number()),
     /**
@@ -950,7 +964,10 @@ export const streamBrokerCapability = {
     ),
     setDeviceAudioMute: method(
       z.object({ deviceId: z.number().int(), muted: z.boolean() }),
-      z.object({ muted: z.boolean(), appliedBrokers: z.number().int().nonnegative() }),
+      z.object({
+        muted: z.boolean(),
+        appliedBrokers: z.number().int().nonnegative(),
+      }),
       { kind: 'mutation', auth: 'admin' },
     ),
   },
@@ -976,6 +993,7 @@ export const streamBrokerCapability = {
       }),
     ),
   },
+  vocabulary: { notOperatorFacing: NOT_A_DEVICE.PIPELINE },
 } as const satisfies CapabilityDefinition
 
 export type IStreamBrokerProvider = InferProvider<typeof streamBrokerCapability>

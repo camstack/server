@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Two-way audio / talk-back cap. Clients open a WebRTC audio-only
@@ -104,7 +105,11 @@ export const intercomCapability = {
     startSession: method(
       z.object({ deviceId: z.number() }),
       z.object({ sessionId: z.string(), sdpOffer: z.string() }),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     handleAnswer: method(
       z.object({
@@ -113,12 +118,17 @@ export const intercomCapability = {
         sdpAnswer: z.string(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     /** Close explicitly. Server also auto-closes on 30s idle. */
     stopSession: method(z.object({ deviceId: z.number(), sessionId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
     }),
     /**
      * Open a raw-PCM talk session (no WebRTC SDP plumbing). Used by
@@ -132,7 +142,12 @@ export const intercomCapability = {
     startTalkSession: method(
       z.object({ deviceId: z.number() }),
       z.object({ sessionId: z.string() }),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing:
+          'two-way talk is a person speaking through the viewer, not an automation step',
+      },
     ),
     /**
      * Push one chunk of talk-back audio onto the active talk session.
@@ -168,12 +183,17 @@ export const intercomCapability = {
         sequenceNumber: z.number().int(),
       }),
       z.object({ accepted: z.boolean() }),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
+      },
     ),
     /** Close the raw-PCM talk session. Idempotent. */
     endTalkSession: method(z.object({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      notOperatorFacing: 'live-stream session plumbing driven by a viewer, never a discrete step',
     }),
   },
   events: {
@@ -182,6 +202,7 @@ export const intercomCapability = {
         deviceId: z.number(),
         status: IntercomStatusSchema,
       }),
+      notOperatorFacing: 'the `talking` state trigger phrases both edges of this change',
     },
   },
   status: {
@@ -228,6 +249,26 @@ export const intercomCapability = {
    * History (D850): none — talk sessions are a ledger concern, not a trend.
    */
   history: 'none',
+  vocabulary: {
+    noun: t('Intercom', 'Citofono'),
+    order: 3150,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'talking',
+        label: t('Talking', 'In conversazione'),
+        whenTrue: t(
+          'When someone starts talking through {device}',
+          'Quando qualcuno inizia a parlare tramite {device}',
+        ),
+        whenFalse: t(
+          'When the conversation on {device} ends',
+          'Quando la conversazione su {device} finisce',
+        ),
+        icon: 'mic',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IIntercomProvider = InferProvider<typeof intercomCapability>

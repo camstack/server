@@ -6,6 +6,7 @@ import {
   type InferNativeProvider,
   method,
 } from './capability-definition.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Vendor-neutral **onboard** recording + storage cap — what the CAMERA
@@ -146,7 +147,10 @@ export const OnboardStorageVolumeSchema = z.object({
  * camera with no card reports `ok` and then an empty list (D393).
  */
 export const OnboardStorageSchema = z.discriminatedUnion('kind', [
-  z.object({ kind: z.literal('present'), volumes: z.array(OnboardStorageVolumeSchema) }),
+  z.object({
+    kind: z.literal('present'),
+    volumes: z.array(OnboardStorageVolumeSchema),
+  }),
   z.object({ kind: z.literal('absent'), reason: z.string() }),
   z.object({ kind: z.literal('unknown'), reason: z.string() }),
 ])
@@ -232,7 +236,11 @@ export const RecordingOnboardStatusSchema = z.object({
 // ── Options: what THIS camera accepts ────────────────────────────────
 
 /** Numeric range descriptor — `{ min, max, step }` per the getOptions convention. */
-const RangeSchema = z.object({ min: z.number(), max: z.number(), step: z.number() })
+const RangeSchema = z.object({
+  min: z.number(),
+  max: z.number(),
+  step: z.number(),
+})
 
 /**
  * The values a camera actually takes for a numeric field, when they are a SET
@@ -355,14 +363,43 @@ export const recordingOnboardCapability = {
   mode: 'singleton',
   deviceTypes: [DeviceType.Camera],
   deviceConfig: {
-    ui: { kind: 'derived-form', builderId: 'recording-onboard', tab: 'recording' },
+    ui: {
+      kind: 'derived-form',
+      builderId: 'recording-onboard',
+      tab: 'recording',
+    },
   },
   methods: {
     getOptions: method(z.object({ deviceId: z.number() }), RecordingOnboardOptionsSchema),
     setSettings: method(
       z.object({ deviceId: z.number(), settings: RecordingOnboardPatchSchema }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'recordingOnboard.on',
+            label: t('On-camera recording on', 'Registrazione a bordo attiva'),
+            phrase: t(
+              'Turn on recording to the card of {device}',
+              'Attiva la registrazione sulla scheda di {device}',
+            ),
+            icon: 'hard-drive',
+            args: { settings: { enabled: true } },
+          },
+          {
+            id: 'recordingOnboard.off',
+            label: t('On-camera recording off', 'Registrazione a bordo spenta'),
+            phrase: t(
+              'Turn off recording to the card of {device}',
+              'Disattiva la registrazione sulla scheda di {device}',
+            ),
+            icon: 'hard-drive',
+            args: { settings: { enabled: false } },
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -387,6 +424,26 @@ export const recordingOnboardCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastFetchedAt'],
+  vocabulary: {
+    noun: t('On-camera recording', 'Registrazione a bordo'),
+    order: 3260,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'recordingToNowhere',
+        label: t('Recording to nowhere', 'Registra nel vuoto'),
+        whenTrue: t(
+          'When {device} is recording with no card to write to',
+          'Quando {device} registra senza una scheda su cui scrivere',
+        ),
+        whenFalse: t(
+          'When {device} has a card to record to again',
+          'Quando {device} ha di nuovo una scheda su cui registrare',
+        ),
+        icon: 'hard-drive',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type IRecordingOnboardProvider = InferNativeProvider<typeof recordingOnboardCapability>

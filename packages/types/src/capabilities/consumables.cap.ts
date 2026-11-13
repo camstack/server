@@ -3,6 +3,7 @@ import { method, type CapabilityDefinition, type InferProvider } from './capabil
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Generic device-consumables capability — the ONE place a device reports what
@@ -192,7 +193,10 @@ const consumablesCustomize = {
           path: 'remaining.value',
           sources: [{ kind: 'numeric', transforms: [{ kind: 'identity' }] }],
           literals: [
-            { path: 'remaining.kind', values: [...ConsumableRemainingKindSchema.options] },
+            {
+              path: 'remaining.kind',
+              values: [...ConsumableRemainingKindSchema.options],
+            },
           ],
         },
         {
@@ -212,8 +216,16 @@ const consumablesCustomize = {
         },
       ],
       traits: [
-        { path: 'kind', values: [...ConsumableKindSchema.options], defaultValue: 'wear' },
-        { path: 'form', values: [...ConsumableFormSchema.options], defaultValue: 'part' },
+        {
+          path: 'kind',
+          values: [...ConsumableKindSchema.options],
+          defaultValue: 'wear',
+        },
+        {
+          path: 'form',
+          values: [...ConsumableFormSchema.options],
+          defaultValue: 'part',
+        },
       ],
       companions: [
         { kind: 'clock', path: 'lastChangedAt', when: 'add' },
@@ -261,9 +273,40 @@ export const consumablesCapability = {
     /** Mark a consumable as replaced — resets its remaining life. Only
      *  meaningful when the item's `resettable` is true. */
     reset: method(
-      z.object({ deviceId: z.number().int().nonnegative(), key: z.string().min(1) }),
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        key: z.string().min(1),
+      }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'consumables.reset',
+            label: t('Mark as replaced', 'Segna come sostituito'),
+            phrase: t(
+              'Mark {key} as replaced on {device}',
+              'Segna {key} come sostituito su {device}',
+            ),
+            icon: 'refresh-cw',
+            openArgs: [
+              {
+                key: 'key',
+                label: t('Consumable', 'Materiale'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'items',
+                  valueKey: 'key',
+                  labelKey: 'label',
+                  where: { key: 'resettable', equals: true },
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   /**
@@ -339,6 +382,7 @@ export const consumablesCapability = {
   },
   /** Clocks, not content: a re-read that changed no item costs no commit. */
   volatileStateFields: ['lastChangedAt', 'lastFetchedAt'],
+  vocabulary: { noun: t('Consumables', 'Materiali di consumo'), order: 2070 },
 } as const satisfies CapabilityDefinition
 
 export type IConsumablesProvider = InferProvider<typeof consumablesCapability>

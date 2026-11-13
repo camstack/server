@@ -8,6 +8,7 @@ import {
 import { DeviceType } from '../device/device-type.js'
 import { REMOTE_SOURCE_KINDS } from '../remote/remote-sources.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Media-player cap. Models HA `media_player.*` (Sonos, Chromecast,
@@ -154,47 +155,172 @@ export const mediaPlayerCapability = {
     off: 'turnOff',
   },
   methods: {
-    turnOn: optionalMethod(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
-    turnOff: optionalMethod(deviceOnly, z.void(), { kind: 'mutation', auth: 'protected' }),
-    volumeUp: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
-    volumeDown: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
-    channelUp: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
-    channelDown: optionalMethod(stepInput, z.void(), { kind: 'mutation', auth: 'protected' }),
+    turnOn: optionalMethod(deviceOnly, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'media.turnOn',
+          label: t('Turn on', 'Accendi'),
+          phrase: t('Turn on {device}', 'Accendi {device}'),
+          icon: 'power',
+        },
+      ],
+    }),
+    turnOff: optionalMethod(deviceOnly, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'media.turnOff',
+          label: t('Turn off', 'Spegni'),
+          phrase: t('Turn off {device}', 'Spegni {device}'),
+          icon: 'power',
+        },
+      ],
+    }),
+    volumeUp: optionalMethod(stepInput, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'media.volumeUp',
+          label: t('Volume up', 'Alza il volume'),
+          phrase: t('Raise the volume of {device}', 'Alza il volume di {device}'),
+          icon: 'volume-2',
+        },
+      ],
+    }),
+    volumeDown: optionalMethod(stepInput, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'media.volumeDown',
+          label: t('Volume down', 'Abbassa il volume'),
+          phrase: t('Lower the volume of {device}', 'Abbassa il volume di {device}'),
+          icon: 'volume-2',
+        },
+      ],
+    }),
+    channelUp: optionalMethod(stepInput, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'media.channelUp',
+          label: t('Channel up', 'Canale successivo'),
+          phrase: t('Go to the next channel on {device}', 'Passa al canale successivo su {device}'),
+          icon: 'skip-forward',
+        },
+      ],
+    }),
+    channelDown: optionalMethod(stepInput, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'media.channelDown',
+          label: t('Channel down', 'Canale precedente'),
+          phrase: t(
+            'Go to the previous channel on {device}',
+            'Torna al canale precedente su {device}',
+          ),
+          icon: 'skip-back',
+        },
+      ],
+    }),
     play: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'media.play',
+          label: t('Play', 'Riproduci'),
+          phrase: t('Play on {device}', 'Avvia la riproduzione su {device}'),
+          icon: 'play',
+        },
+      ],
     }),
     pause: method(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'media.pause',
+          label: t('Pause media', 'Metti in pausa'),
+          phrase: t('Pause {device}', 'Metti in pausa {device}'),
+          icon: 'pause',
+        },
+      ],
     }),
     stop: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'media.stop',
+          label: t('Stop media', 'Ferma la riproduzione'),
+          phrase: t('Stop {device}', 'Ferma {device}'),
+          icon: 'square',
+        },
+      ],
     }),
     next: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'media.next',
+          label: t('Next track', 'Brano successivo'),
+          phrase: t('Skip to the next track on {device}', 'Passa al brano successivo su {device}'),
+          icon: 'skip-forward',
+        },
+      ],
     }),
     previous: optionalMethod(z.object({ deviceId: z.number().int().nonnegative() }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
+      actions: [
+        {
+          id: 'media.previous',
+          label: t('Previous track', 'Brano precedente'),
+          phrase: t(
+            'Go back to the previous track on {device}',
+            'Torna al brano precedente su {device}',
+          ),
+          icon: 'skip-back',
+        },
+      ],
     }),
-    seek: optionalMethod(
-      z.object({
-        deviceId: z.number().int().nonnegative(),
-        position: z.number().int().nonnegative(),
-      }),
-      z.void(),
-      { kind: 'mutation', auth: 'protected' },
-    ),
     setVolume: optionalMethod(
       z.object({
         deviceId: z.number().int().nonnegative(),
         volumeLevel: z.number().min(0).max(100),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'media.volume',
+            label: t('Set volume', 'Imposta il volume'),
+            phrase: t(
+              'Set the volume of {device} to {volumeLevel}',
+              'Imposta il volume di {device} al {volumeLevel}',
+            ),
+            icon: 'volume-2',
+            openArgs: [
+              {
+                key: 'volumeLevel',
+                label: t('Volume', 'Volume'),
+                offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     setMute: optionalMethod(
       z.object({
@@ -202,7 +328,26 @@ export const mediaPlayerCapability = {
         muted: z.boolean(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'media.mute',
+            label: t('Mute', 'Silenzia'),
+            phrase: t('Mute {device}', 'Silenzia {device}'),
+            icon: 'volume-x',
+            args: { muted: true },
+          },
+          {
+            id: 'media.unmute',
+            label: t('Unmute', 'Riattiva l’audio'),
+            phrase: t('Unmute {device}', 'Riattiva l’audio di {device}'),
+            icon: 'volume-2',
+            args: { muted: false },
+          },
+        ],
+      },
     ),
     setShuffle: optionalMethod(
       z.object({
@@ -210,7 +355,29 @@ export const mediaPlayerCapability = {
         shuffle: z.boolean(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'media.shuffleOn',
+            label: t('Shuffle on', 'Riproduzione casuale attiva'),
+            phrase: t('Turn on shuffle on {device}', 'Attiva la riproduzione casuale su {device}'),
+            icon: 'shuffle',
+            args: { shuffle: true },
+          },
+          {
+            id: 'media.shuffleOff',
+            label: t('Shuffle off', 'Riproduzione casuale spenta'),
+            phrase: t(
+              'Turn off shuffle on {device}',
+              'Disattiva la riproduzione casuale su {device}',
+            ),
+            icon: 'shuffle',
+            args: { shuffle: false },
+          },
+        ],
+      },
     ),
     setRepeat: optionalMethod(
       z.object({
@@ -218,7 +385,35 @@ export const mediaPlayerCapability = {
         repeat: MediaPlayerRepeatSchema,
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'media.repeat',
+            label: t('Set repeat', 'Imposta la ripetizione'),
+            phrase: t(
+              'Set repeat on {device} to {repeat}',
+              'Imposta la ripetizione di {device} su {repeat}',
+            ),
+            icon: 'repeat',
+            openArgs: [
+              {
+                key: 'repeat',
+                label: t('Repeat', 'Ripetizione'),
+                offer: {
+                  kind: 'enum',
+                  values: [
+                    { value: 'off', label: t('Off', 'Disattivata') },
+                    { value: 'all', label: t('All', 'Tutti i brani') },
+                    { value: 'one', label: t('One track', 'Un brano') },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     selectSource: optionalMethod(
       z.object({
@@ -226,7 +421,55 @@ export const mediaPlayerCapability = {
         source: z.string().min(1),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'media.source',
+            label: t('Select source', 'Scegli la sorgente'),
+            phrase: t('Switch {device} to {source}', 'Passa {device} alla sorgente {source}'),
+            icon: 'cast',
+            openArgs: [
+              {
+                key: 'source',
+                label: t('Source', 'Sorgente'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'status',
+                  field: 'availableSources',
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ),
+    seek: optionalMethod(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        position: z.number().int().nonnegative(),
+      }),
+      z.void(),
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'media.seek',
+            label: t('Seek', 'Vai al punto'),
+            phrase: t('Move {device} to {position}', 'Porta {device} al punto {position}'),
+            icon: 'fast-forward',
+            openArgs: [
+              {
+                key: 'position',
+                label: t('Position', 'Posizione'),
+                offer: { kind: 'number', min: 0, step: 1000, unit: 'ms' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     playMedia: optionalMethod(
       z.object({
@@ -238,7 +481,30 @@ export const mediaPlayerCapability = {
         mediaType: z.string().min(1),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'protected' },
+      {
+        kind: 'mutation',
+        auth: 'protected',
+        actions: [
+          {
+            id: 'media.playMedia',
+            label: t('Play media', 'Riproduci un contenuto'),
+            phrase: t('Play {mediaId} on {device}', 'Riproduci {mediaId} su {device}'),
+            icon: 'music',
+            openArgs: [
+              {
+                key: 'mediaId',
+                label: t('Media', 'Contenuto'),
+                offer: { kind: 'text' },
+              },
+              {
+                key: 'mediaType',
+                label: t('Media type', 'Tipo di contenuto'),
+                offer: { kind: 'text' },
+              },
+            ],
+          },
+        ],
+      },
     ),
   },
   status: {
@@ -269,6 +535,66 @@ export const mediaPlayerCapability = {
       volumeLevel: { kind: 'gauge', unit: '%', deadband: 1 },
       isMuted: { kind: 'boolean' },
     },
+  },
+  vocabulary: {
+    noun: t('Media player', 'Lettore multimediale'),
+    order: 2060,
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: t('Playback', 'Riproduzione'),
+        values: [
+          {
+            value: 'off',
+            label: t('Off', 'Spento'),
+            phrase: t('When {device} turns off', 'Quando {device} si spegne'),
+          },
+          {
+            value: 'on',
+            label: t('On', 'Acceso'),
+            phrase: t('When {device} turns on', 'Quando {device} si accende'),
+          },
+          { value: 'idle', label: t('Idle', 'Inattivo') },
+          {
+            value: 'playing',
+            label: t('Playing', 'In riproduzione'),
+            phrase: t('When {device} starts playing', 'Quando {device} inizia a riprodurre'),
+          },
+          {
+            value: 'paused',
+            label: t('Paused', 'In pausa'),
+            phrase: t('When {device} is paused', 'Quando {device} va in pausa'),
+          },
+          { value: 'buffering', label: t('Buffering', 'In caricamento') },
+          { value: 'standby', label: t('Standby', 'In standby') },
+        ],
+        icon: 'music',
+      },
+      {
+        kind: 'numeric',
+        field: 'volumeLevel',
+        quantity: t('the volume', 'il volume'),
+        label: t('Volume', 'Volume'),
+        unit: '%',
+        icon: 'volume-2',
+      },
+      {
+        kind: 'boolean',
+        field: 'isMuted',
+        label: t('Muted', 'Silenziato'),
+        whenTrue: t('When {device} is muted', 'Quando {device} viene silenziato'),
+        whenFalse: t('When {device} is unmuted', 'Quando l’audio di {device} torna attivo'),
+        icon: 'volume-x',
+      },
+      {
+        kind: 'value',
+        field: 'source',
+        label: t('Source', 'Sorgente'),
+        offer: { kind: 'dynamic', from: 'status', field: 'availableSources' },
+        icon: 'cast',
+      },
+    ],
   },
 } as const satisfies CapabilityDefinition
 

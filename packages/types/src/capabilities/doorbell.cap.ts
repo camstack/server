@@ -3,6 +3,8 @@ import { type CapabilityDefinition, type InferProvider } from './capability-defi
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
+import { EventCategory } from '../enums/event-category.js'
 
 /** A rise closer than this to the previous one is the same press (D671). */
 export const DOORBELL_RISE_DEBOUNCE_MS = 2_000
@@ -85,6 +87,12 @@ export const doorbellCapability = {
     onPressed: {
       data: DoorbellPressEventSchema,
       fromState: { field: 'lastPressedAt', on: 'advance' },
+      trigger: {
+        category: EventCategory.DoorbellOnPressed,
+        label: t('Rang', 'Ha suonato'),
+        phrase: t('When someone rings {device}', 'Quando qualcuno suona a {device}'),
+        icon: 'bell-ring',
+      },
     },
   },
   status: {
@@ -111,6 +119,7 @@ export const doorbellCapability = {
    */
   history: 'none',
   customize: doorbellCustomize,
+  vocabulary: { noun: t('Doorbell', 'Campanello'), order: 5270 },
 } as const satisfies CapabilityDefinition
 
 export type IDoorbellProvider = InferProvider<typeof doorbellCapability>

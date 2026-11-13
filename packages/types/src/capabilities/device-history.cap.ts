@@ -118,7 +118,11 @@ const QuerySeriesSchema = z.object({
   scope: z.string(),
   /** The last point STRICTLY BEFORE `from` in the chosen tier, so a step chart can start at the held value. */
   before: z
-    .object({ t: z.number(), value: z.number().nullable(), state: z.string().nullable() })
+    .object({
+      t: z.number(),
+      value: z.number().nullable(),
+      state: z.string().nullable(),
+    })
     .nullable(),
   points: z.array(QueryPointSchema).readonly(),
   /** A derived key: the stored key its points were computed from; `null` for a stored series. */
@@ -147,8 +151,16 @@ export const DEVICE_HISTORY_QUERY_MANY_MAX_ITEMS = 24
 
 /** One read of a batch: a device's key or a node's key (exactly one subject). */
 const QueryManyItemSchema = z.union([
-  z.object({ deviceId: z.number().int(), key: z.string(), scope: z.string().optional() }),
-  z.object({ forNodeId: z.string().min(1), key: z.string(), scope: z.string().optional() }),
+  z.object({
+    deviceId: z.number().int(),
+    key: z.string(),
+    scope: z.string().optional(),
+  }),
+  z.object({
+    forNodeId: z.string().min(1),
+    key: z.string(),
+    scope: z.string().optional(),
+  }),
 ])
 export type DeviceHistoryQueryManyItem = z.infer<typeof QueryManyItemSchema>
 
@@ -212,7 +224,11 @@ export const DEVICE_HISTORY_ORPHAN_DELETE_MAX = 50
 export const DeviceHistoryOrphanDeleteRefusalSchema = z.enum(['not-found', 'not-orphan', 'failed'])
 
 const OrphanDeleteEntrySchema = z.discriminatedUnion('ok', [
-  z.object({ seriesId: z.number().int(), ok: z.literal(true), deleted: TierRowsSchema }),
+  z.object({
+    seriesId: z.number().int(),
+    ok: z.literal(true),
+    deleted: TierRowsSchema,
+  }),
   z.object({
     seriesId: z.number().int(),
     ok: z.literal(false),
@@ -403,7 +419,9 @@ export const deviceHistoryCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
 
-    getStatus: method(z.object({}), DeviceHistoryStatusSchema, { auth: 'admin' }),
+    getStatus: method(z.object({}), DeviceHistoryStatusSchema, {
+      auth: 'admin',
+    }),
 
     /**
      * Device series no longer linked to a device (D917): the device is absent
@@ -426,6 +444,9 @@ export const deviceHistoryCapability = {
       z.object({ results: z.array(OrphanDeleteEntrySchema).readonly() }),
       { kind: 'mutation', auth: 'admin' },
     ),
+  },
+  vocabulary: {
+    notOperatorFacing: 'recorded history of device state — read by charts, not actuated',
   },
 } as const satisfies CapabilityDefinition
 

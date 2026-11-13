@@ -1,6 +1,6 @@
 /**
  * The cap vocabulary (D920) — what every capability lets an operator DO to a
- * device and WATCH it for, in one cap-keyed map outside the caps.
+ * device and WATCH it for, in one cap-keyed map generated from the caps (D1050).
  */
 export type {
   ResolvedBooleanTrigger,
@@ -45,7 +45,6 @@ export type {
   CapStatusField,
   CapVocabularyEntry,
   CapVocabularyMap,
-  CapVocabularySlice,
   DeviceCapVocabulary,
   DeviceVocabCapName,
   DynamicOffer,
@@ -76,3 +75,15 @@ export type {
   VocabStateTrigger,
 } from './types.js'
 export { CAP_VOCABULARY, CAP_VOCABULARY_BY_NAME } from './vocabulary.js'
+export type {
+  CapVocabularyDecl,
+  DeviceCapVocabularyDecl,
+  EventVocabularyDecl,
+  LooseMethodActionDecl,
+  MethodActionArgs,
+  MethodActionDecl,
+  MethodActionEffect,
+  MethodActionOpenArg,
+  SystemCapVocabularyDecl,
+} from './declaration.js'
+export { NOT_A_DEVICE } from './system-reasons.js'

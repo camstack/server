@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
+import { t } from '../device/cap-vocabulary/l10n.js'
 
 /**
  * Carbon-monoxide alarm sensor. Drives Home Assistant `binary_sensor`
@@ -45,6 +46,26 @@ export const carbonMonoxideCapability = {
   /** Clock fields: written, but excluded from the compare that decides
    *  whether persisting is worth a SQLite commit. */
   volatileStateFields: ['lastChangedAt'],
+  vocabulary: {
+    noun: t('Carbon monoxide', 'Monossido di carbonio'),
+    order: 5030,
+    state: [
+      {
+        kind: 'boolean',
+        field: 'detected',
+        label: t('Detected', 'Rilevato'),
+        whenTrue: t(
+          'When {device} detects carbon monoxide',
+          'Quando {device} rileva monossido di carbonio',
+        ),
+        whenFalse: t(
+          'When the carbon monoxide clears on {device}',
+          'Quando il monossido su {device} rientra',
+        ),
+        icon: 'cloud-alert',
+      },
+    ],
+  },
 } as const satisfies CapabilityDefinition
 
 export type ICarbonMonoxideProvider = InferProvider<typeof carbonMonoxideCapability>

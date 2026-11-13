@@ -44,7 +44,9 @@ export const ExportDenseRangeSchema = z
     fromSec: z.number().nonnegative(),
     toSec: z.number().nonnegative(),
   })
-  .refine((r) => r.toSec > r.fromSec, { message: 'dense range must have toSec > fromSec' })
+  .refine((r) => r.toSec > r.fromSec, {
+    message: 'dense range must have toSec > fromSec',
+  })
 export type ExportDenseRange = z.infer<typeof ExportDenseRangeSchema>
 
 /**
@@ -609,6 +611,9 @@ export const recordingExportCapability = {
       kind: 'query',
       auth: 'protected',
     }),
+  },
+  vocabulary: {
+    notOperatorFacing: 'recording exports — requested from the timeline, not an automation step',
   },
 } as const satisfies CapabilityDefinition
 
