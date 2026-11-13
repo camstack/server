@@ -1,4 +1,5 @@
 import type { Homematic } from 'nodehomematic'
+import { clearStoredKeyLinkStates } from './devices/hm-key-link-states.js'
 import type { HmIntegrationManager } from './homematic-integration-manager.js'
 
 /**
@@ -87,6 +88,7 @@ export class HmFacadeResolver {
     this.#facades.clear()
     this.#sessions.clear()
     this.#snapshotSubs.clear()
+    clearStoredKeyLinkStates()
   }
 }
 

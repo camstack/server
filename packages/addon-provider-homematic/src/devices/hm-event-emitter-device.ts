@@ -14,11 +14,9 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import type { ValueChangedEvent } from 'nodehomematic'
-import { directLinksOfKey } from '../ccu/ccu-button-events.js'
-import { channelNameLookup } from '../ccu/hm-channel-names.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
-import { buttonEventsSection, type HmKeyLinkState } from './hm-button-events-section.js'
-import { hmName } from './hm-name.js'
+import { buttonEventsSection } from './hm-button-events-section.js'
+import { publishKeyLinkStates, storedKeyLinkStates } from './hm-key-link-states.js'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {
   HM_KEY_PRESS_DATAPOINTS,
@@ -62,8 +60,6 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   readonly #pressSeen = new Set<string>()
   /** True once we know a key channel lacks a central link. */
   #centralLinkMissing = false
-  /** Per key channel: central link and direct links, as the CCU last answered. */
-  #keyStates: readonly HmKeyLinkState[] = []
   #eventSeq = 0
   #eventCount = 0
   /** Unsubscribe for the integration's state-change fan-out. */
@@ -90,7 +86,12 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   }
 
   override getSettingsUISchema(): ConfigUISchemaWithValues {
-    return { sections: buttonEventsSection(this.integrationId, this.#keyStates) }
+    return {
+      sections: buttonEventsSection(
+        this.integrationId,
+        storedKeyLinkStates(this.integrationId, this.address),
+      ),
+    }
   }
 
   /**
@@ -127,41 +128,17 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
     const facade =
       this.integrationId === undefined ? null : homematicFacades.get(this.integrationId)
     const device = this.resolveHmDevice()
-    if (facade === null || device === null) return
-    const keys = hmKeyChannels(device)
-    if (keys.length === 0) return
-    const names = channelNameLookup(facade.devices())
-    const states: HmKeyLinkState[] = []
-    let failed = false
-    for (const channel of keys) {
-      const base = {
-        address: channel.address,
-        name: hmName(channel.name),
-        index: channelIndexFromAddress(channel.address) ?? String(channel.index),
-      }
-      try {
-        const state = await facade.getChannelLinkState(channel.address)
-        states.push({
-          ...base,
-          central: state.central,
-          links: directLinksOfKey(channel.address, state.links, names),
-        })
-      } catch (err: unknown) {
-        failed = true
-        states.push({ ...base, central: null, links: [] })
-        this.ctx.logger.warn('Homematic key channel link state could not be read', {
-          tags: { deviceId: this.ctx.id },
-          meta: {
-            address: this.address,
-            channel: channel.address,
-            error: err instanceof Error ? err.message : String(err),
-          },
-        })
-      }
-    }
-    this.#keyStates = states
+    if (facade === null || device === null || this.integrationId === undefined) return
+    const loaded = await publishKeyLinkStates(this.integrationId, {
+      facade,
+      device,
+      deviceAddress: this.address,
+      deviceId: this.ctx.id,
+      logger: this.ctx.logger,
+    })
     // A failed read is not evidence the CCU is silent: the hint stays as it was.
-    if (failed) return
+    if (loaded === null || loaded.failed) return
+    const states = storedKeyLinkStates(this.integrationId, this.address)
     const missing = states.some((state) => state.central === false)
     if (missing === this.#centralLinkMissing) return
     this.#centralLinkMissing = missing

@@ -11,7 +11,9 @@ import {
 import type { Homematic, HmDevice, ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import { hmName } from './hm-name.js'
+import { buttonEventsSection } from './hm-button-events-section.js'
 import { devicePanelSection } from './hm-device-panel-section.js'
+import { publishKeyLinkStates, storedKeyLinkStates } from './hm-key-link-states.js'
 import { mapMaintenanceChannel, readReachability } from '../homematic-diagnostics-mapping.js'
 import { deriveHmEntitySpecs, type HmEntitySpec } from './hm-entity-spec.js'
 import { hmChildFactoryForSpec } from './hm-child-class-factory.js'
@@ -75,6 +77,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     // device is present but reachability is unknown, default online=true.
     this.online = this.deriveOnline(hmDevice)
     this.attachReachabilityListener()
+    void this.refreshButtonEvents()
 
     void this.updateSourceInfo({ id: this.address, system: 'homematic' })
   }
@@ -126,9 +129,31 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     })
   }
 
-  /** The device page's Homematic panel (values, diagnostics, actuation, MASTER configuration). */
+  /** The device page: the CCU panel, then Button events when this device has keys. */
   override getSettingsUISchema(): ConfigUISchemaWithValues {
-    return { sections: [devicePanelSection(this.integrationId, this.address)] }
+    const panel = devicePanelSection(this.integrationId, this.address)
+    const events = buttonEventsSection(
+      this.integrationId,
+      storedKeyLinkStates(this.integrationId, this.address),
+    )
+    return { sections: [panel, ...events] }
+  }
+
+  /**
+   * Publish this device's key-channel central links into the snapshot the
+   * Buttons child also writes. A device without key channels publishes nothing.
+   */
+  private async refreshButtonEvents(): Promise<void> {
+    const facade = this.facade
+    const device = this.resolveHmDevice()
+    if (facade === null || device === null) return
+    await publishKeyLinkStates(this.integrationId, {
+      facade,
+      device,
+      deviceAddress: this.address,
+      deviceId: this.id,
+      logger: this.ctx.logger,
+    })
   }
 
   override async onActivate(): Promise<void> {
@@ -136,6 +161,7 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
     await this.reconcileDerived()
     this.reconcileUnsub = homematicFacades.onSnapshot(this.integrationId, () => {
       void this.reconcileDerived()
+      void this.refreshButtonEvents()
     })
   }
 

@@ -8,7 +8,7 @@
  * spec list.
  */
 
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   DeviceType,
   DeviceRole,
@@ -79,13 +79,29 @@ interface FacadeStub {
   devices: () => HmDevice[]
   customEntities: () => HmCustomEntity[]
   on: () => () => void
+  getChannelLinkState?: (address: string) => Promise<{
+    central: boolean
+    links: readonly []
+  }>
 }
 
-function makeFacade(hmDevices: HmDevice[], customEntities: HmCustomEntity[]): Homematic {
+function makeFacade(
+  hmDevices: HmDevice[],
+  customEntities: HmCustomEntity[],
+  centralByAddress?: Readonly<Record<string, boolean>>,
+): Homematic {
   const stub: FacadeStub = {
     devices: () => hmDevices,
     customEntities: () => customEntities,
     on: () => () => {},
+    ...(centralByAddress === undefined
+      ? {}
+      : {
+          getChannelLinkState: async (address: string) => ({
+            central: centralByAddress[address] ?? false,
+            links: [],
+          }),
+        }),
   }
   // Widen through unknown at this one boundary (Map value is typed Homematic).
   return stub as unknown as Homematic
@@ -350,5 +366,43 @@ describe('HmContainerDevice device page panel', () => {
       widgetId: 'provider-homematic/device-panel',
       widgetConfig: { integrationId: 'hm_001', address: ADDR },
     })
+  })
+
+  it('omits button events when the device has no key channels', () => {
+    homematicFacades.set('hm_001', makeFacade([makeCover()], [coverEntity()]))
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
+    expect(dev.getSettingsUISchema().sections.map((section) => section.id)).toEqual([
+      'homematic-device',
+    ])
+  })
+
+  it('appends button events with each key central state when the device has key channels', async () => {
+    homematicFacades.set(
+      'hm_001',
+      makeFacade([makeWallSwitch()], [], {
+        [`${ADDR}:1`]: false,
+        [`${ADDR}:2`]: true,
+      }),
+    )
+    const dev = new HmContainerDevice(makeCtx({ address: ADDR, integrationId: 'hm_001' }))
+    await vi.waitFor(() => {
+      expect(dev.getSettingsUISchema().sections.map((section) => section.id)).toEqual([
+        'homematic-device',
+        'button-events',
+      ])
+    })
+    const section = dev.getSettingsUISchema().sections[1]
+    const table = section?.fields.find((field) => field.type === 'object-array')
+    expect(table?.type === 'object-array' ? table.value : null).toEqual([
+      { key: 'Key 1', central: 'warn', links: '—' },
+      { key: 'Key 2', central: 'ok', links: '—' },
+    ])
+    const buttons = section?.fields.flatMap((field) =>
+      field.type === 'addon-action-button' ? [field.paramsStatic] : [],
+    )
+    expect(buttons).toEqual([
+      { integrationId: 'hm_001', address: `${ADDR}:1`, enabled: true, confirmed: true },
+      { integrationId: 'hm_001', address: `${ADDR}:2`, enabled: false, confirmed: true },
+    ])
   })
 })
