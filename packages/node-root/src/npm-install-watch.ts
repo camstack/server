@@ -35,11 +35,10 @@ export const NPM_INSTALL_STALL_MS: number = 5 * 60_000
 export const NPM_INSTALL_CEILING_MS: number = 3 * 60 * 60_000
 
 /**
- * How often progress is measured. A full walk of `node_modules` and the npm
- * cache on the slow box was the cost; this period plus a top-level mark
- * (not a recursive byte walk) is the bound.
+ * How often progress is measured. The walk sums file bytes under the staging
+ * tree; polling less often keeps the slow box from thrashing disk.
  */
-export const NPM_INSTALL_POLL_MS = 30_000
+export const NPM_INSTALL_POLL_MS = 60_000
 
 /** After SIGTERM, how long the group has to exit before SIGKILL. */
 export const NPM_INSTALL_KILL_GRACE_MS = 5_000
@@ -247,96 +246,69 @@ export function npmProcessLaunch(
 }
 
 /**
- * A number that grows when the install is moving, without walking
- * `node_modules` or the npm cache.
- *
- * Counted: the directory's own entries (count, mtime, and file size) and
- * one level of children — enough to see a new package appear — plus the
- * byte size of `<cache>/_cacache/index-v5`. A zip that only grows under a
- * package's nested `binary/` does not move this mark; stdout and the cache
- * index still do. A path that disappears mid-read is skipped.
+ * Bytes on disk that represent install progress. The staging tree is summed
+ * recursively so a postinstall that only grows a deep zip still resets the
+ * stall clock. Tarball fetches outside staging contribute through
+ * `<cache>/_cacache/index-v5` only. Symlinks are not followed. A path that
+ * disappears mid-walk is skipped.
  */
-async function progressMark(dir: string): Promise<number> {
-  const index = await cacheIndexMark(path.join(dir, NPM_CACHE_INDEX))
-  return index + (await levelMark(dir))
-}
-
-async function cacheIndexMark(indexPath: string): Promise<number> {
+async function sumPathFileBytes(root: string): Promise<number> {
   let st: fs.Stats
   try {
-    st = await fs.promises.lstat(indexPath)
+    st = await fs.promises.lstat(root)
   } catch {
     return 0
   }
-  if (st.isSymbolicLink()) return st.mtimeMs
-  if (st.isFile()) return st.size + st.mtimeMs
-  if (!st.isDirectory()) return st.mtimeMs
-  let names: fs.Dirent[]
-  try {
-    names = await fs.promises.readdir(indexPath, { withFileTypes: true })
-  } catch {
-    return st.mtimeMs
-  }
-  let mark = names.length + st.mtimeMs
-  for (const entry of names) {
-    if (!entry.isFile()) continue
+  if (st.isFile()) return st.size
+  if (!st.isDirectory()) return 0
+  return sumTreeFileBytes(root)
+}
+
+async function sumTreeFileBytes(root: string): Promise<number> {
+  let total = 0
+  const pending: string[] = [root]
+  while (pending.length > 0) {
+    const dir = pending.pop()
+    if (dir === undefined) continue
+    let handle: fs.Dir
     try {
-      const child = await fs.promises.stat(path.join(indexPath, entry.name))
-      mark += child.size
+      handle = await fs.promises.opendir(dir)
     } catch {
-      // Vanished between readdir and stat — the install is still moving.
+      continue
+    }
+    let entry: fs.Dirent | null
+    try {
+      while ((entry = await handle.read()) !== null) {
+        const full = path.join(dir, entry.name)
+        if (entry.isSymbolicLink()) continue
+        if (entry.isFile()) {
+          try {
+            total += (await fs.promises.stat(full)).size
+          } catch {
+            // Vanished between readdir and stat — the install is still moving.
+          }
+          continue
+        }
+        if (entry.isDirectory()) pending.push(full)
+      }
+    } finally {
+      await handle.close()
     }
   }
-  return mark
-}
-
-async function statMark(full: string): Promise<number> {
-  try {
-    const st = await fs.promises.lstat(full)
-    if (st.isSymbolicLink()) return st.mtimeMs
-    if (st.isFile()) return st.size + st.mtimeMs
-    return st.mtimeMs
-  } catch {
-    return 0
-  }
-}
-
-/** The directory itself, plus one level of children. `_cacache` is the index only. */
-async function levelMark(dir: string): Promise<number> {
-  let entries: fs.Dirent[]
-  try {
-    entries = await fs.promises.readdir(dir, { withFileTypes: true })
-  } catch {
-    return 0
-  }
-  let mark = entries.length
-  for (const entry of entries) {
-    if (entry.name === '_cacache') continue
-    const full = path.join(dir, entry.name)
-    mark += await statMark(full)
-    if (!entry.isDirectory() || entry.isSymbolicLink()) continue
-    mark += await childMark(full)
-  }
-  return mark
-}
-
-async function childMark(dir: string): Promise<number> {
-  let entries: fs.Dirent[]
-  try {
-    entries = await fs.promises.readdir(dir, { withFileTypes: true })
-  } catch {
-    return 0
-  }
-  let mark = entries.length
-  for (const entry of entries) {
-    mark += await statMark(path.join(dir, entry.name))
-  }
-  return mark
+  return total
 }
 
 async function treeProgress(dirs: readonly string[]): Promise<number> {
   let total = 0
-  for (const dir of dirs) total += await progressMark(dir)
+  for (let index = 0; index < dirs.length; index += 1) {
+    const dir = dirs[index]
+    if (dir === undefined) continue
+    if (index === 0) {
+      total += await sumTreeFileBytes(dir)
+      continue
+    }
+    total += await sumPathFileBytes(path.join(dir, NPM_CACHE_INDEX))
+  }
   return total
 }
 

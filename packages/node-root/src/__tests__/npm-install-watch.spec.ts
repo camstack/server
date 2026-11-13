@@ -491,12 +491,12 @@ describe('a cut whose process never exits', () => {
 })
 
 describe('cheap install progress', () => {
-  it('measures progress every 30 seconds', () => {
-    expect(NPM_INSTALL_POLL_MS).toBe(30_000)
+  it('measures progress every 60 seconds', () => {
+    expect(NPM_INSTALL_POLL_MS).toBe(60_000)
     expect(NPM_INSTALL_POLL_MS).toBeLessThan(5 * 60_000)
   })
 
-  it('stalls when only a nested file grows', async () => {
+  it('does not cut when only a nested file keeps growing', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-nested-'))
     const nested = path.join(dir, 'node_modules', 'node-av', 'binary', 'ffmpeg.zip')
     const stop = path.join(dir, 'stop')
@@ -511,15 +511,16 @@ describe('cheap install progress', () => {
         }
       }, 5)
     `
+    const stallMs = 5 * 60_000
     let clock = 0
     let settled = false
     const outcome = runWatchedCommand({
       command: process.execPath,
       args: ['-e', script, nested, stop],
       cwd: dir,
-      stallMs: 5 * 60_000,
+      stallMs,
       ceilingMs: 30 * 60_000,
-      pollMs: 30_000,
+      pollMs: NPM_INSTALL_POLL_MS,
       graceMs: 20,
       now: () => clock,
       sleep: async (ms) => {
@@ -527,22 +528,51 @@ describe('cheap install progress', () => {
         await new Promise((resolve) => setTimeout(resolve, 15))
       },
       log: silentLog,
-    })
-    void outcome.then(
-      () => {
+    }).then(
+      (value) => {
         settled = true
+        return value
       },
-      () => {
+      (err: unknown) => {
         settled = true
+        throw err
       },
     )
-    const deadline = Date.now() + 4_000
-    while (!settled && Date.now() < deadline) {
+    const deadline = Date.now() + 5_000
+    while (clock <= stallMs) {
+      if (settled) break
+      if (Date.now() > deadline) break
       await new Promise((resolve) => setTimeout(resolve, 20))
     }
+    expect(settled).toBe(false)
+    expect(clock).toBeGreaterThan(stallMs)
     fs.writeFileSync(stop, '1')
-    expect(settled).toBe(true)
+    await expect(outcome).resolves.toEqual({ stdout: '' })
+    fs.rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('cuts when the staging tree stops growing for the stall window', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-flat-stall-'))
+    let clock = 0
+    const stallMs = 5 * 60_000
+    const spawnProcess: WatchedSpawner = () => deferredChild(5152).child
+    const outcome = runWatchedCommand({
+      command: process.execPath,
+      args: ['-e', ''],
+      cwd: dir,
+      stallMs,
+      ceilingMs: 3 * 60 * 60_000,
+      pollMs: NPM_INSTALL_POLL_MS,
+      graceMs: 0,
+      now: () => clock,
+      sleep: async (ms) => {
+        clock += ms
+      },
+      log: silentLog,
+      spawnProcess,
+    })
     await expect(outcome).rejects.toMatchObject({ kind: 'timeout-stall' })
+    expect(clock).toBeGreaterThanOrEqual(stallMs)
     fs.rmSync(dir, { recursive: true, force: true })
   })
 
@@ -639,17 +669,18 @@ describe('progress outside the staging directory', () => {
     `
   }
 
-  it('does not cut a slow writer outside cwd', async () => {
+  it('does not cut a slow npm cache index writer outside cwd', async () => {
     const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-out-cwd-'))
     const outside = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-out-dir-'))
-    const bytes = path.join(outside, 'bytes')
+    const index = path.join(outside, '_cacache', 'index-v5')
     const stop = path.join(outside, 'stop')
+    fs.mkdirSync(path.dirname(index), { recursive: true })
     const oldWallMs = 15 * 60_000
     let clock = 0
     let settled = false
     const outcome = runWatchedCommand({
       command: process.execPath,
-      args: ['-e', slowWriter(bytes, stop)],
+      args: ['-e', slowWriter(index, stop)],
       cwd,
       progressDirs: [outside],
       stallMs: 10 * 60_000,
