@@ -15,8 +15,9 @@ import {
   useDeviceManagerRenderDeviceTemplates,
 } from '../../generated/system-hooks'
 import { useDebouncedString } from '../../hooks/use-debounced-string'
-import { IconButton } from '../../primitives/icon-button'
+import { Button } from '../../primitives/button'
 import { Input } from '../../primitives/input'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
 import { Textarea } from '../../primitives/textarea'
 import { SelectedChip } from '../device-picker/SelectedChip'
 import { DeviceTemplateInsert } from './device-template-insert'
@@ -190,22 +191,31 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
             <Input ref={element} autoFocus={editing} {...common} />
           )}
         </div>
-        <IconButton
-          type="button"
-          variant="outline"
-          size="sm"
-          icon={Braces}
-          aria-label={t('uiLibrary.deviceTemplateField.insertValue', 'Insert a device value')}
-          title={t('uiLibrary.deviceTemplateField.insertValue', 'Insert a device value')}
-          disabled={disabled}
-          data-testid={`${testId}-insert`}
-          // Keep the caret where it is: a mousedown would blur the box before the click.
-          onMouseDown={(e) => {
-            e.preventDefault()
-            remember()
-          }}
-          onClick={() => setDialogOpen(true)}
-        />
+        <Tooltip className="shrink-0">
+          <TooltipTrigger>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              disabled={disabled}
+              data-testid={`${testId}-insert`}
+              aria-label={t('uiLibrary.deviceTemplateField.insertValue', 'Insert value')}
+              onMouseDown={(e) => {
+                e.preventDefault()
+                remember()
+              }}
+              onClick={() => setDialogOpen(true)}
+            >
+              <Braces className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">
+                {t('uiLibrary.deviceTemplateField.insertValue', 'Insert value')}
+              </span>
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent className="sm:hidden">
+            {t('uiLibrary.deviceTemplateField.insertValue', 'Insert value')}
+          </TooltipContent>
+        </Tooltip>
       </div>
       <TemplateFeedback
         value={value}

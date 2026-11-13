@@ -54,7 +54,7 @@ const SLOTS_BY_DEVICE: Record<number, unknown[]> = {
       cameraText: 'old text',
       binding: {
         enabled: true,
-        source: { kind: 'static', text: 'hi' },
+        source: { kind: 'static', text: 'MARKED-VALUE' },
       },
     },
     {
@@ -101,6 +101,8 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
+    DEVICE_TEMPLATE_DOCS_URL:
+      'https://camstack-docs.zentik.app/docs/day-to-day/device-templates',
     // The field's own behaviour is covered in ui-library; here only the handle the editor drives.
     DeviceTemplateField: ({
       handle,
@@ -108,17 +110,20 @@ vi.mock('@camstack/ui-library', async () => {
       onChange,
       testId,
     }: {
-      handle: { current: { insertText: (text: string) => void } | null }
+      handle?: { current: { insertText: (text: string) => void } | null }
       value: string
       onChange: (next: string) => void
       testId: string
     }) => {
       const latest = React.useRef(value)
       latest.current = value
-      handle.current = { insertText: (text) => onChange(latest.current + text) }
+      if (handle !== undefined) {
+        handle.current = { insertText: (text) => onChange(latest.current + text) }
+      }
       return React.createElement('textarea', {
         'data-testid': `${testId}-input`,
         value,
+        'aria-label': 'Text',
         onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => onChange(e.target.value),
       })
     },
@@ -292,37 +297,36 @@ describe('OsdManagerPage — table of cameras', () => {
 })
 
 describe('OsdManagerPage — camera editor modal', () => {
-  it('opens a dialog with slot tabs and the active editor', async () => {
+  it('opens a dialog with the camera section editor', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-slot-tab-text-1')).toBeTruthy())
-    expect(screen.queryByTestId('osd-slot-tab-time-1')).toBeNull()
-    expect(screen.queryByText('Edit slot “text-1”')).toBeNull()
+    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
+    expect(screen.queryByTestId('osd-slot-tabs')).toBeNull()
     expect(screen.getByTestId('osd-slot-current-value')).toBeTruthy()
   })
 
   it('only one camera editor is open at a time', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-slot-tab-text-1')).toBeTruthy())
+    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Back Yard' }))
     await waitFor(() => {
       const dialog = screen.getByTestId('osd-camera-editor')
       expect(within(dialog).getByText('Back Yard')).toBeTruthy()
     })
-    expect(screen.getByTestId('osd-slot-tab-text-1')).toBeTruthy()
+    expect(screen.getByTestId('osd-camera-section')).toBeTruthy()
   })
 
   it('closing the dialog hides the editor again', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-slot-tab-text-1')).toBeTruthy())
+    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
 
     fireEvent.click(
       within(screen.getByTestId('osd-camera-editor')).getByRole('button', { name: 'Close' }),
     )
-    await waitFor(() => expect(screen.queryByTestId('osd-slot-tab-text-1')).toBeNull())
+    await waitFor(() => expect(screen.queryByTestId('osd-camera-section')).toBeNull())
   })
 
   it('an unsupported camera opens to a plain explanatory message, with no editor', async () => {
@@ -335,72 +339,43 @@ describe('OsdManagerPage — camera editor modal', () => {
         within(dialog).getByText('This camera does not expose writable text-overlay slots.'),
       ).toBeTruthy(),
     )
-    expect(within(dialog).queryByTestId('osd-slot-tab-text-1')).toBeNull()
+    expect(within(dialog).queryByTestId('osd-camera-section')).toBeNull()
     expect(within(dialog).queryByTestId('osd-camera-save')).toBeNull()
   })
 })
 
 describe('OsdManagerPage — slot editing inside the modal', () => {
-  it('mounts the editor and saves every writable layer from the dialog footer', async () => {
+  it('shows one section with three source choices, no slot tabs, and saves the first writable slot only', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-slot-current-value')).toBeTruthy())
-    expect(screen.getByTestId('osd-slot-tab-text-1').getAttribute('aria-selected')).toBe('true')
+    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
+    expect(screen.queryByTestId('osd-slot-content-tabs')).toBeNull()
+    expect(screen.queryByTestId('osd-slot-tabs')).toBeNull()
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Binding' }))
-    const textInput = (await screen.findByLabelText('Text')) as HTMLInputElement
+    expect(selectOptionLabels(screen.getByLabelText('Source'))).toEqual(
+      expect.arrayContaining(['None', 'Named template', 'Value']),
+    )
+    expect((screen.getByLabelText('Source') as HTMLSelectElement).value).toBe('value')
+    const textInput = screen.getByTestId('osd-value-field-input') as HTMLTextAreaElement
+    expect(textInput.value).toBe('MARKED-VALUE')
+    expect(screen.getByTestId('osd-value-help')).toBeTruthy()
+    const docs = screen.getByRole('link', { name: 'Template syntax' })
+    expect(docs.getAttribute('href')).toBe(
+      'https://camstack-docs.zentik.app/docs/day-to-day/device-templates',
+    )
+    expect(screen.getByTestId('osd-slot-current-value')).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy()
+
     fireEvent.change(textInput, { target: { value: 'Hello operator' } })
     fireEvent.click(screen.getByTestId('osd-camera-save'))
 
     await waitFor(() => expect(mockSetSlotBinding).toHaveBeenCalled())
-    const call = mockSetSlotBinding.mock.calls.find((c) => c[0].slotId === 'text-1')?.[0]
-    expect(call).toBeTruthy()
+    expect(mockSetSlotBinding.mock.calls).toHaveLength(1)
+    const call = mockSetSlotBinding.mock.calls[0]?.[0]
     expect(call!.deviceId).toBe(1)
+    expect(call!.slotId).toBe('text-1')
     expect(call!.binding.source).toEqual({ kind: 'static', text: 'Hello operator' })
-    await waitFor(() => expect(screen.queryByTestId('osd-slot-tab-text-1')).toBeNull())
-  })
-
-  it('hides read-only layers from the single-camera tab strip', async () => {
-    render(<OsdManagerPage {...pageProps} />)
-    await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-slot-tab-text-1')).toBeTruthy())
-    expect(screen.queryByTestId('osd-slot-tab-time-1')).toBeNull()
-    expect(screen.queryByTestId('osd-slot-readonly')).toBeNull()
-    expect(screen.getByTestId('osd-camera-save')).toBeTruthy()
-    expect(screen.getByRole('tab', { name: 'Layer' })).toBeTruthy()
-    expect(screen.getByRole('tab', { name: 'Binding' })).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy()
-    expect(screen.queryByText('Save & apply')).toBeNull()
-  })
-
-  it('labels each writable slot tab with a short bound/unbound status', async () => {
-    render(<OsdManagerPage {...pageProps} />)
-    await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-slot-tab-text-1')).toBeTruthy())
-    expect(screen.getByTestId('osd-slot-tab-text-1').textContent).toContain('bound')
-  })
-
-  it('puts the Layer/Binding panel in the URL and keeps it across slot changes', async () => {
-    render(<OsdManagerPage {...pageProps} />)
-    await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-slot-content-tabs')).toBeTruthy())
-    expect(screen.queryByRole('button', { name: /Clear binding/i })).toBeNull()
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Binding' }))
-    await waitFor(() =>
-      expect(new URLSearchParams(window.location.search).get('panel')).toBe('binding'),
-    )
-    expect(screen.getByLabelText('Source')).toBeTruthy()
-
-    fireEvent.click(screen.getByTestId('osd-slot-tab-text-2'))
-    await waitFor(() =>
-      expect(screen.getByTestId('osd-slot-tab-text-2').getAttribute('aria-selected')).toBe('true'),
-    )
-    expect(new URLSearchParams(window.location.search).get('panel')).toBe('binding')
-    expect(screen.getByLabelText('Source')).toBeTruthy()
-    const source = screen.getByLabelText('Source') as HTMLSelectElement
-    expect(source.value).toBe('none')
-    expect(screen.getByTestId('osd-source-none-hint')).toBeTruthy()
+    await waitFor(() => expect(screen.queryByTestId('osd-camera-section')).toBeNull())
   })
 })
 

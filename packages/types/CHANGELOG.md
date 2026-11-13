@@ -112,6 +112,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification history can show the title and body that were sent.
 - Email images travel as peerBytes tickets on smtp-provider.sendEmail.
 - A cluster update can name a server install that stalled or hit its time limit.
+### Changed
+
+- OSD static overlay text may be up to 1024 characters, same as named templates.
 
 ## [1.2.562] - 2026-11-13
 

@@ -1,4 +1,5 @@
 export * from './composites'
+export { DEVICE_TEMPLATE_DOCS_URL } from './composites/device-template-field/index.js'
 export { uiLibraryVersion } from './ui-library-version'
 export * from './hotkeys'
 export * from './contexts/custom-field-renderers'

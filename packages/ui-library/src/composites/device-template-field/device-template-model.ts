@@ -66,17 +66,24 @@ function head(path: string): string {
  * cap of the device carries a field of that name; otherwise the cap is spelled out
  * (`{{ alias.cap_name.field }}`), as the renderer requires.
  */
+function escapeUnitLiteral(unit: string): string {
+  return unit.replaceAll('\\', '\\\\').replaceAll("'", "\\'")
+}
+
 export function deviceTemplateToken(
   alias: string,
   pick: { readonly cap: string; readonly path: string },
   caps: readonly DeviceCapFields[],
+  unit?: string,
 ): string {
   const field = head(pick.path)
   const owners = caps.filter((c) => c.paths.some((p) => head(p) === field))
   const ambiguous = owners.some((c) => c.cap !== pick.cap)
-  return ambiguous
+  const base = ambiguous
     ? `{{ ${alias}.${templateCapKey(pick.cap)}.${pick.path} }}`
     : `{{ ${alias}.${pick.path} }}`
+  if (unit === undefined || unit === '') return base
+  return base.replace(/\s*\}\}$/, ` | unit('${escapeUnitLiteral(unit)}') }}`)
 }
 
 export interface TemplateSelection {

@@ -54,6 +54,19 @@ describe('deviceTemplateToken', () => {
       deviceTemplateToken('stufa', { cap: 'temperature-sensor', path: 'temperature' }, caps),
     ).toBe('{{ stufa.temperature_sensor.temperature }}')
   })
+  it('appends unit() when a display unit is passed', () => {
+    expect(
+      deviceTemplateToken('garage', { cap: 'climate', path: 'temperature' }, caps, '°C'),
+    ).toBe("{{ garage.temperature | unit('°C') }}")
+    expect(
+      deviceTemplateToken(
+        'garage',
+        { cap: 'temperature-sensor', path: 'temperature' },
+        caps,
+        "O'Brien",
+      ),
+    ).toBe("{{ garage.temperature_sensor.temperature | unit('O\\'Brien') }}")
+  })
 })
 
 describe('insertTemplateToken', () => {

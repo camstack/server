@@ -5,11 +5,15 @@ import type { TemplateOutcome } from '../template-context.js'
 
 const CAMERA = 101
 
-function facts(rendered: Record<string, TemplateOutcome> = {}): OsdFacts {
+function facts(
+  rendered: Record<string, TemplateOutcome> = {},
+  renderedStatic: Record<string, TemplateOutcome> = {},
+): OsdFacts {
   return {
     atMs: Date.UTC(2026, 7, 7, 9, 5, 0),
     deviceState: () => undefined,
     rendered: new Map(Object.entries(rendered)),
+    renderedStatic: new Map(Object.entries(renderedStatic)),
   }
 }
 
@@ -32,16 +36,32 @@ describe('renderSlot', () => {
     ).toMatchObject({ outcome: 'disabled' })
   })
 
-  it('writes blank text for a none source and the text of a static one', () => {
+  it('writes blank text for a none source', () => {
     expect(
       renderSlot('text-1', binding({ source: { kind: 'none' } }), CAMERA, facts(), undefined),
     ).toMatchObject({ outcome: 'written', text: '' })
+  })
+
+  it('writes the rendered outcome for static text, not raw template markup', () => {
+    const staticBinding = binding({ source: { kind: 'static', text: '{{ camera.name }}' } })
+    expect(
+      renderSlot('text-1', staticBinding, CAMERA, facts(), undefined),
+    ).toMatchObject({ outcome: 'unreadable' })
+    expect(
+      renderSlot(
+        'text-1',
+        staticBinding,
+        CAMERA,
+        facts({}, { 'text-1': { ok: true, text: 'Front Door' } }),
+        undefined,
+      ),
+    ).toMatchObject({ outcome: 'written', text: 'Front Door' })
     expect(
       renderSlot(
         'text-1',
         binding({ source: { kind: 'static', text: 'GATE' } }),
         CAMERA,
-        facts(),
+        facts({}, { 'text-1': { ok: true, text: 'GATE' } }),
         undefined,
       ),
     ).toMatchObject({ outcome: 'written', text: 'GATE' })

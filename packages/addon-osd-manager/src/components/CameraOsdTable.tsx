@@ -10,15 +10,10 @@ import {
   DataTableFilterBar,
   useDataTableFilter,
   useItemFormUrl,
-  useUrlQueryParam,
   type DataColumn,
 } from '@camstack/ui-library'
 import type { OsdNamedTemplate } from '@camstack/types'
-import {
-  parseSlotContentPanel,
-  type OsdCameraRow,
-  type SlotContentPanel,
-} from '../ui/osd-page-model.js'
+import { type OsdCameraRow } from '../ui/osd-page-model.js'
 import { useT } from '../i18n/index.js'
 import { DuplicateIntoAction } from './DuplicateIntoAction.js'
 import {
@@ -44,12 +39,6 @@ export function CameraOsdTable({ cameras, osdCapableIds, templates }: CameraOsdT
   }
   const capableFacet = t('table.facetCapable')
   const formUrl = useItemFormUrl({ editKey: 'device' })
-  const [slotParam, setSlotParam] = useUrlQueryParam('slot')
-  const [panelParam, setPanelParam] = useUrlQueryParam('panel')
-  const contentPanel = parseSlotContentPanel(panelParam)
-  const setContentPanel = (next: SlotContentPanel): void => {
-    setPanelParam(next === 'layer' ? null : next)
-  }
   const refetchers = useRef(new Map<number, () => void>())
   const seededCapability = useRef(false)
 
@@ -89,8 +78,6 @@ export function CameraOsdTable({ cameras, osdCapableIds, templates }: CameraOsdT
 
   function closeEditor() {
     formUrl.close()
-    setSlotParam(null)
-    setPanelParam(null)
   }
 
   const editingId =
@@ -210,10 +197,6 @@ export function CameraOsdTable({ cameras, osdCapableIds, templates }: CameraOsdT
           camera={editingCamera}
           templates={templates}
           onRefetchReady={registerRefetch}
-          activeSlotId={slotParam}
-          onActiveSlotIdChange={setSlotParam}
-          contentPanel={contentPanel}
-          onContentPanelChange={setContentPanel}
           onClose={closeEditor}
         />
       ) : null}

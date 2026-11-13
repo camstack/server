@@ -1027,3 +1027,6 @@ Two names are not devices and are never bound to one.
 - The check result lists `reads` (alias to device id), which is how a caller learns
   which devices a text depends on.
 
+Operators can read the full template syntax at
+https://camstack-docs.zentik.app/docs/day-to-day/device-templates.
+

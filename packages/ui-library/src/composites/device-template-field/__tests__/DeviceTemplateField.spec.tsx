@@ -172,6 +172,11 @@ describe('DeviceTemplateField', () => {
     expect(screen.getByTestId('device-template-field-input')).toBeTruthy()
   })
 
+  it('shows Insert value as visible button text, not only an aria label', () => {
+    renderUi(<Harness initial="" />)
+    expect(screen.getByTestId('device-template-field-insert').textContent).toContain('Insert value')
+  })
+
   it('removing a chip removes exactly that token from the stored text', () => {
     renderUi(<Harness initial="a {{ stufa.temperature }} b" />)
     fireEvent.click(screen.getByRole('button', { name: /Remove stufa.temperature/ }))

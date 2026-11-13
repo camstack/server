@@ -1,10 +1,13 @@
-import { type ReactNode, useCallback, useMemo, useState } from 'react'
+import { type ReactNode, useCallback, useEffect, useMemo, useState } from 'react'
+import { runtimeFieldUnit } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
 } from '../../generated/system-hooks'
 import { Button } from '../../primitives/button'
+import { Label } from '../../primitives/label'
+import { Switch } from '../../primitives/switch'
 import {
   Dialog,
   DialogBody,
@@ -21,9 +24,9 @@ import {
 import {
   type DeviceCapFields,
   type DeviceTemplateAccepts,
-  deviceTemplateToken,
   fieldAccepts,
 } from './device-template-model'
+import { tokenForInsert } from './device-template-insert-model'
 
 export interface DeviceTemplateInsertProps {
   readonly accepts: DeviceTemplateAccepts
@@ -49,6 +52,7 @@ export function DeviceTemplateInsert(props: DeviceTemplateInsertProps): ReactNod
   const t = useUiText()
   const [deviceId, setDeviceId] = useState<number | null>(null)
   const [pick, setPick] = useState<DeviceValuePick | null>(null)
+  const [withUnit, setWithUnit] = useState(true)
   const { accepts, onOpenChange } = props
   const fit = useCallback(
     (field: DeviceValueCandidate): string | null => (fieldAccepts(accepts, field.kind) ? '' : null),
@@ -74,15 +78,27 @@ export function DeviceTemplateInsert(props: DeviceTemplateInsertProps): ReactNod
       })),
     [wireable.data],
   )
+  const fieldUnit = pick !== null ? runtimeFieldUnit(pick.cap, pick.path) : undefined
+  const showWithUnit = fieldUnit !== undefined && fieldUnit !== ''
+
+  useEffect(() => {
+    setWithUnit(true)
+  }, [pick?.cap, pick?.path])
+
   const close = (): void => {
     onOpenChange(false)
     setDeviceId(null)
     setPick(null)
+    setWithUnit(true)
   }
   const alias = deviceId !== null && deviceId === props.thisDeviceId ? 'camera' : device?.alias
+  const previewToken =
+    pick !== null && alias !== undefined
+      ? tokenForInsert(alias, pick, caps, { withUnit, unit: fieldUnit })
+      : ''
   const confirm = (): void => {
     if (pick === null || alias === undefined) return
-    props.onInsert(deviceTemplateToken(alias, pick, caps))
+    props.onInsert(tokenForInsert(alias, pick, caps, { withUnit, unit: fieldUnit }))
     close()
   }
   return (
@@ -122,6 +138,27 @@ export function DeviceTemplateInsert(props: DeviceTemplateInsertProps): ReactNod
               )}
             </p>
           )}
+          {showWithUnit ? (
+            <div className="mt-3 flex items-center gap-2">
+              <Switch
+                id="device-template-insert-with-unit"
+                checked={withUnit}
+                onCheckedChange={setWithUnit}
+                data-testid="device-template-insert-with-unit"
+              />
+              <Label htmlFor="device-template-insert-with-unit" className="text-xs font-normal">
+                {t('uiLibrary.deviceTemplateField.withUnit', 'With unit')}
+              </Label>
+            </div>
+          ) : null}
+          {previewToken !== '' ? (
+            <p
+              className="mt-2 font-mono text-xs text-foreground-muted"
+              data-testid="device-template-insert-preview"
+            >
+              {previewToken}
+            </p>
+          ) : null}
         </DialogBody>
         <DialogFooter>
           <Button variant="ghost" onClick={close}>

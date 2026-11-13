@@ -33,12 +33,26 @@ export function emptyBindingDraft(): OsdSlotBinding {
   }
 }
 
-/** Camera slot dialog content tab — Layer (incl. Preview) | Binding. */
-export type SlotContentPanel = 'layer' | 'binding'
+/** Operator-facing source choice — stored kinds stay `none | static | template`. */
+export type OsdSourceChoice = 'none' | 'namedTemplate' | 'value'
 
-/** Parse `?panel=` for the camera slot editor; unknown / absent → layer. */
-export function parseSlotContentPanel(raw: string | null): SlotContentPanel {
-  return raw === 'binding' ? 'binding' : 'layer'
+export function choiceOfSource(source: OsdSource): OsdSourceChoice {
+  if (source.kind === 'none') return 'none'
+  if (source.kind === 'template') return 'namedTemplate'
+  return 'value'
+}
+
+export function sourceOfChoice(
+  choice: OsdSourceChoice,
+  previous: OsdSource,
+  templates: readonly { readonly id: string }[],
+): OsdSource {
+  if (choice === 'none') return { kind: 'none' }
+  if (choice === 'value') {
+    return previous.kind === 'static' ? previous : { kind: 'static', text: '' }
+  }
+  if (previous.kind === 'template') return previous
+  return { kind: 'template', templateId: templates[0]?.id ?? '' }
 }
 
 /** The draft a slot editor opens with: its saved binding, or a fresh one. */

@@ -21,6 +21,8 @@ export interface OsdFacts {
   readonly deviceState: OsdDeviceStateLookup
   /** Rendered named templates by id — present for every template a slot uses. */
   readonly rendered: ReadonlyMap<string, TemplateOutcome>
+  /** Rendered `static` source text keyed by slot id — never shares template ids. */
+  readonly renderedStatic: ReadonlyMap<string, TemplateOutcome>
 }
 
 /**
@@ -59,7 +61,12 @@ export function renderSlot(
   const source = binding.source
   if (source.kind === 'none') return settle(slotId, '', previousText, 'written')
   if (source.kind === 'static') {
-    return settle(slotId, limitText(source.text.trim(), maxCharacters), previousText, 'written')
+    const outcome = facts.renderedStatic.get(slotId)
+    if (outcome === undefined) {
+      return unreadable(slotId, previousText, 'value source was not rendered')
+    }
+    if (!outcome.ok) return unreadable(slotId, previousText, outcome.reason)
+    return settle(slotId, limitText(outcome.text.trim(), maxCharacters), previousText, 'written')
   }
 
   const outcome = facts.rendered.get(source.templateId)

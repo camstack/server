@@ -17,7 +17,12 @@
     "noneHint": "Writes blank overlay text. The binding stays so CamStack keeps owning this slot.",
     "text": "Text",
     "namedTemplate": "Named template",
-    "noTemplates": "No templates yet — create one in the Templates tab."
+    "noTemplates": "No templates yet — create one in the Templates tab.",
+    "choice": {
+      "none": "None",
+      "namedTemplate": "Named template",
+      "value": "Value"
+    }
   },
   "duplicate": {
     "trigger": "Duplicate into…",
@@ -156,5 +161,14 @@
     "cameraHint": "camera is the camera the template is shown on, so one template serves every camera. now is the server time. camera.lastPerson and camera.lastPlate are the latest recognitions.",
     "previewCamera": "Preview on camera",
     "previewIdle": "Type a text to see how it reads."
+  },
+  "camera": {
+    "valueFieldHint": "Type text, and use Insert value to show a device reading",
+    "valueHelpTitle": "Value help",
+    "valueHelp": {
+      "line1": "Plain text is written as it is. {{ alias.field }} reads a device; camera means this camera.",
+      "line2": "| unit('°C') prints the unit. {{ now | time('HH:mm') }} is the clock. {{ camera.lastPerson }} and {{ camera.lastPlate }} are the last recognition.",
+      "docsLink": "Template syntax"
+    }
   }
 }

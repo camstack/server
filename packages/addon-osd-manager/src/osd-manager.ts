@@ -868,6 +868,7 @@ export class OsdManager implements IOsdManagerProvider {
   ): Promise<OsdFacts> {
     const wanted = new Set<number>()
     const slotsByTemplate = new Map<string, string[]>()
+    const staticBySlot = new Map<string, string>()
     for (const [slotId, binding] of Object.entries(bindings)) {
       const gated = binding.conditions?.deviceState?.deviceId
       if (gated !== undefined) wanted.add(gated)
@@ -876,6 +877,9 @@ export class OsdManager implements IOsdManagerProvider {
           ...(slotsByTemplate.get(binding.source.templateId) ?? []),
           slotId,
         ])
+      }
+      if (binding.source.kind === 'static') {
+        staticBySlot.set(slotId, binding.source.text)
       }
     }
 
@@ -894,18 +898,39 @@ export class OsdManager implements IOsdManagerProvider {
     }
 
     const rendered = new Map<string, TemplateOutcome>()
+    const renderedStatic = new Map<string, TemplateOutcome>()
     const registered = new Set<string>()
     const all = await this.deps.templates.get()
     const used = all.filter((t) => slotsByTemplate.has(t.id))
-    if (used.length > 0) {
-      if (used.some((t) => mentionsRecognition(t.text))) {
+    const staticEntries = [...staticBySlot.entries()]
+    const batchTexts: string[] = []
+    const batchTemplateIds: string[] = []
+    const batchStaticSlotIds: string[] = []
+    for (const t of used) {
+      batchTexts.push(t.text)
+      batchTemplateIds.push(t.id)
+    }
+    for (const [slotId, text] of staticEntries) {
+      batchTexts.push(text)
+      batchStaticSlotIds.push(slotId)
+    }
+    if (batchTexts.length > 0) {
+      if (
+        used.some((t) => mentionsRecognition(t.text)) ||
+        staticEntries.some(([, text]) => mentionsRecognition(text))
+      ) {
         await this.hydrateRecognitions(cameraDeviceId)
       }
-      const outcomes = await this.renderUsed(
-        cameraDeviceId,
-        used.map((t) => t.text),
-      )
-      used.forEach((t, i) => rendered.set(t.id, outcomes[i] ?? { ok: false, reason: 'no render' }))
+      const outcomes = await this.renderUsed(cameraDeviceId, batchTexts)
+      let index = 0
+      for (const templateId of batchTemplateIds) {
+        rendered.set(templateId, outcomes[index] ?? { ok: false, reason: 'no render' })
+        index += 1
+      }
+      for (const slotId of batchStaticSlotIds) {
+        renderedStatic.set(slotId, outcomes[index] ?? { ok: false, reason: 'no render' })
+        index += 1
+      }
       if (options.register) {
         for (const [templateId, slotIds] of slotsByTemplate) {
           const text = used.find((t) => t.id === templateId)?.text
@@ -915,6 +940,11 @@ export class OsdManager implements IOsdManagerProvider {
             this.registerSlot(cameraDeviceId, slotId, deps)
             registered.add(slotId)
           }
+        }
+        for (const [slotId, text] of staticEntries) {
+          const deps = await this.dependenciesOf(cameraDeviceId, text)
+          this.registerSlot(cameraDeviceId, slotId, deps)
+          registered.add(slotId)
         }
       }
     }
@@ -929,6 +959,7 @@ export class OsdManager implements IOsdManagerProvider {
       atMs: this.now(),
       deviceState: (id) => gateState.get(id),
       rendered,
+      renderedStatic,
     }
   }
 

@@ -4,27 +4,22 @@ import {
   Button,
   ErrorBox,
   ItemFormDialog,
-  Tabs,
   useOsdManagerGetDeviceOsd,
   useOsdManagerRenderDevice,
   useOsdManagerSetSlotBinding,
 } from '@camstack/ui-library'
 import { Loader2, Monitor } from 'lucide-react'
-import type { OsdNamedTemplate, OsdSlotBinding, OsdSlotView } from '@camstack/types'
+import type { OsdNamedTemplate, OsdSlotBinding } from '@camstack/types'
 import { useT } from '../i18n/index.js'
-import { SlotEditor, SlotEditorTabList } from './SlotEditor.js'
+import { OsdCameraSection } from './OsdCameraSection.js'
 import {
   activeSourceChips,
   cameraOsdStatus,
   cameraStatusLabel,
   cameraStatusTone,
-  defaultActiveSlotId,
   dirtySlotBindings,
   draftForSlot,
   type OsdCameraRow,
-  type SlotContentPanel,
-  slotTabStatus,
-  slotTabStatusLabel,
   sourceSummary,
   writableSlots,
 } from '../ui/osd-page-model.js'
@@ -85,7 +80,6 @@ export function CameraOsdSourcesCell({
     return <span className="text-xs text-foreground-subtle">{t('row.noActiveSources')}</span>
   }
 
-  // Up to two lines — wrapping Badges used to stretch every row to chip count.
   const label = chips.map((chip) => chip.label).join(' · ')
   return (
     <span
@@ -134,27 +128,14 @@ interface CameraOsdDetailProps {
   readonly camera: OsdCameraRow
   readonly templates: readonly OsdNamedTemplate[]
   readonly onRefetchReady: (deviceId: number, refetch: () => void) => void
-  /** Active slot from the URL (`?slot=`), or null to use the default. */
-  readonly activeSlotId: string | null
-  readonly onActiveSlotIdChange: (slotId: string | null) => void
-  /** Content panel from the URL (`?panel=`), persists across slot changes. */
-  readonly contentPanel: SlotContentPanel
-  readonly onContentPanelChange: (panel: SlotContentPanel) => void
   readonly onClose: () => void
 }
 
-/**
- * Camera OSD dialog: slot strip + Layer/Binding tabs in beforeBody
- * (NC Edit Allarme chrome). Save writes every layer.
- */
+/** Camera OSD dialog — first writable slot only. */
 export function CameraOsdDetail({
   camera,
   templates,
   onRefetchReady,
-  activeSlotId: slotFromUrl,
-  onActiveSlotIdChange,
-  contentPanel,
-  onContentPanelChange,
   onClose,
 }: CameraOsdDetailProps) {
   const { t } = useT()
@@ -164,50 +145,36 @@ export function CameraOsdDetail({
   )
   const slots = osdQuery.data?.slots ?? []
   const editableSlots = useMemo(() => writableSlots(slots), [slots])
-  const activeSlotId = useMemo(() => {
-    if (slotFromUrl !== null && editableSlots.some((slot) => slot.slotId === slotFromUrl)) {
-      return slotFromUrl
-    }
-    return defaultActiveSlotId(editableSlots)
-  }, [slotFromUrl, editableSlots])
-  const activeSlot = editableSlots.find((slot) => slot.slotId === activeSlotId)
+  const primarySlot = editableSlots[0]
 
-  const [drafts, setDrafts] = useState<Readonly<Record<string, OsdSlotBinding>>>({})
-  /** Drafts as loaded from the server — Save only writes slots that differ. */
-  const [baselineDrafts, setBaselineDrafts] = useState<Readonly<Record<string, OsdSlotBinding>>>({})
+  const [draft, setDraft] = useState<OsdSlotBinding | null>(null)
+  const [baseline, setBaseline] = useState<OsdSlotBinding | null>(null)
   const [saveError, setSaveError] = useState<string | null>(null)
 
   const setBinding = useOsdManagerSetSlotBinding()
   const saving = setBinding.isPending
 
-  // Fingerprint server bindings only — never re-seed on a fresh probe object
-  // with the same bindings (hooks may return a new `data` every render).
   const bindingSeed = useMemo(() => {
-    if (osdQuery.data === undefined) return null
-    const writable = writableSlots(osdQuery.data.slots)
-    const nextDrafts: Record<string, OsdSlotBinding> = {}
-    for (const slot of writable) {
-      nextDrafts[slot.slotId] = draftForSlot(slot)
-    }
+    if (osdQuery.data === undefined || primarySlot === undefined) return null
+    const nextDraft = draftForSlot(primarySlot)
     return {
-      key: `${camera.id}:${writable
-        .map((slot) => `${slot.slotId}:${JSON.stringify(slot.binding)}`)
-        .join('|')}`,
-      drafts: nextDrafts,
+      key: `${camera.id}:${primarySlot.slotId}:${JSON.stringify(primarySlot.binding)}`,
+      draft: nextDraft,
     }
-  }, [camera.id, osdQuery.data])
+  }, [camera.id, osdQuery.data, primarySlot])
+
   const bindingSeedRef = useRef(bindingSeed)
   bindingSeedRef.current = bindingSeed
 
   useEffect(() => {
     const seed = bindingSeedRef.current
     if (!camera.supportsOsd || seed === null) {
-      setDrafts((prev) => (Object.keys(prev).length === 0 ? prev : {}))
-      setBaselineDrafts((prev) => (Object.keys(prev).length === 0 ? prev : {}))
+      setDraft(null)
+      setBaseline(null)
       return
     }
-    setDrafts(seed.drafts)
-    setBaselineDrafts(seed.drafts)
+    setDraft(seed.draft)
+    setBaseline(seed.draft)
     setSaveError(null)
   }, [camera.supportsOsd, bindingSeed?.key])
 
@@ -217,21 +184,21 @@ export function CameraOsdDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camera.id, camera.supportsOsd, osdQuery.refetch])
 
-  const pendingWrites = useMemo(
-    () =>
-      dirtySlotBindings(
-        editableSlots.map((slot) => slot.slotId),
-        drafts,
-        baselineDrafts,
-      ),
-    [baselineDrafts, drafts, editableSlots],
-  )
+  const pendingWrites = useMemo(() => {
+    if (primarySlot === undefined || draft === null || baseline === null) return []
+    return dirtySlotBindings(
+      [primarySlot.slotId],
+      { [primarySlot.slotId]: draft },
+      {
+        [primarySlot.slotId]: baseline,
+      },
+    )
+  }, [baseline, draft, primarySlot])
 
-  const saveAll = useCallback(async (): Promise<void> => {
+  const save = useCallback(async (): Promise<void> => {
+    if (primarySlot === undefined || draft === null) return
     setSaveError(null)
     try {
-      // Only dirty slots — unbound layers open as `{ kind: 'none' }` drafts;
-      // writing those on every Save wiped firmware-only static text.
       for (const { slotId, binding } of pendingWrites) {
         await setBinding.mutateAsync({
           deviceId: camera.id,
@@ -239,16 +206,20 @@ export function CameraOsdDetail({
           binding,
         })
       }
-      setBaselineDrafts(drafts)
+      setBaseline(draft)
       void osdQuery.refetch()
       onClose()
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err))
     }
-  }, [camera.id, drafts, onClose, osdQuery, pendingWrites, setBinding])
+  }, [camera.id, draft, onClose, osdQuery, pendingWrites, primarySlot, setBinding])
 
   const canSave = !saving && pendingWrites.length > 0
   const loadError = osdQuery.error
+  const templateNameById = useMemo(
+    () => new Map(templates.map((tpl) => [tpl.id, tpl.name])),
+    [templates],
+  )
 
   const body = ((): ReactNode => {
     if (!camera.supportsOsd) {
@@ -278,22 +249,38 @@ export function CameraOsdDetail({
       )
     }
 
-    if (activeSlotId === undefined || activeSlot === undefined) return null
+    if (primarySlot === undefined || draft === null) return null
 
-    const activeDraft = drafts[activeSlot.slotId]
-    if (activeDraft === undefined) return null
+    if (primarySlot.readOnly) {
+      return (
+        <div data-testid="osd-slot-readonly">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge>{primarySlot.kind}</Badge>
+            <Badge variant="warning">{t('row.readOnly')}</Badge>
+            {!primarySlot.cameraEnabled ? (
+              <Badge variant="default">{t('row.cameraOff')}</Badge>
+            ) : null}
+          </div>
+          <p className="text-xs text-foreground-subtle">
+            {t('row.ownedByCamera')}
+            {primarySlot.cameraText
+              ? ` ${t('row.currently', { text: primarySlot.cameraText })}`
+              : ''}
+          </p>
+          <p className="text-xs text-foreground-subtle">
+            {sourceSummary(primarySlot.binding, templateNameById)}
+          </p>
+        </div>
+      )
+    }
 
     return (
-      <ActiveSlotPanel
-        cameraId={camera.id}
-        slot={activeSlot}
-        binding={activeDraft}
-        onBindingChange={(next) =>
-          setDrafts((prev) => ({
-            ...prev,
-            [activeSlot.slotId]: next,
-          }))
-        }
+      <OsdCameraSection
+        key={`${camera.id}-${primarySlot.slotId}`}
+        deviceId={camera.id}
+        slot={primarySlot}
+        binding={draft}
+        onBindingChange={setDraft}
         templates={templates}
         refreshingCurrent={osdQuery.isFetching}
         onRefreshCurrent={() => osdQuery.refetch()}
@@ -301,137 +288,33 @@ export function CameraOsdDetail({
     )
   })()
 
-  const showSlotStrip =
-    camera.supportsOsd && !osdQuery.isLoading && loadError === null && editableSlots.length > 0
-  const showContentTabs = showSlotStrip && activeSlot !== undefined && !activeSlot.readOnly
+  const showSave =
+    camera.supportsOsd && !osdQuery.isLoading && loadError === null && primarySlot !== undefined
 
-  // Content Tabs (pills) sit under the slot strip — second header when both show.
-  // Slot strip is a separate control (cannot nest Tabs contexts).
   return (
-    <Tabs
-      appearance="pills"
-      value={contentPanel}
-      onValueChange={(next) => {
-        if (next === 'layer' || next === 'binding') onContentPanelChange(next)
-      }}
+    <ItemFormDialog
+      open
+      onClose={onClose}
+      title={camera.name}
+      icon={Monitor}
+      width="xl"
+      testId="osd-camera-editor"
+      error={saveError}
+      footer={
+        showSave ? (
+          <Button
+            type="button"
+            size="sm"
+            disabled={!canSave}
+            data-testid="osd-camera-save"
+            onClick={() => void save()}
+          >
+            {saving ? t('row.saving') : t('row.save')}
+          </Button>
+        ) : null
+      }
     >
-      <ItemFormDialog
-        open
-        onClose={onClose}
-        title={camera.name}
-        icon={Monitor}
-        width="xl"
-        testId="osd-camera-editor"
-        error={saveError}
-        beforeBody={
-          showSlotStrip ? (
-            <div className="space-y-2">
-              <div
-                data-testid="osd-slot-tabs"
-                role="tablist"
-                className="flex flex-row overflow-x-auto overflow-y-hidden border-b border-border-subtle"
-              >
-                {editableSlots.map((slot) => {
-                  const selected = slot.slotId === activeSlotId
-                  const status = slotTabStatus(slot)
-                  return (
-                    // ui-check-ok: slot tab — Matches TabsTrigger underline chrome; not a toolbar Button
-                    <button
-                      key={slot.slotId}
-                      type="button"
-                      role="tab"
-                      aria-selected={selected}
-                      data-testid={`osd-slot-tab-${slot.slotId}`}
-                      className={
-                        selected
-                          ? 'h-7 shrink-0 whitespace-nowrap border-b-2 border-primary px-3 text-xs font-medium text-foreground'
-                          : 'h-7 shrink-0 whitespace-nowrap px-3 text-xs text-foreground-muted hover:text-foreground'
-                      }
-                      onClick={() => onActiveSlotIdChange(slot.slotId)}
-                    >
-                      {slot.slotId}
-                      <span className="ml-1.5 text-[10px] text-foreground-subtle">
-                        {slotTabStatusLabel(status)}
-                      </span>
-                    </button>
-                  )
-                })}
-              </div>
-              {showContentTabs ? <SlotEditorTabList /> : null}
-            </div>
-          ) : null
-        }
-        footer={
-          showContentTabs ? (
-            <Button
-              type="button"
-              size="sm"
-              disabled={!canSave}
-              data-testid="osd-camera-save"
-              onClick={() => void saveAll()}
-            >
-              {saving ? t('row.saving') : t('row.save')}
-            </Button>
-          ) : null
-        }
-      >
-        {body}
-      </ItemFormDialog>
-    </Tabs>
-  )
-}
-
-interface ActiveSlotPanelProps {
-  readonly cameraId: number
-  readonly slot: OsdSlotView
-  readonly binding: OsdSlotBinding
-  readonly onBindingChange: (next: OsdSlotBinding) => void
-  readonly templates: readonly OsdNamedTemplate[]
-  readonly onRefreshCurrent: () => void | Promise<unknown>
-  readonly refreshingCurrent: boolean
-}
-
-function ActiveSlotPanel({
-  cameraId,
-  slot,
-  binding,
-  onBindingChange,
-  templates,
-  onRefreshCurrent,
-  refreshingCurrent,
-}: ActiveSlotPanelProps) {
-  const { t } = useT()
-  const templateNameById = useMemo(() => new Map(templates.map((t) => [t.id, t.name])), [templates])
-
-  if (slot.readOnly) {
-    return (
-      <div data-testid="osd-slot-readonly">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge>{slot.kind}</Badge>
-          <Badge variant="warning">{t('row.readOnly')}</Badge>
-          {!slot.cameraEnabled ? <Badge variant="default">{t('row.cameraOff')}</Badge> : null}
-        </div>
-        <p className="text-xs text-foreground-subtle">
-          {t('row.ownedByCamera')}
-          {slot.cameraText ? ` ${t('row.currently', { text: slot.cameraText })}` : ''}
-        </p>
-        <p className="text-xs text-foreground-subtle">
-          {sourceSummary(slot.binding, templateNameById)}
-        </p>
-      </div>
-    )
-  }
-
-  return (
-    <SlotEditor
-      key={`${cameraId}-${slot.slotId}`}
-      deviceId={cameraId}
-      slot={slot}
-      binding={binding}
-      onBindingChange={onBindingChange}
-      templates={templates}
-      onRefreshCurrent={onRefreshCurrent}
-      refreshingCurrent={refreshingCurrent}
-    />
+      {body}
+    </ItemFormDialog>
   )
 }

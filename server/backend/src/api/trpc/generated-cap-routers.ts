@@ -7,12 +7,7 @@
 import { TRPCError } from '@trpc/server'
 import { CapRouteError } from '@camstack/server/system'
 import { z } from 'zod'
-import {
-  adminProcedure,
-  protectedProcedure,
-  iterableSubscription,
-  trpcRouter,
-} from './trpc.middleware.js'
+import { adminProcedure, protectedProcedure, iterableSubscription, trpcRouter } from './trpc.middleware.js'
 import type { InferProvider } from '@camstack/types'
 import { DEVICE_SETTINGS_CONTRIBUTION_METHODS } from '@camstack/types'
 import { DEVICE_STATUS_METHOD } from '@camstack/types'
@@ -343,16 +338,8 @@ export function createCapRouter_actionSource(
       .input(actionSourceCapability.methods.listActions.input.loose())
       .output(actionSourceCapability.methods.listActions.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'action-source',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('action-source', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listActions(methodInput as any)
       }),
@@ -360,16 +347,8 @@ export function createCapRouter_actionSource(
       .input(actionSourceCapability.methods.runAction.input.loose())
       .output(actionSourceCapability.methods.runAction.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'action-source',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('action-source', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runAction(methodInput as any)
       }),
@@ -377,16 +356,8 @@ export function createCapRouter_actionSource(
       .input(actionSourceCapability.methods.stopAction.input.loose())
       .output(actionSourceCapability.methods.stopAction.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'action-source',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('action-source', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.stopAction(methodInput as any)
       }),
@@ -517,12 +488,7 @@ export function createCapRouter_addonPages(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(addonPagesCapability.methods.listPages.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'addon-pages',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('addon-pages', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listPages()
       }),
   })
@@ -541,12 +507,7 @@ export function createCapRouter_addonPagesSource(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(addonPagesSourceCapability.methods.listPages.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'addon-pages-source',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('addon-pages-source', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listPages()
       }),
   })
@@ -565,28 +526,15 @@ export function createCapRouter_addonRoutes(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(addonRoutesCapability.methods.getRoutes.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'addon-routes',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('addon-routes', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getRoutes()
       }),
     invoke: adminProcedure
       .input(addonRoutesCapability.methods.invoke.input.loose())
       .output(addonRoutesCapability.methods.invoke.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'addon-routes',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('addon-routes', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.invoke(methodInput as any)
       }),
@@ -682,12 +630,7 @@ export function createCapRouter_addonWidgets(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(addonWidgetsCapability.methods.listWidgets.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'addon-widgets',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('addon-widgets', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listWidgets()
       }),
   })
@@ -706,12 +649,7 @@ export function createCapRouter_addonWidgetsSource(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(addonWidgetsSourceCapability.methods.listWidgets.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'addon-widgets-source',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('addon-widgets-source', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listWidgets()
       }),
   })
@@ -997,24 +935,14 @@ export function createCapRouter_adminUi(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(adminUiCapability.methods.getStaticDir.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'admin-ui',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('admin-ui', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getStaticDir()
       }),
     getVersion: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(adminUiCapability.methods.getVersion.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'admin-ui',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('admin-ui', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getVersion()
       }),
   })
@@ -1034,12 +962,7 @@ export function createCapRouter_airQualitySensor(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'air-quality-sensor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('air-quality-sensor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -1132,12 +1055,7 @@ export function createCapRouter_alerts(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(alertsCapability.methods.getUnreadCount.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'alerts',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('alerts', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getUnreadCount()
       }),
     markRead: protectedProcedure
@@ -1153,12 +1071,7 @@ export function createCapRouter_alerts(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(alertsCapability.methods.markAllRead.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'alerts',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('alerts', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.markAllRead()
       }),
     dismiss: protectedProcedure
@@ -1187,12 +1100,7 @@ export function createCapRouter_ambientLightSensor(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ambient-light-sensor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ambient-light-sensor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -1213,12 +1121,7 @@ export function createCapRouter_audioAnalysis(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analysis',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analysis', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -1227,12 +1130,7 @@ export function createCapRouter_audioAnalysis(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analysis',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analysis', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -1241,12 +1139,7 @@ export function createCapRouter_audioAnalysis(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analysis',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analysis', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -1255,12 +1148,7 @@ export function createCapRouter_audioAnalysis(
       .output(audioAnalysisCapability.methods.resolveDeviceSettings.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analysis',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analysis', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resolveDeviceSettings(methodInput as any)
       }),
@@ -1281,12 +1169,7 @@ export function createCapRouter_audioAnalyzer(
       .output(audioAnalyzerCapability.methods.analyseChunk.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analyzer',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analyzer', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.analyseChunk(methodInput as any)
       }),
@@ -1295,12 +1178,7 @@ export function createCapRouter_audioAnalyzer(
       .output(audioAnalyzerCapability.methods.classify.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analyzer',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analyzer', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.classify(methodInput as any)
       }),
@@ -1309,12 +1187,7 @@ export function createCapRouter_audioAnalyzer(
       .output(audioAnalyzerCapability.methods.attachDevice.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analyzer',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analyzer', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.attachDevice(methodInput as any)
       }),
@@ -1323,12 +1196,7 @@ export function createCapRouter_audioAnalyzer(
       .output(audioAnalyzerCapability.methods.detachDevice.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-analyzer',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analyzer', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.detachDevice(methodInput as any)
       }),
@@ -1336,36 +1204,21 @@ export function createCapRouter_audioAnalyzer(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(audioAnalyzerCapability.methods.isReady.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'audio-analyzer',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analyzer', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.isReady()
       }),
     dispose: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(audioAnalyzerCapability.methods.dispose.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'audio-analyzer',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analyzer', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.dispose()
       }),
     reprobeAudioEngine: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(audioAnalyzerCapability.methods.reprobeAudioEngine.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'audio-analyzer',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-analyzer', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.reprobeAudioEngine()
       }),
   })
@@ -1384,12 +1237,7 @@ export function createCapRouter_audioCodec(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(audioCodecCapability.methods.listSupportedCodecs.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'audio-codec',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-codec', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listSupportedCodecs()
       }),
     canHandle: protectedProcedure
@@ -1477,12 +1325,7 @@ export function createCapRouter_audioCodec(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(audioCodecCapability.methods.listActiveSessions.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'audio-codec',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-codec', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listActiveSessions()
       }),
   })
@@ -1502,12 +1345,7 @@ export function createCapRouter_audioMetrics(
       .output(audioMetricsCapability.methods.getCurrentSnapshot.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-metrics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-metrics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCurrentSnapshot(methodInput as any)
       }),
@@ -1516,12 +1354,7 @@ export function createCapRouter_audioMetrics(
       .output(audioMetricsCapability.methods.getHistory.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'audio-metrics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('audio-metrics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getHistory(methodInput as any)
       }),
@@ -1541,16 +1374,8 @@ export function createCapRouter_authProvider(
       .input(authProviderCapability.methods.validateCredentials.input.loose())
       .output(authProviderCapability.methods.validateCredentials.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'auth-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('auth-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.validateCredentials(methodInput as any)
       }),
@@ -1558,16 +1383,8 @@ export function createCapRouter_authProvider(
       .input(authProviderCapability.methods.getLoginUrl.input.loose())
       .output(authProviderCapability.methods.getLoginUrl.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'auth-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('auth-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getLoginUrl(methodInput as any)
       }),
@@ -1582,16 +1399,8 @@ export function createCapRouter_authProvider(
       .input(authProviderCapability.methods.validateToken.input.loose())
       .output(authProviderCapability.methods.validateToken.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'auth-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('auth-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.validateToken(methodInput as any)
       }),
@@ -1612,12 +1421,7 @@ export function createCapRouter_automationControl(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'automation-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('automation-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -1626,12 +1430,7 @@ export function createCapRouter_automationControl(
       .output(automationControlCapability.methods.enable.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'automation-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('automation-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.enable(methodInput as any)
       }),
@@ -1640,12 +1439,7 @@ export function createCapRouter_automationControl(
       .output(automationControlCapability.methods.disable.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'automation-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('automation-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.disable(methodInput as any)
       }),
@@ -1654,12 +1448,7 @@ export function createCapRouter_automationControl(
       .output(automationControlCapability.methods.trigger.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'automation-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('automation-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.trigger(methodInput as any)
       }),
@@ -1679,12 +1468,7 @@ export function createCapRouter_backup(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(backupCapability.methods.listDestinations.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'backup',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('backup', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listDestinations()
       }),
     trigger: adminProcedure
@@ -1698,12 +1482,7 @@ export function createCapRouter_backup(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(backupCapability.methods.listRuns.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'backup',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('backup', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listRuns()
       }),
     cancel: adminProcedure
@@ -1719,24 +1498,14 @@ export function createCapRouter_backup(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(backupCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'backup',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('backup', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.list()
       }),
     listLocations: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(backupCapability.methods.listLocations.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'backup',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('backup', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listLocations()
       }),
     getEntries: adminProcedure
@@ -1761,12 +1530,7 @@ export function createCapRouter_backup(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(backupCapability.methods.getEncryption.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'backup',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('backup', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getEncryption()
       }),
     setupEncryption: adminProcedure
@@ -1836,24 +1600,14 @@ export function createCapRouter_backup(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(backupCapability.methods.listSchedules.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'backup',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('backup', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listSchedules()
       }),
     listAvailableDatabases: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(backupCapability.methods.listAvailableDatabases.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'backup',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('backup', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listAvailableDatabases()
       }),
     upsertSchedule: adminProcedure
@@ -1941,28 +1695,15 @@ export function createCapRouter_boardKeySource(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(boardKeySourceCapability.methods.listSources.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'board-key-source',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('board-key-source', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listSources()
       }),
     listBoards: adminProcedure
       .input(boardKeySourceCapability.methods.listBoards.input.loose())
       .output(boardKeySourceCapability.methods.listBoards.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'board-key-source',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('board-key-source', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listBoards(methodInput as any)
       }),
@@ -1970,16 +1711,8 @@ export function createCapRouter_boardKeySource(
       .input(boardKeySourceCapability.methods.getBoardKey.input.loose())
       .output(boardKeySourceCapability.methods.getBoardKey.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'board-key-source',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('board-key-source', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBoardKey(methodInput as any)
       }),
@@ -2029,28 +1762,15 @@ export function createCapRouter_broker(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'broker',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('broker', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getStatus()
       }),
     getBrokerConfig: adminProcedure
       .input(brokerCapability.methods.getBrokerConfig.input.loose())
       .output(brokerCapability.methods.getBrokerConfig.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBrokerConfig(methodInput as any)
       }),
@@ -2058,16 +1778,8 @@ export function createCapRouter_broker(
       .input(brokerCapability.methods.publish.input.loose())
       .output(brokerCapability.methods.publish.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.publish(methodInput as any)
       }),
@@ -2075,16 +1787,8 @@ export function createCapRouter_broker(
       .input(brokerCapability.methods.subscribe.input.loose())
       .output(brokerCapability.methods.subscribe.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.subscribe(methodInput as any)
       }),
@@ -2092,16 +1796,8 @@ export function createCapRouter_broker(
       .input(brokerCapability.methods.unsubscribe.input.loose())
       .output(brokerCapability.methods.unsubscribe.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unsubscribe(methodInput as any)
       }),
@@ -2109,16 +1805,8 @@ export function createCapRouter_broker(
       .input(brokerCapability.methods.getState.input.loose())
       .output(brokerCapability.methods.getState.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getState(methodInput as any)
       }),
@@ -2159,28 +1847,15 @@ export function createCapRouter_calendarSource(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(calendarSourceCapability.methods.listCalendars.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'calendar-source',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('calendar-source', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listCalendars()
       }),
     listEvents: adminProcedure
       .input(calendarSourceCapability.methods.listEvents.input.loose())
       .output(calendarSourceCapability.methods.listEvents.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'calendar-source',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('calendar-source', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listEvents(methodInput as any)
       }),
@@ -2200,12 +1875,7 @@ export function createCapRouter_calendars(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(calendarsCapability.methods.listCalendars.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'calendars',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('calendars', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listCalendars()
       }),
     listEvents: adminProcedure
@@ -2252,12 +1922,7 @@ export function createCapRouter_cameraCredentials(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -2266,12 +1931,7 @@ export function createCapRouter_cameraCredentials(
       .output(cameraCredentialsCapability.methods.getCredentials.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCredentials(methodInput as any)
       }),
@@ -2292,12 +1952,7 @@ export function createCapRouter_cameraGridLayout(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-grid-layout',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-grid-layout', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -2306,12 +1961,7 @@ export function createCapRouter_cameraGridLayout(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-grid-layout',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-grid-layout', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -2320,12 +1970,7 @@ export function createCapRouter_cameraGridLayout(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-grid-layout',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-grid-layout', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -2334,12 +1979,7 @@ export function createCapRouter_cameraGridLayout(
       .output(cameraGridLayoutCapability.methods.getLayout.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-grid-layout',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-grid-layout', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getLayout(methodInput as any)
       }),
@@ -2348,12 +1988,7 @@ export function createCapRouter_cameraGridLayout(
       .output(cameraGridLayoutCapability.methods.saveLayout.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-grid-layout',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-grid-layout', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.saveLayout(methodInput as any)
       }),
@@ -2374,12 +2009,7 @@ export function createCapRouter_cameraPipelineConfig(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-pipeline-config',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-pipeline-config', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -2388,12 +2018,7 @@ export function createCapRouter_cameraPipelineConfig(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-pipeline-config',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-pipeline-config', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -2402,12 +2027,7 @@ export function createCapRouter_cameraPipelineConfig(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-pipeline-config',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-pipeline-config', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -2428,12 +2048,7 @@ export function createCapRouter_cameraStreams(
       .output(cameraStreamsCapability.methods.getCameraStreams.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-streams',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-streams', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCameraStreams(methodInput as any)
       }),
@@ -2442,12 +2057,7 @@ export function createCapRouter_cameraStreams(
       .output(cameraStreamsCapability.methods.getBrokerStreams.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-streams',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-streams', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBrokerStreams(methodInput as any)
       }),
@@ -2456,12 +2066,7 @@ export function createCapRouter_cameraStreams(
       .output(cameraStreamsCapability.methods.getRtspEntries.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-streams',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-streams', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRtspEntries(methodInput as any)
       }),
@@ -2470,12 +2075,7 @@ export function createCapRouter_cameraStreams(
       .output(cameraStreamsCapability.methods.getProfileRtspEntries.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-streams',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-streams', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getProfileRtspEntries(methodInput as any)
       }),
@@ -2484,12 +2084,7 @@ export function createCapRouter_cameraStreams(
       .output(cameraStreamsCapability.methods.pickStream.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'camera-streams',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('camera-streams', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pickStream(methodInput as any)
       }),
@@ -2510,12 +2105,7 @@ export function createCapRouter_carbonMonoxide(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'carbon-monoxide',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('carbon-monoxide', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -2536,12 +2126,7 @@ export function createCapRouter_climateControl(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -2550,12 +2135,7 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setMode(methodInput as any)
       }),
@@ -2564,12 +2144,7 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setTarget.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setTarget(methodInput as any)
       }),
@@ -2578,12 +2153,7 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setTargetRange.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         const fn = p.setTargetRange
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -2599,12 +2169,7 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setTargetHumidity.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         const fn = p.setTargetHumidity
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -2620,12 +2185,7 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setFanMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         const fn = p.setFanMode
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -2641,12 +2201,7 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setPreset.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         const fn = p.setPreset
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -2662,12 +2217,7 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setSwingVertical.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         const fn = p.setSwingVertical
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -2683,18 +2233,12 @@ export function createCapRouter_climateControl(
       .output(climateControlCapability.methods.setSwingHorizontal.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'climate-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('climate-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         const fn = p.setSwingHorizontal
         if (typeof fn !== 'function') {
           throw new TRPCError({
             code: 'NOT_IMPLEMENTED',
-            message:
-              'Capability "climate-control" provider does not implement "setSwingHorizontal"',
+            message: 'Capability "climate-control" provider does not implement "setSwingHorizontal"',
           })
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -2717,12 +2261,7 @@ export function createCapRouter_clusterUpdate(
       .output(clusterUpdateCapability.methods.previewClusterUpdate.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'cluster-update',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('cluster-update', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.previewClusterUpdate(methodInput as any)
       }),
@@ -2731,12 +2270,7 @@ export function createCapRouter_clusterUpdate(
       .output(clusterUpdateCapability.methods.startClusterUpdate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'cluster-update',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('cluster-update', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startClusterUpdate(methodInput as any)
       }),
@@ -2745,12 +2279,7 @@ export function createCapRouter_clusterUpdate(
       .output(clusterUpdateCapability.methods.getClusterUpdateJob.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'cluster-update',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('cluster-update', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getClusterUpdateJob(methodInput as any)
       }),
@@ -2997,10 +2526,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.list(methodInput as any)
@@ -3010,10 +2536,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.get.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.get(methodInput as any)
@@ -3023,10 +2546,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.create.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.create(methodInput as any)
@@ -3036,10 +2556,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.update.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.update(methodInput as any)
@@ -3049,10 +2566,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
@@ -3062,10 +2576,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.setEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setEnabled(methodInput as any)
@@ -3075,10 +2586,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.restart.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.restart(methodInput as any)
@@ -3088,10 +2596,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.compile.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.compile(methodInput as any)
@@ -3101,10 +2606,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.getBlockSettings.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBlockSettings(methodInput as any)
@@ -3114,10 +2616,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.updateBlockSettings.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateBlockSettings(methodInput as any)
@@ -3127,10 +2626,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.migrateRawSecrets.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.migrateRawSecrets(methodInput as any)
@@ -3140,10 +2636,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.getTypeDefs.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTypeDefs(methodInput as any)
@@ -3153,10 +2646,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.createComposition.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createComposition(methodInput as any)
@@ -3166,10 +2656,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.updateComposition.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateComposition(methodInput as any)
@@ -3179,10 +2666,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.getComposition.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getComposition(methodInput as any)
@@ -3192,10 +2676,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.listCompositions.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listCompositions(methodInput as any)
@@ -3205,10 +2686,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.getCustomization.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCustomization(methodInput as any)
@@ -3218,10 +2696,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.listComposableCaps.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listComposableCaps(methodInput as any)
@@ -3231,10 +2706,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.validateComposition.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.validateComposition(methodInput as any)
@@ -3244,10 +2716,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.proposeRunningThreshold.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.proposeRunningThreshold(methodInput as any)
@@ -3257,10 +2726,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.reportAutomationRun.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reportAutomationRun(methodInput as any)
@@ -3270,10 +2736,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.getAutomationRunState.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAutomationRunState(methodInput as any)
@@ -3283,10 +2746,7 @@ export function createCapRouter_coreBlocks(
       .output(coreBlocksCapability.methods.getTraces.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('core-blocks', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTraces(methodInput as any)
@@ -3394,28 +2854,15 @@ export function createCapRouter_customModelRegistry(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(customModelRegistryCapability.methods.listModels.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'custom-model-registry',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('custom-model-registry', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listModels()
       }),
     importModelBundle: adminProcedure
       .input(customModelRegistryCapability.methods.importModelBundle.input.loose())
       .output(customModelRegistryCapability.methods.importModelBundle.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'custom-model-registry',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('custom-model-registry', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.importModelBundle(methodInput as any)
       }),
@@ -3435,28 +2882,15 @@ export function createCapRouter_dataStoreProvider(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(dataStoreProviderCapability.methods.getEngineInfo.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'data-store-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('data-store-provider', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getEngineInfo()
       }),
     get: adminProcedure
       .input(dataStoreProviderCapability.methods.get.input.loose())
       .output(dataStoreProviderCapability.methods.get.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.get(methodInput as any)
       }),
@@ -3464,16 +2898,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.set.input.loose())
       .output(dataStoreProviderCapability.methods.set.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.set(methodInput as any)
       }),
@@ -3481,16 +2907,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.query.input.loose())
       .output(dataStoreProviderCapability.methods.query.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.query(methodInput as any)
       }),
@@ -3498,16 +2916,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.insert.input.loose())
       .output(dataStoreProviderCapability.methods.insert.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.insert(methodInput as any)
       }),
@@ -3515,16 +2925,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.upsert.input.loose())
       .output(dataStoreProviderCapability.methods.upsert.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.upsert(methodInput as any)
       }),
@@ -3532,16 +2934,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.upsertMany.input.loose())
       .output(dataStoreProviderCapability.methods.upsertMany.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.upsertMany(methodInput as any)
       }),
@@ -3549,16 +2943,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.insertMany.input.loose())
       .output(dataStoreProviderCapability.methods.insertMany.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.insertMany(methodInput as any)
       }),
@@ -3566,16 +2952,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.transact.input.loose())
       .output(dataStoreProviderCapability.methods.transact.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.transact(methodInput as any)
       }),
@@ -3583,16 +2961,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.update.input.loose())
       .output(dataStoreProviderCapability.methods.update.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.update(methodInput as any)
       }),
@@ -3600,16 +2970,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.delete.input.loose())
       .output(dataStoreProviderCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
       }),
@@ -3617,16 +2979,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.deleteWhere.input.loose())
       .output(dataStoreProviderCapability.methods.deleteWhere.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteWhere(methodInput as any)
       }),
@@ -3634,16 +2988,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.updateWhere.input.loose())
       .output(dataStoreProviderCapability.methods.updateWhere.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateWhere(methodInput as any)
       }),
@@ -3651,16 +2997,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.count.input.loose())
       .output(dataStoreProviderCapability.methods.count.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.count(methodInput as any)
       }),
@@ -3668,16 +3006,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.aggregate.input.loose())
       .output(dataStoreProviderCapability.methods.aggregate.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.aggregate(methodInput as any)
       }),
@@ -3685,16 +3015,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.histogram.input.loose())
       .output(dataStoreProviderCapability.methods.histogram.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.histogram(methodInput as any)
       }),
@@ -3702,16 +3024,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.isEmpty.input.loose())
       .output(dataStoreProviderCapability.methods.isEmpty.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.isEmpty(methodInput as any)
       }),
@@ -3719,16 +3033,8 @@ export function createCapRouter_dataStoreProvider(
       .input(dataStoreProviderCapability.methods.declareCollection.input.loose())
       .output(dataStoreProviderCapability.methods.declareCollection.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'data-store-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('data-store-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.declareCollection(methodInput as any)
       }),
@@ -3749,12 +3055,7 @@ export function createCapRouter_databaseSnapshot(
       .output(databaseSnapshotCapability.methods.listDatabases.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'database-snapshot',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('database-snapshot', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listDatabases(methodInput as any)
       }),
@@ -3763,12 +3064,7 @@ export function createCapRouter_databaseSnapshot(
       .output(databaseSnapshotCapability.methods.writeSnapshot.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'database-snapshot',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('database-snapshot', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.writeSnapshot(methodInput as any)
       }),
@@ -3827,24 +3123,14 @@ export function createCapRouter_decoder(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(decoderCapability.methods.getInfo.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'decoder',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('decoder', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getInfo()
       }),
     reprobeHwaccel: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(decoderCapability.methods.reprobeHwaccel.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'decoder',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('decoder', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.reprobeHwaccel()
       }),
   })
@@ -3864,12 +3150,7 @@ export function createCapRouter_detectionPipeline(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'detection-pipeline',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('detection-pipeline', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -3878,12 +3159,7 @@ export function createCapRouter_detectionPipeline(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'detection-pipeline',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('detection-pipeline', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -3892,12 +3168,7 @@ export function createCapRouter_detectionPipeline(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'detection-pipeline',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('detection-pipeline', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -3918,12 +3189,7 @@ export function createCapRouter_deviceAdminLink(
       .output(deviceAdminLinkCapability.methods.getAdminLink.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-admin-link',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-admin-link', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAdminLink(methodInput as any)
       }),
@@ -3943,16 +3209,8 @@ export function createCapRouter_deviceAdoption(
       .input(DEVICE_STATUS_METHOD.getStatus.input.loose())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -3960,16 +3218,8 @@ export function createCapRouter_deviceAdoption(
       .input(deviceAdoptionCapability.methods.listCandidateFilters.input.loose())
       .output(deviceAdoptionCapability.methods.listCandidateFilters.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listCandidateFilters(methodInput as any)
       }),
@@ -3977,16 +3227,8 @@ export function createCapRouter_deviceAdoption(
       .input(deviceAdoptionCapability.methods.listCandidates.input.loose())
       .output(deviceAdoptionCapability.methods.listCandidates.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listCandidates(methodInput as any)
       }),
@@ -3994,16 +3236,8 @@ export function createCapRouter_deviceAdoption(
       .input(deviceAdoptionCapability.methods.getCandidate.input.loose())
       .output(deviceAdoptionCapability.methods.getCandidate.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCandidate(methodInput as any)
       }),
@@ -4011,16 +3245,8 @@ export function createCapRouter_deviceAdoption(
       .input(deviceAdoptionCapability.methods.refresh.input.loose())
       .output(deviceAdoptionCapability.methods.refresh.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.refresh(methodInput as any)
       }),
@@ -4028,16 +3254,8 @@ export function createCapRouter_deviceAdoption(
       .input(deviceAdoptionCapability.methods.adopt.input.loose())
       .output(deviceAdoptionCapability.methods.adopt.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adopt(methodInput as any)
       }),
@@ -4045,16 +3263,8 @@ export function createCapRouter_deviceAdoption(
       .input(deviceAdoptionCapability.methods.release.input.loose())
       .output(deviceAdoptionCapability.methods.release.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.release(methodInput as any)
       }),
@@ -4062,16 +3272,8 @@ export function createCapRouter_deviceAdoption(
       .input(deviceAdoptionCapability.methods.resync.input.loose())
       .output(deviceAdoptionCapability.methods.resync.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-adoption',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-adoption', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resync(methodInput as any)
       }),
@@ -4092,12 +3294,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.listDeviceCredentials.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listDeviceCredentials(methodInput as any)
       }),
@@ -4106,12 +3303,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.startEnrollment.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startEnrollment(methodInput as any)
       }),
@@ -4120,12 +3312,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.revokeDeviceCredential.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.revokeDeviceCredential(methodInput as any)
       }),
@@ -4134,12 +3321,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.getDeviceCertificateSettings.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceCertificateSettings(methodInput as any)
       }),
@@ -4148,12 +3330,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.setDeviceCertificateSettings.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDeviceCertificateSettings(methodInput as any)
       }),
@@ -4162,12 +3339,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.deleteDeviceCredential.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteDeviceCredential(methodInput as any)
       }),
@@ -4176,12 +3348,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.getDeviceCaStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceCaStatus(methodInput as any)
       }),
@@ -4190,12 +3357,7 @@ export function createCapRouter_deviceCredentials(
       .output(deviceCredentialsCapability.methods.renameDeviceCredential.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-credentials',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-credentials', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renameDeviceCredential(methodInput as any)
       }),
@@ -4215,16 +3377,8 @@ export function createCapRouter_deviceExport(
       .input(DEVICE_STATUS_METHOD.getStatus.input.loose())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -4232,16 +3386,8 @@ export function createCapRouter_deviceExport(
       .input(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.input.loose())
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -4249,16 +3395,8 @@ export function createCapRouter_deviceExport(
       .input(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.input.loose())
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -4266,16 +3404,8 @@ export function createCapRouter_deviceExport(
       .input(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.input.loose())
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -4283,28 +3413,15 @@ export function createCapRouter_deviceExport(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(deviceExportCapability.methods.listInstances.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-export',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-export', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listInstances()
       }),
     listSupportedDeviceKinds: protectedProcedure
       .input(deviceExportCapability.methods.listSupportedDeviceKinds.input.loose())
       .output(deviceExportCapability.methods.listSupportedDeviceKinds.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listSupportedDeviceKinds(methodInput as any)
       }),
@@ -4312,16 +3429,8 @@ export function createCapRouter_deviceExport(
       .input(deviceExportCapability.methods.listExposedDevices.input.loose())
       .output(deviceExportCapability.methods.listExposedDevices.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listExposedDevices(methodInput as any)
       }),
@@ -4329,16 +3438,8 @@ export function createCapRouter_deviceExport(
       .input(deviceExportCapability.methods.exposeDevice.input.loose())
       .output(deviceExportCapability.methods.exposeDevice.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.exposeDevice(methodInput as any)
       }),
@@ -4346,16 +3447,8 @@ export function createCapRouter_deviceExport(
       .input(deviceExportCapability.methods.unexposeDevice.input.loose())
       .output(deviceExportCapability.methods.unexposeDevice.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unexposeDevice(methodInput as any)
       }),
@@ -4363,16 +3456,8 @@ export function createCapRouter_deviceExport(
       .input(deviceExportCapability.methods.setExposedName.input.loose())
       .output(deviceExportCapability.methods.setExposedName.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setExposedName(methodInput as any)
       }),
@@ -4380,18 +3465,12 @@ export function createCapRouter_deviceExport(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(deviceExportCapability.methods.listSupportedEntityKinds.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-export',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-export', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         const fn = p.listSupportedEntityKinds
         if (typeof fn !== 'function') {
           throw new TRPCError({
             code: 'NOT_IMPLEMENTED',
-            message:
-              'Capability "device-export" provider does not implement "listSupportedEntityKinds"',
+            message: 'Capability "device-export" provider does not implement "listSupportedEntityKinds"',
           })
         }
         return fn.call(p)
@@ -4400,16 +3479,8 @@ export function createCapRouter_deviceExport(
       .input(deviceExportCapability.methods.listExposedEntities.input.loose())
       .output(deviceExportCapability.methods.listExposedEntities.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         const fn = p.listExposedEntities
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -4424,16 +3495,8 @@ export function createCapRouter_deviceExport(
       .input(deviceExportCapability.methods.exposeEntity.input.loose())
       .output(deviceExportCapability.methods.exposeEntity.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         const fn = p.exposeEntity
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -4448,16 +3511,8 @@ export function createCapRouter_deviceExport(
       .input(deviceExportCapability.methods.unexposeEntity.input.loose())
       .output(deviceExportCapability.methods.unexposeEntity.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-export',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-export', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         const fn = p.unexposeEntity
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -4485,12 +3540,7 @@ export function createCapRouter_deviceExtension(
       .output(deviceExtensionCapability.methods.listSources.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-extension',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-extension', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listSources(methodInput as any)
       }),
@@ -4499,12 +3549,7 @@ export function createCapRouter_deviceExtension(
       .output(deviceExtensionCapability.methods.listSlots.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-extension',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-extension', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listSlots(methodInput as any)
       }),
@@ -4513,12 +3558,7 @@ export function createCapRouter_deviceExtension(
       .output(deviceExtensionCapability.methods.listCandidates.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-extension',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-extension', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listCandidates(methodInput as any)
       }),
@@ -4527,12 +3567,7 @@ export function createCapRouter_deviceExtension(
       .output(deviceExtensionCapability.methods.setSlot.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-extension',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-extension', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSlot(methodInput as any)
       }),
@@ -4553,16 +3588,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.listSeries.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listSeries(methodInput as any)
       }),
@@ -4571,16 +3598,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.listNodeSeries.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listNodeSeries(methodInput as any)
       }),
@@ -4589,16 +3608,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.query.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.query(methodInput as any)
       }),
@@ -4607,16 +3618,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.queryNode.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.queryNode(methodInput as any)
       }),
@@ -4625,16 +3628,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.queryMany.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.queryMany(methodInput as any)
       }),
@@ -4643,16 +3638,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.declareSeries.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.declareSeries(methodInput as any)
       }),
@@ -4661,16 +3648,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.record.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.record(methodInput as any)
       }),
@@ -4679,16 +3658,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.recordBuckets.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.recordBuckets(methodInput as any)
       }),
@@ -4697,16 +3668,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.getDeviceEnabled.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceEnabled(methodInput as any)
       }),
@@ -4715,16 +3678,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.setDeviceEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDeviceEnabled(methodInput as any)
       }),
@@ -4733,16 +3688,8 @@ export function createCapRouter_deviceHistory(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -4751,16 +3698,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.listOrphanSeries.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listOrphanSeries(methodInput as any)
       }),
@@ -4769,16 +3708,8 @@ export function createCapRouter_deviceHistory(
       .output(deviceHistoryCapability.methods.deleteOrphanSeries.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-history',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-history', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteOrphanSeries(methodInput as any)
       }),
@@ -4799,16 +3730,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.allocateDeviceId.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.allocateDeviceId(methodInput as any)
       }),
@@ -4817,16 +3740,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.migrateDevice.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.migrateDevice(methodInput as any)
       }),
@@ -4835,16 +3750,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.registerDevice.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.registerDevice(methodInput as any)
       }),
@@ -4853,16 +3760,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.removeDevice.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeDevice(methodInput as any)
       }),
@@ -4871,16 +3770,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.persistConfig.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.persistConfig(methodInput as any)
       }),
@@ -4889,16 +3780,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.loadConfig.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.loadConfig(methodInput as any)
       }),
@@ -4907,16 +3790,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.loadRuntimeState.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.loadRuntimeState(methodInput as any)
       }),
@@ -4925,16 +3800,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.loadMeta.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.loadMeta(methodInput as any)
       }),
@@ -4943,16 +3810,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setName.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setName(methodInput as any)
       }),
@@ -4961,16 +3820,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setAlias.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAlias(methodInput as any)
       }),
@@ -4979,16 +3830,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.renderDeviceTemplates.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renderDeviceTemplates(methodInput as any)
       }),
@@ -4997,16 +3840,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.checkDeviceTemplates.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.checkDeviceTemplates(methodInput as any)
       }),
@@ -5015,16 +3850,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setLocation.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setLocation(methodInput as any)
       }),
@@ -5033,16 +3860,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setType.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setType(methodInput as any)
       }),
@@ -5051,16 +3870,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setIntegrationId.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setIntegrationId(methodInput as any)
       }),
@@ -5069,16 +3880,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setLinkDeviceId.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setLinkDeviceId(methodInput as any)
       }),
@@ -5087,16 +3890,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setPrimaryChildEntityId.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setPrimaryChildEntityId(methodInput as any)
       }),
@@ -5105,16 +3900,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setChildLayout.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setChildLayout(methodInput as any)
       }),
@@ -5123,16 +3910,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setPrimaryChildPreference.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setPrimaryChildPreference(methodInput as any)
       }),
@@ -5141,16 +3920,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setDisplay.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDisplay(methodInput as any)
       }),
@@ -5159,16 +3930,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getRoleDisplayDefaults.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRoleDisplayDefaults(methodInput as any)
       }),
@@ -5177,16 +3940,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setRoleDisplayDefaults.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setRoleDisplayDefaults(methodInput as any)
       }),
@@ -5195,16 +3950,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getWireableFields.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getWireableFields(methodInput as any)
       }),
@@ -5213,16 +3960,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setRole.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setRole(methodInput as any)
       }),
@@ -5231,16 +3970,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.applyInitialMeta.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyInitialMeta(methodInput as any)
       }),
@@ -5249,16 +3980,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setMetadata.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setMetadata(methodInput as any)
       }),
@@ -5266,12 +3989,7 @@ export function createCapRouter_deviceManager(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(deviceManagerCapability.methods.listLocations.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-manager',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-manager', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listLocations()
       }),
     addLocation: adminProcedure
@@ -5279,16 +3997,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.addLocation.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.addLocation(methodInput as any)
       }),
@@ -5297,16 +4007,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.removeLocation.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeLocation(methodInput as any)
       }),
@@ -5315,16 +4017,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.renameLocation.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renameLocation(methodInput as any)
       }),
@@ -5332,12 +4026,7 @@ export function createCapRouter_deviceManager(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(deviceManagerCapability.methods.listLocationIcons.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-manager',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-manager', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listLocationIcons()
       }),
     setLocationIcon: adminProcedure
@@ -5345,16 +4034,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setLocationIcon.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setLocationIcon(methodInput as any)
       }),
@@ -5362,12 +4043,7 @@ export function createCapRouter_deviceManager(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(deviceManagerCapability.methods.listLocationDescriptions.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-manager',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-manager', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listLocationDescriptions()
       }),
     setLocationDescription: adminProcedure
@@ -5375,16 +4051,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setLocationDescription.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setLocationDescription(methodInput as any)
       }),
@@ -5392,12 +4060,7 @@ export function createCapRouter_deviceManager(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(deviceManagerCapability.methods.listSiteZones.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-manager',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-manager', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listSiteZones()
       }),
     setSiteZone: adminProcedure
@@ -5405,16 +4068,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setSiteZone.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSiteZone(methodInput as any)
       }),
@@ -5423,16 +4078,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.removeSiteZone.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeSiteZone(methodInput as any)
       }),
@@ -5441,16 +4088,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.renameSiteZone.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renameSiteZone(methodInput as any)
       }),
@@ -5459,16 +4098,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setLocationZone.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setLocationZone(methodInput as any)
       }),
@@ -5477,16 +4108,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setDisabled.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDisabled(methodInput as any)
       }),
@@ -5495,16 +4118,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.listPersistedByAddon.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listPersistedByAddon(methodInput as any)
       }),
@@ -5513,16 +4128,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.listAll.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listAll(methodInput as any)
       }),
@@ -5531,16 +4138,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.search.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.search(methodInput as any)
       }),
@@ -5549,16 +4148,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getDevice.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDevice(methodInput as any)
       }),
@@ -5567,16 +4158,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getChildren.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getChildren(methodInput as any)
       }),
@@ -5585,16 +4168,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getChildrenBatch.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getChildrenBatch(methodInput as any)
       }),
@@ -5603,16 +4178,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getLinkedDevices.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getLinkedDevices(methodInput as any)
       }),
@@ -5621,16 +4188,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getLinkedDevicesBatch.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getLinkedDevicesBatch(methodInput as any)
       }),
@@ -5639,16 +4198,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getStreamSources.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStreamSources(methodInput as any)
       }),
@@ -5657,16 +4208,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getConfigSchema.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getConfigSchema(methodInput as any)
       }),
@@ -5675,16 +4218,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getSettingsSchema.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getSettingsSchema(methodInput as any)
       }),
@@ -5693,16 +4228,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.updateConfig.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateConfig(methodInput as any)
       }),
@@ -5711,16 +4238,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.enable.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.enable(methodInput as any)
       }),
@@ -5729,16 +4248,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.disable.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.disable(methodInput as any)
       }),
@@ -5747,16 +4258,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.remove.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.remove(methodInput as any)
       }),
@@ -5765,16 +4268,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.listDeletedSince.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listDeletedSince(methodInput as any)
       }),
@@ -5783,16 +4278,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.cleanupDeletedDevicesData.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cleanupDeletedDevicesData(methodInput as any)
       }),
@@ -5801,16 +4288,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.removeByIntegration.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeByIntegration(methodInput as any)
       }),
@@ -5819,16 +4298,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getStreamProfileMap.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStreamProfileMap(methodInput as any)
       }),
@@ -5837,16 +4308,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setStreamProfileMap.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setStreamProfileMap(methodInput as any)
       }),
@@ -5855,16 +4318,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.probeStreams.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.probeStreams(methodInput as any)
       }),
@@ -5873,16 +4328,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getBindings.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBindings(methodInput as any)
       }),
@@ -5891,16 +4338,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getBindingsBatch.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBindingsBatch(methodInput as any)
       }),
@@ -5909,16 +4348,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getAllBindings.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAllBindings(methodInput as any)
       }),
@@ -5927,16 +4358,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.listDeviceIdsByCaps.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listDeviceIdsByCaps(methodInput as any)
       }),
@@ -5945,16 +4368,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.setWrapperActive.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setWrapperActive(methodInput as any)
       }),
@@ -5963,16 +4378,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getWrapperActivation.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getWrapperActivation(methodInput as any)
       }),
@@ -5981,16 +4388,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.listWrappersForCap.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listWrappersForCap(methodInput as any)
       }),
@@ -5999,16 +4398,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.listBindableCapsForDeviceType.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listBindableCapsForDeviceType(methodInput as any)
       }),
@@ -6017,16 +4408,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getDeviceSettingsAggregate.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsAggregate(methodInput as any)
       }),
@@ -6035,16 +4418,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getDeviceLiveInfoAggregate.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveInfoAggregate(methodInput as any)
       }),
@@ -6053,16 +4428,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getDeviceAggregate.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceAggregate(methodInput as any)
       }),
@@ -6071,16 +4438,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.runDeviceAction.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runDeviceAction(methodInput as any)
       }),
@@ -6089,16 +4448,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.updateDeviceField.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateDeviceField(methodInput as any)
       }),
@@ -6107,16 +4458,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.updateDeviceFieldsBatch.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateDeviceFieldsBatch(methodInput as any)
       }),
@@ -6125,16 +4468,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.discoverDevices.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoverDevices(methodInput as any)
       }),
@@ -6143,16 +4478,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptDevice.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptDevice(methodInput as any)
       }),
@@ -6161,16 +4488,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getCreationSchema.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCreationSchema(methodInput as any)
       }),
@@ -6179,16 +4498,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.createDevice.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createDevice(methodInput as any)
       }),
@@ -6197,16 +4508,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.testCreationField.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.testCreationField(methodInput as any)
       }),
@@ -6215,16 +4518,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionListCandidateFilters.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionListCandidateFilters(methodInput as any)
       }),
@@ -6233,16 +4528,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionListCandidates.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionListCandidates(methodInput as any)
       }),
@@ -6251,16 +4538,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionRefresh.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionRefresh(methodInput as any)
       }),
@@ -6269,16 +4548,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionAdopt.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionAdopt(methodInput as any)
       }),
@@ -6287,16 +4558,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionRelease.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionRelease(methodInput as any)
       }),
@@ -6305,16 +4568,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionStartJob.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionStartJob(methodInput as any)
       }),
@@ -6323,16 +4578,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionListJobs.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionListJobs(methodInput as any)
       }),
@@ -6341,16 +4588,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionCancelJob.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionCancelJob(methodInput as any)
       }),
@@ -6359,16 +4598,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.adoptionResync.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptionResync(methodInput as any)
       }),
@@ -6377,16 +4608,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.discoveryProviders.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoveryProviders(methodInput as any)
       }),
@@ -6395,16 +4618,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.discoverAllProviders.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoverAllProviders(methodInput as any)
       }),
@@ -6413,16 +4628,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.discoverProvider.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoverProvider(methodInput as any)
       }),
@@ -6431,16 +4638,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.listDiscoveryProposals.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listDiscoveryProposals(methodInput as any)
       }),
@@ -6449,16 +4648,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.dismissDiscoveryProposal.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.dismissDiscoveryProposal(methodInput as any)
       }),
@@ -6467,16 +4658,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.reportDiscoveryObservations.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reportDiscoveryObservations(methodInput as any)
       }),
@@ -6485,16 +4668,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.runDiscoverySweep.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runDiscoverySweep(methodInput as any)
       }),
@@ -6503,16 +4678,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.providerCreationType.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.providerCreationType(methodInput as any)
       }),
@@ -6521,16 +4688,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.providerDiscoveryParamsSchema.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.providerDiscoveryParamsSchema(methodInput as any)
       }),
@@ -6539,16 +4698,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.testField.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.testField(methodInput as any)
       }),
@@ -6557,16 +4708,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getDeviceStatusAggregate.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceStatusAggregate(methodInput as any)
       }),
@@ -6575,16 +4718,8 @@ export function createCapRouter_deviceManager(
       .output(deviceManagerCapability.methods.getDeviceStatusAggregateBatch.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-manager',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-manager', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceStatusAggregateBatch(methodInput as any)
       }),
@@ -6679,64 +4814,36 @@ export function createCapRouter_deviceProvider(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(deviceProviderCapability.methods.start.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-provider', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.start()
       }),
     stop: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(deviceProviderCapability.methods.stop.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-provider', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.stop()
       }),
     getStatus: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-provider', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getStatus()
       }),
     getDevices: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(deviceProviderCapability.methods.getDevices.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-provider', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getDevices()
       }),
     reloadDevice: protectedProcedure
       .input(deviceProviderCapability.methods.reloadDevice.input.loose())
       .output(deviceProviderCapability.methods.reloadDevice.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reloadDevice(methodInput as any)
       }),
@@ -6744,16 +4851,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.supportsDiscovery.input.loose())
       .output(deviceProviderCapability.methods.supportsDiscovery.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.supportsDiscovery(methodInput as any)
       }),
@@ -6761,16 +4860,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.discoverDevices.input.loose())
       .output(deviceProviderCapability.methods.discoverDevices.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoverDevices(methodInput as any)
       }),
@@ -6778,16 +4869,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.getDiscoveryModes.input.loose())
       .output(deviceProviderCapability.methods.getDiscoveryModes.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDiscoveryModes(methodInput as any)
       }),
@@ -6795,16 +4878,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.classifyDiscoveryHits.input.loose())
       .output(deviceProviderCapability.methods.classifyDiscoveryHits.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.classifyDiscoveryHits(methodInput as any)
       }),
@@ -6812,16 +4887,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.getDiscoveryParamsSchema.input.loose())
       .output(deviceProviderCapability.methods.getDiscoveryParamsSchema.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDiscoveryParamsSchema(methodInput as any)
       }),
@@ -6829,16 +4896,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.getManualCreationType.input.loose())
       .output(deviceProviderCapability.methods.getManualCreationType.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getManualCreationType(methodInput as any)
       }),
@@ -6846,16 +4905,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.adoptDiscoveredDevice.input.loose())
       .output(deviceProviderCapability.methods.adoptDiscoveredDevice.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptDiscoveredDevice(methodInput as any)
       }),
@@ -6863,16 +4914,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.supportsManualCreation.input.loose())
       .output(deviceProviderCapability.methods.supportsManualCreation.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.supportsManualCreation(methodInput as any)
       }),
@@ -6880,16 +4923,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.getChildCreationSchema.input.loose())
       .output(deviceProviderCapability.methods.getChildCreationSchema.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getChildCreationSchema(methodInput as any)
       }),
@@ -6897,16 +4932,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.createDevice.input.loose())
       .output(deviceProviderCapability.methods.createDevice.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createDevice(methodInput as any)
       }),
@@ -6914,16 +4941,8 @@ export function createCapRouter_deviceProvider(
       .input(deviceProviderCapability.methods.testCreationField.input.loose())
       .output(deviceProviderCapability.methods.testCreationField.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.testCreationField(methodInput as any)
       }),
@@ -6943,16 +4962,8 @@ export function createCapRouter_deviceRemovalHook(
       .input(deviceRemovalHookCapability.methods.onDeviceRemoved.input.loose())
       .output(deviceRemovalHookCapability.methods.onDeviceRemoved.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-removal-hook',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-removal-hook', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.onDeviceRemoved(methodInput as any)
       }),
@@ -6960,12 +4971,7 @@ export function createCapRouter_deviceRemovalHook(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(deviceRemovalHookCapability.methods.listDeviceData.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'device-removal-hook',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-removal-hook', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listDeviceData()
       }),
   })
@@ -7117,12 +5123,7 @@ export function createCapRouter_deviceStatus(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'device-status',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('device-status', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -7143,16 +5144,8 @@ export function createCapRouter_deviceTransitions(
       .output(deviceTransitionsCapability.methods.listTransitions.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-transitions',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-transitions', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listTransitions(methodInput as any)
       }),
@@ -7161,16 +5154,8 @@ export function createCapRouter_deviceTransitions(
       .output(deviceTransitionsCapability.methods.getTransition.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-transitions',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-transitions', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTransition(methodInput as any)
       }),
@@ -7179,16 +5164,8 @@ export function createCapRouter_deviceTransitions(
       .output(deviceTransitionsCapability.methods.listRecentTransitions.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-transitions',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-transitions', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRecentTransitions(methodInput as any)
       }),
@@ -7197,16 +5174,8 @@ export function createCapRouter_deviceTransitions(
       .output(deviceTransitionsCapability.methods.record.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-transitions',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-transitions', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.record(methodInput as any)
       }),
@@ -7215,16 +5184,8 @@ export function createCapRouter_deviceTransitions(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
-        const p = resolveProvider(
-          'device-transitions',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('device-transitions', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -7391,24 +5352,14 @@ export function createCapRouter_displayPalette(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(displayPaletteCapability.methods.getPalette.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'display-palette',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('display-palette', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getPalette()
       }),
     listPresets: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(displayPaletteCapability.methods.listPresets.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'display-palette',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('display-palette', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listPresets()
       }),
     setPalette: adminProcedure
@@ -7435,12 +5386,7 @@ export function createCapRouter_doNotDisturb(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'do-not-disturb',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('do-not-disturb', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -7449,12 +5395,7 @@ export function createCapRouter_doNotDisturb(
       .output(doNotDisturbCapability.methods.setEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'do-not-disturb',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('do-not-disturb', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setEnabled(methodInput as any)
       }),
@@ -7495,16 +5436,8 @@ export function createCapRouter_embeddingEncoder(
       .input(embeddingEncoderCapability.methods.encode.input.loose())
       .output(embeddingEncoderCapability.methods.encode.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'embedding-encoder',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('embedding-encoder', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.encode(methodInput as any)
       }),
@@ -7512,16 +5445,8 @@ export function createCapRouter_embeddingEncoder(
       .input(embeddingEncoderCapability.methods.encodeText.input.loose())
       .output(embeddingEncoderCapability.methods.encodeText.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'embedding-encoder',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('embedding-encoder', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.encodeText(methodInput as any)
       }),
@@ -7529,28 +5454,15 @@ export function createCapRouter_embeddingEncoder(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(embeddingEncoderCapability.methods.getInfo.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'embedding-encoder',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('embedding-encoder', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getInfo()
       }),
     resetFailedModels: adminProcedure
       .input(embeddingEncoderCapability.methods.resetFailedModels.input.loose())
       .output(embeddingEncoderCapability.methods.resetFailedModels.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'embedding-encoder',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('embedding-encoder', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resetFailedModels(methodInput as any)
       }),
@@ -7571,12 +5483,7 @@ export function createCapRouter_energySystem(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'energy-system',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('energy-system', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -7639,12 +5546,7 @@ export function createCapRouter_eventEmitter(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'event-emitter',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('event-emitter', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -7823,12 +5725,7 @@ export function createCapRouter_failureContribution(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(failureContributionCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'failure-contribution',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('failure-contribution', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.list()
       }),
   })
@@ -7997,12 +5894,7 @@ export function createCapRouter_featureProbe(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'feature-probe',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('feature-probe', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -8022,12 +5914,7 @@ export function createCapRouter_filesystemBrowse(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(filesystemBrowseCapability.methods.listAllowedRoots.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'filesystem-browse',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('filesystem-browse', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listAllowedRoots()
       }),
     browse: adminProcedure
@@ -8035,12 +5922,7 @@ export function createCapRouter_filesystemBrowse(
       .output(filesystemBrowseCapability.methods.browse.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'filesystem-browse',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('filesystem-browse', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.browse(methodInput as any)
       }),
@@ -8049,12 +5931,7 @@ export function createCapRouter_filesystemBrowse(
       .output(filesystemBrowseCapability.methods.createDir.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'filesystem-browse',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('filesystem-browse', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createDir(methodInput as any)
       }),
@@ -8138,12 +6015,7 @@ export function createCapRouter_groupCommands(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'group-commands',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('group-commands', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -8185,12 +6057,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setSilentMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSilentMode(methodInput as any)
       }),
@@ -8199,12 +6066,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setAwayMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAwayMode(methodInput as any)
       }),
@@ -8213,12 +6075,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setAdditionalHeaterMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAdditionalHeaterMode(methodInput as any)
       }),
@@ -8227,12 +6084,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setHolidayMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setHolidayMode(methodInput as any)
       }),
@@ -8241,12 +6093,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setCircuitOperationMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setCircuitOperationMode(methodInput as any)
       }),
@@ -8255,12 +6102,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setCircuitHeatCoolMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setCircuitHeatCoolMode(methodInput as any)
       }),
@@ -8269,12 +6111,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setCircuitSummerWinter.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setCircuitSummerWinter(methodInput as any)
       }),
@@ -8283,12 +6120,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setCircuitComfortSetpoint.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setCircuitComfortSetpoint(methodInput as any)
       }),
@@ -8297,12 +6129,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setCircuitEcoSetpoint.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setCircuitEcoSetpoint(methodInput as any)
       }),
@@ -8311,12 +6138,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setCircuitMaxFlowTemp.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setCircuitMaxFlowTemp(methodInput as any)
       }),
@@ -8325,12 +6147,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setDhwOperationMode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDhwOperationMode(methodInput as any)
       }),
@@ -8339,12 +6156,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setDhwTemperatureLevel.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDhwTemperatureLevel(methodInput as any)
       }),
@@ -8353,12 +6165,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.setDhwChargeDuration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDhwChargeDuration(methodInput as any)
       }),
@@ -8367,12 +6174,7 @@ export function createCapRouter_heatPumpControl(
       .output(heatPumpControlCapability.methods.startExtraHotWater.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startExtraHotWater(methodInput as any)
       }),
@@ -8393,12 +6195,7 @@ export function createCapRouter_heatPumpStatus(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heat-pump-status',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heat-pump-status', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -8419,12 +6216,7 @@ export function createCapRouter_heatingValve(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'heating-valve',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('heating-valve', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -8532,12 +6324,7 @@ export function createCapRouter_humiditySensor(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'humidity-sensor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('humidity-sensor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -8579,12 +6366,7 @@ export function createCapRouter_imageSettings(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'image-settings',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('image-settings', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -8593,12 +6375,7 @@ export function createCapRouter_imageSettings(
       .output(imageSettingsCapability.methods.getOptions.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'image-settings',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('image-settings', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOptions(methodInput as any)
       }),
@@ -8607,12 +6384,7 @@ export function createCapRouter_imageSettings(
       .output(imageSettingsCapability.methods.setSettings.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'image-settings',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('image-settings', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSettings(methodInput as any)
       }),
@@ -8632,12 +6404,7 @@ export function createCapRouter_integrationInstances(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(integrationInstancesCapability.methods.describe.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'integration-instances',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('integration-instances', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.describe()
       }),
     instanceFormSchema: adminProcedure
@@ -8645,16 +6412,8 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.instanceFormSchema.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.instanceFormSchema(methodInput as any)
       }),
@@ -8663,16 +6422,8 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.listInstances.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listInstances(methodInput as any)
       }),
@@ -8681,16 +6432,8 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.getInstance.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getInstance(methodInput as any)
       }),
@@ -8699,16 +6442,8 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.createInstance.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createInstance(methodInput as any)
       }),
@@ -8717,16 +6452,8 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.updateInstance.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateInstance(methodInput as any)
       }),
@@ -8735,16 +6462,8 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.setInstanceEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setInstanceEnabled(methodInput as any)
       }),
@@ -8753,16 +6472,8 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.deleteInstance.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteInstance(methodInput as any)
       }),
@@ -8771,22 +6482,13 @@ export function createCapRouter_integrationInstances(
       .output(integrationInstancesCapability.methods.testInstance.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, addonId, ...methodInput } = parsedInput as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'integration-instances',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = parsedInput as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('integration-instances', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         const fn = p.testInstance
         if (typeof fn !== 'function') {
           throw new TRPCError({
             code: 'NOT_IMPLEMENTED',
-            message:
-              'Capability "integration-instances" provider does not implement "testInstance"',
+            message: 'Capability "integration-instances" provider does not implement "testInstance"',
           })
         }
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
@@ -8808,12 +6510,7 @@ export function createCapRouter_integrations(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(integrationsCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'integrations',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('integrations', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.list()
       }),
     get: protectedProcedure
@@ -8821,10 +6518,7 @@ export function createCapRouter_integrations(
       .output(integrationsCapability.methods.get.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.get(methodInput as any)
@@ -8834,10 +6528,7 @@ export function createCapRouter_integrations(
       .output(integrationsCapability.methods.getByAddonId.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getByAddonId(methodInput as any)
@@ -8847,10 +6538,7 @@ export function createCapRouter_integrations(
       .output(integrationsCapability.methods.update.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.update(methodInput as any)
@@ -8860,10 +6548,7 @@ export function createCapRouter_integrations(
       .output(integrationsCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('integrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
@@ -8872,12 +6557,7 @@ export function createCapRouter_integrations(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(integrationsCapability.methods.getAvailableTypes.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'integrations',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('integrations', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getAvailableTypes()
       }),
   })
@@ -8972,12 +6652,7 @@ export function createCapRouter_irTransmitter(
       .output(irTransmitterCapability.methods.send.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ir-transmitter',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ir-transmitter', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.send(methodInput as any)
       }),
@@ -8986,12 +6661,7 @@ export function createCapRouter_irTransmitter(
       .output(irTransmitterCapability.methods.learn.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ir-transmitter',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ir-transmitter', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.learn(methodInput as any)
       }),
@@ -9000,12 +6670,7 @@ export function createCapRouter_irTransmitter(
       .output(irTransmitterCapability.methods.getInfo.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ir-transmitter',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ir-transmitter', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getInfo(methodInput as any)
       }),
@@ -9026,10 +6691,7 @@ export function createCapRouter_keychain(
       .output(keychainCapability.methods.put.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.put(methodInput as any)
@@ -9039,10 +6701,7 @@ export function createCapRouter_keychain(
       .output(keychainCapability.methods.resolve.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resolve(methodInput as any)
@@ -9052,10 +6711,7 @@ export function createCapRouter_keychain(
       .output(keychainCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
@@ -9065,10 +6721,7 @@ export function createCapRouter_keychain(
       .output(keychainCapability.methods.deleteDeviceScope.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteDeviceScope(methodInput as any)
@@ -9078,10 +6731,7 @@ export function createCapRouter_keychain(
       .output(keychainCapability.methods.releaseRecordRefs.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.releaseRecordRefs(methodInput as any)
@@ -9091,10 +6741,7 @@ export function createCapRouter_keychain(
       .output(keychainCapability.methods.listMeta.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listMeta(methodInput as any)
@@ -9104,10 +6751,7 @@ export function createCapRouter_keychain(
       .output(keychainCapability.methods.getState.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('keychain', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getState(methodInput as any)
@@ -9129,12 +6773,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.status.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.status(methodInput as any)
       }),
@@ -9143,12 +6782,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.listSecrets.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listSecrets(methodInput as any)
       }),
@@ -9157,12 +6791,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.listAudit.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listAudit(methodInput as any)
       }),
@@ -9171,12 +6800,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.reveal.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reveal(methodInput as any)
       }),
@@ -9185,12 +6809,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.setSystemSecret.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSystemSecret(methodInput as any)
       }),
@@ -9199,12 +6818,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.importSecret.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.importSecret(methodInput as any)
       }),
@@ -9213,12 +6827,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.deleteOrphans.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteOrphans(methodInput as any)
       }),
@@ -9227,12 +6836,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.rotateMasterKey.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.rotateMasterKey(methodInput as any)
       }),
@@ -9241,12 +6845,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.purgeRetiredKeys.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.purgeRetiredKeys(methodInput as any)
       }),
@@ -9255,12 +6854,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.downloadRecoveryKey.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.downloadRecoveryKey(methodInput as any)
       }),
@@ -9269,12 +6863,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.resetKeychain.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resetKeychain(methodInput as any)
       }),
@@ -9283,12 +6872,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.resetReport.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resetReport(methodInput as any)
       }),
@@ -9297,12 +6881,7 @@ export function createCapRouter_keychainAdmin(
       .output(keychainAdminCapability.methods.acknowledgeReset.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'keychain-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('keychain-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.acknowledgeReset(methodInput as any)
       }),
@@ -9323,12 +6902,7 @@ export function createCapRouter_lawnMowerControl(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'lawn-mower-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('lawn-mower-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -9337,12 +6911,7 @@ export function createCapRouter_lawnMowerControl(
       .output(lawnMowerControlCapability.methods.startMowing.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'lawn-mower-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('lawn-mower-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startMowing(methodInput as any)
       }),
@@ -9351,12 +6920,7 @@ export function createCapRouter_lawnMowerControl(
       .output(lawnMowerControlCapability.methods.pause.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'lawn-mower-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('lawn-mower-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pause(methodInput as any)
       }),
@@ -9365,12 +6929,7 @@ export function createCapRouter_lawnMowerControl(
       .output(lawnMowerControlCapability.methods.dock.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'lawn-mower-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('lawn-mower-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.dock(methodInput as any)
       }),
@@ -9641,12 +7200,7 @@ export function createCapRouter_loadContribution(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(loadContributionCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'load-contribution',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('load-contribution', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.list()
       }),
   })
@@ -9665,24 +7219,14 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.list()
       }),
     getPreferred: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.getPreferred.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getPreferred()
       }),
     getConnectionEndpoints: protectedProcedure
@@ -9690,12 +7234,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.getConnectionEndpoints.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getConnectionEndpoints(methodInput as any)
       }),
@@ -9703,12 +7242,7 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.getNotificationEndpoint.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getNotificationEndpoint()
       }),
     setNotificationEndpoint: protectedProcedure
@@ -9716,12 +7250,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.setNotificationEndpoint.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setNotificationEndpoint(methodInput as any)
       }),
@@ -9729,12 +7258,7 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.getViewerEndpoints.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getViewerEndpoints()
       }),
     setViewerEndpoints: protectedProcedure
@@ -9742,12 +7266,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.setViewerEndpoints.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setViewerEndpoints(methodInput as any)
       }),
@@ -9763,12 +7282,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.addCustomAddress.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.addCustomAddress(methodInput as any)
       }),
@@ -9777,12 +7291,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.removeCustomAddress.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeCustomAddress(methodInput as any)
       }),
@@ -9791,12 +7300,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.setAddressRole.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAddressRole(methodInput as any)
       }),
@@ -9804,24 +7308,14 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.getHubAddresses.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getHubAddresses()
       }),
     getAllowedAddresses: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.getAllowedAddresses.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getAllowedAddresses()
       }),
     setAllowedAddresses: protectedProcedure
@@ -9829,12 +7323,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.setAllowedAddresses.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAllowedAddresses(methodInput as any)
       }),
@@ -9842,24 +7331,14 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.resetAllowlistToBestMatch.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.resetAllowlistToBestMatch()
       }),
     getTlsStatus: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.getTlsStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getTlsStatus()
       }),
     regenerateCertificate: adminProcedure
@@ -9867,12 +7346,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.regenerateCertificate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.regenerateCertificate(methodInput as any)
       }),
@@ -9881,12 +7355,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.uploadCertificate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.uploadCertificate(methodInput as any)
       }),
@@ -9894,24 +7363,14 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.downloadCa.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.downloadCa()
       }),
     useStoredUploadedCertificate: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.useStoredUploadedCertificate.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.useStoredUploadedCertificate()
       }),
     scanNetwork: adminProcedure
@@ -9919,12 +7378,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.scanNetwork.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.scanNetwork(methodInput as any)
       }),
@@ -9932,12 +7386,7 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.getScanSubnets.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getScanSubnets()
       }),
     setScanSubnets: adminProcedure
@@ -9945,12 +7394,7 @@ export function createCapRouter_localNetwork(
       .output(localNetworkCapability.methods.setScanSubnets.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'local-network',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setScanSubnets(methodInput as any)
       }),
@@ -9958,12 +7402,7 @@ export function createCapRouter_localNetwork(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(localNetworkCapability.methods.revertToGeneratedCertificate.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'local-network',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('local-network', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.revertToGeneratedCertificate()
       }),
   })
@@ -10037,28 +7476,15 @@ export function createCapRouter_logChannels(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(logChannelsCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'log-channels',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('log-channels', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.list()
       }),
     apply: adminProcedure
       .input(logChannelsCapability.methods.apply.input.loose())
       .output(logChannelsCapability.methods.apply.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'log-channels',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('log-channels', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.apply(methodInput as any)
       }),
@@ -10078,16 +7504,8 @@ export function createCapRouter_logDestination(
       .input(logDestinationCapability.methods.write.input.loose())
       .output(logDestinationCapability.methods.write.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'log-destination',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('log-destination', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.write(methodInput as any)
       }),
@@ -10095,16 +7513,8 @@ export function createCapRouter_logDestination(
       .input(logDestinationCapability.methods.describeRead.input.loose())
       .output(logDestinationCapability.methods.describeRead.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'log-destination',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('log-destination', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         const fn = p.describeRead
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -10119,16 +7529,8 @@ export function createCapRouter_logDestination(
       .input(logDestinationCapability.methods.read.input.loose())
       .output(logDestinationCapability.methods.read.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'log-destination',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('log-destination', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         const fn = p.read
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -10143,16 +7545,8 @@ export function createCapRouter_logDestination(
       .input(logDestinationCapability.methods.cancelRead.input.loose())
       .output(logDestinationCapability.methods.cancelRead.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'log-destination',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('log-destination', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         const fn = p.cancelRead
         if (typeof fn !== 'function') {
           throw new TRPCError({
@@ -10179,12 +7573,7 @@ export function createCapRouter_loginMethod(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(loginMethodCapability.methods.getLoginMethods.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'login-method',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('login-method', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getLoginMethods()
       }),
   })
@@ -10498,28 +7887,15 @@ export function createCapRouter_meshNetwork(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'mesh-network',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('mesh-network', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getStatus()
       }),
     join: protectedProcedure
       .input(meshNetworkCapability.methods.join.input.loose())
       .output(meshNetworkCapability.methods.join.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mesh-network',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('mesh-network', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.join(methodInput as any)
       }),
@@ -10527,16 +7903,8 @@ export function createCapRouter_meshNetwork(
       .input(meshNetworkCapability.methods.startLogin.input.loose())
       .output(meshNetworkCapability.methods.startLogin.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mesh-network',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('mesh-network', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startLogin(methodInput as any)
       }),
@@ -10544,36 +7912,21 @@ export function createCapRouter_meshNetwork(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(meshNetworkCapability.methods.leave.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'mesh-network',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('mesh-network', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.leave()
       }),
     logout: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(meshNetworkCapability.methods.logout.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'mesh-network',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('mesh-network', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.logout()
       }),
     listPeers: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(meshNetworkCapability.methods.listPeers.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'mesh-network',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('mesh-network', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listPeers()
       }),
   })
@@ -10613,36 +7966,21 @@ export function createCapRouter_metricsProvider(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(metricsProviderCapability.methods.collectSnapshot.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'metrics-provider',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.collectSnapshot()
       }),
     getCached: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(metricsProviderCapability.methods.getCached.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'metrics-provider',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getCached()
       }),
     getCurrent: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(metricsProviderCapability.methods.getCurrent.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'metrics-provider',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getCurrent()
       }),
     getDiskSpace: protectedProcedure
@@ -10650,12 +7988,7 @@ export function createCapRouter_metricsProvider(
       .output(metricsProviderCapability.methods.getDiskSpace.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'metrics-provider',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDiskSpace(methodInput as any)
       }),
@@ -10663,24 +7996,14 @@ export function createCapRouter_metricsProvider(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(metricsProviderCapability.methods.getGpuInfo.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'metrics-provider',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getGpuInfo()
       }),
     getCpuTemperature: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(metricsProviderCapability.methods.getCpuTemperature.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'metrics-provider',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getCpuTemperature()
       }),
     getProcessStats: protectedProcedure
@@ -10688,12 +8011,7 @@ export function createCapRouter_metricsProvider(
       .output(metricsProviderCapability.methods.getProcessStats.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'metrics-provider',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getProcessStats(methodInput as any)
       }),
@@ -10701,12 +8019,7 @@ export function createCapRouter_metricsProvider(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(metricsProviderCapability.methods.listAddonInstances.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'metrics-provider',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listAddonInstances()
       }),
     getAddonStats: protectedProcedure
@@ -10714,12 +8027,7 @@ export function createCapRouter_metricsProvider(
       .output(metricsProviderCapability.methods.getAddonStats.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'metrics-provider',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAddonStats(methodInput as any)
       }),
@@ -10727,12 +8035,7 @@ export function createCapRouter_metricsProvider(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(metricsProviderCapability.methods.listNodeProcesses.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'metrics-provider',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listNodeProcesses()
       }),
     getLoadSeries: protectedProcedure
@@ -10740,12 +8043,7 @@ export function createCapRouter_metricsProvider(
       .output(metricsProviderCapability.methods.getLoadSeries.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'metrics-provider',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('metrics-provider', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getLoadSeries(methodInput as any)
       }),
@@ -10766,10 +8064,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.listLedger.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listLedger(methodInput as any)
@@ -10779,10 +8074,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.listPending.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listPending(methodInput as any)
@@ -10792,10 +8084,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.dryRun.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.dryRun(methodInput as any)
@@ -10805,10 +8094,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.markFailed.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.markFailed(methodInput as any)
@@ -10818,10 +8104,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.retry.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.retry(methodInput as any)
@@ -10831,10 +8114,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.restorePreMigration.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.restorePreMigration(methodInput as any)
@@ -10844,10 +8124,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.declareOwner.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.declareOwner(methodInput as any)
@@ -10857,10 +8134,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.startMigration.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startMigration(methodInput as any)
@@ -10870,10 +8144,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.finishMigration.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.finishMigration(methodInput as any)
@@ -10883,10 +8154,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.readLegacyIntegrationRows.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readLegacyIntegrationRows(methodInput as any)
@@ -10896,10 +8164,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.clearLegacyIntegrationRows.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.clearLegacyIntegrationRows(methodInput as any)
@@ -10909,10 +8174,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.patchLegacyIntegrationRows.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.patchLegacyIntegrationRows(methodInput as any)
@@ -10922,10 +8184,7 @@ export function createCapRouter_migrations(
       .output(migrationsCapability.methods.deleteLegacyIntegrationRowKeys.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('migrations', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteLegacyIntegrationRowKeys(methodInput as any)
@@ -10947,12 +8206,7 @@ export function createCapRouter_modelConvert(
       .output(modelConvertCapability.methods.convert.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'model-convert',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('model-convert', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.convert(methodInput as any)
       }),
@@ -10973,12 +8227,7 @@ export function createCapRouter_modelDistributor(
       .output(modelDistributorCapability.methods.distributeModel.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'model-distributor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('model-distributor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.distributeModel(methodInput as any)
       }),
@@ -11029,12 +8278,7 @@ export function createCapRouter_motionDetection(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'motion-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -11043,12 +8287,7 @@ export function createCapRouter_motionDetection(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'motion-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -11057,12 +8296,7 @@ export function createCapRouter_motionDetection(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'motion-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -11071,12 +8305,7 @@ export function createCapRouter_motionDetection(
       .output(motionDetectionCapability.methods.analyze.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'motion-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.analyze(methodInput as any)
       }),
@@ -11085,12 +8314,7 @@ export function createCapRouter_motionDetection(
       .output(motionDetectionCapability.methods.removeCamera.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'motion-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeCamera(methodInput as any)
       }),
@@ -11098,12 +8322,7 @@ export function createCapRouter_motionDetection(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(motionDetectionCapability.methods.reset.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'motion-detection',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-detection', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.reset()
       }),
   })
@@ -11123,12 +8342,7 @@ export function createCapRouter_motionTrigger(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'motion-trigger',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-trigger', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -11137,12 +8351,7 @@ export function createCapRouter_motionTrigger(
       .output(motionTriggerCapability.methods.setMotionTrigger.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'motion-trigger',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('motion-trigger', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setMotionTrigger(methodInput as any)
       }),
@@ -11201,40 +8410,22 @@ export function createCapRouter_mqttBroker(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'mqtt-broker',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('mqtt-broker', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getStatus()
       }),
     listBrokers: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(mqttBrokerCapability.methods.listBrokers.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'mqtt-broker',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('mqtt-broker', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listBrokers()
       }),
     getBrokerConfig: adminProcedure
       .input(mqttBrokerCapability.methods.getBrokerConfig.input.loose())
       .output(mqttBrokerCapability.methods.getBrokerConfig.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mqtt-broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('mqtt-broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBrokerConfig(methodInput as any)
       }),
@@ -11242,16 +8433,8 @@ export function createCapRouter_mqttBroker(
       .input(mqttBrokerCapability.methods.addBroker.input.loose())
       .output(mqttBrokerCapability.methods.addBroker.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mqtt-broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('mqtt-broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.addBroker(methodInput as any)
       }),
@@ -11259,16 +8442,8 @@ export function createCapRouter_mqttBroker(
       .input(mqttBrokerCapability.methods.removeBroker.input.loose())
       .output(mqttBrokerCapability.methods.removeBroker.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mqtt-broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('mqtt-broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeBroker(methodInput as any)
       }),
@@ -11276,16 +8451,8 @@ export function createCapRouter_mqttBroker(
       .input(mqttBrokerCapability.methods.startEmbeddedBroker.input.loose())
       .output(mqttBrokerCapability.methods.startEmbeddedBroker.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mqtt-broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('mqtt-broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startEmbeddedBroker(methodInput as any)
       }),
@@ -11293,16 +8460,8 @@ export function createCapRouter_mqttBroker(
       .input(mqttBrokerCapability.methods.stopEmbeddedBroker.input.loose())
       .output(mqttBrokerCapability.methods.stopEmbeddedBroker.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'mqtt-broker',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('mqtt-broker', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.stopEmbeddedBroker(methodInput as any)
       }),
@@ -11323,12 +8482,7 @@ export function createCapRouter_nativeObjectDetection(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'native-object-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('native-object-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -11337,12 +8491,7 @@ export function createCapRouter_nativeObjectDetection(
       .output(nativeObjectDetectionCapability.methods.getOptions.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'native-object-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('native-object-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOptions(methodInput as any)
       }),
@@ -11351,12 +8500,7 @@ export function createCapRouter_nativeObjectDetection(
       .output(nativeObjectDetectionCapability.methods.setSettings.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'native-object-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('native-object-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSettings(methodInput as any)
       }),
@@ -11365,12 +8509,7 @@ export function createCapRouter_nativeObjectDetection(
       .output(nativeObjectDetectionCapability.methods.setEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'native-object-detection',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('native-object-detection', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setEnabled(methodInput as any)
       }),
@@ -11501,60 +8640,35 @@ export function createCapRouter_networkAccess(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(networkAccessCapability.methods.start.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'network-access',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-access', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.start()
       }),
     stop: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(networkAccessCapability.methods.stop.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'network-access',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-access', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.stop()
       }),
     getEndpoint: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(networkAccessCapability.methods.getEndpoint.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'network-access',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-access', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getEndpoint()
       }),
     getStatus: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'network-access',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-access', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getStatus()
       }),
     listEndpoints: protectedProcedure
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(networkAccessCapability.methods.listEndpoints.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'network-access',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-access', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.listEndpoints()
       }),
   })
@@ -11595,12 +8709,7 @@ export function createCapRouter_networkQuality(
       .output(networkQualityCapability.methods.getDeviceStats.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'network-quality',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-quality', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceStats(methodInput as any)
       }),
@@ -11608,12 +8717,7 @@ export function createCapRouter_networkQuality(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(networkQualityCapability.methods.getAllStats.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'network-quality',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-quality', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getAllStats()
       }),
     reportClientStats: protectedProcedure
@@ -11621,12 +8725,7 @@ export function createCapRouter_networkQuality(
       .output(networkQualityCapability.methods.reportClientStats.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'network-quality',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('network-quality', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reportClientStats(methodInput as any)
       }),
@@ -11647,12 +8746,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.getCertificates.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCertificates(methodInput as any)
       }),
@@ -11661,12 +8755,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.prepareMeshRenewal.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.prepareMeshRenewal(methodInput as any)
       }),
@@ -11675,12 +8764,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.installMeshLeaf.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.installMeshLeaf(methodInput as any)
       }),
@@ -11689,12 +8773,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.confirmMeshLeaf.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.confirmMeshLeaf(methodInput as any)
       }),
@@ -11703,12 +8782,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.rollbackMeshLeaf.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.rollbackMeshLeaf(methodInput as any)
       }),
@@ -11717,12 +8791,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.prepareHttpsCertificate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.prepareHttpsCertificate(methodInput as any)
       }),
@@ -11731,12 +8800,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.forgetHub.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.forgetHub(methodInput as any)
       }),
@@ -11745,12 +8809,7 @@ export function createCapRouter_nodeCertificates(
       .output(nodeCertificatesCapability.methods.installHttpsCertificate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-certificates',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('node-certificates', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.installHttpsCertificate(methodInput as any)
       }),
@@ -11770,16 +8829,8 @@ export function createCapRouter_nodeRemovalHook(
       .input(nodeRemovalHookCapability.methods.onNodeRemoved.input.loose())
       .output(nodeRemovalHookCapability.methods.onNodeRemoved.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'node-removal-hook',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('node-removal-hook', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.onNodeRemoved(methodInput as any)
       }),
@@ -11923,16 +8974,8 @@ export function createCapRouter_notificationOutput(
       .input(notificationOutputCapability.methods.listTargetKinds.input.loose())
       .output(notificationOutputCapability.methods.listTargetKinds.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('notification-output', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listTargetKinds(methodInput as any)
       }),
@@ -11940,16 +8983,8 @@ export function createCapRouter_notificationOutput(
       .input(notificationOutputCapability.methods.discoverTargets.input.loose())
       .output(notificationOutputCapability.methods.discoverTargets.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('notification-output', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.discoverTargets(methodInput as any)
       }),
@@ -11957,16 +8992,8 @@ export function createCapRouter_notificationOutput(
       .input(notificationOutputCapability.methods.probeTargetConfig.input.loose())
       .output(notificationOutputCapability.methods.probeTargetConfig.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('notification-output', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.probeTargetConfig(methodInput as any)
       }),
@@ -11974,16 +9001,8 @@ export function createCapRouter_notificationOutput(
       .input(notificationOutputCapability.methods.send.input.loose())
       .output(notificationOutputCapability.methods.send.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('notification-output', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.send(methodInput as any)
       }),
@@ -11991,16 +9010,8 @@ export function createCapRouter_notificationOutput(
       .input(notificationOutputCapability.methods.testTarget.input.loose())
       .output(notificationOutputCapability.methods.testTarget.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-output',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('notification-output', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.testTarget(methodInput as any)
       }),
@@ -12021,12 +9032,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.listRules.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRules(methodInput as any)
       }),
@@ -12035,12 +9041,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getRule.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRule(methodInput as any)
       }),
@@ -12049,12 +9050,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.createRule.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createRule(methodInput as any)
       }),
@@ -12063,12 +9059,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.updateRule.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateRule(methodInput as any)
       }),
@@ -12077,12 +9068,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.deleteRule.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteRule(methodInput as any)
       }),
@@ -12091,12 +9077,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.setRuleEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setRuleEnabled(methodInput as any)
       }),
@@ -12105,12 +9086,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getClipRetentionAsks.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getClipRetentionAsks(methodInput as any)
       }),
@@ -12119,12 +9095,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.listDeviceMutes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listDeviceMutes(methodInput as any)
       }),
@@ -12133,12 +9104,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.setDeviceMuted.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDeviceMuted(methodInput as any)
       }),
@@ -12147,12 +9113,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.testRule.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.testRule(methodInput as any)
       }),
@@ -12161,12 +9122,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.previewStateSummary.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.previewStateSummary(methodInput as any)
       }),
@@ -12175,12 +9131,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getConditionCatalog.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getConditionCatalog(methodInput as any)
       }),
@@ -12189,12 +9140,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getTemplateCatalog.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTemplateCatalog(methodInput as any)
       }),
@@ -12203,12 +9149,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.previewTemplate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.previewTemplate(methodInput as any)
       }),
@@ -12217,12 +9158,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getHistory.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getHistory(methodInput as any)
       }),
@@ -12231,12 +9167,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getRuleLastRuns.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRuleLastRuns(methodInput as any)
       }),
@@ -12245,12 +9176,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.resolveArtifactUrl.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resolveArtifactUrl(methodInput as any)
       }),
@@ -12259,12 +9185,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.listSnoozes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listSnoozes(methodInput as any)
       }),
@@ -12273,12 +9194,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.createSnooze.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createSnooze(methodInput as any)
       }),
@@ -12287,12 +9203,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.cancelSnooze.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelSnooze(methodInput as any)
       }),
@@ -12301,12 +9212,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getAlarmConfig.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAlarmConfig(methodInput as any)
       }),
@@ -12315,12 +9221,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.setAlarmConfig.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setAlarmConfig(methodInput as any)
       }),
@@ -12329,12 +9230,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.createAlarmProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createAlarmProfile(methodInput as any)
       }),
@@ -12343,12 +9239,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.renameAlarmProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renameAlarmProfile(methodInput as any)
       }),
@@ -12357,12 +9248,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.deleteAlarmProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteAlarmProfile(methodInput as any)
       }),
@@ -12371,12 +9257,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.activateAlarmProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.activateAlarmProfile(methodInput as any)
       }),
@@ -12385,12 +9266,7 @@ export function createCapRouter_notificationRules(
       .output(notificationRulesCapability.methods.getAlarmSensors.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'notification-rules',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('notification-rules', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAlarmSensors(methodInput as any)
       }),
@@ -12450,12 +9326,7 @@ export function createCapRouter_numericSensor(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'numeric-sensor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('numeric-sensor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -12475,12 +9346,7 @@ export function createCapRouter_oauthIntegration(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(oauthIntegrationCapability.methods.getDescriptor.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'oauth-integration',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('oauth-integration', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getDescriptor()
       }),
   })
@@ -12791,12 +9657,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -12805,12 +9666,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -12819,12 +9675,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -12833,12 +9684,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getActiveTracks.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getActiveTracks(methodInput as any)
       }),
@@ -12847,12 +9693,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getTrack.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTrack(methodInput as any)
       }),
@@ -12861,12 +9702,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listTracks.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listTracks(methodInput as any)
       }),
@@ -12875,12 +9711,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRecentTracks.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRecentTracks(methodInput as any)
       }),
@@ -12889,12 +9720,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.clearTracks.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.clearTracks(methodInput as any)
       }),
@@ -12903,12 +9729,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getMotionEvents.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getMotionEvents(methodInput as any)
       }),
@@ -12917,12 +9738,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getObjectEvents.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getObjectEvents(methodInput as any)
       }),
@@ -12931,12 +9747,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getAudioEvents.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAudioEvents(methodInput as any)
       }),
@@ -12945,12 +9756,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listEventKinds.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listEventKinds(methodInput as any)
       }),
@@ -12959,12 +9765,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listEventKindsBatch.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listEventKindsBatch(methodInput as any)
       }),
@@ -12973,12 +9774,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getSensorEvents.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getSensorEvents(methodInput as any)
       }),
@@ -12987,12 +9783,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getKeyEvents.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getKeyEvents(methodInput as any)
       }),
@@ -13001,12 +9792,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getKeyEventsBatch.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getKeyEventsBatch(methodInput as any)
       }),
@@ -13015,12 +9801,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.readLongTermSeries.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readLongTermSeries(methodInput as any)
       }),
@@ -13029,12 +9810,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getEventDensity.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEventDensity(methodInput as any)
       }),
@@ -13043,12 +9819,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getEventDensityBatch.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEventDensityBatch(methodInput as any)
       }),
@@ -13057,12 +9828,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.pruneEventsBefore.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pruneEventsBefore(methodInput as any)
       }),
@@ -13071,12 +9837,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.pruneTracksBefore.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pruneTracksBefore(methodInput as any)
       }),
@@ -13085,12 +9846,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.wipeAllAnalytics.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.wipeAllAnalytics(methodInput as any)
       }),
@@ -13099,12 +9855,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.reconcileFromDisk.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reconcileFromDisk(methodInput as any)
       }),
@@ -13113,12 +9864,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.deleteTracks.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteTracks(methodInput as any)
       }),
@@ -13127,12 +9873,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.setTrackFlags.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setTrackFlags(methodInput as any)
       }),
@@ -13141,12 +9882,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listArchivedDebugNotes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listArchivedDebugNotes(methodInput as any)
       }),
@@ -13155,12 +9891,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.setTrackRelation.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setTrackRelation(methodInput as any)
       }),
@@ -13169,12 +9900,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.clearTrackRelation.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.clearTrackRelation(methodInput as any)
       }),
@@ -13183,12 +9909,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.setTrackPurity.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setTrackPurity(methodInput as any)
       }),
@@ -13197,12 +9918,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listTrackRelations.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listTrackRelations(methodInput as any)
       }),
@@ -13211,12 +9927,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listBirthDecisions.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listBirthDecisions(methodInput as any)
       }),
@@ -13225,12 +9936,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getEventStoreFootprint.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEventStoreFootprint(methodInput as any)
       }),
@@ -13239,12 +9945,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getEventMediaFootprintByKind.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEventMediaFootprintByKind(methodInput as any)
       }),
@@ -13253,12 +9954,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.pruneEvents.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pruneEvents(methodInput as any)
       }),
@@ -13267,12 +9963,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.deleteDeviceEvents.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteDeviceEvents(methodInput as any)
       }),
@@ -13281,12 +9972,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.pauseForStorageMigration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pauseForStorageMigration(methodInput as any)
       }),
@@ -13295,12 +9981,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.resumeForStorageMigration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resumeForStorageMigration(methodInput as any)
       }),
@@ -13309,12 +9990,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.refreshStorageLocationsForMigration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.refreshStorageLocationsForMigration(methodInput as any)
       }),
@@ -13323,12 +9999,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.startStorageMigrationMove.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startStorageMigrationMove(methodInput as any)
       }),
@@ -13337,12 +10008,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getStorageMigrationMoveStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStorageMigrationMoveStatus(methodInput as any)
       }),
@@ -13351,12 +10017,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.cancelStorageMigrationMove.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelStorageMigrationMove(methodInput as any)
       }),
@@ -13365,12 +10026,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.relocateMedia.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.relocateMedia(methodInput as any)
       }),
@@ -13379,12 +10035,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.countUnstampedEventMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.countUnstampedEventMedia(methodInput as any)
       }),
@@ -13393,12 +10044,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getMediaLocationCensus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getMediaLocationCensus(methodInput as any)
       }),
@@ -13407,12 +10053,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.countRelocatableMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.countRelocatableMedia(methodInput as any)
       }),
@@ -13421,12 +10062,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRelocateMediaJobs.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRelocateMediaJobs(methodInput as any)
       }),
@@ -13435,12 +10071,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.cancelRelocateMedia.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelRelocateMedia(methodInput as any)
       }),
@@ -13449,12 +10080,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listOpsLog.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listOpsLog(methodInput as any)
       }),
@@ -13463,12 +10089,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.reclaimDebugMedia.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reclaimDebugMedia(methodInput as any)
       }),
@@ -13477,12 +10098,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getMediaReclaimStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getMediaReclaimStatus(methodInput as any)
       }),
@@ -13491,12 +10107,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getTrainingExportSummary.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTrainingExportSummary(methodInput as any)
       }),
@@ -13505,12 +10116,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getTrainingExportUrl.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTrainingExportUrl(methodInput as any)
       }),
@@ -13519,12 +10125,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRetrainStaging.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRetrainStaging(methodInput as any)
       }),
@@ -13533,12 +10134,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRetrainCorpusPage.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRetrainCorpusPage(methodInput as any)
       }),
@@ -13547,12 +10143,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getRetrainCorpusKpi.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRetrainCorpusKpi(methodInput as any)
       }),
@@ -13561,12 +10152,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRetrainFrames.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRetrainFrames(methodInput as any)
       }),
@@ -13575,12 +10161,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.selectRetrainFrames.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.selectRetrainFrames(methodInput as any)
       }),
@@ -13589,12 +10170,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.deselectRetrainFrame.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deselectRetrainFrame(methodInput as any)
       }),
@@ -13603,12 +10179,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getRetrainFrameImage.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRetrainFrameImage(methodInput as any)
       }),
@@ -13617,12 +10188,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.proposeRetrainAnnotations.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.proposeRetrainAnnotations(methodInput as any)
       }),
@@ -13631,12 +10197,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRetrainAnnotations.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRetrainAnnotations(methodInput as any)
       }),
@@ -13645,12 +10206,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.saveRetrainAnnotations.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.saveRetrainAnnotations(methodInput as any)
       }),
@@ -13659,12 +10215,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.backfillRetrainOrigins.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.backfillRetrainOrigins(methodInput as any)
       }),
@@ -13673,12 +10224,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.completeRetrainTrack.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.completeRetrainTrack(methodInput as any)
       }),
@@ -13687,12 +10233,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.restageRetrainTrack.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.restageRetrainTrack(methodInput as any)
       }),
@@ -13701,12 +10242,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getRetrainExportUrl.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRetrainExportUrl(methodInput as any)
       }),
@@ -13715,12 +10251,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.setRetrainFrameComplete.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setRetrainFrameComplete(methodInput as any)
       }),
@@ -13729,12 +10260,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.writeRetrainArchive.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.writeRetrainArchive(methodInput as any)
       }),
@@ -13743,12 +10269,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.offerRetrainArchive.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.offerRetrainArchive(methodInput as any)
       }),
@@ -13757,12 +10278,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRetrainAssistProfiles.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRetrainAssistProfiles(methodInput as any)
       }),
@@ -13771,12 +10287,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.proposeRetrainAnnotationsWithLlm.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.proposeRetrainAnnotationsWithLlm(methodInput as any)
       }),
@@ -13785,12 +10296,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.createRetrainCollection.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createRetrainCollection(methodInput as any)
       }),
@@ -13799,12 +10305,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRetrainCollections.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRetrainCollections(methodInput as any)
       }),
@@ -13813,12 +10314,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.resolveRetrainTrainingCorpus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resolveRetrainTrainingCorpus(methodInput as any)
       }),
@@ -13827,12 +10323,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.renameRetrainCollection.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renameRetrainCollection(methodInput as any)
       }),
@@ -13841,12 +10332,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.deleteRetrainCollection.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteRetrainCollection(methodInput as any)
       }),
@@ -13855,12 +10341,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.addRetrainFrameFromRecording.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.addRetrainFrameFromRecording(methodInput as any)
       }),
@@ -13869,12 +10350,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.addRetrainFramesToCollection.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.addRetrainFramesToCollection(methodInput as any)
       }),
@@ -13883,12 +10359,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.removeRetrainFrameFromCollection.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeRetrainFrameFromCollection(methodInput as any)
       }),
@@ -13897,12 +10368,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listRetrainCollectionFrames.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRetrainCollectionFrames(methodInput as any)
       }),
@@ -13911,12 +10377,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getEventMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEventMedia(methodInput as any)
       }),
@@ -13925,12 +10386,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getTrackMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTrackMedia(methodInput as any)
       }),
@@ -13939,12 +10395,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listTrackMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listTrackMedia(methodInput as any)
       }),
@@ -13953,12 +10404,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.listEventMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listEventMedia(methodInput as any)
       }),
@@ -13967,12 +10413,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.ownersWithMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.ownersWithMedia(methodInput as any)
       }),
@@ -13981,12 +10422,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.searchObjectEvents.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.searchObjectEvents(methodInput as any)
       }),
@@ -13995,12 +10431,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.wipeObjectEmbeddings.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.wipeObjectEmbeddings(methodInput as any)
       }),
@@ -14009,12 +10440,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.rebuildObjectEmbeddings.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.rebuildObjectEmbeddings(methodInput as any)
       }),
@@ -14023,12 +10449,7 @@ export function createCapRouter_pipelineAnalytics(
       .output(pipelineAnalyticsCapability.methods.getObjectEmbeddingRebuildStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getObjectEmbeddingRebuildStatus(methodInput as any)
       }),
@@ -14048,24 +10469,14 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getAvailableEngines.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getAvailableEngines()
       }),
     getSelectedEngine: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getSelectedEngine.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getSelectedEngine()
       }),
     getEngineProvisioning: protectedProcedure
@@ -14073,12 +10484,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.getEngineProvisioning.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEngineProvisioning(methodInput as any)
       }),
@@ -14086,12 +10492,7 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getVideoPipelineSteps.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getVideoPipelineSteps()
       }),
     setVideoPipelineSteps: adminProcedure
@@ -14099,12 +10500,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.setVideoPipelineSteps.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setVideoPipelineSteps(methodInput as any)
       }),
@@ -14113,12 +10509,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.getInferenceDeviceHealth.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getInferenceDeviceHealth(methodInput as any)
       }),
@@ -14127,12 +10518,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.rearmInferenceDevice.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.rearmInferenceDevice(methodInput as any)
       }),
@@ -14140,24 +10526,14 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getSchema.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getSchema()
       }),
     getOrchestratorConfigSchema: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getOrchestratorConfigSchema.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getOrchestratorConfigSchema()
       }),
     validatePipeline: protectedProcedure
@@ -14165,12 +10541,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.validatePipeline.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.validatePipeline(methodInput as any)
       }),
@@ -14178,12 +10549,7 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getCapabilities.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getCapabilities()
       }),
     getAddonModels: protectedProcedure
@@ -14191,12 +10557,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.getAddonModels.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAddonModels(methodInput as any)
       }),
@@ -14205,12 +10566,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.downloadModel.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.downloadModel(methodInput as any)
       }),
@@ -14219,12 +10575,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.deleteModel.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteModel(methodInput as any)
       }),
@@ -14233,12 +10584,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.runPipeline.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runPipeline(methodInput as any)
       }),
@@ -14247,12 +10593,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.runPipelineBatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runPipelineBatch(methodInput as any)
       }),
@@ -14261,12 +10602,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.cacheFrameInPool.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cacheFrameInPool(methodInput as any)
       }),
@@ -14275,12 +10611,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.inferCached.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.inferCached(methodInput as any)
       }),
@@ -14289,12 +10620,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.uncacheFrame.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.uncacheFrame(methodInput as any)
       }),
@@ -14303,12 +10629,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.getEffectiveTuning.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEffectiveTuning(methodInput as any)
       }),
@@ -14316,12 +10637,7 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.listLoadedEngines.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listLoadedEngines()
       }),
     spinEngine: adminProcedure
@@ -14329,12 +10645,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.spinEngine.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.spinEngine(methodInput as any)
       }),
@@ -14343,12 +10654,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.killEngine.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.killEngine(methodInput as any)
       }),
@@ -14356,12 +10662,7 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.listReferenceImages.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listReferenceImages()
       }),
     getReferenceImage: protectedProcedure
@@ -14369,12 +10670,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.getReferenceImage.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getReferenceImage(methodInput as any)
       }),
@@ -14382,12 +10678,7 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getReferenceAudioFiles.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getReferenceAudioFiles()
       }),
     getReferenceAudio: protectedProcedure
@@ -14395,12 +10686,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.getReferenceAudio.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getReferenceAudio(methodInput as any)
       }),
@@ -14408,12 +10694,7 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getAudioCapabilities.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getAudioCapabilities()
       }),
     runAudioTest: protectedProcedure
@@ -14421,12 +10702,7 @@ export function createCapRouter_pipelineExecutor(
       .output(pipelineExecutorCapability.methods.runAudioTest.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-executor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runAudioTest(methodInput as any)
       }),
@@ -14434,12 +10710,7 @@ export function createCapRouter_pipelineExecutor(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineExecutorCapability.methods.getDetectionConfigSchema.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-executor',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-executor', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getDetectionConfigSchema()
       }),
   })
@@ -14983,12 +11254,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.attachCamera.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.attachCamera(methodInput as any)
       }),
@@ -14997,12 +11263,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.detachCamera.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.detachCamera(methodInput as any)
       }),
@@ -15011,12 +11272,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.reportMotion.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reportMotion(methodInput as any)
       }),
@@ -15024,24 +11280,14 @@ export function createCapRouter_pipelineRunner(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineRunnerCapability.methods.getLocalLoad.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-runner',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getLocalLoad()
       }),
     getLocalMetrics: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineRunnerCapability.methods.getLocalMetrics.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-runner',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getLocalMetrics()
       }),
     getCameraMetrics: protectedProcedure
@@ -15049,12 +11295,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.getCameraMetrics.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCameraMetrics(methodInput as any)
       }),
@@ -15062,24 +11303,14 @@ export function createCapRouter_pipelineRunner(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineRunnerCapability.methods.getAllCameraMetrics.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-runner',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getAllCameraMetrics()
       }),
     getLocalCameras: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(pipelineRunnerCapability.methods.getLocalCameras.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'pipeline-runner',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getLocalCameras()
       }),
     requestOccupancyBurst: adminProcedure
@@ -15087,12 +11318,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.requestOccupancyBurst.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.requestOccupancyBurst(methodInput as any)
       }),
@@ -15101,12 +11327,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.getNativeCrop.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getNativeCrop(methodInput as any)
       }),
@@ -15115,12 +11336,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.runDetailSubtree.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runDetailSubtree(methodInput as any)
       }),
@@ -15129,12 +11345,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.runStatelessStep.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.runStatelessStep(methodInput as any)
       }),
@@ -15143,12 +11354,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.parkTrackFrame.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.parkTrackFrame(methodInput as any)
       }),
@@ -15157,12 +11363,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.getParkedTrackFrame.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getParkedTrackFrame(methodInput as any)
       }),
@@ -15171,12 +11372,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.releaseParkedTrackFrames.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.releaseParkedTrackFrames(methodInput as any)
       }),
@@ -15185,12 +11381,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.startNodeBench.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startNodeBench(methodInput as any)
       }),
@@ -15199,12 +11390,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.getNodeBenchStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getNodeBenchStatus(methodInput as any)
       }),
@@ -15213,12 +11399,7 @@ export function createCapRouter_pipelineRunner(
       .output(pipelineRunnerCapability.methods.abortNodeBench.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pipeline-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pipeline-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.abortNodeBench(methodInput as any)
       }),
@@ -15246,12 +11427,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.getPlateByTrack.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getPlateByTrack(methodInput as any)
       }),
@@ -15260,12 +11436,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.getPlateMedia.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getPlateMedia(methodInput as any)
       }),
@@ -15274,12 +11445,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.searchPlates.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.searchPlates(methodInput as any)
       }),
@@ -15295,12 +11461,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.correctPlateText.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.correctPlateText(methodInput as any)
       }),
@@ -15309,12 +11470,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.deletePlate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deletePlate(methodInput as any)
       }),
@@ -15330,12 +11486,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.createVehicle.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createVehicle(methodInput as any)
       }),
@@ -15344,12 +11495,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.renameVehicle.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renameVehicle(methodInput as any)
       }),
@@ -15358,12 +11504,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.deleteVehicle.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteVehicle(methodInput as any)
       }),
@@ -15372,12 +11513,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.listVehicleSamples.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listVehicleSamples(methodInput as any)
       }),
@@ -15386,12 +11522,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.removeVehicleSample.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeVehicleSample(methodInput as any)
       }),
@@ -15414,12 +11545,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.assignPlate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.assignPlate(methodInput as any)
       }),
@@ -15428,12 +11554,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.unassignPlate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unassignPlate(methodInput as any)
       }),
@@ -15442,12 +11563,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.assignPlates.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.assignPlates(methodInput as any)
       }),
@@ -15456,12 +11572,7 @@ export function createCapRouter_plateGallery(
       .output(plateGalleryCapability.methods.unassignPlates.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'plate-gallery',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('plate-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unassignPlates(methodInput as any)
       }),
@@ -15481,24 +11592,14 @@ export function createCapRouter_platformProbe(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(platformProbeCapability.methods.getCapabilities.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'platform-probe',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('platform-probe', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getCapabilities()
       }),
     getHardware: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(platformProbeCapability.methods.getHardware.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'platform-probe',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('platform-probe', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getHardware()
       }),
     resolveInferenceConfig: protectedProcedure
@@ -15506,12 +11607,7 @@ export function createCapRouter_platformProbe(
       .output(platformProbeCapability.methods.resolveInferenceConfig.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'platform-probe',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('platform-probe', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resolveInferenceConfig(methodInput as any)
       }),
@@ -15520,12 +11616,7 @@ export function createCapRouter_platformProbe(
       .output(platformProbeCapability.methods.resolveHwAccel.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'platform-probe',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('platform-probe', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resolveHwAccel(methodInput as any)
       }),
@@ -15533,12 +11624,7 @@ export function createCapRouter_platformProbe(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(platformProbeCapability.methods.rescanAccelerators.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'platform-probe',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('platform-probe', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.rescanAccelerators()
       }),
   })
@@ -15648,12 +11734,7 @@ export function createCapRouter_pressureSensor(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'pressure-sensor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('pressure-sensor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -15887,12 +11968,7 @@ export function createCapRouter_ptzAutotrack(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ptz-autotrack',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ptz-autotrack', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -15901,12 +11977,7 @@ export function createCapRouter_ptzAutotrack(
       .output(ptzAutotrackCapability.methods.setEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ptz-autotrack',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ptz-autotrack', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setEnabled(methodInput as any)
       }),
@@ -15915,12 +11986,7 @@ export function createCapRouter_ptzAutotrack(
       .output(ptzAutotrackCapability.methods.getSettings.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ptz-autotrack',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ptz-autotrack', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getSettings(methodInput as any)
       }),
@@ -15929,12 +11995,7 @@ export function createCapRouter_ptzAutotrack(
       .output(ptzAutotrackCapability.methods.setSettings.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'ptz-autotrack',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('ptz-autotrack', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSettings(methodInput as any)
       }),
@@ -16024,12 +12085,7 @@ export function createCapRouter_recordEntries(
       .output(recordEntriesCapability.methods.listEntryKinds.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'record-entries',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('record-entries', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listEntryKinds(methodInput as any)
       }),
@@ -16038,12 +12094,7 @@ export function createCapRouter_recordEntries(
       .output(recordEntriesCapability.methods.listEntries.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'record-entries',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('record-entries', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listEntries(methodInput as any)
       }),
@@ -16052,12 +12103,7 @@ export function createCapRouter_recordEntries(
       .output(recordEntriesCapability.methods.putEntry.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'record-entries',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('record-entries', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.putEntry(methodInput as any)
       }),
@@ -16066,12 +12112,7 @@ export function createCapRouter_recordEntries(
       .output(recordEntriesCapability.methods.deleteEntry.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'record-entries',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('record-entries', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteEntry(methodInput as any)
       }),
@@ -16149,12 +12190,7 @@ export function createCapRouter_recordingArchive(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -16163,12 +12199,7 @@ export function createCapRouter_recordingArchive(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -16177,12 +12208,7 @@ export function createCapRouter_recordingArchive(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -16191,12 +12217,7 @@ export function createCapRouter_recordingArchive(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -16205,12 +12226,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.getAvailabilityBatch.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAvailabilityBatch(methodInput as any)
       }),
@@ -16219,12 +12235,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.getDaysWithRecordingsBatch.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDaysWithRecordingsBatch(methodInput as any)
       }),
@@ -16233,12 +12244,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.getStorageUsage.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStorageUsage(methodInput as any)
       }),
@@ -16247,12 +12253,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.getDeviceConfig.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceConfig(methodInput as any)
       }),
@@ -16261,12 +12262,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.locateSegment.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.locateSegment(methodInput as any)
       }),
@@ -16275,12 +12271,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.readSegmentBytes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readSegmentBytes(methodInput as any)
       }),
@@ -16289,12 +12280,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.readGopBytes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readGopBytes(methodInput as any)
       }),
@@ -16303,12 +12289,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.readWindowBytes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readWindowBytes(methodInput as any)
       }),
@@ -16317,12 +12298,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.setDeviceConfig.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDeviceConfig(methodInput as any)
       }),
@@ -16331,12 +12307,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.rescanStorage.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.rescanStorage(methodInput as any)
       }),
@@ -16345,12 +12316,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.pruneFootage.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pruneFootage(methodInput as any)
       }),
@@ -16359,12 +12325,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.deleteFootprint.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteFootprint(methodInput as any)
       }),
@@ -16373,12 +12334,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.listOpsLog.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listOpsLog(methodInput as any)
       }),
@@ -16387,12 +12343,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.renderGif.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renderGif(methodInput as any)
       }),
@@ -16401,12 +12352,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.renderClip.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renderClip(methodInput as any)
       }),
@@ -16415,12 +12361,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.pauseForStorageMigration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pauseForStorageMigration(methodInput as any)
       }),
@@ -16429,12 +12370,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.resumeForStorageMigration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resumeForStorageMigration(methodInput as any)
       }),
@@ -16443,12 +12379,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.refreshStorageLocationsForMigration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.refreshStorageLocationsForMigration(methodInput as any)
       }),
@@ -16457,12 +12388,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.startStorageMigrationMove.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startStorageMigrationMove(methodInput as any)
       }),
@@ -16471,12 +12397,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.getStorageMigrationMoveStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStorageMigrationMoveStatus(methodInput as any)
       }),
@@ -16485,12 +12406,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.cancelStorageMigrationMove.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelStorageMigrationMove(methodInput as any)
       }),
@@ -16499,12 +12415,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.relocateFootage.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.relocateFootage(methodInput as any)
       }),
@@ -16513,12 +12424,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.listRelocateJobs.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listRelocateJobs(methodInput as any)
       }),
@@ -16527,12 +12433,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.getRelocateResidue.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRelocateResidue(methodInput as any)
       }),
@@ -16541,12 +12442,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.reconcileLedgerAgainstDisk.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reconcileLedgerAgainstDisk(methodInput as any)
       }),
@@ -16555,12 +12451,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.cancelRelocateJob.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelRelocateJob(methodInput as any)
       }),
@@ -16569,12 +12460,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.planStorageRebalance.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.planStorageRebalance(methodInput as any)
       }),
@@ -16583,12 +12469,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.startStorageRebalance.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.startStorageRebalance(methodInput as any)
       }),
@@ -16597,12 +12478,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.getPlacement.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getPlacement(methodInput as any)
       }),
@@ -16611,12 +12487,7 @@ export function createCapRouter_recordingArchive(
       .output(recordingArchiveCapability.methods.setDevicePlacement.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-archive',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-archive', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDevicePlacement(methodInput as any)
       }),
@@ -16637,12 +12508,7 @@ export function createCapRouter_recordingExport(
       .output(recordingExportCapability.methods.createExport.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-export',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-export', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createExport(methodInput as any)
       }),
@@ -16651,12 +12517,7 @@ export function createCapRouter_recordingExport(
       .output(recordingExportCapability.methods.listExports.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-export',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-export', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listExports(methodInput as any)
       }),
@@ -16665,12 +12526,7 @@ export function createCapRouter_recordingExport(
       .output(recordingExportCapability.methods.getExport.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-export',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-export', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getExport(methodInput as any)
       }),
@@ -16679,12 +12535,7 @@ export function createCapRouter_recordingExport(
       .output(recordingExportCapability.methods.cancelExport.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-export',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-export', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelExport(methodInput as any)
       }),
@@ -16693,12 +12544,7 @@ export function createCapRouter_recordingExport(
       .output(recordingExportCapability.methods.deleteExport.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-export',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-export', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteExport(methodInput as any)
       }),
@@ -16707,12 +12553,7 @@ export function createCapRouter_recordingExport(
       .output(recordingExportCapability.methods.getDownloadUrl.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-export',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-export', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDownloadUrl(methodInput as any)
       }),
@@ -16721,12 +12562,7 @@ export function createCapRouter_recordingExport(
       .output(recordingExportCapability.methods.readExportBytes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-export',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-export', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readExportBytes(methodInput as any)
       }),
@@ -16747,12 +12583,7 @@ export function createCapRouter_recordingOnboard(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-onboard',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-onboard', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -16761,12 +12592,7 @@ export function createCapRouter_recordingOnboard(
       .output(recordingOnboardCapability.methods.getOptions.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-onboard',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-onboard', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOptions(methodInput as any)
       }),
@@ -16775,12 +12601,7 @@ export function createCapRouter_recordingOnboard(
       .output(recordingOnboardCapability.methods.setSettings.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-onboard',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-onboard', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSettings(methodInput as any)
       }),
@@ -16801,12 +12622,7 @@ export function createCapRouter_recordingSignal(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'recording-signal',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('recording-signal', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -16827,10 +12643,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.declareKinds.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.declareKinds(methodInput as any)
@@ -16840,10 +12653,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.get.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.get(methodInput as any)
@@ -16853,10 +12663,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.getMany.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getMany(methodInput as any)
@@ -16866,10 +12673,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.secretRefs.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.secretRefs(methodInput as any)
@@ -16879,10 +12683,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.put.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.put(methodInput as any)
@@ -16892,10 +12693,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.putMany.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.putMany(methodInput as any)
@@ -16905,10 +12703,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.patch.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.patch(methodInput as any)
@@ -16918,10 +12713,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
@@ -16931,10 +12723,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.deleteMany.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteMany(methodInput as any)
@@ -16944,10 +12733,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.query.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.query(methodInput as any)
@@ -16957,10 +12743,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.count.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.count(methodInput as any)
@@ -16970,10 +12753,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.histogram.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.histogram(methodInput as any)
@@ -16983,10 +12763,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.aggregate.output)
       .query(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.aggregate(methodInput as any)
@@ -16996,10 +12773,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.deleteWhere.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteWhere(methodInput as any)
@@ -17009,10 +12783,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.transact.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.transact(methodInput as any)
@@ -17022,10 +12793,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.deleteDevice.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteDevice(methodInput as any)
@@ -17035,10 +12803,7 @@ export function createCapRouter_records(
       .output(recordsCapability.methods.allocateId.output)
       .mutation(async ({ input, ctx }) => {
         const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
-        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
-          string,
-          unknown
-        >
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider('records', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.allocateId(methodInput as any)
@@ -17125,16 +12890,8 @@ export function createCapRouter_remoteLayoutComponents(
       .input(remoteLayoutComponentsCapability.methods.listComponents.input.loose())
       .output(remoteLayoutComponentsCapability.methods.listComponents.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'remote-layout-components',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('remote-layout-components', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listComponents(methodInput as any)
       }),
@@ -17155,12 +12912,7 @@ export function createCapRouter_runningState(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'running-state',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('running-state', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -17181,12 +12933,7 @@ export function createCapRouter_sceneMonitor(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -17195,12 +12942,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.listScenes.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listScenes(methodInput as any)
       }),
@@ -17209,12 +12951,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.listScenesBatch.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listScenesBatch(methodInput as any)
       }),
@@ -17223,12 +12960,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.createScene.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createScene(methodInput as any)
       }),
@@ -17237,12 +12969,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.updateScene.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateScene(methodInput as any)
       }),
@@ -17251,12 +12978,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.deleteScene.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteScene(methodInput as any)
       }),
@@ -17265,12 +12987,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.captureReference.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.captureReference(methodInput as any)
       }),
@@ -17279,12 +12996,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.deleteReference.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteReference(methodInput as any)
       }),
@@ -17293,12 +13005,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.recheckNow.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.recheckNow(methodInput as any)
       }),
@@ -17307,12 +13014,7 @@ export function createCapRouter_sceneMonitor(
       .output(sceneMonitorCapability.methods.resetScene.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'scene-monitor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('scene-monitor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resetScene(methodInput as any)
       }),
@@ -17435,12 +13137,7 @@ export function createCapRouter_scriptRunner(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'script-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('script-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -17449,12 +13146,7 @@ export function createCapRouter_scriptRunner(
       .output(scriptRunnerCapability.methods.run.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'script-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('script-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.run(methodInput as any)
       }),
@@ -17463,12 +13155,7 @@ export function createCapRouter_scriptRunner(
       .output(scriptRunnerCapability.methods.stop.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'script-runner',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('script-runner', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.stop(methodInput as any)
       }),
@@ -17488,24 +13175,14 @@ export function createCapRouter_serverManagement(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(serverManagementCapability.methods.getServerPackageStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'server-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getServerPackageStatus()
       }),
     checkServerUpdate: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(serverManagementCapability.methods.checkServerUpdate.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'server-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.checkServerUpdate()
       }),
     applyServerUpdate: adminProcedure
@@ -17513,12 +13190,7 @@ export function createCapRouter_serverManagement(
       .output(serverManagementCapability.methods.applyServerUpdate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'server-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyServerUpdate(methodInput as any)
       }),
@@ -17526,48 +13198,28 @@ export function createCapRouter_serverManagement(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(serverManagementCapability.methods.installDesktopUpdate.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'server-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.installDesktopUpdate()
       }),
     rollbackServerUpdate: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(serverManagementCapability.methods.rollbackServerUpdate.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'server-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.rollbackServerUpdate()
       }),
     restartServer: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(serverManagementCapability.methods.restartServer.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'server-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.restartServer()
       }),
     getLaunchOverrides: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(serverManagementCapability.methods.getLaunchOverrides.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'server-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getLaunchOverrides()
       }),
     setLaunchOverrides: adminProcedure
@@ -17575,12 +13227,7 @@ export function createCapRouter_serverManagement(
       .output(serverManagementCapability.methods.setLaunchOverrides.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'server-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('server-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setLaunchOverrides(methodInput as any)
       }),
@@ -17601,12 +13248,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.get.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.get(methodInput as any)
       }),
@@ -17615,12 +13257,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.set.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.set(methodInput as any)
       }),
@@ -17629,12 +13266,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.query.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.query(methodInput as any)
       }),
@@ -17643,12 +13275,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.upsert.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.upsert(methodInput as any)
       }),
@@ -17657,12 +13284,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.upsertMany.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.upsertMany(methodInput as any)
       }),
@@ -17671,12 +13293,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.insert.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.insert(methodInput as any)
       }),
@@ -17685,12 +13302,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.insertMany.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.insertMany(methodInput as any)
       }),
@@ -17699,12 +13311,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.transact.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.transact(methodInput as any)
       }),
@@ -17713,12 +13320,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.update.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.update(methodInput as any)
       }),
@@ -17727,12 +13329,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
       }),
@@ -17741,12 +13338,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.deleteWhere.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteWhere(methodInput as any)
       }),
@@ -17755,12 +13347,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.updateWhere.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateWhere(methodInput as any)
       }),
@@ -17769,12 +13356,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.count.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.count(methodInput as any)
       }),
@@ -17783,12 +13365,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.aggregate.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.aggregate(methodInput as any)
       }),
@@ -17797,12 +13374,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.histogram.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.histogram(methodInput as any)
       }),
@@ -17811,12 +13383,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.isEmpty.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.isEmpty(methodInput as any)
       }),
@@ -17825,12 +13392,7 @@ export function createCapRouter_settingsStore(
       .output(settingsStoreCapability.methods.declareCollection.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'settings-store',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('settings-store', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.declareCollection(methodInput as any)
       }),
@@ -17871,16 +13433,8 @@ export function createCapRouter_smtpProvider(
       .input(smtpProviderCapability.methods.sendEmail.input.loose())
       .output(smtpProviderCapability.methods.sendEmail.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'smtp-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('smtp-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.sendEmail(methodInput as any)
       }),
@@ -17888,16 +13442,8 @@ export function createCapRouter_smtpProvider(
       .input(DEVICE_STATUS_METHOD.getStatus.input.loose())
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'smtp-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('smtp-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -18175,24 +13721,14 @@ export function createCapRouter_storage(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(storageCapability.methods.listLocationDeclarations.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'storage',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listLocationDeclarations()
       }),
     listDrainProgress: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(storageCapability.methods.listDrainProgress.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'storage',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listDrainProgress()
       }),
   })
@@ -18212,12 +13748,7 @@ export function createCapRouter_storageAdmin(
       .output(storageAdminCapability.methods.listTables.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listTables(methodInput as any)
       }),
@@ -18226,12 +13757,7 @@ export function createCapRouter_storageAdmin(
       .output(storageAdminCapability.methods.listKinds.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listKinds(methodInput as any)
       }),
@@ -18240,12 +13766,7 @@ export function createCapRouter_storageAdmin(
       .output(storageAdminCapability.methods.readRecords.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readRecords(methodInput as any)
       }),
@@ -18254,12 +13775,7 @@ export function createCapRouter_storageAdmin(
       .output(storageAdminCapability.methods.staleDataReport.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.staleDataReport(methodInput as any)
       }),
@@ -18268,12 +13784,7 @@ export function createCapRouter_storageAdmin(
       .output(storageAdminCapability.methods.scanStaleData.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.scanStaleData(methodInput as any)
       }),
@@ -18282,12 +13793,7 @@ export function createCapRouter_storageAdmin(
       .output(storageAdminCapability.methods.dropOrphanedKind.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.dropOrphanedKind(methodInput as any)
       }),
@@ -18296,12 +13802,7 @@ export function createCapRouter_storageAdmin(
       .output(storageAdminCapability.methods.unsetStaleSettingsKey.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-admin',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-admin', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unsetStaleSettingsKey(methodInput as any)
       }),
@@ -18321,16 +13822,8 @@ export function createCapRouter_storageEvictable(
       .input(storageEvictableCapability.methods.getEvictableUsage.input.loose())
       .output(storageEvictableCapability.methods.getEvictableUsage.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-evictable',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-evictable', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getEvictableUsage(methodInput as any)
       }),
@@ -18338,16 +13831,8 @@ export function createCapRouter_storageEvictable(
       .input(storageEvictableCapability.methods.evict.input.loose())
       .output(storageEvictableCapability.methods.evict.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-evictable',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-evictable', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.evict(methodInput as any)
       }),
@@ -18368,12 +13853,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.plan.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.plan(methodInput as any)
       }),
@@ -18382,12 +13862,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.start.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.start(methodInput as any)
       }),
@@ -18396,12 +13871,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.status.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.status(methodInput as any)
       }),
@@ -18410,12 +13880,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.cancel.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancel(methodInput as any)
       }),
@@ -18424,12 +13889,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.movers.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.movers(methodInput as any)
       }),
@@ -18438,12 +13898,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.moverClearance.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.moverClearance(methodInput as any)
       }),
@@ -18452,12 +13907,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.residue.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.residue(methodInput as any)
       }),
@@ -18466,12 +13916,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.drain.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.drain(methodInput as any)
       }),
@@ -18480,12 +13925,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.cleanupStart.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cleanupStart(methodInput as any)
       }),
@@ -18494,12 +13934,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.cleanupStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cleanupStatus(methodInput as any)
       }),
@@ -18508,12 +13943,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.cleanupCancel.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cleanupCancel(methodInput as any)
       }),
@@ -18522,12 +13952,7 @@ export function createCapRouter_storageMigration(
       .output(storageMigrationCapability.methods.history.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-migration',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-migration', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.history(methodInput as any)
       }),
@@ -18547,16 +13972,8 @@ export function createCapRouter_storageOccupancy(
       .input(storageOccupancyCapability.methods.getOccupancy.input.loose())
       .output(storageOccupancyCapability.methods.getOccupancy.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-occupancy',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-occupancy', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOccupancy(methodInput as any)
       }),
@@ -18576,28 +13993,15 @@ export function createCapRouter_storageProvider(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(storageProviderCapability.methods.getProviderInfo.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'storage-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('storage-provider', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getProviderInfo()
       }),
     testLocation: adminProcedure
       .input(storageProviderCapability.methods.testLocation.input.loose())
       .output(storageProviderCapability.methods.testLocation.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.testLocation(methodInput as any)
       }),
@@ -18605,16 +14009,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.resolve.input.loose())
       .output(storageProviderCapability.methods.resolve.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resolve(methodInput as any)
       }),
@@ -18622,16 +14018,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.write.input.loose())
       .output(storageProviderCapability.methods.write.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.write(methodInput as any)
       }),
@@ -18639,16 +14027,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.read.input.loose())
       .output(storageProviderCapability.methods.read.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.read(methodInput as any)
       }),
@@ -18656,16 +14036,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.exists.input.loose())
       .output(storageProviderCapability.methods.exists.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.exists(methodInput as any)
       }),
@@ -18673,16 +14045,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.list.input.loose())
       .output(storageProviderCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.list(methodInput as any)
       }),
@@ -18690,16 +14054,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.delete.input.loose())
       .output(storageProviderCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
       }),
@@ -18707,16 +14063,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.getAvailableSpace.input.loose())
       .output(storageProviderCapability.methods.getAvailableSpace.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAvailableSpace(methodInput as any)
       }),
@@ -18724,16 +14072,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.beginUpload.input.loose())
       .output(storageProviderCapability.methods.beginUpload.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.beginUpload(methodInput as any)
       }),
@@ -18741,16 +14081,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.writeChunk.input.loose())
       .output(storageProviderCapability.methods.writeChunk.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.writeChunk(methodInput as any)
       }),
@@ -18758,16 +14090,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.finalizeUpload.input.loose())
       .output(storageProviderCapability.methods.finalizeUpload.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.finalizeUpload(methodInput as any)
       }),
@@ -18775,16 +14099,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.abortUpload.input.loose())
       .output(storageProviderCapability.methods.abortUpload.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.abortUpload(methodInput as any)
       }),
@@ -18792,16 +14108,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.beginDownload.input.loose())
       .output(storageProviderCapability.methods.beginDownload.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.beginDownload(methodInput as any)
       }),
@@ -18809,16 +14117,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.readChunk.input.loose())
       .output(storageProviderCapability.methods.readChunk.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readChunk(methodInput as any)
       }),
@@ -18826,16 +14126,8 @@ export function createCapRouter_storageProvider(
       .input(storageProviderCapability.methods.endDownload.input.loose())
       .output(storageProviderCapability.methods.endDownload.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'storage-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('storage-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.endDownload(methodInput as any)
       }),
@@ -18856,12 +14148,7 @@ export function createCapRouter_streamBroker(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceSettingsContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceSettingsContribution(methodInput as any)
       }),
@@ -18870,12 +14157,7 @@ export function createCapRouter_streamBroker(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.getDeviceLiveContribution.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceLiveContribution(methodInput as any)
       }),
@@ -18884,12 +14166,7 @@ export function createCapRouter_streamBroker(
       .output(DEVICE_SETTINGS_CONTRIBUTION_METHODS.applyDeviceSettingsPatch.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDeviceSettingsPatch(methodInput as any)
       }),
@@ -18898,12 +14175,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.reportStreamSignal.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.reportStreamSignal(methodInput as any)
       }),
@@ -18912,12 +14184,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.publishCameraStream.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.publishCameraStream(methodInput as any)
       }),
@@ -18926,12 +14193,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.retractCameraStream.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.retractCameraStream(methodInput as any)
       }),
@@ -18940,12 +14202,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.assignProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.assignProfile(methodInput as any)
       }),
@@ -18954,12 +14211,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.unassignProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unassignProfile(methodInput as any)
       }),
@@ -18968,12 +14220,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.forgetDeviceHardware.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.forgetDeviceHardware(methodInput as any)
       }),
@@ -18982,12 +14229,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.renderPreBufferClip.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.renderPreBufferClip(methodInput as any)
       }),
@@ -18996,12 +14238,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.produceEventMedia.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.produceEventMedia(methodInput as any)
       }),
@@ -19010,12 +14247,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.fetchEventMedia.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.fetchEventMedia(methodInput as any)
       }),
@@ -19023,24 +14255,14 @@ export function createCapRouter_streamBroker(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(streamBrokerCapability.methods.listAllCameraStreams.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'stream-broker',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listAllCameraStreams()
       }),
     listAllProfileSlots: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(streamBrokerCapability.methods.listAllProfileSlots.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'stream-broker',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listAllProfileSlots()
       }),
     getBrokerStats: protectedProcedure
@@ -19048,12 +14270,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.getBrokerStats.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBrokerStats(methodInput as any)
       }),
@@ -19062,12 +14279,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.probeStream.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.probeStream(methodInput as any)
       }),
@@ -19076,12 +14288,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.listClients.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listClients(methodInput as any)
       }),
@@ -19089,12 +14296,7 @@ export function createCapRouter_streamBroker(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(streamBrokerCapability.methods.getLiveViewerCounts.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'stream-broker',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getLiveViewerCounts()
       }),
     killClient: adminProcedure
@@ -19102,12 +14304,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.killClient.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.killClient(methodInput as any)
       }),
@@ -19116,12 +14313,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.restartProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.restartProfile(methodInput as any)
       }),
@@ -19130,12 +14322,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.getStreamUrl.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStreamUrl(methodInput as any)
       }),
@@ -19144,12 +14331,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.getStreamWithCodec.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStreamWithCodec(methodInput as any)
       }),
@@ -19158,12 +14340,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.releaseStreamWithCodec.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.releaseStreamWithCodec(methodInput as any)
       }),
@@ -19172,12 +14349,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.acquireEgressTranscode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.acquireEgressTranscode(methodInput as any)
       }),
@@ -19186,12 +14358,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.releaseEgressTranscode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.releaseEgressTranscode(methodInput as any)
       }),
@@ -19200,12 +14367,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.subscribeAudioChunks.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.subscribeAudioChunks(methodInput as any)
       }),
@@ -19214,12 +14376,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.pullAudioChunks.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pullAudioChunks(methodInput as any)
       }),
@@ -19228,12 +14385,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.unsubscribeAudioChunks.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unsubscribeAudioChunks(methodInput as any)
       }),
@@ -19242,12 +14394,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.setPreBufferDuration.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setPreBufferDuration(methodInput as any)
       }),
@@ -19256,12 +14403,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.getPreBufferInfo.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getPreBufferInfo(methodInput as any)
       }),
@@ -19269,12 +14411,7 @@ export function createCapRouter_streamBroker(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(streamBrokerCapability.methods.getRtspPort.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'stream-broker',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getRtspPort()
       }),
     getAllRtspEntries: protectedProcedure
@@ -19282,12 +14419,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.getAllRtspEntries.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getAllRtspEntries(methodInput as any)
       }),
@@ -19296,12 +14428,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.getRtspEntry.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getRtspEntry(methodInput as any)
       }),
@@ -19310,12 +14437,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.regenerateRtspToken.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.regenerateRtspToken(methodInput as any)
       }),
@@ -19324,12 +14446,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.setRtspEnabled.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setRtspEnabled(methodInput as any)
       }),
@@ -19338,12 +14455,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.isRtspEnabled.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.isRtspEnabled(methodInput as any)
       }),
@@ -19352,12 +14464,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.getDeviceAudioMute.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getDeviceAudioMute(methodInput as any)
       }),
@@ -19366,12 +14473,7 @@ export function createCapRouter_streamBroker(
       .output(streamBrokerCapability.methods.setDeviceAudioMute.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-broker',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-broker', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setDeviceAudioMute(methodInput as any)
       }),
@@ -19392,12 +14494,7 @@ export function createCapRouter_streamCatalog(
       .output(streamCatalogCapability.methods.getCatalog.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-catalog',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-catalog', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCatalog(methodInput as any)
       }),
@@ -19418,12 +14515,7 @@ export function createCapRouter_streamParams(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-params',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-params', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -19432,12 +14524,7 @@ export function createCapRouter_streamParams(
       .output(streamParamsCapability.methods.getOptions.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-params',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-params', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOptions(methodInput as any)
       }),
@@ -19446,12 +14533,7 @@ export function createCapRouter_streamParams(
       .output(streamParamsCapability.methods.setProfile.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-params',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-params', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setProfile(methodInput as any)
       }),
@@ -19460,12 +14542,7 @@ export function createCapRouter_streamParams(
       .output(streamParamsCapability.methods.getConfigSchema.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'stream-params',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-params', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getConfigSchema(methodInput as any)
       }),
@@ -19485,12 +14562,7 @@ export function createCapRouter_streamSignals(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(streamSignalsCapability.methods.listSignals.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'stream-signals',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('stream-signals', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listSignals()
       }),
   })
@@ -19555,60 +14627,35 @@ export function createCapRouter_system(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.info.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.info()
       }),
     health: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.health.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.health()
       }),
     featureFlags: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.featureFlags.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.featureFlags()
       }),
     networkAddresses: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.networkAddresses.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.networkAddresses()
       }),
     getRetentionConfig: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.getRetentionConfig.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getRetentionConfig()
       }),
     setRetentionConfig: adminProcedure
@@ -19622,24 +14669,14 @@ export function createCapRouter_system(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.forceRetentionCleanup.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.forceRetentionCleanup()
       }),
     getSiteLocation: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.getSiteLocation.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getSiteLocation()
       }),
     setSiteLocation: adminProcedure
@@ -19653,48 +14690,28 @@ export function createCapRouter_system(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.detectSiteLocation.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.detectSiteLocation()
       }),
     getRequestCensus: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.getRequestCensus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getRequestCensus()
       }),
     getLoadContributions: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.getLoadContributions.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getLoadContributions()
       }),
     getFailureContributions: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(systemCapability.methods.getFailureContributions.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'system',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('system', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getFailureContributions()
       }),
     getLoggingSettings: adminProcedure
@@ -19762,12 +14779,7 @@ export function createCapRouter_temperatureSensor(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'temperature-sensor',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('temperature-sensor', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -19787,16 +14799,8 @@ export function createCapRouter_template(
       .input(templateCapability.methods.list.input.loose())
       .output(templateCapability.methods.list.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'template',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('template', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.list(methodInput as any)
       }),
@@ -19804,16 +14808,8 @@ export function createCapRouter_template(
       .input(templateCapability.methods.get.input.loose())
       .output(templateCapability.methods.get.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'template',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('template', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.get(methodInput as any)
       }),
@@ -19821,16 +14817,8 @@ export function createCapRouter_template(
       .input(templateCapability.methods.create.input.loose())
       .output(templateCapability.methods.create.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'template',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('template', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.create(methodInput as any)
       }),
@@ -19838,16 +14826,8 @@ export function createCapRouter_template(
       .input(templateCapability.methods.update.input.loose())
       .output(templateCapability.methods.update.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'template',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('template', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.update(methodInput as any)
       }),
@@ -19855,16 +14835,8 @@ export function createCapRouter_template(
       .input(templateCapability.methods.delete.input.loose())
       .output(templateCapability.methods.delete.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'template',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('template', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.delete(methodInput as any)
       }),
@@ -19884,24 +14856,14 @@ export function createCapRouter_terminalSession(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(terminalSessionCapability.methods.listProfiles.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'terminal-session',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listProfiles()
       }),
     listLegacyCameras: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(terminalSessionCapability.methods.listLegacyCameras.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'terminal-session',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listLegacyCameras()
       }),
     adoptLegacyMonitor: adminProcedure
@@ -19909,12 +14871,7 @@ export function createCapRouter_terminalSession(
       .output(terminalSessionCapability.methods.adoptLegacyMonitor.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'terminal-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.adoptLegacyMonitor(methodInput as any)
       }),
@@ -19922,12 +14879,7 @@ export function createCapRouter_terminalSession(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(terminalSessionCapability.methods.listSessions.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'terminal-session',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listSessions()
       }),
     serverShellStatus: adminProcedure
@@ -19947,12 +14899,7 @@ export function createCapRouter_terminalSession(
       .output(terminalSessionCapability.methods.openSession.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'terminal-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.openSession(methodInput as any)
       }),
@@ -19961,12 +14908,7 @@ export function createCapRouter_terminalSession(
       .output(terminalSessionCapability.methods.resize.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'terminal-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resize(methodInput as any)
       }),
@@ -19975,12 +14917,7 @@ export function createCapRouter_terminalSession(
       .output(terminalSessionCapability.methods.pullOutput.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'terminal-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pullOutput(methodInput as any)
       }),
@@ -19989,12 +14926,7 @@ export function createCapRouter_terminalSession(
       .output(terminalSessionCapability.methods.writeInput.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'terminal-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.writeInput(methodInput as any)
       }),
@@ -20003,12 +14935,7 @@ export function createCapRouter_terminalSession(
       .output(terminalSessionCapability.methods.close.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'terminal-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('terminal-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.close(methodInput as any)
       }),
@@ -20177,12 +15104,7 @@ export function createCapRouter_training(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(trainingCapability.methods.listCanaryTargets.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'training',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('training', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listCanaryTargets()
       }),
     registerResult: adminProcedure
@@ -20237,16 +15159,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.describe.input.loose())
       .output(trainingProviderCapability.methods.describe.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.describe(methodInput as any)
       }),
@@ -20254,16 +15168,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.describeTypes.input.loose())
       .output(trainingProviderCapability.methods.describeTypes.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.describeTypes(methodInput as any)
       }),
@@ -20271,16 +15177,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.listEntries.input.loose())
       .output(trainingProviderCapability.methods.listEntries.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listEntries(methodInput as any)
       }),
@@ -20288,16 +15186,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.estimateJob.input.loose())
       .output(trainingProviderCapability.methods.estimateJob.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.estimateJob(methodInput as any)
       }),
@@ -20305,16 +15195,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.uploadDataset.input.loose())
       .output(trainingProviderCapability.methods.uploadDataset.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.uploadDataset(methodInput as any)
       }),
@@ -20322,16 +15204,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.submitJob.input.loose())
       .output(trainingProviderCapability.methods.submitJob.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.submitJob(methodInput as any)
       }),
@@ -20339,16 +15213,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.getJob.input.loose())
       .output(trainingProviderCapability.methods.getJob.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getJob(methodInput as any)
       }),
@@ -20356,16 +15222,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.listJobEvents.input.loose())
       .output(trainingProviderCapability.methods.listJobEvents.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listJobEvents(methodInput as any)
       }),
@@ -20373,16 +15231,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.cancelJob.input.loose())
       .output(trainingProviderCapability.methods.cancelJob.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cancelJob(methodInput as any)
       }),
@@ -20390,16 +15240,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.readResult.input.loose())
       .output(trainingProviderCapability.methods.readResult.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.readResult(methodInput as any)
       }),
@@ -20407,16 +15249,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.offerArtifact.input.loose())
       .output(trainingProviderCapability.methods.offerArtifact.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.offerArtifact(methodInput as any)
       }),
@@ -20424,16 +15258,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.cleanupJob.input.loose())
       .output(trainingProviderCapability.methods.cleanupJob.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.cleanupJob(methodInput as any)
       }),
@@ -20441,16 +15267,8 @@ export function createCapRouter_trainingProvider(
       .input(trainingProviderCapability.methods.listJobs.input.loose())
       .output(trainingProviderCapability.methods.listJobs.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'training-provider',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('training-provider', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listJobs(methodInput as any)
       }),
@@ -20470,12 +15288,7 @@ export function createCapRouter_turnProvider(
       .input(z.object({ nodeId: z.string().optional(), addonId: z.string().optional() }).optional())
       .output(turnProviderCapability.methods.getTurnServers.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'turn-provider',
-          input?.nodeId,
-          () => getProvider(ctx, input?.addonId),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('turn-provider', input?.nodeId, () => getProvider(ctx, input?.addonId), createRemoteProxy)
         return p.getTurnServers()
       }),
   })
@@ -20503,12 +15316,7 @@ export function createCapRouter_update(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(updateCapability.methods.installUpdate.output)
       .mutation(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'update',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('update', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.installUpdate()
       }),
   })
@@ -20527,24 +15335,14 @@ export function createCapRouter_userManagement(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(userManagementCapability.methods.listUsers.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'user-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listUsers()
       }),
     getAdminBootstrapStatus: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(userManagementCapability.methods.getAdminBootstrapStatus.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'user-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getAdminBootstrapStatus()
       }),
     createUser: adminProcedure
@@ -20552,12 +15350,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.createUser.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createUser(methodInput as any)
       }),
@@ -20566,12 +15359,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.updateUser.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.updateUser(methodInput as any)
       }),
@@ -20580,12 +15368,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.deleteUser.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteUser(methodInput as any)
       }),
@@ -20594,12 +15377,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.resetPassword.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.resetPassword(methodInput as any)
       }),
@@ -20608,12 +15386,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.setUserScopes.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setUserScopes(methodInput as any)
       }),
@@ -20622,12 +15395,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.validateCredentials.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.validateCredentials(methodInput as any)
       }),
@@ -20636,12 +15404,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.setupTotp.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setupTotp(methodInput as any)
       }),
@@ -20650,12 +15413,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.confirmTotp.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.confirmTotp(methodInput as any)
       }),
@@ -20664,12 +15422,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.disableTotp.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.disableTotp(methodInput as any)
       }),
@@ -20678,12 +15431,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.getTotpStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getTotpStatus(methodInput as any)
       }),
@@ -20692,12 +15440,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.migrateRawSecrets.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.migrateRawSecrets(methodInput as any)
       }),
@@ -20706,12 +15449,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.verifyTotp.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.verifyTotp(methodInput as any)
       }),
@@ -20720,12 +15458,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.oauthIssueCode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.oauthIssueCode(methodInput as any)
       }),
@@ -20734,12 +15467,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.oauthExchangeCode.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.oauthExchangeCode(methodInput as any)
       }),
@@ -20748,12 +15476,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.oauthRefresh.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.oauthRefresh(methodInput as any)
       }),
@@ -20762,12 +15485,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.oauthVerifyAccessToken.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.oauthVerifyAccessToken(methodInput as any)
       }),
@@ -20776,12 +15494,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.listExternalIdentities.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listExternalIdentities(methodInput as any)
       }),
@@ -20790,12 +15503,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.findUserByExternalIdentity.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.findUserByExternalIdentity(methodInput as any)
       }),
@@ -20804,12 +15512,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.unlinkExternalIdentity.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.unlinkExternalIdentity(methodInput as any)
       }),
@@ -20817,12 +15520,7 @@ export function createCapRouter_userManagement(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(userManagementCapability.methods.listOauthSessions.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'user-management',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.listOauthSessions()
       }),
     revokeOauthSession: adminProcedure
@@ -20830,12 +15528,7 @@ export function createCapRouter_userManagement(
       .output(userManagementCapability.methods.revokeOauthSession.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-management',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('user-management', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.revokeOauthSession(methodInput as any)
       }),
@@ -20855,16 +15548,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.beginRegistration.input.loose())
       .output(userPasskeysCapability.methods.beginRegistration.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.beginRegistration(methodInput as any)
       }),
@@ -20872,16 +15557,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.finishRegistration.input.loose())
       .output(userPasskeysCapability.methods.finishRegistration.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.finishRegistration(methodInput as any)
       }),
@@ -20889,16 +15566,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.beginAuthentication.input.loose())
       .output(userPasskeysCapability.methods.beginAuthentication.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.beginAuthentication(methodInput as any)
       }),
@@ -20906,16 +15575,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.finishAuthentication.input.loose())
       .output(userPasskeysCapability.methods.finishAuthentication.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.finishAuthentication(methodInput as any)
       }),
@@ -20923,16 +15584,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.beginDiscoverableAuthentication.input.loose())
       .output(userPasskeysCapability.methods.beginDiscoverableAuthentication.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.beginDiscoverableAuthentication(methodInput as any)
       }),
@@ -20940,16 +15593,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.finishDiscoverableAuthentication.input.loose())
       .output(userPasskeysCapability.methods.finishDiscoverableAuthentication.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.finishDiscoverableAuthentication(methodInput as any)
       }),
@@ -20957,16 +15602,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.listPasskeys.input.loose())
       .output(userPasskeysCapability.methods.listPasskeys.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listPasskeys(methodInput as any)
       }),
@@ -20974,16 +15611,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.removePasskey.input.loose())
       .output(userPasskeysCapability.methods.removePasskey.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removePasskey(methodInput as any)
       }),
@@ -20991,16 +15620,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.getSecondFactorPreference.input.loose())
       .output(userPasskeysCapability.methods.getSecondFactorPreference.output)
       .query(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getSecondFactorPreference(methodInput as any)
       }),
@@ -21008,16 +15629,8 @@ export function createCapRouter_userPasskeys(
       .input(userPasskeysCapability.methods.setSecondFactorPreference.input.loose())
       .output(userPasskeysCapability.methods.setSecondFactorPreference.output)
       .mutation(async ({ input, ctx }) => {
-        const { nodeId, addonId, ...methodInput } = input as {
-          nodeId?: string
-          addonId?: string
-        } & Record<string, unknown>
-        const p = resolveProvider(
-          'user-passkeys',
-          nodeId,
-          () => getProvider(ctx, addonId),
-          createRemoteProxy,
-        )
+        const { nodeId, addonId, ...methodInput } = input as { nodeId?: string; addonId?: string } & Record<string, unknown>
+        const p = resolveProvider('user-passkeys', nodeId, () => getProvider(ctx, addonId), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setSecondFactorPreference(methodInput as any)
       }),
@@ -21038,12 +15651,7 @@ export function createCapRouter_vacuumControl(
       .output(DEVICE_STATUS_METHOD.getStatus.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'vacuum-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('vacuum-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
@@ -21052,12 +15660,7 @@ export function createCapRouter_vacuumControl(
       .output(vacuumControlCapability.methods.start.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'vacuum-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('vacuum-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.start(methodInput as any)
       }),
@@ -21066,12 +15669,7 @@ export function createCapRouter_vacuumControl(
       .output(vacuumControlCapability.methods.pause.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'vacuum-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('vacuum-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.pause(methodInput as any)
       }),
@@ -21080,12 +15678,7 @@ export function createCapRouter_vacuumControl(
       .output(vacuumControlCapability.methods.stop.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'vacuum-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('vacuum-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.stop(methodInput as any)
       }),
@@ -21094,12 +15687,7 @@ export function createCapRouter_vacuumControl(
       .output(vacuumControlCapability.methods.returnToBase.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'vacuum-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('vacuum-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.returnToBase(methodInput as any)
       }),
@@ -21108,12 +15696,7 @@ export function createCapRouter_vacuumControl(
       .output(vacuumControlCapability.methods.locate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'vacuum-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('vacuum-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.locate(methodInput as any)
       }),
@@ -21122,12 +15705,7 @@ export function createCapRouter_vacuumControl(
       .output(vacuumControlCapability.methods.setFanSpeed.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'vacuum-control',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('vacuum-control', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setFanSpeed(methodInput as any)
       }),
@@ -21428,24 +16006,14 @@ export function createCapRouter_viewerUi(
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(viewerUiCapability.methods.getStaticDir.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'viewer-ui',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('viewer-ui', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getStaticDir()
       }),
     getVersion: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(viewerUiCapability.methods.getVersion.output)
       .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'viewer-ui',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('viewer-ui', input?.nodeId, () => getProvider(ctx), createRemoteProxy)
         return p.getVersion()
       }),
   })
@@ -21560,12 +16128,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.listStreams.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listStreams(methodInput as any)
       }),
@@ -21574,12 +16137,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.createSession.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.createSession(methodInput as any)
       }),
@@ -21588,12 +16146,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.handleOffer.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.handleOffer(methodInput as any)
       }),
@@ -21602,12 +16155,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.handleAnswer.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.handleAnswer(methodInput as any)
       }),
@@ -21616,12 +16164,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.addIceCandidate.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.addIceCandidate(methodInput as any)
       }),
@@ -21630,12 +16173,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.getIceCandidates.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getIceCandidates(methodInput as any)
       }),
@@ -21644,12 +16182,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.closeSession.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.closeSession(methodInput as any)
       }),
@@ -21658,12 +16191,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.hasAdaptiveBitrate.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.hasAdaptiveBitrate(methodInput as any)
       }),
@@ -21672,12 +16200,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.getSessionState.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getSessionState(methodInput as any)
       }),
@@ -21686,12 +16209,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.applyDownlinkProbe.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.applyDownlinkProbe(methodInput as any)
       }),
@@ -21700,12 +16218,7 @@ export function createCapRouter_webrtcSession(
       .output(webrtcSessionCapability.methods.getSessionDebug.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'webrtc-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('webrtc-session', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getSessionDebug(methodInput as any)
       }),
@@ -21726,12 +16239,7 @@ export function createCapRouter_zoneAnalytics(
       .output(zoneAnalyticsCapability.methods.getCurrentSnapshot.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'zone-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('zone-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCurrentSnapshot(methodInput as any)
       }),
@@ -21740,12 +16248,7 @@ export function createCapRouter_zoneAnalytics(
       .output(zoneAnalyticsCapability.methods.getCurrentSnapshotBatch.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'zone-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('zone-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCurrentSnapshotBatch(methodInput as any)
       }),
@@ -21754,12 +16257,7 @@ export function createCapRouter_zoneAnalytics(
       .output(zoneAnalyticsCapability.methods.getZoneHistory.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'zone-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('zone-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getZoneHistory(methodInput as any)
       }),
@@ -21768,12 +16266,7 @@ export function createCapRouter_zoneAnalytics(
       .output(zoneAnalyticsCapability.methods.getCameraHistory.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'zone-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('zone-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getCameraHistory(methodInput as any)
       }),
@@ -21782,12 +16275,7 @@ export function createCapRouter_zoneAnalytics(
       .output(zoneAnalyticsCapability.methods.getUnzonedHistory.output)
       .query(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'zone-analytics',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
+        const p = resolveProvider('zone-analytics', nodeId, () => getProvider(ctx), createRemoteProxy)
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getUnzonedHistory(methodInput as any)
       }),

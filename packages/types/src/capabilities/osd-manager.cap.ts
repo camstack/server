@@ -62,7 +62,7 @@ export const OsdSourceSchema = z.discriminatedUnion('kind', [
   /** A literal string, written as it is. */
   z.object({
     kind: z.literal('static'),
-    text: z.string().max(64),
+    text: z.string().max(OSD_TEMPLATE_TEXT_MAX),
   }),
   /** A named template, rendered by the hub for this camera. */
   z.object({

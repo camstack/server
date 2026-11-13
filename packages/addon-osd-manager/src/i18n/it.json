@@ -17,7 +17,12 @@
     "noneHint": "Scrive un testo vuoto nell'overlay. L'associazione resta, così CamStack continua a gestire questo slot.",
     "text": "Testo",
     "namedTemplate": "Template con nome",
-    "noTemplates": "Nessun template — creane uno nella scheda Template."
+    "noTemplates": "Nessun template — creane uno nella scheda Template.",
+    "choice": {
+      "none": "Nessuno",
+      "namedTemplate": "Modello con nome",
+      "value": "Valore"
+    }
   },
   "duplicate": {
     "trigger": "Duplica in…",
@@ -156,5 +161,14 @@
     "cameraHint": "camera è la telecamera su cui appare il template, quindi lo stesso template vale per ogni telecamera. now è l'ora del server. camera.lastPerson e camera.lastPlate sono gli ultimi riconoscimenti.",
     "previewCamera": "Anteprima sulla telecamera",
     "previewIdle": "Scrivi un testo per vedere come appare."
+  },
+  "camera": {
+    "valueFieldHint": "Scrivi il testo e usa Inserisci valore per mostrare una lettura del dispositivo",
+    "valueHelpTitle": "Aiuto valore",
+    "valueHelp": {
+      "line1": "Il testo semplice viene scritto così com’è. {{ alias.field }} legge un dispositivo; camera indica questa telecamera.",
+      "line2": "| unit('°C') stampa l’unità. {{ now | time('HH:mm') }} è l’orologio. {{ camera.lastPerson }} e {{ camera.lastPlate }} sono l’ultimo riconoscimento.",
+      "docsLink": "Sintassi dei modelli"
+    }
   }
 }

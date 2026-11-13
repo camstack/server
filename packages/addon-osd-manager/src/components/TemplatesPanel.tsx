@@ -297,6 +297,7 @@ function TemplateEditorForm({ draft, cameras, onChange }: TemplateEditorFormProp
           testId="osd-tpl-text"
           thisDevice={cameraId === null ? undefined : { deviceId: cameraId }}
         />
+        <p className="text-[11px] text-foreground-subtle">{t('camera.valueFieldHint')}</p>
         <div className="flex flex-wrap gap-1.5" data-testid="osd-tpl-snippets">
           {INSERT_SNIPPETS.map((snippet) => (
             <Button

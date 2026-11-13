@@ -4,7 +4,8 @@ import {
   activeSourceChips,
   cameraOsdStatus,
   defaultActiveSlotId,
-  parseSlotContentPanel,
+  choiceOfSource,
+  sourceOfChoice,
   slotTabStatus,
   slotTabStatusLabel,
   cameraStatusLabel,
@@ -162,11 +163,20 @@ describe('activeSourceChips', () => {
   })
 })
 
-describe('parseSlotContentPanel', () => {
-  it('defaults and accepts known panel ids', () => {
-    expect(parseSlotContentPanel(null)).toBe('layer')
-    expect(parseSlotContentPanel('binding')).toBe('binding')
-    expect(parseSlotContentPanel('nope')).toBe('layer')
+describe('choiceOfSource / sourceOfChoice', () => {
+  it('maps stored kinds to operator choices and back', () => {
+    expect(choiceOfSource({ kind: 'none' })).toBe('none')
+    expect(choiceOfSource({ kind: 'template', templateId: 't1' })).toBe('namedTemplate')
+    expect(choiceOfSource({ kind: 'static', text: 'MARKED-VALUE' })).toBe('value')
+    const templates = [{ id: 'tpl-a' }]
+    expect(sourceOfChoice('value', { kind: 'static', text: 'MARKED-VALUE' }, templates)).toEqual({
+      kind: 'static',
+      text: 'MARKED-VALUE',
+    })
+    expect(sourceOfChoice('namedTemplate', { kind: 'none' }, templates)).toEqual({
+      kind: 'template',
+      templateId: 'tpl-a',
+    })
   })
 })
 
