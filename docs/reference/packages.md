@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.854 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.855 | the update itself | — |
 
 ## Framework (4)
 
@@ -33,7 +33,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.657 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.658 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
 | `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.376 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.182 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.182 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
@@ -51,8 +51,8 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-notifiers` | `packages/addon-notifiers` | 1.2.637 | addons dir (image-seeded) | System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
 | `@camstack/addon-osd-manager` | `packages/addon-osd-manager` | 0.1.318 | addons dir | Binds camera on-screen-display slots to live state and recognitions |
 | `@camstack/addon-pipeline` | `packages/addon-pipeline` | 1.2.651 | addons dir (image-seeded) | Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle. |
-| `@camstack/addon-pipeline-orchestrator` | `packages/addon-pipeline-orchestrator` | 1.2.682 | addons dir (image-seeded) | Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance |
-| `@camstack/addon-post-analysis` | `packages/addon-post-analysis` | 1.2.700 | addons dir (image-seeded) | Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output. |
+| `@camstack/addon-pipeline-orchestrator` | `packages/addon-pipeline-orchestrator` | 1.2.683 | addons dir (image-seeded) | Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance |
+| `@camstack/addon-post-analysis` | `packages/addon-post-analysis` | 1.2.701 | addons dir (image-seeded) | Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output. |
 | `@camstack/addon-provider-amcrest` | `packages/addon-provider-amcrest` | 0.2.170 | addons dir | Amcrest/Dahua camera device provider addon for CamStack — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config) |
 | `@camstack/addon-provider-bosch` | `packages/addon-provider-bosch` | 0.1.54 | addons dir | Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and HomeCom cloud integrations (scaffold) |
 | `@camstack/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.2.174 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
@@ -64,7 +64,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-hikvision` | `packages/addon-provider-hikvision` | 1.2.186 | addons dir | Hikvision camera device provider addon for CamStack — ISAPI over HTTP(S) with digest auth (snapshot, alarm stream, RTSP discovery) |
 | `@camstack/addon-provider-homeassistant` | `packages/addon-provider-homeassistant` | 1.2.683 | addons dir | Home Assistant device provider addon for CamStack |
 | `@camstack/addon-provider-homematic` | `packages/addon-provider-homematic` | 1.2.193 | addons dir | Homematic / HomematicIP (CCU3 / RaspberryMatic) device-provider addon for CamStack — wraps the nodehomematic library |
-| `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.48 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
+| `@camstack/addon-provider-mqtt-ha` | `packages/addon-provider-mqtt-ha` | 0.1.49 | addons dir | Home Assistant MQTT discovery import provider for CamStack — adopts entities published on homeassistant/+/+/config |
 | `@camstack/addon-provider-onvif` | `packages/addon-provider-onvif` | 1.2.158 | addons dir | ONVIF camera device provider addon for CamStack |
 | `@camstack/addon-provider-petkit` | `packages/addon-provider-petkit` | 0.2.169 | addons dir | PetKit smart-feeder device-provider addon for CamStack — wraps the @apocaliss92/nodepetkit PetKit cloud client |
 | `@camstack/addon-provider-rademacher` | `packages/addon-provider-rademacher` | 0.2.166 | addons dir | Rademacher HomePilot device-provider addon for CamStack — wraps the @apocaliss92/noderademacher local-hub client (roller shutters over the cover cap) |
