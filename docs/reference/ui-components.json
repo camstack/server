@@ -2841,6 +2841,13 @@
       "summary": "Classify a settled registry answer."
     },
     {
+      "name": "classifyDeviceChildren",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-item/helpers.ts",
+      "summary": "Split a parent's children into adopted, parts, the primary, and accessories."
+    },
+    {
       "name": "classifySessionVerdict",
       "kind": "function",
       "area": "composites",
@@ -4790,7 +4797,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-item/helpers.ts",
-      "summary": "Shared types + helpers for the DeviceItem composite. Lives outside the orchestrator file so every sub-component can import without cycles."
+      "summary": "A child with no role is \"adopted\" only when its parent is a hub, an NVR or a gateway. A container's child is a part of the container, and the child the container card draws (`primaryChildId`) is its primary."
     },
     {
       "name": "deriveWebrtcDebugStats",
@@ -5566,6 +5573,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-item/index.tsx",
       "summary": "<DeviceItem> — orchestrator that composes Header / Preview / Features / Actions / StatusDot in a flex row (`view='card'`) or a `<tr>` with one `<td>` per logical column (`view='table'`)."
+    },
+    {
+      "name": "deviceItemParentIndex",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-item/helpers.ts",
+      "summary": "One parent record per device, so a child row can tell a hub from a container."
+    },
+    {
+      "name": "deviceItemParentOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-item/helpers.ts",
+      "summary": "Parent badge for one device, including its type and (for a container) primary child."
     },
     {
       "name": "deviceLeadIcon",

@@ -3,6 +3,7 @@ import {
   ConfirmActionButton,
   countableDevices,
   deviceIntegrationResolver,
+  deviceItemParentIndex,
   type DeviceItemDevice,
   type DeviceItemParent,
   DeviceList,
@@ -357,13 +358,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
 
   // Pre-built parent lookup table — same `listAll` snapshot, no extra
   // query per accessory row. Mirrors Devices.tsx + Integrations.tsx.
-  const parentById = useMemo(() => {
-    const byId = new Map<number, DeviceItemParent>()
-    for (const d of deviceList) {
-      byId.set(d.id, { id: d.id, name: d.name ?? d.stableId ?? `#${String(d.id)}` })
-    }
-    return byId
-  }, [deviceList])
+  const parentById = useMemo(() => deviceItemParentIndex(deviceList), [deviceList])
 
   const resolveParent = useCallback(
     (parentId: number): DeviceItemParent | null => parentById.get(parentId) ?? null,

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device picker names a device's provider by its addon alone, without the integration instance
 - The media card's mute key is momentary when the player cannot read the mute back, and no longer writes 'muted'
 - The energy-system card shows its totals of today as value pills, and imported, exported and heat pump totals name kWh
+- A container's child reads as a part (its primary child as primary); only a hub, NVR or gateway child is adopted. Energy rows show solar and storage as separate pills.
 
 ## [1.2.440] - 2026-11-13
 

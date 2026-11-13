@@ -4776,7 +4776,9 @@
     "accessories": "Accessori",
     "adoptedDevices": "Dispositivi adottati",
     "children": "Figli",
-    "disabledSection": "Disabilitati"
+    "disabledSection": "Disabilitati",
+    "parts": "Parti",
+    "primary": "Principale"
   },
   "hero": {
     "buttonHero": {
@@ -8814,7 +8816,9 @@
       "turnOff": "Spegni",
       "turnOn": "Accendi",
       "motionTriggerOn": "Trigger di movimento: attivo (clicca per disattivare)",
-      "motionTriggerOff": "Trigger di movimento: disattivo (clicca per attivare)"
+      "motionTriggerOff": "Trigger di movimento: disattivo (clicca per attivare)",
+      "parts": "Parti",
+      "primary": "Principale"
     },
     "deviceDeleteAction": {
       "title": "Eliminare il dispositivo?",
@@ -8830,13 +8834,19 @@
       "accessories_other": "{{count}} accessori",
       "features": "Funzionalità",
       "markerTitle": "Indicatore informativo (nessuna capability registrata)",
-      "marker": "indicatore"
+      "marker": "indicatore",
+      "primary": "Principale",
+      "parts_one": "{{count}} parte",
+      "parts_other": "{{count}} parti"
     },
     "deviceItemHeader": {
       "collapseChildren": "Comprimi elementi figli",
       "expandChildren": "Espandi elementi figli",
       "openParent": "Apri il genitore: {{name}} (#{{id}})",
-      "under": "Sotto: {{name}}"
+      "under": "Sotto: {{name}}",
+      "primaryOf": "Principale · {{name}}",
+      "partOf": "Parte di {{name}}",
+      "adoptedBy": "Adottato da {{name}}"
     },
     "rebootQuickAction": {
       "rebootDevice": "Riavvia dispositivo",

@@ -30,6 +30,7 @@
 import {
   ChildSectionAccordion,
   childListName,
+  classifyDeviceChildren,
   DeviceItem,
   type DeviceItemDevice,
   groupChildrenByLayout,
@@ -107,26 +108,63 @@ export function ChildrenList({ parentDeviceId }: ChildrenListProps) {
     />
   )
 
-  // Adapt the ungrouped section header to the kind of children present:
-  //   - any `role`-tagged → "Accessories" (mostly siren/floodlight/PIR)
-  //   - all role-absent   → "Adopted devices" (hub-adopted cameras)
-  //   - mixed             → "Children"
-  const hasAccessory = ungrouped.some((c) => Boolean(c.role))
-  const hasAdopted = ungrouped.some((c) => !c.role)
-  const ungroupedHeaderLabel =
-    hasAccessory && !hasAdopted
-      ? t('device.accessories', { defaultValue: 'Accessories' })
-      : !hasAccessory && hasAdopted
-        ? t('device.adoptedDevices', { defaultValue: 'Adopted devices' })
-        : t('device.children', { defaultValue: 'Children' })
+  // A role-less child is adopted only under a hub, NVR or gateway. A
+  // container's children are its parts, and the one it draws is primary.
+  const groups = classifyDeviceChildren(
+    {
+      type: parent?.type ?? '',
+      stableId: parent?.stableId ?? '',
+      linkDeviceId: parent?.linkDeviceId,
+      primaryChildEntityId: parent?.primaryChildEntityId,
+      primaryChildPreference: parent?.primaryChildPreference,
+    },
+    ungrouped,
+  )
+  const hasAccessory = groups.accessories.length > 0
+  const hasAdopted = groups.adopted.length > 0
+  const hasParts = groups.parts.length > 0 || groups.primary.length > 0
+  const splitContainer =
+    groups.primary.length > 0 && groups.parts.length > 0 && !hasAdopted && !hasAccessory
+  const ungroupedHeaderLabel = splitContainer
+    ? ''
+    : hasAdopted && !hasAccessory && !hasParts
+      ? t('device.adoptedDevices', { defaultValue: 'Adopted devices' })
+      : hasAccessory && !hasAdopted && !hasParts
+        ? t('device.accessories', { defaultValue: 'Accessories' })
+        : groups.primary.length > 0 && groups.parts.length === 0 && !hasAdopted && !hasAccessory
+          ? t('device.primary', { defaultValue: 'Primary' })
+          : hasParts && !hasAdopted && !hasAccessory
+            ? t('device.parts', { defaultValue: 'Parts' })
+            : t('device.children', { defaultValue: 'Children' })
 
   const ungroupedBox =
     ungrouped.length > 0 ? (
       <div className="rounded-lg border border-border bg-surface p-3">
-        <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground-subtle mb-1.5">
-          {ungroupedHeaderLabel}
-        </div>
-        <div className="space-y-1">{ungrouped.map((c) => renderChildItem(c.id, c))}</div>
+        {splitContainer ? (
+          <div className="space-y-2">
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground-subtle mb-1.5">
+                {t('device.primary', { defaultValue: 'Primary' })}
+              </div>
+              <div className="space-y-1">{groups.primary.map((c) => renderChildItem(c.id, c))}</div>
+            </div>
+            <div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground-subtle mb-1.5">
+                {t('device.parts', { defaultValue: 'Parts' })}
+              </div>
+              <div className="space-y-1">{groups.parts.map((c) => renderChildItem(c.id, c))}</div>
+            </div>
+          </div>
+        ) : (
+          <>
+            {ungroupedHeaderLabel.length > 0 && (
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-foreground-subtle mb-1.5">
+                {ungroupedHeaderLabel}
+              </div>
+            )}
+            <div className="space-y-1">{ungrouped.map((c) => renderChildItem(c.id, c))}</div>
+          </>
+        )}
       </div>
     ) : null
 
@@ -171,7 +209,7 @@ export function ChildrenList({ parentDeviceId }: ChildrenListProps) {
   //
   // The mixed case ("Children") counts as accessories: a box that contains part
   // of the device is part of the device.
-  const adoptedLeads = hasAdopted && !hasAccessory
+  const adoptedLeads = hasAdopted && !hasAccessory && !hasParts
 
   return (
     <div className="space-y-2">

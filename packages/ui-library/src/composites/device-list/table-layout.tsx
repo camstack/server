@@ -6,7 +6,11 @@ import type { RowOperationState } from '../../hooks/use-row-operations'
 import { cn } from '../../lib/cn'
 import { DeviceItem } from '../device-item'
 import { groupChildrenByLayout } from '../device-item/child-layout'
-import type { DeviceItemDevice, DeviceItemParent } from '../device-item/helpers'
+import {
+  deviceItemParentOf,
+  type DeviceItemDevice,
+  type DeviceItemParent,
+} from '../device-item/helpers'
 import {
   COLUMN_BREAKPOINT_CLASS,
   NAME_COLUMN_PIN_CLASS,
@@ -324,6 +328,7 @@ function TableRowGroup({
   // unmounted the row, and a search used to overwrite it. The chevron is the
   // only writer.
   const showAccessoryRows = hasAccessories && expanded
+  const childParent = deviceItemParentOf(parent, accessories)
 
   // Partition the accessories into provider-declared accordion sections +
   // the remaining (ungrouped) ones. When the parent declares no `childLayout`,
@@ -406,6 +411,7 @@ function TableRowGroup({
             trpc={trpc}
             accessory={a}
             parentName={parent.name}
+            rowParent={childParent}
             showType={showType}
             showManufacturer={showManufacturer}
             showFeatures={showFeatures}
@@ -428,6 +434,7 @@ function TableRowGroup({
               rows={section.children}
               trpc={trpc}
               parentName={parent.name}
+              rowParent={childParent}
               showType={showType}
               showManufacturer={showManufacturer}
               showFeatures={showFeatures}
@@ -449,6 +456,7 @@ function TableRowGroup({
           rows={disabledSection.children}
           trpc={trpc}
           parentName={parent.name}
+          rowParent={childParent}
           showType={showType}
           showManufacturer={showManufacturer}
           showFeatures={showFeatures}
@@ -466,6 +474,7 @@ interface AccessorySubRowProps {
   /** Parent row's name — used to strip the redundant baked-in prefix from the
    *  child's DISPLAY name (the underlying `accessory.name` is untouched). */
   readonly parentName: string
+  readonly rowParent: DeviceItemParent
   readonly showType: boolean
   readonly showManufacturer: boolean
   readonly showFeatures: boolean
@@ -482,6 +491,7 @@ function AccessorySubRow({
   trpc,
   accessory,
   parentName,
+  rowParent,
   showType,
   showManufacturer,
   showFeatures,
@@ -494,11 +504,7 @@ function AccessorySubRow({
       device={accessory}
       view="table"
       integrationIcon={null}
-      parent={
-        accessory.parentDeviceId === null
-          ? null
-          : { id: accessory.parentDeviceId, name: parentName }
-      }
+      parent={accessory.parentDeviceId === null ? null : { ...rowParent, name: parentName }}
       isAccessoryRow
       showChildrenAccordion={false}
       onNavigate={onNavigate ?? undefined}
@@ -520,6 +526,7 @@ interface SectionRowsProps {
   readonly trpc: UseDeviceProxyTrpc
   /** Parent row's name — forwarded to each `AccessorySubRow` for prefix strip. */
   readonly parentName: string
+  readonly rowParent: DeviceItemParent
   readonly showType: boolean
   readonly showManufacturer: boolean
   readonly showFeatures: boolean
@@ -541,6 +548,7 @@ function SectionRows({
   rows,
   trpc,
   parentName,
+  rowParent,
   showType,
   showManufacturer,
   showFeatures,
@@ -583,6 +591,7 @@ function SectionRows({
             trpc={trpc}
             accessory={a}
             parentName={parentName}
+            rowParent={rowParent}
             showType={showType}
             showManufacturer={showManufacturer}
             showFeatures={showFeatures}

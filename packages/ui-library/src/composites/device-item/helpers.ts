@@ -128,20 +128,67 @@ export interface DeviceItemParent {
   readonly name: string
   /**
    * Type of the parent device. Optional — when provided, callers can
-   * distinguish "adopted under a hub/nvr" (renders with extra indent in
-   * the table view) from a generic accessory parent.
+   * distinguish "adopted under a hub/nvr/gateway" from a container's part.
    */
+  readonly type?: string
+  /** The container's resolved primary child, when this parent is a container. */
+  readonly primaryChildId?: number | null
+}
+
+export type DeviceItemKind = 'top-level' | 'adopted' | 'accessory' | 'part' | 'primary'
+
+/** What `deriveDeviceKind` reads off a child row. */
+export interface DeviceKindSource {
+  readonly id: number
+  readonly parentDeviceId?: number | null
+  readonly role?: string | null
   readonly type?: string
 }
 
-export type DeviceItemKind = 'top-level' | 'adopted' | 'accessory'
+/** Parent facts that decide whether a role-less child was adopted or is a part. */
+export interface DeviceKindContext {
+  readonly parentType?: string | null
+  readonly primaryChildId?: number | null
+}
 
+/**
+ * Historical stored type. {@link DeviceType} has no Nvr member; rows still
+ * carry `nvr`, and a camera under one is adopted the same way as under a hub.
+ */
+const NVR_DEVICE_TYPE = 'nvr'
+
+/** A role-less child of one of these parents is adopted, not a part of it. */
+const ADOPTING_PARENT_TYPES: ReadonlySet<string> = new Set<string>([
+  DeviceType.Hub,
+  DeviceType.Gateway,
+  NVR_DEVICE_TYPE,
+])
+
+const FIRST_CLASS_TYPES: ReadonlySet<string> = new Set(['camera', 'hub', 'nvr'])
+
+/**
+ * A child with no role is "adopted" only when its parent is a hub, an NVR or
+ * a gateway. A container's child is a part of the container, and the child
+ * the container card draws (`primaryChildId`) is its primary.
+ */
 export function deriveDeviceKind(
-  device: Pick<DeviceItemDevice, 'parentDeviceId' | 'role'>,
+  device: DeviceKindSource,
+  context?: DeviceKindContext,
 ): DeviceItemKind {
-  if (device.parentDeviceId === null) return 'top-level'
+  if (device.parentDeviceId === null || device.parentDeviceId === undefined) return 'top-level'
+  const parentType = context?.parentType ?? null
+  if (
+    parentType === DeviceType.Container &&
+    context?.primaryChildId != null &&
+    context.primaryChildId === device.id
+  ) {
+    return 'primary'
+  }
   if (device.role) return 'accessory'
-  return 'adopted'
+  if (parentType !== null && ADOPTING_PARENT_TYPES.has(parentType)) return 'adopted'
+  if (parentType === DeviceType.Container) return 'part'
+  if (!FIRST_CLASS_TYPES.has((device.type ?? '').toLowerCase())) return 'accessory'
+  return 'part'
 }
 
 export type DeviceItemVariant = 'minimal' | 'compact' | 'expanded'
@@ -481,8 +528,6 @@ export const FEATURE_TO_CAP_NAME: Readonly<Record<string, string>> = {
 
 // ── Capability gates ────────────────────────────────────────────────
 
-const FIRST_CLASS_TYPES: ReadonlySet<string> = new Set(['camera', 'hub', 'nvr'])
-
 export function maySupportSwitch(device: DeviceItemDevice): boolean {
   return !FIRST_CLASS_TYPES.has(device.type.toLowerCase())
 }
@@ -490,6 +535,122 @@ export function maySupportSwitch(device: DeviceItemDevice): boolean {
 export function isAccessoryChild(device: DeviceItemDevice): boolean {
   if (device.role) return true
   return !FIRST_CLASS_TYPES.has(device.type.toLowerCase())
+}
+
+export interface ClassifiedChildren {
+  readonly adopted: readonly DeviceItemDevice[]
+  readonly parts: readonly DeviceItemDevice[]
+  readonly primary: readonly DeviceItemDevice[]
+  readonly accessories: readonly DeviceItemDevice[]
+}
+
+/** The child a container draws, or null when this parent is not a container. */
+export function containerPrimaryChildId(
+  parent: Pick<
+    DeviceItemDevice,
+    'type' | 'stableId' | 'linkDeviceId' | 'primaryChildEntityId' | 'primaryChildPreference'
+  >,
+  children: readonly DeviceItemDevice[],
+): number | null {
+  if (parent.type !== DeviceType.Container || children.length === 0) return null
+  const primary = resolveContainerPrimary(
+    children,
+    parent.linkDeviceId,
+    parent.primaryChildEntityId,
+    parent.type,
+    primaryChildPreferenceOf(parent),
+  )
+  return primary === null ? null : primary.id
+}
+
+/** Split a parent's children into adopted, parts, the primary, and accessories. */
+export function classifyDeviceChildren(
+  parent: Pick<
+    DeviceItemDevice,
+    'type' | 'stableId' | 'linkDeviceId' | 'primaryChildEntityId' | 'primaryChildPreference'
+  >,
+  children: readonly DeviceItemDevice[],
+): ClassifiedChildren {
+  const primaryChildId = containerPrimaryChildId(parent, children)
+  const adopted: DeviceItemDevice[] = []
+  const parts: DeviceItemDevice[] = []
+  const primary: DeviceItemDevice[] = []
+  const accessories: DeviceItemDevice[] = []
+  for (const child of children) {
+    // A row in a parent's child list is that parent's child even when the
+    // projection omitted `parentDeviceId` (the detail list's fixtures do).
+    const kind = deriveDeviceKind(
+      { ...child, parentDeviceId: child.parentDeviceId ?? -1 },
+      { parentType: parent.type, primaryChildId },
+    )
+    if (kind === 'primary') primary.push(child)
+    else if (kind === 'part') parts.push(child)
+    else if (kind === 'adopted') adopted.push(child)
+    else accessories.push(child)
+  }
+  return { adopted, parts, primary, accessories }
+}
+
+/** Parent badge for one device, including its type and (for a container) primary child. */
+export function deviceItemParentOf(
+  device: Pick<
+    DeviceItemDevice,
+    | 'id'
+    | 'name'
+    | 'stableId'
+    | 'type'
+    | 'linkDeviceId'
+    | 'primaryChildEntityId'
+    | 'primaryChildPreference'
+  >,
+  children: readonly DeviceItemDevice[],
+): DeviceItemParent {
+  const primaryChildId = containerPrimaryChildId(device, children)
+  const name = device.name.length > 0 ? device.name : device.stableId
+  return {
+    id: device.id,
+    name,
+    type: device.type,
+    ...(primaryChildId === null ? {} : { primaryChildId }),
+  }
+}
+
+/** One parent record per device, so a child row can tell a hub from a container. */
+export function deviceItemParentIndex(
+  devices: readonly DeviceItemDevice[],
+): ReadonlyMap<number, DeviceItemParent> {
+  const childrenOf = new Map<number, DeviceItemDevice[]>()
+  for (const device of devices) {
+    const parentId = device.parentDeviceId
+    if (parentId === null || parentId === undefined) continue
+    const existing = childrenOf.get(parentId)
+    if (existing) existing.push(device)
+    else childrenOf.set(parentId, [device])
+  }
+  const byId = new Map<number, DeviceItemParent>()
+  for (const device of devices) {
+    byId.set(device.id, deviceItemParentOf(device, childrenOf.get(device.id) ?? []))
+  }
+  return byId
+}
+
+/** The parent line under a child row. Hub, NVR and gateway stay "adopted by". */
+export function parentRelationText(
+  kind: DeviceItemKind,
+  parentType: string | null | undefined,
+  t: UiTextFn,
+  name: string,
+): string {
+  if (kind === 'primary') {
+    return t('uiLibrary.deviceItemHeader.primaryOf', 'Primary · {{name}}', { name })
+  }
+  if (kind === 'part' && parentType === DeviceType.Container) {
+    return t('uiLibrary.deviceItemHeader.partOf', 'Part of {{name}}', { name })
+  }
+  if (kind === 'adopted') {
+    return t('uiLibrary.deviceItemHeader.adoptedBy', 'Adopted by {{name}}', { name })
+  }
+  return t('uiLibrary.deviceItemHeader.under', 'Under: {{name}}', { name })
 }
 
 export function hasMotionTriggerFeature(device: DeviceItemDevice): boolean {

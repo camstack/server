@@ -7,12 +7,19 @@
 import type { ReactNode } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
+import { ValueChip } from '../device-card/parts/ValueChip'
 import { formatKw } from '../device-card/scenes/energy/model'
 import type { DeviceControlProps } from './control-registry'
 
+interface EnergyReading {
+  readonly id: string
+  readonly text: string
+}
+
 /**
- * EnergySystemInlineControl — "Solar 4.2 kW · Storage 74%" for a device-list
- * row; a part the system does not report is left out. Natural width.
+ * EnergySystemInlineControl — one pill per reading ("Solar 4.2 kW",
+ * "Storage 74%") for a device-list row. A part the system does not report
+ * is left out. Natural width.
  */
 export function EnergySystemInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
@@ -25,18 +32,27 @@ export function EnergySystemInlineControl({ trpc, deviceId }: DeviceControlProps
   if (cap === undefined || slice === undefined) return null
   const solarW = slice.solar?.powerW ?? null
   const pct = slice.storage?.stateOfChargePct ?? null
-  const parts: string[] = []
-  if (solarW !== null)
-    parts.push(`${t('uiLibrary.deviceCard.energy.solar', 'Solar')} ${formatKw(solarW)}`)
-  if (pct !== null)
-    parts.push(`${t('uiLibrary.deviceCard.energy.storage', 'Storage')} ${Math.round(pct)}%`)
-  if (parts.length === 0) return null
+  const readings: EnergyReading[] = []
+  if (solarW !== null) {
+    readings.push({
+      id: 'solar',
+      text: `${t('uiLibrary.deviceCard.energy.solar', 'Solar')} ${formatKw(solarW)}`,
+    })
+  }
+  if (pct !== null) {
+    readings.push({
+      id: 'storage',
+      text: `${t('uiLibrary.deviceCard.energy.storage', 'Storage')} ${Math.round(pct)}%`,
+    })
+  }
+  if (readings.length === 0) return null
   return (
-    <span
-      data-testid="energy-system-inline"
-      className="inline-flex items-center text-xs tabular-nums text-foreground-subtle"
-    >
-      {parts.join(' · ')}
+    <span data-testid="energy-system-inline" className="inline-flex flex-wrap items-center gap-1">
+      {readings.map((reading) => (
+        <span key={reading.id} data-testid="energy-value-chip">
+          <ValueChip>{reading.text}</ValueChip>
+        </span>
+      ))}
     </span>
   )
 }

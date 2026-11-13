@@ -28,6 +28,8 @@ interface ChildrenAccordionProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly accessoryChildren: readonly DeviceItemDevice[]
   readonly adoptedChildren: readonly DeviceItemDevice[]
+  readonly partChildren?: readonly DeviceItemDevice[]
+  readonly primaryChildren?: readonly DeviceItemDevice[]
   readonly onNavigate: (id: number) => void
   /** Parent row's name — used to strip the redundant baked-in prefix from each
    *  child's DISPLAY name (the underlying `child.name` is untouched). */
@@ -38,12 +40,32 @@ export function ChildrenAccordion({
   trpc,
   accessoryChildren,
   adoptedChildren,
+  partChildren = [],
+  primaryChildren = [],
   onNavigate,
   parentName,
 }: ChildrenAccordionProps): ReactNode {
   const t = useUiText()
   return (
     <div className="border-t border-border-subtle/50">
+      {primaryChildren.length > 0 && (
+        <ChildrenSection
+          trpc={trpc}
+          label={t('uiLibrary.childrenAccordion.primary', 'Primary')}
+          rows={primaryChildren}
+          onNavigate={onNavigate}
+          parentName={parentName}
+        />
+      )}
+      {partChildren.length > 0 && (
+        <ChildrenSection
+          trpc={trpc}
+          label={t('uiLibrary.childrenAccordion.parts', 'Parts')}
+          rows={partChildren}
+          onNavigate={onNavigate}
+          parentName={parentName}
+        />
+      )}
       {adoptedChildren.length > 0 && (
         <ChildrenSection
           trpc={trpc}

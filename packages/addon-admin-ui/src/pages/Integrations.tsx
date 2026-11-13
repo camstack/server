@@ -27,6 +27,7 @@ import {
   cn,
   countableDevices,
   deviceIntegrationResolver,
+  deviceItemParentIndex,
   type DeviceItemDevice,
   type DeviceItemParent,
   DeviceList,
@@ -207,13 +208,7 @@ export function IntegrationsPage(): ReactNode {
 
   // Pre-built parent lookup table — same `listAll` snapshot, no extra
   // query per accessory row. Mirrors Devices.tsx.
-  const parentById = useMemo(() => {
-    const byId = new Map<number, DeviceItemParent>()
-    for (const d of deviceList) {
-      byId.set(d.id, { id: d.id, name: d.name ?? d.stableId ?? `#${String(d.id)}` })
-    }
-    return byId
-  }, [deviceList])
+  const parentById = useMemo(() => deviceItemParentIndex(deviceList), [deviceList])
 
   // Which integration each row belongs to — the ONE rule
   // (`deviceIntegrationResolver`): `integrationId` first, `addonId` only for

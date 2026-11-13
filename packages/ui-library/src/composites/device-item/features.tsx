@@ -22,7 +22,7 @@ import type { LucideIcon } from 'lucide-react'
 import { useDeviceFeatures, type ResolvedFeature } from '../../hooks/use-device-features'
 import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { cn } from '../../lib/cn'
-import { useUiText } from '../../contexts/ui-text'
+import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import {
   FEATURE_ICON_MAP,
   FEATURE_LABEL_MAP,
@@ -36,6 +36,8 @@ export interface DeviceItemFeaturesProps {
   readonly flags: VariantDefaults
   readonly accessoryCount: number
   readonly adoptedCount: number
+  readonly partCount?: number
+  readonly primaryCount?: number
   /**
    * When true, render the feature-icon row + popover (table view's
    * "Features" column). Off in card view — only battery + +N badge
@@ -52,9 +54,11 @@ export function DeviceItemFeatures({
   flags,
   accessoryCount,
   adoptedCount,
+  partCount = 0,
+  primaryCount = 0,
   showFeatureRow = false,
 }: DeviceItemFeaturesProps): ReactNode {
-  const total = accessoryCount + adoptedCount
+  const total = accessoryCount + adoptedCount + partCount + primaryCount
   const showChildrenBadge = flags.showChildrenAccordion && total > 0
   const rawFeatures = device.features ?? EMPTY_FEATURES
   const showFeaturesGate = showFeatureRow && rawFeatures.length > 0
@@ -65,7 +69,12 @@ export function DeviceItemFeatures({
   return (
     <div className="flex items-center gap-1.5 flex-nowrap whitespace-nowrap min-w-0">
       {showChildrenBadge && (
-        <ChildrenCountBadge accessoryCount={accessoryCount} adoptedCount={adoptedCount} />
+        <ChildrenCountBadge
+          accessoryCount={accessoryCount}
+          adoptedCount={adoptedCount}
+          partCount={partCount}
+          primaryCount={primaryCount}
+        />
       )}
       {showFeatures && <FeatureRow resolved={resolved} />}
     </div>
@@ -77,29 +86,51 @@ export function DeviceItemFeatures({
 interface ChildrenCountBadgeProps {
   readonly accessoryCount: number
   readonly adoptedCount: number
+  readonly partCount: number
+  readonly primaryCount: number
 }
 
-function ChildrenCountBadge({ accessoryCount, adoptedCount }: ChildrenCountBadgeProps): ReactNode {
+function countedTitle(t: UiTextFn, counts: ChildrenCountBadgeProps): string {
+  const bits: string[] = []
+  if (counts.primaryCount > 0) bits.push(t('uiLibrary.deviceItemFeatures.primary', 'Primary'))
+  if (counts.partCount > 0) {
+    bits.push(
+      t(
+        'uiLibrary.deviceItemFeatures.parts',
+        { one: '{{count}} part', other: '{{count}} parts' },
+        { count: counts.partCount },
+      ),
+    )
+  }
+  if (counts.adoptedCount > 0) {
+    bits.push(
+      t('uiLibrary.deviceItemFeatures.adopted', '{{count}} adopted', {
+        count: counts.adoptedCount,
+      }),
+    )
+  }
+  if (counts.accessoryCount > 0) {
+    bits.push(
+      t(
+        'uiLibrary.deviceItemFeatures.accessories',
+        { one: '{{count}} accessory', other: '{{count}} accessories' },
+        { count: counts.accessoryCount },
+      ),
+    )
+  }
+  return bits.join(' · ')
+}
+
+function ChildrenCountBadge({
+  accessoryCount,
+  adoptedCount,
+  partCount,
+  primaryCount,
+}: ChildrenCountBadgeProps): ReactNode {
   const t = useUiText()
-  const total = accessoryCount + adoptedCount
+  const total = accessoryCount + adoptedCount + partCount + primaryCount
   if (total === 0) return null
-  const title =
-    adoptedCount > 0 && accessoryCount > 0
-      ? t(
-          'uiLibrary.deviceItemFeatures.adoptedAndAccessories',
-          {
-            one: '{{adopted}} adopted · {{count}} accessory',
-            other: '{{adopted}} adopted · {{count}} accessories',
-          },
-          { adopted: adoptedCount, count: accessoryCount },
-        )
-      : adoptedCount > 0
-        ? t('uiLibrary.deviceItemFeatures.adopted', '{{count}} adopted', { count: adoptedCount })
-        : t(
-            'uiLibrary.deviceItemFeatures.accessories',
-            { one: '{{count}} accessory', other: '{{count}} accessories' },
-            { count: accessoryCount },
-          )
+  const title = countedTitle(t, { accessoryCount, adoptedCount, partCount, primaryCount })
   return (
     <span
       className="text-[9px] font-medium text-foreground-subtle bg-surface-elevated/60 rounded px-1.5 py-0.5 flex-shrink-0"

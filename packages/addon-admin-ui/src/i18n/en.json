@@ -4701,7 +4701,9 @@
     "accessories": "Accessories",
     "adoptedDevices": "Adopted devices",
     "children": "Children",
-    "disabledSection": "Disabled"
+    "disabledSection": "Disabled",
+    "parts": "Parts",
+    "primary": "Primary"
   },
   "hero": {
     "buttonHero": {
@@ -8792,7 +8794,9 @@
       "turnOff": "Turn off",
       "turnOn": "Turn on",
       "motionTriggerOn": "Motion-trigger: on (click to disable)",
-      "motionTriggerOff": "Motion-trigger: off (click to enable)"
+      "motionTriggerOff": "Motion-trigger: off (click to enable)",
+      "parts": "Parts",
+      "primary": "Primary"
     },
     "deviceDeleteAction": {
       "title": "Delete device?",
@@ -8808,13 +8812,19 @@
       "accessories_other": "{{count}} accessories",
       "features": "Features",
       "markerTitle": "Informational marker (no cap registered)",
-      "marker": "marker"
+      "marker": "marker",
+      "primary": "Primary",
+      "parts_one": "{{count}} part",
+      "parts_other": "{{count}} parts"
     },
     "deviceItemHeader": {
       "collapseChildren": "Collapse children",
       "expandChildren": "Expand children",
       "openParent": "Open parent: {{name}} (#{{id}})",
-      "under": "Under: {{name}}"
+      "under": "Under: {{name}}",
+      "primaryOf": "Primary · {{name}}",
+      "partOf": "Part of {{name}}",
+      "adoptedBy": "Adopted by {{name}}"
     },
     "rebootQuickAction": {
       "rebootDevice": "Reboot device",

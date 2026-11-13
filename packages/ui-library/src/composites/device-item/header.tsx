@@ -37,7 +37,13 @@ import type {
   VariantDefaults,
 } from './helpers'
 import { useIconGlyphsVersion } from '../icon-glyphs'
-import { deviceLeadIcon, effectiveIconDevice, shortStableId } from './helpers'
+import {
+  deriveDeviceKind,
+  deviceLeadIcon,
+  effectiveIconDevice,
+  parentRelationText,
+  shortStableId,
+} from './helpers'
 import { useRoleDisplayDefaults } from './role-display-defaults-context'
 import { useContainerChildren } from './container-children-context'
 
@@ -235,7 +241,15 @@ export function DeviceItemHeader({
           >
             <Network className="h-2.5 w-2.5 shrink-0" />
             <span className={lineClass}>
-              {t('uiLibrary.deviceItemHeader.under', 'Under: {{name}}', { name: parentLabel })}
+              {parentRelationText(
+                deriveDeviceKind(device, {
+                  parentType: parent.type,
+                  primaryChildId: parent.primaryChildId,
+                }),
+                parent.type,
+                t,
+                parentLabel,
+              )}
             </span>
           </button>
         )}

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A container's child reads as its part or primary; 'adopted' is said only under a hub, NVR or gateway
+
 ## [1.2.664] - 2026-11-13
 
 ### Changed

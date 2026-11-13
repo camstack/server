@@ -32,9 +32,9 @@ import {
   type DeviceItemParent,
   type DeviceItemProps,
   type DeviceItemVariant,
+  classifyDeviceChildren,
   effectiveOnline,
   effectiveType,
-  isAccessoryChild,
   resolveFlags,
   type VariantDefaults,
 } from './helpers'
@@ -61,7 +61,15 @@ export type {
   DeviceItemView,
 } from './helpers'
 export type { DeviceLeadIconSource } from './helpers'
-export { childListName, deriveDeviceKind, deviceLeadIcon, stripParentNamePrefix } from './helpers'
+export {
+  childListName,
+  classifyDeviceChildren,
+  deriveDeviceKind,
+  deviceItemParentIndex,
+  deviceItemParentOf,
+  deviceLeadIcon,
+  stripParentNamePrefix,
+} from './helpers'
 
 export function DeviceItem(props: DeviceItemProps): ReactNode {
   const t = useUiText()
@@ -94,8 +102,11 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
   const isCamera = device.isCamera ?? device.type.toLowerCase() === 'camera'
 
   const childrenList = props.children ?? []
-  const accessoryChildren = childrenList.filter(isAccessoryChild)
-  const adoptedChildren = childrenList.filter((c) => !isAccessoryChild(c))
+  const childGroups = classifyDeviceChildren(device, childrenList)
+  const accessoryChildren = childGroups.accessories
+  const adoptedChildren = childGroups.adopted
+  const partChildren = childGroups.parts
+  const primaryChildren = childGroups.primary
   const hasChildren = childrenList.length > 0
 
   const [localExpanded, setLocalExpanded] = useState(false)
@@ -152,6 +163,8 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
         integrationIcon={integrationIcon ?? null}
         accessoryCount={accessoryChildren.length}
         adoptedCount={adoptedChildren.length}
+        partCount={partChildren.length}
+        primaryCount={primaryChildren.length}
         hasChildren={hasChildren}
         expanded={expanded}
         onToggleExpand={onToggleExpand}
@@ -250,6 +263,8 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
             flags={flags}
             accessoryCount={accessoryChildren.length}
             adoptedCount={adoptedChildren.length}
+            partCount={partChildren.length}
+            primaryCount={primaryChildren.length}
             showFeatureRow={false}
           />
 
@@ -276,6 +291,8 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
             trpc={trpc}
             accessoryChildren={accessoryChildren}
             adoptedChildren={adoptedChildren}
+            partChildren={partChildren}
+            primaryChildren={primaryChildren}
             onNavigate={navigate}
             parentName={device.name}
           />
@@ -367,6 +384,8 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
           flags={flags}
           accessoryCount={accessoryChildren.length}
           adoptedCount={adoptedChildren.length}
+          partCount={partChildren.length}
+          primaryCount={primaryChildren.length}
           showFeatureRow={false}
         />
 
@@ -391,6 +410,8 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
           trpc={trpc}
           accessoryChildren={accessoryChildren}
           adoptedChildren={adoptedChildren}
+          partChildren={partChildren}
+          primaryChildren={primaryChildren}
           onNavigate={navigate}
           parentName={device.name}
         />
@@ -414,6 +435,8 @@ interface DeviceItemTableRowProps {
   readonly integrationIcon: ReactNode | null
   readonly accessoryCount: number
   readonly adoptedCount: number
+  readonly partCount: number
+  readonly primaryCount: number
   readonly hasChildren: boolean
   readonly expanded: boolean
   readonly onToggleExpand: () => void
@@ -469,6 +492,8 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
     integrationIcon,
     accessoryCount,
     adoptedCount,
+    partCount,
+    primaryCount,
     hasChildren,
     expanded,
     onToggleExpand,
@@ -676,6 +701,8 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             flags={flags}
             accessoryCount={accessoryCount}
             adoptedCount={adoptedCount}
+            partCount={partCount}
+            primaryCount={primaryCount}
             showFeatureRow
           />
         </td>

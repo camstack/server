@@ -22,6 +22,7 @@ interface ChildRow {
   readonly stableId: string
   readonly name: string
   readonly role?: string | null
+  readonly type?: string
   readonly disabled?: boolean
 }
 
@@ -55,6 +56,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     // Faithful inline mirror of the real `childListName` helper — kept local so
     // this spec doesn't depend on a freshly-built `@camstack/ui-library` dist.
     // Its own behaviour is unit-tested in ui-library's `child-list-name.test.ts`.
+    classifyDeviceChildren: actual.classifyDeviceChildren,
     childListName: (child: { name: string; display?: { label?: string } }, parentName: string) => {
       if (child.display?.label) return child.display.label
       if (parentName.length === 0) return child.name
@@ -298,6 +300,7 @@ describe('ChildrenList — adopted devices lead', () => {
     parentResult.current = {
       data: {
         stableId: PARENT_STABLE,
+        type: 'hub',
         childLayout: [{ childKey: 'voltage', section: 'Diagnostics' }],
       },
       isLoading: false,
@@ -338,9 +341,46 @@ describe('ChildrenList — adopted devices lead', () => {
       isLoading: false,
       isError: false,
     }
-    parentResult.current = { data: { stableId: PARENT_STABLE }, isLoading: false, isError: false }
+    parentResult.current = {
+      data: { stableId: PARENT_STABLE, type: 'hub' },
+      isLoading: false,
+      isError: false,
+    }
     render(<ChildrenList parentDeviceId={1} />)
     expect(screen.queryByTestId('accordion')).toBeNull()
     expect(screen.getByText('Adopted devices')).toBeDefined()
+  })
+
+  it('a container child is a part, and the declared primary reads Primary', () => {
+    childrenResult.current = {
+      data: [
+        {
+          id: 2,
+          stableId: `${PARENT_STABLE}-energy`,
+          name: 'Energy system',
+          role: null,
+          type: 'energy-system',
+        },
+        { id: 3, stableId: `${PARENT_STABLE}-grid`, name: 'Grid', role: null, type: 'sensor' },
+      ],
+      isLoading: false,
+      isError: false,
+    }
+    parentResult.current = {
+      data: {
+        stableId: PARENT_STABLE,
+        type: 'container',
+        name: 'Enpal system',
+        primaryChildPreference: ['energy'],
+      },
+      isLoading: false,
+      isError: false,
+    }
+    render(<ChildrenList parentDeviceId={1} />)
+    expect(screen.queryByText('Adopted devices')).toBeNull()
+    expect(screen.getByText('Primary')).toBeDefined()
+    expect(screen.getByText('Parts')).toBeDefined()
+    expect(orderOf('Diagnostics')).toBe(-1)
+    expect(orderOf('Primary')).toBeLessThan(orderOf('Parts'))
   })
 })
