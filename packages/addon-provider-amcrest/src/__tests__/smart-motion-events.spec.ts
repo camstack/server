@@ -1,11 +1,12 @@
 /**
  * Dahua smart events are this camera's motion. A Start/Stop pair has the
- * same edges as VideoMotion. A Pulse has no Stop: one rising edge, and the
- * session cooldown is the close — the keepalive that holds a Start must not
- * arm, or motion would stay on.
+ * same edges as VideoMotion. Overlapping codes stay on until the last Stop.
+ * A Pulse has no Stop: it holds motion for `AMCREST_PULSE_HOLD_MS`, then
+ * turns it off, unless a Start is still held — that Stop owns the off.
+ * The keepalive arms only while a Start is held.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { AmcrestCamera } from '../amcrest-camera.js'
+import { AMCREST_PULSE_HOLD_MS, AmcrestCamera } from '../amcrest-camera.js'
 import type { AmcrestEvent } from '../amcrest-cgi-client.js'
 
 const DEVICE = 16
@@ -19,6 +20,8 @@ interface Subject {
   id: number
   motionActive: boolean
   motionKeepaliveTimer: ReturnType<typeof setInterval> | null
+  activeMotionCodes: Set<string>
+  motionPulseTimer: ReturnType<typeof setTimeout> | null
   ctx: {
     logger: {
       info: (message: string, opts?: { tags?: Record<string, unknown> }) => void
@@ -40,6 +43,8 @@ function makeSubject(): { subject: Subject; edges: MotionEdge[] } {
     id: DEVICE,
     motionActive: false,
     motionKeepaliveTimer: null,
+    activeMotionCodes: new Set<string>(),
+    motionPulseTimer: null,
     ctx: {
       logger: { info: () => {}, debug: () => {}, warn: () => {}, error: () => {} },
       eventBus: {
@@ -99,12 +104,74 @@ describe('Amcrest smart events count as onboard motion', () => {
     expect(subject.motionActive).toBe(false)
   })
 
-  it('a Pulse with no Stop emits one rising edge and does not hold motion', () => {
+  it('overlapping codes stay on until the last Stop', () => {
     const { subject, edges } = makeSubject()
-    deliver(subject, event('CrossLineDetection', 'Pulse', 7_000))
-    vi.advanceTimersByTime(30_000)
-    expect(edges).toEqual([{ detected: true, timestamp: 7_000 }])
+    deliver(subject, event('VideoMotion', 'Start', 1_000))
+    deliver(subject, event('SmartMotionHuman', 'Start', 2_000))
+    deliver(subject, event('SmartMotionHuman', 'Stop', 3_000))
+    expect(subject.motionActive).toBe(true)
+    expect(subject.motionKeepaliveTimer).not.toBeNull()
+    expect(edges.some((edge) => edge.detected === false)).toBe(false)
+    deliver(subject, event('VideoMotion', 'Stop', 4_000))
+    expect(edges).toEqual([
+      { detected: true, timestamp: 1_000 },
+      { detected: false, timestamp: 4_000 },
+    ])
     expect(subject.motionActive).toBe(false)
     expect(subject.motionKeepaliveTimer).toBeNull()
+  })
+
+  it('a Pulse turns motion on, then off after the hold', () => {
+    const { subject, edges } = makeSubject()
+    vi.setSystemTime(7_000)
+    deliver(subject, event('CrossLineDetection', 'Pulse', 7_000))
+    expect(edges).toEqual([{ detected: true, timestamp: 7_000 }])
+    expect(subject.motionActive).toBe(true)
+    expect(subject.motionKeepaliveTimer).toBeNull()
+    expect(subject.motionPulseTimer).not.toBeNull()
+    vi.advanceTimersByTime(AMCREST_PULSE_HOLD_MS - 1)
+    expect(subject.motionActive).toBe(true)
+    vi.advanceTimersByTime(1)
+    expect(edges).toEqual([
+      { detected: true, timestamp: 7_000 },
+      { detected: false, timestamp: 7_000 + AMCREST_PULSE_HOLD_MS },
+    ])
+    expect(subject.motionActive).toBe(false)
+    expect(subject.motionPulseTimer).toBeNull()
+    expect(subject.motionKeepaliveTimer).toBeNull()
+  })
+
+  it('a Pulse during a held Start does not turn motion off when the hold ends', () => {
+    const { subject, edges } = makeSubject()
+    vi.setSystemTime(8_000)
+    deliver(subject, event('VideoMotion', 'Start', 8_000))
+    deliver(subject, event('CrossRegionDetection', 'Pulse', 8_100))
+    expect(subject.motionPulseTimer).not.toBeNull()
+    expect(subject.motionKeepaliveTimer).not.toBeNull()
+    vi.advanceTimersByTime(AMCREST_PULSE_HOLD_MS)
+    expect(edges.some((edge) => edge.detected === false)).toBe(false)
+    expect(subject.motionActive).toBe(true)
+    expect(subject.motionKeepaliveTimer).not.toBeNull()
+    deliver(subject, event('VideoMotion', 'Stop', 9_000))
+    expect(edges.at(-1)).toEqual({ detected: false, timestamp: 9_000 })
+    expect(subject.motionActive).toBe(false)
+  })
+
+  it('a second Pulse during the hold extends it', () => {
+    const { subject, edges } = makeSubject()
+    vi.setSystemTime(10_000)
+    deliver(subject, event('CrossLineDetection', 'Pulse', 10_000))
+    vi.advanceTimersByTime(AMCREST_PULSE_HOLD_MS - 1_000)
+    const extendedAt = 10_000 + AMCREST_PULSE_HOLD_MS - 1_000
+    deliver(subject, event('CrossLineDetection', 'Pulse', extendedAt))
+    vi.advanceTimersByTime(AMCREST_PULSE_HOLD_MS - 1)
+    expect(subject.motionActive).toBe(true)
+    expect(edges.some((edge) => edge.detected === false)).toBe(false)
+    vi.advanceTimersByTime(1)
+    expect(edges.at(-1)).toEqual({
+      detected: false,
+      timestamp: extendedAt + AMCREST_PULSE_HOLD_MS,
+    })
+    expect(subject.motionActive).toBe(false)
   })
 })

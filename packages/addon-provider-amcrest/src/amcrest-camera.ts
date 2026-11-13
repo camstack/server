@@ -136,6 +136,13 @@ export const AMCREST_MOTION_EVENT_CODES: string = `[${AMCREST_MOTION_CODE_LIST.j
 
 const AMCREST_MOTION_CODES: ReadonlySet<string> = new Set(AMCREST_MOTION_CODE_LIST)
 
+/** A Pulse has no Stop. Hold motion this long, then turn it off unless a Start is still held. */
+export const AMCREST_PULSE_HOLD_MS: number = 5_000
+
+function motionCodeKey(code: string, index: number | null): string {
+  return `${code}:${index ?? ''}`
+}
+
 export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implements ICameraDevice {
   readonly type = DeviceType.Camera as const
 
@@ -200,10 +207,14 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   private eventStreamReconnectAttempts = 0
   /** Pending reconnect timer. */
   private eventStreamReconnectTimer: ReturnType<typeof setTimeout> | null = null
-  /** True between a `VideoMotion Start` and its `Stop`. */
+  /** True while a Start is held or a Pulse hold has not expired. */
   private motionActive = false
-  /** Keepalive re-emit timer for a sustained motion window. */
+  /** Start edges still open, keyed `code:index`. Motion stays on until this is empty. */
+  private activeMotionCodes: Set<string> = new Set()
+  /** Keepalive re-emit timer for a sustained Start window. */
   private motionKeepaliveTimer: ReturnType<typeof setInterval> | null = null
+  /** Pending Pulse hold. A later Pulse replaces it; teardown clears it. */
+  private motionPulseTimer: ReturnType<typeof setTimeout> | null = null
   /** Control-plane reachability poll — drives `device.online` from Dahua CGI
    *  `getDeviceInfo` liveness, decoupled from stream-broker video health.
    *  Started in `onActivate`, stopped in `removeDevice`. */
@@ -391,8 +402,10 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   // `multipart/x-mixed-replace` CGI GET
   // (`eventManager.cgi?action=attach&codes=[VideoMotion,…]`). Each part is a
   // `text/plain` block `Code=VideoMotion;action=Start|Stop;index=0`. Smart
-  // codes (human, vehicle, line, region) use the same edges; a Pulse is one
-  // rising edge. We translate them into the same RAW
+  // codes (human, vehicle, line, region) use the same edges. Motion stays on
+  // until every Start `(code, index)` has stopped. A Pulse holds for
+  // `AMCREST_PULSE_HOLD_MS`, then turns off unless a Start is still held.
+  // We translate them into the same RAW
   // `EventCategory.ProviderMotion` (`source:'onboard'`) bus event the
   // Reolink/Hikvision providers emit (D673: the orchestrator's camera-sensors
   // bridge turns it into `MotionOnMotionChanged`), so the pipeline treats
@@ -456,7 +469,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
         this.eventStreamReconnectAttempts = 0
         // A reconnect resets any stuck `active` state — a `Stop` missed
         // while the socket was down would otherwise pin motion on.
-        if (this.motionActive) this.onMotionStop(Date.now())
+        this.releaseMotionOnReconnect(Date.now())
         this.ctx.logger.info('amcrest: event stream connected', {
           tags: { deviceId: this.id },
         })
@@ -527,8 +540,8 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       return
     }
     const action = ev.action.toLowerCase()
-    if (action === 'start') this.onMotionStart(ev.observedAt)
-    else if (action === 'stop') this.onMotionStop(ev.observedAt)
+    if (action === 'start') this.onMotionStart(ev.observedAt, ev.code, ev.index)
+    else if (action === 'stop') this.onMotionStop(ev.observedAt, ev.code, ev.index)
     else if (action === 'pulse') this.onMotionPulse(ev.observedAt)
     else {
       this.ctx.logger.debug('amcrest: motion event with no start, stop or pulse — dropped', {
@@ -538,17 +551,19 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     }
   }
 
-  private onMotionStart(now: number): void {
+  private onMotionStart(now: number, code = 'VideoMotion', index: number | null = 0): void {
+    const wasHeld = this.activeMotionCodes.size > 0
+    this.activeMotionCodes.add(motionCodeKey(code, index))
     const wasActive = this.motionActive
     this.motionActive = true
-    this.emitMotion(true, now)
     if (!wasActive) {
+      this.emitMotion(true, now)
       this.ctx.logger.info('amcrest: onboard motion started', {
         tags: { deviceId: this.id },
       })
     }
-    // Heartbeat re-emit for the sustained window (see MOTION_KEEPALIVE_MS).
-    if (this.motionKeepaliveTimer === null) {
+    // Heartbeat re-emit while any Start is held (see MOTION_KEEPALIVE_MS).
+    if (!wasHeld && this.motionKeepaliveTimer === null) {
       this.motionKeepaliveTimer = setInterval(() => {
         this.emitMotion(true, Date.now())
       }, AmcrestCamera.MOTION_KEEPALIVE_MS)
@@ -556,21 +571,50 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   }
 
   /**
-   * A Pulse has no Stop. One rising edge; the detection session's motion
-   * cooldown closes it when nothing else arrives. The keepalive holds a
-   * Start until its Stop — arming it here would pin motion on.
+   * A Pulse has no Stop. Emit on, then off after {@link AMCREST_PULSE_HOLD_MS}
+   * unless a Start is still held — that Stop owns the off. A Pulse during the
+   * hold replaces the timer. The keepalive stays armed only for Starts.
    */
   private onMotionPulse(now: number): void {
-    const held = this.motionActive
+    const wasActive = this.motionActive
+    this.motionActive = true
     this.emitMotion(true, now)
-    if (held) return
-    this.ctx.logger.info('amcrest: onboard motion pulse', {
+    if (!wasActive) {
+      this.ctx.logger.info('amcrest: onboard motion pulse', {
+        tags: { deviceId: this.id },
+      })
+    }
+    this.armMotionPulseHold()
+  }
+
+  private armMotionPulseHold(): void {
+    if (this.motionPulseTimer !== null) clearTimeout(this.motionPulseTimer)
+    this.motionPulseTimer = setTimeout(() => {
+      this.motionPulseTimer = null
+      if (this.activeMotionCodes.size > 0) return
+      this.finishMotion(Date.now())
+    }, AMCREST_PULSE_HOLD_MS)
+  }
+
+  private onMotionStop(now: number, code = 'VideoMotion', index: number | null = 0): void {
+    const removed = this.activeMotionCodes.delete(motionCodeKey(code, index))
+    if (this.activeMotionCodes.size > 0) return
+    this.clearMotionKeepalive()
+    // A Stop for a code we were not holding must not cut a Pulse short.
+    if (!removed) return
+    if (this.motionPulseTimer != null) {
+      clearTimeout(this.motionPulseTimer)
+      this.motionPulseTimer = null
+    }
+    if (!this.motionActive) return
+    this.motionActive = false
+    this.emitMotion(false, now)
+    this.ctx.logger.info('amcrest: onboard motion stopped', {
       tags: { deviceId: this.id },
     })
   }
 
-  private onMotionStop(now: number): void {
-    this.clearMotionKeepalive()
+  private finishMotion(now: number): void {
     if (!this.motionActive) return
     this.motionActive = false
     this.emitMotion(false, now)
@@ -584,6 +628,32 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       clearInterval(this.motionKeepaliveTimer)
       this.motionKeepaliveTimer = null
     }
+  }
+
+  private clearMotionPulseTimer(): void {
+    if (this.motionPulseTimer !== null) {
+      clearTimeout(this.motionPulseTimer)
+      this.motionPulseTimer = null
+    }
+  }
+
+  /** Drop every held code and any Pulse timer. Emits off when motion was on. */
+  private releaseMotionOnReconnect(now: number): void {
+    const wasActive = this.motionActive
+    this.dropMotionTracking()
+    if (!wasActive) return
+    this.emitMotion(false, now)
+    this.ctx.logger.info('amcrest: onboard motion stopped', {
+      tags: { deviceId: this.id },
+    })
+  }
+
+  /** Clear codes, keepalive and the Pulse timer without emitting. */
+  private dropMotionTracking(): void {
+    this.activeMotionCodes.clear()
+    this.clearMotionKeepalive()
+    this.clearMotionPulseTimer()
+    this.motionActive = false
   }
 
   /** Abort the stream + clear all motion timers. Idempotent. */
@@ -600,8 +670,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       }
       this.eventStreamController = null
     }
-    this.clearMotionKeepalive()
-    this.motionActive = false
+    this.dropMotionTracking()
   }
 
   /** Phase 5 — device is live: open the onboard-motion event stream. */

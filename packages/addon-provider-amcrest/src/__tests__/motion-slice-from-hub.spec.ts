@@ -33,6 +33,8 @@ function makeSubject(hub: () => Promise<Readonly<Record<string, unknown>> | null
     id: ID,
     motionActive: false,
     motionKeepaliveTimer: null,
+    activeMotionCodes: new Set<string>(),
+    motionPulseTimer: null,
     setCapSlice,
     getCapSlice: vi.fn(() => null),
     emitMotion: vi.fn(),

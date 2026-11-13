@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - Dahua and Amcrest smart events (person, vehicle, tripwire, intrusion) now start and stop motion recordings the same way ordinary motion does.
+- Overlapping camera motion events stay on until the last one stops, and a momentary event turns itself off after a few seconds.
 
 ## [0.2.170] - 2026-11-08
 
