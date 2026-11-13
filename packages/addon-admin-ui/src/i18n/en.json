@@ -10459,7 +10459,13 @@
         "install": "Install",
         "installed": "Installed",
         "installing": "Installing",
-        "latest": "Available"
+        "latest": "Available",
+        "step": {
+          "sending": "Sending firmware",
+          "ready": "Ready to install",
+          "waiting": "Waiting for the device",
+          "applying": "Applying"
+        }
       }
     },
     "language": "en",

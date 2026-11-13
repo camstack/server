@@ -10481,7 +10481,13 @@
         "install": "Installa",
         "installed": "Installata",
         "installing": "Installazione in corso",
-        "latest": "Disponibile"
+        "latest": "Disponibile",
+        "step": {
+          "sending": "Invio del firmware",
+          "ready": "Pronto da installare",
+          "waiting": "In attesa del dispositivo",
+          "applying": "Applicazione"
+        }
       }
     },
     "language": "it",

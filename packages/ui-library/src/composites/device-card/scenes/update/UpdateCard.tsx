@@ -1,12 +1,37 @@
 import type { ReactElement } from 'react'
-import { useUiText } from '../../../../contexts/ui-text'
+import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
 import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { InfoTile } from '../../parts/InfoTile'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
-import type { UpdateCardActions, UpdateCardModel } from './model'
+import {
+  type UpdateCardActions,
+  type UpdateCardModel,
+  type UpdateStateWord,
+  type UpdateStep,
+  updateStateWordOf,
+} from './model'
+
+function stepText(step: UpdateStep, t: UiTextFn): string {
+  switch (step) {
+    case 'sending':
+      return t('uiLibrary.deviceCard.update.step.sending', 'Sending firmware')
+    case 'ready':
+      return t('uiLibrary.deviceCard.update.step.ready', 'Ready to install')
+    case 'waiting':
+      return t('uiLibrary.deviceCard.update.step.waiting', 'Waiting for the device')
+    case 'applying':
+      return t('uiLibrary.deviceCard.update.step.applying', 'Applying')
+  }
+}
+
+/** The provider's word beside the phase, translated; never the raw code. */
+function stateWordText(word: UpdateStateWord, t: UiTextFn): string | null {
+  if (word === null) return null
+  return word.kind === 'step' ? stepText(word.step, t) : word.text
+}
 
 export interface UpdateCardProps {
   readonly model: UpdateCardModel
@@ -42,7 +67,7 @@ export function UpdateCard({
             : pending
               ? t('uiLibrary.deviceCard.update.available', 'Update available')
               : t('uiLibrary.deviceCard.update.current', 'Up to date'),
-        since: model.stateText,
+        since: stateWordText(updateStateWordOf(model.stateText), t),
         tone: model.phase === 'installing' ? 'primary' : pending ? 'warning' : 'success',
       }}
       scene={{

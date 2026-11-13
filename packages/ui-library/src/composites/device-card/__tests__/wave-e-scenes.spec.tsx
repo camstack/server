@@ -33,7 +33,7 @@ import { EventCard } from '../scenes/event/EventCard'
 import { GatewayCard } from '../scenes/gateway/GatewayCard'
 import { ImageCard } from '../scenes/image/ImageCard'
 import { NotifierCard } from '../scenes/notifier/NotifierCard'
-import { updatePhaseOf } from '../scenes/update/model'
+import { updatePhaseOf, updateStateWordOf } from '../scenes/update/model'
 import { UpdateCard } from '../scenes/update/UpdateCard'
 
 afterEach(cleanup)
@@ -265,6 +265,28 @@ describe('the scenes', () => {
       />,
     )
     expect(screen.queryByTestId('dc-update-install')).toBeNull()
+  })
+
+  it('the provider word names the install step, never its raw code', () => {
+    expect(updateStateWordOf('DELIVER_FIRMWARE_IMAGE')).toEqual({ kind: 'step', step: 'sending' })
+    expect(updateStateWordOf('performing_update')).toEqual({ kind: 'step', step: 'applying' })
+    expect(updateStateWordOf('UP_TO_DATE')).toBeNull()
+    expect(updateStateWordOf('on')).toBeNull()
+    expect(updateStateWordOf(null)).toBeNull()
+    expect(updateStateWordOf('BACKGROUND_UPDATE_NOT_SUPPORTED')).toEqual({
+      kind: 'other',
+      text: 'Background update not supported',
+    })
+    render(
+      <UpdateCard
+        model={fixture(updateFixtures(), 'update-installing').model}
+        actions={{ onInstall: noop }}
+      />,
+    )
+    const corner = screen.getByTestId('dc-state')
+    expect(corner.textContent).toContain('Sending firmware')
+    expect(corner.textContent).not.toContain('DELIVER_FIRMWARE_IMAGE')
+    expect(corner.className).toContain('whitespace-nowrap')
   })
 
   it('a script runs, and stops while it runs', () => {

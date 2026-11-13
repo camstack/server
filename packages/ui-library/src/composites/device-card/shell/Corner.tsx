@@ -17,7 +17,7 @@ const PLACE: Readonly<Record<CornerPlace, string>> = {
 }
 
 export const CORNER_CLASS =
-  'absolute z-10 inline-flex items-center gap-1 rounded-lg px-2 py-0.5 text-xs'
+  'absolute z-10 inline-flex items-center gap-1 whitespace-nowrap rounded-lg px-2 py-0.5 text-xs'
 
 export interface CornerProps {
   readonly place: CornerPlace
@@ -58,22 +58,27 @@ export interface StateCornerProps {
   readonly onOpenHistory?: () => void
 }
 
+/** The state corner stays on one line inside the scene; a long "since" is cut, never wrapped. */
+const STATE_FIT = 'max-w-[calc(100%-1rem)]'
+
 /** Top-left: what the device is doing, and since when. */
 export function StateCorner({ state, onOpenHistory }: StateCornerProps): ReactElement {
   const t = useUiText()
   const body = (
     <>
-      <span className={cn('font-semibold uppercase tracking-wide', TONE_TEXT[state.tone])}>
+      <span
+        className={cn('shrink-0 font-semibold uppercase tracking-wide', TONE_TEXT[state.tone])}
+      >
         {state.label}
       </span>
       {state.since === null ? null : (
-        <small className="text-foreground-muted">· {state.since}</small>
+        <small className="min-w-0 truncate text-foreground-muted">· {state.since}</small>
       )}
     </>
   )
   if (onOpenHistory === undefined) {
     return (
-      <Corner place="tl" testId="dc-state">
+      <Corner place="tl" testId="dc-state" className={STATE_FIT}>
         {body}
       </Corner>
     )
@@ -86,7 +91,7 @@ export function StateCorner({ state, onOpenHistory }: StateCornerProps): ReactEl
       data-testid="dc-state"
       aria-label={t('uiLibrary.deviceCard.openHistory', 'Open the history')}
       onClick={onOpenHistory}
-      className={cn(CORNER_CLASS, PLACE.tl, 'hover:bg-surface-hover')}
+      className={cn(CORNER_CLASS, PLACE.tl, STATE_FIT, 'hover:bg-surface-hover')}
     >
       {body}
       <CardIcon glyph="open" className="h-3 w-3 text-primary" />
