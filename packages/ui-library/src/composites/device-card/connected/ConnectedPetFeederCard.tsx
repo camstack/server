@@ -5,13 +5,47 @@ import {
 } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
-import { useUiText } from '../../../contexts/ui-text'
+import { type UiTextFn, useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
 import { resolveBowlReading } from '../../device-controls/pet-feeder-panel'
 import { PetFeederCard } from '../scenes/pet/PetFeederCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
+import type { CardCommon } from '../shell/model'
+
+interface FeederPower {
+  readonly battery: CardCommon['battery']
+  readonly note: string | null
+}
+
+/** Battery and status from the feeder's own slice. PetKit binds no battery cap. */
+function feederPower(
+  display: Pick<PetFeederStatus, 'batteryPower' | 'powerSource' | 'status'>,
+  shell: CardCommon['battery'],
+  t: UiTextFn,
+): FeederPower {
+  const notes: string[] = []
+  if (display.powerSource === 'mains') notes.push(t('uiLibrary.petFeeder.mains', 'Mains'))
+  if (display.status === 'on_batteries') {
+    notes.push(t('uiLibrary.petFeeder.onBattery', 'On battery'))
+  }
+  if (display.status === 'offline') notes.push(t('uiLibrary.petFeeder.offline', 'Offline'))
+  const note = notes.length === 0 ? null : notes.join(' · ')
+  if (display.batteryPower === null) return { battery: shell, note }
+  if (display.powerSource === 'mains') {
+    return {
+      note,
+      battery: {
+        level: display.batteryPower,
+        label: t('uiLibrary.petFeeder.backupBattery', 'Backup {{percent}}%', {
+          percent: display.batteryPower,
+        }),
+      },
+    }
+  }
+  return { battery: { level: display.batteryPower }, note }
+}
 import { petFaultOf, petFeedInput, petFeederActivityOf } from './pet-model'
 import { useCardCommon } from './use-card-common'
 import { reportedCommand } from './use-command-notice'
@@ -49,13 +83,15 @@ export function ConnectedPetFeederCard({
   })
   const has = (method: string): boolean => card.implements('pet-feeder', method)
   const bowl = resolveBowlReading(display.bowlFood, units)
+  const power = feederPower(display, card.common.battery, t)
   return (
     <PetFeederCard
       orientation={orientation}
       showName={showName}
       model={{
-        common: card.common,
+        common: { ...card.common, battery: power.battery },
         activity: petFeederActivityOf(display),
+        powerNote: power.note,
         since:
           display.lastFeedGrams === null
             ? null
@@ -74,8 +110,7 @@ export function ConnectedPetFeederCard({
         canFeed: has('feed'),
         canCancel: has('cancelFeed'),
         canCallPet: has('callPet'),
-        canMarkRefilled:
-          display.lowFood && display.supportsMarkRefilled && has('markFoodReplenished'),
+        canMarkRefilled: display.supportsMarkRefilled,
         settings: {
           childLock: has('setChildLock') ? display.childLock : null,
           light: has('setIndicatorLight') ? display.indicatorLight : null,

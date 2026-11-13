@@ -122,6 +122,7 @@ export function ValveCard({
             max={100}
             step={5}
             ariaLabel={t('uiLibrary.deviceCard.valve.position', 'Opening')}
+            testId="dc-valve-position"
             onCommit={actions.onPosition}
           />
         ) : null,

@@ -1,13 +1,15 @@
+import { formatReading, type ReadingQuantity } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
+import { useUnitPreferences } from '../../../../contexts/unit-preferences'
 import { cn } from '../../../../lib/cn'
+import { preferenceForQuantity, type UnitPreferences } from '../../../../lib/unit-preferences'
 import { CardIcon } from '../../parts/CardIcon'
 import { InfoTile } from '../../parts/InfoTile'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import {
   compassOf,
-  kmhOf,
   type WeatherCardActions,
   type WeatherCardModel,
   type WeatherSky,
@@ -70,10 +72,27 @@ export function weatherConditionLabel(condition: string | null, t: UiTextFn): st
   }
 }
 
+/** A base-unit reading in the signed-in user's units, symbol included. */
+export function formatWeatherReading(
+  value: number | null,
+  quantity: ReadingQuantity,
+  preferences: UnitPreferences,
+): string | null {
+  if (value === null) return null
+  const rendered = formatReading({
+    value,
+    quantity,
+    precision: 0,
+    preference: preferenceForQuantity(preferences, quantity),
+  })
+  return rendered.unit.length === 0 ? rendered.text : `${rendered.text}${rendered.unit}`
+}
+
 /**
  * A weather source: the temperature large on the left, the sky in the
  * middle, humidity, wind and pressure on the right — each only when the
- * provider reports it ("—" while it has not yet). It commands nothing.
+ * provider reports it ("—" while it has not yet). Units follow the signed-in
+ * preferences. It commands nothing.
  */
 export function WeatherCard({
   model,
@@ -82,11 +101,15 @@ export function WeatherCard({
   showName = true,
 }: WeatherCardProps): ReactElement {
   const t = useUiText()
+  const preferences = useUnitPreferences()
   const sky = weatherSkyOf(model.condition)
+  const speed = formatWeatherReading(model.windSpeed, 'speed', preferences)
   const wind =
-    model.windSpeed === null
+    speed === null
       ? null
-      : `${Math.round(kmhOf(model.windSpeed))} km/h${model.windBearing === null ? '' : ` ${compassOf(model.windBearing)}`}`
+      : `${speed}${model.windBearing === null ? '' : ` ${compassOf(model.windBearing)}`}`
+  const temperature = formatWeatherReading(model.temperature, 'temperature', preferences)
+  const pressure = formatWeatherReading(model.pressure, 'pressure', preferences)
   return (
     <DeviceCard
       kind="weather"
@@ -106,7 +129,7 @@ export function WeatherCard({
             data-testid="dc-weather-temp"
             className="text-3xl font-semibold tabular-nums text-foreground"
           >
-            {model.temperature === null ? '—' : `${model.temperature.toFixed(1)}°`}
+            {temperature ?? '—'}
           </b>
         ),
         image: <CardIcon glyph={sky} className={cn('h-20 w-20', SKY_TONE[sky])} />,
@@ -130,7 +153,7 @@ export function WeatherCard({
               layout="side"
               glyph="gauge"
               label={t('uiLibrary.deviceCard.weather.pressure', 'Pressure')}
-              value={model.pressure === null ? null : `${Math.round(model.pressure)} hPa`}
+              value={pressure}
               testId="dc-weather-pressure"
             />
           </div>

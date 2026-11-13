@@ -82,7 +82,8 @@ export interface CardCommon {
   readonly notice: string | null
   /** Null on every optional block means: the device does not declare it. */
   readonly power: CardPower | null
-  readonly battery: { readonly level: number } | null
+  /** `label` replaces the bare percent (a feeder's "Backup 40%"). */
+  readonly battery: { readonly level: number; readonly label?: string } | null
   readonly supply: CardSupply | null
   readonly consumables: readonly CardConsumable[] | null
   readonly remote: readonly CardRemoteKey[] | null

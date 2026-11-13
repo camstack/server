@@ -138,7 +138,13 @@ export function PowerCorner({ power }: { readonly power: CardPower }): ReactElem
 }
 
 /** Bottom-left: the device's own battery. */
-export function BatteryCorner({ level }: { readonly level: number }): ReactElement {
+export function BatteryCorner({
+  level,
+  label,
+}: {
+  readonly level: number
+  readonly label?: string
+}): ReactElement {
   const low = level < BATTERY_LOW_PERCENT
   return (
     <Corner
@@ -147,7 +153,7 @@ export function BatteryCorner({ level }: { readonly level: number }): ReactEleme
       className={cn('tabular-nums', low ? 'text-danger' : 'text-foreground-muted')}
     >
       <CardIcon glyph={low ? 'batteryLow' : 'battery'} className="h-3.5 w-3.5 text-success" />
-      {Math.round(level)}%
+      {label ?? `${Math.round(level)}%`}
     </Corner>
   )
 }

@@ -29,6 +29,7 @@ const feederBase: Omit<PetFeederCardModel, 'common' | 'activity'> = {
   canCancel: true,
   canCallPet: true,
   canMarkRefilled: false,
+  powerNote: null,
   settings: { childLock: false, light: true, feedSound: true, volume: 5 },
 }
 
@@ -38,7 +39,12 @@ export function petFeederFixtures(): readonly PetFixture<PetFeederCardModel>[] {
       id: 'feeder-ready',
       caption: 'Pronto',
       orientation: 'vertical',
-      model: { ...feederBase, common: feeder(), activity: 'ready' },
+      model: {
+        ...feederBase,
+        common: { ...feeder(), battery: { level: 40, label: 'Backup 40%' } },
+        activity: 'ready',
+        powerNote: 'Mains',
+      },
     },
     {
       id: 'feeder-feeding',
@@ -86,7 +92,10 @@ const fountainBase: Omit<PetFountainCardModel, 'common' | 'activity'> = {
   since: '4 min',
   fault: null,
   waterLevel: 72,
+  waterVolume: 1.3,
   pump: true,
+  pumpSwitchable: true,
+  cycle: { enabled: true, runMinutes: 10, restMinutes: 20 },
 }
 
 export function petFountainFixtures(): readonly PetFixture<PetFountainCardModel>[] {

@@ -15,8 +15,8 @@ export interface HumidifierCardProps {
   readonly showName?: boolean
 }
 
-/** One press of the target moves it by this much. */
-export const HUMIDITY_STEP = 5
+/** One press of the target moves it by one percent, as the previous card did. */
+export const HUMIDITY_STEP = 1
 
 const TONE: Readonly<Record<HumidifierActivity, CardTone>> = {
   humidify: 'info',

@@ -62,7 +62,12 @@ const FEEDER_ACTIONS: PetFeederCardActions = {
   onFeedSound: noop,
   onVolume: noop,
 }
-const FOUNTAIN_ACTIONS: PetFountainCardActions = { onPump: noop }
+const FOUNTAIN_ACTIONS: PetFountainCardActions = {
+  onPump: noop,
+  onCycle: noop,
+  onRunMinutes: noop,
+  onRestMinutes: noop,
+}
 
 export const WAVE_D_TYPES: ReadonlySet<string> = new Set([
   'lock',

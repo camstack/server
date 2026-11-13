@@ -69,25 +69,27 @@ function doorTile(model: LockCardModel, t: UiTextFn): ReactNode {
   )
 }
 
-function unlockButtons(model: LockCardModel, actions: LockCardActions, t: UiTextFn): ReactNode {
+function unlockButton(model: LockCardModel, actions: LockCardActions, t: UiTextFn): ReactNode {
+  if (!model.canUnlock) return null
   return (
-    <>
-      {model.canUnlock ? (
-        <ArmedButton
-          testId="dc-lock-unlock"
-          glyph="lockOpen"
-          tone="primary"
-          onConfirm={actions.onUnlock}
-        >
-          {t('uiLibrary.deviceCard.lock.unlock', 'Unlock')}
-        </ArmedButton>
-      ) : null}
-      {model.canOpen ? (
-        <ArmedButton testId="dc-lock-open" glyph="doorOpen" onConfirm={actions.onOpen}>
-          {t('uiLibrary.deviceCard.lock.open', 'Open door')}
-        </ArmedButton>
-      ) : null}
-    </>
+    <ArmedButton
+      testId="dc-lock-unlock"
+      glyph="lockOpen"
+      tone="primary"
+      onConfirm={actions.onUnlock}
+    >
+      {t('uiLibrary.deviceCard.lock.unlock', 'Unlock')}
+    </ArmedButton>
+  )
+}
+
+/** Latch release, two presses. Offered in every state except jammed. */
+function openButton(model: LockCardModel, actions: LockCardActions, t: UiTextFn): ReactNode {
+  if (!model.canOpen || model.activity === 'jammed') return null
+  return (
+    <ArmedButton testId="dc-lock-open" glyph="doorOpen" onConfirm={actions.onOpen}>
+      {t('uiLibrary.deviceCard.lock.open', 'Open door')}
+    </ArmedButton>
   )
 }
 
@@ -118,23 +120,37 @@ function lockButton(
 
 function rightColumn(model: LockCardModel, actions: LockCardActions, t: UiTextFn): ReactNode {
   const lockWord = t('uiLibrary.deviceCard.lock.lock', 'Lock')
+  const open = openButton(model, actions, t)
   switch (model.activity) {
     case 'locked':
-      return unlockButtons(model, actions, t)
+      return (
+        <>
+          {unlockButton(model, actions, t)}
+          {open}
+        </>
+      )
     case 'unlocked':
-      return lockButton(model, actions, t, lockWord)
+      return (
+        <>
+          {lockButton(model, actions, t, lockWord)}
+          {open}
+        </>
+      )
     case 'locking':
     case 'unlocking':
       return (
-        <CardButton glyph="lock" disabled data-testid="dc-lock-moving">
-          {lockWord}
-        </CardButton>
+        <>
+          <CardButton glyph="lock" disabled data-testid="dc-lock-moving">
+            {lockWord}
+          </CardButton>
+          {open}
+        </>
       )
     case 'jammed':
       return (
         <>
           {lockButton(model, actions, t, t('uiLibrary.deviceCard.lock.retry', 'Retry'))}
-          {unlockButtons(model, actions, t)}
+          {unlockButton(model, actions, t)}
         </>
       )
   }
@@ -143,8 +159,9 @@ function rightColumn(model: LockCardModel, actions: LockCardActions, t: UiTextFn
 /**
  * A lock: the linked door on the left, the padlock in the middle, the one
  * command that changes it on the right. Unlock and Open door are armed (a
- * second press confirms); Lock waits for a closed door. A jammed lock turns
- * the scene red and offers Retry beside Unlock.
+ * second press confirms). Open door is offered in every state except jammed,
+ * unlocked included, when the device declares it. Lock waits for a closed
+ * door. A jammed lock turns the scene red and offers Retry beside Unlock.
  */
 export function LockCard({
   model,

@@ -1,5 +1,5 @@
-import type { ReactElement } from 'react'
-import { useUiText } from '../../../../contexts/ui-text'
+import type { ReactElement, ReactNode } from 'react'
+import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { SirenIllustration } from '../../illustrations/SirenIllustration'
 import { ArmedButton } from '../../parts/ArmedButton'
 import { CardButton } from '../../parts/CardButton'
@@ -14,9 +14,39 @@ export interface SirenCardProps {
   readonly showName?: boolean
 }
 
+function sirenCommands(model: SirenCardModel, actions: SirenCardActions, t: UiTextFn): ReactNode {
+  if (!model.switchable) return null
+  const sound = (
+    <ArmedButton testId="dc-siren-sound" glyph="siren" onConfirm={() => actions.onSound(true)}>
+      {t('uiLibrary.deviceCard.siren.sound', 'Sound')}
+    </ArmedButton>
+  )
+  const silence = (
+    <CardButton
+      glyph="mute"
+      tone="primary"
+      data-testid="dc-siren-silence"
+      onClick={() => actions.onSound(false)}
+    >
+      {t('uiLibrary.deviceCard.siren.silence', 'Silence')}
+    </CardButton>
+  )
+  if (model.activity === 'sounding') return silence
+  if (model.activity === 'unknown') {
+    return (
+      <>
+        {sound}
+        {silence}
+      </>
+    )
+  }
+  return sound
+}
+
 /**
  * A siren: the horn, waves and a red scene while it sounds. Sounding it is
- * armed (a second press confirms); silencing it is one press.
+ * armed (a second press confirms); silencing it is one press. An unknown
+ * state offers both, because neither sounding nor silent is known.
  */
 export function SirenCard({
   model,
@@ -46,24 +76,7 @@ export function SirenCard({
       scene={{
         alert: sounding,
         image: <SirenIllustration sounding={sounding} className="h-auto w-28" />,
-        right: !model.switchable ? null : sounding ? (
-          <CardButton
-            glyph="mute"
-            tone="primary"
-            data-testid="dc-siren-silence"
-            onClick={() => actions.onSound(false)}
-          >
-            {t('uiLibrary.deviceCard.siren.silence', 'Silence')}
-          </CardButton>
-        ) : (
-          <ArmedButton
-            testId="dc-siren-sound"
-            glyph="siren"
-            onConfirm={() => actions.onSound(true)}
-          >
-            {t('uiLibrary.deviceCard.siren.sound', 'Sound')}
-          </ArmedButton>
-        ),
+        right: sirenCommands(model, actions, t),
       }}
     />
   )

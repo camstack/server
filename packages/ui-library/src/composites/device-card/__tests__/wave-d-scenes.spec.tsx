@@ -8,6 +8,7 @@
 import { DeviceRole, DeviceType } from '@camstack/types'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, type Mock, vi } from 'vitest'
+import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
 import { alarmFixtures } from '../__fixtures__/alarm'
 import { humidifierFixtures } from '../__fixtures__/humidifier'
 import { lockFixtures } from '../__fixtures__/lock'
@@ -29,6 +30,7 @@ import {
 import { AlarmCard } from '../scenes/alarm/AlarmCard'
 import type { AlarmCardActions, AlarmCardModel } from '../scenes/alarm/model'
 import { HumidifierCard } from '../scenes/humidifier/HumidifierCard'
+import type { HumidifierCardModel } from '../scenes/humidifier/model'
 import { LockCard } from '../scenes/lock/LockCard'
 import type { LockCardActions, LockCardModel } from '../scenes/lock/model'
 import { PetFeederCard } from '../scenes/pet/PetFeederCard'
@@ -131,6 +133,19 @@ describe('the lock', () => {
     render(<LockCard model={model} actions={lockActions()} />)
     expect(screen.queryByTestId('dc-lock-open')).toBeNull()
   })
+
+  it('offers Open door, still two-step, while the lock is unlocked', () => {
+    const actions = lockActions()
+    const model: LockCardModel = {
+      ...fixture(lockFixtures(), 'lock-locked').model,
+      activity: 'unlocked',
+    }
+    render(<LockCard model={model} actions={actions} />)
+    fireEvent.click(screen.getByTestId('dc-lock-open'))
+    expect(actions.onOpen).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId('dc-lock-open'))
+    expect(actions.onOpen).toHaveBeenCalledTimes(1)
+  })
 })
 
 describe('the alarm', () => {
@@ -204,6 +219,14 @@ describe('the humidifier, valve and siren', () => {
     expect(humidifierActivityOf({ on: true, action: null })).toBe('idle')
   })
 
+  it('steps a humidifier target by one percent', () => {
+    const onTarget = vi.fn()
+    const model: HumidifierCardModel = fixture(humidifierFixtures(), 'humid-on').model
+    render(<HumidifierCard model={model} actions={{ onPower: noop, onTarget, onMode: noop }} />)
+    fireEvent.click(screen.getByTestId('dc-humid-target-up'))
+    expect(onTarget).toHaveBeenCalledWith((model.targetHumidity ?? 0) + 1)
+  })
+
   it('stops a moving valve', () => {
     const onStop = vi.fn()
     render(
@@ -234,6 +257,16 @@ describe('the humidifier, valve and siren', () => {
     )
     expect(screen.getByTestId('dc-scene').getAttribute('data-alert')).toBe('true')
   })
+
+  it('offers Silence as well as Sound while the siren state is unknown', () => {
+    const model = {
+      ...fixture(sirenFixtures(), 'siren-silent').model,
+      activity: 'unknown' as const,
+    }
+    render(<SirenCard model={model} actions={{ onSound: noop }} />)
+    expect(screen.getByTestId('dc-siren-silence')).toBeTruthy()
+    expect(screen.getByTestId('dc-siren-sound')).toBeTruthy()
+  })
 })
 
 describe('the pet feeder and fountain', () => {
@@ -262,6 +295,17 @@ describe('the pet feeder and fountain', () => {
 })
 
 describe('the weather', () => {
+  it('formats temperature, wind and pressure in imperial preferences', () => {
+    render(
+      <UnitPreferencesProvider value={{ system: 'imperial', temperature: 'fahrenheit' }}>
+        <WeatherCard model={fixture(weatherFixtures(), 'weather-sunny').model} />
+      </UnitPreferencesProvider>,
+    )
+    expect(screen.getByTestId('dc-weather-temp').textContent).toContain('°F')
+    expect(screen.getByTestId('dc-weather-wind').textContent).toContain('mph')
+    expect(screen.getByTestId('dc-weather-pressure').textContent).toContain('inHg')
+  })
+
   it('maps a condition to its sky, a bearing to the compass and m/s to km/h', () => {
     expect(weatherSkyOf('pouring')).toBe('rain')
     expect(weatherSkyOf('clear-night')).toBe('night')
@@ -327,7 +371,11 @@ describe('every Wave-D fixture renders through the shell', () => {
   })
   it.each(petFountainFixtures().map((f) => [f.id, f] as const))('%s', (_id, f) => {
     render(
-      <PetFountainCard model={f.model} actions={{ onPump: noop }} orientation={f.orientation} />,
+      <PetFountainCard
+        model={f.model}
+        actions={{ onPump: noop, onCycle: noop, onRunMinutes: noop, onRestMinutes: noop }}
+        orientation={f.orientation}
+      />,
     )
     expect(screen.getByTestId('dc-scene')).toBeTruthy()
   })

@@ -171,7 +171,10 @@ export function PetFeederCard({
       showName={showName}
       activity={model.activity}
       state={{
-        label: petFeederStateLabel(model.activity, t),
+        label:
+          model.powerNote === null
+            ? petFeederStateLabel(model.activity, t)
+            : `${petFeederStateLabel(model.activity, t)} · ${model.powerNote}`,
         since: model.since,
         tone: TONE[model.activity],
       }}

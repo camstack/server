@@ -40,6 +40,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device hooks regenerated for the capability vocabulary now declared on each capability (no behaviour change)
 
+### Fixed
+
+- A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
+
 ## [1.2.436] - 2026-11-13
 
 ### Changed

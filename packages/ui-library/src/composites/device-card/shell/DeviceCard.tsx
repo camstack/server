@@ -197,7 +197,12 @@ export function DeviceCard({
                   {...(hasHistory ? { onOpenHistory: () => setView('history') } : {})}
                 />
                 {common.power === null ? null : <PowerCorner power={common.power} />}
-                {common.battery === null ? null : <BatteryCorner level={common.battery.level} />}
+                {common.battery === null ? null : (
+                  <BatteryCorner
+                    level={common.battery.level}
+                    {...(common.battery.label === undefined ? {} : { label: common.battery.label })}
+                  />
+                )}
                 {hasRemote ? <RemoteCorner onOpen={() => setView('remote')} /> : null}
               </>
             }

@@ -36,8 +36,13 @@ export interface PetFeederCardModel {
   readonly canFeed: boolean
   readonly canCancel: boolean
   readonly canCallPet: boolean
-  /** Mark refilled is offered (a low feeder whose cloud tracks refills). */
+  /** Mark refilled is offered when the feeder says the action exists. */
   readonly canMarkRefilled: boolean
+  /**
+   * Power words from the feeder's own status (mains, on battery, offline).
+   * Null when it reported nothing extra. PetKit binds no battery cap.
+   */
+  readonly powerNote: string | null
   readonly settings: PetFeederSettings
 }
 
@@ -55,6 +60,14 @@ export interface PetFeederCardActions extends CardCommonActions {
 /** What the fountain is doing. */
 export type PetFountainActivity = 'running' | 'stopped' | 'empty' | 'fault' | 'unknown'
 
+/** The optional pump-cycle cap: run and rest, in minutes. Null minutes are unknown. */
+export interface PetFountainCycle {
+  /** Null while the cycle switch has not reported. */
+  readonly enabled: boolean | null
+  readonly runMinutes: number | null
+  readonly restMinutes: number | null
+}
+
 export interface PetFountainCardModel {
   readonly common: CardCommon
   readonly activity: PetFountainActivity
@@ -62,12 +75,31 @@ export interface PetFountainCardModel {
   readonly fault: string | null
   /** 0..100 water in the tank; null when not reported. */
   readonly waterLevel: number | null
-  /** Null when the pump cannot be switched; otherwise whether it runs. */
+  /** Litres in the tank; null when not reported. Drawn as millilitres. */
+  readonly waterVolume: number | null
+  /**
+   * Whether the pump runs. Null is unknown — neither on nor off — and is
+   * drawn that way when `pumpSwitchable` is set.
+   */
   readonly pump: boolean | null
+  /** The binding implements setPump. */
+  readonly pumpSwitchable: boolean
+  /** Null when the fountain does not compose `pump-cycle`. */
+  readonly cycle: PetFountainCycle | null
 }
 
 export interface PetFountainCardActions extends CardCommonActions {
   readonly onPump: (on: boolean) => void
+  readonly onCycle: (on: boolean) => void
+  readonly onRunMinutes: (minutes: number) => void
+  readonly onRestMinutes: (minutes: number) => void
+}
+
+const LITRES_TO_ML = 1000
+
+/** Tank volume as millilitres. Null stays unknown — never zero. */
+export function fountainMillilitres(litres: number | null): string | null {
+  return litres === null ? null : `${Math.round(litres * LITRES_TO_ML)} mL`
 }
 
 /** Under this much water the pump stops: the level is drawn as a warning. */

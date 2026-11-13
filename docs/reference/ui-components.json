@@ -1565,6 +1565,13 @@
       ]
     },
     {
+      "name": "AutomationCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/action/ActionCards.tsx",
+      "summary": "An automation: on or off, and a manual run."
+    },
+    {
       "name": "AutomationHeroCard",
       "kind": "component",
       "area": "composites",
@@ -2097,6 +2104,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "ButtonCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/action/ActionCards.tsx",
+      "summary": "A big round push button: one press, nothing to report back."
     },
     {
       "name": "ButtonControl",
@@ -3500,6 +3514,20 @@
       "summary": "A washer, a dryer or a dishwasher known only through what feeds it: whether a cycle runs (`running-state`, from the draw or the device) and the `switch` that powers it. No programs, no start: the card says what it kno…"
     },
     {
+      "name": "ConnectedAutomationCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedActionCards.tsx",
+      "summary": "An automation (`automation-control`): enable / disable and a manual run. `isRunning` is never written by the provider, so the card does not claim it."
+    },
+    {
+      "name": "ConnectedButtonCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedActionCards.tsx",
+      "summary": "A `button`: fire-only, so the card is a press and nothing else."
+    },
+    {
       "name": "connectedCardKindOf",
       "kind": "function",
       "area": "composites",
@@ -3512,6 +3540,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedClimateCard.tsx",
       "summary": "The climate card of a real device: its `climate-control` slice, its `heating-valve` slice, or both. A valve that only reports still draws."
+    },
+    {
+      "name": "ConnectedControlCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedControlCard.tsx",
+      "summary": "A settable value (`control`). A number is shown and typed in the operator's unit and sent in the device's (the reading's own resolution); a date keeps the shape its source declares. The cap carries no text length limi…"
     },
     {
       "name": "ConnectedCoverCard",
@@ -3551,11 +3586,25 @@
       "summary": "An energy system (`energy-system`): solar, grid, storage, house and heat pump as branches of one bus, with today's totals. Read-only. The storage is a node of the scene fed by the model; the card draws no battery corn…"
     },
     {
+      "name": "ConnectedEventCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedEventCard.tsx",
+      "summary": "An event source (`event-emitter`). The status keeps only the LAST event, so the card does not claim when the other entries last fired."
+    },
+    {
       "name": "ConnectedFanCard",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedFanCard.tsx",
       "summary": "The fan card of a real device: power through `switch` (D1042), the rest through `fan-control` (speed, presets, direction, oscillation and its axes, D1034) and the saved presets of `fan-presets`. A `switch` with the ro…"
+    },
+    {
+      "name": "ConnectedGatewayCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedGatewayCard.tsx",
+      "summary": "A gateway: its reachability (`device-status`), the facts it writes into its metadata, `reboot` and `device-admin-link` when it binds them. How many products sit behind it is not reported by any cap, so it is not drawn."
     },
     {
       "name": "ConnectedHeaterCard",
@@ -3577,6 +3626,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedHumidifierCard.tsx",
       "summary": "A humidifier or dehumidifier (`humidifier`): power, target humidity within the device's range and mode — each only when the binding implements it."
+    },
+    {
+      "name": "ConnectedImageCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedImageCard.tsx",
+      "summary": "A still image (`image`): its url and when it last changed."
     },
     {
       "name": "ConnectedIrTransmitterCard",
@@ -3614,6 +3670,13 @@
       "summary": "A robot mower (`lawn-mower-control`): mow, pause, dock; its code as the status line."
     },
     {
+      "name": "ConnectedNotifierCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedNotifierCard.tsx",
+      "summary": "A notification destination (`notifier`); the test goes through `send`."
+    },
+    {
       "name": "ConnectedPetFeederCard",
       "kind": "component",
       "area": "composites",
@@ -3625,7 +3688,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedPetFountainCard.tsx",
-      "summary": "A drinking fountain (`pet-fountain`): the pump switch and the tank's level."
+      "summary": "A drinking fountain (`pet-fountain`): the pump, the tank, and the cycle when composed."
     },
     {
       "name": "ConnectedPlugCard",
@@ -3667,11 +3730,25 @@
       ]
     },
     {
+      "name": "ConnectedScriptCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedActionCards.tsx",
+      "summary": "A script (`script-runner`): run and stop; 0 on `lastRunAt` means it never ran."
+    },
+    {
       "name": "ConnectedSirenCard",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedSirenCard.tsx",
       "summary": "A siren (a `siren` device, or a switch in the siren role): sound and silence through its `switch`. Tone, duration and volume are drawn only when a cap declares them — none does yet."
+    },
+    {
+      "name": "ConnectedUpdateCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedUpdateCard.tsx",
+      "summary": "An update entity (`update`). The cap carries no progress, release notes or failure reason, so the card draws none of them."
     },
     {
       "name": "ConnectedVacuumCard",
@@ -3685,7 +3762,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedValveCard.tsx",
-      "summary": "A valve (`valve`): open, close, stop and — when the binding implements `setPosition` — a position."
+      "summary": "A valve (`valve`): open, close, stop and — when the device declares `valve-positionable` — a position. Home Assistant's valve always implements `setPosition`; the feature is what makes the slider real."
     },
     {
       "name": "ConnectedWaterHeaterCard",
@@ -3891,6 +3968,46 @@
       "summary": "Per-type FILL flag."
     },
     {
+      "name": "ControlCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/control/ControlCard.tsx",
+      "summary": "A settable value (`control`): a number with steps and its range, a choice from a list, a text or a date — each with the editor its kind needs.",
+      "props": [
+        {
+          "name": "model",
+          "type": "ControlCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "ControlCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "controlCardValueOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/control-model.ts",
+      "summary": "The card's value from the `control` status: a number converted to the shown unit."
+    },
+    {
       "name": "ControlColumn",
       "kind": "component",
       "area": "composites",
@@ -3932,6 +4049,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/control-panel.tsx",
       "summary": ""
+    },
+    {
+      "name": "controlSetInput",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/control-model.ts",
+      "summary": "What `setValue` is sent: a number back in the device's unit; null when the value does not fit the kind."
     },
     {
       "name": "CopyButton",
@@ -7274,11 +7398,58 @@
       "summary": "useRowOperations — the per-row \"an operation is in flight\" state of a table."
     },
     {
+      "name": "EVENT_CARD_ENTRIES",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/event/EventCard.tsx",
+      "summary": "At most this many entries of the vocabulary are listed."
+    },
+    {
       "name": "EVENT_KIND_ICONS",
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/event-kind-visuals.tsx",
       "summary": "`iconId` → lucide component. Built ONLY from statically-imported icons (bundle-safe). Unknown ids resolve to the neutral `Tag` fallback."
+    },
+    {
+      "name": "EventCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/event/EventCard.tsx",
+      "summary": "An event source (`event-emitter`): the last event it fired, and the events it can fire — its own vocabulary, never a normalised one. It commands nothing.",
+      "props": [
+        {
+          "name": "model",
+          "type": "EventCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "CardCommonActions",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "eventEntriesOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedEventCard.tsx",
+      "summary": "The vocabulary as the card lists it: the labelled vocabulary, or the bare event types of a status written before it existed."
     },
     {
       "name": "EventKindGlyph",
@@ -7319,6 +7490,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/event-kind-visuals.tsx",
       "summary": "Translated label for an event kind — `t(labelKey)` when a translation exists, else the English `label` fallback. Robust to a missing key: an i18n backend that echoes the key unchanged (react-i18next default) is treate…"
+    },
+    {
+      "name": "eventLastOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedEventCard.tsx",
+      "summary": ""
     },
     {
       "name": "EventList",
@@ -8033,6 +8211,13 @@
       "summary": "\"1:12\"."
     },
     {
+      "name": "formatWeatherReading",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather/WeatherCard.tsx",
+      "summary": "A base-unit reading in the signed-in user's units, symbol included."
+    },
+    {
       "name": "FormField",
       "kind": "component",
       "area": "composites",
@@ -8089,6 +8274,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/pet/model.ts",
       "summary": "Under this much water the pump stops: the level is drawn as a warning."
+    },
+    {
+      "name": "fountainMillilitres",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/pet/model.ts",
+      "summary": "Tank volume as millilitres. Null stays unknown — never zero."
     },
     {
       "name": "frameClass",
@@ -8158,6 +8350,46 @@
           "doc": "`null` = back to the catalog default."
         }
       ]
+    },
+    {
+      "name": "GatewayCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/gateway/GatewayCard.tsx",
+      "summary": "The bridge box of an ecosystem: connected or unreachable, its firmware and address, a two-step restart and a link to its own page — each only when the box declares it.",
+      "props": [
+        {
+          "name": "model",
+          "type": "GatewayCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "GatewayCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "gatewayFactsOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedGatewayCard.tsx",
+      "summary": "The facts a gateway writes into its device metadata (`firmware`, `ip`, `model`)."
     },
     {
       "name": "getClassColor",
@@ -9413,7 +9645,7 @@
       "kind": "constant",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/humidifier/HumidifierCard.tsx",
-      "summary": "One press of the target moves it by this much."
+      "summary": "One press of the target moves it by one percent, as the previous card did."
     },
     {
       "name": "IconAction",
@@ -9553,6 +9785,39 @@
         },
         {
           "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "ImageCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/image/ImageCard.tsx",
+      "summary": "A still image (`image`): the picture itself, opened full size with zoom on a click; a placeholder when there is none or it fails to load (an expired link). It commands nothing.",
+      "props": [
+        {
+          "name": "model",
+          "type": "ImageCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "CardCommonActions",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
           "type": "boolean",
           "optional": true,
           "doc": ""
@@ -10647,7 +10912,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/lock/LockCard.tsx",
-      "summary": "A lock: the linked door on the left, the padlock in the middle, the one command that changes it on the right. Unlock and Open door are armed (a second press confirms); Lock waits for a closed door. A jammed lock turns…",
+      "summary": "A lock: the linked door on the left, the padlock in the middle, the one command that changes it on the right. Unlock and Open door are armed (a second press confirms). Open door is offered in every state except jammed…",
       "props": [
         {
           "name": "model",
@@ -11863,11 +12128,51 @@
       ]
     },
     {
+      "name": "NotifierCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/notifier/NotifierCard.tsx",
+      "summary": "A notification destination (`notifier`): ready or failing, its last delivery, what is queued, and a test message.",
+      "props": [
+        {
+          "name": "model",
+          "type": "NotifierCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "NotifierCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "nounSpecFor",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-name/device-name-nouns.ts",
       "summary": "Role wins when it has a noun; otherwise the type. Unknown types fall back."
+    },
+    {
+      "name": "numericText",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/control/model.ts",
+      "summary": ""
     },
     {
       "name": "OCCUPANCY_KEY",
@@ -12433,7 +12738,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/pet/PetFountainCard.tsx",
-      "summary": "A drinking fountain: the basin filled to the tank's level with a jet while the pump runs, the pump switch on the right, the water level under it (a warning under 10%, where the pump stops).",
+      "summary": "A drinking fountain: the basin filled to the tank's level with a jet while the pump runs, the pump switch on the right, the water level and — when the device reports them — the volume and the on/off cycle under it.",
       "props": [
         {
           "name": "model",
@@ -14775,6 +15080,13 @@
       ]
     },
     {
+      "name": "ScriptCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/action/ActionCards.tsx",
+      "summary": "A script: Run, or Stop while it runs; its last run and its last error."
+    },
+    {
       "name": "ScriptHeroCard",
       "kind": "component",
       "area": "composites",
@@ -15654,7 +15966,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/siren/SirenCard.tsx",
-      "summary": "A siren: the horn, waves and a red scene while it sounds. Sounding it is armed (a second press confirms); silencing it is one press.",
+      "summary": "A siren: the horn, waves and a red scene while it sounds. Sounding it is armed (a second press confirms); silencing it is one press. An unknown state offers both, because neither sounding nor silent is known.",
       "props": [
         {
           "name": "model",
@@ -16606,6 +16918,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "steppedValue",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/control/model.ts",
+      "summary": "The number one step away, clamped into the range."
     },
     {
       "name": "Stepper",
@@ -17998,6 +18317,46 @@
       "summary": "The signed-in user's unit preferences, published by context so every reading renders in the same units without a query of its own. Without a provider (a spec, a standalone addon page) the default applies: metric, °C."
     },
     {
+      "name": "UpdateCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/update/UpdateCard.tsx",
+      "summary": "A firmware or software update: installed and available versions on the left, the arrow in the middle, Install while one is pending.",
+      "props": [
+        {
+          "name": "model",
+          "type": "UpdateCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "UpdateCardActions",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "updatePhaseOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/update/model.ts",
+      "summary": ""
+    },
+    {
       "name": "useAccountUnitPreferences",
       "kind": "hook",
       "area": "hooks",
@@ -18801,6 +19160,51 @@
       ]
     },
     {
+      "name": "ValueEntry",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/ValueEntry.tsx",
+      "summary": "A typed value and its Save: the draft is sent only on Save (or Enter), and follows the device again when the device's value changes. Obeys the shell's gating like every control that actuates.",
+      "props": [
+        {
+          "name": "type",
+          "type": "'text' | 'date' | 'time' | 'datetime-local'",
+          "optional": false,
+          "doc": "`text`, or the browser's date / time / datetime-local editor."
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "optional": false,
+          "doc": "The device's value in the editor's shape."
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "saveLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onSave",
+          "type": "(value: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ValueReadout",
       "kind": "component",
       "area": "composites",
@@ -19193,7 +19597,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/weather/WeatherCard.tsx",
-      "summary": "A weather source: the temperature large on the left, the sky in the middle, humidity, wind and pressure on the right — each only when the provider reports it (\"—\" while it has not yet). It commands nothing.",
+      "summary": "A weather source: the temperature large on the left, the sky in the middle, humidity, wind and pressure on the right — each only when the provider reports it (\"—\" while it has not yet). Units follow the signed-in pref…",
       "props": [
         {
           "name": "model",
@@ -19443,6 +19847,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "withError",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/action/model.ts",
+      "summary": "The provider's error goes on the reason line, after a failed command's."
     },
     {
       "name": "withHiddenChart",

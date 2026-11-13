@@ -1,4 +1,4 @@
-import type { ValveStatus } from '@camstack/types'
+import { DeviceFeature, type ValveStatus } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
@@ -11,8 +11,9 @@ import { useCardCommon } from './use-card-common'
 import { reportedCommand } from './use-command-notice'
 
 /**
- * A valve (`valve`): open, close, stop and — when the binding implements
- * `setPosition` — a position.
+ * A valve (`valve`): open, close, stop and — when the device declares
+ * `valve-positionable` — a position. Home Assistant's valve always implements
+ * `setPosition`; the feature is what makes the slider real.
  */
 export function ConnectedValveCard({
   deviceId,
@@ -46,7 +47,7 @@ export function ConnectedValveCard({
         since:
           display.lastChangedAt > 0 ? coarseDuration(Date.now() - display.lastChangedAt, t) : null,
         position: display.position,
-        positionable: has('setPosition') && cap.setPosition !== undefined,
+        positionable: card.features.includes(DeviceFeature.ValvePositionable),
         canOpen: has('open'),
         canClose: has('close'),
         canStop: has('stop'),
