@@ -13,22 +13,28 @@ export interface PreferenceBackfillInput {
 
 /**
  * Stamp the declared primary-child preference on a container adopted before
- * the declaration existed. Adoption stamps it through `InitialDeviceMeta`;
- * a restore passes no initial meta, so an older row would otherwise never get
- * one and keep being shown by the heuristic's child.
+ * the declaration existed, or before it changed. Adoption stamps it through
+ * `InitialDeviceMeta`; a restore passes no initial meta, so an older row would
+ * otherwise keep the old declaration (or none) — a System adopted before its
+ * Energy system child (#513) would keep standing for its PV sensor.
  *
- * Only an ABSENT declaration is filled: a stored one is the provider's own and
- * is left alone. The operator's pick (`primaryChildEntityId`) is a different
- * column, never written here, and still wins at resolution.
+ * The stored declaration is always the provider's own, so a different one is
+ * replaced and an equal one is left alone (no write). The operator's pick
+ * (`primaryChildEntityId`) is a different column, never written here, and
+ * still wins at resolution.
  *
  * @returns whether it wrote.
  */
+function sameKeys(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((key, i) => key === b[i])
+}
+
 export async function backfillPrimaryChildPreference(
   input: PreferenceBackfillInput,
 ): Promise<boolean> {
   const { deviceId, stored, declared, write, logger } = input
-  if (stored !== undefined && stored.length > 0) return false
   if (declared.length === 0) return false
+  if (stored !== undefined && sameKeys(stored, declared)) return false
   try {
     await write(declared)
   } catch (err: unknown) {
@@ -38,9 +44,9 @@ export async function backfillPrimaryChildPreference(
     })
     return false
   }
-  logger.info('enpal: stamped the primary-child preference on a container adopted without one', {
+  logger.info('enpal: stamped the current primary-child preference on a container', {
     tags: { deviceId },
-    meta: { primaryChildPreference: declared },
+    meta: { primaryChildPreference: declared, previous: stored ?? null },
   })
   return true
 }

@@ -9,6 +9,8 @@ import { ENPAL_SYSTEM } from './config.js'
 import { findSpec } from './enpal-catalog.js'
 import type { EnpalSnapshot } from './enpal-snapshot.js'
 import { enpalSensorFactory } from './devices/enpal-sensor-factory.js'
+import { enpalEnergySystemFactory } from './devices/enpal-energy-system-device.js'
+import { ENERGY_SYSTEM_CHILD_KEY } from './enpal-energy-system.js'
 
 /**
  * One child of an equipment Container: the catalog entry, the accordion section it sits in
@@ -49,6 +51,12 @@ export interface EnpalEquipment {
    * the children come back in. Empty for the gateway, which stands for itself.
    */
   readonly primaryChildPreference: readonly string[]
+  /**
+   * Whether the piece carries an {@link DeviceType.EnergySystem} child (#513): every value
+   * of the installation on one `energy-system` slice. Spawned whatever children the piece
+   * was adopted with, and declared ahead of {@link primaryChildPreference}.
+   */
+  readonly energySystem?: boolean
   /** Derived: the spec ids of {@link children}, in order. */
   readonly specIds: readonly string[]
 }
@@ -197,6 +205,7 @@ export const ENPAL_EQUIPMENT: readonly EnpalEquipment[] = [
       },
     ],
     primaryChildPreference: ['pv', 'battery', 'house'],
+    energySystem: true,
   }),
   equipment({
     id: 'heatpump',
@@ -263,9 +272,7 @@ export const enpalEquipmentSchema = z.object({
   equipment: z
     .string()
     .min(1)
-    .describe(
-      'Equipment id (impianto, heatpump; older adoptions: pv, battery, grid, house)',
-    ),
+    .describe('Equipment id (impianto, heatpump; older adoptions: pv, battery, grid, house)'),
   specIds: z.array(z.string().min(1)).describe('Catalog entries adopted as children'),
   integrationId: z.string().min(1).describe('Owning integration'),
   system: z.literal(ENPAL_SYSTEM).optional(),
@@ -274,15 +281,16 @@ export const enpalEquipmentSchema = z.object({
 export type EnpalEquipmentConfig = z.infer<typeof enpalEquipmentSchema>
 
 /**
- * The declared primary children of an adopted piece: its preference, limited to the children
- * it was adopted with. Empty for the gateway and for an equipment id the catalog dropped.
+ * The declared primary children of an adopted piece: its Energy system child when it has one,
+ * then its preference limited to the children it was adopted with. Empty for the gateway and for an equipment id the catalog dropped.
  */
 export function primaryChildPreferenceOf(
   found: EnpalEquipment | undefined,
   specIds: readonly string[],
 ): readonly string[] {
   if (found === undefined) return []
-  return found.primaryChildPreference.filter((id) => specIds.includes(id))
+  const adopted = found.primaryChildPreference.filter((id) => specIds.includes(id))
+  return found.energySystem === true ? [ENERGY_SYSTEM_CHILD_KEY, ...adopted] : adopted
 }
 
 /**
@@ -323,6 +331,18 @@ export function accessoryChildSpecs(config: {
 }): readonly AccessoryChildSpec[] {
   const found = findEquipment(config.equipment)
   const out: AccessoryChildSpec[] = []
+  if (found?.energySystem === true) {
+    out.push({
+      stableIdSuffix: ENERGY_SYSTEM_CHILD_KEY,
+      meta: {
+        type: DeviceType.EnergySystem,
+        name: 'Energy system',
+        integrationId: config.integrationId,
+      },
+      config: { integrationId: config.integrationId, system: ENPAL_SYSTEM },
+      factory: enpalEnergySystemFactory,
+    })
+  }
   for (const specId of config.specIds) {
     const spec = findSpec(specId)
     if (spec === undefined) continue

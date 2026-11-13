@@ -109,7 +109,7 @@ describe('Enpal adoption', () => {
           ['battery-health', 'Battery'],
           ['inverter-temperature', 'Inverter'],
         ],
-        primary: ['battery'],
+        primary: ['energy-system', 'battery'],
       },
     ])
     expect(out.adopted).toEqual([
@@ -181,6 +181,6 @@ describe('Enpal adoption', () => {
   it('declares the primary child of a container in preference order, adopted ones only', async () => {
     const h = harness(['Power.Consumption.Total', 'Energy.Battery.Charge.Level'])
     await h.provider.adopt({ integrationId: 'int-1', childNativeIds: ['impianto'] })
-    expect(h.adoptCalls[0]?.primary).toEqual(['battery', 'house'])
+    expect(h.adoptCalls[0]?.primary).toEqual(['energy-system', 'battery', 'house'])
   })
 })

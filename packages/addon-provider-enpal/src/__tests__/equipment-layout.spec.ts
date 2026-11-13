@@ -431,10 +431,10 @@ describe('child layout', () => {
 })
 
 describe('the primary child: a declared preference, the first adopted one wins', () => {
-  it('System prefers PV power, then the battery level, then the home consumption', () => {
-    expect(primaryChildPreferenceOf(equipmentOf('impianto'), equipmentOf('impianto').specIds)).toEqual(
-      ['pv', 'battery', 'house'],
-    )
+  it('System prefers its Energy system, then PV power, the battery level, the home consumption', () => {
+    expect(
+      primaryChildPreferenceOf(equipmentOf('impianto'), equipmentOf('impianto').specIds),
+    ).toEqual(['energy-system', 'pv', 'battery', 'house'])
   })
 
   it('Heat pump prefers its power, then the hot water, then the outside temperature', () => {
@@ -445,13 +445,16 @@ describe('the primary child: a declared preference, the first adopted one wins',
 
   it('declares only the children that were adopted', () => {
     expect(primaryChildPreferenceOf(equipmentOf('impianto'), ['house', 'battery'])).toEqual([
+      'energy-system',
       'battery',
       'house',
     ])
   })
 
   it('the gateway and an older container declare nothing', () => {
-    expect(primaryChildPreferenceOf(equipmentOf(ENPAL_BOX_ID), equipmentOf(ENPAL_BOX_ID).specIds)).toEqual([])
+    expect(
+      primaryChildPreferenceOf(equipmentOf(ENPAL_BOX_ID), equipmentOf(ENPAL_BOX_ID).specIds),
+    ).toEqual([])
     expect(primaryChildPreferenceOf(findEquipment('pv'), ['pv'])).toEqual([])
   })
 
@@ -462,18 +465,20 @@ describe('the primary child: a declared preference, the first adopted one wins',
     expect(kinds).toEqual(new Set(['power-meter', 'battery', 'numeric']))
   })
 
-  it('the framework resolves the declared child whatever order the children come back in', () => {
+  it('the framework resolves the Energy system whatever order the children come back in', () => {
     const parentStableId = 'enpal-system'
     const specIds = equipmentOf('impianto').specIds
-    const children = accessoryChildSpecs({ equipment: 'impianto', specIds, integrationId: 'i' }).map(
-      (spec, index) => ({
-        id: index + 1,
-        stableId: `${parentStableId}-${spec.stableIdSuffix}`,
-        type: spec.meta.type,
-        ...(spec.meta.role !== undefined ? { role: spec.meta.role } : {}),
-        name: spec.meta.name,
-      }),
-    )
+    const children = accessoryChildSpecs({
+      equipment: 'impianto',
+      specIds,
+      integrationId: 'i',
+    }).map((spec, index) => ({
+      id: index + 1,
+      stableId: `${parentStableId}-${spec.stableIdSuffix}`,
+      type: spec.meta.type,
+      ...(spec.meta.role !== undefined ? { role: spec.meta.role } : {}),
+      name: spec.meta.name,
+    }))
     const preference = {
       parentStableId,
       childKeys: primaryChildPreferenceOf(equipmentOf('impianto'), specIds),
@@ -486,7 +491,7 @@ describe('the primary child: a declared preference, the first adopted one wins',
         DeviceType.Container,
         preference,
       )
-      expect(primary?.stableId).toBe(`${parentStableId}-pv`)
+      expect(primary?.stableId).toBe(`${parentStableId}-energy-system`)
     }
   })
 })

@@ -13,14 +13,15 @@ Pieces (the box is always offered; a container only when the box reported at lea
 | Piece | Type | Sections | Children |
 | --- | --- | --- | --- |
 | Enpal Box | Gateway | Box, EEBUS, Connectivity | state, load and link sensors, all diagnostic; plus the link to the box's device page |
-| System | Container | Photovoltaic, Battery, Grid, Home, Inverter | live sensors (power, level, day and lifetime energy, states) and diagnostic ones (voltages, currents, limits, ratings) |
+| System | Container | Photovoltaic, Battery, Grid, Home, Inverter | an Energy system device carrying every value on one model (production, grid, house, heat pump, storage); live sensors (power, level, day and lifetime energy, states) and diagnostic ones (voltages, currents, limits, ratings) |
 | Heat pump (Enpal) | Container | none | the power, consumption and temperatures Enpal reads, running states and diagnostic ones; offered only when the box reports heat-pump keys |
 
 - A diagnostic child is hidden by default (`display.hidden`); its history is still recorded.
 - Identity facts (model, serial numbers, firmware) are device attributes of the piece (the box's on the Gateway), never sensors.
 - A text value (a state, a mode) is an `enum-sensor` and keeps the label the box sent; a certificate expiry is a date-time sensor.
 - Texts and attributes come only from the web-page channel; InfluxDB and the device page carry numbers only.
-- Each container declares which child stands for it (`primaryChildPreference`), and the framework takes the first one that was adopted: System PV power, battery level, home consumption; Heat pump power, hot water, outside temperature. An operator's own pick wins over it.
+- Each container declares which child stands for it (`primaryChildPreference`), and the framework takes the first one that was adopted: System the Energy system, then PV power, battery level, home consumption; Heat pump power, hot water, outside temperature. An operator's own pick wins over it.
+- The Energy system is spawned under every System, whatever was adopted with it. Its storage is a field of its model, never the `battery` capability, so a home storage never raises a low-battery alert. The box reports no day total for the heat pump: that value stays empty. Older Systems are re-stamped with the new preference at start, so the Energy system becomes their primary child unless the operator picked one.
 - Not exposed on purpose: AC consumption duplicate, AC maximum, the network-traffic, cellular-guard and predictor internals.
 
 Removing the integration removes its devices. An unreachable box marks its devices offline; it never publishes zeros. A lifetime counter that drops for one poll is held at its previous value.

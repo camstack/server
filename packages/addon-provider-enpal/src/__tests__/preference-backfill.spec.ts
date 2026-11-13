@@ -1,8 +1,10 @@
 /**
  * A System adopted before containers declared their primary child carries no
- * `primaryChildPreference`. The device re-stamps it when it activates — and
- * only then: an existing declaration is left alone, and the operator's own
- * pick (`primaryChildEntityId`) is a different column nothing here writes.
+ * `primaryChildPreference`, and one adopted before the Energy system child
+ * existed carries an older one. The device re-stamps the current declaration
+ * when it activates and the stored one differs; an equal one is left alone,
+ * and the operator's own pick (`primaryChildEntityId`) is a different column
+ * nothing here writes.
  */
 import {
   type DeviceContext,
@@ -46,7 +48,7 @@ const SPEC_IDS = ['battery', 'pv', 'house']
 const DECLARED = primaryChildPreferenceOf(SYSTEM, SPEC_IDS)
 
 describe('backfillPrimaryChildPreference', () => {
-  it('declares PV first on a System adopted without a preference', async () => {
+  it('declares the Energy system first, then PV, on a System adopted without a preference', async () => {
     const { row, write } = rig({ primaryChildEntityId: null, primaryChildPreference: undefined })
     const wrote = await backfillPrimaryChildPreference({
       deviceId: 9,
@@ -56,7 +58,7 @@ describe('backfillPrimaryChildPreference', () => {
       logger: quiet,
     })
     expect(wrote).toBe(true)
-    expect(row.primaryChildPreference?.[0]).toBe('pv')
+    expect(row.primaryChildPreference).toEqual(['energy-system', 'pv', 'battery', 'house'])
   })
 
   it("never touches the operator's pick", async () => {
@@ -74,8 +76,8 @@ describe('backfillPrimaryChildPreference', () => {
     expect(row.primaryChildEntityId).toBe('enpal-sys-battery')
   })
 
-  it('leaves a stored declaration alone', async () => {
-    const { row, write } = rig({ primaryChildEntityId: null, primaryChildPreference: ['house'] })
+  it('leaves a stored declaration equal to the current one alone', async () => {
+    const { row, write } = rig({ primaryChildEntityId: null, primaryChildPreference: DECLARED })
     const wrote = await backfillPrimaryChildPreference({
       deviceId: 9,
       stored: row.primaryChildPreference,
@@ -84,7 +86,23 @@ describe('backfillPrimaryChildPreference', () => {
       logger: quiet,
     })
     expect(wrote).toBe(false)
-    expect(row.primaryChildPreference).toEqual(['house'])
+    expect(row.primaryChildPreference).toEqual(DECLARED)
+  })
+
+  it('re-stamps an older declaration: the Energy system now stands for the System', async () => {
+    const { row, write } = rig({
+      primaryChildEntityId: null,
+      primaryChildPreference: ['pv', 'battery', 'house'],
+    })
+    const wrote = await backfillPrimaryChildPreference({
+      deviceId: 9,
+      stored: row.primaryChildPreference,
+      declared: DECLARED,
+      write,
+      logger: quiet,
+    })
+    expect(wrote).toBe(true)
+    expect(row.primaryChildPreference?.[0]).toBe('energy-system')
   })
 
   it('writes nothing for a piece that declares nothing', async () => {
@@ -156,8 +174,8 @@ describe('EnpalEquipmentDevice on activation', () => {
     await device.removeDevice().catch(() => undefined)
   })
 
-  it('does not write over a stored declaration', async () => {
-    const { ctx, mutate } = deviceRig(['house'])
+  it('does not write over a stored declaration equal to the current one', async () => {
+    const { ctx, mutate } = deviceRig(DECLARED)
     const device = new EnpalEquipmentDevice(ctx)
     await device.onActivate()
     expect(mutate).not.toHaveBeenCalled()
