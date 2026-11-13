@@ -10,6 +10,10 @@ import {
   type AutomationRecipe,
   type AutomationTemplatePayload,
   type CoreBlockInput,
+  detachAutomationInstance,
+  generateAutomationBlock,
+  instantiateAutomationTemplate,
+  TEMPLATE_GROUP_ROWS_MAX,
   type TemplateGroupInput,
   type TemplateGroupRow,
   type TemplateInput,
@@ -18,10 +22,6 @@ import {
   type TemplateInstanceProblem,
   type TemplateScalarInput,
   type TemplateScalarValue,
-  TEMPLATE_GROUP_ROWS_MAX,
-  detachAutomationInstance,
-  generateAutomationBlock,
-  instantiateAutomationTemplate,
 } from '@camstack/types'
 import { prepareRecipeUnits } from '../automation/recipe-units'
 
@@ -84,6 +84,20 @@ export function withValue(
   return value === undefined ? rest : { ...rest, [key]: value }
 }
 
+/** Several keys at once (a command writes its devices and its action together). */
+export type TemplateValuePatch = Readonly<Record<string, TemplateScalarValue | undefined>>
+
+export function withValues(
+  values: TemplateInputValues,
+  patch: TemplateValuePatch,
+): TemplateInputValues {
+  let next = values
+  for (const [key, value] of Object.entries(patch)) {
+    next = withValue(next, key, value)
+  }
+  return next
+}
+
 export function rowsOf(values: TemplateInputValues, key: string): readonly TemplateGroupRow[] {
   const raw = values[key]
   if (!Array.isArray(raw)) return []
@@ -105,6 +119,19 @@ export function withRowValue(
     return value === undefined ? rest : { ...rest, [key]: value }
   })
   return { ...values, [groupKey]: rows }
+}
+
+export function withRowValues(
+  values: TemplateInputValues,
+  groupKey: string,
+  index: number,
+  patch: TemplateValuePatch,
+): TemplateInputValues {
+  let next = values
+  for (const [key, value] of Object.entries(patch)) {
+    next = withRowValue(next, groupKey, index, key, value)
+  }
+  return next
 }
 
 export function withAddedRow(

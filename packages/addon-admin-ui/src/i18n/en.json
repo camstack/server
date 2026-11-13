@@ -6096,7 +6096,8 @@
       "saveAsTemplate": "Save as template",
       "templateGone": "The template of this automation no longer exists.",
       "unreadable": "This template cannot be read",
-      "view": "View"
+      "view": "View",
+      "command": "Command"
     }
   },
   "automation": {

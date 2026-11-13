@@ -5,10 +5,19 @@
  * Reuses the `build` area's devices and the `remote` area's remote template.
  */
 import { generateAutomationBlock } from '../../../../packages/types/src/automation/codegen.ts'
+import { BUILTIN_AUTOMATION_TEMPLATES } from '../../../../packages/types/src/template/builtin-automation-templates.ts'
 import { defineFixtures } from './_define'
 import { NOW } from './_time'
 import build from './build'
 import remote from './remote'
+
+/** The shipped buttons template, so the use-template form can be shot. */
+const BUTTONS_TO_DEVICES = BUILTIN_AUTOMATION_TEMPLATES.find(
+  (template) => template.id === 'builtin:buttons-to-devices',
+)
+if (BUTTONS_TO_DEVICES === undefined) {
+  throw new Error('builtin:buttons-to-devices is not in BUILTIN_AUTOMATION_TEMPLATES')
+}
 
 const MOTION_BODY = {
   when: {
@@ -41,6 +50,15 @@ const MOTION_PAYLOAD = {
 }
 
 const AUTOMATION_TEMPLATES = [
+  {
+    id: BUTTONS_TO_DEVICES.id,
+    kind: 'automation',
+    name: BUTTONS_TO_DEVICES.name,
+    builtIn: true,
+    payload: BUTTONS_TO_DEVICES.payload,
+    createdAt: 0,
+    updatedAt: 0,
+  },
   {
     id: 'builtin:motion-light',
     kind: 'automation',

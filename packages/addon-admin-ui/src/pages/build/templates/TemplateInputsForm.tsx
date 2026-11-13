@@ -1,9 +1,12 @@
 /**
  * The inputs form of an automation made from a template (#527): the only thing
  * an operator fills in. One field per declared input, by kind — a device picker,
- * the events of the chosen device, the command editor, a number — and a
- * repeatable list of rows for a group. A problem the expansion reported for an
- * input is shown under that input, by its dotted address (`buttons.2.targets`).
+ * the events of the chosen device, a number — and a repeatable list of rows
+ * for a group. An action that names a sibling device input with no capability
+ * or role filter is one Command field: the dialog picks the command and the
+ * devices, and both stored keys change together. A problem the expansion
+ * reported for an input is shown under that input, by its dotted address
+ * (`buttons.2.targets`); a combined field shows both keys' problems.
  */
 import {
   type AutomationTemplatePayload,
@@ -13,6 +16,7 @@ import {
   type TemplateEventValue,
   TemplateEventValueSchema,
   type TemplateGroupInput,
+  type TemplateInput,
   type TemplateInputValue,
   type TemplateInputValues,
   type TemplateInstanceProblem,
@@ -31,19 +35,26 @@ import {
 import { Plus, Trash2 } from 'lucide-react'
 import { type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { CommandStep } from '../flow/CommandStep'
 import { useAutomationDevices } from '../automation/automation-data'
 import { FiredFields } from '../automation/FiredFields'
+import { CommandStep } from '../flow/CommandStep'
+import type { CommandStep as CommandStepValue } from '../flow/command-vocab'
 import { DurationValueInput } from './DurationValueInput'
 import {
   groupBounds,
   problemsAt,
   rowsOf,
+  type TemplateValuePatch,
   withAddedRow,
-  withRowValue,
-  withValue,
   withoutRow,
+  withRowValue,
+  withRowValues,
+  withValue,
+  withValues,
 } from './template-values'
+
+type DeviceInput = Extract<TemplateScalarInput, { kind: 'device' }>
+type ActionInput = Extract<TemplateScalarInput, { kind: 'action' }>
 
 type Siblings = Readonly<Record<string, TemplateInputValue>>
 
@@ -71,6 +82,68 @@ function actionValueOf(value: TemplateInputValue | undefined): TemplateActionVal
   return parsed.success ? parsed.data : undefined
 }
 
+function scalarsOf(inputs: readonly TemplateInput[]): readonly TemplateScalarInput[] {
+  return inputs.filter((input): input is TemplateScalarInput => input.kind !== 'group')
+}
+
+function deviceByKey(
+  siblings: readonly TemplateScalarInput[],
+  key: string,
+): DeviceInput | undefined {
+  const found = siblings.find((input) => input.key === key && input.kind === 'device')
+  return found !== undefined && found.kind === 'device' ? found : undefined
+}
+
+/**
+ * The device input this action can replace. Absent when the dialog cannot
+ * apply the device's filter, or when another input beside it also reads
+ * that device (an event still needs its own picker).
+ */
+function commandDevice(
+  action: ActionInput,
+  siblings: readonly TemplateScalarInput[],
+): DeviceInput | undefined {
+  if (action.deviceInput === undefined) return undefined
+  const named = action.deviceInput
+  const readers = siblings.filter(
+    (input) => (input.kind === 'action' || input.kind === 'event') && input.deviceInput === named,
+  )
+  if (readers.length !== 1) return undefined
+  const device = deviceByKey(siblings, named)
+  if (device === undefined) return undefined
+  if (device.filter?.capability !== undefined || device.filter?.role !== undefined) {
+    return undefined
+  }
+  return device
+}
+
+function hiddenDeviceKeys(siblings: readonly TemplateScalarInput[]): ReadonlySet<string> {
+  const keys = new Set<string>()
+  for (const input of siblings) {
+    if (input.kind !== 'action') continue
+    const device = commandDevice(input, siblings)
+    if (device !== undefined) keys.add(device.key)
+  }
+  return keys
+}
+
+function storedDeviceValue(
+  device: DeviceInput,
+  target: CommandStepValue['target'],
+): TemplateScalarValue | undefined {
+  if (target.kind !== 'devices' || target.ids.length === 0) return undefined
+  if (device.multiple === true) return [...target.ids]
+  return target.ids[0]
+}
+
+function storedActionValue(step: CommandStepValue): TemplateActionValue | undefined {
+  if (step.actionId === '') return undefined
+  return {
+    actionId: step.actionId,
+    ...(step.args === undefined ? {} : { args: step.args }),
+  }
+}
+
 export function TemplateInputsForm({
   payload,
   values,
@@ -78,6 +151,8 @@ export function TemplateInputsForm({
   disabled = false,
   onChange,
 }: TemplateInputsFormProps): ReactNode {
+  const siblings = scalarsOf(payload.inputs)
+  const hidden = hiddenDeviceKeys(siblings)
   return (
     <div className="space-y-4" data-testid="template-inputs-form">
       {payload.inputs.map((input) =>
@@ -91,15 +166,17 @@ export function TemplateInputsForm({
             onChange={onChange}
           />
         ) : (
-          <ScalarField
+          <ScopedInput
             key={input.key}
             input={input}
-            siblings={input.kind === 'event' || input.kind === 'action' ? payload.inputs : []}
+            siblings={siblings}
+            hidden={hidden}
             siblingValues={values}
-            address={input.key}
+            addressPrefix=""
             problems={problems}
             disabled={disabled}
-            onChange={(next) => onChange(withValue(values, input.key, next))}
+            onScalar={(key, next) => onChange(withValue(values, key, next))}
+            onPair={(patch) => onChange(withValues(values, patch))}
           />
         ),
       )}
@@ -120,6 +197,7 @@ function GroupField({ group, values, problems, disabled, onChange }: GroupFieldP
   const rows = rowsOf(values, group.key)
   const bounds = groupBounds(group)
   const own = problemsAt(problems, group.key)
+  const hidden = hiddenDeviceKeys(group.inputs)
   return (
     <section className="space-y-2" data-testid={`template-group-${group.key}`}>
       <h4 className="text-sm font-medium text-foreground">{group.label}</h4>
@@ -129,42 +207,20 @@ function GroupField({ group, values, problems, disabled, onChange }: GroupFieldP
         </p>
       ))}
       {rows.map((row, index) => (
-        <div
-          // The index is the row's address (`buttons.2.targets`); rows have no other identity.
+        // The index is the row's address (`buttons.2.targets`); rows have no other identity.
+        <GroupRow
           key={index}
-          className="space-y-3 rounded-md border border-border bg-surface p-3"
-          data-testid={`template-group-${group.key}-row`}
-        >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-xs font-medium text-foreground-muted">
-              {t('build.templates.row', 'Row {{n}}', { n: index + 1 })}
-            </span>
-            <IconButton
-              icon={Trash2}
-              size="sm"
-              variant="ghost"
-              aria-label={t('build.templates.removeRow', 'Remove row')}
-              disabled={disabled || rows.length <= bounds.min}
-              onClick={() => onChange(withoutRow(values, group, index))}
-            />
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {group.inputs.map((input) => (
-              <ScalarField
-                key={input.key}
-                input={input}
-                siblings={group.inputs}
-                siblingValues={row}
-                address={`${group.key}.${String(index)}.${input.key}`}
-                problems={problems}
-                disabled={disabled}
-                onChange={(next) =>
-                  onChange(withRowValue(values, group.key, index, input.key, next))
-                }
-              />
-            ))}
-          </div>
-        </div>
+          group={group}
+          values={values}
+          row={row}
+          index={index}
+          rowCount={rows.length}
+          minRows={bounds.min}
+          hidden={hidden}
+          problems={problems}
+          disabled={disabled}
+          onChange={onChange}
+        />
       ))}
       <Button
         size="sm"
@@ -177,6 +233,191 @@ function GroupField({ group, values, problems, disabled, onChange }: GroupFieldP
         {t('build.templates.addRow', 'Add row')}
       </Button>
     </section>
+  )
+}
+
+interface GroupRowProps {
+  readonly group: TemplateGroupInput
+  readonly values: TemplateInputValues
+  readonly row: Siblings
+  readonly index: number
+  readonly rowCount: number
+  readonly minRows: number
+  readonly hidden: ReadonlySet<string>
+  readonly problems: readonly TemplateInstanceProblem[]
+  readonly disabled: boolean
+  readonly onChange: (next: TemplateInputValues) => void
+}
+
+function GroupRow({
+  group,
+  values,
+  row,
+  index,
+  rowCount,
+  minRows,
+  hidden,
+  problems,
+  disabled,
+  onChange,
+}: GroupRowProps): ReactNode {
+  const { t } = useTranslation()
+  const prefix = `${group.key}.${String(index)}`
+  return (
+    <div
+      // The index is the row's address (`buttons.2.targets`); rows have no other identity.
+      className="space-y-3 rounded-md border border-border bg-surface p-3"
+      data-testid={`template-group-${group.key}-row`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-medium text-foreground-muted">
+          {t('build.templates.row', 'Row {{n}}', { n: index + 1 })}
+        </span>
+        <IconButton
+          icon={Trash2}
+          size="sm"
+          variant="ghost"
+          aria-label={t('build.templates.removeRow', 'Remove row')}
+          disabled={disabled || rowCount <= minRows}
+          onClick={() => onChange(withoutRow(values, group, index))}
+        />
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {group.inputs.map((input) => (
+          <ScopedInput
+            key={input.key}
+            input={input}
+            siblings={group.inputs}
+            hidden={hidden}
+            siblingValues={row}
+            addressPrefix={prefix}
+            problems={problems}
+            disabled={disabled}
+            className="sm:col-span-2"
+            onScalar={(key, next) => onChange(withRowValue(values, group.key, index, key, next))}
+            onPair={(patch) => onChange(withRowValues(values, group.key, index, patch))}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+interface ScopedInputProps {
+  readonly input: TemplateScalarInput
+  readonly siblings: readonly TemplateScalarInput[]
+  readonly hidden: ReadonlySet<string>
+  readonly siblingValues: Siblings
+  readonly addressPrefix: string
+  readonly problems: readonly TemplateInstanceProblem[]
+  readonly disabled: boolean
+  /** Applied only to a combined command, so it can span the row grid. */
+  readonly className?: string
+  readonly onScalar: (key: string, next: TemplateScalarValue | undefined) => void
+  readonly onPair: (patch: TemplateValuePatch) => void
+}
+
+function ScopedInput({
+  input,
+  siblings,
+  hidden,
+  siblingValues,
+  addressPrefix,
+  problems,
+  disabled,
+  className,
+  onScalar,
+  onPair,
+}: ScopedInputProps): ReactNode {
+  if (hidden.has(input.key)) return null
+  const address = addressPrefix === '' ? input.key : `${addressPrefix}.${input.key}`
+  if (input.kind === 'action') {
+    const device = commandDevice(input, siblings)
+    if (device !== undefined) {
+      const deviceAddress = addressPrefix === '' ? device.key : `${addressPrefix}.${device.key}`
+      return (
+        <CommandPairField
+          action={input}
+          device={device}
+          siblingValues={siblingValues}
+          address={address}
+          deviceAddress={deviceAddress}
+          problems={problems}
+          {...(className === undefined ? {} : { className })}
+          onChange={onPair}
+        />
+      )
+    }
+  }
+  return (
+    <ScalarField
+      input={input}
+      siblings={siblings}
+      siblingValues={siblingValues}
+      address={address}
+      problems={problems}
+      disabled={disabled}
+      onChange={(next) => onScalar(input.key, next)}
+    />
+  )
+}
+
+interface CommandPairFieldProps {
+  readonly action: ActionInput
+  readonly device: DeviceInput
+  readonly siblingValues: Siblings
+  readonly address: string
+  readonly deviceAddress: string
+  readonly problems: readonly TemplateInstanceProblem[]
+  readonly className?: string
+  readonly onChange: (patch: TemplateValuePatch) => void
+}
+
+function CommandPairField({
+  action,
+  device,
+  siblingValues,
+  address,
+  deviceAddress,
+  problems,
+  className,
+  onChange,
+}: CommandPairFieldProps): ReactNode {
+  const { t } = useTranslation()
+  const devices = useAutomationDevices()
+  const own = [...problemsAt(problems, deviceAddress), ...problemsAt(problems, address)]
+  const error = own.length === 0 ? undefined : own.map((problem) => problem.detail).join(' ')
+  const picked = actionValueOf(siblingValues[action.key])
+  const targetIds = deviceIdsOf(siblingValues[device.key])
+  return (
+    <FormField
+      label={t('build.templates.command', 'Command')}
+      required={action.optional !== true || device.optional !== true}
+      {...(action.description === undefined ? {} : { description: action.description })}
+      {...(error === undefined ? {} : { error })}
+      className={className === undefined ? 'min-w-0' : `min-w-0 ${className}`}
+    >
+      <div data-testid={`template-input-${address}`}>
+        <CommandStep
+          autoOpen={false}
+          singleTarget={device.multiple !== true}
+          devices={devices}
+          variables={[]}
+          step={{
+            kind: 'command',
+            target: { kind: 'devices', ids: [...targetIds] },
+            actionId: picked?.actionId ?? '',
+            ...(picked?.args === undefined ? {} : { args: picked.args }),
+          }}
+          onChange={(next) =>
+            onChange({
+              [device.key]: storedDeviceValue(device, next.target),
+              [action.key]: storedActionValue(next),
+            })
+          }
+        />
+      </div>
+    </FormField>
   )
 }
 
