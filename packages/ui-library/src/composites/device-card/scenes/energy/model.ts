@@ -21,13 +21,27 @@ export interface EnergyFlows {
   readonly heatPumpW: number | null
 }
 
-/** Today's totals (kWh, the self-consumption in %); a null total is not drawn. */
+/**
+ * Today's totals and the derived daily facts. A null is not drawn — a missing
+ * input is never shown as 0. Percents are 0..100; `autonomyHours` is stored
+ * kWh divided by the current house load.
+ */
 export interface EnergyToday {
   readonly producedKwh: number | null
   readonly selfConsumptionPct: number | null
   readonly importedKwh: number | null
   readonly exportedKwh: number | null
   readonly heatPumpKwh: number | null
+  readonly houseKwh: number | null
+  /** 1 − import today / house consumption today, clamped to 0..100. */
+  readonly selfSufficiencyPct: number | null
+  readonly autonomyHours: number | null
+  readonly chargedTodayKwh: number | null
+  readonly dischargedTodayKwh: number | null
+  readonly socPct: number | null
+  readonly healthPct: number | null
+  /** Heat pump power ÷ house power, right now. */
+  readonly heatPumpShareNowPct: number | null
 }
 
 export interface EnergyCardModel {

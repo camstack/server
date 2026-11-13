@@ -75,6 +75,16 @@ export interface TextSpec extends SpecBase {
 
 export type EnpalSpec = PowerMeterSpec | BatterySpec | MeterSpec | NumericSpec | TextSpec
 
+/**
+ * The two meters the box both called "Consumption". English is the device
+ * name (one string, like every other catalog entry); Italian is the addon
+ * catalogue key `catalog.<id>.name`.
+ */
+export const ENPAL_CONSUMPTION_NAMES = {
+  house: { en: 'House consumption', it: 'Consumo casa' },
+  heatpump: { en: 'Heat pump consumption', it: 'Consumo pompa di calore' },
+} as const
+
 const point = (
   quantity: ReadingQuantity,
   ...sources: ReadonlyArray<string | PointSource>
@@ -186,7 +196,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'power-meter',
     id: 'house',
-    name: 'Consumption',
+    name: ENPAL_CONSUMPTION_NAMES.house.en,
     role: DeviceRole.PowerSensor,
     power: point('power', 'Power.Consumption.Total'),
     kwh: point('energy', 'Energy.Consumption.Total.Lifetime'),
@@ -194,7 +204,7 @@ export const ENPAL_SPECS: readonly EnpalSpec[] = [
   {
     kind: 'power-meter',
     id: 'heatpump',
-    name: 'Consumption',
+    name: ENPAL_CONSUMPTION_NAMES.heatpump.en,
     role: DeviceRole.PowerSensor,
     power: point('power', 'Heatpump.Power.Consumption.Total'),
     kwh: point('energy', 'Heatpump.Energy.Consumption.Total.Lifetime'),

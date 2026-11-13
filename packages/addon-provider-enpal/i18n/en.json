@@ -15,5 +15,7 @@
   "connection.s_source.pagePort.label": "Device page port",
   "connection.s_polling.title": "Polling",
   "connection.s_polling.pollIntervalMs.label": "Poll interval (ms)",
-  "connection.s_polling.invertBatteryPower.label": "Invert battery power sign"
+  "connection.s_polling.invertBatteryPower.label": "Invert battery power sign",
+  "catalog.house.name": "House consumption",
+  "catalog.heatpump.name": "Heat pump consumption"
 }

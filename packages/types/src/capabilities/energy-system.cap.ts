@@ -73,6 +73,8 @@ export const EnergyStorageSchema = z.object({
   dischargedKwh: z.number().nullable().meta(readingMeta('energy')),
   chargedTodayKwh: z.number().nullable().meta(readingMeta('energy')),
   dischargedTodayKwh: z.number().nullable().meta(readingMeta('energy')),
+  /** State of health, 0..100. Null when the system did not report it. */
+  healthPct: z.number().nullable().meta(readingMeta('percentage')),
 })
 export type EnergyStorage = z.infer<typeof EnergyStorageSchema>
 
@@ -162,6 +164,12 @@ export const energySystemCapability = {
         kind: 'counter',
         unit: 'kWh',
         displayName: 'Storage discharged',
+      },
+      'storage.healthPct': {
+        kind: 'gauge',
+        unit: '%',
+        deadband: 1,
+        displayName: 'Storage health',
       },
     },
   },

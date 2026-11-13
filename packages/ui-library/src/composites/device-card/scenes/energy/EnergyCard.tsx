@@ -76,22 +76,62 @@ export function energySince(flows: EnergyFlows, t: UiTextFn): string | null {
   return null
 }
 
-function Today({ today, t }: { readonly today: EnergyToday; readonly t: UiTextFn }): ReactNode {
-  const items: readonly (readonly [string, string, string | null])[] = [
+type TodayPill = readonly [string, string, string | null]
+
+const kwh = (v: number | null): string | null => (v === null ? null : `${v} kWh`)
+const pct = (v: number | null): string | null => (v === null ? null : `${Math.round(v)}%`)
+const hours = (v: number | null): string | null => (v === null ? null : `≈ ${v.toFixed(1)} h`)
+
+function todayPills(today: EnergyToday, t: UiTextFn): readonly TodayPill[] {
+  return [
     ['produced', t('uiLibrary.deviceCard.energy.produced', 'Produced'), kwh(today.producedKwh)],
+    ['house', t('uiLibrary.deviceCard.energy.houseToday', 'House'), kwh(today.houseKwh)],
+    ['imported', t('uiLibrary.deviceCard.energy.imported', 'Imported'), kwh(today.importedKwh)],
+    ['exported', t('uiLibrary.deviceCard.energy.exported', 'Exported'), kwh(today.exportedKwh)],
     [
       'self',
       t('uiLibrary.deviceCard.energy.selfConsumption', 'Self-use'),
-      today.selfConsumptionPct === null ? null : `${Math.round(today.selfConsumptionPct)}%`,
+      pct(today.selfConsumptionPct),
     ],
-    ['imported', t('uiLibrary.deviceCard.energy.imported', 'Imported'), kwh(today.importedKwh)],
-    ['exported', t('uiLibrary.deviceCard.energy.exported', 'Exported'), kwh(today.exportedKwh)],
+    [
+      'sufficiency',
+      t('uiLibrary.deviceCard.energy.selfSufficiency', 'Self-sufficiency'),
+      pct(today.selfSufficiencyPct),
+    ],
     [
       'heatPump',
       t('uiLibrary.deviceCard.energy.heatPumpToday', 'Heat pump'),
       kwh(today.heatPumpKwh),
     ],
+    [
+      'heatPumpNow',
+      t('uiLibrary.deviceCard.energy.heatPumpNow', 'Heat pump now'),
+      pct(today.heatPumpShareNowPct),
+    ],
+    ['soc', t('uiLibrary.deviceCard.energy.soc', 'Charge'), pct(today.socPct)],
+    ['health', t('uiLibrary.deviceCard.energy.health', 'Health'), pct(today.healthPct)],
+    ['autonomy', t('uiLibrary.deviceCard.energy.autonomy', 'Autonomy'), hours(today.autonomyHours)],
+    [
+      'charged',
+      t('uiLibrary.deviceCard.energy.chargedToday', 'Charged'),
+      kwh(today.chargedTodayKwh),
+    ],
+    [
+      'discharged',
+      t('uiLibrary.deviceCard.energy.dischargedToday', 'Discharged'),
+      kwh(today.dischargedTodayKwh),
+    ],
   ]
+}
+
+interface TodayProps {
+  readonly today: EnergyToday
+  readonly t: UiTextFn
+}
+
+function Today(props: TodayProps): ReactNode {
+  const { today, t } = props
+  const items = todayPills(today, t)
   return (
     <ul data-testid="dc-energy-today" className="flex flex-wrap justify-center gap-1.5">
       {items.flatMap(([id, label, value]) =>
@@ -109,8 +149,6 @@ function Today({ today, t }: { readonly today: EnergyToday; readonly t: UiTextFn
     </ul>
   )
 }
-
-const kwh = (v: number | null): string | null => (v === null ? null : `${v} kWh`)
 
 /**
  * An energy system: solar, grid, battery, house and heat pump as branches of

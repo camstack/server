@@ -63,6 +63,7 @@ const FULL: readonly Row[] = [
   ['Energy.Battery.Discharge.Lifetime', 2300, 'kWh'],
   ['Energy.Battery.Charge.Day', 6.1, 'kWh'],
   ['Energy.Battery.Discharge.Day', 4.2, 'kWh'],
+  ['Battery.SOH', 96, '%'],
 ]
 
 const PLAIN = { invertBatteryPower: false }
@@ -93,6 +94,7 @@ describe('computeEnergySystemStatus', () => {
         dischargedKwh: 2300,
         chargedTodayKwh: 6.1,
         dischargedTodayKwh: 4.2,
+        healthPct: 96,
       },
       lastFetchedAt: 5_000,
     })

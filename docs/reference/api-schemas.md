@@ -2114,6 +2114,7 @@ Enum: `"image" \| "text"`
 - `dischargedKwh`: `number \| null`
 - `chargedTodayKwh`: `number \| null`
 - `dischargedTodayKwh`: `number \| null`
+- `healthPct`: `number \| null`
 
 ### `EnergySystemStatusSchema`
 

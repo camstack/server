@@ -125,6 +125,7 @@ export function computeEnergySystemStatus(
     dischargedKwh: read.meter('battery-discharged'),
     chargedTodayKwh: read.numeric('battery-charge-day'),
     dischargedTodayKwh: read.numeric('battery-discharge-day'),
+    healthPct: read.numeric('battery-health'),
   }
   return {
     status: {

@@ -10271,7 +10271,15 @@
         "producing": "Produce",
         "notProducing": "Non produce",
         "flows": "Flussi di energia",
-        "storage": "Accumulo"
+        "storage": "Accumulo",
+        "houseToday": "Casa",
+        "selfSufficiency": "Autosufficienza",
+        "heatPumpNow": "Pompa ora",
+        "soc": "Carica",
+        "health": "Salute",
+        "autonomy": "Autonomia",
+        "chargedToday": "Caricati",
+        "dischargedToday": "Scaricati"
       },
       "ir": {
         "canLearn": "Può apprendere",

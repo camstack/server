@@ -11,7 +11,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'
 import { ConnectedEnergyCard } from '../connected/ConnectedEnergyCard'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
-import { energyFlowsOf, energyTodayOf } from '../connected/energy-model'
+import { energyDailyFacts, energyFlowsOf, energyTodayOf } from '../connected/energy-model'
 
 const FULL: EnergySystemStatus = {
   solar: { powerW: 4200, energyKwh: 12000, todayKwh: 18.44 },
@@ -33,6 +33,7 @@ const FULL: EnergySystemStatus = {
     dischargedKwh: 2300,
     chargedTodayKwh: 6.1,
     dischargedTodayKwh: 4.2,
+    healthPct: 96,
   },
   lastFetchedAt: 0,
 }
@@ -72,6 +73,87 @@ beforeEach(() => {
 })
 afterEach(cleanup)
 
+describe('energyDailyFacts', () => {
+  it('derives each fact from the slice', () => {
+    const facts = energyDailyFacts(FULL)
+    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 11.2) * 100, 5)
+    expect(facts.producedKwh).toBe(18.4)
+    expect(facts.houseKwh).toBe(11.2)
+    expect(facts.importedKwh).toBe(2.1)
+    expect(facts.exportedKwh).toBe(7.3)
+    expect(facts.autonomyHours).toBeCloseTo(7.4 / 0.9, 5)
+    expect(facts.chargedTodayKwh).toBe(6.1)
+    expect(facts.dischargedTodayKwh).toBe(4.2)
+    expect(facts.socPct).toBe(74)
+    expect(facts.healthPct).toBe(96)
+    expect(facts.heatPumpShareNowPct).toBeCloseTo((600 / 900) * 100, 5)
+  })
+
+  it('derives house consumption from produced + import − export when the day total is absent', () => {
+    const facts = energyDailyFacts({
+      ...FULL,
+      house: { powerW: 900, energyKwh: 8000, todayKwh: null },
+    })
+    // 18.44 + 2.1 − 7.3 = 13.24
+    expect(facts.houseKwh).toBe(13.2)
+    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 13.24) * 100, 5)
+  })
+
+  it('a missing input is absent, never 0', () => {
+    const noImport = energyDailyFacts({
+      ...FULL,
+      grid: {
+        powerW: -1500,
+        importKwh: 3000,
+        exportKwh: 5000,
+        importTodayKwh: null,
+        exportTodayKwh: 7.3,
+      },
+    })
+    expect(noImport.selfSufficiencyPct).toBeNull()
+    expect(noImport.importedKwh).toBeNull()
+
+    const idle = energyDailyFacts({
+      ...FULL,
+      house: { powerW: 0, energyKwh: null, todayKwh: null },
+      solar: null,
+      heatPump: null,
+      storage: null,
+    })
+    expect(idle.selfSufficiencyPct).toBeNull()
+    expect(idle.houseKwh).toBeNull()
+    expect(idle.autonomyHours).toBeNull()
+    expect(idle.heatPumpShareNowPct).toBeNull()
+    expect(idle.chargedTodayKwh).toBeNull()
+    expect(idle.healthPct).toBeNull()
+    expect(idle.socPct).toBeNull()
+  })
+
+  it('clamps self-sufficiency to 0–100', () => {
+    const grid = {
+      powerW: 100,
+      importKwh: 1,
+      exportKwh: 1,
+      importTodayKwh: 9,
+      exportTodayKwh: 0,
+    }
+    expect(
+      energyDailyFacts({
+        ...FULL,
+        house: { powerW: 900, energyKwh: 1, todayKwh: 4 },
+        grid,
+      }).selfSufficiencyPct,
+    ).toBe(0)
+    expect(
+      energyDailyFacts({
+        ...FULL,
+        house: { powerW: 900, energyKwh: 1, todayKwh: 4 },
+        grid: { ...grid, importTodayKwh: 0 },
+      }).selfSufficiencyPct,
+    ).toBe(100)
+  })
+})
+
 describe('the energy system card', () => {
   it('an energy-system device with the cap resolves to the energy card', () => {
     expect(connectedCardKindOf(DeviceType.EnergySystem, null, ['energy-system'])).toBe('energy')
@@ -91,7 +173,14 @@ describe('the energy system card', () => {
     expect(flows.batteryPct).toBeNull()
     expect(flows.heatPumpW).toBeNull()
     expect(
-      energyTodayOf({ ...FULL, solar: null, grid: null, heatPump: null, house: null }),
+      energyTodayOf({
+        ...FULL,
+        solar: null,
+        grid: null,
+        heatPump: null,
+        house: null,
+        storage: null,
+      }),
     ).toBeNull()
   })
 
@@ -118,10 +207,41 @@ describe('the energy system card', () => {
     )
     expect(chips.map((chip) => chip.textContent)).toEqual([
       'Produced18.4 kWh',
-      'Self-use60%',
+      'House11.2 kWh',
       'Imported2.1 kWh',
       'Exported7.3 kWh',
+      'Self-use60%',
+      'Self-sufficiency81%',
+      'Heat pump now67%',
+      'Charge74%',
+      'Health96%',
+      'Autonomy≈ 8.2 h',
+      'Charged6.1 kWh',
+      'Discharged4.2 kWh',
     ])
+  })
+
+  it('omits a pill whose input is missing, and never draws 0 for it', () => {
+    hub.slice = {
+      ...FULL,
+      house: { powerW: 0, energyKwh: 8000, todayKwh: null },
+      solar: null,
+      grid: null,
+      heatPump: null,
+      storage: {
+        stateOfChargePct: null,
+        storedKwh: null,
+        capacityKwh: 10,
+        powerW: null,
+        chargedKwh: null,
+        dischargedKwh: null,
+        chargedTodayKwh: null,
+        dischargedTodayKwh: null,
+        healthPct: null,
+      },
+    }
+    render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
+    expect(screen.queryByTestId('dc-energy-today')).toBeNull()
   })
 
   it('draws nothing before the cap answers', () => {

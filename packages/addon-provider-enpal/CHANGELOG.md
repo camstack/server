@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Enpal: the grid frequency shows in Hz, and the LTE RSRQ and SNR in dB
 - The integration shows the official Enpal icon
+- House and heat-pump meters are named apart, and the energy system reports battery health.
 
 ## [0.1.20] - 2026-11-13
 

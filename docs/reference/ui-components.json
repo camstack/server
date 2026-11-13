@@ -7266,6 +7266,13 @@
       ]
     },
     {
+      "name": "energyDailyFacts",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/energy-model.ts",
+      "summary": "The daily facts of one energy-system slice. Pure; a missing input is null."
+    },
+    {
       "name": "EnergyFlowIllustration",
       "kind": "component",
       "area": "composites",

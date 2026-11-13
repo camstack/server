@@ -10249,7 +10249,15 @@
         "producing": "Producing",
         "notProducing": "Not producing",
         "flows": "Energy flows",
-        "storage": "Storage"
+        "storage": "Storage",
+        "houseToday": "House",
+        "selfSufficiency": "Self-sufficiency",
+        "heatPumpNow": "Heat pump now",
+        "soc": "Charge",
+        "health": "Health",
+        "autonomy": "Autonomy",
+        "chargedToday": "Charged",
+        "dischargedToday": "Discharged"
       },
       "ir": {
         "canLearn": "Can learn",

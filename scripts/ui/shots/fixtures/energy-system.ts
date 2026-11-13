@@ -50,6 +50,7 @@ const FULL = {
     dischargedKwh: 2300,
     chargedTodayKwh: 6.1,
     dischargedTodayKwh: 4.2,
+    healthPct: 96,
   },
   lastFetchedAt: 1,
 }

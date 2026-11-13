@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 45 caps with series (103 series), 37 caps answered `'none'`.
+ * 45 caps with series (104 series), 37 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -85,6 +85,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'storage.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Storage power' },
     'storage.chargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage charged' },
     'storage.dischargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage discharged' },
+    'storage.healthPct': { kind: 'gauge', unit: '%', deadband: 1, displayName: 'Storage health' },
   },
   'enum-sensor': {
     'value': { kind: 'enum', skipWhenSet: 'timestamp' },
