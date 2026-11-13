@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Instance pickers list a Google account wherever a mail sender is asked for.
+- A link picker names each instance with its status (Signed in, Not signed in), so a sender that is not ready says so before it is picked
+
 ## [1.2.437] - 2026-11-13
 
 ### Added
@@ -16,8 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device hooks regenerated for the capability vocabulary now declared on each capability (no behaviour change)
-- Instance pickers list a Google account wherever a mail sender is asked for.
-- A link picker names each instance with its status (Signed in, Not signed in), so a sender that is not ready says so before it is picked
 
 ## [1.2.436] - 2026-11-13
 
