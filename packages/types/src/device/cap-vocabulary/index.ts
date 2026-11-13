@@ -15,6 +15,7 @@ export type {
 } from './resolve.js'
 export {
   actionsForDevice,
+  deviceOffersActions,
   renderVocabPhrase,
   triggersForDevice,
 } from './resolve.js'

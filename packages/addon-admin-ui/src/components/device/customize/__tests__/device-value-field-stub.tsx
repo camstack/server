@@ -13,8 +13,10 @@ export interface StubDevice {
 
 function meetsRequires(device: StubDevice, requires: DeviceValueFieldProps['requires']): boolean {
   if (requires === undefined || device.caps === undefined) return true
+  const caps = requires.caps ?? []
+  if (caps.length === 0) return true
   const has = (cap: string) => device.caps?.includes(cap) === true
-  return requires.mode === 'all' ? requires.caps.every(has) : requires.caps.some(has)
+  return requires.mode === 'all' ? caps.every(has) : caps.some(has)
 }
 
 /**

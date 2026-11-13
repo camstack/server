@@ -48,6 +48,8 @@ export interface DeviceValuePanelProps {
   readonly recentIds: readonly number[]
   /** Focus the search on mount (default true: the panel opened from a click). */
   readonly autoFocus?: boolean
+  /** Stretch to a flex parent and scroll the rows inside it (a full-height dialog). */
+  readonly fill?: boolean
 }
 
 /**
@@ -65,8 +67,14 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
   const debounced = useDebouncedValue(text.trim(), SEARCH_DEBOUNCE_MS)
 
   const caps = props.requires?.caps ?? []
+  const actions = props.requires?.actions ?? []
   const hasCap = caps.length > 0
-  const capLabel = capabilityListLabel(caps, t, t('uiLibrary.deviceValuePicker.or', 'or'))
+  const hasRequire = hasCap || actions.length > 0
+  const joiner =
+    props.requires?.mode === 'all'
+      ? t('uiLibrary.deviceValuePicker.and', 'and')
+      : t('uiLibrary.deviceValuePicker.or', 'or')
+  const capLabel = capabilityListLabel(hasCap ? caps : actions, t, joiner)
   const search = useDeviceValueSearch(
     {
       text: debounced === '' ? undefined : debounced,
@@ -112,7 +120,14 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
   }
 
   return (
-    <div data-dvp-panel="" className="flex max-h-[min(70vh,34rem)] min-h-0 flex-col sm:flex-row">
+    <div
+      data-dvp-panel=""
+      className={
+        props.fill === true
+          ? 'flex min-h-0 flex-1 flex-col sm:flex-row'
+          : 'flex max-h-[min(70vh,34rem)] min-h-0 flex-col sm:flex-row'
+      }
+    >
       {first !== undefined && (
         // Desktop: the filter rail is always there. Phone: it opens with "Browse all…".
         <div className={cn('flex min-h-0 flex-col sm:contents', !railOpen && 'hidden')}>
@@ -152,7 +167,7 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
           ) : (
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-foreground-muted">
               <span>
-                {hasCap
+                {hasRequire
                   ? t(
                       'uiLibrary.deviceValuePicker.matchesOf',
                       {
@@ -197,7 +212,7 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
             <ListState
               state={state}
               capLabel={capLabel}
-              hasCap={hasCap}
+              hasCap={hasRequire}
               query={debounced}
               onRetry={search.refetch}
             />

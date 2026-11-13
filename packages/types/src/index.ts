@@ -1298,6 +1298,7 @@ export type {
 export {
   actionEffect,
   actionsForDevice as vocabularyActionsForDevice,
+  deviceOffersActions,
   allVocabActions,
   auditedFields,
   CAP_VOCABULARY,

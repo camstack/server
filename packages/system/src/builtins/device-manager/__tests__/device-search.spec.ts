@@ -122,6 +122,32 @@ describe('searchDevices', () => {
     expect(res.items.find((i) => i.id === 2)?.values).toHaveLength(1)
   })
 
+  it('an action require keeps only devices that offer it, and mode all is the intersection', async () => {
+    const deps = makeDeps({
+      fleet: [device(1), device(2), device(3)],
+      caps: (id) => (id === 2 ? ['cover'] : id === 3 ? ['cover', 'switch'] : ['battery']),
+    })
+    const one = await searchDevices(deps, {
+      requires: { actions: ['cover.open'] },
+      includeIncompatible: true,
+      limit: 20,
+    })
+    const byId = new Map(one.items.map((item) => [item.id, item]))
+    expect(byId.get(1)?.compatible).toBe(false)
+    expect(byId.get(2)?.compatible).toBe(true)
+    expect(byId.get(3)?.compatible).toBe(true)
+    expect(one.items.every((item) => item.values.length === 0)).toBe(true)
+    expect(one.hiddenIncompatible).toBe(1)
+
+    const both = await searchDevices(deps, {
+      requires: { actions: ['cover.open', 'switch.on'], mode: 'all' },
+      limit: 20,
+    })
+    expect(both.items.map((item) => item.id)).toEqual([3])
+    expect(both.compatibleTotal).toBe(1)
+    expect(both.items[0]?.values).toEqual([])
+  })
+
   it('mode all requires every cap', async () => {
     const deps = makeDeps({ fleet: smallFleet })
     const res = await searchDevices(deps, {

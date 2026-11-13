@@ -11,9 +11,10 @@
  *
  * Everything that costs a read per device (bindings, status) is paid only for
  * what the answer needs: bindings once for the devices that survive the text
- * filter and only when a cap is required, live readings only for the devices
- * actually returned (a page, the suggestions, the resolved ids) — never the
- * fleet.
+ * filter and only when a cap or an action is required, live readings only for
+ * the devices actually returned (a page, the suggestions, the resolved ids) —
+ * never the fleet. An action require uses `deviceOffersActions` (the same
+ * vocabulary resolution the command picker uses); it does not fill `values`.
  */
 import type {
   DeviceInfo,
@@ -24,7 +25,12 @@ import type {
   DeviceValueOption,
   IScopedLogger,
 } from '@camstack/types'
-import { DEVICE_SEARCH_DEFAULT_LIMIT, DEVICE_SEARCH_MAX_LIMIT, errMsg } from '@camstack/types'
+import {
+  DEVICE_SEARCH_DEFAULT_LIMIT,
+  DEVICE_SEARCH_MAX_LIMIT,
+  deviceOffersActions,
+  errMsg,
+} from '@camstack/types'
 
 /** The wireable fields of one capability, as `wireableEntryForDef` derives them. */
 export interface SearchCapFields {
@@ -140,13 +146,45 @@ function bump(counts: Map<string, number>, key: string | null): void {
   counts.set(key, (counts.get(key) ?? 0) + 1)
 }
 
+interface RequireSpec {
+  readonly caps: readonly string[]
+  readonly actions: readonly string[]
+  readonly mode: 'any' | 'all'
+}
+
+function requireOf(input: DeviceSearchInput): RequireSpec {
+  return {
+    caps: input.requires?.caps ?? [],
+    actions: input.requires?.actions ?? [],
+    mode: input.requires?.mode ?? 'any',
+  }
+}
+
+function needsBindings(req: RequireSpec): boolean {
+  return req.caps.length > 0 || req.actions.length > 0
+}
+
+/** Caps and actions are judged separately, then both must pass. An empty list passes. */
+function applyRequire(candidate: Candidate, have: readonly string[], req: RequireSpec): void {
+  const held = new Set(have)
+  const matched = req.caps.filter((cap) => held.has(cap))
+  candidate.matchedCaps = matched
+  const capsOk =
+    req.caps.length === 0
+      ? true
+      : req.mode === 'all'
+        ? matched.length === req.caps.length
+        : matched.length > 0
+  const actionsOk = deviceOffersActions(have, req.actions, req.mode, candidate.device.type)
+  candidate.compatible = capsOk && actionsOk
+}
+
 export async function searchDevices(
   deps: DeviceSearchDeps,
   input: DeviceSearchInput,
 ): Promise<DeviceSearchResult> {
   const [fleet, labels] = await Promise.all([deps.listDevices(), deps.integrationLabels()])
-  const requiredCaps = input.requires?.caps ?? []
-  const mode = input.requires?.mode ?? 'any'
+  const req = requireOf(input)
 
   const candidates = fleet.map((device): Candidate => {
     const integrationId = device.integrationId ?? null
@@ -166,7 +204,7 @@ export async function searchDevices(
         .join('\u0000')
         .toLowerCase(),
       matchedCaps: [],
-      compatible: requiredCaps.length === 0,
+      compatible: !needsBindings(req),
     }
   })
 
@@ -178,14 +216,9 @@ export async function searchDevices(
   const textPass =
     needle === '' ? candidates : candidates.filter((c) => c.haystack.includes(needle))
 
-  if (requiredCaps.length > 0) {
+  if (needsBindings(req)) {
     const bound = await deps.boundCaps(textPass.map((c) => c.device.id))
-    for (const c of textPass) {
-      const have = new Set(bound.get(c.device.id) ?? [])
-      const matched = requiredCaps.filter((cap) => have.has(cap))
-      c.matchedCaps = matched
-      c.compatible = mode === 'all' ? matched.length === requiredCaps.length : matched.length > 0
-    }
+    for (const c of textPass) applyRequire(c, bound.get(c.device.id) ?? [], req)
   }
 
   // Faceted search: each facet is counted over the compatible set with the
@@ -241,7 +274,7 @@ export async function searchDevices(
   const firstPage = start === 0
   const suggestedCandidates = firstPage ? suggestFor(input, keyed, fleet) : []
 
-  const items = await withValues(deps, [...page, ...suggestedCandidates], requiredCaps)
+  const items = await withValues(deps, [...page, ...suggestedCandidates], req.caps)
   const byId = new Map(items.map((i) => [i.id, i]))
 
   const facets: DeviceSearchFacets = {
@@ -291,8 +324,7 @@ async function resolveIds(
   input: DeviceSearchInput,
   candidates: readonly Candidate[],
 ): Promise<DeviceSearchResult> {
-  const requiredCaps = input.requires?.caps ?? []
-  const mode = input.requires?.mode ?? 'any'
+  const req = requireOf(input)
   const byId = new Map(candidates.map((c) => [c.device.id, c]))
   const asked = [...new Set(input.ids ?? [])]
   const found: Candidate[] = []
@@ -302,16 +334,11 @@ async function resolveIds(
     if (c === undefined) missingIds.push(id)
     else found.push(c)
   }
-  if (requiredCaps.length > 0 && found.length > 0) {
+  if (needsBindings(req) && found.length > 0) {
     const bound = await deps.boundCaps(found.map((c) => c.device.id))
-    for (const c of found) {
-      const have = new Set(bound.get(c.device.id) ?? [])
-      c.matchedCaps = requiredCaps.filter((cap) => have.has(cap))
-      c.compatible =
-        mode === 'all' ? c.matchedCaps.length === requiredCaps.length : c.matchedCaps.length > 0
-    }
+    for (const c of found) applyRequire(c, bound.get(c.device.id) ?? [], req)
   }
-  const items = await withValues(deps, found, requiredCaps)
+  const items = await withValues(deps, found, req.caps)
   return {
     items,
     nextCursor: null,

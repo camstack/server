@@ -11,6 +11,7 @@ import {
   type DeviceSearchInput,
   type DeviceSearchItem,
   type DeviceSearchResult,
+  deviceOffersActions,
   DeviceType,
 } from '@camstack/types'
 import { trpc } from '@camstack/ui-library'
@@ -26,9 +27,11 @@ export interface SearchHubDevice {
   readonly name: string
   readonly type: DeviceType
   readonly location?: string | null
+  /** Bound caps. Absent means the device offers no vocabulary action. */
+  readonly caps?: readonly string[]
 }
 
-function itemOf(device: SearchHubDevice): DeviceSearchItem {
+function itemOf(device: SearchHubDevice, compatible: boolean): DeviceSearchItem {
   return {
     id: device.id,
     name: device.name,
@@ -38,9 +41,16 @@ function itemOf(device: SearchHubDevice): DeviceSearchItem {
     integrationLabel: null,
     online: true,
     disabled: false,
-    compatible: true,
+    compatible,
     values: [],
   }
+}
+
+/** The action require, judged the same way the server judges an id lookup. */
+function offersActions(device: SearchHubDevice, input: DeviceSearchInput): boolean {
+  const actions = input.requires?.actions ?? []
+  if (actions.length === 0) return true
+  return deviceOffersActions(device.caps ?? [], actions, input.requires?.mode ?? 'any', device.type)
 }
 
 function isSearchInput(input: unknown): input is DeviceSearchInput {
@@ -50,6 +60,7 @@ function isSearchInput(input: unknown): input is DeviceSearchInput {
 function matches(device: SearchHubDevice, input: DeviceSearchInput): boolean {
   const types = input.filters?.types
   if (types !== undefined && types.length > 0 && !types.includes(device.type)) return false
+  if (!offersActions(device, input)) return false
   const text = input.text?.trim().toLowerCase()
   return text === undefined || text === '' || device.name.toLowerCase().includes(text)
 }
@@ -65,7 +76,9 @@ export function searchAnswer(
     ids !== undefined
       ? fleet.filter((d) => ids.includes(d.id))
       : fleet.filter((d) => d.id !== query.contextDeviceId && matches(d, query))
-  const items = picked.map(itemOf)
+  const items = picked.map((device) =>
+    itemOf(device, ids === undefined ? true : offersActions(device, query)),
+  )
   return {
     items,
     nextCursor: null,

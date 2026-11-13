@@ -14,7 +14,7 @@ describe('what the source column asks the device search', () => {
     expect(search.kind).toBe('requires')
     if (search.kind !== 'requires') return
     expect(search.requires.mode).toBe('any')
-    expect(search.requires.caps.length).toBeGreaterThan(0)
+    expect((search.requires.caps ?? []).length).toBeGreaterThan(0)
   })
 
   it('offers nothing, and runs no search, for a destination with no source', () => {

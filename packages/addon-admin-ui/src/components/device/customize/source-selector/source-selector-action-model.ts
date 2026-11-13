@@ -7,7 +7,7 @@
  * caps (`getBindingsBatch`) — through the cap vocabulary (D920). A device
  * offers an action when one of its bindings provides the action's cap.
  */
-import { REPEAT_ITEM_VAR, vocabularyActionsForDevice } from '@camstack/types'
+import { deviceOffersActions, REPEAT_ITEM_VAR, vocabularyActionsForDevice } from '@camstack/types'
 import type { ActionTarget, ResolvedVocabAction } from '@camstack/types'
 
 /** The variable a run binds to the device that triggered it. */
@@ -70,7 +70,7 @@ export function devicesOffering(
   fleet: readonly ActionFleetDevice[],
   actionId: string,
 ): readonly ActionFleetDevice[] {
-  return fleet.filter((device) => deviceActions(device).some((a) => a.id === actionId))
+  return fleet.filter((device) => deviceOffersActions(device.caps, [actionId], 'any', device.type))
 }
 
 function byId(fleet: readonly ActionFleetDevice[], id: number): ActionFleetDevice {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Device search can require vocabulary actions, so a command picker lists only devices that offer the command.
+
 ## [1.2.562] - 2026-11-13
 
 ### Added

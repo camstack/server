@@ -17,9 +17,15 @@ export const DEVICE_SEARCH_DEFAULT_LIMIT = 50
 export const DEVICE_SEARCH_MAX_LIMIT = 200
 
 export const DeviceSearchRequiresSchema = z.object({
-  /** Capability names the field wants a value of. */
-  caps: z.array(z.string()).readonly(),
-  /** `any` (default): a device with one of them is compatible. `all`: it must hold every one. */
+  /** Capability names the field wants a value of. Absent when the field wants actions only. */
+  caps: z.array(z.string()).readonly().optional(),
+  /**
+   * Vocabulary action ids (`cover.open`) the device must offer. Compatible means
+   * the device's bindings resolve those actions; `values` stays empty when no
+   * cap was required. `mode` applies the same way as for `caps`.
+   */
+  actions: z.array(z.string()).readonly().optional(),
+  /** `any` (default): one of the named caps, and one of the named actions, is enough. `all`: every one. */
   mode: z.enum(['any', 'all']).optional(),
 })
 export type DeviceSearchRequires = z.infer<typeof DeviceSearchRequiresSchema>

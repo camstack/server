@@ -7,10 +7,14 @@
  *  - By action lists the fleet's commands and then only the devices offering
  *    the picked one; switching mode keeps a compatible pick.
  */
-import { fireEvent, render, screen, within } from '@testing-library/react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { DeviceType } from '@camstack/types'
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
+import {
+  withDeviceSearchHub,
+  type SearchHubDevice,
+} from '../../../../../test-setup/device-search-hub'
 import '../../../../../i18n'
 import { SourceSelector } from '../SourceSelector'
 import type { ActionPickDraft } from '../SourceSelectorAction'
@@ -84,12 +88,21 @@ function Harness(props: {
   )
 }
 
+const SEARCH_FLEET: readonly SearchHubDevice[] = [
+  { id: 1, name: 'Kitchen blind', type: DeviceType.Cover, location: 'Kitchen', caps: ['cover'] },
+  { id: 2, name: 'Lamp', type: DeviceType.Light, location: 'Kitchen', caps: ['switch'] },
+  {
+    id: 3,
+    name: 'Feeder',
+    type: DeviceType.PetFeeder,
+    location: 'Kitchen',
+    caps: ['pet-feeder', 'switch'],
+  },
+  { id: 4, name: 'Hall hub', type: DeviceType.Container, location: 'Kitchen', caps: ['switch'] },
+]
+
 function mount(props: Parameters<typeof Harness>[0] = {}) {
-  render(
-    <QueryClientProvider client={new QueryClient()}>
-      <Harness {...props} />
-    </QueryClientProvider>,
-  )
+  render(withDeviceSearchHub(<Harness {...props} />, SEARCH_FLEET))
 }
 
 const draft = (): ActionPickDraft => JSON.parse(screen.getByTestId('draft').textContent ?? '{}')
@@ -97,12 +110,14 @@ const commands = () =>
   within(screen.getByTestId('action-command-column'))
     .queryAllByRole('radio')
     .map((r) => r.getAttribute('data-testid')?.replace('action-row-', ''))
-const pickDevice = (name: RegExp) => fireEvent.click(screen.getByRole('checkbox', { name }))
+const pickDevice = async (name: RegExp): Promise<void> => {
+  fireEvent.click(await screen.findByRole('checkbox', { name }))
+}
 
 describe('SourceSelector intent action — by device', () => {
-  it('one device lists its own commands, grouped under the cap title', () => {
+  it('one device lists its own commands, grouped under the cap title', async () => {
     mount()
-    pickDevice(/Kitchen blind/)
+    await pickDevice(/Kitchen blind/)
     const ids = commands()
     expect(ids).toContain('cover.open')
     expect(ids.some((id) => id?.startsWith('switch.'))).toBe(false)
@@ -113,27 +128,27 @@ describe('SourceSelector intent action — by device', () => {
     expect(draft()).toEqual({ target: { kind: 'devices', ids: [1] }, actionId: 'cover.open' })
   })
 
-  it('several devices list only the commands all of them offer', () => {
+  it('several devices list only the commands all of them offer', async () => {
     mount()
-    pickDevice(/Lamp/)
-    pickDevice(/Feeder/)
+    await pickDevice(/Lamp/)
+    await pickDevice(/Feeder/)
     const ids = commands()
     expect(ids).toContain('switch.on')
     expect(ids).not.toContain('petFeeder.feed')
-    pickDevice(/Kitchen blind/)
+    await pickDevice(/Kitchen blind/)
     expect(commands()).toEqual([])
     expect(screen.getByTestId('action-none')).toBeTruthy()
   })
 
-  it('a device that drops the picked command drops the command, not the device', () => {
+  it('a device that drops the picked command drops the command, not the device', async () => {
     mount({ initial: { target: { kind: 'devices', ids: [3] }, actionId: 'petFeeder.feed' } })
-    pickDevice(/Lamp/)
+    await pickDevice(/Lamp/)
     expect(draft()).toEqual({ target: { kind: 'devices', ids: [3, 2] }, actionId: null })
   })
 
-  it('never offers an excluded type: a container is not a pick (D356)', () => {
+  it('never offers an excluded type: a container is not a pick (D356)', async () => {
     mount({ excludeTypes: ['container'] })
-    expect(screen.getByRole('checkbox', { name: /Lamp/ })).toBeTruthy()
+    expect(await screen.findByRole('checkbox', { name: /Lamp/ })).toBeTruthy()
     expect(screen.queryByRole('checkbox', { name: /Hall hub/ })).toBeNull()
   })
 
@@ -158,7 +173,7 @@ describe('SourceSelector intent action — by device', () => {
 })
 
 describe('SourceSelector intent action — by action', () => {
-  it('lists the fleet’s commands, then only the devices that offer the picked one', () => {
+  it('lists the fleet’s commands, then only the devices that offer the picked one', async () => {
     mount()
     fireEvent.click(screen.getByRole('radio', { name: /By action|byAction/ }))
     expect(commands()).toEqual(
@@ -166,9 +181,12 @@ describe('SourceSelector intent action — by action', () => {
     )
     fireEvent.click(screen.getByTestId('action-row-petFeeder.feed'))
     const column = within(screen.getByTestId('action-device-column'))
-    expect(column.getAllByRole('checkbox')).toHaveLength(1)
-    expect(column.getByRole('checkbox', { name: /Feeder/ })).toBeTruthy()
-    expect(column.queryByRole('checkbox', { name: /Lamp|Kitchen blind/ })).toBeNull()
+    await waitFor(() => {
+      expect(column.getByRole('checkbox', { name: /Feeder/ })).toBeTruthy()
+      expect(column.queryByRole('checkbox', { name: /Lamp/ })).toBeNull()
+      expect(column.queryByRole('checkbox', { name: /Kitchen blind/ })).toBeNull()
+      expect(column.queryByRole('checkbox', { name: /Hall hub/ })).toBeNull()
+    })
   })
 
   it('searches the commands', () => {
@@ -189,6 +207,6 @@ describe('SourceSelector intent action — by action', () => {
 })
 
 function cleanupAndMount(props: Parameters<typeof Harness>[0]): void {
-  document.body.innerHTML = ''
+  cleanup()
   mount(props)
 }

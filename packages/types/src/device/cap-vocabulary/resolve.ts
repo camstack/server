@@ -244,6 +244,24 @@ export function actionsForDevice(
   return out
 }
 
+/**
+ * Whether a device offers the vocabulary actions, with the same `any` / `all`
+ * rule a cap require uses. An empty list passes. This is the one check the
+ * device search and the command picker share.
+ */
+export function deviceOffersActions(
+  bindings: VocabBindingsInput,
+  actionIds: readonly string[],
+  mode: 'any' | 'all' = 'any',
+  deviceType?: string,
+): boolean {
+  if (actionIds.length === 0) return true
+  const offered = new Set(actionsForDevice(bindings, deviceType).map((action) => action.id))
+  return mode === 'all'
+    ? actionIds.every((id) => offered.has(id))
+    : actionIds.some((id) => offered.has(id))
+}
+
 function resolveEnumValue(v: EnumStateValue): ResolvedEnumValue {
   const phrase = v.phrase ?? fill(BECOMES, { en: { value: v.label.en }, it: { value: v.label.it } })
   return { value: v.value, label: v.label, phrase, phraseFor: heldFor(phrase) }
