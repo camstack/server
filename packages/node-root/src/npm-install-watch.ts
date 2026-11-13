@@ -20,7 +20,7 @@
  * `spawn('npm.cmd')` without a shell throws EINVAL on Node ≥ 20.12, so npm
  * is started as `node npm-cli.js` (beside the node binary, or `npm_execpath`).
  */
-import { type ChildProcess, spawn } from 'node:child_process'
+import { type ChildProcess, execFile, spawn } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 
@@ -34,11 +34,27 @@ export const NPM_INSTALL_STALL_MS: number = 5 * 60_000
  */
 export const NPM_INSTALL_CEILING_MS: number = 3 * 60 * 60_000
 
-/** How often the staging directory is measured. */
-export const NPM_INSTALL_POLL_MS = 5_000
+/**
+ * How often progress is measured. A full walk of `node_modules` and the npm
+ * cache on the slow box was the cost; this period plus a top-level mark
+ * (not a recursive byte walk) is the bound.
+ */
+export const NPM_INSTALL_POLL_MS = 30_000
 
 /** After SIGTERM, how long the group has to exit before SIGKILL. */
 export const NPM_INSTALL_KILL_GRACE_MS = 5_000
+
+/**
+ * After the kill, how long to wait for the leader's `exit` before reporting
+ * the cut anyway. A child that never exits must not leave the update in
+ * `staging`.
+ */
+export const NPM_INSTALL_EXIT_WAIT_MS = 10_000
+
+/** `npm config get cache` is a lookup, not an install. */
+const NPM_CONFIG_CACHE_TIMEOUT_MS = 10_000
+
+const NPM_CACHE_INDEX = path.join('_cacache', 'index-v5')
 
 const OUTPUT_CAP_CHARS = 64 * 1024
 
@@ -132,16 +148,62 @@ interface CommandExit {
 
 type CutKind = 'timeout-stall' | 'timeout-ceiling'
 
+export type NpmCacheReader = (env: NodeJS.ProcessEnv) => Promise<string>
+
+function configuredNpmCache(env: NodeJS.ProcessEnv): string | null {
+  const configured = env['npm_config_cache'] ?? env['NPM_CONFIG_CACHE']
+  if (typeof configured === 'string' && configured.length > 0) return configured
+  return null
+}
+
+function parseNpmCacheDir(stdout: string): string | null {
+  const line = stdout.trim()
+  if (line.length === 0 || line === 'undefined' || line === 'null') return null
+  return line
+}
+
+function readNpmConfigCache(env: NodeJS.ProcessEnv): Promise<string> {
+  const launch = npmProcessLaunch(process.platform, process.execPath, env, [
+    'config',
+    'get',
+    'cache',
+  ])
+  return new Promise((resolve, reject) => {
+    execFile(
+      launch.command,
+      [...launch.args],
+      {
+        env,
+        timeout: NPM_CONFIG_CACHE_TIMEOUT_MS,
+        windowsHide: true,
+        shell: launch.shell,
+      },
+      (err, stdout) => {
+        if (err !== null) reject(err)
+        else resolve(stdout)
+      },
+    )
+  })
+}
+
 /**
  * Where npm stores tarballs while it downloads them. Outside the staging
- * directory, so a slow registry fetch does not look like a stall.
+ * directory, so a slow registry fetch does not look like a stall. The
+ * directory is `npm config get cache` (or `npm_config_cache`), read by the
+ * caller once per update — not `~/.npm`, and not on each poll.
  */
-export function npmInstallProgressDirs(env: NodeJS.ProcessEnv): readonly string[] {
-  const configured = env['npm_config_cache'] ?? env['NPM_CONFIG_CACHE']
-  if (typeof configured === 'string' && configured.length > 0) return [configured]
-  const home = env['HOME'] ?? env['USERPROFILE']
-  if (typeof home !== 'string' || home.length === 0) return []
-  return [path.join(home, '.npm')]
+export async function npmInstallProgressDirs(
+  env: NodeJS.ProcessEnv,
+  readCache: NpmCacheReader = readNpmConfigCache,
+): Promise<readonly string[]> {
+  const configured = configuredNpmCache(env)
+  if (configured !== null) return [configured]
+  try {
+    const dir = parseNpmCacheDir(await readCache(env))
+    return dir === null ? [] : [dir]
+  } catch {
+    return []
+  }
 }
 
 /** `npm_execpath`, else `npm-cli.js` next to the node binary (Windows and Unix layouts). */
@@ -185,45 +247,96 @@ export function npmProcessLaunch(
 }
 
 /**
- * Byte size of regular files under `root`. Symlinks are skipped so a link
- * that points outside the staging directory is not counted and is not
- * followed. A file that disappears mid-walk is skipped: an install renaming
- * a temp file is progress, not a failure of the measurement.
+ * A number that grows when the install is moving, without walking
+ * `node_modules` or the npm cache.
+ *
+ * Counted: the directory's own entries (count, mtime, and file size) and
+ * one level of children — enough to see a new package appear — plus the
+ * byte size of `<cache>/_cacache/index-v5`. A zip that only grows under a
+ * package's nested `binary/` does not move this mark; stdout and the cache
+ * index still do. A path that disappears mid-read is skipped.
  */
-export async function directoryByteSize(root: string): Promise<number> {
-  let total = 0
-  const stack: string[] = [root]
-  while (stack.length > 0) {
-    const dir = stack.pop()
-    if (dir === undefined) break
-    let entries: fs.Dirent[]
-    try {
-      entries = await fs.promises.readdir(dir, { withFileTypes: true })
-    } catch {
-      continue
-    }
-    for (const entry of entries) {
-      const full = path.join(dir, entry.name)
-      if (entry.isSymbolicLink()) continue
-      if (entry.isDirectory()) {
-        stack.push(full)
-        continue
-      }
-      if (!entry.isFile()) continue
-      try {
-        const st = await fs.promises.stat(full)
-        total += st.size
-      } catch {
-        // Vanished between readdir and stat — the install is still moving.
-      }
-    }
-  }
-  return total
+async function progressMark(dir: string): Promise<number> {
+  const index = await cacheIndexMark(path.join(dir, NPM_CACHE_INDEX))
+  return index + (await levelMark(dir))
 }
 
-async function treeByteSize(dirs: readonly string[]): Promise<number> {
+async function cacheIndexMark(indexPath: string): Promise<number> {
+  let st: fs.Stats
+  try {
+    st = await fs.promises.lstat(indexPath)
+  } catch {
+    return 0
+  }
+  if (st.isSymbolicLink()) return st.mtimeMs
+  if (st.isFile()) return st.size + st.mtimeMs
+  if (!st.isDirectory()) return st.mtimeMs
+  let names: fs.Dirent[]
+  try {
+    names = await fs.promises.readdir(indexPath, { withFileTypes: true })
+  } catch {
+    return st.mtimeMs
+  }
+  let mark = names.length + st.mtimeMs
+  for (const entry of names) {
+    if (!entry.isFile()) continue
+    try {
+      const child = await fs.promises.stat(path.join(indexPath, entry.name))
+      mark += child.size
+    } catch {
+      // Vanished between readdir and stat — the install is still moving.
+    }
+  }
+  return mark
+}
+
+async function statMark(full: string): Promise<number> {
+  try {
+    const st = await fs.promises.lstat(full)
+    if (st.isSymbolicLink()) return st.mtimeMs
+    if (st.isFile()) return st.size + st.mtimeMs
+    return st.mtimeMs
+  } catch {
+    return 0
+  }
+}
+
+/** The directory itself, plus one level of children. `_cacache` is the index only. */
+async function levelMark(dir: string): Promise<number> {
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(dir, { withFileTypes: true })
+  } catch {
+    return 0
+  }
+  let mark = entries.length
+  for (const entry of entries) {
+    if (entry.name === '_cacache') continue
+    const full = path.join(dir, entry.name)
+    mark += await statMark(full)
+    if (!entry.isDirectory() || entry.isSymbolicLink()) continue
+    mark += await childMark(full)
+  }
+  return mark
+}
+
+async function childMark(dir: string): Promise<number> {
+  let entries: fs.Dirent[]
+  try {
+    entries = await fs.promises.readdir(dir, { withFileTypes: true })
+  } catch {
+    return 0
+  }
+  let mark = entries.length
+  for (const entry of entries) {
+    mark += await statMark(path.join(dir, entry.name))
+  }
+  return mark
+}
+
+async function treeProgress(dirs: readonly string[]): Promise<number> {
   let total = 0
-  for (const dir of dirs) total += await directoryByteSize(dir)
+  for (const dir of dirs) total += await progressMark(dir)
   return total
 }
 
@@ -231,9 +344,9 @@ function tail(text: string): string {
   return text.length > OUTPUT_CAP_CHARS ? text.slice(text.length - OUTPUT_CAP_CHARS) : text
 }
 
-function pidAlive(pid: number): boolean {
+function groupExists(pid: number): boolean {
   try {
-    process.kill(pid, 0)
+    process.kill(-pid, 0)
     return true
   } catch {
     return false
@@ -330,7 +443,9 @@ async function killProcessGroup(
     // The leader is already gone.
   }
   await sleep(graceMs)
-  if (!pidAlive(pid)) return
+  // The leader often dies on SIGTERM while a grandchild that traps it stays
+  // in the group. SIGKILL the group whenever it still exists.
+  if (!groupExists(pid)) return
   try {
     process.kill(-pid, 'SIGKILL')
   } catch {
@@ -369,7 +484,7 @@ export async function runWatchedCommand(
   const startedAt = options.now()
   let lastGrowthAt = startedAt
   const watchedDirs = [cwd, ...(options.progressDirs ?? [])]
-  let lastSize = await treeByteSize(watchedDirs)
+  let lastSize = await treeProgress(watchedDirs)
   let lastOutput = 0
   let outputBytes = 0
   let stdout = ''
@@ -427,11 +542,16 @@ export async function runWatchedCommand(
 
   if (cut !== null) {
     await killProcessGroup(pid, platform, options.graceMs, options.sleep, spawnProcess, env)
-    await exitPromise
+    const exited = await waitForExit(exitPromise, options.sleep, NPM_INSTALL_EXIT_WAIT_MS)
     const message =
       cut === 'timeout-stall'
         ? `npm install stalled: no progress for ${options.stallMs}ms in ${cwd}`
         : `npm install hit the hard ceiling (${options.ceilingMs}ms) in ${cwd}`
+    if (!exited) {
+      log.error('npm install did not exit after the cut', {
+        meta: { stagingDir: cwd, kind: cut, pid, error: message },
+      })
+    }
     log.error('npm install cut', {
       meta: { stagingDir: cwd, kind: cut, pid, error: message },
     })
@@ -460,7 +580,7 @@ async function pollUntilCut(
   while (readExit() === null) {
     await Promise.race([options.sleep(options.pollMs), exitPromise])
     if (readExit() !== null) return null
-    const size = await treeByteSize(cursor.watchedDirs)
+    const size = await treeProgress(cursor.watchedDirs)
     const output = cursor.readOutput()
     const now = options.now()
     const grew = size > cursor.lastSize() || output > cursor.lastOutput()
@@ -469,6 +589,19 @@ async function pollUntilCut(
     if (now - cursor.startedAt >= options.ceilingMs) return 'timeout-ceiling'
   }
   return null
+}
+
+async function waitForExit(
+  exitPromise: Promise<void>,
+  sleep: (ms: number) => Promise<void>,
+  timeoutMs: number,
+): Promise<boolean> {
+  let exited = false
+  const finished = exitPromise.then(() => {
+    exited = true
+  })
+  await Promise.race([finished, sleep(timeoutMs)])
+  return exited
 }
 
 function finishExit(

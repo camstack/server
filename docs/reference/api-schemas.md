@@ -1112,7 +1112,7 @@ Enum: `"no-target" \| "node-busy" \| "job-running" \| "nothing-to-do" \| "status
 
 ### `ClusterUpdateFailureReasonSchema`
 
-Enum: `"backup-unavailable" \| "backup-failed" \| "server-refused" \| "server-not-on-target" \| "node-capless" \| "status-unreadable" \| "addon-update-failed" \| "addons-not-converged" \| "interrupted"`
+Enum: `"backup-unavailable" \| "backup-failed" \| "server-refused" \| "server-not-on-target" \| "node-capless" \| "status-unreadable" \| "addon-update-failed" \| "addons-not-converged" \| "interrupted" \| "timeout-stall" \| "timeout-ceiling"`
 
 ### `ClusterUpdateJobSchema`
 

@@ -58,6 +58,10 @@ const ClusterUpdateFailureReasonSchema = z.enum([
   'addons-not-converged',
   /** The hub restarted while a step other than its own update was running. */
   'interrupted',
+  /** `applyServerUpdate` cut a server install that stopped making progress. */
+  'timeout-stall',
+  /** `applyServerUpdate` cut a server install at its hard time limit. */
+  'timeout-ceiling',
 ])
 
 const ClusterUpdateStepSchema = z.object({

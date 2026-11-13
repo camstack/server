@@ -12927,7 +12927,9 @@
       "status-unreadable": "The node's status could not be read.",
       "addon-update-failed": "An addon update failed.",
       "addons-not-converged": "The agents did not converge on the addon versions.",
-      "interrupted": "The hub restarted in the middle of this step."
+      "interrupted": "The hub restarted in the middle of this step.",
+      "timeout-stall": "The server install stalled.",
+      "timeout-ceiling": "The server install hit its time limit."
     },
     "blocker": {
       "no-target": "No target version.",

@@ -2059,7 +2059,7 @@
 
 ### `cluster-update` → `clusterUpdate.*`
 
-- **Source:** `packages/types/src/capabilities/cluster-update.cap.ts:145`
+- **Source:** `packages/types/src/capabilities/cluster-update.cap.ts:149`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IClusterUpdateProvider`
@@ -4425,7 +4425,7 @@
 
 ### `server-management` → `serverManagement.*`
 
-- **Source:** `packages/types/src/capabilities/server-management.cap.ts:479`
+- **Source:** `packages/types/src/capabilities/server-management.cap.ts:480`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `server-provided`
 - **Archetypes:** —
 - **Provider interface:** `IServerManagementProvider`

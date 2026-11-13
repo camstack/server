@@ -10,6 +10,8 @@ import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
+import { seedStagingFromCurrent } from '../closure-stage-seed.js'
+import { NpmInstallError } from '../npm-install-watch.js'
 import { HUB_ROOT_SPEC } from '../root-package-spec.js'
 import { rootPackageDir, serverRootDir } from '../root-state.js'
 import { currentDir } from '../root-single-copy.js'
@@ -253,5 +255,46 @@ describe('stageClosure seeds from current/', () => {
         (line) => line.message === 'root package closure produced' && line.source === 'clean',
       ),
     ).toBe(true)
+  })
+
+  it('falls back to a clean install when npm ls hits the ceiling', async () => {
+    arrange()
+    let lsCalls = 0
+    const installs: string[] = []
+    const execNpm: NpmExecFn = async (args, opts) => {
+      const cwd = opts.cwd
+      if (cwd === undefined) return { stdout: '' }
+      if (args[0] === 'ls') {
+        lsCalls += 1
+        if (lsCalls === 1) {
+          throw new NpmInstallError('timeout-ceiling', cwd, null, 'npm ls hit the hard ceiling')
+        }
+        return { stdout: '' }
+      }
+      if (args[0] !== 'install') return { stdout: '' }
+      const seeded = fs.existsSync(path.join(cwd, 'node_modules', 'node-av', 'package.json'))
+      installs.push(seeded ? 'seeded' : 'clean')
+      if (seeded) return { stdout: '' }
+      return scriptAwareInstall('1.1.60', NODE_AV)(args, opts)
+    }
+    const svc = service(execNpm)
+    const res = await svc.applyServerUpdate({ version: '1.1.60' })
+    expect(res.accepted, res.message).toBe(true)
+    expect(res.reason).not.toBe('timeout-ceiling')
+    expect(installs).toEqual(['seeded', 'clean'])
+  })
+
+  it('copies a node_modules .bin entry as a symlink', async () => {
+    arrange()
+    const current = currentDir(serverRootDir(dataDir))
+    const binDir = path.join(current, 'node_modules', '.bin')
+    const target = path.join(current, 'node_modules', 'node-av', 'package.json')
+    fs.mkdirSync(binDir, { recursive: true })
+    fs.symlinkSync(path.relative(binDir, target), path.join(binDir, 'node-av'))
+    const staging = path.join(dataDir, 'staging-copy')
+    fs.mkdirSync(staging)
+    await seedStagingFromCurrent(current, staging)
+    const copied = path.join(staging, 'node_modules', '.bin', 'node-av')
+    expect(fs.lstatSync(copied).isSymbolicLink()).toBe(true)
   })
 })

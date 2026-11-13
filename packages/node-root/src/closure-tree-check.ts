@@ -12,6 +12,18 @@ import type { NpmExecFn } from './root-update-service.js'
 
 const NPM_LS_TIMEOUT_MS = 60_000
 
+/** A seeded tree that `npm ls` could not prove. Not an install timeout. */
+export const VALIDATION_FAILED_KIND = 'validation-failed' as const
+
+export class ClosureValidationError extends Error {
+  readonly kind: typeof VALIDATION_FAILED_KIND = VALIDATION_FAILED_KIND
+
+  constructor(message: string) {
+    super(message)
+    this.name = 'ClosureValidationError'
+  }
+}
+
 const NPM_LS_ARGS: readonly string[] = ['ls', '--omit=dev', '--all']
 
 /** npm ls names a broken edge with one of these words. */
@@ -143,16 +155,26 @@ export function closureLockMismatch(
  * non-zero throws on its own (the exec rejects); a zero exit that still
  * prints invalid, missing or extraneous is the same failure.
  */
+function validationFailed(message: string): ClosureValidationError {
+  return new ClosureValidationError(message)
+}
+
 export async function assertInstalledClosureTree(
   stagingDir: string,
   packageName: string,
   target: string,
   execNpm: NpmExecFn,
 ): Promise<void> {
-  const listed = await execNpm(NPM_LS_ARGS, { cwd: stagingDir, timeoutMs: NPM_LS_TIMEOUT_MS })
+  let listed: { readonly stdout: string }
+  try {
+    listed = await execNpm(NPM_LS_ARGS, { cwd: stagingDir, timeoutMs: NPM_LS_TIMEOUT_MS })
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err)
+    throw validationFailed(`npm ls failed in ${stagingDir}: ${message}`)
+  }
   if (LS_PROBLEM_RE.test(listed.stdout)) {
-    throw new Error(`npm ls reported a broken tree in ${stagingDir}`)
+    throw validationFailed(`npm ls reported a broken tree in ${stagingDir}`)
   }
   const mismatch = closureLockMismatch(stagingDir, packageName, target)
-  if (mismatch !== null) throw new Error(mismatch)
+  if (mismatch !== null) throw validationFailed(mismatch)
 }

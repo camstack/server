@@ -204,15 +204,25 @@ export async function waitForAgentOnline(
       return { reason: 'status-unreadable', why: `topology unreadable (${errText(err)})` }
     }
     const node = topology.find((n) => n.id === nodeId)
-    if (node === undefined) return { reason: 'server-not-on-target', why: 'absent from the topology' }
+    if (node === undefined)
+      return { reason: 'server-not-on-target', why: 'absent from the topology' }
     return node.isOnline ? null : { reason: 'server-not-on-target', why: 'still offline' }
   })
   return wait.ok
     ? null
-    : failed(wait.last.reason, `${nodeId} was not online at its turn: ${wait.last.why}; not updated`)
+    : failed(
+        wait.last.reason,
+        `${nodeId} was not online at its turn: ${wait.last.why}; not updated`,
+      )
 }
 
 /** Did the apply answer say "this will not happen"? */
+function serverStepReason(reason: string | null | undefined): ClusterUpdateFailureReason {
+  if (reason === 'timeout-stall') return 'timeout-stall'
+  if (reason === 'timeout-ceiling') return 'timeout-ceiling'
+  return 'server-refused'
+}
+
 function refusal(result: ServerUpdateActionResult): string | null {
   if (result.outcome === 'already-current') return null
   if (result.outcome === 'refused' || result.outcome === 'failed' || !result.accepted) {
@@ -238,7 +248,9 @@ export async function runServerStep(
   try {
     const result = await seams.applyServerUpdate(nodeId, target)
     const refused = refusal(result)
-    if (refused !== null) return failed('server-refused', `${name} refused the update (${refused})`)
+    if (refused !== null) {
+      return failed(serverStepReason(result.reason), `${name} refused the update (${refused})`)
+    }
     note = result.outcome ?? ''
   } catch (err) {
     note = `no reply (${errText(err)}); expected while the node restarts`

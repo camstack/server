@@ -21,10 +21,13 @@ import {
 } from '../root-update-service.js'
 import {
   type NpmInstallLogger,
+  NPM_INSTALL_EXIT_WAIT_MS,
+  NPM_INSTALL_POLL_MS,
   NpmInstallError,
   type RunWatchedCommandOptions,
   type WatchedChild,
   type WatchedSpawner,
+  npmInstallProgressDirs,
   runWatchedCommand,
 } from '../npm-install-watch.js'
 
@@ -105,6 +108,41 @@ describe('npm install process group', () => {
     const parentPid = Number(parentRaw)
     const childPid = Number(childRaw)
     leftovers.push(parentPid)
+    expect(parentPid).toBeGreaterThan(0)
+    expect(childPid).toBeGreaterThan(0)
+    expect(await waitUntilDead(parentPid)).toBe(true)
+    expect(await waitUntilDead(childPid)).toBe(true)
+    fs.rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('kills a grandchild that traps SIGTERM when the install is cut', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-trap-'))
+    const pidFile = path.join(dir, 'pids')
+    const script = `
+      const { spawn } = require('node:child_process')
+      const fs = require('node:fs')
+      const child = spawn(process.execPath, ['-e', 'process.on("SIGTERM", () => {}); setInterval(() => {}, 1e9)'], { stdio: 'ignore' })
+      fs.writeFileSync(process.argv[1], process.pid + '\\n' + child.pid + '\\n')
+      setInterval(() => {}, 1e9)
+    `
+    const outcome = runWatchedCommand({
+      command: process.execPath,
+      args: ['-e', script, pidFile],
+      cwd: dir,
+      stallMs: 300,
+      ceilingMs: 60_000,
+      pollMs: 40,
+      graceMs: 100,
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
+      log: silentLog,
+    })
+    await expect(outcome).rejects.toBeInstanceOf(NpmInstallError)
+    const text = fs.readFileSync(pidFile, 'utf8')
+    const [parentRaw, childRaw] = text.trim().split('\n')
+    const parentPid = Number(parentRaw)
+    const childPid = Number(childRaw)
+    leftovers.push(parentPid, childPid)
     expect(parentPid).toBeGreaterThan(0)
     expect(childPid).toBeGreaterThan(0)
     expect(await waitUntilDead(parentPid)).toBe(true)
@@ -415,6 +453,175 @@ describe('windows npm launch', () => {
       shell: true,
     })
     fs.rmSync(dir, { recursive: true, force: true })
+  })
+})
+
+describe('a cut whose process never exits', () => {
+  it('throws the cut error after a short wait', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-hang-'))
+    const errors: string[] = []
+    let clock = 0
+    const spawnProcess: WatchedSpawner = () => deferredChild(4242).child
+    const outcome = runWatchedCommand({
+      command: process.execPath,
+      args: ['-e', ''],
+      cwd: dir,
+      stallMs: 1,
+      ceilingMs: 60_000,
+      pollMs: 1,
+      graceMs: 0,
+      now: () => clock,
+      sleep: async (ms) => {
+        clock += ms
+      },
+      log: {
+        info: () => undefined,
+        warn: () => undefined,
+        error: (message) => {
+          errors.push(message)
+        },
+      },
+      spawnProcess,
+    })
+    await expect(outcome).rejects.toMatchObject({ kind: 'timeout-stall' })
+    expect(errors).toContain('npm install did not exit after the cut')
+    expect(clock).toBeGreaterThanOrEqual(NPM_INSTALL_EXIT_WAIT_MS)
+    fs.rmSync(dir, { recursive: true, force: true })
+  }, 3_000)
+})
+
+describe('cheap install progress', () => {
+  it('measures progress every 30 seconds', () => {
+    expect(NPM_INSTALL_POLL_MS).toBe(30_000)
+    expect(NPM_INSTALL_POLL_MS).toBeLessThan(5 * 60_000)
+  })
+
+  it('stalls when only a nested file grows', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-nested-'))
+    const nested = path.join(dir, 'node_modules', 'node-av', 'binary', 'ffmpeg.zip')
+    const stop = path.join(dir, 'stop')
+    fs.mkdirSync(path.dirname(nested), { recursive: true })
+    const script = `
+      const fs = require('node:fs')
+      const timer = setInterval(() => {
+        fs.appendFileSync(process.argv[1], 'x')
+        if (fs.existsSync(process.argv[2])) {
+          clearInterval(timer)
+          process.exit(0)
+        }
+      }, 5)
+    `
+    let clock = 0
+    let settled = false
+    const outcome = runWatchedCommand({
+      command: process.execPath,
+      args: ['-e', script, nested, stop],
+      cwd: dir,
+      stallMs: 5 * 60_000,
+      ceilingMs: 30 * 60_000,
+      pollMs: 30_000,
+      graceMs: 20,
+      now: () => clock,
+      sleep: async (ms) => {
+        clock += ms
+        await new Promise((resolve) => setTimeout(resolve, 15))
+      },
+      log: silentLog,
+    })
+    void outcome.then(
+      () => {
+        settled = true
+      },
+      () => {
+        settled = true
+      },
+    )
+    const deadline = Date.now() + 4_000
+    while (!settled && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    }
+    fs.writeFileSync(stop, '1')
+    expect(settled).toBe(true)
+    await expect(outcome).rejects.toMatchObject({ kind: 'timeout-stall' })
+    fs.rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('treats a growing npm cache index as progress', async () => {
+    const cwd = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-cache-cwd-'))
+    const cache = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-cache-'))
+    const index = path.join(cache, '_cacache', 'index-v5')
+    const stop = path.join(cache, 'stop')
+    fs.mkdirSync(path.dirname(index), { recursive: true })
+    const script = `
+      const fs = require('node:fs')
+      const timer = setInterval(() => {
+        fs.appendFileSync(process.argv[1], 'x')
+        if (fs.existsSync(process.argv[2])) {
+          clearInterval(timer)
+          process.exit(0)
+        }
+      }, 10)
+    `
+    const oldWallMs = 15 * 60_000
+    let clock = 0
+    let settled = false
+    const outcome = runWatchedCommand({
+      command: process.execPath,
+      args: ['-e', script, index, stop],
+      cwd,
+      progressDirs: [cache],
+      stallMs: 10 * 60_000,
+      ceilingMs: 90 * 60_000,
+      pollMs: 60_000,
+      graceMs: 50,
+      now: () => clock,
+      sleep: async (ms) => {
+        clock += ms
+        await new Promise((resolve) => setTimeout(resolve, 30))
+      },
+      log: silentLog,
+    }).then(
+      (value) => {
+        settled = true
+        return value
+      },
+      (err: unknown) => {
+        settled = true
+        throw err
+      },
+    )
+    const deadline = Date.now() + 5_000
+    while (clock <= oldWallMs) {
+      if (settled) break
+      if (Date.now() > deadline) break
+      await new Promise((resolve) => setTimeout(resolve, 20))
+    }
+    expect(settled).toBe(false)
+    expect(clock).toBeGreaterThan(oldWallMs)
+    fs.writeFileSync(stop, '1')
+    await expect(outcome).resolves.toEqual({ stdout: '' })
+    fs.rmSync(cwd, { recursive: true, force: true })
+    fs.rmSync(cache, { recursive: true, force: true })
+  })
+
+  it('reads the cache directory from npm config get cache', async () => {
+    let calls = 0
+    const dirs = await npmInstallProgressDirs({ HOME: '/Users/nobody' }, async () => {
+      calls += 1
+      return '/var/npm-cache\n'
+    })
+    expect(calls).toBe(1)
+    expect(dirs).toEqual(['/var/npm-cache'])
+  })
+
+  it('keeps an explicit npm cache without asking npm', async () => {
+    let calls = 0
+    const dirs = await npmInstallProgressDirs({ npm_config_cache: '/opt/cache' }, async () => {
+      calls += 1
+      return '/nope\n'
+    })
+    expect(calls).toBe(0)
+    expect(dirs).toEqual(['/opt/cache'])
   })
 })
 

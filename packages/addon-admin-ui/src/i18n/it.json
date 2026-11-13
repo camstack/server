@@ -12949,7 +12949,9 @@
       "status-unreadable": "Impossibile leggere lo stato del nodo.",
       "addon-update-failed": "Un aggiornamento addon è fallito.",
       "addons-not-converged": "Gli agent non si sono allineati alle versioni degli addon.",
-      "interrupted": "L'hub si è riavviato nel mezzo di questo passo."
+      "interrupted": "L'hub si è riavviato nel mezzo di questo passo.",
+      "timeout-stall": "L'installazione del server si è bloccata.",
+      "timeout-ceiling": "L'installazione del server ha raggiunto il limite di tempo."
     },
     "blocker": {
       "no-target": "Nessuna versione di destinazione.",

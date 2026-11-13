@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Email images travel as peerBytes tickets on smtp-provider.sendEmail.
+- A cluster update can name a server install that stalled or hit its time limit.
 
 ## [1.2.562] - 2026-11-13
 

@@ -431,7 +431,8 @@ const ServerUpdateActionResultSchema = z.object({
   outcome: ServerUpdateOutcomeSchema.optional(),
   /**
    * Stable, greppable cause for `refused` / `failed` (the engine's
-   * `UpdateRefusalReason`, `staging-failed`, …). `null` on success.
+   * `UpdateRefusalReason`, `staging-failed`, `timeout-stall`,
+   * `timeout-ceiling`). `null` on success.
    */
   reason: z.string().nullable().optional(),
   /**

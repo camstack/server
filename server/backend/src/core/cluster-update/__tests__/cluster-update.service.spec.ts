@@ -241,6 +241,21 @@ describe('ClusterUpdateService', () => {
     expect(w.calls).not.toContain('apply:agent-b@2.0.0')
   })
 
+  it('a stalled server install is its own reason, not a generic refusal', async () => {
+    const w = world()
+    w.apply = async () => ({
+      accepted: false,
+      targetVersion: TARGET,
+      restarting: false,
+      message: 'Staging failed: npm install stalled',
+      outcome: 'failed',
+      reason: 'timeout-stall',
+    })
+    const job = await run(w)
+    expect(job.state).toBe('failed')
+    expect(job.reason).toBe('timeout-stall')
+  })
+
   it('a refused hub update stops the job before any agent or addon', async () => {
     const w = world()
     w.apply = async (nodeId) => {

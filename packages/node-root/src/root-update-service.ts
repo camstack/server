@@ -326,19 +326,25 @@ export function isTransientNpmNetworkError(message: string): boolean {
  * a network code (the download's own stderr). Anything else still has to
  * look like a dropped connection.
  */
-export function isRetryableStagingFailure(err: unknown): boolean {
-  if (
+export function isInstallTimeout(err: unknown): err is NpmInstallError {
+  return (
     err instanceof NpmInstallError &&
-    (err.kind === 'timeout-stall' || err.kind === 'timeout-ceiling')
-  ) {
-    return false
-  }
+    (err.kind === TIMEOUT_STALL_REASON || err.kind === TIMEOUT_CEILING_REASON)
+  )
+}
+
+export function isRetryableStagingFailure(err: unknown): boolean {
+  if (isInstallTimeout(err)) return false
   const message = err instanceof Error ? err.message : String(err)
   return isTransientNpmNetworkError(message)
 }
 
 /** Stable `reason` a staging install that never landed reports (see `ServerUpdateOutcome`). */
 export const STAGING_FAILED_REASON = 'staging-failed'
+/** `applyServerUpdate` reason: the install made no progress for {@link NPM_INSTALL_STALL_MS}. */
+export const TIMEOUT_STALL_REASON = 'timeout-stall' as const
+/** `applyServerUpdate` reason: the install hit {@link NPM_INSTALL_CEILING_MS}. */
+export const TIMEOUT_CEILING_REASON = 'timeout-ceiling' as const
 /** Stable `reason` for the rollback the single-copy model cannot perform. */
 export const ROLLBACK_UNSUPPORTED_REASON = 'rollback-unsupported'
 
@@ -424,6 +430,8 @@ export class RootUpdateService {
   private readonly installedAddonVersionsFn: (() => Readonly<Record<string, string | null>>) | null
   private readonly runnerBootCheckFn: () => RunnerBootCheck | undefined
   private readonly execNpm: NpmExecFn
+  /** `npm config get cache`, once per service — not on each progress poll. */
+  private npmProgressDirsPromise: Promise<readonly string[]> | null = null
   private readonly ensureNativePrebuildsFn: (closureDir: string) => Promise<void>
   private readonly applyClosurePatchesFn: (closureDir: string) => Promise<void>
   private readonly env: NodeJS.ProcessEnv
@@ -475,7 +483,7 @@ export class RootUpdateService {
           now: () => this.now(),
           sleep: (ms) => this.sleep(ms),
           env: this.env,
-          progressDirs: npmInstallProgressDirs(this.env),
+          progressDirs: await this.installProgressDirs(),
           log: {
             info: (message, context) =>
               this.logger.info(message, { tags: this.logTags, ...context }),
@@ -930,9 +938,7 @@ export class RootUpdateService {
       stagingPath = await this.stageClosureWithRetry(target)
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
-      const timedOut =
-        err instanceof NpmInstallError &&
-        (err.kind === 'timeout-stall' || err.kind === 'timeout-ceiling')
+      const timedOut = isInstallTimeout(err)
       return {
         accepted: false,
         targetVersion: target,
@@ -1056,9 +1062,10 @@ export class RootUpdateService {
    * replaces packages whose version changed. The dev-upload channel is not
    * seeded: those tarballs are pinned by version string, and a copied
    * `node_modules` would let npm skip a tarball whose bytes changed under the
-   * same version. A seeded attempt that fails install or validation is
-   * retried once from an empty directory. A stall or the hard ceiling is not
-   * retried — the empty install would wait on the same download.
+   * same version. A seeded attempt that fails install or validation
+   * (`validation-failed`, including a slow or failed `npm ls`) is retried
+   * once from an empty directory. A stall or the hard ceiling of the install
+   * itself is not retried — the empty install would wait on the same download.
    */
   private async stageClosure(target: string): Promise<string> {
     const devDir = devUploadVersionDir(this.rootDir(), target)
@@ -1073,12 +1080,7 @@ export class RootUpdateService {
       this.logClosureSource(target, stagingDir, 'seeded')
       return stagingDir
     } catch (err) {
-      if (
-        err instanceof NpmInstallError &&
-        (err.kind === 'timeout-stall' || err.kind === 'timeout-ceiling')
-      ) {
-        throw err
-      }
+      if (isInstallTimeout(err)) throw err
       const message = err instanceof Error ? err.message : String(err)
       this.logger.warn('seeded closure staging failed — retrying from an empty directory', {
         tags: this.logTags,
@@ -1088,6 +1090,19 @@ export class RootUpdateService {
       this.logClosureSource(target, stagingDir, 'clean')
       return stagingDir
     }
+  }
+
+  /** npm's cache directory, resolved once. Empty means progress ignores the cache. */
+  private installProgressDirs(): Promise<readonly string[]> {
+    this.npmProgressDirsPromise ??= npmInstallProgressDirs(this.env).then((dirs) => {
+      if (dirs.length === 0) {
+        this.logger.warn('npm cache directory unknown — install progress ignores the cache', {
+          tags: this.logTags,
+        })
+      }
+      return dirs
+    })
+    return this.npmProgressDirsPromise
   }
 
   /** The running closure has the files a seed copy needs. */

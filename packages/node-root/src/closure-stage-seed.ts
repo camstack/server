@@ -7,9 +7,10 @@
  * (20–30 min at ~33 KB/s on little-unraid, 2026-11-12). Copying `current/`
  * first lets npm treat unchanged packages as already installed.
  *
- * The copy is a real copy (`fs.cp` with `dereference`), never a hardlink:
- * the starter later deletes or swaps `current/`, and a staged tree that
- * shared inodes with it would lose files out from under the install.
+ * The copy is a real copy, never a hardlink: the starter later deletes or
+ * swaps `current/`, and a staged tree that shared inodes with it would lose
+ * files out from under the install. Symlinks are copied as symlinks
+ * (`verbatimSymlinks`) so `node_modules/.bin` stays a link.
  */
 import * as fs from 'node:fs'
 import * as path from 'node:path'
@@ -35,6 +36,6 @@ export async function seedStagingFromCurrent(
   }
   await fs.promises.cp(nodeModules, path.join(stagingDir, 'node_modules'), {
     recursive: true,
-    dereference: true,
+    verbatimSymlinks: true,
   })
 }
