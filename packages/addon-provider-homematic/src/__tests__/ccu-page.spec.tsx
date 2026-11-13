@@ -519,3 +519,65 @@ describe('HomematicCcuPage device configuration', () => {
     })
   })
 })
+
+describe('HomematicCcuPage button events', () => {
+  const BS2 = {
+    address: '00315F298E5093',
+    type: 'HmIP-BS2',
+    name: 'Bagno camerette',
+    rooms: [],
+    functions: [],
+    firmware: null,
+    availableFirmware: null,
+    updatable: null,
+    rssi: null,
+    rssiPeer: null,
+    dutyCycle: null,
+    dutyCycleLimited: null,
+    lowBattery: null,
+    unreach: null,
+    configPending: null,
+    sabotage: null,
+    keyChannels: [
+      {
+        address: '00315F298E5093:1',
+        index: '1',
+        name: null,
+        central: 'off',
+        links: [
+          {
+            receiver: '00315F298E5093:4',
+            receiverName: 'Luce bagno',
+            receiverDeviceName: 'Bagno camerette',
+          },
+        ],
+      },
+    ],
+  }
+
+  it('shows what each key actuates and turns presses on only after confirmation', async () => {
+    window.history.replaceState(null, '', '/?tab=devices')
+    const set = vi.fn().mockReturnValue({ ok: true })
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({ devices: [BS2] }),
+      setButtonEvents: set,
+    })
+    mountPage(fake.trpc)
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Button events' }))
+    const dialog = await screen.findByTestId('hm-button-events-dialog')
+    expect(within(dialog).getByText('Direct links: Luce bagno (00315F298E5093:4)')).toBeTruthy()
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Enable button events' }))
+    expect(set).not.toHaveBeenCalled()
+    const confirm = await screen.findByRole('dialog', { name: /Enable button events/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Enable button events' }))
+    await waitFor(() => expect(set).toHaveBeenCalled())
+    expect(set.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      address: '00315F298E5093:1',
+      enabled: true,
+      confirmed: true,
+    })
+  })
+})

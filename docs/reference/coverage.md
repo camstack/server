@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**249 units · 8638 source files · 242 units claimed by at least one document (8607 files).**
+**249 units · 8640 source files · 242 units claimed by at least one document (8609 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -102,10 +102,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-vesync` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/generated` | 19 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0936-a-customize-declaration-is-the-override-contract.md`, +2 more, 2 ADRs | — |
 | `packages/addon-auth` | 18 | `auth` | `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, `decisions/adr-0780-an-icon-setting-is-a-display-icon-vocabulary-key-chosen-with-the-shared-picker.md`, `decisions/adr-1013-one-instance-model.md`, +8 more | 2026-10-21 |
+| `packages/addon-provider-homematic/src/devices` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1044-an-event-emitter-declares-its-events-in-a-typed-vocabulary-under-one-category.md`, +1 more | 2026-11-08 |
 | `packages/addon-provider-wyze` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/system/src/auth` | 18 | `auth` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `architecture/authentication.md`, +17 more | 2026-10-21 |
 | `packages/addon-mqtt-broker` | 17 | `ecosystem-exports` | `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0797-no-secret-reaches-a-node-through-its-environment-the-hub-keeps-its-own-in-the-keychain.md` | — |
-| `packages/addon-provider-homematic/src/devices` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1044-an-event-emitter-declares-its-events-in-a-typed-vocabulary-under-one-category.md`, +1 more | 2026-11-08 |
 | `packages/addon-provider-petkit` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0959-a-petkit-re-login-is-gated-because-the-account-has-one-session.md`, `decisions/adr-1013-one-instance-model.md`, +1 more, 1 ADR | 2026-11-08 |
 | `packages/addon-provider-rademacher` | 17 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-tailscale` | 17 | `remote-access` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md` | — |
@@ -133,11 +133,11 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
 | `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, +2 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |
+| `packages/addon-provider-homematic/src/ccu` | 11 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/ir` | 11 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md` | — |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +3 more, 1 ADR | 2026-09-29 |
 | `packages/addon-import-alexa/src/migrations` | 10 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md` | — |
 | `packages/addon-pipeline/src/audio-analyzer` | 10 | `audio` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0660-an-audio-window-waits-for-the-classifier-it-is-never-dropped-for-contention.md`, `decisions/adr-0450-the-audio-plane-carries-the-source-rate-and-the-one-consumer-that-needs-more-resamples-next-to-itself.md`, +5 more | 2026-10-02 |
-| `packages/addon-provider-homematic/src/ccu` | 10 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/sdk` | 10 | `tooling` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/authentication.md`, `decisions/adr-0812-every-session-token-belongs-to-a-server-side-login-session-checked-on-every-verify.md` | 2026-10-21 |
 | `packages/system/src/migrations` | 10 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/types/src/deps` | 10 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `architecture/windows-agent.md`, +3 more | 2026-10-24 |

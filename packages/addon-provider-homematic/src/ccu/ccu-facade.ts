@@ -49,6 +49,11 @@ export interface CcuActionDeps {
   readonly logger: IScopedLogger
   /** CCU device addresses already adopted from this integration. */
   readonly adoptedAddresses: (integrationId: string) => Promise<ReadonlySet<string>>
+  /**
+   * A CCU write landed: the adopted devices of this integration re-read what
+   * they show (a key's central link, a name).
+   */
+  readonly ccuChanged: (integrationId: string) => void
 }
 
 export function errorText(err: unknown): string {

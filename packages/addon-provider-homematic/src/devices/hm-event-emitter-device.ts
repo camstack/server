@@ -14,7 +14,11 @@ import {
   type InferNativeProvider,
 } from '@camstack/types'
 import type { ValueChangedEvent } from 'nodehomematic'
+import { directLinksOfKey } from '../ccu/ccu-button-events.js'
+import { channelNameLookup } from '../ccu/hm-channel-names.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
+import { buttonEventsSection, type HmKeyLinkState } from './hm-button-events-section.js'
+import { hmName } from './hm-name.js'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {
   HM_KEY_PRESS_DATAPOINTS,
@@ -26,7 +30,7 @@ import { hmKeyChannels, hmKeyVocabulary } from './hm-key-vocabulary.js'
 
 /** Shown on the Buttons child when none of its key channels has a central link. */
 export const BUTTON_EVENTS_HINT =
-  'The CCU does not send these presses — enable button events on the CCU page'
+  "The CCU does not send these presses — turn them on in this device's Button events section"
 
 /**
  * Event-emitter child config: the persisted native press vocabulary for the
@@ -56,8 +60,10 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   readonly #undeclaredLogged = new Set<string>()
   /** Key channels that have delivered a press since this process started. */
   readonly #pressSeen = new Set<string>()
-  /** True once we know every key channel lacks a central link. */
+  /** True once we know a key channel lacks a central link. */
   #centralLinkMissing = false
+  /** Per key channel: central link and direct links, as the CCU last answered. */
+  #keyStates: readonly HmKeyLinkState[] = []
   #eventSeq = 0
   #eventCount = 0
   /** Unsubscribe for the integration's state-change fan-out. */
@@ -84,28 +90,7 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
   }
 
   override getSettingsUISchema(): ConfigUISchemaWithValues {
-    if (!this.#centralLinkMissing) return { sections: [] }
-    return {
-      sections: [
-        {
-          id: 'button-events',
-          title: 'Button events',
-          titleKey: 'provider-homematic:device.buttonEvents.title',
-          columns: 1,
-          fields: [
-            {
-              type: 'info',
-              key: 'buttonEventsHint',
-              label: 'Button events',
-              labelKey: 'provider-homematic:device.buttonEvents.hint.label',
-              content: BUTTON_EVENTS_HINT,
-              contentKey: 'provider-homematic:device.buttonEvents.hint.content',
-              variant: 'warning',
-            },
-          ],
-        },
-      ],
-    }
+    return { sections: buttonEventsSection(this.integrationId, this.#keyStates) }
   }
 
   /**
@@ -145,12 +130,25 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
     if (facade === null || device === null) return
     const keys = hmKeyChannels(device)
     if (keys.length === 0) return
-    let missing = false
+    const names = channelNameLookup(facade.devices())
+    const states: HmKeyLinkState[] = []
+    let failed = false
     for (const channel of keys) {
+      const base = {
+        address: channel.address,
+        name: hmName(channel.name),
+        index: channelIndexFromAddress(channel.address) ?? String(channel.index),
+      }
       try {
         const state = await facade.getChannelLinkState(channel.address)
-        if (!state.central) missing = true
+        states.push({
+          ...base,
+          central: state.central,
+          links: directLinksOfKey(channel.address, state.links, names),
+        })
       } catch (err: unknown) {
+        failed = true
+        states.push({ ...base, central: null, links: [] })
         this.ctx.logger.warn('Homematic key channel link state could not be read', {
           tags: { deviceId: this.ctx.id },
           meta: {
@@ -159,9 +157,12 @@ export class HmEventEmitterDevice extends HmChildDevice<typeof hmEventEmitterSch
             error: err instanceof Error ? err.message : String(err),
           },
         })
-        return
       }
     }
+    this.#keyStates = states
+    // A failed read is not evidence the CCU is silent: the hint stays as it was.
+    if (failed) return
+    const missing = states.some((state) => state.central === false)
     if (missing === this.#centralLinkMissing) return
     this.#centralLinkMissing = missing
     const current = this.runtimeState.getCapState<EventEmitterStatus>('event-emitter')

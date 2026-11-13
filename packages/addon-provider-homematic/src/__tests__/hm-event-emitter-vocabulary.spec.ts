@@ -13,7 +13,7 @@ import {
   type IDeviceRuntimeState,
 } from '@camstack/types'
 import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
-import { beforeEach, describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HmEventEmitterDevice } from '../devices/hm-event-emitter-device.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 
@@ -125,7 +125,7 @@ interface FacadeHandle {
 }
 
 /** A two-button wall switch as the library reports it: keys on :1 and :2. */
-function makeFacade(): FacadeHandle {
+function makeFacade(central = true): FacadeHandle {
   const handlers = new Map<string, Handler[]>()
   const device = {
     address: ADDRESS,
@@ -157,8 +157,14 @@ function makeFacade(): FacadeHandle {
     },
     devices: () => [device],
     customEntities: () => [],
-    // The CCU already sends these keys' presses (central link present).
-    getChannelLinkState: async () => ({ central: true, links: [] }),
+    // Key 1 actuates the switch on :3 through a direct link.
+    getChannelLinkState: async (address: string) => ({
+      central,
+      links:
+        address === `${ADDRESS}:1`
+          ? [{ sender: `${ADDRESS}:1`, receiver: `${ADDRESS}:3`, name: '' }]
+          : [],
+    }),
   }
   return {
     // Exactly what `HmChildDevice` calls on a `Homematic` facade. Widened at
@@ -329,5 +335,25 @@ describe('HmEventEmitterDevice, the declared vocabulary', () => {
       meta: { parameter: 'STATE' },
     })
     expect(h.emitted).toHaveLength(0)
+  })
+
+  it('offers, per key, the central-link toggle and the channels it actuates', async () => {
+    const f = makeFacade(false)
+    homematicFacades.set(INTEGRATION_ID, f.facade)
+    const h = makeCtx()
+    const device = new HmEventEmitterDevice(h.ctx)
+    await vi.waitFor(() => {
+      expect(device.getSettingsUISchema().sections).toHaveLength(1)
+    })
+    const fields = device.getSettingsUISchema().sections[0]?.fields ?? []
+    const buttons = fields.flatMap((field) =>
+      field.type === 'addon-action-button' ? [field.paramsStatic] : [],
+    )
+    expect(buttons).toEqual([
+      { integrationId: INTEGRATION_ID, address: `${ADDRESS}:1`, enabled: true, confirmed: true },
+      { integrationId: INTEGRATION_ID, address: `${ADDRESS}:2`, enabled: true, confirmed: true },
+    ])
+    const table = fields.find((field) => field.type === 'object-array')
+    expect(table?.type === 'object-array' ? table.value[0]?.['links'] : null).toBe(`${ADDRESS}:3`)
   })
 })

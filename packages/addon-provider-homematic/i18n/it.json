@@ -23,5 +23,9 @@
   "connection.s_interfaces.enableBidcosRf.description": "I dispositivi BidCos classici (HM-RCV-50, RPI-RF-MOD) compaiono solo con questa opzione attiva.",
   "device.buttonEvents.title": "Eventi pulsante",
   "device.buttonEvents.hint.label": "Eventi pulsante",
-  "device.buttonEvents.hint.content": "La CCU non invia queste pressioni: attiva gli eventi pulsante nella pagina CCU"
+  "device.buttonEvents.hint.content": "La CCU non invia alcune di queste pressioni: attivale qui sotto",
+  "device.buttonEvents.keys.label": "Tasti",
+  "device.buttonEvents.keys.key": "Tasto",
+  "device.buttonEvents.keys.central": "Inviato a CamStack",
+  "device.buttonEvents.keys.links": "Collegamenti diretti"
 }

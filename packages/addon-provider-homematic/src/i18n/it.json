@@ -99,7 +99,9 @@
     "enableButtonEvents": "Abilita eventi pulsante",
     "disableButtonEvents": "Disabilita eventi pulsante",
     "enableButtonEventsMessage": "Crea un collegamento centrale per {{name}}. I collegamenti diretti restano.",
-    "disableButtonEventsMessage": "Rimuove il collegamento centrale di {{name}}. I collegamenti diretti restano."
+    "disableButtonEventsMessage": "Rimuove il collegamento centrale di {{name}}. I collegamenti diretti restano.",
+    "directLinks": "Collegamenti diretti: {{targets}}",
+    "directLinksNone": "Nessun collegamento diretto"
   },
   "heating": {
     "loadFailed": "Impossibile leggere il riscaldamento",

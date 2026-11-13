@@ -101,12 +101,25 @@ export const SetButtonEventsInputSchema = IntegrationRefSchema.extend({
 
 // ── Devices ────────────────────────────────────────────────────────────────
 
-/** One key channel's central-link state. `unknown` is a read that failed, never `off`. */
+/** A channel a key channel actuates through a direct link. */
+export const KeyDirectLinkSchema = z.object({
+  receiver: z.string(),
+  receiverName: z.string().nullable(),
+  receiverDeviceName: z.string().nullable(),
+})
+export type KeyDirectLink = z.infer<typeof KeyDirectLinkSchema>
+
+/**
+ * One key channel's central-link state and the channels it actuates directly.
+ * `unknown` is a read that failed, never `off`; its `links` are then empty
+ * because they were not read, not because there are none.
+ */
 export const KeyChannelLinkSchema = z.object({
   address: z.string(),
   index: z.string(),
   name: z.string().nullable(),
   central: z.enum(['on', 'off', 'unknown']),
+  links: z.array(KeyDirectLinkSchema),
 })
 export type KeyChannelLink = z.infer<typeof KeyChannelLinkSchema>
 

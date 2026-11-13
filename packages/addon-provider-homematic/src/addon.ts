@@ -257,6 +257,7 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
       },
       logger: this.ctx.logger,
       adoptedAddresses: (integrationId) => this.adoptedCcuAddresses(integrationId),
+      ccuChanged: (integrationId) => homematicFacades.emitSnapshot(integrationId),
     }
   }
 

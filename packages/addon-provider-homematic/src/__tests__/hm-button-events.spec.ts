@@ -23,7 +23,11 @@ function keyDevice() {
 function linkState(central: boolean): () => Promise<HmChannelLinkState> {
   return async () => ({
     central,
-    links: [{ sender: `${ADDRESS}:1`, receiver: `${ADDRESS}:4`, name: '' }],
+    links: [
+      { sender: `${ADDRESS}:1`, receiver: `${ADDRESS}:4`, name: '' },
+      // A link where this key is the RECEIVER actuates nothing from it.
+      { sender: 'OTHER:1', receiver: `${ADDRESS}:1`, name: '' },
+    ],
   })
 }
 
@@ -36,7 +40,7 @@ describe('hmName', () => {
 })
 
 describe('button events on the device list', () => {
-  it('reports central-link state for an adopted device with key channels', async () => {
+  it('reports central-link state and the actuated channels for an adopted device with key channels', async () => {
     const { deps } = fakeDeps({
       devices: () => [keyDevice()],
       getChannelLinkState: linkState(false),
@@ -52,6 +56,13 @@ describe('button events on the device list', () => {
         index: '1',
         name: 'Sinistra',
         central: 'off',
+        links: [
+          {
+            receiver: `${ADDRESS}:4`,
+            receiverName: 'Luce',
+            receiverDeviceName: 'Pulsante bagno camerette',
+          },
+        ],
       },
     ])
   })
@@ -69,6 +80,7 @@ describe('button events on the device list', () => {
     })
     const out = await handlers.listCcuDevices({ integrationId: 'hm_1' })
     expect(out.devices[0]?.keyChannels[0]?.central).toBe('unknown')
+    expect(out.devices[0]?.keyChannels[0]?.links).toEqual([])
   })
 
   it('omits key channels for a device that is not adopted', async () => {
@@ -106,13 +118,18 @@ describe('setButtonEvents', () => {
         removedLinks.push(sender)
       },
     })
-    await buildButtonEventHandlers(deps).setButtonEvents({
+    const changed: string[] = []
+    await buildButtonEventHandlers({
+      ...deps,
+      ccuChanged: (id) => changed.push(id),
+    }).setButtonEvents({
       integrationId: 'hm_1',
       address: `${ADDRESS}:1`,
       enabled: true,
       confirmed: true,
     })
     expect(created).toEqual([`${ADDRESS}:1`])
+    expect(changed).toEqual(['hm_1'])
     expect(removedLinks).toEqual([])
   })
 

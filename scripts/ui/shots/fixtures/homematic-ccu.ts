@@ -40,8 +40,20 @@ const DEVICES = [
     rooms: ['Hall'],
     functions: ['Light'],
     keyChannels: [
-      { address: '0001D3C99C5678:1', index: '1', name: 'Left', central: 'off' },
-      { address: '0001D3C99C5678:2', index: '2', name: null, central: 'on' },
+      {
+        address: '0001D3C99C5678:1',
+        index: '1',
+        name: 'Left',
+        central: 'off',
+        links: [
+          {
+            receiver: '0001D3C99C5678:4',
+            receiverName: 'Hall light',
+            receiverDeviceName: 'Hall buttons',
+          },
+        ],
+      },
+      { address: '0001D3C99C5678:2', index: '2', name: null, central: 'on', links: [] },
     ],
   }),
   device('NEQ1234567', 'HM-CC-RT-DN', 'Study radiator', { unreach: true, rssi: null }),

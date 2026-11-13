@@ -1,13 +1,27 @@
 import { Badge, Button, ItemFormDialog } from '@camstack/ui-library'
 import { MousePointerClick } from 'lucide-react'
 import { useState } from 'react'
-import { OkResultSchema, type CcuDeviceRow, type KeyChannelLink } from '../ccu/ccu-schemas.js'
+import {
+  OkResultSchema,
+  type CcuDeviceRow,
+  type KeyChannelLink,
+  type KeyDirectLink,
+} from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { centralKey } from './central-key.js'
 import { useCcuWrite } from './use-ccu-write.js'
 
-/** Per key channel: whether the CCU sends presses, and the central-link toggle. */
+/** A linked channel by its CCU name, the address beside it. */
+export function directLinkLabel(link: KeyDirectLink): string {
+  const name = link.receiverName ?? link.receiverDeviceName
+  return name === null ? link.receiver : `${name} (${link.receiver})`
+}
+
+/**
+ * Per key channel: whether the CCU sends presses, the channels it actuates
+ * through direct links, and the central-link toggle.
+ */
 export function ButtonEventsDialog(props: {
   readonly trpc: CcuTrpc
   readonly integrationId: string
@@ -63,6 +77,15 @@ export function ButtonEventsDialog(props: {
               <span className="text-xs text-foreground-subtle">
                 {t('devices.buttonEventsStatus', { state: t(centralKey(channel.central)) })}
               </span>
+              {channel.central !== 'unknown' && (
+                <span className="text-xs text-foreground-subtle">
+                  {channel.links.length === 0
+                    ? t('devices.directLinksNone')
+                    : t('devices.directLinks', {
+                        targets: channel.links.map(directLinkLabel).join(', '),
+                      })}
+                </span>
+              )}
             </div>
             {channel.central === 'on' || channel.central === 'off' ? (
               <Button
