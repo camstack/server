@@ -9,8 +9,15 @@ import {
   type DataColumn,
   type DataTableFilterConfig,
 } from '@camstack/ui-library'
-import { MousePointerClick, SlidersHorizontal, Trash2 } from 'lucide-react'
-import { CcuDevicesResultSchema, OkResultSchema, type CcuDeviceRow } from '../ccu/ccu-schemas.js'
+import { MousePointerClick, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
+import {
+  CcuDevicesResultSchema,
+  DeviceRenameResultSchema,
+  NamedObjectSchema,
+  OkResultSchema,
+  type CcuChannelRow,
+  type CcuDeviceRow,
+} from '../ccu/ccu-schemas.js'
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { percentOrDash, textOrDash } from './format.js'
@@ -18,6 +25,7 @@ import { ChannelConfigDialog } from './ChannelConfigDialog.js'
 import { ButtonEventsDialog } from './ButtonEventsDialog.js'
 import { centralKey } from './central-key.js'
 import { DeleteDeviceDialog, type DeleteDraft } from './DeleteDeviceDialog.js'
+import { RenameDeviceDialog, type DeviceRenameDraft } from './RenameDeviceDialog.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
 
@@ -56,6 +64,45 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
   const [deleting, setDeleting] = useState<CcuDeviceRow | null>(null)
   const [configuring, setConfiguring] = useState<CcuDeviceRow | null>(null)
   const [buttons, setButtons] = useState<CcuDeviceRow | null>(null)
+  const [renaming, setRenaming] = useState<CcuDeviceRow | null>(null)
+
+  const renameDevice = async (device: CcuDeviceRow, draft: DeviceRenameDraft): Promise<void> => {
+    const done = await write({
+      action: 'renameCcuDevice',
+      input: {
+        integrationId,
+        address: device.address,
+        name: draft.name,
+        renameChannels: draft.renameChannels,
+      },
+      schema: DeviceRenameResultSchema,
+      title: t('rename.deviceTitle'),
+      message: t(draft.renameChannels ? 'rename.deviceMessageChannels' : 'rename.deviceMessage', {
+        from: device.name ?? device.address,
+        to: draft.name.trim(),
+      }),
+      confirmLabel: t('rename.deviceConfirm'),
+    })
+    if (done !== null) {
+      setRenaming(null)
+      devices.reload()
+    }
+  }
+
+  const renameChannel = async (channel: CcuChannelRow, name: string): Promise<void> => {
+    const done = await write({
+      action: 'renameCcuChannel',
+      input: { integrationId, address: channel.address, name },
+      schema: NamedObjectSchema,
+      title: t('rename.channelTitle'),
+      message: t('rename.channelMessage', {
+        from: channel.name ?? channel.address,
+        to: name.trim(),
+      }),
+      confirmLabel: t('rename.channelConfirm'),
+    })
+    if (done !== null) devices.reload()
+  }
 
   const removeDevice = async (device: CcuDeviceRow, draft: DeleteDraft): Promise<void> => {
     const done = await write({
@@ -184,6 +231,12 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
                   ]
                 : []),
               {
+                id: 'rename',
+                label: t('devices.renameAction'),
+                icon: Pencil,
+                onClick: () => setRenaming(row),
+              },
+              {
                 id: 'configure',
                 label: t('devices.configureAction'),
                 icon: SlidersHorizontal,
@@ -276,6 +329,14 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
             setButtons(null)
             devices.reload()
           }}
+        />
+      )}
+      {renaming !== null && (
+        <RenameDeviceDialog
+          device={renaming}
+          onClose={() => setRenaming(null)}
+          onRenameDevice={(draft) => renameDevice(renaming, draft)}
+          onRenameChannel={renameChannel}
         />
       )}
       {deleting !== null && (

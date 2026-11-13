@@ -123,6 +123,15 @@ export const KeyChannelLinkSchema = z.object({
 })
 export type KeyChannelLink = z.infer<typeof KeyChannelLinkSchema>
 
+/** A channel of a CCU device as the CCU names it (`null`: the CCU holds no name). */
+export const CcuChannelRowSchema = z.object({
+  address: z.string(),
+  index: z.number(),
+  type: z.string().nullable(),
+  name: z.string().nullable(),
+})
+export type CcuChannelRow = z.infer<typeof CcuChannelRowSchema>
+
 export const CcuDeviceRowSchema = z.object({
   address: z.string(),
   type: z.string(),
@@ -149,6 +158,8 @@ export const CcuDeviceRowSchema = z.object({
    * (a central link). Empty for a device that is not adopted or has no keys.
    */
   keyChannels: z.array(KeyChannelLinkSchema).default([]),
+  /** Every channel but the maintenance channel (index 0), for renaming. */
+  channels: z.array(CcuChannelRowSchema).default([]),
 })
 export type CcuDeviceRow = z.infer<typeof CcuDeviceRowSchema>
 
@@ -371,4 +382,30 @@ export const LinkRefInputSchema = IntegrationRefSchema.extend({
 export const LinkProfileInputSchema = LinkRefInputSchema.extend({
   short: LinkPressActionSchema,
   long: LinkPressActionSchema,
+})
+
+// ── Names ──────────────────────────────────────────────────────────────────
+
+/** A device or channel with the name the CCU now holds (it may adjust a name to keep it unique). */
+export const NamedObjectSchema = z.object({ address: z.string(), name: z.string() })
+
+export const DeviceRenameResultSchema = z.object({
+  device: NamedObjectSchema,
+  /** The renamed channels; empty when the channels were left alone. */
+  channels: z.array(NamedObjectSchema),
+})
+export type DeviceRenameResult = z.infer<typeof DeviceRenameResultSchema>
+
+export const RenameDeviceInputSchema = IntegrationRefSchema.extend({
+  address: z.string().min(1),
+  name: z.string(),
+  /** Also rename every channel to `<name>:<index>` (the CCU's own pattern). */
+  renameChannels: z.boolean(),
+  confirmed: ConfirmedSchema,
+})
+
+export const RenameChannelInputSchema = IntegrationRefSchema.extend({
+  address: z.string().min(1),
+  name: z.string(),
+  confirmed: ConfirmedSchema,
 })

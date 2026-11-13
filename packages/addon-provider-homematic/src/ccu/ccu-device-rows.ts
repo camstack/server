@@ -1,5 +1,6 @@
 import type { HmChannel, HmDevice, HmValue } from 'nodehomematic'
 import type { CcuDeviceRow } from './ccu-schemas.js'
+import { hmName } from '../devices/hm-name.js'
 
 /** `RSSI_*` reports this when the device has no signal reading. */
 const RSSI_UNKNOWN = 65535
@@ -57,5 +58,13 @@ export function toCcuDeviceRow(device: HmDevice): CcuDeviceRow {
     configPending: asBool(readParam(maintenance, ['CONFIG_PENDING'])),
     sabotage: asBool(readParam(maintenance, ['SABOTAGE', 'ERROR_SABOTAGE'])),
     keyChannels: [],
+    channels: device.channels
+      .filter((channel) => channel.index !== 0)
+      .map((channel) => ({
+        address: channel.address,
+        index: channel.index,
+        type: channel.type ?? null,
+        name: hmName(channel.name),
+      })),
   }
 }

@@ -102,7 +102,8 @@
     "enableButtonEventsMessage": "Crea un collegamento centrale per {{name}}. I collegamenti diretti restano.",
     "disableButtonEventsMessage": "Rimuove il collegamento centrale di {{name}}. I collegamenti diretti restano.",
     "directLinks": "Collegamenti diretti: {{targets}}",
-    "directLinksNone": "Nessun collegamento diretto"
+    "directLinksNone": "Nessun collegamento diretto",
+    "renameAction": "Rinomina sulla CCU"
   },
   "heating": {
     "loadFailed": "Impossibile leggere il riscaldamento",
@@ -218,5 +219,22 @@
     "deleteTitle": "Elimina collegamento diretto",
     "deleteMessage": "Eliminare il collegamento {{link}} sulla CCU? Il tasto non comanderà più direttamente quell'attuatore.",
     "deleteConfirm": "Elimina collegamento"
+  },
+  "rename": {
+    "title": "Rinomina {{name}}",
+    "deviceName": "Nome del dispositivo",
+    "deviceSave": "Rinomina dispositivo",
+    "renameChannels": "Rinomina anche ogni canale in <nome>:<canale>",
+    "channels": "Canali",
+    "channelsHint": "Rinomina un canale alla volta; ogni rinomina chiede conferma.",
+    "channelName": "Nome del canale {{index}}",
+    "channelSave": "Rinomina",
+    "deviceTitle": "Rinomina dispositivo sulla CCU",
+    "deviceMessage": "Rinominare {{from}} in {{to}} sulla CCU?",
+    "deviceMessageChannels": "Rinominare {{from}} in {{to}} sulla CCU, e ogni canale in {{to}}:<canale>? I nomi dei canali impostati a mano vengono sostituiti.",
+    "deviceConfirm": "Rinomina",
+    "channelTitle": "Rinomina canale sulla CCU",
+    "channelMessage": "Rinominare il canale {{from}} in {{to}} sulla CCU?",
+    "channelConfirm": "Rinomina"
   }
 }

@@ -685,3 +685,85 @@ describe('HomematicCcuPage links', () => {
     expect(screen.queryByRole('button', { name: 'Change profile' })).toBeNull()
   })
 })
+
+describe('HomematicCcuPage rename', () => {
+  const DEVICE = {
+    address: 'BS2',
+    type: 'HmIP-BS2',
+    name: 'Bathroom key',
+    rooms: [],
+    functions: [],
+    firmware: null,
+    availableFirmware: null,
+    updatable: null,
+    rssi: null,
+    rssiPeer: null,
+    dutyCycle: null,
+    dutyCycleLimited: null,
+    lowBattery: null,
+    unreach: null,
+    configPending: null,
+    sabotage: null,
+    channels: [{ address: 'BS2:1', index: 1, type: 'KEY_TRANSCEIVER', name: 'Bathroom key:1' }],
+  }
+
+  function mountRename(extra: Record<string, Handler>) {
+    window.history.replaceState(null, '', '/?tab=devices')
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({ devices: [DEVICE] }),
+      ...extra,
+    })
+    mountPage(fake.trpc)
+    return fake.calls
+  }
+
+  async function openRename() {
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Rename on the CCU' }))
+    return screen.findByTestId('hm-rename-dialog')
+  }
+
+  it('renames the device with its channels only after the operator confirms', async () => {
+    const rename = vi
+      .fn()
+      .mockReturnValue({ device: { address: 'BS2', name: 'Bagno' }, channels: [] })
+    mountRename({ renameCcuDevice: rename })
+    const form = await openRename()
+    fireEvent.change(within(form).getByRole('textbox', { name: 'Device name' }), {
+      target: { value: 'Bagno' },
+    })
+    fireEvent.click(within(form).getByRole('checkbox'))
+    fireEvent.click(within(form).getByRole('button', { name: 'Rename device' }))
+    const confirm = await screen.findByRole('dialog', { name: /Rename device on the CCU/ })
+    expect(rename).not.toHaveBeenCalled()
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Rename' }))
+    await waitFor(() => expect(rename).toHaveBeenCalled())
+    expect(rename.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      address: 'BS2',
+      name: 'Bagno',
+      renameChannels: true,
+      confirmed: true,
+    })
+  })
+
+  it('renames one channel after confirmation', async () => {
+    const rename = vi.fn().mockReturnValue({ address: 'BS2:1', name: 'Left' })
+    mountRename({ renameCcuChannel: rename })
+    const form = await openRename()
+    fireEvent.change(within(form).getByRole('textbox', { name: 'Name of channel 1' }), {
+      target: { value: 'Left' },
+    })
+    fireEvent.click(within(form).getByRole('button', { name: 'Rename' }))
+    const confirm = await screen.findByRole('dialog', { name: /Rename channel on the CCU/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Rename' }))
+    await waitFor(() => expect(rename).toHaveBeenCalled())
+    expect(rename.mock.calls[0]?.[0]).toEqual({
+      integrationId: 'hm_1',
+      address: 'BS2:1',
+      name: 'Left',
+      confirmed: true,
+    })
+  })
+})

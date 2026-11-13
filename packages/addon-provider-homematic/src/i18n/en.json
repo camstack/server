@@ -102,7 +102,8 @@
     "enableButtonEventsMessage": "Create a central link for {{name}}. Direct links stay.",
     "disableButtonEventsMessage": "Remove the central link for {{name}}. Direct links stay.",
     "directLinks": "Direct links: {{targets}}",
-    "directLinksNone": "No direct links"
+    "directLinksNone": "No direct links",
+    "renameAction": "Rename on the CCU"
   },
   "heating": {
     "loadFailed": "Could not read the heating setup",
@@ -218,5 +219,22 @@
     "deleteTitle": "Delete direct link",
     "deleteMessage": "Delete the link {{link}} on the CCU? The key will no longer switch that actuator directly.",
     "deleteConfirm": "Delete link"
+  },
+  "rename": {
+    "title": "Rename {{name}}",
+    "deviceName": "Device name",
+    "deviceSave": "Rename device",
+    "renameChannels": "Also rename every channel to <name>:<channel>",
+    "channels": "Channels",
+    "channelsHint": "Rename one channel at a time; each rename asks first.",
+    "channelName": "Name of channel {{index}}",
+    "channelSave": "Rename",
+    "deviceTitle": "Rename device on the CCU",
+    "deviceMessage": "Rename {{from}} to {{to}} on the CCU?",
+    "deviceMessageChannels": "Rename {{from}} to {{to}} on the CCU, and every channel to {{to}}:<channel>? Channel names you set by hand are replaced.",
+    "deviceConfirm": "Rename",
+    "channelTitle": "Rename channel on the CCU",
+    "channelMessage": "Rename the channel {{from}} to {{to}} on the CCU?",
+    "channelConfirm": "Rename"
   }
 }
