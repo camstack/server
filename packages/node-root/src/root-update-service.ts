@@ -74,12 +74,14 @@ import {
   type WrapperProbeReadings,
 } from './wrapper-identity.js'
 import { seedStagingFromCurrent } from './closure-stage-seed.js'
+import { assertInstalledClosureTree } from './closure-tree-check.js'
 import {
   NPM_INSTALL_CEILING_MS,
   NPM_INSTALL_KILL_GRACE_MS,
   NPM_INSTALL_POLL_MS,
   NPM_INSTALL_STALL_MS,
   NpmInstallError,
+  npmInstallProgressDirs,
   runWatchedCommand,
 } from './npm-install-watch.js'
 
@@ -299,6 +301,9 @@ const NPM_VIEW_TIMEOUT_MS = 20_000
  * (2026-09-19 21:04Z on the hub). Why bounded: a registry that is DOWN must
  * surface as a failure in under a minute, not hold the caller for another
  * full install. Three attempts, ~20 s of waiting in total.
+ *
+ * A stall or the hard ceiling is not transient. Retrying it spends the
+ * ceiling again (a 5-minute stall, three times).
  */
 export const STAGING_ATTEMPTS = 3
 export const STAGING_RETRY_DELAYS_MS: readonly number[] = [5_000, 15_000]
@@ -314,6 +319,22 @@ const TRANSIENT_NPM_ERROR_RE =
 
 export function isTransientNpmNetworkError(message: string): boolean {
   return TRANSIENT_NPM_ERROR_RE.test(message)
+}
+
+/**
+ * A stall or the hard ceiling is final even when the message also contains
+ * a network code (the download's own stderr). Anything else still has to
+ * look like a dropped connection.
+ */
+export function isRetryableStagingFailure(err: unknown): boolean {
+  if (
+    err instanceof NpmInstallError &&
+    (err.kind === 'timeout-stall' || err.kind === 'timeout-ceiling')
+  ) {
+    return false
+  }
+  const message = err instanceof Error ? err.message : String(err)
+  return isTransientNpmNetworkError(message)
 }
 
 /** Stable `reason` a staging install that never landed reports (see `ServerUpdateOutcome`). */
@@ -444,7 +465,7 @@ export class RootUpdateService {
       (async (args, opts) => {
         const cwd = opts.cwd ?? process.cwd()
         return runWatchedCommand({
-          command: process.platform === 'win32' ? 'npm.cmd' : 'npm',
+          command: 'npm',
           args,
           cwd,
           stallMs: NPM_INSTALL_STALL_MS,
@@ -453,6 +474,8 @@ export class RootUpdateService {
           graceMs: NPM_INSTALL_KILL_GRACE_MS,
           now: () => this.now(),
           sleep: (ms) => this.sleep(ms),
+          env: this.env,
+          progressDirs: npmInstallProgressDirs(this.env),
           log: {
             info: (message, context) =>
               this.logger.info(message, { tags: this.logTags, ...context }),
@@ -990,7 +1013,7 @@ export class RootUpdateService {
       } catch (err) {
         lastError = err
         const message = err instanceof Error ? err.message : String(err)
-        const transient = isTransientNpmNetworkError(message)
+        const transient = isRetryableStagingFailure(err)
         const delayMs = STAGING_RETRY_DELAYS_MS[attempt - 1]
         const willRetry = transient && attempt < STAGING_ATTEMPTS && delayMs !== undefined
         if (!willRetry) {
@@ -1119,6 +1142,7 @@ export class RootUpdateService {
           [...installArgs, `${this.spec.packageName}@${target}`, ...buildNpmRegistryArgs(registry)],
           { cwd: stagingDir, timeoutMs: NPM_INSTALL_CEILING_MS },
         )
+        await assertInstalledClosureTree(stagingDir, this.spec.packageName, target, this.execNpm)
       } else {
         fs.writeFileSync(
           path.join(stagingDir, 'package.json'),

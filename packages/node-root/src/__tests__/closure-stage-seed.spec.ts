@@ -64,6 +64,21 @@ function scriptAwareInstall(serverVersion: string, nodeAvWanted: string): NpmExe
       JSON.stringify({ name: '@camstack/server', version: serverVersion }),
       'utf8',
     )
+    fs.writeFileSync(
+      path.join(cwd, 'package-lock.json'),
+      JSON.stringify({
+        lockfileVersion: 3,
+        packages: {
+          '': {
+            name: 'camstack-node-root',
+            dependencies: { '@camstack/server': serverVersion },
+          },
+          'node_modules/@camstack/server': { version: serverVersion },
+          'node_modules/node-av': { version: nodeAvWanted },
+        },
+      }),
+      'utf8',
+    )
     for (const rel of [
       'better-sqlite3/build/Release/better_sqlite3.node',
       '@img/sharp-linux-x64/lib/sharp.node',
@@ -169,11 +184,13 @@ describe('stageClosure seeds from current/', () => {
 
   it('falls back to a clean install when the seeded closure fails validation', async () => {
     arrange()
-    let calls = 0
+    let installs = 0
     const execNpm: NpmExecFn = async (args, opts) => {
-      calls += 1
       const cwd = opts.cwd
       if (cwd === undefined) return { stdout: '' }
+      if (args[0] === 'ls') return { stdout: '' }
+      if (args[0] !== 'install') return { stdout: '' }
+      installs += 1
       const seeded = fs.existsSync(path.join(cwd, 'node_modules', 'node-av', 'package.json'))
       if (seeded) return { stdout: '' }
       return scriptAwareInstall('1.1.60', NODE_AV)(args, opts)
@@ -181,7 +198,56 @@ describe('stageClosure seeds from current/', () => {
     const svc = service(execNpm)
     const res = await svc.applyServerUpdate({ version: '1.1.60' })
     expect(res.accepted, res.message).toBe(true)
-    expect(calls).toBe(2)
+    expect(installs).toBe(2)
+    expect(
+      lines.some(
+        (line) => line.message === 'root package closure produced' && line.source === 'clean',
+      ),
+    ).toBe(true)
+  })
+
+  it('falls back to a clean install when a seeded tree keeps a stale transitive', async () => {
+    arrange()
+    const installs: string[] = []
+    const lsArgs: string[][] = []
+    const execNpm: NpmExecFn = async (args, opts) => {
+      const cwd = opts.cwd
+      if (cwd === undefined) return { stdout: '' }
+      if (args[0] === 'ls') {
+        lsArgs.push([...args])
+        return { stdout: '' }
+      }
+      if (args[0] !== 'install') return { stdout: '' }
+      const seeded = fs.existsSync(path.join(cwd, 'node_modules', 'node-av', 'package.json'))
+      installs.push(seeded ? 'seeded' : 'clean')
+      const installed = await scriptAwareInstall('1.1.60', NODE_AV)(args, opts)
+      if (!seeded) return installed
+      const lockPath = path.join(cwd, 'package-lock.json')
+      const parsed: unknown = JSON.parse(fs.readFileSync(lockPath, 'utf8'))
+      if (!isRecord(parsed) || !isRecord(parsed['packages'])) {
+        throw new Error('lockfile missing packages')
+      }
+      fs.writeFileSync(
+        lockPath,
+        JSON.stringify({
+          ...parsed,
+          packages: { ...parsed['packages'], 'node_modules/left-pad': { version: '2.0.0' } },
+        }),
+        'utf8',
+      )
+      fs.mkdirSync(path.join(cwd, 'node_modules', 'left-pad'), { recursive: true })
+      fs.writeFileSync(
+        path.join(cwd, 'node_modules', 'left-pad', 'package.json'),
+        JSON.stringify({ name: 'left-pad', version: '1.0.0' }),
+        'utf8',
+      )
+      return installed
+    }
+    const svc = service(execNpm)
+    const res = await svc.applyServerUpdate({ version: '1.1.60' })
+    expect(res.accepted, res.message).toBe(true)
+    expect(installs).toEqual(['seeded', 'clean'])
+    expect(lsArgs[0]).toEqual(['ls', '--omit=dev', '--all'])
     expect(
       lines.some(
         (line) => line.message === 'root package closure produced' && line.source === 'clean',
