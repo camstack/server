@@ -1,10 +1,19 @@
 import { DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH } from '@camstack/types'
+import {
+  deviceTemplateCallableBounds,
+  deviceTemplateFilterMaxParams,
+} from '@camstack/types/device-template-catalogue'
 import { describe, expect, it } from 'vitest'
 import { nunjucksNodeFields } from '../nunjucks-internals.js'
 import { analyzeTemplate, NODE_POLICY } from '../template-grammar.js'
 
+const policy = {
+  filterMaxParams: deviceTemplateFilterMaxParams(),
+  callableBounds: deviceTemplateCallableBounds(),
+}
+
 const vet = (source: string) =>
-  analyzeTemplate(source, DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH)
+  analyzeTemplate(source, DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH, policy)
 
 function refused(source: string): string {
   const out = vet(source)

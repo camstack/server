@@ -26,21 +26,41 @@ import {
   truncFilter,
   unitFilter,
 } from './template-filters.js'
-import { analyzeTemplate } from './template-grammar.js'
+import { analyzeTemplate, type TemplateCallableBound } from './template-grammar.js'
 import {
   isRenderRequest,
   type RenderResponse,
   type TemplateWorkerData,
 } from './template-protocol.js'
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
 function isWorkerData(value: unknown): value is TemplateWorkerData {
   if (typeof value !== 'object' || value === null) return false
   return (
     Array.isArray(Reflect.get(value, 'allowedFilters')) &&
+    isRecord(Reflect.get(value, 'filterMaxParams')) &&
+    Array.isArray(Reflect.get(value, 'callableBounds')) &&
     typeof Reflect.get(value, 'maxSourceLength') === 'number' &&
     typeof Reflect.get(value, 'maxOutput') === 'number' &&
     typeof Reflect.get(value, 'unavailable') === 'string'
   )
+}
+
+function boundsOf(value: readonly unknown[]): readonly TemplateCallableBound[] {
+  const out: TemplateCallableBound[] = []
+  for (const item of value) {
+    if (!isRecord(item)) continue
+    const name = item['name']
+    const min = item['min']
+    const max = item['max']
+    if (typeof name === 'string' && typeof min === 'number' && typeof max === 'number') {
+      out.push({ name, min, max })
+    }
+  }
+  return out
 }
 
 function stringsOf(value: readonly unknown[]): readonly string[] {
@@ -119,7 +139,10 @@ function renderInWorker(
   },
   limits: TemplateWorkerData,
 ): RenderResponse {
-  const analysis = analyzeTemplate(request.source, limits.allowedFilters, limits.maxSourceLength)
+  const analysis = analyzeTemplate(request.source, limits.allowedFilters, limits.maxSourceLength, {
+    filterMaxParams: limits.filterMaxParams,
+    callableBounds: boundsOf(limits.callableBounds),
+  })
   if (!analysis.ok) {
     return {
       id: request.id,
@@ -157,6 +180,8 @@ if (parentPort !== null && isWorkerData(workerData)) {
   const port = parentPort
   const limits: TemplateWorkerData = {
     allowedFilters: stringsOf(workerData.allowedFilters),
+    filterMaxParams: workerData.filterMaxParams,
+    callableBounds: boundsOf(workerData.callableBounds),
     maxSourceLength: workerData.maxSourceLength,
     maxOutput: workerData.maxOutput,
     unavailable: workerData.unavailable,

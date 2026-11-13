@@ -15,6 +15,7 @@
  * `(alias, path)` reference resolves against a device's slices.
  */
 import { z } from 'zod'
+import { deviceTemplateFilterNames } from '../device-template-catalogue.js'
 
 export const DEVICE_TEMPLATE_MAX_LENGTH = 4096
 /** Wall time a render may take, host-measured; the worker is terminated past it. */
@@ -56,40 +57,11 @@ export type DeviceTemplateThisDevice = z.infer<typeof DeviceTemplateThisDeviceSc
 /** The synthetic slice `thisDevice.values` is exposed under. */
 export const DEVICE_TEMPLATE_VALUES_CAP = 'values'
 
-/** The filters a template may use. Anything else is refused at parse time. */
-export const DEVICE_TEMPLATE_FILTERS = [
-  'unit',
-  'round',
-  'trunc',
-  /** `{{ x | onoff }}`: `true` reads ON, `false` OFF, anything else is left as it is. */
-  'onoff',
-  'default',
-  'since',
-  'ago',
-  'format',
-  'upper',
-  'lower',
-  'title',
-  'capitalize',
-  'trim',
-  'abs',
-  'int',
-  'float',
-  'length',
-  'd',
-  'join',
-  'replace',
-  'first',
-  'last',
-  'sort',
-  'reverse',
-  'sum',
-  'string',
-  'list',
-  'truncate',
-  /** `{{ now | time('HH:mm') }}`: an epoch timestamp as clock text in the server's zone. */
-  'time',
-] as const
+/**
+ * The filters a template may use, derived from the catalogue. Anything else
+ * is refused at parse time.
+ */
+export const DEVICE_TEMPLATE_FILTERS: readonly string[] = deviceTemplateFilterNames()
 export type DeviceTemplateFilter = (typeof DEVICE_TEMPLATE_FILTERS)[number]
 
 /** A device-state reference found in a template: the alias and the literal path after it. */

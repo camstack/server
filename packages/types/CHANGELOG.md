@@ -115,6 +115,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - OSD static overlay text may be up to 1024 characters, same as named templates.
+- Device templates share one catalogue of filters, functions and variables; the renderer allow-list is derived from it.
 
 ## [1.2.562] - 2026-11-13
 

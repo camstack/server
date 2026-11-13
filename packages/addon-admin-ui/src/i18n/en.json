@@ -9878,7 +9878,26 @@
       "unknownDevice": "No device is named {{names}}.",
       "outOfScope": "{{names}} is outside what this can read.",
       "preview": "Now reads: {{text}}",
-      "withUnit": "With unit"
+      "withUnit": "With unit",
+      "category": {
+        "number": "number",
+        "unit": "unit",
+        "text": "text",
+        "state": "state",
+        "time": "time",
+        "fallback": "fallback",
+        "loop": "loop",
+        "variable": "variable"
+      },
+      "deviceValue": "+ Device value",
+      "function": "+ Function",
+      "functionTitle": "Insert a function",
+      "functionSearch": "Search functions",
+      "optional": " (optional)",
+      "helpTitle": "Template help",
+      "helpLine1": "Plain text is written as it is. {{ alias.field }} reads a device; camera means this camera.",
+      "helpLine2": "Ctrl+Space completes a name. | unit('°C') prints the unit. {{ now | time('HH:mm') }} is the clock.",
+      "docsLink": "Template syntax"
     },
     "deviceValuePicker": {
       "offline": "offline",
@@ -10581,6 +10600,148 @@
       "next": "Next",
       "room": "Room",
       "type": "Device type"
+    },
+    "deviceTemplateCatalogue": {
+      "unit": {
+        "description": "Converts a number from the field’s base unit and prints the symbol.",
+        "example": "{{ garage.temperature | unit('°C') }}"
+      },
+      "round": {
+        "description": "Rounds a number to the given decimals.",
+        "example": "{{ garage.temperature | round(1) }}"
+      },
+      "trunc": {
+        "description": "Cuts decimals toward zero, without rounding.",
+        "example": "{{ garage.temperature | trunc(1) }}"
+      },
+      "onoff": {
+        "description": "Prints a boolean as ON or OFF.",
+        "example": "{{ garage.switch | onoff }}"
+      },
+      "default": {
+        "description": "Replaces a missing value. The second argument also replaces a false or zero.",
+        "example": "{{ camera.lastPerson | default('') }}"
+      },
+      "since": {
+        "description": "How long ago a timestamp was, as “5 min”.",
+        "example": "{{ garage.updated | since }}"
+      },
+      "ago": {
+        "description": "The same duration as since, followed by “ago”.",
+        "example": "{{ garage.updated | ago }}"
+      },
+      "format": {
+        "description": "Prints one value with a single %s, %d or %.Nf placeholder.",
+        "example": "{{ garage.temperature | format('%.1f') }}"
+      },
+      "upper": {
+        "description": "Uppercase text.",
+        "example": "{{ camera.lastPerson | upper }}"
+      },
+      "lower": {
+        "description": "Lowercase text.",
+        "example": "{{ camera.lastPlate | lower }}"
+      },
+      "title": {
+        "description": "Capitalises each word.",
+        "example": "{{ camera.lastPerson | title }}"
+      },
+      "capitalize": {
+        "description": "Capitalises the first letter.",
+        "example": "{{ camera.lastPerson | capitalize }}"
+      },
+      "trim": {
+        "description": "Removes spaces at both ends.",
+        "example": "{{ camera.lastPerson | trim }}"
+      },
+      "abs": {
+        "description": "The absolute value of a number.",
+        "example": "{{ garage.power | abs }}"
+      },
+      "int": {
+        "description": "The whole part of a number.",
+        "example": "{{ garage.temperature | int }}"
+      },
+      "float": {
+        "description": "Reads the value as a decimal number.",
+        "example": "{{ garage.temperature | float }}"
+      },
+      "length": {
+        "description": "How many characters or items.",
+        "example": "{{ camera.lastPerson | length }}"
+      },
+      "d": {
+        "description": "The short name of default.",
+        "example": "{{ camera.lastPerson | d('') }}"
+      },
+      "join": {
+        "description": "Joins a list with a separator.",
+        "example": "{{ range(3) | join(', ') }}"
+      },
+      "replace": {
+        "description": "Replaces text, optionally only the first few times.",
+        "example": "{{ camera.lastPlate | replace(' ', '') }}"
+      },
+      "first": {
+        "description": "The first item of a list.",
+        "example": "{{ range(3) | first }}"
+      },
+      "last": {
+        "description": "The last item of a list.",
+        "example": "{{ range(3) | last }}"
+      },
+      "sort": {
+        "description": "Sorts a list. The arguments reverse it or keep case.",
+        "example": "{{ range(3) | reverse | sort }}"
+      },
+      "reverse": {
+        "description": "Reverses a list.",
+        "example": "{{ range(3) | reverse }}"
+      },
+      "sum": {
+        "description": "Adds the numbers in a list.",
+        "example": "{{ range(3) | sum }}"
+      },
+      "string": {
+        "description": "Prints the value as text.",
+        "example": "{{ garage.temperature | string }}"
+      },
+      "list": {
+        "description": "Wraps the value in a list.",
+        "example": "{{ garage.temperature | list }}"
+      },
+      "truncate": {
+        "description": "Shortens text to a length, with an ending.",
+        "example": "{{ camera.lastPerson | truncate(12) }}"
+      },
+      "time": {
+        "description": "Prints a timestamp in the server’s time zone. Tokens: YYYY MM DD HH mm ss.",
+        "example": "{{ now | time('HH:mm') }}"
+      },
+      "range": {
+        "description": "The integers up to stop, or from start to stop by step. At most 1000 items.",
+        "example": "{% for i in range(3) %}{{ i }}{% endfor %}"
+      },
+      "now": {
+        "description": "The hub clock. A bare now prints ISO; time prints a pattern.",
+        "example": "{{ now | time('HH:mm') }}"
+      },
+      "camera": {
+        "description": "The device this text is written for. It stays correct when the text is copied to another camera.",
+        "example": "{{ camera.temperature }}"
+      },
+      "loop": {
+        "description": "The for-loop counter (index, length) inside {% for %}.",
+        "example": "{% for i in range(3) %}{{ loop.index }}{% endfor %}"
+      },
+      "lastPerson": {
+        "description": "The last person recognised on this camera, empty until there is one.",
+        "example": "{{ camera.lastPerson }}"
+      },
+      "lastPlate": {
+        "description": "The last plate recognised on this camera, empty until there is one.",
+        "example": "{{ camera.lastPlate }}"
+      }
     }
   },
   "helpers": {

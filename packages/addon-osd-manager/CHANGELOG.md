@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Camera OSD is one section per camera (first writable slot) with None, named template, or Value; static text renders through the hub.
+- Each camera layer is its own section: None, a named template, or Customize with the shared template field.
 
 ## [0.1.318] - 2026-11-11
 

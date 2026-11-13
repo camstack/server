@@ -39,7 +39,7 @@ export interface DeviceValueSearch {
 export function useDeviceValueSearch(query: SearchQuery, enabled: boolean): DeviceValueSearch {
   const q = trpc.deviceManager.search.useInfiniteQuery(query, {
     enabled,
-    getNextPageParam: (last: DeviceSearchResult) => last.nextCursor ?? undefined,
+    getNextPageParam: (last: DeviceSearchResult | null) => last?.nextCursor ?? undefined,
     // The previous answer stays on screen while a keystroke's answer loads.
     placeholderData: (previous) => previous,
   })

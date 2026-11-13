@@ -3,14 +3,8 @@ import {
   Badge,
   Button,
   Checkbox,
-  DEVICE_TEMPLATE_DOCS_URL,
   DeviceTemplateField,
-  IconButton,
-  Label,
   Select,
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
   useOsdManagerPreviewSlot,
   useOsdManagerSetSlotCameraEnabled,
 } from '@camstack/ui-library'
@@ -20,7 +14,7 @@ import type {
   OsdSlotBinding,
   OsdSlotView,
 } from '@camstack/types'
-import { Info, Loader2, RefreshCw } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
 import { useT } from '../i18n/index.js'
 import {
   choiceOfSource,
@@ -44,7 +38,7 @@ interface OsdCameraSectionProps {
   readonly refreshingCurrent?: boolean
 }
 
-/** One camera overlay section — first writable slot only; no slot or layer tabs. */
+/** One layer: a single choice, and the control that choice needs. No title row inside. */
 export function OsdCameraSection({
   deviceId,
   slot,
@@ -93,10 +87,10 @@ export function OsdCameraSection({
 
   return (
     <div className="space-y-4" data-testid="osd-camera-section">
-      <div className="space-y-2">
-        <Label htmlFor="osd-source-choice">{t('source.label')}</Label>
+      <div className="space-y-2" data-testid="osd-layer-body">
         <Select
-          id="osd-source-choice"
+          id={`osd-source-choice-${slot.slotId}`}
+          aria-label={t('source.label')}
           value={choice}
           options={choiceOptions}
           onChange={(e) => {
@@ -117,12 +111,12 @@ export function OsdCameraSection({
 
         {choice === 'namedTemplate' ? (
           <div>
-            <Label htmlFor="osd-source-template">{t('source.namedTemplate')}</Label>
             {templateOptions.length === 0 ? (
               <p className="text-xs text-foreground-muted">{t('source.noTemplates')}</p>
             ) : (
               <Select
-                id="osd-source-template"
+                id={`osd-source-template-${slot.slotId}`}
+                aria-label={t('source.namedTemplate')}
                 value={source.kind === 'template' ? source.templateId : ''}
                 options={templateOptions}
                 onChange={(e) =>
@@ -137,51 +131,17 @@ export function OsdCameraSection({
         ) : null}
 
         {choice === 'value' ? (
-          <div className="space-y-1">
-            <div className="flex items-center gap-1">
-              <span className="text-xs font-medium text-foreground">
-                {t('source.choice.value')}
-              </span>
-              <Tooltip>
-                <TooltipTrigger>
-                  <IconButton
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    icon={Info}
-                    aria-label={t('camera.valueHelpTitle')}
-                    data-testid="osd-value-help"
-                  />
-                </TooltipTrigger>
-                <TooltipContent className="max-w-[16rem] whitespace-normal text-left">
-                  <span className="block">{t('camera.valueHelp.line1')}</span>
-                  <span className="mt-1 block">{t('camera.valueHelp.line2')}</span>
-                  <a
-                    href={DEVICE_TEMPLATE_DOCS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-1 block text-primary underline"
-                  >
-                    {t('camera.valueHelp.docsLink')}
-                  </a>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <DeviceTemplateField
-              label={t('source.text')}
-              value={source.kind === 'static' ? source.text : ''}
-              onChange={(text) => onBindingChange({ ...draft, source: { kind: 'static', text } })}
-              accepts="any"
-              multiline
-              thisDevice={{ deviceId }}
-              testId="osd-value-field"
-            />
-            <p className="text-[11px] text-foreground-subtle">{t('camera.valueFieldHint')}</p>
-          </div>
+          <DeviceTemplateField
+            label={t('source.text')}
+            value={source.kind === 'static' ? source.text : ''}
+            onChange={(text) => onBindingChange({ ...draft, source: { kind: 'static', text } })}
+            accepts="any"
+            multiline
+            thisDevice={{ deviceId }}
+            testId={`osd-value-${slot.slotId}`}
+          />
         ) : null}
       </div>
-
-      <p className="text-[11px] text-foreground-subtle">{t('slot.layerHint')}</p>
 
       <label className="flex items-center gap-2 text-xs text-foreground">
         <Checkbox

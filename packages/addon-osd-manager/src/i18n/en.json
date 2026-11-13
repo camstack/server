@@ -21,7 +21,7 @@
     "choice": {
       "none": "None",
       "namedTemplate": "Named template",
-      "value": "Value"
+      "value": "Customize"
     }
   },
   "duplicate": {

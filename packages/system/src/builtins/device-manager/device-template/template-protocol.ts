@@ -4,9 +4,18 @@
  */
 import type { DeviceTemplateRefusalReason } from '@camstack/types'
 
+/** One callable global's argument range, copied into the worker with the other limits. */
+export interface TemplateBoundMessage {
+  readonly name: string
+  readonly min: number
+  readonly max: number
+}
+
 /** Fixed at spawn: the worker cannot read the types barrel, so the limits travel with it. */
 export interface TemplateWorkerData {
   readonly allowedFilters: readonly string[]
+  readonly filterMaxParams: Readonly<Record<string, number>>
+  readonly callableBounds: readonly TemplateBoundMessage[]
   readonly maxSourceLength: number
   readonly maxOutput: number
   readonly unavailable: string

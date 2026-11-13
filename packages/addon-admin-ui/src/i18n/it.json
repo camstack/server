@@ -9900,7 +9900,26 @@
       "unknownDevice": "Nessun dispositivo si chiama {{names}}.",
       "outOfScope": "{{names}} è fuori da ciò che questo può leggere.",
       "preview": "Ora legge: {{text}}",
-      "withUnit": "Con unità"
+      "withUnit": "Con unità",
+      "category": {
+        "number": "numero",
+        "unit": "unità",
+        "text": "testo",
+        "state": "stato",
+        "time": "tempo",
+        "fallback": "riserva",
+        "loop": "ciclo",
+        "variable": "variabile"
+      },
+      "deviceValue": "+ Valore dispositivo",
+      "function": "+ Funzione",
+      "functionTitle": "Inserisci una funzione",
+      "functionSearch": "Cerca funzioni",
+      "optional": " (facoltativo)",
+      "helpTitle": "Aiuto sui modelli",
+      "helpLine1": "Il testo semplice viene scritto così com’è. {{ alias.field }} legge un dispositivo; camera indica questa telecamera.",
+      "helpLine2": "Ctrl+Spazio completa un nome. | unit('°C') stampa l’unità. {{ now | time('HH:mm') }} è l’orologio.",
+      "docsLink": "Sintassi dei modelli"
     },
     "deviceValuePicker": {
       "offline": "offline",
@@ -10603,6 +10622,148 @@
       "next": "Avanti",
       "room": "Stanza",
       "type": "Tipo di dispositivo"
+    },
+    "deviceTemplateCatalogue": {
+      "unit": {
+        "description": "Converte un numero dall’unità di base del campo e stampa il simbolo.",
+        "example": "{{ garage.temperature | unit('°C') }}"
+      },
+      "round": {
+        "description": "Arrotonda un numero ai decimali indicati.",
+        "example": "{{ garage.temperature | round(1) }}"
+      },
+      "trunc": {
+        "description": "Taglia i decimali verso zero, senza arrotondare.",
+        "example": "{{ garage.temperature | trunc(1) }}"
+      },
+      "onoff": {
+        "description": "Stampa un sì/no come ON oppure OFF.",
+        "example": "{{ garage.switch | onoff }}"
+      },
+      "default": {
+        "description": "Sostituisce un valore assente. Il secondo argomento sostituisce anche falso o zero.",
+        "example": "{{ camera.lastPerson | default('') }}"
+      },
+      "since": {
+        "description": "Quanto tempo fa era un istante, come «5 min».",
+        "example": "{{ garage.updated | since }}"
+      },
+      "ago": {
+        "description": "La stessa durata di since, seguita da «ago».",
+        "example": "{{ garage.updated | ago }}"
+      },
+      "format": {
+        "description": "Stampa un valore con un solo segnaposto %s, %d o %.Nf.",
+        "example": "{{ garage.temperature | format('%.1f') }}"
+      },
+      "upper": {
+        "description": "Testo in maiuscolo.",
+        "example": "{{ camera.lastPerson | upper }}"
+      },
+      "lower": {
+        "description": "Testo in minuscolo.",
+        "example": "{{ camera.lastPlate | lower }}"
+      },
+      "title": {
+        "description": "Mette la maiuscola a ogni parola.",
+        "example": "{{ camera.lastPerson | title }}"
+      },
+      "capitalize": {
+        "description": "Mette la maiuscola alla prima lettera.",
+        "example": "{{ camera.lastPerson | capitalize }}"
+      },
+      "trim": {
+        "description": "Toglie gli spazi alle estremità.",
+        "example": "{{ camera.lastPerson | trim }}"
+      },
+      "abs": {
+        "description": "Il valore assoluto di un numero.",
+        "example": "{{ garage.power | abs }}"
+      },
+      "int": {
+        "description": "La parte intera di un numero.",
+        "example": "{{ garage.temperature | int }}"
+      },
+      "float": {
+        "description": "Legge il valore come numero decimale.",
+        "example": "{{ garage.temperature | float }}"
+      },
+      "length": {
+        "description": "Quanti caratteri o elementi.",
+        "example": "{{ camera.lastPerson | length }}"
+      },
+      "d": {
+        "description": "Il nome breve di default.",
+        "example": "{{ camera.lastPerson | d('') }}"
+      },
+      "join": {
+        "description": "Unisce un elenco con un separatore.",
+        "example": "{{ range(3) | join(', ') }}"
+      },
+      "replace": {
+        "description": "Sostituisce del testo, volendo solo le prime volte.",
+        "example": "{{ camera.lastPlate | replace(' ', '') }}"
+      },
+      "first": {
+        "description": "Il primo elemento di un elenco.",
+        "example": "{{ range(3) | first }}"
+      },
+      "last": {
+        "description": "L’ultimo elemento di un elenco.",
+        "example": "{{ range(3) | last }}"
+      },
+      "sort": {
+        "description": "Ordina un elenco. Gli argomenti lo invertono o rispettano le maiuscole.",
+        "example": "{{ range(3) | reverse | sort }}"
+      },
+      "reverse": {
+        "description": "Inverte un elenco.",
+        "example": "{{ range(3) | reverse }}"
+      },
+      "sum": {
+        "description": "Somma i numeri di un elenco.",
+        "example": "{{ range(3) | sum }}"
+      },
+      "string": {
+        "description": "Stampa il valore come testo.",
+        "example": "{{ garage.temperature | string }}"
+      },
+      "list": {
+        "description": "Mette il valore in un elenco.",
+        "example": "{{ garage.temperature | list }}"
+      },
+      "truncate": {
+        "description": "Accorcia il testo a una lunghezza, con una chiusura.",
+        "example": "{{ camera.lastPerson | truncate(12) }}"
+      },
+      "time": {
+        "description": "Stampa un istante nel fuso del server. Segni: YYYY MM DD HH mm ss.",
+        "example": "{{ now | time('HH:mm') }}"
+      },
+      "range": {
+        "description": "Gli interi fino a stop, oppure da start a stop con step. Al massimo 1000 elementi.",
+        "example": "{% for i in range(3) %}{{ i }}{% endfor %}"
+      },
+      "now": {
+        "description": "L’orologio dell’hub. now da solo stampa ISO; time stampa un formato.",
+        "example": "{{ now | time('HH:mm') }}"
+      },
+      "camera": {
+        "description": "Il dispositivo per cui è scritto il testo. Resta corretto se il testo viene copiato su un’altra telecamera.",
+        "example": "{{ camera.temperature }}"
+      },
+      "loop": {
+        "description": "Il contatore del ciclo (index, length) dentro {% for %}.",
+        "example": "{% for i in range(3) %}{{ loop.index }}{% endfor %}"
+      },
+      "lastPerson": {
+        "description": "L’ultima persona riconosciuta su questa telecamera, vuota finché non ce n’è una.",
+        "example": "{{ camera.lastPerson }}"
+      },
+      "lastPlate": {
+        "description": "L’ultima targa riconosciuta su questa telecamera, vuota finché non ce n’è una.",
+        "example": "{{ camera.lastPlate }}"
+      }
     }
   },
   "helpers": {

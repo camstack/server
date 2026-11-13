@@ -238,6 +238,10 @@ export default defineConfig({
       },
       { find: /^@camstack\/types\/enums$/, replacement: path.join(PACKAGES, 'types/src/enums.ts') },
       { find: /^@camstack\/types$/, replacement: path.join(PACKAGES, 'types/src/index.ts') },
+      {
+        find: /^@camstack\/types\/device-template-catalogue$/,
+        replacement: path.join(PACKAGES, 'types/src/device-template-catalogue.ts'),
+      },
       // A types module hashes at load time; the browser has no node:crypto.
       { find: /^node:crypto$/, replacement: path.join(HERE, 'stubs/node-crypto.ts') },
       { find: /^@admin\/(.*)$/, replacement: `${ADMIN}/$1` },

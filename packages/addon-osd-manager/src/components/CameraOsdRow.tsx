@@ -21,7 +21,6 @@ import {
   draftForSlot,
   type OsdCameraRow,
   sourceSummary,
-  writableSlots,
 } from '../ui/osd-page-model.js'
 
 interface CameraOsdStatusCellProps {
@@ -131,7 +130,7 @@ interface CameraOsdDetailProps {
   readonly onClose: () => void
 }
 
-/** Camera OSD dialog — first writable slot only. */
+/** Camera OSD dialog — one section per layer. */
 export function CameraOsdDetail({
   camera,
   templates,
@@ -144,24 +143,26 @@ export function CameraOsdDetail({
     { enabled: camera.supportsOsd },
   )
   const slots = osdQuery.data?.slots ?? []
-  const editableSlots = useMemo(() => writableSlots(slots), [slots])
-  const primarySlot = editableSlots[0]
 
-  const [draft, setDraft] = useState<OsdSlotBinding | null>(null)
-  const [baseline, setBaseline] = useState<OsdSlotBinding | null>(null)
+  const [drafts, setDrafts] = useState<Readonly<Record<string, OsdSlotBinding>>>({})
+  const [baselines, setBaselines] = useState<Readonly<Record<string, OsdSlotBinding>>>({})
   const [saveError, setSaveError] = useState<string | null>(null)
 
   const setBinding = useOsdManagerSetSlotBinding()
   const saving = setBinding.isPending
 
   const bindingSeed = useMemo(() => {
-    if (osdQuery.data === undefined || primarySlot === undefined) return null
-    const nextDraft = draftForSlot(primarySlot)
-    return {
-      key: `${camera.id}:${primarySlot.slotId}:${JSON.stringify(primarySlot.binding)}`,
-      draft: nextDraft,
+    if (osdQuery.data === undefined) return null
+    const next: Record<string, OsdSlotBinding> = {}
+    for (const slot of osdQuery.data.slots) {
+      if (slot.readOnly) continue
+      next[slot.slotId] = draftForSlot(slot)
     }
-  }, [camera.id, osdQuery.data, primarySlot])
+    return {
+      key: `${camera.id}:${osdQuery.data.slots.map((slot) => `${slot.slotId}:${JSON.stringify(slot.binding)}`).join('|')}`,
+      drafts: next,
+    }
+  }, [camera.id, osdQuery.data])
 
   const bindingSeedRef = useRef(bindingSeed)
   bindingSeedRef.current = bindingSeed
@@ -169,12 +170,12 @@ export function CameraOsdDetail({
   useEffect(() => {
     const seed = bindingSeedRef.current
     if (!camera.supportsOsd || seed === null) {
-      setDraft(null)
-      setBaseline(null)
+      setDrafts({})
+      setBaselines({})
       return
     }
-    setDraft(seed.draft)
-    setBaseline(seed.draft)
+    setDrafts(seed.drafts)
+    setBaselines(seed.drafts)
     setSaveError(null)
   }, [camera.supportsOsd, bindingSeed?.key])
 
@@ -184,19 +185,16 @@ export function CameraOsdDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [camera.id, camera.supportsOsd, osdQuery.refetch])
 
-  const pendingWrites = useMemo(() => {
-    if (primarySlot === undefined || draft === null || baseline === null) return []
-    return dirtySlotBindings(
-      [primarySlot.slotId],
-      { [primarySlot.slotId]: draft },
-      {
-        [primarySlot.slotId]: baseline,
-      },
-    )
-  }, [baseline, draft, primarySlot])
+  const writableIds = useMemo(
+    () => slots.filter((slot) => !slot.readOnly).map((slot) => slot.slotId),
+    [slots],
+  )
+  const pendingWrites = useMemo(
+    () => dirtySlotBindings(writableIds, drafts, baselines),
+    [baselines, drafts, writableIds],
+  )
 
   const save = useCallback(async (): Promise<void> => {
-    if (primarySlot === undefined || draft === null) return
     setSaveError(null)
     try {
       for (const { slotId, binding } of pendingWrites) {
@@ -206,13 +204,13 @@ export function CameraOsdDetail({
           binding,
         })
       }
-      setBaseline(draft)
+      setBaselines(drafts)
       void osdQuery.refetch()
       onClose()
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : String(err))
     }
-  }, [camera.id, draft, onClose, osdQuery, pendingWrites, primarySlot, setBinding])
+  }, [camera.id, drafts, onClose, osdQuery, pendingWrites, setBinding])
 
   const canSave = !saving && pendingWrites.length > 0
   const loadError = osdQuery.error
@@ -241,55 +239,57 @@ export function CameraOsdDetail({
       )
     }
 
-    if (osdQuery.data?.supported && editableSlots.length === 0) {
-      return (
-        <p className="text-xs text-foreground-subtle">
-          {slots.length === 0 ? t('row.noSlotsReported') : t('row.noWritableLayers')}
-        </p>
-      )
-    }
-
-    if (primarySlot === undefined || draft === null) return null
-
-    if (primarySlot.readOnly) {
-      return (
-        <div data-testid="osd-slot-readonly">
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge>{primarySlot.kind}</Badge>
-            <Badge variant="warning">{t('row.readOnly')}</Badge>
-            {!primarySlot.cameraEnabled ? (
-              <Badge variant="default">{t('row.cameraOff')}</Badge>
-            ) : null}
-          </div>
-          <p className="text-xs text-foreground-subtle">
-            {t('row.ownedByCamera')}
-            {primarySlot.cameraText
-              ? ` ${t('row.currently', { text: primarySlot.cameraText })}`
-              : ''}
-          </p>
-          <p className="text-xs text-foreground-subtle">
-            {sourceSummary(primarySlot.binding, templateNameById)}
-          </p>
-        </div>
-      )
+    if (osdQuery.data?.supported && slots.length === 0) {
+      return <p className="text-xs text-foreground-subtle">{t('row.noSlotsReported')}</p>
     }
 
     return (
-      <OsdCameraSection
-        key={`${camera.id}-${primarySlot.slotId}`}
-        deviceId={camera.id}
-        slot={primarySlot}
-        binding={draft}
-        onBindingChange={setDraft}
-        templates={templates}
-        refreshingCurrent={osdQuery.isFetching}
-        onRefreshCurrent={() => osdQuery.refetch()}
-      />
+      <div className="space-y-4" data-testid="osd-camera-layers">
+        {slots.map((slot) => {
+          const draft = drafts[slot.slotId]
+          return (
+            <section
+              key={slot.slotId}
+              className="space-y-2"
+              data-testid={`osd-layer-${slot.slotId}`}
+            >
+              <h3 className="text-sm font-medium text-foreground">{slot.slotId}</h3>
+              {slot.readOnly || draft === undefined ? (
+                <div data-testid="osd-slot-readonly">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>{slot.kind}</Badge>
+                    <Badge variant="warning">{t('row.readOnly')}</Badge>
+                  </div>
+                  <p className="text-xs text-foreground-subtle">
+                    {t('row.ownedByCamera')}
+                    {slot.cameraText ? ` ${t('row.currently', { text: slot.cameraText })}` : ''}
+                  </p>
+                  <p className="text-xs text-foreground-subtle">
+                    {sourceSummary(slot.binding, templateNameById)}
+                  </p>
+                </div>
+              ) : (
+                <OsdCameraSection
+                  deviceId={camera.id}
+                  slot={slot}
+                  binding={draft}
+                  onBindingChange={(next) =>
+                    setDrafts((current) => ({ ...current, [slot.slotId]: next }))
+                  }
+                  templates={templates}
+                  refreshingCurrent={osdQuery.isFetching}
+                  onRefreshCurrent={() => osdQuery.refetch()}
+                />
+              )}
+            </section>
+          )
+        })}
+      </div>
     )
   })()
 
   const showSave =
-    camera.supportsOsd && !osdQuery.isLoading && loadError === null && primarySlot !== undefined
+    camera.supportsOsd && !osdQuery.isLoading && loadError === null && writableIds.length > 0
 
   return (
     <ItemFormDialog

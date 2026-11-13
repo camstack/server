@@ -12,7 +12,8 @@
  *      (the typed wrapper). No other source file, in any package.
  *   2. The render worker's relative-import graph never VALUE-imports the bare
  *      `@camstack/types` barrel (D453) — the limits travel in `workerData`;
- *      `@camstack/types/units-lean` is the one allowed subpath.
+ *      `@camstack/types/units-lean` is the one allowed subpath. The catalogue
+ *      caps travel in `workerData`.
  *
  * Specs may import nothing from nunjucks either: they render through the
  * renderer, which is what must be proven safe.

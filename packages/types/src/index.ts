@@ -1621,6 +1621,32 @@ export {
   resolveTemplateRef,
   templateCapKey,
 } from './expression/device-template.js'
+export {
+  DEVICE_TEMPLATE_CATALOGUE,
+  DEVICE_TEMPLATE_CATALOGUE_CATEGORIES,
+  DEVICE_TEMPLATE_CATALOGUE_KINDS,
+  DEVICE_TEMPLATE_CATALOGUE_TEXT,
+  DEVICE_TEMPLATE_PARAM_TYPES,
+  deviceTemplateCallableBounds,
+  deviceTemplateCameraValues,
+  deviceTemplateCatalogueEntrySchema,
+  deviceTemplateCatalogueMarkdown,
+  deviceTemplateCatalogueSentence,
+  deviceTemplateFilterMaxParams,
+  deviceTemplateFilterNames,
+  deviceTemplateParamSchema,
+  deviceTemplateRootVariables,
+  deviceTemplateSignature,
+} from './device-template-catalogue.js'
+export type {
+  DeviceTemplateCallableBounds,
+  DeviceTemplateCatalogueCategory,
+  DeviceTemplateCatalogueEntry,
+  DeviceTemplateCatalogueKind,
+  DeviceTemplateCatalogueText,
+  DeviceTemplateParam,
+  DeviceTemplateParamType,
+} from './device-template-catalogue.js'
 export type {
   DeviceTemplateFilter,
   DeviceTemplateRef,

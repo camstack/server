@@ -101,8 +101,7 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
-    DEVICE_TEMPLATE_DOCS_URL:
-      'https://camstack-docs.zentik.app/docs/day-to-day/device-templates',
+    DEVICE_TEMPLATE_DOCS_URL: 'https://camstack-docs.zentik.app/docs/day-to-day/device-templates',
     // The field's own behaviour is covered in ui-library; here only the handle the editor drives.
     DeviceTemplateField: ({
       handle,
@@ -300,33 +299,39 @@ describe('OsdManagerPage — camera editor modal', () => {
   it('opens a dialog with the camera section editor', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
+    await waitFor(() =>
+      expect(screen.getAllByTestId('osd-camera-section').length).toBeGreaterThan(0),
+    )
     expect(screen.queryByTestId('osd-slot-tabs')).toBeNull()
-    expect(screen.getByTestId('osd-slot-current-value')).toBeTruthy()
+    expect(screen.getAllByTestId('osd-slot-current-value').length).toBeGreaterThan(0)
   })
 
   it('only one camera editor is open at a time', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
+    await waitFor(() =>
+      expect(screen.getAllByTestId('osd-camera-section').length).toBeGreaterThan(0),
+    )
 
     fireEvent.click(screen.getByRole('button', { name: 'Edit Back Yard' }))
     await waitFor(() => {
       const dialog = screen.getByTestId('osd-camera-editor')
       expect(within(dialog).getByText('Back Yard')).toBeTruthy()
     })
-    expect(screen.getByTestId('osd-camera-section')).toBeTruthy()
+    expect(screen.getAllByTestId('osd-camera-section').length).toBeGreaterThan(0)
   })
 
   it('closing the dialog hides the editor again', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
+    await waitFor(() =>
+      expect(screen.getAllByTestId('osd-camera-section').length).toBeGreaterThan(0),
+    )
 
     fireEvent.click(
       within(screen.getByTestId('osd-camera-editor')).getByRole('button', { name: 'Close' }),
     )
-    await waitFor(() => expect(screen.queryByTestId('osd-camera-section')).toBeNull())
+    await waitFor(() => expect(screen.queryAllByTestId('osd-camera-section')).toHaveLength(0))
   })
 
   it('an unsupported camera opens to a plain explanatory message, with no editor', async () => {
@@ -345,26 +350,23 @@ describe('OsdManagerPage — camera editor modal', () => {
 })
 
 describe('OsdManagerPage — slot editing inside the modal', () => {
-  it('shows one section with three source choices, no slot tabs, and saves the first writable slot only', async () => {
+  it('shows one section per layer and saves only the layer that changed', async () => {
     render(<OsdManagerPage {...pageProps} />)
     await openCameraEditor('Front Door')
-    await waitFor(() => expect(screen.getByTestId('osd-camera-section')).toBeTruthy())
+    await waitFor(() => expect(screen.getByTestId('osd-layer-text-1')).toBeTruthy())
+    expect(screen.getByTestId('osd-layer-text-2')).toBeTruthy()
+    expect(screen.getByTestId('osd-layer-time-1')).toBeTruthy()
     expect(screen.queryByTestId('osd-slot-content-tabs')).toBeNull()
     expect(screen.queryByTestId('osd-slot-tabs')).toBeNull()
 
-    expect(selectOptionLabels(screen.getByLabelText('Source'))).toEqual(
-      expect.arrayContaining(['None', 'Named template', 'Value']),
+    const layer = within(screen.getByTestId('osd-layer-text-1'))
+    expect(selectOptionLabels(layer.getByLabelText('Source'))).toEqual(
+      expect.arrayContaining(['None', 'Named template', 'Customize']),
     )
-    expect((screen.getByLabelText('Source') as HTMLSelectElement).value).toBe('value')
-    const textInput = screen.getByTestId('osd-value-field-input') as HTMLTextAreaElement
+    expect((layer.getByLabelText('Source') as HTMLSelectElement).value).toBe('value')
+    const textInput = layer.getByTestId('osd-value-text-1-input') as HTMLTextAreaElement
     expect(textInput.value).toBe('MARKED-VALUE')
-    expect(screen.getByTestId('osd-value-help')).toBeTruthy()
-    const docs = screen.getByRole('link', { name: 'Template syntax' })
-    expect(docs.getAttribute('href')).toBe(
-      'https://camstack-docs.zentik.app/docs/day-to-day/device-templates',
-    )
-    expect(screen.getByTestId('osd-slot-current-value')).toBeTruthy()
-    expect(screen.getByRole('button', { name: 'Preview' })).toBeTruthy()
+    expect(layer.getByTestId('osd-slot-current-value')).toBeTruthy()
 
     fireEvent.change(textInput, { target: { value: 'Hello operator' } })
     fireEvent.click(screen.getByTestId('osd-camera-save'))
@@ -375,7 +377,7 @@ describe('OsdManagerPage — slot editing inside the modal', () => {
     expect(call!.deviceId).toBe(1)
     expect(call!.slotId).toBe('text-1')
     expect(call!.binding.source).toEqual({ kind: 'static', text: 'Hello operator' })
-    await waitFor(() => expect(screen.queryByTestId('osd-camera-section')).toBeNull())
+    await waitFor(() => expect(screen.queryByTestId('osd-layer-text-1')).toBeNull())
   })
 })
 
@@ -434,28 +436,15 @@ describe('OsdManagerPage — Duplicate into… (table row)', () => {
 })
 
 describe('OsdManagerPage — template editor', () => {
-  it('inserts the clock and recognition variables, previews on a camera, and saves the text', async () => {
+  it('edits a named template with the shared field and saves the text', async () => {
     window.history.replaceState(null, '', `${window.location.pathname}?tab=templates`)
     render(<OsdManagerPage {...pageProps} />)
     fireEvent.click(await screen.findByTestId('osd-template-new'))
     await waitFor(() => expect(screen.getByTestId('osd-template-editor')).toBeTruthy())
 
-    fireEvent.click(screen.getByTestId('osd-tpl-insert-person'))
-    fireEvent.click(screen.getByTestId('osd-tpl-insert-clock'))
     const input = screen.getByTestId('osd-tpl-text-input')
-    await waitFor(() =>
-      expect((input as HTMLTextAreaElement).value).toContain('{{ camera.lastPerson }}'),
-    )
-    expect((input as HTMLTextAreaElement).value).toContain("{{ now | time('HH:mm') }}")
-
-    // The preview is asked of the hub for the first camera, with the text typed so far.
-    await waitFor(() =>
-      expect(mockPreviewTemplate).toHaveBeenCalledWith({
-        deviceId: 2,
-        text: expect.stringContaining('camera.lastPerson'),
-      }),
-    )
-    expect(screen.getByTestId('osd-tpl-preview-text').textContent).toBe('21°C')
+    fireEvent.change(input, { target: { value: '{{ camera.lastPerson }}' } })
+    expect((input as HTMLTextAreaElement).value).toContain('{{ camera.lastPerson }}')
 
     fireEvent.click(screen.getByRole('button', { name: 'Save template' }))
     await waitFor(() => expect(mockUpsertTemplate).toHaveBeenCalledTimes(1))

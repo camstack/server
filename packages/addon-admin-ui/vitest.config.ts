@@ -17,6 +17,10 @@ export default defineConfig({
   resolve: {
     alias: [
       {
+        find: /^@camstack\/types\/device-template-catalogue$/,
+        replacement: path.join(repoRoot, 'packages/types/src/device-template-catalogue.ts'),
+      },
+      {
         find: '@camstack/types/client',
         replacement: path.join(repoRoot, 'packages/types/dist/client.mjs'),
       },

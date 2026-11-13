@@ -172,9 +172,30 @@ describe('DeviceTemplateField', () => {
     expect(screen.getByTestId('device-template-field-input')).toBeTruthy()
   })
 
-  it('shows Insert value as visible button text, not only an aria label', () => {
-    renderUi(<Harness initial="" />)
-    expect(screen.getByTestId('device-template-field-insert').textContent).toContain('Insert value')
+  it('a consumer gets the buttons, help, preview and autocomplete from value and onChange', () => {
+    renderUi(<Harness initial="{{ stufa.temperature }}" />)
+    expect(screen.getByTestId('device-template-field-insert').textContent).toContain(
+      '+ Device value',
+    )
+    expect(screen.getByTestId('device-template-field-function').textContent).toContain('+ Function')
+    expect(screen.getByTestId('device-template-field-help')).toBeTruthy()
+    expect(screen.getByTestId('device-template-field-preview').textContent).toContain('Now 21.0 C')
+  })
+
+  it('Ctrl+Space opens suggestions, Enter inserts, Escape closes; Cmd+Space does not', () => {
+    renderUi(<Harness initial="{{ " />)
+    const input = screen.getByTestId('device-template-field-input')
+    fireEvent.keyDown(input, { key: ' ', code: 'Space', metaKey: true })
+    expect(screen.queryByTestId('device-template-field-suggest')).toBeNull()
+    fireEvent.keyDown(input, { key: ' ', code: 'Space', ctrlKey: true })
+    expect(screen.getByTestId('device-template-field-suggest')).toBeTruthy()
+    fireEvent.keyDown(input, { key: 'Enter', code: 'Enter' })
+    expect(stored()).toContain('{{')
+    fireEvent.keyDown(screen.getByTestId('device-template-field-input'), {
+      key: 'Escape',
+      code: 'Escape',
+    })
+    expect(screen.queryByTestId('device-template-field-suggest')).toBeNull()
   })
 
   it('removing a chip removes exactly that token from the stored text', () => {

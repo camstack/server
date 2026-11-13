@@ -14,6 +14,9 @@
       "@camstack/types": [
         "../types/src/index.ts"
       ],
+      "@camstack/types/device-template-catalogue": [
+        "../types/dist/device-template-catalogue.d.ts"
+      ],
       "@camstack/ui-library": [
         "../ui-library/src/index.ts"
       ]

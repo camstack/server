@@ -1,4 +1,9 @@
 import {
+  DEVICE_TEMPLATE_CATALOGUE,
+  deviceTemplateCameraValues,
+  deviceTemplateRootVariables,
+} from '@camstack/types/device-template-catalogue'
+import {
   type MutableRefObject,
   type ReactNode,
   useImperativeHandle,
@@ -7,22 +12,24 @@ import {
   useState,
 } from 'react'
 import type { DeviceTemplateThisDevice } from '@camstack/types'
-import { Braces } from 'lucide-react'
+import { Braces, Info, Parentheses } from 'lucide-react'
 import { useUiText } from '../../contexts/ui-text'
 import {
-  useDeviceManagerCheckDeviceTemplates,
+  useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
-  useDeviceManagerRenderDeviceTemplates,
 } from '../../generated/system-hooks'
-import { useDebouncedString } from '../../hooks/use-debounced-string'
 import { Button } from '../../primitives/button'
+import { IconButton } from '../../primitives/icon-button'
 import { Input } from '../../primitives/input'
 import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
 import { Textarea } from '../../primitives/textarea'
 import { SelectedChip } from '../device-picker/SelectedChip'
 import { DeviceTemplateInsert } from './device-template-insert'
+import { DeviceTemplateFeedback } from './device-template-feedback'
+import { DeviceTemplateFunction } from './device-template-function'
+import { DeviceTemplateSuggest } from './device-template-suggest'
 import {
-  carriesDeviceTemplate,
+  applyTemplateSuggestion,
   type DeviceTemplateHeldSlots,
   chipLabel,
   type DeviceTemplateAccepts,
@@ -30,10 +37,14 @@ import {
   insertTemplateToken,
   parseTemplateSegments,
   type TemplateSegment,
-  textForDeviceCheck,
+  type TemplateSuggestion,
+  templateCaretContext,
+  templateSuggestions,
+  templateSuggestTrigger,
 } from './device-template-model'
 
-const CHECK_DEBOUNCE_MS = 400
+export const DEVICE_TEMPLATE_DOCS_URL: string =
+  'https://camstack-docs.zentik.app/docs/day-to-day/device-templates'
 
 /** What a host drives from outside: a button of its own that writes at the caret. */
 export interface DeviceTemplateFieldHandle {
@@ -53,7 +64,7 @@ export interface DeviceTemplateFieldProps {
   readonly disabled?: boolean
   /** Which `{{…}}` the consumer fills itself and the hub is not asked about. Default `vars` (an action run). */
   readonly heldSlots?: DeviceTemplateHeldSlots
-  /** Show the rendered text under the field (one hub call per pause in typing). */
+  /** Show the rendered text under the field. Default on — the hub renders it. */
   readonly preview?: boolean
   /** Devices the end caller may read; a template naming another is refused. */
   readonly allowedDeviceIds?: readonly number[]
@@ -71,18 +82,30 @@ export interface DeviceTemplateFieldProps {
 
 type RefSegment = Extract<TemplateSegment, { kind: 'ref' }>
 
+function isSuggestKey(event: {
+  ctrlKey: boolean
+  metaKey: boolean
+  altKey: boolean
+  code: string
+}): boolean {
+  return event.ctrlKey && !event.metaKey && !event.altKey && event.code === 'Space'
+}
+
 /**
- * A text field for a device template (`{{ alias.field | filter }}`). Device references
- * show as chips (alias.field, the device name on hover) until the field is edited; an
- * "insert value" button picks device → field and writes the token. The hub vets the text
- * (`checkDeviceTemplates`) after a pause in typing and the refusal shows under the field.
+ * The one device-template editor. A consumer passes the text, `onChange` and its
+ * context; this owns the box, "+ Device value", "+ Function", Ctrl+Space, the
+ * help link and the hub's validation and preview.
  */
 export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode {
-  const t = useUiText()
   const { value, onChange, accepts = 'any', multiline = false, disabled = false } = props
+  const preview = props.preview !== false
   const testId = props.testId ?? 'device-template-field'
   const [editing, setEditing] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [functionOpen, setFunctionOpen] = useState(false)
+  const [suggestOpen, setSuggestOpen] = useState(false)
+  const [active, setActive] = useState(0)
+  const [caret, setCaret] = useState(value.length)
   const element = useRef<HTMLInputElement & HTMLTextAreaElement>(null)
   const selection = useRef({ start: value.length, end: value.length })
   const segments = useMemo(() => parseTemplateSegments(value), [value])
@@ -94,50 +117,130 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
     for (const d of all.data ?? []) if (d.alias !== undefined) names.set(d.alias, d.name)
     return names
   }, [all.data])
+  const context = templateCaretContext(value, caret)
+  const fieldDeviceId =
+    context.kind !== 'field'
+      ? null
+      : context.alias === 'camera'
+        ? (props.thisDevice?.deviceId ?? null)
+        : (all.data?.find((d) => d.alias === context.alias)?.id ?? null)
+  const wireable = useDeviceManagerGetWireableFields(
+    { deviceId: fieldDeviceId ?? 0 },
+    { enabled: fieldDeviceId !== null },
+  )
+  const suggestions = templateSuggestions(context, {
+    aliases: [...nameOf.entries()].map(([alias, label]) => ({ alias, label })),
+    fields: (wireable.data?.caps ?? []).flatMap((cap) =>
+      cap.fields
+        .filter((field) => field.item !== true)
+        .map((field) => ({ path: field.path, kind: field.kind })),
+    ),
+    includeCamera: props.thisDevice !== undefined,
+    entries: DEVICE_TEMPLATE_CATALOGUE,
+    cameraValues: [
+      ...deviceTemplateCameraValues().map((item) => item.name),
+      ...Object.keys(props.thisDevice?.values ?? {}),
+    ],
+    rootVariables: deviceTemplateRootVariables().map((item) => item.name),
+  })
+  const shownActive = suggestions.length === 0 ? 0 : active % suggestions.length
 
-  const remember = (): void => {
-    selection.current = {
-      start: element.current?.selectionStart ?? value.length,
-      end: element.current?.selectionEnd ?? value.length,
-    }
+  const placeCaret = (cursor: number, selectStart = cursor, selectEnd = cursor): void => {
+    selection.current = { start: selectStart, end: selectEnd }
+    setCaret(selectEnd)
+    setEditing(true)
+    requestAnimationFrame(() => {
+      element.current?.focus()
+      element.current?.setSelectionRange(selectStart, selectEnd)
+    })
   }
   const insertText = (text: string, cursorOffset?: number): void => {
     const result = insertTemplateToken(value, selection.current, text)
     const cursor = result.cursor - text.length + (cursorOffset ?? text.length)
     onChange(result.value)
-    selection.current = { start: cursor, end: cursor }
-    setEditing(true)
-    requestAnimationFrame(() => {
-      element.current?.focus()
-      element.current?.setSelectionRange(cursor, cursor)
-    })
+    placeCaret(cursor)
   }
   useImperativeHandle(props.handle, () => ({ insertText }))
-  const insert = (token: string): void => insertText(token)
+  const remember = (nextCaret?: number): void => {
+    const start = nextCaret ?? element.current?.selectionStart ?? value.length
+    const end = nextCaret ?? element.current?.selectionEnd ?? value.length
+    selection.current = { start, end }
+    setCaret(end)
+  }
+  const choose = (suggestion: TemplateSuggestion): void => {
+    const result = applyTemplateSuggestion(value, caret, context, suggestion.replacement)
+    onChange(result.value)
+    setSuggestOpen(false)
+    placeCaret(result.cursor)
+  }
+  const onKeyDown = (event: {
+    ctrlKey: boolean
+    metaKey: boolean
+    altKey: boolean
+    code: string
+    key: string
+    preventDefault: () => void
+  }): void => {
+    if (isSuggestKey(event)) {
+      event.preventDefault()
+      setSuggestOpen(true)
+      setActive(0)
+      return
+    }
+    if (!suggestOpen) return
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      setSuggestOpen(false)
+      return
+    }
+    if (event.key === 'ArrowDown') {
+      event.preventDefault()
+      setActive((index) => index + 1)
+      return
+    }
+    if (event.key === 'ArrowUp') {
+      event.preventDefault()
+      setActive((index) => (index <= 0 ? suggestions.length - 1 : index - 1))
+      return
+    }
+    if (event.key !== 'Enter' && event.key !== 'Tab') return
+    const chosen = suggestions[shownActive]
+    if (chosen === undefined) return
+    event.preventDefault()
+    choose(chosen)
+  }
   const removeRef = (segment: RefSegment): void => {
     onChange(
       segments.map((s) => (s === segment ? '' : s.kind === 'text' ? s.text : s.raw)).join(''),
     )
   }
-
   const common = {
     'aria-label': props.label,
     value,
     disabled,
     placeholder: props.placeholder,
-    onChange: (e: { target: { value: string } }): void => {
-      onChange(e.target.value)
-      remember()
+    onChange: (e: { target: { value: string; selectionStart: number | null } }): void => {
+      const next = e.target.value
+      const nextCaret = e.target.selectionStart ?? next.length
+      onChange(next)
+      remember(nextCaret)
+      if (templateSuggestTrigger(next, nextCaret)) {
+        setSuggestOpen(true)
+        setActive(0)
+      } else if (templateCaretContext(next, nextCaret).kind === 'none') {
+        setSuggestOpen(false)
+      }
     },
-    onSelect: remember,
+    onSelect: (): void => remember(),
+    onKeyDown,
     onBlur: (): void => setEditing(false),
     'data-testid': `${testId}-input`,
   }
 
   return (
-    <div className={props.className ?? 'flex flex-col gap-1'} data-testid={testId}>
-      <div className="flex items-start gap-1.5">
-        <div className="min-w-0 flex-1">
+    <div className={props.className ?? 'relative flex flex-col gap-1'} data-testid={testId}>
+      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start">
+        <div className="relative min-w-0 flex-1">
           {chips ? (
             <div
               role="textbox"
@@ -156,7 +259,7 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
                 setEditing(true)
                 requestAnimationFrame(() => element.current?.focus())
               }}
-              onKeyDown={() => undefined}
+              onKeyDown={onKeyDown}
             >
               {segments.map((segment, index) =>
                 segment.kind === 'text' ? (
@@ -190,36 +293,26 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
           ) : (
             <Input ref={element} autoFocus={editing} {...common} />
           )}
+          <DeviceTemplateSuggest
+            open={suggestOpen && !disabled}
+            suggestions={suggestions}
+            active={shownActive}
+            testId={testId}
+            onHover={setActive}
+            onChoose={choose}
+          />
         </div>
-        <Tooltip className="shrink-0">
-          <TooltipTrigger>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              disabled={disabled}
-              data-testid={`${testId}-insert`}
-              aria-label={t('uiLibrary.deviceTemplateField.insertValue', 'Insert value')}
-              onMouseDown={(e) => {
-                e.preventDefault()
-                remember()
-              }}
-              onClick={() => setDialogOpen(true)}
-            >
-              <Braces className="h-3.5 w-3.5 shrink-0" />
-              <span className="hidden sm:inline">
-                {t('uiLibrary.deviceTemplateField.insertValue', 'Insert value')}
-              </span>
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent className="sm:hidden">
-            {t('uiLibrary.deviceTemplateField.insertValue', 'Insert value')}
-          </TooltipContent>
-        </Tooltip>
+        <FieldActions
+          testId={testId}
+          disabled={disabled}
+          onInsert={() => setDialogOpen(true)}
+          onFunction={() => setFunctionOpen(true)}
+          onMouseDown={() => remember()}
+        />
       </div>
-      <TemplateFeedback
+      <DeviceTemplateFeedback
         value={value}
-        preview={props.preview === true}
+        preview={preview}
         heldSlots={props.heldSlots}
         allowedDeviceIds={props.allowedDeviceIds}
         thisDevice={props.thisDevice}
@@ -229,89 +322,107 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
         accepts={accepts}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        onInsert={insert}
+        onInsert={(token) => insertText(token)}
         thisDeviceId={props.thisDevice?.deviceId}
         capTitle={props.capTitle}
         fieldLabel={props.fieldLabel}
+      />
+      <DeviceTemplateFunction
+        open={functionOpen}
+        onOpenChange={setFunctionOpen}
+        value={value}
+        caret={caret}
+        heldSlots={props.heldSlots}
+        allowedDeviceIds={props.allowedDeviceIds}
+        thisDevice={props.thisDevice}
+        testId={testId}
+        onInsert={(next, cursor, selectStart, selectEnd) => {
+          onChange(next)
+          placeCaret(cursor, selectStart, selectEnd)
+        }}
       />
     </div>
   )
 }
 
-interface TemplateFeedbackProps {
-  readonly heldSlots?: DeviceTemplateHeldSlots
-  readonly value: string
-  readonly preview: boolean
-  readonly allowedDeviceIds: readonly number[] | undefined
-  readonly thisDevice: DeviceTemplateThisDevice | undefined
+interface FieldActionsProps {
   readonly testId: string
+  readonly disabled: boolean
+  readonly onInsert: () => void
+  readonly onFunction: () => void
+  readonly onMouseDown: () => void
 }
 
-/** The hub's verdict on the text: a refusal, an unknown device name, or the rendered preview. */
-function TemplateFeedback({
-  heldSlots,
-  value,
-  preview,
-  allowedDeviceIds,
-  thisDevice,
-  testId,
-}: TemplateFeedbackProps): ReactNode {
+function FieldActions(props: FieldActionsProps): ReactNode {
   const t = useUiText()
-  const settled = useDebouncedString(value, CHECK_DEBOUNCE_MS)
-  // Plain text carries no device reference: nothing to vet, nothing to ask the hub.
-  const worth = carriesDeviceTemplate(settled, heldSlots)
-  const text = textForDeviceCheck(settled, heldSlots)
-  const allowed = allowedDeviceIds === undefined ? undefined : [...allowedDeviceIds]
-  const check = useDeviceManagerCheckDeviceTemplates(
-    { templates: [text], allowedDeviceIds: allowed, thisDevice },
-    { enabled: worth },
-  )
-  const verdict = worth ? check.data?.results[0] : undefined
-  const refused = verdict?.ok === false ? verdict.refusal.message : null
-  const unknownAliases =
-    verdict?.ok === true
-      ? verdict.aliases.filter((a) => a.deviceId === null).map((a) => a.alias)
-      : []
-  const outOfScope =
-    verdict?.ok === true ? verdict.aliases.filter((a) => a.deviceId !== null && !a.allowed) : []
-  const vetted = verdict?.ok === true && unknownAliases.length === 0 && outOfScope.length === 0
-  const rendered = useDeviceManagerRenderDeviceTemplates(
-    { templates: [text], allowedDeviceIds: allowed, thisDevice },
-    { enabled: preview && vetted },
-  )
-  const result = preview && vetted ? rendered.data?.results[0] : undefined
   return (
-    <>
-      {refused !== null && (
-        <p role="alert" className="text-[11px] text-danger" data-testid={`${testId}-refusal`}>
-          {refused}
-        </p>
-      )}
-      {unknownAliases.length > 0 && (
-        <p role="alert" className="text-[11px] text-danger" data-testid={`${testId}-unknown`}>
-          {t('uiLibrary.deviceTemplateField.unknownDevice', 'No device is named {{names}}.', {
-            names: unknownAliases.join(', '),
-          })}
-        </p>
-      )}
-      {outOfScope.length > 0 && (
-        <p role="alert" className="text-[11px] text-danger" data-testid={`${testId}-scope`}>
-          {t(
-            'uiLibrary.deviceTemplateField.outOfScope',
-            '{{names}} is outside what this can read.',
-            {
-              names: outOfScope.map((a) => a.alias).join(', '),
-            },
-          )}
-        </p>
-      )}
-      {result?.ok === true && (
-        <p className="text-[11px] text-foreground-muted" data-testid={`${testId}-preview`}>
-          {t('uiLibrary.deviceTemplateField.preview', 'Now reads: {{text}}', {
-            text: result.text,
-          })}
-        </p>
-      )}
-    </>
+    <div className="flex shrink-0 flex-wrap items-center gap-1">
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={props.disabled}
+        data-testid={`${props.testId}-insert`}
+        aria-label={t('uiLibrary.deviceTemplateField.deviceValue', '+ Device value')}
+        onMouseDown={(e) => {
+          e.preventDefault()
+          props.onMouseDown()
+        }}
+        onClick={props.onInsert}
+      >
+        <Braces className="h-3.5 w-3.5 shrink-0" />
+        {t('uiLibrary.deviceTemplateField.deviceValue', '+ Device value')}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={props.disabled}
+        data-testid={`${props.testId}-function`}
+        aria-label={t('uiLibrary.deviceTemplateField.function', '+ Function')}
+        onMouseDown={(e) => {
+          e.preventDefault()
+          props.onMouseDown()
+        }}
+        onClick={props.onFunction}
+      >
+        <Parentheses className="h-3.5 w-3.5 shrink-0" />
+        {t('uiLibrary.deviceTemplateField.function', '+ Function')}
+      </Button>
+      <Tooltip>
+        <TooltipTrigger>
+          <IconButton
+            type="button"
+            variant="ghost"
+            size="sm"
+            icon={Info}
+            aria-label={t('uiLibrary.deviceTemplateField.helpTitle', 'Template help')}
+            data-testid={`${props.testId}-help`}
+          />
+        </TooltipTrigger>
+        <TooltipContent className="max-w-[16rem] whitespace-normal text-left">
+          <span className="block">
+            {t(
+              'uiLibrary.deviceTemplateField.helpLine1',
+              'Plain text is written as it is. {{ alias.field }} reads a device; camera means this camera.',
+            )}
+          </span>
+          <span className="mt-1 block">
+            {t(
+              'uiLibrary.deviceTemplateField.helpLine2',
+              "Ctrl+Space completes a name. | unit('°C') prints the unit. {{ now | time('HH:mm') }} is the clock.",
+            )}
+          </span>
+          <a
+            href={DEVICE_TEMPLATE_DOCS_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 block text-primary underline"
+          >
+            {t('uiLibrary.deviceTemplateField.docsLink', 'Template syntax')}
+          </a>
+        </TooltipContent>
+      </Tooltip>
+    </div>
   )
 }

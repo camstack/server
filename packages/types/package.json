@@ -54,6 +54,11 @@
       "import": "./dist/units-lean.mjs",
       "require": "./dist/units-lean.js"
     },
+    "./device-template-catalogue": {
+      "types": "./dist/device-template-catalogue.d.ts",
+      "import": "./dist/device-template-catalogue.mjs",
+      "require": "./dist/device-template-catalogue.js"
+    },
     "./client": {
       "types": "./dist/client.d.ts",
       "import": "./dist/client.mjs",

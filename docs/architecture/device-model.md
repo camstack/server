@@ -1027,6 +1027,12 @@ Two names are not devices and are never bound to one.
 - The check result lists `reads` (alias to device id), which is how a caller learns
   which devices a text depends on.
 
+The filters, the `range` global and the names `now`, `camera`, `lastPerson` and
+`lastPlate` are one catalogue
+(`packages/types/src/device-template-catalogue.ts`). The grammar's allow-list
+and argument limits are derived from it, and the public function table is
+generated from the same list.
+
 Operators can read the full template syntax at
 https://camstack-docs.zentik.app/docs/day-to-day/device-templates.
 

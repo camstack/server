@@ -1,4 +1,8 @@
 import { holdVarSlots, templateCapKey } from '@camstack/types'
+import type {
+  DeviceTemplateCatalogueEntry,
+  DeviceTemplateParam,
+} from '@camstack/types/device-template-catalogue'
 
 /** What a field of the text may hold: the declared value kind of the place the template feeds. */
 export type DeviceTemplateAccepts = 'number' | 'string' | 'boolean' | 'any'
@@ -135,4 +139,301 @@ export function carriesDeviceTemplate(
   held: DeviceTemplateHeldSlots = 'vars',
 ): boolean {
   return /\{\{|\{%/.test(textForDeviceCheck(text, held))
+}
+
+/** Where the caret sits in a template, and the prefix the operator is still typing. */
+export type TemplateCaretContext =
+  | { readonly kind: 'none' }
+  | { readonly kind: 'expression'; readonly prefix: string }
+  | { readonly kind: 'field'; readonly alias: string; readonly prefix: string }
+  | { readonly kind: 'filter'; readonly prefix: string }
+
+function clampCaret(value: string, caret: number): number {
+  return Math.min(Math.max(caret, 0), value.length)
+}
+
+/** Index of the `{{` that contains the caret, or -1 when the caret is outside one. */
+function openExpression(value: string, caret: number): number {
+  const before = value.slice(0, caret)
+  const open = before.lastIndexOf('{{')
+  if (open < 0) return -1
+  const close = before.lastIndexOf('}}')
+  return close > open ? -1 : open
+}
+
+/** The last `|` that is not inside a quoted string. */
+function lastUnquotedPipe(text: string): number {
+  let quote: string | undefined
+  let at = -1
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]
+    if (quote !== undefined) {
+      if (ch === '\\') {
+        i += 1
+        continue
+      }
+      if (ch === quote) quote = undefined
+      continue
+    }
+    if (ch === "'" || ch === '"') {
+      quote = ch
+      continue
+    }
+    if (ch === '|') at = i
+  }
+  return at
+}
+
+export function templateCaretContext(value: string, caret: number): TemplateCaretContext {
+  const at = clampCaret(value, caret)
+  const open = openExpression(value, at)
+  if (open < 0) return { kind: 'none' }
+  const inner = value.slice(open + 2, at)
+  const pipe = lastUnquotedPipe(inner)
+  if (pipe >= 0) {
+    const name = /^[A-Za-z0-9_]*/.exec(inner.slice(pipe + 1).trimStart())?.[0] ?? ''
+    return { kind: 'filter', prefix: name }
+  }
+  const trimmed = inner.trimStart()
+  const field = /^([a-z][a-z0-9_]*)\.(.*)$/.exec(trimmed)
+  if (field?.[1] !== undefined && field[2] !== undefined) {
+    return { kind: 'field', alias: field[1], prefix: field[2] }
+  }
+  return { kind: 'expression', prefix: /[A-Za-z0-9_]*$/.exec(trimmed)?.[0] ?? '' }
+}
+
+/** True when the caret just landed on `{{`, `|` or `alias.` — the popover opens itself. */
+export function templateSuggestTrigger(value: string, caret: number): boolean {
+  const before = value.slice(0, clampCaret(value, caret))
+  if (before.endsWith('{{') || before.endsWith('|')) return true
+  if (!before.endsWith('.')) return false
+  return templateCaretContext(value, caret).kind === 'field'
+}
+
+export interface CatalogueCall {
+  readonly kind: 'filter' | 'global' | 'variable'
+  readonly name: string
+  readonly args: readonly string[]
+}
+
+export interface CatalogueInsertion {
+  readonly value: string
+  readonly cursor: number
+  readonly select: TemplateSelection | null
+}
+
+function splice(value: string, start: number, end: number, text: string): string {
+  return `${value.slice(0, start)}${text}${value.slice(end)}`
+}
+
+function renderedCall(call: CatalogueCall): string {
+  if (call.kind === 'variable' || call.args.length === 0) return call.name
+  return `${call.name}(${call.args.join(', ')})`
+}
+
+const PLACEHOLDER = 'value'
+
+/**
+ * Insert a catalogue name at the caret.
+ * Right after an expression inside `{{ }}`, a filter becomes ` | name(args)`.
+ * Anywhere else it becomes a new `{{ … }}`, with `value` selected when a filter needs an input.
+ */
+export function insertCatalogueCall(
+  value: string,
+  caret: number,
+  call: CatalogueCall,
+): CatalogueInsertion {
+  const at = clampCaret(value, caret)
+  const rendered = renderedCall(call)
+  const open = openExpression(value, at)
+  if (call.kind === 'filter' && open >= 0) return insertFilter(value, at, open, rendered)
+  if (open >= 0) {
+    return { value: splice(value, at, at, rendered), cursor: at + rendered.length, select: null }
+  }
+  const token = call.kind === 'filter' ? `{{ ${PLACEHOLDER} | ${rendered} }}` : `{{ ${rendered} }}`
+  const next = splice(value, at, at, token)
+  if (call.kind !== 'filter') {
+    return { value: next, cursor: at + token.length, select: null }
+  }
+  const selectStart = at + 3
+  return {
+    value: next,
+    cursor: selectStart + PLACEHOLDER.length,
+    select: { start: selectStart, end: selectStart + PLACEHOLDER.length },
+  }
+}
+
+function insertFilter(
+  value: string,
+  at: number,
+  open: number,
+  rendered: string,
+): CatalogueInsertion {
+  const inner = value.slice(open + 2, at)
+  const pipe = lastUnquotedPipe(inner)
+  if (pipe >= 0) {
+    const pipeAt = open + 2 + pipe
+    const from = pipeAt > 0 && value[pipeAt - 1] === ' ' ? pipeAt - 1 : pipeAt
+    const text = ` | ${rendered}`
+    return { value: splice(value, from, at, text), cursor: from + text.length, select: null }
+  }
+  if (inner.trim().length > 0) {
+    const text = ` | ${rendered}`
+    return { value: splice(value, at, at, text), cursor: at + text.length, select: null }
+  }
+  const inserted = ` ${PLACEHOLDER} | ${rendered}`
+  const next = splice(value, open + 2, at, inserted)
+  const selectStart = open + 3
+  return {
+    value: next,
+    cursor: selectStart + PLACEHOLDER.length,
+    select: { start: selectStart, end: selectStart + PLACEHOLDER.length },
+  }
+}
+
+export function formatCatalogueArg(type: 'string' | 'number' | 'boolean', raw: string): string {
+  if (type === 'number') {
+    const trimmed = raw.trim()
+    return trimmed === '' ? '0' : trimmed
+  }
+  if (type === 'boolean') return raw === 'true' ? 'true' : 'false'
+  return `'${raw.replaceAll('\\', '\\\\').replaceAll("'", "\\'")}'`
+}
+
+interface FormattedArg {
+  readonly omit: boolean
+  readonly text: string
+}
+
+/** Positional arguments for a catalogue call. Trailing untouched optionals are left off. */
+export function formatCatalogueArgs(
+  params: readonly DeviceTemplateParam[],
+  raw: Readonly<Record<string, string>>,
+): readonly string[] {
+  const formatted: FormattedArg[] = params.map((item) => formatOneArg(item, raw[item.name]))
+  let end = formatted.length
+  while (end > 0 && formatted[end - 1]?.omit === true) end -= 1
+  return formatted.slice(0, end).map((item) => item.text)
+}
+
+function formatOneArg(item: DeviceTemplateParam, text: string | undefined): FormattedArg {
+  const empty = text === undefined || text.trim() === ''
+  if (empty && item.optional) return { omit: true, text: '' }
+  return { omit: false, text: formatCatalogueArg(item.type, text ?? '') }
+}
+
+export interface TemplateAliasOption {
+  readonly alias: string
+  readonly label: string
+}
+
+export interface TemplateFieldOption {
+  readonly path: string
+  readonly kind: string
+}
+
+export interface TemplateSuggestion {
+  readonly id: string
+  readonly label: string
+  readonly detail: string
+  readonly replacement: string
+}
+
+export interface TemplateSuggestionInput {
+  readonly aliases: readonly TemplateAliasOption[]
+  readonly fields: readonly TemplateFieldOption[]
+  readonly includeCamera: boolean
+  readonly entries: readonly DeviceTemplateCatalogueEntry[]
+  readonly cameraValues: readonly string[]
+  readonly rootVariables: readonly string[]
+}
+
+function matchesPrefix(label: string, prefix: string): boolean {
+  return label.toLowerCase().startsWith(prefix.toLowerCase())
+}
+
+/** What Ctrl+Space (and `{{` / `|` / `alias.`) offers at this caret. */
+export function templateSuggestions(
+  ctx: TemplateCaretContext,
+  input: TemplateSuggestionInput,
+): readonly TemplateSuggestion[] {
+  if (ctx.kind === 'none') return []
+  if (ctx.kind === 'expression') return expressionSuggestions(ctx.prefix, input)
+  if (ctx.kind === 'field') return fieldSuggestions(ctx, input)
+  return input.entries
+    .filter((item) => item.kind !== 'variable' && matchesPrefix(item.name, ctx.prefix))
+    .map((item) => ({
+      id: `fn:${item.name}`,
+      label: item.name,
+      detail: item.category,
+      replacement: suggestionReplacement(item),
+    }))
+}
+
+function suggestionReplacement(item: DeviceTemplateCatalogueEntry): string {
+  if (item.kind === 'variable') return item.name
+  const args = formatCatalogueArgs(item.params, {})
+  return args.length === 0 ? item.name : `${item.name}(${args.join(', ')})`
+}
+
+function expressionSuggestions(
+  prefix: string,
+  input: TemplateSuggestionInput,
+): readonly TemplateSuggestion[] {
+  const variables = input.rootVariables.filter((name) => name !== 'camera' || input.includeCamera)
+  const aliasRows: TemplateSuggestion[] = input.aliases
+    .filter((item) => matchesPrefix(item.alias, prefix))
+    .map((item) => ({
+      id: `alias:${item.alias}`,
+      label: item.alias,
+      detail: item.label,
+      replacement: item.alias,
+    }))
+  const variableRows: TemplateSuggestion[] = variables
+    .filter(
+      (name) => matchesPrefix(name, prefix) && !input.aliases.some((item) => item.alias === name),
+    )
+    .map((name) => ({
+      id: `var:${name}`,
+      label: name,
+      detail: 'variable',
+      replacement: name,
+    }))
+  return [...aliasRows, ...variableRows]
+}
+
+function fieldSuggestions(
+  ctx: Extract<TemplateCaretContext, { kind: 'field' }>,
+  input: TemplateSuggestionInput,
+): readonly TemplateSuggestion[] {
+  const paths =
+    ctx.alias === 'camera'
+      ? [...input.fields.map((item) => item.path), ...input.cameraValues]
+      : input.fields.map((item) => item.path)
+  const unique = [...new Set(paths)]
+  return unique
+    .filter((path) => matchesPrefix(path, ctx.prefix))
+    .map((path) => ({
+      id: `field:${ctx.alias}.${path}`,
+      label: path,
+      detail: ctx.alias,
+      replacement: path,
+    }))
+}
+
+/** Replace the prefix at the caret with the chosen suggestion. */
+export function applyTemplateSuggestion(
+  value: string,
+  caret: number,
+  ctx: TemplateCaretContext,
+  replacement: string,
+): CatalogueInsertion {
+  const at = clampCaret(value, caret)
+  const prefix = ctx.kind === 'none' ? '' : ctx.prefix
+  const from = Math.max(0, at - prefix.length)
+  return {
+    value: splice(value, from, at, replacement),
+    cursor: from + replacement.length,
+    select: null,
+  }
 }

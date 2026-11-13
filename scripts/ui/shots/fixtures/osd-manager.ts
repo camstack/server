@@ -87,6 +87,17 @@ export default defineFixtures({
       text: '21 damp',
       notes: [],
     },
+    'deviceManager.search': {
+      items: [],
+      nextCursor: null,
+      total: 0,
+      compatibleTotal: 0,
+      fleetTotal: 0,
+      hiddenIncompatible: 0,
+      facets: { locations: [], integrations: [], types: [] },
+      suggested: [],
+      missingIds: [],
+    },
     'deviceManager.checkDeviceTemplates': {
       results: [
         {

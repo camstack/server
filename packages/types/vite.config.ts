@@ -22,6 +22,9 @@ export default buildLibPreset({
     'node-color': 'src/node-color.ts',
     // Table + conversion only (no zod) — the device-template render worker's unit filter.
     'units-lean': 'src/units-lean.ts',
+    // Filter/global/variable catalogue — the render worker reads argument caps
+    // from here without loading the types barrel (D453).
+    'device-template-catalogue': 'src/device-template-catalogue.ts',
     // Test doubles for addon authors (fakeAddonContext) — bundles the tRPC
     // client, so it stays off the root entry.
     testing: 'src/testing.ts',

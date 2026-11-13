@@ -1,6 +1,11 @@
+import { fileURLToPath } from 'node:url'
 import { configDefaults, defineConfig, mergeConfig } from 'vitest/config'
 import viteConfig from './vite.config.js'
 import { vitestWorkers } from '../../vitest.workers'
+
+const catalogue = fileURLToPath(
+  new URL('../types/src/device-template-catalogue.ts', import.meta.url),
+)
 
 /**
  * Per-push unit lane. Specs that boot a REAL multi-broker cluster (several
@@ -11,6 +16,9 @@ import { vitestWorkers } from '../../vitest.workers'
 export default mergeConfig(
   viteConfig,
   defineConfig({
+    resolve: {
+      alias: [{ find: /^@camstack\/types\/device-template-catalogue$/, replacement: catalogue }],
+    },
     test: {
       ...vitestWorkers(),
       exclude: [

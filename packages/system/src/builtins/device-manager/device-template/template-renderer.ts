@@ -29,7 +29,16 @@ import {
   type DeviceTemplateView,
   resolveTemplateRef,
 } from '@camstack/types'
-import { analyzeTemplate, type TemplateAnalysis, type UnitSite } from './template-grammar.js'
+import {
+  deviceTemplateCallableBounds,
+  deviceTemplateFilterMaxParams,
+} from '@camstack/types/device-template-catalogue'
+import {
+  analyzeTemplate,
+  type TemplateAnalysis,
+  type TemplateGrammarPolicy,
+  type UnitSite,
+} from './template-grammar.js'
 import {
   isRenderResponse,
   type RenderRequest,
@@ -47,6 +56,12 @@ export function defaultTemplateWorkerPath(): string {
   const require_ = createRequire(import.meta.url)
   const packageRoot = path.dirname(require_.resolve('@camstack/server/system/package.json'))
   return path.join(packageRoot, 'dist', 'device-template-worker.js')
+}
+
+/** Filter caps and callable globals, derived once from the catalogue. */
+const GRAMMAR_POLICY: TemplateGrammarPolicy = {
+  filterMaxParams: deviceTemplateFilterMaxParams(),
+  callableBounds: deviceTemplateCallableBounds(),
 }
 
 export interface DeviceTemplateRendererOptions {
@@ -213,7 +228,12 @@ export class DeviceTemplateRenderer {
 
   /** Vet a template without rendering it: its references, or the refusal. */
   validate(source: string): TemplateAnalysis {
-    return analyzeTemplate(source, DEVICE_TEMPLATE_FILTERS, DEVICE_TEMPLATE_MAX_LENGTH)
+    return analyzeTemplate(
+      source,
+      DEVICE_TEMPLATE_FILTERS,
+      DEVICE_TEMPLATE_MAX_LENGTH,
+      GRAMMAR_POLICY,
+    )
   }
 
   async render(source: string, resolver: DeviceTemplateResolver): Promise<DeviceTemplateRender> {
@@ -409,6 +429,8 @@ export class DeviceTemplateRenderer {
     if (existing !== null && this.ready !== null) return this.ready.then(() => existing)
     const limits: TemplateWorkerData = {
       allowedFilters: DEVICE_TEMPLATE_FILTERS,
+      filterMaxParams: GRAMMAR_POLICY.filterMaxParams,
+      callableBounds: GRAMMAR_POLICY.callableBounds,
       maxSourceLength: DEVICE_TEMPLATE_MAX_LENGTH + REWRITE_ALLOWANCE,
       maxOutput: DEVICE_TEMPLATE_MAX_OUTPUT,
       unavailable: DEVICE_TEMPLATE_UNAVAILABLE,

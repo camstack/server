@@ -1,6 +1,11 @@
+import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
 import { vitestWorkers } from '../../vitest.workers'
+
+const catalogue = fileURLToPath(
+  new URL('../types/src/device-template-catalogue.ts', import.meta.url),
+)
 
 /**
  * Vitest config for `@camstack/addon-osd-manager`.
@@ -14,6 +19,9 @@ import { vitestWorkers } from '../../vitest.workers'
  */
 export default defineConfig({
   plugins: [react()],
+  resolve: {
+    alias: [{ find: /^@camstack\/types\/device-template-catalogue$/, replacement: catalogue }],
+  },
   test: {
     ...vitestWorkers(),
     globals: true,

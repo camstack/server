@@ -98,44 +98,20 @@ const ALLOWED_TESTS: ReadonlySet<string> = new Set([
   'mapping',
 ])
 
-/** The one global a template may call. */
-const CALLABLE_GLOBAL = 'range'
-
 /**
- * Most parameters a filter takes after its input. The attribute-taking forms
- * (`join(',', attr)`, `sort(false, false, attr)`, `sum(attr)`) sit past these
- * limits, and a keyword named `attribute` is refused wherever it appears.
+ * Argument caps and callable globals, derived by the host from the catalogue
+ * and handed to this walker. The worker receives the same object in
+ * `workerData` so this file never loads the types barrel (D453).
  */
-const FILTER_MAX_PARAMS: Readonly<Record<string, number>> = {
-  unit: 2,
-  round: 1,
-  trunc: 1,
-  onoff: 0,
-  default: 2,
-  d: 2,
-  since: 0,
-  ago: 0,
-  format: 1,
-  upper: 0,
-  lower: 0,
-  title: 0,
-  capitalize: 0,
-  trim: 0,
-  abs: 0,
-  int: 1,
-  float: 1,
-  length: 0,
-  join: 1,
-  replace: 3,
-  first: 0,
-  last: 0,
-  sort: 2,
-  reverse: 0,
-  sum: 0,
-  string: 0,
-  list: 0,
-  truncate: 3,
-  time: 1,
+export interface TemplateGrammarPolicy {
+  readonly filterMaxParams: Readonly<Record<string, number>>
+  readonly callableBounds: readonly TemplateCallableBound[]
+}
+
+export interface TemplateCallableBound {
+  readonly name: string
+  readonly min: number
+  readonly max: number
 }
 
 const FORBIDDEN_KEYWORDS: ReadonlySet<string> = new Set(['attribute', 'attr'])
@@ -212,6 +188,7 @@ function chainOf(
 
 interface WalkState {
   readonly allowedFilters: ReadonlySet<string>
+  readonly policy: TemplateGrammarPolicy
   readonly locals: Set<string>
   readonly refs: DeviceTemplateRef[]
   readonly unitSites: UnitSite[]
@@ -377,22 +354,30 @@ function testName(symbol: TemplateNode, node: TemplateNode): void {
     )
 }
 
-/** The only call a template may make is the capped `range(n)`. */
+/** The only calls a template may make are the catalogue globals (`range`), within their argument cap. */
 function walkCall(node: TemplateNode, state: WalkState): void {
   const name = node.field('name')
   const callee =
     name !== undefined && name.typename === 'Symbol' && typeof name.value === 'string'
       ? name.value
       : undefined
-  if (callee !== CALLABLE_GLOBAL || state.locals.has(callee)) {
+  const bounds =
+    callee === undefined
+      ? undefined
+      : state.policy.callableBounds.find((item) => item.name === callee)
+  if (bounds === undefined || callee === undefined || state.locals.has(callee)) {
     refuse(
       'forbidden-syntax',
       `calling ${callee ?? 'an expression'} is not allowed in a device template (${at(node)})`,
     )
   }
   const args = node.field('args')?.children ?? []
-  if (args.length < 1 || args.length > 3 || args.some((arg) => arg.typename === 'KeywordArgs')) {
-    refuse('syntax', `range() takes one to three numbers (${at(node)})`)
+  if (
+    args.length < bounds.min ||
+    args.length > bounds.max ||
+    args.some((arg) => arg.typename === 'KeywordArgs')
+  ) {
+    refuse('syntax', `${bounds.name}() takes ${bounds.min} to ${bounds.max} numbers (${at(node)})`)
   }
   for (const arg of args) walk(arg, state)
 }
@@ -403,7 +388,7 @@ function walkFilter(node: TemplateNode, state: WalkState): void {
   if (
     filterName === undefined ||
     !state.allowedFilters.has(filterName) ||
-    FILTER_MAX_PARAMS[filterName] === undefined
+    state.policy.filterMaxParams[filterName] === undefined
   ) {
     refuse(
       'unknown-filter',
@@ -417,7 +402,7 @@ function walkFilter(node: TemplateNode, state: WalkState): void {
   const keywords = params
     .filter((param) => param.typename === 'KeywordArgs')
     .flatMap((k) => k.children)
-  const max = FILTER_MAX_PARAMS[filterName] ?? 0
+  const max = state.policy.filterMaxParams[filterName] ?? 0
   if (positional.length - 1 + keywords.length > max) {
     refuse('syntax', `filter "${filterName}" takes at most ${max} argument(s) (${at(node)})`)
   }
@@ -440,6 +425,7 @@ export function analyzeTemplate(
   source: string,
   allowedFilters: readonly string[],
   maxLength: number,
+  policy: TemplateGrammarPolicy,
 ): TemplateAnalysis {
   if (source.length > maxLength) {
     return {
@@ -453,6 +439,7 @@ export function analyzeTemplate(
   collectLocals(parsed.root, locals)
   const state: WalkState = {
     allowedFilters: new Set(allowedFilters),
+    policy,
     locals,
     refs: [],
     unitSites: [],

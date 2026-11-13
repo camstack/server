@@ -3,7 +3,7 @@
  * A template is one device-template text (`{{ alias.field | unit('°C') }}`); `camera`
  * names the camera it is rendered for, so one template serves every camera.
  */
-import { useMemo, useRef, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import {
   Button,
   DataTable,
@@ -13,13 +13,10 @@ import {
   Label,
   DeviceTemplateField,
   Select,
-  type DeviceTemplateFieldHandle,
-  useDebouncedString,
   useConfirm,
   useItemFormUrl,
   useOsdManagerDeleteTemplate,
   useOsdManagerListTemplates,
-  useOsdManagerPreviewTemplate,
   useOsdManagerUpsertTemplate,
   type DataColumn,
 } from '@camstack/ui-library'
@@ -27,9 +24,6 @@ import type { OsdNamedTemplate } from '@camstack/types'
 import { Copy, Layers, Trash2 } from 'lucide-react'
 import { generateTemplateId } from '../template-id.js'
 import { translate, useT } from '../i18n/index.js'
-
-/** Pause in typing before the hub is asked for a preview. */
-const PREVIEW_DEBOUNCE_MS = 500
 
 export interface CameraChoice {
   readonly id: number
@@ -246,26 +240,10 @@ interface TemplateEditorFormProps {
   readonly onChange: (next: OsdNamedTemplate) => void
 }
 
-/** The template variables the manager supplies besides device values. */
-const INSERT_SNIPPETS = [
-  { id: 'clock', labelKey: 'templates.insertClock', text: "{{ now | time('HH:mm') }}", offset: 7 },
-  { id: 'person', labelKey: 'templates.insertPerson', text: '{{ camera.lastPerson }}' },
-  { id: 'plate', labelKey: 'templates.insertPlate', text: '{{ camera.lastPlate }}' },
-] as const
-
 function TemplateEditorForm({ draft, cameras, onChange }: TemplateEditorFormProps) {
   const { t } = useT()
-  const handle = useRef<DeviceTemplateFieldHandle | null>(null)
   const [previewCameraId, setPreviewCameraId] = useState<number | null>(null)
   const cameraId = previewCameraId ?? cameras[0]?.id ?? null
-  const settledText = useDebouncedString(draft.text, PREVIEW_DEBOUNCE_MS)
-  const previewMutation = useOsdManagerPreviewTemplate()
-  const { mutate: runPreview } = previewMutation
-  useEffect(() => {
-    if (cameraId === null || settledText.trim() === '') return
-    runPreview({ deviceId: cameraId, text: settledText })
-  }, [cameraId, settledText, runPreview])
-  const preview = previewMutation.data
   const cameraOptions = useMemo(
     () => cameras.map((c) => ({ value: String(c.id), label: c.name })),
     [cameras],
@@ -286,8 +264,15 @@ function TemplateEditorForm({ draft, cameras, onChange }: TemplateEditorFormProp
 
       <div className="space-y-2 border-t border-border pt-3" data-testid="osd-tpl-section-text">
         <p className="text-[11px] text-foreground-subtle">{t('templates.textHint')}</p>
+        {cameraOptions.length > 0 && cameraId !== null ? (
+          <Select
+            aria-label={t('templates.previewCamera')}
+            value={String(cameraId)}
+            options={cameraOptions}
+            onChange={(e) => setPreviewCameraId(Number(e.target.value))}
+          />
+        ) : null}
         <DeviceTemplateField
-          handle={handle}
           label={t('templates.textLabel')}
           value={draft.text}
           onChange={(text) => onChange({ ...draft, text })}
@@ -297,60 +282,7 @@ function TemplateEditorForm({ draft, cameras, onChange }: TemplateEditorFormProp
           testId="osd-tpl-text"
           thisDevice={cameraId === null ? undefined : { deviceId: cameraId }}
         />
-        <p className="text-[11px] text-foreground-subtle">{t('camera.valueFieldHint')}</p>
-        <div className="flex flex-wrap gap-1.5" data-testid="osd-tpl-snippets">
-          {INSERT_SNIPPETS.map((snippet) => (
-            <Button
-              key={snippet.id}
-              type="button"
-              size="sm"
-              variant="outline"
-              data-testid={`osd-tpl-insert-${snippet.id}`}
-              onClick={() =>
-                handle.current?.insertText(
-                  snippet.text,
-                  'offset' in snippet ? snippet.offset : undefined,
-                )
-              }
-            >
-              {t(snippet.labelKey)}
-            </Button>
-          ))}
-        </div>
         <p className="text-[11px] text-foreground-subtle">{t('templates.cameraHint')}</p>
-      </div>
-
-      <div
-        className="space-y-2 rounded border border-border bg-surface-hover/40 px-3 py-2"
-        data-testid="osd-tpl-preview"
-      >
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[10px] uppercase tracking-wide text-foreground-muted">
-            {t('templates.livePreview')}
-          </p>
-          {cameraOptions.length > 0 && cameraId !== null ? (
-            <Select
-              aria-label={t('templates.previewCamera')}
-              value={String(cameraId)}
-              options={cameraOptions}
-              onChange={(e) => setPreviewCameraId(Number(e.target.value))}
-            />
-          ) : null}
-        </div>
-        {preview === undefined ? (
-          <p className="text-xs text-foreground-muted">{t('templates.previewIdle')}</p>
-        ) : preview.ok ? (
-          <p className="font-mono text-sm text-foreground" data-testid="osd-tpl-preview-text">
-            {preview.text === '' ? t('common.empty') : preview.text}
-          </p>
-        ) : (
-          <p className="text-xs text-danger" role="alert" data-testid="osd-tpl-preview-refused">
-            {preview.notes.join(' ')}
-          </p>
-        )}
-        {preview?.ok === true && preview.notes.length > 0 ? (
-          <p className="text-[11px] text-foreground-muted">{preview.notes.join(' ')}</p>
-        ) : null}
       </div>
     </div>
   )
