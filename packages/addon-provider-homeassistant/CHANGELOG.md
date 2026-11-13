@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.684] - 2026-11-13
+
 ### Changed
 
 - The new energy-system capability is not exported: each of its values is already exported through the installation's sensors

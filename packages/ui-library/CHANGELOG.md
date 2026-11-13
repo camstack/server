@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.438] - 2026-11-13
+
 ### Changed
 
 - Instance pickers list a Google account wherever a mail sender is asked for.

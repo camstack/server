@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.20] - 2026-11-13
+
 ### Changed
 
 - The System now has an Energy system device carrying every value the box reads (production, grid, house, heat pump, storage); it is the System's primary device

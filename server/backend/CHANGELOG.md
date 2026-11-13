@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.858] - 2026-11-13
+
 ### Changed
 
 - A Google account an email target sends with cannot be deleted while the target still links it.

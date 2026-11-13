@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.562] - 2026-11-13
+
 ### Added
 
 - Automation templates: a template kind with typed inputs and bindings, an expansion that fills them in, and instance flagging when a template changes

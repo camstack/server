@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.661] - 2026-11-13
+
 ### Added
 
 - Build → Templates now holds remote and automation templates: author them with inputs, create automations from a template by filling only its inputs, save an automation as a template, and convert a template automation to a free one.

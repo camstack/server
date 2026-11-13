@@ -1,6 +1,6 @@
 {
   "name": "@camstack/types",
-  "version": "1.2.561",
+  "version": "1.2.562",
   "description": "Shared types, interfaces, and model catalogs for the CamStack detection ecosystem",
   "keywords": [
     "camstack",

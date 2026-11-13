@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.857",
+  "version": "1.2.858",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,10 +66,14 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.660",
-        "@camstack/addon-agent-ui": ">=1.2.377",
-        "@camstack/addon-provider-esphome": ">=0.1.21",
-        "@camstack/addon-provider-mqtt-ha": ">=0.1.50"
+        "@camstack/addon-admin-ui": ">=1.2.661",
+        "@camstack/addon-agent-ui": ">=1.2.378",
+        "@camstack/addon-google-services": ">=0.2.48",
+        "@camstack/addon-notifiers": ">=1.2.638",
+        "@camstack/addon-post-analysis": ">=1.2.702",
+        "@camstack/addon-provider-enpal": ">=0.1.20",
+        "@camstack/addon-provider-homeassistant": ">=1.2.684",
+        "@camstack/addon-provider-homematic": ">=1.2.195"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
