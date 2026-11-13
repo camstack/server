@@ -25,6 +25,8 @@ export interface LinkableInstance {
   /** The kind of the instance (`kind.brokerKind ?? kind.id`). */
   readonly kind: string
   readonly addonId: string
+  /** The kind's own icon (`IntegrationInstanceKind.iconUrl`), when it declares one. */
+  readonly iconUrl?: string
   readonly state: 'ok' | 'off' | 'error' | 'unknown'
   readonly stateLabel: string | null
   /** The record kind id the instance is stored under (`kind.id`; `kind` above may be the broker kind). */
@@ -76,6 +78,7 @@ export function instancesOfHolder(
       enabled: instance.enabled !== false,
       formValues: instance.formValues,
       addonId: holder.addonId,
+      ...(own.iconUrl !== undefined ? { iconUrl: own.iconUrl } : {}),
       state: instance.status?.state ?? 'unknown',
       stateLabel: instance.status?.label ?? null,
       usable:

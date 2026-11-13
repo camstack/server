@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest'
 import { InstancePickerSlotProvider } from '../../contexts/instance-picker-slot'
 import type { LinkableInstance } from '../../hooks/use-instances-of-cap'
 import { FormField } from '../config-form-field'
+import { instanceOptionLabel } from '../config-instance-select-field'
 
 const asked: { functionCap: string; kind?: string }[] = []
 
@@ -70,6 +71,13 @@ describe('instance-select field', () => {
       />,
     )
     expect(selectOptionLabels(screen.getByRole('combobox'))).toContain('Default relay')
+  })
+
+  it('names each instance with the status its provider reported, so a sender that is not ready shows it', () => {
+    expect(instanceOptionLabel({ ...linkable('a', true), stateLabel: 'Not signed in' })).toBe(
+      'name-a · Not signed in',
+    )
+    expect(instanceOptionLabel(linkable('b', true))).toBe('name-b')
   })
 
   it('keeps the chosen instance visible even when it is not usable', () => {

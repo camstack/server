@@ -7,6 +7,7 @@ import type { JSX } from 'react'
 import type { ConfigInstanceSelectField } from '@camstack/types'
 import { useInstancePickerSlot } from '../contexts/instance-picker-slot'
 import { useUiText } from '../contexts/ui-text'
+import type { LinkableInstance } from '../hooks/use-instances-of-cap'
 import { selectableInstances, useInstancesOfCap } from '../hooks/use-instances-of-cap'
 import { Select } from '../primitives/select'
 
@@ -19,6 +20,16 @@ export interface InstancePlainSelectProps {
   readonly noneLabel?: string
   readonly disabled?: boolean
   readonly controlId: string
+}
+
+/**
+ * The words of one option: the instance's name, then the status its provider reported (e.g. "Not
+ * signed in"), so a linked instance that is offered but not ready says so before it is picked.
+ */
+export function instanceOptionLabel(row: LinkableInstance): string {
+  return row.stateLabel === null || row.stateLabel === ''
+    ? row.name
+    : `${row.name} · ${row.stateLabel}`
 }
 
 /** A plain select over the existing instances of one function cap; it never picks for the operator. */
@@ -47,7 +58,7 @@ export function InstancePlainSelect({
             ? t('uiLibrary.configFormField.loadingOptions', 'Loading options…')
             : (noneLabel ?? t('uiLibrary.configFormField.select', '— Select —')),
         },
-        ...rows.map((row) => ({ value: row.id, label: row.name })),
+        ...rows.map((row) => ({ value: row.id, label: instanceOptionLabel(row) })),
       ]}
     />
   )
