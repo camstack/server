@@ -22,12 +22,8 @@ import {
   ThermostatInlineControl,
   MediaPlayerInlineControl,
   AlarmPanelInlineControl,
-  ScriptInlineControl,
-  AutomationInlineControl,
-  ControlInlineControl,
 } from '../../device-controls/panel-controls'
 import { SensorInlineControl } from '../../device-controls/sensor-inline-control'
-import { ButtonControl } from '../../device-controls/button-control'
 import { VacuumInlineControl } from '../../device-controls/vacuum-control'
 import { LawnMowerInlineControl } from '../../device-controls/lawn-mower-control'
 import { DishwasherInlineControl } from '../../device-controls/dishwasher-control'
@@ -57,19 +53,12 @@ describe('DEVICE_TYPE_CONTROL (replaces DEVICE_TYPE_ACTIONS)', () => {
       [DeviceType.Sensor, SensorInlineControl],
       [DeviceType.Presence, SensorInlineControl],
       [DeviceType.Climate, ThermostatInlineControl],
-      [DeviceType.Button, ButtonControl],
       [DeviceType.Lock, LockInlineControl],
       [DeviceType.MediaPlayer, MediaPlayerInlineControl],
       [DeviceType.AlarmPanel, AlarmPanelInlineControl],
-      [DeviceType.Control, ControlInlineControl],
       [DeviceType.Vacuum, VacuumInlineControl],
       [DeviceType.LawnMower, LawnMowerInlineControl],
       [DeviceType.Dishwasher, DishwasherInlineControl],
-      // Promoted 2026-08-05. This test is what caught the promotion — it
-      // failed with `expected ScriptInlineControl to be DummyInline` the
-      // moment the kind changed, which is the review it exists to force.
-      [DeviceType.Script, ScriptInlineControl],
-      [DeviceType.Automation, AutomationInlineControl],
     ]
     for (const [type, expectedControl] of realControls) {
       expect(DEVICE_TYPE_CONTROL[type].InlineControl).toBe(expectedControl)
@@ -111,9 +100,16 @@ describe('DEVICE_TYPE_CONTROL (replaces DEVICE_TYPE_ACTIONS)', () => {
     expect(resolveDeviceControl(DeviceType.Generic)?.InlineControl).toBe(DummyInline)
   })
 
-  it('Button → ButtonControl (real inline control, not DummyInline)', () => {
-    expect(resolveDeviceControl(DeviceType.Button)?.InlineControl).toBe(ButtonControl)
-    expect(resolveDeviceControl(DeviceType.Button)?.InlineControl).not.toBe(DummyInline)
+  it('model-drawn rows carry no registry inline control (ModelRowControl draws them)', () => {
+    for (const t of [
+      DeviceType.Button,
+      DeviceType.Control,
+      DeviceType.Script,
+      DeviceType.Automation,
+      DeviceType.Update,
+    ]) {
+      expect(resolveDeviceControl(t)?.InlineControl).toBeNull()
+    }
   })
 
   it('Container type → DummyInline (no per-type control on container row)', () => {

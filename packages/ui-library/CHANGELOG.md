@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device rows for control, button, script, automation, update and event types are drawn from the projected row model; the parallel inline controls are removed
+
 ## [1.2.440] - 2026-11-13
 
 ### Changed

@@ -49,41 +49,6 @@ function useUpdate(trpc: DeviceControlProps['trpc'], deviceId: number) {
 }
 
 /**
- * UpdateInlineControl — compact firmware state for a device-list row.
- */
-export function UpdateInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
-  const t = useUiText()
-  const { cap, slice } = useUpdate(trpc, deviceId)
-  if (cap === undefined) return null
-
-  if (slice?.inProgress) {
-    return (
-      <span className="inline-flex items-center gap-1 text-xs text-foreground-subtle">
-        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        {t('uiLibrary.updateControl.updating', 'Updating…')}
-      </span>
-    )
-  }
-
-  if (hasUpdate(slice)) {
-    return (
-      <span className="inline-flex items-center gap-1 rounded bg-warning/15 px-1.5 py-0.5 text-[10px] font-medium text-warning">
-        <Download className="h-3 w-3" />
-        {t('uiLibrary.updateControl.update', 'Update')}
-      </span>
-    )
-  }
-
-  // Up to date — show the current version when known, else a subtle check.
-  return (
-    <span className="inline-flex items-center gap-1 text-[10px] text-foreground-subtle">
-      <Check className="h-3 w-3 text-success" />
-      {slice?.currentVersion ?? t('uiLibrary.updateControl.upToDate', 'Up to date')}
-    </span>
-  )
-}
-
-/**
  * UpdateHeroCard — version transition + Install action for the device-detail
  * hero area.
  */

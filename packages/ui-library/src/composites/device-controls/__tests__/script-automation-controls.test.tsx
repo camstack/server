@@ -60,10 +60,8 @@ vi.mock('../../../hooks/use-device-capability', () => ({
 
 import {
   AutomationHeroCard,
-  AutomationInlineControl,
   lastRunLabel,
   ScriptHeroCard,
-  ScriptInlineControl,
 } from '../script-automation-controls'
 
 const trpc = {} as never
@@ -197,15 +195,6 @@ describe('ScriptHeroCard', () => {
   })
 })
 
-describe('ScriptInlineControl', () => {
-  it('is the run button plus the last run, nothing taller', () => {
-    withScript(scriptSlice({ lastRunAt: Date.now() - 5 * 60_000 }))
-    render(<ScriptInlineControl trpc={trpc} deviceId={7} features={undefined} />)
-    expect(screen.getByTestId('script-run')).toBeTruthy()
-    expect(screen.getByTestId('last-run').textContent).toBe('5 min ago')
-  })
-})
-
 describe('AutomationHeroCard', () => {
   it('renders nothing without the cap', () => {
     withAutomation(undefined)
@@ -255,11 +244,3 @@ describe('AutomationHeroCard', () => {
   })
 })
 
-describe('AutomationInlineControl', () => {
-  it('is the enabled pill plus a trigger', () => {
-    withAutomation(automationSlice({ enabled: true }))
-    render(<AutomationInlineControl trpc={trpc} deviceId={9} features={undefined} />)
-    expect(screen.getByTestId('automation-enabled').getAttribute('aria-checked')).toBe('true')
-    expect(screen.getByTestId('automation-trigger')).toBeTruthy()
-  })
-})

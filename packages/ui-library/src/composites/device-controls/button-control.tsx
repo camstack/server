@@ -6,45 +6,6 @@ import { cn } from '../../lib/cn'
 import type { DeviceControlProps } from './control-registry'
 
 /**
- * ButtonControl (inline) — compact "Press" trigger for a device-list row.
- *
- * The `button` cap is fire-only (no status / runtimeState), so we bypass
- * `useDeviceCapability` (which requires a slice) and resolve the cap
- * handle directly from the device proxy. We guard on `cap === undefined`
- * (device has no button cap) and render nothing in that case.
- */
-export function ButtonControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
-  const t = useUiText()
-  const dev = useDeviceProxy(trpc, deviceId)
-  const cap = dev !== null ? dev.button : undefined
-
-  if (cap === undefined) return null
-
-  const handlePress = (): void => {
-    void cap.press({ deviceId })
-  }
-
-  return (
-    <button
-      type="button"
-      aria-label={t('uiLibrary.buttonControl.press', 'Press')}
-      title={t('uiLibrary.buttonControl.press', 'Press')}
-      onClick={(e) => {
-        e.stopPropagation()
-        handlePress()
-      }}
-      className={cn(
-        'inline-flex h-5 items-center gap-1 rounded px-1.5 text-xs',
-        'bg-primary text-primary-foreground hover:bg-primary/90 transition-colors',
-      )}
-    >
-      <MousePointerClick className="h-3 w-3" />
-      <span>{t('uiLibrary.buttonControl.press', 'Press')}</span>
-    </button>
-  )
-}
-
-/**
  * ButtonHeroCard — large press-actuator card for the device-detail hero area.
  *
  * Renders a centred "Press" button with real design-token classes. The cap is

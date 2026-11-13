@@ -32,7 +32,6 @@ import {
   FanHeroCard,
   ThermostatInlineControl,
   MediaPlayerInlineControl,
-  ControlInlineControl,
   ControlHeroCard,
 } from '../panel-controls'
 
@@ -329,31 +328,6 @@ describe('MediaPlayerInlineControl', () => {
 })
 
 // ── Control ────────────────────────────────────────────────────────────────────
-
-describe('ControlInlineControl', () => {
-  beforeEach(() => {
-    mockResult = {
-      cap: { setValue: vi.fn() },
-      slice: { kind: 'numeric' as const, value: 5, options: [], lastChangedAt: 0 },
-      available: true,
-    }
-  })
-
-  it('mounts without error when cap present', () => {
-    const { container } = render(
-      <ControlInlineControl trpc={trpc} deviceId={1} features={undefined} />,
-    )
-    expect(container.firstChild).not.toBeNull()
-  })
-
-  it('returns null when control cap is undefined', () => {
-    mockResult = { cap: undefined, slice: undefined, available: false }
-    const { container } = render(
-      <ControlInlineControl trpc={trpc} deviceId={1} features={undefined} />,
-    )
-    expect(container.firstChild).toBeNull()
-  })
-})
 
 describe('ControlHeroCard', () => {
   beforeEach(() => {

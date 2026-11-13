@@ -207,27 +207,6 @@ function RunButton({ running, busy, large, onRun, onStop }: RunButtonProps): Rea
   )
 }
 
-export function ScriptInlineControl({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
-  const t = useUiText()
-  const { display, capPresent, busy, running, run, stop } = useScriptControl(
-    trpc,
-    deviceId,
-    optimistic,
-  )
-  if (!capPresent) return null
-  if (display === undefined) return null
-
-  return (
-    <div className="flex min-w-0 items-center gap-2">
-      <RunButton running={running} busy={busy} large={false} onRun={run} onStop={stop} />
-      <LastRun
-        atMs={display.lastRunAt}
-        neverLabel={t('uiLibrary.scriptAutomationControls.neverRun', 'never run')}
-      />
-    </div>
-  )
-}
-
 export function ScriptHeroCard({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { display, capPresent, busy, running, run, stop } = useScriptControl(
@@ -389,27 +368,6 @@ function TriggerButton({ busy, large, onTrigger }: TriggerButtonProps): ReactNod
       <Zap className={large ? 'h-4 w-4' : 'h-3 w-3'} aria-hidden="true" />
       <span>{t('uiLibrary.scriptAutomationControls.trigger', 'Trigger')}</span>
     </button>
-  )
-}
-
-export function AutomationInlineControl({
-  trpc,
-  deviceId,
-  optimistic,
-}: DeviceControlProps): ReactNode {
-  const { display, capPresent, busy, setEnabled, trigger } = useAutomationControl(
-    trpc,
-    deviceId,
-    optimistic,
-  )
-  if (!capPresent) return null
-  if (display === undefined) return null
-
-  return (
-    <div className="flex min-w-0 items-center gap-2">
-      <EnabledPill enabled={display.enabled} busy={busy} onToggle={setEnabled} />
-      <TriggerButton busy={busy} large={false} onTrigger={trigger} />
-    </div>
   )
 }
 

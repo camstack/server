@@ -47,6 +47,22 @@ import { RebootQuickAction } from './reboot-quick-action'
 import { useContainerChildren } from './container-children-context'
 import { ModelRowControl, ModelRowReading } from './model-row-value'
 
+/**
+ * DeviceTypes whose row is drawn from the projected row model (`heroLayout.getRowModels`):
+ * the primary control and extras the model names, so the row and the device card decide
+ * editability in ONE place. The per-type registry holds no inline control for them.
+ */
+const MODEL_ROW_TYPES: ReadonlySet<string> = new Set<string>([
+  DeviceType.Control,
+  DeviceType.Button,
+  DeviceType.Script,
+  DeviceType.Automation,
+  DeviceType.Update,
+  DeviceType.EventEmitter,
+  DeviceType.Notifier,
+  DeviceType.Gateway,
+])
+
 /** DeviceTypes whose row display is the live sensor value, not a control. */
 const SENSOR_VALUE_TYPES: ReadonlySet<string> = new Set<string>([
   DeviceType.Sensor,
@@ -107,7 +123,9 @@ export function DeviceItemActions({
   //    (which needs device.role + sourceInfo). All other types use the
   //    registry's InlineControl directly (cover → ↑■↓; rest → DummyInline).
   const isSensorRow = SENSOR_VALUE_TYPES.has(device.type)
-  const control = isSensorRow ? null : resolveDeviceControl(device.type, device.role)
+  const isModelRow = MODEL_ROW_TYPES.has(device.type)
+  const control =
+    isSensorRow || isModelRow ? null : resolveDeviceControl(device.type, device.role)
   const InlineControl = control?.InlineControl ?? null
   // Alignment for the uniform control column. FILL types stretch; natural-width
   // types are placed per `placement` (right for card view, center for table).
@@ -135,7 +153,7 @@ export function DeviceItemActions({
           <SensorRowValue trpc={trpc} device={device} />
         </ControlColumn>
       )}
-      {InlineControl !== null && (
+      {(InlineControl !== null || isModelRow) && (
         // Stop clicks on inline controls (select/buttons/sliders) from bubbling
         // to the row's navigate-to-detail handler. The motion-trigger toggle
         // sits INSIDE the control column (before the control) so it's flush
@@ -145,16 +163,24 @@ export function DeviceItemActions({
           {showOnMotion && (
             <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
           )}
-          <TypeInlineControl trpc={trpc} device={device} InlineControl={InlineControl} />
-          <TimedRunRowControl
-            trpc={trpc}
-            deviceId={device.id}
-            deviceType={device.type}
-            deviceRole={device.role ?? null}
-          />
+          {isModelRow ? (
+            <ModelRowControl device={device} />
+          ) : (
+            InlineControl !== null && (
+              <>
+                <TypeInlineControl trpc={trpc} device={device} InlineControl={InlineControl} />
+                <TimedRunRowControl
+                  trpc={trpc}
+                  deviceId={device.id}
+                  deviceType={device.type}
+                  deviceRole={device.role ?? null}
+                />
+              </>
+            )
+          )}
         </ControlColumn>
       )}
-      {!isSensorRow && InlineControl === null && showOnMotion && (
+      {!isSensorRow && !isModelRow && InlineControl === null && showOnMotion && (
         <OnMotionToggle trpc={trpc} deviceId={device.id} features={device.features} />
       )}
       {showPtz && <PtzQuickAction trpc={trpc} deviceId={device.id} />}
@@ -176,10 +202,10 @@ export function DeviceItemActions({
 
 // ── Row value from the row model ────────────────────────────────────
 //
-// A Sensor row draws its measurement and a Control row its primary control from the
-// projected row model (`heroLayout.getRowModels`), the model the device page draws.
-// Today's atoms stay the fallback: a sensor with two readings, a presence device, a
-// date control, or a server without a row model for the device.
+// A Sensor row draws its measurement, and a model row (`MODEL_ROW_TYPES`) its controls,
+// from the projected row model (`heroLayout.getRowModels`), the model the device page
+// draws. Today's atom stays the fallback of a sensor with two readings or a presence
+// device, which have no single measurement.
 
 interface SensorRowValueProps {
   readonly trpc: UseDeviceProxyTrpc
@@ -192,7 +218,9 @@ function SensorRowValue({ trpc, device }: SensorRowValueProps): ReactNode {
   return <ModelRowReading device={device} fallback={atom} />
 }
 
-type InlineControlComponent = NonNullable<ReturnType<typeof resolveDeviceControl>>['InlineControl']
+type InlineControlComponent = NonNullable<
+  NonNullable<ReturnType<typeof resolveDeviceControl>>['InlineControl']
+>
 
 interface TypeInlineControlProps {
   readonly trpc: UseDeviceProxyTrpc
@@ -201,9 +229,7 @@ interface TypeInlineControlProps {
 }
 
 function TypeInlineControl({ trpc, device, InlineControl }: TypeInlineControlProps): ReactNode {
-  const own = <InlineControl trpc={trpc} deviceId={device.id} features={device.features} />
-  if (device.type !== DeviceType.Control) return own
-  return <ModelRowControl device={device} fallback={own} />
+  return <InlineControl trpc={trpc} deviceId={device.id} features={device.features} />
 }
 
 // ── ContainerPrimaryInline ──────────────────────────────────────────
@@ -239,10 +265,17 @@ function ContainerPrimaryInline({
       </ControlColumn>
     )
   }
+  const columnAlign = resolveControlAlign(child.type, placement)
+  if (MODEL_ROW_TYPES.has(child.type)) {
+    return (
+      <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
+        <ModelRowControl device={child} />
+      </ControlColumn>
+    )
+  }
   const control = resolveDeviceControl(child.type, child.role)
   const InlineControl = control?.InlineControl ?? null
   if (InlineControl === null) return null
-  const columnAlign = resolveControlAlign(child.type, placement)
   return (
     <ControlColumn align={columnAlign} onClick={(e) => e.stopPropagation()}>
       <TypeInlineControl trpc={trpc} device={child} InlineControl={InlineControl} />

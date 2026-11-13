@@ -17,7 +17,6 @@ import type { UseDeviceProxyTrpc } from '../../hooks/use-device-proxy'
 import { EnergySystemInlineControl } from './energy-system-control'
 import { ApplianceInlineControl } from './appliance-control'
 import { CENTER, type ControlAlign, FILL, FIT, RIGHT } from './atoms'
-import { ButtonControl } from './button-control'
 import { CoverHeroCard } from './cover-hero-card'
 import { CoverInlineControl } from './cover-inline'
 import { DishwasherInlineControl } from './dishwasher-control'
@@ -33,11 +32,9 @@ import {
   AlarmPanelInlineControl,
   ApplianceCardHero,
   AutomationCardHero,
-  AutomationInlineControl,
   ButtonCardHero,
   ClimateCardHero,
   ControlCardHero,
-  ControlInlineControl,
   DishwasherCardHero,
   DummyCardHero,
   FanHeroCard,
@@ -55,7 +52,6 @@ import {
   PetFountainCardHero,
   PlugCardHero,
   ScriptCardHero,
-  ScriptInlineControl,
   SwitchInlineControl,
   ThermostatInlineControl,
   UpdateCardHero,
@@ -68,7 +64,6 @@ import { PetFeederInlineControl } from './pet-feeder-panel'
 import { PetFountainInlineControl } from './pet-fountain-panel'
 import { SensorHeroCard } from './sensor-hero-card'
 import { SensorInlineControl } from './sensor-inline-control'
-import { UpdateInlineControl } from './update-control'
 import { VacuumInlineControl } from './vacuum-control'
 import { ValveInlineControl } from './valve-control'
 import { WaterHeaterInlineControl } from './water-heater-control'
@@ -87,8 +82,12 @@ export interface DeviceControlProps {
 }
 
 export interface DeviceTypeControl {
-  /** Compact, state-aware controls rendered directly in a device-list row. */
-  readonly InlineControl: (p: DeviceControlProps) => ReactNode
+  /**
+   * Compact, state-aware controls rendered directly in a device-list row. `null` = the
+   * row is drawn from the projected row model (`heroLayout.getRowModels`) instead, so
+   * the registry holds no second copy of what that device's row offers.
+   */
+  readonly InlineControl: ((p: DeviceControlProps) => ReactNode) | null
   /** Full control surface rendered as a card in the device-detail hero area. */
   readonly HeroCard: (p: DeviceControlProps) => ReactNode
 }
@@ -109,7 +108,7 @@ const SENSOR_CONTROL: DeviceTypeControl = {
 }
 
 const UPDATE_CONTROL: DeviceTypeControl = {
-  InlineControl: UpdateInlineControl,
+  InlineControl: null,
   HeroCard: UpdateCardHero,
 }
 
@@ -154,17 +153,17 @@ const ALARM_PANEL_CONTROL: DeviceTypeControl = {
 }
 
 const SCRIPT_CONTROL: DeviceTypeControl = {
-  InlineControl: ScriptInlineControl,
+  InlineControl: null,
   HeroCard: ScriptCardHero,
 }
 
 const AUTOMATION_CONTROL: DeviceTypeControl = {
-  InlineControl: AutomationInlineControl,
+  InlineControl: null,
   HeroCard: AutomationCardHero,
 }
 
 const CONTROL_CONTROL: DeviceTypeControl = {
-  InlineControl: ControlInlineControl,
+  InlineControl: null,
   HeroCard: ControlCardHero,
 }
 
@@ -234,7 +233,7 @@ const APPLIANCE_CONTROL: DeviceTypeControl = {
 }
 
 const BUTTON_CONTROL: DeviceTypeControl = {
-  InlineControl: ButtonControl,
+  InlineControl: null,
   HeroCard: ButtonCardHero,
 }
 

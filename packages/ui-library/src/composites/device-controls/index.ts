@@ -12,7 +12,7 @@ export {
 } from './atoms'
 export { RadialGauge, type RadialGaugeProps } from './radial-gauge'
 export { TapToggle, type TapToggleProps } from './tap-toggle'
-export { ButtonControl, ButtonHeroCard } from './button-control'
+export { ButtonHeroCard } from './button-control'
 export { CoverPanel } from './cover-panel'
 export { LockPanel } from './lock-panel'
 export { SwitchPanel } from './switch-panel'
@@ -106,11 +106,8 @@ export {
   WeatherCardHero,
   AlarmPanelInlineControl,
   AlarmHeroCard,
-  ScriptInlineControl,
   ScriptHeroCard,
-  AutomationInlineControl,
   AutomationHeroCard,
-  ControlInlineControl,
   ControlHeroCard,
 } from './panel-controls'
 export {

@@ -22,9 +22,13 @@ const h = vi.hoisted(() => ({
   mutate: vi.fn<(input: unknown) => Promise<unknown>>(),
   getBindings: vi.fn(async () => ({
     deviceId: 1,
-    entries: [{ capName: 'control', providerNodeId: 'agent-1' }],
+    entries: ['control', 'button', 'script-runner', 'automation-control'].map((capName) => ({
+      capName,
+      providerNodeId: 'agent-1',
+    })),
   })),
   alert: vi.fn(async () => undefined),
+  confirm: vi.fn(async () => true),
   refetch: vi.fn(async () => undefined),
 }))
 
@@ -38,11 +42,19 @@ vi.mock('../../../contexts/system-context', async (importOriginal) => ({
   useTrpcClient: () => ({
     deviceManager: { getBindings: { query: h.getBindings } },
     control: { setValue: { mutate: h.mutate } },
+    button: { press: { mutate: h.mutate } },
+    scriptRunner: { run: { mutate: h.mutate } },
+    automationControl: {
+      trigger: { mutate: h.mutate },
+      enable: { mutate: h.mutate },
+      disable: { mutate: h.mutate },
+    },
   }),
 }))
 vi.mock('../../confirm-dialog', async (importOriginal) => ({
   ...(await importOriginal<typeof import('../../confirm-dialog')>()),
   useAlertIfAvailable: () => h.alert,
+  useConfirmIfAvailable: () => h.confirm,
 }))
 
 import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
@@ -70,9 +82,13 @@ function controlRow(slice: Record<string, unknown>): unknown {
 }
 
 function device(
-  extra: { readonly display?: DeviceDisplayOverride; readonly sourceInfo?: SourceInfo } = {},
+  extra: {
+    readonly display?: DeviceDisplayOverride
+    readonly sourceInfo?: SourceInfo
+    readonly type?: string
+  } = {},
 ): RowValueDevice {
-  return { id: 1, role: null, ...extra }
+  return { id: 1, role: null, type: DeviceType.Control, ...extra }
 }
 
 function inFahrenheit(node: ReactNode): ReactNode {
@@ -111,7 +127,6 @@ describe('a Control row edits its primary control', () => {
       inFahrenheit(
         <ModelRowControl
           device={device({ sourceInfo: { id: 'ctl', system: 'test', quantity: 'temperature' } })}
-          fallback="own"
         />,
       ),
     )
@@ -127,7 +142,7 @@ describe('a Control row edits its primary control', () => {
 
   it('a number with bounds is clamped to them', async () => {
     answer([controlRow({ kind: 'numeric', value: 2, min: 0, max: 10, step: 1 })])
-    render(<ModelRowControl device={device()} fallback="own" />)
+    render(<ModelRowControl device={device()} />)
     fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '50' } })
     await waitFor(() => expect(h.mutate).toHaveBeenCalled())
     expect(lastSent()).toMatchObject({ control: { kind: 'numeric', value: 10 } })
@@ -142,7 +157,7 @@ describe('a Control row edits its primary control', () => {
         }),
     )
     answer([controlRow({ kind: 'select', value: 'Comfort', options: ['Eco', 'Comfort'] })])
-    render(<ModelRowControl device={device()} fallback="own" />)
+    render(<ModelRowControl device={device()} />)
     const select = screen.getByRole('combobox')
     selectOption(select, 'Eco')
     expect(select.textContent).toBe('Eco')
@@ -154,7 +169,7 @@ describe('a Control row edits its primary control', () => {
 
   it('a text field sends what was typed', async () => {
     answer([controlRow({ kind: 'text', value: 'Back on Monday' })])
-    render(<ModelRowControl device={device()} fallback="own" />)
+    render(<ModelRowControl device={device()} />)
     const input = screen.getByDisplayValue('Back on Monday')
     fireEvent.change(input, { target: { value: 'Away' } })
     fireEvent.blur(input)
@@ -167,7 +182,7 @@ describe('a Control row edits its primary control', () => {
       throw new Error('device offline')
     })
     answer([controlRow({ kind: 'select', value: 'Comfort', options: ['Eco', 'Comfort'] })])
-    render(<ModelRowControl device={device()} fallback="own" />)
+    render(<ModelRowControl device={device()} />)
     const select = screen.getByRole('combobox')
     selectOption(select, 'Eco')
     await waitFor(() =>
@@ -178,19 +193,110 @@ describe('a Control row edits its primary control', () => {
     await waitFor(() => expect(select.textContent).toBe('Comfort'))
   })
 
-  it('a date, an action or a toggle draws the row’s own control', () => {
+  it('a date is read out from the model, never typed over (the row keeps it read-only)', () => {
     answer([controlRow({ kind: 'datetime', value: '2026-11-12T10:00:00Z' })])
-    const { unmount } = render(<ModelRowControl device={device()} fallback="own" />)
-    expect(screen.getByText('own')).toBeTruthy()
-    unmount()
-    answer([{ primary: { kind: 'toggle', id: 'power' } }])
-    render(<ModelRowControl device={device()} fallback="own" />)
-    expect(screen.getByText('own')).toBeTruthy()
+    render(<ModelRowControl device={device()} />)
+    expect(screen.getByTestId('row-readout').textContent).toBe('2026-11-12T10:00:00Z')
+    expect(screen.queryByRole('textbox')).toBeNull()
+  })
+})
+
+function modelRow(type: string, cap: string, slice: Record<string, unknown>): unknown {
+  return projectDeviceRow(
+    buildHeroModel({
+      device: { id: 1, type, role: null, name: 'Dev', online: true },
+      caps: [cap],
+      features: [],
+      slices: { [cap]: slice },
+      now: 1_700_000_000_000,
+      remoteCommands: null,
+      access: { canActuate: true },
+    }),
+  )
+}
+
+describe('the wave E rows draw the projected model, the same one the card reads', () => {
+  it('a button row asks what the model says to ask, then presses the cap call', async () => {
+    answer([modelRow(DeviceType.Button, 'button', {})])
+    render(<ModelRowControl device={device({ type: DeviceType.Button })} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Press' }))
+    await waitFor(() => expect(h.mutate).toHaveBeenCalled())
+    expect(h.confirm).toHaveBeenCalledWith(expect.objectContaining({ confirmLabel: 'Run' }))
+    expect(lastSent()).toMatchObject({ deviceId: 1, nodeId: 'agent-1' })
   })
 
+  it('a declined confirmation presses nothing', async () => {
+    h.confirm.mockResolvedValueOnce(false)
+    answer([modelRow(DeviceType.Button, 'button', {})])
+    render(<ModelRowControl device={device({ type: DeviceType.Button })} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Press' }))
+    await waitFor(() => expect(h.confirm).toHaveBeenCalled())
+    expect(h.mutate).not.toHaveBeenCalled()
+  })
+
+  it('a script row runs the script', async () => {
+    answer([modelRow(DeviceType.Script, 'script-runner', { isRunning: false, lastRunAt: null })])
+    render(<ModelRowControl device={device({ type: DeviceType.Script })} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Run' }))
+    await waitFor(() => expect(h.mutate).toHaveBeenCalled())
+  })
+
+  it('an automation row has its Run now AND its enabled switch (the row extra)', async () => {
+    // The row's extras are pinned in the types package (`hero-row-extras.spec.ts`); the
+    // projection is taken here with the extras the model itself offers.
+    const model = buildHeroModel({
+      device: { id: 1, type: DeviceType.Automation, role: null, name: 'Auto', online: true },
+      caps: ['automation-control'],
+      features: [],
+      slices: {
+        'automation-control': { enabled: true, isRunning: false, lastTriggeredAt: 0, lastError: null, lastChangedAt: 0 },
+      },
+      now: 1_700_000_000_000,
+      remoteCommands: null,
+      access: { canActuate: true },
+    })
+    const extras = model.rows.flatMap((r) => r.controls).filter((c) => c.kind === 'toggle')
+    answer([{ ...projectDeviceRow(model), extras }])
+    render(<ModelRowControl device={device({ type: DeviceType.Automation })} />)
+    expect(screen.getByRole('button', { name: 'Run now' })).toBeTruthy()
+    const toggle = screen.getByRole('switch')
+    expect(toggle.getAttribute('aria-checked')).toBe('true')
+    fireEvent.click(toggle)
+    await waitFor(() => expect(h.mutate).toHaveBeenCalled())
+  })
+
+  it('an update row reads out the model’s state, and offers nothing to press', () => {
+    answer([
+      modelRow(DeviceType.Update, 'update', {
+        currentVersion: '1.0',
+        availableVersion: '1.1',
+        updatable: true,
+        state: null,
+        inProgress: false,
+      }),
+    ])
+    render(<ModelRowControl device={device({ type: DeviceType.Update })} />)
+    expect(screen.getByTestId('row-readout').textContent).toBe('Update available')
+    expect(screen.queryByRole('button')).toBeNull()
+  })
+
+  it('a notifier or gateway row has no control and no readout', () => {
+    answer([modelRow(DeviceType.Notifier, 'notifier', {})])
+    const { container } = render(<ModelRowControl device={device({ type: DeviceType.Notifier })} />)
+    expect(container.textContent).toBe('')
+  })
+
+  it('an unanswered device draws nothing (never a stand-in control)', () => {
+    answer([null])
+    const { container } = render(<ModelRowControl device={device({ type: DeviceType.Button })} />)
+    expect(container.textContent).toBe('')
+  })
+})
+
+describe('row control states', () => {
   it('nothing while the row model is unanswered', () => {
     h.rowModels = { status: 'pending' }
-    const { container } = render(<ModelRowControl device={device()} fallback="own" />)
+    const { container } = render(<ModelRowControl device={device()} />)
     expect(container.textContent).toBe('')
   })
 })

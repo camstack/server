@@ -150,6 +150,13 @@ export function useConfirm(): (options: ConfirmOptions) => Promise<boolean> {
   return useDialogContext().confirm
 }
 
+/** `useConfirm`, or undefined where no `ConfirmDialogProvider` is mounted (a control that must then refuse to act unasked). */
+export function useConfirmIfAvailable():
+  | ((options: ConfirmOptions) => Promise<boolean>)
+  | undefined {
+  return useContext(ConfirmContext)?.confirm
+}
+
 /** An error/notice with a single acknowledge. Replaces `window.alert`. */
 export function useAlert(): (options: AlertOptions) => Promise<void> {
   return useDialogContext().alert

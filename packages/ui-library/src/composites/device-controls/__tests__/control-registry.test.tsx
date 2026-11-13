@@ -8,7 +8,7 @@ describe('DEVICE_TYPE_CONTROL', () => {
     for (const t of Object.values(DeviceType)) {
       const entry = DEVICE_TYPE_CONTROL[t]
       expect(entry, `Missing entry for DeviceType.${t}`).toBeDefined()
-      expect(typeof entry.InlineControl).toBe('function')
+      expect(entry.InlineControl === null || typeof entry.InlineControl === 'function').toBe(true)
       expect(typeof entry.HeroCard).toBe('function')
     }
   })

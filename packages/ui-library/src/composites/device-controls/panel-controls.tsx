@@ -50,9 +50,7 @@ export { LockHeroCard } from './lock-hero-card'
 // run, an error), differing in one button.
 export {
   AutomationHeroCard,
-  AutomationInlineControl,
   ScriptHeroCard,
-  ScriptInlineControl,
 } from './script-automation-controls'
 
 // ── Hero shell ────────────────────────────────────────────────────────────────
@@ -479,25 +477,6 @@ function useControlCapGuard(trpc: DeviceControlProps['trpc'], deviceId: number):
     slice: (d) => d.state.control,
   })
   return cap !== undefined
-}
-
-export function ControlInlineControl({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
-  const hasControl = useControlCapGuard(trpc, deviceId)
-  if (!hasControl) return null
-  return (
-    <ControlPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="compact"
-      optimistic={optimistic}
-    />
-  )
 }
 
 export function ControlHeroCard({

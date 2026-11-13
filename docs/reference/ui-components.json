@@ -1579,13 +1579,6 @@
       "summary": ""
     },
     {
-      "name": "AutomationInlineControl",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/script-automation-controls.tsx",
-      "summary": ""
-    },
-    {
       "name": "AutotrackSection",
       "kind": "component",
       "area": "composites",
@@ -2111,13 +2104,6 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/action/ActionCards.tsx",
       "summary": "A big round push button: one press, nothing to report back."
-    },
-    {
-      "name": "ButtonControl",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/button-control.tsx",
-      "summary": "ButtonControl (inline) — compact \"Press\" trigger for a device-list row."
     },
     {
       "name": "ButtonGroup",
@@ -4059,13 +4045,6 @@
     },
     {
       "name": "ControlHeroCard",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
-      "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
-    },
-    {
-      "name": "ControlInlineControl",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
@@ -7444,7 +7423,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/event/EventCard.tsx",
-      "summary": "An event source (`event-emitter`): the last event it fired, and the events it can fire — its own vocabulary, never a normalised one. It commands nothing.",
+      "summary": "An event source (`event-emitter`): the last event it fired, and the events it can fire — its own vocabulary, never a normalised one. It commands nothing. Two parts that share a token are listed apart, under the part t…",
       "props": [
         {
           "name": "model",
@@ -7477,7 +7456,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedEventCard.tsx",
-      "summary": "The vocabulary as the card lists it: the labelled vocabulary, or the bare event types of a status written before it existed."
+      "summary": "The vocabulary as the card lists it: each declared event, including the part of the device it comes from. A token alone is not an identity."
     },
     {
       "name": "EventKindGlyph",
@@ -15184,13 +15163,6 @@
       "summary": ""
     },
     {
-      "name": "ScriptInlineControl",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-controls/script-automation-controls.tsx",
-      "summary": ""
-    },
-    {
       "name": "ScrollArea",
       "kind": "component",
       "area": "primitives",
@@ -18643,6 +18615,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/confirm-dialog.tsx",
       "summary": "The ONE modal dialog of the product — confirm, alert and prompt."
+    },
+    {
+      "name": "useConfirmIfAvailable",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/confirm-dialog.tsx",
+      "summary": "`useConfirm`, or undefined where no `ConfirmDialogProvider` is mounted (a control that must then refuse to act unasked)."
     },
     {
       "name": "useConnectedCardKind",
