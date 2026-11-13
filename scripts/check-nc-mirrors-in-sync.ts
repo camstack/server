@@ -138,8 +138,6 @@ const KEY_LISTS: readonly KeyListPair[] = [
       path: 'camstack/src/data/notification-center.ts',
       marker: 'export const NcSystemEventKindSchema = z.enum(',
     },
-    // D1022 device-command: the viewer mirror ships with its next OTA.
-    aheadOfViewer: ['device-command'],
   },
 ]
 
@@ -219,8 +217,6 @@ const SCHEMA_KEYS: readonly SchemaKeysPair[] = [
       path: 'camstack/src/data/notification-center.ts',
       marker: 'export const NcSystemEventConditionSchema = z.object(',
     },
-    // D1022 device-command filters: the viewer mirror ships with its next OTA.
-    aheadOfViewer: ['commandActions', 'commandOutcomes', 'commandActorKinds'],
   },
   {
     label: 'rule condition keys',
@@ -245,7 +241,6 @@ const SCHEMA_KEYS: readonly SchemaKeysPair[] = [
       path: 'camstack/src/data/notification-center.ts',
       marker: 'export const NcRuleInputSchema = z.object(',
     },
-    aheadOfViewer: ['groupWithinSec'],
   },
 ]
 
