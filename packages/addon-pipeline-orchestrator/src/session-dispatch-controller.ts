@@ -379,8 +379,19 @@ export class SessionDispatchController {
    * {@link ensureMotionWatch}'s doc comment for the bounce/reassignment
    * scenario where an analyzer-class on-motion camera silently stops
    * dispatching.
+   *
+   * A session attach on the SAME node replaces that watch (`attachCamera`
+   * detaches the device first). The device leaves this map then, and comes
+   * back only when the session closes and the watch is attached again.
+   * Keeping the entry would make {@link ensureMotionWatch} a permanent no-op.
    */
   private readonly motionWatchByDevice = new Map<number, string>()
+  /**
+   * Devices whose analyzer watch the current session replaced. Cleared when
+   * the watch is restored, or when detection stops (no restore — the camera
+   * is no longer armed).
+   */
+  private readonly motionWatchDisplacedBySession = new Set<number>()
 
   /**
    * The last session REFUSAL per camera (D650 rounds 3–4): the elected device
@@ -656,8 +667,8 @@ export class SessionDispatchController {
    *
    * Deliberately NOT `stopForDevice`: the camera must stay ARMED —
    * `activeDetections` (the dispatch gate `handleSessionMotion` re-reads
-   * inside the lock) and any motion-watch attach are both left untouched, so
-   * the very next `MotionOnMotionChanged` re-runs `dispatchDetectionSession`,
+   * inside the lock) stays, and a watch the session had replaced is put
+   * back, so the very next `MotionOnMotionChanged` re-runs `dispatchDetectionSession`,
    * which reads the (just-persisted) pin and lands on the pinned node via the
    * balancer's manual affinity. Runs under the session lock so it cannot race
    * an in-flight dispatch/teardown for the same device.
@@ -681,6 +692,9 @@ export class SessionDispatchController {
       this.lastLiveTrackCount.delete(deviceId)
       // The camera just left this node — the cached agent load still counts it.
       this.notePlacementChanged()
+      // A session on the watch's node replaced that attach; closing it
+      // detached the replacement. Put the watch back so the camera stays armed.
+      await this.restoreDisplacedMotionWatch(deviceId)
     })
   }
 
@@ -756,6 +770,50 @@ export class SessionDispatchController {
     }
     await this.deps.attachOn(nodeId, watchConfig)
     this.motionWatchByDevice.set(deviceId, nodeId)
+  }
+
+  /**
+   * The runner replaces an existing attach for the same device. A session
+   * that landed on the watch's node no longer has a watch there — drop the
+   * bookkeeping so the close can put it back.
+   */
+  private noteMotionWatchReplacedBySession(deviceId: number, sessionNodeId: string): void {
+    if (this.motionWatchByDevice.get(deviceId) !== sessionNodeId) return
+    this.motionWatchByDevice.delete(deviceId)
+    this.motionWatchDisplacedBySession.add(deviceId)
+  }
+
+  /**
+   * Re-attach the analyzer watch after the session that replaced it closed.
+   * No-op when this session did not displace a watch (a session on another
+   * node leaves the watch where it is; a stop clears the flag instead).
+   */
+  private async restoreDisplacedMotionWatch(deviceId: number): Promise<void> {
+    if (!this.motionWatchDisplacedBySession.delete(deviceId)) return
+    if (this.shuttingDown) return
+    const config = this.deps.getActiveDetectionConfig(deviceId)
+    if (
+      !config ||
+      config.detectionMode !== 'on-motion' ||
+      !config.motionSources.includes('analyzer')
+    ) {
+      this.deps.logger.info('motion watch not restored — detection no longer wants the analyzer', {
+        tags: { deviceId },
+      })
+      return
+    }
+    try {
+      await this.ensureMotionWatch(deviceId, config)
+    } catch (err: unknown) {
+      this.deps.logger.error('motion watch restore failed', {
+        tags: { deviceId },
+        meta: { error: errMsg(err) },
+      })
+      return
+    }
+    this.deps.logger.info('motion watch restored after detection session', {
+      tags: { deviceId },
+    })
   }
 
   /**
@@ -1331,6 +1389,7 @@ export class SessionDispatchController {
     let attachedAt = configuredAt
     try {
       await this.deps.attachOn(targetNodeId, sessionConfig)
+      this.noteMotionWatchReplacedBySession(deviceId, targetNodeId)
       attachedAt = Date.now()
       this.deps.recordAssignment(
         deviceId,
@@ -1553,6 +1612,7 @@ export class SessionDispatchController {
     // The recheck arms only from a session that tracked something (D547):
     // `null` here means no frame of this session carried a subject.
     this.recheck?.noteSessionClosed(deviceId, { sawSubject: sinceSubjectSeenMs !== null })
+    await this.restoreDisplacedMotionWatch(deviceId)
     const subjectPresent =
       sinceSubjectSeenMs !== null && sinceSubjectSeenMs < SUBJECT_PRESENT_STALE_MS
     const meta = {
@@ -1694,7 +1754,9 @@ export class SessionDispatchController {
       this.lastLiveTrackCount.delete(deviceId)
       // A camera that no longer arms has no refused session to show.
       this.sessionRefusals.delete(deviceId)
-      // The operator removed the work: no recheck may re-attach it.
+      // The operator removed the work: no recheck may re-attach it, and a
+      // watch the session had replaced is not put back.
+      this.motionWatchDisplacedBySession.delete(deviceId)
       this.recheck?.forget(deviceId)
     })
 
@@ -1737,6 +1799,7 @@ export class SessionDispatchController {
     this.recheck?.shutdown()
     this.sessionRegistry.clear()
     this.motionWatchByDevice.clear()
+    this.motionWatchDisplacedBySession.clear()
     this.lastSubjectSeenAt.clear()
     this.lastLiveTrackCount.clear()
     this.sessionRefusals.clear()

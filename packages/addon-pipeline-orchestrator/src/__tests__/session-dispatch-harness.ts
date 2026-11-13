@@ -77,6 +77,7 @@ export interface Harness {
   readonly controller: SessionDispatchController
   readonly lines: LogLine[]
   readonly attached: RunnerCameraConfig[]
+  readonly detectionConfig: () => CameraDetectionConfig
   readonly setSources: (next: MotionSources) => void
   /** Holds every `attachOn` until the returned release is called. */
   readonly holdAttach: () => () => void
@@ -103,6 +104,7 @@ export function makeHarness(opts: HarnessOptions): Harness {
     } as unknown as SessionDispatchControllerDeps['ledger'],
     topology: {
       detectionEligibleNodes: () => [NODE],
+      clusterRoles: { ingestNode: NODE, audioNode: NODE, motionNode: NODE },
     } as unknown as SessionDispatchControllerDeps['topology'],
     loadService: {
       collectAgentLoad: async () => [fakeLoad()],
@@ -140,6 +142,7 @@ export function makeHarness(opts: HarnessOptions): Harness {
     controller: new SessionDispatchController(deps),
     lines,
     attached,
+    detectionConfig: () => ({ ...fakeDetectionConfig(), motionSources: h.sources }),
     setSources: (next) => {
       h.sources = next
     },

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- An on-motion camera keeps its motion watch after a detection session: the session no longer leaves the camera without an analyzer.
+
 ## [1.2.683] - 2026-11-13
 
 ### Changed
