@@ -2776,7 +2776,7 @@ rewrites each such row to a `sendWith` link, keeping its recipients, switch and 
 
 - a pinned relay links that relay;
 - a provider pinned alone links the instance the old send path would have used: among the
-  provider's usable instances (enabled and not failing), the one whose address matches the
+  provider's usable instances (enabled and reporting `ok`, or reporting no status — a sender in `unknown`, such as a signed-out Google account, is skipped), the one whose address matches the
   target's `from`, else the first usable one. A signed-out account is never pinned;
 - a provider that is not registered yet (it boots after the notifiers) or whose instances cannot be
   read FAILS the step, which is retried on the next boot;
