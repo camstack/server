@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Serves viewer 1.0.706
 - Serves viewer 1.0.707
+- Serves viewer 1.0.708
 
 ## [1.2.684] - 2026-11-13
 
