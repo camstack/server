@@ -113,7 +113,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `stream-catalog` | 1 | — | ✓ | none | — | — |
 | `stream-params` | 4 | ✓ | ✓ | 4 series | — | `provider-amcrest` `provider-hikvision` `provider-reolink` `provider-wyze` |
 | `stream-signals` | 1 | — | ✓ | none | — | `provider-reolink` |
-| `switch` | 2 | ✓ | ✓ | 1 series | — | — |
+| `switch` | 3 | ✓ | ✓ | 1 series | — | — |
 | `tamper` | 1 | ✓ | ✓ | 1 series | — | — |
 | `temperature-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
 | `timed-run` | 5 | ✓ | ✓ | none | — | `core-blocks` |

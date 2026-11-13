@@ -1792,7 +1792,8 @@ Enum: `"open" \| "closed"`
 
 ### `DeviceSearchRequiresSchema`
 
-- `caps`: `string[]`
+- `caps?`: `string[]`
+- `actions?`: `string[]`
 - `mode?`: `"any" \| "all"`
 
 ### `DeviceSearchResultSchema`
@@ -4451,6 +4452,8 @@ Enum: `"immediate" \| "track-end" \| "device-event" \| "package-event" \| "syste
 - `updatedAt`: `number`
 - `error?`: `string`
 - `subject`: `NcHistorySubjectSchema`
+- `title?`: `string`
+- `body?`: `string`
 - `artifactIds?`: `string[]`
 - `groupedInto?`: `string`
 

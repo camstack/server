@@ -4,7 +4,7 @@
 
 # Decisions
 
-1016 architecture decision records. One file per decision, never
+1017 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1031,6 +1031,7 @@ that rots.
 | D1049 | [A device has one exposed name per export instance, and a rename never changes the exported id](adr-1049-a-device-has-one-exposed-name-per-export-instance-and-a-rename-never-changes-the-exported-id.md) | ✅ accepted | 2026-11-12 |
 | D1050 | [A cap's vocabulary is declared on the cap, and the map is generated](adr-1050-a-caps-vocabulary-is-declared-on-the-cap-and-generated.md) | ✅ accepted (supersedes D920) | 2026-11-13 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
+| DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 
 Conventions, and why the numbering looks the way it does:
 [conventions.md](conventions.md). Adding one: copy `template.md`, take the next

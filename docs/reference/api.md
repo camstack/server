@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**206 capabilities · 1486 methods.**
+**206 capabilities · 1487 methods.**
 
 ## Method index
 
@@ -1341,6 +1341,7 @@
 | `streamSignals.listSignals` | query | protected | stream-signals |
 | `switch.getStatus` | query | protected | switch (auto) |
 | `switch.setState` | mutation | protected | switch |
+| `switch.toggle` | mutation | protected | switch |
 | `system.info` | query | protected | system |
 | `system.health` | query | protected | system |
 | `system.featureFlags` | query | protected | system |
@@ -3622,7 +3623,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3351`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3358`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`
@@ -4725,7 +4726,7 @@
 
 ### `switch` → `switch.*`
 
-- **Source:** `packages/types/src/capabilities/switch.cap.ts:25`
+- **Source:** `packages/types/src/capabilities/switch.cap.ts:30`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `switch, siren, light, fan`
 - **Archetypes:** status(command-driven) · runtimeState · settings(1 binding(s))
 - **Provider interface:** `ISwitchProvider`
@@ -4736,6 +4737,7 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `switch.getStatus` | query | protected | `{ deviceId: number }` | `SwitchStatusSchema` |
 | setState | `switch.setState` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
+| toggle | `switch.toggle` | mutation | protected | `{ deviceId: number }` | `void` |
 
 ### `system` → `system.*`
 
