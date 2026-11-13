@@ -104,7 +104,9 @@
     "disableButtonEventsMessage": "Rimuove il collegamento centrale di {{name}}. I collegamenti diretti restano.",
     "directLinks": "Collegamenti diretti: {{targets}}",
     "directLinksNone": "Nessun collegamento diretto",
-    "renameAction": "Rinomina sulla CCU"
+    "renameAction": "Rinomina sulla CCU",
+    "buttonEventsSaving": "Salvataggio…",
+    "buttonEventsSaved": "Salvato"
   },
   "heating": {
     "loadFailed": "Impossibile leggere il riscaldamento",
@@ -219,7 +221,12 @@
     "profileConfirm": "Scrivi profilo",
     "deleteTitle": "Elimina collegamento diretto",
     "deleteMessage": "Eliminare il collegamento {{link}} sulla CCU? Il tasto non comanderà più direttamente quell'attuatore.",
-    "deleteConfirm": "Elimina collegamento"
+    "deleteConfirm": "Elimina collegamento",
+    "searchPlaceholder": "Cerca mittente, destinatario, nome, profilo",
+    "searchLabel": "Cerca collegamenti",
+    "facetsLabel": "Profilo",
+    "clearFilters": "Azzera filtri",
+    "noMatch": "Nessun collegamento corrisponde al filtro"
   },
   "rename": {
     "title": "Rinomina {{name}}",

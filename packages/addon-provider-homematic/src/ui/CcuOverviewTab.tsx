@@ -11,7 +11,7 @@ import {
   StatusBadge,
   type DataColumn,
 } from '@camstack/ui-library'
-import { Radio, TriangleAlert } from 'lucide-react'
+import { Radio } from 'lucide-react'
 import {
   CcuOverviewSchema,
   OkResultSchema,
@@ -22,6 +22,7 @@ import {
 import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { dateTimeOrDash, percentOrDash, textOrDash } from './format.js'
+import { TableBlock } from './TableBlock.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
 
@@ -162,7 +163,7 @@ export function CcuOverviewTab(props: { readonly trpc: CcuTrpc; readonly integra
           </div>
         )}
       </SectionCard>
-      <SectionCard headingId="hm-ccu-interfaces" title={t('overview.interfacesTitle')}>
+      <TableBlock headingId="hm-ccu-interfaces" title={t('overview.interfacesTitle')}>
         {overview.data?.interfacesError ? (
           <ErrorBox
             variant="warning"
@@ -178,12 +179,8 @@ export function CcuOverviewTab(props: { readonly trpc: CcuTrpc; readonly integra
             minWidthPx={560}
           />
         )}
-      </SectionCard>
-      <SectionCard
-        headingId="hm-ccu-messages"
-        title={t('overview.messagesTitle')}
-        icon={TriangleAlert}
-      >
+      </TableBlock>
+      <TableBlock headingId="hm-ccu-messages" title={t('overview.messagesTitle')}>
         {messages.data?.error ? (
           <ErrorBox
             variant="warning"
@@ -204,7 +201,7 @@ export function CcuOverviewTab(props: { readonly trpc: CcuTrpc; readonly integra
             defaultSort={{ columnKey: 'time', dir: 'desc' }}
           />
         )}
-      </SectionCard>
+      </TableBlock>
     </div>
   )
 }

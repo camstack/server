@@ -104,7 +104,9 @@
     "disableButtonEventsMessage": "Remove the central link for {{name}}. Direct links stay.",
     "directLinks": "Direct links: {{targets}}",
     "directLinksNone": "No direct links",
-    "renameAction": "Rename on the CCU"
+    "renameAction": "Rename on the CCU",
+    "buttonEventsSaving": "Saving…",
+    "buttonEventsSaved": "Saved"
   },
   "heating": {
     "loadFailed": "Could not read the heating setup",
@@ -219,7 +221,12 @@
     "profileConfirm": "Write profile",
     "deleteTitle": "Delete direct link",
     "deleteMessage": "Delete the link {{link}} on the CCU? The key will no longer switch that actuator directly.",
-    "deleteConfirm": "Delete link"
+    "deleteConfirm": "Delete link",
+    "searchPlaceholder": "Search sender, receiver, name, profile",
+    "searchLabel": "Search links",
+    "facetsLabel": "Profile",
+    "clearFilters": "Clear filters",
+    "noMatch": "No links match the filter"
   },
   "rename": {
     "title": "Rename {{name}}",

@@ -4,7 +4,6 @@ import {
   DataTable,
   ErrorBox,
   KebabMenu,
-  SectionCard,
   usePrompt,
   type DataColumn,
 } from '@camstack/ui-library'
@@ -20,6 +19,7 @@ import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { endpointLabel } from './link-labels.js'
 import { RoomChannelsDialog } from './RoomChannelsDialog.js'
+import { TableBlock } from './TableBlock.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
 
@@ -152,7 +152,7 @@ export function CcuSettingsTab(props: CcuSettingsTabProps) {
   const data = rooms.data
   return (
     <div className="flex flex-col gap-3">
-      <SectionCard
+      <TableBlock
         headingId="hm-rooms"
         title={t('rooms.title')}
         actions={
@@ -175,7 +175,7 @@ export function CcuSettingsTab(props: CcuSettingsTabProps) {
           defaultSort={{ columnKey: 'name', dir: 'asc' }}
           emptyMessage={rooms.loading ? t('common.loading') : t('rooms.none')}
         />
-      </SectionCard>
+      </TableBlock>
       {editing !== null && data !== undefined && (
         <RoomChannelsDialog
           room={editing}

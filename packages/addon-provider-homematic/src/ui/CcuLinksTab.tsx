@@ -3,10 +3,12 @@ import {
   Badge,
   Button,
   DataTable,
+  DataTableFilterBar,
   ErrorBox,
   KebabMenu,
-  SectionCard,
+  useDataTableFilter,
   type DataColumn,
+  type DataTableFilterConfig,
   type KebabMenuItem,
 } from '@camstack/ui-library'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
@@ -20,6 +22,7 @@ import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { endpointLabel } from './link-labels.js'
 import { LinkFormDialog, type LinkDraft } from './LinkFormDialog.js'
+import { TableBlock } from './TableBlock.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
 
@@ -34,6 +37,32 @@ export interface CcuLinksTabProps {
 
 function linkKey(link: CcuLink): string {
   return `${link.sender.address}>${link.receiver.address}`
+}
+
+function linkSearchText(link: CcuLink): readonly string[] {
+  const profile =
+    link.profile === null
+      ? []
+      : link.profile.kind === 'switch'
+        ? [link.profile.kind, link.profile.short, link.profile.long]
+        : [link.profile.kind]
+  return [
+    link.sender.address,
+    link.sender.name ?? '',
+    link.sender.deviceName ?? '',
+    link.sender.deviceType ?? '',
+    link.receiver.address,
+    link.receiver.name ?? '',
+    link.receiver.deviceName ?? '',
+    link.receiver.deviceType ?? '',
+    link.name,
+    link.description,
+    ...profile,
+  ]
+}
+
+const LINK_FILTER: DataTableFilterConfig<CcuLink> = {
+  searchText: linkSearchText,
 }
 
 function Endpoint(props: { readonly endpoint: LinkEndpoint }) {
@@ -62,6 +91,8 @@ export function CcuLinksTab(props: CcuLinksTabProps) {
   const result = useCcuData(trpc, 'listCcuLinks', input, CcuLinksResultSchema)
   const write = useCcuWrite(trpc)
   const [dialog, setDialog] = useState<DialogState>({ kind: 'closed' })
+  const links = result.data?.links ?? []
+  const filter = useDataTableFilter(links, LINK_FILTER)
 
   const describe = (sender: string, receiver: string): string => {
     const all = [...(result.data?.senders ?? []), ...(result.data?.receivers ?? [])]
@@ -185,7 +216,7 @@ export function CcuLinksTab(props: CcuLinksTabProps) {
   const failures = data?.failures ?? []
   return (
     <div className="flex flex-col gap-3">
-      <SectionCard
+      <TableBlock
         headingId="hm-links"
         title={t('links.title')}
         actions={
@@ -200,27 +231,44 @@ export function CcuLinksTab(props: CcuLinksTabProps) {
           </Button>
         }
       >
-        <div className="flex flex-col gap-2 px-3 py-2">
-          <p className="text-xs text-foreground-muted">{t('links.hint')}</p>
-          {failures.length > 0 && (
-            <ErrorBox
-              variant="warning"
-              title={t('links.partial', { count: failures.length })}
-              message={failures
-                .map((failure) => `${failure.deviceName ?? failure.address}: ${failure.error}`)
-                .join('\n')}
-            />
-          )}
-        </div>
+        <p className="text-xs text-foreground-muted">{t('links.hint')}</p>
+        {failures.length > 0 && (
+          <ErrorBox
+            variant="warning"
+            title={t('links.partial', { count: failures.length })}
+            message={failures
+              .map((failure) => `${failure.deviceName ?? failure.address}: ${failure.error}`)
+              .join('\n')}
+          />
+        )}
+        <DataTableFilterBar
+          state={filter.state}
+          facets={filter.facets}
+          labels={{
+            searchPlaceholder: t('links.searchPlaceholder'),
+            searchLabel: t('links.searchLabel'),
+            facetsLabel: t('links.facetsLabel'),
+            clearLabel: t('links.clearFilters'),
+          }}
+          onSearch={filter.setSearch}
+          onToggleFacet={filter.toggleFacet}
+          onClear={filter.clear}
+        />
         <DataTable
           columns={columns}
-          rows={data?.links ?? []}
+          rows={filter.rows}
           rowKey={linkKey}
           minWidthPx={640}
           defaultSort={{ columnKey: 'sender', dir: 'asc' }}
-          emptyMessage={result.loading ? t('common.loading') : t('links.none')}
+          emptyMessage={
+            result.loading
+              ? t('common.loading')
+              : filter.active
+                ? t('links.noMatch')
+                : t('links.none')
+          }
         />
-      </SectionCard>
+      </TableBlock>
       {dialog.kind === 'form' && data !== undefined && (
         <LinkFormDialog
           link={dialog.link}

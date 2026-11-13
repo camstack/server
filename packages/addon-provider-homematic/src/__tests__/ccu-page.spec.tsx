@@ -71,6 +71,24 @@ function mountPage(trpc: CcuTrpc) {
 
 afterEach(() => cleanup())
 
+/** A page table wears one frame (its own). A SectionCard around it is a second. */
+function expectOneTableFrame(table: HTMLElement): void {
+  let frames = 0
+  let node: HTMLElement | null = table.parentElement
+  while (node !== null) {
+    const className = node.className
+    if (
+      className.includes('rounded-lg') &&
+      className.includes('border-border') &&
+      className.includes('bg-surface')
+    ) {
+      frames += 1
+    }
+    node = node.parentElement
+  }
+  expect(frames).toBe(1)
+}
+
 describe('HomematicCcuPage overview', () => {
   const base = {
     listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
@@ -85,6 +103,7 @@ describe('HomematicCcuPage overview', () => {
     expect(screen.getByText('HmIP-RF')).toBeTruthy()
     expect(screen.getByText('12%')).toBeTruthy()
     expect(await screen.findByText('STICKY_UNREACH')).toBeTruthy()
+    for (const table of screen.getAllByRole('table')) expectOneTableFrame(table)
   })
 
   it('says why the CCU details are missing instead of showing blanks', async () => {
@@ -237,6 +256,7 @@ describe('HomematicCcuPage heating', () => {
     expect(await screen.findByText('Bedroom')).toBeTruthy()
     expect(screen.getAllByText('Radiator').length).toBeGreaterThan(0)
     expect(screen.getByText('19.5 °C')).toBeTruthy()
+    for (const table of screen.getAllByRole('table')) expectOneTableFrame(table)
   })
 
   it('explains why groups are missing and disables creating one', async () => {
@@ -580,6 +600,62 @@ describe('HomematicCcuPage button events', () => {
       confirmed: true,
     })
   })
+
+  it('keeps the dialog open and shows saving, then saved, on the row', async () => {
+    window.history.replaceState(null, '', '/?tab=devices')
+    let reads = 0
+    let finish: (value: { ok: true }) => void = () => undefined
+    const set = vi.fn().mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve
+        }),
+    )
+    const enabled = {
+      ...BS2,
+      keyChannels: [{ ...BS2.keyChannels[0], central: 'on' }],
+    }
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({ devices: [reads++ === 0 ? BS2 : enabled] }),
+      setButtonEvents: set,
+    })
+    mountPage(fake.trpc)
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Button events' }))
+    const dialog = await screen.findByTestId('hm-button-events-dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Enable button events' }))
+    const confirm = await screen.findByRole('dialog', { name: /Enable button events/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Enable button events' }))
+    expect(await within(dialog).findByText('Saving…')).toBeTruthy()
+    finish({ ok: true })
+    expect(await screen.findByText('Saved')).toBeTruthy()
+    const still = await screen.findByTestId('hm-button-events-dialog')
+    expect(await within(still).findByRole('button', { name: 'Disable button events' })).toBeTruthy()
+  })
+
+  it('keeps the dialog open and shows the error on the row', async () => {
+    window.history.replaceState(null, '', '/?tab=devices')
+    const fake = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({
+        devices: [{ ...BS2, keyChannels: [{ ...BS2.keyChannels[0], central: 'on' }] }],
+      }),
+      setButtonEvents: () => {
+        throw new Error('ccu refused')
+      },
+    })
+    mountPage(fake.trpc)
+    fireEvent.click(await screen.findByRole('button', { name: /More actions/ }))
+    fireEvent.click(await screen.findByRole('button', { name: 'Button events' }))
+    const dialog = await screen.findByTestId('hm-button-events-dialog')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Disable button events' }))
+    const confirm = await screen.findByRole('dialog', { name: /Disable button events/ })
+    fireEvent.click(within(confirm).getByRole('button', { name: 'Disable button events' }))
+    const still = await screen.findByTestId('hm-button-events-dialog')
+    expect(await within(still).findByText('ccu refused')).toBeTruthy()
+    expect(screen.queryByRole('dialog', { name: /failed/i })).toBeNull()
+  })
 })
 
 describe('HomematicCcuPage links', () => {
@@ -629,6 +705,22 @@ describe('HomematicCcuPage links', () => {
     expect(screen.getByText('Custom (not editable here)')).toBeTruthy()
     expect(screen.getByText('Bathroom key:2')).toBeTruthy()
     expect(screen.getByText(/could not be read/)).toBeTruthy()
+    expectOneTableFrame(screen.getByRole('table'))
+  })
+
+  it('filters by sender, receiver, name and profile', async () => {
+    mountLinks({})
+    await screen.findByText('Short: Toggle · Long: Off')
+    const search = screen.getByRole('searchbox', { name: 'Search links' })
+    fireEvent.change(search, { target: { value: 'Bathroom key left' } })
+    expect(screen.queryByText('Custom (not editable here)')).toBeNull()
+    expect(screen.getByText('Short: Toggle · Long: Off')).toBeTruthy()
+    fireEvent.change(search, { target: { value: 'custom' } })
+    expect(screen.getByText('Custom (not editable here)')).toBeTruthy()
+    expect(screen.queryByText('Short: Toggle · Long: Off')).toBeNull()
+    fireEvent.change(search, { target: { value: 'Bathroom light' } })
+    expect(screen.getByText('Short: Toggle · Long: Off')).toBeTruthy()
+    expect(screen.getByText('Custom (not editable here)')).toBeTruthy()
   })
 
   it('deletes a link only after the operator confirms', async () => {
@@ -801,6 +893,7 @@ describe('HomematicCcuPage settings: rooms', () => {
     mountRooms({})
     expect(await screen.findByText('Bathroom')).toBeTruthy()
     expect(screen.getByText('Left key')).toBeTruthy()
+    expectOneTableFrame(screen.getByRole('table'))
   })
 
   it('creates a room after the name and a confirmation', async () => {

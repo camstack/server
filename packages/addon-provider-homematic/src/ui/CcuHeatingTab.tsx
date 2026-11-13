@@ -5,7 +5,6 @@ import {
   DataTable,
   ErrorBox,
   KebabMenu,
-  SectionCard,
   type DataColumn,
 } from '@camstack/ui-library'
 import { Pencil, Plus, Trash2 } from 'lucide-react'
@@ -20,6 +19,7 @@ import { useT } from '../i18n/index.js'
 import type { CcuTrpc } from './ccu-client.js'
 import { GroupFormDialog, type GroupDraft } from './GroupFormDialog.js'
 import { textOrDash } from './format.js'
+import { TableBlock } from './TableBlock.js'
 import { useCcuData } from './use-ccu-data.js'
 import { useCcuWrite } from './use-ccu-write.js'
 
@@ -181,7 +181,7 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
   const data = overview.data
   return (
     <div className="flex flex-col gap-3">
-      <SectionCard
+      <TableBlock
         headingId="hm-heating-groups"
         title={t('heating.groupsTitle')}
         actions={
@@ -211,8 +211,8 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
             emptyMessage={overview.loading ? t('common.loading') : t('heating.noGroups')}
           />
         )}
-      </SectionCard>
-      <SectionCard headingId="hm-heating-thermostats" title={t('heating.thermostatsTitle')}>
+      </TableBlock>
+      <TableBlock headingId="hm-heating-thermostats" title={t('heating.thermostatsTitle')}>
         <DataTable
           columns={thermostatColumns}
           rows={data?.thermostats ?? []}
@@ -220,7 +220,7 @@ export function CcuHeatingTab(props: { readonly trpc: CcuTrpc; readonly integrat
           minWidthPx={520}
           emptyMessage={overview.loading ? t('common.loading') : t('heating.noThermostats')}
         />
-      </SectionCard>
+      </TableBlock>
       {dialog.kind === 'form' && data !== undefined && (
         <GroupFormDialog
           group={dialog.group}

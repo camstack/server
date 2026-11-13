@@ -63,7 +63,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
   const write = useCcuWrite(trpc)
   const [deleting, setDeleting] = useState<CcuDeviceRow | null>(null)
   const [configuring, setConfiguring] = useState<CcuDeviceRow | null>(null)
-  const [buttons, setButtons] = useState<CcuDeviceRow | null>(null)
+  const [buttonAddress, setButtonAddress] = useState<string | null>(null)
   const [renaming, setRenaming] = useState<CcuDeviceRow | null>(null)
 
   const renameDevice = async (device: CcuDeviceRow, draft: DeviceRenameDraft): Promise<void> => {
@@ -226,7 +226,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
                       id: 'button-events',
                       label: t('devices.buttonEventsAction'),
                       icon: MousePointerClick,
-                      onClick: () => setButtons(row),
+                      onClick: () => setButtonAddress(row.address),
                     },
                   ]
                 : []),
@@ -262,6 +262,9 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
       <ErrorBox title={t('devices.loadFailed')} message={devices.error} onRetry={devices.reload} />
     )
   }
+
+  const buttons =
+    buttonAddress === null ? null : (rows.find((row) => row.address === buttonAddress) ?? null)
 
   const groupLabel: Readonly<Record<string, string>> = {
     issue: t('devices.groupIssue'),
@@ -324,11 +327,8 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
           trpc={trpc}
           integrationId={integrationId}
           device={buttons}
-          onClose={() => setButtons(null)}
-          onChanged={() => {
-            setButtons(null)
-            devices.reload()
-          }}
+          onClose={() => setButtonAddress(null)}
+          onChanged={() => devices.reload()}
         />
       )}
       {renaming !== null && (
