@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device search can require vocabulary actions, so a command picker lists only devices that offer the command.
 
+### Changed
+
+- Notification templates can use {{headline}}, the subject and the place of a detection.
+
 ## [1.2.562] - 2026-11-13
 
 ### Added

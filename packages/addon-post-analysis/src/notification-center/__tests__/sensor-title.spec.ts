@@ -72,9 +72,9 @@ describe('sensor row title', () => {
     expect(renderRowTitle(texts, e, vars(e))).not.toBe('Porta ingresso')
     expect(renderRowTitle(texts, e, vars(e))).toContain('Hall')
   })
-  it('a detection row is still titled with the rule', () => {
+  it('a detection row is titled with the subject and the camera, not the rule', () => {
     const e = sensorRow({ sensor: null })
-    expect(renderRowTitle(texts, e, vars(e))).toBe('Apertura porte — mosaico camere')
+    expect(renderRowTitle(texts, e, vars(e))).toBe('Contact — Camera ingresso')
   })
   it('history renders the same title (one recipe, D708)', () => {
     const e = sensorRow()

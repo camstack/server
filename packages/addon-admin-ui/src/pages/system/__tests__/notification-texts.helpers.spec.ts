@@ -112,7 +112,7 @@ describe('draftValue', () => {
 describe('buildOverridePatch', () => {
   const rows = [
     entry(),
-    entry({ key: 'detection.title', shipped: '{{rule}}', placeholders: ['rule'] }),
+    entry({ key: 'detection.title', shipped: '{{headline}}', placeholders: ['headline'] }),
   ]
 
   it('an untouched table sends nothing', () => {

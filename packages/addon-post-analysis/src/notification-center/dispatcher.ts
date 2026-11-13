@@ -138,7 +138,10 @@ import {
   ncDetectionSummary,
   ncInZonesText,
   ncOccupancyOp,
+  ncEventHeadline,
   ncSentenceCaseBody,
+  ncTitleNoun,
+  ncTitlePlace,
   ncSubjectText,
 } from './text-compose.js'
 import {
@@ -3978,6 +3981,28 @@ export function buildTemplateVars(
     // fragments; empty on every other row, per the missing-var rule.
     ...(cycle !== undefined ? ncApplianceCycleVars(texts, cycle) : NC_EMPTY_CYCLE_VARS),
     rule: entry.payload.ruleName,
+    // Default detection title: who, then where. The noun stays lowercase; the
+    // place keeps the name the operator stored. `renderRowTitle` capitalises
+    // the catalog title's first letter.
+    // Empty on a system row: the title key is the event's own, and a headline
+    // built from the filler class would be a variable that kind never declared.
+    headline:
+      systemEvent !== undefined
+        ? ''
+        : ncEventHeadline(
+            ncTitleNoun(texts, {
+              className: subject.className,
+              ...(subject.label !== undefined ? { label: subject.label } : {}),
+              ...(group !== undefined && group.members.length > 1
+                ? { groupSubject: ncGroupSubjectText(texts, { members: group.members }) }
+                : {}),
+              systemEvent: false,
+            }),
+            ncTitlePlace(
+              deviceName === NC_DEVICELESS_CAMERA_NAME ? '' : deviceName,
+              occupancy?.zone ?? zoneLabels[0],
+            ),
+          ),
     // The CONFIRMED observed count at the edge vs the rule's configured
     // capacity — two different numbers. Empty on every non-occupancy row.
     // Occupancy's confirmed count, or — on a grouped row — how many subjects
@@ -4185,12 +4210,13 @@ export function renderRowTitle(
     ...(count !== undefined ? { count } : {}),
     frozen: systemEvent?.title ?? entry.payload.ruleName,
   })
-  // The default sentence opens with the device name, lowercase in the vars:
-  // capitalise the first letter only, and only for the catalog's own title.
-  return titleKeyFor(entry) === 'appliance.finished.title' &&
-    entry.payload.template?.title === undefined
-    ? ncSentenceCaseBody(rendered)
-    : rendered
+  // Catalog titles open on a lowercase noun (`{{headline}}`, `{{device}}`).
+  // Capitalise the first letter only, and only when the operator wrote no title.
+  const key = titleKeyFor(entry)
+  const catalogOwn =
+    entry.payload.template?.title === undefined &&
+    (key === 'appliance.finished.title' || key === 'detection.title')
+  return catalogOwn ? ncSentenceCaseBody(rendered) : rendered
 }
 
 /** The default TITLE key — same shape, same pre-catalog reasoning. */

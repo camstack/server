@@ -97,7 +97,7 @@ describe('detection defaults', () => {
   it('reproduces the hard-coded English body exactly', async () => {
     const sent = await deliver(en(), makeEntry())
     expect(sent.notification.body).toBe('Person on front door')
-    expect(sent.notification.title).toBe('Person at gate')
+    expect(sent.notification.title).toBe('Person — Front door')
   })
 
   it('carries the label and the zone names, English', async () => {
@@ -435,7 +435,7 @@ describe('package phases', () => {
         { recordKind: 'package-event' },
       ),
     )
-    expect(sent.notification.title).toBe('Parcel delivery (entrance)')
+    expect(sent.notification.title).toBe('Package — Front door')
     expect(sent.notification.body).toBe('Package on front door')
   })
 })

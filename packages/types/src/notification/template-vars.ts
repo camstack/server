@@ -290,6 +290,17 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
   // (dispatcher.ts) resolves `subject` to the event's DEDUP SLOT key (e.g.
   // `battery:102`, `wrapper:hub` — event-intake.ts), never a composed sentence.
   {
+    name: 'headline',
+    label: 'Subject and place',
+    description:
+      'The default detection title: the label when one is set, otherwise the translated class, then the zone or the device. The subject alone when neither place is known.',
+    example: 'Persona — Uscio',
+    group: 'subject',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['detection', 'occupancy', 'sound', 'sensor'],
+  },
+  {
     name: 'subject',
     label: 'Subject sentence',
     description: 'Composed in the notification language, e.g. "person (Mario)".',

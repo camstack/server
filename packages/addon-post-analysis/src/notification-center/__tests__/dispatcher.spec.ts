@@ -280,7 +280,7 @@ describe('NcDispatcher notification composition', () => {
     const h = makeHarness()
     await h.dispatcher.deliver(makeEntry({ media: 'none' }))
     const n = h.sends[0]!.notification
-    expect(n.title).toBe('Person at gate')
+    expect(n.title).toBe('John — gate')
     expect(n.body).toBe('Person (John) on driveway in gate')
     expect(n.priority).toBe(3)
     // One-shot (D686): an ungrouped notification carries NO coalescing tag,
@@ -341,7 +341,7 @@ describe('NcDispatcher notification composition', () => {
     await h.dispatcher.deliver(makeEntry({ media: 'none', synthetic: true }))
     const n = h.sends[0]!.notification
     expect(n.body).toBe('[TEST] person (John) on driveway in gate')
-    expect(n.title).toBe('Person at gate')
+    expect(n.title).toBe('John — gate')
   })
 
   it('an ordinary row is unchanged byte for byte', async () => {
@@ -504,7 +504,7 @@ describe('NcDispatcher occupancy template vars', () => {
       makeOccupancyEntry({ zone: 'Parking', count: 3, capacity: 3, occupied: true }),
     )
     expect(h.sends[0]!.notification.body).toBe('Parking occupied (3/3)')
-    expect(h.sends[0]!.notification.title).toBe('Driveway crowded')
+    expect(h.sends[0]!.notification.title).toBe('Person — Parking')
   })
 
   it('a became-free edge renders the free op word', async () => {

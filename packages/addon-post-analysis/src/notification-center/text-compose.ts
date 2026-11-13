@@ -166,3 +166,55 @@ export function ncDetectionSummary(texts: NcTextCatalog, counts: readonly NcClas
     .map((entry) => `${entry.count} ${ncClassNoun(texts, entry.className, entry.count)}`)
   return texts.join(parts)
 }
+
+/** What a default detection title names: a label when one is set, else the class. */
+export interface NcTitleNounInput {
+  readonly className: string
+  readonly label?: string
+  /** A grouped row speaks for every member; it outranks one member's label. */
+  readonly groupSubject?: string
+  /** A system row's filler class (`event`) is not a subject. */
+  readonly systemEvent: boolean
+}
+
+/**
+ * The noun of a detection title.
+ *
+ * A set label wins over the coarse class — a species id is the catalog's noun
+ * ("cane", not "animale"), a person or plate is the label as recognised.
+ * A group is the composed list of members. A system row with no detection
+ * class contributes nothing.
+ */
+export function ncTitleNoun(texts: NcTextCatalog, input: NcTitleNounInput): string {
+  const grouped = input.groupSubject?.trim() ?? ''
+  if (grouped.length > 0) return grouped
+  const label = input.label?.trim() ?? ''
+  if (label.length > 0) {
+    const key = label.toLocaleLowerCase(texts.language)
+    if (isEventKindLabelKey(key)) return ncClassNoun(texts, key, 1)
+    return label
+  }
+  if (input.systemEvent || input.className.length === 0 || input.className === 'event') return ''
+  return ncClassNoun(texts, input.className, 1)
+}
+
+/**
+ * Where the event happened: the zone when the event has one, else the device.
+ * The deviceless filler and a blank name are not a place.
+ */
+export function ncTitlePlace(deviceName: string, zone: string | undefined): string {
+  const where = zone?.trim() ?? ''
+  if (where.length > 0) return where
+  const device = deviceName.trim()
+  if (device.length === 0 || device === 'system') return ''
+  return device
+}
+
+/** `persona — Uscio`, or the subject alone when there is nowhere to put it. */
+export function ncEventHeadline(subject: string, place: string): string {
+  const who = subject.trim()
+  const where = place.trim()
+  if (who.length === 0) return where
+  if (where.length === 0) return who
+  return `${who} — ${where}`
+}

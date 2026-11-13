@@ -380,8 +380,8 @@ describe('the words (D706)', () => {
     expect((await render(row({ template }), 'it'))?.title).toBe('Qualcuno in casa')
   })
 
-  it('a plain row is titled with the rule, as ever', async () => {
-    expect((await render(row({}), 'en'))?.title).toBe('Persone in casa')
+  it('a plain row is titled with the subject and the camera, not the rule', async () => {
+    expect((await render(row({}), 'en'))?.title).toBe('Person — Cam hallway')
   })
 
   it('re-armed reads "Re-armed — <mode>" / "Riarmato — <mode>"', () => {
