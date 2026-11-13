@@ -14,7 +14,7 @@ import {
   nudgeItem,
   previewMove,
 } from '../layout-drag'
-import { clampToGrid, frameClass, shapeClass, toneClass } from '../remote-look'
+import { clampToGrid, frameClass, shapeClass, toneClass } from '@camstack/ui-library'
 import {
   canFillWidth,
   componentName,

@@ -67,16 +67,18 @@ export function isDividerFrame(frame: string): boolean {
   return frame === 'divider'
 }
 
+export interface RemoteGridRect {
+  readonly row: number
+  readonly col: number
+  readonly rowSpan: number
+  readonly colSpan: number
+}
+
 /** A rectangle clipped to the grid, so a footprint that sticks out is still drawn inside it. */
 export function clampToGrid(
   grid: Pick<RemoteLayoutPayload, 'columns' | 'rows'>,
-  rect: {
-    readonly row: number
-    readonly col: number
-    readonly rowSpan: number
-    readonly colSpan: number
-  },
-): { row: number; col: number; rowSpan: number; colSpan: number } {
+  rect: RemoteGridRect,
+): RemoteGridRect {
   const row = Math.min(Math.max(rect.row, 0), grid.rows - 1)
   const col = Math.min(Math.max(rect.col, 0), grid.columns - 1)
   const endRow = Math.min(Math.max(rect.row + rect.rowSpan, row + 1), grid.rows)

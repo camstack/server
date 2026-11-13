@@ -334,6 +334,7 @@ export type {
 export { DeviceActivityPanel } from './device-activity-panel'
 export * from './device-summary-card'
 export * from './device-card'
+export * from './remote'
 export * from './device-controls'
 export * from './hero-scene'
 export * from './hero-model'

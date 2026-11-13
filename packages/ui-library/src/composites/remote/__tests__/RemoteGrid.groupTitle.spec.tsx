@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { RemoteLayoutPayload } from '@camstack/types'
-import '../../../i18n'
 import { RemoteGrid } from '../RemoteGrid'
 
 const GRID: RemoteLayoutPayload = {

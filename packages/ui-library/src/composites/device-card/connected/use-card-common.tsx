@@ -16,8 +16,10 @@ import {
   usePowerSourceGetStatus,
   usePowerSourcePowerOff,
   usePowerSourcePowerOn,
+  useRemoteGetAssumedStatus,
   useRemoteListCommands,
   useRemoteSendCommand,
+  useTemplateList,
 } from '../../../generated/system-hooks'
 import { useCapabilityPresence } from '../../../hooks/use-capability-presence'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
@@ -32,6 +34,7 @@ import type {
   CardPowerDetail,
   CardSupplyAction,
 } from '../shell/model'
+import { remoteLayoutPending, remotePanelOf } from './remote-panel'
 import { remoteKeyOf } from '../shell/remote-keys'
 import { sinceText } from './since-text'
 import { useCommandNotice } from './use-command-notice'
@@ -129,6 +132,12 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
   const restart = usePowerSourceForceRestart()
   const remotePresence = useCapabilityPresence('remote')
   const remote = useRemoteListCommands({ deviceId }, { enabled: remotePresence === 'present' })
+  const templateId = remote.data?.layoutTemplateId ?? null
+  const templates = useTemplateList(
+    { kind: 'remote' },
+    { enabled: remotePresence === 'present' && templateId !== null },
+  )
+  const assumed = useRemoteGetAssumedStatus({ deviceId }, { enabled: remotePresence === 'present' })
   const send = useRemoteSendCommand()
   const reset = useConsumablesReset()
   const series = useDeviceSeriesList(deviceId)
@@ -223,6 +232,14 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
       remote.data === undefined || remote.data === null || remote.data.commands.length === 0
         ? null
         : remote.data.commands.map((c) => remoteKeyOf(c.role, c.label, t)),
+    remotePanel: remotePanelOf(
+      deviceId,
+      remote.data,
+      templates.data,
+      templates.status,
+      assumed.data,
+    ),
+    remoteLayoutPending: remoteLayoutPending(remote.data, templates.data, templates.status),
     history: hasHistory
       ? { charts: <DeviceHistoryView deviceId={deviceId} />, events: null }
       : null,

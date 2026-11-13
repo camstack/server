@@ -6,7 +6,11 @@
 import type { ReactNode } from 'react'
 import { type AppBrand, brandFill } from './app-brand-icons'
 
-export function AppBrandGlyph({ brand }: { readonly brand: AppBrand }): ReactNode {
+export interface AppBrandGlyphProps {
+  readonly brand: AppBrand
+}
+
+export function AppBrandGlyph({ brand }: AppBrandGlyphProps): ReactNode {
   if (brand.mark.kind === 'lettermark') {
     return (
       <span className="text-[11px] font-semibold leading-none" aria-hidden>

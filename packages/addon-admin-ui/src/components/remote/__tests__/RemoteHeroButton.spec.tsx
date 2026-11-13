@@ -28,6 +28,15 @@ const TEMPLATE = {
   },
 }
 
+vi.mock('../../../../../ui-library/src/generated/system-hooks', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('../../../../../ui-library/src/generated/system-hooks')>()
+  return {
+    ...actual,
+    useRemoteSendMediaCommand: () => ({ mutateAsync: selectSource, isPending: false }),
+  }
+})
+
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {

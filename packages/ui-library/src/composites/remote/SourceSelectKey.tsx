@@ -5,21 +5,33 @@
  * Inputs (sequences and infrared codes) — and a pick runs `remote.selectSource` through
  * `sendMediaCommand`. A remote that declares no source draws NOTHING here.
  */
-import type { RemoteLayoutButton, RemoteSource } from '@camstack/types'
+import type { RemoteLayoutButton, RemoteSource, RemoteRefusalReason } from '@camstack/types'
+import { Tv } from 'lucide-react'
+import { type ReactNode, useState } from 'react'
+import { useUiText } from '../../contexts/ui-text'
+import { useRemoteSendMediaCommand } from '../../generated/system-hooks'
+import { cn } from '../../lib/cn'
+import { Button } from '../../primitives/button'
 import {
-  Button,
   Dialog,
   DialogBody,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  cn,
-  useRemoteSendMediaCommand,
-} from '@camstack/ui-library'
-import { Tv } from 'lucide-react'
-import { type ReactNode, useState } from 'react'
-import { useTranslation } from 'react-i18next'
+} from '../../primitives/dialog'
+import type { RemoteGridPlacement } from './RemoteGrid'
 import { shapeClass, toneClass } from './remote-look'
+
+const REFUSAL_FALLBACK: Readonly<Record<RemoteRefusalReason, string>> = {
+  'no-remote': 'This device has no remote configured.',
+  'unbound-role': 'That button has no saved command.',
+  'action-failed': 'The command failed. {{detail}}',
+  'unknown-source': 'No declared source has that name.',
+  'unbound-step': 'A step of this source is not bound: {{detail}}',
+  'undeclared-channel': 'No source declares that channel number.',
+  'press-timeout': 'The press never finished and was given up: {{detail}}',
+  'no-transmitter': 'This remote has no infrared transmitter.',
+}
 
 export interface SourceSelectKeyProps {
   readonly deviceId: number
@@ -28,7 +40,7 @@ export interface SourceSelectKeyProps {
   readonly sources: readonly RemoteSource[]
   /** The source the remote assumes is on (`getAssumedStatus.source`), empty when unknown. */
   readonly current: string
-  readonly placement: { readonly gridRow: string; readonly gridColumn: string }
+  readonly placement: RemoteGridPlacement
 }
 
 export function SourceSelectKey({
@@ -38,12 +50,12 @@ export function SourceSelectKey({
   current,
   placement,
 }: SourceSelectKeyProps): ReactNode {
-  const { t } = useTranslation()
+  const t = useUiText()
   const send = useRemoteSendMediaCommand()
   const [open, setOpen] = useState(false)
   const [failure, setFailure] = useState<string | null>(null)
   if (sources.length === 0) return null
-  const label = current === '' ? t('remote.sourceSelect.label') : current
+  const label = current === '' ? t('remote.sourceSelect.label', 'Sources') : current
   const channels = sources.filter((s) => s.kind === 'digits')
   const inputs = sources.filter((s) => s.kind !== 'digits')
 
@@ -57,11 +69,15 @@ export function SourceSelectKey({
         repeat: 1,
       })
       if (result.status === 'refused') {
-        setFailure(t(`remote.test.refused.${result.reason}`, { detail: result.detail ?? '' }))
+        setFailure(
+          t(`remote.test.refused.${result.reason}`, REFUSAL_FALLBACK[result.reason], {
+            detail: result.detail ?? '',
+          }),
+        )
         return
       }
       if (result.status === 'not-routed') {
-        setFailure(t('remote.sourceSelect.notRouted'))
+        setFailure(t('remote.sourceSelect.notRouted', 'This remote cannot select a source.'))
         return
       }
       setOpen(false)
@@ -99,18 +115,18 @@ export function SourceSelectKey({
         <Dialog open onOpenChange={(next) => !next && setOpen(false)}>
           <DialogContent width="sm" placement="sheet-on-mobile" scroll="body">
             <DialogHeader>
-              <DialogTitle>{t('remote.sourceSelect.title')}</DialogTitle>
+              <DialogTitle>{t('remote.sourceSelect.title', 'Select source')}</DialogTitle>
             </DialogHeader>
             <DialogBody className="space-y-3" data-testid="source-picker">
               <SourceGroup
-                title={t('remote.sourceSelect.channels')}
+                title={t('remote.sourceSelect.channels', 'Channels')}
                 sources={channels}
                 current={current}
                 busy={send.isPending}
                 onPick={(s) => void pick(s)}
               />
               <SourceGroup
-                title={t('remote.sourceSelect.inputs')}
+                title={t('remote.sourceSelect.inputs', 'Inputs')}
                 sources={inputs}
                 current={current}
                 busy={send.isPending}

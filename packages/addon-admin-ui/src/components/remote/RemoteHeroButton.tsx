@@ -24,9 +24,7 @@ import {
 } from '@camstack/ui-library'
 import { type ReactNode, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { layoutOf } from './layout-model'
-import { RemoteGrid } from './RemoteGrid'
-import { SourceSelectKey } from './SourceSelectKey'
+import { layoutOf, RemoteGrid, SourceSelectKey } from '@camstack/ui-library'
 
 export interface RemoteHeroButtonProps {
   readonly deviceId: number

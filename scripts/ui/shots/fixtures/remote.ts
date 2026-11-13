@@ -255,7 +255,7 @@ const TV_MEDIA_PLAYER = {
   isMuted: null,
   source: '',
   availableSources: [],
-  currentMedia: { title: 'Evening mix', artist: 'The Band', imageUrl: ARTWORK },
+  currentMedia: { type: 'music', title: 'Evening mix', artist: 'The Band', imageUrl: ARTWORK },
   position: null,
   duration: null,
   shuffle: null,
@@ -376,9 +376,13 @@ export default defineFixtures({
     'deviceManager.getBindings': (i: { deviceId: number }) =>
       i.deviceId === TV_ID
         ? {
+            deviceId: i.deviceId,
             entries: [
               {
                 capName: 'media-player',
+                kind: 'native' as const,
+                providerAddonId: 'provider-homeassistant',
+                providerNodeId: 'hub',
                 nativeAddonId: 'provider-homeassistant',
               },
             ],

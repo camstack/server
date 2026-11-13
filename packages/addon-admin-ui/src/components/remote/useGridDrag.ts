@@ -17,7 +17,7 @@ import {
   moveItem,
   previewMove,
 } from './layout-drag'
-import { type LayoutResult, rowWeightsOf } from './layout-model'
+import { type LayoutResult, rowWeightsOf } from '@camstack/ui-library'
 
 /** Pixels the pointer must travel before a press is a drag. */
 const DRAG_THRESHOLD_PX = 4

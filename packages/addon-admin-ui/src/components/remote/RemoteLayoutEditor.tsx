@@ -46,7 +46,7 @@ import {
 } from 'lucide-react'
 import { type KeyboardEvent, type ReactNode, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { APP_BRANDS, appIconKey, resolveAppBrand } from './app-brand-icons'
+import { APP_BRANDS, appIconKey, resolveAppBrand } from '@camstack/ui-library'
 import { ComponentPalette } from './ComponentPalette'
 import { placeComponent } from './layout-components'
 import { arrowStep, type DragItem, nudgeItem } from './layout-drag'
@@ -67,9 +67,9 @@ import {
   setGroupTitle,
   setSeparatorOptions,
   shiftButton,
-} from './layout-model'
-import { RemoteGrid } from './RemoteGrid'
-import { roleName } from './role-vocabulary'
+  RemoteGrid,
+  roleName,
+} from '@camstack/ui-library'
 import { useGridDrag } from './useGridDrag'
 
 const CUSTOM_CHOICE = '__custom__'

@@ -8,8 +8,13 @@
 import { checkTemplatePayload, TEMPLATE_KINDS, type TemplateKind } from '@camstack/types'
 import type { TFunction } from 'i18next'
 import type { ReactNode } from 'react'
-import { checkedLayout, emptyLayout, layoutOf } from './layout-model'
-import { copyOfPreset, REMOTE_LAYOUT_PRESETS } from './layout-presets'
+import {
+  checkedLayout,
+  copyOfPreset,
+  emptyLayout,
+  layoutOf,
+  REMOTE_LAYOUT_PRESETS,
+} from '@camstack/ui-library'
 import { RemoteLayoutEditor } from './RemoteLayoutEditor'
 
 export interface TemplateKindView {

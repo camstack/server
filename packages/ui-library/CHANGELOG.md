@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The device card for an IR or RF transmitter shows its media, whether it can learn, and the last send and learn.
+- A media player's device card draws its saved remote layout — shapes, tones and labels — and falls back to a built-in preset instead of raw key codes.
 
 ## [1.2.436] - 2026-11-13
 

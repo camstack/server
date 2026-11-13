@@ -3,8 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { HotkeyProvider } from '@camstack/ui-library'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
-import { copyOfPreset } from '../layout-presets'
-import { RemoteGrid } from '../RemoteGrid'
+import { copyOfPreset, RemoteGrid } from '@camstack/ui-library'
 import { TemplateEditorDialog } from '../TemplateEditorDialog'
 
 const NEW_DRAFT = {

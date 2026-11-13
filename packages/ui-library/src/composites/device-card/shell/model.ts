@@ -2,6 +2,7 @@
  * What every device card shows whatever the device is: the shell's data. A
  * scene adds its own zones on top; it never restates any of this.
  */
+import type { RemoteLayoutPayload, RemoteSource } from '@camstack/types'
 import type { ReactNode } from 'react'
 import type { CardGlyph } from '../icons'
 import type { CardEvent } from '../parts/EventList'
@@ -46,6 +47,19 @@ export interface CardRemoteKey {
   readonly glyph?: CardGlyph
 }
 
+/**
+ * The saved remote layout (or the preset that stands in for one), drawn by the
+ * shared grid. A press sends the button's role. Absent: the card lays the
+ * declared keys out itself.
+ */
+export interface CardRemotePanel {
+  readonly layout: RemoteLayoutPayload
+  readonly boundRoles: readonly string[]
+  readonly sources: readonly RemoteSource[]
+  readonly currentSource: string
+  readonly deviceId: number
+}
+
 export interface CardHistory {
   /** The charts of the History tab; null hides the tab. */
   readonly charts: ReactNode | null
@@ -70,6 +84,13 @@ export interface CardCommon {
   readonly supply: CardSupply | null
   readonly consumables: readonly CardConsumable[] | null
   readonly remote: readonly CardRemoteKey[] | null
+  /**
+   * The layout grid. Set together with `remote` when the device's remote has a
+   * layout (saved, or a built-in preset). Null or absent: the key list.
+   */
+  readonly remotePanel?: CardRemotePanel | null
+  /** A saved template is still loading: the remote view draws no raw keys. */
+  readonly remoteLayoutPending?: boolean
   readonly history: CardHistory | null
 }
 

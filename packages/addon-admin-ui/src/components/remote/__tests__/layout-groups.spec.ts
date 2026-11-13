@@ -21,7 +21,7 @@ import {
   setGroupTitle,
   setSeparatorOptions,
   slimRowsOf,
-} from '../layout-model'
+} from '@camstack/ui-library'
 
 function must(result: LayoutResult): RemoteLayoutPayload {
   if (result.status !== 'ok') throw new Error(`refused: ${result.reason}`)

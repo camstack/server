@@ -30,7 +30,7 @@ import {
   smartIrDraft,
   toTimings,
 } from '@camstack/types'
-import { humanRole } from './layout-model'
+import { humanRole } from '@camstack/ui-library'
 
 export const IR_CAP = 'ir-transmitter'
 export const IR_SEND = 'send'

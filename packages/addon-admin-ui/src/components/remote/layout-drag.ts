@@ -12,7 +12,7 @@ import {
   type LayoutResult,
   moveButton,
   moveGroup,
-} from './layout-model'
+} from '@camstack/ui-library'
 
 export interface DragItem {
   readonly kind: 'button' | 'group'

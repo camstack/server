@@ -32,7 +32,7 @@ import {
   filterComponents,
   mergeComponents,
 } from './layout-components'
-import { RemoteGrid } from './RemoteGrid'
+import { RemoteGrid } from '@camstack/ui-library'
 
 export interface ComponentPaletteProps {
   readonly open: boolean

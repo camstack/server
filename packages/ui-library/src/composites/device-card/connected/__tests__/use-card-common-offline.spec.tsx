@@ -32,6 +32,8 @@ vi.mock('../../../../generated/system-hooks', () => ({
   usePowerSourcePowerOff: () => ({ mutate: () => undefined }),
   usePowerSourceForceRestart: () => ({ mutate: () => undefined }),
   useRemoteListCommands: () => ({ data: undefined }),
+  useRemoteGetAssumedStatus: () => ({ data: undefined }),
+  useTemplateList: () => ({ data: undefined, status: 'pending' }),
   useRemoteSendCommand: () => ({ mutate: () => undefined }),
   useConsumablesReset: () => ({ mutate: () => undefined }),
 }))

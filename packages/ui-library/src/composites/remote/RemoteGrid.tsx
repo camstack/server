@@ -6,28 +6,48 @@
  * its role's name. The look of a shape, tone or frame is `remote-look`.
  */
 import {
+  isRemoteWidgetRole,
+  type LayoutRect,
   type RemoteLayoutButton,
   type RemoteLayoutGroup,
   type RemoteLayoutPayload,
-  isRemoteWidgetRole,
   remoteRoleIcon,
   remoteRoleLegend,
 } from '@camstack/types'
-import { Button, cn, useDisplayIconResolver } from '@camstack/ui-library'
 import { GripVertical } from 'lucide-react'
 import { Fragment, type KeyboardEvent, type PointerEvent, type ReactNode, type Ref } from 'react'
-import { useTranslation } from 'react-i18next'
+import { useUiText } from '../../contexts/ui-text'
+import { cn } from '../../lib/cn'
+import { useDisplayIconResolver } from '../icon-glyphs'
+import { Button } from '../../primitives/button'
 import { AppBrandGlyph } from './AppBrandGlyph'
 import { resolveAppBrand } from './app-brand-icons'
-import type { DragItem, DragPreview } from './layout-drag'
 import { slimRowsOf } from './layout-model'
 import { roleName } from './role-vocabulary'
 import { clampToGrid, frameClass, isDividerFrame, shapeClass, toneClass } from './remote-look'
 
+/** What the editor is dragging. The drag maths stays in the editor. */
+export interface RemoteGridDragItem {
+  readonly kind: 'button' | 'group'
+  readonly id: string
+}
+
+/** Where a drag would land. Extra fields the editor carries are ignored here. */
+export interface RemoteGridDragPreview {
+  readonly rect: LayoutRect
+  readonly valid: boolean
+}
+
 /** A drag in progress: what is held and where it would land. */
 export interface GridDrag {
-  readonly item: DragItem
-  readonly preview: DragPreview | null
+  readonly item: RemoteGridDragItem
+  readonly preview: RemoteGridDragPreview | null
+}
+
+/** CSS grid placement of one cell, as the layout computed it. */
+export interface RemoteGridPlacement {
+  readonly gridRow: string
+  readonly gridColumn: string
 }
 
 export interface RemoteGridProps {
@@ -47,18 +67,15 @@ export interface RemoteGridProps {
   readonly selectedGroupId?: string | null
   readonly onSelectGroup?: (id: string) => void
   /** Present = the grid is editable: items can be grabbed by pointer and nudged by arrow keys. */
-  readonly onItemPointerDown?: (item: DragItem, event: PointerEvent<HTMLElement>) => void
-  readonly onItemKeyDown?: (item: DragItem, event: KeyboardEvent<HTMLElement>) => void
+  readonly onItemPointerDown?: (item: RemoteGridDragItem, event: PointerEvent<HTMLElement>) => void
+  readonly onItemKeyDown?: (item: RemoteGridDragItem, event: KeyboardEvent<HTMLElement>) => void
   readonly drag?: GridDrag | null
   /**
    * Where the grid is USED (not edited): draws a widget key (`source_select`).
    * Returning null draws an empty cell; a grid without it draws the widget as a
    * plain key, which is how the editor shows where it sits.
    */
-  readonly renderWidget?: (
-    button: RemoteLayoutButton,
-    style: { readonly gridRow: string; readonly gridColumn: string },
-  ) => ReactNode
+  readonly renderWidget?: (button: RemoteLayoutButton, style: RemoteGridPlacement) => ReactNode
 }
 
 const FULL_ROW = '2.75rem'
@@ -125,12 +142,7 @@ function Face({
   )
 }
 
-function placement(rect: {
-  readonly row: number
-  readonly col: number
-  readonly rowSpan: number
-  readonly colSpan: number
-}): { gridRow: string; gridColumn: string } {
+function placement(rect: LayoutRect): RemoteGridPlacement {
   return {
     gridRow: `${rect.row + 1} / span ${rect.rowSpan}`,
     gridColumn: `${rect.col + 1} / span ${rect.colSpan}`,
@@ -159,7 +171,7 @@ function GroupFrame({
   onPointerDown,
   onKeyDown,
 }: GroupFrameProps): ReactNode {
-  const { t } = useTranslation()
+  const t = useUiText()
   const divider = isDividerFrame(group.frame)
   // A title names a group for the person LAYING OUT the remote; where the remote is used
   // (the press modal, the config preview) a group is only a gap between key clusters.
@@ -194,7 +206,7 @@ function GroupFrame({
         // ui-check-ok: a 16px drag grip on the frame corner; IconButton has no touch-none drag-handle size
         <button
           type="button"
-          aria-label={t('remote.layout.groupHandle', {
+          aria-label={t('remote.layout.groupHandle', 'Move group {{name}}', {
             name: group.title ?? group.componentId,
           })}
           aria-pressed={selected}
@@ -227,7 +239,7 @@ export function RemoteGrid({
   drag = null,
   renderWidget,
 }: RemoteGridProps): ReactNode {
-  const { i18n } = useTranslation()
+  const language = typeof document === 'undefined' ? 'en' : document.documentElement.lang
   const editable = onItemPointerDown !== undefined
   const dragging = drag !== null
   const taken = occupied(grid)
@@ -305,8 +317,8 @@ export function RemoteGrid({
         const selected = button.id === selectedId
         const bound = boundRoles === undefined || boundRoles.has(button.role)
         const held = drag?.item.kind === 'button' && drag.item.id === button.id
-        const item: DragItem = { kind: 'button', id: button.id }
-        const name = keyName(button, roleName(button.role, i18n.language))
+        const item: RemoteGridDragItem = { kind: 'button', id: button.id }
+        const name = keyName(button, roleName(button.role, language))
         return (
           <Button
             key={button.id}

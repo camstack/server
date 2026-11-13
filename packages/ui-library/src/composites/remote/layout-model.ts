@@ -151,8 +151,13 @@ export function nextButtonId(grid: RemoteLayoutPayload): string {
   }
 }
 
+export interface LayoutCell {
+  readonly row: number
+  readonly col: number
+}
+
 /** The first free 1×1 cell outside every group, reading left to right and top to bottom. */
-export function firstFreeCell(grid: RemoteLayoutPayload): { row: number; col: number } | null {
+export function firstFreeCell(grid: RemoteLayoutPayload): LayoutCell | null {
   for (let row = 0; row < grid.rows; row += 1) {
     for (let col = 0; col < grid.columns; col += 1) {
       const probe: RemoteLayoutButton = {

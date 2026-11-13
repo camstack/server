@@ -135,7 +135,10 @@ export function DeviceCard({
   const history = common.history
   const hasHistory = history !== null && (history.charts !== null || history.events !== null)
   const remoteKeys = common.remote ?? []
-  const hasRemote = remoteKeys.length > 0 || remoteExtra != null
+  const remotePanel = common.remotePanel ?? null
+  const remotePending = common.remoteLayoutPending === true
+  const hasRemote =
+    remoteKeys.length > 0 || remotePanel !== null || remotePending || remoteExtra != null
   const hasBottomLine =
     gating.reason !== null ||
     common.notice !== null ||
@@ -169,6 +172,8 @@ export function DeviceCard({
         ) : view === 'remote' && hasRemote ? (
           <RemoteView
             keys={remoteKeys}
+            panel={remotePanel}
+            layoutPending={remotePending}
             extra={remoteExtra}
             onKey={(id) => actions?.onRemoteKey?.(id)}
             onBack={() => setView('scene')}

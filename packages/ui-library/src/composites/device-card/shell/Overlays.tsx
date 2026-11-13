@@ -4,7 +4,8 @@ import { useUiText } from '../../../contexts/ui-text'
 import { ButtonGroup } from '../parts/ButtonGroup'
 import { CardButton } from '../parts/CardButton'
 import { EventList } from '../parts/EventList'
-import type { CardHistory, CardRemoteKey, CardState } from './model'
+import { RemoteGrid, SourceSelectKey } from '../../remote'
+import type { CardHistory, CardRemoteKey, CardRemotePanel, CardState } from './model'
 import { cardToneClass } from './Corner'
 import { remoteKeyIconOnly, remotePadRows } from './remote-keys'
 
@@ -93,6 +94,10 @@ export function HistoryView({ state, history, onBack }: HistoryViewProps): React
 
 export interface RemoteViewProps {
   readonly keys: readonly CardRemoteKey[]
+  /** The layout grid. Null: the declared keys, as a pad when they have one. */
+  readonly panel?: CardRemotePanel | null
+  /** A saved layout has not arrived yet: draw the frame, never the raw keys. */
+  readonly layoutPending?: boolean
   readonly onKey: (id: string) => void
   readonly onBack: () => void
   /** Drawn under the keys: what the scene does not (shuffle, repeat). */
@@ -131,11 +136,67 @@ function RemoteKeyButton({
   )
 }
 
-/** Replaces the scene: the keys the device's remote declares, as a pad when it has one. */
-export function RemoteView({ keys, onKey, onBack, extra = null }: RemoteViewProps): ReactElement {
+/** Replaces the scene: the saved layout, or the keys the device declares. */
+export function RemoteView({
+  keys,
+  panel = null,
+  layoutPending = false,
+  onKey,
+  onBack,
+  extra = null,
+}: RemoteViewProps): ReactElement {
   const t = useUiText()
   const [flashed, setFlashed] = useState<string | null>(null)
   const rows = remotePadRows(keys)
+  const title = t('uiLibrary.deviceCard.remote', 'Remote')
+  if (panel !== null) {
+    const bound = new Set(panel.boundRoles)
+    return (
+      <div
+        data-testid="dc-remote-view"
+        className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
+      >
+        <OverlayBar onBack={onBack}>{title}</OverlayBar>
+        <div className="mx-auto w-full max-w-xs">
+          <RemoteGrid
+            grid={panel.layout}
+            label={title}
+            boundRoles={bound}
+            onSelect={(id) => {
+              const role = panel.layout.buttons.find((button) => button.id === id)?.role
+              if (role === undefined || !bound.has(role)) return
+              onKey(role)
+            }}
+            renderWidget={
+              panel.sources.length === 0
+                ? undefined
+                : (button, placement) => (
+                    <SourceSelectKey
+                      deviceId={panel.deviceId}
+                      button={button}
+                      sources={panel.sources}
+                      current={panel.currentSource}
+                      placement={placement}
+                    />
+                  )
+            }
+          />
+        </div>
+        {extra}
+      </div>
+    )
+  }
+  if (layoutPending) {
+    return (
+      <div
+        data-testid="dc-remote-view"
+        className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
+      >
+        <OverlayBar onBack={onBack}>{title}</OverlayBar>
+        {extra}
+      </div>
+    )
+  }
   const button = (k: CardRemoteKey, pos?: string): ReactElement => (
     <RemoteKeyButton
       key={k.id}

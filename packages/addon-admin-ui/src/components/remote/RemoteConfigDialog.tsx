@@ -40,8 +40,7 @@ import { BindingPanel } from './BindingPanel'
 import { deviceLabel } from './binding-summary'
 import { composedBlockIdOf, withMediaPlayerExtension } from './composed-remote'
 import { FlipperIrdbPanel } from './FlipperIrdbPanel'
-import { layoutOf } from './layout-model'
-import { RemoteGrid } from './RemoteGrid'
+import { layoutOf, RemoteGrid } from '@camstack/ui-library'
 import {
   applyDraft,
   type BindableRole,
@@ -51,7 +50,7 @@ import {
   IR_CAP,
   setBinding,
 } from './remote-config-model'
-import { roleName as vocabRoleName } from './role-vocabulary'
+import { roleName as vocabRoleName } from '@camstack/ui-library'
 import { SmartIrImportPanel } from './SmartIrImportPanel'
 import { SourcesPanel } from './SourcesPanel'
 import { type TemplateDraft, TemplateEditorBody } from './TemplateEditorDialog'
