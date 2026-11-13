@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The update card names the install step in your language on one line instead of the provider's raw code
+- A simple sensor (one reading, nothing to set) is drawn in the shared device card: its value once with the quantity icon, the backdrop behind it, and the state corner that opens the history.
+
+### Fixed
+
+- An event source card names which button fired, and lists each button's events when several share a name.
+
 ## [1.2.439] - 2026-11-13
 
 ### Added
@@ -21,13 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The pager under a table names previous and next with a tooltip.
 - Device cards for locks, alarm panels, humidifiers, valves, sirens, pet feeders and fountains, and weather stations: two-step unlock and siren, alarm codes typed on a pad and sent only with the command, a lock that refuses to close beside an open door.
 - Device cards for buttons, updates, scripts, automations, controls (number, choice, text, date), event sources, images, notifiers and gateways, drawn from what each device declares
-- The update card names the install step in your language on one line instead of the provider's raw code
-- A simple sensor (one reading, nothing to set) is drawn in the shared device card: its value once with the quantity icon, the backdrop behind it, and the state corner that opens the history.
 
 ### Fixed
 
 - A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
-- An event source card names which button fired, and lists each button's events when several share a name.
 
 ## [1.2.438] - 2026-11-13
 
