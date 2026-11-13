@@ -833,7 +833,8 @@
       "emptyTitle": "Ancora nessun target di notifica",
       "emptyDescription": "Aggiungi un target per inviare le notifiche a ntfy, Pushover, Telegram, Home Assistant e altro.",
       "testTarget": "Invia un test a {{name}}",
-      "unknownUser": "utente sconosciuto"
+      "unknownUser": "utente sconosciuto",
+      "sendTest": "Invia prova"
     },
     "notificationTestPanel": {
       "level": "Livello",

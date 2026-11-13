@@ -87,6 +87,8 @@ export interface InstanceEditorDialogProps {
    * being created) means the provider or the UI mints it.
    */
   readonly typedId?: TypedIdRuleFor
+  /** The words of the test button, already translated (a notifier's "Send test"); absent: "Test connection". */
+  readonly testLabel?: string
 }
 
 const NO_VALUES: Readonly<Record<string, unknown>> = {}
@@ -100,6 +102,7 @@ export function InstanceEditorDialog({
   onSaved,
   lead,
   typedId,
+  testLabel,
 }: InstanceEditorDialogProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -420,7 +423,7 @@ export function InstanceEditorDialog({
       width="lg"
       footer={
         <>
-          {description.canTest && (
+          {(kind?.canTest ?? description.canTest) && (
             <Button
               size="sm"
               variant="outline"
@@ -432,7 +435,7 @@ export function InstanceEditorDialog({
               }}
             >
               {test.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-              {t('providerInstances.test', 'Test connection')}
+              {testLabel ?? t('providerInstances.test', 'Test connection')}
             </Button>
           )}
           <Button

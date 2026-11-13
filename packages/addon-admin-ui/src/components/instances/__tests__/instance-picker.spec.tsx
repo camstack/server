@@ -1,6 +1,6 @@
 /**
  * InstancePicker — what the host mounts for `instance-select`: a broker link is the rich
- * BrokerPicker, any other cap the library's plain select.
+ * BrokerPicker, any other cap the library's plain select with a "Create new…".
  */
 import { render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
@@ -11,6 +11,9 @@ vi.mock('../../brokers/BrokerPicker', () => ({
       broker-picker:{props.kind}:{String(props.optional)}:{String(props.disabled)}
     </span>
   ),
+}))
+vi.mock('../InstanceLinkCreate', () => ({
+  InstanceLinkCreate: (props: { functionCap: string }) => <span>create:{props.functionCap}</span>,
 }))
 vi.mock('@camstack/ui-library', async () => {
   const actual =
@@ -43,6 +46,8 @@ describe('InstancePicker', () => {
       />,
     )
     expect(screen.getByText('plain:smtp-provider:Default relay')).toBeTruthy()
+    // Any instance the link can point at can be created from here.
+    expect(screen.getByText('create:smtp-provider')).toBeTruthy()
   })
 
   it('passes disabled through, and an optional link to the BrokerPicker', () => {

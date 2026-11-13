@@ -18,6 +18,8 @@ interface ProviderIconProps {
   type: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
   showLabel?: boolean
+  /** A more specific icon tried before the addon's own (a notifier kind's brand icon). */
+  iconUrl?: string
 }
 
 const SIZES = { sm: 'h-4 w-4', md: 'h-5 w-5', lg: 'h-6 w-6', xl: 'h-16 w-16' }
@@ -47,7 +49,7 @@ function lookupProvider(type: string): { icon: LucideIcon; color: string; label:
   return PROVIDERS[key] ?? { icon: Cctv, color: '#78716c', label: type }
 }
 
-export function ProviderIcon({ type, size = 'md', showLabel }: ProviderIconProps) {
+export function ProviderIcon({ type, size = 'md', showLabel, iconUrl }: ProviderIconProps) {
   const provider = lookupProvider(type)
   const Icon = provider.icon
   // The addon's own icon — but only one its manifest DECLARES. `type` is
@@ -55,8 +57,12 @@ export function ProviderIcon({ type, size = 'md', showLabel }: ProviderIconProps
   // `camera-grid`); a bare provider name resolves to `provider-<name>`
   // only when that addon is known. Never a guessed URL: prefixing every
   // id with `provider-` used to request `provider-core-blocks/...` and 404.
-  const [iconBroken, setIconBroken] = useState(false)
-  const assetUrl = useAddonIconUrl(type)
+  const [broken, setBroken] = useState<ReadonlySet<string>>(new Set())
+  const addonIcon = useAddonIconUrl(type)
+  const assetUrl = [iconUrl, addonIcon].find(
+    (candidate): candidate is string =>
+      typeof candidate === 'string' && candidate !== '' && !broken.has(candidate),
+  )
 
   return (
     <div className="flex items-center gap-2">
@@ -64,14 +70,14 @@ export function ProviderIcon({ type, size = 'md', showLabel }: ProviderIconProps
         className={`flex items-center justify-center rounded-lg ${CONTAINER_SIZES[size]}`}
         style={{ backgroundColor: `${provider.color}15` }}
       >
-        {iconBroken || !assetUrl ? (
+        {assetUrl === undefined ? (
           <Icon className={SIZES[size]} style={{ color: provider.color }} />
         ) : (
           <img
             src={assetUrl}
             alt={provider.label}
             className={SIZES[size]}
-            onError={() => setIconBroken(true)}
+            onError={() => setBroken((prev) => new Set([...prev, assetUrl]))}
           />
         )}
       </div>

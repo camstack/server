@@ -24,7 +24,7 @@ import {
 } from '@camstack/ui-library'
 import { InstanceEditorDialog } from './InstanceEditorDialog'
 import { sectionDescription, type TypedIdRuleFor } from './instances-model'
-import { useInstanceKinds } from './instance-kinds'
+import { type InstanceKindMatch, useInstanceKinds } from './instance-kinds'
 
 export interface InstanceCreateDialogProps {
   readonly functionCap: string
@@ -37,6 +37,8 @@ export interface InstanceCreateDialogProps {
   readonly onSaved: (id: string) => void
   /** The kinds whose id the operator types (see `InstanceEditorDialog`). */
   readonly typedId?: TypedIdRuleFor
+  /** `link`: any kind that serves `functionCap` (a link picker); default the section's own kinds. */
+  readonly match?: InstanceKindMatch
 }
 
 function Placeholder({
@@ -65,6 +67,7 @@ export function InstanceCreateDialog({
   onClose,
   onSaved,
   typedId,
+  match,
 }: InstanceCreateDialogProps) {
   const { t } = useTranslation()
   const system = useSystem()
@@ -73,6 +76,7 @@ export function InstanceCreateDialog({
     functionCap,
     ...(addonId !== undefined ? { addonId } : {}),
     ...(kind !== undefined ? { kind } : {}),
+    ...(match !== undefined ? { match } : {}),
   })
   const option = kinds.options[0]
   const ownerId = addonId ?? option?.addonId

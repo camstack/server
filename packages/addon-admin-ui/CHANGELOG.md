@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Build → Templates now holds remote and automation templates: author them with inputs, create automations from a template by filling only its inputs, save an automation as a template, and convert a template automation to a free one.
 
+### Changed
+
+- Add target lists every kind with its icon and opens the form on the one you pick; email's Send with offers Create new for a Google account or SMTP relay; the editor sends a test with the unsaved values
+
 ## [1.2.660] - 2026-11-13
 
 ### Added

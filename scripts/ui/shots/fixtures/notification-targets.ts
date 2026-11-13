@@ -8,6 +8,7 @@
 import { alexaTargetKind } from '../../../../packages/addon-import-alexa/src/speak/provider'
 import { ALEXA_ICON_SVG } from '../../../../packages/addon-import-alexa/src/speak/icon-routes'
 import { buildEmailDescriptor } from '../../../../packages/addon-notifiers/src/adapters/email'
+import { NOTIFIER_ICONS } from '../../../../packages/addon-notifiers/src/icons-data'
 import { defineFixtures } from './_define'
 
 /** Invented Echo devices. Not a real account. */
@@ -73,10 +74,11 @@ const webhookKind = {
   caps: alexaKind.caps,
 }
 
-/** The Email kind as the hub serves it: one provider, whose relays are discovered. */
-const emailKind = buildEmailDescriptor([
-  { value: 'provider-smtp', label: 'Email (SMTP) — smtp.example.com', ready: true },
-])
+/** The Email kind as the hub serves it: ONE "Send with" link, and its brand icon (inline here). */
+const emailKind = {
+  ...buildEmailDescriptor(),
+  iconUrl: `data:image/svg+xml,${encodeURIComponent(String(NOTIFIER_ICONS.email.body))}`,
+}
 
 /** The targets as instances of `notification-output`, per provider addon (D1013). */
 const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
@@ -90,8 +92,7 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
       formValues: {
         name: 'Alerts',
         to: 'ops@example.com',
-        smtpAddonId: 'provider-smtp',
-        smtpInstanceId: 'relay-gone',
+        sendWith: 'relay-gone',
         ownerUserId: 'user-1',
       },
     },
@@ -115,7 +116,9 @@ const INSTANCES: Readonly<Record<string, readonly unknown[]>> = {
   ],
 }
 
-const KINDS_BY_ADDON: Readonly<Record<string, readonly { kind: string; label: string }[]>> = {
+const KINDS_BY_ADDON: Readonly<
+  Record<string, readonly { kind: string; label: string; iconUrl?: string }[]>
+> = {
   notifiers: [emailKind, webhookKind],
   'import-alexa': [alexaKind],
 }
@@ -126,7 +129,7 @@ const formOf = (kind: string): unknown =>
 export default defineFixtures({
   area: 'notification-targets',
   description:
-    'Targets page (InstancesTable over notification-output) with an Alexa kind, a Webhook and an Email target pinned to a missing relay',
+    'Targets page (InstancesTable over notification-output) with an Alexa kind, a Webhook and an Email target linked to a missing sender',
   handlers: {
     'notificationOutput.listTargetKinds': [alexaKind, webhookKind, emailKind],
     'capabilities.getCapability': (i: { name: string }) => ({
@@ -147,6 +150,7 @@ export default defineFixtures({
         label: k.label,
         functionCap: 'notification-output',
         canTest: true,
+        ...(k.iconUrl !== undefined ? { iconUrl: k.iconUrl } : {}),
       })),
     }),
     'integrationInstances.listInstances': (i: { addonId: string }) => INSTANCES[i.addonId] ?? [],
@@ -165,12 +169,12 @@ export default defineFixtures({
       {
         kind: 'email',
         suggestedName: 'Office relay',
-        config: { smtpInstanceId: 'relay-1a2b3c4d' },
+        config: { sendWith: 'relay-1a2b3c4d' },
       },
       {
         kind: 'email',
         suggestedName: 'Backup relay',
-        config: { smtpInstanceId: 'relay-5e6f7a8b' },
+        config: { sendWith: 'relay-5e6f7a8b' },
       },
       ...SAMPLE_ECHOES.map((device) => ({
         kind: 'alexa-echo',

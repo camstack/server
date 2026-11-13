@@ -25,6 +25,8 @@ export interface IntegrationCardProps {
   readonly disabled?: boolean
   readonly testId: string
   readonly buttonTestId?: string
+  /** An icon tried before the addon's own (the kind being created). */
+  readonly iconUrl?: string
 }
 
 export function IntegrationCard({
@@ -37,6 +39,7 @@ export function IntegrationCard({
   disabled = false,
   testId,
   buttonTestId,
+  iconUrl,
 }: IntegrationCardProps): ReactElement {
   return (
     <article
@@ -53,7 +56,7 @@ export function IntegrationCard({
         className="absolute inset-0 z-0 h-auto w-auto rounded-lg p-0 focus-visible:ring-2 focus-visible:ring-primary"
       />
       <div className="pointer-events-none relative z-10 flex w-20 shrink-0 items-center justify-center">
-        <ProviderIcon type={addonId} size="xl" />
+        <ProviderIcon type={addonId} size="xl" {...(iconUrl !== undefined ? { iconUrl } : {})} />
       </div>
       <div className="pointer-events-none relative z-10 grid min-w-0 flex-1 grid-rows-[1fr_auto_1fr] gap-1">
         <p className="min-w-0 self-start truncate text-sm font-semibold text-foreground">{name}</p>

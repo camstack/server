@@ -11,8 +11,10 @@ import {
   isStoppedProcessState,
   effectiveInstanceValues,
   buildRows,
+  creatableKinds,
   creatableProviders,
   deriveState,
+  sectionDescription,
   diffInstanceValues,
   filterRows,
   formatEditRef,
@@ -221,6 +223,13 @@ describe('edit refs', () => {
       )
     }
   })
+  it('a create carries the kind it was picked for', () => {
+    expect(parseEditRef(formatEditRef('notifiers', null, 'email'))).toEqual({
+      kind: 'create',
+      addonId: 'notifiers',
+      kindId: 'email',
+    })
+  })
   it('keeps a colon inside an instance id', () => {
     expect(parseEditRef('a:b:c')).toEqual({
       kind: 'instance',
@@ -233,9 +242,9 @@ describe('edit refs', () => {
 describe('targetsPinning', () => {
   it('names the targets that pin the instance and no others', () => {
     const targets = [
-      { name: 'Mail ops', formValues: { smtpInstanceId: 'inst-aaaaaaaa' } },
+      { name: 'Mail ops', formValues: { sendWith: 'inst-aaaaaaaa' } },
       { name: 'Mail default', formValues: {} },
-      { name: 'Mail other', formValues: { smtpInstanceId: 'relay-default' } },
+      { name: 'Mail other', formValues: { sendWith: 'relay-default' } },
     ]
     expect(targetsPinning(targets, 'inst-aaaaaaaa')).toEqual(['Mail ops'])
   })
@@ -577,5 +586,96 @@ describe('uiProposesInstanceId', () => {
   })
   it('leaves the id to a provider that mints its own', () => {
     expect(uiProposesInstanceId({ ...base, mintsId: true }, services)).toBe(false)
+  })
+})
+
+describe('Add: every creatable kind, with its icon', () => {
+  const notifiers: HolderData = {
+    addonId: 'notifiers',
+    description: {
+      role: 'services' as const,
+      instanceMode: 'multiple',
+      kind: 'target',
+      canTest: true,
+      kinds: [
+        { id: 'email', label: 'Email', functionCap: 'notification-output', iconUrl: '/i/email' },
+        { id: 'ntfy', label: 'ntfy', functionCap: 'notification-output' },
+      ],
+    },
+    instances: [],
+  }
+  const plain: HolderData = {
+    addonId: 'alexa',
+    description: {
+      role: 'services' as const,
+      instanceMode: 'multiple',
+      kind: 'speaker',
+      canTest: false,
+      kinds: [],
+    },
+    instances: [],
+  }
+  const nameOf = (addonId: string): string => `name:${addonId}`
+
+  it('lists one entry per kind across providers, a provider without kinds as one', () => {
+    expect(creatableKinds([notifiers, plain], nameOf)).toEqual([
+      {
+        addonId: 'notifiers',
+        kind: 'email',
+        label: 'Email',
+        providerName: 'name:notifiers',
+        iconUrl: '/i/email',
+      },
+      { addonId: 'notifiers', kind: 'ntfy', label: 'ntfy', providerName: 'name:notifiers' },
+      { addonId: 'alexa', label: 'name:alexa', providerName: 'name:alexa' },
+    ])
+  })
+
+  it('a row carries its kind icon', () => {
+    const [row] = buildRows({
+      functionProviders: [{ addonId: 'notifiers', isActive: true }],
+      holders: [
+        {
+          ...notifiers,
+          instances: [
+            {
+              id: 't1',
+              name: 'Mail',
+              configured: true,
+              enabled: true,
+              formValues: {},
+              kind: 'email',
+            },
+          ],
+        },
+      ],
+      displayNames: new Map(),
+      descriptions: new Map(),
+    })
+    expect(row).toMatchObject({ kindIconUrl: '/i/email' })
+  })
+
+  it('a create picked for one kind opens on that kind alone, also one that only also-serves the cap', () => {
+    expect(sectionDescription(notifiers.description, 'notification-output', 'ntfy')?.kinds).toEqual(
+      [{ id: 'ntfy', label: 'ntfy', functionCap: 'notification-output' }],
+    )
+    const google: IntegrationInstanceDescription = {
+      role: 'services',
+      instanceMode: 'multiple',
+      kind: 'account',
+      canTest: false,
+      kinds: [
+        {
+          id: 'account',
+          label: 'Google account',
+          functionCap: 'google-account',
+          alsoServes: ['smtp-provider'],
+        },
+      ],
+    }
+    expect(sectionDescription(google, 'smtp-provider')).toBeNull()
+    expect(sectionDescription(google, 'smtp-provider', 'account')?.kinds?.map((k) => k.id)).toEqual(
+      ['account'],
+    )
   })
 })

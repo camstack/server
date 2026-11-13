@@ -5,7 +5,7 @@
  * Kind VALUES are data; nothing here branches on one.
  */
 import { useAddonsListCapabilityProviders, useSystem } from '@camstack/ui-library'
-import type { IntegrationInstanceDescription } from '@camstack/types'
+import { type IntegrationInstanceDescription, kindServesCap } from '@camstack/types'
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
@@ -23,13 +23,26 @@ export interface InstanceKindOption {
   readonly connectPath?: string
   readonly disconnectPath?: string
   readonly signInBasePath?: string
+  /** The kind's own icon, when it declares one. */
+  readonly iconUrl?: string
+  /** The kind can be tested (its own `canTest`, else its holder's). */
+  readonly canTest: boolean
 }
+
+/**
+ * How a kind matches the filter's cap: `section` — the cap is the kind's function (a page section
+ * lists its own kinds); `link` — the kind serves the cap, as its function or through `alsoServes`
+ * (a link picker creates any instance the link can point at).
+ */
+export type InstanceKindMatch = 'section' | 'link'
 
 export interface InstanceKindsFilter {
   readonly functionCap: string
   readonly addonId?: string
   /** Narrow to one registry kind (`brokerKind ?? id`). */
   readonly kind?: string
+  /** Default `section`. */
+  readonly match?: InstanceKindMatch
 }
 
 export interface DescribedHolder {
@@ -46,7 +59,11 @@ export function buildInstanceKindOptions(
   for (const holder of holders) {
     if (filter.addonId !== undefined && holder.addonId !== filter.addonId) continue
     for (const k of holder.description.kinds ?? []) {
-      if (k.functionCap !== filter.functionCap) continue
+      const matches =
+        filter.match === 'link'
+          ? kindServesCap(k, filter.functionCap)
+          : k.functionCap === filter.functionCap
+      if (!matches) continue
       const brokerKind = k.brokerKind ?? k.id
       if (filter.kind !== undefined && brokerKind !== filter.kind && k.id !== filter.kind) continue
       out.push({
@@ -57,6 +74,8 @@ export function buildInstanceKindOptions(
         ...(k.connectPath !== undefined ? { connectPath: k.connectPath } : {}),
         ...(k.disconnectPath !== undefined ? { disconnectPath: k.disconnectPath } : {}),
         ...(k.signIn !== undefined ? { signInBasePath: k.signIn.basePath } : {}),
+        ...(k.iconUrl !== undefined ? { iconUrl: k.iconUrl } : {}),
+        canTest: k.canTest ?? holder.description.canTest === true,
       })
     }
   }
@@ -93,7 +112,7 @@ export function useInstanceKinds(filter: InstanceKindsFilter): UseInstanceKindsR
   const options = useMemo(
     () => buildInstanceKindOptions(holders, filter),
     // eslint-disable-next-line react-hooks/exhaustive-deps -- filter is read by its fields
-    [holders, filter.functionCap, filter.addonId, filter.kind],
+    [holders, filter.functionCap, filter.addonId, filter.kind, filter.match],
   )
   return {
     options,

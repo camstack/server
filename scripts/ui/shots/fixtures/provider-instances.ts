@@ -154,7 +154,7 @@ const TARGETS: readonly FixtureTarget[] = [
     name: 'Mail ops',
     kind: 'email',
     addonId: 'notification-output',
-    config: { smtpInstanceId: 'inst-3f9a1c2e' },
+    config: { sendWith: 'inst-3f9a1c2e' },
   },
 ]
 

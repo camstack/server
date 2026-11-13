@@ -53,11 +53,14 @@ import { InstanceEditorDialog } from './InstanceEditorDialog'
 import { InstanceProviderPills, type InstanceInstallLink } from './InstanceProviderPills'
 import { IntegrationWizard } from '../integrations/IntegrationWizard'
 import {
+  creatableKinds,
   creatableProviders,
   filterRows,
   formatEditRef,
   parseEditRef,
   providerPills,
+  needsKindPicker,
+  sectionDescription,
   providersOf,
   statusText,
   targetsPinning,
@@ -115,6 +118,8 @@ export interface InstancesTableProps {
    * pills and Add stay those of the whole function.
    */
   readonly rowFilter?: (row: PanelRow) => boolean
+  /** The words of the editor's test button, already translated (a notifier's "Send test"). */
+  readonly testLabel?: string
 }
 
 /** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
@@ -208,6 +213,7 @@ export function InstancesTable({
   pageActions,
   typedId,
   rowFilter,
+  testLabel,
 }: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -373,7 +379,11 @@ export function InstancesTable({
                 row.kind === 'instance' &&
                 row.kindLabel !== undefined &&
                 row.kindLabel.length > 0 ? (
-                  <KindCell addonId={row.addonId} label={row.kindLabel} />
+                  <KindCell
+                    addonId={row.addonId}
+                    label={row.kindLabel}
+                    {...(row.kindIconUrl !== undefined ? { iconUrl: row.kindIconUrl } : {})}
+                  />
                 ) : (
                   <span className="text-foreground-muted" />
                 ),
@@ -552,11 +562,12 @@ export function InstancesTable({
           )
         : t('instances.addNone', 'No provider here can hold instances.')
 
+  // Add lists every kind it can create, across providers; a selected pill narrows it to its own.
+  const chosen = creatable.filter((h) => h.addonId === activeFilter)
+  const addable = creatableKinds(chosen.length > 0 ? chosen : creatable, nameOf)
   const onAdd = (): void => {
-    // A selected pill adds to its own provider; otherwise the picker, unless there is no choice.
-    const chosen = creatable.find((h) => h.addonId === activeFilter)
-    const only = chosen ?? (creatable.length === 1 ? creatable[0] : undefined)
-    if (only !== undefined) form.openEdit(formatEditRef(only.addonId, null))
+    const only = addable.length === 1 ? addable[0] : undefined
+    if (only !== undefined) form.openEdit(formatEditRef(only.addonId, null, only.kind))
     else form.openNew()
   }
 
@@ -608,12 +619,17 @@ export function InstancesTable({
           onClose={form.close}
           pickFrom={{
             title: addLabel,
-            providers: creatable.map((h) => ({
-              addonId: h.addonId,
-              name: nameOf(h.addonId),
-              description: data.descriptions.get(h.addonId) ?? '',
+            providers: addable.map((entry) => ({
+              addonId: entry.addonId,
+              name: entry.label,
+              description:
+                entry.kind === undefined
+                  ? (data.descriptions.get(entry.addonId) ?? '')
+                  : entry.providerName,
+              ...(entry.kind !== undefined ? { kind: entry.kind } : {}),
+              ...(entry.iconUrl !== undefined ? { iconUrl: entry.iconUrl } : {}),
             })),
-            onPick: (addonId) => form.openEdit(formatEditRef(addonId, null)),
+            onPick: (addonId, kind) => form.openEdit(formatEditRef(addonId, null, kind)),
           }}
         />
       )}
@@ -624,9 +640,11 @@ export function InstancesTable({
           data={data}
           nameOf={nameOf}
           onClose={form.close}
+          functionCap={functionCap}
           onOpen={(addonId, id) => form.openEdit(formatEditRef(addonId, id))}
           {...(lead !== undefined ? { lead } : {})}
           {...(typedId !== undefined ? { typedId } : {})}
+          {...(testLabel !== undefined ? { testLabel } : {})}
         />
       )}
     </>
@@ -703,9 +721,13 @@ function EditDialog({
   onOpen,
   lead,
   typedId,
+  functionCap,
+  testLabel,
 }: {
   readonly refValue: string
   readonly data: InstancesData
+  readonly functionCap: string
+  readonly testLabel?: string
   readonly nameOf: (addonId: string) => string
   readonly onClose: () => void
   /** Opens a record's editor; a create hands over to it so the record's lead (setup, pairing) shows. */
@@ -725,6 +747,15 @@ function EditDialog({
     ref.kind === 'instance' ? (holder.instances.find((i) => i.id === ref.id) ?? null) : null
   // A link to a record that no longer exists opens nothing.
   if (ref.kind === 'instance' && instance === null) return null
+  // A create names the kind it was picked for: the editor opens on that kind alone, called by it
+  // when the provider offers several (an "Email" target, not a "Notifiers" one).
+  const picked =
+    ref.kind === 'create' && ref.kindId !== undefined
+      ? sectionDescription(holder.description, functionCap, ref.kindId)
+      : null
+  const description = picked ?? holder.description
+  const pickedLabel =
+    picked !== null && needsKindPicker(holder.description) ? picked.kinds?.[0]?.label : undefined
   const leadRow = data.rows.find(
     (row): row is InstanceRow =>
       row.kind === 'instance' && row.addonId === ref.addonId && row.id === instance?.id,
@@ -733,12 +764,13 @@ function EditDialog({
     <EditorForRecord
       addonId={ref.addonId}
       {...(lead !== undefined && leadRow !== undefined ? { lead: lead(leadRow) } : {})}
-      providerName={nameOf(ref.addonId)}
-      description={holder.description}
+      providerName={pickedLabel ?? nameOf(ref.addonId)}
+      description={description}
       instance={instance}
       onClose={onClose}
       onOpen={onOpen}
       {...(typedId !== undefined ? { typedId } : {})}
+      {...(testLabel !== undefined ? { testLabel } : {})}
     />
   )
 }

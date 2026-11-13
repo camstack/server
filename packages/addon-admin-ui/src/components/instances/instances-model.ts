@@ -6,11 +6,12 @@
  * An unanswered query is never an empty answer (D315): `deriveState` is `pending` until every
  * query has answered, so the caller shows "nothing here" only from `ready`.
  */
-import type {
-  IntegrationInstance,
-  IntegrationInstanceDescription,
-  IntegrationInstanceKind,
-  IntegrationInstanceMode,
+import {
+  kindServesCap,
+  type IntegrationInstance,
+  type IntegrationInstanceDescription,
+  type IntegrationInstanceKind,
+  type IntegrationInstanceMode,
 } from '@camstack/types'
 import type { ConfigUISchema } from '../../types/config-ui'
 
@@ -42,6 +43,8 @@ export interface InstanceRow {
   /** The instance's kind when the provider has kinds; `kindLabel` is what the table shows. */
   readonly kindId?: string
   readonly kindLabel?: string
+  /** The kind's own icon, when it declares one (else the Kind cell shows the addon's). */
+  readonly kindIconUrl?: string
   /** Epoch ms of the last probe behind `status`. */
   readonly lastCheckedAt?: number
   /** The kind's interactive link / unlink paths (may carry `{{brokerId}}`). */
@@ -108,9 +111,10 @@ export function buildRows(input: BuildRowsInput): readonly PanelRow[] {
         configured: instance.configured,
         enabled: instance.enabled ?? true,
         status: instance.status,
-        canTest: holder.description.canTest,
+        canTest: kind?.canTest ?? holder.description.canTest,
         ...(instance.kind !== undefined ? { kindId: instance.kind } : {}),
         ...(instance.kind !== undefined ? { kindLabel: kind?.label ?? instance.kind } : {}),
+        ...(kind?.iconUrl !== undefined ? { kindIconUrl: kind.iconUrl } : {}),
         ...(instance.lastCheckedAt !== undefined ? { lastCheckedAt: instance.lastCheckedAt } : {}),
         ...(kind?.connectPath !== undefined ? { connectPath: kind.connectPath } : {}),
         ...(kind?.disconnectPath !== undefined ? { disconnectPath: kind.disconnectPath } : {}),
@@ -206,8 +210,12 @@ export function sectionDescription(
 ): IntegrationInstanceDescription | null {
   const kinds = description.kinds
   if (kinds === undefined || kinds.length === 0) return description
-  const own = kinds.filter(
-    (k) => k.functionCap === functionCap && (kindId === undefined || k.id === kindId),
+  // A named kind is kept when it serves the cap at all (a Google account created from a mail
+  // sender picker); the section itself lists only the kinds whose function the cap is.
+  const own = kinds.filter((k) =>
+    kindId === undefined
+      ? k.functionCap === functionCap
+      : k.id === kindId && kindServesCap(k, functionCap),
   )
   return own.length === 0 ? null : { ...description, kinds: own }
 }
@@ -350,6 +358,39 @@ export function creatableProviders(holders: readonly HolderData[]): readonly Hol
   )
 }
 
+/** One thing Add can create: a kind of a provider, or a provider that has no kinds. */
+export interface CreatableKind {
+  readonly addonId: string
+  /** The kind the editor opens on; absent for a provider without kinds. */
+  readonly kind?: string
+  readonly label: string
+  readonly providerName: string
+  readonly iconUrl?: string
+}
+
+/**
+ * Every kind Add can create across the creatable providers, in provider order: one entry per kind
+ * of the section (a provider without kinds is one entry). Add opens the editor straight away when
+ * there is one, else the chooser lists them all, each with its icon. Kind VALUES are data.
+ */
+export function creatableKinds(
+  holders: readonly HolderData[],
+  nameOf: (addonId: string) => string,
+): readonly CreatableKind[] {
+  return holders.flatMap((holder): readonly CreatableKind[] => {
+    const providerName = nameOf(holder.addonId)
+    const kinds = holder.description.kinds ?? []
+    if (kinds.length === 0) return [{ addonId: holder.addonId, label: providerName, providerName }]
+    return kinds.map((k) => ({
+      addonId: holder.addonId,
+      kind: k.id,
+      label: k.label,
+      providerName,
+      ...(k.iconUrl !== undefined ? { iconUrl: k.iconUrl } : {}),
+    }))
+  })
+}
+
 export type PanelState = 'pending' | 'error' | 'ready'
 
 export interface QueryFlags {
@@ -460,18 +501,20 @@ export function randomHex8(): string {
 /** What an open dialog names: a record, a record about to be created, or a fixed row's settings. */
 export type EditRef =
   | { readonly kind: 'instance'; readonly addonId: string; readonly id: string }
-  | { readonly kind: 'create'; readonly addonId: string }
+  | { readonly kind: 'create'; readonly addonId: string; readonly kindId?: string }
   | { readonly kind: 'fixed'; readonly addonId: string }
 
 const CREATE_MARK = '+'
 
 /**
- * The one URL value of an open dialog. `addonId:id` is a record, `addonId:+` a new one and a bare
- * `addonId` a fixed row. An id is only unique inside its provider, so the addon travels with it.
+ * The one URL value of an open dialog. `addonId:id` is a record, `addonId:+` a new one,
+ * `addonId:+kind` a new one of a kind already chosen, and a bare `addonId` a fixed row. An id is
+ * only unique inside its provider, so the addon travels with it.
  */
-export function formatEditRef(addonId: string, id?: string | null): string {
+export function formatEditRef(addonId: string, id?: string | null, kindId?: string): string {
   if (id === undefined) return addonId
-  return `${addonId}:${id === null ? CREATE_MARK : id}`
+  if (id === null) return `${addonId}:${CREATE_MARK}${kindId ?? ''}`
+  return `${addonId}:${id}`
 }
 
 export function parseEditRef(raw: string): EditRef {
@@ -479,9 +522,9 @@ export function parseEditRef(raw: string): EditRef {
   if (at < 0) return { kind: 'fixed', addonId: raw }
   const addonId = raw.slice(0, at)
   const rest = raw.slice(at + 1)
-  return rest === CREATE_MARK
-    ? { kind: 'create', addonId }
-    : { kind: 'instance', addonId, id: rest }
+  if (!rest.startsWith(CREATE_MARK)) return { kind: 'instance', addonId, id: rest }
+  const kindId = rest.slice(CREATE_MARK.length)
+  return kindId === '' ? { kind: 'create', addonId } : { kind: 'create', addonId, kindId }
 }
 
 export interface PinningTarget {
@@ -489,12 +532,15 @@ export interface PinningTarget {
   readonly formValues: Readonly<Record<string, unknown>>
 }
 
-/** Names of the notification targets that pin one relay (`smtpInstanceId`): the delete warning and the row hint. */
+/** The email target field that links the instance sending its mail (`notifiers` `sendWith`). */
+const SENDER_LINK_KEY = 'sendWith'
+
+/** Names of the notification targets that send with one instance: the delete warning and the row hint. */
 export function targetsPinning(
   targets: readonly PinningTarget[],
   instanceId: string,
 ): readonly string[] {
-  return targets.filter((t) => t.formValues['smtpInstanceId'] === instanceId).map((t) => t.name)
+  return targets.filter((t) => t.formValues[SENDER_LINK_KEY] === instanceId).map((t) => t.name)
 }
 
 /**

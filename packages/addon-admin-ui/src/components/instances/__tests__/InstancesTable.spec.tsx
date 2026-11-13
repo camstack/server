@@ -172,6 +172,7 @@ function renderPanel(
       | 'pageActions'
       | 'rowFilter'
       | 'typedId'
+      | 'testLabel'
     >
   > = {},
   icons?: ReadonlyMap<string, string>,
@@ -277,6 +278,58 @@ describe('InstancesTable', () => {
       expect(document.querySelector('img')?.getAttribute('src')).toBe(
         '/api/addon-assets/smtp-nodemailer/assets/icon.svg',
       )
+    })
+
+    it("draws the kind's own icon before the provider's", async () => {
+      h.descriptionExtra = {
+        'smtp-nodemailer': {
+          kinds: [
+            { id: 'k2', label: 'Kind two', functionCap: 'log-destination', iconUrl: '/i/k2' },
+          ],
+        },
+      }
+      renderPanel('', {}, new Map([['smtp-nodemailer', 'assets/icon.svg']]))
+      expect(await screen.findByText('Kind two')).toBeTruthy()
+      expect(document.querySelector('img')?.getAttribute('src')).toBe('/i/k2')
+    })
+
+    it('Add lists every kind as its own tile, and a pick opens the editor on that kind', async () => {
+      renderPanel()
+      await screen.findByText('Relay A')
+      fireEvent.click(screen.getByRole('button', { name: /Add destination/ }))
+      const dialog = await screen.findByRole('dialog')
+      expect(within(dialog).getByTestId('provider-card-smtp-nodemailer-k1')).toBeTruthy()
+      fireEvent.click(within(dialog).getByTestId('provider-pick-smtp-nodemailer-k2'))
+      expect(await screen.findByText('Add Kind two')).toBeTruthy()
+      // The kind was picked on the tile: the editor does not ask it again.
+      expect(screen.queryByLabelText('Kind')).toBeNull()
+      fireEvent.click(await screen.findByRole('button', { name: 'Create' }))
+      await waitFor(() => expect(h.create).toHaveBeenCalledTimes(1))
+      expect(h.create.mock.calls[0]?.[0]).toMatchObject({ addonId: 'smtp-nodemailer', kind: 'k2' })
+    })
+
+    it('the editor tests per kind, with the words the page gives', async () => {
+      h.descriptionExtra = {
+        'smtp-nodemailer': {
+          kinds: [
+            { id: 'k1', label: 'Kind one', functionCap: 'log-destination', canTest: false },
+            { id: 'k2', label: 'Kind two', functionCap: 'log-destination', canTest: true },
+          ],
+        },
+      }
+      renderPanel('?instance=smtp-nodemailer:a', { testLabel: 'Send test' })
+      expect(await screen.findByRole('button', { name: 'Send test' })).toBeTruthy()
+    })
+
+    it('a kind that cannot be tested shows no test, whatever its provider says', async () => {
+      h.descriptionExtra = {
+        'smtp-nodemailer': {
+          kinds: [{ id: 'k2', label: 'Kind two', functionCap: 'log-destination', canTest: false }],
+        },
+      }
+      renderPanel('?instance=smtp-nodemailer:a')
+      expect(await screen.findByRole('button', { name: 'Save changes' })).toBeTruthy()
+      expect(screen.queryByRole('button', { name: 'Test connection' })).toBeNull()
     })
 
     it('Add asks the kind and offers restore; the provider mints the id so none is sent', async () => {
@@ -598,7 +651,7 @@ describe('InstancesTable', () => {
     })
 
     it('delete asks first, and names the notification targets that pin the relay', async () => {
-      h.targets = [{ name: 'Mail ops', formValues: { smtpInstanceId: 'relay-default' } }]
+      h.targets = [{ name: 'Mail ops', formValues: { sendWith: 'relay-default' } }]
       renderPanel()
       fireEvent.click(await screen.findByRole('button', { name: 'Delete Default relay' }))
       expect(await screen.findByText(/Mail ops/)).toBeTruthy()
@@ -708,7 +761,7 @@ describe('InstancesTable', () => {
     })
 
     it('says how many targets pin a relay', async () => {
-      h.targets = [{ name: 'Mail ops', formValues: { smtpInstanceId: 'inst-aaaaaaaa' } }]
+      h.targets = [{ name: 'Mail ops', formValues: { sendWith: 'inst-aaaaaaaa' } }]
       renderPanel()
       expect(await screen.findByText('1 target pins this relay')).toBeTruthy()
     })

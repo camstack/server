@@ -120,6 +120,7 @@ export function NotificationTargetsPanel(): ReactElement {
           'Add a target to deliver notifications to ntfy, Pushover, Telegram, Home Assistant and more.',
         )}
         addLabel={t('system.notificationTargets.addTarget', 'Add target')}
+        testLabel={t('system.notificationTargets.sendTest', 'Send test')}
         extraColumns={[ownerColumn(t('system.notificationTargets.owner', 'Owner'))]}
         rowActions={rowActions}
       />

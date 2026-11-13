@@ -14,19 +14,23 @@ import { IntegrationSection } from './integration-section'
 import { shouldAutofocusSearch } from './search-autofocus'
 
 /**
- * One provider an instance list can add to (a notification target, a broker, a storage place):
- * the picker's other source. Its tile is the same card, with the provider's own icon.
+ * One thing an instance list can add (a notification target, a broker, a storage place): the
+ * picker's other source. A provider that offers several kinds is one tile PER KIND, each with the
+ * kind's own icon when it declares one, else the provider's.
  */
 export interface PickableProvider {
   readonly addonId: string
+  /** The kind this tile creates; absent for a provider without kinds. */
+  readonly kind?: string
   readonly name: string
   readonly description: string
+  readonly iconUrl?: string
 }
 
 /** The picker over a caller's providers instead of the integration types. */
 export interface ProviderPickerInstanceSource {
   readonly providers: readonly PickableProvider[]
-  readonly onPick: (addonId: string) => void
+  readonly onPick: (addonId: string, kind: string | undefined) => void
 }
 
 interface ProviderPickerProps {
@@ -53,7 +57,9 @@ interface ProviderPickerProps {
 
 /** One tile, whichever source it came from. */
 interface PickerEntry {
+  readonly key: string
   readonly addonId: string
+  readonly iconUrl?: string
   readonly name: string
   readonly description: string
   readonly open: () => void
@@ -92,7 +98,9 @@ export function ProviderPicker({
     if (source !== undefined) {
       return source.providers.map((provider) => ({
         ...provider,
-        open: () => source.onPick(provider.addonId),
+        key:
+          provider.kind === undefined ? provider.addonId : `${provider.addonId}-${provider.kind}`,
+        open: () => source.onPick(provider.addonId, provider.kind),
         footer: null,
       }))
     }
@@ -100,6 +108,7 @@ export function ProviderPicker({
       const isUniqueExisting =
         provider.instanceMode === 'unique' && provider.existingInstances.length > 0
       return {
+        key: provider.addonId,
         addonId: provider.addonId,
         name: provider.name,
         description: provider.description ?? '',
@@ -158,10 +167,11 @@ export function ProviderPicker({
     <IntegrationCardGrid>
       {list.map((entry) => (
         <IntegrationCard
-          key={entry.addonId}
-          testId={`provider-card-${entry.addonId}`}
-          buttonTestId={`provider-pick-${entry.addonId}`}
+          key={entry.key}
+          testId={`provider-card-${entry.key}`}
+          buttonTestId={`provider-pick-${entry.key}`}
           addonId={entry.addonId}
+          {...(entry.iconUrl !== undefined ? { iconUrl: entry.iconUrl } : {})}
           name={entry.name}
           openLabel={entry.name}
           disabled={isAnyPending}
