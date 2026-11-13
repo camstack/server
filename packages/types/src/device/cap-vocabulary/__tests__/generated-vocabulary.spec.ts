@@ -53,6 +53,13 @@ const ADDED_ACTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> 
   },
 }
 
+/**
+ * Caps declared AFTER the fixture was taken (the fixture is a frozen snapshot of
+ * the hand-written map, it never grows). Each must be in the generated map; the
+ * comparisons against the fixture leave them out.
+ */
+const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = ['energy-system']
+
 function actionsOf(entry: unknown): readonly JsonRecord[] {
   const actions = isRecord(entry) ? entry['actions'] : undefined
   return Array.isArray(actions) ? actions.filter(isRecord) : []
@@ -91,7 +98,9 @@ describe('the generated cap vocabulary', () => {
   const now = asJson(CAP_VOCABULARY)
 
   it('has exactly the caps the hand-written map had', () => {
-    expect(Object.keys(now).toSorted()).toEqual(Object.keys(before).toSorted())
+    const generated = Object.keys(now).filter((cap) => !CAPS_ADDED_SINCE_FIXTURE.includes(cap))
+    expect(generated.toSorted()).toEqual(Object.keys(before).toSorted())
+    for (const cap of CAPS_ADDED_SINCE_FIXTURE) expect(now[cap], cap).toBeDefined()
   })
 
   it('is, cap by cap, the hand-written entry — apart from the listed additions', () => {
@@ -118,6 +127,8 @@ describe('the generated cap vocabulary', () => {
   })
 
   it('draws the device caps in the hand-written picker order', () => {
-    expect(deviceCaps(now)).toEqual(deviceCaps(before))
+    expect(deviceCaps(now).filter((cap) => !CAPS_ADDED_SINCE_FIXTURE.includes(cap))).toEqual(
+      deviceCaps(before),
+    )
   })
 })
