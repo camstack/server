@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.436] - 2026-11-13
+
 ### Changed
 
 - Device cards and controls show an empty — for a value not yet reported, drop the Online chip and the Online tooltip on a device row's status dot (offline still shows), and lists in a select or dropdown scroll without the panel jumping back

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.852",
+  "version": "1.2.853",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,15 +66,8 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.655",
-        "@camstack/addon-agent-ui": ">=1.2.375",
-        "@camstack/addon-export-alexa": ">=1.2.197",
-        "@camstack/addon-export-google": ">=0.1.134",
-        "@camstack/addon-export-hap": ">=1.2.201",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.682",
-        "@camstack/addon-post-analysis": ">=1.2.700",
-        "@camstack/addon-provider-homeassistant": ">=1.2.683",
-        "@camstack/addon-provider-unraid": ">=0.2.166"
+        "@camstack/addon-admin-ui": ">=1.2.656",
+        "@camstack/addon-agent-ui": ">=1.2.376"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
