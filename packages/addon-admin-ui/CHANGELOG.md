@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device page, search, locations and helper templates use the device's role icon, and the Locations tables now draw the shared type icons too (a hub is a network glyph, a climate device a thermometer); the device header and the Locations rows no longer say Online, only Offline
+
 ## [1.2.655] - 2026-11-13
 
 ### Changed
 
 - Customize offers the switch role On/off light (switch-light) for a relay that drives a lamp
 - The light group's member picker offers relays whose role is switch-light.
-- Device page, search, locations and helper templates use the device's role icon; the device header no longer says Online, only Offline
-- Device page, search, locations and helper templates use the device's role icon, and the Locations tables now draw the shared type icons too (a hub is a network glyph, a climate device a thermometer); the device header and the Locations rows no longer say Online, only Offline
 
 ## [1.2.654] - 2026-11-12
 
@@ -45,7 +47,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Creating an integration whose kind brings devices leaves the id to the hub, so it is no longer refused
 - The remote editor gets a Learn button for IR transmitters that can learn a code
 ### Changed
-
 
 ## [1.2.650] - 2026-11-12
 
