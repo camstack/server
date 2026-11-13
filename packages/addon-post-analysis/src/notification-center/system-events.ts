@@ -221,7 +221,7 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
   if (system !== undefined) host.plannedUpdates.observe(system, host.now())
   const observation = system !== undefined ? ledgeredLiveness(system) : null
   if (observation !== null) {
-    const previous = host.liveness.stateOf(observation.subject)
+    const accepted = host.liveness.acceptedOf(observation.subject)
     const verdict = host.liveness.observe(observation, host.now())
     const holdoff = isNodeLivenessKind(observation.kind)
       ? host.nodeLivenessHoldoff
@@ -235,9 +235,23 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
       host.reportLivenessDrop(incoming, verdict)
       return
     }
-    if (previous !== undefined) {
-      holdoff.rememberIfAbsent(observation.subject, previous)
-    }
+    const hydration =
+      accepted !== undefined
+        ? holdoff.hydrateAccepted(
+            observation.subject,
+            { state: accepted.state, since: accepted.updatedAt },
+            host.now(),
+          )
+        : 'known'
+    host.logger.info('liveness flip', {
+      tags: incoming.log().tags,
+      meta: {
+        subject: observation.subject,
+        kind: observation.kind,
+        state: observation.state,
+        ...(hydration !== 'known' ? { hydration } : {}),
+      },
+    })
     // THE ALL-CLEAR SWITCH (the operator's D-4), applied to liveness as it is
     // to the battery band: a device coming BACK is the recovery half, and an
     // operator who turned the all-clear off does not want it.

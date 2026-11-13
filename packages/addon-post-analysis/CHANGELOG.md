@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A post-analysis restart no longer sends a 'back online' push for devices whose offline was never notified (an offline younger than the 5-minute hold-off hydrates as a silent bounce).
+
 ## [1.2.700] - 2026-11-13
 
 ### Changed

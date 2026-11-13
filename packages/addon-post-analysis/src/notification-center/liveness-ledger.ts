@@ -395,6 +395,16 @@ export class NcLivenessLedger {
   }
 
   /**
+   * The row the ledger currently accepts for a subject, if any — its state AND
+   * when that state began (`updatedAt`). Accepted is not notified: the hold-off
+   * needs the age to tell an announced outage from one a dead process never
+   * got to announce.
+   */
+  acceptedOf(subject: string): NcLivenessRow | undefined {
+    return this.ledger.get(subject)
+  }
+
+  /**
    * Judge ONE observation and advance the ledger.
    *
    * Synchronous on purpose: the verdict is a function of the in-RAM mirror

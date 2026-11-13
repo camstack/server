@@ -42,6 +42,19 @@ export interface LivenessTiming {
   readonly previousSince?: number
 }
 
+/** A state the ledger accepted, and when it began. */
+export interface LivenessAccepted {
+  readonly state: NcLivenessState
+  readonly since: number
+}
+
+/**
+ * What {@link DeviceLivenessHoldoff.hydrateAccepted} did: nothing (the
+ * process already knows the subject), took the accepted state, or treated a
+ * young offline as never announced.
+ */
+export type LivenessHydration = 'known' | 'hydrated' | 'unannounced-offline'
+
 export function isDeviceLivenessKind(kind: string): boolean {
   return (
     kind === 'device-online' ||
@@ -95,9 +108,26 @@ export class DeviceLivenessHoldoff {
     this.departedAt.delete(subject)
   }
 
-  /** Directory-seeded rows never pass through {@link remember}; first flip does. */
-  rememberIfAbsent(subject: string, state: NcLivenessState): void {
-    if (!this.lastNotified.has(subject)) this.lastNotified.set(subject, state)
+  /**
+   * The first flip of a subject this process never notified: take the state
+   * the ledger ACCEPTED as the baseline — but accepted is not notified.
+   *
+   * An `offline` younger than the hold-off delay cannot have been announced:
+   * the process that accepted it died before its timer matured (2026-11-12, a
+   * post-analysis respawn turned 65 device restarts into 65 "back online"
+   * pushes). It hydrates as `online`, so the bounce back is silent. An older
+   * one was announced, and its recovery still is — knowing, from the row, when
+   * the outage began.
+   */
+  hydrateAccepted(subject: string, accepted: LivenessAccepted, now: number): LivenessHydration {
+    if (this.lastNotified.has(subject)) return 'known'
+    if (accepted.state === 'offline' && now - accepted.since < this.delayMs) {
+      this.lastNotified.set(subject, 'online')
+      return 'unannounced-offline'
+    }
+    this.lastNotified.set(subject, accepted.state)
+    this.stateSince.set(subject, accepted.since)
+    return 'hydrated'
   }
 
   /**
