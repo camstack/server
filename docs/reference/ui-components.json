@@ -8708,7 +8708,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/Overlays.tsx",
-      "summary": "Replaces the scene: the device's charts and who did what.",
+      "summary": "Replaces the scene: the device's values, or who changed them.",
       "props": [
         {
           "name": "state",

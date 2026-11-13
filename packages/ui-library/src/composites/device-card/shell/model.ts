@@ -61,9 +61,9 @@ export interface CardRemotePanel {
 }
 
 export interface CardHistory {
-  /** The charts of the History tab; null hides the tab. */
+  /** The value history; null hides that section. */
   readonly charts: ReactNode | null
-  /** The Interactions tab; null hides the tab. */
+  /** Older interaction rows. Null hides them; a device that records actuations uses that list instead. */
   readonly events: readonly CardEvent[] | null
 }
 

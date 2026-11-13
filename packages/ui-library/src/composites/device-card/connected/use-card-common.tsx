@@ -234,6 +234,14 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
       remote.data === undefined || remote.data === null || remote.data.commands.length === 0
         ? null
         : remote.data.commands.map((c) => remoteKeyOf(c.role, c.label, t)),
+    remotePanel: remotePanelOf(
+      deviceId,
+      remote.data,
+      templates.data,
+      templates.status,
+      assumed.data,
+    ),
+    remoteLayoutPending: remoteLayoutPending(remote.data, templates.data, templates.status),
     deviceId,
     history:
       seriesReady || actuationsOffered

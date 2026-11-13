@@ -9881,7 +9881,8 @@
           "already": "Already set",
           "unconfirmed": "Unconfirmed",
           "failed": "Failed"
-        }
+        },
+        "sectionSwitch": "History sections"
       },
       "plug": {
         "on": "On",

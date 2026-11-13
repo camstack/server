@@ -9903,7 +9903,8 @@
           "already": "Già impostato",
           "unconfirmed": "Non confermato",
           "failed": "Non riuscito"
-        }
+        },
+        "sectionSwitch": "Sezioni dello storico"
       },
       "plug": {
         "on": "Accesa",

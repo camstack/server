@@ -1,11 +1,14 @@
 import { type ReactElement, type ReactNode, useState } from 'react'
 import { cn } from '../../../lib/cn'
-import { useUiText } from '../../../contexts/ui-text'
-import { ButtonGroup } from '../parts/ButtonGroup'
+import { useUiText, type UiTextFn } from '../../../contexts/ui-text'
+import { useCapabilityPresence } from '../../../hooks/use-capability-presence'
+import { ViewSwitch, type ViewSwitchOption } from '../../view-switch'
 import { CardButton } from '../parts/CardButton'
 import { EventList } from '../parts/EventList'
+import { RemoteGrid, SourceSelectKey } from '../../remote'
 import { ActuationHistory } from './ActuationHistory'
-import type { CardHistory, CardRemoteKey, CardState } from './model'
+import { historyPanes, shownHistoryPane, type HistoryPane } from './history-sections'
+import type { CardHistory, CardRemoteKey, CardRemotePanel, CardState } from './model'
 import { cardToneClass } from './Corner'
 import { remoteKeyIconOnly, remotePadRows } from './remote-keys'
 
@@ -39,28 +42,39 @@ export interface HistoryViewProps {
   readonly deviceId?: number
 }
 
-/** Replaces the scene: the device's charts and who did what. */
-export function HistoryView({ state, history, onBack, deviceId }: HistoryViewProps): ReactElement {
+function paneOptions(
+  panes: readonly HistoryPane[],
+  t: UiTextFn,
+): readonly ViewSwitchOption<HistoryPane>[] {
+  return panes.map((id) => ({
+    id,
+    label:
+      id === 'values'
+        ? t('uiLibrary.deviceCard.history.charts', 'History')
+        : t('uiLibrary.deviceCard.history.events', 'Interactions'),
+  }))
+}
+
+interface HistoryPanesProps extends HistoryViewProps {
+  /** False hides the switch and the actuation list: values only. */
+  readonly actuationsOffered: boolean
+}
+
+function HistoryPanes({
+  state,
+  history,
+  onBack,
+  deviceId,
+  actuationsOffered,
+}: HistoryPanesProps): ReactElement {
   const t = useUiText()
-  const tabs = [
-    ...(history.charts === null
-      ? []
-      : [
-          {
-            id: 'charts',
-            label: t('uiLibrary.deviceCard.history.charts', 'History'),
-          },
-        ]),
-    ...(history.events === null
-      ? []
-      : [
-          {
-            id: 'events',
-            label: t('uiLibrary.deviceCard.history.events', 'Interactions'),
-          },
-        ]),
-  ]
-  const [tab, setTab] = useState(tabs[0]?.id ?? 'charts')
+  const panes = historyPanes({
+    hasValues: history.charts !== null,
+    hasEvents: history.events !== null,
+    actuationsOffered,
+  })
+  const [chosen, setChosen] = useState<HistoryPane>('values')
+  const pane = shownHistoryPane(panes, chosen)
   return (
     <div
       data-testid="dc-history"
@@ -74,27 +88,41 @@ export function HistoryView({ state, history, onBack, deviceId }: HistoryViewPro
           </small>
         )}
       </OverlayBar>
-      {tabs.length > 1 ? (
-        <ButtonGroup
-          options={tabs}
-          value={tab}
-          onChange={setTab}
-          actuates={false}
-          ariaLabel={t('uiLibrary.deviceCard.history.charts', 'History')}
-        />
-      ) : null}
-      {tab === 'charts' ? history.charts : null}
-      {tab === 'events' && history.events !== null ? (
+      <ViewSwitch
+        options={paneOptions(panes, t)}
+        value={pane}
+        onChange={setChosen}
+        ariaLabel={t('uiLibrary.deviceCard.history.sectionSwitch', 'History sections')}
+        testId="dc-history-sections"
+      />
+      {pane === 'values' ? history.charts : null}
+      {pane === 'interactions' && !actuationsOffered && history.events !== null ? (
         <EventList
           events={history.events}
           emptyLabel={t('uiLibrary.deviceCard.history.noEvents', 'No interactions yet')}
         />
       ) : null}
-      {deviceId !== undefined && (tab === 'charts' || history.charts === null) ? (
+      {pane === 'interactions' && actuationsOffered && deviceId !== undefined ? (
         <ActuationHistory deviceId={deviceId} />
       ) : null}
     </div>
   )
+}
+
+interface HistoryWithCapabilityProps extends HistoryViewProps {
+  readonly deviceId: number
+}
+
+/** Asks whether this cluster records actuations before offering the section. */
+function HistoryWithCapability({ deviceId, ...rest }: HistoryWithCapabilityProps): ReactElement {
+  const presence = useCapabilityPresence('device-transitions')
+  return <HistoryPanes {...rest} deviceId={deviceId} actuationsOffered={presence !== 'absent'} />
+}
+
+/** Replaces the scene: the device's values, or who changed them. */
+export function HistoryView(props: HistoryViewProps): ReactElement {
+  if (props.deviceId === undefined) return <HistoryPanes {...props} actuationsOffered={false} />
+  return <HistoryWithCapability {...props} deviceId={props.deviceId} />
 }
 
 export interface RemoteViewProps {

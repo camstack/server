@@ -1,7 +1,7 @@
 /**
- * Actuations under a device card's value history: who changed which field,
- * newest first. The capability is asked, not assumed (an unanswered read is
- * never "no actuations").
+ * The Interactions section of a device card's History view: who changed which
+ * field, newest first. The capability is asked, not assumed (an unanswered
+ * read is never "no actuations").
  */
 import { useMemo, type ReactElement } from 'react'
 import { useUiText, type UiTextFn } from '../../../contexts/ui-text'
@@ -96,7 +96,7 @@ function ActuationRows({ rows }: ActuationRowsProps): ReactElement {
   )
 }
 
-/** The actuations of one device, under the value history. */
+/** The actuations of one device. The History view shows this instead of the values. */
 export function ActuationHistory({ deviceId }: ActuationHistoryProps): ReactElement | null {
   const t = useUiText()
   const presence = useCapabilityPresence('device-transitions')
@@ -134,9 +134,6 @@ export function ActuationHistory({ deviceId }: ActuationHistoryProps): ReactElem
   if (section.kind === 'hidden') return null
   return (
     <section className="flex flex-col gap-1.5" data-testid="dc-actuations">
-      <h4 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
-        {t('uiLibrary.deviceCard.history.actuations', 'Actuations')}
-      </h4>
       {section.kind === 'skeleton' ? (
         <div className="flex flex-col gap-2" data-testid="dc-actuations-skeleton">
           <Skeleton className="h-8" />
