@@ -121,6 +121,21 @@ import { AMCREST_ADDON_ID, amcrestCameraSchema } from './schema.js'
  * live against an IP4M-1041B (firmware per `getSystemInfo`, probed
  * 2026-07-08) — see `.superpowers/sdd/amcrest-addon-report.md`.
  */
+
+/** Dahua `eventManager` codes that are this camera's onboard motion. */
+const AMCREST_MOTION_CODE_LIST = [
+  'VideoMotion',
+  'SmartMotionHuman',
+  'SmartMotionVehicle',
+  'CrossLineDetection',
+  'CrossRegionDetection',
+] as const
+
+/** `codes=` value for the event-manager attach. Bracket form, unescaped. */
+export const AMCREST_MOTION_EVENT_CODES: string = `[${AMCREST_MOTION_CODE_LIST.join(',')}]`
+
+const AMCREST_MOTION_CODES: ReadonlySet<string> = new Set(AMCREST_MOTION_CODE_LIST)
+
 export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implements ICameraDevice {
   readonly type = DeviceType.Camera as const
 
@@ -166,11 +181,9 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   }
 
   // ── Onboard-motion event stream state ──────────────────────────────
-  /** Dahua CGI `eventManager` attach codes — VideoMotion is the base
-   *  onboard-motion signal (Start/Stop). Smart sub-codes
-   *  (SmartMotionHuman/Vehicle) are camera-AI detections handled by a
-   *  separate cap and intentionally out of scope here. */
-  private static readonly MOTION_EVENT_CODES = '[VideoMotion]'
+  /** Dahua CGI `eventManager` attach codes. VideoMotion and the smart
+   *  codes (human/vehicle, tripwire, intrusion) are all onboard motion. */
+  private static readonly MOTION_EVENT_CODES = AMCREST_MOTION_EVENT_CODES
   /** Re-emit interval (ms) for a sustained motion window. Dahua fires a
    *  single `VideoMotion action=Start` for the whole window (no per-tick
    *  repeats), but the pipeline-runner re-arms its `motionCooldownMs` on
@@ -376,9 +389,10 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   //
   // Dahua/Amcrest cameras push firmware events over a long-lived
   // `multipart/x-mixed-replace` CGI GET
-  // (`eventManager.cgi?action=attach&codes=[VideoMotion]`). Each part is a
-  // `text/plain` block `Code=VideoMotion;action=Start|Stop;index=0`. We
-  // translate Start→motion-on / Stop→motion-off into the same RAW
+  // (`eventManager.cgi?action=attach&codes=[VideoMotion,…]`). Each part is a
+  // `text/plain` block `Code=VideoMotion;action=Start|Stop;index=0`. Smart
+  // codes (human, vehicle, line, region) use the same edges; a Pulse is one
+  // rising edge. We translate them into the same RAW
   // `EventCategory.ProviderMotion` (`source:'onboard'`) bus event the
   // Reolink/Hikvision providers emit (D673: the orchestrator's camera-sensors
   // bridge turns it into `MotionOnMotionChanged`), so the pipeline treats
@@ -503,10 +517,9 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   }
 
   private handleAmcrestEvent(ev: AmcrestEvent): void {
-    // Only VideoMotion drives the onboard motion signal. Other codes
-    // (SmartMotion*, Heartbeat, …) are logged at debug and dropped — onboard
-    // AI detection is a separate cap, out of scope for the motion source.
-    if (ev.code !== 'VideoMotion') {
+    // VideoMotion and the smart codes are onboard motion. Heartbeat and
+    // everything else stay dropped — a heartbeat is a keep-alive, not motion.
+    if (!AMCREST_MOTION_CODES.has(ev.code)) {
       this.ctx.logger.debug('amcrest: unhandled event', {
         tags: { deviceId: this.id },
         meta: { code: ev.code, action: ev.action },
@@ -514,8 +527,15 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       return
     }
     const action = ev.action.toLowerCase()
-    if (action === 'start' || action === 'pulse') this.onMotionStart(ev.observedAt)
+    if (action === 'start') this.onMotionStart(ev.observedAt)
     else if (action === 'stop') this.onMotionStop(ev.observedAt)
+    else if (action === 'pulse') this.onMotionPulse(ev.observedAt)
+    else {
+      this.ctx.logger.debug('amcrest: motion event with no start, stop or pulse — dropped', {
+        tags: { deviceId: this.id },
+        meta: { code: ev.code, action: ev.action },
+      })
+    }
   }
 
   private onMotionStart(now: number): void {
@@ -533,6 +553,20 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
         this.emitMotion(true, Date.now())
       }, AmcrestCamera.MOTION_KEEPALIVE_MS)
     }
+  }
+
+  /**
+   * A Pulse has no Stop. One rising edge; the detection session's motion
+   * cooldown closes it when nothing else arrives. The keepalive holds a
+   * Start until its Stop — arming it here would pin motion on.
+   */
+  private onMotionPulse(now: number): void {
+    const held = this.motionActive
+    this.emitMotion(true, now)
+    if (held) return
+    this.ctx.logger.info('amcrest: onboard motion pulse', {
+      tags: { deviceId: this.id },
+    })
   }
 
   private onMotionStop(now: number): void {

@@ -1,5 +1,6 @@
 import { PassThrough } from 'node:stream'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { AMCREST_MOTION_EVENT_CODES } from '../amcrest-camera.js'
 import { type AmcrestEvent, eventStreamPath } from '../amcrest-cgi-client.js'
 import {
   EVENT_STREAM_BUFFER_RETAIN_BYTES,
@@ -113,9 +114,12 @@ describe('readCompleteParts — a part is delivered when it is complete (D669)',
 })
 
 describe('eventStreamPath', () => {
-  it('asks the camera for heartbeats', () => {
-    expect(eventStreamPath('[VideoMotion]')).toBe(
-      '/cgi-bin/eventManager.cgi?action=attach&codes=[VideoMotion]&heartbeat=5',
+  it('asks the camera for heartbeats and the smart motion codes', () => {
+    expect(AMCREST_MOTION_EVENT_CODES).toBe(
+      '[VideoMotion,SmartMotionHuman,SmartMotionVehicle,CrossLineDetection,CrossRegionDetection]',
+    )
+    expect(eventStreamPath(AMCREST_MOTION_EVENT_CODES)).toBe(
+      `/cgi-bin/eventManager.cgi?action=attach&codes=${AMCREST_MOTION_EVENT_CODES}&heartbeat=5`,
     )
   })
 })
