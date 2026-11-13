@@ -5,6 +5,7 @@ import {
   type EnergyNodeId,
   type EnergyNodeView,
 } from '../../illustrations/EnergyFlowIllustration'
+import { ValueChip } from '../../parts/ValueChip'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import {
@@ -83,34 +84,32 @@ function Today({ today, t }: { readonly today: EnergyToday; readonly t: UiTextFn
       t('uiLibrary.deviceCard.energy.selfConsumption', 'Self-use'),
       today.selfConsumptionPct === null ? null : `${Math.round(today.selfConsumptionPct)}%`,
     ],
-    ['imported', t('uiLibrary.deviceCard.energy.imported', 'Imported'), num(today.importedKwh)],
-    ['exported', t('uiLibrary.deviceCard.energy.exported', 'Exported'), num(today.exportedKwh)],
+    ['imported', t('uiLibrary.deviceCard.energy.imported', 'Imported'), kwh(today.importedKwh)],
+    ['exported', t('uiLibrary.deviceCard.energy.exported', 'Exported'), kwh(today.exportedKwh)],
     [
       'heatPump',
       t('uiLibrary.deviceCard.energy.heatPumpToday', 'Heat pump'),
-      num(today.heatPumpKwh),
+      kwh(today.heatPumpKwh),
     ],
   ]
   return (
-    <dl
-      data-testid="dc-energy-today"
-      className="flex flex-wrap justify-center gap-x-3.5 gap-y-1 text-xs text-foreground-muted"
-    >
+    <ul data-testid="dc-energy-today" className="flex flex-wrap justify-center gap-1.5">
       {items.flatMap(([id, label, value]) =>
         value === null
           ? []
           : [
-              <div key={id} className="flex gap-1">
-                <dt>{label}</dt>
-                <dd className="font-semibold tabular-nums text-foreground">{value}</dd>
-              </div>,
+              <li key={id}>
+                <ValueChip data-testid="dc-energy-today-chip">
+                  <span>{label}</span>
+                  <span className="font-semibold tabular-nums text-foreground">{value}</span>
+                </ValueChip>
+              </li>,
             ],
       )}
-    </dl>
+    </ul>
   )
 }
 
-const num = (v: number | null): string | null => (v === null ? null : String(v))
 const kwh = (v: number | null): string | null => (v === null ? null : `${v} kWh`)
 
 /**

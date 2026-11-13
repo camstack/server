@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device rows for control, button, script, automation, update and event types are drawn from the projected row model; the parallel inline controls are removed
 - The device picker names a device's provider by its addon alone, without the integration instance
 - The media card's mute key is momentary when the player cannot read the mute back, and no longer writes 'muted'
+- The energy-system card shows its totals of today as value pills, and imported, exported and heat pump totals name kWh
 
 ## [1.2.440] - 2026-11-13
 

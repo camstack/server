@@ -8,7 +8,9 @@
  * with no reading yet; 1511 is a container drawn as its child 1512, a
  * temperature sensor with no reading (the registry sensor hero); 1513 a
  * temperature sensor that has never reported, with no slice at all (an
- * empty "—" with its unit, D393). Load alone
+ * empty "—" with its unit, D393); 1514 an offline temperature sensor whose stale
+ * value is not drawn as current; 1515 and 1516 are numeric readings of no fixed type
+ * (CPU load, a grid frequency) whose unit comes from the stored quantity. Load alone
  * (`--fixtures sensor-card`). Every hero model and row is built with the shared
  * pure builder, so the fixture draws exactly what the hub would serve.
  */
@@ -139,6 +141,20 @@ const SPECS: Readonly<Record<number, Spec>> = {
     // Offline: the last value is stale and must not be drawn as current.
     slices: { 'temperature-sensor': { temperature: 17.4, lastFetchedAt: NOW - 3 * 60 * MINUTE } },
   },
+  1515: {
+    name: 'CPU load',
+    type: 'sensor',
+    role: 'numeric-sensor',
+    quantity: 'percentage',
+    slices: { 'numeric-sensor': { value: 23, lastFetchedAt: NOW - MINUTE } },
+  },
+  1516: {
+    name: 'Frequency',
+    type: 'sensor',
+    role: 'numeric-sensor',
+    quantity: 'frequency',
+    slices: { 'numeric-sensor': { value: 49.9, lastFetchedAt: NOW - MINUTE } },
+  },
 }
 
 const IDS = Object.keys(SPECS).map(Number)
@@ -164,6 +180,9 @@ function deviceOf(id: number, spec: Spec): Record<string, unknown> {
     secretConfigPaths: [],
     metadata: {},
     ...(spec.display === undefined ? {} : { display: spec.display }),
+    ...(spec.quantity === undefined
+      ? {}
+      : { sourceInfo: { id: `sensor.card_${id}`, system: 'enpal', quantity: spec.quantity } }),
   }
 }
 

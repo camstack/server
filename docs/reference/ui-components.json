@@ -19318,6 +19318,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "'data-testid'",
+          "type": "string",
+          "optional": true,
+          "doc": ""
         }
       ]
     },
