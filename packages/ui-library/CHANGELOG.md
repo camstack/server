@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device rows for control, button, script, automation, update and event types are drawn from the projected row model; the parallel inline controls are removed
+- The device picker names a device's provider by its addon alone, without the integration instance
 
 ## [1.2.440] - 2026-11-13
 
