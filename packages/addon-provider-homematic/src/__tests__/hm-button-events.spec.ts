@@ -14,8 +14,18 @@ function keyDevice() {
     type: 'HmIP-BS2',
     name: 'Pulsante bagno camerette',
     channels: [
-      { address: `${ADDRESS}:1`, index: 1, type: 'KEY_TRANSCEIVER', name: 'Sinistra' },
-      { address: `${ADDRESS}:4`, index: 4, type: 'SWITCH_VIRTUAL_RECEIVER', name: 'Luce' },
+      {
+        address: `${ADDRESS}:1`,
+        index: 1,
+        type: 'KEY_TRANSCEIVER',
+        name: 'Sinistra',
+      },
+      {
+        address: `${ADDRESS}:4`,
+        index: 4,
+        type: 'SWITCH_VIRTUAL_RECEIVER',
+        name: 'Luce',
+      },
     ],
   })
 }
@@ -44,6 +54,7 @@ describe('button events on the device list', () => {
     const { deps } = fakeDeps({
       devices: () => [keyDevice()],
       getChannelLinkState: linkState(false),
+      getKeyEventProgram: async () => null,
     })
     const handlers = buildCcuDevicesHandlers({
       ...deps,
@@ -87,9 +98,196 @@ describe('button events on the device list', () => {
     const { deps } = fakeDeps({
       devices: () => [keyDevice()],
       getChannelLinkState: linkState(true),
+      getKeyEventProgram: async () => null,
     })
-    const out = await buildCcuDevicesHandlers(deps).listCcuDevices({ integrationId: 'hm_1' })
+    const out = await buildCcuDevicesHandlers(deps).listCcuDevices({
+      integrationId: 'hm_1',
+    })
     expect(out.devices[0]?.keyChannels).toEqual([])
+  })
+})
+
+function adoptedDeps(facade: Parameters<typeof fakeDeps>[0]) {
+  const { deps, logger } = fakeDeps(facade)
+  return {
+    deps: { ...deps, adoptedAddresses: async () => new Map([[ADDRESS, 7]]) },
+    logger,
+  }
+}
+
+const PROGRAM = 'CamStack: Pulsante bagno camerette events'
+
+describe('HmIP key events need a CCU program', () => {
+  it('reports a central link without the program as off, with it as on', async () => {
+    for (const [covered, expected] of [
+      [[], 'off'],
+      [[`${ADDRESS}:1`], 'on'],
+    ] as const) {
+      const { deps } = adoptedDeps({
+        devices: () => [keyDevice()],
+        getChannelLinkState: linkState(true),
+        getKeyEventProgram: async () => ({
+          programId: '9',
+          channelAddresses: [...covered],
+        }),
+      })
+      const out = await buildCcuDevicesHandlers(deps).listCcuDevices({
+        integrationId: 'hm_1',
+      })
+      expect(out.devices[0]?.keyChannels[0]?.central).toBe(expected)
+    }
+  })
+
+  it('reports off when the program is missing, unknown when it cannot be read', async () => {
+    const missing = adoptedDeps({
+      devices: () => [keyDevice()],
+      getChannelLinkState: linkState(true),
+      getKeyEventProgram: async () => null,
+    })
+    expect(
+      (
+        await buildCcuDevicesHandlers(missing.deps).listCcuDevices({
+          integrationId: 'hm_1',
+        })
+      ).devices[0]?.keyChannels[0]?.central,
+    ).toBe('off')
+    const broken = adoptedDeps({
+      devices: () => [keyDevice()],
+      getChannelLinkState: linkState(true),
+      getKeyEventProgram: async () => {
+        throw new Error('ReGa fault')
+      },
+    })
+    expect(
+      (
+        await buildCcuDevicesHandlers(broken.deps).listCcuDevices({
+          integrationId: 'hm_1',
+        })
+      ).devices[0]?.keyChannels[0]?.central,
+    ).toBe('unknown')
+  })
+
+  it('enabling creates the device program with the channel and logs the device id', async () => {
+    const ensured: unknown[] = []
+    const { deps, logger } = adoptedDeps({
+      devices: () => [keyDevice()],
+      createCentralLink: async () => undefined,
+      getKeyEventProgram: async () => null,
+      ensureKeyEventProgram: async (input) => {
+        ensured.push(input)
+        return { programId: '55', created: true }
+      },
+    })
+    await buildButtonEventHandlers(deps).setButtonEvents({
+      integrationId: 'hm_1',
+      address: `${ADDRESS}:1`,
+      enabled: true,
+      confirmed: true,
+    })
+    expect(ensured).toEqual([{ name: PROGRAM, channelAddresses: [`${ADDRESS}:1`] }])
+    const written = logger.lines.filter((line) => line.level === 'info')
+    expect(written.length).toBeGreaterThan(0)
+    expect(written.every((line) => line.tags['deviceId'] === 7)).toBe(true)
+  })
+
+  it('enabling a second key keeps the first in the program', async () => {
+    const ensured: unknown[] = []
+    const { deps } = adoptedDeps({
+      devices: () => [keyDevice()],
+      createCentralLink: async () => undefined,
+      getKeyEventProgram: async () => ({
+        programId: '55',
+        channelAddresses: [`${ADDRESS}:1`],
+      }),
+      ensureKeyEventProgram: async (input) => {
+        ensured.push(input)
+        return { programId: '55', created: false }
+      },
+    })
+    await buildButtonEventHandlers(deps).setButtonEvents({
+      integrationId: 'hm_1',
+      address: `${ADDRESS}:2`,
+      enabled: true,
+      confirmed: true,
+    })
+    expect(ensured).toEqual([{ name: PROGRAM, channelAddresses: [`${ADDRESS}:1`, `${ADDRESS}:2`] }])
+  })
+
+  it('disabling one of two keys rewrites the program; the last key deletes it', async () => {
+    const ensured: unknown[] = []
+    const removed: string[] = []
+    let covered = [`${ADDRESS}:1`, `${ADDRESS}:2`]
+    const { deps } = adoptedDeps({
+      devices: () => [keyDevice()],
+      removeCentralLink: async () => undefined,
+      getKeyEventProgram: async () => ({
+        programId: '55',
+        channelAddresses: covered,
+      }),
+      ensureKeyEventProgram: async (input) => {
+        ensured.push(input)
+        return { programId: '55', created: false }
+      },
+      removeKeyEventProgram: async (name) => {
+        removed.push(name)
+        return { removed: true }
+      },
+    })
+    const handlers = buildButtonEventHandlers(deps)
+    await handlers.setButtonEvents({
+      integrationId: 'hm_1',
+      address: `${ADDRESS}:2`,
+      enabled: false,
+      confirmed: true,
+    })
+    expect(ensured).toEqual([{ name: PROGRAM, channelAddresses: [`${ADDRESS}:1`] }])
+    expect(removed).toEqual([])
+    covered = [`${ADDRESS}:1`]
+    await handlers.setButtonEvents({
+      integrationId: 'hm_1',
+      address: `${ADDRESS}:1`,
+      enabled: false,
+      confirmed: true,
+    })
+    expect(removed).toEqual([PROGRAM])
+    expect(ensured).toHaveLength(1)
+  })
+
+  it('a BidCos key never touches programs', async () => {
+    const touched: string[] = []
+    const bidcos = hmDevice({
+      address: 'NEQ0000001',
+      type: 'HM-RC-4-2',
+      name: 'Remote',
+      channels: [{ address: 'NEQ0000001:1', index: 1, type: 'KEY', name: 'K' }],
+    })
+    const { deps } = adoptedDeps({
+      devices: () => [bidcos],
+      createCentralLink: async () => undefined,
+      removeCentralLink: async () => undefined,
+      getKeyEventProgram: async () => {
+        touched.push('get')
+        return null
+      },
+      ensureKeyEventProgram: async () => {
+        touched.push('ensure')
+        return { programId: '1', created: true }
+      },
+      removeKeyEventProgram: async () => {
+        touched.push('remove')
+        return { removed: false }
+      },
+    })
+    const handlers = buildButtonEventHandlers(deps)
+    for (const enabled of [true, false]) {
+      await handlers.setButtonEvents({
+        integrationId: 'hm_1',
+        address: 'NEQ0000001:1',
+        enabled,
+        confirmed: true,
+      })
+    }
+    expect(touched).toEqual([])
   })
 })
 

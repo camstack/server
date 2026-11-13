@@ -100,7 +100,7 @@
     "buttonChannel": "Canale {{index}}",
     "enableButtonEvents": "Abilita eventi pulsante",
     "disableButtonEvents": "Disabilita eventi pulsante",
-    "enableButtonEventsMessage": "Crea un collegamento centrale per {{name}}. I collegamenti diretti restano.",
+    "enableButtonEventsMessage": "Crea un collegamento centrale per {{name}} e, per HomematicIP, un programma CCU \"CamStack: <dispositivo> events\" che usa il tasto (un dispositivo HomematicIP invia le pressioni solo per un tasto usato). I collegamenti diretti restano.",
     "disableButtonEventsMessage": "Rimuove il collegamento centrale di {{name}}. I collegamenti diretti restano.",
     "directLinks": "Collegamenti diretti: {{targets}}",
     "directLinksNone": "Nessun collegamento diretto",

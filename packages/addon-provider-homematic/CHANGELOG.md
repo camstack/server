@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Enabling button events on a HomematicIP key now also creates a CCU program per device (named "CamStack: <device> events") that uses the key, because the device sends presses only for a used key; a key shows events on only while that program covers it.
+
 ## [1.2.196] - 2026-11-13
 
 ### Changed
