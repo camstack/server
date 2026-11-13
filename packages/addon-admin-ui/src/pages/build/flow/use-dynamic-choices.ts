@@ -1,6 +1,6 @@
 /**
- * Reads the list a `dynamic` offer names off one device, through the cap's own
- * router (`<cap>.getStatus` or the offer's read method, both `{ deviceId }`).
+ * Reads the list a `dynamic` offer names off one device, through the router of
+ * the cap it reads — its own or the sibling it names (`<cap>.getStatus` or the offer's read method, both `{ deviceId }`).
  * The router is reached by key, so the answer is `unknown` and is narrowed by
  * `dynamicChoicesOf` — nothing here assumes a cap's shape.
  */
@@ -12,6 +12,7 @@ import {
   type DynamicChoices,
   type DynamicOffer,
   dynamicChoicesOf,
+  dynamicReadCap,
   dynamicReadName,
 } from './dynamic-offer'
 
@@ -34,17 +35,18 @@ export function useDynamicChoices(
 ): DynamicChoices {
   const system = useSystem()
   const read = offer === null ? '' : dynamicReadName(offer)
+  const readCap = offer === null ? cap : dynamicReadCap(cap, offer)
   const query = useQuery({
-    queryKey: ['build', 'dynamic-offer', deviceId, cap, read],
+    queryKey: ['build', 'dynamic-offer', deviceId, readCap, read],
     enabled: deviceId !== null && deviceId > 0 && offer !== null,
     staleTime: STALE_MS,
     retry: false,
     queryFn: async (): Promise<unknown> => {
-      const router: unknown = Reflect.get(system.trpcClient, capRouterKey(cap))
+      const router: unknown = Reflect.get(system.trpcClient, capRouterKey(readCap))
       const procedure: unknown =
         typeof router === 'object' && router !== null ? Reflect.get(router, read) : undefined
       if (!isQueryProcedure(procedure) || deviceId === null) {
-        throw new Error(`no readable ${cap}.${read}`)
+        throw new Error(`no readable ${readCap}.${read}`)
       }
       return procedure.query({ deviceId })
     },

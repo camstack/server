@@ -269,7 +269,35 @@ export const ptzCapability = {
         name: z.string(),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'ptz.savePreset',
+            label: t('Save PTZ preset here', 'Salva qui un preset'),
+            phrase: t(
+              'Save where {device} points now as preset {presetId} ({name})',
+              'Salva la posizione attuale di {device} come preset {presetId} ({name})',
+            ),
+            icon: 'bookmark-plus',
+            openArgs: [
+              {
+                key: 'presetId',
+                label: t('Preset', 'Preset'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'method',
+                  method: 'getPresets',
+                  valueKey: 'id',
+                  labelKey: 'name',
+                },
+              },
+              { key: 'name', label: t('Name', 'Nome'), offer: { kind: 'text' } },
+            ],
+          },
+        ],
+      },
     ),
     deletePreset: method(z.object({ deviceId: z.number(), presetId: z.string() }), z.void(), {
       kind: 'mutation',
@@ -296,7 +324,34 @@ export const ptzCapability = {
     setHomePreset: method(
       z.object({ deviceId: z.number(), presetId: z.string().nullable() }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'ptz.setHomePreset',
+            label: t('Set PTZ home preset', 'Imposta il preset iniziale'),
+            phrase: t(
+              'Make {presetId} the home position of {device}',
+              'Rendi {presetId} la posizione iniziale di {device}',
+            ),
+            icon: 'house',
+            openArgs: [
+              {
+                key: 'presetId',
+                label: t('Preset', 'Preset'),
+                offer: {
+                  kind: 'dynamic',
+                  from: 'method',
+                  method: 'getPresets',
+                  valueKey: 'id',
+                  labelKey: 'name',
+                },
+              },
+            ],
+          },
+        ],
+      },
     ),
     /**
      * Make WHERE THE HEAD IS POINTING RIGHT NOW this camera's home.
@@ -320,6 +375,17 @@ export const ptzCapability = {
     captureHomeHere: method(z.object({ deviceId: z.number() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      actions: [
+        {
+          id: 'ptz.captureHomeHere',
+          label: t('Set PTZ home here', 'Imposta qui la posizione iniziale'),
+          phrase: t(
+            'Make where {device} points now its home position',
+            'Rendi la posizione attuale di {device} la sua posizione iniziale',
+          ),
+          icon: 'map-pin',
+        },
+      ],
     }),
     /**
      * Whether the camera returns home on its own when left idle, and after how
@@ -345,7 +411,33 @@ export const ptzCapability = {
         seconds: z.number().int().min(0).max(3600),
       }),
       z.void(),
-      { kind: 'mutation', auth: 'admin' },
+      {
+        kind: 'mutation',
+        auth: 'admin',
+        actions: [
+          {
+            id: 'ptz.setHomeReturn',
+            label: t('Set PTZ return home', 'Imposta il ritorno alla posizione iniziale'),
+            phrase: t(
+              'Set {device} to return home when idle ({enabled}) after {seconds} s',
+              'Imposta {device} per tornare alla posizione iniziale da fermo ({enabled}) dopo {seconds} s',
+            ),
+            icon: 'undo-2',
+            openArgs: [
+              {
+                key: 'enabled',
+                label: t('Return home', 'Torna alla posizione iniziale'),
+                offer: { kind: 'boolean' },
+              },
+              {
+                key: 'seconds',
+                label: t('Idle seconds', 'Secondi da fermo'),
+                offer: { kind: 'number', min: 0, max: 3600, step: 1, unit: 's' },
+              },
+            ],
+          },
+        ],
+      },
     ),
     /**
      * Pull the current PTZ position. Redundant with the auto-injected

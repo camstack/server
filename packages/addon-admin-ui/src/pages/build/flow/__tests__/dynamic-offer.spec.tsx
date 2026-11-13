@@ -9,7 +9,13 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { describe, expect, it, vi } from 'vitest'
 import { renderWithTemplateHub } from '../../../../test-setup/device-template-hub'
 import { ArgField } from '../ArgField'
-import { capRouterKey, dynamicChoicesOf, dynamicReadName, isDynamicOffer } from '../dynamic-offer'
+import {
+  capRouterKey,
+  dynamicChoicesOf,
+  dynamicReadCap,
+  dynamicReadName,
+  isDynamicOffer,
+} from '../dynamic-offer'
 
 function dynamicArg(id: string): LooseVocabOpenArg {
   const arg = vocabularyActionsForDevice(['vacuum-control', 'battery', 'dishwasher', 'consumables'])
@@ -44,6 +50,26 @@ describe('dynamic offer projection', () => {
       ],
     }
     expect(dynamicChoicesOf(status, offer)).toEqual([{ value: 'filter', label: 'Filter' }])
+  })
+
+  it('a sibling-cap offer reads the sibling status, filtered by its where', () => {
+    const arg = vocabularyActionsForDevice(['heat-pump-control', 'heat-pump-status'])
+      .find((a) => a.id === 'heatPump.circuitComfortSetpoint')
+      ?.openArgs.find((o) => o.key === 'circuitId')
+    if (arg === undefined) throw new Error('no circuitId arg')
+    const offer = offerOf(arg)
+    expect(dynamicReadCap('heat-pump-control', offer)).toBe('heat-pump-status')
+    expect(dynamicReadName(offer)).toBe('getStatus')
+    const status = {
+      circuits: [
+        { id: 'hc1', kind: 'heating', label: 'Floor' },
+        { id: 'dhw', kind: 'dhw', label: 'Hot water' },
+      ],
+    }
+    expect(dynamicChoicesOf(status, offer)).toEqual([{ value: 'hc1', label: 'Floor' }])
+    expect(dynamicReadCap('vacuum-control', offerOf(dynamicArg('vacuum.fanSpeed')))).toBe(
+      'vacuum-control',
+    )
   })
 
   it('an answer that is not a list yields no choices', () => {

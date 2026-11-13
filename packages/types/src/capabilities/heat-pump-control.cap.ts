@@ -16,6 +16,43 @@ const circuitId = z.string().min(1)
 const mode = z.string().min(1)
 const temp = z.number().finite()
 
+/**
+ * The circuit a per-circuit step acts on, offered from the circuits
+ * `heat-pump-status` reports for the same device (D1050). Mode values differ
+ * per circuit and per gateway (`allowed` on each circuit), so a mode is
+ * offered as text and the provider refuses a value the circuit does not take.
+ */
+const HEATING_CIRCUIT = {
+  key: 'circuitId',
+  label: t('Circuit', 'Circuito'),
+  offer: {
+    kind: 'dynamic',
+    from: 'status',
+    cap: 'heat-pump-status',
+    field: 'circuits',
+    valueKey: 'id',
+    labelKey: 'label',
+    where: { key: 'kind', equals: 'heating' },
+  },
+} as const
+const HOT_WATER_CIRCUIT = {
+  ...HEATING_CIRCUIT,
+  label: t('Hot water circuit', 'Circuito acqua calda'),
+  offer: { ...HEATING_CIRCUIT.offer, where: { key: 'kind', equals: 'dhw' } },
+} as const
+const MODE_ARG = { key: 'mode', label: t('Mode', 'Modalità'), offer: { kind: 'text' } } as const
+const LEVEL_ARG = { key: 'level', label: t('Level', 'Livello'), offer: { kind: 'text' } } as const
+const TEMP_ARG = {
+  key: 'temp',
+  label: t('Temperature', 'Temperatura'),
+  offer: { kind: 'number', step: 0.5, unit: '°C' },
+} as const
+const MINUTES_ARG = {
+  key: 'minutes',
+  label: t('Minutes', 'Minuti'),
+  offer: { kind: 'number', min: 1, step: 1, unit: 'min' },
+} as const
+
 export const heatPumpControlCapability = {
   name: 'heat-pump-control',
   scope: 'device',
@@ -153,43 +190,131 @@ export const heatPumpControlCapability = {
     setCircuitOperationMode: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.circuitOperationMode',
+          label: t('Set circuit operation mode', 'Imposta la modalità del circuito'),
+          phrase: t(
+            'Set {circuitId} of {device} to {mode}',
+            'Imposta {circuitId} di {device} su {mode}',
+          ),
+          icon: 'thermometer',
+          openArgs: [HEATING_CIRCUIT, MODE_ARG],
+        },
+      ],
     }),
     setCircuitHeatCoolMode: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.circuitHeatCoolMode',
+          label: t('Set circuit heat / cool', 'Imposta caldo / freddo del circuito'),
+          phrase: t(
+            'Set {circuitId} of {device} to {mode}',
+            'Imposta {circuitId} di {device} su {mode}',
+          ),
+          icon: 'sun-snow',
+          openArgs: [HEATING_CIRCUIT, MODE_ARG],
+        },
+      ],
     }),
     setCircuitSummerWinter: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.circuitSummerWinter',
+          label: t('Set circuit summer / winter', 'Imposta estate / inverno del circuito'),
+          phrase: t(
+            'Set {circuitId} of {device} to {mode}',
+            'Imposta {circuitId} di {device} su {mode}',
+          ),
+          icon: 'sun',
+          openArgs: [HEATING_CIRCUIT, MODE_ARG],
+        },
+      ],
     }),
     setCircuitComfortSetpoint: method(z.object({ deviceId, circuitId, temp }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.circuitComfortSetpoint',
+          label: t('Set comfort temperature', 'Imposta la temperatura comfort'),
+          phrase: t(
+            'Set the comfort temperature of {circuitId} on {device} to {temp}',
+            'Imposta la temperatura comfort di {circuitId} su {device} a {temp}',
+          ),
+          icon: 'thermometer-sun',
+          openArgs: [HEATING_CIRCUIT, TEMP_ARG],
+        },
+      ],
     }),
     setCircuitEcoSetpoint: method(z.object({ deviceId, circuitId, temp }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.circuitEcoSetpoint',
+          label: t('Set eco temperature', 'Imposta la temperatura eco'),
+          phrase: t(
+            'Set the eco temperature of {circuitId} on {device} to {temp}',
+            'Imposta la temperatura eco di {circuitId} su {device} a {temp}',
+          ),
+          icon: 'leaf',
+          openArgs: [HEATING_CIRCUIT, TEMP_ARG],
+        },
+      ],
     }),
     setCircuitMaxFlowTemp: method(z.object({ deviceId, circuitId, temp }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.circuitMaxFlowTemp',
+          label: t('Set maximum flow temperature', 'Imposta la temperatura massima di mandata'),
+          phrase: t(
+            'Set the maximum flow temperature of {circuitId} on {device} to {temp}',
+            'Imposta la temperatura massima di mandata di {circuitId} su {device} a {temp}',
+          ),
+          icon: 'flame',
+          openArgs: [HEATING_CIRCUIT, TEMP_ARG],
+        },
+      ],
     }),
     // Hot water.
     setDhwOperationMode: method(z.object({ deviceId, circuitId, mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.dhwOperationMode',
+          label: t('Set hot water mode', 'Imposta la modalità acqua calda'),
+          phrase: t(
+            'Set hot water {circuitId} of {device} to {mode}',
+            "Imposta l'acqua calda {circuitId} di {device} su {mode}",
+          ),
+          icon: 'shower-head',
+          openArgs: [HOT_WATER_CIRCUIT, MODE_ARG],
+        },
+      ],
     }),
     setDhwTemperatureLevel: method(z.object({ deviceId, circuitId, level: mode }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.dhwTemperatureLevel',
+          label: t('Set hot water level', 'Imposta il livello acqua calda'),
+          phrase: t(
+            'Set hot water {circuitId} of {device} to level {level}',
+            "Imposta l'acqua calda {circuitId} di {device} al livello {level}",
+          ),
+          icon: 'droplet',
+          openArgs: [HOT_WATER_CIRCUIT, LEVEL_ARG],
+        },
+      ],
     }),
     setDhwChargeDuration: method(
       z.object({ deviceId, circuitId, minutes: z.number().int().positive() }),
@@ -197,14 +322,36 @@ export const heatPumpControlCapability = {
       {
         kind: 'mutation',
         auth: 'protected',
-        notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+        actions: [
+          {
+            id: 'heatPump.dhwChargeDuration',
+            label: t('Set hot water charge duration', 'Imposta la durata della carica acqua calda'),
+            phrase: t(
+              'Set the charge of hot water {circuitId} on {device} to {minutes} min',
+              "Imposta la carica dell'acqua calda {circuitId} di {device} a {minutes} min",
+            ),
+            icon: 'timer',
+            openArgs: [HOT_WATER_CIRCUIT, MINUTES_ARG],
+          },
+        ],
       },
     ),
     /** Start an extra-hot-water charge now: an action, not a stored mode. */
     startExtraHotWater: method(z.object({ deviceId, circuitId }), z.void(), {
       kind: 'mutation',
       auth: 'protected',
-      notOperatorFacing: 'Needs a circuit: set from the device page, not offered to automations',
+      actions: [
+        {
+          id: 'heatPump.extraHotWater',
+          label: t('Start extra hot water', 'Avvia acqua calda extra'),
+          phrase: t(
+            'Start an extra hot water charge of {circuitId} on {device}',
+            'Avvia una carica extra di acqua calda {circuitId} su {device}',
+          ),
+          icon: 'droplets',
+          openArgs: [HOT_WATER_CIRCUIT],
+        },
+      ],
     }),
   },
   vocabulary: {

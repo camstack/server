@@ -2880,7 +2880,7 @@
 
 ### `heat-pump-control` → `heatPumpControl.*`
 
-- **Source:** `packages/types/src/capabilities/heat-pump-control.cap.ts:19`
+- **Source:** `packages/types/src/capabilities/heat-pump-control.cap.ts:56`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `heat-pump`
 - **Archetypes:** —
 - **Provider interface:** `IHeatPumpControlProvider`

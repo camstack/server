@@ -200,15 +200,27 @@ function checkPhrase(
 function checkDynamicOffer(
   where: string,
   def: CapabilityDefinition,
+  defs: readonly CapabilityDefinition[],
   offer: LooseDynamicOffer,
   accessOf: CapVocabularyCheckInput['accessOf'],
   problems: string[],
 ): void {
   if (offer.from === 'status') {
-    const shape = statusShape(def)
+    const source = offer.cap === undefined ? def : defs.find((d) => d.name === offer.cap)
+    if (source === undefined) {
+      problems.push(
+        `${where}: dynamic offer reads cap '${String(offer.cap)}', which does not exist`,
+      )
+      return
+    }
+    if (source.scope !== 'device') {
+      problems.push(`${where}: dynamic offer reads '${source.name}', which is not a device cap`)
+      return
+    }
+    const shape = statusShape(source)
     if (shape === null || !(offer.field in shape)) {
       problems.push(
-        `${where}: dynamic offer reads status field '${offer.field}' that ${def.name} does not declare`,
+        `${where}: dynamic offer reads status field '${offer.field}' that ${source.name} does not declare`,
       )
     }
     return
@@ -371,7 +383,7 @@ function checkAction(
         problems.push(`${where}: '${arg.key}' is offered as a boolean but the input is not one`)
       }
     } else if (offer.kind === 'dynamic') {
-      checkDynamicOffer(where, def, offer, input.accessOf, problems)
+      checkDynamicOffer(where, def, input.defs, offer, input.accessOf, problems)
       const kind = scalarKind(field)
       const declared = offer.valueKind ?? 'string'
       if ((kind === 'number') !== (declared === 'number')) {
@@ -428,7 +440,7 @@ function checkStateTrigger(
     if (kind !== 'string' && kind !== 'enum')
       problems.push(`${where}: phrased as a value but the field is ${kind}`)
     if (trigger.offer !== undefined)
-      checkDynamicOffer(where, def, trigger.offer, input.accessOf, problems)
+      checkDynamicOffer(where, def, input.defs, trigger.offer, input.accessOf, problems)
     checkPhrase(`${where} phrase`, trigger.phrase, new Set(['device', 'value']), problems)
   }
 }

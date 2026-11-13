@@ -290,6 +290,40 @@ describe('checkCapVocabulary', () => {
     ])
   })
 
+  it('resolves a dynamic offer read from a sibling cap, and refuses one it cannot read', () => {
+    const offerOf = (offer: {
+      readonly cap?: string
+      readonly field: string
+    }): readonly string[] => {
+      const sw = goodSwitch()
+      const actions = (sw.actions ?? []).map((a) =>
+        a.id === 'switch.mode'
+          ? {
+              ...a,
+              openArgs: [
+                {
+                  key: 'mode',
+                  label: L,
+                  offer: { kind: 'dynamic' as const, from: 'status' as const, ...offer },
+                },
+              ],
+            }
+          : a,
+      )
+      return problemsOf({ ...sw, actions })
+    }
+    expect(offerOf({ cap: 'switch', field: 'level' })).toEqual([])
+    expect(offerOf({ cap: 'switch', field: 'circuits' })).toEqual([
+      "switch action 'switch.mode': dynamic offer reads status field 'circuits' that switch does not declare",
+    ])
+    expect(offerOf({ cap: 'heat-pump-status', field: 'circuits' })).toEqual([
+      "switch action 'switch.mode': dynamic offer reads cap 'heat-pump-status', which does not exist",
+    ])
+    expect(offerOf({ cap: 'backup', field: 'circuits' })).toEqual([
+      "switch action 'switch.mode': dynamic offer reads 'backup', which is not a device cap",
+    ])
+  })
+
   it('refuses a state trigger whose field kind or values disagree with the status schema', () => {
     const sw = goodSwitch()
     const state = [

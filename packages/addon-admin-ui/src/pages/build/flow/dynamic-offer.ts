@@ -1,6 +1,7 @@
 /**
  * A `dynamic` vocabulary offer (D920) is a list the DEVICE knows: a status
- * field holding it, or a read method returning it. This file turns the raw read
+ * field holding it (of the action's cap or a sibling cap), or a read method
+ * returning it. This file turns the raw read
  * into the choices of a select, and names where to read it; the hook that does
  * the read is `use-dynamic-choices.ts`.
  *
@@ -32,6 +33,15 @@ export function isDynamicOffer(offer: LooseVocabOffer): offer is DynamicOffer {
 /** The tRPC router key of a cap (`vacuum-control` → `vacuumControl`). */
 export function capRouterKey(cap: string): string {
   return cap.replace(/-([a-z0-9])/g, (_m, ch: string) => ch.toUpperCase())
+}
+
+/**
+ * The cap an offer reads: the action's own cap, or the sibling cap of the same
+ * device whose status holds the list (D1050 — `heat-pump-control` reads the
+ * circuits `heat-pump-status` reports).
+ */
+export function dynamicReadCap(cap: string, offer: DynamicOffer): string {
+  return offer.from === 'status' && offer.cap !== undefined ? offer.cap : cap
 }
 
 /** The read an offer names: the cap's status, or one of its methods. */

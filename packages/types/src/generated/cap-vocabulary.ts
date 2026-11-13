@@ -3642,11 +3642,90 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         ],
       },
       {
+        id: 'ptz.savePreset',
+        method: 'savePreset',
+        label: { en: 'Save PTZ preset here', it: 'Salva qui un preset' },
+        phrase: {
+          en: 'Save where {device} points now as preset {presetId} ({name})',
+          it: 'Salva la posizione attuale di {device} come preset {presetId} ({name})',
+        },
+        icon: 'bookmark-plus',
+        openArgs: [
+          {
+            key: 'presetId',
+            label: { en: 'Preset', it: 'Preset' },
+            offer: {
+              kind: 'dynamic',
+              from: 'method',
+              method: 'getPresets',
+              valueKey: 'id',
+              labelKey: 'name',
+            },
+          },
+          { key: 'name', label: { en: 'Name', it: 'Nome' }, offer: { kind: 'text' } },
+        ],
+      },
+      {
         id: 'ptz.stop',
         method: 'stop',
         label: { en: 'Stop moving', it: 'Ferma il movimento' },
         phrase: { en: 'Stop {device} moving', it: 'Ferma il movimento di {device}' },
         icon: 'square',
+      },
+      {
+        id: 'ptz.setHomePreset',
+        method: 'setHomePreset',
+        label: { en: 'Set PTZ home preset', it: 'Imposta il preset iniziale' },
+        phrase: {
+          en: 'Make {presetId} the home position of {device}',
+          it: 'Rendi {presetId} la posizione iniziale di {device}',
+        },
+        icon: 'house',
+        openArgs: [
+          {
+            key: 'presetId',
+            label: { en: 'Preset', it: 'Preset' },
+            offer: {
+              kind: 'dynamic',
+              from: 'method',
+              method: 'getPresets',
+              valueKey: 'id',
+              labelKey: 'name',
+            },
+          },
+        ],
+      },
+      {
+        id: 'ptz.captureHomeHere',
+        method: 'captureHomeHere',
+        label: { en: 'Set PTZ home here', it: 'Imposta qui la posizione iniziale' },
+        phrase: {
+          en: 'Make where {device} points now its home position',
+          it: 'Rendi la posizione attuale di {device} la sua posizione iniziale',
+        },
+        icon: 'map-pin',
+      },
+      {
+        id: 'ptz.setHomeReturn',
+        method: 'setHomeReturn',
+        label: { en: 'Set PTZ return home', it: 'Imposta il ritorno alla posizione iniziale' },
+        phrase: {
+          en: 'Set {device} to return home when idle ({enabled}) after {seconds} s',
+          it: 'Imposta {device} per tornare alla posizione iniziale da fermo ({enabled}) dopo {seconds} s',
+        },
+        icon: 'undo-2',
+        openArgs: [
+          {
+            key: 'enabled',
+            label: { en: 'Return home', it: 'Torna alla posizione iniziale' },
+            offer: { kind: 'boolean' },
+          },
+          {
+            key: 'seconds',
+            label: { en: 'Idle seconds', it: 'Secondi da fermo' },
+            offer: { kind: 'number', min: 0, max: 3600, step: 1, unit: 's' },
+          },
+        ],
       },
       {
         id: 'ptz.autofocusOn',
@@ -3983,19 +4062,288 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
       },
+      {
+        id: 'heatPump.circuitOperationMode',
+        method: 'setCircuitOperationMode',
+        label: { en: 'Set circuit operation mode', it: 'Imposta la modalità del circuito' },
+        phrase: {
+          en: 'Set {circuitId} of {device} to {mode}',
+          it: 'Imposta {circuitId} di {device} su {mode}',
+        },
+        icon: 'thermometer',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          { key: 'mode', label: { en: 'Mode', it: 'Modalità' }, offer: { kind: 'text' } },
+        ],
+      },
+      {
+        id: 'heatPump.circuitHeatCoolMode',
+        method: 'setCircuitHeatCoolMode',
+        label: { en: 'Set circuit heat / cool', it: 'Imposta caldo / freddo del circuito' },
+        phrase: {
+          en: 'Set {circuitId} of {device} to {mode}',
+          it: 'Imposta {circuitId} di {device} su {mode}',
+        },
+        icon: 'sun-snow',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          { key: 'mode', label: { en: 'Mode', it: 'Modalità' }, offer: { kind: 'text' } },
+        ],
+      },
+      {
+        id: 'heatPump.circuitSummerWinter',
+        method: 'setCircuitSummerWinter',
+        label: { en: 'Set circuit summer / winter', it: 'Imposta estate / inverno del circuito' },
+        phrase: {
+          en: 'Set {circuitId} of {device} to {mode}',
+          it: 'Imposta {circuitId} di {device} su {mode}',
+        },
+        icon: 'sun',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          { key: 'mode', label: { en: 'Mode', it: 'Modalità' }, offer: { kind: 'text' } },
+        ],
+      },
+      {
+        id: 'heatPump.circuitComfortSetpoint',
+        method: 'setCircuitComfortSetpoint',
+        label: { en: 'Set comfort temperature', it: 'Imposta la temperatura comfort' },
+        phrase: {
+          en: 'Set the comfort temperature of {circuitId} on {device} to {temp}',
+          it: 'Imposta la temperatura comfort di {circuitId} su {device} a {temp}',
+        },
+        icon: 'thermometer-sun',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          {
+            key: 'temp',
+            label: { en: 'Temperature', it: 'Temperatura' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.circuitEcoSetpoint',
+        method: 'setCircuitEcoSetpoint',
+        label: { en: 'Set eco temperature', it: 'Imposta la temperatura eco' },
+        phrase: {
+          en: 'Set the eco temperature of {circuitId} on {device} to {temp}',
+          it: 'Imposta la temperatura eco di {circuitId} su {device} a {temp}',
+        },
+        icon: 'leaf',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          {
+            key: 'temp',
+            label: { en: 'Temperature', it: 'Temperatura' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.circuitMaxFlowTemp',
+        method: 'setCircuitMaxFlowTemp',
+        label: {
+          en: 'Set maximum flow temperature',
+          it: 'Imposta la temperatura massima di mandata',
+        },
+        phrase: {
+          en: 'Set the maximum flow temperature of {circuitId} on {device} to {temp}',
+          it: 'Imposta la temperatura massima di mandata di {circuitId} su {device} a {temp}',
+        },
+        icon: 'flame',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Circuit', it: 'Circuito' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'heating' },
+            },
+          },
+          {
+            key: 'temp',
+            label: { en: 'Temperature', it: 'Temperatura' },
+            offer: { kind: 'number', step: 0.5, unit: '°C' },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.dhwOperationMode',
+        method: 'setDhwOperationMode',
+        label: { en: 'Set hot water mode', it: 'Imposta la modalità acqua calda' },
+        phrase: {
+          en: 'Set hot water {circuitId} of {device} to {mode}',
+          it: 'Imposta l\'acqua calda {circuitId} di {device} su {mode}',
+        },
+        icon: 'shower-head',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Hot water circuit', it: 'Circuito acqua calda' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'dhw' },
+            },
+          },
+          { key: 'mode', label: { en: 'Mode', it: 'Modalità' }, offer: { kind: 'text' } },
+        ],
+      },
+      {
+        id: 'heatPump.dhwTemperatureLevel',
+        method: 'setDhwTemperatureLevel',
+        label: { en: 'Set hot water level', it: 'Imposta il livello acqua calda' },
+        phrase: {
+          en: 'Set hot water {circuitId} of {device} to level {level}',
+          it: 'Imposta l\'acqua calda {circuitId} di {device} al livello {level}',
+        },
+        icon: 'droplet',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Hot water circuit', it: 'Circuito acqua calda' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'dhw' },
+            },
+          },
+          { key: 'level', label: { en: 'Level', it: 'Livello' }, offer: { kind: 'text' } },
+        ],
+      },
+      {
+        id: 'heatPump.dhwChargeDuration',
+        method: 'setDhwChargeDuration',
+        label: {
+          en: 'Set hot water charge duration',
+          it: 'Imposta la durata della carica acqua calda',
+        },
+        phrase: {
+          en: 'Set the charge of hot water {circuitId} on {device} to {minutes} min',
+          it: 'Imposta la carica dell\'acqua calda {circuitId} di {device} a {minutes} min',
+        },
+        icon: 'timer',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Hot water circuit', it: 'Circuito acqua calda' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'dhw' },
+            },
+          },
+          {
+            key: 'minutes',
+            label: { en: 'Minutes', it: 'Minuti' },
+            offer: { kind: 'number', min: 1, step: 1, unit: 'min' },
+          },
+        ],
+      },
+      {
+        id: 'heatPump.extraHotWater',
+        method: 'startExtraHotWater',
+        label: { en: 'Start extra hot water', it: 'Avvia acqua calda extra' },
+        phrase: {
+          en: 'Start an extra hot water charge of {circuitId} on {device}',
+          it: 'Avvia una carica extra di acqua calda {circuitId} su {device}',
+        },
+        icon: 'droplets',
+        openArgs: [
+          {
+            key: 'circuitId',
+            label: { en: 'Hot water circuit', it: 'Circuito acqua calda' },
+            offer: {
+              kind: 'dynamic',
+              from: 'status',
+              cap: 'heat-pump-status',
+              field: 'circuits',
+              valueKey: 'id',
+              labelKey: 'label',
+              where: { key: 'kind', equals: 'dhw' },
+            },
+          },
+        ],
+      },
     ],
-    notOperatorFacing: {
-      setCircuitOperationMode: 'Needs a circuit: set from the device page, not offered to automations',
-      setCircuitHeatCoolMode: 'Needs a circuit: set from the device page, not offered to automations',
-      setCircuitSummerWinter: 'Needs a circuit: set from the device page, not offered to automations',
-      setCircuitComfortSetpoint: 'Needs a circuit: set from the device page, not offered to automations',
-      setCircuitEcoSetpoint: 'Needs a circuit: set from the device page, not offered to automations',
-      setCircuitMaxFlowTemp: 'Needs a circuit: set from the device page, not offered to automations',
-      setDhwOperationMode: 'Needs a circuit: set from the device page, not offered to automations',
-      setDhwTemperatureLevel: 'Needs a circuit: set from the device page, not offered to automations',
-      setDhwChargeDuration: 'Needs a circuit: set from the device page, not offered to automations',
-      startExtraHotWater: 'Needs a circuit: set from the device page, not offered to automations',
-    },
   },
   'air-quality-sensor': {
     scope: 'device',

@@ -145,7 +145,8 @@ export interface BooleanOffer {
 }
 
 /**
- * Values the DEVICE knows, read at authoring time from the same cap:
+ * Values the DEVICE knows, read at authoring time from the same cap (or, for a
+ * status list, a sibling cap of the same device — {@link SiblingStatusOffer}):
  * a status field holding a list, or a read method returning one.
  * `valueKey` / `labelKey` pick the fields of an object item (omit both for a
  * list of strings); `where` keeps only items whose field equals a value.
@@ -176,6 +177,27 @@ export type DynamicOffer<C extends VocabCapName> =
       }
       readonly valueKind?: 'string' | 'number'
     }
+  | SiblingStatusOffer
+
+/**
+ * Values read from the status of ANOTHER cap the same device binds (D1050):
+ * `heat-pump-control.setCircuitComfortSetpoint` offers the circuits that
+ * `heat-pump-status` reports. `field` is a status field of `cap`, checked by
+ * `scripts/check-cap-vocabulary.ts`.
+ */
+export interface SiblingStatusOffer {
+  readonly kind: 'dynamic'
+  readonly from: 'status'
+  readonly cap: DeviceVocabCapName
+  readonly field: string
+  readonly valueKey?: string
+  readonly labelKey?: string
+  readonly where?: {
+    readonly key: string
+    readonly equals: string | number | boolean
+  }
+  readonly valueKind?: 'string' | 'number'
+}
 
 /** How the authoring UI offers a value for an open arg. */
 export type VocabOffer<C extends VocabCapName> =
@@ -401,6 +423,8 @@ export type LooseDynamicOffer =
   | {
       readonly kind: 'dynamic'
       readonly from: 'status'
+      /** A sibling cap of the same device whose status holds the list; absent = this cap. */
+      readonly cap?: string
       readonly field: string
       readonly valueKey?: string
       readonly labelKey?: string
