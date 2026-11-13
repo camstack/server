@@ -482,76 +482,95 @@ export function mountAllCaps(services: MountAllCapsServices) {
     services.moleculer.createCapabilityProxy(capName, nodeId) as T | null
   return {
     accessories: createCapRouter_accessories(
-      (_ctx) => requireDeviceScoped(reg, 'accessories') as InferProvider<typeof accessoriesCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'accessories') as InferProvider<
+          typeof accessoriesCapability
+        > | null,
       remoteCapProxy,
     ),
-    actionSource: createCapRouter_actionSource(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof actionSourceCapability>>('action-source', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof actionSourceCapability>>('action-source')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listActions: concatCollection(providers, 'listActions') as InferProvider<typeof actionSourceCapability>['listActions'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    actionSource: createCapRouter_actionSource((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof actionSourceCapability>>(
+          'action-source',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof actionSourceCapability>>('action-source')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listActions: concatCollection(providers, 'listActions') as InferProvider<
+          typeof actionSourceCapability
+        >['listActions'],
+      }
+    }, remoteCapProxy),
     actions: createCapRouter_actions(
       (_ctx) => reg?.getSingleton<InferProvider<typeof actionsCapability>>('actions') ?? null,
       remoteCapProxy,
     ),
     addonPages: createCapRouter_addonPages(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof addonPagesCapability>>('addon-pages') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof addonPagesCapability>>('addon-pages') ?? null,
       remoteCapProxy,
     ),
-    addonPagesSource: createCapRouter_addonPagesSource(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof addonPagesSourceCapability>>('addon-pages-source', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof addonPagesSourceCapability>>('addon-pages-source')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listPages: concatCollection(providers, 'listPages') as InferProvider<typeof addonPagesSourceCapability>['listPages'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    addonPagesSource: createCapRouter_addonPagesSource((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof addonPagesSourceCapability>>(
+          'addon-pages-source',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof addonPagesSourceCapability>>(
+          'addon-pages-source',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listPages: concatCollection(providers, 'listPages') as InferProvider<
+          typeof addonPagesSourceCapability
+        >['listPages'],
+      }
+    }, remoteCapProxy),
     addonSettings: createCapRouter_addonSettings(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof addonSettingsCapability>>('addon-settings') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof addonSettingsCapability>>('addon-settings') ?? null,
       remoteCapProxy,
     ),
     addonWidgets: createCapRouter_addonWidgets(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof addonWidgetsCapability>>('addon-widgets') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof addonWidgetsCapability>>('addon-widgets') ?? null,
       remoteCapProxy,
     ),
-    addonWidgetsSource: createCapRouter_addonWidgetsSource(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof addonWidgetsSourceCapability>>('addon-widgets-source', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof addonWidgetsSourceCapability>>('addon-widgets-source')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listWidgets: concatCollection(providers, 'listWidgets') as InferProvider<typeof addonWidgetsSourceCapability>['listWidgets'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    addonWidgetsSource: createCapRouter_addonWidgetsSource((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof addonWidgetsSourceCapability>>(
+          'addon-widgets-source',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof addonWidgetsSourceCapability>>(
+          'addon-widgets-source',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listWidgets: concatCollection(providers, 'listWidgets') as InferProvider<
+          typeof addonWidgetsSourceCapability
+        >['listWidgets'],
+      }
+    }, remoteCapProxy),
     addons: createCapRouter_addons(
       (_ctx) => reg?.getSingleton<InferProvider<typeof addonsCapability>>('addons') ?? null,
       remoteCapProxy,
@@ -561,11 +580,17 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     airQualitySensor: createCapRouter_airQualitySensor(
-      (_ctx) => requireDeviceScoped(reg, 'air-quality-sensor') as InferProvider<typeof airQualitySensorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'air-quality-sensor') as InferProvider<
+          typeof airQualitySensorCapability
+        > | null,
       remoteCapProxy,
     ),
     alarmPanel: createCapRouter_alarmPanel(
-      (_ctx) => requireDeviceScoped(reg, 'alarm-panel') as InferProvider<typeof alarmPanelCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'alarm-panel') as InferProvider<
+          typeof alarmPanelCapability
+        > | null,
       remoteCapProxy,
     ),
     alerts: createCapRouter_alerts(
@@ -573,27 +598,39 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     ambientLightSensor: createCapRouter_ambientLightSensor(
-      (_ctx) => requireDeviceScoped(reg, 'ambient-light-sensor') as InferProvider<typeof ambientLightSensorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'ambient-light-sensor') as InferProvider<
+          typeof ambientLightSensorCapability
+        > | null,
       remoteCapProxy,
     ),
     audioAnalysis: createCapRouter_audioAnalysis(
-      (_ctx) => requireDeviceScoped(reg, 'audio-analysis') as InferProvider<typeof audioAnalysisCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'audio-analysis') as InferProvider<
+          typeof audioAnalysisCapability
+        > | null,
       remoteCapProxy,
     ),
     audioAnalyzer: createCapRouter_audioAnalyzer(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof audioAnalyzerCapability>>('audio-analyzer') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof audioAnalyzerCapability>>('audio-analyzer') ?? null,
       remoteCapProxy,
     ),
     audioCodec: createCapRouter_audioCodec(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof audioCodecCapability>>('audio-codec') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof audioCodecCapability>>('audio-codec') ?? null,
       remoteCapProxy,
     ),
     audioMetrics: createCapRouter_audioMetrics(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof audioMetricsCapability>>('audio-metrics') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof audioMetricsCapability>>('audio-metrics') ?? null,
       remoteCapProxy,
     ),
     automationControl: createCapRouter_automationControl(
-      (_ctx) => requireDeviceScoped(reg, 'automation-control') as InferProvider<typeof automationControlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'automation-control') as InferProvider<
+          typeof automationControlCapability
+        > | null,
       remoteCapProxy,
     ),
     backup: createCapRouter_backup(
@@ -601,97 +638,123 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     battery: createCapRouter_battery(
-      (_ctx) => requireDeviceScoped(reg, 'battery') as InferProvider<typeof batteryCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'battery') as InferProvider<typeof batteryCapability> | null,
       remoteCapProxy,
     ),
     binary: createCapRouter_binary(
       (_ctx) => requireDeviceScoped(reg, 'binary') as InferProvider<typeof binaryCapability> | null,
       remoteCapProxy,
     ),
-    boardKeySource: createCapRouter_boardKeySource(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof boardKeySourceCapability>>('board-key-source', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof boardKeySourceCapability>>('board-key-source')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listSources: concatCollection(providers, 'listSources') as InferProvider<typeof boardKeySourceCapability>['listSources'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    boardKeySource: createCapRouter_boardKeySource((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof boardKeySourceCapability>>(
+          'board-key-source',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof boardKeySourceCapability>>('board-key-source')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listSources: concatCollection(providers, 'listSources') as InferProvider<
+          typeof boardKeySourceCapability
+        >['listSources'],
+      }
+    }, remoteCapProxy),
     brightness: createCapRouter_brightness(
-      (_ctx) => requireDeviceScoped(reg, 'brightness') as InferProvider<typeof brightnessCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'brightness') as InferProvider<typeof brightnessCapability> | null,
       remoteCapProxy,
     ),
-    broker: createCapRouter_broker(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof brokerCapability>>('broker', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof brokerCapability>>('broker')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    broker: createCapRouter_broker((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof brokerCapability>>('broker', addonId)
+      }
+      const entries = reg.getCollectionEntries<InferProvider<typeof brokerCapability>>('broker')
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     button: createCapRouter_button(
       (_ctx) => requireDeviceScoped(reg, 'button') as InferProvider<typeof buttonCapability> | null,
       remoteCapProxy,
     ),
-    calendarSource: createCapRouter_calendarSource(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof calendarSourceCapability>>('calendar-source', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof calendarSourceCapability>>('calendar-source')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listCalendars: concatCollection(providers, 'listCalendars') as InferProvider<typeof calendarSourceCapability>['listCalendars'],
-          listEvents: concatCollection(providers, 'listEvents') as InferProvider<typeof calendarSourceCapability>['listEvents'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    calendarSource: createCapRouter_calendarSource((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof calendarSourceCapability>>(
+          'calendar-source',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof calendarSourceCapability>>('calendar-source')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listCalendars: concatCollection(providers, 'listCalendars') as InferProvider<
+          typeof calendarSourceCapability
+        >['listCalendars'],
+        listEvents: concatCollection(providers, 'listEvents') as InferProvider<
+          typeof calendarSourceCapability
+        >['listEvents'],
+      }
+    }, remoteCapProxy),
     calendars: createCapRouter_calendars(
       (_ctx) => reg?.getSingleton<InferProvider<typeof calendarsCapability>>('calendars') ?? null,
       remoteCapProxy,
     ),
     cameraCredentials: createCapRouter_cameraCredentials(
-      (_ctx) => requireDeviceScoped(reg, 'camera-credentials') as InferProvider<typeof cameraCredentialsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'camera-credentials') as InferProvider<
+          typeof cameraCredentialsCapability
+        > | null,
       remoteCapProxy,
     ),
     cameraGridLayout: createCapRouter_cameraGridLayout(
-      (_ctx) => requireDeviceScoped(reg, 'camera-grid-layout') as InferProvider<typeof cameraGridLayoutCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'camera-grid-layout') as InferProvider<
+          typeof cameraGridLayoutCapability
+        > | null,
       remoteCapProxy,
     ),
     cameraPipelineConfig: createCapRouter_cameraPipelineConfig(
-      (_ctx) => requireDeviceScoped(reg, 'camera-pipeline-config') as InferProvider<typeof cameraPipelineConfigCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'camera-pipeline-config') as InferProvider<
+          typeof cameraPipelineConfigCapability
+        > | null,
       remoteCapProxy,
     ),
     cameraStreams: createCapRouter_cameraStreams(
-      (_ctx) => requireDeviceScoped(reg, 'camera-streams') as InferProvider<typeof cameraStreamsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'camera-streams') as InferProvider<
+          typeof cameraStreamsCapability
+        > | null,
       remoteCapProxy,
     ),
     carbonMonoxide: createCapRouter_carbonMonoxide(
-      (_ctx) => requireDeviceScoped(reg, 'carbon-monoxide') as InferProvider<typeof carbonMonoxideCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'carbon-monoxide') as InferProvider<
+          typeof carbonMonoxideCapability
+        > | null,
       remoteCapProxy,
     ),
     climateControl: createCapRouter_climateControl(
-      (_ctx) => requireDeviceScoped(reg, 'climate-control') as InferProvider<typeof climateControlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'climate-control') as InferProvider<
+          typeof climateControlCapability
+        > | null,
       remoteCapProxy,
     ),
     clusterUpdate: createCapRouter_clusterUpdate(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof clusterUpdateCapability>>('cluster-update') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof clusterUpdateCapability>>('cluster-update') ?? null,
       remoteCapProxy,
     ),
     color: createCapRouter_color(
@@ -703,70 +766,94 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     connectivity: createCapRouter_connectivity(
-      (_ctx) => requireDeviceScoped(reg, 'connectivity') as InferProvider<typeof connectivityCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'connectivity') as InferProvider<
+          typeof connectivityCapability
+        > | null,
       remoteCapProxy,
     ),
     consumables: createCapRouter_consumables(
-      (_ctx) => requireDeviceScoped(reg, 'consumables') as InferProvider<typeof consumablesCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'consumables') as InferProvider<
+          typeof consumablesCapability
+        > | null,
       remoteCapProxy,
     ),
     contact: createCapRouter_contact(
-      (_ctx) => requireDeviceScoped(reg, 'contact') as InferProvider<typeof contactCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'contact') as InferProvider<typeof contactCapability> | null,
       remoteCapProxy,
     ),
     control: createCapRouter_control(
-      (_ctx) => requireDeviceScoped(reg, 'control') as InferProvider<typeof controlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'control') as InferProvider<typeof controlCapability> | null,
       remoteCapProxy,
     ),
     coreBlocks: createCapRouter_coreBlocks(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof coreBlocksCapability>>('core-blocks') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof coreBlocksCapability>>('core-blocks') ?? null,
       remoteCapProxy,
     ),
     cover: createCapRouter_cover(
       (_ctx) => requireDeviceScoped(reg, 'cover') as InferProvider<typeof coverCapability> | null,
       remoteCapProxy,
     ),
-    customModelRegistry: createCapRouter_customModelRegistry(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof customModelRegistryCapability>>('custom-model-registry', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof customModelRegistryCapability>>('custom-model-registry')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listModels: concatCollection(providers, 'listModels') as InferProvider<typeof customModelRegistryCapability>['listModels'],
-        }
-      },
-      remoteCapProxy,
-    ),
-    dataStoreProvider: createCapRouter_dataStoreProvider(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof dataStoreProviderCapability>>('data-store-provider', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof dataStoreProviderCapability>>('data-store-provider')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          query: concatCollection(providers, 'query') as InferProvider<typeof dataStoreProviderCapability>['query'],
-          histogram: concatCollection(providers, 'histogram') as InferProvider<typeof dataStoreProviderCapability>['histogram'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    customModelRegistry: createCapRouter_customModelRegistry((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof customModelRegistryCapability>>(
+          'custom-model-registry',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof customModelRegistryCapability>>(
+          'custom-model-registry',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listModels: concatCollection(providers, 'listModels') as InferProvider<
+          typeof customModelRegistryCapability
+        >['listModels'],
+      }
+    }, remoteCapProxy),
+    dataStoreProvider: createCapRouter_dataStoreProvider((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof dataStoreProviderCapability>>(
+          'data-store-provider',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof dataStoreProviderCapability>>(
+          'data-store-provider',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        query: concatCollection(providers, 'query') as InferProvider<
+          typeof dataStoreProviderCapability
+        >['query'],
+        histogram: concatCollection(providers, 'histogram') as InferProvider<
+          typeof dataStoreProviderCapability
+        >['histogram'],
+      }
+    }, remoteCapProxy),
     databaseSnapshot: createCapRouter_databaseSnapshot(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof databaseSnapshotCapability>>('database-snapshot') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof databaseSnapshotCapability>>('database-snapshot') ??
+        null,
       remoteCapProxy,
     ),
     dayNight: createCapRouter_dayNight(
-      (_ctx) => requireDeviceScoped(reg, 'day-night') as InferProvider<typeof dayNightCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'day-night') as InferProvider<typeof dayNightCapability> | null,
       remoteCapProxy,
     ),
     decoder: createCapRouter_decoder(
@@ -774,151 +861,221 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     detectionPipeline: createCapRouter_detectionPipeline(
-      (_ctx) => requireDeviceScoped(reg, 'detection-pipeline') as InferProvider<typeof detectionPipelineCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'detection-pipeline') as InferProvider<
+          typeof detectionPipelineCapability
+        > | null,
       remoteCapProxy,
     ),
     deviceAdminLink: createCapRouter_deviceAdminLink(
-      (_ctx) => requireDeviceScoped(reg, 'device-admin-link') as InferProvider<typeof deviceAdminLinkCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'device-admin-link') as InferProvider<
+          typeof deviceAdminLinkCapability
+        > | null,
       remoteCapProxy,
     ),
-    deviceAdoption: createCapRouter_deviceAdoption(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof deviceAdoptionCapability>>('device-adoption', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof deviceAdoptionCapability>>('device-adoption')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    deviceAdoption: createCapRouter_deviceAdoption((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof deviceAdoptionCapability>>(
+          'device-adoption',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof deviceAdoptionCapability>>('device-adoption')
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     deviceCredentials: createCapRouter_deviceCredentials(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof deviceCredentialsCapability>>('device-credentials') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof deviceCredentialsCapability>>(
+          'device-credentials',
+        ) ?? null,
       remoteCapProxy,
     ),
-    deviceExport: createCapRouter_deviceExport(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof deviceExportCapability>>('device-export', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof deviceExportCapability>>('device-export')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listInstances: concatCollection(providers, 'listInstances') as InferProvider<typeof deviceExportCapability>['listInstances'],
-          listSupportedDeviceKinds: concatCollection(providers, 'listSupportedDeviceKinds') as InferProvider<typeof deviceExportCapability>['listSupportedDeviceKinds'],
-          listExposedDevices: concatCollection(providers, 'listExposedDevices') as InferProvider<typeof deviceExportCapability>['listExposedDevices'],
-          listSupportedEntityKinds: concatCollection(providers, 'listSupportedEntityKinds') as InferProvider<typeof deviceExportCapability>['listSupportedEntityKinds'],
-          listExposedEntities: concatCollection(providers, 'listExposedEntities') as InferProvider<typeof deviceExportCapability>['listExposedEntities'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    deviceExport: createCapRouter_deviceExport((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof deviceExportCapability>>(
+          'device-export',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof deviceExportCapability>>('device-export')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listInstances: concatCollection(providers, 'listInstances') as InferProvider<
+          typeof deviceExportCapability
+        >['listInstances'],
+        listSupportedDeviceKinds: concatCollection(
+          providers,
+          'listSupportedDeviceKinds',
+        ) as InferProvider<typeof deviceExportCapability>['listSupportedDeviceKinds'],
+        listExposedDevices: concatCollection(providers, 'listExposedDevices') as InferProvider<
+          typeof deviceExportCapability
+        >['listExposedDevices'],
+        listSupportedEntityKinds: concatCollection(
+          providers,
+          'listSupportedEntityKinds',
+        ) as InferProvider<typeof deviceExportCapability>['listSupportedEntityKinds'],
+        listExposedEntities: concatCollection(providers, 'listExposedEntities') as InferProvider<
+          typeof deviceExportCapability
+        >['listExposedEntities'],
+      }
+    }, remoteCapProxy),
     deviceExtension: createCapRouter_deviceExtension(
-      (_ctx) => requireDeviceCollection(reg, 'device-extension') as InferProvider<typeof deviceExtensionCapability> | null,
+      (_ctx) =>
+        requireDeviceCollection(reg, 'device-extension') as InferProvider<
+          typeof deviceExtensionCapability
+        > | null,
       remoteCapProxy,
     ),
     deviceHistory: createCapRouter_deviceHistory(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof deviceHistoryCapability>>('device-history') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof deviceHistoryCapability>>('device-history') ?? null,
       remoteCapProxy,
     ),
     deviceManager: createCapRouter_deviceManager(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof deviceManagerCapability>>('device-manager') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof deviceManagerCapability>>('device-manager') ?? null,
       remoteCapProxy,
     ),
     deviceOps: createCapRouter_deviceOps(
-      (_ctx) => requireDeviceScoped(reg, 'device-ops') as InferProvider<typeof deviceOpsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'device-ops') as InferProvider<typeof deviceOpsCapability> | null,
       remoteCapProxy,
     ),
-    deviceProvider: createCapRouter_deviceProvider(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof deviceProviderCapability>>('device-provider', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof deviceProviderCapability>>('device-provider')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          getDevices: concatCollection(providers, 'getDevices') as InferProvider<typeof deviceProviderCapability>['getDevices'],
-          discoverDevices: concatCollection(providers, 'discoverDevices') as InferProvider<typeof deviceProviderCapability>['discoverDevices'],
-          getDiscoveryModes: concatCollection(providers, 'getDiscoveryModes') as InferProvider<typeof deviceProviderCapability>['getDiscoveryModes'],
-          classifyDiscoveryHits: concatCollection(providers, 'classifyDiscoveryHits') as InferProvider<typeof deviceProviderCapability>['classifyDiscoveryHits'],
-        }
-      },
-      remoteCapProxy,
-    ),
-    deviceRemovalHook: createCapRouter_deviceRemovalHook(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof deviceRemovalHookCapability>>('device-removal-hook', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof deviceRemovalHookCapability>>('device-removal-hook')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listDeviceData: concatCollection(providers, 'listDeviceData') as InferProvider<typeof deviceRemovalHookCapability>['listDeviceData'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    deviceProvider: createCapRouter_deviceProvider((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof deviceProviderCapability>>(
+          'device-provider',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof deviceProviderCapability>>('device-provider')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        getDevices: concatCollection(providers, 'getDevices') as InferProvider<
+          typeof deviceProviderCapability
+        >['getDevices'],
+        discoverDevices: concatCollection(providers, 'discoverDevices') as InferProvider<
+          typeof deviceProviderCapability
+        >['discoverDevices'],
+        getDiscoveryModes: concatCollection(providers, 'getDiscoveryModes') as InferProvider<
+          typeof deviceProviderCapability
+        >['getDiscoveryModes'],
+        classifyDiscoveryHits: concatCollection(
+          providers,
+          'classifyDiscoveryHits',
+        ) as InferProvider<typeof deviceProviderCapability>['classifyDiscoveryHits'],
+      }
+    }, remoteCapProxy),
+    deviceRemovalHook: createCapRouter_deviceRemovalHook((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof deviceRemovalHookCapability>>(
+          'device-removal-hook',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof deviceRemovalHookCapability>>(
+          'device-removal-hook',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listDeviceData: concatCollection(providers, 'listDeviceData') as InferProvider<
+          typeof deviceRemovalHookCapability
+        >['listDeviceData'],
+      }
+    }, remoteCapProxy),
     deviceRuns: createCapRouter_deviceRuns(
-      (_ctx) => requireDeviceScoped(reg, 'device-runs') as InferProvider<typeof deviceRunsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'device-runs') as InferProvider<
+          typeof deviceRunsCapability
+        > | null,
       remoteCapProxy,
     ),
     deviceState: createCapRouter_deviceState(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof deviceStateCapability>>('device-state') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof deviceStateCapability>>('device-state') ?? null,
       remoteCapProxy,
     ),
     deviceStatus: createCapRouter_deviceStatus(
-      (_ctx) => requireDeviceScoped(reg, 'device-status') as InferProvider<typeof deviceStatusCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'device-status') as InferProvider<
+          typeof deviceStatusCapability
+        > | null,
       remoteCapProxy,
     ),
     deviceTransitions: createCapRouter_deviceTransitions(
-      (_ctx) => requireDeviceScoped(reg, 'device-transitions') as InferProvider<typeof deviceTransitionsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'device-transitions') as InferProvider<
+          typeof deviceTransitionsCapability
+        > | null,
       remoteCapProxy,
     ),
     dishwasher: createCapRouter_dishwasher(
-      (_ctx) => requireDeviceScoped(reg, 'dishwasher') as InferProvider<typeof dishwasherCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'dishwasher') as InferProvider<typeof dishwasherCapability> | null,
       remoteCapProxy,
     ),
     displayPalette: createCapRouter_displayPalette(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof displayPaletteCapability>>('display-palette') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof displayPaletteCapability>>('display-palette') ??
+        null,
       remoteCapProxy,
     ),
     doNotDisturb: createCapRouter_doNotDisturb(
-      (_ctx) => requireDeviceScoped(reg, 'do-not-disturb') as InferProvider<typeof doNotDisturbCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'do-not-disturb') as InferProvider<
+          typeof doNotDisturbCapability
+        > | null,
       remoteCapProxy,
     ),
     doorbell: createCapRouter_doorbell(
-      (_ctx) => requireDeviceScoped(reg, 'doorbell') as InferProvider<typeof doorbellCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'doorbell') as InferProvider<typeof doorbellCapability> | null,
       remoteCapProxy,
     ),
-    embeddingEncoder: createCapRouter_embeddingEncoder(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof embeddingEncoderCapability>>('embedding-encoder', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof embeddingEncoderCapability>>('embedding-encoder')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    embeddingEncoder: createCapRouter_embeddingEncoder((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof embeddingEncoderCapability>>(
+          'embedding-encoder',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof embeddingEncoderCapability>>(
+          'embedding-encoder',
+        )
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     energySystem: createCapRouter_energySystem(
-      (_ctx) => requireDeviceScoped(reg, 'energy-system') as InferProvider<typeof energySystemCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'energy-system') as InferProvider<
+          typeof energySystemCapability
+        > | null,
       remoteCapProxy,
     ),
     enumSensor: createCapRouter_enumSensor(
-      (_ctx) => requireDeviceScoped(reg, 'enum-sensor') as InferProvider<typeof enumSensorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'enum-sensor') as InferProvider<
+          typeof enumSensorCapability
+        > | null,
       remoteCapProxy,
     ),
     error: createCapRouter_error(
@@ -926,44 +1083,62 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     eventEmitter: createCapRouter_eventEmitter(
-      (_ctx) => requireDeviceScoped(reg, 'event-emitter') as InferProvider<typeof eventEmitterCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'event-emitter') as InferProvider<
+          typeof eventEmitterCapability
+        > | null,
       remoteCapProxy,
     ),
     faceGallery: createCapRouter_faceGallery(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof faceGalleryCapability>>('face-gallery') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof faceGalleryCapability>>('face-gallery') ?? null,
       remoteCapProxy,
     ),
-    failureContribution: createCapRouter_failureContribution(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof failureContributionCapability>>('failure-contribution', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof failureContributionCapability>>('failure-contribution')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          list: concatCollection(providers, 'list') as InferProvider<typeof failureContributionCapability>['list'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    failureContribution: createCapRouter_failureContribution((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof failureContributionCapability>>(
+          'failure-contribution',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof failureContributionCapability>>(
+          'failure-contribution',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        list: concatCollection(providers, 'list') as InferProvider<
+          typeof failureContributionCapability
+        >['list'],
+      }
+    }, remoteCapProxy),
     fanControl: createCapRouter_fanControl(
-      (_ctx) => requireDeviceScoped(reg, 'fan-control') as InferProvider<typeof fanControlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'fan-control') as InferProvider<
+          typeof fanControlCapability
+        > | null,
       remoteCapProxy,
     ),
     fanPresets: createCapRouter_fanPresets(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof fanPresetsCapability>>('fan-presets') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof fanPresetsCapability>>('fan-presets') ?? null,
       remoteCapProxy,
     ),
     featureProbe: createCapRouter_featureProbe(
-      (_ctx) => requireDeviceScoped(reg, 'feature-probe') as InferProvider<typeof featureProbeCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'feature-probe') as InferProvider<
+          typeof featureProbeCapability
+        > | null,
       remoteCapProxy,
     ),
     filesystemBrowse: createCapRouter_filesystemBrowse(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof filesystemBrowseCapability>>('filesystem-browse') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof filesystemBrowseCapability>>('filesystem-browse') ??
+        null,
       remoteCapProxy,
     ),
     flood: createCapRouter_flood(
@@ -975,39 +1150,62 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     groupActive: createCapRouter_groupActive(
-      (_ctx) => requireDeviceScoped(reg, 'group-active') as InferProvider<typeof groupActiveCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'group-active') as InferProvider<
+          typeof groupActiveCapability
+        > | null,
       remoteCapProxy,
     ),
     groupCommands: createCapRouter_groupCommands(
-      (_ctx) => requireDeviceScoped(reg, 'group-commands') as InferProvider<typeof groupCommandsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'group-commands') as InferProvider<
+          typeof groupCommandsCapability
+        > | null,
       remoteCapProxy,
     ),
     groupStatus: createCapRouter_groupStatus(
-      (_ctx) => requireDeviceScoped(reg, 'group-status') as InferProvider<typeof groupStatusCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'group-status') as InferProvider<
+          typeof groupStatusCapability
+        > | null,
       remoteCapProxy,
     ),
     heatPumpControl: createCapRouter_heatPumpControl(
-      (_ctx) => requireDeviceScoped(reg, 'heat-pump-control') as InferProvider<typeof heatPumpControlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'heat-pump-control') as InferProvider<
+          typeof heatPumpControlCapability
+        > | null,
       remoteCapProxy,
     ),
     heatPumpStatus: createCapRouter_heatPumpStatus(
-      (_ctx) => requireDeviceScoped(reg, 'heat-pump-status') as InferProvider<typeof heatPumpStatusCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'heat-pump-status') as InferProvider<
+          typeof heatPumpStatusCapability
+        > | null,
       remoteCapProxy,
     ),
     heatingValve: createCapRouter_heatingValve(
-      (_ctx) => requireDeviceScoped(reg, 'heating-valve') as InferProvider<typeof heatingValveCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'heating-valve') as InferProvider<
+          typeof heatingValveCapability
+        > | null,
       remoteCapProxy,
     ),
     heroLayout: createCapRouter_heroLayout(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof heroLayoutCapability>>('hero-layout') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof heroLayoutCapability>>('hero-layout') ?? null,
       remoteCapProxy,
     ),
     humidifier: createCapRouter_humidifier(
-      (_ctx) => requireDeviceScoped(reg, 'humidifier') as InferProvider<typeof humidifierCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'humidifier') as InferProvider<typeof humidifierCapability> | null,
       remoteCapProxy,
     ),
     humiditySensor: createCapRouter_humiditySensor(
-      (_ctx) => requireDeviceScoped(reg, 'humidity-sensor') as InferProvider<typeof humiditySensorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'humidity-sensor') as InferProvider<
+          typeof humiditySensorCapability
+        > | null,
       remoteCapProxy,
     ),
     image: createCapRouter_image(
@@ -1015,36 +1213,49 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     imageSettings: createCapRouter_imageSettings(
-      (_ctx) => requireDeviceScoped(reg, 'image-settings') as InferProvider<typeof imageSettingsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'image-settings') as InferProvider<
+          typeof imageSettingsCapability
+        > | null,
       remoteCapProxy,
     ),
-    integrationInstances: createCapRouter_integrationInstances(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof integrationInstancesCapability>>('integration-instances', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof integrationInstancesCapability>>('integration-instances')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listInstances: concatCollection(providers, 'listInstances') as InferProvider<typeof integrationInstancesCapability>['listInstances'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    integrationInstances: createCapRouter_integrationInstances((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof integrationInstancesCapability>>(
+          'integration-instances',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof integrationInstancesCapability>>(
+          'integration-instances',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listInstances: concatCollection(providers, 'listInstances') as InferProvider<
+          typeof integrationInstancesCapability
+        >['listInstances'],
+      }
+    }, remoteCapProxy),
     integrations: createCapRouter_integrations(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof integrationsCapability>>('integrations') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof integrationsCapability>>('integrations') ?? null,
       remoteCapProxy,
     ),
     intercom: createCapRouter_intercom(
-      (_ctx) => requireDeviceScoped(reg, 'intercom') as InferProvider<typeof intercomCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'intercom') as InferProvider<typeof intercomCapability> | null,
       remoteCapProxy,
     ),
     irTransmitter: createCapRouter_irTransmitter(
-      (_ctx) => requireDeviceScoped(reg, 'ir-transmitter') as InferProvider<typeof irTransmitterCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'ir-transmitter') as InferProvider<
+          typeof irTransmitterCapability
+        > | null,
       remoteCapProxy,
     ),
     keychain: createCapRouter_keychain(
@@ -1052,118 +1263,151 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     keychainAdmin: createCapRouter_keychainAdmin(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof keychainAdminCapability>>('keychain-admin') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof keychainAdminCapability>>('keychain-admin') ?? null,
       remoteCapProxy,
     ),
     lawnMowerControl: createCapRouter_lawnMowerControl(
-      (_ctx) => requireDeviceScoped(reg, 'lawn-mower-control') as InferProvider<typeof lawnMowerControlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'lawn-mower-control') as InferProvider<
+          typeof lawnMowerControlCapability
+        > | null,
       remoteCapProxy,
     ),
-    llm: createCapRouter_llm(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof llmCapability>>('llm', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof llmCapability>>('llm')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          getDefaults: concatCollection(providers, 'getDefaults') as InferProvider<typeof llmCapability>['getDefaults'],
-          getUsage: concatCollection(providers, 'getUsage') as InferProvider<typeof llmCapability>['getUsage'],
-          listModelCatalog: concatCollection(providers, 'listModelCatalog') as InferProvider<typeof llmCapability>['listModelCatalog'],
-          listRuntimeNodes: concatCollection(providers, 'listRuntimeNodes') as InferProvider<typeof llmCapability>['listRuntimeNodes'],
-          listNodeModels: concatCollection(providers, 'listNodeModels') as InferProvider<typeof llmCapability>['listNodeModels'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    llm: createCapRouter_llm((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof llmCapability>>('llm', addonId)
+      }
+      const entries = reg.getCollectionEntries<InferProvider<typeof llmCapability>>('llm')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        getDefaults: concatCollection(providers, 'getDefaults') as InferProvider<
+          typeof llmCapability
+        >['getDefaults'],
+        getUsage: concatCollection(providers, 'getUsage') as InferProvider<
+          typeof llmCapability
+        >['getUsage'],
+        listModelCatalog: concatCollection(providers, 'listModelCatalog') as InferProvider<
+          typeof llmCapability
+        >['listModelCatalog'],
+        listRuntimeNodes: concatCollection(providers, 'listRuntimeNodes') as InferProvider<
+          typeof llmCapability
+        >['listRuntimeNodes'],
+        listNodeModels: concatCollection(providers, 'listNodeModels') as InferProvider<
+          typeof llmCapability
+        >['listNodeModels'],
+      }
+    }, remoteCapProxy),
     llmRuntime: createCapRouter_llmRuntime(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof llmRuntimeCapability>>('llm-runtime') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof llmRuntimeCapability>>('llm-runtime') ?? null,
       remoteCapProxy,
     ),
-    loadContribution: createCapRouter_loadContribution(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof loadContributionCapability>>('load-contribution', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof loadContributionCapability>>('load-contribution')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          list: concatCollection(providers, 'list') as InferProvider<typeof loadContributionCapability>['list'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    loadContribution: createCapRouter_loadContribution((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof loadContributionCapability>>(
+          'load-contribution',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof loadContributionCapability>>(
+          'load-contribution',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        list: concatCollection(providers, 'list') as InferProvider<
+          typeof loadContributionCapability
+        >['list'],
+      }
+    }, remoteCapProxy),
     localNetwork: createCapRouter_localNetwork(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof localNetworkCapability>>('local-network') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof localNetworkCapability>>('local-network') ?? null,
       remoteCapProxy,
     ),
     lockControl: createCapRouter_lockControl(
-      (_ctx) => requireDeviceScoped(reg, 'lock-control') as InferProvider<typeof lockControlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'lock-control') as InferProvider<
+          typeof lockControlCapability
+        > | null,
       remoteCapProxy,
     ),
-    logChannels: createCapRouter_logChannels(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof logChannelsCapability>>('log-channels', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof logChannelsCapability>>('log-channels')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          list: concatCollection(providers, 'list') as InferProvider<typeof logChannelsCapability>['list'],
-        }
-      },
-      remoteCapProxy,
-    ),
-    loginMethod: createCapRouter_loginMethod(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof loginMethodCapability>>('login-method', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof loginMethodCapability>>('login-method')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          getLoginMethods: concatCollection(providers, 'getLoginMethods') as InferProvider<typeof loginMethodCapability>['getLoginMethods'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    logChannels: createCapRouter_logChannels((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof logChannelsCapability>>(
+          'log-channels',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof logChannelsCapability>>('log-channels')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        list: concatCollection(providers, 'list') as InferProvider<
+          typeof logChannelsCapability
+        >['list'],
+      }
+    }, remoteCapProxy),
+    loginMethod: createCapRouter_loginMethod((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof loginMethodCapability>>(
+          'login-method',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof loginMethodCapability>>('login-method')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        getLoginMethods: concatCollection(providers, 'getLoginMethods') as InferProvider<
+          typeof loginMethodCapability
+        >['getLoginMethods'],
+      }
+    }, remoteCapProxy),
     mediaPlayer: createCapRouter_mediaPlayer(
-      (_ctx) => requireDeviceScoped(reg, 'media-player') as InferProvider<typeof mediaPlayerCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'media-player') as InferProvider<
+          typeof mediaPlayerCapability
+        > | null,
       remoteCapProxy,
     ),
-    meshNetwork: createCapRouter_meshNetwork(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof meshNetworkCapability>>('mesh-network', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof meshNetworkCapability>>('mesh-network')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    meshNetwork: createCapRouter_meshNetwork((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof meshNetworkCapability>>(
+          'mesh-network',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof meshNetworkCapability>>('mesh-network')
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     meter: createCapRouter_meter(
       (_ctx) => requireDeviceScoped(reg, 'meter') as InferProvider<typeof meterCapability> | null,
       remoteCapProxy,
     ),
     metricsProvider: createCapRouter_metricsProvider(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof metricsProviderCapability>>('metrics-provider') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof metricsProviderCapability>>('metrics-provider') ??
+        null,
       remoteCapProxy,
     ),
     migrations: createCapRouter_migrations(
@@ -1171,11 +1415,14 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     modelConvert: createCapRouter_modelConvert(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof modelConvertCapability>>('model-convert') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof modelConvertCapability>>('model-convert') ?? null,
       remoteCapProxy,
     ),
     modelDistributor: createCapRouter_modelDistributor(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof modelDistributorCapability>>('model-distributor') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof modelDistributorCapability>>('model-distributor') ??
+        null,
       remoteCapProxy,
     ),
     motion: createCapRouter_motion(
@@ -1183,185 +1430,259 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     motionDetection: createCapRouter_motionDetection(
-      (_ctx) => requireDeviceScoped(reg, 'motion-detection') as InferProvider<typeof motionDetectionCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'motion-detection') as InferProvider<
+          typeof motionDetectionCapability
+        > | null,
       remoteCapProxy,
     ),
     motionTrigger: createCapRouter_motionTrigger(
-      (_ctx) => requireDeviceScoped(reg, 'motion-trigger') as InferProvider<typeof motionTriggerCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'motion-trigger') as InferProvider<
+          typeof motionTriggerCapability
+        > | null,
       remoteCapProxy,
     ),
     motionZones: createCapRouter_motionZones(
-      (_ctx) => requireDeviceScoped(reg, 'motion-zones') as InferProvider<typeof motionZonesCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'motion-zones') as InferProvider<
+          typeof motionZonesCapability
+        > | null,
       remoteCapProxy,
     ),
-    mqttBroker: createCapRouter_mqttBroker(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof mqttBrokerCapability>>('mqtt-broker', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof mqttBrokerCapability>>('mqtt-broker')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listBrokers: concatCollection(providers, 'listBrokers') as InferProvider<typeof mqttBrokerCapability>['listBrokers'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    mqttBroker: createCapRouter_mqttBroker((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof mqttBrokerCapability>>(
+          'mqtt-broker',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof mqttBrokerCapability>>('mqtt-broker')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listBrokers: concatCollection(providers, 'listBrokers') as InferProvider<
+          typeof mqttBrokerCapability
+        >['listBrokers'],
+      }
+    }, remoteCapProxy),
     nativeObjectDetection: createCapRouter_nativeObjectDetection(
-      (_ctx) => requireDeviceScoped(reg, 'native-object-detection') as InferProvider<typeof nativeObjectDetectionCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'native-object-detection') as InferProvider<
+          typeof nativeObjectDetectionCapability
+        > | null,
       remoteCapProxy,
     ),
     navigation: createCapRouter_navigation(
-      (_ctx) => requireDeviceScoped(reg, 'navigation') as InferProvider<typeof navigationCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'navigation') as InferProvider<typeof navigationCapability> | null,
       remoteCapProxy,
     ),
-    networkAccess: createCapRouter_networkAccess(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof networkAccessCapability>>('network-access', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof networkAccessCapability>>('network-access')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listEndpoints: concatCollection(providers, 'listEndpoints') as InferProvider<typeof networkAccessCapability>['listEndpoints'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    networkAccess: createCapRouter_networkAccess((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof networkAccessCapability>>(
+          'network-access',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof networkAccessCapability>>('network-access')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listEndpoints: concatCollection(providers, 'listEndpoints') as InferProvider<
+          typeof networkAccessCapability
+        >['listEndpoints'],
+      }
+    }, remoteCapProxy),
     networkLink: createCapRouter_networkLink(
-      (_ctx) => requireDeviceScoped(reg, 'network-link') as InferProvider<typeof networkLinkCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'network-link') as InferProvider<
+          typeof networkLinkCapability
+        > | null,
       remoteCapProxy,
     ),
     networkQuality: createCapRouter_networkQuality(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof networkQualityCapability>>('network-quality') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof networkQualityCapability>>('network-quality') ??
+        null,
       remoteCapProxy,
     ),
     nodeCertificates: createCapRouter_nodeCertificates(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof nodeCertificatesCapability>>('node-certificates') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof nodeCertificatesCapability>>('node-certificates') ??
+        null,
       remoteCapProxy,
     ),
-    nodeRemovalHook: createCapRouter_nodeRemovalHook(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof nodeRemovalHookCapability>>('node-removal-hook', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof nodeRemovalHookCapability>>('node-removal-hook')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    nodeRemovalHook: createCapRouter_nodeRemovalHook((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof nodeRemovalHookCapability>>(
+          'node-removal-hook',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof nodeRemovalHookCapability>>(
+          'node-removal-hook',
+        )
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     nodes: createCapRouter_nodes(
       (_ctx) => reg?.getSingleton<InferProvider<typeof nodesCapability>>('nodes') ?? null,
       remoteCapProxy,
     ),
-    notificationOutput: createCapRouter_notificationOutput(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof notificationOutputCapability>>('notification-output', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof notificationOutputCapability>>('notification-output')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listTargetKinds: concatCollection(providers, 'listTargetKinds') as InferProvider<typeof notificationOutputCapability>['listTargetKinds'],
-          discoverTargets: concatCollection(providers, 'discoverTargets') as InferProvider<typeof notificationOutputCapability>['discoverTargets'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    notificationOutput: createCapRouter_notificationOutput((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof notificationOutputCapability>>(
+          'notification-output',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof notificationOutputCapability>>(
+          'notification-output',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listTargetKinds: concatCollection(providers, 'listTargetKinds') as InferProvider<
+          typeof notificationOutputCapability
+        >['listTargetKinds'],
+        discoverTargets: concatCollection(providers, 'discoverTargets') as InferProvider<
+          typeof notificationOutputCapability
+        >['discoverTargets'],
+      }
+    }, remoteCapProxy),
     notificationRules: createCapRouter_notificationRules(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof notificationRulesCapability>>('notification-rules') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof notificationRulesCapability>>(
+          'notification-rules',
+        ) ?? null,
       remoteCapProxy,
     ),
     notifier: createCapRouter_notifier(
-      (_ctx) => requireDeviceScoped(reg, 'notifier') as InferProvider<typeof notifierCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'notifier') as InferProvider<typeof notifierCapability> | null,
       remoteCapProxy,
     ),
     numericSensor: createCapRouter_numericSensor(
-      (_ctx) => requireDeviceScoped(reg, 'numeric-sensor') as InferProvider<typeof numericSensorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'numeric-sensor') as InferProvider<
+          typeof numericSensorCapability
+        > | null,
       remoteCapProxy,
     ),
-    oauthIntegration: createCapRouter_oauthIntegration(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof oauthIntegrationCapability>>('oauth-integration', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof oauthIntegrationCapability>>('oauth-integration')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    oauthIntegration: createCapRouter_oauthIntegration((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof oauthIntegrationCapability>>(
+          'oauth-integration',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof oauthIntegrationCapability>>(
+          'oauth-integration',
+        )
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     osd: createCapRouter_osd(
       (_ctx) => requireDeviceScoped(reg, 'osd') as InferProvider<typeof osdCapability> | null,
       remoteCapProxy,
     ),
     osdManager: createCapRouter_osdManager(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof osdManagerCapability>>('osd-manager') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof osdManagerCapability>>('osd-manager') ?? null,
       remoteCapProxy,
     ),
     petFeeder: createCapRouter_petFeeder(
-      (_ctx) => requireDeviceScoped(reg, 'pet-feeder') as InferProvider<typeof petFeederCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'pet-feeder') as InferProvider<typeof petFeederCapability> | null,
       remoteCapProxy,
     ),
     petFountain: createCapRouter_petFountain(
-      (_ctx) => requireDeviceScoped(reg, 'pet-fountain') as InferProvider<typeof petFountainCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'pet-fountain') as InferProvider<
+          typeof petFountainCapability
+        > | null,
       remoteCapProxy,
     ),
     pipelineAnalytics: createCapRouter_pipelineAnalytics(
-      (_ctx) => requireDeviceScoped(reg, 'pipeline-analytics') as InferProvider<typeof pipelineAnalyticsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'pipeline-analytics') as InferProvider<
+          typeof pipelineAnalyticsCapability
+        > | null,
       remoteCapProxy,
     ),
     pipelineExecutor: createCapRouter_pipelineExecutor(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof pipelineExecutorCapability>>('pipeline-executor') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof pipelineExecutorCapability>>('pipeline-executor') ??
+        null,
       remoteCapProxy,
     ),
     pipelineOrchestrator: createCapRouter_pipelineOrchestrator(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof pipelineOrchestratorCapability>>('pipeline-orchestrator') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof pipelineOrchestratorCapability>>(
+          'pipeline-orchestrator',
+        ) ?? null,
       remoteCapProxy,
     ),
     pipelineRunner: createCapRouter_pipelineRunner(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof pipelineRunnerCapability>>('pipeline-runner') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof pipelineRunnerCapability>>('pipeline-runner') ??
+        null,
       remoteCapProxy,
     ),
     plateGallery: createCapRouter_plateGallery(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof plateGalleryCapability>>('plate-gallery') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof plateGalleryCapability>>('plate-gallery') ?? null,
       remoteCapProxy,
     ),
     platformProbe: createCapRouter_platformProbe(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof platformProbeCapability>>('platform-probe') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof platformProbeCapability>>('platform-probe') ?? null,
       remoteCapProxy,
     ),
     powerMeter: createCapRouter_powerMeter(
-      (_ctx) => requireDeviceScoped(reg, 'power-meter') as InferProvider<typeof powerMeterCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'power-meter') as InferProvider<
+          typeof powerMeterCapability
+        > | null,
       remoteCapProxy,
     ),
     powerSource: createCapRouter_powerSource(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof powerSourceCapability>>('power-source') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof powerSourceCapability>>('power-source') ?? null,
       remoteCapProxy,
     ),
     presence: createCapRouter_presence(
-      (_ctx) => requireDeviceScoped(reg, 'presence') as InferProvider<typeof presenceCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'presence') as InferProvider<typeof presenceCapability> | null,
       remoteCapProxy,
     ),
     pressureSensor: createCapRouter_pressureSensor(
-      (_ctx) => requireDeviceScoped(reg, 'pressure-sensor') as InferProvider<typeof pressureSensorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'pressure-sensor') as InferProvider<
+          typeof pressureSensorCapability
+        > | null,
       remoteCapProxy,
     ),
     privacyMask: createCapRouter_privacyMask(
-      (_ctx) => requireDeviceScoped(reg, 'privacy-mask') as InferProvider<typeof privacyMaskCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'privacy-mask') as InferProvider<
+          typeof privacyMaskCapability
+        > | null,
       remoteCapProxy,
     ),
     ptz: createCapRouter_ptz(
@@ -1369,11 +1690,15 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     ptzAutotrack: createCapRouter_ptzAutotrack(
-      (_ctx) => requireDeviceScoped(reg, 'ptz-autotrack') as InferProvider<typeof ptzAutotrackCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'ptz-autotrack') as InferProvider<
+          typeof ptzAutotrackCapability
+        > | null,
       remoteCapProxy,
     ),
     pumpCycle: createCapRouter_pumpCycle(
-      (_ctx) => requireDeviceScoped(reg, 'pump-cycle') as InferProvider<typeof pumpCycleCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'pump-cycle') as InferProvider<typeof pumpCycleCapability> | null,
       remoteCapProxy,
     ),
     reboot: createCapRouter_reboot(
@@ -1381,27 +1706,41 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     recordEntries: createCapRouter_recordEntries(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof recordEntriesCapability>>('record-entries') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof recordEntriesCapability>>('record-entries') ?? null,
       remoteCapProxy,
     ),
     recording: createCapRouter_recording(
-      (_ctx) => requireDeviceCollection(reg, 'recording') as InferProvider<typeof recordingCapability> | null,
+      (_ctx) =>
+        requireDeviceCollection(reg, 'recording') as InferProvider<
+          typeof recordingCapability
+        > | null,
       remoteCapProxy,
     ),
     recordingArchive: createCapRouter_recordingArchive(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof recordingArchiveCapability>>('recording-archive') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof recordingArchiveCapability>>('recording-archive') ??
+        null,
       remoteCapProxy,
     ),
     recordingExport: createCapRouter_recordingExport(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof recordingExportCapability>>('recording-export') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof recordingExportCapability>>('recording-export') ??
+        null,
       remoteCapProxy,
     ),
     recordingOnboard: createCapRouter_recordingOnboard(
-      (_ctx) => requireDeviceScoped(reg, 'recording-onboard') as InferProvider<typeof recordingOnboardCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'recording-onboard') as InferProvider<
+          typeof recordingOnboardCapability
+        > | null,
       remoteCapProxy,
     ),
     recordingSignal: createCapRouter_recordingSignal(
-      (_ctx) => requireDeviceScoped(reg, 'recording-signal') as InferProvider<typeof recordingSignalCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'recording-signal') as InferProvider<
+          typeof recordingSignalCapability
+        > | null,
       remoteCapProxy,
     ),
     records: createCapRouter_records(
@@ -1412,29 +1751,39 @@ export function mountAllCaps(services: MountAllCapsServices) {
       (_ctx) => reg?.getSingleton<InferProvider<typeof remoteCapability>>('remote') ?? null,
       remoteCapProxy,
     ),
-    remoteLayoutComponents: createCapRouter_remoteLayoutComponents(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof remoteLayoutComponentsCapability>>('remote-layout-components', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof remoteLayoutComponentsCapability>>('remote-layout-components')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listComponents: concatCollection(providers, 'listComponents') as InferProvider<typeof remoteLayoutComponentsCapability>['listComponents'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    remoteLayoutComponents: createCapRouter_remoteLayoutComponents((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof remoteLayoutComponentsCapability>>(
+          'remote-layout-components',
+          addonId,
+        )
+      }
+      const entries = reg.getCollectionEntries<
+        InferProvider<typeof remoteLayoutComponentsCapability>
+      >('remote-layout-components')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listComponents: concatCollection(providers, 'listComponents') as InferProvider<
+          typeof remoteLayoutComponentsCapability
+        >['listComponents'],
+      }
+    }, remoteCapProxy),
     runningState: createCapRouter_runningState(
-      (_ctx) => requireDeviceScoped(reg, 'running-state') as InferProvider<typeof runningStateCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'running-state') as InferProvider<
+          typeof runningStateCapability
+        > | null,
       remoteCapProxy,
     ),
     sceneMonitor: createCapRouter_sceneMonitor(
-      (_ctx) => requireDeviceScoped(reg, 'scene-monitor') as InferProvider<typeof sceneMonitorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'scene-monitor') as InferProvider<
+          typeof sceneMonitorCapability
+        > | null,
       remoteCapProxy,
     ),
     schedulers: createCapRouter_schedulers(
@@ -1442,34 +1791,42 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     scriptRunner: createCapRouter_scriptRunner(
-      (_ctx) => requireDeviceScoped(reg, 'script-runner') as InferProvider<typeof scriptRunnerCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'script-runner') as InferProvider<
+          typeof scriptRunnerCapability
+        > | null,
       remoteCapProxy,
     ),
     serverManagement: createCapRouter_serverManagement(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof serverManagementCapability>>('server-management') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof serverManagementCapability>>('server-management') ??
+        null,
       remoteCapProxy,
     ),
     settingsStore: createCapRouter_settingsStore(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof settingsStoreCapability>>('settings-store') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof settingsStoreCapability>>('settings-store') ?? null,
       remoteCapProxy,
     ),
     smoke: createCapRouter_smoke(
       (_ctx) => requireDeviceScoped(reg, 'smoke') as InferProvider<typeof smokeCapability> | null,
       remoteCapProxy,
     ),
-    smtpProvider: createCapRouter_smtpProvider(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof smtpProviderCapability>>('smtp-provider', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof smtpProviderCapability>>('smtp-provider')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    smtpProvider: createCapRouter_smtpProvider((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof smtpProviderCapability>>(
+          'smtp-provider',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof smtpProviderCapability>>('smtp-provider')
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     snapshot: createCapRouter_snapshot(
-      (_ctx) => requireDeviceScoped(reg, 'snapshot') as InferProvider<typeof snapshotCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'snapshot') as InferProvider<typeof snapshotCapability> | null,
       remoteCapProxy,
     ),
     ssoBridge: createCapRouter_ssoBridge(
@@ -1481,72 +1838,98 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     storageAdmin: createCapRouter_storageAdmin(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof storageAdminCapability>>('storage-admin') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof storageAdminCapability>>('storage-admin') ?? null,
       remoteCapProxy,
     ),
-    storageEvictable: createCapRouter_storageEvictable(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof storageEvictableCapability>>('storage-evictable', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof storageEvictableCapability>>('storage-evictable')
-        return entries[0]?.[1] ?? null
-      },
-      remoteCapProxy,
-    ),
+    storageEvictable: createCapRouter_storageEvictable((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof storageEvictableCapability>>(
+          'storage-evictable',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof storageEvictableCapability>>(
+          'storage-evictable',
+        )
+      return entries[0]?.[1] ?? null
+    }, remoteCapProxy),
     storageMigration: createCapRouter_storageMigration(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof storageMigrationCapability>>('storage-migration') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof storageMigrationCapability>>('storage-migration') ??
+        null,
       remoteCapProxy,
     ),
-    storageOccupancy: createCapRouter_storageOccupancy(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof storageOccupancyCapability>>('storage-occupancy', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof storageOccupancyCapability>>('storage-occupancy')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          getOccupancy: concatCollection(providers, 'getOccupancy') as InferProvider<typeof storageOccupancyCapability>['getOccupancy'],
-        }
-      },
-      remoteCapProxy,
-    ),
-    storageProvider: createCapRouter_storageProvider(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof storageProviderCapability>>('storage-provider', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof storageProviderCapability>>('storage-provider')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          list: concatCollection(providers, 'list') as InferProvider<typeof storageProviderCapability>['list'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    storageOccupancy: createCapRouter_storageOccupancy((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof storageOccupancyCapability>>(
+          'storage-occupancy',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof storageOccupancyCapability>>(
+          'storage-occupancy',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        getOccupancy: concatCollection(providers, 'getOccupancy') as InferProvider<
+          typeof storageOccupancyCapability
+        >['getOccupancy'],
+      }
+    }, remoteCapProxy),
+    storageProvider: createCapRouter_storageProvider((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof storageProviderCapability>>(
+          'storage-provider',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof storageProviderCapability>>(
+          'storage-provider',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        list: concatCollection(providers, 'list') as InferProvider<
+          typeof storageProviderCapability
+        >['list'],
+      }
+    }, remoteCapProxy),
     streamBroker: createCapRouter_streamBroker(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof streamBrokerCapability>>('stream-broker') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof streamBrokerCapability>>('stream-broker') ?? null,
       remoteCapProxy,
     ),
     streamCatalog: createCapRouter_streamCatalog(
-      (_ctx) => requireDeviceScoped(reg, 'stream-catalog') as InferProvider<typeof streamCatalogCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'stream-catalog') as InferProvider<
+          typeof streamCatalogCapability
+        > | null,
       remoteCapProxy,
     ),
     streamParams: createCapRouter_streamParams(
-      (_ctx) => requireDeviceScoped(reg, 'stream-params') as InferProvider<typeof streamParamsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'stream-params') as InferProvider<
+          typeof streamParamsCapability
+        > | null,
       remoteCapProxy,
     ),
     streamSignals: createCapRouter_streamSignals(
-      (_ctx) => requireDeviceScoped(reg, 'stream-signals') as InferProvider<typeof streamSignalsCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'stream-signals') as InferProvider<
+          typeof streamSignalsCapability
+        > | null,
       remoteCapProxy,
     ),
     switch: createCapRouter_switch(
@@ -1562,32 +1945,40 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     temperatureSensor: createCapRouter_temperatureSensor(
-      (_ctx) => requireDeviceScoped(reg, 'temperature-sensor') as InferProvider<typeof temperatureSensorCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'temperature-sensor') as InferProvider<
+          typeof temperatureSensorCapability
+        > | null,
       remoteCapProxy,
     ),
-    template: createCapRouter_template(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof templateCapability>>('template', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof templateCapability>>('template')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          list: concatCollection(providers, 'list') as InferProvider<typeof templateCapability>['list'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    template: createCapRouter_template((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof templateCapability>>(
+          'template',
+          addonId,
+        )
+      }
+      const entries = reg.getCollectionEntries<InferProvider<typeof templateCapability>>('template')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        list: concatCollection(providers, 'list') as InferProvider<
+          typeof templateCapability
+        >['list'],
+      }
+    }, remoteCapProxy),
     terminalSession: createCapRouter_terminalSession(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof terminalSessionCapability>>('terminal-session') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof terminalSessionCapability>>('terminal-session') ??
+        null,
       remoteCapProxy,
     ),
     timedRun: createCapRouter_timedRun(
-      (_ctx) => requireDeviceScoped(reg, 'timed-run') as InferProvider<typeof timedRunCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'timed-run') as InferProvider<typeof timedRunCapability> | null,
       remoteCapProxy,
     ),
     toast: createCapRouter_toast(
@@ -1598,70 +1989,92 @@ export function mountAllCaps(services: MountAllCapsServices) {
       (_ctx) => reg?.getSingleton<InferProvider<typeof trainingCapability>>('training') ?? null,
       remoteCapProxy,
     ),
-    trainingProvider: createCapRouter_trainingProvider(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof trainingProviderCapability>>('training-provider', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof trainingProviderCapability>>('training-provider')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          describe: concatCollection(providers, 'describe') as InferProvider<typeof trainingProviderCapability>['describe'],
-          describeTypes: concatCollection(providers, 'describeTypes') as InferProvider<typeof trainingProviderCapability>['describeTypes'],
-          listEntries: concatCollection(providers, 'listEntries') as InferProvider<typeof trainingProviderCapability>['listEntries'],
-          listJobs: concatCollection(providers, 'listJobs') as InferProvider<typeof trainingProviderCapability>['listJobs'],
-        }
-      },
-      remoteCapProxy,
-    ),
-    turnProvider: createCapRouter_turnProvider(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof turnProviderCapability>>('turn-provider', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof turnProviderCapability>>('turn-provider')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          getTurnServers: concatCollection(providers, 'getTurnServers') as InferProvider<typeof turnProviderCapability>['getTurnServers'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    trainingProvider: createCapRouter_trainingProvider((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof trainingProviderCapability>>(
+          'training-provider',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof trainingProviderCapability>>(
+          'training-provider',
+        )
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        describe: concatCollection(providers, 'describe') as InferProvider<
+          typeof trainingProviderCapability
+        >['describe'],
+        describeTypes: concatCollection(providers, 'describeTypes') as InferProvider<
+          typeof trainingProviderCapability
+        >['describeTypes'],
+        listEntries: concatCollection(providers, 'listEntries') as InferProvider<
+          typeof trainingProviderCapability
+        >['listEntries'],
+        listJobs: concatCollection(providers, 'listJobs') as InferProvider<
+          typeof trainingProviderCapability
+        >['listJobs'],
+      }
+    }, remoteCapProxy),
+    turnProvider: createCapRouter_turnProvider((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof turnProviderCapability>>(
+          'turn-provider',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof turnProviderCapability>>('turn-provider')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        getTurnServers: concatCollection(providers, 'getTurnServers') as InferProvider<
+          typeof turnProviderCapability
+        >['getTurnServers'],
+      }
+    }, remoteCapProxy),
     update: createCapRouter_update(
       (_ctx) => requireDeviceScoped(reg, 'update') as InferProvider<typeof updateCapability> | null,
       remoteCapProxy,
     ),
     userManagement: createCapRouter_userManagement(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof userManagementCapability>>('user-management') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof userManagementCapability>>('user-management') ??
+        null,
       remoteCapProxy,
     ),
-    userPasskeys: createCapRouter_userPasskeys(
-      (_ctx, addonId) => {
-        if (!reg) return null
-        if (addonId !== undefined) {
-          return reg.getProviderByAddonId<InferProvider<typeof userPasskeysCapability>>('user-passkeys', addonId)
-        }
-        const entries = reg.getCollectionEntries<InferProvider<typeof userPasskeysCapability>>('user-passkeys')
-        if (entries.length === 0) return null
-        const providers = entries.map(([, p]) => p)
-        const first = providers[0]!
-        return {
-          ...first,
-          listPasskeys: concatCollection(providers, 'listPasskeys') as InferProvider<typeof userPasskeysCapability>['listPasskeys'],
-        }
-      },
-      remoteCapProxy,
-    ),
+    userPasskeys: createCapRouter_userPasskeys((_ctx, addonId) => {
+      if (!reg) return null
+      if (addonId !== undefined) {
+        return reg.getProviderByAddonId<InferProvider<typeof userPasskeysCapability>>(
+          'user-passkeys',
+          addonId,
+        )
+      }
+      const entries =
+        reg.getCollectionEntries<InferProvider<typeof userPasskeysCapability>>('user-passkeys')
+      if (entries.length === 0) return null
+      const providers = entries.map(([, p]) => p)
+      const first = providers[0]!
+      return {
+        ...first,
+        listPasskeys: concatCollection(providers, 'listPasskeys') as InferProvider<
+          typeof userPasskeysCapability
+        >['listPasskeys'],
+      }
+    }, remoteCapProxy),
     vacuumControl: createCapRouter_vacuumControl(
-      (_ctx) => requireDeviceScoped(reg, 'vacuum-control') as InferProvider<typeof vacuumControlCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'vacuum-control') as InferProvider<
+          typeof vacuumControlCapability
+        > | null,
       remoteCapProxy,
     ),
     valve: createCapRouter_valve(
@@ -1669,15 +2082,20 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     vectorStore: createCapRouter_vectorStore(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof vectorStoreCapability>>('vector-store') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof vectorStoreCapability>>('vector-store') ?? null,
       remoteCapProxy,
     ),
     vibration: createCapRouter_vibration(
-      (_ctx) => requireDeviceScoped(reg, 'vibration') as InferProvider<typeof vibrationCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'vibration') as InferProvider<typeof vibrationCapability> | null,
       remoteCapProxy,
     ),
     videoclips: createCapRouter_videoclips(
-      (_ctx) => requireDeviceCollection(reg, 'videoclips') as InferProvider<typeof videoclipsCapability> | null,
+      (_ctx) =>
+        requireDeviceCollection(reg, 'videoclips') as InferProvider<
+          typeof videoclipsCapability
+        > | null,
       remoteCapProxy,
     ),
     viewerUi: createCapRouter_viewerUi(
@@ -1685,11 +2103,15 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     waterHeater: createCapRouter_waterHeater(
-      (_ctx) => requireDeviceScoped(reg, 'water-heater') as InferProvider<typeof waterHeaterCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'water-heater') as InferProvider<
+          typeof waterHeaterCapability
+        > | null,
       remoteCapProxy,
     ),
     weather: createCapRouter_weather(
-      (_ctx) => requireDeviceScoped(reg, 'weather') as InferProvider<typeof weatherCapability> | null,
+      (_ctx) =>
+        requireDeviceScoped(reg, 'weather') as InferProvider<typeof weatherCapability> | null,
       remoteCapProxy,
     ),
     weatherStation: createCapRouter_weatherStation(
@@ -1700,11 +2122,13 @@ export function mountAllCaps(services: MountAllCapsServices) {
       remoteCapProxy,
     ),
     webrtcSession: createCapRouter_webrtcSession(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof webrtcSessionCapability>>('webrtc-session') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof webrtcSessionCapability>>('webrtc-session') ?? null,
       remoteCapProxy,
     ),
     zoneAnalytics: createCapRouter_zoneAnalytics(
-      (_ctx) => reg?.getSingleton<InferProvider<typeof zoneAnalyticsCapability>>('zone-analytics') ?? null,
+      (_ctx) =>
+        reg?.getSingleton<InferProvider<typeof zoneAnalyticsCapability>>('zone-analytics') ?? null,
       remoteCapProxy,
     ),
     zoneRules: createCapRouter_zoneRules(

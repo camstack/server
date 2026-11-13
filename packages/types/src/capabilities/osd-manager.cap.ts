@@ -59,7 +59,10 @@ export const OsdSourceSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('none'),
   }),
-  /** A literal string, written as it is. */
+  /**
+   * Inline device-template text for this camera (plain text is valid).
+   * The UI calls this Value. Older literal bindings stay in this shape.
+   */
   z.object({
     kind: z.literal('static'),
     text: z.string().max(OSD_TEMPLATE_TEXT_MAX),
