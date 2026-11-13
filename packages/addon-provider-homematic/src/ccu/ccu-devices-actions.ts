@@ -15,7 +15,10 @@ export function buildCcuDevicesHandlers(deps: CcuActionDeps) {
       const devices = await Promise.all(
         facade.devices().map(async (device) => {
           const links = await keyChannelsForDevice(deps, input.integrationId, device, adopted)
-          return withKeyChannels(toCcuDeviceRow(device), links)
+          return {
+            ...withKeyChannels(toCcuDeviceRow(device), links),
+            deviceId: adopted.get(device.address) ?? null,
+          }
         }),
       )
       return { devices }

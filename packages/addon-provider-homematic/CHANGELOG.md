@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - CCU page: button events stay open and show saved or the error on the row; the links list can be searched; tables sit in one frame instead of a card around a table.
+- CCU Devices: an adopted device's name and row menu open its CamStack device page.
 
 ## [1.2.195] - 2026-11-13
 

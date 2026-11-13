@@ -47,7 +47,7 @@ describe('button events on the device list', () => {
     })
     const handlers = buildCcuDevicesHandlers({
       ...deps,
-      adoptedAddresses: async () => new Set([ADDRESS]),
+      adoptedAddresses: async () => new Map([[ADDRESS, 7]]),
     })
     const out = await handlers.listCcuDevices({ integrationId: 'hm_1' })
     expect(out.devices[0]?.keyChannels).toEqual([
@@ -76,7 +76,7 @@ describe('button events on the device list', () => {
     })
     const handlers = buildCcuDevicesHandlers({
       ...deps,
-      adoptedAddresses: async () => new Set([ADDRESS]),
+      adoptedAddresses: async () => new Map([[ADDRESS, 7]]),
     })
     const out = await handlers.listCcuDevices({ integrationId: 'hm_1' })
     expect(out.devices[0]?.keyChannels[0]?.central).toBe('unknown')

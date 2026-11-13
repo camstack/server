@@ -106,7 +106,8 @@
     "directLinksNone": "Nessun collegamento diretto",
     "renameAction": "Rinomina sulla CCU",
     "buttonEventsSaving": "Salvataggio…",
-    "buttonEventsSaved": "Salvato"
+    "buttonEventsSaved": "Salvato",
+    "openDevicePage": "Apri la pagina del dispositivo"
   },
   "heating": {
     "loadFailed": "Impossibile leggere il riscaldamento",

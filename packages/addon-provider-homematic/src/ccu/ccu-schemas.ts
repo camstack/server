@@ -154,6 +154,11 @@ export const CcuDeviceRowSchema = z.object({
   configPending: z.boolean().nullable(),
   sabotage: z.boolean().nullable(),
   /**
+   * CamStack device id when this CCU device is adopted as a container.
+   * `null` when it is not adopted — the page then has nowhere to link.
+   */
+  deviceId: z.number().int().nullable().default(null),
+  /**
    * Key channels of an ADOPTED device, and whether the CCU sends their presses
    * (a central link). Empty for a device that is not adopted or has no keys.
    */

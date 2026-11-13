@@ -48,8 +48,11 @@ export interface CcuActionDeps {
   readonly facade: (integrationId: string) => CcuFacade | null
   readonly integrations: () => readonly CcuListItem[]
   readonly logger: IScopedLogger
-  /** CCU device addresses already adopted from this integration. */
-  readonly adoptedAddresses: (integrationId: string) => Promise<ReadonlySet<string>>
+  /**
+   * CCU device address → CamStack device id for containers adopted from this
+   * integration. A missing address is not adopted.
+   */
+  readonly adoptedAddresses: (integrationId: string) => Promise<ReadonlyMap<string, number>>
   /**
    * A CCU write landed: the adopted devices of this integration re-read what
    * they show (a key's central link, a name).

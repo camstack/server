@@ -97,7 +97,9 @@ export default function HomematicCcuPage(props: AddonPageProps) {
         {
           id: 'devices',
           label: t('page.tabDevices'),
-          content: body(<CcuDevicesTab trpc={trpc} integrationId={integrationId} />),
+          content: body(
+            <CcuDevicesTab trpc={trpc} integrationId={integrationId} navigate={props.navigate} />,
+          ),
         },
         {
           id: 'links',

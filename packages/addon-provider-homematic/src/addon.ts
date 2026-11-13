@@ -239,21 +239,21 @@ export class HomematicProviderAddon extends BaseDeviceProvider {
     return connected === true ? homematicFacades.get(integrationId) : null
   }
 
-  /** CCU addresses adopted as containers from one integration. */
-  private async adoptedCcuAddresses(integrationId: string): Promise<ReadonlySet<string>> {
+  /** CCU address → CamStack device id for containers adopted from one integration. */
+  private async adoptedCcuAddresses(integrationId: string): Promise<ReadonlyMap<string, number>> {
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
-    const addresses = new Set<string>()
-    if (!reg || !devices) return addresses
+    const byAddress = new Map<string, number>()
+    if (!reg || !devices) return byAddress
     for (const device of reg.getAllForAddon(this.addonId)) {
       if (device.parentDeviceId !== null) continue
       const config = await devices.loadConfig(device.id).catch((): Record<string, unknown> => ({}))
       if (config['integrationId'] !== integrationId) continue
       if (typeof config['hmEntityKey'] === 'string') continue
       const address = config['hmAddress']
-      if (typeof address === 'string' && address.length > 0) addresses.add(address)
+      if (typeof address === 'string' && address.length > 0) byAddress.set(address, device.id)
     }
-    return addresses
+    return byAddress
   }
 
   /** What the CCU management actions reach: connected sessions only, never a half-started facade. */

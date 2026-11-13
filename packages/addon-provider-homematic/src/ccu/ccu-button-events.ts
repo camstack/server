@@ -52,12 +52,17 @@ async function keyChannelRow(
   }
 }
 
+/** Something that can say whether a CCU address is adopted (a set or the id map). */
+export interface AdoptedAddressIndex {
+  has(address: string): boolean
+}
+
 /** Key-channel central-link rows for adopted devices. */
 export async function keyChannelsForDevice(
   deps: CcuActionDeps,
   integrationId: string,
   device: Parameters<typeof hmKeyChannels>[0] & { readonly address: string },
-  adopted: ReadonlySet<string>,
+  adopted: AdoptedAddressIndex,
 ): Promise<readonly KeyChannelLink[]> {
   if (!adopted.has(device.address)) return []
   const keys = hmKeyChannels(device)

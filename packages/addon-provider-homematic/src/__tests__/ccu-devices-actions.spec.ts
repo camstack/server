@@ -104,8 +104,25 @@ describe('listCcuDevices', () => {
     const out = await handlers.listCcuDevices({ integrationId: 'hm_1' })
     expect(out.devices).toHaveLength(1)
     expect(out.devices[0]?.unreach).toBe(true)
+    expect(out.devices[0]?.deviceId).toBeNull()
     await expect(handlers.listCcuDevices({ integrationId: 'nope' })).rejects.toThrow(
       /not connected/,
     )
+  })
+
+  it('attaches the CamStack device id for an adopted address', async () => {
+    const { deps } = fakeDeps({
+      devices: () => [
+        device({ name: 'Lamp' }, {}),
+        device({ address: 'OTHER', name: 'Other' }, {}),
+      ],
+    })
+    const handlers = buildCcuDevicesHandlers({
+      ...deps,
+      adoptedAddresses: async () => new Map([['ABC', 42]]),
+    })
+    const out = await handlers.listCcuDevices({ integrationId: 'hm_1' })
+    expect(out.devices.find((row) => row.address === 'ABC')?.deviceId).toBe(42)
+    expect(out.devices.find((row) => row.address === 'OTHER')?.deviceId).toBeNull()
   })
 })

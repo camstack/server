@@ -61,10 +61,10 @@ const MESSAGE = {
 }
 
 // Documented type boundary: the fake implements the one call the page makes (`addons.custom`).
-function mountPage(trpc: CcuTrpc) {
+function mountPage(trpc: CcuTrpc, navigate: (path: string) => void = () => undefined) {
   return render(
     <ConfirmDialogProvider>
-      <HomematicCcuPage trpc={trpc as never} theme={{ isDark: true }} navigate={() => undefined} />
+      <HomematicCcuPage trpc={trpc as never} theme={{ isDark: true }} navigate={navigate} />
     </ConfirmDialogProvider>,
   )
 }
@@ -201,6 +201,36 @@ describe('HomematicCcuPage devices', () => {
   it('says the CCU has no devices instead of showing an empty grid', async () => {
     mountDevices([])
     expect(await screen.findByText('The CCU has no devices')).toBeTruthy()
+  })
+
+  it('links an adopted device to its CamStack page and puts Open device page first', async () => {
+    const navigate = vi.fn()
+    window.history.replaceState(null, '', '/?tab=devices')
+    const { trpc } = fakeTrpc({
+      listCcus: () => [{ integrationId: 'hm_1', name: 'Casa', connected: true }],
+      listCcuDevices: () => ({ devices: [{ ...DEVICE, deviceId: 42 }] }),
+    })
+    mountPage(trpc, navigate)
+    const link = await screen.findByRole('link', { name: 'Bedroom radiator' })
+    expect(link.getAttribute('href')).toBe('/devices/42')
+    fireEvent.click(link)
+    expect(navigate).toHaveBeenCalledWith('/devices/42')
+    fireEvent.click(screen.getByRole('button', { name: /More actions/ }))
+    const open = screen.getByRole('button', { name: 'Open device page' })
+    const menu = open.closest('ul')
+    expect(menu).not.toBeNull()
+    expect(within(menu as HTMLElement).getAllByRole('button')[0]).toBe(open)
+    fireEvent.click(open)
+    expect(navigate).toHaveBeenCalledTimes(2)
+  })
+
+  it('offers no device-page link when the CCU device is not adopted', async () => {
+    mountDevices([DEVICE])
+    expect(await screen.findByText('Bedroom radiator')).toBeTruthy()
+    expect(screen.queryByRole('link', { name: 'Bedroom radiator' })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /More actions/ }))
+    expect(screen.queryByRole('button', { name: 'Open device page' })).toBeNull()
+    expect(screen.getByRole('button', { name: 'Rename on the CCU' })).toBeTruthy()
   })
 })
 

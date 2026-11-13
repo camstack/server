@@ -6,10 +6,12 @@ import {
   ErrorBox,
   KebabMenu,
   useDataTableFilter,
+  type AddonPageProps,
   type DataColumn,
   type DataTableFilterConfig,
+  type KebabMenuItem,
 } from '@camstack/ui-library'
-import { MousePointerClick, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
+import { ExternalLink, MousePointerClick, Pencil, SlidersHorizontal, Trash2 } from 'lucide-react'
 import {
   CcuDevicesResultSchema,
   DeviceRenameResultSchema,
@@ -52,9 +54,75 @@ function signalText(row: CcuDeviceRow): string {
   return row.rssi === null ? '—' : `${row.rssi} dBm`
 }
 
+/**
+ * The admin device page. Same path as `devicePath` in addon-admin-ui
+ * (`lib/customization-routes.ts`); the host's `navigate` resolves the basename.
+ */
+export function camstackDevicePagePath(deviceId: number): string {
+  return `/devices/${deviceId}` // hub-path-ok: AddonPageProps.navigate, basename-aware
+}
+
+function deviceMenuPrefix(
+  row: CcuDeviceRow,
+  label: string,
+  navigate: AddonPageProps['navigate'],
+): readonly KebabMenuItem[] {
+  const open = openDeviceItem(row, label, navigate)
+  return open === null ? [] : [open]
+}
+
+function openDeviceItem(
+  row: CcuDeviceRow,
+  label: string,
+  navigate: AddonPageProps['navigate'],
+): KebabMenuItem | null {
+  const deviceId = row.deviceId
+  if (deviceId === null) return null
+  const path = camstackDevicePagePath(deviceId)
+  return {
+    id: 'open-device',
+    label,
+    icon: ExternalLink,
+    onClick: () => navigate(path),
+  }
+}
+
+function DeviceName(props: {
+  readonly row: CcuDeviceRow
+  readonly navigate: AddonPageProps['navigate']
+}) {
+  const { row, navigate } = props
+  const label = row.name ?? row.address
+  const deviceId = row.deviceId
+  const path = deviceId === null ? null : camstackDevicePagePath(deviceId)
+  return (
+    <div className="flex flex-col">
+      {path === null ? (
+        <span className="text-foreground">{label}</span>
+      ) : (
+        <a
+          href={path}
+          className="text-primary hover:underline"
+          onClick={(event) => {
+            event.preventDefault()
+            navigate(path)
+          }}
+        >
+          {label}
+        </a>
+      )}
+      {row.name !== null && <span className="text-xs text-foreground-subtle">{row.address}</span>}
+    </div>
+  )
+}
+
 /** The CCU device list: identity, firmware and the health flags the WebUI buries in "Servicemeldungen". */
-export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrationId: string }) {
-  const { trpc, integrationId } = props
+export function CcuDevicesTab(props: {
+  readonly trpc: CcuTrpc
+  readonly integrationId: string
+  readonly navigate: AddonPageProps['navigate']
+}) {
+  const { trpc, integrationId, navigate } = props
   const { t } = useT()
   const input = useMemo(() => ({ integrationId }), [integrationId])
   const devices = useCcuData(trpc, 'listCcuDevices', input, CcuDevicesResultSchema)
@@ -127,14 +195,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
       {
         key: 'name',
         header: t('devices.colDevice'),
-        render: (row) => (
-          <div className="flex flex-col">
-            <span className="text-foreground">{row.name ?? row.address}</span>
-            {row.name !== null && (
-              <span className="text-xs text-foreground-subtle">{row.address}</span>
-            )}
-          </div>
-        ),
+        render: (row) => <DeviceName row={row} navigate={navigate} />,
         sortValue: (row) => row.name ?? row.address,
       },
       {
@@ -220,6 +281,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
         render: (row) => (
           <KebabMenu
             items={[
+              ...deviceMenuPrefix(row, t('devices.openDevicePage'), navigate),
               ...(row.keyChannels.length > 0
                 ? [
                     {
@@ -254,7 +316,7 @@ export function CcuDevicesTab(props: { readonly trpc: CcuTrpc; readonly integrat
         ),
       },
     ],
-    [t],
+    [navigate, t],
   )
 
   if (devices.error !== null) {

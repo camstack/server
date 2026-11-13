@@ -21,7 +21,7 @@ export function fakeDeps(
       facade: (id) => (id === 'hm_1' && facade !== null ? asFacade(facade) : null),
       integrations: () => options.integrations ?? [],
       logger,
-      adoptedAddresses: async () => new Set<string>(),
+      adoptedAddresses: async () => new Map<string, number>(),
       ccuChanged: () => undefined,
     },
     logger,

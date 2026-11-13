@@ -106,7 +106,8 @@
     "directLinksNone": "No direct links",
     "renameAction": "Rename on the CCU",
     "buttonEventsSaving": "Saving…",
-    "buttonEventsSaved": "Saved"
+    "buttonEventsSaved": "Saved",
+    "openDevicePage": "Open device page"
   },
   "heating": {
     "loadFailed": "Could not read the heating setup",
