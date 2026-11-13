@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notification templates can use {{headline}}, the subject and the place of a detection.
+- Notification templates can count how many devices or nodes went offline and came back in a summary.
 
 ## [1.2.562] - 2026-11-13
 

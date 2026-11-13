@@ -157,8 +157,8 @@ describe('a scheduled state summary, through the centre', () => {
     })
     // Delivered through the ordinary drain, rendered with the rule's template.
     await center.drainNow()
-    // The shipped title is `system.state-summary.title`: "{{rule}}: {{summaryCount}}".
-    const delivered = sent.find((n) => n.title === 'Stato batterie: 1')
+    // The shipped title names the section, not the rule.
+    const delivered = sent.find((n) => n.title === 'Low batteries: 1')
     expect(delivered?.body).toMatch(
       /^1 — Low batteries:\n• Termometro \(Sensor\) is down to 4% battery$/,
     )
@@ -358,7 +358,7 @@ describe('a scheduled state summary, through the centre', () => {
     await vi.waitFor(() => expect(outboxRows(world)).toHaveLength(1), { timeout: 2_000 })
     expect(outboxRows(world)[0]?.['ruleId']).toBe(greeted.rule.id)
     await center.drainNow()
-    expect(sent.find((n) => n.title === 'Buongiorno: 1')?.body).toMatch(
+    expect(sent.find((n) => n.title === 'Low batteries: 1')?.body).toMatch(
       /^Buongiorno\nLow batteries:\n• Termometro/,
     )
     await vi.waitFor(() =>

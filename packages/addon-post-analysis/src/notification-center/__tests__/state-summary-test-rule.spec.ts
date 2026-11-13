@@ -167,7 +167,7 @@ describe('TEST on a state-summary rule (D698)', () => {
     // Marked as a TEST exactly like every other rule test (review M5).
     expect(rows[0]?.['payload']).toMatchObject({ synthetic: true })
     await center.drainNow()
-    const body = sent.find((n) => n.title === 'Stato batterie: 1')?.body
+    const body = sent.find((n) => n.title === 'Low batteries: 1')?.body
     expect(body?.startsWith('[TEST] ')).toBe(true)
     expect(body).toContain('Termometro (Sensor) is down to 4% battery')
     // A test touches no stamp: the next real window is still owed (review L7).

@@ -199,11 +199,13 @@ describe('a state summary split per section, through the centre (D698)', () => {
     expect(mine()[0]?.['recordId']).toBe(`state-summary:${created.rule.id}:${String(WINDOW_END)}`)
     await center.drainNow()
     expect(sent).toHaveLength(1)
-    expect(sent[0]?.title).toBe('Stato: 2')
+    expect(sent[0]?.title).toBe('Streams offline, Low batteries: 2')
     // D708: history shows the title the phone got. It rendered the frozen
     // params alone and read ": 2" — `{{rule}}` is a row-level variable.
     const history = await provider.getHistory({ filter: { ruleId: created.rule.id, limit: 10 } })
-    expect(history.entries.map((entry) => entry.subject.systemEvent?.title)).toEqual(['Stato: 2'])
+    expect(history.entries.map((entry) => entry.subject.systemEvent?.title)).toEqual([
+      'Streams offline, Low batteries: 2',
+    ])
   })
 
   it('M4: a crash after ONE section and before the stamp — the replay sends each section exactly once', async () => {

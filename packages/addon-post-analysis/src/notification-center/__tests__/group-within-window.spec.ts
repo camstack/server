@@ -203,7 +203,7 @@ describe('a system rule groups deliveries that arrive within a few seconds', () 
 
     box.clock.now = BASE + 5_000
     await box.center.runDrainTickForTest()
-    expect(box.sent.map((sent) => sent.title)).toEqual(['Dispositivi: 2'])
+    expect(box.sent.map((sent) => sent.title)).toEqual(['2 devices offline'])
     expect(box.sent[0]?.body).toContain('Offline or off')
     expect(box.sent[0]?.body).toContain('Offline or off')
     expect(box.sent[0]?.body).toContain('3395')
@@ -244,7 +244,7 @@ describe('a system rule groups deliveries that arrive within a few seconds', () 
     box.clock.now = BASE + 438_000
     await box.center.runDrainTickForTest()
     expect(box.sent).toHaveLength(4)
-    expect(box.sent[3]?.title).toBe('Dispositivi: 2')
+    expect(box.sent[3]?.title).toBe('2 devices back online')
 
     const history = await box.center.buildProvider().getHistory({ filter: { ruleId, limit: 50 } })
     const folded = history.entries.filter((entry) => entry.groupedInto !== undefined)
@@ -301,7 +301,7 @@ describe('a system rule groups deliveries that arrive within a few seconds', () 
     box.clock.now = BASE + 5_000
     await next.runDrainTickForTest()
     expect(box.sent).toHaveLength(1)
-    expect(box.sent[0]?.title).toBe('Dispositivi: 2')
+    expect(box.sent[0]?.title).toBe('2 devices offline')
     const held = outbox(box.world).filter(
       (row) => row['deviceId'] === 3395 || row['deviceId'] === 3502,
     )

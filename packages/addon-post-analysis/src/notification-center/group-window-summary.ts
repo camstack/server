@@ -1,11 +1,12 @@
 /**
  * A burst of deliveries worded as a state summary.
  *
- * The evening digest (`state-summary.ts`) is the structure: a title
- * `{{rule}}: {{summaryCount}}` and a body of bullet lines. A burst of the
- * bad edge (devices offline) uses that digest's section block, heading
- * included. A burst of the recovery edge uses the same bullets without the
- * "still offline" heading, which would describe the wrong fact.
+ * The evening digest (`state-summary.ts`) is the structure: a title that
+ * counts the burst (`group.window.*`, or the section name when the kinds
+ * mix) and a body of bullet lines. A burst of the bad edge (devices
+ * offline) uses that digest's section block, heading included. A burst of
+ * the recovery edge uses the same bullets without the "still offline"
+ * heading, which would describe the wrong fact.
  */
 
 import { NC_SYSTEM_EVENT_CLASS_SPECS, type NcRule, type NcSystemEventKind } from '@camstack/types'
@@ -28,6 +29,7 @@ import {
   type NcStateSummary,
   stateSummaryText,
 } from './state-summary/state-summary.js'
+import { groupWindowTitleChoice } from './group-window-title.js'
 import {
   NC_STATE_SUMMARY_BODY_KEY,
   NC_STATE_SUMMARY_TITLE_KEY,
@@ -47,6 +49,9 @@ export function groupWindowSubject(input: GroupWindowSummaryInput): NcRuleSubjec
   const built = burstText(input)
   if (built === null) return null
   const kind = summaryKind(input)
+  const title = groupWindowTitleChoice(
+    input.entries.map((entry) => entry.payload.subject.systemEvent?.kind ?? ''),
+  )
   return {
     kind: 'system-event',
     recordId: groupWindowRecordId(input.rule.id, input.targetId, input.openedAt),
@@ -57,14 +62,20 @@ export function groupWindowSubject(input: GroupWindowSummaryInput): NcRuleSubjec
     systemEvent: {
       kind,
       subject: `group-window:${input.rule.id}:${input.targetId}`,
-      titleKey: NC_STATE_SUMMARY_TITLE_KEY,
+      titleKey: title?.titleKey ?? NC_STATE_SUMMARY_TITLE_KEY,
       bodyKey: NC_STATE_SUMMARY_BODY_KEY,
       textParams: {
         summaryText: built.text,
-        summaryCount: String(built.count),
+        summaryCount: String(title?.count ?? built.count),
         summarySection: built.section,
+        ...(title !== null
+          ? {
+              offlineCount: String(title.offlineCount),
+              onlineCount: String(title.onlineCount),
+            }
+          : {}),
       },
-      textCount: built.count,
+      textCount: title?.count ?? built.count,
       data: {
         stateSummary: true,
         groupWindow: true,

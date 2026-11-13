@@ -366,7 +366,7 @@
   "action.server-update.uptodate": "Già aggiornato su {{nodeId}} — niente da fare",
   "action.server-update.unknown": "Non è stato possibile leggere se {{nodeId}} ha ancora bisogno di un aggiornamento server — non è stato cambiato nulla. Apri CamStack.",
   "action.server-update.failed": "L'aggiornamento server su {{nodeId}} è stato rifiutato — non è stato cambiato nulla. Apri CamStack.",
-  "summary.title": "Riepilogo — {{rule}}",
+  "summary.title": "Riepilogo {{from}}→{{to}}",
   "summary.body.window": "{{from}}→{{to}}",
   "summary.body.events": {
     "one": "{{events}} evento",
@@ -379,7 +379,29 @@
   "summary.body.detections": "{{detectionSummary}}",
   "summary.body.truncated": "mostrati i {{shown}} più rilevanti su {{total}}",
   "summary.body.empty": "nessun evento in questa finestra",
-  "system.state-summary.title": "{{rule}}: {{summaryCount}}",
+  "system.state-summary.title": "{{summarySection}}: {{summaryCount}}",
+  "group.window.device-online": {
+    "one": "{{summaryCount}} dispositivo di nuovo online",
+    "other": "{{summaryCount}} dispositivi di nuovo online"
+  },
+  "group.window.device-offline": {
+    "one": "{{summaryCount}} dispositivo offline",
+    "other": "{{summaryCount}} dispositivi offline"
+  },
+  "group.window.device-mixed": "{{offlineCount}} offline, {{onlineCount}} di nuovo online",
+  "group.window.node-online": {
+    "one": "{{summaryCount}} nodo di nuovo online",
+    "other": "{{summaryCount}} nodi di nuovo online"
+  },
+  "group.window.node-offline": {
+    "one": "{{summaryCount}} nodo offline",
+    "other": "{{summaryCount}} nodi offline"
+  },
+  "group.window.node-mixed": "{{offlineCount}} offline, {{onlineCount}} di nuovo online",
+  "group.window.updates": {
+    "one": "{{summaryCount}} aggiornamento disponibile",
+    "other": "{{summaryCount}} aggiornamenti disponibili"
+  },
   "system.state-summary.body": "{{summaryText}}",
   "system.state-summary.section.title": "{{summarySection}}: {{summaryCount}}",
   "system.state-summary.section.body": "{{summaryText}}",
@@ -411,7 +433,10 @@
   "summary.line.consumable.tank-full": "{{item}} piena",
   "summary.line.consumable.product": "{{item}} in esaurimento",
   "summary.line.consumable.bin": "{{item}} pieno",
-  "calendar-events.title": "{{rule}}: {{count}} in arrivo",
+  "calendar-events.title": {
+    "one": "{{count}} evento in arrivo",
+    "other": "{{count}} eventi in arrivo"
+  },
   "calendar-events.empty": "Nessun evento nei prossimi {{horizonDays}} giorno/i.",
   "calendar-events.day.today": "Oggi — {{date}}",
   "calendar-events.day.tomorrow": "★ Domani — {{date}}",

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Detection notifications are titled with the subject and the place, not the rule name.
+- Grouped device, node and update notifications are titled with the count, not the rule name.
 
 ## [1.2.702] - 2026-11-13
 

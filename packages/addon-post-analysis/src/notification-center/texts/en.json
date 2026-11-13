@@ -366,7 +366,7 @@
   "action.server-update.uptodate": "Already up to date on {{nodeId}} — nothing to do",
   "action.server-update.unknown": "Could not read whether {{nodeId}} still needs a server update — nothing was changed. Open CamStack.",
   "action.server-update.failed": "Server update on {{nodeId}} was refused — nothing was changed. Open CamStack.",
-  "summary.title": "Summary — {{rule}}",
+  "summary.title": "Summary {{from}}→{{to}}",
   "summary.body.window": "{{from}}→{{to}}",
   "summary.body.events": {
     "one": "{{events}} event",
@@ -379,7 +379,29 @@
   "summary.body.detections": "{{detectionSummary}}",
   "summary.body.truncated": "showing the {{shown}} most relevant of {{total}}",
   "summary.body.empty": "nothing was seen in this window",
-  "system.state-summary.title": "{{rule}}: {{summaryCount}}",
+  "system.state-summary.title": "{{summarySection}}: {{summaryCount}}",
+  "group.window.device-online": {
+    "one": "{{summaryCount}} device back online",
+    "other": "{{summaryCount}} devices back online"
+  },
+  "group.window.device-offline": {
+    "one": "{{summaryCount}} device offline",
+    "other": "{{summaryCount}} devices offline"
+  },
+  "group.window.device-mixed": "{{offlineCount}} offline, {{onlineCount}} back online",
+  "group.window.node-online": {
+    "one": "{{summaryCount}} node back online",
+    "other": "{{summaryCount}} nodes back online"
+  },
+  "group.window.node-offline": {
+    "one": "{{summaryCount}} node offline",
+    "other": "{{summaryCount}} nodes offline"
+  },
+  "group.window.node-mixed": "{{offlineCount}} offline, {{onlineCount}} back online",
+  "group.window.updates": {
+    "one": "{{summaryCount}} update available",
+    "other": "{{summaryCount}} updates available"
+  },
   "system.state-summary.body": "{{summaryText}}",
   "system.state-summary.section.title": "{{summarySection}}: {{summaryCount}}",
   "system.state-summary.section.body": "{{summaryText}}",
@@ -411,7 +433,10 @@
   "summary.line.consumable.tank-full": "{{item}} full",
   "summary.line.consumable.product": "{{item}} running out",
   "summary.line.consumable.bin": "{{item}} full",
-  "calendar-events.title": "{{rule}}: {{count}} upcoming",
+  "calendar-events.title": {
+    "one": "{{count}} event upcoming",
+    "other": "{{count}} events upcoming"
+  },
   "calendar-events.empty": "No events in the next {{horizonDays}} day(s).",
   "calendar-events.day.today": "Today — {{date}}",
   "calendar-events.day.tomorrow": "★ Tomorrow — {{date}}",

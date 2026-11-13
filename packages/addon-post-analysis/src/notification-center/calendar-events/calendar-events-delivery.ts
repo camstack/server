@@ -94,6 +94,7 @@ export function buildCalendarEventsOutboxInputs(
       key: 'calendar-events.title',
       template: template?.title,
       vars,
+      count: input.events.length,
     }),
     body: renderTemplate(template?.body, vars) ?? derivedBody(input),
   })
