@@ -2,6 +2,7 @@
  * What ONE capability adds to a hero (D1023), and the context it reads.
  * Contributions return a fragment; `buildHeroModel` merges the fragments.
  */
+import type { ReadingQuantity } from '../../units/quantity.js'
 import type {
   HeroBadge,
   HeroConsumablesSlot,
@@ -84,6 +85,8 @@ export interface HeroContext {
   readonly remoteCommands: number | null
   /** The caps the device is bound to: a contribution that overlaps another cap's fact yields to it. */
   readonly caps: readonly string[]
+  /** What a numeric-sensor measures (stored at adopt); `null`/absent = unknown, the number shows bare. */
+  readonly quantity?: ReadingQuantity | null
 }
 
 export interface HeroFragment {

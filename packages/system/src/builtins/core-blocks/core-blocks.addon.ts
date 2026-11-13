@@ -321,6 +321,7 @@ export class CoreBlocksAddon extends BaseAddon {
                 online: found.online,
                 features: found.features,
                 integration: manufacturerOf(found.metadata),
+                quantity: found.sourceInfo?.quantity ?? null,
               }
         },
         caps: async (deviceId) =>

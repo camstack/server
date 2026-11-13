@@ -9,6 +9,7 @@
  * off (D315/D393), a heater whose switch has not reported renders `unknown`.
  */
 import { RunningStateStatusSchema } from '../../capabilities/running-state.cap.js'
+import type { ReadingQuantity } from '../../units/quantity.js'
 import { DeviceType } from '../device-type.js'
 import type { HeroContext, HeroFragment, StateReading, StateSource } from './hero-fragment.js'
 import { HERO_CAP_CONTRIBUTIONS } from './hero-contributions.js'
@@ -42,6 +43,8 @@ export interface HeroModelInput {
     readonly online: boolean
     /** The integration or brand the device comes from ("Midea"); drawn as a chip when known. */
     readonly integration?: string | null
+    /** What a numeric-sensor measures; names the unit its reading shows. */
+    readonly quantity?: ReadingQuantity | null
   }
   /** Kebab cap names the device is bound to. */
   readonly caps: readonly string[]
@@ -239,6 +242,7 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     running: runningOf(input),
     remoteCommands: input.remoteCommands,
     caps: input.caps,
+    quantity: device.quantity ?? null,
   }
   const contributed = HERO_CAP_CONTRIBUTIONS.filter((c) => input.caps.includes(c.cap)).map((c) => ({
     cap: c.cap,

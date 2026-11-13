@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A remote no longer assumes a mute from the last key sent; mute on an infrared TV is a momentary key
 - A numeric reading without a fixed type (CPU load, memory, a health or charge level) now shows its unit on the device list and the device page for devices run by a forked addon
+- A numeric sensor's device page shows its unit
 
 ## [1.2.862] - 2026-11-13
 

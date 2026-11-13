@@ -54,6 +54,22 @@ describe('hero-layout provider', () => {
     expect(plain.rows).not.toContain('run-for')
   })
 
+  it('a numeric sensor reads with the unit of the quantity its device stored', async () => {
+    const model = await service({
+      device: async () => ({
+        type: DeviceType.Sensor,
+        role: DeviceRole.NumericSensor,
+        name: 'Grid frequency',
+        online: true,
+        features: [],
+        quantity: 'frequency',
+      }),
+      caps: async () => ['numeric-sensor'],
+      slice: async () => ({ value: 49.9, lastFetchedAt: 1 }),
+    }).getHeroModel({ deviceId: 7 })
+    expect(JSON.stringify(model)).toContain('"49.9 Hz"')
+  })
+
   it('an unknown device answers null and says so on the record, tagged', async () => {
     const logs: Logged[] = []
     const model = await service({ device: async () => null }, logs).getHeroModel({ deviceId: 9 })

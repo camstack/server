@@ -18,6 +18,7 @@ import { NumericSensorStatusSchema } from '../../capabilities/numeric-sensor.cap
 import { PressureSensorStatusSchema } from '../../capabilities/pressure-sensor.cap.js'
 import { TemperatureSensorStatusSchema } from '../../capabilities/temperature-sensor.cap.js'
 import { WaterHeaterStatusSchema } from '../../capabilities/water-heater.cap.js'
+import { baseUnitOf } from '../../units/quantity.js'
 import { DeviceFeature } from '../device-type.js'
 import {
   action,
@@ -504,16 +505,18 @@ const illuminanceContribution = contribution(
     ),
 )
 
-const numericContribution = contribution('numeric-sensor', NumericSensorStatusSchema, (slice) =>
-  sensorFragment(
+const numericContribution = contribution('numeric-sensor', NumericSensorStatusSchema, (slice, ctx) => {
+  const unit = ctx.quantity == null ? undefined : baseUnitOf(ctx.quantity)
+  const text = String(Number((slice?.value ?? 0).toFixed(2)))
+  return sensorFragment(
     slice?.value ?? null,
     'reading',
     'gauge',
     'Value',
     'Valore',
-    String(Number((slice?.value ?? 0).toFixed(2))),
-  ),
-)
+    unit === undefined ? text : `${text} ${unit}`,
+  )
+})
 
 const enumContribution = contribution('enum-sensor', EnumSensorStatusSchema, (slice) => {
   // A timestamp is not a state: it would read as an opaque string.

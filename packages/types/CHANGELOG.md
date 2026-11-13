@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A sensor that is offline now carries an empty measurement, so its card shows a dash instead of falling back to the old card; automation rows carry the enabled switch
 - A TV remote without a mute readback (infrared) offers mute as a momentary key; the muted state and label are no longer shown or kept
 - A grid frequency and a signal-to-noise or quality ratio are readings of their own, shown in Hz and dB
+- A numeric sensor's hero reading names the unit of its quantity
 
 ## [1.2.563] - 2026-11-13
 
