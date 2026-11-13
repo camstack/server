@@ -26,7 +26,7 @@ import {
   isDeviceLivenessKind,
   isNodeLivenessKind,
 } from './liveness-holdoff.js'
-import { NcLivenessLedger, ledgeredLiveness } from './liveness-ledger.js'
+import { NcLivenessLedger, ledgeredLiveness, type NcLivenessRow } from './liveness-ledger.js'
 import { OccupancyStore } from './occupancy-store.js'
 import { NcPlannedUpdateWindow } from './planned-update-window.js'
 import { NcUpdateLandings } from './restart-supersede.js'
@@ -219,10 +219,18 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
   // An announcement opens the node's planned-update window (see
   // `planned-update-window.ts`): its offline is worded as an update.
   if (system !== undefined) host.plannedUpdates.observe(system, host.now())
+  const plannedUpdate =
+    system !== undefined &&
+    system.kind === 'node-offline' &&
+    system.nodeId !== undefined &&
+    host.plannedUpdates.isPlanned(system.nodeId, host.now())
   const observation = system !== undefined ? ledgeredLiveness(system) : null
   if (observation !== null) {
     const accepted = host.liveness.acceptedOf(observation.subject)
-    const verdict = host.liveness.observe(observation, host.now())
+    const verdict = host.liveness.observe(
+      plannedUpdate ? { ...observation, cause: 'update' } : observation,
+      host.now(),
+    )
     const holdoff = isNodeLivenessKind(observation.kind)
       ? host.nodeLivenessHoldoff
       : host.livenessHoldoff
@@ -271,7 +279,8 @@ export function onSystemEvent(host: SystemEventsHost, event: SystemEvent): void 
       return
     }
     if (isNodeLivenessKind(observation.kind) && system !== undefined) {
-      armNodeLiveness(host, holdoff, observation.subject, incoming, system)
+      if (dropPlannedUpdate(host, system, accepted)) return
+      armNodeLiveness(holdoff, observation.subject, incoming)
       return
     }
     if (isDeviceLivenessKind(observation.kind)) {
@@ -312,31 +321,49 @@ function dropSwitchedOff(
   return true
 }
 /**
- * Arm a node liveness flip. An OFFLINE of a node that announced an update is
- * delivered AT ONCE, worded "restarting for an update": the operator is told,
- * and the node's return is then always the second half of a pair — even when
- * this process restarts in between and has only the ledger to go on. Every
- * other flip waits on the hold-off.
+ * A planned update restart, and the online that follows it, are not news.
+ *
+ * The offline is recognised by the announcement window (`isPlanned`). The
+ * return is recognised by the cause the ledger stored on that offline, so a
+ * process that restarted in between — and lost the window — still stays quiet.
+ * Any other offline still notifies.
+ */
+function dropPlannedUpdate(
+  host: SystemEventsHost,
+  system: NcSystemEventSubject,
+  accepted: NcLivenessRow | undefined,
+): boolean {
+  const nodeId = system.nodeId
+  if (nodeId === undefined) return false
+  if (system.kind === 'node-offline' && host.plannedUpdates.isPlanned(nodeId, host.now())) {
+    host.logger.info('node offline not notified — restarting for an update', {
+      meta: { nodeId, kind: system.kind },
+    })
+    return true
+  }
+  if (
+    system.kind === 'node-online' &&
+    accepted?.state === 'offline' &&
+    accepted.cause === 'update'
+  ) {
+    host.logger.info('node online not notified — returning from an update', {
+      meta: { nodeId, kind: system.kind },
+    })
+    return true
+  }
+  return false
+}
+
+/**
+ * Arm a node liveness flip. Every flip waits on the hold-off. A planned
+ * update restart never reaches here — {@link dropPlannedUpdate} already
+ * dropped it.
  */
 function armNodeLiveness(
-  host: SystemEventsHost,
   holdoff: DeviceLivenessHoldoff,
   subject: string,
   incoming: NcIncomingEvent,
-  system: NcSystemEventSubject,
 ): void {
-  const nodeId = system.nodeId
-  if (
-    nodeId !== undefined &&
-    system.kind === 'node-offline' &&
-    host.plannedUpdates.isPlanned(nodeId, host.now())
-  ) {
-    host.logger.info(`node ${nodeId}: offline notified: restarting for an update`, {
-      meta: { nodeId },
-    })
-    holdoff.arm(subject, withPlannedUpdateWording(incoming, system), 0)
-    return
-  }
   holdoff.arm(subject, incoming)
 }
 

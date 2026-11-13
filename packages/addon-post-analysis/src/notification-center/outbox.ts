@@ -484,6 +484,13 @@ export interface NcOutboxPayload {
    * one on demand rather than trusting one frozen at delivery time.
    */
   readonly artifactIds?: readonly string[]
+  /**
+   * The title and body the successful send actually rendered. Frozen so
+   * history does not re-render them later. Absent until that send, and on a
+   * suppression that returned before a notification was built.
+   */
+  readonly renderedTitle?: string
+  readonly renderedBody?: string
   /** AI CONFIRM policy — see {@link NcOutboxConfirmPolicy}. Absent = no gate. */
   readonly confirm?: NcOutboxConfirmPolicy
   /** AI NARRATION policy — see {@link NcOutboxAiPolicy}. Absent = no pass, and
@@ -737,6 +744,8 @@ export type NcDeliverResult =
       readonly ok: true
       readonly confirm?: NcOutboxConfirmVerdict
       readonly artifactIds?: readonly string[]
+      readonly renderedTitle?: string
+      readonly renderedBody?: string
     }
   | { readonly ok: false; readonly error: string; readonly permanent: boolean }
 
@@ -1322,6 +1331,8 @@ export class NcOutbox {
         ...(result.artifactIds !== undefined && result.artifactIds.length > 0
           ? { artifactIds: result.artifactIds }
           : {}),
+        ...(result.renderedTitle !== undefined ? { renderedTitle: result.renderedTitle } : {}),
+        ...(result.renderedBody !== undefined ? { renderedBody: result.renderedBody } : {}),
       }
       const sent: NcOutboxEntry = {
         ...entry,

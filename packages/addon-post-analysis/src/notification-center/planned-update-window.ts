@@ -5,8 +5,8 @@
  * `system.restarting` becomes `node-updating` / `node-restarting`; the centre
  * records the announcement per node (RAM, refreshed by the event, never by a
  * read — D49). An offline for that node inside {@link PLANNED_UPDATE_OFFLINE_GRACE_MS}
- * of the announcement is delivered at once, worded as an update, instead of
- * waiting on the usual hold-off. A lost announcement (events may be dropped,
+ * of the announcement is not notified, and neither is the matching return.
+ * A lost announcement (events may be dropped,
  * D8) simply behaves as before.
  */
 

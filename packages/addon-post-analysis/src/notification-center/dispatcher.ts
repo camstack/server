@@ -1322,6 +1322,12 @@ export class NcDispatcher {
         // The ids THIS send actually shipped — never re-derived, so a row can
         // only ever name an artefact its own delivery produced.
         ...(artifactIds.length > 0 ? { artifactIds } : {}),
+        // Frozen on the outbox row so history reads the sentence that was
+        // sent, not one re-rendered later.
+        ...(notification.title !== undefined && notification.title.length > 0
+          ? { renderedTitle: notification.title }
+          : {}),
+        ...(notification.body.length > 0 ? { renderedBody: notification.body } : {}),
       }
     } catch (err) {
       return { ok: false, error: String(err), permanent: false }

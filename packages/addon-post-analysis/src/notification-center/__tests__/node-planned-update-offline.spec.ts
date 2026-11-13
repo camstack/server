@@ -1,12 +1,11 @@
 /**
- * A NODE THAT ANNOUNCED AN UPDATE IS TOLD ABOUT, NEVER SILENCED.
+ * A node restarting for an update produces no push, and neither does its return.
  *
  * The announcement (`system.restarting`, kinds `node-updating` / `node-restarting`)
- * opens a window; an offline inside it is delivered AT ONCE worded "restarting
- * for an update", so the later "back online" always has its offline. A
- * notification-center restart between the two must not change that: the fresh
- * process is seeded from the ledger with `offline`. No announcement, or one
- * older than the window: the 60 s hold-off, unchanged.
+ * opens a window. An offline inside it is a planned restart: it is remembered
+ * on the liveness ledger and not notified. The matching online is not notified
+ * either, including after this process restarts and has only the ledger. No
+ * announcement, or one older than the window: the ordinary hold-off, unchanged.
  */
 import type { InMemoryRecords } from '@camstack/types'
 import { ncTable, makeNcRecords } from './support/nc-test-deps.js'
@@ -126,63 +125,32 @@ async function seededCenter(): Promise<InMemoryRecords> {
 }
 
 describe('planned-update offline, wired', () => {
-  it('the offline is notified at once with the update wording', async () => {
+  it('an update restart and its return produce no push', async () => {
     const world = await seededCenter()
     const center = centers[0]
     center?.onSystemEvent(announceUpdate())
     center?.onSystemEvent(agent(false, 'shutdown'))
-    await vi.advanceTimersByTimeAsync(0)
-    await vi.waitFor(() => {
-      expect(ncTable(world, 'outbox')?.size).toBe(1)
-    })
-    const [offline] = frozen(world)
-    expect(offline?.kind).toBe('node-offline')
-    expect(offline?.bodyKey).toBe('system.node-offline.body.agent.updating')
-    expect(offline?.textParams?.['nodeName']).toBe('Unraid piccolo')
-  })
-
-  it('back after the update: the online follows its offline', async () => {
-    const world = await seededCenter()
-    const center = centers[0]
-    center?.onSystemEvent(announceUpdate())
-    center?.onSystemEvent(agent(false, 'shutdown'))
-    await vi.advanceTimersByTimeAsync(2 * 60_000)
+    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
     center?.onSystemEvent(agent(true))
     await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
-    await vi.waitFor(() => {
-      expect(ncTable(world, 'outbox')?.size).toBe(2)
-    })
-    expect(
-      frozen(world)
-        .map((e) => e.kind)
-        .sort(),
-    ).toEqual(['node-offline', 'node-online'])
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
   })
 
-  it('a notification-center restart between offline and online: the online is still sent once', async () => {
+  it('a notification-center restart still suppresses the return from an update', async () => {
     const world = await seededCenter()
     const first = centers[0]
     first?.onSystemEvent(announceUpdate())
     first?.onSystemEvent(agent(false, 'shutdown'))
-    await vi.advanceTimersByTimeAsync(0)
-    await vi.waitFor(() => {
-      expect(ncTable(world, 'outbox')?.size).toBe(1)
-    })
-    expect(frozen(world)[0]?.bodyKey).toBe('system.node-offline.body.agent.updating')
+    await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
     await first?.stop()
     // The new process: no window, no hold-off memory — only the ledger.
     const second = await startCenter(world, false)
     await vi.advanceTimersByTimeAsync(2 * 60_000)
     second.onSystemEvent(agent(true))
     await vi.advanceTimersByTimeAsync(NODE_LIVENESS_HOLDOFF_MS)
-    await vi.waitFor(() => {
-      expect(ncTable(world, 'outbox')?.size).toBe(2)
-    })
-    expect(
-      frozen(world)
-        .map((e) => e.kind)
-        .sort(),
-    ).toEqual(['node-offline', 'node-online'])
+    expect(ncTable(world, 'outbox')?.size ?? 0).toBe(0)
   })
 
   it('no announcement: the offline goes out at the normal hold-off', async () => {

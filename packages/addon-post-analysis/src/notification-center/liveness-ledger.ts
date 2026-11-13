@@ -135,6 +135,9 @@ const NC_LIVENESS_COLUMNS = [
    *  per-device. */
   { name: 'deviceId', type: 'INTEGER' as const },
   { name: 'updatedAt', type: 'INTEGER' as const, notNull: true },
+  /** Set on an offline that was a planned update restart. The matching online
+   *  reads it and stays quiet; a later row clears it. */
+  { name: 'cause', type: 'TEXT' as const },
 ] as const
 
 const NC_LIVENESS_INDEXES = [
@@ -143,6 +146,9 @@ const NC_LIVENESS_INDEXES = [
 
 /** The two states a ledgered subject can be in. */
 export type NcLivenessState = 'online' | 'offline'
+
+/** Why an offline was accepted. Only a planned update restart is named. */
+export type NcLivenessCause = 'update'
 
 /**
  * What one observation was worth.
@@ -161,6 +167,8 @@ export interface NcLivenessRow {
   readonly kind: string
   readonly deviceId?: number
   readonly updatedAt: number
+  /** Set when this offline is a planned update restart. */
+  readonly cause?: NcLivenessCause
 }
 
 /** A system event reduced to the facts the ledger keys and compares on. */
@@ -169,6 +177,8 @@ export interface NcLivenessObservation {
   readonly kind: NcSystemEventKind
   readonly state: NcLivenessState
   readonly deviceId?: number
+  /** Carried onto the row when this offline is a planned update restart. */
+  readonly cause?: NcLivenessCause
 }
 
 /**
@@ -421,6 +431,7 @@ export class NcLivenessLedger {
       state: observation.state,
       kind: observation.kind,
       ...(observation.deviceId !== undefined ? { deviceId: observation.deviceId } : {}),
+      ...(observation.cause !== undefined ? { cause: observation.cause } : {}),
       updatedAt: now,
     }
     if (!this.bootWindow.open()) return this.ledger.observe(row)
@@ -445,6 +456,7 @@ function rowToValue(row: NcLivenessRow): Record<string, unknown> {
     state: row.state,
     kind: row.kind,
     ...(row.deviceId !== undefined ? { deviceId: row.deviceId } : {}),
+    ...(row.cause !== undefined ? { cause: row.cause } : {}),
     updatedAt: row.updatedAt,
   }
 }
@@ -466,11 +478,13 @@ function recordToRow(subject: string, data: Record<string, unknown>): NcLiveness
   const rawDeviceId = data['deviceId']
   const deviceId =
     typeof rawDeviceId === 'number' && Number.isFinite(rawDeviceId) ? rawDeviceId : undefined
+  const cause = data['cause'] === 'update' ? 'update' : undefined
   return {
     subject,
     state,
     kind,
     ...(deviceId !== undefined ? { deviceId } : {}),
+    ...(cause !== undefined ? { cause } : {}),
     updatedAt,
   }
 }

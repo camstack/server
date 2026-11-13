@@ -2600,6 +2600,13 @@ export const NcHistoryEntrySchema = z.object({
   error: z.string().optional(),
   subject: NcHistorySubjectSchema,
   /**
+   * The title and body actually sent, frozen at delivery. Absent on a row
+   * still pending, a row suppressed before a notification was built, and a
+   * row delivered before this field shipped.
+   */
+  title: z.string().optional(),
+  body: z.string().optional(),
+  /**
    * Ids of the artefacts (still, then gif, then clip) this row's successful
    * delivery indexed in the artefact library — a REFERENCE, never the bytes
    * (an artefact is often megabytes; this row is durable JSON rewritten on
