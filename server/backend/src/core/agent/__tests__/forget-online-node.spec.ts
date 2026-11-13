@@ -9,7 +9,6 @@
  * Real pieces: the mutual-TLS transporter, the certificate registry + CRL, the revoker seam, and a
  * real Moleculer registry. Only the history store is a stub.
  */
-import { createServer as createNetServer } from 'node:net'
 import * as tls from 'node:tls'
 import {
   generateMeshCa,
@@ -21,7 +20,7 @@ import {
 } from '@camstack/server/system'
 import type { IScopedLogger, SettingsStoreClient } from '@camstack/types'
 import { ServiceBroker, Errors } from 'moleculer'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventBusService } from '../../events/event-bus.service'
 import type { CapabilityService } from '../../capability/capability.service'
 import type { MoleculerService } from '../../moleculer/moleculer.service'
@@ -73,25 +72,22 @@ function memoryStore(): SettingsStoreClient {
   return store as unknown as SettingsStoreClient
 }
 
-async function freePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const s = createNetServer()
-    s.once('error', reject)
-    s.listen(0, '127.0.0.1', () => {
-      const addr = s.address()
-      if (addr === null || typeof addr === 'string') {
-        s.close(() => reject(new Error('no port')))
-        return
-      }
-      const { port } = addr
-      s.close(() => resolve(port))
-    })
-  })
+/**
+ * Both listeners bind port 0 and the spec reads back what the OS gave them. A port
+ * pre-picked by "listen on 0, close, reuse the number" can be taken in the gap by
+ * any other socket on a loaded machine; the transporter's listen then fails and
+ * Moleculer retries the connect every 5 s, so `broker.start()` never resolves.
+ */
+function boundPort(port: number | null | undefined, what: string): number {
+  if (typeof port !== 'number' || port === 0) throw new Error(`${what} is not bound`)
+  return port
 }
 
 const brokers: ServiceBroker[] = []
 const sockets: tls.TLSSocket[] = []
+const pollers: Array<ReturnType<typeof setInterval>> = []
 afterEach(async () => {
+  for (const timer of pollers.splice(0)) clearInterval(timer)
   for (const s of sockets.splice(0)) s.destroy()
   for (const b of brokers.splice(0)) await b.stop()
 })
@@ -119,10 +115,9 @@ async function startTlsHub(): Promise<TlsHub> {
   const ca = await generateMeshCa()
   const leaf = await issueMeshLeafForNode(ca, 'hub')
   const crl = new MeshCrl()
-  const tlsPort = await freePort()
   const tx = new TlsTcpTransporter({
-    port: await freePort(),
-    tlsPort,
+    port: 0,
+    tlsPort: 0,
     hubTlsOnly: true,
     udpDiscovery: false,
     crl,
@@ -141,7 +136,18 @@ async function startTlsHub(): Promise<TlsHub> {
   })
   brokers.push(broker)
   await broker.start()
-  return { tx, broker, ca, crl, tlsPort }
+  return {
+    tx,
+    broker,
+    ca,
+    crl,
+    tlsPort: boundPort(tx.tlsListeningPort(), 'mesh TLS port'),
+  }
+}
+
+interface MeshLeafPem {
+  readonly certPem: string
+  readonly keyPem: string
 }
 
 interface Dialled {
@@ -149,23 +155,57 @@ interface Dialled {
   readonly closed: Promise<void>
 }
 
-function dial(hub: TlsHub, leaf: { certPem: string; keyPem: string }): Promise<Dialled> {
+type DialOutcome = 'admitted' | 'refused'
+
+const PEER_POLL_MS = 25
+
+function dial(hub: TlsHub, leaf: MeshLeafPem): Promise<Dialled> {
+  const socket = tls.connect({
+    host: '127.0.0.1',
+    port: hub.tlsPort,
+    key: leaf.keyPem,
+    cert: leaf.certPem,
+    ca: [hub.ca.certPem],
+    minVersion: 'TLSv1.3',
+    checkServerIdentity: () => undefined,
+  })
+  sockets.push(socket)
+  const closed = new Promise<void>((done) => {
+    socket.once('close', () => done())
+  })
   return new Promise((resolve) => {
-    const socket = tls.connect(
-      {
-        host: '127.0.0.1',
-        port: hub.tlsPort,
-        key: leaf.keyPem,
-        cert: leaf.certPem,
-        ca: [hub.ca.certPem],
-        minVersion: 'TLSv1.3',
-        checkServerIdentity: () => undefined,
-      },
-      () => setTimeout(() => resolve({ socket, closed }), 150),
-    )
-    sockets.push(socket)
-    const closed = new Promise<void>((done) => socket.once('close', () => done()))
-    socket.on('error', () => setTimeout(() => resolve({ socket, closed }), 150))
+    let settled = false
+    const finish = (): void => {
+      if (settled) return
+      settled = true
+      resolve({ socket, closed })
+    }
+    socket.once('secureConnect', finish)
+    socket.once('error', finish)
+  })
+}
+
+/** Admitted once the handshake is recorded and the socket is still up; refused once it closes. */
+function dialOutcome(hub: TlsHub, dialled: Dialled, nodeId: string): Promise<DialOutcome> {
+  return new Promise((resolve) => {
+    let settled = false
+    const finish = (outcome: DialOutcome): void => {
+      if (settled) return
+      settled = true
+      clearInterval(timer)
+      resolve(outcome)
+    }
+    const look = (): void => {
+      if (dialled.socket.destroyed) {
+        finish('refused')
+        return
+      }
+      if (hub.tx.verifiedPeer(nodeId) !== undefined) finish('admitted')
+    }
+    const timer = setInterval(look, PEER_POLL_MS)
+    pollers.push(timer)
+    dialled.closed.then(() => finish('refused'))
+    look()
   })
 }
 
@@ -174,16 +214,27 @@ const BUDGET_MS = 20_000
 describe('forgetting an ONLINE node over the real mutual-TLS transport', {
   timeout: BUDGET_MS,
 }, () => {
+  let hub: TlsHub | undefined
+
+  beforeEach(async () => {
+    hub = await startTlsHub()
+  }, BUDGET_MS)
+
+  function requireHub(): TlsHub {
+    if (hub === undefined) throw new Error('tls hub was not started')
+    return hub
+  }
+
   it('revokes, cuts the live socket, and the revoked leaf cannot reconnect', async () => {
-    const hub = await startTlsHub()
+    const started = requireHub()
     const registry = new MeshCertificateRegistry(memoryStore())
-    const leaf = await issueMeshLeafForNode(hub.ca, 'agent-a')
+    const leaf = await issueMeshLeafForNode(started.ca, 'agent-a')
     await registry.recordIssued('agent-a', leaf.certPem, 'pairing')
 
-    const live = await dial(hub, leaf)
-    expect(hub.tx.verifiedPeer('agent-a')).toBeDefined()
+    const live = await dial(started, leaf)
+    expect(await dialOutcome(started, live, 'agent-a')).toBe('admitted')
     // The node is ONLINE in the hub's Moleculer catalog, as a registered agent is.
-    hub.broker.registry.nodes.processNodeInfo({
+    started.broker.registry.nodes.processNodeInfo({
       sender: 'agent-a',
       services: [],
       config: {},
@@ -194,20 +245,20 @@ describe('forgetting an ONLINE node over the real mutual-TLS transport', {
       seq: 1,
       metadata: {},
     })
-    expect(hub.broker.registry.getNodeList({ onlyAvailable: true }).map((n) => n.id)).toContain(
+    expect(started.broker.registry.getNodeList({ onlyAvailable: true }).map((n) => n.id)).toContain(
       'agent-a',
     )
     expect(live.socket.destroyed).toBe(false)
 
-    const service = serviceFor(hub.broker)
+    const service = serviceFor(started.broker)
     service.setNodeCertificateRevoker(
       createForgottenNodeRevoker({
         logger: silent,
         registry: () => registry,
-        crl: () => hub.crl,
+        crl: () => started.crl,
         peers: {
-          peerLeaf: (nodeId) => hub.tx.peerLeaf(nodeId),
-          dropPeer: (nodeId) => hub.tx.dropPeer(nodeId),
+          peerLeaf: (nodeId) => started.tx.peerLeaf(nodeId),
+          dropPeer: (nodeId) => started.tx.dropPeer(nodeId),
         },
       }),
     )
@@ -220,21 +271,23 @@ describe('forgetting an ONLINE node over the real mutual-TLS transport', {
     expect(result.stillListed).toBe(false)
     await live.closed
     expect(live.socket.destroyed).toBe(true)
-    expect(hub.tx.verifiedPeer('agent-a')).toBeUndefined()
+    expect(started.tx.verifiedPeer('agent-a')).toBeUndefined()
 
     // The same leaf, dialled again, is refused.
-    const again = await dial(hub, leaf)
-    expect(hub.tx.verifiedPeer('agent-a')).toBeUndefined()
-    await again.closed
+    const again = await dial(started, leaf)
+    expect(await dialOutcome(started, again, 'agent-a')).toBe('refused')
+    expect(started.tx.verifiedPeer('agent-a')).toBeUndefined()
   })
 
   it('without the revocation the cut socket would be re-admitted - the CRL is what stops the agent', async () => {
-    const hub = await startTlsHub()
-    const leaf = await issueMeshLeafForNode(hub.ca, 'agent-a')
-    await dial(hub, leaf)
-    expect(hub.tx.dropPeer('agent-a')).toBe(1)
-    await dial(hub, leaf)
-    expect(hub.tx.verifiedPeer('agent-a')).toBeDefined()
+    const started = requireHub()
+    const leaf = await issueMeshLeafForNode(started.ca, 'agent-a')
+    const live = await dial(started, leaf)
+    expect(await dialOutcome(started, live, 'agent-a')).toBe('admitted')
+    expect(started.tx.dropPeer('agent-a')).toBe(1)
+    await live.closed
+    const again = await dial(started, leaf)
+    expect(await dialOutcome(started, again, 'agent-a')).toBe('admitted')
   })
 })
 
