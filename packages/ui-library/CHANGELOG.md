@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.435] - 2026-11-13
+
 ### Changed
 
 - A switch with the role switch-light gets the light card (bulb and glow, no slider) and a bulb icon

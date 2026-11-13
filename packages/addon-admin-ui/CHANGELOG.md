@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.655] - 2026-11-13
+
 ### Changed
 
 - Customize offers the switch role On/off light (switch-light) for a relay that drives a lamp

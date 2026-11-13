@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.201] - 2026-11-13
+
 ### Changed
 
 - A switch with the role switch-light is published to HomeKit as an on/off Lightbulb

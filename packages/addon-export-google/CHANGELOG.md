@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.134] - 2026-11-13
+
 ### Changed
 
 - A switch is exported by its sub-role: outlet as OUTLET, switch-light as LIGHT, switch-fan as FAN, switch-heater as HEATER (on/off only).
