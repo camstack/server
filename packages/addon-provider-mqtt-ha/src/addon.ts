@@ -25,6 +25,7 @@ import {
   mqttHaConnectionsEntryKind,
 } from './mqtt-ha-instances.js'
 import { buildMqttHaAdoptionProvider } from './mqtt-ha-adoption-provider.js'
+import { MQTT_HA_DEVICE_TYPES } from './mqtt-ha-device-types.js'
 import { buildMqttHaDeviceStableId, buildMqttHaStableId } from './mqtt-ha-discovery-parser.js'
 import { MqttHaDiscoveryStore } from './mqtt-ha-discovery-store.js'
 import {
@@ -47,15 +48,6 @@ type MqttHaProviderConfig = Record<string, never>
  * The brokers this addon connects to are the MQTT Broker addon's.
  */
 const MQTT_BROKER_ADDON_ID = 'mqtt-broker'
-
-const MQTT_HA_DEVICE_TYPES: readonly DeviceType[] = [
-  DeviceType.Switch,
-  DeviceType.Light,
-  DeviceType.Sensor,
-  DeviceType.Climate,
-  DeviceType.EventEmitter,
-  DeviceType.Container,
-]
 
 /**
  * MQTT Home Assistant discovery IMPORT addon. Subscribes to

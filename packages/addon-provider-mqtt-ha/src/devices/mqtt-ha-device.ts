@@ -704,7 +704,12 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
 
   private registerIrTransmitter(): void {
     const match = matchIrProfile([...this.model.entities.values()])
-    if (match === null) return
+    if (match === null) {
+      this.ctx.logger.warn('ir-transmitter not registered: no entity set matches an IR profile', {
+        tags: { deviceId: this.id },
+      })
+      return
+    }
     const bridge = new MqttHaIrBridge({
       match,
       deviceName: this.name,

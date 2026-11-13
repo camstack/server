@@ -4,6 +4,7 @@ import { parseDiscoveryConfigPayload } from '../mqtt-ha-discovery-parser.js'
 import type { MqttHaDiscoveredEntity } from '../mqtt-ha-discovery-types.js'
 import { groupEntitiesByDevice } from '../mqtt-ha-device-grouping.js'
 import { planMqttHaDevice } from '../mqtt-ha-domain-mapping.js'
+import { MQTT_HA_DEVICE_TYPES } from '../mqtt-ha-device-types.js'
 import { planMqttHaContainer } from '../mqtt-ha-container-plan.js'
 import { adoptableMqttHaDevices, buildMqttHaDeviceCandidate } from '../mqtt-ha-discovery.js'
 import {
@@ -264,6 +265,11 @@ describe('IR blaster profile', () => {
     expect(plan.deviceType).toBe(DeviceType.Generic)
     expect(plan.capabilities).toEqual(['ir-transmitter'])
     expect(plan.members).toHaveLength(3)
+  })
+
+  it('the IR blaster type has a device class, so it survives a runner restart', () => {
+    const { plan } = planOf(irBlasterMessages())
+    expect(MQTT_HA_DEVICE_TYPES).toContain(plan.deviceType)
   })
 
   it('without origin the device is not an ir-transmitter', () => {

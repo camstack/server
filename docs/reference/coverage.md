@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**249 units · 8616 source files · 242 units claimed by at least one document (8585 files).**
+**249 units · 8617 source files · 242 units claimed by at least one document (8586 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -77,12 +77,12 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-notifiers` | 26 | `notification-center` | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md`, +1 more, 1 ADR | 2026-11-12 |
 | `packages/addon-provider-velux` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-11-08 |
 | `packages/addon-export-alexa/src/endpoints` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +14 more, 2 ADRs | 2026-08-26 |
+| `packages/addon-provider-mqtt-ha` | 24 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/addon` | 24 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1013-one-instance-model.md`, `architecture/secrets-keychain.md`, +17 more, 1 ADR | 2026-10-18 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |
 | `packages/addon-export-google` | 23 | `ecosystem-exports` | `addons/addon-export-google.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-google-home-camera-streaming.md` _(covers)_, +5 more | 2026-08-28 |
 | `packages/addon-provider-ecowitt` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-homematic` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-11-08 |
-| `packages/addon-provider-mqtt-ha` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-dreo` | 22 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-11-08 |
 | `packages/addon-terminal` | 22 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-07-26-terminal-session-design.md`, +1 more, 2 ADRs | 2026-10-03 |
 | `packages/types/src/utils` | 22 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, +2 more, 2 ADRs | 2026-08-26 |

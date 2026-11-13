@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An IR blaster adopted from MQTT discovery keeps working after the addon restarts (it was skipped on restore, so every remote press failed).
+
 ## [0.1.48] - 2026-11-12
 
 ### Changed
