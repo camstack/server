@@ -20,6 +20,16 @@ import type { HmValue } from 'nodehomematic'
 /** Local mirror of the library's non-exported `ClimateMode` union. */
 export type HmClimateMode = 'auto' | 'heat' | 'off'
 
+/** HmIP OFF is MANU with the CCU off temperature ({@link HM_OFF_SETPOINT_C}). */
+export const HM_OFF_SETPOINT_C = 4.5
+
+/** When waking from OFF with no remembered target, match the library fallback. */
+export const HM_DEFAULT_RESTORE_TARGET_C = 21
+
+export function isHmOffSetpoint(target: number | null): boolean {
+  return target !== null && target <= HM_OFF_SETPOINT_C
+}
+
 /** HmIP `SET_POINT_MODE` ENUM index → library climate mode. Numeric-arm
  *  fallback only (see {@link fromHmSetPointMode}) — the wire index, used
  *  when the value list did not resolve. `CONTROL_MODE` is write-only on
@@ -255,6 +265,12 @@ export function decodeLock(
  * (current °C), HUMIDITY (%), SET_POINT_MODE (ENUM, readable mode),
  * BOOST_MODE (bool). `CONTROL_MODE` is write-only on HmIP and ignored here.
  */
+function modeWithHmOffTarget(previous: ClimateControlStatus, target: number): HvacMode {
+  if (isHmOffSetpoint(target)) return 'off'
+  if (previous.mode === 'off') return previous.lastActiveMode ?? 'heat'
+  return previous.mode
+}
+
 export function decodeClimate(
   previous: ClimateControlStatus,
   parameter: string,
@@ -262,7 +278,12 @@ export function decodeClimate(
   now: number,
 ): ClimateControlStatus | null {
   if (parameter === 'SET_POINT_TEMPERATURE' && typeof value === 'number') {
-    return { ...previous, target: value, lastFetchedAt: now }
+    return {
+      ...previous,
+      target: value,
+      mode: modeWithHmOffTarget(previous, value),
+      lastFetchedAt: now,
+    }
   }
   if (parameter === 'ACTUAL_TEMPERATURE' && typeof value === 'number') {
     return { ...previous, currentTemp: value, lastFetchedAt: now }
@@ -271,6 +292,9 @@ export function decodeClimate(
     return { ...previous, currentHumidity: value, lastFetchedAt: now }
   }
   if (parameter === 'SET_POINT_MODE') {
+    if (isHmOffSetpoint(previous.target)) {
+      return { ...previous, mode: 'off', lastFetchedAt: now }
+    }
     const mode = fromHmSetPointMode(value)
     if (mode === null) return null
     return { ...previous, mode, lastFetchedAt: now }

@@ -15,7 +15,15 @@ import {
 } from '@camstack/types'
 import type { HmValue, ValueChangedEvent } from 'nodehomematic'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
-import { decodeClimate, decodeCover, decodeLock, toHmClimateMode } from '../homematic-decode.js'
+import {
+  HM_DEFAULT_RESTORE_TARGET_C,
+  HM_OFF_SETPOINT_C,
+  decodeClimate,
+  decodeCover,
+  decodeLock,
+  isHmOffSetpoint,
+  toHmClimateMode,
+} from '../homematic-decode.js'
 import { COLD_CLIMATE, COLD_COVER, COLD_LOCK, COLD_SWITCH } from './hm-cold-start.js'
 import { changeStamp, stampForOrigin, type HmValueOrigin } from './hm-change-stamp.js'
 
@@ -43,6 +51,8 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
   private readonly kind: HmActuatorConfig['kind']
   /** The actuator cap name actually registered (drives decode routing). */
   private registeredCap: string | null = null
+  /** Last setpoint above {@link HM_OFF_SETPOINT_C}; HmIP OFF leaves target at 4.5. */
+  private climateRestoreTargetC: number | null = null
 
   constructor(ctx: DeviceContext) {
     super(ctx, hmActuatorSchema)
@@ -152,9 +162,23 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       getStatus: async () =>
         this.runtimeState.getCapState<ClimateControlStatus>('climate-control') ?? COLD_CLIMATE,
       setMode: async ({ mode }) => {
-        await this.requireFacade().climateSetMode(this.address, channel, toHmClimateMode(mode))
+        const facade = this.requireFacade()
+        const prev =
+          this.runtimeState.getCapState<ClimateControlStatus>('climate-control') ?? COLD_CLIMATE
+        const hmMode = toHmClimateMode(mode)
+        if (hmMode === 'off' && prev.target !== null && prev.target > HM_OFF_SETPOINT_C) {
+          this.climateRestoreTargetC = prev.target
+        }
+        await facade.climateSetMode(this.address, channel, hmMode)
+        if (hmMode !== 'off' && (prev.mode === 'off' || isHmOffSetpoint(prev.target))) {
+          const restore = this.climateRestoreTargetC ?? HM_DEFAULT_RESTORE_TARGET_C
+          await facade.climateSetTemperature(this.address, channel, restore)
+        }
       },
       setTarget: async ({ target }) => {
+        if (target > HM_OFF_SETPOINT_C) {
+          this.climateRestoreTargetC = target
+        }
         await this.requireFacade().climateSetTemperature(this.address, channel, target)
       },
       setPreset: async ({ preset }) => {
@@ -192,7 +216,12 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       const prev =
         this.runtimeState.getCapState<ClimateControlStatus>('climate-control') ?? COLD_CLIMATE
       const next = decodeClimate(prev, parameter, value, now)
-      if (next) this.runtimeState.setCapState('climate-control', next)
+      if (next) {
+        if (next.target !== null && next.target > HM_OFF_SETPOINT_C) {
+          this.climateRestoreTargetC = next.target
+        }
+        this.runtimeState.setCapState('climate-control', next)
+      }
     }
   }
 

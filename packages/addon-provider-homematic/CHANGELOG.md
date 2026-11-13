@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Homematic thermostats show the CCU's real mode (manual vs auto) instead of always auto
+- Homematic climate OFF sticks: decode 4.5°C as off; restore setpoint when heating again
 
 ## [1.2.193] - 2026-11-13
 

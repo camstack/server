@@ -224,6 +224,23 @@ describe('decodeClimate', () => {
     expect(decodeClimate(CLIMATE, 'SET_POINT_TEMPERATURE', 21.5, 7)?.target).toBe(21.5)
   })
 
+  it('HmIP OFF setpoint yields mode off regardless of prior mode', () => {
+    const off = decodeClimate(
+      { ...CLIMATE, mode: 'heat', target: 21, lastActiveMode: 'heat' },
+      'SET_POINT_TEMPERATURE',
+      4.5,
+      7,
+    )
+    expect(off?.target).toBe(4.5)
+    expect(off?.mode).toBe('off')
+  })
+
+  it('SET_POINT_MODE MANU at OFF temperature stays mode off', () => {
+    const atOff = { ...CLIMATE, mode: 'off' as const, target: 4.5 }
+    expect(decodeClimate(atOff, 'SET_POINT_MODE', 'MANU', 7)?.mode).toBe('off')
+    expect(decodeClimate(atOff, 'SET_POINT_MODE', 1, 7)?.mode).toBe('off')
+  })
+
   it('decodes ACTUAL_TEMPERATURE into currentTemp', () => {
     expect(decodeClimate(CLIMATE, 'ACTUAL_TEMPERATURE', 19.2, 7)?.currentTemp).toBe(19.2)
   })
