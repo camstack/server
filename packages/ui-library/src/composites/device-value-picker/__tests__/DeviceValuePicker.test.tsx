@@ -81,6 +81,7 @@ const state = {
   fetchNextPage: vi.fn(),
   refetch: vi.fn(),
   hasNextPage: false,
+  resolveByIds: false,
   lastQuery: undefined as unknown,
 }
 
@@ -106,11 +107,24 @@ vi.mock('../../../trpc-react', () => ({
   },
 }))
 vi.mock('../../../generated/system-hooks', () => ({
-  useDeviceManagerSearch: () => ({ data: state.resolved.data, isError: false, isPending: false }),
+  useDeviceManagerSearch: (input: { ids?: readonly number[] }) => {
+    const all = state.resolved.data
+    const data =
+      all === undefined || !state.resolveByIds
+        ? all
+        : {
+            ...all,
+            items: (input.ids ?? [])
+              .map((id) => all.items.find((i) => i.id === id))
+              .filter((i): i is DeviceSearchItem => i !== undefined),
+          }
+    return { data, isError: false, isPending: false }
+  },
 }))
 
 const { DeviceValuePicker } = await import('../DeviceValuePicker')
 const { DeviceSelectFormField } = await import('../device-value-form-fields')
+const { DeviceFleetProvider } = await import('../../device-name/device-fleet')
 
 const requires = { caps: ['temperature-sensor'] }
 
@@ -118,6 +132,7 @@ beforeEach(() => {
   state.list = { data: result([cucina, stazione]), isError: false, isPending: false }
   state.resolved = { data: undefined }
   state.hasNextPage = false
+  state.resolveByIds = false
   state.fetchNextPage.mockClear()
   state.refetch.mockClear()
   window.localStorage.clear()
@@ -226,7 +241,7 @@ describe('DeviceValuePicker', () => {
   })
 
   it('renders a picked value as device › value with its reading, never the location', () => {
-    state.resolved = { data: result([stazione]) }
+    state.resolved = { data: result([stazione, cucina]) }
     render(
       <DeviceValuePicker
         requires={requires}
@@ -242,6 +257,72 @@ describe('DeviceValuePicker', () => {
     const many = [1, 2, 3, 4, 5, 6, 7].map((n) => ({ deviceId: n }))
     render(<DeviceValuePicker multiple value={many} onChange={vi.fn()} />)
     expect(screen.getByText('+2')).toBeTruthy()
+  })
+})
+
+describe('device-picker UX', () => {
+  const fleetRow = (id: number, name: string, parentDeviceId: number | null) => ({
+    id,
+    name,
+    type: 'sensor',
+    stableId: `s${String(id)}`,
+    parentDeviceId,
+  })
+
+  it('shows the name of the parent device on a row whose device has one', () => {
+    render(
+      <DeviceFleetProvider devices={[fleetRow(1, 'Cucina', 10), fleetRow(10, 'Living room hub', null)]}>
+        <DeviceValuePicker multiple requires={requires} value={[]} onChange={vi.fn()} />
+      </DeviceFleetProvider>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /add device/i }))
+    const row = screen.getByRole('option', { name: /Cucina/ })
+    expect(row.textContent).toContain('Living room hub')
+    expect(screen.getByRole('option', { name: /Stazione meteo/ }).textContent).not.toContain('hub')
+  })
+
+  it('shows no parent while the fleet has not answered (D315)', () => {
+    render(<DeviceValuePicker multiple requires={requires} value={[]} onChange={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /add device/i }))
+    expect(screen.getByRole('option', { name: /Cucina/ }).textContent).not.toContain('hub')
+  })
+
+  it('keeps the visible Recently used order while the picker is open and stores the pick', () => {
+    window.localStorage.setItem('camstack.deviceValuePicker.recent.k', JSON.stringify([2]))
+    state.resolved = { data: result([stazione, cucina]) }
+    state.resolveByIds = true
+    render(
+      <DeviceValuePicker multiple requires={requires} recentKey="k" value={[]} onChange={vi.fn()} />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /add device/i }))
+    const recentNames = () => {
+      const heading = screen.getByText('Recently used')
+      return Array.from(heading.parentElement?.querySelectorAll('[role=option]') ?? []).map(
+        (o) => o.textContent ?? '',
+      )
+    }
+    expect(recentNames()).toHaveLength(1)
+    fireEvent.click(screen.getByRole('checkbox', { name: /Cucina/ }))
+    expect(recentNames()).toHaveLength(1)
+    expect(recentNames()[0]).toContain('Stazione meteo')
+    expect(window.localStorage.getItem('camstack.deviceValuePicker.recent.k')).toBe('[1,2]')
+  })
+
+  it('offers the stored recents again on the next open', () => {
+    window.localStorage.setItem('camstack.deviceValuePicker.recent.k', JSON.stringify([2]))
+    state.resolved = { data: result([stazione, cucina]) }
+    state.resolveByIds = true
+    render(
+      <DeviceValuePicker multiple requires={requires} recentKey="k" value={[]} onChange={vi.fn()} />,
+    )
+    const trigger = screen.getByRole('button', { name: /add device/i })
+    fireEvent.click(trigger)
+    fireEvent.click(screen.getByRole('checkbox', { name: /Cucina/ }))
+    fireEvent.click(trigger)
+    fireEvent.click(trigger)
+    expect(
+      screen.getByText('Recently used').parentElement?.querySelectorAll('[role=option]'),
+    ).toHaveLength(2)
   })
 })
 

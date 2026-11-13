@@ -84,7 +84,7 @@ export function DeviceValueRail({
   return (
     <nav
       aria-label={t('uiLibrary.deviceValuePicker.filters', 'Filters')}
-      className="flex shrink-0 flex-col gap-0.5 border-b border-border p-2 text-xs sm:w-44 sm:border-b-0 sm:border-r"
+      className="flex shrink-0 flex-col gap-0.5 border-b border-border p-2 text-xs sm:w-52 sm:border-b-0 sm:border-r"
     >
       {views.map((view) => {
         const isOpen = open === view.key

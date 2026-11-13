@@ -106,9 +106,18 @@ function describeLine(d: PickedDescription, t: ReturnType<typeof useUiText>): st
  */
 export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
   const t = useUiText()
-  const [open, setOpen] = useState(false)
+  const [open, setOpenState] = useState(false)
   const [chipsExpanded, setChipsExpanded] = useState(false)
   const recents = useRecentDevices(props.recentKey)
+  const { refresh: refreshRecents } = recents
+  // The recent list is captured when the popover OPENS and stays put while it is open.
+  const setOpen = useCallback(
+    (next: boolean) => {
+      if (next) refreshRecents()
+      setOpenState(next)
+    },
+    [refreshRecents],
+  )
   const kind: PickKind = props.pick ?? (props.requires === undefined ? 'device' : 'value')
 
   const pickedList: readonly PickedValue[] = props.multiple
@@ -137,7 +146,7 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
   )
 
   const panel = (
-    <PopoverContent className="w-[min(36rem,calc(100vw-1rem))] overflow-hidden p-0">
+    <PopoverContent className="w-[min(44rem,calc(100vw-1rem))] overflow-hidden p-0">
       <DeviceValuePanel
         requires={props.requires}
         contextDeviceId={props.contextDeviceId}

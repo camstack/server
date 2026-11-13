@@ -9,6 +9,7 @@ import { Badge } from '../../primitives/badge'
 import { Checkbox } from '../../primitives/checkbox'
 import { Radio } from '../../primitives/radio'
 import { Skeleton } from '../../primitives/skeleton'
+import { useDeviceNameIndex } from '../device-name/device-fleet'
 import { ErrorBox } from '../error-box'
 import {
   isPicked,
@@ -114,6 +115,10 @@ function DeviceRow({
   showType,
 }: DeviceRowsProps & { readonly item: DeviceSearchItem; readonly showType: boolean }): JSX.Element {
   const t = useUiText()
+  const fleet = useDeviceNameIndex()
+  // Unknown until the fleet answers: no fleet, or a device it does not list, claims nothing (D315).
+  const parentId = fleet?.byId.get(item.id)?.parentDeviceId ?? null
+  const parentName = parentId === null ? null : (fleet?.byId.get(parentId)?.name ?? null)
   const mode = rowMode(item, kind)
   const disabled = !item.compatible
   const own = pickFromRow(item, kind)
@@ -122,7 +127,15 @@ function DeviceRow({
   const body: ReactNode = (
     <>
       <span className="min-w-0 flex-1">
-        <span className="block truncate">{item.name}</span>
+        <span className="block truncate">
+          {item.name}
+          {parentName !== null && (
+            <span className="text-foreground-muted" data-testid="dvp-parent">
+              {' · '}
+              {parentName}
+            </span>
+          )}
+        </span>
         {showType && <span className={SUB}>{humanizeIdentifier(item.type)}</span>}
       </span>
       {item.online === false && <OfflineBadge />}

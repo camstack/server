@@ -2,6 +2,7 @@ import type { DeviceSearchRequires } from '@camstack/types'
 import { Search } from 'lucide-react'
 import { type JSX, type UIEvent, useMemo, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
+import { cn } from '../../lib/cn'
 import { capabilityListLabel } from '../../lib/capability-label'
 import { Button } from '../../primitives/button'
 import { Skeleton } from '../../primitives/skeleton'
@@ -112,12 +113,15 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
 
   return (
     <div data-dvp-panel="" className="flex max-h-[min(70vh,34rem)] min-h-0 flex-col sm:flex-row">
-      {railOpen && first !== undefined && (
-        <DeviceValueRail
-          facets={first.facets}
-          selection={facets}
-          onToggle={(key, value) => setFacets((f) => toggleFacet(f, key, value))}
-        />
+      {first !== undefined && (
+        // Desktop: the filter rail is always there. Phone: it opens with "Browse all…".
+        <div className={cn('flex min-h-0 flex-col sm:contents', !railOpen && 'hidden')}>
+          <DeviceValueRail
+            facets={first.facets}
+            selection={facets}
+            onToggle={(key, value) => setFacets((f) => toggleFacet(f, key, value))}
+          />
+        </div>
       )}
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="flex flex-col gap-1.5 border-b border-border p-2">
@@ -223,7 +227,7 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
           )}
         </div>
         {!railOpen && (
-          <div className="border-t border-border p-1.5">
+          <div className="border-t border-border p-1.5 sm:hidden">
             <Button variant="ghost" size="sm" onClick={() => setRailOpen(true)}>
               {t('uiLibrary.deviceValuePicker.browseAll', 'Browse all…')}
             </Button>
