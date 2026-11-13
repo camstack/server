@@ -2356,6 +2356,14 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'mapping as the status, which the export does not have yet (D1026).',
   },
   {
+    cap: 'energy-system',
+    reason:
+      'An aggregate of readings the system already publishes one by one: every value ' +
+      'it carries is also a sensor child of the same installation (power, energy, ' +
+      'state of charge), which the export maps. Exporting it again would duplicate ' +
+      'each entity (#513).',
+  },
+  {
     cap: 'do-not-disturb',
     reason:
       'A vendor switch of a speaker, provided so far only by an imported Echo: its ' +

@@ -62,6 +62,9 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
   'group-commands': 'contributes',
   'group-status': 'contributes',
   'heat-pump-status': 'contributes',
+  'energy-system': {
+    none: 'drawn by the energy-system device card (the energy-flow scene), which replaces the hero on the device page',
+  },
   'heating-valve': 'contributes',
   humidifier: 'contributes',
   'humidity-sensor': 'contributes',

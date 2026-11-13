@@ -463,6 +463,7 @@
   "embeddingEncoder.encodeText": "admin",
   "embeddingEncoder.getInfo": "admin",
   "embeddingEncoder.resetFailedModels": "admin",
+  "energySystem.getStatus": "viewer",
   "enumSensor.getStatus": "viewer",
   "eventEmitter.getStatus": "viewer",
   "faceGallery.assignFace": "feature:face-assignment",

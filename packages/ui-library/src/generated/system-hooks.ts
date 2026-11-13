@@ -1289,6 +1289,9 @@ export const useDoNotDisturbGetStatus: typeof trpc.doNotDisturb.getStatus.useQue
 /** Generated alias around `trpc.doorbell.getStatus.useQuery`. */
 export const useDoorbellGetStatus: typeof trpc.doorbell.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.doorbell.getStatus.useQuery)
 
+/** Generated alias around `trpc.energySystem.getStatus.useQuery`. */
+export const useEnergySystemGetStatus: typeof trpc.energySystem.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.energySystem.getStatus.useQuery)
+
 /** Generated alias around `trpc.enumSensor.getStatus.useQuery`. */
 export const useEnumSensorGetStatus: typeof trpc.enumSensor.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.enumSensor.getStatus.useQuery)
 

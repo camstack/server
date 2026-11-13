@@ -116,6 +116,10 @@ export enum DeviceType {
    *  water, cooling, solar), its system modes and its power. One main read-only
    *  `heat-pump-status` cap carries all of it; `heat-pump-control` sets it (D1026). */
   HeatPump = 'heat-pump',
+  /** A home energy installation (any vendor): solar, grid, house, a metered heat pump
+   *  and the storage as branches of one bus. One read-only `energy-system` cap carries
+   *  every value; the storage is a field of it, never the `battery` cap (#513, #522). */
+  EnergySystem = 'energy-system',
 }
 
 export enum DeviceFeature {

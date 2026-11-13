@@ -2576,6 +2576,21 @@ export {
   type IGroupStatusProvider,
 } from './group-status.cap.js'
 export {
+  type EnergyConsumer,
+  type EnergyGrid,
+  type EnergySolar,
+  type EnergyStorage,
+  type EnergySystemStatus,
+  type IEnergySystemProvider,
+  EnergyConsumerSchema,
+  EnergyGridSchema,
+  EnergySolarSchema,
+  EnergyStorageSchema,
+  EnergySystemStatusSchema,
+  energySystemCapability,
+  energySystemSelfConsumptionPct,
+} from './energy-system.cap.js'
+export {
   type HeatPumpCircuit,
   type HeatPumpCircuitKind,
   type HeatPumpEnergy,
@@ -3617,6 +3632,7 @@ import type { groupCommandsCapability } from './group-commands.cap.js'
 import type { groupStatusCapability } from './group-status.cap.js'
 import type { heatingValveCapability } from './heating-valve.cap.js'
 import type { heatPumpStatusCapability } from './heat-pump-status.cap.js'
+import type { energySystemCapability } from './energy-system.cap.js'
 import type { heatPumpControlCapability } from './heat-pump-control.cap.js'
 import type { humidifierCapability } from './humidifier.cap.js'
 import type { humiditySensorCapability } from './humidity-sensor.cap.js'
@@ -3868,6 +3884,7 @@ type AnyCapability =
   | typeof temperatureSensorCapability
   | typeof heatingValveCapability
   | typeof heatPumpStatusCapability
+  | typeof energySystemCapability
   | typeof heatPumpControlCapability
   | typeof humiditySensorCapability
   | typeof ambientLightSensorCapability

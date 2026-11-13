@@ -28,6 +28,7 @@ import type { deviceStatusCapability } from '../capabilities/device-status.cap.j
 import type { DishwasherStatusSchema } from '../capabilities/dishwasher.cap.js'
 import type { DoNotDisturbStatusSchema } from '../capabilities/do-not-disturb.cap.js'
 import type { DoorbellStatusSchema } from '../capabilities/doorbell.cap.js'
+import type { EnergySystemStatusSchema } from '../capabilities/energy-system.cap.js'
 import type { EnumSensorStatusSchema } from '../capabilities/enum-sensor.cap.js'
 import type { EventEmitterStatusSchema } from '../capabilities/event-emitter.cap.js'
 import type { FanControlStatusSchema } from '../capabilities/fan-control.cap.js'
@@ -118,6 +119,7 @@ export type CapStatusTypeMap = {
   readonly 'dishwasher': z.infer<typeof DishwasherStatusSchema>
   readonly 'do-not-disturb': z.infer<typeof DoNotDisturbStatusSchema>
   readonly 'doorbell': z.infer<typeof DoorbellStatusSchema>
+  readonly 'energy-system': z.infer<typeof EnergySystemStatusSchema>
   readonly 'enum-sensor': z.infer<typeof EnumSensorStatusSchema>
   readonly 'event-emitter': z.infer<typeof EventEmitterStatusSchema>
   readonly 'fan-control': z.infer<typeof FanControlStatusSchema>
@@ -212,6 +214,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'dishwasher',
   'do-not-disturb',
   'doorbell',
+  'energy-system',
   'enum-sensor',
   'event-emitter',
   'fan-control',

@@ -42,6 +42,7 @@ import type { deviceTransitionsCapability } from '../capabilities/device-transit
 import type { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
 import type { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
 import type { doorbellCapability } from '../capabilities/doorbell.cap.js'
+import type { energySystemCapability } from '../capabilities/energy-system.cap.js'
 import type { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
 import type { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
 import type { fanControlCapability } from '../capabilities/fan-control.cap.js'
@@ -161,6 +162,7 @@ export interface DeviceProxyState {
   readonly dishwasher: SliceHandle<InferRuntimeState<typeof dishwasherCapability>>
   readonly doNotDisturb: SliceHandle<InferRuntimeState<typeof doNotDisturbCapability>>
   readonly doorbell: SliceHandle<InferRuntimeState<typeof doorbellCapability>>
+  readonly energySystem: SliceHandle<InferRuntimeState<typeof energySystemCapability>>
   readonly enumSensor: SliceHandle<InferRuntimeState<typeof enumSensorCapability>>
   readonly eventEmitter: SliceHandle<InferRuntimeState<typeof eventEmitterCapability>>
   readonly fanControl: SliceHandle<InferRuntimeState<typeof fanControlCapability>>
@@ -275,6 +277,7 @@ export interface DeviceProxy {
   readonly dishwasher?: InferDeviceProxyCap<typeof dishwasherCapability>
   readonly doNotDisturb?: InferDeviceProxyCap<typeof doNotDisturbCapability>
   readonly doorbell?: InferDeviceProxyCap<typeof doorbellCapability>
+  readonly energySystem?: InferDeviceProxyCap<typeof energySystemCapability>
   readonly enumSensor?: InferDeviceProxyCap<typeof enumSensorCapability>
   readonly eventEmitter?: InferDeviceProxyCap<typeof eventEmitterCapability>
   readonly fanControl?: InferDeviceProxyCap<typeof fanControlCapability>
@@ -651,6 +654,10 @@ export function createDeviceProxy(
 
   const doorbellInterface = {
     getStatus: (input?: unknown) => dispatch('doorbell', 'doorbell', 'getStatus', 'query', input),
+  }
+
+  const energySystemInterface = {
+    getStatus: (input?: unknown) => dispatch('energy-system', 'energySystem', 'getStatus', 'query', input),
   }
 
   const enumSensorInterface = {
@@ -1435,6 +1442,7 @@ export function createDeviceProxy(
       dishwasher: createSliceHandle<InferRuntimeState<typeof dishwasherCapability>>(stateSource, binding.deviceId, 'dishwasher'),
       doNotDisturb: createSliceHandle<InferRuntimeState<typeof doNotDisturbCapability>>(stateSource, binding.deviceId, 'do-not-disturb'),
       doorbell: createSliceHandle<InferRuntimeState<typeof doorbellCapability>>(stateSource, binding.deviceId, 'doorbell'),
+      energySystem: createSliceHandle<InferRuntimeState<typeof energySystemCapability>>(stateSource, binding.deviceId, 'energy-system'),
       enumSensor: createSliceHandle<InferRuntimeState<typeof enumSensorCapability>>(stateSource, binding.deviceId, 'enum-sensor'),
       eventEmitter: createSliceHandle<InferRuntimeState<typeof eventEmitterCapability>>(stateSource, binding.deviceId, 'event-emitter'),
       fanControl: createSliceHandle<InferRuntimeState<typeof fanControlCapability>>(stateSource, binding.deviceId, 'fan-control'),
@@ -1530,6 +1538,7 @@ export function createDeviceProxy(
     ...(bound('dishwasher') ? { dishwasher: dishwasherInterface } : {}),
     ...(bound('do-not-disturb') ? { doNotDisturb: doNotDisturbInterface } : {}),
     ...(bound('doorbell') ? { doorbell: doorbellInterface } : {}),
+    ...(bound('energy-system') ? { energySystem: energySystemInterface } : {}),
     ...(bound('enum-sensor') ? { enumSensor: enumSensorInterface } : {}),
     ...(bound('event-emitter') ? { eventEmitter: eventEmitterInterface } : {}),
     ...(bound('fan-control') ? { fanControl: fanControlInterface } : {}),

@@ -25,6 +25,7 @@ import { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
 import { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
 import { doorbellCapability } from '../capabilities/doorbell.cap.js'
+import { energySystemCapability } from '../capabilities/energy-system.cap.js'
 import { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
 import { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
 import { fanControlCapability } from '../capabilities/fan-control.cap.js'
@@ -120,6 +121,7 @@ export interface DeviceLocalState {
   dishwasher: InferRuntimeState<typeof dishwasherCapability>
   doNotDisturb: InferRuntimeState<typeof doNotDisturbCapability>
   doorbell: InferRuntimeState<typeof doorbellCapability>
+  energySystem: InferRuntimeState<typeof energySystemCapability>
   enumSensor: InferRuntimeState<typeof enumSensorCapability>
   eventEmitter: InferRuntimeState<typeof eventEmitterCapability>
   fanControl: InferRuntimeState<typeof fanControlCapability>
@@ -211,6 +213,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   dishwasher: dishwasherCapability,
   doNotDisturb: doNotDisturbCapability,
   doorbell: doorbellCapability,
+  energySystem: energySystemCapability,
   enumSensor: enumSensorCapability,
   eventEmitter: eventEmitterCapability,
   fanControl: fanControlCapability,
@@ -309,6 +312,7 @@ export interface CapNameToRuntimeStateMap {
   'dishwasher': InferRuntimeState<typeof dishwasherCapability>
   'do-not-disturb': InferRuntimeState<typeof doNotDisturbCapability>
   'doorbell': InferRuntimeState<typeof doorbellCapability>
+  'energy-system': InferRuntimeState<typeof energySystemCapability>
   'enum-sensor': InferRuntimeState<typeof enumSensorCapability>
   'event-emitter': InferRuntimeState<typeof eventEmitterCapability>
   'fan-control': InferRuntimeState<typeof fanControlCapability>

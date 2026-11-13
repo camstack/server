@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 44 caps with series (89 series), 37 caps answered `'none'`.
+ * 45 caps with series (103 series), 37 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -69,6 +69,22 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   },
   'do-not-disturb': {
     'enabled': { kind: 'boolean' },
+  },
+  'energy-system': {
+    'solar.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Solar power' },
+    'solar.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'Solar energy' },
+    'grid.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Grid power' },
+    'grid.importKwh': { kind: 'counter', unit: 'kWh', displayName: 'Grid import' },
+    'grid.exportKwh': { kind: 'counter', unit: 'kWh', displayName: 'Grid export' },
+    'house.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'House power' },
+    'house.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'House energy' },
+    'heatPump.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Heat pump power' },
+    'heatPump.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'Heat pump energy' },
+    'storage.stateOfChargePct': { kind: 'gauge', unit: '%', deadband: 1, displayName: 'Storage charge' },
+    'storage.storedKwh': { kind: 'gauge', unit: 'kWh', deadband: 0.05, displayName: 'Stored energy' },
+    'storage.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Storage power' },
+    'storage.chargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage charged' },
+    'storage.dischargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage discharged' },
   },
   'enum-sensor': {
     'value': { kind: 'enum', skipWhenSet: 'timestamp' },

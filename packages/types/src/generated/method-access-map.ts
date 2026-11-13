@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1485 method paths across 205 capabilities.
+ * Coverage: 1486 method paths across 206 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -486,6 +486,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'embeddingEncoder.encodeText': { capName: "embedding-encoder", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'embeddingEncoder.getInfo': { capName: "embedding-encoder", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'embeddingEncoder.resetFailedModels': { capName: "embedding-encoder", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'energySystem.getStatus': { capName: "energy-system", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'enumSensor.getStatus': { capName: "enum-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'eventEmitter.getStatus': { capName: "event-emitter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'faceGallery.assignFace': { capName: "face-gallery", capScope: "system", addonId: null, access: "create", role: "feature:face-assignment" } as const,
@@ -1581,6 +1582,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "do-not-disturb",
   "doorbell",
   "embedding-encoder",
+  "energy-system",
   "enum-sensor",
   "event-emitter",
   "face-gallery",
@@ -1754,6 +1756,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "dishwasher",
   "do-not-disturb",
   "doorbell",
+  "energy-system",
   "enum-sensor",
   "event-emitter",
   "fan-control",

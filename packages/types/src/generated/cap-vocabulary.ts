@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 205 caps (104 device, 101 system).
+ * `*.cap.ts` (D1050): 206 caps (105 device, 101 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -4345,6 +4345,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
       },
     ],
   },
+  'energy-system': { scope: 'device', noun: { en: 'Energy system', it: 'Sistema energetico' } },
   'air-quality-sensor': {
     scope: 'device',
     noun: { en: 'Air quality', it: 'Qualità dell’aria' },

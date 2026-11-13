@@ -26,6 +26,7 @@ export const DEVICE_TYPE_ICON = {
   [DeviceType.Sensor]: 'activity',
   [DeviceType.Climate]: 'thermometer',
   [DeviceType.HeatPump]: 'flame',
+  [DeviceType.EnergySystem]: 'solar-panel',
   [DeviceType.Button]: 'circle-dot',
   [DeviceType.EventEmitter]: 'zap',
   [DeviceType.Update]: 'refresh-cw',

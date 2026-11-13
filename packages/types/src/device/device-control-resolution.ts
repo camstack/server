@@ -69,6 +69,7 @@ export type DeviceControlKind =
   | 'appliance'
   | 'script'
   | 'automation'
+  | 'energy-system'
   | 'dummy'
 
 /**
@@ -83,6 +84,7 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Humidifier]: 'humidifier',
   [DeviceType.WaterHeater]: 'water-heater',
   [DeviceType.HeatPump]: 'dummy',
+  [DeviceType.EnergySystem]: 'energy-system',
   [DeviceType.Camera]: 'dummy',
   [DeviceType.Hub]: 'dummy',
   [DeviceType.Switch]: 'switch',

@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - An integration kind can declare the other function caps it serves (a Google account also sends mail) and carry its brand icon.
+- New Energy system device type and its read-only energy-system capability: solar, grid, house, heat pump and home storage on one model, with history
 
 ## [1.2.561] - 2026-11-13
 
