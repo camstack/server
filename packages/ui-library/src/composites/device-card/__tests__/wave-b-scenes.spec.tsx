@@ -225,7 +225,13 @@ describe('the media scene', () => {
       <MediaPlayerCard
         model={{
           ...speaker.model,
-          volume: { level: 32, muted: false, mutable: false, bounds: { min: 0, max: 40, step: 2 } },
+          volume: {
+            level: 32,
+            muted: false,
+            mutable: false,
+            muteReadback: false,
+            bounds: { min: 0, max: 40, step: 2 },
+          },
         }}
         actions={actions}
       />,
@@ -240,19 +246,39 @@ describe('the media scene', () => {
     expect(actions.onVolume).toHaveBeenCalledWith(20)
   })
 
-  it('a muted speaker says so on the mute key, and on the step column when the level is unknown', () => {
+  it('a speaker that reads the mute back shows it pressed on the key, and never writes a label', () => {
     const speaker = fixture(mediaFixtures(), 'media-speaker')
     render(
       <MediaPlayerCard
         model={{
           ...speaker.model,
-          volume: { level: null, muted: true, mutable: true, bounds: null },
+          volume: { level: null, muted: true, mutable: true, muteReadback: true, bounds: null },
         }}
         actions={mediaActions()}
       />,
     )
-    expect(screen.getByTestId('dc-media-volume').textContent).toContain('muted')
+    expect(screen.getByTestId('dc-media-volume').textContent).not.toMatch(/muted/i)
     expect(screen.getByTestId('dc-media-mute').getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('without readback the mute key is momentary: no pressed state, always sends mute', () => {
+    const speaker = fixture(mediaFixtures(), 'media-speaker')
+    const actions = mediaActions()
+    render(
+      <MediaPlayerCard
+        model={{
+          ...speaker.model,
+          volume: { level: null, muted: false, mutable: true, muteReadback: false, bounds: null },
+        }}
+        actions={actions}
+      />,
+    )
+    const key = screen.getByTestId('dc-media-mute')
+    expect(key.getAttribute('aria-pressed')).toBeNull()
+    fireEvent.click(key)
+    fireEvent.click(key)
+    expect(actions.onMute).toHaveBeenNthCalledWith(1, true)
+    expect(actions.onMute).toHaveBeenNthCalledWith(2, true)
   })
 })
 

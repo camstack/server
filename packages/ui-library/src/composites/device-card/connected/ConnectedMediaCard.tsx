@@ -105,7 +105,9 @@ export function ConnectedMediaCard({
             command(cap.setVolume, 'setVolume')({ volumeLevel }),
           ),
         onMute: (muted) =>
-          send({ isMuted: muted }, () => command(cap.setMute, 'setMute')({ muted })),
+          volume?.muteReadback === true
+            ? send({ isMuted: muted }, () => command(cap.setMute, 'setMute')({ muted }))
+            : void call(() => command(cap.setMute, 'setMute')({ muted })),
         onSource: (source) =>
           send({ source }, () => command(cap.selectSource, 'selectSource')({ source })),
         onSeek: (sec) => {

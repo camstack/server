@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A remote no longer assumes a mute from the last key sent; mute on an infrared TV is a momentary key
+
 ## [1.2.862] - 2026-11-13
 
 ### Changed

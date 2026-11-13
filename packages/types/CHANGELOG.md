@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A sensor that is offline now carries an empty measurement, so its card shows a dash instead of falling back to the old card; automation rows carry the enabled switch
+- A TV remote without a mute readback (infrared) offers mute as a momentary key; the muted state and label are no longer shown or kept
 
 ## [1.2.563] - 2026-11-13
 

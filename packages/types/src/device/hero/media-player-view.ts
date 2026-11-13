@@ -122,7 +122,7 @@ export interface MediaPlayerView {
   readonly muteKnown: boolean
   /** Artwork of what is playing; null when there is none. */
   readonly artworkUrl: string | null
-  /** A mute toggle with a known state. */
+  /** A mute control is offered; a toggle only when `muteKnown`, else a momentary key. */
   readonly mute: boolean
   readonly source: SourceView | null
   /** Channel up / down is offered; null when the device does not declare channel stepping. */
@@ -339,7 +339,7 @@ function deriveFromStatus(
     // a device that declares nothing but reports a mute next to a slider keeps the toggle.
     mute: has(DeviceFeature.MediaPlayerMute) || (volume === 'slider' && status.isMuted !== null),
     volumeKnown: status.volumeLevel !== null,
-    muteKnown: status.isMuted !== null,
+    muteKnown: status.isMuted !== null && !isAssumed(status, 'isMuted'),
     artworkUrl: artworkOf(status),
     source: hasSource
       ? {

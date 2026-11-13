@@ -20,7 +20,8 @@
  *    only AFTER a send succeeded, is persisted per device and never recorded
  *    in history. A toggle power code is sent only when the current state
  *    differs from the requested one; a discrete pair is always sent. A mute on
- *    a device that does not report it is sent and marked assumed.
+ *    a device that does not report it is a momentary key: sent every time, and
+ *    no mute state is kept or shown (only a native READING of it is a state).
  *  - **Sources are declared** (planning#460). `availableSources` is the
  *    operator's declared sources, never the custom buttons. A source runs its
  *    steps in order under the device's lock (no other press interleaves),
@@ -311,23 +312,22 @@ export class RemoteService implements IRemoteProvider {
   }
 
   /**
-   * What the remote ASSUMES (the last power and mute it sent), or null when it
-   * knows neither. No plug, no running-state: that is `assumedStatus`.
+   * What the remote ASSUMES (the last power and source it sent), or null when it
+   * knows neither. A mute is never assumed: without a reading it has no state. No plug, no running-state: that is `assumedStatus`.
    */
   readonly getAssumedStatus: IRemoteProvider['getAssumedStatus'] = async ({ deviceId }) => {
     const kept = await this.readAssumed(deviceId)
-    if (kept.power === null && kept.muted === null && kept.source === null) return null
+    if (kept.power === null && kept.source === null) return null
     const config = await this.deps.store.read(deviceId)
     const assumedFields: MediaPlayerAssumedField[] = []
     if (kept.power !== null) assumedFields.push('state')
-    if (kept.muted !== null) assumedFields.push('isMuted')
     if (kept.source !== null) assumedFields.push('source')
     return this.buildStatus({
       state: kept.power?.state ?? 'standby',
       assumedFields,
-      muted: kept.muted?.value ?? null,
+      muted: null,
       source: kept.source?.name ?? '',
-      changedAt: Math.max(kept.power?.at ?? 0, kept.muted?.at ?? 0, kept.source?.at ?? 0),
+      changedAt: Math.max(kept.power?.at ?? 0, kept.source?.at ?? 0),
       sources: config.sources,
     })
   }
@@ -337,7 +337,7 @@ export class RemoteService implements IRemoteProvider {
    * state. Power truth, in order: a `running-state` reading; the linked plug
    * (off is `off`, a reading; on is `standby` until a power command was sent,
    * then what the remote sent); the remote's own assumption. Mute comes from
-   * the assumption, and only while the device may be on.
+   * the native reading only; the remote never assumes it.
    */
   async assumedStatus(deviceId: number): Promise<MediaPlayerStatus | null> {
     return this.statusOf(deviceId, true)
@@ -351,17 +351,15 @@ export class RemoteService implements IRemoteProvider {
     const assumedFields: MediaPlayerAssumedField[] = truth.assumed ? ['state'] : []
     const state = truth.state
     const changedAt = truth.at
-    const mute = state === 'off' ? null : (kept.muted ?? null)
-    if (mute !== null) assumedFields.push('isMuted')
     const source = state === 'off' ? null : (kept.source ?? null)
     if (source !== null) assumedFields.push('source')
     const config = await this.deps.store.read(deviceId)
     return this.buildStatus({
       state,
       assumedFields,
-      muted: mute?.value ?? null,
+      muted: null,
       source: source?.name ?? '',
-      changedAt: Math.max(changedAt, mute?.at ?? 0, source?.at ?? 0),
+      changedAt: Math.max(changedAt, source?.at ?? 0),
       sources: config.sources,
     })
   }
@@ -454,11 +452,10 @@ export class RemoteService implements IRemoteProvider {
     return null
   }
 
-  /** The mute as a native source reads it, else as last assumed, else unknown. */
+  /** The mute as a native source READS it, else unknown: a send is never a reading. */
   private async currentMute(deviceId: number): Promise<boolean | null> {
     const reported = await this.deps.reportedStatus(deviceId)
-    if (reported !== null && reported.isMuted !== null) return reported.isMuted
-    return (await this.readAssumed(deviceId)).muted?.value ?? null
+    return reported !== null ? reported.isMuted : null
   }
 
   private async readAssumed(deviceId: number): Promise<RemoteAssumedState> {
@@ -466,9 +463,9 @@ export class RemoteService implements IRemoteProvider {
   }
 
   /**
-   * `setMute(muted)`: skipped when the mute is already known to be that value;
-   * otherwise the mute code is sent ONCE and the requested value is assumed —
-   * including when the state was unknown, which is the only way it becomes known.
+   * `setMute(muted)`: skipped when a native reading says the mute is already
+   * that value; otherwise the mute code is sent ONCE. Nothing is assumed from
+   * the send: without a reading the key is momentary and has no state.
    */
   private async setMute(
     deviceId: number,
@@ -483,16 +480,7 @@ export class RemoteService implements IRemoteProvider {
       })
       return { status: 'skipped', reason: 'already-in-state' }
     }
-    const result = await this.run(deviceId, config, role, 1)
-    if (result.status === 'sent') {
-      const kept = await this.readAssumed(deviceId)
-      await this.deps.assumptions.write(deviceId, {
-        ...kept,
-        muted: { value: muted, at: this.now() },
-      })
-      await this.refreshSlice(deviceId)
-    }
-    return result
+    return this.run(deviceId, config, role, 1)
   }
 
   /**
@@ -801,8 +789,7 @@ export class RemoteService implements IRemoteProvider {
 
   /**
    * The assumption moves only after a send landed. A bare `power` flips a KNOWN
-   * state; a bare `mute` press flips a KNOWN mute and leaves an unknown one
-   * unknown (the press alone does not say which way it went).
+   * state. A `mute` press moves nothing: the mute is never assumed.
    */
   private async moveAssumption(
     deviceId: number,
@@ -835,14 +822,6 @@ export class RemoteService implements IRemoteProvider {
       if (kept.source !== null)
         await this.deps.assumptions.write(deviceId, { ...kept, source: null })
       return
-    }
-    if (role === 'mute') {
-      const before = await this.currentMute(deviceId)
-      if (before === null) return
-      await this.deps.assumptions.write(deviceId, {
-        ...kept,
-        muted: { value: !before, at: this.now() },
-      })
     }
   }
 }

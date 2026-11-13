@@ -439,53 +439,27 @@ describe('the power source', () => {
 
 describe('mute on a device that does not report it', () => {
   const withMute = config({ bindings: { mute: ir('mute'), power: ir('pwr') } })
+  const press = { deviceId: TV, command: 'setMute', muted: true, repeat: 1 } as const
 
-  it('sends when the state is unknown and marks the field assumed', async () => {
+  it('sends the key and keeps no mute state: the key is momentary', async () => {
     const w = world(withMute, { running: true })
-    expect(
-      await w.service.sendMediaCommand({
-        deviceId: TV,
-        command: 'setMute',
-        muted: true,
-        repeat: 1,
-      }),
-    ).toMatchObject({ status: 'sent' })
-    expect(await w.service.assumedStatus(TV)).toMatchObject({
-      isMuted: true,
-      stateSource: 'assumed',
-      assumedFields: ['isMuted'],
-    })
+    expect(await w.service.sendMediaCommand(press)).toMatchObject({ status: 'sent' })
+    expect(await w.service.assumedStatus(TV)).toMatchObject({ isMuted: null })
+    expect(await w.service.getAssumedStatus({ deviceId: TV })).toBeNull()
   })
 
-  it('does not resend a mute the assumption already holds, and flips on the opposite', async () => {
+  it('sends on every press, whichever way it asks', async () => {
     const w = world(withMute, { running: true })
-    await w.service.sendMediaCommand({
-      deviceId: TV,
-      command: 'setMute',
-      muted: true,
-      repeat: 1,
+    await w.service.sendMediaCommand(press)
+    expect(await w.service.sendMediaCommand(press)).toMatchObject({ status: 'sent' })
+    expect(await w.service.sendMediaCommand({ ...press, muted: false })).toMatchObject({
+      status: 'sent',
     })
-    expect(
-      await w.service.sendMediaCommand({
-        deviceId: TV,
-        command: 'setMute',
-        muted: true,
-        repeat: 1,
-      }),
-    ).toEqual({ status: 'skipped', reason: 'already-in-state' })
-    expect(
-      await w.service.sendMediaCommand({
-        deviceId: TV,
-        command: 'setMute',
-        muted: false,
-        repeat: 1,
-      }),
-    ).toMatchObject({ status: 'sent' })
-    expect(w.calls).toHaveLength(2)
-    expect(await w.service.assumedStatus(TV)).toMatchObject({ isMuted: false })
+    expect(w.calls).toHaveLength(3)
+    expect(await w.service.assumedStatus(TV)).toMatchObject({ isMuted: null })
   })
 
-  it('a native reading of the mute outranks the assumption', async () => {
+  it('a native reading of the mute still skips a press that changes nothing', async () => {
     const reported = { ...nativeStatus('on'), isMuted: true }
     const w = world(withMute, { reported })
     expect(

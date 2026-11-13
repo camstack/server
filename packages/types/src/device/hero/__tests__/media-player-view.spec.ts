@@ -138,6 +138,19 @@ describe('controls come from what the device exposes', () => {
     ).toBe(true)
   })
 
+  it('an assumed mute is not a readback', () => {
+    const guessed = {
+      ...on,
+      isMuted: true,
+      stateSource: 'assumed' as const,
+      assumedFields: ['isMuted' as const],
+    }
+    expect(deriveMediaPlayerView(guessed, [DeviceFeature.MediaPlayerMute]).muteKnown).toBe(false)
+    expect(
+      deriveMediaPlayerView({ ...on, isMuted: true }, [DeviceFeature.MediaPlayerMute]).muteKnown,
+    ).toBe(true)
+  })
+
   it('artwork is the current media image, nothing when blank or absent', () => {
     const media = { type: 'music', title: 'Song' }
     expect(

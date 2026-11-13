@@ -745,12 +745,25 @@ function volumeControls(
       ),
     )
   }
-  if (view.mute) {
+  if (view.mute && !view.muteKnown) {
+    // No readback (an infrared set): a momentary key. It sends; no state is kept or shown.
+    controls.push({
+      kind: 'action',
+      action: action(
+        'volume.mute',
+        heroText('Mute', 'Muto'),
+        'volume-x',
+        'media-player',
+        'setMute',
+        { muted: true },
+      ),
+    })
+  } else if (view.mute) {
     controls.push({
       kind: 'toggle',
       id: 'volume.mute',
       label: heroText('Mute', 'Muto'),
-      on: view.muteKnown ? muted : null,
+      on: muted,
       turnOn: action(
         'volume.mute',
         heroText('Mute', 'Muto'),

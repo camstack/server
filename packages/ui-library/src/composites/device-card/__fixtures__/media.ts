@@ -42,6 +42,7 @@ const volume = (level: number | null, muted = false): MediaVolume => ({
   level,
   muted,
   mutable: true,
+  muteReadback: true,
   bounds: level === null ? null : DEFAULT_VOLUME_BOUNDS,
 })
 

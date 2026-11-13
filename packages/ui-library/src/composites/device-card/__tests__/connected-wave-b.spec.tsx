@@ -468,6 +468,20 @@ describe('a media player draws what it declares', () => {
     await vi.waitFor(() => expect(hub.media.setMute).toHaveBeenCalledWith({ muted: true }))
   })
 
+  it('a player that does not read the mute back: every press sends mute, nothing is kept or shown', async () => {
+    hub.mediaSlice = { ...MEDIA, isMuted: null }
+    hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerMute]
+    render(<ConnectedMediaCard deviceId={1} />)
+    const key = screen.getByTestId('dc-media-mute')
+    fireEvent.click(key)
+    await vi.waitFor(() => expect(hub.media.setMute).toHaveBeenCalledTimes(1))
+    fireEvent.click(key)
+    await vi.waitFor(() => expect(hub.media.setMute).toHaveBeenCalledTimes(2))
+    expect(hub.media.setMute.mock.calls).toEqual([[{ muted: true }], [{ muted: true }]])
+    expect(screen.getByTestId('dc-media-mute').getAttribute('aria-pressed')).toBeNull()
+    expect(document.body.textContent).not.toMatch(/muted/i)
+  })
+
   it('turns off through turnOff when power is declared', async () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerPower]

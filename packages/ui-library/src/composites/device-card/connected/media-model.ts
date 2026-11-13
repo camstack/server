@@ -68,12 +68,14 @@ export function mediaVolumeOf(
   const reports = has(features, DeviceFeature.MediaPlayerVolume)
   const steps = has(features, DeviceFeature.MediaPlayerVolumeStep)
   if (!reports && !steps) return null
+  const muteReadback = status.isMuted !== null && !status.assumedFields.includes('isMuted')
   const reported = reports && typeof status.volumeLevel === 'number' ? status.volumeLevel : null
   const bounds =
     reported !== null && options.absolute ? (options.bounds ?? DEFAULT_VOLUME_BOUNDS) : null
   return {
     level: reported,
-    muted: status.isMuted === true,
+    muted: muteReadback && status.isMuted === true,
+    muteReadback,
     mutable: has(features, DeviceFeature.MediaPlayerMute),
     bounds,
   }

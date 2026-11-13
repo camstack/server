@@ -72,8 +72,8 @@ function volumeLevel(
   return (
     <StepColumn
       testId="dc-media-volume"
-      value={v.muted ? t('uiLibrary.deviceCard.media.muted', 'muted') : v.level}
-      notes={v.muted || v.level === null ? [] : [t('uiLibrary.deviceCard.media.vol', 'vol')]}
+      value={v.level}
+      notes={v.level === null ? [] : [t('uiLibrary.deviceCard.media.vol', 'vol')]}
       up={{
         glyph: 'plus',
         label: t('uiLibrary.deviceCard.media.volumeUp', 'Volume up'),
@@ -100,13 +100,13 @@ function volumeColumn(model: MediaCardModel, actions: MediaCardActions, t: UiTex
       {v.mutable ? (
         <CardButton
           glyph="mute"
-          tone={v.muted ? 'on' : 'default'}
-          aria-pressed={v.muted}
+          tone={v.muteReadback && v.muted ? 'on' : 'default'}
+          aria-pressed={v.muteReadback ? v.muted : undefined}
           aria-label={t('uiLibrary.deviceCard.media.mute', 'Mute')}
           title={t('uiLibrary.deviceCard.media.mute', 'Mute')}
           disabled={off}
           data-testid="dc-media-mute"
-          onClick={() => actions.onMute(!v.muted)}
+          onClick={() => actions.onMute(v.muteReadback ? !v.muted : true)}
         />
       ) : null}
     </>

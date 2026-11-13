@@ -18,9 +18,15 @@ export const DEFAULT_VOLUME_BOUNDS: MediaVolumeBounds = { min: 0, max: 100, step
 export interface MediaVolume {
   /** The reported level, or null when the player does not report it (an IR amplifier). */
   readonly level: number | null
+  /** The device's READ mute; false whenever `muteReadback` is false. */
   readonly muted: boolean
   /** The device binds a mute command. */
   readonly mutable: boolean
+  /**
+   * The provider reads the mute back. Without it (an infrared TV) mute is a
+   * momentary key: it sends, and no on / off state is kept or drawn.
+   */
+  readonly muteReadback: boolean
   /**
    * The slider's scale when the player reports a level and implements an
    * absolute set. Null: the − / + keys (the level is unknown, or only

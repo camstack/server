@@ -76,3 +76,29 @@ describe('media player transport extras', () => {
     expect(m.facts.some((f) => f.id === 'progress')).toBe(false)
   })
 })
+
+describe('media player mute', () => {
+  const MUTE = [DeviceFeature.MediaPlayerMute]
+  const muteOf = (slice: MediaPlayerStatus) =>
+    rowOf(model(MUTE, slice), 'volume').controls.find(
+      (c) =>
+        (c.kind === 'toggle' && c.id === 'volume.mute') ||
+        (c.kind === 'action' && c.action.id === 'volume.mute'),
+    )
+
+  it('a provider that reads the mute back offers a toggle that shows its state', () => {
+    const control = muteOf({ ...PLAYING, isMuted: true })
+    expect(control).toMatchObject({ kind: 'toggle', on: true })
+  })
+
+  it('an infrared player (mute only assumed, or unknown) offers a momentary key with no state', () => {
+    const guessed = muteOf({
+      ...PLAYING,
+      isMuted: true,
+      stateSource: 'assumed',
+      assumedFields: ['isMuted'],
+    })
+    expect(guessed).toMatchObject({ kind: 'action' })
+    expect(muteOf({ ...PLAYING, isMuted: null })).toMatchObject({ kind: 'action' })
+  })
+})
