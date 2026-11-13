@@ -40,6 +40,7 @@ import {
   EnergyCard,
   type EnergyCardActions,
   IrTransmitterCard,
+  SensorCard,
   type IrTransmitterCardActions,
 } from '@camstack/ui-library'
 import { applianceFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/appliance'
@@ -58,6 +59,7 @@ import { plugFixtures } from '../../../../packages/ui-library/src/composites/dev
 import { robotFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/robot'
 import { waterHeaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/water-heater'
 import { irFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/ir'
+import { sensorFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/sensor'
 import { WAVE_D_TYPES, WaveDScene } from './device-card-preview-wave-d'
 import { WAVE_E_TYPES, WaveEScene } from './device-card-preview-wave-e'
 
@@ -378,6 +380,12 @@ export function DeviceCardPreview(): ReactElement {
           irFixtures().map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
               <IrTransmitterCard model={f.model} actions={IR_ACTIONS} orientation={f.orientation} />
+            </Cell>
+          ))
+        ) : type === 'sensor' ? (
+          sensorFixtures().map((f) => (
+            <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+              <SensorCard model={f.model} orientation={f.orientation} />
             </Cell>
           ))
         ) : WAVE_D_TYPES.has(type) ? (

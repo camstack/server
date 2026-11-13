@@ -8,7 +8,8 @@ import { render, screen } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import { UnitPreferencesProvider } from '../../../contexts/unit-preferences'
 import { measurementText } from '../measurement-display'
-import { MeasurementScene, measurementVisual } from '../MeasurementScene'
+import { measurementVisual } from '../../device-card/scenes/sensor/model'
+import { MeasurementScene } from '../MeasurementScene'
 
 describe('the scene a measurement moves with', () => {
   it('heat when hot, flakes when cold, still when mild', () => {
@@ -45,7 +46,7 @@ describe('the card draws the reading as the operator displays it', () => {
       </UnitPreferencesProvider>,
     )
     expect(
-      Number.parseFloat(screen.getByTestId('measurement-value').textContent ?? ''),
+      Number.parseFloat(screen.getByTestId('dc-reading-value').textContent ?? ''),
     ).toBeCloseTo(118.4, 0)
     expect(screen.getByText('°F')).toBeTruthy()
   })

@@ -34,8 +34,12 @@ import {
 } from '../device-controls/control-panel'
 import { useAlertIfAvailable } from '../confirm-dialog'
 import { callHeroAction } from '../hero-model/call-hero-action'
-import { heroLang, type HeroLang } from '../hero-model/hero-model-view'
-import { type ReadingDisplaySubject, useMeasurementText } from '../hero-model/measurement-display'
+import type { HeroLang } from '../hero-model/hero-model-view'
+import {
+  type ReadingDisplaySubject,
+  useHeroLang,
+  useMeasurementText,
+} from '../hero-model/measurement-display'
 import { TONE_CLASS } from '../hero-scene/scene-map'
 import type { DeviceItemDevice } from './helpers'
 import { useRowModel } from './row-models-context'
@@ -43,14 +47,6 @@ import { useRowModel } from './row-models-context'
 /** What of a row's device the row value reads. */
 export type RowValueDevice = Pick<DeviceItemDevice, 'id' | 'role' | 'display' | 'sourceInfo'>
 
-/**
- * The host's language as the model's `{ en, it }` texts are picked in. A row has no
- * `lang` prop of its own: the ui-text catalogue names its language (`uiLibrary.language`).
- */
-function useRowLang(): HeroLang {
-  const t = useUiText()
-  return heroLang(t('uiLibrary.language', 'en'))
-}
 
 export interface RowMeasurementProps {
   readonly measurement: HeroMeasurement
@@ -83,7 +79,7 @@ export interface ModelRowReadingProps {
 /** A Sensor row's value, from the row model's measurement. */
 export function ModelRowReading({ device, fallback }: ModelRowReadingProps): ReactNode {
   const { stage } = useRowModel(device.id)
-  const lang = useRowLang()
+  const lang = useHeroLang()
   if (stage.status === 'pending') return null
   const measurement = stage.status === 'ok' ? stage.row.measurement : undefined
   if (measurement === undefined) return <>{fallback}</>

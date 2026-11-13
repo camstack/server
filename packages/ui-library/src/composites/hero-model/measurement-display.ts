@@ -13,6 +13,7 @@ import {
   type ReadingQuantity,
   ReadingQuantitySchema,
 } from '@camstack/types'
+import { useUiText } from '../../contexts/ui-text'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { type ResolvedSensorDisplay, resolveSensorDisplay } from '../../lib/resolve-sensor-display'
 import type { UnitPreferences } from '../../lib/unit-preferences'
@@ -20,7 +21,7 @@ import {
   type RoleDisplayDefaults,
   useRoleDisplayDefaults,
 } from '../device-item/role-display-defaults-context'
-import { type HeroLang, pickText } from './hero-model-view'
+import { type HeroLang, heroLang, pickText } from './hero-model-view'
 
 /** What of a device the display resolution reads: its role and its display override. */
 export interface ReadingDisplaySubject {
@@ -78,4 +79,14 @@ export function useMeasurementText(
   const unitPreferences = useUnitPreferences()
   const roleDefaults = useRoleDisplayDefaults()
   return measurementText({ measurement, lang, subject, unitPreferences, roleDefaults })
+}
+
+/**
+ * The host's language as the model's `{ en, it }` texts are picked in, for a
+ * surface with no `lang` prop of its own: the ui-text catalogue names it
+ * (`uiLibrary.language`).
+ */
+export function useHeroLang(): HeroLang {
+  const t = useUiText()
+  return heroLang(t('uiLibrary.language', 'en'))
 }

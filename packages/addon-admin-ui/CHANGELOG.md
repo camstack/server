@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device command dialog uses the shared device picker, filtered to devices that offer the command.
 - Table icons use a tooltip: a kind icon names the kind and its provider, a linked instance says who it sends through, and a second badge is hidden when it would repeat the same icon.
 - Translations for the update card's install steps
+- The device page draws a simple sensor in the shared device card, like every other card.
 
 ### Fixed
 

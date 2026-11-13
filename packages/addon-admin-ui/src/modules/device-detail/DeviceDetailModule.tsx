@@ -1,6 +1,7 @@
 import {
   ConfirmDialogProvider,
   ConnectedDeviceCard,
+  ConnectedSensorCard,
   type ConnectedCardKind,
   Dialog,
   DialogBody,
@@ -90,7 +91,39 @@ function ModuleBody(
       />
     )
   }
-  return <HeroBody {...props} />
+  return <SensorBody {...props} />
+}
+
+/**
+ * A simple sensor (one measurement, nothing to set) in the shared card; any
+ * other device in the layout-A hero card.
+ */
+function SensorBody(
+  props: Pick<
+    DeviceDetailModuleProps,
+    'deviceId' | 'fallback' | 'onDrawn' | 'defaultHistoryOpen' | 'showName'
+  > & {
+    readonly canActuate: boolean
+  },
+): ReactNode {
+  const phone = useIsPhone()
+  return (
+    <div className="flex justify-center">
+      <ConnectedSensorCard
+        deviceId={props.deviceId}
+        canActuate={props.canActuate}
+        orientation={phone ? 'vertical' : 'horizontal'}
+        showName={props.showName !== false}
+        placeholder={<Skeleton className="h-72 w-full" />}
+        fallback={
+          <div className="w-full">
+            <HeroBody {...props} />
+          </div>
+        }
+        {...(props.onDrawn === undefined ? {} : { onDrawn: props.onDrawn })}
+      />
+    </div>
+  )
 }
 
 function HeroBody({

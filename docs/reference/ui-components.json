@@ -3737,6 +3737,34 @@
       "summary": "A script (`script-runner`): run and stop; 0 on `lastRunAt` means it never ran."
     },
     {
+      "name": "ConnectedSensorCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedSensorCard.tsx",
+      "summary": "A sensor that measures one thing (#514), drawn from the hero model's `measurement` — the same reading the row shows — inside the shared card.",
+      "propsExtends": ["ConnectedCardProps"],
+      "props": [
+        {
+          "name": "fallback",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Drawn when the device is not a simple sensor (its hero model has no single measurement) or the model could not be read. Nothing while it is "
+        },
+        {
+          "name": "placeholder",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Drawn while the model loads (default nothing)."
+        },
+        {
+          "name": "onDrawn",
+          "type": "(drawn: boolean) => void",
+          "optional": true,
+          "doc": "Told `true` once the sensor card is drawn; a fallback reports for itself."
+        }
+      ]
+    },
+    {
       "name": "ConnectedSirenCard",
       "kind": "component",
       "area": "composites",
@@ -11196,6 +11224,35 @@
       "summary": "Keys a combo may name. Extend this union to support a new key."
     },
     {
+      "name": "MeasurementFx",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/illustrations/MeasurementFx.tsx",
+      "summary": "The backdrop behind a sensor's reading, in the reading's tone: the scene's ambient layer for a measurement. Under `prefers-reduced-motion` it stands still (HERO_SCENE_CSS).",
+      "props": [
+        {
+          "name": "visual",
+          "type": "SceneVisual",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "measurementSinceText",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/measurement-since.ts",
+      "summary": "The state corner's \"since\" for a sensor: how long a state has HELD (the same coarse duration every card's corner shows) for a `changed` measurement, \"2 min ago\" for a value last READ then; `null` when never observed."
+    },
+    {
+      "name": "measurementVisual",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/sensor/model.ts",
+      "summary": "The backdrop a measurement moves with: heat rising when hot, flakes when cold, a wire at the speed of the power (still at 0 W), drops for humidity, a ring while a contact is open; nothing for a text."
+    },
+    {
       "name": "MEDIA_GRID",
       "kind": "constant",
       "area": "lib",
@@ -13980,6 +14037,39 @@
       "summary": "Read a stored row's value. A row this client cannot read (another version, a hand edit) is answered as empty rather than throwing — and the caller must not write over it blindly: `parsed: false` says so."
     },
     {
+      "name": "ReadingValue",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/ReadingValue.tsx",
+      "summary": "One reading, big: the quantity's icon, the value, the unit small and muted.",
+      "props": [
+        {
+          "name": "icon",
+          "type": "IconKey | null",
+          "optional": false,
+          "doc": "The quantity's icon beside the value (the server's id); `null` = none."
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "unit",
+          "type": "string | null",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "text",
+          "type": "boolean",
+          "optional": true,
+          "doc": "A word, not a number: drawn smaller and allowed to wrap."
+        }
+      ]
+    },
+    {
       "name": "readItemId",
       "kind": "function",
       "area": "composites",
@@ -15621,6 +15711,45 @@
       ]
     },
     {
+      "name": "SensorCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/sensor/SensorCard.tsx",
+      "summary": "A sensor that measures one thing: the value once, big, inside the scene, with its quantity's icon and the backdrop behind. No rows under it repeat the value; the state corner opens the history.",
+      "props": [
+        {
+          "name": "model",
+          "type": "SensorCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "CardCommonActions",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "trend",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The last day of the reading, under it (beside it when horizontal); absent = none."
+        }
+      ]
+    },
+    {
       "name": "SensorHeroCard",
       "kind": "component",
       "area": "composites",
@@ -15633,6 +15762,46 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/sensor-inline-control.tsx",
       "summary": "Registry InlineControl for Sensor and Presence device types."
+    },
+    {
+      "name": "sensorMeasurementOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/sensor/model.ts",
+      "summary": "The measurement the sensor card draws, or `null` when the device is not a simple sensor: no single measurement, or a row the operator can still set (a sensor with controls keeps the full hero card, which draws them)."
+    },
+    {
+      "name": "SensorTrend",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/SensorTrend.tsx",
+      "summary": "The last day of a sensor's reading; nothing until the read answers with a line.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "historyKey",
+          "type": "string",
+          "optional": false,
+          "doc": "The history series (`cap:<cap>.<field>`)."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "reading",
+          "type": "HeroMeasurementReading",
+          "optional": false,
+          "doc": "The series is in this reading's base unit; the tooltip converts it like the value."
+        }
+      ]
     },
     {
       "name": "SensorValueAtom",
@@ -18151,6 +18320,13 @@
       "summary": "Resolve a key in `lang`, then in English; an unknown key answers itself."
     },
     {
+      "name": "TREND_MIN_POINTS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/SensorTrend.tsx",
+      "summary": "The fewest points a trend line is drawn from: one point is not a trend."
+    },
+    {
       "name": "trpc",
       "kind": "constant",
       "area": "root",
@@ -18351,6 +18527,13 @@
     },
     {
       "name": "updatePhaseOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/update/model.ts",
+      "summary": ""
+    },
+    {
+      "name": "updateStateWordOf",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/update/model.ts",
