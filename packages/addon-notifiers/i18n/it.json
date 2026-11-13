@@ -43,12 +43,13 @@
   "descriptor.s_pushover.expire.label": "Scadenza emergenza (secondi)",
   "descriptor.s_pushover.expire.description": "Per quanto tempo gli avvisi di emergenza continuano a essere ripetuti. Solo emergenza. Massimo 10800.",
   "emailDescriptor.s_email.title": "Email",
-  "emailDescriptor.s_email.description": "Invio tramite un provider Connettività → Email (Google o Email (SMTP)). Installa e verifica prima un provider.",
+  "emailDescriptor.s_email.description": "Inviata tramite un account Google o un relay SMTP.",
   "emailDescriptor.s_email.to.label": "A",
   "emailDescriptor.s_email.to.description": "Indirizzo del destinatario, o elenco separato da virgole.",
-  "emailDescriptor.s_email.smtpAddonId.label": "Provider email",
+  "emailDescriptor.s_email.sendWith.label": "Invia con",
+  "emailDescriptor.s_email.sendWith.description": "L'account Google o il relay SMTP che invia questa email.",
   "emailDescriptor.s_email.from.label": "Da (facoltativo)",
-  "emailDescriptor.s_email.from.description": "Sostituisce il mittente quando il relay lo consente.",
+  "emailDescriptor.s_email.from.description": "Sostituisce il mittente quando chi invia lo consente.",
   "discordConfig.s_discord.title": "Webhook Discord",
   "discordConfig.s_discord.webhookUrl.label": "URL del webhook",
   "discordConfig.s_discord.webhookUrl.description": "URL completo del webhook Discord. Il token è incluso nell'URL, quindi viene salvato come segreto.",
@@ -121,8 +122,5 @@
   "config.s_whatsapp.apiTokenInstance.label": "Token API (apiTokenInstance)",
   "config.s_whatsapp.chatId.label": "ID chat / numero di telefono",
   "config.s_whatsapp.chatId.description": "Destinatario in formato internazionale senza \"+\", oppure un ID WhatsApp completo (…@c.us / …@g.us). L'istanza deve essere autorizzata nella console Green API.",
-  "config.s_whatsapp.acknowledgeToS.label": "Ho capito il rischio di blocco e accetto la violazione dei Termini di servizio di WhatsApp",
-  "emailDescriptor.s_email.smtpInstanceId.label": "Relay (facoltativo)",
-  "emailDescriptor.s_email.smtpInstanceId.description": "Fissa questo target a un relay del provider. Lascia il relay predefinito per usare il primo configurato.",
-  "emailDescriptor.s_email.smtpInstanceId.none": "Relay predefinito"
+  "config.s_whatsapp.acknowledgeToS.label": "Ho capito il rischio di blocco e accetto la violazione dei Termini di servizio di WhatsApp"
 }

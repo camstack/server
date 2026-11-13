@@ -1,18 +1,27 @@
 import { linkFieldDescriptor, userError } from '@camstack/types'
 /**
- * Email notifier — delivers through a ready `smtp-provider` (Google Gmail API
- * or nodemailer SMTP). Not HTTP: the provider calls {@link sendDirect}.
+ * Email notifier — delivers through a mail sender the target links to (`sendWith`): an instance
+ * that serves `smtp-provider`, an SMTP relay or a Google account (whose kind declares it in
+ * `alsoServes`). Not HTTP: the provider calls {@link sendDirect}, which resolves the linked
+ * instance to the addon that holds it and sends through that addon's `smtp-provider`.
  */
-import type {
-  ConfigOption,
-  DiscoveredTarget,
-  PreparedNotification,
-  SendResult,
-  TargetKind,
-} from '@camstack/types'
+import type { PreparedNotification, SendResult, TargetKind } from '@camstack/types'
 import type { DirectNotifierAdapter, TargetConfig } from './adapter.js'
 
 export const EMAIL_KIND = 'email'
+
+/** The body key of the link to the instance that sends a target's mail. */
+export const EMAIL_SENDER_KEY = 'sendWith'
+
+/** The function cap the sender link points at. */
+export const EMAIL_SENDER_CAP = 'smtp-provider'
+
+/**
+ * The two keys a target written before `sendWith` pinned its sender with: the provider addon and,
+ * optionally, one relay of it. Read only for a row the `email-send-with` migration has not moved yet.
+ */
+export const LEGACY_SMTP_ADDON_KEY = 'smtpAddonId'
+export const LEGACY_SMTP_INSTANCE_KEY = 'smtpInstanceId'
 
 export interface EmailSendInput {
   readonly to: string | readonly string[]
@@ -21,89 +30,29 @@ export interface EmailSendInput {
   readonly html?: string
   readonly from?: string
   readonly addonId?: string
-  /** One relay of a multi-relay provider (its integration id); absent = the provider's default relay. */
+  /** The sending instance inside the provider (a relay, a Google account); absent = its default. */
   readonly instanceId?: string
 }
 
-/** One smtp-provider entry the operator can pick as the mail relay. */
-export interface SmtpProviderOption {
-  readonly value: string
-  readonly label: string
-  readonly description?: string
-  /** False unless the entry's last send worked. */
-  readonly ready?: boolean
-  /** The tri-state behind `ready`: false = its last send failed, absent = it has not sent yet. */
-  readonly verified?: boolean
-}
-
-/** What `smtp-provider.getStatus` answers, as far as the picker reads it. */
-export interface SmtpProviderStatusView {
-  readonly ready: boolean
-  readonly verified?: boolean
-  readonly host: string
-}
-
-/** The picker entry of a provider: an unverified entry says "not verified" only when a send FAILED. */
-export function smtpProviderOption(
-  addonId: string,
-  name: string,
-  status: SmtpProviderStatusView,
-): SmtpProviderOption {
-  const hostBit = status.host !== '' ? status.host : addonId
-  const base = `${name} — ${hostBit}`
-  const label = status.ready
-    ? base
-    : status.verified === false
-      ? `${base} (not verified)`
-      : `${base} (not checked yet)`
-  return {
-    value: addonId,
-    label,
-    description: addonId,
-    ready: status.ready,
-    ...(status.verified !== undefined ? { verified: status.verified } : {}),
-  }
-}
-
-/** One relay (integration instance) a provider holds. */
-export interface SmtpRelayOption {
-  readonly id: string
-  readonly name: string
+/** Where a linked sender lives: the provider addon that holds the instance, and the instance. */
+export interface EmailSender {
+  readonly addonId: string
+  readonly instanceId: string
 }
 
 export interface EmailSmtpClient {
   sendEmail(input: EmailSendInput): Promise<{ readonly messageId: string }>
   /**
-   * Active smtp-provider entries for the target editor select (ready or not —
-   * not-ready rows stay selectable so the operator can pick the entry they
-   * will Verify). Absent → empty catalog + install/verify prompt.
+   * The provider that holds the instance `instanceId` serving `smtp-provider`; null when no holder
+   * lists it. Rejects when a holder could not answer, so a failed read never reads as "gone".
    */
-  listProviders?(): Promise<readonly SmtpProviderOption[]>
-  /**
-   * The relays one provider holds (its `integration-instances` records); empty
-   * for a provider that holds none. Rejects when the provider cannot answer.
-   */
-  listRelays?(addonId: string): Promise<readonly SmtpRelayOption[]>
-  /**
-   * When the target omits `smtpAddonId`, pick the first ready provider's
-   * addonId (or undefined → collection default routing).
-   */
-  resolveDefaultAddonId?(): Promise<string | undefined>
+  resolveSender?(instanceId: string): Promise<EmailSender | null>
 }
 
 const BODY_MAX = 100_000
 
-/** Build the email kind descriptor, optionally stamping live provider options. */
-export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = []): TargetKind {
-  const options: ConfigOption[] = providers.map((p) => ({
-    value: p.value,
-    label: p.label,
-    ...(p.description !== undefined ? { description: p.description } : {}),
-  }))
-  const providerDescription =
-    options.length === 0
-      ? 'No Email provider installed. Open Connectivity → Email, install Google or Email (SMTP), then Verify.'
-      : 'Which Connectivity → Email entry delivers this target. Verify it under Connectivity → Email if the label says not verified.'
+/** The email kind descriptor: the recipients, the sender link and an optional From. */
+export function buildEmailDescriptor(): TargetKind {
   return {
     kind: EMAIL_KIND,
     label: 'Email',
@@ -116,8 +65,7 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
           id: 'email',
           title: 'Email',
           titleKey: 'notifiers:emailDescriptor.s_email.title',
-          description:
-            'Send via a Connectivity → Email provider (Google or Email (SMTP)). Install and Verify a provider first.',
+          description: 'Sent through a Google account or an SMTP relay.',
           descriptionKey: 'notifiers:emailDescriptor.s_email.description',
           fields: [
             {
@@ -130,33 +78,23 @@ export function buildEmailDescriptor(providers: readonly SmtpProviderOption[] = 
               required: true,
             },
             {
-              type: 'select',
-              key: 'smtpAddonId',
-              label: 'Email provider',
-              labelKey: 'notifiers:emailDescriptor.s_email.smtpAddonId.label',
-              description: providerDescription,
-              required: true,
-              options,
-            },
-            {
               ...linkFieldDescriptor(
-                'smtpInstanceId',
-                { cap: 'smtp-provider' },
-                { label: 'Relay (optional)', noneLabel: 'Default relay', required: false },
+                EMAIL_SENDER_KEY,
+                { cap: EMAIL_SENDER_CAP },
+                {
+                  label: 'Send with',
+                  description: 'The Google account or SMTP relay that sends this email.',
+                },
               ),
-              labelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.label',
-              description:
-                'Pin this target to one relay of the provider. Leave on the default relay to use the first configured one.',
-              descriptionKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.description',
-              // The pin is optional: an empty link uses the first configured relay.
-              noneLabelKey: 'notifiers:emailDescriptor.s_email.smtpInstanceId.none',
+              labelKey: 'notifiers:emailDescriptor.s_email.sendWith.label',
+              descriptionKey: 'notifiers:emailDescriptor.s_email.sendWith.description',
             },
             {
               type: 'text',
               key: 'from',
               label: 'From (optional)',
               labelKey: 'notifiers:emailDescriptor.s_email.from.label',
-              description: 'Override From when the relay allows it.',
+              description: 'Override From when the sender allows it.',
               descriptionKey: 'notifiers:emailDescriptor.s_email.from.description',
             },
           ],
@@ -193,7 +131,10 @@ function requireTo(config: TargetConfig): string[] {
   return list
 }
 
-function renderBodies(prepared: PreparedNotification): { text: string; html?: string } {
+function renderBodies(prepared: PreparedNotification): {
+  text: string
+  html?: string
+} {
   const body = prepared.bodyParts[0] ?? prepared.body
   const title = prepared.title?.trim() ?? ''
   const click =
@@ -217,60 +158,86 @@ function escapeHtml(value: string): string {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
+function trimmed(config: TargetConfig, key: string): string | undefined {
+  const raw = config[key]
+  return typeof raw === 'string' && raw.trim() !== '' ? raw.trim() : undefined
+}
+
+/**
+ * Where a target's mail goes: the linked sender resolved to its holder, or — for a row the migration
+ * has not moved yet — the provider and relay it pinned before. Throws a reason an operator can read.
+ */
+async function senderOf(smtp: EmailSmtpClient, config: TargetConfig): Promise<EmailSendRoute> {
+  const linked = trimmed(config, EMAIL_SENDER_KEY)
+  if (linked !== undefined) {
+    if (smtp.resolveSender === undefined) {
+      throw new Error('email: no mail sender can be resolved on this node')
+    }
+    const sender = await smtp.resolveSender(linked)
+    if (sender === null) {
+      throw userError(
+        'notifiers.email-sender-gone',
+        { id: linked },
+        `email: the sender ${linked} no longer exists — pick another under Send with`,
+      )
+    }
+    return { addonId: sender.addonId, instanceId: sender.instanceId }
+  }
+  const legacyAddon = trimmed(config, LEGACY_SMTP_ADDON_KEY)
+  if (legacyAddon !== undefined) {
+    const legacyInstance = trimmed(config, LEGACY_SMTP_INSTANCE_KEY)
+    return {
+      addonId: legacyAddon,
+      ...(legacyInstance !== undefined ? { instanceId: legacyInstance } : {}),
+    }
+  }
+  throw userError(
+    'notifiers.email-sender-required',
+    undefined,
+    'email: pick the account or relay under Send with',
+  )
+}
+
+/** The pin `smtp-provider.sendEmail` is routed by. */
+interface EmailSendRoute {
+  readonly addonId: string
+  readonly instanceId?: string
+}
+
+/** The save-time rule: an email target names the sender it sends with. */
+export function validateEmailConfig(config: TargetConfig): void {
+  if (trimmed(config, EMAIL_SENDER_KEY) === undefined) {
+    throw userError(
+      'notifiers.email-sender-required',
+      undefined,
+      'email: pick the account or relay under Send with',
+    )
+  }
+}
+
 /** Build the email adapter bound to a live smtp-provider client. */
 export function createEmailAdapter(smtp: EmailSmtpClient): DirectNotifierAdapter {
   return {
     descriptor: buildEmailDescriptor(),
-    hydrateDescriptor: async () => {
-      const providers = (await smtp.listProviders?.()) ?? []
-      return buildEmailDescriptor(providers)
-    },
-    destinationKeys: ['to', 'smtpAddonId', 'smtpInstanceId'],
-    async discover(config): Promise<readonly DiscoveredTarget[]> {
-      const addonId = config['smtpAddonId']
-      if (typeof addonId !== 'string' || addonId.trim() === '' || smtp.listRelays === undefined) {
-        return []
-      }
-      const relays = await smtp.listRelays(addonId.trim())
-      return relays.map((relay) => ({
-        kind: EMAIL_KIND,
-        suggestedName: relay.name.length > 0 ? relay.name : relay.id,
-        config: { smtpInstanceId: relay.id },
-      }))
-    },
+    destinationKeys: ['to', EMAIL_SENDER_KEY],
+    validateConfig: validateEmailConfig,
     async sendDirect(config, prepared): Promise<SendResult> {
       try {
         const to = requireTo(config)
         const bodies = renderBodies(prepared)
-        const configuredAddon =
-          typeof config['smtpAddonId'] === 'string' && config['smtpAddonId'].trim() !== ''
-            ? config['smtpAddonId'].trim()
-            : undefined
-        const addonId = configuredAddon ?? (await smtp.resolveDefaultAddonId?.())
-        if (addonId === undefined) {
-          throw new Error(
-            'email: pick an Email provider (Connectivity → Email) — none ready or none selected',
-          )
-        }
-        const instanceId =
-          typeof config['smtpInstanceId'] === 'string' && config['smtpInstanceId'].trim() !== ''
-            ? config['smtpInstanceId'].trim()
-            : undefined
+        const route = await senderOf(smtp, config)
         const subject =
           prepared.title?.trim() && prepared.title.trim().length > 0
             ? prepared.title.trim()
             : 'CamStack notification'
-        const from =
-          typeof config['from'] === 'string' && config['from'].trim() !== ''
-            ? config['from'].trim()
-            : undefined
+        const from = trimmed(config, 'from')
         await smtp.sendEmail({
           to,
           subject,
           text: bodies.text,
           ...(bodies.html !== undefined ? { html: bodies.html } : {}),
-          addonId,
-          ...(instanceId !== undefined ? { instanceId } : {}),
+          addonId: route.addonId,
+          ...(route.instanceId !== undefined ? { instanceId: route.instanceId } : {}),
           ...(from !== undefined ? { from } : {}),
         })
         return { success: true }

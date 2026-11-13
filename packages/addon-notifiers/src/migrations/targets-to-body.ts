@@ -12,6 +12,7 @@ import {
   type TargetRowPorts,
 } from '@camstack/types'
 import { z } from 'zod'
+import type { EmailSendWithPorts } from './email-send-with.js'
 
 export const TARGETS_TO_BODY_ID = 'notifiers/2026-11-06-targets-config-to-body'
 
@@ -35,6 +36,8 @@ export type OldTargetsHandle = RecordKindHandle<z.infer<typeof OldTargetBodySche
 export interface NotifiersMigrationPorts {
   readonly rows: TargetRowPorts
   readonly secretKeysOf: (kind: string) => readonly string[]
+  /** The email target rows and their senders, for `email-send-with`. */
+  readonly emailSenders: EmailSendWithPorts
 }
 
 export async function moveNotifierTargets(

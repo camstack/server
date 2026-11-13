@@ -148,6 +148,22 @@ function omitBlankSecrets(
   return out
 }
 
+/** An unsaved target's form values to test: the kind, the values, and the row they edit (if any). */
+export interface DraftTestInput {
+  readonly kind: string
+  readonly config: Readonly<Record<string, unknown>>
+  readonly targetId: string | undefined
+}
+
+/**
+ * The `notification-output` provider plus the editor's draft test: a canned notification sent
+ * with values that were never saved (stored secrets restored when `targetId` names the row).
+ */
+export interface NotificationOutputRuntime {
+  readonly provider: INotificationOutputProvider
+  testDraft(input: DraftTestInput): Promise<SendResult>
+}
+
 /**
  * Build the concrete `notification-output` provider. Returns a plain object
  * matching `INotificationOutputProvider` so the addon can register it with the
@@ -156,6 +172,13 @@ function omitBlankSecrets(
 export function createNotificationOutputProvider(
   deps: NotificationOutputProviderDeps,
 ): INotificationOutputProvider {
+  return createNotificationOutputRuntime(deps).provider
+}
+
+/** {@link createNotificationOutputProvider}, with the editor's draft test beside it. */
+export function createNotificationOutputRuntime(
+  deps: NotificationOutputProviderDeps,
+): NotificationOutputRuntime {
   const addonId = deps.addonId ?? NOTIFIERS_ADDON_ID
   const httpSend: HttpSender = deps.httpSend ?? ((plan) => sendHttpPlan(plan))
   const fetchAttachment: AttachmentFetcher =
@@ -184,7 +207,11 @@ export function createNotificationOutputProvider(
     if (existing === null) return config
     return mergeSecrets({
       existing,
-      incoming: { id: targetId, kind, config: omitBlankSecrets(config, adapter) },
+      incoming: {
+        id: targetId,
+        kind,
+        config: omitBlankSecrets(config, adapter),
+      },
       adapter,
     })
   }
@@ -218,7 +245,10 @@ export function createNotificationOutputProvider(
   async function dispatch(target: Target, raw: Notification): Promise<SendResult> {
     const adapter = adapterByKind.get(target.kind)
     if (!adapter) {
-      return { success: false, error: `No adapter registered for kind '${target.kind}'` }
+      return {
+        success: false,
+        error: `No adapter registered for kind '${target.kind}'`,
+      }
     }
 
     // Green API accepts sendMessage with HTTP 200 + idMessage even while
@@ -270,9 +300,15 @@ export function createNotificationOutputProvider(
         const result = await adapter.sendDirect(target.config, readyPrepared)
         return result.error === undefined
           ? { ...result, renderedAs: prepared.renderedAs }
-          : { ...result, error: stripUrls(result.error), renderedAs: prepared.renderedAs }
+          : {
+              ...result,
+              error: stripUrls(result.error),
+              renderedAs: prepared.renderedAs,
+            }
       } catch (err) {
-        logger?.warn('sendDirect failed', { meta: { kind: target.kind, error: errMsg(err) } })
+        logger?.warn('sendDirect failed', {
+          meta: { kind: target.kind, error: errMsg(err) },
+        })
         return {
           success: false,
           error: `sendDirect failed: ${errMsg(err)}`,
@@ -293,7 +329,9 @@ export function createNotificationOutputProvider(
     try {
       plan = adapter.buildRequest(target.config, readyPrepared)
     } catch (err) {
-      logger?.warn('buildRequest failed', { meta: { kind: target.kind, error: errMsg(err) } })
+      logger?.warn('buildRequest failed', {
+        meta: { kind: target.kind, error: errMsg(err) },
+      })
       return {
         success: false,
         error: `buildRequest failed: ${errMsg(err)}`,
@@ -305,7 +343,9 @@ export function createNotificationOutputProvider(
     try {
       res = await httpSend(plan)
     } catch (err) {
-      logger?.warn('request failed', { meta: { kind: target.kind, error: errMsg(err) } })
+      logger?.warn('request failed', {
+        meta: { kind: target.kind, error: errMsg(err) },
+      })
       return {
         success: false,
         error: `request failed: ${errMsg(err)}`,
@@ -329,7 +369,10 @@ export function createNotificationOutputProvider(
       try {
         result = adapter.parseResult(res, bodyText)
       } catch (err) {
-        result = { success: false, error: `parseResult failed: ${errMsg(err)}` }
+        result = {
+          success: false,
+          error: `parseResult failed: ${errMsg(err)}`,
+        }
       }
     } else {
       result = res.ok
@@ -340,19 +383,66 @@ export function createNotificationOutputProvider(
     // can echo the request url back — it is cut like every other error.
     return result.error === undefined
       ? { ...result, renderedAs: prepared.renderedAs }
-      : { ...result, error: stripUrls(result.error), renderedAs: prepared.renderedAs }
+      : {
+          ...result,
+          error: stripUrls(result.error),
+          renderedAs: prepared.renderedAs,
+        }
   }
 
   const iconUrlFor = deps.iconUrlFor
   const iconMediaTypeFor = deps.iconMediaTypeFor
 
-  return {
+  /**
+   * The values an edit of a saved target would leave: the editor sends only what changed, so they are
+   * laid over the stored config. Stored secrets are NOT carried here — `configWithStoredSecrets`
+   * restores them only while the destination is unchanged (D634).
+   */
+  async function overStoredValues(
+    adapter: NotifierAdapter,
+    input: DraftTestInput,
+  ): Promise<Record<string, unknown>> {
+    if (input.targetId === undefined) return { ...input.config }
+    const stored = await store.getById(input.targetId)
+    if (stored === null) return { ...input.config }
+    const secrets = passwordFieldKeys(adapter.descriptor)
+    const base: Record<string, unknown> = {}
+    for (const [key, value] of Object.entries(stored.config)) {
+      if (!secrets.has(key)) base[key] = value
+    }
+    return { ...base, ...input.config }
+  }
+
+  async function testDraft(input: DraftTestInput): Promise<SendResult> {
+    const adapter = adapterByKind.get(input.kind)
+    if (adapter === undefined) {
+      return {
+        success: false,
+        error: `No adapter registered for kind '${input.kind}'`,
+      }
+    }
+    try {
+      const edited = await overStoredValues(adapter, input)
+      const config = await configWithStoredSecrets(input.kind, edited, input.targetId)
+      const draft: Target = {
+        id: input.targetId ?? 'draft',
+        name: 'draft',
+        kind: input.kind,
+        addonId,
+        enabled: true,
+        config,
+      }
+      return await dispatch(draft, cannedNotification())
+    } catch (err) {
+      return { success: false, error: errMsg(err) }
+    }
+  }
+
+  const provider: INotificationOutputProvider = {
     listTargetKinds: async (): Promise<TargetKind[]> => {
       const kinds: TargetKind[] = []
       for (const a of deps.adapters) {
-        // Live descriptors (email's smtp-provider select) win over the static
-        // catalog when the adapter hydrates options from the cluster.
-        const base = a.hydrateDescriptor !== undefined ? await a.hydrateDescriptor() : a.descriptor
+        const base = a.descriptor
         // `destinationKeys` is published so an editor can tell WHICH edit will
         // need the secret re-typed, instead of warning on every edit (D634).
         const descriptor: TargetKind = {
@@ -433,4 +523,5 @@ export function createNotificationOutputProvider(
       return dispatch(target, sample ?? cannedNotification())
     },
   }
+  return { provider, testDraft }
 }

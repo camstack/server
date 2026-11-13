@@ -17,6 +17,8 @@ import {
   buildAddonRouteProvider,
   buildUserScopedNotificationTargetInstances,
   defineAddonMigrations,
+  instanceSourceOverApi,
+  instancesOfCap,
   integrationInstancesCapability,
   retiredTargetsOver,
   notificationOutputCapability,
@@ -24,22 +26,22 @@ import {
   secretKeysOf,
   targetRowPortsOver,
 } from '@camstack/types'
-import {
-  type EmailSmtpClient,
-  type SmtpProviderOption,
-  smtpProviderOption,
-} from './adapters/email.js'
+import { EMAIL_KIND, EMAIL_SENDER_CAP, type EmailSmtpClient } from './adapters/email.js'
 import { buildNotifierAdapters } from './adapters/registry.js'
 import { iconMediaTypeFor, iconRoutes, iconUrlFor } from './icon-routes.js'
 import { ADDON_MIGRATIONS, OLD_TARGETS_KIND, oldTargetKinds } from './migrations/index.js'
 import { makeNcTargetHandlers, type NcTargetActions, ncTargetActions } from './nc-target-actions.js'
-import { createNotificationOutputProvider, NOTIFIERS_ADDON_ID } from './provider.js'
+import { createNotificationOutputRuntime, NOTIFIERS_ADDON_ID } from './provider.js'
+import { notifierInstancesSpec } from './notifier-instances.js'
 import { notifierDescriptors, notifiersRecordKinds } from './record-kinds.js'
 import { sampleRoutes } from './sample-routes.js'
 import { TargetStore } from './target-store.js'
 
 /** The notifiers addon has no global settings today — targets are managed via cap CRUD. */
 type NotifiersConfig = Record<string, never>
+
+/** The most email targets the `email-send-with` step reads (a settings list, not a table). */
+const EMAIL_ROWS_MAX = 1000
 
 export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
   constructor() {
@@ -59,7 +61,21 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
     // The retired single kind is declared on the store's first list, on every boot (not only while
     // the migration runs), so a stuck row stays visible through `legacy`; never declared here.
     const legacy = retiredTargetsOver(records, oldTargetKinds[OLD_TARGETS_KIND], this.ctx.logger)
-    const store = TargetStore.of(records, descriptors, { logger: this.ctx.logger, legacy })
+    const store = TargetStore.of(records, descriptors, {
+      logger: this.ctx.logger,
+      legacy,
+    })
+    const emailRows = store.handlesByKind().get(EMAIL_KIND)
+    if (emailRows === undefined) throw new Error('notifiers: the email record kind is not declared')
+    // The first instance of `addonId` serving `smtp-provider`; a provider that cannot be read rejects.
+    const firstSenderOf = async (addonId: string): Promise<string | null> => {
+      if (api === undefined) throw new Error('notifiers: no api to read the mail senders')
+      const listed = await instancesOfCap(instanceSourceOverApi(api), EMAIL_SENDER_CAP)
+      const failed = listed.unreadable.find((entry) => entry.addonId === addonId)
+      if (failed !== undefined)
+        throw new Error(`notifiers: ${addonId} could not be read: ${failed.error}`)
+      return listed.instances.find((entry) => entry.addonId === addonId)?.instance.id ?? null
+    }
     // The old single kind is flattened into the per-kind records BEFORE anything reads a target.
     await this.runMigrations(
       defineAddonMigrations(ADDON_MIGRATIONS, {
@@ -68,38 +84,15 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
           const descriptor = descriptors.find((candidate) => candidate.kind === kind)
           return descriptor === undefined ? [] : secretKeysOf(descriptor)
         },
+        emailSenders: {
+          list: async () => (await emailRows.query({ limit: EMAIL_ROWS_MAX })).records,
+          replace: async (row) => {
+            await emailRows.put({ id: row.id, data: { ...row.data } }, { ifRev: row.rev })
+          },
+          firstSenderOf,
+        },
       }),
     )
-
-    const listProviders = async (): Promise<readonly SmtpProviderOption[]> => {
-      if (api === undefined) return []
-      const [providers, addons] = await Promise.all([
-        api.addons.listCapabilityProviders.query({ capName: 'smtp-provider' }),
-        api.addons.list.query(),
-      ])
-      const names = new Map<string, string>()
-      for (const row of addons) {
-        const id = row.manifest.id
-        names.set(id, row.manifest.name ?? row.manifest.packageDisplayName ?? id)
-      }
-      const out: SmtpProviderOption[] = []
-      for (const p of providers) {
-        if (!p.isActive) continue
-        const name = names.get(p.addonId) ?? p.addonId
-        try {
-          const status = await api.smtpProvider.getStatus.query({ addonId: p.addonId })
-          out.push(smtpProviderOption(p.addonId, name, status))
-        } catch {
-          out.push({
-            value: p.addonId,
-            label: `${name} (status unavailable)`,
-            description: p.addonId,
-            ready: false,
-          })
-        }
-      }
-      return out
-    }
 
     const smtpClient: EmailSmtpClient | undefined =
       api !== undefined
@@ -116,26 +109,24 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
               })
               return { messageId: result.messageId }
             },
-            listProviders,
-            listRelays: async (addonId) => {
-              // A provider that holds no records is not an `integration-instances`
-              // provider: it has no relays, which is an answer, not a failure.
-              const holders = await api.addons.listCapabilityProviders.query({
-                capName: 'integration-instances',
-              })
-              if (!holders.some((holder) => holder.addonId === addonId)) return []
-              const instances = await api.integrationInstances.listInstances.query({ addonId })
-              return instances.map((instance) => ({ id: instance.id, name: instance.name }))
-            },
-            resolveDefaultAddonId: async () => {
-              const providers = await listProviders()
-              return providers.find((p) => p.ready === true)?.value ?? providers[0]?.value
+            // The linked sender is found among the instances that serve `smtp-provider` — a relay,
+            // or a Google account through its kind's `alsoServes`. A holder that could not answer
+            // is a failure, never "gone" (D49).
+            resolveSender: async (instanceId) => {
+              const listed = await instancesOfCap(instanceSourceOverApi(api), EMAIL_SENDER_CAP)
+              const found = listed.instances.find((entry) => entry.instance.id === instanceId)
+              if (found !== undefined) return { addonId: found.addonId, instanceId }
+              if (listed.unreadable.length > 0) {
+                const holders = listed.unreadable.map((entry) => entry.addonId).join(', ')
+                throw new Error(`email: the mail senders of ${holders} could not be read`)
+              }
+              return null
             },
           }
         : undefined
 
     const adapters = buildNotifierAdapters(smtpClient)
-    const provider = createNotificationOutputProvider({
+    const runtime = createNotificationOutputRuntime({
       store,
       adapters,
       logger: this.ctx.logger.child('notification-output'),
@@ -145,6 +136,7 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
       iconUrlFor,
       iconMediaTypeFor,
     })
+    const provider = runtime.provider
 
     // ONE `addon-routes` provider owns the `notifiers` route id, so the brand
     // icons and the test-notification samples travel in a single route set —
@@ -165,21 +157,21 @@ export class NotifiersAddon extends BaseAddon<NotifiersConfig> {
 
     const instances = buildUserScopedNotificationTargetInstances(
       records,
-      {
+      notifierInstancesSpec({
+        adapters,
         descriptors,
         kinds: notifiersRecordKinds,
         mintId: () => randomUUID(),
-        canProbe: (kind) =>
-          adapters.some(
-            (adapter) => adapter.descriptor.kind === kind && adapter.probe !== undefined,
-          ),
-        probe: (input) =>
+        probeCredentials: (input) =>
           provider.probeTargetConfig({
             kind: input.kind,
             config: { ...input.config },
             ...(input.targetId !== undefined ? { targetId: input.targetId } : {}),
           }),
-      },
+        testDraft: (input) => runtime.testDraft(input),
+        iconUrlFor,
+        iconMediaTypeFor,
+      }),
       this.ctx.logger,
     )
 

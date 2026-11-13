@@ -1,4 +1,5 @@
 import type { AddonMigration } from '@camstack/types'
+import { EMAIL_SEND_WITH_ID, linkEmailSenders } from './email-send-with.js'
 import {
   moveNotifierTargets,
   type NotifiersMigrationPorts,
@@ -10,6 +11,8 @@ export {
   oldTargetKinds,
   TARGETS_TO_BODY_ID,
 } from './targets-to-body.js'
+export { EMAIL_SEND_WITH_ID } from './email-send-with.js'
+export type { EmailSendWithPorts, EmailTargetRow } from './email-send-with.js'
 export type {
   NotifiersMigrationPorts,
   OldTargetsHandle,
@@ -33,5 +36,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<NotifiersMigrationPorts>[
       fixtureMark: 'the token, the switch (off) and the id of a Telegram target',
     },
     procedure: moveNotifierTargets,
+  },
+  {
+    meta: {
+      id: EMAIL_SEND_WITH_ID,
+      owner: 'notifiers',
+      level: 'addon-state',
+      seq: 2,
+      dependsOn: [TARGETS_TO_BODY_ID],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Link each email target to the instance that sends it (sendWith): the relay it pinned, else the first sender of the provider it named; the two old keys go, every other field stays; a provider that cannot be read fails the step for the next boot',
+      fixtureMark: 'the recipients, the switch (off) and the owner of an email target',
+    },
+    procedure: (ports) => linkEmailSenders(ports.emailSenders),
   },
 ]

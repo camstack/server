@@ -1,256 +1,236 @@
-import { userError } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { buildEmailDescriptor, createEmailAdapter, type EmailSendInput } from '../adapters/email.js'
+import {
+  buildEmailDescriptor,
+  createEmailAdapter,
+  type EmailSendInput,
+  type EmailSender,
+  type EmailSmtpClient,
+  validateEmailConfig,
+} from '../adapters/email.js'
 import { iconUrlFor } from '../icon-routes.js'
-import { createNotificationOutputProvider as createNotificationOutputProvider } from '../provider.js'
+import { createNotificationOutputProvider, createNotificationOutputRuntime } from '../provider.js'
 import { TargetStore } from '../target-store.js'
 import { makeNotifiersRecords } from './fake-records.js'
 
-describe('email descriptor relay pin', () => {
-  it('is an optional instance-select over smtp-provider, not a hand-rolled select', () => {
-    const fields = buildEmailDescriptor([]).configSchema.sections.flatMap(
-      (section) => section.fields,
-    )
-    expect(fields.find((f) => f.key === 'smtpInstanceId')).toMatchObject({
+/** A provider over one email target with `config`, sending through `smtp`. */
+async function emailTargetOver(smtp: EmailSmtpClient, config: Record<string, unknown>) {
+  const adapter = createEmailAdapter(smtp)
+  const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
+    adapter.descriptor,
+  ])
+  const provider = createNotificationOutputProvider({
+    store,
+    adapters: [adapter],
+    iconUrlFor,
+  })
+  await store.upsert({
+    id: 'email-1',
+    addonId: 'notifiers',
+    name: 'Ops',
+    kind: 'email',
+    enabled: true,
+    config,
+  })
+  return provider
+}
+
+const SAMPLE = {
+  body: 'Hello',
+  title: 'CamStack',
+  format: 'text',
+  priority: 3,
+} as const
+
+describe('email descriptor', () => {
+  it('names its sender with ONE required link over smtp-provider, and nothing else', () => {
+    const fields = buildEmailDescriptor().configSchema.sections.flatMap((section) => section.fields)
+    expect(fields.find((f) => f.key === 'sendWith')).toMatchObject({
       type: 'instance-select',
       functionCap: 'smtp-provider',
-      required: false,
-      noneLabel: 'Default relay',
     })
+    expect(fields.map((f) => f.key)).toEqual(['to', 'sendWith', 'from'])
+  })
+
+  it('carries its brand icon through listTargetKinds', async () => {
+    const provider = await emailTargetOver(
+      { sendEmail: async () => ({ messageId: 'x' }) },
+      { to: 'ops@example.com', sendWith: 'acct-1' },
+    )
+    const email = (await provider.listTargetKinds({})).find((k) => k.kind === 'email')
+    expect(email?.iconUrl).toBe('/addon/notifiers/icons/email')
   })
 })
 
-describe('email notifier adapter', () => {
-  it('sendDirect calls smtp sendEmail with to + subject + text + smtpAddonId', async () => {
+describe('email save rule', () => {
+  it('refuses a target without a sender', () => {
+    expect(() => validateEmailConfig({ to: 'ops@example.com' })).toThrow(/Send with/)
+    expect(() => validateEmailConfig({ to: 'ops@example.com', sendWith: '  ' })).toThrow(
+      /Send with/,
+    )
+  })
+
+  it('accepts a target that links a sender', () => {
+    expect(() => validateEmailConfig({ to: 'ops@example.com', sendWith: 'acct-1' })).not.toThrow()
+  })
+})
+
+describe('email send path', () => {
+  it('sends through the provider that holds the linked sender, naming the instance', async () => {
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({
+      messageId: 'm-1',
+    }))
+    const resolveSender = vi.fn(
+      async (instanceId: string): Promise<EmailSender | null> => ({
+        addonId: 'google-services',
+        instanceId,
+      }),
+    )
+    const provider = await emailTargetOver(
+      { sendEmail, resolveSender },
+      { to: 'ops@example.com', sendWith: 'acct-1' },
+    )
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: SAMPLE,
+    })
+    expect(result.success).toBe(true)
+    expect(resolveSender).toHaveBeenCalledWith('acct-1')
+    expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({
+      to: ['ops@example.com'],
+      subject: 'CamStack',
+      text: expect.stringContaining('Hello') as string,
+      addonId: 'google-services',
+      instanceId: 'acct-1',
+    })
+  })
+
+  it('fails naming the sender when the linked instance no longer exists, and sends nothing', async () => {
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({
+      messageId: 'm-1',
+    }))
+    const provider = await emailTargetOver(
+      { sendEmail, resolveSender: async () => null },
+      { to: 'ops@example.com', sendWith: 'gone-1' },
+    )
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: SAMPLE,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/gone-1/)
+    expect(sendEmail).not.toHaveBeenCalled()
+  })
+
+  it('still sends a row the migration has not moved, through the provider and relay it pinned', async () => {
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({
+      messageId: 'm-1',
+    }))
+    const provider = await emailTargetOver(
+      { sendEmail },
+      {
+        to: 'ops@example.com',
+        smtpAddonId: 'smtp-nodemailer',
+        smtpInstanceId: 'relay-1',
+      },
+    )
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: SAMPLE,
+    })
+    expect(result.success).toBe(true)
+    expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({
+      addonId: 'smtp-nodemailer',
+      instanceId: 'relay-1',
+    })
+  })
+
+  it('refuses to send a target with no sender at all', async () => {
+    const sendEmail = vi.fn(async (_input: EmailSendInput) => ({
+      messageId: 'm-1',
+    }))
+    const provider = await emailTargetOver({ sendEmail }, { to: 'ops@example.com' })
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: SAMPLE,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/Send with/)
+    expect(sendEmail).not.toHaveBeenCalled()
+  })
+
+  it('fails clearly when the sender refuses', async () => {
+    const provider = await emailTargetOver(
+      {
+        sendEmail: async () => {
+          throw new Error('Gmail account not verified')
+        },
+        resolveSender: async (instanceId) => ({
+          addonId: 'google-services',
+          instanceId,
+        }),
+      },
+      { to: 'ops@example.com', sendWith: 'acct-1' },
+    )
+    const result = await provider.testTarget({
+      targetId: 'email-1',
+      sample: SAMPLE,
+    })
+    expect(result.success).toBe(false)
+    expect(result.error).toMatch(/not verified/)
+  })
+})
+
+describe('the editor test of an email target', () => {
+  it('lays the edited values over the saved target, so an edit that changed only the recipient still names the sender', async () => {
     const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
-    const adapter = createEmailAdapter({ sendEmail })
+    const adapter = createEmailAdapter({
+      sendEmail,
+      resolveSender: async (instanceId) => ({ addonId: 'google-services', instanceId }),
+    })
     const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
       adapter.descriptor,
     ])
-    const provider = createNotificationOutputProvider({
-      store,
-      adapters: [adapter],
-    })
+    const runtime = createNotificationOutputRuntime({ store, adapters: [adapter] })
     await store.upsert({
       id: 'email-1',
       addonId: 'notifiers',
       name: 'Ops',
       kind: 'email',
       enabled: true,
-      config: { to: 'ops@example.com', smtpAddonId: 'google-services' },
+      config: { to: 'ops@example.com', sendWith: 'acct-1' },
     })
-    const result = await provider.testTarget({
+    const result = await runtime.testDraft({
+      kind: 'email',
+      config: { to: 'night@example.com' },
       targetId: 'email-1',
-      sample: { body: 'Hello', title: 'CamStack', format: 'text', priority: 3 },
     })
     expect(result.success).toBe(true)
-    expect(sendEmail).toHaveBeenCalledOnce()
     expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({
-      to: ['ops@example.com'],
-      subject: 'CamStack',
-      text: expect.stringContaining('Hello') as string,
-      addonId: 'google-services',
+      to: ['night@example.com'],
+      instanceId: 'acct-1',
     })
   })
 
-  it('forwards a pinned relay as instanceId and omits it when the target pins none', async () => {
+  it('tests an unsaved target with exactly the values typed', async () => {
     const sendEmail = vi.fn(async (_input: EmailSendInput) => ({ messageId: 'm-1' }))
-    const adapter = createEmailAdapter({ sendEmail })
-    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
-      adapter.descriptor,
-    ])
-    const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
-    const sample = { body: 'Hello', title: 'CamStack', format: 'text', priority: 3 } as const
-    for (const [id, config] of [
-      [
-        'pinned',
-        { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer', smtpInstanceId: ' int_0003 ' },
-      ],
-      ['unpinned', { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer' }],
-    ] as const) {
-      await store.upsert({
-        id,
-        addonId: 'notifiers',
-        name: id,
-        kind: 'email',
-        enabled: true,
-        config,
-      })
-      await provider.testTarget({ targetId: id, sample })
-    }
-    expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({ instanceId: 'int_0003' })
-    expect(sendEmail.mock.calls[1]?.[0]).not.toHaveProperty('instanceId')
-  })
-
-  it('a target pinned to a relay that is switched off fails with the relay message and no other relay answers', async () => {
-    const message = 'smtp-nodemailer: relay "a" is switched off'
-    const sendEmail = vi.fn(async (input: EmailSendInput) => {
-      if (input.instanceId === 'int_0003')
-        throw userError('smtp.relay-disabled', { id: 'int_0003', name: 'a' }, message)
-      return { messageId: 'other-relay' }
+    const adapter = createEmailAdapter({
+      sendEmail,
+      resolveSender: async (instanceId) => ({ addonId: 'smtp-nodemailer', instanceId }),
     })
-    const adapter = createEmailAdapter({ sendEmail })
     const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
       adapter.descriptor,
     ])
-    const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
-    await store.upsert({
-      id: 'pinned',
-      addonId: 'notifiers',
-      name: 'pinned',
+    const runtime = createNotificationOutputRuntime({ store, adapters: [adapter] })
+    const result = await runtime.testDraft({
       kind: 'email',
-      enabled: true,
-      config: {
-        to: 'ops@example.com',
-        smtpAddonId: 'smtp-nodemailer',
-        smtpInstanceId: 'int_0003',
-      },
+      config: { to: 'a@example.com', sendWith: 'relay-2' },
+      targetId: undefined,
     })
-    const result = await provider.testTarget({
-      targetId: 'pinned',
-      sample: { body: 'Hello', title: 'CamStack', format: 'text', priority: 3 },
+    expect(result.success).toBe(true)
+    expect(sendEmail.mock.calls[0]?.[0]).toMatchObject({
+      to: ['a@example.com'],
+      addonId: 'smtp-nodemailer',
+      instanceId: 'relay-2',
     })
-    expect(result).toMatchObject({ success: false, error: message })
-    expect(sendEmail).toHaveBeenCalledOnce()
-  })
-
-  it('fails clearly when smtp client refuses', async () => {
-    const adapter = createEmailAdapter({
-      async sendEmail() {
-        throw new Error('No Google broker connected')
-      },
-    })
-    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
-      adapter.descriptor,
-    ])
-    const provider = createNotificationOutputProvider({ store, adapters: [adapter] })
-    await store.upsert({
-      id: 'email-2',
-      addonId: 'notifiers',
-      name: 'Ops',
-      kind: 'email',
-      enabled: true,
-      config: { to: 'ops@example.com', smtpAddonId: 'smtp-nodemailer' },
-    })
-    const result = await provider.send({
-      targetId: 'email-2',
-      notification: { body: 'x', format: 'text', priority: 3 },
-    })
-    expect(result.success).toBe(false)
-    expect(result.error).toContain('No Google broker connected')
-  })
-
-  it('hydrateDescriptor stamps ready smtp-provider entries into the select', async () => {
-    const adapter = createEmailAdapter({
-      async sendEmail() {
-        return { messageId: 'x' }
-      },
-      async listProviders() {
-        return [
-          {
-            value: 'google-services',
-            label: 'Google Services — smtp.gmail.com (not verified)',
-            ready: false,
-          },
-          { value: 'smtp-nodemailer', label: 'SMTP Email — mail.example.com', ready: true },
-        ]
-      },
-    })
-    const hydrated = await adapter.hydrateDescriptor!()
-    const field = hydrated.configSchema.sections[0]?.fields.find(
-      (f) => f.key === 'smtpAddonId' && f.type === 'select',
-    )
-    expect(field).toBeDefined()
-    if (field === undefined || field.type !== 'select') throw new Error('expected select')
-    expect(field.options).toEqual([
-      {
-        value: 'google-services',
-        label: 'Google Services — smtp.gmail.com (not verified)',
-      },
-      { value: 'smtp-nodemailer', label: 'SMTP Email — mail.example.com' },
-    ])
-    expect(field.required).toBe(true)
-  })
-
-  it('listTargetKinds hydrates email select options and stamps iconUrl', async () => {
-    const adapter = createEmailAdapter({
-      async sendEmail() {
-        return { messageId: 'x' }
-      },
-      async listProviders() {
-        return [
-          {
-            value: 'google-services',
-            label: 'Google Services — alice@example.com (not verified)',
-            ready: false,
-          },
-        ]
-      },
-    })
-    const store = TargetStore.of((await makeNotifiersRecords([adapter.descriptor])).records, [
-      adapter.descriptor,
-    ])
-    const provider = createNotificationOutputProvider({
-      store,
-      adapters: [adapter],
-      iconUrlFor,
-    })
-    const kinds = await provider.listTargetKinds({})
-    const email = kinds.find((k) => k.kind === 'email')
-    expect(email).toBeDefined()
-    if (email === undefined) throw new Error('expected email kind')
-    expect(email.iconUrl).toBe('/addon/notifiers/icons/email')
-    // Cap wire type leaves configSchema as unknown (TargetKindSchema passthrough).
-    // Assert options through the adapter's typed hydrate, and that listTargetKinds
-    // stamped the same schema object shape onto the wire kind.
-    const hydrated = await adapter.hydrateDescriptor!()
-    expect(email.configSchema).toEqual(hydrated.configSchema)
-    const field = hydrated.configSchema.sections[0]?.fields.find(
-      (f) => f.key === 'smtpAddonId' && f.type === 'select',
-    )
-    expect(field?.type === 'select' && field.options[0]?.value).toBe('google-services')
-    expect(field?.type === 'select' && field.options[0]?.label).toMatch(/not verified/)
-  })
-
-  it('buildEmailDescriptor exposes an empty select when no providers are installed', () => {
-    const d = buildEmailDescriptor()
-    const field = d.configSchema.sections[0]?.fields.find(
-      (f) => f.key === 'smtpAddonId' && f.type === 'select',
-    )
-    expect(field?.type).toBe('select')
-    if (field === undefined || field.type !== 'select') throw new Error('expected select')
-    expect(field.options).toEqual([])
-    expect(field.description).toMatch(/No Email provider installed/)
-  })
-})
-
-describe('email notifier relay picker', () => {
-  it('discover lists the relays of the chosen provider by name', async () => {
-    const listRelays = vi.fn(async (_addonId: string) => [
-      { id: 'relay-1a2b3c4d', name: 'Office relay' },
-      { id: 'relay-5e6f7a8b', name: 'Backup relay' },
-    ])
-    const adapter = createEmailAdapter({ sendEmail: vi.fn(), listRelays })
-    const found = await adapter.discover?.({ smtpAddonId: 'smtp-nodemailer' })
-    expect(listRelays).toHaveBeenCalledWith('smtp-nodemailer')
-    expect(found).toEqual([
-      {
-        kind: 'email',
-        suggestedName: 'Office relay',
-        config: { smtpInstanceId: 'relay-1a2b3c4d' },
-      },
-      {
-        kind: 'email',
-        suggestedName: 'Backup relay',
-        config: { smtpInstanceId: 'relay-5e6f7a8b' },
-      },
-    ])
-  })
-
-  it('discover without a provider answers nothing and asks nobody', async () => {
-    const listRelays = vi.fn(async () => [])
-    const adapter = createEmailAdapter({ sendEmail: vi.fn(), listRelays })
-    expect(await adapter.discover?.({})).toEqual([])
-    expect(listRelays).not.toHaveBeenCalled()
   })
 })

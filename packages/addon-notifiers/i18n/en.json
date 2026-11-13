@@ -43,12 +43,13 @@
   "descriptor.s_pushover.expire.label": "Emergency Expire (seconds)",
   "descriptor.s_pushover.expire.description": "How long emergency alerts keep retrying. Emergency only. Max 10800.",
   "emailDescriptor.s_email.title": "Email",
-  "emailDescriptor.s_email.description": "Send via a Connectivity → Email provider (Google or Email (SMTP)). Install and Verify a provider first.",
+  "emailDescriptor.s_email.description": "Sent through a Google account or an SMTP relay.",
   "emailDescriptor.s_email.to.label": "To",
   "emailDescriptor.s_email.to.description": "Recipient address, or comma-separated list.",
-  "emailDescriptor.s_email.smtpAddonId.label": "Email provider",
+  "emailDescriptor.s_email.sendWith.label": "Send with",
+  "emailDescriptor.s_email.sendWith.description": "The Google account or SMTP relay that sends this email.",
   "emailDescriptor.s_email.from.label": "From (optional)",
-  "emailDescriptor.s_email.from.description": "Override From when the relay allows it.",
+  "emailDescriptor.s_email.from.description": "Override From when the sender allows it.",
   "discordConfig.s_discord.title": "Discord Webhook",
   "discordConfig.s_discord.webhookUrl.label": "Webhook URL",
   "discordConfig.s_discord.webhookUrl.description": "Full Discord webhook URL. The token is embedded in the URL, so it is stored as a secret.",
@@ -121,8 +122,5 @@
   "config.s_whatsapp.apiTokenInstance.label": "API Token (apiTokenInstance)",
   "config.s_whatsapp.chatId.label": "Chat ID / phone number",
   "config.s_whatsapp.chatId.description": "Recipient in international format without \"+\", or a full WhatsApp id (…@c.us / …@g.us). Instance must be authorized in the Green API console.",
-  "config.s_whatsapp.acknowledgeToS.label": "I understand the ban risk and accept the WhatsApp Terms-of-Service violation",
-  "emailDescriptor.s_email.smtpInstanceId.label": "Relay (optional)",
-  "emailDescriptor.s_email.smtpInstanceId.description": "Pin this target to one relay of the provider. Leave on the default relay to use the first configured one.",
-  "emailDescriptor.s_email.smtpInstanceId.none": "Default relay"
+  "config.s_whatsapp.acknowledgeToS.label": "I understand the ban risk and accept the WhatsApp Terms-of-Service violation"
 }

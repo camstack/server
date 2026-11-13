@@ -113,11 +113,10 @@ export interface ProbeResult {
 interface NotifierAdapterBase {
   readonly descriptor: TargetKind
   /**
-   * Optional live descriptor for the kind picker / editor. Used when the
-   * static {@link descriptor} cannot carry fresh options (e.g. email's
-   * smtp-provider entry select). Absent → {@link descriptor} is used as-is.
+   * The save-time rule of this kind, on the config a save would leave: throws a reason an operator
+   * can read to refuse the write (email without a sender). Absent → the form's own checks are all.
    */
-  hydrateDescriptor?(): Promise<TargetKind>
+  validateConfig?(config: TargetConfig): void
   /**
    * The config keys that decide WHERE this kind's secrets are sent — the
    * server / base URL, the host-deriving instance id, the chat / bucket /

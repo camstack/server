@@ -13,7 +13,7 @@
 import { notificationTargetKinds, type TargetKind } from '@camstack/types'
 import { buildNotifierAdapters } from './adapters/registry.js'
 
-/** The descriptors of the catalog, by kind. The email adapter's live options do not change its fields. */
+/** The descriptors of the catalog, by kind. */
 export function notifierDescriptors(): readonly TargetKind[] {
   return buildNotifierAdapters().map((adapter) => adapter.descriptor)
 }

@@ -77,7 +77,10 @@ async function world() {
   await memory.records.declare({ ...notifiersRecordKinds, ...oldTargetKinds })
   const oldKind = memory.records.kind(oldTargetKinds[OLD_TARGETS_KIND])
   const legacy = legacyTargetsOver(oldKind, silentLogger)
-  const store = TargetStore.of(memory.records, notifierDescriptors(), { logger: silentLogger, legacy })
+  const store = TargetStore.of(memory.records, notifierDescriptors(), {
+    logger: silentLogger,
+    legacy,
+  })
   const descriptors = notifierDescriptors()
   const run = (
     host: AddonMigrationHost,
@@ -91,6 +94,11 @@ async function world() {
           const descriptor = descriptors.find((candidate) => candidate.kind === kind)
           return descriptor === undefined ? [] : secretKeysOf(descriptor)
         },
+        emailSenders: {
+          list: async () => [],
+          replace: async () => undefined,
+          firstSenderOf: async () => null,
+        },
       }),
       silentLogger,
     )
@@ -100,7 +108,10 @@ async function world() {
 describe('notifiers targets-to-body', () => {
   it('moves a switched-off Telegram target: token reads back equal, stays off, keeps its id', async () => {
     const w = await world()
-    await w.oldKind.put({ id: LEGACY_TELEGRAM_TARGET.id, data: LEGACY_TELEGRAM_TARGET.data })
+    await w.oldKind.put({
+      id: LEGACY_TELEGRAM_TARGET.id,
+      data: LEGACY_TELEGRAM_TARGET.data,
+    })
     const { host, outcomes } = ledgerHost()
     expect((await w.run(host)).failed).toEqual([])
     const moved = await w.store.getById('tg-1')
@@ -120,7 +131,10 @@ describe('notifiers targets-to-body', () => {
 
   it('a rerun is already-done and a row of a kind this addon does not serve stays', async () => {
     const w = await world()
-    await w.oldKind.put({ id: LEGACY_FOREIGN_TARGET.id, data: LEGACY_FOREIGN_TARGET.data })
+    await w.oldKind.put({
+      id: LEGACY_FOREIGN_TARGET.id,
+      data: LEGACY_FOREIGN_TARGET.data,
+    })
     const first = ledgerHost()
     await w.run(first.host)
     expect(first.outcomes.get(TARGETS_TO_BODY_ID)).toMatchObject({

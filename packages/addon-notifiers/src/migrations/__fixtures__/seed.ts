@@ -42,3 +42,41 @@ export const LEGACY_FOREIGN_TARGET: LegacyTargetRow = {
     config: {},
   },
 }
+
+/**
+ * Email target bodies as the release before `sendWith` stored them, already in the per-kind record
+ * (`notify-email`): flat, the provider named by `smtpAddonId` and one relay by `smtpInstanceId`. The
+ * recipients and the owner carry a MARK and the target is switched off — the fields a step that
+ * re-built the row would drop or reset.
+ */
+export const LEGACY_EMAIL_RECIPIENT = 'ops-MARK-77c2@example.com'
+export const LEGACY_EMAIL_OWNER = 'user-MARK-9e04'
+
+export interface LegacyEmailRow {
+  readonly id: string
+  readonly data: Record<string, unknown>
+}
+
+/** Pinned to one relay of the SMTP provider. */
+export const LEGACY_EMAIL_RELAY_TARGET: LegacyEmailRow = {
+  id: 'mail-relay',
+  data: {
+    name: 'Night shift',
+    enabled: false,
+    to: LEGACY_EMAIL_RECIPIENT,
+    ownerUserId: LEGACY_EMAIL_OWNER,
+    smtpAddonId: 'smtp-nodemailer',
+    smtpInstanceId: 'relay-7',
+  },
+}
+
+/** Naming only the provider (its default sender). */
+export const LEGACY_EMAIL_PROVIDER_TARGET: LegacyEmailRow = {
+  id: 'mail-google',
+  data: {
+    name: 'Family',
+    enabled: true,
+    to: 'family@example.com',
+    smtpAddonId: 'google-services',
+  },
+}

@@ -51,6 +51,8 @@
   "notifiers.gotify-server-url-required": "gotify: serverUrl è obbligatorio",
   "notifiers.gotify-app-token-required": "gotify: appToken è obbligatorio",
   "notifiers.email-to-required": "email: manca la configurazione obbligatoria 'to'",
+  "notifiers.email-sender-required": "email: scegli l'account o il relay in Invia con",
+  "notifiers.email-sender-gone": "email: il mittente {{id}} non esiste più — scegline un altro in Invia con",
   "hikvision.camera-name-required": "Il nome della telecamera è obbligatorio",
   "hikvision.camera-ip-required": "L'IP della telecamera è obbligatorio",
   "hikvision.password-required": "La password è obbligatoria",

@@ -51,6 +51,8 @@
   "notifiers.gotify-server-url-required": "gotify: serverUrl is required",
   "notifiers.gotify-app-token-required": "gotify: appToken is required",
   "notifiers.email-to-required": "email: missing required config 'to'",
+  "notifiers.email-sender-required": "email: pick the account or relay under Send with",
+  "notifiers.email-sender-gone": "email: the sender {{id}} no longer exists — pick another under Send with",
   "hikvision.camera-name-required": "Camera name is required",
   "hikvision.camera-ip-required": "Camera IP is required",
   "hikvision.password-required": "Password is required",

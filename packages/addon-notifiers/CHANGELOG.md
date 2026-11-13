@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Email targets pick the Google account or SMTP relay that sends them under Send with; existing targets are linked automatically, and every target kind can send a test from the editor before it is saved.
+
 ## [1.2.637] - 2026-11-11
 
 ### Changed
