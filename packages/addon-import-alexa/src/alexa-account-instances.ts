@@ -13,7 +13,7 @@ import {
 } from '@camstack/types'
 import { alexaBrokersEntryKind, type AlexaBrokerBody } from './broker-record-kinds.js'
 import { buildConnectionFormSchema } from './config.js'
-import { ALEXA_BROKER_KIND } from './speak/constants.js'
+import { ALEXA_BROKER_KIND, ALEXA_SPEAK_ICON_URL } from './speak/constants.js'
 import type { AlexaBrokerInfo } from './alexa-integration-manager.js'
 
 export const ALEXA_ACCOUNT_KIND = 'account'
@@ -60,6 +60,9 @@ export function buildAlexaAccountInstances(
           functionCap: 'broker',
           role: 'services',
           brokerKind: ALEXA_BROKER_KIND,
+          // The same mark the Echo target uses, so a target row does not badge it twice.
+          iconUrl: ALEXA_SPEAK_ICON_URL,
+          iconMediaType: 'image/svg+xml',
         },
       ],
     },

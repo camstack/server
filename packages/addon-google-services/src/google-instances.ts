@@ -15,6 +15,10 @@ import { type GoogleBrokerBody, googleBrokersEntryKind } from './broker-record-k
 import { buildGoogleBrokerSettingsSchema } from './google-broker-settings-schema.js'
 import { GOOGLE_BROKER_KIND, GOOGLE_BROKER_KIND_LABEL } from './google-types.js'
 
+/** The account mark, a file in this package served like the addon icon. */
+const GOOGLE_ACCOUNT_ICON_URL = '/api/addon-assets/google-services/assets/google-account.svg'
+const GOOGLE_ACCOUNT_ICON_MEDIA_TYPE = 'image/svg+xml'
+
 export interface GoogleInstancesDeps {
   /** Hub-relative route that starts the account link (`{{brokerId}}` is replaced by the UI). */
   readonly connectPath: string
@@ -66,6 +70,8 @@ export function googleAccountKind(
     // A Google account also sends mail: an email target links it as its sender.
     alsoServes: ['smtp-provider'],
     brokerKind: GOOGLE_BROKER_KIND,
+    iconUrl: GOOGLE_ACCOUNT_ICON_URL,
+    iconMediaType: GOOGLE_ACCOUNT_ICON_MEDIA_TYPE,
     connectPath: deps.connectPath,
     disconnectPath: deps.disconnectPath,
   }

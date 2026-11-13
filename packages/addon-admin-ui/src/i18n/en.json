@@ -12666,7 +12666,9 @@
     },
     "active": "Active",
     "addBlocked": "{{names}}: only one instance is allowed and it already exists.",
-    "addNone": "No provider here can hold instances."
+    "addNone": "No provider here can hold instances.",
+    "kindIconTip": "{{kind}} · {{provider}}",
+    "sendsVia": "Sends via {{name}}"
   },
   "wasteFetchNow": {
     "label": "Fetch {{name}} now",

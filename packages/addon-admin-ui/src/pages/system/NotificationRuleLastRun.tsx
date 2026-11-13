@@ -8,7 +8,7 @@
  */
 
 import type { NcHistoryStatus, NcRule, NcRuleLastRuns } from '@camstack/types'
-import { Button, useSystem } from '@camstack/ui-library'
+import { Button, Tooltip, TooltipContent, TooltipTrigger, useSystem } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { History } from 'lucide-react'
 import { formatRelativeTime } from '../../components/device/hero/format'
@@ -96,21 +96,26 @@ export interface RuleHistoryButtonProps {
 /** Opens the History tab filtered on this rule (the host owns the URL). */
 export function RuleHistoryButton({ rule, onOpenHistory }: RuleHistoryButtonProps) {
   const { t } = useTranslation()
+  const hint = t(
+    'system.notificationRuleLastRun.historyThisRuleSDeliveries',
+    "History — this rule's deliveries",
+  )
   return (
-    <Button
-      size="sm"
-      variant="ghost"
-      type="button"
-      onClick={() => onOpenHistory(rule)}
-      title={t(
-        'system.notificationRuleLastRun.historyThisRuleSDeliveries',
-        "History — this rule's deliveries",
-      )}
-      aria-label={t('system.notificationRuleLastRun.historyOf', 'history of {{name}}', {
-        name: rule.name,
-      })}
-    >
-      <History className="h-3.5 w-3.5" />
-    </Button>
+    <Tooltip>
+      <TooltipTrigger>
+        <Button
+          size="sm"
+          variant="ghost"
+          type="button"
+          onClick={() => onOpenHistory(rule)}
+          aria-label={t('system.notificationRuleLastRun.historyOf', 'history of {{name}}', {
+            name: rule.name,
+          })}
+        >
+          <History className="h-3.5 w-3.5" />
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>{hint}</TooltipContent>
+    </Tooltip>
   )
 }

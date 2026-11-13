@@ -12688,7 +12688,9 @@
     },
     "active": "Attivo",
     "addBlocked": "{{names}}: è consentita una sola istanza e esiste già.",
-    "addNone": "Nessun provider qui può contenere istanze."
+    "addNone": "Nessun provider qui può contenere istanze.",
+    "kindIconTip": "{{kind}} · {{provider}}",
+    "sendsVia": "Invia tramite {{name}}"
   },
   "wasteFetchNow": {
     "label": "Aggiorna {{name}} ora",

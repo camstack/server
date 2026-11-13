@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device picker shows each device's parent, keeps the filter rail visible on desktop, opens wider, and no longer re-orders or scrolls the list when you select a device
 - A full-height form dialog now has a fixed height on desktop, so only its columns scroll while the title and buttons stay put
 - The device picker panel can fill a dialog column and label an action requirement.
+- The pager under a table names previous and next with a tooltip.
 
 ## [1.2.438] - 2026-11-13
 

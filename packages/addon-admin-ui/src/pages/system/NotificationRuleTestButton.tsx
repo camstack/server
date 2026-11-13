@@ -20,7 +20,7 @@
  * anything the plan could not reproduce.
  */
 
-import { Button, useSystem } from '@camstack/ui-library'
+import { Button, Tooltip, TooltipContent, TooltipTrigger, useSystem } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { AlertTriangle, Loader2, Send } from 'lucide-react'
 import { useState } from 'react'
@@ -82,51 +82,62 @@ export function NotificationRuleTestButton({
       setError(err instanceof Error ? err.message : 'The test could not be run.'),
   })
 
-  const title = outcome !== null ? summariseRuleTest(outcome) : error !== null ? error : undefined
+  const hint =
+    outcome !== null
+      ? summariseRuleTest(outcome)
+      : error !== null
+        ? error
+        : summary
+          ? t(
+              'system.notificationRuleTestButton.sendSummaryTitle',
+              'Sends this rule’s state summary now, to every target',
+            )
+          : t(
+              'system.notificationRuleTestButton.testNowFiresThisRule',
+              'Test now — fires this rule and really sends the notification',
+            )
+
+  const button = (
+    <Button
+      size="sm"
+      variant={variant === 'icon' ? 'ghost' : 'outline'}
+      type="button"
+      disabled={run.isPending}
+      onClick={() => run.mutate()}
+      {...(variant === 'full' ? { title: hint } : {})}
+      aria-label={
+        summary
+          ? t(
+              'system.notificationRuleTestButton.sendSummaryAria',
+              'send the summary of {{ruleName}} now',
+              { ruleName },
+            )
+          : t('system.notificationRuleTestButton.testNow', 'test {{ruleName}} now', { ruleName })
+      }
+      data-testid={summary ? 'nc-rule-test-summary' : 'nc-rule-test-now'}
+    >
+      {run.isPending ? (
+        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+      ) : (
+        <Send className="h-3.5 w-3.5" />
+      )}
+      {variant === 'full' &&
+        (summary
+          ? t('system.notificationRuleTestButton.sendSummaryNow', 'Send the summary now')
+          : t('system.notificationRuleTestButton.testNow2', 'Test now'))}
+    </Button>
+  )
 
   return (
     <>
-      <Button
-        size="sm"
-        variant={variant === 'icon' ? 'ghost' : 'outline'}
-        type="button"
-        disabled={run.isPending}
-        onClick={() => run.mutate()}
-        // The title carries the LAST verdict in a row, where there is no room
-        // for the paragraph — hovering is how the operator reads it.
-        title={
-          title ??
-          (summary
-            ? t(
-                'system.notificationRuleTestButton.sendSummaryTitle',
-                'Sends this rule’s state summary now, to every target',
-              )
-            : t(
-                'system.notificationRuleTestButton.testNowFiresThisRule',
-                'Test now — fires this rule and really sends the notification',
-              ))
-        }
-        aria-label={
-          summary
-            ? t(
-                'system.notificationRuleTestButton.sendSummaryAria',
-                'send the summary of {{ruleName}} now',
-                { ruleName },
-              )
-            : t('system.notificationRuleTestButton.testNow', 'test {{ruleName}} now', { ruleName })
-        }
-        data-testid={summary ? 'nc-rule-test-summary' : 'nc-rule-test-now'}
-      >
-        {run.isPending ? (
-          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        ) : (
-          <Send className="h-3.5 w-3.5" />
-        )}
-        {variant === 'full' &&
-          (summary
-            ? t('system.notificationRuleTestButton.sendSummaryNow', 'Send the summary now')
-            : t('system.notificationRuleTestButton.testNow2', 'Test now'))}
-      </Button>
+      {variant === 'icon' ? (
+        <Tooltip>
+          <TooltipTrigger>{button}</TooltipTrigger>
+          <TooltipContent>{hint}</TooltipContent>
+        </Tooltip>
+      ) : (
+        button
+      )}
 
       {showResult && error !== null && (
         <div className="mt-2 rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-[11px] text-danger">

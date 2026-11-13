@@ -8,6 +8,9 @@ import { useQueryClient } from '@tanstack/react-query'
 import {
   ConfirmActionButton,
   IconButton,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   useConfirm,
   useAddonsRestartAddon,
 } from '@camstack/ui-library'
@@ -44,26 +47,32 @@ function RestartIconButton({
   const { t } = useTranslation()
   const confirm = useConfirm()
   const restartAddon = useRestartAddon()
+  const label = t('integrationHub.addonControls.restartNamed', 'Restart {{name}}', {
+    name: displayName,
+  })
   return (
-    <IconButton
-      icon={restartAddon.isPending ? Loader2 : RefreshCw}
-      variant="ghost"
-      size="sm"
-      aria-label={t('integrationHub.addonControls.restartNamed', 'Restart {{name}}', {
-        name: displayName,
-      })}
-      disabled={restartAddon.isPending}
-      onClick={() =>
-        void confirm({
-          title: t('integrationHub.addonControls.restart2', 'Restart "{{displayName}}"?', {
-            displayName,
-          }),
-          message,
-          confirmLabel: t('integrationHub.addonControls.restart', 'Restart'),
-          variant: 'danger',
-        }).then((ok) => (ok ? restartAddon.mutateAsync({ addonId }) : undefined))
-      }
-    />
+    <Tooltip>
+      <TooltipTrigger>
+        <IconButton
+          icon={restartAddon.isPending ? Loader2 : RefreshCw}
+          variant="ghost"
+          size="sm"
+          aria-label={label}
+          disabled={restartAddon.isPending}
+          onClick={() =>
+            void confirm({
+              title: t('integrationHub.addonControls.restart2', 'Restart "{{displayName}}"?', {
+                displayName,
+              }),
+              message,
+              confirmLabel: t('integrationHub.addonControls.restart', 'Restart'),
+              variant: 'danger',
+            }).then((ok) => (ok ? restartAddon.mutateAsync({ addonId }) : undefined))
+          }
+        />
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   )
 }
 

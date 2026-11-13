@@ -9,6 +9,7 @@
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { IconButton } from '../primitives/icon-button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '../primitives/tooltip'
 import type { DataTablePage, DataTablePaginationLabels } from './data-table-pagination'
 
 export interface DataTablePagerProps {
@@ -25,26 +26,34 @@ export function DataTablePager({ page, labels, onPageChange }: DataTablePagerPro
       <span aria-live="polite" className="text-[11px] tabular-nums text-foreground-subtle">
         {labels.range(page.from, page.to, page.total)}
       </span>
-      <IconButton
-        type="button"
-        variant="outline"
-        size="sm"
-        icon={ChevronLeft}
-        aria-label={labels.previous}
-        title={labels.previous}
-        disabled={atStart}
-        onClick={() => onPageChange(page.page - 1)}
-      />
-      <IconButton
-        type="button"
-        variant="outline"
-        size="sm"
-        icon={ChevronRight}
-        aria-label={labels.next}
-        title={labels.next}
-        disabled={atEnd}
-        onClick={() => onPageChange(page.page + 1)}
-      />
+      <Tooltip>
+        <TooltipTrigger>
+          <IconButton
+            type="button"
+            variant="outline"
+            size="sm"
+            icon={ChevronLeft}
+            aria-label={labels.previous}
+            disabled={atStart}
+            onClick={() => onPageChange(page.page - 1)}
+          />
+        </TooltipTrigger>
+        <TooltipContent>{labels.previous}</TooltipContent>
+      </Tooltip>
+      <Tooltip>
+        <TooltipTrigger>
+          <IconButton
+            type="button"
+            variant="outline"
+            size="sm"
+            icon={ChevronRight}
+            aria-label={labels.next}
+            disabled={atEnd}
+            onClick={() => onPageChange(page.page + 1)}
+          />
+        </TooltipTrigger>
+        <TooltipContent>{labels.next}</TooltipContent>
+      </Tooltip>
     </nav>
   )
 }

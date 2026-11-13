@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A Google account has its own mark, so an email target badges the account instead of the Google addon's calendar icon.
+
 ## [0.2.48] - 2026-11-13
 
 ### Changed

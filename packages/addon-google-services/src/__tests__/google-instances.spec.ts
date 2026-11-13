@@ -65,6 +65,8 @@ describe('Google accounts as integration instances', () => {
       functionCap: 'broker',
       alsoServes: ['smtp-provider'],
       brokerKind: 'google',
+      iconUrl: '/api/addon-assets/google-services/assets/google-account.svg',
+      iconMediaType: 'image/svg+xml',
     })
   })
 

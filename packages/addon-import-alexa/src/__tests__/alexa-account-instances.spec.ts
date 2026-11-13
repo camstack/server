@@ -58,6 +58,10 @@ describe('Alexa accounts as integration instances', () => {
     expect(one?.formValues['cookie']).not.toBe('cookie')
     const description = await instances.describe()
     expect(description).toMatchObject({ allowRestoreId: true, mintsId: true })
+    expect(description.kinds?.[0]).toMatchObject({
+      iconUrl: '/addon/import-alexa/icons/alexa-echo',
+      iconMediaType: 'image/svg+xml',
+    })
   })
 
   it('an edit keeps the cookie, the macDms and the integration link; create mints alexa_NNN; restore keeps the old id', async () => {

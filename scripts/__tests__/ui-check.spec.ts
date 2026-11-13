@@ -237,3 +237,30 @@ describe('undeclared-token', () => {
     expect(rules(ADMIN, '<div className="bg-surface-2" />\n')).toEqual([])
   })
 })
+
+describe('icon-title', () => {
+  const cell = 'packages/addon-admin-ui/src/components/instances/kind-cell.tsx'
+
+  it('flags an icon in a table cell that uses the native title', () => {
+    const src = '<img src="/a.svg" title="Email" />\n'
+    expect(rules(cell, src)).toContain('icon-title')
+    expect(rules(cell, '<IconButton icon={Pencil} title="Edit" aria-label="Edit" />\n')).toContain(
+      'icon-title',
+    )
+    expect(
+      rules(ADMIN, 'render: () => (\n  <svg title="Kind" className="h-4 w-4" />\n)\n'),
+    ).toContain('icon-title')
+  })
+
+  it('accepts the library Tooltip and a button that also has text', () => {
+    expect(
+      rules(
+        cell,
+        '<Tooltip>\n  <TooltipTrigger><img src="/a.svg" title="Email" alt="" /></TooltipTrigger>\n  <TooltipContent>Email</TooltipContent>\n</Tooltip>\n',
+      ),
+    ).not.toContain('icon-title')
+    expect(rules(ADMIN, '<img src="/a.svg" title="Outside a table" />\n')).not.toContain(
+      'icon-title',
+    )
+  })
+})

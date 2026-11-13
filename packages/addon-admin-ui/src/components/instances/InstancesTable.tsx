@@ -19,6 +19,9 @@ import {
   SECTION_CARD,
   SectionCard,
   Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   useAddonsSetCapabilityProviderEnabled,
   useConfirm,
   useInstancesOfCap,
@@ -122,6 +125,18 @@ export interface InstancesTableProps {
   readonly testLabel?: string
   /** What that test does, one sentence under the form, already translated. */
   readonly testHint?: string
+}
+
+/** A row action: the library tooltip shows the same words as the accessible name. */
+function RowIconButton(props: ComponentProps<typeof IconButton>): ReactElement {
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <IconButton {...props} />
+      </TooltipTrigger>
+      <TooltipContent>{props['aria-label']}</TooltipContent>
+    </Tooltip>
+  )
 }
 
 /** The badge tooltip: the provider's detail and, when known, when the remote was last probed. */
@@ -384,6 +399,7 @@ export function InstancesTable({
                 row.kindLabel.length > 0 ? (
                   <KindCell
                     addonId={row.addonId}
+                    providerName={row.providerName}
                     label={row.kindLabel}
                     {...(row.kindIconUrl !== undefined ? { iconUrl: row.kindIconUrl } : {})}
                     {...(row.links !== undefined ? { links: row.links } : {})}
@@ -432,7 +448,7 @@ export function InstancesTable({
         render: (row) => (
           <span className="inline-flex items-center gap-1">
             {row.kind === 'instance' && row.connectPath !== undefined && (
-              <IconButton
+              <RowIconButton
                 icon={Link2}
                 variant="ghost"
                 size="sm"
@@ -443,7 +459,7 @@ export function InstancesTable({
               />
             )}
             {row.kind === 'instance' && row.disconnectPath !== undefined && (
-              <IconButton
+              <RowIconButton
                 icon={Link2Off}
                 variant="ghost"
                 size="sm"
@@ -454,7 +470,7 @@ export function InstancesTable({
               />
             )}
             {row.kind === 'instance' && row.canTest && (
-              <IconButton
+              <RowIconButton
                 icon={testing === row.key ? Loader2 : Play}
                 variant="ghost"
                 size="sm"
@@ -467,7 +483,7 @@ export function InstancesTable({
             )}
             {row.kind === 'instance' && rowActions?.(row)}
             {row.kind === 'fixed' && fixedRowActions?.(row)}
-            <IconButton
+            <RowIconButton
               icon={Pencil}
               variant="ghost"
               size="sm"
@@ -490,7 +506,7 @@ export function InstancesTable({
               )}
             />
             {row.kind === 'instance' && (canDelete?.(row) ?? true) && (
-              <IconButton
+              <RowIconButton
                 icon={Trash2}
                 variant="ghost"
                 size="sm"

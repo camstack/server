@@ -88,6 +88,12 @@ A private `StatCard` still lives in
 widget is next touched (library already accepts `icon` / `subtext` /
 `valueClassName`).
 
+**A native `title` on an icon in a table cell.** Hover text on an `img`, `svg`
+or `IconButton` is the library `Tooltip` (`Tooltip` + `TooltipTrigger` +
+`TooltipContent`). A kind icon says "<kind> · <provider>"; a badge of a linked
+instance says "Sends via <name>". `ui:check` flags the native attribute as
+`icon-title`.
+
 **A raw `<table>` for a managed list.** `packages/addon-admin-ui/src/components/backup/BackupRunsPanel.tsx`,
 `packages/addon-admin-ui/src/components/pipeline/tabs/NodeEnginesTab.tsx`.
 → `DataTable` — it brings the pinned header, the inner scroll

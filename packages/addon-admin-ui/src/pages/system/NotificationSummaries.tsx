@@ -26,6 +26,9 @@ import {
   Button,
   ErrorBox,
   Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   useDeviceManagerListAll,
   useSystem,
 } from '@camstack/ui-library'
@@ -500,23 +503,29 @@ export function summaryColumns(deps: SummaryColumnsDeps): readonly DataColumn<Su
       nowrap: true,
       render: (rule) => (
         <NcListRowControls className="flex items-center justify-end gap-1">
-          <Button
-            size="sm"
-            variant="ghost"
-            type="button"
-            disabled={rule.readOnly}
-            onClick={() => deps.onTest(rule)}
-            title={i18n.t(
-              'system.notificationSummaries.produceThisDigestNowAnd',
-              'Produce this digest now and DELIVER it',
-            )}
-            aria-label={i18n.t('system.notificationSummaries.test', 'test {{name}}', {
-              name: rule.name,
-            })}
-            data-testid={`summary-test-${rule.id}`}
-          >
-            <FlaskConical className="h-3.5 w-3.5" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                size="sm"
+                variant="ghost"
+                type="button"
+                disabled={rule.readOnly}
+                onClick={() => deps.onTest(rule)}
+                aria-label={i18n.t('system.notificationSummaries.test', 'test {{name}}', {
+                  name: rule.name,
+                })}
+                data-testid={`summary-test-${rule.id}`}
+              >
+                <FlaskConical className="h-3.5 w-3.5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              {i18n.t(
+                'system.notificationSummaries.produceThisDigestNowAnd',
+                'Produce this digest now and DELIVER it',
+              )}
+            </TooltipContent>
+          </Tooltip>
           {/* No Edit button: the row IS the edit target (same as Rules). */}
           <NcListDeleteButton
             disabled={rule.readOnly}

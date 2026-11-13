@@ -843,7 +843,7 @@ describe('InstancesTable extensions', () => {
 
   it('shows no lead when the prop is absent', async () => {
     renderPanel('?instance=smtp-nodemailer:a')
-    expect(await screen.findByText('Edit Relay A')).toBeTruthy()
+    expect(await screen.findByText('Edit Relay A', { selector: 'span' })).toBeTruthy()
     expect(screen.queryByText(/lead for/)).toBeNull()
   })
 })
@@ -992,7 +992,7 @@ describe('InstancesTable slots', () => {
 
     it('does not offer the field when editing an existing record', async () => {
       renderPanel('?instance=smtp-nodemailer:a', { typedId: () => rule })
-      expect(await screen.findByText('Edit Relay A')).toBeTruthy()
+      expect(await screen.findByText('Edit Relay A', { selector: 'span' })).toBeTruthy()
       expect(screen.queryByText(/^Id\b/)).toBeNull()
     })
   })

@@ -9,7 +9,14 @@
 import type { NcRule, NcSnooze } from '@camstack/types'
 import { ruleKindOf, ruleKindSpec } from '@camstack/types'
 import type { DataColumn } from '@camstack/ui-library'
-import { Badge, Button, Switch } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  Switch,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@camstack/ui-library'
 import { Copy, FlaskConical } from 'lucide-react'
 import type { TFunction } from 'i18next'
 import { useTranslation } from 'react-i18next'
@@ -191,33 +198,48 @@ export function ruleColumns(deps: RuleColumnsDeps): readonly DataColumn<NcRule>[
               <RuleHistoryButton rule={rule} onOpenHistory={deps.onOpenHistory} />
             )}
             {deps.onTest && (
-              <Button
-                size="sm"
-                variant="ghost"
-                type="button"
-                onClick={() => deps.onTest?.(rule)}
-                title={i18n.t(
-                  'system.notificationRuleColumns.openInTheSimulatorDescribe',
-                  'Open in the simulator — describe an event and tune it before injecting',
-                )}
-                aria-label={i18n.t('system.notificationRuleColumns.simulate', 'simulate {{name}}', {
-                  name: rule.name,
-                })}
-              >
-                <FlaskConical className="h-3.5 w-3.5" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    type="button"
+                    onClick={() => deps.onTest?.(rule)}
+                    aria-label={i18n.t(
+                      'system.notificationRuleColumns.simulate',
+                      'simulate {{name}}',
+                      { name: rule.name },
+                    )}
+                  >
+                    <FlaskConical className="h-3.5 w-3.5" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  {i18n.t(
+                    'system.notificationRuleColumns.openInTheSimulatorDescribe',
+                    'Open in the simulator — describe an event and tune it before injecting',
+                  )}
+                </TooltipContent>
+              </Tooltip>
             )}
             {/* No Edit button: the row IS the edit target (R2). The snooze has
               its own column. */}
-            <Button
-              size="sm"
-              variant="ghost"
-              type="button"
-              onClick={() => deps.onDuplicate(rule)}
-              title={i18n.t('system.notificationRuleColumns.duplicate', 'Duplicate')}
-            >
-              <Copy className="h-3.5 w-3.5" />
-            </Button>
+            <Tooltip>
+              <TooltipTrigger>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  type="button"
+                  onClick={() => deps.onDuplicate(rule)}
+                  aria-label={i18n.t('system.notificationRuleColumns.duplicate', 'Duplicate')}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {i18n.t('system.notificationRuleColumns.duplicate', 'Duplicate')}
+              </TooltipContent>
+            </Tooltip>
             <RuleDeleteButton rule={rule} deps={deps} />
           </NcListRowControls>
         ) : (

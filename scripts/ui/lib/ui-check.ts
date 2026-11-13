@@ -30,6 +30,7 @@ export type UiRule =
   | 'inline-confirm-state'
   | 'raw-password-input'
   | 'shadows-library'
+  | 'icon-title'
 
 export interface UiFinding {
   readonly file: string
@@ -207,6 +208,99 @@ function hexMessage(hex: string, tokens: HexTokenMap): string {
     : `raw ${hex} → a theme token (\`ui:tokens\`); a colour the theme lacks is added to camstack-theme.css, not inlined`
 }
 
+const ICON_TITLE_MESSAGE =
+  'icon-only control in a table cell uses native `title` → wrap it in `Tooltip` / `TooltipTrigger` / `TooltipContent` from @camstack/ui-library'
+
+const TABLE_CELL_FILE = /(?:table|cell)\.[jt]sx$/i
+
+/** Index of the `>` that closes the JSX tag starting at `start` (`<` of the tag). */
+function openingTagEnd(source: string, start: number): number {
+  let brace = 0
+  let quote: string | null = null
+  for (let i = start; i < source.length; i++) {
+    const c = source[i]
+    if (quote !== null) {
+      if (c === '\\') {
+        i++
+        continue
+      }
+      if (c === quote) quote = null
+      continue
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      quote = c
+      continue
+    }
+    if (c === '{') brace++
+    else if (c === '}') brace = Math.max(0, brace - 1)
+    else if (c === '>' && brace === 0) return i
+  }
+  return source.length
+}
+
+function lineNumberAt(source: string, index: number): number {
+  let line = 1
+  for (let i = 0; i < index && i < source.length; i++) if (source[i] === '\n') line++
+  return line
+}
+
+function suppressedAt(source: string, index: number): boolean {
+  const lineStart = source.lastIndexOf('\n', index - 1) + 1
+  const lineEnd = source.indexOf('\n', index)
+  const line = source.slice(lineStart, lineEnd === -1 ? source.length : lineEnd)
+  if (SUPPRESS.test(line)) return true
+  const prevEnd = lineStart - 1
+  if (prevEnd < 0) return false
+  const prevStart = source.lastIndexOf('\n', prevEnd - 1) + 1
+  return SUPPRESS.test(source.slice(prevStart, prevEnd))
+}
+
+function insideTooltip(source: string, index: number): boolean {
+  const before = source.slice(0, index)
+  const opens = before.match(/<Tooltip\b/g)?.length ?? 0
+  const closes = before.match(/<\/Tooltip>/g)?.length ?? 0
+  return opens > closes
+}
+
+function inTableCell(file: string, source: string, index: number): boolean {
+  if (TABLE_CELL_FILE.test(file)) return true
+  const from = Math.max(0, index - 2500)
+  const before = source.slice(from, index)
+  return (
+    /\brender\s*[:(]/.test(before) ||
+    /<t[dh][\s>]/.test(before) ||
+    /\b(?:DataTable|InstancesTable)\b/.test(before)
+  )
+}
+
+/**
+ * An icon-only `img` / `svg` / `IconButton` in a table cell that still uses
+ * the native `title` tooltip.
+ */
+export function iconTitleFindings(file: string, source: string): UiFinding[] {
+  if (!file.endsWith('.tsx')) return []
+  const findings: UiFinding[] = []
+  const pattern = /<(img|svg|IconButton)\b/g
+  for (const match of source.matchAll(pattern)) {
+    const index = match.index
+    if (index === undefined) continue
+    if (suppressedAt(source, index) || insideTooltip(source, index)) continue
+    if (!inTableCell(file, source, index)) continue
+    const tag = match[1] ?? ''
+    const end = openingTagEnd(source, index)
+    const open = source.slice(index, end)
+    if (!/\btitle\s*=/.test(open)) continue
+    findings.push({
+      file,
+      line: lineNumberAt(source, index),
+      rule: 'icon-title',
+      match: `<${tag} title=`,
+      message: ICON_TITLE_MESSAGE,
+    })
+  }
+  return findings
+}
+
 /**
  * `libraryComponents`: the names `@camstack/ui-library` exports as components.
  * A file outside the library that EXPORTS a component of the same name is a
@@ -314,6 +408,9 @@ export function checkUiSource(
         `window.${m[1]}() → \`use${m[1][0].toUpperCase()}${m[1].slice(1)}\` from @camstack/ui-library (needs \`ConfirmDialogProvider\`)`,
       )
     }
+  }
+  if (isTsx) {
+    for (const finding of iconTitleFindings(file, source)) findings.push(finding)
   }
   if (isTsx && !file.startsWith('packages/ui-library/')) {
     for (const [index, text] of lines.entries()) {
