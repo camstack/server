@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.207] - 2026-11-14
+
 ### Changed
 
 - An Echo reports a mute reading only when Amazon sends a mute boolean

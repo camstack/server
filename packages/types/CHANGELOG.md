@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.564] - 2026-11-14
+
 ### Changed
 
 - A sensor that is offline now carries an empty measurement, so its card shows a dash instead of falling back to the old card; automation rows carry the enabled switch
