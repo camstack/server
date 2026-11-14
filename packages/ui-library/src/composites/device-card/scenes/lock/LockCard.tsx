@@ -1,8 +1,8 @@
 import type { ReactElement } from 'react'
-import { cn } from '../../../../lib/cn'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { LockIllustration, type LockLook } from '../../illustrations/LockIllustration'
 import { type ColumnItem, columnArmedButton, columnButton } from '../../shell/column-items'
+import { type BottomRow, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -48,23 +48,22 @@ export function lockStateLabel(activity: LockActivity, doorOpen: boolean, t: UiT
   }
 }
 
-function doorLine(model: LockCardModel, t: UiTextFn): ReactElement | null {
+function doorRows(model: LockCardModel, t: UiTextFn): readonly BottomRow[] {
   const door = model.door
-  if (door === null) return null
+  if (door === null) return []
   const state =
     door.reading === 'unknown'
       ? '—'
       : door.reading === 'open'
         ? t('uiLibrary.deviceCard.lock.doorOpen', 'Open')
         : t('uiLibrary.deviceCard.lock.doorClosed', 'Closed')
-  return (
-    <p
-      data-testid="dc-lock-door"
-      className={cn('text-xs', door.reading === 'open' ? 'text-warning' : 'text-foreground-muted')}
-    >
-      {door.name} · {state}
-    </p>
-  )
+  return [
+    rowText('door', {
+      text: `${door.name} · ${state}`,
+      tone: door.reading === 'open' ? 'warning' : 'muted',
+      testId: 'dc-lock-door',
+    }),
+  ]
 }
 
 function unlockButton(
@@ -166,7 +165,6 @@ export function LockCard({
 }: LockCardProps): ReactElement {
   const t = useUiText()
   const waiting = model.activity === 'unlocked' && model.doorOpen && model.canLock
-  const door = doorLine(model, t)
   return (
     <DeviceCard
       kind="lock"
@@ -184,17 +182,18 @@ export function LockCard({
         alert: model.activity === 'jammed',
         columns: { right: rightColumn(model, actions, t) },
         image: <LockIllustration look={LOOK[model.activity]} className={SCENE_DRAWING_CLASS} />,
-        bottom:
-          door === null && !waiting ? null : (
-            <>
-              {door}
-              {waiting ? (
-                <p data-testid="dc-lock-wait" className="text-xs text-warning">
-                  {t('uiLibrary.deviceCard.lock.closeDoorFirst', 'Close the door first')}
-                </p>
-              ) : null}
-            </>
-          ),
+        bottom: [
+          ...doorRows(model, t),
+          ...(waiting
+            ? [
+                rowText('wait', {
+                  text: t('uiLibrary.deviceCard.lock.closeDoorFirst', 'Close the door first'),
+                  tone: 'warning',
+                  testId: 'dc-lock-wait',
+                }),
+              ]
+            : []),
+        ],
       }}
     />
   )
