@@ -4,13 +4,14 @@ import { Checkbox } from '../../../../primitives/checkbox'
 import { useUiText } from '../../../../contexts/ui-text'
 import { AmbientFx } from '../../illustrations/AmbientFx'
 import { type FanAxisDrawing, FanIllustration } from '../../illustrations/FanIllustration'
-import { CardButton } from '../../parts/CardButton'
 import { MenuButton } from '../../parts/MenuButton'
 import { PopoverButton } from '../../parts/PopoverButton'
-import { HorizontalSlider, VerticalSlider } from '../../parts/sliders'
+import { HorizontalSlider } from '../../parts/sliders'
 import { SwitchTimer, useTimerSince } from '../../parts/SwitchTimer'
+import { columnButton, columnSlider } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
 import {
   FAN_MIN_SWEEP,
   type FanAxisModel,
@@ -139,7 +140,7 @@ export function FanCard({
   const reverse = model.direction === 'reverse'
   const axes = model.axes
   const pending = model.pending === true
-  const hasBottom = model.oscillating !== null || axes !== null || model.timer !== null
+  const hasBottom = model.presets.length > 0 || axes !== null || model.timer !== null
   return (
     <DeviceCard
       kind="fan"
@@ -153,20 +154,63 @@ export function FanCard({
         fx: on ? (
           <AmbientFx role="fan" activity="run" swing={false} speed={model.speed ?? 60} />
         ) : null,
-        left:
-          model.speed === null ? null : (
-            <VerticalSlider
-              value={model.speed}
-              min={0}
-              max={100}
-              step={model.speedStep}
-              ariaLabel={t('uiLibrary.deviceCard.fan.speed', 'Speed')}
-              disabled={!on || pending}
-              valueLabel={(v) => (on && !pending ? `${v}%` : null)}
-              onCommit={actions.onSpeed}
-              testId="dc-fan-speed"
-            />
-          ),
+        columns: {
+          left:
+            model.speed === null
+              ? []
+              : [
+                  columnSlider('speed', {
+                    value: model.speed,
+                    min: 0,
+                    max: 100,
+                    step: model.speedStep,
+                    ariaLabel: t('uiLibrary.deviceCard.fan.speed', 'Speed'),
+                    disabled: !on || pending,
+                    valueLabel: (v) => (on && !pending ? `${v}%` : null),
+                    onCommit: actions.onSpeed,
+                    testId: 'dc-fan-speed',
+                  }),
+                ],
+          right: [
+            columnButton('power', {
+              glyph: 'power',
+              tone: on ? 'primary' : 'default',
+              label: on
+                ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
+                : t('uiLibrary.deviceCard.turnOn', 'Turn on'),
+              testId: 'dc-fan-power',
+              onPress: () => actions.onPower(!on),
+            }),
+            ...(model.oscillating === null || axes !== null
+              ? []
+              : [
+                  columnButton('oscillate', {
+                    glyph: 'swingHorizontal',
+                    tone: model.oscillating ? 'on' : 'default',
+                    pressed: model.oscillating,
+                    disabled: !on,
+                    label: t('uiLibrary.deviceCard.fan.oscillation', 'Oscillation'),
+                    testId: 'dc-fan-oscillate',
+                    onPress: () => actions.onOscillating(model.oscillating !== true),
+                  }),
+                ]),
+            ...(model.direction === null
+              ? []
+              : [
+                  columnButton('direction', {
+                    glyph: reverse ? 'directionReverse' : 'directionForward',
+                    disabled: !on || pending,
+                    label: pending
+                      ? t('uiLibrary.deviceCard.fan.direction', 'Direction')
+                      : reverse
+                        ? t('uiLibrary.deviceCard.fan.winter', 'Winter')
+                        : t('uiLibrary.deviceCard.fan.summer', 'Summer'),
+                    testId: 'dc-fan-direction',
+                    onPress: () => actions.onDirection(reverse ? 'forward' : 'reverse'),
+                  }),
+                ]),
+          ],
+        },
         image: (
           <FanIllustration
             on={on}
@@ -181,21 +225,11 @@ export function FanCard({
                     vertical: drawnAxis(axes.vertical),
                   }
             }
-            className="h-31 w-31"
+            className={SCENE_DRAWING_CLASS}
           />
         ),
-        right: (
+        bottom: hasBottom ? (
           <>
-            <CardButton
-              glyph="power"
-              tone={on ? 'primary' : 'default'}
-              data-testid="dc-fan-power"
-              onClick={() => actions.onPower(!on)}
-            >
-              {on
-                ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
-                : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-            </CardButton>
             {model.presets.length === 0 ? null : (
               <MenuButton
                 options={model.presets}
@@ -206,36 +240,6 @@ export function FanCard({
                 testId="dc-fan-preset"
                 layout="stacked"
               />
-            )}
-            {model.direction === null ? null : (
-              <CardButton
-                glyph={reverse ? 'directionReverse' : 'directionForward'}
-                disabled={!on || pending}
-                data-testid="dc-fan-direction"
-                onClick={() => actions.onDirection(reverse ? 'forward' : 'reverse')}
-              >
-                {pending
-                  ? t('uiLibrary.deviceCard.fan.direction', 'Direction')
-                  : reverse
-                    ? t('uiLibrary.deviceCard.fan.winter', 'Winter')
-                    : t('uiLibrary.deviceCard.fan.summer', 'Summer')}
-              </CardButton>
-            )}
-          </>
-        ),
-        bottom: hasBottom ? (
-          <>
-            {model.oscillating === null || axes !== null ? null : (
-              <CardButton
-                glyph="swingHorizontal"
-                tone={model.oscillating ? 'on' : 'default'}
-                aria-pressed={model.oscillating}
-                disabled={!on}
-                data-testid="dc-fan-oscillate"
-                onClick={() => actions.onOscillating(model.oscillating !== true)}
-              >
-                {t('uiLibrary.deviceCard.fan.oscillation', 'Oscillation')}
-              </CardButton>
             )}
             {axes === null ? null : (
               <div className="flex flex-wrap justify-center gap-1.5">
