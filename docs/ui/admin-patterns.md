@@ -882,6 +882,11 @@ D1042), never a per-capability setter.
   `columnArmedButton` / `columnLink` / `columnPopover` (`shell/column-items.tsx`):
   a compact control or one short value. A selector, segmented choice, dropdown or
   anything longer goes in `bottom`; the type refuses a `ReactNode` in a column.
+  `bottom` is a list of typed rows (`shell/bottom-rows.tsx`): `rowSelector`,
+  `rowPills`, `rowStats` (name over value, up to four to a row: group readings
+  rather than listing pills), `rowButtons`, `rowSlider`, `rowText`, and `rowBlock`
+  for a composed control the others cannot express. One renderer in `SceneGrid`
+  draws them; an optional short `label` captions a row.
   A device whose only control is power wraps its drawing in `ScenePower`
   (`role="switch"`, keyboard toggle, the shell's gating): the drawing is the
   switch and no power button sits beside it. Every scene is on these

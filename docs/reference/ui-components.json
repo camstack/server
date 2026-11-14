@@ -1923,6 +1923,13 @@
       "summary": "Operator words for a boolean field's two states."
     },
     {
+      "name": "BottomRow",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "One horizontal row of a scene's bottom area: n rows, each of one kind, drawn by the one renderer in `SceneGrid`. A `BottomRow` is made only by the `row*` factories below, so a scene cannot hand the bottom a loose node…"
+    },
+    {
       "name": "BottomSheet",
       "kind": "component",
       "area": "primitives",
@@ -15020,6 +15027,55 @@
       "summary": "`<BrowserRouter basename>`: the mount without its trailing slash."
     },
     {
+      "name": "rowBlock",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "The escape hatch: one composed block. Prefer a typed row."
+    },
+    {
+      "name": "rowButtons",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "Commands side by side on a row."
+    },
+    {
+      "name": "rowPills",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "Short chips that wrap: facts that carry no number to compare."
+    },
+    {
+      "name": "rowSelector",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "A selector, dropdown or segmented choice, on a row of its own."
+    },
+    {
+      "name": "rowSlider",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "One horizontal track across the card."
+    },
+    {
+      "name": "rowStats",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "Name over value, up to four cells sharing a row: the compact way to show readings."
+    },
+    {
+      "name": "rowText",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "A sentence or a short fact on a row."
+    },
+    {
       "name": "rowWeightsOf",
       "kind": "function",
       "area": "composites",
@@ -19662,7 +19718,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/sliders.tsx",
-      "summary": "A level in one of the scene's side columns, its value riding on the thumb.",
+      "summary": "A level in one of the scene's side columns, its value under the track so a narrow column never pushes it over the drawing.",
       "props": [
         {
           "name": "value",
