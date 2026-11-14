@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { ClimateControlStatus, CoverStatus } from '@camstack/types'
 import {
   decodeClimate,
+  decodeClimateDemand,
   decodeCover,
   decodeLock,
   fromHmSetPointMode,
@@ -303,5 +304,41 @@ describe('decodeClimate', () => {
 
   it('returns null for irrelevant parameters', () => {
     expect(decodeClimate(CLIMATE, 'RSSI_DEVICE', -50, 7)).toBeNull()
+  })
+})
+
+describe('decodeClimate SET_POINT_MODE party', () => {
+  it('index 2 and PARTY stay auto and become the `party` preset', () => {
+    expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 2, 1)).toMatchObject({
+      mode: 'auto',
+      preset: 'party',
+    })
+    expect(decodeClimate(CLIMATE, 'SET_POINT_MODE', 'PARTY', 1)).toMatchObject({
+      mode: 'auto',
+      preset: 'party',
+    })
+  })
+
+  it('leaving party clears only the party preset, never boost', () => {
+    const party = { ...CLIMATE, preset: 'party' }
+    expect(decodeClimate(party, 'SET_POINT_MODE', 0, 1)?.preset).toBe('')
+    const boost = { ...CLIMATE, preset: 'boost' }
+    expect(decodeClimate(boost, 'SET_POINT_MODE', 0, 1)?.preset).toBe('boost')
+  })
+})
+
+describe('decodeClimateDemand', () => {
+  it('a floor relay STATE is heating / idle; a valve LEVEL > 0 is heating, 0 is idle', () => {
+    expect(decodeClimateDemand(CLIMATE, 'floor-direct-state', true, 1)?.action).toBe('heating')
+    expect(decodeClimateDemand(CLIMATE, 'floor-direct-state', false, 1)?.action).toBe('idle')
+    expect(decodeClimateDemand(CLIMATE, 'valve-level', 0.2, 1)?.action).toBe('heating')
+    expect(decodeClimateDemand(CLIMATE, 'valve-level', 0, 1)?.action).toBe('idle')
+  })
+
+  it('a value of the wrong kind says nothing, and off wins over demand', () => {
+    expect(decodeClimateDemand(CLIMATE, 'floor-direct-state', 1, 1)).toBeNull()
+    expect(decodeClimateDemand(CLIMATE, 'valve-level', true, 1)).toBeNull()
+    const off = { ...CLIMATE, mode: 'off' as const }
+    expect(decodeClimateDemand(off, 'valve-level', 0.9, 1)?.action).toBe('off')
   })
 })

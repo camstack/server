@@ -13,12 +13,13 @@ import {
   type LockControlStatus,
   type SwitchStatus,
 } from '@camstack/types'
-import type { HmValue, ValueChangedEvent } from 'nodehomematic'
+import type { HmChannel, HmValue, ValueChangedEvent } from 'nodehomematic'
 import { HmChildDevice, hmChildSchema } from './hm-child-device.js'
 import {
   HM_DEFAULT_RESTORE_TARGET_C,
   HM_OFF_SETPOINT_C,
   decodeClimate,
+  decodeClimateDemand,
   decodeCover,
   decodeLock,
   isHmOffSetpoint,
@@ -218,6 +219,37 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
     return entity?.kind === 'climate' ? entity.minTemp : HM_OFF_SETPOINT_C
   }
 
+  /** The channel type of a floor-heating relay's demand report (HmIP-BWTH `:8`). */
+  private static readonly FLOOR_DIRECT_CHANNEL_TYPE = 'CLIMATECONTROL_FLOOR_DIRECT_TRANSMITTER'
+
+  private static isFloorDirect(channel: HmChannel): boolean {
+    return channel.type === HmActuatorDevice.FLOOR_DIRECT_CHANNEL_TYPE
+  }
+
+  /**
+   * A climate child reads the `STATE` of the device's floor-direct transmitter
+   * as its heat demand. It is the ONLY foreign datapoint it takes: the other
+   * parameters of that channel and every other channel (`:9`, `:10`) stay dropped.
+   */
+  protected override readsForeignDatapoint(channel: HmChannel, parameter: string): boolean {
+    return (
+      this.registeredCap === 'climate-control' &&
+      parameter === 'STATE' &&
+      HmActuatorDevice.isFloorDirect(channel)
+    )
+  }
+
+  private hasFloorDirectChannel(): boolean {
+    return this.resolveHmDevice()?.channels.some(HmActuatorDevice.isFloorDirect) === true
+  }
+
+  /** Is this event the floor-direct `STATE`, as opposed to the owned channel's own? */
+  private isFloorDirectState(event: ValueChangedEvent): boolean {
+    if (event.parameter !== 'STATE') return false
+    const channel = this.resolveHmDevice()?.channels.find((c) => c.address === event.channel)
+    return channel !== undefined && HmActuatorDevice.isFloorDirect(channel)
+  }
+
   // ── Value-change decode (status read-back) ────────────────────────────
 
   private handleValueChanged(event: ValueChangedEvent, origin: HmValueOrigin): void {
@@ -236,7 +268,7 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       const prev =
         this.runtimeState.getCapState<ClimateControlStatus>('climate-control') ?? COLD_CLIMATE
       const offC = this.climateOffSetpointC()
-      const next = decodeClimate(prev, parameter, value, now, offC)
+      const next = this.decodeClimateEvent(prev, event, now, offC)
       if (next === null && parameter === 'SET_POINT_MODE') {
         this.ctx.logger.debug('Homematic climate: SET_POINT_MODE unknown — mode unchanged', {
           tags: { deviceId: this.id },
@@ -250,6 +282,27 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
         this.runtimeState.setCapState('climate-control', next)
       }
     }
+  }
+
+  /**
+   * Heat demand has two sources: the floor relay's `STATE` (BWTH `:8`) and a
+   * radiator valve's `LEVEL`. A device with a floor relay takes its demand from
+   * there only, so a `LEVEL` it also carries cannot contradict it.
+   */
+  private decodeClimateEvent(
+    prev: ClimateControlStatus,
+    event: ValueChangedEvent,
+    now: number,
+    offC: number,
+  ): ClimateControlStatus | null {
+    const { parameter, value } = event
+    if (this.isFloorDirectState(event)) {
+      return decodeClimateDemand(prev, 'floor-direct-state', value, now)
+    }
+    if (parameter === 'LEVEL' && !this.hasFloorDirectChannel()) {
+      return decodeClimateDemand(prev, 'valve-level', value, now)
+    }
+    return decodeClimate(prev, parameter, value, now, offC)
   }
 
   private applyCover(parameter: string, value: HmValue, now: number, origin: HmValueOrigin): void {

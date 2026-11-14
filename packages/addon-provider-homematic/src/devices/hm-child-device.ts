@@ -1,5 +1,5 @@
 import { BaseDevice, type DeviceContext, type DeviceFeature } from '@camstack/types'
-import type { HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
+import type { HmChannel, HmDevice, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { z } from 'zod'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import type { HmValueOrigin } from './hm-change-stamp.js'
@@ -238,12 +238,28 @@ export abstract class HmChildDevice<
     })
   }
 
+  /**
+   * A (channel, parameter) outside the entity's channels that this child still
+   * reads. Default: none. A climate child reads the `STATE` of the device's
+   * floor-heating relay channel (the heat demand); every other parameter of
+   * that channel stays foreign.
+   */
+  protected readsForeignDatapoint(_channel: HmChannel, _parameter: string): boolean {
+    return false
+  }
+
+  private readsForeignEvent(event: ValueChangedEvent): boolean {
+    const channel = this.resolveHmDevice()?.channels.find((c) => c.address === event.channel)
+    return channel !== undefined && this.readsForeignDatapoint(channel, event.parameter)
+  }
+
   private ownsEventChannel(event: ValueChangedEvent): boolean {
     const owned = this.channel
     if (owned === undefined) return true
     const channel = event.channel
     if (typeof channel === 'string' && channel.length > 0) {
       if (!this.ownedChannels().includes(channel)) {
+        if (this.readsForeignEvent(event)) return true
         this.logValueDropped(event, 'foreign-channel')
         return false
       }
@@ -290,8 +306,9 @@ export abstract class HmChildDevice<
     // extreme — 100 % against a CCU that said 47.5 % — until somebody moved it.
     const accepted = this.ownedChannels()
     for (const channel of device.channels) {
-      if (!accepted.includes(channel.address)) continue
+      const ownedChannel = accepted.includes(channel.address)
       for (const dp of channel.dataPoints ?? []) {
+        if (!ownedChannel && !this.readsForeignDatapoint(channel, dp.parameter)) continue
         if (dp.value === null || dp.value === undefined) continue
         // Same preference as the live path, or the seed would replay the
         // receiver's LEVEL over the transmitter's and undo itself.

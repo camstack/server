@@ -1,4 +1,5 @@
 import type {
+  ClimateAction,
   ClimateControlStatus,
   CoverStatus,
   HvacMode,
@@ -44,12 +45,13 @@ export function isHmOffSetpoint(
  * Observed 2026-11-13 via `getParamsetDescription` on `INT0000001:1`: the
  * datapoint is `TYPE INTEGER`, `MIN 0`, `MAX 3`, with no value list. The
  * live CCU therefore delivers the index, not a name.
- * 0 auto, 1 manual heat, 2 party (a timed override — still auto).
+ * 0 auto, 1 manual heat, 2 party (a timed override: mode auto, preset `party`).
  * 3 is absent: unknown, so {@link fromHmSetPointMode} returns null and the
  * caller keeps the previous mode.
  * `CONTROL_MODE` is write-only on HmIP heating groups and always reads `0`;
  * mode is read from here.
  */
+const HM_SET_POINT_MODE_PARTY = 2
 const HM_SET_POINT_MODE_BY_INDEX: Readonly<Record<number, HmClimateMode>> = {
   0: 'auto',
   1: 'heat',
@@ -100,6 +102,25 @@ export function fromHmSetPointMode(value: HmValue): HvacMode | null {
   const mode = HM_SET_POINT_MODE_BY_INDEX[value]
   if (mode === undefined) return null
   return mode === 'auto' ? 'auto' : 'heat'
+}
+
+/** A decoded `SET_POINT_MODE`: the mode plus whether a timed override (party) is running. */
+export interface HmSetPointModeReading {
+  readonly mode: HvacMode
+  readonly party: boolean
+}
+
+/**
+ * Like {@link fromHmSetPointMode}, but it also says whether the timed override
+ * (index 2 / `PARTY`) is running. The mode stays `auto` under a party; the
+ * override is the `party` preset, as `boost` is.
+ */
+export function readHmSetPointMode(value: HmValue): HmSetPointModeReading | null {
+  const mode = fromHmSetPointMode(value)
+  if (mode === null) return null
+  const party =
+    typeof value === 'string' ? value.toUpperCase() === 'PARTY' : value === HM_SET_POINT_MODE_PARTY
+  return { mode, party }
 }
 
 /** Convert a 0..1 HmIP LEVEL into a 0..100 CamStack position (rounded). */
@@ -292,6 +313,59 @@ function modeWithHmOffTarget(
   return previous.mode
 }
 
+/** The action a device with a known heat demand reports, or `off` when it is switched off. */
+function actionFor(mode: HvacMode, demand: boolean | null): ClimateAction | null {
+  if (mode === 'off') return 'off'
+  if (demand === null) return null
+  return demand ? 'heating' : 'idle'
+}
+
+/** The demand the previous slice recorded in its `action`; unknown when it said `off` or nothing. */
+function demandOf(previous: ClimateControlStatus): boolean | null {
+  if (previous.action === 'heating') return true
+  if (previous.action === 'idle') return false
+  return null
+}
+
+/**
+ * A mode change settles the action: off is `off`; LEAVING off forgets the
+ * demand (the valve was shut by the off setpoint and the device has not said
+ * yet, D393); otherwise the last demand stands.
+ */
+function withModeAction(
+  previous: ClimateControlStatus,
+  next: ClimateControlStatus,
+): ClimateControlStatus {
+  if (next.mode === previous.mode) return next
+  const demand = previous.mode === 'off' ? null : demandOf(previous)
+  return { ...next, action: actionFor(next.mode, demand) }
+}
+
+/** Where a heat-demand report came from. */
+export type HmClimateDemandSource = 'floor-direct-state' | 'valve-level'
+
+/**
+ * Decode a heat-demand report: a floor-heating relay's `STATE` (BWTH `:8`) or a
+ * radiator valve's `LEVEL` (0..1). Switched off wins over any demand.
+ */
+export function decodeClimateDemand(
+  previous: ClimateControlStatus,
+  source: HmClimateDemandSource,
+  value: HmValue,
+  now: number,
+): ClimateControlStatus | null {
+  const demand =
+    source === 'floor-direct-state'
+      ? typeof value === 'boolean'
+        ? value
+        : null
+      : typeof value === 'number'
+        ? value > 0
+        : null
+  if (demand === null) return null
+  return { ...previous, action: actionFor(previous.mode, demand), lastFetchedAt: now }
+}
+
 export function decodeClimate(
   previous: ClimateControlStatus,
   parameter: string,
@@ -300,12 +374,12 @@ export function decodeClimate(
   offSetpointC: number = HM_OFF_SETPOINT_C,
 ): ClimateControlStatus | null {
   if (parameter === 'SET_POINT_TEMPERATURE' && typeof value === 'number') {
-    return {
+    return withModeAction(previous, {
       ...previous,
       target: value,
       mode: modeWithHmOffTarget(previous, value, offSetpointC),
       lastFetchedAt: now,
-    }
+    })
   }
   if (parameter === 'ACTUAL_TEMPERATURE' && typeof value === 'number') {
     return { ...previous, currentTemp: value, lastFetchedAt: now }
@@ -314,15 +388,18 @@ export function decodeClimate(
     return { ...previous, currentHumidity: value, lastFetchedAt: now }
   }
   if (parameter === 'SET_POINT_MODE') {
-    const mode = fromHmSetPointMode(value)
+    const reading = readHmSetPointMode(value)
     // Unknown index (3 on the live CCU): write nothing so the previous mode
     // stays. The caller logs the drop.
-    if (mode === null) return null
+    if (reading === null) return null
+    const { mode, party } = reading
     // MANU at the off temperature is off. AUTO (including a frost slot and
     // party) keeps the mode the index named.
     const resolved =
       mode === 'heat' && isHmOffSetpoint(previous.target, offSetpointC) ? 'off' : mode
-    return { ...previous, mode: resolved, lastFetchedAt: now }
+    // A party is the `party` preset; leaving it clears only that preset (boost is its own).
+    const preset = party ? 'party' : previous.preset === 'party' ? '' : previous.preset
+    return withModeAction(previous, { ...previous, mode: resolved, preset, lastFetchedAt: now })
   }
   if (parameter === 'BOOST_MODE' && typeof value === 'boolean') {
     return { ...previous, preset: value ? 'boost' : '', lastFetchedAt: now }
