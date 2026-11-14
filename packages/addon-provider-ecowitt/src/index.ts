@@ -30,4 +30,3 @@ export {
   gatewayDeviceNativeId,
   groupNativeId,
 } from './ecowitt-discovery.js'
-export { ADDON_MIGRATIONS } from './migrations/index.js'

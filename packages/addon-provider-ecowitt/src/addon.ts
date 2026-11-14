@@ -51,7 +51,6 @@ import type { EcowittDeviceGroup } from './ecowitt-mapping.js'
 import { findDuplicateGatewaySensors, type DuplicateScanRow } from './ecowitt-duplicate-sensors.js'
 import { bucketSensorsByGroup, configDeviceGroup, sensorsEqual } from './ecowitt-sensor-groups.js'
 import { EcowittReconciler, type IntegrationLifecycleKind } from './ecowitt-reconciler.js'
-import { restoreAfterMigration } from './migrations/restore-after-migration.js'
 import {
   buildEcowittInstances,
   type EcowittConnectionBody,
@@ -59,13 +58,7 @@ import {
   ecowittRecordKinds,
   settingsReadOf,
 } from './ecowitt-instances.js'
-import {
-  ADDON_MIGRATIONS,
-  ECOWITT_HUB_MIGRATION_ID,
-  ECOWITT_ROWS_TO_RECORD_ID,
-  ECOWITT_ROWS_TO_RECORD_MIGRATION,
-  type EcowittMigrationPorts,
-} from './migrations/index.js'
+import { ECOWITT_ROWS_TO_RECORD_ID, ECOWITT_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
 
 /**
  * Ecowitt weather-station provider, `mode: account` and broker-less. An integration is one
@@ -74,9 +67,6 @@ import {
  * integration. Discovery offers the gateway itself ({@link DeviceType.Gateway}, with a link to its
  * page) and up to THREE group {@link DeviceType.Container}s (gateway / weather-station /
  * temp-sensor-ch1), each fanning out one typed sensor child per `Sensor.quantity`.
- *
- * The old Hub device that held the connection is retired by the `provider-ecowitt` migration
- * (D987), run from {@link onRestoreDevices}: no Hub device exists any more.
  */
 export class EcowittProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-ecowitt'
@@ -106,16 +96,12 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     })
     this.instances = instances
     // The rows move BEFORE the instances provider registers (below): while it is registered the
-    // hub answers from the record, not from the rows. The hub-device migration of the same
-    // catalogue needs the persisted devices and runs from `onRestoreDevices`.
+    // hub answers from the record, not from the rows.
     this.declareRegistrySwitch({
       kind: ecowittConnectionsEntryKind,
       initialBody: (name) => ({ name }),
     })
-    await this.runMigrations(
-      this.migrationCatalogue(this.buildMigrationPorts([], async () => undefined)),
-      { only: [ECOWITT_ROWS_TO_RECORD_ID] },
-    )
+    await this.runMigrations(this.migrationCatalogue(), { only: [ECOWITT_ROWS_TO_RECORD_ID] })
     this.clients = new EcowittClientRegistry(this.ctx.logger, {
       onOnline: (_integrationId, gatewayKey, online) =>
         this.setGatewayDevicesOnline(gatewayKey, online),
@@ -136,11 +122,8 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     }
   }
 
-  /**
-   * The WHOLE catalogue, whatever phase runs (a partial declare would make the applied ids of the
-   * other phase read as newer): each phase names its own with `only`.
-   */
-  private migrationCatalogue(hubPorts: EcowittMigrationPorts) {
+  /** The rows-to-record catalogue. `only` names the phase that runs at initialise. */
+  private migrationCatalogue() {
     const records = this.ctx.records
     if (records === undefined) {
       throw new Error('provider-ecowitt: ctx.records is required (hub-only addon)')
@@ -155,10 +138,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       }),
       log: { warn: (message) => this.ctx.logger.warn(message) },
     })
-    return [
-      ...defineAddonMigrations(ADDON_MIGRATIONS, hubPorts),
-      ...defineAddonMigrations([ECOWITT_ROWS_TO_RECORD_MIGRATION], rowsPorts),
-    ]
+    return defineAddonMigrations([ECOWITT_ROWS_TO_RECORD_MIGRATION], rowsPorts)
   }
 
   protected override async onShutdown(): Promise<void> {
@@ -188,96 +168,18 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     return this.clients
   }
 
-  // ── Migration: the Hub device becomes an integration + Gateway sibling ──
-
   /**
-   * The `provider-ecowitt` catalogue runs here because it needs the persisted rows. Its
-   * procedure creates the integration, restores the Containers top-level and retires the Hub by
-   * tombstone; whatever it restored is not restored a second time.
+   * Remember the persisted rows so adopting a Gateway can see a device that is saved but not
+   * restored yet, then restore as usual.
    */
   protected override async onRestoreDevices(
     savedDevices: readonly SavedDevice[],
   ): Promise<DeviceRestoreReport | void> {
     this.savedRows = savedDevices
-    return restoreAfterMigration({
-      saved: savedDevices,
-      migrationId: ECOWITT_HUB_MIGRATION_ID,
-      logger: this.ctx.logger,
-      runMigration: (restoreRows) => {
-        const ports = this.buildMigrationPorts(savedDevices, restoreRows)
-        return this.runMigrations(this.migrationCatalogue(ports), {
-          only: [ECOWITT_HUB_MIGRATION_ID],
-        })
-      },
-      restoreRows: async (rows) => {
-        await this.reconciler().reconcile()
-        await super.onRestoreDevices(rows)
-      },
-      restoreRest: (rows) => super.onRestoreDevices(rows),
-    })
-  }
-
-  private buildMigrationPorts(
-    saved: readonly SavedDevice[],
-    restoreRows: (rows: readonly SavedDevice[]) => Promise<void>,
-  ): EcowittMigrationPorts {
-    const devices = this.ctx.kernel.devices
-    return {
-      addonId: this.ctx.id,
-      logger: this.ctx.logger,
-      listSavedDevices: async () => saved,
-      restoreRows,
-      listIntegrations: async () =>
-        (await this.ctx.api.integrations.list.query()).map((i) => ({
-          id: i.id,
-          addonId: i.addonId,
-          name: i.name,
-          info: i.info,
-          ...(i.originStableId !== undefined ? { originStableId: i.originStableId } : {}),
-        })),
-      createIntegration: async (input) => {
-        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
-          addonId: input.addonId,
-          name: input.name,
-          seed: { info: { ...input.info } },
-          ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
-          values: { ...input.settings },
-        })
-        return { id: created.id }
-      },
-      setIntegrationId: async (deviceId, integrationId) => {
-        await this.ctx.api.deviceManager.setIntegrationId.mutate({
-          deviceId,
-          integrationId,
-        })
-      },
-      persistConfig: async (stableId, config) => {
-        if (!devices) throw new Error('ecowitt hub migration: kernel.devices unavailable')
-        await devices.persistInitialConfig(stableId, config)
-      },
-      childIdsOf: async (parentDeviceId) =>
-        (await this.ctx.api.deviceManager.getChildren.query({ parentDeviceId })).map((c) => c.id),
-      createGateway: async ({ integrationId, name }) => {
-        const gatewayKey = await this.gatewayKeyFor(integrationId)
-        return this.adoptGatewayDevice(integrationId, gatewayKey, name)
-      },
-      removeDevice: async (deviceId) => {
-        await this.ctx.api.deviceManager.remove.mutate({ deviceId })
-      },
-    }
+    return super.onRestoreDevices(savedDevices)
   }
 
   // ── Integrations: one live client each ──────────────────────────────────
-
-  /** The gateway key of an integration, from its `originStableId` (read live, not cached). */
-  private async gatewayKeyFor(integrationId: string): Promise<string> {
-    const all = await this.ctx.api.integrations.list.query()
-    const found = all.find((i) => i.id === integrationId)
-    return gatewayKeyOf({
-      id: integrationId,
-      originStableId: found?.originStableId,
-    })
-  }
 
   private reconciler(): EcowittReconciler {
     const reg = this.requireClients()

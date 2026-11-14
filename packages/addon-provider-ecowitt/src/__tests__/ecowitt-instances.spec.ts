@@ -9,12 +9,7 @@ import {
   ecowittRecordKinds,
   settingsReadOf,
 } from '../ecowitt-instances.js'
-import {
-  ADDON_MIGRATIONS,
-  ECOWITT_HUB_MIGRATION_ID,
-  ECOWITT_ROWS_TO_RECORD_ID,
-  ECOWITT_ROWS_TO_RECORD_MIGRATION,
-} from '../migrations/index.js'
+import { ECOWITT_ROWS_TO_RECORD_ID, ECOWITT_ROWS_TO_RECORD_MIGRATION } from '../migrations/index.js'
 import { fakeRowsWorld } from './support/fake-integration-rows.js'
 
 const ADDON = 'provider-ecowitt'
@@ -54,11 +49,9 @@ const OTHER_ADDON = {
 } as const
 
 describe('ecowitt rows-to-record migration', () => {
-  it('is declared beside the hub migration with the id the brief names', () => {
+  it('is declared with the id the brief names', () => {
     expect(ECOWITT_ROWS_TO_RECORD_ID).toBe('provider-ecowitt/2026-11-05-integration-rows-to-record')
     expect(ECOWITT_ROWS_TO_RECORD_MIGRATION.meta.onFailure).toBe('block-owner')
-    expect(ADDON_MIGRATIONS.map((m) => m.meta.id)).toEqual([ECOWITT_HUB_MIGRATION_ID])
-    expect(ECOWITT_ROWS_TO_RECORD_MIGRATION.meta.seq).not.toBe(ADDON_MIGRATIONS[0]?.meta.seq)
     expect(Object.keys(ecowittRecordKinds)).toEqual(['connections'])
     expect(SECRETS).toEqual(['password'])
   })
