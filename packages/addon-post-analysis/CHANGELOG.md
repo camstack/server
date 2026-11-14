@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.706] - 2026-11-14
+
 ### Changed
 
 - A grouped burst of one kind is titled with what happened — devices back online, low batteries, consumables to replace, critical alerts — instead of the section or the rule name.

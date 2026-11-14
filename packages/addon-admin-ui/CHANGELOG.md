@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.672] - 2026-11-14
+
 ### Changed
 
 - The automation device-event trigger now offers the events the selected device declares (and says so when it declares none), and the command picker joins the shared action block.

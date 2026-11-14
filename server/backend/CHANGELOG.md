@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.871] - 2026-11-14
+
 ### Added
 
 - A device can report a fault through the new error capability; the hub routes it.
