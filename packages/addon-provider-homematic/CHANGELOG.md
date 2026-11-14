@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.201] - 2026-11-14
+
 ### Changed
 
 - Homematic thermostats report heating or idle (floor-heating relay on the HmIP-BWTH, valve level on radiator thermostats), off when switched off, and a running party shows as the party preset
