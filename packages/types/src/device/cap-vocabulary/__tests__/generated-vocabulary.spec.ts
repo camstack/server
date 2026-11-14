@@ -65,7 +65,7 @@ const ADDED_ACTIONS: Readonly<Record<string, Readonly<Record<string, string>>>> 
  * the hand-written map, it never grows). Each must be in the generated map; the
  * comparisons against the fixture leave them out.
  */
-const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = ['energy-system']
+const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = ['energy-system', 'weather-station']
 
 function actionsOf(entry: unknown): readonly JsonRecord[] {
   const actions = isRecord(entry) ? entry['actions'] : undefined
