@@ -332,6 +332,23 @@ describe('device-picker UX', () => {
     expect(screen.getByTestId('many').textContent).toContain('Living room hub')
   })
 
+  it('labels a list row exactly as the closed field labels that device', () => {
+    state.resolved.data = result([cucina])
+    const fleet = [fleetRow(1, 'Cucina', 10), fleetRow(10, 'Living room hub', null)]
+    render(
+      <DeviceFleetProvider devices={fleet}>
+        <DeviceValuePicker pick="device" value={{ deviceId: 1 }} onChange={vi.fn()} testId="one" />
+      </DeviceFleetProvider>,
+    )
+    const closed = screen.getByTestId('one').querySelector('button span')?.textContent ?? ''
+    fireEvent.click(screen.getByTestId('one').querySelector('button') ?? document.body)
+    const row = screen.getByRole('option', { name: /Cucina/ })
+    expect(closed).toContain('Living room hub')
+    expect(
+      row.querySelector('span.truncate')?.textContent?.startsWith(closed.split(' · 22')[0] ?? ''),
+    ).toBe(true)
+  })
+
   it('keeps the search answer name for a selected device while the fleet is unknown', () => {
     state.resolved.data = result([cucina])
     render(

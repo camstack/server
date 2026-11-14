@@ -10,6 +10,7 @@ import { Checkbox } from '../../primitives/checkbox'
 import { Radio } from '../../primitives/radio'
 import { Skeleton } from '../../primitives/skeleton'
 import { useDeviceNameIndex } from '../device-name/device-fleet'
+import { foldDeviceName } from '../device-name/format-device-name'
 import { resolveDeviceLabel, useDeviceNameNouns } from '../device-name/use-device-label'
 import { ErrorBox } from '../error-box'
 import {
@@ -120,9 +121,16 @@ function DeviceRow({
 }): JSX.Element {
   const t = useUiText()
   const fleet = useDeviceNameIndex()
-  // Unknown until the fleet answers: no fleet, or a device it does not list, claims nothing (D315).
-  const parentId = fleet?.byId.get(item.id)?.parentDeviceId ?? null
-  const parentName = parentId === null ? null : (fleet?.byId.get(parentId)?.name ?? null)
+  const nouns = useDeviceNameNouns()
+  // One label everywhere: the row reads as the closed field will. Unknown until the fleet
+  // answers: no fleet, or a device it does not list, claims nothing (D315).
+  const known = fleet?.byId.get(item.id)
+  const label =
+    fleet === null || known === undefined
+      ? item.name
+      : resolveDeviceLabel(known, 'compact', fleet, nouns)
+  // The stored name stays visible when the label left it out: it is what a search matched.
+  const ownName = foldDeviceName(label).includes(foldDeviceName(item.name)) ? null : item.name
   const mode = rowMode(item, kind)
   const disabled = !item.compatible
   const own = pickFromRow(item, kind)
@@ -132,11 +140,11 @@ function DeviceRow({
     <>
       <span className="min-w-0 flex-1">
         <span className="block truncate">
-          {item.name}
-          {parentName !== null && (
-            <span className="text-foreground-muted" data-testid="dvp-parent">
+          {label}
+          {ownName !== null && (
+            <span className="text-foreground-muted" data-testid="dvp-own-name">
               {' · '}
-              {parentName}
+              {ownName}
             </span>
           )}
         </span>
