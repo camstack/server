@@ -38,7 +38,8 @@
     "valve": "Valve",
     "washer": "Washing machine",
     "water-heater": "Water heater",
-    "weather": "Weather"
+    "weather": "Weather",
+    "weather-station": "Weather station"
   },
   "it": {
     "alarm-panel": "Pannello allarme",
@@ -79,6 +80,7 @@
     "valve": "Valvola",
     "washer": "Lavatrice",
     "water-heater": "Scaldabagno",
-    "weather": "Meteo"
+    "weather": "Meteo",
+    "weather-station": "Stazione meteo"
   }
 }
