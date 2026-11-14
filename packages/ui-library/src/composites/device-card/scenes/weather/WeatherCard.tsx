@@ -5,8 +5,8 @@ import { useUnitPreferences } from '../../../../contexts/unit-preferences'
 import { cn } from '../../../../lib/cn'
 import { preferenceForQuantity, type UnitPreferences } from '../../../../lib/unit-preferences'
 import { CardIcon } from '../../parts/CardIcon'
-import { InfoTile } from '../../parts/InfoTile'
 import { columnValue } from '../../shell/column-items'
+import { rowStats } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
@@ -135,31 +135,30 @@ export function WeatherCard({
           ],
         },
         image: <CardIcon glyph={sky} className={cn(SCENE_ICON_CLASS, SKY_TONE[sky])} />,
-        bottom: (
-          <div className="grid w-full gap-1.5">
-            <InfoTile
-              layout="side"
-              glyph="humidity"
-              label={t('uiLibrary.deviceCard.weather.humidity', 'Humidity')}
-              value={model.humidity === null ? null : `${Math.round(model.humidity)}%`}
-              testId="dc-weather-humidity"
-            />
-            <InfoTile
-              layout="side"
-              glyph="wind"
-              label={t('uiLibrary.deviceCard.weather.wind', 'Wind')}
-              value={wind}
-              testId="dc-weather-wind"
-            />
-            <InfoTile
-              layout="side"
-              glyph="gauge"
-              label={t('uiLibrary.deviceCard.weather.pressure', 'Pressure')}
-              value={pressure}
-              testId="dc-weather-pressure"
-            />
-          </div>
-        ),
+        bottom: [
+          rowStats('readings', {
+            stats: [
+              {
+                id: 'humidity',
+                name: t('uiLibrary.deviceCard.weather.humidity', 'Humidity'),
+                value: model.humidity === null ? '—' : `${Math.round(model.humidity)}%`,
+                testId: 'dc-weather-humidity',
+              },
+              {
+                id: 'wind',
+                name: t('uiLibrary.deviceCard.weather.wind', 'Wind'),
+                value: wind ?? '—',
+                testId: 'dc-weather-wind',
+              },
+              {
+                id: 'pressure',
+                name: t('uiLibrary.deviceCard.weather.pressure', 'Pressure'),
+                value: pressure ?? '—',
+                testId: 'dc-weather-pressure',
+              },
+            ],
+          }),
+        ],
       }}
     />
   )
