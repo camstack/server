@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Customize: a thermostat can link a room temperature and humidity sensor
 - Notification rules editor can now target a storage location's drain progress and completion events (#538).
+### Changed
+
+- Build page: New script now opens the editor, automations no longer appear (or count) under Code, and the Templates tab shows its count.
 
 ## [1.2.669] - 2026-11-14
 

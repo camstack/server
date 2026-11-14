@@ -44,6 +44,15 @@ export function looksLikeAutomation(code: string): boolean {
   return code.includes(DECLARATION)
 }
 
+/**
+ * A plain script: a code block that is NOT an automation. Automations are code
+ * blocks too (they carry the recipe declaration) but live on the Automations
+ * tab, so the Code list and its count both use this one predicate.
+ */
+export function isPlainScript(block: { readonly code: string }): boolean {
+  return !looksLikeAutomation(block.code)
+}
+
 /** A parse attempt. A failure carries the reason so the surface can say why a
  *  block that LOOKS like an automation is not being offered as one. */
 export type RecipeParseResult =

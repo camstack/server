@@ -4,14 +4,14 @@
  * Shell is library `SectionedPage` via `AdminSectionedPage` (OSD template).
  */
 import { coreBlockSourceKind, type CoreBlock } from '@camstack/types'
-import { Button, useSystem } from '@camstack/ui-library'
+import { Button, useSystem, useTemplateList } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
 import { Hammer, Plus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { AdminSectionedPage } from '../components/AdminSectionedPage'
 import { navChromeForPath } from '../lib/nav-items'
-import { looksLikeAutomation } from './build/automation/recipe-from-code'
+import { isPlainScript, looksLikeAutomation } from './build/automation/recipe-from-code'
 import { ActionsTab } from './build/actions/ActionsTab'
 import { AutomationsTab } from './build/AutomationsTab'
 import { SchedulersTab } from './build/schedulers/SchedulersTab'
@@ -49,7 +49,7 @@ const EDITOR_OWNED = [
 ] as const
 
 function countScripts(blocks: readonly CoreBlock[]): number {
-  return blocks.filter((b) => coreBlockSourceKind(b) === 'code').length
+  return blocks.filter((b) => coreBlockSourceKind(b) === 'code' && isPlainScript(b)).length
 }
 
 function countAutomations(blocks: readonly CoreBlock[]): number {
@@ -102,10 +102,15 @@ export function BuildPage() {
   const compositionCount =
     compositionsQuery.data?.state === 'loaded' ? compositionsQuery.data.views.length : null
 
+  // Unknown (not yet answered / failed) shows no number — never 0.
+  const templatesList = useTemplateList({})
+  const templateCount = templatesList.data?.length ?? null
+
+  /** Every URL write reads the live location: a router `prev` snapshot has not seen a sibling's write. */
   const openScripts = (blockId?: string): void => {
     setParams(
-      (prev) => {
-        const copy = new URLSearchParams(prev)
+      () => {
+        const copy = new URLSearchParams(window.location.search)
         copy.set('tab', 'scripts')
         copy.delete('create')
         if (blockId === undefined) copy.delete('block')
@@ -118,8 +123,8 @@ export function BuildPage() {
 
   const setScriptsBlock = (blockId: string | null): void => {
     setParams(
-      (prev) => {
-        const copy = new URLSearchParams(prev)
+      () => {
+        const copy = new URLSearchParams(window.location.search)
         copy.set('tab', 'scripts')
         copy.delete('create')
         if (blockId === null) copy.delete('block')
@@ -272,7 +277,7 @@ export function BuildPage() {
         },
         {
           id: 'templates',
-          label: t('build.tabTemplates', 'Templates'),
+          label: withCount(t('build.tabTemplates', 'Templates'), templateCount),
           ownedParams: EDITOR_OWNED,
           content: (
             <TemplatesTab

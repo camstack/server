@@ -16,6 +16,7 @@ vi.mock('@camstack/ui-library', async () => {
     await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
+    useTemplateList: () => ({ data: [], status: 'success', refetch: vi.fn() }),
     useSystem: () => ({
       trpcClient: {
         actions: { list: { query: async () => [] } },

@@ -50,6 +50,7 @@ import { useMutation, useQuery } from '@tanstack/react-query'
 import { Code2, RotateCw, ScrollText, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BlockEditor, type BlockTypeLibs } from './BlockEditor'
+import { isPlainScript } from './automation/recipe-from-code'
 import {
   badgeVariantForTone,
   describeBlockStatus,
@@ -206,7 +207,7 @@ export function ScriptsTab({
    * here made two empty `code:''` rows look like broken scripts.
    */
   const blocks = sortBlocksForDisplay(
-    (blocksQuery.data ?? []).filter((b) => coreBlockSourceKind(b) === 'code'),
+    (blocksQuery.data ?? []).filter((b) => coreBlockSourceKind(b) === 'code' && isPlainScript(b)),
   )
   /**
    * Whether a read actually SUCCEEDED — not whether the array is short.
