@@ -108,7 +108,7 @@ export function ChildrenList({ parentDeviceId }: ChildrenListProps) {
     />
   )
 
-  // A role-less child is adopted only under a hub, NVR or gateway. A
+  // A role-less child is adopted only under an NVR or gateway. A
   // container's children are its parts, and the one it draws is primary.
   const groups = classifyDeviceChildren(
     {

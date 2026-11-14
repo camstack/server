@@ -300,7 +300,7 @@ describe('ChildrenList — adopted devices lead', () => {
     parentResult.current = {
       data: {
         stableId: PARENT_STABLE,
-        type: 'hub',
+        type: 'nvr',
         childLayout: [{ childKey: 'voltage', section: 'Diagnostics' }],
       },
       isLoading: false,
@@ -342,7 +342,7 @@ describe('ChildrenList — adopted devices lead', () => {
       isError: false,
     }
     parentResult.current = {
-      data: { stableId: PARENT_STABLE, type: 'hub' },
+      data: { stableId: PARENT_STABLE, type: 'nvr' },
       isLoading: false,
       isError: false,
     }
