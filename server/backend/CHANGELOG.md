@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.868] - 2026-11-14
+
 ### Changed
 
 - Remote: an infrared TV card no longer shows a stale source; a source is shown only when the device reports it, and picking one is a one-shot choice.
