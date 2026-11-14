@@ -2334,6 +2334,8 @@ export {
   type ICarbonMonoxideProvider,
 } from './carbon-monoxide.cap.js'
 export {
+  type ClimateAction,
+  ClimateActionSchema,
   type ClimateControlStatus,
   ClimateControlStatusSchema,
   climateControlCapability,

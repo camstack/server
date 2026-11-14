@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1081 shared schemas.**
+**1082 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -975,10 +975,14 @@ Enum: `"pull-rtsp" \| "pull-rtmp" \| "pull-http" \| "pull-flv" \| "pull-rfc4571"
 - `downlinkAgeMs?`: `number`
 - `lastUpdated`: `number`
 
+### `ClimateActionSchema`
+
+Enum: `"heating" \| "cooling" \| "drying" \| "fan" \| "idle" \| "off"`
+
 ### `ClimateControlStatusSchema`
 
 - `mode`: `HvacModeSchema`
-- `action?`: `"heating" \| "cooling" \| "drying" \| "fan" \| "idle" \| "off" \| null`
+- `action?`: `ClimateActionSchema \| null`
 - `availableModes`: `HvacModeSchema[]`
 - `fanMode`: `string`
 - `availableFanModes`: `string[]`
