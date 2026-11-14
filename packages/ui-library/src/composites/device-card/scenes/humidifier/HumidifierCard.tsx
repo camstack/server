@@ -1,9 +1,10 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { DropIllustration } from '../../illustrations/DropIllustration'
-import { CardButton } from '../../parts/CardButton'
+import { cn } from '../../../../lib/cn'
+import { DIAL_BOX_CLASS } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
-import { StepColumn } from '../../parts/StepColumn'
+import { type ColumnItem, columnButton, columnStep } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type { HumidifierActivity, HumidifierCardActions, HumidifierCardModel } from './model'
@@ -43,34 +44,32 @@ function targetColumn(
   actions: HumidifierCardActions,
   held: boolean,
   t: UiTextFn,
-): ReactNode {
+): readonly ColumnItem[] {
   const target = model.targetHumidity
-  if (target === null) return null
+  if (target === null) return []
   const min = model.minHumidity ?? 0
   const max = model.maxHumidity ?? 100
   const step = (delta: number) => (): void => {
     const next = Math.max(min, Math.min(max, target + delta))
     if (next !== target) actions.onTarget(next)
   }
-  return (
-    <StepColumn
-      testId="dc-humid-target"
-      value={`${Math.round(target)}%`}
-      notes={[t('uiLibrary.deviceCard.humidifier.target', 'target')]}
-      up={{
-        glyph: 'plus',
-        label: t('uiLibrary.deviceCard.humidifier.raise', 'Raise target'),
-        disabled: held || !model.targetSettable || target >= max,
-        onPress: step(HUMIDITY_STEP),
-      }}
-      down={{
-        glyph: 'minus',
-        label: t('uiLibrary.deviceCard.humidifier.lower', 'Lower target'),
-        disabled: held || !model.targetSettable || target <= min,
-        onPress: step(-HUMIDITY_STEP),
-      }}
-    />
-  )
+  return columnStep('target', {
+    testId: 'dc-humid-target',
+    value: `${Math.round(target)}%`,
+    caption: t('uiLibrary.deviceCard.humidifier.target', 'target'),
+    up: {
+      glyph: 'plus',
+      label: t('uiLibrary.deviceCard.humidifier.raise', 'Raise target'),
+      disabled: held || !model.targetSettable || target >= max,
+      onPress: step(HUMIDITY_STEP),
+    },
+    down: {
+      glyph: 'minus',
+      label: t('uiLibrary.deviceCard.humidifier.lower', 'Lower target'),
+      disabled: held || !model.targetSettable || target <= min,
+      onPress: step(-HUMIDITY_STEP),
+    },
+  })
 }
 
 /**
@@ -103,54 +102,55 @@ export function HumidifierCard({
         tone: TONE[model.activity],
       }}
       scene={{
-        left: targetColumn(model, actions, held, t),
+        columns: {
+          left: targetColumn(model, actions, held, t),
+          right:
+            model.power === null
+              ? []
+              : [
+                  columnButton('power', {
+                    glyph: 'power',
+                    tone: on ? 'primary' : 'default',
+                    label: on
+                      ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
+                      : t('uiLibrary.deviceCard.turnOn', 'Turn on'),
+                    testId: 'dc-humid-power',
+                    onPress: () => actions.onPower(!on),
+                  }),
+                ],
+        },
         image: (
-          <div className="relative grid w-24 justify-items-center">
+          <div className={cn(DIAL_BOX_CLASS, 'grid justify-items-center')}>
             <DropIllustration
               fill={model.currentHumidity === null ? null : model.currentHumidity / 100}
               off={off}
-              className="h-auto w-24"
+              className="h-auto w-full"
             />
             <div
               data-testid="dc-humid-current"
               className="absolute inset-x-0 top-[58%] grid -translate-y-1/2 justify-items-center"
             >
-              <b className="text-xl font-semibold tabular-nums text-foreground">
+              <b className="text-xl font-semibold tabular-nums text-foreground @[10rem]:text-3xl">
                 {model.currentHumidity === null ? '—' : `${Math.round(model.currentHumidity)}%`}
               </b>
-              <small className="text-xs text-foreground-muted">
+              <small className="text-xs text-foreground-muted @[10rem]:text-sm">
                 {t('uiLibrary.deviceCard.humidifier.current', 'now')}
               </small>
             </div>
           </div>
         ),
-        right: (
-          <>
-            {model.power === null ? null : (
-              <CardButton
-                glyph="power"
-                tone={on ? 'primary' : 'default'}
-                data-testid="dc-humid-power"
-                onClick={() => actions.onPower(!on)}
-              >
-                {on
-                  ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
-                  : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-              </CardButton>
-            )}
-            {model.modes.length === 0 ? null : (
-              <MenuButton
-                testId="dc-humid-mode"
-                layout="stacked"
-                ariaLabel={t('uiLibrary.deviceCard.humidifier.modeMenu', 'Mode')}
-                options={model.modes}
-                value={model.mode}
-                disabled={held}
-                onChange={actions.onMode}
-              />
-            )}
-          </>
-        ),
+        bottom:
+          model.modes.length === 0 ? null : (
+            <MenuButton
+              testId="dc-humid-mode"
+              layout="stacked"
+              ariaLabel={t('uiLibrary.deviceCard.humidifier.modeMenu', 'Mode')}
+              options={model.modes}
+              value={model.mode}
+              disabled={held}
+              onChange={actions.onMode}
+            />
+          ),
       }}
     />
   )

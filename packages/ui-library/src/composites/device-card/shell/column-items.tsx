@@ -148,6 +148,45 @@ export function columnPopover(key: string, props: ColumnPopoverProps): ColumnIte
   )
 }
 
+export interface ColumnStepButton {
+  readonly glyph: CardGlyph
+  readonly label: string
+  readonly onPress: () => void
+  readonly disabled?: boolean
+}
+
+export interface ColumnStepProps {
+  readonly up: ColumnStepButton
+  readonly down: ColumnStepButton
+  /** The current value, one short token; null draws no value (not known). */
+  readonly value: string | null
+  /** What it is, one lowercase word. */
+  readonly caption?: string
+  readonly tone?: ColumnValueProps['tone']
+  /** The value reads `testId`; the buttons `testId-up` and `testId-down`. */
+  readonly testId?: string
+}
+
+/** A value with a step above and a step below: three items of the column, in order. */
+export function columnStep(key: string, props: ColumnStepProps): readonly ColumnItem[] {
+  const id = (suffix: string): string | undefined =>
+    props.testId === undefined ? undefined : `${props.testId}${suffix}`
+  return [
+    columnButton(`${key}-up`, { ...props.up, testId: id('-up') }),
+    ...(props.value === null
+      ? []
+      : [
+          columnValue(`${key}-value`, {
+            value: props.value,
+            caption: props.caption,
+            tone: props.tone,
+            testId: props.testId,
+          }),
+        ]),
+    columnButton(`${key}-down`, { ...props.down, testId: id('-down') }),
+  ]
+}
+
 /** A level in a side column. */
 export function columnSlider(key: string, props: CardSliderProps): ColumnItem {
   return makeItem(key, <VerticalSlider {...props} />)
