@@ -9,6 +9,7 @@ import { PopoverButton } from '../../parts/PopoverButton'
 import { HorizontalSlider } from '../../parts/sliders'
 import { SwitchTimer, useTimerSince } from '../../parts/SwitchTimer'
 import { columnButton, columnSlider } from '../../shell/column-items'
+import { rowBlock, rowButtons, rowSelector } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -140,7 +141,6 @@ export function FanCard({
   const reverse = model.direction === 'reverse'
   const axes = model.axes
   const pending = model.pending === true
-  const hasBottom = model.presets.length > 0 || axes !== null || model.timer !== null
   return (
     <DeviceCard
       kind="fan"
@@ -228,42 +228,62 @@ export function FanCard({
             className={SCENE_DRAWING_CLASS}
           />
         ),
-        bottom: hasBottom ? (
-          <>
-            {model.presets.length === 0 ? null : (
-              <MenuButton
-                options={model.presets}
-                value={model.preset}
-                onChange={actions.onPreset}
-                ariaLabel={t('uiLibrary.deviceCard.fan.preset', 'Preset')}
-                disabled={!on}
-                testId="dc-fan-preset"
-                layout="stacked"
-              />
-            )}
-            {axes === null ? null : (
-              <div className="flex flex-wrap justify-center gap-1.5">
-                {axes.horizontal === null ? null : (
-                  <AxisButton
-                    name="horizontal"
-                    axis={axes.horizontal}
-                    disabled={!on}
-                    onAxis={actions.onAxis}
-                  />
-                )}
-                {axes.vertical === null ? null : (
-                  <AxisButton
-                    name="vertical"
-                    axis={axes.vertical}
-                    disabled={!on}
-                    onAxis={actions.onAxis}
-                  />
-                )}
-              </div>
-            )}
-            {model.timer === null ? null : <SwitchTimer timer={model.timer} actions={actions} />}
-          </>
-        ) : null,
+        bottom: [
+          ...(model.presets.length === 0
+            ? []
+            : [
+                rowSelector('preset', {
+                  control: (
+                    <MenuButton
+                      options={model.presets}
+                      value={model.preset}
+                      onChange={actions.onPreset}
+                      ariaLabel={t('uiLibrary.deviceCard.fan.preset', 'Preset')}
+                      disabled={!on}
+                      testId="dc-fan-preset"
+                      layout="stacked"
+                    />
+                  ),
+                }),
+              ]),
+          ...(axes === null
+            ? []
+            : [
+                rowButtons('axes', {
+                  buttons: [
+                    ...(axes.horizontal === null
+                      ? []
+                      : [
+                          <AxisButton
+                            key="horizontal"
+                            name="horizontal"
+                            axis={axes.horizontal}
+                            disabled={!on}
+                            onAxis={actions.onAxis}
+                          />,
+                        ]),
+                    ...(axes.vertical === null
+                      ? []
+                      : [
+                          <AxisButton
+                            key="vertical"
+                            name="vertical"
+                            axis={axes.vertical}
+                            disabled={!on}
+                            onAxis={actions.onAxis}
+                          />,
+                        ]),
+                  ],
+                }),
+              ]),
+          ...(model.timer === null
+            ? []
+            : [
+                rowBlock('timer', {
+                  content: <SwitchTimer timer={model.timer} actions={actions} />,
+                }),
+              ]),
+        ],
       }}
     />
   )
