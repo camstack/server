@@ -5,6 +5,7 @@ import { ButtonGroup } from '../../parts/ButtonGroup'
 import { CardButton } from '../../parts/CardButton'
 import { LevelRow } from '../../parts/LevelRow'
 import { type ColumnItem, columnButton, columnPopover, columnStep } from '../../shell/column-items'
+import { rowBlock, rowButtons, rowSelector, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type {
@@ -253,43 +254,52 @@ export function PetFeederCard({
             </small>
           </div>
         ),
-        bottom: (
-          <div className="grid w-full justify-items-center gap-1.5">
-            {model.hoppers !== null && model.canFeed ? (
-              <ButtonGroup
-                testId="dc-feeder-hopper"
-                ariaLabel={t('uiLibrary.deviceCard.petFeeder.hopper', 'Hopper')}
-                options={[
-                  {
-                    id: 'hopper1',
-                    label: t('uiLibrary.deviceCard.petFeeder.hopper1', 'Hopper 1'),
-                  },
-                  {
-                    id: 'hopper2',
-                    label: t('uiLibrary.deviceCard.petFeeder.hopper2', 'Hopper 2'),
-                  },
-                ]}
-                value={hopper}
-                onChange={(id) => setHopper(id === 'hopper2' ? 'hopper2' : 'hopper1')}
-              />
-            ) : null}
-            {levels(model, t)}
-            {model.fault === null ? null : (
-              <p data-testid="dc-feeder-fault" className="text-xs text-danger">
-                {model.fault}
-              </p>
-            )}
-            {model.canMarkRefilled ? (
-              <CardButton
-                glyph="package"
-                data-testid="dc-feeder-refilled"
-                onClick={actions.onMarkRefilled}
-              >
-                {t('uiLibrary.deviceCard.petFeeder.markRefilled', 'Mark refilled')}
-              </CardButton>
-            ) : null}
-          </div>
-        ),
+        bottom: [
+          ...(model.hoppers !== null && model.canFeed
+            ? [
+                rowSelector('hopper', {
+                  control: (
+                    <ButtonGroup
+                      testId="dc-feeder-hopper"
+                      ariaLabel={t('uiLibrary.deviceCard.petFeeder.hopper', 'Hopper')}
+                      options={[
+                        {
+                          id: 'hopper1',
+                          label: t('uiLibrary.deviceCard.petFeeder.hopper1', 'Hopper 1'),
+                        },
+                        {
+                          id: 'hopper2',
+                          label: t('uiLibrary.deviceCard.petFeeder.hopper2', 'Hopper 2'),
+                        },
+                      ]}
+                      value={hopper}
+                      onChange={(id) => setHopper(id === 'hopper2' ? 'hopper2' : 'hopper1')}
+                    />
+                  ),
+                }),
+              ]
+            : []),
+          rowBlock('levels', { content: <>{levels(model, t)}</> }),
+          ...(model.fault === null
+            ? []
+            : [rowText('fault', { text: model.fault, tone: 'danger', testId: 'dc-feeder-fault' })]),
+          ...(model.canMarkRefilled
+            ? [
+                rowButtons('refilled', {
+                  buttons: [
+                    <CardButton
+                      key="refilled"
+                      glyph="package"
+                      data-testid="dc-feeder-refilled"
+                      onClick={actions.onMarkRefilled}
+                    >
+                      {t('uiLibrary.deviceCard.petFeeder.markRefilled', 'Mark refilled')}
+                    </CardButton>,
+                  ],
+                }),
+              ]
+            : []),
+        ],
       }}
     />
   )
