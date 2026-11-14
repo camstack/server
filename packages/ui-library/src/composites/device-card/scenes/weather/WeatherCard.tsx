@@ -6,8 +6,10 @@ import { cn } from '../../../../lib/cn'
 import { preferenceForQuantity, type UnitPreferences } from '../../../../lib/unit-preferences'
 import { CardIcon } from '../../parts/CardIcon'
 import { InfoTile } from '../../parts/InfoTile'
+import { columnValue } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 import {
   compassOf,
   type WeatherCardActions,
@@ -124,16 +126,16 @@ export function WeatherCard({
         tone: 'info',
       }}
       scene={{
-        left: (
-          <b
-            data-testid="dc-weather-temp"
-            className="text-3xl font-semibold tabular-nums text-foreground"
-          >
-            {temperature ?? '—'}
-          </b>
-        ),
-        image: <CardIcon glyph={sky} className={cn('h-20 w-20', SKY_TONE[sky])} />,
-        right: (
+        columns: {
+          left: [
+            columnValue('temperature', {
+              value: temperature ?? '—',
+              testId: 'dc-weather-temp',
+            }),
+          ],
+        },
+        image: <CardIcon glyph={sky} className={cn(SCENE_ICON_CLASS, SKY_TONE[sky])} />,
+        bottom: (
           <div className="grid w-full gap-1.5">
             <InfoTile
               layout="side"
