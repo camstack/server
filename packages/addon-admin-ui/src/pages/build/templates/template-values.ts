@@ -3,8 +3,9 @@
  * edits them, and the one boundary that turns them into a saved block.
  *
  * Pure: the form holds `TemplateInputValues`; this file builds the starting
- * values, edits a row of a repeatable group, finds the problems of one input
- * by its dotted address, and expands values into the block the hub stores.
+ * values, edits a row of a repeatable group — and a row of a group nested in
+ * it — finds the problems of one input by its dotted address, and expands
+ * values into the block the hub stores.
  */
 import {
   type AutomationRecipe,
@@ -20,6 +21,9 @@ import {
   type TemplateInputValue,
   type TemplateInputValues,
   type TemplateInstanceProblem,
+  type TemplateNestedGroupInput,
+  type TemplateNestedRow,
+  type TemplateRowValue,
   type TemplateScalarInput,
   type TemplateScalarValue,
 } from '@camstack/types'
@@ -41,8 +45,22 @@ function scalarDefault(input: TemplateScalarInput): TemplateScalarValue | undefi
   }
 }
 
-/** The row a group starts with: only the defaults its inputs declare. */
-export function blankRow(group: TemplateGroupInput): TemplateGroupRow {
+/** A repeatable group at either level: the form's own, or one inside its rows. */
+export type TemplateAnyGroup = TemplateGroupInput | TemplateNestedGroupInput
+
+export interface GroupBounds {
+  readonly min: number
+  readonly max: number
+}
+
+export function groupBounds(group: TemplateAnyGroup): GroupBounds {
+  return {
+    min: group.minRows ?? (group.optional === true ? 0 : 1),
+    max: group.maxRows ?? TEMPLATE_GROUP_ROWS_MAX,
+  }
+}
+
+function blankNestedRow(group: TemplateNestedGroupInput): TemplateNestedRow {
   const row: Record<string, TemplateScalarValue> = {}
   for (const input of group.inputs) {
     const value = scalarDefault(input)
@@ -51,14 +69,18 @@ export function blankRow(group: TemplateGroupInput): TemplateGroupRow {
   return row
 }
 
-export function groupBounds(group: TemplateGroupInput): {
-  readonly min: number
-  readonly max: number
-} {
-  return {
-    min: group.minRows ?? (group.optional === true ? 0 : 1),
-    max: group.maxRows ?? TEMPLATE_GROUP_ROWS_MAX,
+/** The row a group starts with: its inputs' defaults, each nested group at its minimum rows. */
+export function blankRow(group: TemplateGroupInput): TemplateGroupRow {
+  const row: Record<string, TemplateRowValue> = {}
+  for (const input of group.inputs) {
+    if (input.kind === 'group') {
+      row[input.key] = Array.from({ length: groupBounds(input).min }, () => blankNestedRow(input))
+      continue
+    }
+    const value = scalarDefault(input)
+    if (value !== undefined) row[input.key] = value
   }
+  return row
 }
 
 /** Values for a new automation: each input's default, each group at its minimum rows. */
@@ -84,20 +106,6 @@ export function withValue(
   return value === undefined ? rest : { ...rest, [key]: value }
 }
 
-/** Several keys at once (a command writes its devices and its action together). */
-export type TemplateValuePatch = Readonly<Record<string, TemplateScalarValue | undefined>>
-
-export function withValues(
-  values: TemplateInputValues,
-  patch: TemplateValuePatch,
-): TemplateInputValues {
-  let next = values
-  for (const [key, value] of Object.entries(patch)) {
-    next = withValue(next, key, value)
-  }
-  return next
-}
-
 export function rowsOf(values: TemplateInputValues, key: string): readonly TemplateGroupRow[] {
   const raw = values[key]
   if (!Array.isArray(raw)) return []
@@ -111,7 +119,7 @@ export function withRowValue(
   groupKey: string,
   index: number,
   key: string,
-  value: TemplateScalarValue | undefined,
+  value: TemplateRowValue | undefined,
 ): TemplateInputValues {
   const rows = rowsOf(values, groupKey).map((row, i) => {
     if (i !== index) return row
@@ -119,19 +127,6 @@ export function withRowValue(
     return value === undefined ? rest : { ...rest, [key]: value }
   })
   return { ...values, [groupKey]: rows }
-}
-
-export function withRowValues(
-  values: TemplateInputValues,
-  groupKey: string,
-  index: number,
-  patch: TemplateValuePatch,
-): TemplateInputValues {
-  let next = values
-  for (const [key, value] of Object.entries(patch)) {
-    next = withRowValue(next, groupKey, index, key, value)
-  }
-  return next
 }
 
 export function withAddedRow(
@@ -151,6 +146,75 @@ export function withoutRow(
   const rows = rowsOf(values, group.key)
   if (rows.length <= groupBounds(group).min) return values
   return { ...values, [group.key]: rows.filter((_, i) => i !== index) }
+}
+
+/** Where a group nested in a group row lives: `values[groupKey][index][group.key]`. */
+export interface NestedGroupAt {
+  readonly groupKey: string
+  readonly index: number
+  readonly group: TemplateNestedGroupInput
+}
+
+export function nestedRowsOf(row: TemplateGroupRow, key: string): readonly TemplateNestedRow[] {
+  const raw = row[key]
+  if (!Array.isArray(raw)) return []
+  return raw.filter(
+    (v): v is TemplateNestedRow => typeof v === 'object' && v !== null && !Array.isArray(v),
+  )
+}
+
+function nestedRowsAt(
+  values: TemplateInputValues,
+  at: NestedGroupAt,
+): readonly TemplateNestedRow[] {
+  const row = rowsOf(values, at.groupKey)[at.index]
+  return row === undefined ? [] : nestedRowsOf(row, at.group.key)
+}
+
+function withNestedRows(
+  values: TemplateInputValues,
+  at: NestedGroupAt,
+  rows: readonly TemplateNestedRow[],
+): TemplateInputValues {
+  return withRowValue(values, at.groupKey, at.index, at.group.key, [...rows])
+}
+
+export function withNestedValue(
+  values: TemplateInputValues,
+  at: NestedGroupAt,
+  nestedIndex: number,
+  key: string,
+  value: TemplateScalarValue | undefined,
+): TemplateInputValues {
+  const rows = nestedRowsAt(values, at).map((row, i) => {
+    if (i !== nestedIndex) return row
+    const { [key]: _dropped, ...rest } = row
+    return value === undefined ? rest : { ...rest, [key]: value }
+  })
+  return withNestedRows(values, at, rows)
+}
+
+export function withAddedNestedRow(
+  values: TemplateInputValues,
+  at: NestedGroupAt,
+): TemplateInputValues {
+  const rows = nestedRowsAt(values, at)
+  if (rows.length >= groupBounds(at.group).max) return values
+  return withNestedRows(values, at, [...rows, blankNestedRow(at.group)])
+}
+
+export function withoutNestedRow(
+  values: TemplateInputValues,
+  at: NestedGroupAt,
+  nestedIndex: number,
+): TemplateInputValues {
+  const rows = nestedRowsAt(values, at)
+  if (rows.length <= groupBounds(at.group).min) return values
+  return withNestedRows(
+    values,
+    at,
+    rows.filter((_, i) => i !== nestedIndex),
+  )
 }
 
 /** Problems that name `address` exactly (`buttons.2.targets`) — shown under that input. */

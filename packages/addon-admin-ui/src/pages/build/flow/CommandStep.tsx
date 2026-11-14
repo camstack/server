@@ -222,7 +222,7 @@ export function CommandPickerDialog({
   )
 }
 
-interface CommandArgsProps {
+export interface CommandArgsProps {
   readonly action: ResolvedVocabAction
   /** The one device the command goes to, when it is one: a `dynamic` list is read from it. */
   readonly deviceId: number | null
@@ -233,7 +233,14 @@ interface CommandArgsProps {
 }
 
 /** Step 3: one labelled field per open arg. */
-function CommandArgs({ action, deviceId, values, locale, variables, onChange }: CommandArgsProps) {
+export function CommandArgs({
+  action,
+  deviceId,
+  values,
+  locale,
+  variables,
+  onChange,
+}: CommandArgsProps) {
   return (
     <div className="flex flex-wrap items-start gap-3" data-testid="command-args">
       {action.openArgs.map((arg) => {

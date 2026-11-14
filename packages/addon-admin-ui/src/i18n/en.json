@@ -6099,7 +6099,13 @@
       "templateGone": "The template of this automation no longer exists.",
       "unreadable": "This template cannot be read",
       "view": "View",
-      "command": "Command"
+      "command": "Command",
+      "addNamed": "Add {{noun}}",
+      "newNamed": "New {{noun}}",
+      "newRow": "New row",
+      "removeNamed": "Remove {{noun}}",
+      "readingActions": "Reading what these devices can do…",
+      "actionNotOffered": "{{id}} (not offered)"
     }
   },
   "automation": {

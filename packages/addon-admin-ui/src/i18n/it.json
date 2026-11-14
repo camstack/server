@@ -6174,7 +6174,13 @@
       "templateGone": "Il template di questa automazione non esiste più.",
       "unreadable": "Questo template non è leggibile",
       "view": "Vedi",
-      "command": "Comando"
+      "command": "Comando",
+      "addNamed": "Aggiungi {{noun}}",
+      "newNamed": "Nuovo: {{noun}}",
+      "newRow": "Nuova riga",
+      "removeNamed": "Rimuovi {{noun}}",
+      "readingActions": "Lettura di cosa possono fare questi dispositivi…",
+      "actionNotOffered": "{{id}} (non disponibile)"
     }
   },
   "automation": {
