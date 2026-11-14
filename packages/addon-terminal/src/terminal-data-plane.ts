@@ -11,12 +11,15 @@
  * line is a JSON-encoded {@link TerminalOutputEvent}, so embedded newlines are
  * escaped and never break framing.
  */
-import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { DataPlaneHandler } from '@camstack/types'
+import type { IncomingHttpHeaders, IncomingMessage, ServerResponse } from 'node:http'
+import { CALLER_USERNAME_HEADER, type DataPlaneHandler } from '@camstack/types'
+import { ServerShellRefusedError } from './server-shell.js'
 import type { TerminalSessionManager } from './terminal-session-manager.js'
 
 const SSE_KEEPALIVE_MS = 15_000
 const MAX_INPUT_BYTES = 64 * 1024
+const MAX_CALLER_HEADER = 384
+const MAX_CALLER_USER = 128
 
 interface ParsedPath {
   readonly sessionId: string
@@ -34,12 +37,45 @@ function parsePath(url: string | undefined): ParsedPath | null {
   return { sessionId, action }
 }
 
+/** The hub writes this after it has authenticated the request. Absent means unattributed. */
+function callerUserIdFromHeaders(headers: IncomingHttpHeaders): string | null {
+  const raw = headers[CALLER_USERNAME_HEADER]
+  const value = Array.isArray(raw) ? raw[0] : raw
+  if (typeof value !== 'string' || value.length === 0 || value.length > MAX_CALLER_HEADER)
+    return null
+  try {
+    const decoded = decodeURIComponent(value).trim()
+    if (decoded.length === 0 || decoded.length > MAX_CALLER_USER) return null
+    return decoded
+  } catch {
+    return null
+  }
+}
+
+/** True when the response was ended because the server shell opt-in is off. */
+function refusedServerShell(
+  manager: TerminalSessionManager,
+  sessionId: string,
+  res: ServerResponse,
+): boolean {
+  try {
+    manager.assertServerShellAllowed(sessionId)
+    return false
+  } catch (error) {
+    if (!(error instanceof ServerShellRefusedError)) throw error
+    res.writeHead(403, { 'content-type': 'text/plain' })
+    res.end(error.message)
+    return true
+  }
+}
+
 function handleOut(
   manager: TerminalSessionManager,
   sessionId: string,
   req: IncomingMessage,
   res: ServerResponse,
 ): void {
+  if (refusedServerShell(manager, sessionId, res)) return
   if (!manager.hasEntry(sessionId)) {
     res.writeHead(404, { 'content-type': 'text/plain' })
     res.end('no such session')
@@ -53,10 +89,14 @@ function handleOut(
   })
   res.write(': connected\n\n')
 
-  const detach = manager.attachOutput(sessionId, (event) => {
-    res.write(`data: ${JSON.stringify(event)}\n\n`)
-    if (event.kind === 'exit') res.end()
-  })
+  const detach = manager.attachOutput(
+    sessionId,
+    (event) => {
+      res.write(`data: ${JSON.stringify(event)}\n\n`)
+      if (event.kind === 'exit') res.end()
+    },
+    { userId: callerUserIdFromHeaders(req.headers) },
+  )
 
   const keepalive = setInterval(() => {
     res.write(': keepalive\n\n')
@@ -77,6 +117,7 @@ function handleIn(
   req: IncomingMessage,
   res: ServerResponse,
 ): void {
+  if (refusedServerShell(manager, sessionId, res)) return
   if (!manager.hasSession(sessionId)) {
     res.writeHead(404, { 'content-type': 'text/plain' })
     res.end('no such session')
@@ -99,32 +140,60 @@ function handleIn(
   })
   req.on('end', () => {
     if (aborted) return
-    const raw = Buffer.concat(chunks).toString('utf-8')
-    const contentType = req.headers['content-type'] ?? ''
-    let data = raw
-    if (contentType.includes('application/json')) {
-      try {
-        const parsed: unknown = JSON.parse(raw)
-        if (
-          parsed !== null &&
-          typeof parsed === 'object' &&
-          'data' in parsed &&
-          typeof (parsed as { data: unknown }).data === 'string'
-        ) {
-          data = (parsed as { data: string }).data
-        } else {
-          data = ''
-        }
-      } catch {
-        res.writeHead(400, { 'content-type': 'text/plain' })
-        res.end('invalid json')
-        return
-      }
-    }
-    if (data.length > 0) manager.writeInputToSession(sessionId, data)
-    res.writeHead(204)
-    res.end()
+    finishTerminalInput(manager, sessionId, req, res, Buffer.concat(chunks).toString('utf-8'))
   })
+}
+
+function finishTerminalInput(
+  manager: TerminalSessionManager,
+  sessionId: string,
+  req: IncomingMessage,
+  res: ServerResponse,
+  raw: string,
+): void {
+  const contentType = req.headers['content-type'] ?? ''
+  let data = raw
+  if (contentType.includes('application/json')) {
+    try {
+      const parsed: unknown = JSON.parse(raw)
+      if (
+        parsed !== null &&
+        typeof parsed === 'object' &&
+        'data' in parsed &&
+        typeof (parsed as { data: unknown }).data === 'string'
+      ) {
+        data = (parsed as { data: string }).data
+      } else {
+        data = ''
+      }
+    } catch {
+      res.writeHead(400, { 'content-type': 'text/plain' })
+      res.end('invalid json')
+      return
+    }
+  }
+  if (data.length > 0 && !writeServerShellInput(manager, sessionId, data, res)) return
+  res.writeHead(204)
+  res.end()
+}
+
+function writeServerShellInput(
+  manager: TerminalSessionManager,
+  sessionId: string,
+  data: string,
+  res: ServerResponse,
+): boolean {
+  try {
+    manager.writeInputToSession(sessionId, data)
+    return true
+  } catch (error) {
+    if (!(error instanceof ServerShellRefusedError)) throw error
+    if (!res.headersSent) {
+      res.writeHead(403, { 'content-type': 'text/plain' })
+      res.end(error.message)
+    }
+    return false
+  }
 }
 
 /** Build the data-plane handler bound to a session manager. */

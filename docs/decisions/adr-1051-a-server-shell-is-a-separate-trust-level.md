@@ -40,22 +40,38 @@ controls:
 3. Audited. One log line per open, attach, close and idle close, with
    `tags: { nodeId, sessionId, userId }`.
 4. Idle timeout. A session with no input and no output for
-   `serverShellIdleMinutes` (default 30) is closed and logged as idle.
+   `serverShellIdleMinutes` (default 30) is closed and logged as idle. The
+   provider's idle watch is what closes it: a timer calls the sweep, and
+   turning the opt-in off does the same to every live shell on that node
+   (`reason: opt-in-disabled`). A later pull, write or attach is refused.
+
+Any admin may attach to or close another admin's shell session. That is
+accepted because every method on the capability is `auth: 'admin'`. The
+session is not private to the admin who opened it; the tier is the bound.
 
 The child is the login shell (`/bin/bash` in a container, otherwise `$SHELL`
-or `/bin/zsh` on macOS). Its working directory is the node data directory.
-Its environment is the allowlist `PATH`, `HOME`, `LANG`, `TERM`, `USER` and
-nothing else — the process environment is not copied (D783, D797). Caller
-overrides of executable, arguments, directory and environment are ignored for
-this profile. While the opt-in is off, open is refused with a typed reason
-that names the node. The profile is not a camera.
+or `/bin/zsh` on macOS). It runs as the node's uid. Its working directory is
+the node data directory, so the keychain and the database files there are
+readable to whoever holds the shell. That is why the opt-in is per node and
+off until that node turns it on. Its environment is the allowlist `PATH`,
+`HOME`, `LANG`, `TERM`, `USER` and nothing else — the process environment is
+not copied (D783, D797). Caller overrides of executable, arguments, directory
+and environment are ignored for this profile. While the opt-in is off, open
+is refused with a typed reason that names the node. The profile is not a
+camera.
 
 ## Consequences
 
 An admin who turns the switch on can run commands as the server user on that
-node. The audit line is the record of who did. A node that never opts in
-cannot be opened, and the UI shows that reason rather than a blank terminal.
-The idle close is the bound on a forgotten tab.
+node, and can read what that uid can read in the data directory, including
+the keychain and the database. The audit line is the record of who did. A
+node that never opts in cannot be opened, and the UI shows that reason rather
+than a blank terminal. Turning the switch off closes the live shells. The
+idle close is the bound on a forgotten tab. Another admin on the same tier
+can attach to a session they did not open. An attach whose caller the data
+plane cannot name is logged unattributed: the camera relay opens a session
+with no caller, and a data-plane request with no hub user header is the same
+fact.
 
 The auth audit trail is not this record. Its actions are authentication
 events. The shell audit is the provider's logger, tagged so a node can be
@@ -63,7 +79,11 @@ filtered later.
 
 ## Enforcement
 
-Specs: refused when the opt-in is off and the error names the node; the spawn
+Specs: refused when the opt-in is off and the error names the node; turning
+the opt-in off kills each live shell and a later pull, write or attach is
+refused with `reason: opt-in-disabled` on the close line; the spawn
 environment carries no name outside the allowlist, including through the pty
-`replace` mode; an idle sweep closes the session and logs it; open, attach
-and close lines carry `nodeId`. Nothing else checks the trust level.
+`replace` mode; the idle watch (not only a direct sweep) closes the session
+and logs it; open, attach and close lines carry `nodeId`; the first pull of
+each user is audited, and an attach with no caller is logged unattributed.
+Nothing else checks the trust level.

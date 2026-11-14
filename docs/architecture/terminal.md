@@ -1,6 +1,6 @@
 ---
 title: Terminal sessions and cameras
-last-verified: 2026-09-15
+last-verified: 2026-11-14
 applies-to:
   - packages/types/src/capabilities/terminal-session.cap.ts
   - packages/addon-admin-ui/src/pages/system/Terminal.tsx
@@ -46,7 +46,7 @@ profile still owns the binary unless the instance sets an explicit override.
 
 The optional interactive shell is a separate, disabled-by-default profile.
 
-The server shell (`server-shell`) is a further trust level: the node's login shell, working directory the node data dir, and an allowlisted environment (`PATH`, `HOME`, `LANG`, `TERM`, `USER`). It is off until that node opts in (`serverShellEnabled`, read only by `serverShellOptIn`). A refusal names the node. Each open, attach, close and idle close is one audit line tagged with the node, the user and the session. A session with no input and no output for `serverShellIdleMinutes` (default 30) is closed. It is not a camera profile. See [D1051](../decisions/adr-1051-a-server-shell-is-a-separate-trust-level.md).
+The server shell (`server-shell`) is a further trust level: the node's login shell, running as that node's uid, working directory the node data dir (so the keychain and database files are readable to whoever holds it), and an allowlisted environment (`PATH`, `HOME`, `LANG`, `TERM`, `USER`). It is off until that node opts in (`serverShellEnabled`, read only by `serverShellOptIn`); turning the opt-in off terminates every live shell on the node. A refusal names the node. Any admin may attach to or close another admin's session, because the methods are admin-tier. Each open, attach, close and idle close is one audit line tagged with the node, the user and the session; an attach with no caller is logged unattributed. A session with no input and no output for `serverShellIdleMinutes` (default 30) is closed by the idle watch. It is not a camera profile. See [D1051](../decisions/adr-1051-a-server-shell-is-a-separate-trust-level.md).
 
 A session request no longer carries only `profileId`. `openSession` also accepts
 `executable`, `args`, `cwd` and `environment`, which replace the profile's own

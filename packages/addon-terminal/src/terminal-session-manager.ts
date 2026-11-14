@@ -62,6 +62,11 @@ type UnsequencedOutputEvent =
 
 export type TerminalOutputSink = (event: TerminalOutputEvent) => void
 
+/** Who the data plane says is attaching. Null when the hub did not name a user. */
+export interface TerminalAttachAttribution {
+  readonly userId: string | null
+}
+
 export interface TerminalInstanceControl {
   listLegacyCameras(): Promise<readonly TerminalLegacyCamera[]>
   adoptLegacyMonitor(input: {
@@ -121,6 +126,10 @@ interface LiveSession {
   outputChars: number
   nextSeq: number
   lastIoAt: number
+  /** Admin who opened the session. `unattributed` when the caller was not passed. */
+  readonly openedByUserId: string
+  /** Users already audited for a `pullOutput` attach. One line per user. */
+  readonly pulledByUsers: Set<string>
   exited: boolean
   disposed: boolean
   lastExit?: { exitCode: number; signal?: number }
@@ -140,6 +149,10 @@ const MAX_ROWS = 500
 const EXITED_RETENTION_MS = 10_000
 const OUTPUT_REPLAY_CHARS = 256 * 1024
 const IDLE_SWEEP_MS = 60_000
+/** Session ids closed because the node opt-in turned off. A later touch is still refused. */
+const OPT_IN_CLOSED_LIMIT = 64
+const SERVER_SHELL_UNATTRIBUTED_USER = 'unattributed'
+const SERVER_SHELL_OPT_OUT_REASON = 'opt-in-disabled'
 
 const SERVER_SHELL_AUDIT = {
   opened: 'terminal: server shell opened',
@@ -149,6 +162,13 @@ const SERVER_SHELL_AUDIT = {
 } as const
 
 type ServerShellAuditKind = keyof typeof SERVER_SHELL_AUDIT
+
+function attributedUser(userId: string | null | undefined): string {
+  if (userId === undefined || userId === null || userId.length === 0) {
+    return SERVER_SHELL_UNATTRIBUTED_USER
+  }
+  return userId
+}
 
 function clampDimension(value: number, max: number): number {
   if (!Number.isFinite(value)) return MIN_GRID
@@ -172,6 +192,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
   private idleTimeoutMs: number
   private readonly nodeId: string
   private idleTimer: ReturnType<typeof setInterval> | null = null
+  private readonly optInClosed = new Set<string>()
 
   constructor(opts: TerminalSessionManagerOptions) {
     this.opts = opts
@@ -234,10 +255,12 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     readonly serverShellIdleMs?: number
   }): void {
     if (config.serverShell) this.serverShell = config.serverShell
+    const shellWasEnabled = this.serverShellEnabled
     if (config.serverShellEnabled !== undefined) {
       this.serverShellEnabled = config.serverShellEnabled
     }
     if (config.serverShellIdleMs !== undefined) this.idleTimeoutMs = config.serverShellIdleMs
+    if (shellWasEnabled && !this.serverShellEnabled) this.closeServerShellsForOptOut()
     this.profiles = buildProfiles({
       ...config,
       serverShell: this.serverShell,
@@ -386,6 +409,8 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
       outputChars: 0,
       nextSeq: 1,
       lastIoAt: this.now(),
+      openedByUserId: attributedUser(input.caller?.userId),
+      pulledByUsers: new Set<string>(),
       exited: false,
       disposed: false,
     }
@@ -411,7 +436,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     this.opts.logger.info('terminal: session opened', {
       meta: { sessionId, profileId: profile.profileId, pid: pty.pid, cols, rows },
     })
-    if (locked) this.auditServerShell('opened', sessionId, input.caller?.userId ?? 'unknown')
+    if (locked) this.auditServerShell('opened', sessionId, session.openedByUserId)
     return info
   }
 
@@ -435,7 +460,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     if (!session) return
     this.terminateSession(input.sessionId, session, false)
     if (session.info.profileId === SERVER_SHELL_PROFILE_ID) {
-      this.auditServerShell('closed', input.sessionId, input.caller?.userId ?? 'unknown')
+      this.auditServerShell('closed', input.sessionId, attributedUser(input.caller?.userId))
       return
     }
     this.opts.logger.info('terminal: session closed', { meta: { sessionId: input.sessionId } })
@@ -448,11 +473,10 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     readonly waitForOutput?: boolean
     readonly caller?: CapCaller
   }): Promise<TerminalOutputBatch> {
+    this.assertServerShellAllowed(input.sessionId)
     const session = this.sessions.get(input.sessionId)
     if (!session) throw new Error(`No such terminal session: ${input.sessionId}`)
-    if (input.afterSeq === 0 && session.info.profileId === SERVER_SHELL_PROFILE_ID) {
-      this.auditServerShell('attached', input.sessionId, input.caller?.userId ?? 'unknown')
-    }
+    this.noteServerShellPull(session, input.sessionId, input.caller?.userId)
 
     if (
       (input.afterSeq > 0 || input.waitForOutput === true) &&
@@ -505,6 +529,20 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     this.writeInputToSession(input.sessionId, input.data)
   }
 
+  /**
+   * Refuse a server shell while this node's opt-in is off, including one this
+   * process just terminated because the switch flipped. Other profiles are
+   * untouched.
+   */
+  assertServerShellAllowed(sessionId: string): void {
+    if (this.serverShellEnabled) return
+    const session = this.sessions.get(sessionId)
+    const blocked =
+      session?.info.profileId === SERVER_SHELL_PROFILE_ID || this.optInClosed.has(sessionId)
+    if (!blocked) return
+    throw new ServerShellRefusedError(this.nodeId)
+  }
+
   // ── Data-plane surface (not part of the capability) ───────────────────
 
   hasSession(sessionId: string): boolean {
@@ -527,13 +565,18 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
    * authoritative buffer) so a fresh xterm.js is in sync, then streams live
    * output. Returns a detach function.
    */
-  attachOutput(sessionId: string, sink: TerminalOutputSink): () => void {
+  attachOutput(
+    sessionId: string,
+    sink: TerminalOutputSink,
+    attribution?: TerminalAttachAttribution,
+  ): () => void {
+    this.assertServerShellAllowed(sessionId)
     const session = this.sessions.get(sessionId)
     if (!session) {
       throw new Error(`No such terminal session: ${sessionId}`)
     }
     if (session.info.profileId === SERVER_SHELL_PROFILE_ID) {
-      this.auditServerShell('attached', sessionId, 'data-plane')
+      this.auditServerShell('attached', sessionId, attributedUser(attribution?.userId))
     }
     if (session.exited) {
       sink({
@@ -552,6 +595,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
   }
 
   writeInputToSession(sessionId: string, data: string): void {
+    this.assertServerShellAllowed(sessionId)
     const session = this.sessions.get(sessionId)
     if (!session || session.exited) return
     session.lastIoAt = this.now()
@@ -619,9 +663,60 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     }
   }
 
-  private auditServerShell(kind: ServerShellAuditKind, sessionId: string, userId: string): void {
-    this.opts.logger.info(SERVER_SHELL_AUDIT[kind], {
-      tags: { nodeId: this.nodeId, sessionId, userId },
+  private closeServerShellsForOptOut(): void {
+    const live = [...this.sessions.entries()].filter(
+      ([, session]) => session.info.profileId === SERVER_SHELL_PROFILE_ID && !session.exited,
+    )
+    for (const [sessionId, session] of live) {
+      this.rememberOptInClosed(sessionId)
+      this.terminateSession(sessionId, session, false)
+      this.auditServerShell(
+        'closed',
+        sessionId,
+        session.openedByUserId,
+        SERVER_SHELL_OPT_OUT_REASON,
+      )
+    }
+  }
+
+  private rememberOptInClosed(sessionId: string): void {
+    this.optInClosed.add(sessionId)
+    while (this.optInClosed.size > OPT_IN_CLOSED_LIMIT) {
+      const oldest = this.optInClosed.values().next().value
+      if (oldest === undefined) return
+      this.optInClosed.delete(oldest)
+    }
+  }
+
+  private noteServerShellPull(
+    session: LiveSession,
+    sessionId: string,
+    userId: string | undefined,
+  ): void {
+    if (session.info.profileId !== SERVER_SHELL_PROFILE_ID) return
+    const attributed = attributedUser(userId)
+    if (session.pulledByUsers.has(attributed)) return
+    session.pulledByUsers.add(attributed)
+    this.auditServerShell('attached', sessionId, attributed)
+  }
+
+  private auditServerShell(
+    kind: ServerShellAuditKind,
+    sessionId: string,
+    userId: string,
+    reason?: typeof SERVER_SHELL_OPT_OUT_REASON,
+  ): void {
+    const message =
+      userId === SERVER_SHELL_UNATTRIBUTED_USER
+        ? `${SERVER_SHELL_AUDIT[kind]} unattributed`
+        : SERVER_SHELL_AUDIT[kind]
+    this.opts.logger.info(message, {
+      tags: {
+        nodeId: this.nodeId,
+        sessionId,
+        userId,
+        ...(reason !== undefined ? { reason } : {}),
+      },
     })
   }
 

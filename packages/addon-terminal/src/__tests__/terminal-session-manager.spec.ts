@@ -1,5 +1,7 @@
-import type { IScopedLogger, LogExtras } from '@camstack/types'
+import { createServer, request, type ClientRequest, type Server } from 'node:http'
+import { CALLER_USERNAME_HEADER, type IScopedLogger, type LogExtras } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
+import { createTerminalDataPlaneHandler } from '../terminal-data-plane.js'
 import type { PtyProcess, PtySpawner, PtySpawnOptions } from '../pty.js'
 import { ptyEnvironment } from '../pty.js'
 import { resolveServerShell, ServerShellRefusedError } from '../server-shell.js'
@@ -667,4 +669,197 @@ describe('server shell', () => {
       userId: 'idle',
     })
   })
+
+  it('terminates live server shells when the opt-in turns off and refuses a later write or pull', async () => {
+    const { logger, lines } = auditLogger()
+    const { manager, ptys } = shellManager({ logger })
+    const shell = await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+    })
+    const monitor = await manager.openSession({ profileId: 'monitor', cols: 80, rows: 24 })
+    manager.reconfigureProfiles(profileConfig(false))
+    expect(ptys[0]!.killed).toBe(true)
+    expect(ptys[1]!.killed).toBe(false)
+    expect(await manager.listSessions()).toEqual([
+      expect.objectContaining({ sessionId: monitor.sessionId, profileId: 'monitor' }),
+    ])
+    await expect(
+      manager.pullOutput({ sessionId: shell.sessionId, afterSeq: 0, caller: shellCaller }),
+    ).rejects.toBeInstanceOf(ServerShellRefusedError)
+    await expect(
+      manager.writeInput({ sessionId: shell.sessionId, data: 'ls\n' }),
+    ).rejects.toBeInstanceOf(ServerShellRefusedError)
+    expect(() => manager.attachOutput(shell.sessionId, () => {})).toThrow(ServerShellRefusedError)
+    expect(ptys[0]!.writes).toEqual([])
+    expect(
+      lines.find((line) => line.message === 'terminal: server shell closed')?.extras?.tags,
+    ).toEqual({
+      nodeId: 'hub',
+      sessionId: shell.sessionId,
+      userId: 'admin-7',
+      reason: 'opt-in-disabled',
+    })
+  })
+
+  it('audits the first pull of each user, including a pull that resumes past seq 0', async () => {
+    const { logger, lines } = auditLogger()
+    const { manager } = shellManager({ logger })
+    const info = await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+    })
+    const first = await manager.pullOutput({
+      sessionId: info.sessionId,
+      afterSeq: 0,
+      caller: shellCaller,
+    })
+    await manager.pullOutput({
+      sessionId: info.sessionId,
+      afterSeq: first.cursor,
+      caller: shellCaller,
+    })
+    const other = { userId: 'admin-9', isAdmin: true } as const
+    await manager.pullOutput({
+      sessionId: info.sessionId,
+      afterSeq: first.cursor,
+      caller: other,
+    })
+    await manager.pullOutput({ sessionId: info.sessionId, afterSeq: first.cursor })
+    const attaches = lines.filter((line) =>
+      line.message.startsWith('terminal: server shell attached'),
+    )
+    expect(attaches.map((line) => line.extras?.tags?.userId)).toEqual([
+      'admin-7',
+      'admin-9',
+      'unattributed',
+    ])
+    expect(attaches[2]?.message).toBe('terminal: server shell attached unattributed')
+  })
+
+  it('attributes a data-plane attach to the hub caller, and logs it unattributed when the header is absent', async () => {
+    const { logger, lines } = auditLogger()
+    const { manager } = shellManager({ logger })
+    const info = await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+    })
+    const handler = createTerminalDataPlaneHandler(manager)
+    const server = createServer((req, res) => {
+      handler(req, res)
+    })
+    const port = await listen(server)
+    try {
+      const named = await getStatus(port, `/${info.sessionId}/out`, {
+        [CALLER_USERNAME_HEADER]: encodeURIComponent('admin-7'),
+      })
+      const bare = await getStatus(port, `/${info.sessionId}/out`, {})
+      expect(named).toBe(200)
+      expect(bare).toBe(200)
+    } finally {
+      await closeServer(server)
+    }
+    const attaches = lines.filter((line) =>
+      line.message.startsWith('terminal: server shell attached'),
+    )
+    expect(attaches.map((line) => line.message)).toEqual([
+      'terminal: server shell attached',
+      'terminal: server shell attached unattributed',
+    ])
+    expect(attaches[0]?.extras?.tags).toEqual({
+      nodeId: 'hub',
+      sessionId: info.sessionId,
+      userId: 'admin-7',
+    })
+    expect(attaches[1]?.extras?.tags?.userId).toBe('unattributed')
+  })
+
+  it('kills an idle server shell from the idle watch, without a direct sweep', async () => {
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] })
+    let manager: TerminalSessionManager | undefined
+    try {
+      let now = 1_700_000_000_000
+      const made = shellManager({
+        now: () => now,
+        serverShellIdleMs: 1_000,
+      })
+      manager = made.manager
+      await manager.openSession({
+        profileId: 'server-shell',
+        cols: 80,
+        rows: 24,
+        caller: shellCaller,
+      })
+      manager.startIdleWatch()
+      now += 1_000
+      await vi.advanceTimersByTimeAsync(59_000)
+      expect(made.ptys[0]!.killed).toBe(false)
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(made.ptys[0]!.killed).toBe(true)
+      expect(await manager.listSessions()).toEqual([])
+    } finally {
+      manager?.stopIdleWatch()
+      vi.useRealTimers()
+    }
+  })
 })
+
+function profileConfig(serverShellEnabled: boolean) {
+  return {
+    btmPath: '',
+    allowShell: false,
+    shellPath: '',
+    maxSessions: 2,
+    serverShellEnabled,
+  }
+}
+
+function listen(server: Server): Promise<number> {
+  return new Promise((resolve, reject) => {
+    server.once('error', reject)
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address()
+      if (typeof address !== 'object' || address === null) {
+        reject(new Error('terminal data-plane test server did not bind'))
+        return
+      }
+      resolve(address.port)
+    })
+  })
+}
+
+function getStatus(
+  port: number,
+  path: string,
+  headers: Readonly<Record<string, string>>,
+): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const req = httpGet(port, path, headers, (status) => resolve(status))
+    req.on('error', reject)
+  })
+}
+
+function httpGet(
+  port: number,
+  path: string,
+  headers: Readonly<Record<string, string>>,
+  onStatus: (status: number) => void,
+): ClientRequest {
+  return request({ hostname: '127.0.0.1', port, path, headers: { ...headers } }, (res) => {
+    res.resume()
+    onStatus(res.statusCode ?? 0)
+    res.destroy()
+  }).end()
+}
+
+function closeServer(server: Server): Promise<void> {
+  return new Promise((resolve) => {
+    server.close(() => resolve())
+  })
+}

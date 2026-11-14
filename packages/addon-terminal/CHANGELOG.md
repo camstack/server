@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Admins can open a login shell on a node that opts in; it is off by default, audited, and closed when idle.
 
+### Changed
+
+- Turning a node's server shell off closes its live shells, and a later read or keystroke is refused.
+
 ## [0.1.164] - 2026-11-11
 
 ### Changed
