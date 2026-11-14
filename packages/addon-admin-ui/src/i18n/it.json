@@ -6183,7 +6183,8 @@
       "actionNotOffered": "{{id}} (non disponibile)",
       "timeWindow": {
         "limit": "Esegui solo in certi orari"
-      }
+      },
+      "actionLabel": "Azione"
     }
   },
   "automation": {
@@ -10535,6 +10536,22 @@
       "loading": "Lettura degli eventi del dispositivo…",
       "unknown": "Non è stato possibile leggere gli eventi del dispositivo.",
       "none": "Questo dispositivo non dichiara eventi."
+    },
+    "deviceActionPicker": {
+      "add": "Aggiungi azione…",
+      "allDevices": "tutti i dispositivi",
+      "allOfType": "tutti: {{type}}",
+      "anyRoom": "Qualsiasi stanza",
+      "anyType": "Qualsiasi tipo",
+      "byDevice": "Dispositivi",
+      "byDomain": "Per stanza/tipo",
+      "confirmAdd": "Aggiungi",
+      "confirmSave": "Salva",
+      "devices": "{{count}} dispositivo/i",
+      "inRoom": "{{what}} in {{room}}",
+      "next": "Avanti",
+      "room": "Stanza",
+      "type": "Tipo di dispositivo"
     }
   },
   "helpers": {

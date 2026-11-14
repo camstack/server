@@ -6108,7 +6108,8 @@
       "actionNotOffered": "{{id}} (not offered)",
       "timeWindow": {
         "limit": "Only run at certain times"
-      }
+      },
+      "actionLabel": "Action"
     }
   },
   "automation": {
@@ -10513,6 +10514,22 @@
       "loading": "Reading what this device can fire…",
       "unknown": "What this device can fire could not be read.",
       "none": "This device declares no event."
+    },
+    "deviceActionPicker": {
+      "add": "Add action…",
+      "allDevices": "all devices",
+      "allOfType": "all {{type}}",
+      "anyRoom": "Any room",
+      "anyType": "Any type",
+      "byDevice": "Devices",
+      "byDomain": "By room/type",
+      "confirmAdd": "Add",
+      "confirmSave": "Save",
+      "devices": "{{count}} device(s)",
+      "inRoom": "{{what}} in {{room}}",
+      "next": "Next",
+      "room": "Room",
+      "type": "Device type"
     }
   },
   "helpers": {

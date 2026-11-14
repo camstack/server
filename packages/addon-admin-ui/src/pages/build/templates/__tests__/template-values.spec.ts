@@ -3,7 +3,6 @@ import {
   AutomationRecipeSchema,
   AutomationTemplatePayloadSchema,
   type AutomationTemplatePayload,
-  BUILTIN_AUTOMATION_TEMPLATES,
 } from '@camstack/types'
 import {
   convertInstance,
@@ -59,9 +58,40 @@ describe('expandInstance / convertInstance', () => {
 })
 
 describe('a group inside a group row', () => {
-  const buttons = BUILTIN_AUTOMATION_TEMPLATES.find((t) => t.id === 'builtin:buttons-to-devices')
-  if (buttons === undefined) throw new Error('the buttons template is not built in')
-  const group = buttons.payload.inputs.find((i) => i.key === 'buttons')
+  const nested: AutomationTemplatePayload = AutomationTemplatePayloadSchema.parse({
+    version: 1,
+    body: { when: { kind: 'any', children: [] }, actions: [] },
+    inputs: [
+      {
+        kind: 'group',
+        key: 'buttons',
+        label: 'Buttons',
+        rowLabel: 'button',
+        maxRows: 4,
+        inputs: [
+          {
+            kind: 'group',
+            key: 'events',
+            label: 'Events',
+            rowLabel: 'event',
+            maxRows: 4,
+            inputs: [{ kind: 'device', key: 'button', label: 'Button' }],
+          },
+          {
+            kind: 'group',
+            key: 'commands',
+            label: 'Commands',
+            rowLabel: 'command',
+            maxRows: 3,
+            inputs: [{ kind: 'device', key: 'targets', label: 'Devices', multiple: true }],
+          },
+        ],
+      },
+    ],
+    bindings: [],
+  })
+  const buttons = { payload: nested }
+  const group = nested.inputs.find((i) => i.key === 'buttons')
   if (group === undefined || group.kind !== 'group') throw new Error('buttons is not a group')
   const commands = group.inputs.find((i) => i.key === 'commands')
   if (commands === undefined || commands.kind !== 'group') throw new Error('commands is not nested')

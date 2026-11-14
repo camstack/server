@@ -46,7 +46,7 @@ export type DeviceFiredEntry = DeviceFiredLeaf
 
 /** A fresh leaf id: what a `triggered-by` of the entry's row reads. */
 export function newEntryId(): string {
-  return `ev-${Math.random().toString(36).slice(2, 8)}`
+  return `ev-${crypto.randomUUID()}`
 }
 
 /** The event a leaf names, or undefined when it names none (or several) the picker cannot show. */
