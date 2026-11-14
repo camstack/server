@@ -102,6 +102,9 @@ export const NC_SYSTEM_EVENT_CATEGORIES: readonly EventCategory[] = [
   EventCategory.StorageLocationLow,
   EventCategory.StorageLocationCritical,
   EventCategory.StorageLocationOk,
+  // Drain and pruning progress (#538) — emitted by storage-orchestrator's sweep.
+  EventCategory.StorageDrainProgress,
+  EventCategory.StorageDrainComplete,
   // A notification rule that cannot work, and its clear (D905) — emitted by
   // this addon's own notification centre on the evaluating node.
   EventCategory.NotificationRuleBroken,

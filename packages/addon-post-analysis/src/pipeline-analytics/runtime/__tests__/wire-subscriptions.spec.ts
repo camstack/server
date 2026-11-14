@@ -127,6 +127,8 @@ describe('the system-event subscription topology', () => {
         EventCategory.RecordingHealthDegraded,
         EventCategory.RecordingHealthOk,
         EventCategory.RecordingHealthStalled,
+        EventCategory.StorageDrainComplete,
+        EventCategory.StorageDrainProgress,
         EventCategory.StorageLocationCritical,
         EventCategory.StorageLocationLow,
         EventCategory.StorageLocationOk,
