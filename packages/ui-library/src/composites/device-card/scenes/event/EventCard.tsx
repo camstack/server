@@ -1,9 +1,11 @@
 import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
+import { cn } from '../../../../lib/cn'
 import { CardIcon } from '../../parts/CardIcon'
 import { InfoTile } from '../../parts/InfoTile'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation } from '../../shell/model'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 import {
   eventEntryKey,
   eventEntryText,
@@ -139,7 +141,8 @@ export function EventCard({
         tone: model.last === null ? 'muted' : 'primary',
       }}
       scene={{
-        image: <CardIcon glyph="event" className="h-20 w-20 text-foreground-muted" />,
+        columns: {},
+        image: <CardIcon glyph="event" className={cn(SCENE_ICON_CLASS, 'text-foreground-muted')} />,
         bottom: <EventVocabularyList model={model} t={t} />,
       }}
     />
