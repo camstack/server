@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A read-only key-event diagnosis for a Homematic device: central link, direct links, the CCU's own last update of each key, the programs using it and what CamStack last received
+- Every press of a Homematic key reaches automations: a press after the first on the same key was dropped as an unchanged value
 
 ## [1.2.198] - 2026-11-14
 

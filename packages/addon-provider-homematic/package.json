@@ -105,7 +105,7 @@
     "dev:page": "vite -c vite.page.config.ts"
   },
   "dependencies": {
-    "nodehomematic": "^0.8.0"
+    "nodehomematic": "^0.8.1"
   },
   "peerDependencies": {
     "@camstack/types": "*",
