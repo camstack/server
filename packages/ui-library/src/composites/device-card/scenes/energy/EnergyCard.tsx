@@ -126,12 +126,6 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
         ...(omitCharge ? [] : [['soc', e('soc', 'Charge'), pct(today.socPct)] as const]),
         ['health', e('health', 'Health'), pct(today.healthPct)],
         ['autonomy', e('autonomy', 'Autonomy'), hours(today.autonomyHours)],
-      ],
-    },
-    {
-      id: 'cycle',
-      label: e('rowCycle', 'Cycled'),
-      cells: [
         ['charged', e('chargedToday', 'Charged'), kwh(today.chargedTodayKwh)],
         ['discharged', e('dischargedToday', 'Discharged'), kwh(today.dischargedTodayKwh)],
       ],
@@ -139,22 +133,29 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
   ]
 }
 
-/** One `rowStats` per group that has a value; a missing input is omitted, never 0. */
+const MAX_STATS_PER_ROW = 4
+
+/** Splits n cells into the fewest rows of at most four, as even as possible (5 becomes 3 + 2). */
+function evenChunks<T>(items: readonly T[]): readonly (readonly T[])[] {
+  const rows = Math.ceil(items.length / MAX_STATS_PER_ROW)
+  const size = Math.ceil(items.length / Math.max(1, rows))
+  return Array.from({ length: rows }, (_, i) => items.slice(i * size, (i + 1) * size))
+}
+
+/** One `rowStats` per group (more when a group holds over four); a missing input is omitted, never 0. */
 function todayBottom(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readonly BottomRow[] {
   return todayRows(today, t, omitCharge).flatMap((row) => {
     const stats = row.cells.flatMap(([id, name, value]) =>
       value === null ? [] : [{ id, name, value }],
     )
-    return stats.length === 0
-      ? []
-      : [
-          rowStats(`today-${row.id}`, {
-            label: row.label,
-            stats,
-            testId: 'dc-energy-today',
-            cellTestId: 'dc-energy-today-chip',
-          }),
-        ]
+    return evenChunks(stats).map((chunk, i) =>
+      rowStats(`today-${row.id}-${i}`, {
+        label: i === 0 ? row.label : undefined,
+        stats: chunk,
+        testId: 'dc-energy-today',
+        cellTestId: 'dc-energy-today-chip',
+      }),
+    )
   })
 }
 

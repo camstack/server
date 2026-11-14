@@ -84,8 +84,16 @@ export interface RowStat {
   readonly testId?: string
 }
 
+const STATS_COLUMNS: Readonly<Record<number, string>> = {
+  0: 'grid-cols-1',
+  1: 'grid-cols-1',
+  2: 'grid-cols-2',
+  3: 'grid-cols-3',
+  4: 'grid-cols-4',
+}
+
 export interface RowStatsProps extends RowBase {
-  /** Up to four: they share the row's width equally. */
+  /** Up to four: they share the row's width equally (a fifth would wrap, so split the row). */
   readonly stats: readonly RowStat[]
   readonly testId?: string
   /** Test id of each cell. */
@@ -100,7 +108,7 @@ export function rowStats(key: string, props: RowStatsProps): BottomRow {
     props.label,
     <ul
       data-testid={props.testId}
-      className="grid w-full grid-cols-[repeat(auto-fit,minmax(4.5rem,1fr))] gap-1.5"
+      className={cn('grid w-full gap-1.5', STATS_COLUMNS[Math.min(props.stats.length, 4)])}
     >
       {props.stats.map((stat) => (
         <li
