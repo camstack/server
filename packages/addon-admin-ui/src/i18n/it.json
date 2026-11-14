@@ -2677,7 +2677,8 @@
         "power-meter": "Potenza ed energia",
         "power-source": "Fonte di alimentazione",
         "lock-control": "Contatto porta",
-        "fan-control": "Ventilatore"
+        "fan-control": "Ventilatore",
+        "climate-control": "Sensore stanza"
       },
       "add": "+ Aggiungi",
       "change": "Cambia",
@@ -2939,7 +2940,8 @@
         "power-source": "Fonte di alimentazione",
         "remote": "Telecomando",
         "running-state": "In funzione",
-        "fan-control": "Ventola"
+        "fan-control": "Ventola",
+        "climate-control": "Sensore stanza"
       },
       "edit": "Modifica",
       "editWhat": "Modifica {{title}}",

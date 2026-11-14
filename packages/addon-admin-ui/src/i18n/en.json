@@ -2602,7 +2602,8 @@
         "power-meter": "Power and energy",
         "power-source": "Power source",
         "lock-control": "Door contact",
-        "fan-control": "Fan"
+        "fan-control": "Fan",
+        "climate-control": "Room sensor"
       },
       "add": "+ Add",
       "change": "Change",
@@ -2864,7 +2865,8 @@
         "power-source": "Power source",
         "remote": "Remote",
         "running-state": "Running",
-        "fan-control": "Fan"
+        "fan-control": "Fan",
+        "climate-control": "Room sensor"
       },
       "edit": "Edit",
       "editWhat": "Edit {{title}}",

@@ -220,6 +220,9 @@ describe('every Customize target reaches a composed device (D1004)', () => {
   it('the catalog is non-empty and only the two named kinds are not offered', () => {
     expect(offered.length).toBeGreaterThan(8)
     expect(rows.filter(notOffered).map((r) => `${r.cap}.${r.target.id}`)).toEqual([
+      // A thermostat's linked room sensor: replace links on its own climate-control.
+      'climate-control.room-temperature',
+      'climate-control.room-humidity',
       // The fan's oscillation axes and preset: replace links on its own fan-control.
       'fan-control.horizontal-oscillating',
       'fan-control.horizontal-angle',
