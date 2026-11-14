@@ -5,6 +5,7 @@ import { MediaArtwork } from '../../illustrations/MediaArtwork'
 import { CardButton } from '../../parts/CardButton'
 import { MenuButton } from '../../parts/MenuButton'
 import { HorizontalSlider } from '../../parts/sliders'
+import { type BottomRow, rowBlock, rowSelector, rowSlider } from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton, columnSlider, columnValue } from '../../shell/column-items'
 import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import { ScenePower } from '../../shell/ScenePower'
@@ -229,43 +230,54 @@ function playbackExtra(
   )
 }
 
-function bottomZone(model: MediaCardModel, actions: MediaCardActions, t: UiTextFn): ReactNode {
+function bottomRows(
+  model: MediaCardModel,
+  actions: MediaCardActions,
+  t: UiTextFn,
+): readonly BottomRow[] {
   const seek = model.seek
   const transport = transportRow(model, actions, t)
   const sourceLabel = t('uiLibrary.deviceCard.media.source', 'Source')
-  const picker =
-    model.sources.length === 0 ? null : (
-      <MenuButton
-        options={model.sources.map((s) => ({ id: s, label: s }))}
-        value={model.source}
-        onChange={actions.onSource}
-        ariaLabel={sourceLabel}
-        triggerLabel={sourceLabel}
-        disabled={model.phase === 'off'}
-        testId="dc-media-source"
-      />
-    )
-  if (seek === null && transport === null && picker === null) return null
-  return (
-    <>
-      {seek === null ? null : (
-        <HorizontalSlider
-          value={seek.positionSec}
-          min={0}
-          max={Math.max(1, seek.durationSec)}
-          ariaLabel={t('uiLibrary.deviceCard.media.position', 'Position in the track')}
-          disabled={model.phase === 'off'}
-          label={formatTrackTime(seek.positionSec)}
-          trailing={formatTrackTime(seek.durationSec)}
-          fill
-          onCommit={actions.onSeek}
-          testId="dc-media-seek"
-        />
-      )}
-      {transport}
-      {picker}
-    </>
-  )
+  return [
+    ...(seek === null
+      ? []
+      : [
+          rowSlider('seek', {
+            slider: (
+              <HorizontalSlider
+                value={seek.positionSec}
+                min={0}
+                max={Math.max(1, seek.durationSec)}
+                ariaLabel={t('uiLibrary.deviceCard.media.position', 'Position in the track')}
+                disabled={model.phase === 'off'}
+                label={formatTrackTime(seek.positionSec)}
+                trailing={formatTrackTime(seek.durationSec)}
+                fill
+                onCommit={actions.onSeek}
+                testId="dc-media-seek"
+              />
+            ),
+          }),
+        ]),
+    ...(transport === null ? [] : [rowBlock('transport', { content: <>{transport}</> })]),
+    ...(model.sources.length === 0
+      ? []
+      : [
+          rowSelector('source', {
+            control: (
+              <MenuButton
+                options={model.sources.map((s) => ({ id: s, label: s }))}
+                value={model.source}
+                onChange={actions.onSource}
+                ariaLabel={sourceLabel}
+                triggerLabel={sourceLabel}
+                disabled={model.phase === 'off'}
+                testId="dc-media-source"
+              />
+            ),
+          }),
+        ]),
+  ]
 }
 
 /**
@@ -286,9 +298,9 @@ export function MediaPlayerCard({
   const on = model.phase !== 'off'
   const label = mediaPhaseLabel(model.phase, t)
   const volume = model.volume === null ? [] : volumeItems(model.volume, !on, actions, t)
-  const bottom = bottomZone(model, actions, t)
+  const bottom = bottomRows(model, actions, t)
   /** Power is the only control: the drawing is the switch. */
-  const powerOnly = model.power !== null && volume.length === 0 && bottom === null
+  const powerOnly = model.power !== null && volume.length === 0 && bottom.length === 0
   const powerLabel =
     model.power?.on === true
       ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
@@ -340,12 +352,7 @@ export function MediaPlayerCard({
                 ],
         },
         image: powerOnly ? (
-          <ScenePower
-            on={on}
-            label={powerLabel}
-            testId="dc-media-power"
-            onToggle={actions.onPower}
-          >
+          <ScenePower on={on} label={powerLabel} testId="dc-media-power" onToggle={actions.onPower}>
             {artwork}
           </ScenePower>
         ) : (
