@@ -140,6 +140,7 @@ describe('program writes', () => {
   it('runs, enables and deletes the program the id names, only once confirmed', async () => {
     const runProgram = vi.fn(async () => undefined)
     const setProgramActive = vi.fn(async () => undefined)
+    const deleteProgram = vi.fn(async () => ({ removed: true }))
     const removeKeyEventProgram = vi.fn(async () => ({ removed: true }))
     const refreshHub = vi.fn(async () => undefined)
     const changed = vi.fn()
@@ -149,6 +150,7 @@ describe('program writes', () => {
       getKeyEventProgram: async () => ({ programId: '42', channelAddresses: [`${KEY}:1`] }),
       runProgram,
       setProgramActive,
+      deleteProgram,
       removeKeyEventProgram,
       refreshHub,
     })
@@ -177,16 +179,17 @@ describe('program writes', () => {
     await expect(handlers.deleteCcuProgram({ ...ref, confirmed: true })).resolves.toEqual({
       ok: true,
     })
-    expect(removeKeyEventProgram).toHaveBeenCalledWith(PROGRAM_NAME)
+    expect(deleteProgram).toHaveBeenCalledWith('42')
+    expect(removeKeyEventProgram).not.toHaveBeenCalled()
     expect(refreshHub).toHaveBeenCalled()
     expect(changed).toHaveBeenCalledWith('hm_1')
   })
 
   it('refuses an unknown id and an internal program before any write', async () => {
-    const removeKeyEventProgram = vi.fn(async () => ({ removed: true }))
+    const deleteProgram = vi.fn(async () => ({ removed: true }))
     const { deps } = fakeDeps({
       programs: () => [{ ...NIGHT, isInternal: true }],
-      removeKeyEventProgram,
+      deleteProgram,
     })
     const handlers = buildCcuProgramHandlers(deps)
     await expect(
@@ -195,7 +198,7 @@ describe('program writes', () => {
     await expect(
       handlers.deleteCcuProgram({ integrationId: 'hm_1', programId: '7', confirmed: true }),
     ).rejects.toMatchObject({ reason: 'internal' })
-    expect(removeKeyEventProgram).not.toHaveBeenCalled()
+    expect(deleteProgram).not.toHaveBeenCalled()
   })
 
   it('creates a key-event program for the device keys and refuses anything else', async () => {

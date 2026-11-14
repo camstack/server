@@ -31,6 +31,7 @@ export type CcuFacade = Pick<
   | 'getKeyEventProgram'
   | 'diagnoseKeyEvents'
   | 'removeKeyEventProgram'
+  | 'deleteProgram'
   | 'programs'
   | 'runProgram'
   | 'setProgramActive'

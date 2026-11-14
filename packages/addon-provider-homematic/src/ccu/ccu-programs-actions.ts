@@ -279,7 +279,7 @@ export function buildCcuProgramHandlers(deps: CcuActionDeps) {
       const facade = connectedFacade(deps, input.integrationId)
       const program = programById(facade, input.programId)
       if (program.isInternal) refuse('internal')
-      const { removed } = await facade.removeKeyEventProgram(program.name)
+      const { removed } = await facade.deleteProgram(program.id)
       if (!removed) refuse('unknown-program')
       logProgram(deps, 'Homematic: program deleted', [], {
         integrationId: input.integrationId,
