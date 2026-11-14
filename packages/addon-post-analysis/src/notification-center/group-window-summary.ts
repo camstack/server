@@ -127,7 +127,10 @@ function burstText(input: GroupWindowSummaryInput): BurstText | null {
   const text = [body, extra].filter((part) => part.length > 0).join('\n')
   const count = summary.itemCount + orphans.length
   if (text.length === 0 || count === 0) return null
-  const section = words?.sections.map((part) => part.title).join(', ') ?? ''
+  // Kinds with no state-summary section (alerts) have no section title: the
+  // burst is named after its rule, never left as an empty `": 2"`.
+  const titles = words?.sections.map((part) => part.title).join(', ') ?? ''
+  const section = titles.length > 0 ? titles : input.rule.name
   return { text, count, section }
 }
 
