@@ -18,6 +18,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
+### Changed
+
+- control cap gains next/previous/first/last for select controls
 
 ## [1.2.866] - 2026-11-14
 

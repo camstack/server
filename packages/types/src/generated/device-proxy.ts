@@ -566,6 +566,10 @@ export function createDeviceProxy(
 
   const controlInterface = {
     setValue: (input?: unknown) => dispatch('control', 'control', 'setValue', 'mutation', input),
+    next: (input?: unknown) => dispatch('control', 'control', 'next', 'mutation', input),
+    previous: (input?: unknown) => dispatch('control', 'control', 'previous', 'mutation', input),
+    first: (input?: unknown) => dispatch('control', 'control', 'first', 'mutation', input),
+    last: (input?: unknown) => dispatch('control', 'control', 'last', 'mutation', input),
     getStatus: (input?: unknown) => dispatch('control', 'control', 'getStatus', 'query', input),
   }
 

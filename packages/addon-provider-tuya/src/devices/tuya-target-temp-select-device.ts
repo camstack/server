@@ -1,5 +1,6 @@
 import {
   controlCapability,
+  selectNavigationMethods,
   type ControlStatus,
   type DeviceContext,
   DeviceRole,
@@ -60,32 +61,37 @@ export class TuyaTargetTempSelectDevice extends TuyaChildDevice {
   }
 
   protected override registerControlCap(): void {
+    const getStatus = async (): Promise<ControlStatus> =>
+      this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ?? this.#slice(this.#readLabel() ?? '')
+    const setLabel = async (label: string): Promise<void> => {
+      const degrees = Number.parseInt(label, 10)
+      if (!Number.isFinite(degrees)) {
+        throw new Error(
+          `TuyaTargetTempSelectDevice: invalid option "${label}" (device=${this.tuyaDeviceId})`,
+        )
+      }
+      const handle = this.resolveHandle()
+      if (handle === null) {
+        throw new Error(
+          `TuyaTargetTempSelectDevice: LAN client unavailable (device=${this.tuyaDeviceId})`,
+        )
+      }
+      const raw = this.#scale === 1 ? degrees : Math.round(degrees * this.#scale)
+      await handle.set(numberDpPatch(this.#dp, raw))
+      this.runtimeState.setCapState(CAP_NAME, this.#slice(label))
+    }
     const provider: InferNativeProvider<typeof controlCapability> = {
-      getStatus: async () =>
-        this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ??
-        this.#slice(this.#readLabel() ?? ''),
+      getStatus,
       setValue: async ({ control }) => {
         if (control.kind !== 'select') {
           throw new Error(
             `TuyaTargetTempSelectDevice: expected a select value (device=${this.tuyaDeviceId})`,
           )
         }
-        const degrees = Number.parseInt(control.value, 10)
-        if (!Number.isFinite(degrees)) {
-          throw new Error(
-            `TuyaTargetTempSelectDevice: invalid option "${control.value}" (device=${this.tuyaDeviceId})`,
-          )
-        }
-        const handle = this.resolveHandle()
-        if (handle === null) {
-          throw new Error(
-            `TuyaTargetTempSelectDevice: LAN client unavailable (device=${this.tuyaDeviceId})`,
-          )
-        }
-        const raw = this.#scale === 1 ? degrees : Math.round(degrees * this.#scale)
-        await handle.set(numberDpPatch(this.#dp, raw))
-        this.runtimeState.setCapState(CAP_NAME, this.#slice(control.value))
+        await setLabel(control.value)
       },
+      // next/previous/first/last (#544) — the shared stepping helper.
+      ...selectNavigationMethods(getStatus, setLabel),
     }
     this.ctx.registerNativeCap(controlCapability, provider)
     this.runtimeState.setCapState(CAP_NAME, this.#slice(this.#readLabel() ?? ''))

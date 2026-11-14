@@ -1566,6 +1566,62 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
   'control': {
     scope: 'device',
     noun: { en: 'Control', it: 'Controllo' },
+    actions: [
+      {
+        id: 'select.next',
+        method: 'next',
+        label: { en: 'Next option', it: 'Opzione successiva' },
+        phrase: {
+          en: 'Select the next option on {device}',
+          it: 'Seleziona l’opzione successiva su {device}',
+        },
+        icon: 'skip-forward',
+        openArgs: [
+          {
+            key: 'cycle',
+            label: { en: 'Wrap to the first option', it: 'Ricomincia dalla prima opzione' },
+            offer: { kind: 'boolean' },
+          },
+        ],
+      },
+      {
+        id: 'select.previous',
+        method: 'previous',
+        label: { en: 'Previous option', it: 'Opzione precedente' },
+        phrase: {
+          en: 'Select the previous option on {device}',
+          it: 'Seleziona l’opzione precedente su {device}',
+        },
+        icon: 'skip-back',
+        openArgs: [
+          {
+            key: 'cycle',
+            label: { en: 'Wrap to the last option', it: 'Ricomincia dall’ultima opzione' },
+            offer: { kind: 'boolean' },
+          },
+        ],
+      },
+      {
+        id: 'select.first',
+        method: 'first',
+        label: { en: 'First option', it: 'Prima opzione' },
+        phrase: {
+          en: 'Select the first option on {device}',
+          it: 'Seleziona la prima opzione su {device}',
+        },
+        icon: 'chevron-first',
+      },
+      {
+        id: 'select.last',
+        method: 'last',
+        label: { en: 'Last option', it: 'Ultima opzione' },
+        phrase: {
+          en: 'Select the last option on {device}',
+          it: 'Seleziona l’ultima opzione su {device}',
+        },
+        icon: 'chevron-last',
+      },
+    ],
     notOperatorFacing: {
       setValue: 'the value shape depends on the control kind (numeric / select / text / datetime) read from status; a typed picker for it is a follow-up of the automations rework',
     },

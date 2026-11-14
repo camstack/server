@@ -1,5 +1,10 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import {
+  method,
+  optionalMethod,
+  type CapabilityDefinition,
+  type InferProvider,
+} from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
@@ -79,6 +84,23 @@ const ControlSetValueInputSchema = z.discriminatedUnion('kind', [
 
 export type ControlSetValueInput = z.infer<typeof ControlSetValueInputSchema>
 
+/**
+ * `next` / `previous` input (#544, operator scripts driving a selector).
+ * `cycle` is a TOP-LEVEL default so a direct `ctx.api.control.next` call
+ * (which skips the tRPC router's Zod parse) still gets `true` via
+ * `CAP_INPUT_DEFAULTS` — matching HA's own `select_next` / `select_previous`
+ * default.
+ */
+const ControlStepInputSchema = z.object({
+  deviceId: z.number().int().nonnegative(),
+  cycle: z.boolean().default(true),
+})
+
+/** `first` / `last` input — no `cycle`, there is no boundary to stop at. */
+const ControlBoundaryInputSchema = z.object({
+  deviceId: z.number().int().nonnegative(),
+})
+
 export const controlCapability = {
   name: 'control',
   scope: 'device',
@@ -99,6 +121,87 @@ export const controlCapability = {
           'the value shape depends on the control kind (numeric / select / text / datetime) read from status; a typed picker for it is a follow-up of the automations rework',
       },
     ),
+    /**
+     * Select one step forward through `options` (#544). `providerOptional`
+     * (hence `optionalMethod`): only a `kind: 'select'` provider implements
+     * it — the stepping math is NOT re-derived per provider, it is the one
+     * shared helper `selectNavigationMethods` (`control-select-navigation.ts`)
+     * every select-kind driver spreads in.
+     */
+    next: optionalMethod(ControlStepInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'select.next',
+          label: t('Next option', 'Opzione successiva'),
+          phrase: t(
+            'Select the next option on {device}',
+            'Seleziona l’opzione successiva su {device}',
+          ),
+          icon: 'skip-forward',
+          openArgs: [
+            {
+              key: 'cycle',
+              label: t('Wrap to the first option', 'Ricomincia dalla prima opzione'),
+              offer: { kind: 'boolean' },
+            },
+          ],
+        },
+      ],
+    }),
+    /** Select one step backward through `options` (#544) — mirrors `next`. */
+    previous: optionalMethod(ControlStepInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'select.previous',
+          label: t('Previous option', 'Opzione precedente'),
+          phrase: t(
+            'Select the previous option on {device}',
+            'Seleziona l’opzione precedente su {device}',
+          ),
+          icon: 'skip-back',
+          openArgs: [
+            {
+              key: 'cycle',
+              label: t('Wrap to the last option', 'Ricomincia dall’ultima opzione'),
+              offer: { kind: 'boolean' },
+            },
+          ],
+        },
+      ],
+    }),
+    /** Select the first entry of `options` (#544). */
+    first: optionalMethod(ControlBoundaryInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'select.first',
+          label: t('First option', 'Prima opzione'),
+          phrase: t(
+            'Select the first option on {device}',
+            'Seleziona la prima opzione su {device}',
+          ),
+          icon: 'chevron-first',
+        },
+      ],
+    }),
+    /** Select the last entry of `options` (#544). */
+    last: optionalMethod(ControlBoundaryInputSchema, z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'select.last',
+          label: t('Last option', 'Ultima opzione'),
+          phrase: t('Select the last option on {device}', 'Seleziona l’ultima opzione su {device}'),
+          icon: 'chevron-last',
+        },
+      ],
+    }),
   },
   status: {
     schema: ControlStatusSchema,

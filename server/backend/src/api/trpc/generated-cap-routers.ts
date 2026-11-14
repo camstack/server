@@ -2914,6 +2914,70 @@ export function createCapRouter_control(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setValue(methodInput as any)
       }),
+    next: protectedProcedure
+      .input(controlCapability.methods.next.input.loose())
+      .output(controlCapability.methods.next.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.next
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "control" provider does not implement "next"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    previous: protectedProcedure
+      .input(controlCapability.methods.previous.input.loose())
+      .output(controlCapability.methods.previous.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.previous
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "control" provider does not implement "previous"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    first: protectedProcedure
+      .input(controlCapability.methods.first.input.loose())
+      .output(controlCapability.methods.first.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.first
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "control" provider does not implement "first"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    last: protectedProcedure
+      .input(controlCapability.methods.last.input.loose())
+      .output(controlCapability.methods.last.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('control', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.last
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "control" provider does not implement "last"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
   })
 }
 

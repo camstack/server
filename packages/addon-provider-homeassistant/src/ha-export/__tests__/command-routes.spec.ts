@@ -224,6 +224,10 @@ function recordingDevice(calls: RecordedCall[]): CapCommandDevice {
       setValue: async (input) => {
         calls.push({ method: 'control.setValue', input })
       },
+      next: rec(calls, 'control.next'),
+      previous: rec(calls, 'control.previous'),
+      first: rec(calls, 'control.first'),
+      last: rec(calls, 'control.last'),
       getStatus: async () => ({
         kind: 'select' as const,
         value: 'it452 - 1.2.3.4',

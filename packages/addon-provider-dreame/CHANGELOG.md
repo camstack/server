@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- select-style controls (program option, auto-switch, mower map) support next/previous/first/last stepping
+
 ## [0.2.174] - 2026-11-10
 
 ### Changed

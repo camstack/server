@@ -2,6 +2,7 @@ import { z } from 'zod'
 import {
   controlCapability,
   DeviceRole,
+  selectNavigationMethods,
   type ControlStatus,
   type DeviceContext,
   type InferNativeProvider,
@@ -79,31 +80,36 @@ export class DreameAutoSelectDevice extends DreameChildDevice {
   }
 
   protected override registerControlCap(): void {
+    const getStatus = async (): Promise<ControlStatus> =>
+      this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ?? this.#slice(this.#readLabel() ?? '')
+    const setLabel = async (label: string): Promise<void> => {
+      const option = this.#options.find((o) => o.label === label)
+      if (option === undefined) {
+        throw new Error(
+          `DreameAutoSelectDevice: unknown option "${label}" (device=${this.dreameDeviceId}, ${this.#key})`,
+        )
+      }
+      const vacuum = this.#vacuum()
+      if (vacuum === null) {
+        throw new Error(
+          `DreameAutoSelectDevice: handle unavailable (device=${this.dreameDeviceId}, ${this.#key})`,
+        )
+      }
+      await vacuum.setAutoSwitchProperty(this.#key, option.value)
+      this.runtimeState.setCapState(CAP_NAME, this.#slice(option.label))
+    }
     const provider: InferNativeProvider<typeof controlCapability> = {
-      getStatus: async () =>
-        this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ??
-        this.#slice(this.#readLabel() ?? ''),
+      getStatus,
       setValue: async ({ control }) => {
         if (control.kind !== 'select') {
           throw new Error(
             `DreameAutoSelectDevice: expected a select value (device=${this.dreameDeviceId}, ${this.#key})`,
           )
         }
-        const option = this.#options.find((o) => o.label === control.value)
-        if (option === undefined) {
-          throw new Error(
-            `DreameAutoSelectDevice: unknown option "${control.value}" (device=${this.dreameDeviceId}, ${this.#key})`,
-          )
-        }
-        const vacuum = this.#vacuum()
-        if (vacuum === null) {
-          throw new Error(
-            `DreameAutoSelectDevice: handle unavailable (device=${this.dreameDeviceId}, ${this.#key})`,
-          )
-        }
-        await vacuum.setAutoSwitchProperty(this.#key, option.value)
-        this.runtimeState.setCapState(CAP_NAME, this.#slice(option.label))
+        await setLabel(control.value)
       },
+      // next/previous/first/last (#544) — the shared stepping helper.
+      ...selectNavigationMethods(getStatus, setLabel),
     }
     this.ctx.registerNativeCap(controlCapability, provider)
     this.runtimeState.setCapState(CAP_NAME, this.#slice(this.#readLabel() ?? ''))

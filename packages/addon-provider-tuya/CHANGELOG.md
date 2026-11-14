@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- the kettle target-temperature select supports next/previous/first/last stepping
+
 ## [0.2.159] - 2026-11-10
 
 ### Changed

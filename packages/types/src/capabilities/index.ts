@@ -2399,6 +2399,11 @@ export {
   controlCapability,
   type IControlProvider,
 } from './control.cap.js'
+export {
+  resolveSelectStep,
+  selectNavigationMethods,
+  type SelectStepDirection,
+} from './control-select-navigation.js'
 // HA-targeted actuator caps (Phase C2)
 export {
   type CoverState,

@@ -2,6 +2,7 @@ import {
   controlCapability,
   DeviceRole,
   errMsg,
+  selectNavigationMethods,
   type ControlStatus,
   type DeviceContext,
   type InferNativeProvider,
@@ -80,44 +81,50 @@ export class DreameMowerMapSelectDevice extends DreameChildDevice {
   }
 
   protected override registerControlCap(): void {
+    const getStatus = async (): Promise<ControlStatus> => {
+      const mower = this.resolveMower()
+      if (mower === null) {
+        return (
+          this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ?? {
+            kind: 'select',
+            value: '',
+            options: [],
+            lastChangedAt: Date.now(),
+          }
+        )
+      }
+      return this.#slice(mower)
+    }
+    const setMapLabel = async (label: string): Promise<void> => {
+      const mower = this.resolveMower()
+      if (mower === null) {
+        throw new Error(
+          `DreameMowerMapSelectDevice: mower handle unavailable (device=${this.dreameDeviceId})`,
+        )
+      }
+      const entry = (mower.lastMap?.availableMaps ?? []).find(
+        (m) => mapLabel(m.mapId, m.name) === label,
+      )
+      if (entry === undefined) {
+        throw new Error(
+          `DreameMowerMapSelectDevice: unknown map "${label}" (device=${this.dreameDeviceId})`,
+        )
+      }
+      await mower.setCurrentMap(entry.mapId)
+      this.runtimeState.setCapState(CAP_NAME, { ...this.#slice(mower), value: label })
+    }
     const provider: InferNativeProvider<typeof controlCapability> = {
-      getStatus: async () => {
-        const mower = this.resolveMower()
-        if (mower === null) {
-          return (
-            this.runtimeState.getCapState<ControlStatus>(CAP_NAME) ?? {
-              kind: 'select',
-              value: '',
-              options: [],
-              lastChangedAt: Date.now(),
-            }
-          )
-        }
-        return this.#slice(mower)
-      },
+      getStatus,
       setValue: async ({ control }) => {
         if (control.kind !== 'select') {
           throw new Error(
             `DreameMowerMapSelectDevice: expected a select value (device=${this.dreameDeviceId})`,
           )
         }
-        const mower = this.resolveMower()
-        if (mower === null) {
-          throw new Error(
-            `DreameMowerMapSelectDevice: mower handle unavailable (device=${this.dreameDeviceId})`,
-          )
-        }
-        const entry = (mower.lastMap?.availableMaps ?? []).find(
-          (m) => mapLabel(m.mapId, m.name) === control.value,
-        )
-        if (entry === undefined) {
-          throw new Error(
-            `DreameMowerMapSelectDevice: unknown map "${control.value}" (device=${this.dreameDeviceId})`,
-          )
-        }
-        await mower.setCurrentMap(entry.mapId)
-        this.runtimeState.setCapState(CAP_NAME, { ...this.#slice(mower), value: control.value })
+        await setMapLabel(control.value)
       },
+      // next/previous/first/last (#544) — the shared stepping helper.
+      ...selectNavigationMethods(getStatus, setMapLabel),
     }
     this.ctx.registerNativeCap(controlCapability, provider)
     this.#publishSlice()

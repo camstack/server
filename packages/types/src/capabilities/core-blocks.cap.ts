@@ -40,6 +40,17 @@ import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
  * so a block that throws or never returns is marked `failed` and visible
  * instead of taking the hub with it (D6). Every method here is admin-only, and
  * must stay so.
+ *
+ * **Calling a device cap from a block.** `ctx.api.<cap>.<method>.mutate(...)`
+ * is the same call an addon makes — e.g. driving a `select` / `input_select`
+ * device through `control` (#544, a UniFi-triggered script cycling a scene
+ * selector):
+ *
+ * ```ts
+ * await ctx.api.control.next.mutate({ deviceId, cycle: true })
+ * await ctx.api.control.first.mutate({ deviceId })
+ * const status = await ctx.api.control.getStatus.query({ deviceId })
+ * ```
  */
 
 /**

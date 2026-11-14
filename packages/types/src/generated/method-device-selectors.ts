@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 617 methods carry a device reference, of which
+ * Coverage: 621 methods carry a device reference, of which
  * 196 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -95,7 +95,11 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'consumables.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'consumables.reset': [{ name: "deviceId", form: "single", optional: false }] as const,
   'contact.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'control.first': [{ name: "deviceId", form: "single", optional: false }] as const,
   'control.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'control.last': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'control.next': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'control.previous': [{ name: "deviceId", form: "single", optional: false }] as const,
   'control.setValue': [{ name: "deviceId", form: "single", optional: false }] as const,
   'coreBlocks.proposeRunningThreshold': [{ name: "deviceId", form: "single", optional: false }] as const,
   'cover.close': [{ name: "deviceId", form: "single", optional: false }] as const,

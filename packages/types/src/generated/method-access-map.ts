@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1487 method paths across 206 capabilities.
+ * Coverage: 1491 method paths across 206 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -208,7 +208,11 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'consumables.getStatus': { capName: "consumables", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'consumables.reset': { capName: "consumables", capScope: "device", addonId: null, access: "delete", role: "admin" } as const,
   'contact.getStatus': { capName: "contact", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'control.first': { capName: "control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'control.getStatus': { capName: "control", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'control.last': { capName: "control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'control.next': { capName: "control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'control.previous': { capName: "control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'control.setValue': { capName: "control", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'coreBlocks.compile': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'coreBlocks.create': { capName: "core-blocks", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

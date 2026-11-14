@@ -5,6 +5,7 @@ import {
   tryConvertUnit,
   baseUnitOf,
   normalizeUnit,
+  selectNavigationMethods,
   type DeviceContext,
   type InferNativeProvider,
   type ControlStatus,
@@ -87,20 +88,23 @@ export class HaControlDevice extends HaBaseChildDevice {
   }
 
   private registerControlCap(): void {
+    const getStatus = async (): Promise<ControlStatus> =>
+      this.runtimeState.getCapState<ControlStatus>('control') ?? {
+        kind: this.kind,
+        value: this.kind === 'numeric' ? 0 : '',
+        options: [],
+        lastChangedAt: 0,
+      }
     const provider: InferNativeProvider<typeof controlCapability> = {
-      getStatus: async () => {
-        return (
-          this.runtimeState.getCapState<ControlStatus>('control') ?? {
-            kind: this.kind,
-            value: this.kind === 'numeric' ? 0 : '',
-            options: [],
-            lastChangedAt: 0,
-          }
-        )
-      },
+      getStatus,
       setValue: async ({ control }) => {
         await this.dispatchSet(control)
       },
+      // next/previous/first/last (#544) — select-kind only; the stepping
+      // math is the one shared helper, not re-derived per HA domain.
+      ...(this.kind === 'select'
+        ? selectNavigationMethods(getStatus, (value) => this.dispatchSet({ kind: 'select', value }))
+        : {}),
     }
     this.ctx.registerNativeCap(controlCapability, provider)
   }

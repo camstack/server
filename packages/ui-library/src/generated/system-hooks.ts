@@ -542,6 +542,18 @@ export const useContactGetStatus: typeof trpc.contact.getStatus.useQuery = /*#__
 /** Generated alias around `trpc.control.setValue.useMutation`. */
 export const useControlSetValue: typeof trpc.control.setValue.useMutation = /*#__PURE__*/ alias(() => trpc.control.setValue.useMutation)
 
+/** Generated alias around `trpc.control.next.useMutation`. */
+export const useControlNext: typeof trpc.control.next.useMutation = /*#__PURE__*/ alias(() => trpc.control.next.useMutation)
+
+/** Generated alias around `trpc.control.previous.useMutation`. */
+export const useControlPrevious: typeof trpc.control.previous.useMutation = /*#__PURE__*/ alias(() => trpc.control.previous.useMutation)
+
+/** Generated alias around `trpc.control.first.useMutation`. */
+export const useControlFirst: typeof trpc.control.first.useMutation = /*#__PURE__*/ alias(() => trpc.control.first.useMutation)
+
+/** Generated alias around `trpc.control.last.useMutation`. */
+export const useControlLast: typeof trpc.control.last.useMutation = /*#__PURE__*/ alias(() => trpc.control.last.useMutation)
+
 /** Generated alias around `trpc.control.getStatus.useQuery`. */
 export const useControlGetStatus: typeof trpc.control.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.control.getStatus.useQuery)
 
