@@ -1,6 +1,8 @@
 import type { ReactElement } from 'react'
 import type { CardGlyph } from '../icons'
-import { type CardButtonTone, CardButton } from '../parts/CardButton'
+import { ArmedButton } from '../parts/ArmedButton'
+import { type CardButtonTone, CardButton, cardButtonClass } from '../parts/CardButton'
+import { CardIcon } from '../parts/CardIcon'
 import { type CardSliderProps, VerticalSlider } from '../parts/sliders'
 
 let makeItem!: (key: string, node: ReactElement) => ColumnItem
@@ -58,6 +60,60 @@ export function columnButton(key: string, props: ColumnButtonProps): ColumnItem 
     >
       {props.caption === undefined ? null : <span className="max-w-full truncate">{props.caption}</span>}
     </CardButton>,
+  )
+}
+
+export interface ColumnArmedButtonProps {
+  readonly glyph: CardGlyph
+  readonly label: string
+  readonly onConfirm: () => void
+  readonly caption?: string
+  readonly tone?: CardButtonTone
+  readonly disabled?: boolean
+  readonly testId?: string
+}
+
+/** A two-step button in a side column: the first press arms it, Confirm and Cancel stack. */
+export function columnArmedButton(key: string, props: ColumnArmedButtonProps): ColumnItem {
+  return makeItem(
+    key,
+    <ArmedButton
+      stacked
+      glyph={props.glyph}
+      tone={props.tone}
+      label={props.label}
+      disabled={props.disabled}
+      testId={props.testId}
+      buttonClassName={COLUMN_BUTTON_CLASS}
+      onConfirm={props.onConfirm}
+    >
+      {props.caption === undefined ? null : <span className="max-w-full truncate">{props.caption}</span>}
+    </ArmedButton>,
+  )
+}
+
+export interface ColumnLinkProps {
+  readonly glyph: CardGlyph
+  readonly label: string
+  readonly href: string
+  readonly testId?: string
+}
+
+/** A link that leaves the card (opens in a new tab), drawn as a column button. */
+export function columnLink(key: string, props: ColumnLinkProps): ColumnItem {
+  return makeItem(
+    key,
+    <a
+      href={props.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      data-testid={props.testId}
+      title={props.label}
+      aria-label={props.label}
+      className={cardButtonClass('default', false, COLUMN_BUTTON_CLASS)}
+    >
+      <CardIcon glyph={props.glyph} />
+    </a>,
   )
 }
 

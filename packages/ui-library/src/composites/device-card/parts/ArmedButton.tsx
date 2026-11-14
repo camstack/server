@@ -17,6 +17,12 @@ export interface ArmedButtonProps {
   readonly disabled?: boolean
   readonly windowMs?: number
   readonly testId?: string
+  /** The accessible name of the main button, when its face is only a glyph. */
+  readonly label?: string
+  /** Confirm and Cancel stack vertically, for a side column; the default sits them side by side. */
+  readonly stacked?: boolean
+  /** Added to both buttons (a column passes its compact size). */
+  readonly buttonClassName?: string
 }
 
 /**
@@ -33,6 +39,9 @@ export function ArmedButton({
   disabled,
   windowMs = ARMED_WINDOW_MS,
   testId,
+  label,
+  stacked = false,
+  buttonClassName,
 }: ArmedButtonProps): ReactElement {
   const t = useUiText()
   const [armed, setArmed] = useState(false)
@@ -50,18 +59,29 @@ export function ArmedButton({
     onConfirm()
   }, [armed, onConfirm])
   return (
-    <span className="inline-flex items-center gap-2" data-armed={armed}>
+    <span
+      className={stacked ? 'flex w-full flex-col items-center gap-1' : 'inline-flex items-center gap-2'}
+      data-armed={armed}
+    >
       <CardButton
         tone={armed ? 'danger' : tone}
         glyph={glyph}
         onClick={press}
         disabled={disabled}
         data-testid={testId}
+        aria-label={label}
+        title={label}
+        className={buttonClassName}
       >
         {armed ? (armedLabel ?? t('uiLibrary.deviceCard.confirm', 'Confirm')) : children}
       </CardButton>
       {armed ? (
-        <CardButton glyph="cancel" onClick={() => setArmed(false)} data-testid="dc-armed-cancel">
+        <CardButton
+          glyph="cancel"
+          onClick={() => setArmed(false)}
+          data-testid="dc-armed-cancel"
+          className={buttonClassName}
+        >
           {t('uiLibrary.deviceCard.cancel', 'Cancel')}
         </CardButton>
       ) : null}
