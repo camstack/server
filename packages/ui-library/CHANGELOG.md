@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A siren card stays pending until its switch answers, instead of looking blank or silent.
+
 ## [1.2.441] - 2026-11-14
 
 ### Changed

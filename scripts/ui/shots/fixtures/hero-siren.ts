@@ -10,6 +10,8 @@ import { NOW } from './_time'
 
 const ADDON = 'provider-hikvision'
 const ID = 591
+/** Same siren, whose `switch` slice never answers (`{ __hang: true }`). */
+const UNANSWERED_ID = 592
 
 export const SIREN_DEVICE = {
   id: ID,
@@ -30,6 +32,13 @@ export const SIREN_DEVICE = {
   metadata: {},
 }
 
+const UNANSWERED_DEVICE = {
+  ...SIREN_DEVICE,
+  id: UNANSWERED_ID,
+  stableId: 'mac-e8a0edb96bcf-acc-siren-pending',
+  name: 'Videocamera salone Siren pending',
+}
+
 const SLICES: Readonly<Record<string, unknown>> = {
   switch: { on: false, lastChangedAt: 0 },
   'device-status': { online: true, lastChangedAt: NOW },
@@ -39,22 +48,26 @@ const base = (path: string): ((i: unknown) => unknown) => {
   const h = helpersArea.handlers[path]
   return typeof h === 'function' ? (i: unknown) => (h as (x: unknown) => unknown)(i) : () => h
 }
-const ours = (id: number | undefined): boolean => id === ID
+const deviceOf = (id: number | undefined): typeof SIREN_DEVICE | undefined =>
+  id === ID ? SIREN_DEVICE : id === UNANSWERED_ID ? UNANSWERED_DEVICE : undefined
+const ours = (id: number | undefined): boolean => deviceOf(id) !== undefined
 
 export default defineFixtures({
   area: 'hero-siren',
-  description: 'A camera siren accessory (591): native switch, role siren, off',
+  description:
+    'A camera siren accessory (591): native switch, role siren, off; 592 is the same siren whose switch has not answered',
   handlers: {
     'deviceManager.listAll': (i: unknown) => [
       ...(base('deviceManager.listAll')(i) as unknown[]),
       SIREN_DEVICE,
+      UNANSWERED_DEVICE,
     ],
     'deviceManager.getDevice': (i: { deviceId?: number }) =>
-      ours(i.deviceId) ? SIREN_DEVICE : base('deviceManager.getDevice')(i),
+      deviceOf(i.deviceId) ?? base('deviceManager.getDevice')(i),
     'deviceManager.getBindings': (i: { deviceId?: number }) =>
       ours(i.deviceId)
         ? {
-            deviceId: ID,
+            deviceId: i.deviceId ?? ID,
             entries: [...Object.keys(SLICES), 'feature-probe', 'device-ops'].map((capName) => ({
               capName,
               kind: 'native' as const,
@@ -77,9 +90,14 @@ export default defineFixtures({
       offSeconds: 0,
     },
     'preferences.get': { rows: [] },
-    'deviceState.getSnapshot': (i: { deviceId?: number }) =>
-      ours(i.deviceId) ? SLICES : base('deviceState.getSnapshot')(i),
-    'deviceState.getCapSlice': (i: { deviceId?: number; capName?: string }) =>
-      ours(i.deviceId) ? (SLICES[i.capName ?? ''] ?? {}) : base('deviceState.getCapSlice')(i),
+    'deviceState.getSnapshot': (i: { deviceId?: number }) => {
+      if (i.deviceId === UNANSWERED_ID) return { 'device-status': SLICES['device-status'] }
+      return ours(i.deviceId) ? SLICES : base('deviceState.getSnapshot')(i)
+    },
+    'deviceState.getCapSlice': (i: { deviceId?: number; capName?: string }) => {
+      if (!ours(i.deviceId)) return base('deviceState.getCapSlice')(i)
+      if (i.deviceId === UNANSWERED_ID && i.capName === 'switch') return { __hang: true }
+      return SLICES[i.capName ?? ''] ?? {}
+    },
   },
 })

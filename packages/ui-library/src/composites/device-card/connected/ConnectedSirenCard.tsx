@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { Skeleton } from '../../../primitives/skeleton'
 import { SirenCard } from '../scenes/siren/SirenCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
@@ -18,7 +19,11 @@ export function ConnectedSirenCard({
 }: ConnectedCardProps): ReactElement | null {
   const card = useCardCommon({ deviceId, canActuate })
   const power = useSwitchPower({ deviceId, optimistic, card })
-  if (!power.bound || power.on === undefined) return null
+  if (!power.bound) return null
+  // An unanswered switch is not off: the card stays pending until the slice answers.
+  if (power.on === undefined) {
+    return <Skeleton className="h-72 w-full" data-testid="dc-card-pending" />
+  }
   return (
     <SirenCard
       orientation={orientation}
