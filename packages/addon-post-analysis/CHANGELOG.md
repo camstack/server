@@ -7,15 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A grouped burst of alerts is titled with its rule name instead of ": 2"
+
 ## [1.2.704] - 2026-11-14
 
 ### Added
 
 - Notification Center can now author rules on a storage drain's progress and completion events (#538).
-
-### Fixed
-
-- A grouped burst of alerts is titled with its rule name instead of ": 2"
 
 ## [1.2.703] - 2026-11-13
 

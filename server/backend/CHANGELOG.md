@@ -7,15 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Fixed a hub crash loop (out of memory every ~2 minutes) when a TV remote without a native media player computed its status
+
 ## [1.2.869] - 2026-11-14
 
 ### Changed
 
 - control cap gains next/previous/first/last for select controls
-
-### Fixed
-
-- Fixed a hub crash loop (out of memory every ~2 minutes) when a TV remote without a native media player computed its status
 
 ## [1.2.868] - 2026-11-14
 
@@ -29,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rebuilt against updated dependencies.
 ### Changed
-
 
 ## [1.2.866] - 2026-11-14
 
@@ -104,7 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Rebuilt against updated dependencies.
 ### Changed
-
 
 ## [1.2.855] - 2026-11-13
 

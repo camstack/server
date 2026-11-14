@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A weather station aggregate is not exported; each reading is already a sensor child.
+
 ## [1.2.687] - 2026-11-14
 
 ### Changed
 
 - Home Assistant thermostats now report what they are doing (heating, cooling, idle) from hvac_action
 - HA select / input_select entities support next/previous/first/last stepping
-- A weather station aggregate is not exported; each reading is already a sensor child.
 
 ## [1.2.686] - 2026-11-14
 
@@ -89,7 +92,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Each imported calendar names the record that owns it, so two connections sharing an entity id keep separate switches
 ### Changed
-
 
 ## [1.2.674] - 2026-11-08
 

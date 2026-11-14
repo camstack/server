@@ -7,13 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A physical weather station is its own device type, with one nullable reading for temperature, wind, rain, pressure, UV and dew point.
+
 ## [1.2.568] - 2026-11-14
 
 ### Added
 
 - control cap: next/previous/first/last for select controls (script- and automation-driven cycling with wrap-around)
 - Added two system events for a draining storage location: a regular progress ping (#538) and a one-time completion event.
-- A physical weather station is its own device type, with one nullable reading for temperature, wind, rain, pressure, UV and dew point.
 
 ### Changed
 
@@ -25,7 +28,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Remote: the source last sent by an infrared remote is no longer kept as state
 ### Changed
-
 
 ## [1.2.566] - 2026-11-14
 
