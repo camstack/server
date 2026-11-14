@@ -23,7 +23,7 @@ describe('mapMatterEndpointToCamStack', () => {
     })
     expect(mapMatterEndpointToCamStack([MatterClusterId.DoorLock])).toEqual({
       deviceType: DeviceType.Lock,
-      capabilities: ['lock-control'],
+      capabilities: ['lock-control', 'event-emitter'],
     })
     expect(mapMatterEndpointToCamStack([MatterClusterId.WindowCovering])).toEqual({
       deviceType: DeviceType.Cover,

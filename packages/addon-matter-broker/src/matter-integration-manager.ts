@@ -71,6 +71,7 @@ export class MatterIntegrationManager {
 
   #controller: MatterController | null = null
   #reportUnsub: Unsubscribe | null = null
+  #eventUnsub: Unsubscribe | null = null
   #reconcileTimer: ReturnType<typeof setInterval> | null = null
   #status: MatterBrokerStatus = 'disconnected'
   #nodeCount = 0
@@ -98,6 +99,12 @@ export class MatterIntegrationManager {
               this.#commission = progress
             },
             resolveDeviceId: (nodeId) => matterNodes.deviceIdFor(nodeId),
+            // A node dropping off the mesh must reach its devices now, not at
+            // the next reconcile tick: a lock that cannot be reached is
+            // offline, never "still locked".
+            onNodePresence: () => {
+              void this.reconcile()
+            },
           },
           this.#logger,
         ))
@@ -164,6 +171,16 @@ export class MatterIntegrationManager {
       this.#onAttributeReport(this.#id, report)
     })
 
+    this.#eventUnsub = controller.subscribeEvents((event) => {
+      this.#lastCheckedAt = Date.now()
+      if (!matterNodes.recordEvent(this.#id, event)) {
+        this.#logger.debug('Matter event dropped: already delivered (replay after resubscribe)', {
+          tags: this.#tagsFor(event.nodeId),
+          meta: { nodeId: event.nodeId, clusterId: event.clusterId, eventId: event.eventId },
+        })
+      }
+    })
+
     try {
       await controller.start()
       this.#status = 'connected'
@@ -217,6 +234,14 @@ export class MatterIntegrationManager {
       }
       this.#reportUnsub = null
     }
+    if (this.#eventUnsub !== null) {
+      try {
+        this.#eventUnsub()
+      } catch {
+        // best-effort
+      }
+      this.#eventUnsub = null
+    }
     const controller = this.#controller
     this.#controller = null
     this.#status = 'disconnected'
@@ -239,6 +264,11 @@ export class MatterIntegrationManager {
     await this.stop()
     this.#connection = conn
     await this.start()
+  }
+
+  #tagsFor(nodeId: string): { deviceId: number } | { brokerId: string } {
+    const deviceId = matterNodes.deviceIdFor(nodeId)
+    return deviceId !== null ? { deviceId } : { brokerId: this.#id }
   }
 
   #scheduleReconcile(): void {

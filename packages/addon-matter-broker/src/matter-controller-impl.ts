@@ -25,6 +25,7 @@ import {
   type MatterAttributeReport,
   type MatterCommandInvocation,
   type MatterController,
+  type MatterEventReport,
   type MatterControllerOptions,
   type MatterEndpointSnapshot,
   type MatterNodeSnapshot,
@@ -81,6 +82,7 @@ export class MatterJsController implements MatterController {
   readonly #options: MatterJsControllerOptions
   readonly #logger: IScopedLogger
   readonly #handlers: Set<(report: MatterAttributeReport) => void> = new Set()
+  readonly #eventHandlers: Set<(event: MatterEventReport) => void> = new Set()
   readonly #subscriptions: MatterSubscriptionSupervisor
 
   #server: MatterFabricServer | null = null
@@ -95,6 +97,10 @@ export class MatterJsController implements MatterController {
       logger,
       resolveDeviceId: options.resolveDeviceId ?? (() => null),
       onReport: (report) => this.#emitIfChanged(report),
+      onEvent: (event) => this.#emitEvent(event),
+      onPresence: (nodeId, online) => {
+        options.onNodePresence?.(nodeId, online)
+      },
     })
   }
 
@@ -123,6 +129,7 @@ export class MatterJsController implements MatterController {
   /** Close subscriptions FIRST, then the ServerNode. */
   async stop(): Promise<void> {
     this.#handlers.clear()
+    this.#eventHandlers.clear()
     await this.#subscriptions.stop()
     const server = this.#server
     this.#server = null
@@ -223,6 +230,25 @@ export class MatterJsController implements MatterController {
     this.#handlers.add(handler)
     return () => {
       this.#handlers.delete(handler)
+    }
+  }
+
+  subscribeEvents(handler: (event: MatterEventReport) => void): Unsubscribe {
+    this.#eventHandlers.add(handler)
+    return () => {
+      this.#eventHandlers.delete(handler)
+    }
+  }
+
+  #emitEvent(event: MatterEventReport): void {
+    for (const handler of this.#eventHandlers) {
+      try {
+        handler(event)
+      } catch (err: unknown) {
+        this.#logger.warn('MatterJsController: event handler threw', {
+          meta: { error: errMsg(err), nodeId: event.nodeId, endpointId: event.endpointId },
+        })
+      }
     }
   }
 
@@ -355,6 +381,8 @@ export class MatterJsController implements MatterController {
     const endpoints: MatterEndpointSnapshot[] = readNodeEndpoints(view.rootEndpoint).map((ep) => ({
       endpointId: ep.number,
       clusterIds: ep.clusterIds,
+      deviceTypeIds: ep.deviceTypeIds,
+      attributes: ep.attributeKeys,
     }))
     return { nodeId: view.id, label: view.label, online: view.online, endpoints }
   }

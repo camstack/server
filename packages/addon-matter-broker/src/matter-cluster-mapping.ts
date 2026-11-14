@@ -28,6 +28,12 @@ export type MatterEndpointCap =
   | 'battery'
   | 'power-meter'
   | 'button'
+  | 'flood'
+  | 'smoke'
+  | 'carbon-monoxide'
+  | 'air-quality-sensor'
+  | 'valve'
+  | 'event-emitter'
 
 /**
  * Matter cluster ids relevant to the v1 device surface. Values are the official
@@ -52,7 +58,63 @@ export const MatterClusterId = {
   ElectricalPowerMeasurement: 0x0090,
   ElectricalEnergyMeasurement: 0x0091,
   Switch: 0x003b,
+  SmokeCoAlarm: 0x005c,
+  ValveConfigurationAndControl: 0x0081,
+  CarbonDioxideConcentration: 0x040d,
+  Pm25Concentration: 0x042a,
+  Pm10Concentration: 0x042d,
+  TvocConcentration: 0x042e,
 } as const
+
+/**
+ * Descriptor device type ids that change what a shared cluster MEANS. The
+ * Descriptor `deviceTypeList` is the only thing that tells a water-leak
+ * detector from a door contact (both are BooleanState), or a smart plug from a
+ * dimmable light (both are OnOff + LevelControl).
+ */
+export const MatterDeviceTypeId = {
+  DoorLock: 0x000a,
+  ContactSensor: 0x0015,
+  OnOffPlugInUnit: 0x010a,
+  DimmablePlugInUnit: 0x010b,
+  WaterFreezeDetector: 0x0041,
+  WaterValve: 0x0042,
+  WaterLeakDetector: 0x0043,
+  RainSensor: 0x0044,
+  SmokeCoAlarm: 0x0076,
+} as const
+
+/** BooleanState endpoints whose `true` means "detected", not "closed". */
+const LEAK_DEVICE_TYPES: ReadonlySet<number> = new Set([
+  MatterDeviceTypeId.WaterFreezeDetector,
+  MatterDeviceTypeId.WaterLeakDetector,
+  MatterDeviceTypeId.RainSensor,
+])
+
+/** Plug device types: OnOff (+ Level) there is a socket, not a light. */
+const PLUG_DEVICE_TYPES: ReadonlySet<number> = new Set([
+  MatterDeviceTypeId.OnOffPlugInUnit,
+  MatterDeviceTypeId.DimmablePlugInUnit,
+])
+
+/** What the controller read off the endpoint besides its cluster ids. */
+export interface MatterEndpointHints {
+  /** Descriptor `deviceTypeList` ids. Absent / empty → decided by clusters alone. */
+  readonly deviceTypeIds?: readonly number[]
+  /** `"clusterId:attributeId"` of the recognised attributes the endpoint carries. */
+  readonly attributes?: readonly string[]
+}
+
+/** Optional DoorLock attribute: only locks with a door sensor have it. */
+const DOOR_STATE_KEY = `${MatterClusterId.DoorLock}:3`
+/** SmokeCOAlarm attributes, present per feature (a smoke-only unit has no COState). */
+const SMOKE_STATE_KEY = `${MatterClusterId.SmokeCoAlarm}:1`
+const CO_STATE_KEY = `${MatterClusterId.SmokeCoAlarm}:2`
+
+/** True when the endpoint is a leak / rain / freeze detector by its Descriptor. */
+export function isLeakEndpoint(hints: MatterEndpointHints | undefined): boolean {
+  return (hints?.deviceTypeIds ?? []).some((id) => LEAK_DEVICE_TYPES.has(id))
+}
 
 /** One cluster → the caps it contributes (most contribute exactly one). */
 const CLUSTER_TO_CAPS: ReadonlyMap<number, readonly MatterEndpointCap[]> = new Map<
@@ -62,7 +124,7 @@ const CLUSTER_TO_CAPS: ReadonlyMap<number, readonly MatterEndpointCap[]> = new M
   [MatterClusterId.OnOff, ['switch']],
   [MatterClusterId.LevelControl, ['brightness']],
   [MatterClusterId.ColorControl, ['color']],
-  [MatterClusterId.DoorLock, ['lock-control']],
+  [MatterClusterId.DoorLock, ['lock-control', 'event-emitter']],
   [MatterClusterId.Thermostat, ['climate-control']],
   [MatterClusterId.WindowCovering, ['cover']],
   [MatterClusterId.TemperatureMeasurement, ['temperature-sensor']],
@@ -74,7 +136,12 @@ const CLUSTER_TO_CAPS: ReadonlyMap<number, readonly MatterEndpointCap[]> = new M
   [MatterClusterId.PowerSource, ['battery']],
   [MatterClusterId.ElectricalPowerMeasurement, ['power-meter']],
   [MatterClusterId.ElectricalEnergyMeasurement, ['power-meter']],
-  [MatterClusterId.Switch, ['button']],
+  [MatterClusterId.Switch, ['button', 'event-emitter']],
+  [MatterClusterId.ValveConfigurationAndControl, ['valve']],
+  [MatterClusterId.CarbonDioxideConcentration, ['air-quality-sensor']],
+  [MatterClusterId.Pm25Concentration, ['air-quality-sensor']],
+  [MatterClusterId.Pm10Concentration, ['air-quality-sensor']],
+  [MatterClusterId.TvocConcentration, ['air-quality-sensor']],
 ])
 
 /** Stable cap order so a derived child's cap list is deterministic. */
@@ -90,9 +157,15 @@ const CAP_ORDER: readonly MatterEndpointCap[] = [
   'pressure-sensor',
   'ambient-light-sensor',
   'contact',
+  'flood',
+  'smoke',
+  'carbon-monoxide',
+  'air-quality-sensor',
   'motion',
+  'valve',
   'power-meter',
   'button',
+  'event-emitter',
   'battery',
 ]
 
@@ -110,26 +183,59 @@ export interface MatterEndpointMapping {
  */
 export function mapMatterEndpointToCamStack(
   presentClusterIds: readonly number[],
+  hints?: MatterEndpointHints,
 ): MatterEndpointMapping {
   const caps = new Set<MatterEndpointCap>()
+  const attributes = new Set(hints?.attributes ?? [])
   for (const id of presentClusterIds) {
-    const contributed = CLUSTER_TO_CAPS.get(id)
-    if (contributed === undefined) continue
-    for (const cap of contributed) caps.add(cap)
+    for (const cap of capsForCluster(id, hints, attributes)) caps.add(cap)
   }
   const ordered = CAP_ORDER.filter((c) => caps.has(c))
   return {
-    deviceType: deviceTypeForCaps(ordered),
+    deviceType: deviceTypeForCaps(ordered, hints),
     capabilities: ordered,
   }
 }
 
+/** The caps one cluster contributes on THIS endpoint (hints refine the shared ones). */
+function capsForCluster(
+  clusterId: number,
+  hints: MatterEndpointHints | undefined,
+  attributes: ReadonlySet<string>,
+): readonly MatterEndpointCap[] {
+  switch (clusterId) {
+    case MatterClusterId.BooleanState:
+      return isLeakEndpoint(hints) ? ['flood'] : ['contact']
+    case MatterClusterId.DoorLock:
+      // The door sensor is optional hardware: without DoorState there is no
+      // door position to report, and a made-up "closed" would be a false fact.
+      return attributes.has(DOOR_STATE_KEY)
+        ? ['lock-control', 'event-emitter', 'contact']
+        : ['lock-control', 'event-emitter']
+    case MatterClusterId.SmokeCoAlarm: {
+      const out: MatterEndpointCap[] = []
+      if (attributes.has(SMOKE_STATE_KEY) || !attributes.has(CO_STATE_KEY)) out.push('smoke')
+      if (attributes.has(CO_STATE_KEY)) out.push('carbon-monoxide')
+      return out
+    }
+    default:
+      return CLUSTER_TO_CAPS.get(clusterId) ?? []
+  }
+}
+
 /** Pick the most-specific CamStack device type for a cap set. */
-function deviceTypeForCaps(caps: readonly MatterEndpointCap[]): DeviceType {
+function deviceTypeForCaps(
+  caps: readonly MatterEndpointCap[],
+  hints: MatterEndpointHints | undefined,
+): DeviceType {
   if (caps.includes('lock-control')) return DeviceType.Lock
   if (caps.includes('cover')) return DeviceType.Cover
+  if (caps.includes('valve')) return DeviceType.Valve
   // D1033: a thermostat is a `climate` device; its role is the operator's to set.
   if (caps.includes('climate-control')) return DeviceType.Climate
+  // A dimmable plug is a socket that happens to dim, not a lamp (Descriptor).
+  const plug = (hints?.deviceTypeIds ?? []).some((id) => PLUG_DEVICE_TYPES.has(id))
+  if (plug && caps.includes('switch')) return DeviceType.Switch
   if (caps.includes('color') || caps.includes('brightness')) return DeviceType.Light
   if (caps.includes('switch')) return DeviceType.Switch
   if (caps.includes('button')) return DeviceType.Button
@@ -139,6 +245,10 @@ function deviceTypeForCaps(caps: readonly MatterEndpointCap[]): DeviceType {
     caps.includes('pressure-sensor') ||
     caps.includes('ambient-light-sensor') ||
     caps.includes('contact') ||
+    caps.includes('flood') ||
+    caps.includes('smoke') ||
+    caps.includes('carbon-monoxide') ||
+    caps.includes('air-quality-sensor') ||
     caps.includes('motion')
   ) {
     return DeviceType.Sensor
@@ -159,6 +269,7 @@ const ENDPOINT_TYPE_LABEL: Partial<Record<DeviceType, string>> = {
   [DeviceType.Cover]: 'Cover',
   [DeviceType.Climate]: 'Thermostat',
   [DeviceType.Sensor]: 'Sensor',
+  [DeviceType.Valve]: 'Valve',
   [DeviceType.Button]: 'Button',
   [DeviceType.Generic]: 'Endpoint',
 }

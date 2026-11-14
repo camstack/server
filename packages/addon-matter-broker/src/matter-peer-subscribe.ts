@@ -12,6 +12,8 @@ import { Seconds } from '@matter/general'
 import type { MatterAttributeReport } from './matter-controller.js'
 import {
   collectAttributeReports,
+  collectEventReports,
+  materialiseUpdate,
   type MatterPeerSubscription,
   type MatterSubscribablePeer,
 } from './matter-subscription.js'
@@ -96,12 +98,17 @@ export function subscribableFromPeer(peer: unknown, nodeId: string): MatterSubsc
         keepSubscriptions: false,
         fabricFilter: true,
         attributes: [{}],
+        events: [{}],
         minIntervalFloor: Seconds(SUBSCRIPTION_MIN_INTERVAL_S),
         maxIntervalCeiling: Seconds(SUBSCRIPTION_MAX_INTERVAL_S),
         bootstrapWithRead: true,
         updated: async (update: unknown) => {
-          const reports = await collectAttributeReports(nodeId, update)
+          // The result is a one-shot stream: read it once, split by kind.
+          const records = await materialiseUpdate(update)
+          const reports = await collectAttributeReports(nodeId, records)
           for (const report of reports) handlers.onReport(report)
+          const events = await collectEventReports(nodeId, records)
+          for (const event of events) handlers.onEvent(event)
         },
         closed: () => {
           handlers.onClosed()

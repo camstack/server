@@ -12,9 +12,13 @@ import { endpointLabel, mapMatterEndpointToCamStack } from '../matter-cluster-ma
 import { MatterEndpointDevice } from './matter-endpoint-device.js'
 
 /** One endpoint entry persisted on the node container — drives a child spawn. */
-const matterEndpointEntrySchema = z.object({
+export const matterEndpointEntrySchema = z.object({
   endpointId: z.number().int().nonnegative(),
   clusterIds: z.array(z.number().int().nonnegative()).default([]),
+  /** Descriptor device types; empty on an entry persisted before they were read. */
+  deviceTypeIds: z.array(z.number().int().nonnegative()).default([]),
+  /** `"clusterId:attributeId"` of the recognised attributes the endpoint carries. */
+  attributes: z.array(z.string()).default([]),
 })
 export type MatterEndpointEntry = z.infer<typeof matterEndpointEntrySchema>
 
@@ -48,6 +52,7 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
   private readonly brokerId: string
   private readonly nodeId: string
   private readonly integrationId: string | undefined
+  private presenceUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = matterNodeSchema.parse(ctx.persistedConfig ?? {})
@@ -60,7 +65,17 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
     void this.updateSourceInfo({ id: this.nodeId, system: 'matter' })
   }
 
+  override async onActivate(): Promise<void> {
+    await super.onActivate()
+    this.presenceUnsub = matterNodes.onNodePresence((brokerId, nodeId, online) => {
+      if (brokerId !== this.brokerId || nodeId !== this.nodeId) return
+      if (this.online !== online) this.markOnline(online)
+    })
+  }
+
   override async removeDevice(): Promise<void> {
+    this.presenceUnsub?.()
+    this.presenceUnsub = null
     matterNodes.unbindDevice(this.nodeId)
     await super.removeDevice()
   }
@@ -68,7 +83,10 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     const specs: AccessoryChildSpec[] = []
     for (const endpoint of this.config.values.endpoints) {
-      const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds)
+      const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds, {
+        deviceTypeIds: endpoint.deviceTypeIds,
+        attributes: endpoint.attributes,
+      })
       if (mapping.capabilities.length === 0) continue
       const meta: AccessoryChildSpec['meta'] = {
         type: mapping.deviceType,
@@ -81,6 +99,8 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
         nodeId: this.nodeId,
         endpointId: endpoint.endpointId,
         clusterIds: endpoint.clusterIds,
+        deviceTypeIds: endpoint.deviceTypeIds,
+        attributes: endpoint.attributes,
         capabilities: [...mapping.capabilities],
         system: 'matter',
         ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),

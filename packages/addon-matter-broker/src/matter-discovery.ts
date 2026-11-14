@@ -20,7 +20,10 @@ export function buildMatterNodeCandidate(input: {
 
   const children: DiscoveredChildDevice[] = []
   for (const endpoint of node.endpoints) {
-    const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds)
+    const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds, {
+      deviceTypeIds: endpoint.deviceTypeIds ?? [],
+      attributes: endpoint.attributes ?? [],
+    })
     if (mapping.capabilities.length === 0) continue
     children.push({
       childNativeId: endpointNativeId(node.nodeId, endpoint.endpointId),

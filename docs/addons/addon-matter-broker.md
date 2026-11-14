@@ -43,6 +43,25 @@ read returns it blank, and a save that sends a blank value keeps the stored
 secret. The same applies to the Wi-Fi password. Do not put either value in a
 log or a ticket.
 
+## Commissioning a Thread device already on another fabric
+
+A lock or sensor that is already paired to another ecosystem (Aqara, Apple
+Home, Home Assistant) is added as a second admin, not reset.
+
+1. In the current ecosystem, open the device and start sharing (multi-admin).
+   It shows an 11-digit manual code or an `MT:` payload that is valid for a
+   few minutes.
+2. Paste it into the fabric's commissioning field here, before it expires.
+3. The hub must reach the Thread mesh over IPv6. A Thread border router
+   advertises the mesh prefix in a router advertisement route; a container
+   ignores it unless the kernel accepts route information. Set
+   `net.ipv6.conf.<interface>.accept_ra_rt_info_max_plen=64` on the hub
+   container (and `accept_ra=2` when the host forwards). Without the route
+   the share code is accepted and the node never answers.
+
+A node that is unreachable is shown offline. It is never shown with its last
+state, so an offline lock does not read as locked.
+
 ## What is stored where
 
 `threadDataset` and `wifiPassword` are secret fields. They go through the
@@ -73,15 +92,32 @@ online, with a delay that grows up to one minute.
 | On/Off | switch |
 | Level | brightness |
 | Color | color state. Setting a color is not implemented. |
-| Door lock | lock: locked, unlocked, jammed. Not fully locked and unlatched are jammed and unlocked, with a detail. Door open, closed, forced open and ajar are details. A jammed door is lock state jammed. Battery comes from Power Source when that cluster is present. |
+| Door lock | lock (and event emitter). Not fully locked and unlatched are jammed and unlocked, with a detail. A door contact is added only when the lock reports DoorState; DoorJammed stays a lock state. Battery comes from Power Source when that cluster is present: the percentage when reported, otherwise the charge-level enum (ok, warning, critical), which never overwrites a real percentage. |
 | Thermostat | climate |
 | Window covering | cover |
 | Temperature, humidity, pressure, illuminance | the matching sensor |
-| Boolean state | contact |
+| Boolean state | contact; flood when the endpoint's Descriptor device type is a water-leak, rain or freeze detector |
 | Occupancy | motion |
 | Power source | battery |
 | Electrical power and energy | power meter |
-| Switch (button) | button device type. Inbound presses are not forwarded yet. |
+| Switch (button) | button device type and event emitter: press, long press, release and multi-press events |
+| Smoke/CO alarm | smoke and carbon monoxide detectors, each only when the unit reports that state |
+| Valve | valve: open and close. Position is read; setting a position and stop are not implemented. |
+| CO2, PM2.5, PM10, TVOC | air quality sensor. Units are assumed ppm, ug/m3 and ppb. |
+| Plug-in unit device types | switch device type instead of light |
+
+Not mapped, because no capability exists for them yet: Fan Control and air
+purifiers, the Air Quality enum, Mode Select and robot vacuum cleaners.
+
+## Events
+
+Matter events are one-shot facts, not states. Door lock operation (locked,
+unlocked, unlatched, with source and user index), alarms (jammed, tamper,
+wrong-code lockout, forced open and others), operation errors and door
+open/close, and the switch events above, are emitted as device events. The
+node numbers its events; a resubscribe that replays buffered events delivers
+nothing twice, and an event stamped more than ten minutes old is dropped.
+Every event that is dropped is logged on the device with the reason.
 
 Lock and unlock send `lockDoor` / `unlockDoor`. The device shows locking or
 unlocking until the subscription reports the outcome.

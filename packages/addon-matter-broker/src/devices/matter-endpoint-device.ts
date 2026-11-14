@@ -17,6 +17,18 @@ import {
   ambientLightSensorCapability,
   batteryCapability,
   buttonCapability,
+  floodCapability,
+  smokeCapability,
+  carbonMonoxideCapability,
+  airQualitySensorCapability,
+  valveCapability,
+  eventEmitterCapability,
+  EventCategory,
+  createEvent,
+  conventionalEventVocabulary,
+  type EventEmitterStatus,
+  type EventFire,
+  type ValveStatus,
   HvacModeSchema,
   type BatteryStatus,
   type ClimateControlStatus,
@@ -29,9 +41,14 @@ import {
   type PowerMeterStatus,
 } from '@camstack/types'
 import { matterCommands, matterNodes } from '../matter-gateway.js'
-import type { MatterAttributeReport } from '../matter-controller.js'
+import type { MatterAttributeReport, MatterEventReport } from '../matter-controller.js'
+import { decodeMatterEvent, LOCK_EVENT_TYPES, SWITCH_EVENT_TYPES } from '../matter-event-decode.js'
 import { decodeMatterAttribute, MatterAttributeId } from '../matter-attr-decode.js'
-import { MatterClusterId, type MatterEndpointCap } from '../matter-cluster-mapping.js'
+import {
+  isLeakEndpoint,
+  MatterClusterId,
+  type MatterEndpointCap,
+} from '../matter-cluster-mapping.js'
 import { planDoorLockCommand } from '../matter-lock-command.js'
 
 /**
@@ -45,6 +62,8 @@ export const matterEndpointSchema = z.object({
   nodeId: z.string().min(1).describe('Matter operational node id'),
   endpointId: z.number().int().nonnegative().describe('Endpoint index within the node'),
   clusterIds: z.array(z.number().int().nonnegative()).default([]),
+  deviceTypeIds: z.array(z.number().int().nonnegative()).default([]),
+  attributes: z.array(z.string()).default([]),
   capabilities: z.array(z.string()).default([]),
   system: z.literal('matter').optional(),
   integrationId: z.string().optional(),
@@ -69,6 +88,12 @@ const KNOWN_CAPS: ReadonlySet<MatterEndpointCap> = new Set<MatterEndpointCap>([
   'ambient-light-sensor',
   'battery',
   'button',
+  'flood',
+  'smoke',
+  'carbon-monoxide',
+  'air-quality-sensor',
+  'valve',
+  'event-emitter',
 ])
 
 /** Which CamStack cap a decoded attribute patch updates → the cap's slice name. */
@@ -88,7 +113,16 @@ const CAP_SLICE_NAME: Readonly<Record<MatterEndpointCap, string>> = {
   'ambient-light-sensor': 'ambient-light-sensor',
   battery: 'battery',
   button: 'button',
+  flood: 'flood',
+  smoke: 'smoke',
+  'carbon-monoxide': 'carbon-monoxide',
+  'air-quality-sensor': 'air-quality-sensor',
+  valve: 'valve',
+  'event-emitter': 'event-emitter',
 }
+
+/** An event older than this on arrival is a resubscribe replay, not news. */
+const EVENT_MAX_AGE_MS = 10 * 60_000
 
 /** Cold-start climate-control slice (no readings yet). */
 const COLD_CLIMATE: ClimateControlStatus = {
@@ -135,6 +169,14 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
   private readonly caps: readonly MatterEndpointCap[]
   private readonly registeredCaps: Set<MatterEndpointCap> = new Set()
   private reportUnsub: (() => void) | null = null
+  private eventUnsub: (() => void) | null = null
+  private presenceUnsub: (() => void) | null = null
+  /** What BooleanState means here: a door contact or a leak/rain detector. */
+  private readonly booleanState: 'contact' | 'flood'
+  /** A real BatPercentRemaining was seen: the level-only enum must not overwrite it. */
+  private batteryPercentSeen = false
+  private eventSeq = 0
+  private eventCount = 0
 
   constructor(ctx: DeviceContext) {
     const persisted = matterEndpointSchema.parse(ctx.persistedConfig ?? {})
@@ -143,6 +185,9 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     this.nodeId = persisted.nodeId
     this.endpointId = persisted.endpointId
     this.caps = persisted.capabilities.filter(isKnownCap)
+    this.booleanState = isLeakEndpoint({ deviceTypeIds: persisted.deviceTypeIds })
+      ? 'flood'
+      : 'contact'
     this.pinRequired =
       matterNodes.getAttribute(
         this.brokerId,
@@ -175,6 +220,15 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     this.reportUnsub = matterNodes.onAttributeReport((brokerId, report) => {
       this.applyReport(brokerId, report)
     })
+    this.eventUnsub = matterNodes.onEvent((brokerId, event) => {
+      this.applyEvent(brokerId, event)
+    })
+    // An unreachable node is offline. Its last slice (a lock that read
+    // "locked") is a memory, not a fact, and must not be presented as one.
+    this.presenceUnsub = matterNodes.onNodePresence((brokerId, nodeId, online) => {
+      if (brokerId !== this.brokerId || nodeId !== this.nodeId) return
+      if (this.online !== online) this.markOnline(online)
+    })
   }
 
   override async removeDevice(): Promise<void> {
@@ -182,6 +236,10 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
       this.reportUnsub()
       this.reportUnsub = null
     }
+    this.eventUnsub?.()
+    this.eventUnsub = null
+    this.presenceUnsub?.()
+    this.presenceUnsub = null
     await super.removeDevice()
   }
 
@@ -193,6 +251,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
       clusterId: report.clusterId,
       attributeId: report.attributeId,
       value: report.value,
+      booleanState: this.booleanState,
     })
     if (decoded === null) return
     if (decoded.detail === 'pin-required' || decoded.detail === 'pin-not-required') {
@@ -212,7 +271,77 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     }
     if (!this.registeredCaps.has(decoded.cap)) return
     if (Object.keys(decoded.patch).length === 0) return
+    if (decoded.detail === 'battery-percent') this.batteryPercentSeen = true
+    if (decoded.detail === 'battery-level-only' && this.batteryPercentSeen) return
     this.runtimeState.patchCapState(CAP_SLICE_NAME[decoded.cap], decoded.patch)
+  }
+
+  /**
+   * A Matter event becomes an `event-emitter` fire on the bus. Everything that
+   * does not become one is logged with its reason (D391): a keypad unlock that
+   * silently vanished would read as "nobody opened the door".
+   */
+  private applyEvent(brokerId: string, event: MatterEventReport): void {
+    if (brokerId !== this.brokerId) return
+    if (event.nodeId !== this.nodeId || event.endpointId !== this.endpointId) return
+    const tags = { deviceId: this.id }
+    const meta = { nodeId: this.nodeId, endpointId: this.endpointId, eventId: event.eventId }
+    if (!this.registeredCaps.has('event-emitter')) {
+      this.ctx.logger.debug('Matter event dropped: endpoint has no event-emitter', { tags, meta })
+      return
+    }
+    if (event.timestampMs !== null && Date.now() - event.timestampMs > EVENT_MAX_AGE_MS) {
+      this.ctx.logger.info('Matter event dropped: older than the replay window', {
+        tags,
+        meta: { ...meta, ageMs: Date.now() - event.timestampMs },
+      })
+      return
+    }
+    const decoded = decodeMatterEvent({
+      clusterId: event.clusterId,
+      eventId: event.eventId,
+      value: event.value,
+    })
+    if (decoded.kind === 'dropped') {
+      this.ctx.logger.info('Matter event dropped: ' + decoded.reason, { tags, meta })
+      return
+    }
+    const fire: EventFire = {
+      deviceId: this.id,
+      eventType: decoded.eventType,
+      data: { ...decoded.data },
+      timestamp: event.timestampMs ?? Date.now(),
+      seq: ++this.eventSeq,
+    }
+    this.ctx.eventBus.emit(
+      createEvent(
+        EventCategory.EventEmitted,
+        {
+          type: 'device',
+          id: this.stableId,
+          deviceId: this.id,
+          addonId: this.ctx.deviceMeta.addonId,
+        },
+        fire,
+      ),
+    )
+    this.eventCount += 1
+    this.runtimeState.setCapState('event-emitter', this.eventStatus(fire))
+  }
+
+  /** The event tokens this endpoint can fire, by the cluster it carries. */
+  private eventTypes(): readonly string[] {
+    return this.caps.includes('lock-control') ? LOCK_EVENT_TYPES : SWITCH_EVENT_TYPES
+  }
+
+  private eventStatus(lastEvent: EventFire | null): EventEmitterStatus {
+    const types = this.eventTypes()
+    return {
+      eventTypes: [...types],
+      vocabulary: conventionalEventVocabulary(types),
+      lastEvent,
+      eventCountSinceStart: this.eventCount,
+    }
   }
 
   /** Invoke a cluster command on this endpoint via the live controller. */
@@ -258,6 +387,18 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
         return this.registerBattery()
       case 'button':
         return this.registerButton()
+      case 'flood':
+        return this.registerFlood()
+      case 'smoke':
+        return this.registerSmoke()
+      case 'carbon-monoxide':
+        return this.registerCarbonMonoxide()
+      case 'air-quality-sensor':
+        return this.registerAirQuality()
+      case 'valve':
+        return this.registerValve()
+      case 'event-emitter':
+        return this.registerEventEmitter()
       case 'climate-control':
         return this.registerClimateControl()
       case 'power-meter':
@@ -492,6 +633,85 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
 
   // ── Read-only sensor caps ──────────────────────────────────────────────
 
+  private registerEventEmitter(): void {
+    const provider: InferNativeProvider<typeof eventEmitterCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<EventEmitterStatus>('event-emitter') ??
+        this.eventStatus(null),
+    }
+    this.ctx.registerNativeCap(eventEmitterCapability, provider)
+    this.runtimeState.setCapState('event-emitter', this.eventStatus(null))
+  }
+
+  private registerFlood(): void {
+    const COLD = { flooded: false, lastChangedAt: 0 }
+    const provider: InferNativeProvider<typeof floodCapability> = {
+      getStatus: async () => this.runtimeState.getCapState<typeof COLD>('flood') ?? COLD,
+    }
+    this.ctx.registerNativeCap(floodCapability, provider)
+    this.runtimeState.setCapState('flood', COLD)
+  }
+
+  private registerSmoke(): void {
+    const COLD = { detected: false, lastChangedAt: 0 }
+    const provider: InferNativeProvider<typeof smokeCapability> = {
+      getStatus: async () => this.runtimeState.getCapState<typeof COLD>('smoke') ?? COLD,
+    }
+    this.ctx.registerNativeCap(smokeCapability, provider)
+    this.runtimeState.setCapState('smoke', COLD)
+  }
+
+  private registerCarbonMonoxide(): void {
+    const COLD = { detected: false, lastChangedAt: 0 }
+    const provider: InferNativeProvider<typeof carbonMonoxideCapability> = {
+      getStatus: async () => this.runtimeState.getCapState<typeof COLD>('carbon-monoxide') ?? COLD,
+    }
+    this.ctx.registerNativeCap(carbonMonoxideCapability, provider)
+    this.runtimeState.setCapState('carbon-monoxide', COLD)
+  }
+
+  private registerAirQuality(): void {
+    const COLD = { lastFetchedAt: 0 }
+    const provider: InferNativeProvider<typeof airQualitySensorCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<typeof COLD>('air-quality-sensor') ?? COLD,
+    }
+    this.ctx.registerNativeCap(airQualitySensorCapability, provider)
+    this.runtimeState.setCapState('air-quality-sensor', COLD)
+  }
+
+  private registerValve(): void {
+    const COLD: ValveStatus = { state: 'closed', position: null, lastChangedAt: 0 }
+    const move = async (
+      command: 'open' | 'close',
+      pending: 'opening' | 'closing',
+    ): Promise<void> => {
+      const previous = this.runtimeState.getCapState<ValveStatus>('valve') ?? COLD
+      this.runtimeState.setCapState('valve', {
+        ...previous,
+        state: pending,
+        lastChangedAt: Date.now(),
+      })
+      try {
+        await this.invoke(MatterClusterId.ValveConfigurationAndControl, command)
+      } catch (err) {
+        this.runtimeState.setCapState('valve', previous)
+        throw err
+      }
+    }
+    const provider: InferNativeProvider<typeof valveCapability> = {
+      getStatus: async () => this.runtimeState.getCapState<ValveStatus>('valve') ?? COLD,
+      open: async () => move('open', 'opening'),
+      close: async () => move('close', 'closing'),
+      // Matter's valve cluster has open and close only; there is nothing to stop.
+      stop: async () => {
+        throw new Error('matter-broker: a Matter valve cannot be stopped mid-travel')
+      },
+    }
+    this.ctx.registerNativeCap(valveCapability, provider)
+    this.runtimeState.setCapState('valve', COLD)
+  }
+
   private registerContact(): void {
     const COLD = { entryOpen: false, lastChangedAt: 0 }
     const provider: InferNativeProvider<typeof contactCapability> = {
@@ -559,7 +779,8 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
 
   private registerBattery(): void {
     const COLD: BatteryStatus = {
-      level: 0,
+      // Unknown until the node reports — 0 would read as a flat battery (D315).
+      level: null,
       charging: 'unknown',
       sleeping: false,
       lastUpdated: 0,

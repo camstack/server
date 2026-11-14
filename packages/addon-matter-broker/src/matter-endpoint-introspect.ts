@@ -19,6 +19,7 @@
  */
 
 import { MatterAttributeId } from './matter-attr-decode.js'
+import { MatterClusterId } from './matter-cluster-mapping.js'
 
 /** A matter.js Endpoint, viewed through the minimal dynamic surface we use. */
 export interface MatterEndpointView {
@@ -28,6 +29,10 @@ export interface MatterEndpointView {
   readonly clusterIds: readonly number[]
   /** One decoded attribute value per (cluster, attribute) we recognise. */
   readonly attributes: readonly MatterEndpointAttribute[]
+  /** Descriptor.DeviceTypeList device type ids (empty when unreadable). */
+  readonly deviceTypeIds: readonly number[]
+  /** `"clusterId:attributeId"` of every recognised attribute the endpoint carries. */
+  readonly attributeKeys: readonly string[]
 }
 
 /** A single attribute value read from an endpoint's behavior state. */
@@ -61,7 +66,33 @@ const ATTR_NAME_TO_ID: ReadonlyMap<string, number> = new Map<string, number>([
   ['lockState', MatterAttributeId.LockState],
   ['doorState', MatterAttributeId.DoorState],
   ['requirePinForRemoteOperation', MatterAttributeId.RequirePinForRemoteOperation],
+  ['batChargeLevel', MatterAttributeId.BatChargeLevel],
+  ['smokeState', MatterAttributeId.SmokeState],
+  ['coState', MatterAttributeId.CoState],
 ])
+
+/**
+ * Attribute names whose id differs by cluster (matter.js names are per cluster,
+ * the numeric id is not). Looked up before {@link ATTR_NAME_TO_ID}.
+ */
+const CLUSTER_ATTR_NAME_TO_ID: ReadonlyMap<number, ReadonlyMap<string, number>> = new Map([
+  [
+    MatterClusterId.ValveConfigurationAndControl,
+    new Map<string, number>([
+      ['currentState', MatterAttributeId.ValveCurrentState],
+      ['currentLevel', MatterAttributeId.ValveCurrentLevel],
+    ]),
+  ],
+])
+
+function attributeIdOf(clusterId: number, name: string): number | undefined {
+  return CLUSTER_ATTR_NAME_TO_ID.get(clusterId)?.get(name) ?? ATTR_NAME_TO_ID.get(name)
+}
+
+/** Stable `"clusterId:attributeId"` key used by the mapping hints. */
+export function attributeKey(clusterId: number, attributeId: number): string {
+  return `${clusterId}:${attributeId}`
+}
 
 /** clusterId → matter.js behavior id (camelCase) for outbound command clusters. */
 export const CLUSTER_ID_TO_BEHAVIOR_ID: ReadonlyMap<number, string> = new Map<number, string>([
@@ -71,6 +102,7 @@ export const CLUSTER_ID_TO_BEHAVIOR_ID: ReadonlyMap<number, string> = new Map<nu
   [0x0101, 'doorLock'],
   [0x0201, 'thermostat'],
   [0x0102, 'windowCovering'],
+  [MatterClusterId.ValveConfigurationAndControl, 'valveConfigurationAndControl'],
 ])
 
 /** A callable matter.js cluster command: `(input?, context?) => Promise`. */
@@ -215,17 +247,24 @@ function collectEndpoint(endpoint: DynamicEndpoint, out: MatterEndpointView[]): 
   const supported = endpoint.behaviors.supported
   const clusterIds: number[] = []
   const attributes: MatterEndpointAttribute[] = []
+  const attributeKeys: string[] = []
 
   if (isRecord(supported)) {
     for (const [behaviorId, behaviorType] of Object.entries(supported)) {
       const clusterId = clusterIdOf(behaviorType)
       if (clusterId === null) continue
       clusterIds.push(clusterId)
-      readBehaviorAttributes(endpoint, behaviorId, clusterId, attributes)
+      readBehaviorAttributes(endpoint, behaviorId, clusterId, attributes, attributeKeys)
     }
   }
 
-  out.push({ number: endpoint.number, clusterIds, attributes })
+  out.push({
+    number: endpoint.number,
+    clusterIds,
+    attributes,
+    deviceTypeIds: readDeviceTypeIds(endpoint),
+    attributeKeys,
+  })
   for (const part of endpoint.parts) collectEndpoint(part, out)
 }
 
@@ -234,6 +273,7 @@ function readBehaviorAttributes(
   behaviorId: string,
   clusterId: number,
   attributes: MatterEndpointAttribute[],
+  attributeKeys: string[],
 ): void {
   let struct: unknown
   try {
@@ -244,8 +284,35 @@ function readBehaviorAttributes(
   }
   if (!isRecord(struct)) return
   for (const [attrName, value] of Object.entries(struct)) {
-    const attributeId = ATTR_NAME_TO_ID.get(attrName)
+    const attributeId = attributeIdOf(clusterId, attrName)
     if (attributeId === undefined) continue
+    // An optional attribute (DoorLock.DoorState, SmokeCOAlarm.COState) exists in
+    // the state only on hardware that has it, even while its value is null.
+    if (value !== undefined) attributeKeys.push(attributeKey(clusterId, attributeId))
     attributes.push({ clusterId, attributeId, value })
   }
+}
+
+/**
+ * The Descriptor `deviceTypeList` of an endpoint, as plain numeric ids. matter.js
+ * keeps it in the `descriptor` behavior state as `{ deviceType, revision }[]`.
+ */
+function readDeviceTypeIds(endpoint: DynamicEndpoint): number[] {
+  let descriptor: unknown
+  try {
+    descriptor = endpoint.stateOf('descriptor')
+  } catch {
+    return []
+  }
+  if (!isRecord(descriptor)) return []
+  const list = descriptor['deviceTypeList']
+  if (!isIterable(list)) return []
+  const ids: number[] = []
+  for (const entry of list) {
+    if (!isRecord(entry)) continue
+    const raw = entry['deviceType']
+    if (typeof raw === 'number' && Number.isFinite(raw)) ids.push(raw)
+    else if (typeof raw === 'bigint') ids.push(Number(raw))
+  }
+  return ids
 }

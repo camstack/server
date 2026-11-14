@@ -1,3 +1,4 @@
+import { z } from 'zod'
 import {
   BaseDeviceProvider,
   brokerCapability,
@@ -34,7 +35,11 @@ import { setBrokerDevicesOnline, type OfflineTarget } from './matter-broker-offl
 import { matterCommands, matterNodes } from './matter-gateway.js'
 import type { MatterAttributeReport, MatterNodeSnapshot } from './matter-controller.js'
 import { mapMatterEndpointToCamStack } from './matter-cluster-mapping.js'
-import { MatterNodeDevice, type MatterEndpointEntry } from './devices/matter-node-device.js'
+import {
+  MatterNodeDevice,
+  matterEndpointEntrySchema,
+  type MatterEndpointEntry,
+} from './devices/matter-node-device.js'
 import {
   type MatterBrokerBody,
   type MatterConnectionBody,
@@ -480,25 +485,37 @@ export class MatterBrokerAddon extends BaseDeviceProvider<MatterAddonConfig> {
 function mappableEndpoints(node: MatterNodeSnapshot): MatterEndpointEntry[] {
   const out: MatterEndpointEntry[] = []
   for (const endpoint of node.endpoints) {
-    const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds)
+    const mapping = mapMatterEndpointToCamStack(endpoint.clusterIds, {
+      deviceTypeIds: endpoint.deviceTypeIds ?? [],
+      attributes: endpoint.attributes ?? [],
+    })
     if (mapping.capabilities.length === 0) continue
-    out.push({ endpointId: endpoint.endpointId, clusterIds: [...endpoint.clusterIds] })
+    out.push({
+      endpointId: endpoint.endpointId,
+      clusterIds: [...endpoint.clusterIds],
+      deviceTypeIds: [...(endpoint.deviceTypeIds ?? [])],
+      attributes: [...(endpoint.attributes ?? [])],
+    })
   }
   return out
 }
 
-/** Structural equality of two persisted endpoint lists (by endpointId set). */
+/**
+ * Structural equality of two persisted endpoint lists. An entry persisted before
+ * the Descriptor device types / attribute keys were read differs from the live
+ * one, so the node re-derives its children (a lock gains its door contact and
+ * events; a leak detector stops being a door contact).
+ */
 function endpointsEqual(a: readonly unknown[], b: readonly MatterEndpointEntry[]): boolean {
-  if (a.length !== b.length) return false
-  const aIds = new Set<number>()
-  for (const entry of a) {
-    if (typeof entry === 'object' && entry !== null && 'endpointId' in entry) {
-      const id = entry.endpointId
-      if (typeof id === 'number') aIds.add(id)
-    }
-  }
-  for (const entry of b) {
-    if (!aIds.has(entry.endpointId)) return false
-  }
-  return true
+  const parsed = z.array(matterEndpointEntrySchema).safeParse(a)
+  if (!parsed.success || parsed.data.length !== b.length) return false
+  const key = (e: MatterEndpointEntry): string =>
+    JSON.stringify([
+      e.endpointId,
+      [...e.clusterIds].sort((x, y) => x - y),
+      [...e.deviceTypeIds].sort((x, y) => x - y),
+      [...e.attributes].sort(),
+    ])
+  const current = new Set(parsed.data.map(key))
+  return b.every((entry) => current.has(key(entry)))
 }

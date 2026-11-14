@@ -34,8 +34,18 @@ export const MatterAttributeId = {
   MeasuredValue: 0x0000,
   /** PowerSource.BatPercentRemaining (uint8, half-percent 0..200). */
   BatPercentRemaining: 0x000c,
+  /** PowerSource.BatChargeLevel (enum: 0=Ok,1=Warning,2=Critical). Some locks report only this. */
+  BatChargeLevel: 0x000e,
   /** PowerSource.BatChargeState (enum: 0=Unknown,1=IsCharging,2=IsAtFullCharge,3=IsNotCharging). */
-  BatChargeState: 0x0010,
+  BatChargeState: 0x001a,
+  /** SmokeCoAlarm.SmokeState (AlarmState: 0 Normal, 1 Warning, 2 Critical). */
+  SmokeState: 0x0001,
+  /** SmokeCoAlarm.COState (AlarmState). */
+  CoState: 0x0002,
+  /** ValveConfigurationAndControl.CurrentState (0 Closed, 1 Open, 2 Transitioning). */
+  ValveCurrentState: 0x0004,
+  /** ValveConfigurationAndControl.CurrentLevel (percent 0..100). */
+  ValveCurrentLevel: 0x0006,
   /** Thermostat.LocalTemperature (int16, 0.01 °C). */
   LocalTemperature: 0x0000,
   /** Thermostat.OccupiedCoolingSetpoint (int16, 0.01 °C). */
@@ -128,6 +138,13 @@ export function decodeMatterAttribute(input: {
   readonly clusterId: number
   readonly attributeId: number
   readonly value: unknown
+  /**
+   * The cap BooleanState feeds on THIS endpoint. A contact sensor reads
+   * `true` = closed; a water-leak or rain detector reads `true` = detected.
+   * The endpoint knows which one it is (Descriptor device type); the cluster
+   * alone does not.
+   */
+  readonly booleanState?: 'contact' | 'flood'
 }): DecodedAttribute | null {
   const { clusterId, attributeId, value } = input
   switch (clusterId) {
@@ -136,7 +153,9 @@ export function decodeMatterAttribute(input: {
     case MatterClusterId.LevelControl:
       return decodeLevel(attributeId, value)
     case MatterClusterId.BooleanState:
-      return decodeContact(attributeId, value)
+      return input.booleanState === 'flood'
+        ? decodeFlood(attributeId, value)
+        : decodeContact(attributeId, value)
     case MatterClusterId.OccupancySensing:
       return decodeOccupancy(attributeId, value)
     case MatterClusterId.TemperatureMeasurement:
@@ -158,6 +177,18 @@ export function decodeMatterAttribute(input: {
       return decodeElectricalEnergy(attributeId, value)
     case MatterClusterId.DoorLock:
       return decodeDoorLock(attributeId, value)
+    case MatterClusterId.SmokeCoAlarm:
+      return decodeSmokeCoAlarm(attributeId, value)
+    case MatterClusterId.ValveConfigurationAndControl:
+      return decodeValve(attributeId, value)
+    case MatterClusterId.CarbonDioxideConcentration:
+      return decodeConcentration(attributeId, value, 'co2')
+    case MatterClusterId.Pm25Concentration:
+      return decodeConcentration(attributeId, value, 'pm25')
+    case MatterClusterId.Pm10Concentration:
+      return decodeConcentration(attributeId, value, 'pm10')
+    case MatterClusterId.TvocConcentration:
+      return decodeConcentration(attributeId, value, 'voc')
     default:
       return null
   }
@@ -180,6 +211,14 @@ const DOOR_STATE_DETAIL: ReadonlyMap<number, string> = new Map([
   [3, 'door-forced-open'],
   [4, 'door-unspecified'],
   [5, 'door-ajar'],
+])
+
+/** DoorState → is the door open. Unspecified (4) says nothing about the door. */
+const DOOR_STATE_OPEN: ReadonlyMap<number, boolean> = new Map([
+  [0, true],
+  [1, false],
+  [3, true],
+  [5, true],
 ])
 
 function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute | null {
@@ -207,6 +246,12 @@ function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute |
         detail,
       }
     }
+    // The door sensor is a fact of its own: it feeds the door-contact the
+    // lock exposes. DoorJammed is the BOLT failing, not the door position.
+    const open = DOOR_STATE_OPEN.get(raw)
+    if (open !== undefined) {
+      return { cap: 'contact', patch: { entryOpen: open, lastChangedAt: Date.now() }, detail }
+    }
     return { cap: 'lock-control', patch: {}, detail }
   }
   if (attributeId === MatterAttributeId.RequirePinForRemoteOperation) {
@@ -219,6 +264,61 @@ function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute |
     }
   }
   return null
+}
+
+function decodeFlood(attributeId: number, value: unknown): DecodedAttribute | null {
+  if (attributeId !== MatterAttributeId.StateValue) return null
+  const detected = asBoolean(value)
+  if (detected === null) return null
+  // Water-leak / rain detector: StateValue true = detected (not "closed").
+  return { cap: 'flood', patch: { flooded: detected, lastChangedAt: Date.now() } }
+}
+
+/** SmokeCOAlarm AlarmState: anything but Normal(0) is an alarm. */
+function decodeSmokeCoAlarm(attributeId: number, value: unknown): DecodedAttribute | null {
+  const raw = asNumber(value)
+  if (raw === null) return null
+  const detected = raw !== 0
+  if (attributeId === MatterAttributeId.SmokeState) {
+    return { cap: 'smoke', patch: { detected, lastChangedAt: Date.now() } }
+  }
+  if (attributeId === MatterAttributeId.CoState) {
+    return { cap: 'carbon-monoxide', patch: { detected, lastChangedAt: Date.now() } }
+  }
+  return null
+}
+
+function decodeValve(attributeId: number, value: unknown): DecodedAttribute | null {
+  const raw = asNumber(value)
+  if (raw === null) return null
+  if (attributeId === MatterAttributeId.ValveCurrentState) {
+    // 2 = Transitioning says "moving", not which way: the command that started
+    // the move already recorded opening / closing, so leave the slice alone.
+    if (raw === 0) return { cap: 'valve', patch: { state: 'closed', lastChangedAt: Date.now() } }
+    if (raw === 1) return { cap: 'valve', patch: { state: 'open', lastChangedAt: Date.now() } }
+    return { cap: 'valve', patch: {}, detail: 'valve-transitioning' }
+  }
+  if (attributeId === MatterAttributeId.ValveCurrentLevel) {
+    const position = Math.max(0, Math.min(100, raw))
+    return { cap: 'valve', patch: { position, lastChangedAt: Date.now() } }
+  }
+  return null
+}
+
+/**
+ * Concentration clusters (CO2, PM2.5, PM10, TVOC): MeasuredValue is a float in
+ * the cluster's MeasurementUnit. The defaults the cap documents (ppm, µg/m³,
+ * ppb) are assumed; null/NaN is "not measured" and is no value (D393).
+ */
+function decodeConcentration(
+  attributeId: number,
+  value: unknown,
+  field: 'co2' | 'pm25' | 'pm10' | 'voc',
+): DecodedAttribute | null {
+  if (attributeId !== MatterAttributeId.MeasuredValue) return null
+  const raw = asNumber(value)
+  if (raw === null || raw < 0) return null
+  return { cap: 'air-quality-sensor', patch: { [field]: raw, lastFetchedAt: Date.now() } }
 }
 
 function decodeOnOff(attributeId: number, value: unknown): DecodedAttribute | null {
@@ -288,17 +388,41 @@ function decodeBattery(attributeId: number, value: unknown): DecodedAttribute | 
     if (half === null) return null
     // PowerSource.BatPercentRemaining is in half-percent (0..200) → 0..100.
     const percentage = Math.max(0, Math.min(100, Math.round(half / 2)))
-    return { cap: 'battery', patch: { level: percentage, lastUpdated: Date.now() } }
+    return {
+      cap: 'battery',
+      patch: { level: percentage, binary: false, lastUpdated: Date.now() },
+      detail: 'battery-percent',
+    }
+  }
+  if (attributeId === MatterAttributeId.BatChargeLevel) {
+    const level = asNumber(value)
+    if (level === null) return null
+    // Locks that publish only the level enum: 0 Ok, 1 Warning, 2 Critical. It is
+    // a coarse stand-in (`binary`), so a real percentage always wins over it.
+    const stand = BAT_CHARGE_LEVEL_STAND_IN.get(level)
+    if (stand === undefined) return null
+    return {
+      cap: 'battery',
+      patch: { level: stand, binary: true, lastUpdated: Date.now() },
+      detail: 'battery-level-only',
+    }
   }
   if (attributeId === MatterAttributeId.BatChargeState) {
     const state = asNumber(value)
     if (state === null) return null
-    // 1 = IsCharging → 'charging'; everything else → 'none'.
-    const charging = state === 1 ? 'in' : 'none'
+    // 0 Unknown, 1 IsCharging, 2 IsAtFullCharge (still on a charger), 3 IsNotCharging.
+    const charging = state === 1 || state === 2 ? 'dc' : state === 3 ? 'none' : 'unknown'
     return { cap: 'battery', patch: { charging, lastUpdated: Date.now() } }
   }
   return null
 }
+
+/** BatChargeLevel enum → coarse percentage (the UI shows Normal / Low for `binary`). */
+const BAT_CHARGE_LEVEL_STAND_IN: ReadonlyMap<number, number> = new Map([
+  [0, 100],
+  [1, 20],
+  [2, 5],
+])
 
 function decodeThermostat(attributeId: number, value: unknown): DecodedAttribute | null {
   switch (attributeId) {

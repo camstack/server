@@ -30,6 +30,18 @@ export interface MatterEndpointSnapshot {
   readonly endpointId: number
   /** Server cluster ids present on this endpoint (decimal Matter cluster ids). */
   readonly clusterIds: readonly number[]
+  /**
+   * Device type ids of the Descriptor `deviceTypeList` (e.g. 0x0043 water leak
+   * detector). Empty when the controller could not read the Descriptor. They
+   * disambiguate clusters shared by several device classes (BooleanState).
+   */
+  readonly deviceTypeIds?: readonly number[]
+  /**
+   * `"clusterId:attributeId"` of every recognised attribute the endpoint
+   * actually carries (optional attributes such as DoorLock.DoorState exist only
+   * on hardware with the matching feature).
+   */
+  readonly attributes?: readonly string[]
 }
 
 /** A single attribute report pushed from a commissioned node. */
@@ -38,6 +50,24 @@ export interface MatterAttributeReport {
   readonly endpointId: number
   readonly clusterId: number
   readonly attributeId: number
+  readonly value: unknown
+}
+
+/**
+ * A Matter EVENT pushed by a node (DoorLock.LockOperation, Switch.MultiPressComplete…).
+ * Distinct from an attribute report: an event is a fact that happened once, not
+ * a state that can be re-read.
+ */
+export interface MatterEventReport {
+  readonly nodeId: string
+  readonly endpointId: number
+  readonly clusterId: number
+  readonly eventId: number
+  /** Node-global monotonic event number; used to drop a replayed event. */
+  readonly eventNumber: number | null
+  /** Epoch ms the node stamped the event with, or null when it sent a relative stamp. */
+  readonly timestampMs: number | null
+  /** The decoded event payload (matter.js camelCase field names). */
   readonly value: unknown
 }
 
@@ -76,6 +106,8 @@ export interface MatterController {
   getNode(nodeId: string): Promise<MatterNodeSnapshot | null>
   /** Subscribe to attribute reports across all nodes. Returns a disposer. */
   subscribe(handler: (report: MatterAttributeReport) => void): Unsubscribe
+  /** Subscribe to Matter events across all nodes. Returns a disposer. */
+  subscribeEvents(handler: (event: MatterEventReport) => void): Unsubscribe
   /** Invoke a cluster command on an endpoint (outbound control). */
   invokeCommand(invocation: MatterCommandInvocation): Promise<void>
   /** Remove (decommission) a node from this fabric. */
@@ -108,6 +140,8 @@ export interface MatterControllerOptions {
   readonly onCommissionProgress?: (progress: CommissionProgress) => void
   /** Adopted container id for subscription logs. Null until the node is adopted. */
   readonly resolveDeviceId?: (nodeId: string) => number | null
+  /** A node's reachability changed (the peer went offline / came back). */
+  readonly onNodePresence?: (nodeId: string, online: boolean) => void
 }
 
 /**
@@ -117,6 +151,7 @@ export interface MatterControllerOptions {
  */
 export class StubMatterController implements MatterController {
   readonly #handlers: Set<(report: MatterAttributeReport) => void> = new Set()
+  readonly #eventHandlers: Set<(event: MatterEventReport) => void> = new Set()
   readonly #options: MatterControllerOptions
 
   constructor(options: MatterControllerOptions) {
@@ -134,6 +169,7 @@ export class StubMatterController implements MatterController {
 
   async stop(): Promise<void> {
     this.#handlers.clear()
+    this.#eventHandlers.clear()
   }
 
   async commissionNode(_pairingCode: string): Promise<CommissionResult> {
@@ -153,6 +189,13 @@ export class StubMatterController implements MatterController {
     this.#handlers.add(handler)
     return () => {
       this.#handlers.delete(handler)
+    }
+  }
+
+  subscribeEvents(handler: (event: MatterEventReport) => void): Unsubscribe {
+    this.#eventHandlers.add(handler)
+    return () => {
+      this.#eventHandlers.delete(handler)
     }
   }
 

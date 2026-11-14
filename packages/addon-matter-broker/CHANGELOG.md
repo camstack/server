@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Matter: door locks report lock and door state, lock operations, alarms and button presses become device events, and leak, smoke, CO, valve and air-quality devices are mapped; an unreachable node shows offline instead of its last state.
+
 ## [0.2.168] - 2026-11-12
 
 ### Changed

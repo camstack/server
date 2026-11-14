@@ -6,7 +6,7 @@
  */
 
 import { errMsg, type IScopedLogger } from '@camstack/types'
-import type { MatterAttributeReport } from './matter-controller.js'
+import type { MatterAttributeReport, MatterEventReport } from './matter-controller.js'
 
 /** First wait after a dropped subscription. */
 export const SUBSCRIPTION_BACKOFF_INITIAL_MS = 1_000
@@ -28,6 +28,7 @@ export interface MatterPeerSubscription {
 
 export interface MatterSubscriptionHandlers {
   onReport: (report: MatterAttributeReport) => void
+  onEvent: (event: MatterEventReport) => void
   onClosed: () => void
 }
 
@@ -46,6 +47,10 @@ export interface MatterSubscriptionSupervisorOptions {
   /** CamStack device id for the node container, when the node has been adopted. */
   readonly resolveDeviceId: (nodeId: string) => number | null
   readonly onReport: (report: MatterAttributeReport) => void
+  /** Matter events (lock operations, switch presses). Optional: a test may not care. */
+  readonly onEvent?: (event: MatterEventReport) => void
+  /** A node's peer went offline / came back (drives the per-device online flag). */
+  readonly onPresence?: (nodeId: string, online: boolean) => void
 }
 
 interface Slot {
@@ -70,6 +75,8 @@ export class MatterSubscriptionSupervisor {
   readonly #logger: IScopedLogger
   readonly #resolveDeviceId: (nodeId: string) => number | null
   readonly #onReport: (report: MatterAttributeReport) => void
+  readonly #onEvent: (event: MatterEventReport) => void
+  readonly #onPresence: (nodeId: string, online: boolean) => void
   readonly #slots: Map<string, Slot> = new Map()
   #stopped = false
 
@@ -78,6 +85,8 @@ export class MatterSubscriptionSupervisor {
     this.#logger = options.logger
     this.#resolveDeviceId = options.resolveDeviceId
     this.#onReport = options.onReport
+    this.#onEvent = options.onEvent ?? (() => undefined)
+    this.#onPresence = options.onPresence ?? (() => undefined)
   }
 
   /** How many times `subscribe` has been entered for a node (tests). */
@@ -144,6 +153,9 @@ export class MatterSubscriptionSupervisor {
           if (report.value === undefined || report.value === null) return
           this.#onReport(report)
         },
+        onEvent: (event) => {
+          this.#onEvent(event)
+        },
         onClosed: () => {
           const current = this.#slots.get(peer.nodeId)
           if (current === undefined || current.generation !== generation) return
@@ -178,6 +190,7 @@ export class MatterSubscriptionSupervisor {
     if (!slot.peer.online()) {
       slot.phase = 'offline'
       this.#log(nodeId, 'offline')
+      this.#onPresence(nodeId, false)
       return
     }
     this.#schedule(nodeId)
@@ -211,6 +224,7 @@ export class MatterSubscriptionSupervisor {
         if (current.phase === 'offline') return
         current.phase = 'offline'
         this.#log(slot.peer.nodeId, 'offline')
+        this.#onPresence(slot.peer.nodeId, false)
       }),
     )
     slot.unlisten.push(
@@ -223,6 +237,7 @@ export class MatterSubscriptionSupervisor {
           current.timer = null
         }
         this.#log(slot.peer.nodeId, 'online')
+        this.#onPresence(slot.peer.nodeId, true)
         void this.#open(current.peer)
       }),
     )
@@ -317,6 +332,56 @@ export async function collectAttributeReports(
     }
   }
   return out
+}
+
+/** Drain a (possibly async) chunked result into one replayable array of chunks. */
+export async function materialiseUpdate(update: unknown): Promise<unknown[]> {
+  const out: unknown[] = []
+  const chunks = isAsyncIterable(update) ? update : isIterable(update) ? update : []
+  for await (const chunk of chunks) out.push(chunk)
+  return out
+}
+
+/**
+ * Pull Matter events out of the same `ReadResult` stream. A status record or an
+ * event without a payload is not an event. The timestamp is the epoch variant
+ * when the node sent one; a relative or system-time stamp cannot be placed on
+ * the wall clock, so it stays null (and the caller does not guess an age).
+ */
+export async function collectEventReports(
+  nodeId: string,
+  update: unknown,
+): Promise<MatterEventReport[]> {
+  const out: MatterEventReport[] = []
+  const chunks = isAsyncIterable(update) ? update : isIterable(update) ? update : []
+  for await (const chunk of chunks) {
+    const records = isIterable(chunk) ? chunk : []
+    for (const record of records) {
+      const decoded = eventFromRecord(nodeId, record)
+      if (decoded !== null) out.push(decoded)
+    }
+  }
+  return out
+}
+
+function eventFromRecord(nodeId: string, record: unknown): MatterEventReport | null {
+  if (!isRecord(record)) return null
+  if (record['kind'] !== 'event-value') return null
+  const path = record['path']
+  if (!isRecord(path)) return null
+  const endpointId = asFiniteNumber(path['endpointId'])
+  const clusterId = asFiniteNumber(path['clusterId'])
+  const eventId = asFiniteNumber(path['eventId'])
+  if (endpointId === null || clusterId === null || eventId === null) return null
+  return {
+    nodeId,
+    endpointId,
+    clusterId,
+    eventId,
+    eventNumber: asFiniteNumber(record['number']),
+    timestampMs: asFiniteNumber(record['epochTimestamp']),
+    value: record['value'],
+  }
 }
 
 function reportFromRecord(nodeId: string, report: unknown): MatterAttributeReport | null {
