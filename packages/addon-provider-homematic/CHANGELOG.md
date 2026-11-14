@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic thermostats report heating or idle (floor-heating relay on the HmIP-BWTH, valve level on radiator thermostats), off when switched off, and a running party shows as the party preset
+
 ## [1.2.200] - 2026-11-14
 
 ### Changed
 
 - Homematic thermostats whose minimum setpoint is above 4.5 (e.g. HmIP-BWTH, 5.0) now show Off when switched off instead of staying on Heat at the minimum.
-- Homematic thermostats report heating or idle (floor-heating relay on the HmIP-BWTH, valve level on radiator thermostats), off when switched off, and a running party shows as the party preset
 
 ## [1.2.199] - 2026-11-14
 

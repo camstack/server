@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Thermostats can report what they are doing (heating, cooling, idle) and a room sensor can be linked to replace a thermostat's temperature and humidity
+
 ## [1.2.567] - 2026-11-14
 
 ### Changed
 
 - Remote: the source last sent by an infrared remote is no longer kept as state
-- Thermostats can report what they are doing (heating, cooling, idle) and a room sensor can be linked to replace a thermostat's temperature and humidity
 
 ## [1.2.566] - 2026-11-14
 
