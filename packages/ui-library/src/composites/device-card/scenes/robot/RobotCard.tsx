@@ -11,6 +11,7 @@ import {
   columnStep,
   columnValue,
 } from '../../shell/column-items'
+import { rowBlock, rowButtons } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -219,28 +220,32 @@ export function RobotCard({
             className={SCENE_DRAWING_CLASS}
           />
         ),
-        bottom:
-          robotError === null && model.mapUrl === null ? null : (
-            <>
-              {robotError}
-              {model.mapUrl === null ? null : (
-                <CardButton
-                  glyph={mapShown ? 'robot' : 'map'}
-                  tone={mapShown ? 'on' : 'default'}
-                  actuates={false}
-                  aria-pressed={mapShown}
-                  data-testid="dc-robot-map-toggle"
-                  onClick={() => setShowMap((v) => !v)}
-                >
-                  {mapShown
-                    ? model.mower
-                      ? t('uiLibrary.deviceCard.robot.mower', 'Mower')
-                      : t('uiLibrary.deviceCard.robot.robot', 'Robot')
-                    : t('uiLibrary.deviceCard.robot.map', 'Map')}
-                </CardButton>
-              )}
-            </>
-          ),
+        bottom: [
+          ...(robotError === null ? [] : [rowBlock('error', { content: robotError })]),
+          ...(model.mapUrl === null
+            ? []
+            : [
+                rowButtons('map', {
+                  buttons: [
+                    <CardButton
+                      key="map"
+                      glyph={mapShown ? 'robot' : 'map'}
+                      tone={mapShown ? 'on' : 'default'}
+                      actuates={false}
+                      aria-pressed={mapShown}
+                      data-testid="dc-robot-map-toggle"
+                      onClick={() => setShowMap((v) => !v)}
+                    >
+                      {mapShown
+                        ? model.mower
+                          ? t('uiLibrary.deviceCard.robot.mower', 'Mower')
+                          : t('uiLibrary.deviceCard.robot.robot', 'Robot')
+                        : t('uiLibrary.deviceCard.robot.map', 'Map')}
+                    </CardButton>,
+                  ],
+                }),
+              ]),
+        ],
       }}
     />
   )
