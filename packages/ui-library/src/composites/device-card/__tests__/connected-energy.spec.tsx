@@ -213,12 +213,34 @@ describe('the energy system card', () => {
       'Self-use60%',
       'Self-sufficiency81%',
       'Heat pump now67%',
-      'Charge74%',
       'Health96%',
       'Autonomy≈ 8.2 h',
       'Charged6.1 kWh',
       'Discharged4.2 kWh',
     ])
+  })
+
+  it('keeps the Charge pill when the scene does not draw the battery', () => {
+    hub.slice = {
+      ...FULL,
+      storage: {
+        stateOfChargePct: 74,
+        storedKwh: 7.4,
+        capacityKwh: 10,
+        powerW: null,
+        chargedKwh: 2500,
+        dischargedKwh: 2300,
+        chargedTodayKwh: 6.1,
+        dischargedTodayKwh: 4.2,
+        healthPct: 96,
+      },
+    }
+    render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
+    expect(screen.queryByText('Charging · 74%')).toBeNull()
+    const chips = within(screen.getByTestId('dc-energy-today')).getAllByTestId(
+      'dc-energy-today-chip',
+    )
+    expect(chips.map((chip) => chip.textContent)).toContain('Charge74%')
   })
 
   it('omits a pill whose input is missing, and never draws 0 for it', () => {

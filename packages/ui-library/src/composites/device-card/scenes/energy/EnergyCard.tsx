@@ -82,7 +82,12 @@ const kwh = (v: number | null): string | null => (v === null ? null : `${v} kWh`
 const pct = (v: number | null): string | null => (v === null ? null : `${Math.round(v)}%`)
 const hours = (v: number | null): string | null => (v === null ? null : `≈ ${v.toFixed(1)} h`)
 
-function todayPills(today: EnergyToday, t: UiTextFn): readonly TodayPill[] {
+/** The scene label already says "Charging · 74%", so the Charge pill would repeat it. */
+function sceneShowsBatteryCharge(flows: EnergyFlows): boolean {
+  return flows.batteryW !== null && flows.batteryPct !== null
+}
+
+function todayPills(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readonly TodayPill[] {
   return [
     ['produced', t('uiLibrary.deviceCard.energy.produced', 'Produced'), kwh(today.producedKwh)],
     ['house', t('uiLibrary.deviceCard.energy.houseToday', 'House'), kwh(today.houseKwh)],
@@ -108,7 +113,9 @@ function todayPills(today: EnergyToday, t: UiTextFn): readonly TodayPill[] {
       t('uiLibrary.deviceCard.energy.heatPumpNow', 'Heat pump now'),
       pct(today.heatPumpShareNowPct),
     ],
-    ['soc', t('uiLibrary.deviceCard.energy.soc', 'Charge'), pct(today.socPct)],
+    ...(omitCharge
+      ? []
+      : [['soc', t('uiLibrary.deviceCard.energy.soc', 'Charge'), pct(today.socPct)] as const]),
     ['health', t('uiLibrary.deviceCard.energy.health', 'Health'), pct(today.healthPct)],
     ['autonomy', t('uiLibrary.deviceCard.energy.autonomy', 'Autonomy'), hours(today.autonomyHours)],
     [
@@ -127,11 +134,12 @@ function todayPills(today: EnergyToday, t: UiTextFn): readonly TodayPill[] {
 interface TodayProps {
   readonly today: EnergyToday
   readonly t: UiTextFn
+  readonly omitCharge: boolean
 }
 
 function Today(props: TodayProps): ReactNode {
-  const { today, t } = props
-  const items = todayPills(today, t)
+  const { today, t, omitCharge } = props
+  const items = todayPills(today, t, omitCharge)
   return (
     <ul data-testid="dc-energy-today" className="flex flex-wrap justify-center gap-1.5">
       {items.flatMap(([id, label, value]) =>
@@ -189,7 +197,10 @@ export function EnergyCard({
           />
         ),
         right: null,
-        bottom: model.today === null ? null : <Today today={model.today} t={t} />,
+        bottom:
+          model.today === null ? null : (
+            <Today today={model.today} t={t} omitCharge={sceneShowsBatteryCharge(model.flows)} />
+          ),
       }}
     />
   )
