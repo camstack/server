@@ -1,14 +1,15 @@
 import type { ReactElement, ReactNode } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
+import { cn } from '../../../../lib/cn'
 import type { CardGlyph } from '../../icons'
-import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { MenuButton } from '../../parts/MenuButton'
 import { HorizontalSlider } from '../../parts/sliders'
 import { ValueEntry } from '../../parts/ValueEntry'
+import { type ColumnItem, columnButton, columnValue } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
-import type { SceneZones } from '../../shell/SceneGrid'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 import {
   type ControlCardActions,
   type ControlCardModel,
@@ -56,33 +57,36 @@ function shownValue(control: ControlCardValue): string {
   }
 }
 
+interface ControlZones {
+  readonly right?: readonly ColumnItem[]
+  readonly bottom?: ReactNode
+}
+
 function numericZones(
   control: NumericControlValue,
   settable: boolean,
   onSet: (value: number) => void,
   t: UiTextFn,
-): Pick<SceneZones, 'right' | 'bottom'> {
+): ControlZones {
   if (!settable) return {}
   const ranged = control.min !== null && control.max !== null
   return {
-    right: (
-      <>
-        <CardButton
-          glyph="plus"
-          aria-label={t('uiLibrary.deviceCard.control.increase', 'Increase')}
-          data-testid="dc-control-up"
-          disabled={control.max !== null && control.value >= control.max}
-          onClick={() => onSet(steppedValue(control, 1))}
-        />
-        <CardButton
-          glyph="minus"
-          aria-label={t('uiLibrary.deviceCard.control.decrease', 'Decrease')}
-          data-testid="dc-control-down"
-          disabled={control.min !== null && control.value <= control.min}
-          onClick={() => onSet(steppedValue(control, -1))}
-        />
-      </>
-    ),
+    right: [
+      columnButton('up', {
+        glyph: 'plus',
+        label: t('uiLibrary.deviceCard.control.increase', 'Increase'),
+        testId: 'dc-control-up',
+        disabled: control.max !== null && control.value >= control.max,
+        onPress: () => onSet(steppedValue(control, 1)),
+      }),
+      columnButton('down', {
+        glyph: 'minus',
+        label: t('uiLibrary.deviceCard.control.decrease', 'Decrease'),
+        testId: 'dc-control-down',
+        disabled: control.min !== null && control.value <= control.min,
+        onPress: () => onSet(steppedValue(control, -1)),
+      }),
+    ],
     bottom:
       ranged && control.min !== null && control.max !== null ? (
         <HorizontalSlider
@@ -107,7 +111,7 @@ function editorZones(
   model: ControlCardModel,
   onSet: (value: string) => void,
   t: UiTextFn,
-): Pick<SceneZones, 'right' | 'bottom'> {
+): ControlZones {
   const control = model.control
   if (!model.settable) return {}
   const save = t('uiLibrary.deviceCard.control.save', 'Save')
@@ -117,7 +121,7 @@ function editorZones(
       return control.options.length < 2
         ? {}
         : {
-            right: (
+            bottom: (
               <MenuButton
                 layout="stacked"
                 options={control.options.map((option) => ({ id: option, label: option }))}
@@ -176,15 +180,10 @@ export function ControlCard({
     control.kind === 'numeric'
       ? numericZones(control, model.settable, actions.onSet, t)
       : editorZones(model, actions.onSet, t)
-  const left: ReactNode =
-    control.kind === 'numeric' || control.kind === 'select' ? (
-      <b
-        data-testid="dc-control-value"
-        className="max-w-full truncate text-2xl font-semibold tabular-nums text-primary"
-      >
-        {shownValue(control)}
-      </b>
-    ) : null
+  const left: readonly ColumnItem[] =
+    control.kind === 'numeric' || control.kind === 'select'
+      ? [columnValue('value', { value: shownValue(control), testId: 'dc-control-value' })]
+      : []
   return (
     <DeviceCard
       kind="control"
@@ -199,9 +198,14 @@ export function ControlCard({
         tone: 'primary',
       }}
       scene={{
-        left,
-        image: <CardIcon glyph={GLYPH[control.kind]} className="h-20 w-20 text-foreground-muted" />,
-        ...zones,
+        columns: { left, right: zones.right },
+        image: (
+          <CardIcon
+            glyph={GLYPH[control.kind]}
+            className={cn(SCENE_ICON_CLASS, 'text-foreground-muted')}
+          />
+        ),
+        bottom: zones.bottom,
       }}
     />
   )
