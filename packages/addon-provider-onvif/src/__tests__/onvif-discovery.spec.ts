@@ -1,6 +1,11 @@
 import type { DiscoveryHit } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { ONVIF_DISCOVERY_MODES, onvifCamerasFromHits } from '../onvif-discovery.js'
+import {
+  findOnboardedOnvifMatch,
+  mapOnvifDiscoveryToCandidates,
+  ONVIF_DISCOVERY_MODES,
+  onvifCamerasFromHits,
+} from '../onvif-discovery.js'
 
 function wsd(host: string, over: Partial<NonNullable<DiscoveryHit['wsd']>> = {}): DiscoveryHit {
   return {
@@ -48,5 +53,25 @@ describe('ONVIF discovery classification', () => {
 
   it('keeps one camera per host', () => {
     expect(onvifCamerasFromHits([wsd('192.0.2.10'), wsd('192.0.2.10')])).toHaveLength(1)
+  })
+})
+
+describe('already-onboarded marking (#541)', () => {
+  // A camera created by hand is stored under `onvif-<epoch>`, never `onvif-<host>`, so a
+  // stableId comparison cannot recognise it; the host is the identity a scan reproduces.
+  const onboarded = [{ deviceId: 5, name: 'Porch', host: 'Cam-Porch.LOCAL' }]
+
+  it('marks an owned camera, matching the host case-insensitively', () => {
+    const [candidate] = mapOnvifDiscoveryToCandidates([{ host: 'cam-porch.local', port: 80 }], onboarded)
+    expect(candidate?.alreadyOnboarded).toBe(true)
+    expect(candidate?.onboardedDeviceId).toBe(5)
+    expect(candidate?.onboardedName).toBe('Porch')
+  })
+
+  it('leaves a genuinely new host unmarked', () => {
+    expect(findOnboardedOnvifMatch('192.0.2.50', onboarded)).toBeUndefined()
+    const [candidate] = mapOnvifDiscoveryToCandidates([{ host: '192.0.2.50', port: 80 }], onboarded)
+    expect(candidate?.alreadyOnboarded).toBeUndefined()
+    expect(candidate?.stableId).toBe('onvif-192-0-2-50')
   })
 })

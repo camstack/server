@@ -1,4 +1,5 @@
 import type { DiscoveryHit } from '@camstack/types'
+import type { OnboardedAmcrestCamera } from '../amcrest-discovery.js'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const getDeviceInfo = vi.fn()
@@ -8,9 +9,13 @@ vi.mock('../amcrest-cgi-client.js', () => ({
   },
 }))
 
-const { AMCREST_DISCOVERY_MODES, amcrestFromHttpHits, amcrestFromWsdHits } = await import(
-  '../amcrest-discovery.js'
-)
+const {
+  AMCREST_DISCOVERY_MODES,
+  amcrestFromHttpHits,
+  amcrestFromWsdHits,
+  findOnboardedAmcrestMatch,
+  mapAmcrestDiscoveryToCandidates,
+} = await import('../amcrest-discovery.js')
 
 afterEach(() => getDeviceInfo.mockReset())
 
@@ -61,5 +66,35 @@ describe('Amcrest discovery classification', () => {
   it('never calls a host without credentials', async () => {
     expect(await amcrestFromHttpHits([httpHit('192.0.2.20')], null)).toEqual([])
     expect(getDeviceInfo).not.toHaveBeenCalled()
+  })
+})
+
+describe('already-onboarded marking (#541)', () => {
+  const onboarded: readonly OnboardedAmcrestCamera[] = [
+    { deviceId: 9, name: 'Garage', host: 'Cam-Garage.LOCAL' },
+  ]
+
+  it('matches a stored host case/format-insensitively', () => {
+    expect(findOnboardedAmcrestMatch('cam-garage.local', onboarded)?.deviceId).toBe(9)
+  })
+
+  /**
+   * An adopted camera persists `mac-<mac>`; discovery only knows the host, so it classifies
+   * under `host-<slug>` and a stableId comparison never matches. The candidate must be marked.
+   */
+  it('marks an owned camera instead of offering it again', () => {
+    const [candidate] = mapAmcrestDiscoveryToCandidates(
+      [{ host: 'CAM-GARAGE.local', port: 80 }],
+      {},
+      onboarded,
+    )
+    expect(candidate?.alreadyOnboarded).toBe(true)
+    expect(candidate?.onboardedDeviceId).toBe(9)
+    expect(candidate?.onboardedName).toBe('Garage')
+  })
+
+  it('leaves a genuinely new host unmarked', () => {
+    const [candidate] = mapAmcrestDiscoveryToCandidates([{ host: '192.0.2.77', port: 80 }], {}, onboarded)
+    expect(candidate?.alreadyOnboarded).toBeUndefined()
   })
 })

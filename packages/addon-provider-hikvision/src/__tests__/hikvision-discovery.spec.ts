@@ -1,5 +1,6 @@
 import type { DiscoveryHit } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { OnboardedHikvisionCamera } from '../hikvision-discovery.js'
 
 const getDeviceInfo = vi.fn()
 vi.mock('../hikvision-isapi-client.js', () => ({
@@ -8,9 +9,13 @@ vi.mock('../hikvision-isapi-client.js', () => ({
   },
 }))
 
-const { HIKVISION_DISCOVERY_MODES, hikvisionFromHttpHits, hikvisionFromWsdHits } = await import(
-  '../hikvision-discovery.js'
-)
+const {
+  HIKVISION_DISCOVERY_MODES,
+  findOnboardedHikvisionMatch,
+  hikvisionFromHttpHits,
+  hikvisionFromWsdHits,
+  mapHikvisionDiscoveryToCandidates,
+} = await import('../hikvision-discovery.js')
 
 afterEach(() => getDeviceInfo.mockReset())
 
@@ -63,5 +68,53 @@ describe('Hikvision discovery classification', () => {
   it('never calls a host without credentials', async () => {
     expect(await hikvisionFromHttpHits([httpHit('192.0.2.20')], null)).toEqual([])
     expect(getDeviceInfo).not.toHaveBeenCalled()
+  })
+})
+
+describe('findOnboardedHikvisionMatch', () => {
+  const onboarded: readonly OnboardedHikvisionCamera[] = [
+    { deviceId: 42, name: 'Front Door', host: 'Cam-Front.LOCAL' },
+  ]
+
+  it('matches a stored host case/format-insensitively', () => {
+    expect(findOnboardedHikvisionMatch('cam-front.local', onboarded)?.deviceId).toBe(42)
+  })
+
+  it('leaves a genuinely new host unmarked', () => {
+    expect(findOnboardedHikvisionMatch('192.0.2.99', onboarded)).toBeUndefined()
+  })
+})
+
+describe('mapHikvisionDiscoveryToCandidates', () => {
+  /**
+   * REGRESSION (#541). A camera adopted through this provider persists `mac-<mac>` — the
+   * MAC is learned by a separate network probe `onCreateDevice` runs at creation time, which
+   * discovery never does (it only confirms `deviceInfo`: model + serial). A re-scan of that
+   * same camera therefore always classifies it under `host-<slug>`, a stableId that can never
+   * equal the stored `mac-<mac>` one — a stableId-only comparison re-offers it forever. The
+   * fix marks it `alreadyOnboarded` by host instead, the identity discovery CAN reproduce.
+   */
+  it('marks a MAC-keyed camera already owned instead of offering it again', () => {
+    const onboarded: readonly OnboardedHikvisionCamera[] = [
+      { deviceId: 7, name: 'Front Door', host: '192.0.2.50' },
+    ]
+    const [candidate] = mapHikvisionDiscoveryToCandidates(
+      [{ host: '192.0.2.50', port: 80, model: 'DS-2CD' }],
+      {},
+      onboarded,
+    )
+    expect(candidate?.alreadyOnboarded).toBe(true)
+    expect(candidate?.onboardedDeviceId).toBe(7)
+    expect(candidate?.onboardedName).toBe('Front Door')
+  })
+
+  it('leaves a genuinely new host unmarked — absent is not "known to be new"', () => {
+    const [candidate] = mapHikvisionDiscoveryToCandidates(
+      [{ host: '192.0.2.77', port: 80 }],
+      {},
+      [{ deviceId: 7, name: 'Front Door', host: '192.0.2.50' }],
+    )
+    expect(candidate?.alreadyOnboarded).toBeUndefined()
+    expect(candidate?.onboardedDeviceId).toBeUndefined()
   })
 })

@@ -38,6 +38,8 @@ import {
   amcrestFromHttpHits,
   amcrestFromWsdHits,
   type DiscoveredAmcrestCamera,
+  mapAmcrestDiscoveryToCandidates,
+  type OnboardedAmcrestCamera,
   slugifyAmcrestHost,
 } from './amcrest-discovery.js'
 import { type ClipService, createClipService } from './clips/clip-service.js'
@@ -422,21 +424,33 @@ export class AmcrestProviderAddon extends BaseDeviceProvider {
       meta: { count: cameras.length, ws: ws.length, httpConfirmed: http.length },
     })
 
-    return cameras.map((c) => {
-      const displayName = c.name ?? c.model ?? c.host
-      return {
-        stableId: `host-${slugifyAmcrestHost(c.host)}`,
-        type: DeviceType.Camera,
-        suggestedName: displayName,
-        prefilledConfig: {
-          name: displayName,
-          host: c.host,
-          port: c.port,
-          ...(username ? { username } : {}),
-          ...(password ? { password } : {}),
-        },
-      }
-    })
+    // Devices this provider already owns are MARKED, not offered: discovery can't reproduce
+    // the `mac-<mac>` stableId an adopted camera persists (see `findOnboardedAmcrestMatch`).
+    const candidates = mapAmcrestDiscoveryToCandidates(
+      cameras,
+      { username, password },
+      this.listOnboardedForDiscovery(),
+    )
+    const owned = candidates.filter((c) => c.alreadyOnboarded === true).length
+    if (owned > 0) {
+      this.ctx.logger.info('Amcrest discovery: candidates already owned by this provider', {
+        meta: { owned, total: candidates.length },
+      })
+    }
+    return candidates
+  }
+
+  /** Reduce this addon's live cameras to the host identity a scan can reproduce. */
+  private listOnboardedForDiscovery(): readonly OnboardedAmcrestCamera[] {
+    const all = this.ctx.kernel.deviceRegistry?.getAll() ?? []
+    const onboarded: OnboardedAmcrestCamera[] = []
+    for (const d of all) {
+      if (!(d instanceof AmcrestCamera)) continue
+      const host = d.config.get('host')
+      if (typeof host !== 'string' || host === '') continue
+      onboarded.push({ deviceId: d.id, name: d.name, host })
+    }
+    return onboarded
   }
 
   override async adoptDiscoveredDevice(input: {

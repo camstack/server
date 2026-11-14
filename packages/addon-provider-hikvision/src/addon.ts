@@ -32,6 +32,8 @@ import {
   HIKVISION_DISCOVERY_MODES,
   hikvisionFromHttpHits,
   hikvisionFromWsdHits,
+  mapHikvisionDiscoveryToCandidates,
+  type OnboardedHikvisionCamera,
   slugifyHikvisionHost,
 } from './hikvision-discovery.js'
 import {
@@ -464,23 +466,34 @@ export class HikvisionProviderAddon extends BaseDeviceProvider {
       meta: { count: cameras.length, ws: ws.length, httpConfirmed: http.length },
     })
 
-    return cameras.map((c) => {
-      const displayName = c.name ?? c.model ?? c.host
-      return {
-        // Best-effort: the authoritative id is `mac-<mac>` (learned during the ISAPI probe at adopt
-        // time). Discovery has no MAC, so the host slug keys the candidate.
-        stableId: `host-${slugifyHikvisionHost(c.host)}`,
-        type: DeviceType.Camera,
-        suggestedName: displayName,
-        prefilledConfig: {
-          name: displayName,
-          host: c.host,
-          port: c.port,
-          ...(username ? { username } : {}),
-          ...(password ? { password } : {}),
-        },
-      }
-    })
+    // Devices this provider already owns are MARKED, not offered: discovery can't reproduce
+    // the `mac-<mac>` stableId an adopted camera persists (see `findOnboardedHikvisionMatch`).
+    const onboarded = this.listOnboardedForDiscovery()
+    const candidates = mapHikvisionDiscoveryToCandidates(cameras, { username, password }, onboarded)
+    const owned = candidates.filter((c) => c.alreadyOnboarded === true).length
+    if (owned > 0) {
+      this.ctx.logger.info('Hikvision discovery: candidates already owned by this provider', {
+        meta: { owned, total: candidates.length },
+      })
+    }
+    return candidates
+  }
+
+  /**
+   * Reduce this addon's live cameras to the identity {@link findOnboardedHikvisionMatch} can
+   * recognise — the host a camera was created with, regardless of what its persisted stableId
+   * ended up being.
+   */
+  private listOnboardedForDiscovery(): readonly OnboardedHikvisionCamera[] {
+    const all = this.ctx.kernel.deviceRegistry?.getAll() ?? []
+    const onboarded: OnboardedHikvisionCamera[] = []
+    for (const d of all) {
+      if (!(d instanceof HikvisionCamera)) continue
+      const host = d.config.get('host')
+      if (typeof host !== 'string' || host === '') continue
+      onboarded.push({ deviceId: d.id, name: d.name, host })
+    }
+    return onboarded
   }
 
   override async adoptDiscoveredDevice(input: {

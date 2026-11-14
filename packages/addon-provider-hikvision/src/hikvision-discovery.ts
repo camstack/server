@@ -1,4 +1,4 @@
-import type { DiscoveryHit, DiscoveryMode } from '@camstack/types'
+import { DeviceType, type DiscoveryCandidate, type DiscoveryHit, type DiscoveryMode } from '@camstack/types'
 import { HikvisionIsapiClient } from './hikvision-isapi-client.js'
 
 /** A Hikvision camera found on the LAN (via WS-Discovery and/or an ISAPI probe). */
@@ -122,4 +122,71 @@ export function slugifyHikvisionHost(host: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+/** One already-onboarded Hikvision camera, reduced to the identity a scan can produce.
+ *  Built by the addon from its live device list; the matching stays pure. */
+export interface OnboardedHikvisionCamera {
+  readonly deviceId: number
+  readonly name: string
+  readonly host?: string
+}
+
+/**
+ * Decide whether a discovered host is a camera this provider already owns.
+ *
+ * Host-keyed, compared through the same slug `generateStableId`'s host fallback uses (so a
+ * case or formatting difference in the stored host does not hide the match). Discovery can't
+ * do better than host: the ISAPI probe here confirms `deviceInfo` (model, serial), never the
+ * network interface, so it can't reproduce the `mac-<mac>` stableId `onCreateDevice` persists
+ * once it probes the MAC separately — a stableId-only comparison never fires for an adopted
+ * camera, which is why this candidate carries `alreadyOnboarded` instead (mirrors Reolink's
+ * `findOnboardedMatch`).
+ */
+export function findOnboardedHikvisionMatch(
+  host: string,
+  onboarded: readonly OnboardedHikvisionCamera[],
+): OnboardedHikvisionCamera | undefined {
+  const needle = slugifyHikvisionHost(host)
+  return onboarded.find((o) => o.host !== undefined && slugifyHikvisionHost(o.host) === needle)
+}
+
+/** Scan-form credentials threaded into every candidate so a one-click adopt authenticates. */
+export interface HikvisionDiscoveryCredentials {
+  readonly username?: string
+  readonly password?: string
+}
+
+/**
+ * Map confirmed Hikvision hosts to adoption candidates, marking one this provider already
+ * owns instead of offering it again (see {@link findOnboardedHikvisionMatch}). Pure: no I/O.
+ */
+export function mapHikvisionDiscoveryToCandidates(
+  cameras: readonly DiscoveredHikvisionCamera[],
+  credentials: HikvisionDiscoveryCredentials,
+  onboarded: readonly OnboardedHikvisionCamera[] = [],
+): readonly DiscoveryCandidate[] {
+  const username = credentials.username?.trim() ?? ''
+  const password = credentials.password ?? ''
+  return cameras.map((c) => {
+    const displayName = c.name ?? c.model ?? c.host
+    const match = findOnboardedHikvisionMatch(c.host, onboarded)
+    return {
+      // Best-effort: the authoritative id is `mac-<mac>` (learned during the ISAPI probe at adopt
+      // time). Discovery has no MAC, so the host slug keys the candidate.
+      stableId: `host-${slugifyHikvisionHost(c.host)}`,
+      type: DeviceType.Camera,
+      suggestedName: displayName,
+      prefilledConfig: {
+        name: displayName,
+        host: c.host,
+        port: c.port,
+        ...(username ? { username } : {}),
+        ...(password ? { password } : {}),
+      },
+      ...(match !== undefined
+        ? { alreadyOnboarded: true, onboardedDeviceId: match.deviceId, onboardedName: match.name }
+        : {}),
+    }
+  })
 }

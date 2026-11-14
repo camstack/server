@@ -29,7 +29,12 @@ import {
 } from './onvif-instances.js'
 import { OnvifCamera, onvifCameraSchema } from './onvif-camera.js'
 import { OnvifClient } from './onvif-client.js'
-import { ONVIF_DISCOVERY_MODES, onvifCamerasFromHits } from './onvif-discovery.js'
+import {
+  mapOnvifDiscoveryToCandidates,
+  type OnboardedOnvifCamera,
+  ONVIF_DISCOVERY_MODES,
+  onvifCamerasFromHits,
+} from './onvif-discovery.js'
 import type { DiscoveredOnvifCamera } from './onvif-types.js'
 
 const ADDON_ID = 'provider-onvif'
@@ -125,18 +130,27 @@ export class OnvifProviderAddon extends BaseDeviceProvider<OnvifGlobalConfig> {
     this.lastDiscovered = cameras
     this.ctx.logger.info('ONVIF discovery complete', { meta: { cameraCount: cameras.length } })
 
-    return cameras.map((c) => ({
-      stableId: `onvif-${c.host.replace(/\./g, '-')}`,
-      type: DeviceType.Camera,
-      suggestedName: c.name ?? c.host,
-      prefilledConfig: {
-        name: c.name ?? c.host,
-        host: c.host,
-        port: c.port,
-        username: '',
-        password: '',
-      },
-    }))
+    const candidates = mapOnvifDiscoveryToCandidates(cameras, this.listOnboardedForDiscovery())
+    const owned = candidates.filter((c) => c.alreadyOnboarded === true).length
+    if (owned > 0) {
+      this.ctx.logger.info('ONVIF discovery: candidates already owned by this provider', {
+        meta: { owned, total: candidates.length },
+      })
+    }
+    return candidates
+  }
+
+  /** Reduce this addon's live cameras to the host identity a scan can reproduce. */
+  private listOnboardedForDiscovery(): readonly OnboardedOnvifCamera[] {
+    const all = this.ctx.kernel.deviceRegistry?.getAll() ?? []
+    const onboarded: OnboardedOnvifCamera[] = []
+    for (const d of all) {
+      if (!(d instanceof OnvifCamera)) continue
+      const host = d.config.get('host')
+      if (typeof host !== 'string' || host === '') continue
+      onboarded.push({ deviceId: d.id, name: d.name, host })
+    }
+    return onboarded
   }
 
   override async adoptDiscoveredDevice(input: {

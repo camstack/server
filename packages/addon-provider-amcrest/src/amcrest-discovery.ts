@@ -1,4 +1,4 @@
-import type { DiscoveryHit, DiscoveryMode } from '@camstack/types'
+import { DeviceType, type DiscoveryCandidate, type DiscoveryHit, type DiscoveryMode } from '@camstack/types'
 import { AmcrestCgiClient } from './amcrest-cgi-client.js'
 
 /** A Amcrest or Dahua camera found on the LAN (via WS-Discovery and/or a CGI probe). */
@@ -124,4 +124,69 @@ export function slugifyAmcrestHost(host: string): string {
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
+}
+
+/** One already-onboarded Amcrest camera, reduced to the identity a scan can produce.
+ *  Built by the addon from its live device list; the matching stays pure. */
+export interface OnboardedAmcrestCamera {
+  readonly deviceId: number
+  readonly name: string
+  readonly host?: string
+}
+
+/**
+ * Decide whether a discovered host is a camera this provider already owns.
+ *
+ * Host-keyed, compared through the same slug `generateStableId`'s host fallback uses (so a
+ * case or formatting difference in the stored host does not hide the match). Discovery can't
+ * do better than host: the CGI probe here confirms `getSystemInfo` (deviceType, serial), never
+ * the network interface, so it can't reproduce the `mac-<mac>` stableId `onCreateDevice`
+ * persists once it probes the MAC separately — a stableId-only comparison never fires for an
+ * adopted camera, which is why this candidate carries `alreadyOnboarded` instead (mirrors
+ * Reolink's `findOnboardedMatch`).
+ */
+export function findOnboardedAmcrestMatch(
+  host: string,
+  onboarded: readonly OnboardedAmcrestCamera[],
+): OnboardedAmcrestCamera | undefined {
+  const needle = slugifyAmcrestHost(host)
+  return onboarded.find((o) => o.host !== undefined && slugifyAmcrestHost(o.host) === needle)
+}
+
+/** Scan-form credentials threaded into every candidate so a one-click adopt authenticates. */
+export interface AmcrestDiscoveryCredentials {
+  readonly username?: string
+  readonly password?: string
+}
+
+/**
+ * Map confirmed Amcrest hosts to adoption candidates, marking one this provider already owns
+ * instead of offering it again (see {@link findOnboardedAmcrestMatch}). Pure: no I/O.
+ */
+export function mapAmcrestDiscoveryToCandidates(
+  cameras: readonly DiscoveredAmcrestCamera[],
+  credentials: AmcrestDiscoveryCredentials,
+  onboarded: readonly OnboardedAmcrestCamera[] = [],
+): readonly DiscoveryCandidate[] {
+  const username = credentials.username?.trim() ?? ''
+  const password = credentials.password ?? ''
+  return cameras.map((c) => {
+    const displayName = c.name ?? c.model ?? c.host
+    const match = findOnboardedAmcrestMatch(c.host, onboarded)
+    return {
+      stableId: `host-${slugifyAmcrestHost(c.host)}`,
+      type: DeviceType.Camera,
+      suggestedName: displayName,
+      prefilledConfig: {
+        name: displayName,
+        host: c.host,
+        port: c.port,
+        ...(username ? { username } : {}),
+        ...(password ? { password } : {}),
+      },
+      ...(match !== undefined
+        ? { alreadyOnboarded: true, onboardedDeviceId: match.deviceId, onboardedName: match.name }
+        : {}),
+    }
+  })
 }

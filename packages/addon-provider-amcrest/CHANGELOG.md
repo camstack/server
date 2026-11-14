@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A network scan now marks a camera this provider already owns as already added instead of offering it again
+
 ## [0.2.171] - 2026-11-13
 
 ### Fixed
