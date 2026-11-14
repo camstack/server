@@ -5,7 +5,7 @@
  * can answer "may a rule actuate this?" without importing the schema barrel
  * (~144MB RSS per runner, D28).
  *
- * Coverage: 106 device-scoped capabilities.
+ * Coverage: 107 device-scoped capabilities.
  */
 export const DEVICE_SCOPED_CAPS: ReadonlySet<string> = new Set([
   "accessories",
@@ -44,6 +44,7 @@ export const DEVICE_SCOPED_CAPS: ReadonlySet<string> = new Set([
   "doorbell",
   "energy-system",
   "enum-sensor",
+  "error",
   "event-emitter",
   "fan-control",
   "feature-probe",

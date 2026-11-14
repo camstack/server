@@ -2159,6 +2159,17 @@ export {
   type IBatteryProvider,
 } from './battery.cap.js'
 export {
+  type DeviceErrorSeverity,
+  DeviceErrorSeveritySchema,
+  type DeviceFault,
+  DeviceFaultSchema,
+  ERROR_STATUS_COLD,
+  type ErrorStatus,
+  ErrorStatusSchema,
+  errorCapability,
+  type IErrorProvider,
+} from './error.cap.js'
+export {
   type BinaryStatus,
   BinaryStatusSchema,
   binaryCapability,
@@ -3571,6 +3582,7 @@ import type { schedulersCapability } from './schedulers.cap.js'
 import type { automationControlCapability } from './automation-control.cap.js'
 import type { backupCapability } from './backup.cap.js'
 import type { batteryCapability } from './battery.cap.js'
+import type { errorCapability } from './error.cap.js'
 import type { binaryCapability } from './binary.cap.js'
 import type { brightnessCapability } from './brightness.cap.js'
 import type { brokerCapability } from './broker.cap.js'
@@ -3941,6 +3953,7 @@ type AnyCapability =
   | typeof osdManagerCapability
   | typeof accessoriesCapability
   | typeof batteryCapability
+  | typeof errorCapability
   | typeof networkLinkCapability
   | typeof buttonCapability
   | typeof irTransmitterCapability

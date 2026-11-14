@@ -25,6 +25,13 @@ import {
   type SourceInfo,
 } from './source-info.js'
 import { createEvent } from '../interfaces/event-bus.js'
+import { ERROR_STATUS_COLD, errorCapability, type ErrorStatus } from '../capabilities/error.cap.js'
+import { errMsg } from '../utils/err-msg.js'
+import {
+  buildDeviceErrorAlert,
+  deviceErrorAlertId,
+  deviceErrorEdge,
+} from './device-error-episode.js'
 import type { CustomActionSpec } from '../capabilities/custom-actions.js'
 
 // Zod 4's `ZodRawShape = $ZodShape = Record<string, $ZodType<unknown, unknown>>`
@@ -472,6 +479,65 @@ export abstract class BaseDevice<
       // No logger on BaseDevice (would require ctx wiring) — drivers
       // that want visibility wrap the call themselves.
       void err
+    }
+  }
+
+  /**
+   * Declare that this device can report a fault (the `error` cap). The slice
+   * starts UNKNOWN — a restored slice is kept, so a fault that was open before
+   * a restart is compared, not announced again.
+   */
+  protected registerErrorCap(): void {
+    this.ctx.registerNativeCap?.(errorCapability, {})
+    if (this.runtimeState.getCapState(errorCapability.name) === undefined) {
+      this.setCapSlice(errorCapability, ERROR_STATUS_COLD)
+    }
+  }
+
+  /**
+   * Publish the device's fault. The slice is written; on an EDGE (a fault
+   * starts, or one resolves) an attention episode opens or closes through the
+   * alerts cap, which the notification center announces as
+   * `device-attention-required` / `-resolved`. An unknown reading is never an
+   * edge. No rule exists by default: it notifies when the operator makes one.
+   */
+  protected async publishError(reading: ErrorStatus): Promise<void> {
+    const previous = this.getCapSlice(errorCapability)
+    // A failed read changes nothing (D49): it must not erase a KNOWN state, or
+    // the resolve that follows would have no fault to close.
+    if (reading.active === null && previous !== null && previous.active !== null) return
+    const now = Date.now()
+    const edge = deviceErrorEdge(previous, reading)
+    const next: ErrorStatus =
+      edge === 'start' && reading.since === null ? { ...reading, since: now } : reading
+    this.setCapSlice(errorCapability, next)
+    if (edge === null) return
+    const alerts = this.ctx.api.alerts
+    if (alerts === undefined) {
+      this.ctx.logger.warn('device error: attention event skipped — alerts capability missing', {
+        tags: { deviceId: this.id },
+        meta: { edge },
+      })
+      return
+    }
+    try {
+      if (edge === 'start') {
+        await alerts.emit.mutate(buildDeviceErrorAlert(this.id, this.name, next, now))
+      } else {
+        await alerts.update.mutate({
+          alertId: deviceErrorAlertId(this.id),
+          patch: { status: 'completed', read: true, updatedAt: now },
+        })
+      }
+      this.ctx.logger.info(`device error: ${edge === 'start' ? 'raised' : 'resolved'}`, {
+        tags: { deviceId: this.id },
+        meta: { code: next.code, label: next.label },
+      })
+    } catch (err) {
+      this.ctx.logger.warn('device error: attention event failed', {
+        tags: { deviceId: this.id },
+        meta: { edge, error: errMsg(err) },
+      })
     }
   }
 

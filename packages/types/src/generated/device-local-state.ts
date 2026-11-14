@@ -27,6 +27,7 @@ import { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.js'
 import { doorbellCapability } from '../capabilities/doorbell.cap.js'
 import { energySystemCapability } from '../capabilities/energy-system.cap.js'
 import { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
+import { errorCapability } from '../capabilities/error.cap.js'
 import { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
 import { fanControlCapability } from '../capabilities/fan-control.cap.js'
 import { featureProbeCapability } from '../capabilities/feature-probe.cap.js'
@@ -124,6 +125,7 @@ export interface DeviceLocalState {
   doorbell: InferRuntimeState<typeof doorbellCapability>
   energySystem: InferRuntimeState<typeof energySystemCapability>
   enumSensor: InferRuntimeState<typeof enumSensorCapability>
+  error: InferRuntimeState<typeof errorCapability>
   eventEmitter: InferRuntimeState<typeof eventEmitterCapability>
   fanControl: InferRuntimeState<typeof fanControlCapability>
   featureProbe: InferRuntimeState<typeof featureProbeCapability>
@@ -217,6 +219,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   doorbell: doorbellCapability,
   energySystem: energySystemCapability,
   enumSensor: enumSensorCapability,
+  error: errorCapability,
   eventEmitter: eventEmitterCapability,
   fanControl: fanControlCapability,
   featureProbe: featureProbeCapability,
@@ -317,6 +320,7 @@ export interface CapNameToRuntimeStateMap {
   'doorbell': InferRuntimeState<typeof doorbellCapability>
   'energy-system': InferRuntimeState<typeof energySystemCapability>
   'enum-sensor': InferRuntimeState<typeof enumSensorCapability>
+  'error': InferRuntimeState<typeof errorCapability>
   'event-emitter': InferRuntimeState<typeof eventEmitterCapability>
   'fan-control': InferRuntimeState<typeof fanControlCapability>
   'feature-probe': InferRuntimeState<typeof featureProbeCapability>

@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Climate card gauge: target large in the centre with the current temperature under it, a hollow marker at the room temperature, and the band to the target only while the device reports heating or cooling; the activity label follows the reported action instead of target versus room. The idle state reads "Inattivo" in Italian.
 - A device-and-value field can show its value column before a device is picked.
 - The weather station card draws the sensors the station reports — cups that spin with the wind, a vane that turns to the direction — and groups the readings into categories.
+- Every device card shows a badge when the device reports a fault.
 
 ## [1.2.446] - 2026-11-14
 

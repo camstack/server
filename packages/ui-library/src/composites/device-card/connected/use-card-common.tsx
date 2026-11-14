@@ -34,6 +34,7 @@ import type {
   CardPowerDetail,
   CardSupplyAction,
 } from '../shell/model'
+import { cardFaultOf } from '../shell/model'
 import { remoteLayoutPending, remotePanelOf } from './remote-panel'
 import { remoteKeyOf } from '../shell/remote-keys'
 import { sinceText } from './since-text'
@@ -122,6 +123,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     dev?.powerMeter === undefined ? undefined : dev.state.powerMeter,
   )
   const battery = useDeviceStateSlice(dev?.battery === undefined ? undefined : dev.state.battery)
+  const fault = useDeviceStateSlice(dev?.error === undefined ? undefined : dev.state.error)
   const consumables = useDeviceStateSlice(
     dev?.consumables === undefined ? undefined : dev.state.consumables,
   )
@@ -229,6 +231,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
                 : 'on',
           }
         : null,
+    fault: cardFaultOf(fault),
     consumables: items,
     remote:
       remote.data === undefined || remote.data === null || remote.data.commands.length === 0

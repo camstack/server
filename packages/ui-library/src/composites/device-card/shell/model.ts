@@ -67,6 +67,31 @@ export interface CardHistory {
   readonly events: readonly CardEvent[] | null
 }
 
+/** A fault the device reports right now (the `error` cap, `active === true`). */
+export interface CardFault {
+  readonly label: string
+  readonly severity: 'warning' | 'error'
+}
+
+/**
+ * The fault to draw, or null. Only a slice that ANSWERED `active: true` draws
+ * one: not-yet-read (`null`), clear (`false`) and a cap the device does not
+ * have (no slice) are all no badge (D315).
+ */
+export function cardFaultOf(
+  slice:
+    | {
+        readonly active: boolean | null
+        readonly label: string | null
+        readonly code: string | null
+        readonly severity: 'warning' | 'error'
+      }
+    | undefined,
+): CardFault | null {
+  if (slice === undefined || slice.active !== true) return null
+  return { label: slice.label ?? slice.code ?? '', severity: slice.severity }
+}
+
 export interface CardCommon {
   /** Set on a live device so the history view can read its actuations. */
   readonly deviceId?: number
@@ -85,6 +110,8 @@ export interface CardCommon {
   /** `label` replaces the bare percent (a feeder's "Backup 40%"). */
   readonly battery: { readonly level: number; readonly label?: string } | null
   readonly supply: CardSupply | null
+  /** The device's reported fault; absent or null draws no badge. */
+  readonly fault?: CardFault | null
   readonly consumables: readonly CardConsumable[] | null
   readonly remote: readonly CardRemoteKey[] | null
   /**

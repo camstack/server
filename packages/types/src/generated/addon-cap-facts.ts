@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 85 caps with 431 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 86 caps with 436 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -95,6 +95,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "embedding-encoder",
   "energy-system",
   "enum-sensor",
+  "error",
   "event-emitter",
   "face-gallery",
   "failure-contribution",
@@ -261,6 +262,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "doorbell": [{"path":"lastPressedAt","valueType":"number"}, {"path":"pressCountSinceStart","valueType":"number"}],
   "energy-system": [{"path":"solar.powerW","valueType":"number"}, {"path":"solar.energyKwh","valueType":"number"}, {"path":"solar.todayKwh","valueType":"number"}, {"path":"grid.powerW","valueType":"number"}, {"path":"grid.importKwh","valueType":"number"}, {"path":"grid.exportKwh","valueType":"number"}, {"path":"grid.importTodayKwh","valueType":"number"}, {"path":"grid.exportTodayKwh","valueType":"number"}, {"path":"house.powerW","valueType":"number"}, {"path":"house.energyKwh","valueType":"number"}, {"path":"house.todayKwh","valueType":"number"}, {"path":"heatPump.powerW","valueType":"number"}, {"path":"heatPump.energyKwh","valueType":"number"}, {"path":"heatPump.todayKwh","valueType":"number"}, {"path":"storage.stateOfChargePct","valueType":"number"}, {"path":"storage.storedKwh","valueType":"number"}, {"path":"storage.capacityKwh","valueType":"number"}, {"path":"storage.powerW","valueType":"number"}, {"path":"storage.chargedKwh","valueType":"number"}, {"path":"storage.dischargedKwh","valueType":"number"}, {"path":"storage.chargedTodayKwh","valueType":"number"}, {"path":"storage.dischargedTodayKwh","valueType":"number"}, {"path":"storage.healthPct","valueType":"number"}],
   "enum-sensor": [{"path":"value","valueType":"string"}, {"path":"timestamp","valueType":"boolean"}],
+  "error": [{"path":"active","valueType":"boolean"}, {"path":"code","valueType":"string"}, {"path":"label","valueType":"string"}, {"path":"severity","valueType":"enum","enumValues":["warning","error"]}, {"path":"since","valueType":"number"}],
   "event-emitter": [{"path":"lastEvent.deviceId","valueType":"number"}, {"path":"lastEvent.eventType","valueType":"string"}, {"path":"lastEvent.sourceId","valueType":"string"}, {"path":"lastEvent.timestamp","valueType":"number"}, {"path":"lastEvent.seq","valueType":"number"}, {"path":"eventCountSinceStart","valueType":"number"}],
   "fan-control": [{"path":"speed","valueType":"number"}, {"path":"percentageStep","valueType":"number"}, {"path":"preset","valueType":"string"}, {"path":"direction","valueType":"enum","enumValues":["forward","reverse"]}, {"path":"oscillating","valueType":"boolean"}],
   "feature-probe": [{"path":"deviceType","valueType":"string"}, {"path":"model","valueType":"string"}, {"path":"channelCount","valueType":"number"}, {"path":"lastProbedAt","valueType":"number"}],

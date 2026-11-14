@@ -398,6 +398,25 @@ export function DeviceCardPreview(): ReactElement {
               <ClimateCard model={f.model} actions={CLIMATE_ACTIONS} orientation={f.orientation} />
             </Cell>
           ))
+        ) : type === 'fault' ? (
+          plugFixtures().map((f, index) => (
+            <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
+              <PlugCard
+                model={{
+                  ...f.model,
+                  common: {
+                    ...f.model.common,
+                    fault:
+                      index === 0
+                        ? { label: 'Dust bin missing', severity: 'error' }
+                        : { label: 'Filter to clean', severity: 'warning' },
+                  },
+                }}
+                actions={PLUG_ACTIONS}
+                orientation={f.orientation}
+              />
+            </Cell>
+          ))
         ) : (
           plugFixtures().map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>

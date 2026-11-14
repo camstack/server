@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The robot's error is now served by the generic error capability; the separate Error sensor is removed
+
 ## [0.2.175] - 2026-11-14
 
 ### Changed

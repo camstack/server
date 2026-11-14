@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1083 shared schemas.**
+**1086 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1587,6 +1587,10 @@ Enum: `"info" \| "warning" \| "error"`
 - `deviceId`: `number`
 - `count`: `number`
 
+### `DeviceErrorSeveritySchema`
+
+Enum: `"warning" \| "error"`
+
 ### `DeviceExportExposeInputSchema`
 
 - `instanceId`: `string`
@@ -1616,6 +1620,12 @@ Enum: `"info" \| "warning" \| "error"`
 
 - `instanceId`: `string`
 - `deviceId`: `string`
+
+### `DeviceFaultSchema`
+
+- `code`: `string`
+- `label`: `string`
+- `severity`: `DeviceErrorSeveritySchema`
 
 ### `DeviceHistoryKindSchema`
 
@@ -2174,6 +2184,16 @@ Enum: `"image" \| "text"`
 
 - `value`: `string`
 - `timestamp?`: `boolean`
+- `lastFetchedAt`: `number`
+
+### `ErrorStatusSchema`
+
+- `active`: `boolean \| null`
+- `code`: `string \| null`
+- `label`: `string \| null`
+- `severity`: `DeviceErrorSeveritySchema`
+- `since`: `number \| null`
+- `faults?`: `DeviceFaultSchema[]`
 - `lastFetchedAt`: `number`
 
 ### `EventDensityBucketSchema`

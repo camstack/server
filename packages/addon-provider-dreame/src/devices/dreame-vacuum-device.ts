@@ -25,6 +25,7 @@ import {
   tokenToSuctionLevel,
   VACUUM_TANK_PROPS,
   vacuumErrorLabel,
+  vacuumErrorReading,
 } from '../dreame-vacuum-decode.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 import {
@@ -194,6 +195,7 @@ export class DreameVacuumDevice extends DreameChildDevice {
     }
     this.ctx.registerNativeCap(vacuumControlCapability, provider)
     this.registerRunningCap()
+    this.registerErrorCap()
     this.runtimeState.setCapState(CAP_NAME, CONTROL_COLD_START)
     this.runtimeState.setCapState(RUNNING_CAP, RUNNING_STATE_COLD)
     // Register the consumables cap HERE so its schema is seeded before the
@@ -248,6 +250,9 @@ export class DreameVacuumDevice extends DreameChildDevice {
     )
     if (toWrite !== null) this.runtimeState.setCapState(CAP_NAME, toWrite)
     this.publishRunningSlice(miotStatus, Date.now(), controlSlice.lastChangedAt)
+    // The robot's fault, served by the generic `error` cap (the old Error
+    // sensor child is gone). Edges raise / close the attention episode.
+    void this.publishError(vacuumErrorReading(vacuum.errorCode, Date.now()))
     // Replays the cache and the tanks into the consumables slice (only on a
     // change, never an empty list) and refreshes on the edge into docked.
     this.consumables.onPush(controlSlice.state, tanks, {

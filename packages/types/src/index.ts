@@ -1362,6 +1362,12 @@ export type {
   RuntimeStateWriter,
 } from './device/device-runtime-state.js'
 export { DeviceRuntimeState } from './device/device-runtime-state.js'
+export {
+  buildDeviceErrorAlert,
+  type DeviceErrorEdge,
+  deviceErrorAlertId,
+  deviceErrorEdge,
+} from './device/device-error-episode.js'
 export type {
   SliceEventBus,
   SliceHandle,

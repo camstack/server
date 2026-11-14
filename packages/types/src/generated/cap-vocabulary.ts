@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 207 caps (106 device, 101 system).
+ * `*.cap.ts` (D1050): 208 caps (107 device, 101 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -5232,6 +5232,23 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Went offline', it: 'Andato offline' },
         phrase: { en: 'When {device} goes offline', it: 'Quando {device} va offline' },
         icon: 'wifi-off',
+      },
+    ],
+  },
+  'error': {
+    scope: 'device',
+    noun: { en: 'Fault', it: 'Guasto' },
+    state: [
+      {
+        kind: 'boolean',
+        field: 'active',
+        label: { en: 'Fault', it: 'Guasto' },
+        whenTrue: { en: 'When {device} reports a fault', it: 'Quando {device} segnala un guasto' },
+        whenFalse: {
+          en: 'When the fault of {device} clears',
+          it: 'Quando il guasto di {device} si risolve',
+        },
+        icon: 'triangle-alert',
       },
     ],
   },

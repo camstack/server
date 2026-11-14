@@ -6,7 +6,7 @@ import { CardIcon } from './CardIcon'
 export interface ValueChipProps {
   readonly glyph?: CardGlyph
   readonly children: ReactNode
-  readonly tone?: 'default' | 'danger'
+  readonly tone?: 'default' | 'danger' | 'warning'
   readonly className?: string
   readonly 'data-testid'?: string
 }
@@ -24,7 +24,9 @@ export function ValueChip({
       data-testid={testId}
       className={cn(
         'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs',
-        tone === 'danger' ? 'bg-danger/10 text-danger' : 'bg-surface-hover text-foreground-muted',
+        tone === 'danger' && 'bg-danger/10 text-danger',
+        tone === 'warning' && 'bg-warning/10 text-warning',
+        tone === 'default' && 'bg-surface-hover text-foreground-muted',
         className,
       )}
     >

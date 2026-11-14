@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device can report a fault through the new error capability; its start and resolution reach the notification rules (no default rule)
+
 ## [1.2.569] - 2026-11-14
 
 ### Added

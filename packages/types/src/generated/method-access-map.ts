@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1492 method paths across 207 capabilities.
+ * Coverage: 1493 method paths across 208 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -492,6 +492,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'embeddingEncoder.resetFailedModels': { capName: "embedding-encoder", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'energySystem.getStatus': { capName: "energy-system", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'enumSensor.getStatus': { capName: "enum-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'error.getStatus': { capName: "error", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'eventEmitter.getStatus': { capName: "event-emitter", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'faceGallery.assignFace': { capName: "face-gallery", capScope: "system", addonId: null, access: "create", role: "feature:face-assignment" } as const,
   'faceGallery.assignFaces': { capName: "face-gallery", capScope: "system", addonId: null, access: "create", role: "feature:face-assignment" } as const,
@@ -1590,6 +1591,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "embedding-encoder",
   "energy-system",
   "enum-sensor",
+  "error",
   "event-emitter",
   "face-gallery",
   "failure-contribution",
@@ -1765,6 +1767,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "doorbell",
   "energy-system",
   "enum-sensor",
+  "error",
   "event-emitter",
   "fan-control",
   "feature-probe",

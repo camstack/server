@@ -1,9 +1,11 @@
 import { MiotError, MiotState, SuctionLevel } from '@apocaliss92/nodedreame'
 import type { ConsumableReading, MiotProp, VacuumCapabilities } from '@apocaliss92/nodedreame'
+import { ERROR_STATUS_COLD } from '@camstack/types'
 import type {
   ConsumableForm,
   ConsumableItem,
   ConsumableKind,
+  ErrorStatus,
   VacuumControlStatus,
   VacuumState,
 } from '@camstack/types'
@@ -129,8 +131,8 @@ export function clampBatteryLevel(value: number | null): number | null {
 /**
  * MiotError codes that are BENIGN completion / reminder states, not active
  * faults. A fresh cloud-shadow read of an idle docked robot legitimately
- * returns `TaskComplete` (68); it is not an error to show. The Error sensor
- * (`dreame-entity-catalog.ts`) and the vacuum card both read this set.
+ * returns `TaskComplete` (68); it is not an error to show. The `error` cap
+ * reading ({@link vacuumErrorReading}) and the vacuum card both read this set.
  * Extend it if other non-fault codes surface as spurious "errors".
  */
 export const BENIGN_ERROR_CODES: ReadonlySet<number> = new Set<number>([MiotError.TaskComplete])
@@ -139,6 +141,29 @@ export const BENIGN_ERROR_CODES: ReadonlySet<number> = new Set<number>([MiotErro
 export function vacuumErrorLabel(code: number | null): string | null {
   if (!code || BENIGN_ERROR_CODES.has(code)) return null
   return `Error ${code}`
+}
+
+/**
+ * The `error` cap reading for a robot's error code. A `null` code is UNKNOWN
+ * (`active: null`, never "no fault"); `0` and the benign codes are a clean
+ * `active: false` — the provider keeps the benign filter, the cap never sees it.
+ */
+export function vacuumErrorReading(code: number | null, now: number): ErrorStatus {
+  if (code === null) return { ...ERROR_STATUS_COLD, lastFetchedAt: now }
+  if (!code || BENIGN_ERROR_CODES.has(code)) {
+    return { ...ERROR_STATUS_COLD, active: false, lastFetchedAt: now }
+  }
+  const name = MiotError[code]
+  const label =
+    typeof name === 'string' ? name.replace(/([a-z0-9])([A-Z])/g, '$1 $2') : `Error ${code}`
+  return {
+    active: true,
+    code: String(code),
+    label,
+    severity: 'error',
+    since: null,
+    lastFetchedAt: now,
+  }
 }
 
 /** Clamp a 0..100 percentage (progress, coverage, …), null-safe. */

@@ -4,7 +4,7 @@
 
 # Capabilities
 
-207 capability definitions in `packages/types/src/capabilities/`.
+208 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -17,7 +17,7 @@ has no `runtimeState`.
 installed addon declares it — either it is server-provided, or the cap is
 registered at runtime only (`registerNativeCap` from a `BaseDevice`).
 
-## Device-scoped (106)
+## Device-scoped (107)
 
 Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`.
 
@@ -59,6 +59,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `doorbell` | 1 | ✓ | ✓ | none | — | — |
 | `energy-system` | 1 | ✓ | ✓ | 15 series | — | — |
 | `enum-sensor` | 1 | ✓ | ✓ | 1 series | — | — |
+| `error` | 1 | ✓ | ✓ | none | — | `provider-dreame` |
 | `event-emitter` | 1 | ✓ | ✓ | none | — | — |
 | `fan-control` | 6 | ✓ | ✓ | 2 series | — | — |
 | `feature-probe` | 1 | ✓ | ✓ | none | — | — |

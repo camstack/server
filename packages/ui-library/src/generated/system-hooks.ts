@@ -1307,6 +1307,9 @@ export const useEnergySystemGetStatus: typeof trpc.energySystem.getStatus.useQue
 /** Generated alias around `trpc.enumSensor.getStatus.useQuery`. */
 export const useEnumSensorGetStatus: typeof trpc.enumSensor.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.enumSensor.getStatus.useQuery)
 
+/** Generated alias around `trpc.error.getStatus.useQuery`. */
+export const useErrorGetStatus: typeof trpc.error.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.error.getStatus.useQuery)
+
 /** Generated alias around `trpc.eventEmitter.getStatus.useQuery`. */
 export const useEventEmitterGetStatus: typeof trpc.eventEmitter.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.eventEmitter.getStatus.useQuery)
 

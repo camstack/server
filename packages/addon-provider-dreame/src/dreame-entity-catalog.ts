@@ -1,14 +1,12 @@
 import {
   type AutoSwitchKey,
   ChargingStatus,
-  MiotError,
   type MiotProp,
   MowerChargingStatus,
   MowerFault,
   MowerStatus,
   MowerTaskStatus,
 } from '@apocaliss92/nodedreame'
-import { BENIGN_ERROR_CODES } from './dreame-vacuum-decode.js'
 
 /**
  * Data-driven Dreame entity catalog. Rather than a class per entity, each
@@ -554,20 +552,11 @@ function enumOptions(e: Record<string, string | number>): readonly SelectOption[
     .map(([name, value]) => ({ value, label: humanizeEnumName(name) }))
 }
 
-/** `MiotError` options with the benign completion codes remapped to the `Clear`
- *  label, so the Error sensor reads as no-error for them (matches HA). */
-function errorEnumOptions(): readonly SelectOption[] {
-  const clearLabel = humanizeEnumName(MiotError[MiotError.Clear])
-  return enumOptions(MiotError).map((o) =>
-    BENIGN_ERROR_CODES.has(o.value) ? { ...o, label: clearLabel } : o,
-  )
-}
-
 /**
  * Resolve the CURRENT catalog options for an enum-sensor by its MIoT coordinates
  * (across both the vacuum and mower enum-sensor catalogs). The enum-sensor child
  * persists its option map at adoption; preferring the live catalog here lets a
- * label change (e.g. the benign-error remap) take effect for already-adopted
+ * label change take effect for already-adopted
  * children on the next boot — without a re-adopt. Null when no catalog entry
  * matches (persisted config is then the only source).
  */
@@ -710,14 +699,6 @@ export const DREAME_ENUM_SENSORS: readonly EnumSensorDescriptor[] = [
     siid: 3,
     piid: 2,
     options: enumOptions(ChargingStatus),
-    section: DIAG,
-  },
-  {
-    key: 'error',
-    label: 'Error',
-    siid: 2,
-    piid: 2,
-    options: errorEnumOptions(),
     section: DIAG,
   },
   // Tank / dock / task diagnostic statuses — int→label maps from Tasshack

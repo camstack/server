@@ -71,19 +71,31 @@ export function DeviceCardFrameProvider({
  */
 export function CardTop({ common }: { readonly common: CardCommon }): ReactElement | null {
   const t = useUiText()
-  if (common.integration === null && common.online === true) return null
+  const fault = common.fault ?? null
+  if (common.integration === null && common.online === true && fault === null) return null
   return (
     <div className="flex items-center justify-between gap-2" data-testid="dc-top">
       {common.integration === null ? <span /> : <ValueChip>{common.integration}</ValueChip>}
-      {common.online === null ? (
-        <span className="text-xs text-foreground-subtle" data-testid="dc-reach-unknown">
-          {t('uiLibrary.deviceCard.reachUnknown', 'Status unknown')}
-        </span>
-      ) : common.online ? null : (
-        <ValueChip tone="danger">
-          {common.offlineLabel ?? t('uiLibrary.deviceCard.offline', 'Offline')}
-        </ValueChip>
-      )}
+      <div className="flex items-center gap-2">
+        {fault !== null ? (
+          <ValueChip
+            glyph="warning"
+            tone={fault.severity === 'error' ? 'danger' : 'warning'}
+            data-testid="dc-fault"
+          >
+            {fault.label.length > 0 ? fault.label : t('uiLibrary.deviceCard.fault', 'Fault')}
+          </ValueChip>
+        ) : null}
+        {common.online === null ? (
+          <span className="text-xs text-foreground-subtle" data-testid="dc-reach-unknown">
+            {t('uiLibrary.deviceCard.reachUnknown', 'Status unknown')}
+          </span>
+        ) : common.online ? null : (
+          <ValueChip tone="danger">
+            {common.offlineLabel ?? t('uiLibrary.deviceCard.offline', 'Offline')}
+          </ValueChip>
+        )}
+      </div>
     </div>
   )
 }

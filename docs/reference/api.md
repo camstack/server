@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**207 capabilities · 1492 methods.**
+**208 capabilities · 1493 methods.**
 
 ## Method index
 
@@ -483,6 +483,7 @@
 | `embeddingEncoder.resetFailedModels` | mutation | admin | embedding-encoder |
 | `energySystem.getStatus` | query | protected | energy-system (auto) |
 | `enumSensor.getStatus` | query | protected | enum-sensor (auto) |
+| `error.getStatus` | query | protected | error (auto) |
 | `eventEmitter.getStatus` | query | protected | event-emitter (auto) |
 | `faceGallery.listIdentities` | query | protected | face-gallery |
 | `faceGallery.createIdentity` | mutation | admin | face-gallery |
@@ -2733,6 +2734,18 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `enumSensor.getStatus` | query | protected | `{ deviceId: number }` | `EnumSensorStatusSchema` |
+
+### `error` → `error.*`
+
+- **Source:** `packages/types/src/capabilities/error.cap.ts:54`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
+- **Archetypes:** status(push) · runtimeState
+- **Provider interface:** `IErrorProvider`
+- **runtimeState:** `ErrorStatusSchema`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus _(auto)_ | `error.getStatus` | query | protected | `{ deviceId: number }` | `ErrorStatusSchema` |
 
 ### `event-emitter` → `eventEmitter.*`
 

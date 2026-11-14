@@ -30,6 +30,7 @@ import type { DoNotDisturbStatusSchema } from '../capabilities/do-not-disturb.ca
 import type { DoorbellStatusSchema } from '../capabilities/doorbell.cap.js'
 import type { EnergySystemStatusSchema } from '../capabilities/energy-system.cap.js'
 import type { EnumSensorStatusSchema } from '../capabilities/enum-sensor.cap.js'
+import type { ErrorStatusSchema } from '../capabilities/error.cap.js'
 import type { EventEmitterStatusSchema } from '../capabilities/event-emitter.cap.js'
 import type { FanControlStatusSchema } from '../capabilities/fan-control.cap.js'
 import type { FeatureProbeStatusSchema } from '../capabilities/feature-probe.cap.js'
@@ -122,6 +123,7 @@ export type CapStatusTypeMap = {
   readonly 'doorbell': z.infer<typeof DoorbellStatusSchema>
   readonly 'energy-system': z.infer<typeof EnergySystemStatusSchema>
   readonly 'enum-sensor': z.infer<typeof EnumSensorStatusSchema>
+  readonly 'error': z.infer<typeof ErrorStatusSchema>
   readonly 'event-emitter': z.infer<typeof EventEmitterStatusSchema>
   readonly 'fan-control': z.infer<typeof FanControlStatusSchema>
   readonly 'feature-probe': z.infer<typeof FeatureProbeStatusSchema>
@@ -218,6 +220,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'doorbell',
   'energy-system',
   'enum-sensor',
+  'error',
   'event-emitter',
   'fan-control',
   'feature-probe',

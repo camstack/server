@@ -2514,6 +2514,13 @@
       "summary": "The card button's classes, for the one trigger that must be its own element (a menu)."
     },
     {
+      "name": "cardFaultOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/model.ts",
+      "summary": "The fault to draw, or null. Only a slice that ANSWERED `active: true` draws one: not-yet-read (`null`), clear (`false`) and a cap the device does not have (no slice) are all no badge (D315)."
+    },
+    {
       "name": "CardGatingProvider",
       "kind": "component",
       "area": "composites",
@@ -19817,7 +19824,7 @@
         },
         {
           "name": "tone",
-          "type": "'default' | 'danger'",
+          "type": "'default' | 'danger' | 'warning'",
           "optional": true,
           "doc": ""
         },

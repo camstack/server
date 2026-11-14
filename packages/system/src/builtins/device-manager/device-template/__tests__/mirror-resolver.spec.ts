@@ -28,4 +28,21 @@ describe('mirror template resolver', () => {
     mirror.apply(7, 'temperature-sensor', { temperature: 20 })
     expect(mirrorTemplateResolver(mirror, devices).viewOf('veranda')?.slices).toEqual({})
   })
+
+  it('serves the `error` slice under the cap name, so {{ alias.error.label }} reads it (D1021)', () => {
+    const robot = [
+      {
+        deviceId: 9,
+        addonId: 'dreame',
+        stableId: 'robot',
+        alias: 'robot',
+        caps: ['error'],
+      },
+    ]
+    const mirror = new ConditionMirror(templateMirrorSources(robot))
+    mirror.apply(9, 'error', { active: true, code: '38', label: 'Dust bin missing' })
+    expect(mirrorTemplateResolver(mirror, robot).viewOf('robot')?.slices['error']).toMatchObject({
+      label: 'Dust bin missing',
+    })
+  })
 })

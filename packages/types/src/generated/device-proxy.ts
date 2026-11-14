@@ -44,6 +44,7 @@ import type { doNotDisturbCapability } from '../capabilities/do-not-disturb.cap.
 import type { doorbellCapability } from '../capabilities/doorbell.cap.js'
 import type { energySystemCapability } from '../capabilities/energy-system.cap.js'
 import type { enumSensorCapability } from '../capabilities/enum-sensor.cap.js'
+import type { errorCapability } from '../capabilities/error.cap.js'
 import type { eventEmitterCapability } from '../capabilities/event-emitter.cap.js'
 import type { fanControlCapability } from '../capabilities/fan-control.cap.js'
 import type { featureProbeCapability } from '../capabilities/feature-probe.cap.js'
@@ -165,6 +166,7 @@ export interface DeviceProxyState {
   readonly doorbell: SliceHandle<InferRuntimeState<typeof doorbellCapability>>
   readonly energySystem: SliceHandle<InferRuntimeState<typeof energySystemCapability>>
   readonly enumSensor: SliceHandle<InferRuntimeState<typeof enumSensorCapability>>
+  readonly error: SliceHandle<InferRuntimeState<typeof errorCapability>>
   readonly eventEmitter: SliceHandle<InferRuntimeState<typeof eventEmitterCapability>>
   readonly fanControl: SliceHandle<InferRuntimeState<typeof fanControlCapability>>
   readonly featureProbe: SliceHandle<InferRuntimeState<typeof featureProbeCapability>>
@@ -281,6 +283,7 @@ export interface DeviceProxy {
   readonly doorbell?: InferDeviceProxyCap<typeof doorbellCapability>
   readonly energySystem?: InferDeviceProxyCap<typeof energySystemCapability>
   readonly enumSensor?: InferDeviceProxyCap<typeof enumSensorCapability>
+  readonly error?: InferDeviceProxyCap<typeof errorCapability>
   readonly eventEmitter?: InferDeviceProxyCap<typeof eventEmitterCapability>
   readonly fanControl?: InferDeviceProxyCap<typeof fanControlCapability>
   readonly featureProbe?: InferDeviceProxyCap<typeof featureProbeCapability>
@@ -669,6 +672,10 @@ export function createDeviceProxy(
 
   const enumSensorInterface = {
     getStatus: (input?: unknown) => dispatch('enum-sensor', 'enumSensor', 'getStatus', 'query', input),
+  }
+
+  const errorInterface = {
+    getStatus: (input?: unknown) => dispatch('error', 'error', 'getStatus', 'query', input),
   }
 
   const eventEmitterInterface = {
@@ -1456,6 +1463,7 @@ export function createDeviceProxy(
       doorbell: createSliceHandle<InferRuntimeState<typeof doorbellCapability>>(stateSource, binding.deviceId, 'doorbell'),
       energySystem: createSliceHandle<InferRuntimeState<typeof energySystemCapability>>(stateSource, binding.deviceId, 'energy-system'),
       enumSensor: createSliceHandle<InferRuntimeState<typeof enumSensorCapability>>(stateSource, binding.deviceId, 'enum-sensor'),
+      error: createSliceHandle<InferRuntimeState<typeof errorCapability>>(stateSource, binding.deviceId, 'error'),
       eventEmitter: createSliceHandle<InferRuntimeState<typeof eventEmitterCapability>>(stateSource, binding.deviceId, 'event-emitter'),
       fanControl: createSliceHandle<InferRuntimeState<typeof fanControlCapability>>(stateSource, binding.deviceId, 'fan-control'),
       featureProbe: createSliceHandle<InferRuntimeState<typeof featureProbeCapability>>(stateSource, binding.deviceId, 'feature-probe'),
@@ -1553,6 +1561,7 @@ export function createDeviceProxy(
     ...(bound('doorbell') ? { doorbell: doorbellInterface } : {}),
     ...(bound('energy-system') ? { energySystem: energySystemInterface } : {}),
     ...(bound('enum-sensor') ? { enumSensor: enumSensorInterface } : {}),
+    ...(bound('error') ? { error: errorInterface } : {}),
     ...(bound('event-emitter') ? { eventEmitter: eventEmitterInterface } : {}),
     ...(bound('fan-control') ? { fanControl: fanControlInterface } : {}),
     ...(bound('feature-probe') ? { featureProbe: featureProbeInterface } : {}),
