@@ -166,19 +166,25 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
         const prev =
           this.runtimeState.getCapState<ClimateControlStatus>('climate-control') ?? COLD_CLIMATE
         const hmMode = toHmClimateMode(mode)
-        if (hmMode === 'off' && prev.target !== null && prev.target > HM_OFF_SETPOINT_C) {
+        const offC = this.climateOffSetpointC()
+        if (hmMode === 'off' && prev.target !== null && prev.target > offC) {
           this.climateRestoreTargetC = prev.target
         }
         await facade.climateSetMode(this.address, channel, hmMode)
+        // The library's OFF writes 4.5 °C; the device clamps it to its own
+        // minimum. Write that minimum so the write and the decode agree.
+        if (hmMode === 'off' && offC !== HM_OFF_SETPOINT_C) {
+          await facade.climateSetTemperature(this.address, channel, offC)
+        }
         // A setpoint write while the CCU is in AUTO becomes a manual
         // override and drops the schedule. Only heat restores the target.
-        if (mode === 'heat' && (prev.mode === 'off' || isHmOffSetpoint(prev.target))) {
+        if (mode === 'heat' && (prev.mode === 'off' || isHmOffSetpoint(prev.target, offC))) {
           const restore = this.climateRestoreTargetC ?? HM_DEFAULT_RESTORE_TARGET_C
           await facade.climateSetTemperature(this.address, channel, restore)
         }
       },
       setTarget: async ({ target }) => {
-        if (target > HM_OFF_SETPOINT_C) {
+        if (target > this.climateOffSetpointC()) {
           this.climateRestoreTargetC = target
         }
         await this.requireFacade().climateSetTemperature(this.address, channel, target)
@@ -200,6 +206,18 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
     this.registeredCap = 'climate-control'
   }
 
+  /**
+   * The off setpoint of THIS thermostat: the entity's own minimum setpoint
+   * (the library reads it from the SETPOINT datapoint metadata), else the
+   * CCU default {@link HM_OFF_SETPOINT_C}.
+   */
+  private climateOffSetpointC(): number {
+    const entity = this.facade
+      ?.customEntities()
+      .find((e) => e.device === this.address && e.channel === this.actuatorChannel)
+    return entity?.kind === 'climate' ? entity.minTemp : HM_OFF_SETPOINT_C
+  }
+
   // ── Value-change decode (status read-back) ────────────────────────────
 
   private handleValueChanged(event: ValueChangedEvent, origin: HmValueOrigin): void {
@@ -217,7 +235,8 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
     if (cap === 'climate-control') {
       const prev =
         this.runtimeState.getCapState<ClimateControlStatus>('climate-control') ?? COLD_CLIMATE
-      const next = decodeClimate(prev, parameter, value, now)
+      const offC = this.climateOffSetpointC()
+      const next = decodeClimate(prev, parameter, value, now, offC)
       if (next === null && parameter === 'SET_POINT_MODE') {
         this.ctx.logger.debug('Homematic climate: SET_POINT_MODE unknown — mode unchanged', {
           tags: { deviceId: this.id },
@@ -225,7 +244,7 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
         })
       }
       if (next) {
-        if (next.target !== null && next.target > HM_OFF_SETPOINT_C) {
+        if (next.target !== null && next.target > offC) {
           this.climateRestoreTargetC = next.target
         }
         this.runtimeState.setCapState('climate-control', next)

@@ -247,6 +247,22 @@ describe('decodeClimate', () => {
     expect(frost?.mode).toBe('auto')
   })
 
+  it('the off setpoint is the device minimum when known (BWTH clamps 4.5 to 5)', () => {
+    const heat = { ...CLIMATE, mode: 'heat' as const, target: 21, lastActiveMode: 'heat' as const }
+    expect(decodeClimate(heat, 'SET_POINT_TEMPERATURE', 5, 7, 5)?.mode).toBe('off')
+    expect(decodeClimate(heat, 'SET_POINT_TEMPERATURE', 5.5, 7, 5)?.mode).toBe('heat')
+    const auto = { ...CLIMATE, mode: 'auto' as const, target: 21 }
+    expect(decodeClimate(auto, 'SET_POINT_TEMPERATURE', 5, 7, 5)?.mode).toBe('auto')
+    const atMin = { ...CLIMATE, mode: 'heat' as const, target: 5 }
+    expect(decodeClimate(atMin, 'SET_POINT_MODE', 'MANU', 7, 5)?.mode).toBe('off')
+  })
+
+  it('without a known minimum the 4.5 rule holds: 5 is heat', () => {
+    const heat = { ...CLIMATE, mode: 'heat' as const, target: 21, lastActiveMode: 'heat' as const }
+    expect(decodeClimate(heat, 'SET_POINT_TEMPERATURE', 5, 7)?.mode).toBe('heat')
+    expect(decodeClimate(heat, 'SET_POINT_TEMPERATURE', 4.5, 7)?.mode).toBe('off')
+  })
+
   it('SET_POINT_MODE at 4.5 °C is off only for MANU; AUTO stays auto', () => {
     const atOff = { ...CLIMATE, mode: 'off' as const, target: 4.5 }
     expect(decodeClimate(atOff, 'SET_POINT_MODE', 'MANU', 7)?.mode).toBe('off')

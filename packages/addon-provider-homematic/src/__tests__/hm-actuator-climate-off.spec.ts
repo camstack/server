@@ -11,6 +11,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
 import type { HmClimateMode } from '../homematic-decode.js'
+import { hmClimateEntity } from './hm-test-fixtures.js'
 import { RecordingLogger } from './recording-logger.js'
 
 const INTEGRATION_ID = 'hm_001'
@@ -158,6 +159,68 @@ describe('HmActuatorDevice climate OFF', () => {
     await climate.setMode({ deviceId: DEVICE_ID, mode: 'heat' })
     expect(climateSetMode).toHaveBeenLastCalledWith(ADDRESS, CHANNEL, 'heat')
     expect(climateSetTemperature).toHaveBeenCalledWith(ADDRESS, CHANNEL, 22.5)
+  })
+
+  it('setMode off writes the device minimum (BWTH 5.0) so write and decode agree', async () => {
+    const entity = hmClimateEntity({ device: ADDRESS, channel: CHANNEL })
+    installFacade({
+      climateSetMode,
+      climateSetTemperature,
+      on: () => () => undefined,
+      devices: (): HmDevice[] => [],
+      customEntities: (): HmCustomEntity[] => [entity],
+    })
+    const captured: CapturedCap[] = []
+    const device = new HmActuatorDevice(climateContext(captured, silentLogger))
+    const climate = climateOf(captured)
+
+    runtimeSeed(device, { mode: 'heat', target: 22.5, lastActiveMode: 'heat' })
+    await climate.setMode({ deviceId: DEVICE_ID, mode: 'off' })
+    expect(climateSetMode).toHaveBeenCalledWith(ADDRESS, CHANNEL, 'off')
+    expect(climateSetTemperature).toHaveBeenLastCalledWith(ADDRESS, CHANNEL, 5)
+  })
+
+  it.each([
+    { target: 5, mode: 'off' },
+    { target: 5.5, mode: 'heat' },
+  ])('a MANU setpoint of $target on a minimum-5 device decodes as $mode', ({ target, mode }) => {
+    const entity = hmClimateEntity({ device: ADDRESS, channel: CHANNEL })
+    const datapoint = (parameter: string, type: string, value: string | number) => ({
+      id: `${INTEGRATION_ID}:${CHANNEL}:VALUES:${parameter}`,
+      parameter,
+      type,
+      value,
+      readable: true,
+      writable: true,
+      hasEvents: true,
+    })
+    const seeded: HmDevice = {
+      address: ADDRESS,
+      type: 'HMIP-BWTH',
+      name: null,
+      channels: [
+        {
+          address: CHANNEL,
+          index: 1,
+          name: null,
+          dataPoints: [
+            datapoint('SET_POINT_MODE', 'INTEGER', 1),
+            datapoint('SET_POINT_TEMPERATURE', 'FLOAT', target),
+          ],
+        },
+      ],
+    }
+    installFacade({
+      climateSetMode,
+      climateSetTemperature,
+      on: () => () => undefined,
+      devices: () => [seeded],
+      customEntities: (): HmCustomEntity[] => [entity],
+    })
+    const device = new HmActuatorDevice(climateContext([], silentLogger))
+    expect(device.runtimeState.getCapState<ClimateControlStatus>('climate-control')?.mode).toBe(
+      mode,
+    )
   })
 
   it('setMode auto from OFF does not write a setpoint', async () => {

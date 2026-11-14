@@ -26,8 +26,16 @@ export const HM_OFF_SETPOINT_C = 4.5
 /** When waking from OFF with no remembered target, match the library fallback. */
 export const HM_DEFAULT_RESTORE_TARGET_C = 21
 
-export function isHmOffSetpoint(target: number | null): boolean {
-  return target !== null && target <= HM_OFF_SETPOINT_C
+/**
+ * Is `target` the off setpoint? OFF is the device's own minimum setpoint when
+ * known (a HmIP-BWTH clamps the 4.5 write to its 5.0 minimum and reports 5),
+ * {@link HM_OFF_SETPOINT_C} otherwise.
+ */
+export function isHmOffSetpoint(
+  target: number | null,
+  offSetpointC: number = HM_OFF_SETPOINT_C,
+): boolean {
+  return target !== null && target <= offSetpointC
 }
 
 /**
@@ -272,10 +280,14 @@ export function decodeLock(
  * (current °C), HUMIDITY (%), SET_POINT_MODE (ENUM, readable mode),
  * BOOST_MODE (bool). `CONTROL_MODE` is write-only on HmIP and ignored here.
  */
-function modeWithHmOffTarget(previous: ClimateControlStatus, target: number): HvacMode {
-  // 4.5 °C is OFF only in MANU. An AUTO schedule uses the same temperature
-  // as a frost slot and must stay auto.
-  if (isHmOffSetpoint(target)) return previous.mode === 'auto' ? 'auto' : 'off'
+function modeWithHmOffTarget(
+  previous: ClimateControlStatus,
+  target: number,
+  offSetpointC: number,
+): HvacMode {
+  // The off setpoint is OFF only in MANU. An AUTO schedule uses the same
+  // temperature as a frost slot and must stay auto.
+  if (isHmOffSetpoint(target, offSetpointC)) return previous.mode === 'auto' ? 'auto' : 'off'
   if (previous.mode === 'off') return previous.lastActiveMode ?? 'heat'
   return previous.mode
 }
@@ -285,12 +297,13 @@ export function decodeClimate(
   parameter: string,
   value: HmValue,
   now: number,
+  offSetpointC: number = HM_OFF_SETPOINT_C,
 ): ClimateControlStatus | null {
   if (parameter === 'SET_POINT_TEMPERATURE' && typeof value === 'number') {
     return {
       ...previous,
       target: value,
-      mode: modeWithHmOffTarget(previous, value),
+      mode: modeWithHmOffTarget(previous, value, offSetpointC),
       lastFetchedAt: now,
     }
   }
@@ -307,7 +320,8 @@ export function decodeClimate(
     if (mode === null) return null
     // MANU at the off temperature is off. AUTO (including a frost slot and
     // party) keeps the mode the index named.
-    const resolved = mode === 'heat' && isHmOffSetpoint(previous.target) ? 'off' : mode
+    const resolved =
+      mode === 'heat' && isHmOffSetpoint(previous.target, offSetpointC) ? 'off' : mode
     return { ...previous, mode: resolved, lastFetchedAt: now }
   }
   if (parameter === 'BOOST_MODE' && typeof value === 'boolean') {

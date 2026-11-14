@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic thermostats whose minimum setpoint is above 4.5 (e.g. HmIP-BWTH, 5.0) now show Off when switched off instead of staying on Heat at the minimum.
+
 ## [1.2.199] - 2026-11-14
 
 ### Changed
