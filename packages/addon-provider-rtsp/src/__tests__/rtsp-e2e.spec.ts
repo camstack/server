@@ -546,7 +546,7 @@ describe('RTSP Provider — Device Architecture v2 E2E', () => {
       const addon = new RtspProviderAddon()
       await addon.initialize(makeAddonContext(ADDON_ID, devicesApi, fakeApi))
 
-      await expect(addon.createDevice({ type: DeviceType.Hub, config: {} })).rejects.toThrow(
+      await expect(addon.createDevice({ type: DeviceType.Light, config: {} })).rejects.toThrow(
         /does not support device type/,
       )
     })
@@ -740,7 +740,7 @@ describe('RTSP Provider — Device Architecture v2 E2E', () => {
       const addon = new RtspProviderAddon()
       await addon.initialize(makeAddonContext(ADDON_ID, devicesApi, fakeApi))
 
-      const schema = await addon.getChildCreationSchema({ type: DeviceType.Hub })
+      const schema = await addon.getChildCreationSchema({ type: DeviceType.Light })
       expect(schema).toBeNull()
     })
   })

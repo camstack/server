@@ -55,7 +55,6 @@ const BUTTON_LAYOUT: HeroLayout = { rows: ['button'] }
 
 export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Camera]: HERO_LAYOUT_DEFAULT,
-  [DeviceType.Hub]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Light]: LIGHT_LAYOUT,
   [DeviceType.Siren]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Switch]: SWITCH_LAYOUT,

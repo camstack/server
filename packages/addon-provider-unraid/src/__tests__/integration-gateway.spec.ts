@@ -144,9 +144,10 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     expect(addon?.capabilities.map((c) => c.name)).toContain('device-adoption')
   })
 
-  it('has no Hub device class: the Gateway takes its place', () => {
+  it('has no hub device class: the Gateway takes its place', () => {
     const classes = new InspectableAddon().classes()
-    expect(classes[DeviceType.Hub]).toBeUndefined()
+    const keys: readonly string[] = Object.keys(classes)
+    expect(keys).not.toContain('hub')
     expect(classes[DeviceType.Gateway]).toBe(UnraidGatewayDevice)
     expect(classes[DeviceType.Container]).toBe(UnraidInstanceDevice)
   })

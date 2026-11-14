@@ -9329,7 +9329,6 @@
     "deviceMeta": {
       "type": {
         "camera": "Camera",
-        "hub": "Hub",
         "light": "Light",
         "siren": "Siren",
         "switch": "Switch",
@@ -9500,7 +9499,6 @@
         },
         "type": {
           "camera": "Camera",
-          "hub": "Hub",
           "light": "Light",
           "siren": "Siren",
           "switch": "Switch",

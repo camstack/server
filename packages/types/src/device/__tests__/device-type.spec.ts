@@ -4,7 +4,6 @@ import { DeviceType, DeviceFeature, ChargingStatus } from '../device-type.js'
 describe('DeviceType', () => {
   it('has expected values', () => {
     expect(DeviceType.Camera).toBe('camera')
-    expect(DeviceType.Hub).toBe('hub')
     expect(DeviceType.Light).toBe('light')
     expect(DeviceType.Siren).toBe('siren')
     expect(DeviceType.Switch).toBe('switch')

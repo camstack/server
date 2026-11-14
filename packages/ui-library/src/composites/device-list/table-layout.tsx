@@ -80,12 +80,12 @@ interface TableLayoutProps extends DeviceRowsProps {
 
 // Indent levels for the table-view first cell:
 //   0 → top-level (parentDeviceId null)
-//   1 → adopted under a hub/nvr (parent.type ∈ {hub, nvr}) — visual
-//       hierarchy hint so operators see the parent-child relationship
-//       without relying solely on the "Under: <parent>" badge
+//   1 → adopted under an nvr (parent.type is `nvr`) — visual hierarchy
+//       hint so operators see the parent-child relationship without
+//       relying solely on the "Under: <parent>" badge
 //   2 → accessory under any parent (handled by `isAccessoryRow` →
 //       index.tsx maps to indentLevel 2)
-const HUB_LIKE_PARENT_TYPES: ReadonlySet<string> = new Set(['hub', 'nvr'])
+const HUB_LIKE_PARENT_TYPES: ReadonlySet<string> = new Set(['nvr'])
 
 function topLevelIndentLevel(device: DeviceItemDevice, parentType: string | null): 0 | 1 {
   if (device.parentDeviceId === null || parentType === null) return 0

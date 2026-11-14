@@ -75,7 +75,7 @@ export type DeviceControlKind =
 /**
  * Exhaustive `DeviceType` → `DeviceControlKind` map. Omitting a new enum member
  * fails the build here (the single place the type→kind decision is encoded).
- * `'dummy'` marks types with no interactive control (Camera/Hub/Generic and the
+ * `'dummy'` marks types with no interactive control (Camera/Generic and the
  * placeholder HA types whose inline control renders a dash).
  */
 export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
@@ -86,7 +86,6 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.HeatPump]: 'dummy',
   [DeviceType.EnergySystem]: 'energy-system',
   [DeviceType.Camera]: 'dummy',
-  [DeviceType.Hub]: 'dummy',
   [DeviceType.Switch]: 'switch',
   [DeviceType.Siren]: 'switch',
   [DeviceType.Light]: 'light',

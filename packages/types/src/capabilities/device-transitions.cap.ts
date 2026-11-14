@@ -53,11 +53,10 @@ export const TransitionsStatusSchema = z.object({
 export type TransitionsStatus = z.infer<typeof TransitionsStatusSchema>
 
 /**
- * Every real device type: a Container is a place, not something that changes
- * state, and `Hub` is only a legacy stored value no live device carries.
+ * Every real device type. A Container is a place, not something that changes state.
  */
 const DEVICE_TRANSITIONS_DEVICE_TYPES: readonly DeviceType[] = Object.values(DeviceType).filter(
-  (type) => type !== DeviceType.Hub && type !== DeviceType.Container,
+  (type) => type !== DeviceType.Container,
 )
 
 export const deviceTransitionsCapability = {

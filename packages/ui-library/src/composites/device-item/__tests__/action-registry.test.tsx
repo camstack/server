@@ -74,7 +74,6 @@ describe('DEVICE_TYPE_CONTROL (replaces DEVICE_TYPE_ACTIONS)', () => {
   it('genuine placeholder types → DummyInline', () => {
     const dummyTypes: DeviceType[] = [
       DeviceType.Camera,
-      DeviceType.Hub,
       DeviceType.Generic,
       DeviceType.Notifier,
       DeviceType.Container,
@@ -94,9 +93,8 @@ describe('DEVICE_TYPE_CONTROL (replaces DEVICE_TYPE_ACTIONS)', () => {
     expect(result?.InlineControl).toBe(CoverInlineControl)
   })
 
-  it('resolveDeviceControl returns DummyInline for Camera, Hub, Generic (no real control)', () => {
+  it('resolveDeviceControl returns DummyInline for Camera and Generic (no real control)', () => {
     expect(resolveDeviceControl(DeviceType.Camera)?.InlineControl).toBe(DummyInline)
-    expect(resolveDeviceControl(DeviceType.Hub)?.InlineControl).toBe(DummyInline)
     expect(resolveDeviceControl(DeviceType.Generic)?.InlineControl).toBe(DummyInline)
   })
 

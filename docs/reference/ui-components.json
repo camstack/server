@@ -4797,7 +4797,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-item/helpers.ts",
-      "summary": "A child with no role is \"adopted\" only when its parent is a hub, an NVR or a gateway. A container's child is a part of the container, and the child the container card draws (`primaryChildId`) is its primary."
+      "summary": "A child with no role is \"adopted\" only when its parent is an NVR or a gateway. A container's child is a part of the container, and the child the container card draws (`primaryChildId`) is its primary."
     },
     {
       "name": "deriveWebrtcDebugStats",

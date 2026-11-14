@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The hub device type is no longer offered in type pickers or device labels.
+
 ## [1.2.665] - 2026-11-14
 
 ### Changed

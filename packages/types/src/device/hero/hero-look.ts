@@ -438,7 +438,6 @@ const MODE_LOOK_TYPES: readonly string[] = [DeviceType.Climate]
 
 export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Camera]: CAMERA_LOOK,
-  [DeviceType.Hub]: HERO_LOOK_DEFAULT,
   [DeviceType.Light]: LIGHT_LOOK,
   [DeviceType.Siren]: HERO_LOOK_DEFAULT,
   [DeviceType.Switch]: SWITCH_LOOK,

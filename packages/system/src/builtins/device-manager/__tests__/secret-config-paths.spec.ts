@@ -19,7 +19,7 @@ describe('secretConfigPaths on DeviceInfo', () => {
       addonId: 'provider-unifi',
       stableId: 'ctl',
       id,
-      type: 'hub',
+      type: 'gateway',
       name: 'Controller',
       parentDeviceId: null,
       config: {},

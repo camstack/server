@@ -555,15 +555,6 @@ export const DEVICE_TYPE_NOUNS: readonly DeviceNounSpec[] = [
     aliases: [],
   },
   {
-    id: 'hub',
-    key: 'uiLibrary.deviceMeta.noun.type.hub',
-    en: 'Hub',
-    it: 'Hub',
-    shortEn: 'Hub',
-    shortIt: 'Hub',
-    aliases: [],
-  },
-  {
     id: 'light',
     key: 'uiLibrary.deviceMeta.noun.type.light',
     en: 'Light',

@@ -213,10 +213,6 @@ const DEVICE_TYPE_LABELS: Record<DeviceType, DeviceMetaLabel> = {
     labelKey: 'uiLibrary.deviceMeta.type.camera',
     labelFallback: 'Camera',
   },
-  [DeviceType.Hub]: {
-    labelKey: 'uiLibrary.deviceMeta.type.hub',
-    labelFallback: 'Hub',
-  },
   [DeviceType.Light]: {
     labelKey: 'uiLibrary.deviceMeta.type.light',
     labelFallback: 'Light',

@@ -4,11 +4,10 @@
  *
  * Classification:
  *   - Top-level rows: standalone devices (`parentDeviceId === null`)
- *     plus adopted devices whose parent is a hub or NVR (e.g. cameras
- *     under a `Home hub`). Adopted devices keep their parent badge but
+ *     plus adopted devices whose parent is an NVR. Adopted devices keep their parent badge but
  *     render as primary rows + paginate.
  *   - Accessories: devices whose parent is a CAMERA (or any non-
- *     hub/nvr type). Render nested under the parent's chevron.
+ *     NVR type). Render nested under the parent's chevron.
  *
  * Why parent-type and not the device's own `role`: the wire response
  * from `deviceManager.listAll` ships `role: null` even for siren /
@@ -33,8 +32,8 @@ import type { DeviceItemDevice } from '../device-item/helpers'
  *
  * A device is countable when:
  *   - it has no parent (`parentDeviceId === null`), OR
- *   - its parent's type is a hub-like owner (`hub` / `nvr`) — an NVR's
- *     cameras and a hub's children are real, individually-operable devices.
+ *   - its parent's type is an NVR (`nvr`) — an NVR's cameras are real,
+ *     individually-operable devices.
  *
  * Excluded:
  *   - devices whose parent has type `container` — a Container is a grouping
@@ -64,7 +63,7 @@ export interface GroupedDevices {
   readonly accessoriesByParent: ReadonlyMap<number, readonly DeviceItemDevice[]>
 }
 
-const PARENT_AS_OWNER_TYPES: ReadonlySet<string> = new Set(['hub', 'nvr'])
+const PARENT_AS_OWNER_TYPES: ReadonlySet<string> = new Set(['nvr'])
 
 /** Options for `groupTopLevelAndAccessories`. */
 export interface GroupDevicesOptions {
@@ -142,15 +141,15 @@ export function groupTopLevelAndAccessories(
       topLevel.push(d)
       continue
     }
-    // Adopted: parent is a hub/NVR and the child has no role override.
-    // Cameras adopted by a `Home hub` keep their primary-row treatment.
+    // Adopted: parent is an NVR and the child has no role override.
+    // Cameras adopted by an NVR keep their primary-row treatment.
     const hasRole = d.role !== null && d.role !== undefined
     const parentIsOwner = PARENT_AS_OWNER_TYPES.has(parent.type)
     if (parentIsOwner && !hasRole) {
       topLevel.push(d)
       continue
     }
-    // Otherwise: accessory of a camera (or other non-hub parent). Group
+    // Otherwise: accessory of a camera (or other non-NVR parent). Group
     // under the parent so the table renders it as a nested row.
     const list = accessoriesByParent.get(parentId)
     if (list) list.push(d)

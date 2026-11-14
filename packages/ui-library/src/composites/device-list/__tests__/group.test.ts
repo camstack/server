@@ -25,14 +25,14 @@ describe('groupTopLevelAndAccessories', () => {
 
   it('keeps top-level devices (parentDeviceId=null, role=null) as topLevel', () => {
     const a = dev({ id: 1, type: 'camera' })
-    const b = dev({ id: 2, type: 'hub' })
+    const b = dev({ id: 2, type: 'nvr' })
     const result = groupTopLevelAndAccessories([a, b])
     expect(result.topLevel).toEqual([a, b])
     expect(result.accessoriesByParent.size).toBe(0)
   })
 
-  it('treats role=null adopted children as top-level (cameras adopted under hub)', () => {
-    const hub = dev({ id: 1, type: 'hub' })
+  it('treats role=null adopted children as top-level (cameras adopted under an nvr)', () => {
+    const hub = dev({ id: 1, type: 'nvr' })
     const cam = dev({ id: 2, type: 'camera', parentDeviceId: 1 })
     const result = groupTopLevelAndAccessories([hub, cam])
     expect(result.topLevel).toEqual([hub, cam])
@@ -94,17 +94,17 @@ describe('countableDevices', () => {
 
   it('counts top-level devices (parentDeviceId=null)', () => {
     const cam = dev({ id: 1, type: 'camera' })
-    const hub = dev({ id: 2, type: 'hub' })
+    const hub = dev({ id: 2, type: 'nvr' })
     expect(countableDevices([cam, hub])).toEqual([cam, hub])
   })
 
-  it('counts hub children but NOT container children', () => {
+  it('counts nvr children but NOT container children', () => {
     // Container (id=1) with 2 entity-children → container counts as 1, children excluded
-    // Hub (id=2) with 1 camera child → hub + camera both counted
+    // NVR (id=2) with 1 camera child → nvr + camera both counted
     const container = dev({ id: 1, type: 'container' })
     const cover = dev({ id: 3, type: 'cover', parentDeviceId: 1 })
     const sensor = dev({ id: 4, type: 'sensor', parentDeviceId: 1 })
-    const hub = dev({ id: 2, type: 'hub' })
+    const hub = dev({ id: 2, type: 'nvr' })
     const cam = dev({ id: 5, type: 'camera', parentDeviceId: 2 })
 
     const result = countableDevices([container, cover, sensor, hub, cam])
@@ -139,7 +139,7 @@ describe('orderAdoptedAfterParent (via groupTopLevelAndAccessories)', () => {
     // The operator's screenshot: Carol, Home hub, Baby monitor (standalone),
     // then the hub's two adopted cameras — family scattered by arrival order.
     const carol = dev({ id: 107, type: 'camera', name: 'Carol' })
-    const hub = dev({ id: 639, type: 'hub', name: 'Home hub' })
+    const hub = dev({ id: 639, type: 'nvr', name: 'Home hub' })
     const baby = dev({ id: 106, type: 'camera', name: 'Baby monitor' })
     const laundry = dev({ id: 3628, type: 'camera', name: 'Laundry', parentDeviceId: 639 })
     const retro = dev({ id: 3629, type: 'camera', name: 'Porta retro', parentDeviceId: 639 })
@@ -151,7 +151,7 @@ describe('orderAdoptedAfterParent (via groupTopLevelAndAccessories)', () => {
     // Direct unit: a self-referential row must be emitted (never dropped),
     // and siblings keep their incoming relative order after the parent.
     const selfRef = dev({ id: 7, type: 'camera', parentDeviceId: 7 })
-    const hub = dev({ id: 1, type: 'hub' })
+    const hub = dev({ id: 1, type: 'nvr' })
     const kidB = dev({ id: 3, type: 'camera', parentDeviceId: 1 })
     const kidA = dev({ id: 2, type: 'camera', parentDeviceId: 1 })
     const ordered = orderAdoptedAfterParent([selfRef, kidB, hub, kidA])

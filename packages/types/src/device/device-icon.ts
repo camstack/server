@@ -19,7 +19,6 @@ import type { IconKey } from './icon-catalog.js'
 /** The icon of each device type. */
 export const DEVICE_TYPE_ICON = {
   [DeviceType.Camera]: 'camera',
-  [DeviceType.Hub]: 'network',
   [DeviceType.Light]: 'lightbulb',
   [DeviceType.Siren]: 'siren',
   [DeviceType.Switch]: 'toggle-left',

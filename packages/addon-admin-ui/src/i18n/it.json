@@ -9351,7 +9351,6 @@
     "deviceMeta": {
       "type": {
         "camera": "Telecamera",
-        "hub": "Hub",
         "light": "Luce",
         "siren": "Sirena",
         "switch": "Interruttore",
@@ -9522,7 +9521,6 @@
         },
         "type": {
           "camera": "Telecamera",
-          "hub": "Hub",
           "light": "Luce",
           "siren": "Sirena",
           "switch": "Interruttore",

@@ -355,7 +355,6 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.Automation]: false,
   // ── natural width: DummyInline placeholder ("—") ───────────────────
   [DeviceType.Camera]: false,
-  [DeviceType.Hub]: false,
   [DeviceType.Update]: false,
   [DeviceType.Generic]: false,
   // Weather inline = condition icon + temperature readout (readout, natural width).

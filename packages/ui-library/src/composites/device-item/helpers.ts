@@ -128,7 +128,7 @@ export interface DeviceItemParent {
   readonly name: string
   /**
    * Type of the parent device. Optional — when provided, callers can
-   * distinguish "adopted under a hub/nvr/gateway" from a container's part.
+   * distinguish "adopted under an nvr/gateway" from a container's part.
    */
   readonly type?: string
   /** The container's resolved primary child, when this parent is a container. */
@@ -153,22 +153,21 @@ export interface DeviceKindContext {
 
 /**
  * Historical stored type. {@link DeviceType} has no Nvr member; rows still
- * carry `nvr`, and a camera under one is adopted the same way as under a hub.
+ * carry `nvr`, and a camera under one is adopted.
  */
 const NVR_DEVICE_TYPE = 'nvr'
 
 /** A role-less child of one of these parents is adopted, not a part of it. */
 const ADOPTING_PARENT_TYPES: ReadonlySet<string> = new Set<string>([
-  DeviceType.Hub,
   DeviceType.Gateway,
   NVR_DEVICE_TYPE,
 ])
 
-const FIRST_CLASS_TYPES: ReadonlySet<string> = new Set(['camera', 'hub', 'nvr'])
+const FIRST_CLASS_TYPES: ReadonlySet<string> = new Set(['camera', 'nvr'])
 
 /**
- * A child with no role is "adopted" only when its parent is a hub, an NVR or
- * a gateway. A container's child is a part of the container, and the child
+ * A child with no role is "adopted" only when its parent is an NVR or a
+ * gateway. A container's child is a part of the container, and the child
  * the container card draws (`primaryChildId`) is its primary.
  */
 export function deriveDeviceKind(

@@ -77,7 +77,6 @@ export type HeroScene = z.infer<typeof HeroSceneSchema>
 
 export const HERO_SCENE_BY_TYPE = {
   [DeviceType.Camera]: 'camera',
-  [DeviceType.Hub]: 'gateway',
   [DeviceType.Light]: 'light',
   [DeviceType.Siren]: 'siren',
   [DeviceType.Switch]: 'plug',

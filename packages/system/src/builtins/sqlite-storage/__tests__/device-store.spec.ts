@@ -54,7 +54,12 @@ describe('DeviceStore', () => {
   })
 
   it('lists children by parent', () => {
-    store.insert('reolink', { stableId: 'nvr-01', type: 'hub', name: 'NVR', parentStableId: null })
+    store.insert('reolink', {
+      stableId: 'nvr-01',
+      type: 'gateway',
+      name: 'NVR',
+      parentStableId: null,
+    })
     store.insert('reolink', {
       stableId: 'cam-ch1',
       type: 'camera',

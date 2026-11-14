@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 /**
- * A role-less child is "adopted" only under a hub, NVR or gateway.
+ * A role-less child is "adopted" only under an NVR or a gateway.
  * A container's child is a part of it, and the child the container draws
  * reads "primary".
  */
@@ -80,9 +80,8 @@ describe('deriveDeviceKind', () => {
     ).toBe('part')
   })
 
-  it('still calls a role-less child adopted under a hub, an NVR or a gateway', () => {
+  it('still calls a role-less child adopted under an NVR or a gateway', () => {
     const camera = row(12, DeviceType.Camera, 3)
-    expect(deriveDeviceKind(camera, { parentType: DeviceType.Hub })).toBe('adopted')
     expect(deriveDeviceKind(camera, { parentType: 'nvr' })).toBe('adopted')
     expect(deriveDeviceKind(camera, { parentType: DeviceType.Gateway })).toBe('adopted')
   })
@@ -116,8 +115,8 @@ describe('container children are parts, hub children stay adopted', () => {
     expect(screen.getByTitle('Primary · 1 part')).toBeTruthy()
   })
 
-  it('keeps Adopted devices for a hub', () => {
-    const hub = row(3, DeviceType.Hub, null, { name: 'Home hub' })
+  it('keeps Adopted devices for an nvr', () => {
+    const hub = row(3, 'nvr', null, { name: 'Home hub' })
     const camera = row(12, DeviceType.Camera, 3, { name: 'Porch' })
     render(
       withQuery(
@@ -156,7 +155,7 @@ describe('container children are parts, hub children stay adopted', () => {
               trpc={trpc}
               device={row(12, DeviceType.Camera, 3, { name: 'Porch' })}
               view="table"
-              parent={{ id: 3, name: 'Home hub', type: DeviceType.Hub }}
+              parent={{ id: 3, name: 'Home hub', type: DeviceType.Gateway }}
             />
           </tbody>
         </table>,

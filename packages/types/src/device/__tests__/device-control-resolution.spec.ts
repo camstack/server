@@ -31,7 +31,6 @@ describe('resolveDeviceControlKind (base type → control-kind)', () => {
   it('maps placeholder / non-controllable types to dummy', () => {
     for (const t of [
       DeviceType.Camera,
-      DeviceType.Hub,
       DeviceType.Generic,
       DeviceType.Notifier,
       DeviceType.Container,
