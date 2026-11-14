@@ -19,9 +19,6 @@ export interface CardSliderProps {
   readonly testId?: string
 }
 
-/** Thumb travel of the vertical track, in px: its height minus the thumb. */
-const VERTICAL_TRAVEL_PX = 96
-
 interface Draft {
   readonly shown: number
   readonly move: (value: number) => void
@@ -80,9 +77,6 @@ function GatedSlider({
   )
 }
 
-const fraction = (value: number, min: number, max: number): number =>
-  max === min ? 0 : Math.min(1, Math.max(0, (value - min) / (max - min)))
-
 /** What a bottom-zone track may add around itself. */
 export interface HorizontalSliderExtras {
   /** Drawn before the track (its name, or the elapsed time). */
@@ -118,19 +112,20 @@ export function HorizontalSlider(props: CardSliderProps & HorizontalSliderExtras
   )
 }
 
-/** A level in one of the scene's side columns, its value riding on the thumb. */
+/**
+ * A level in one of the scene's side columns, its value under the track so a
+ * narrow column never pushes it over the drawing.
+ */
 export function VerticalSlider(props: CardSliderProps): ReactElement {
   const draft = useDraft(props)
   const shownLabel = props.valueLabel?.(draft.shown) ?? null
-  const top = (1 - fraction(draft.shown, props.min, props.max)) * VERTICAL_TRAVEL_PX
   return (
-    <div className="relative flex h-28 w-12 justify-center">
-      <GatedSlider vertical props={props} draft={draft} />
+    <div className="flex min-w-0 max-w-full flex-col items-center gap-1">
+      <div className="relative flex h-28 w-12 justify-center">
+        <GatedSlider vertical props={props} draft={draft} />
+      </div>
       {shownLabel === null ? null : (
-        <output
-          className="pointer-events-none absolute left-9 whitespace-nowrap rounded-md bg-primary/10 px-1.5 text-xs font-semibold tabular-nums text-primary"
-          style={{ top }} // ui-check-ok: computed geometry, the thumb's height on the track
-        >
+        <output className="max-w-full truncate whitespace-nowrap rounded-md bg-primary/10 px-1.5 text-xs font-semibold tabular-nums text-primary">
           {shownLabel}
         </output>
       )}
