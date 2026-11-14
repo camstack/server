@@ -114,6 +114,32 @@ describe('HeroModelCard', () => {
       null,
     )
   })
+  it('draws a number without bounds as a number field and a text control as a text field', () => {
+    const run = vi.fn()
+    const free = buildModel('control', ['control'], {
+      control: { kind: 'numeric', value: 5, options: [], lastChangedAt: 1 },
+    })
+    const { unmount } = render(<HeroModelCard model={free} host={host(run)} />)
+    expect(screen.queryByRole('slider')).toBeNull()
+    expect(screen.getByRole('spinbutton')).toBeTruthy()
+    unmount()
+    const text = buildModel('control', ['control'], {
+      control: { kind: 'text', value: 'Away', options: [], lastChangedAt: 1 },
+    })
+    render(<HeroModelCard model={text} host={host(run)} />)
+    expect(screen.getByDisplayValue('Away')).toBeTruthy()
+  })
+
+  it('draws no editor for a control the session may not act on', () => {
+    const model = buildModel(
+      'control',
+      ['control'],
+      { control: { kind: 'text', value: 'Away', options: [], lastChangedAt: 1 } },
+      false,
+    )
+    render(<HeroModelCard model={model} host={host()} />)
+    expect(screen.queryByDisplayValue('Away')).toBeNull()
+  })
   it('draws a climate setpoint in the scene centre, steps it by the cap step and names mode and fan', () => {
     const run = vi.fn()
     const model = buildModel('climate', ['climate-control'], {

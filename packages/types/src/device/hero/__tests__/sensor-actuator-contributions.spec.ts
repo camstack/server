@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { DeviceFeature, DeviceRole, DeviceType } from '../../device-type.js'
+import { buildHeroModel } from '../build-hero-model.js'
 import { resolveHeroLook } from '../hero-look.js'
+import { projectDeviceRow } from '../hero-row.js'
 import { actionsOf, build, NOW, primaryOf, rowOf } from './hero-test-kit.js'
 
 const POWER_WORDS = ['On', 'Off', 'Acceso', 'Spento']
@@ -249,6 +251,47 @@ describe('meter, weather, image, control', () => {
     expect(m.title.en).toBe('5')
     expect(m.look.icon).toBe('sliders-horizontal')
     expect(build(DeviceType.Control, ['control'], {}).state).toBe('unknown')
+  })
+})
+
+describe('a control offers the editor its value allows', () => {
+  const controlOf = (control: object) =>
+    build(DeviceType.Control, ['control'], {
+      control: { options: [], lastChangedAt: 0, ...control },
+    })
+  const kinds = (control: object) =>
+    rowOf(controlOf(control), 'control').controls.map((c) => c.kind)
+  it('a number with bounds is a slider', () => {
+    expect(kinds({ kind: 'numeric', value: 5, min: 0, max: 30, step: 1 })).toEqual(['slider'])
+  })
+  it('a number without bounds is a number field, carrying its step', () => {
+    const [control] = rowOf(controlOf({ kind: 'numeric', value: 5, step: 0.5 }), 'control').controls
+    expect(control).toMatchObject({
+      kind: 'number',
+      value: 5,
+      step: 0.5,
+      valueArg: 'control.value',
+    })
+    expect(kinds({ kind: 'numeric', value: 5 })).toEqual(['number'])
+  })
+  it('free text is a text field', () => {
+    expect(kinds({ kind: 'text', value: 'Away' })).toEqual(['text'])
+  })
+  it('a date has no control: it stays read-only', () => {
+    expect(controlOf({ kind: 'datetime', value: '2026-11-12T10:00:00Z' }).rows).toEqual([])
+  })
+  it('a session that may not act is gated: the row projects no inline control, the card draws none', () => {
+    const m = buildHeroModel({
+      device: { id: 7, type: DeviceType.Control, role: null, name: 'Dev', online: true },
+      caps: ['control'],
+      features: [],
+      slices: { control: { kind: 'text', value: 'Away', options: [], lastChangedAt: 0 } },
+      now: NOW,
+      remoteCommands: null,
+      access: { canActuate: false },
+    })
+    expect(m.gated).toContain('control')
+    expect(projectDeviceRow(m).primary).toBeNull()
   })
 })
 
