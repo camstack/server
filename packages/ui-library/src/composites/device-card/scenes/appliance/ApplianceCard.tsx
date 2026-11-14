@@ -9,6 +9,7 @@ import {
   columnButton,
   columnStep,
 } from '../../shell/column-items'
+import { rowBlock } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -280,12 +281,14 @@ export function ApplianceCard({
           />
         ),
         bottom:
-          program === null && start === null ? null : (
-            <>
-              {program?.info}
-              {start}
-            </>
-          ),
+          program === null && start === null
+            ? []
+            : [
+                ...(program === null
+                  ? []
+                  : [rowBlock('program', { content: <>{program.info}</> })]),
+                ...(start === null ? [] : [rowBlock('start', { content: <>{start}</> })]),
+              ],
       }}
     />
   )
