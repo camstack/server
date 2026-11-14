@@ -39,7 +39,7 @@
  *   node scripts/ship-viewer.mjs            # bump, OTA, bundle, deploy, pin
  *   node scripts/ship-viewer.mjs --check    # verify the three channels agree
  */
-import { execFileSync, execSync } from 'node:child_process'
+import { execFileSync, execSync, spawnSync } from 'node:child_process'
 import * as fs from 'node:fs'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -184,9 +184,16 @@ if (marker !== want) die(`il bundle dice ${marker}, atteso ${want}`)
 // environment; a token file here used to override them and went stale unnoticed
 // ("token not recognised" on every ship). Only an explicit env token is passed on.
 say("deploy dell'orchestrator…")
+// `camstack` on PATH when installed globally; otherwise the workspace CLI build.
+const onPath = spawnSync('camstack', ['--version'], { stdio: 'ignore' }).error === undefined
+const localCli = path.join(ROOT, 'packages/cli/dist/cli.js')
+if (!onPath && !fs.existsSync(localCli)) {
+  die(`'camstack' non e' nel PATH e ${localCli} non esiste: npm run build -w packages/cli`)
+}
+const [cliCmd, cliPrefix] = onPath ? ['camstack', []] : [process.execPath, [localCli]]
 execFileSync(
-  'camstack',
-  ['deploy', 'packages/addon-pipeline-orchestrator', '-s', HUB, '--no-verify'],
+  cliCmd,
+  [...cliPrefix, 'deploy', 'packages/addon-pipeline-orchestrator', '-s', HUB, '--no-verify'],
   {
     cwd: ROOT,
     encoding: 'utf-8',
