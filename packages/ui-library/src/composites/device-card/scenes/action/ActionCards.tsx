@@ -1,10 +1,11 @@
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
-import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { DeviceCard } from '../../shell/DeviceCard'
+import { columnButton } from '../../shell/column-items'
 import type { CardOrientation } from '../../shell/model'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 import {
   type AutomationCardActions,
   type AutomationCardModel,
@@ -48,17 +49,20 @@ export function ButtonCard({
         tone: 'muted',
       }}
       scene={{
-        image: <CardIcon glyph="press" className="h-20 w-20 text-foreground-muted" />,
-        right: model.pressable ? (
-          <CardButton
-            glyph="press"
-            tone="primary"
-            data-testid="dc-button-press"
-            onClick={actions.onPress}
-          >
-            {t('uiLibrary.deviceCard.button.press', 'Press')}
-          </CardButton>
-        ) : null,
+        image: <CardIcon glyph="press" className={cn(SCENE_ICON_CLASS, 'text-foreground-muted')} />,
+        columns: {
+          right: model.pressable
+            ? [
+                columnButton('press', {
+                  glyph: 'press',
+                  tone: 'primary',
+                  label: t('uiLibrary.deviceCard.button.press', 'Press'),
+                  testId: 'dc-button-press',
+                  onPress: actions.onPress,
+                }),
+              ]
+            : [],
+        },
       }}
     />
   )
@@ -73,16 +77,23 @@ export function ScriptCard({
 }: ScriptCardProps): ReactElement {
   const t = useUiText()
   const command = model.running
-    ? model.stoppable && (
-        <CardButton glyph="stop" data-testid="dc-script-stop" onClick={actions.onStop}>
-          {t('uiLibrary.deviceCard.script.stop', 'Stop')}
-        </CardButton>
-      )
-    : model.runnable && (
-        <CardButton glyph="play" tone="primary" data-testid="dc-script-run" onClick={actions.onRun}>
-          {t('uiLibrary.deviceCard.script.run', 'Run')}
-        </CardButton>
-      )
+    ? model.stoppable
+      ? columnButton('stop', {
+          glyph: 'stop',
+          label: t('uiLibrary.deviceCard.script.stop', 'Stop'),
+          testId: 'dc-script-stop',
+          onPress: actions.onStop,
+        })
+      : null
+    : model.runnable
+      ? columnButton('run', {
+          glyph: 'play',
+          tone: 'primary',
+          label: t('uiLibrary.deviceCard.script.run', 'Run'),
+          testId: 'dc-script-run',
+          onPress: actions.onRun,
+        })
+      : null
   return (
     <DeviceCard
       kind="script"
@@ -108,12 +119,12 @@ export function ScriptCard({
           <CardIcon
             glyph="script"
             className={cn(
-              'h-20 w-20',
+              SCENE_ICON_CLASS,
               model.running ? 'animate-pulse text-primary' : 'text-foreground-muted',
             )}
           />
         ),
-        right: command === false ? null : command,
+        columns: { right: command === null ? [] : [command] },
       }}
     />
   )
@@ -127,7 +138,6 @@ export function AutomationCard({
   showName = true,
 }: AutomationCardProps): ReactElement {
   const t = useUiText()
-  const showRight = model.switchable || model.triggerable
   return (
     <DeviceCard
       kind="automation"
@@ -152,34 +162,36 @@ export function AutomationCard({
         image: (
           <CardIcon
             glyph="automation"
-            className={cn('h-20 w-20', model.enabled ? 'text-primary' : 'text-foreground-subtle')}
+            className={cn(SCENE_ICON_CLASS, model.enabled ? 'text-primary' : 'text-foreground-subtle')}
           />
         ),
-        right: showRight ? (
-          <>
-            {model.switchable ? (
-              <CardButton
-                glyph="power"
-                tone={model.enabled ? 'default' : 'primary'}
-                data-testid="dc-automation-enabled"
-                onClick={() => actions.onEnabled(!model.enabled)}
-              >
-                {model.enabled
-                  ? t('uiLibrary.deviceCard.automation.disable', 'Disable')
-                  : t('uiLibrary.deviceCard.automation.enable', 'Enable')}
-              </CardButton>
-            ) : null}
-            {model.triggerable ? (
-              <CardButton
-                glyph="play"
-                data-testid="dc-automation-trigger"
-                onClick={actions.onTrigger}
-              >
-                {t('uiLibrary.deviceCard.automation.trigger', 'Run now')}
-              </CardButton>
-            ) : null}
-          </>
-        ) : null,
+        columns: {
+          right: [
+            ...(model.switchable
+              ? [
+                  columnButton('enabled', {
+                    glyph: 'power',
+                    tone: model.enabled ? 'default' : 'primary',
+                    label: model.enabled
+                      ? t('uiLibrary.deviceCard.automation.disable', 'Disable')
+                      : t('uiLibrary.deviceCard.automation.enable', 'Enable'),
+                    testId: 'dc-automation-enabled',
+                    onPress: () => actions.onEnabled(!model.enabled),
+                  }),
+                ]
+              : []),
+            ...(model.triggerable
+              ? [
+                  columnButton('trigger', {
+                    glyph: 'play',
+                    label: t('uiLibrary.deviceCard.automation.trigger', 'Run now'),
+                    testId: 'dc-automation-trigger',
+                    onPress: actions.onTrigger,
+                  }),
+                ]
+              : []),
+          ],
+        },
       }}
     />
   )
