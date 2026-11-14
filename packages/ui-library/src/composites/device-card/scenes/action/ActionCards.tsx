@@ -162,7 +162,10 @@ export function AutomationCard({
         image: (
           <CardIcon
             glyph="automation"
-            className={cn(SCENE_ICON_CLASS, model.enabled ? 'text-primary' : 'text-foreground-subtle')}
+            className={cn(
+              SCENE_ICON_CLASS,
+              model.enabled ? 'text-primary' : 'text-foreground-subtle',
+            )}
           />
         ),
         columns: {

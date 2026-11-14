@@ -60,7 +60,9 @@ export function ArmedButton({
   }, [armed, onConfirm])
   return (
     <span
-      className={stacked ? 'flex w-full flex-col items-center gap-1' : 'inline-flex items-center gap-2'}
+      className={
+        stacked ? 'flex w-full flex-col items-center gap-1' : 'inline-flex items-center gap-2'
+      }
       data-armed={armed}
     >
       <CardButton
