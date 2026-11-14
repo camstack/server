@@ -1,10 +1,11 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { AmbientFx } from '../../illustrations/AmbientFx'
 import { TankIllustration } from '../../illustrations/TankIllustration'
-import { CardButton } from '../../parts/CardButton'
+import { cn } from '../../../../lib/cn'
+import { DIAL_BOX_CLASS } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
-import { StepColumn } from '../../parts/StepColumn'
+import { type ColumnItem, columnButton, columnStep } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type { WaterHeaterActivity, WaterHeaterCardActions, WaterHeaterCardModel } from './model'
@@ -53,36 +54,34 @@ function targetColumn(
   actions: WaterHeaterCardActions,
   held: boolean,
   t: UiTextFn,
-): ReactNode {
+): readonly ColumnItem[] {
   const target = model.targetTemp
-  if (target === null) return null
+  if (target === null) return []
   const step = (delta: number) => (): void => {
     let next = target + delta
     if (model.minTemp !== null) next = Math.max(model.minTemp, next)
     if (model.maxTemp !== null) next = Math.min(model.maxTemp, next)
     if (next !== target) actions.onTarget(next)
   }
-  return (
-    <StepColumn
-      testId="dc-wh-target"
-      value={`${target}°`}
-      notes={[t('uiLibrary.deviceCard.waterHeater.target', 'target')]}
-      up={{
-        glyph: 'plus',
-        label: t('uiLibrary.deviceCard.waterHeater.raise', 'Raise target'),
-        disabled:
-          held || !model.targetSettable || (model.maxTemp !== null && target >= model.maxTemp),
-        onPress: step(1),
-      }}
-      down={{
-        glyph: 'minus',
-        label: t('uiLibrary.deviceCard.waterHeater.lower', 'Lower target'),
-        disabled:
-          held || !model.targetSettable || (model.minTemp !== null && target <= model.minTemp),
-        onPress: step(-1),
-      }}
-    />
-  )
+  return columnStep('target', {
+    testId: 'dc-wh-target',
+    value: `${target}°`,
+    caption: t('uiLibrary.deviceCard.waterHeater.target', 'target'),
+    up: {
+      glyph: 'plus',
+      label: t('uiLibrary.deviceCard.waterHeater.raise', 'Raise target'),
+      disabled:
+        held || !model.targetSettable || (model.maxTemp !== null && target >= model.maxTemp),
+      onPress: step(1),
+    },
+    down: {
+      glyph: 'minus',
+      label: t('uiLibrary.deviceCard.waterHeater.lower', 'Lower target'),
+      disabled:
+        held || !model.targetSettable || (model.minTemp !== null && target <= model.minTemp),
+      onPress: step(-1),
+    },
+  })
 }
 
 function rightColumn(
@@ -90,47 +89,36 @@ function rightColumn(
   actions: WaterHeaterCardActions,
   held: boolean,
   t: UiTextFn,
-): ReactNode {
+): readonly ColumnItem[] {
   const on = model.power === true
-  return (
-    <>
-      {model.power === null ? null : (
-        <CardButton
-          glyph="power"
-          tone={on ? 'primary' : 'default'}
-          data-testid="dc-wh-power"
-          onClick={() => actions.onPower(!on)}
-        >
-          {on
-            ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
-            : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-        </CardButton>
-      )}
-      {model.modes.length === 0 ? null : (
-        <MenuButton
-          testId="dc-wh-mode"
-          layout="stacked"
-          ariaLabel={t('uiLibrary.deviceCard.waterHeater.modeMenu', 'Mode')}
-          options={model.modes}
-          value={model.mode}
-          disabled={held}
-          onChange={actions.onMode}
-        />
-      )}
-      {model.away === null ? null : (
-        <CardButton
-          glyph="away"
-          tone={model.away ? 'on' : 'default'}
-          aria-pressed={model.away}
-          disabled={held}
-          data-testid="dc-wh-away"
-          onClick={() => actions.onAway(model.away !== true)}
-        >
-          {t('uiLibrary.deviceCard.waterHeater.away', 'Away')}
-        </CardButton>
-      )}
-    </>
-  )
+  return [
+    ...(model.power === null
+      ? []
+      : [
+          columnButton('power', {
+            glyph: 'power',
+            tone: on ? 'primary' : 'default',
+            label: on
+              ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
+              : t('uiLibrary.deviceCard.turnOn', 'Turn on'),
+            testId: 'dc-wh-power',
+            onPress: () => actions.onPower(!on),
+          }),
+        ]),
+    ...(model.away === null
+      ? []
+      : [
+          columnButton('away', {
+            glyph: 'away',
+            tone: model.away ? 'on' : 'default',
+            pressed: model.away,
+            disabled: held,
+            label: t('uiLibrary.deviceCard.waterHeater.away', 'Away'),
+            testId: 'dc-wh-away',
+            onPress: () => actions.onAway(model.away !== true),
+          }),
+        ]),
+  ]
 }
 
 /**
@@ -166,29 +154,43 @@ export function WaterHeaterCard({
       }}
       scene={{
         fx: heating ? <AmbientFx role="water-heater" activity="heat" swing={false} /> : null,
-        left: targetColumn(model, actions, held, t),
+        columns: {
+          left: targetColumn(model, actions, held, t),
+          right: rightColumn(model, actions, held, t),
+        },
         image: (
-          <div className="relative grid w-25 justify-items-center">
+          <div className={cn(DIAL_BOX_CLASS, 'grid justify-items-center')}>
             <TankIllustration
               fill={waterHeaterFill(model.currentTemp, model.maxTemp)}
               heating={heating}
               off={off}
-              className="h-auto w-25"
+              className="h-auto w-full"
             />
             <div
               data-testid="dc-wh-current"
               className="absolute inset-x-0 top-1/2 grid -translate-y-1/2 justify-items-center"
             >
-              <b className="text-xl font-semibold tabular-nums text-foreground">
+              <b className="text-xl font-semibold tabular-nums text-foreground @[10rem]:text-3xl">
                 {model.currentTemp === null ? '—' : `${model.currentTemp.toFixed(1)}°`}
               </b>
-              <small className="text-xs text-foreground-muted">
+              <small className="text-xs text-foreground-muted @[10rem]:text-sm">
                 {t('uiLibrary.deviceCard.waterHeater.current', 'now')}
               </small>
             </div>
           </div>
         ),
-        right: rightColumn(model, actions, held, t),
+        bottom:
+          model.modes.length === 0 ? null : (
+            <MenuButton
+              testId="dc-wh-mode"
+              layout="stacked"
+              ariaLabel={t('uiLibrary.deviceCard.waterHeater.modeMenu', 'Mode')}
+              options={model.modes}
+              value={model.mode}
+              disabled={held}
+              onChange={actions.onMode}
+            />
+          ),
       }}
     />
   )
