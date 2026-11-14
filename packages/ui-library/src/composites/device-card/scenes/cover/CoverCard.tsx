@@ -13,6 +13,7 @@ import {
   columnValue,
 } from '../../shell/column-items'
 import { useCardGating } from '../../shell/gating'
+import { rowSlider } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import {
@@ -286,24 +287,28 @@ export function CoverCard({
             className="h-auto w-full min-w-26 max-w-44"
           />
         ),
-        bottom: positionable ? (
-          <>
-            <HorizontalSlider
-              label={sliderLabel(t, spec)}
-              value={drawn}
-              min={0}
-              max={100}
-              ariaLabel={sliderLabel(t, spec)}
-              valueLabel={(v) => `${v}%`}
-              onChange={draft.move}
-              onCommit={commit}
-              testId="dc-cover-position"
-            />
-            {tiltSlider}
-          </>
-        ) : (
-          tiltSlider
-        ),
+        bottom: [
+          ...(positionable
+            ? [
+                rowSlider('position', {
+                  slider: (
+                    <HorizontalSlider
+                      label={sliderLabel(t, spec)}
+                      value={drawn}
+                      min={0}
+                      max={100}
+                      ariaLabel={sliderLabel(t, spec)}
+                      valueLabel={(v) => `${v}%`}
+                      onChange={draft.move}
+                      onCommit={commit}
+                      testId="dc-cover-position"
+                    />
+                  ),
+                }),
+              ]
+            : []),
+          ...(tiltSlider === null ? [] : [rowSlider('tilt', { slider: tiltSlider })]),
+        ],
       }}
     />
   )
