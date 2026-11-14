@@ -263,6 +263,7 @@ jobs:
             scripts/check-cap-name-kebab.ts \
             scripts/check-hero-look-exhaustive.ts \
             scripts/check-device-card-parts.ts \
+            scripts/check-device-card-scene-layout.ts \
             scripts/check-cap-hero-contributions.ts \
             scripts/check-spec-dynamic-imports-declared.ts \
             scripts/check-authored-fields-reachable.ts \
