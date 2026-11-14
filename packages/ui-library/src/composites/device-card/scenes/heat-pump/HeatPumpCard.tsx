@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import type { CardGlyph } from '../../icons'
 import { AmbientFx } from '../../illustrations/AmbientFx'
@@ -9,6 +9,7 @@ import { LevelBar } from '../../parts/LevelBar'
 import { MenuButton } from '../../parts/MenuButton'
 import { PopoverButton } from '../../parts/PopoverButton'
 import { type ColumnItem, columnValue } from '../../shell/column-items'
+import { type BottomRow, rowButtons } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type {
@@ -173,32 +174,33 @@ function SystemMode({
   )
 }
 
-function bottomRow(model: HeatPumpCardModel, actions: HeatPumpCardActions, t: UiTextFn): ReactNode {
-  if (model.circuits.length === 0 && model.system.length === 0) return null
-  return (
-    <>
-      {model.circuits.length === 0 ? null : (
-        <div
-          data-testid="dc-hp-circuits"
-          className="flex max-w-full flex-wrap justify-center gap-1.5"
-        >
-          {model.circuits.map((c) => (
-            <CircuitButton key={c.id} circuit={c} onPick={actions.onCircuit} t={t} />
-          ))}
-        </div>
-      )}
-      {model.system.length === 0 ? null : (
-        <div
-          data-testid="dc-hp-system"
-          className="flex max-w-full flex-wrap justify-center gap-1.5"
-        >
-          {model.system.map((m) => (
-            <SystemMode key={m.id} mode={m} onChange={actions.onSystemMode} t={t} />
-          ))}
-        </div>
-      )}
-    </>
-  )
+function bottomRows(
+  model: HeatPumpCardModel,
+  actions: HeatPumpCardActions,
+  t: UiTextFn,
+): readonly BottomRow[] {
+  return [
+    ...(model.circuits.length === 0
+      ? []
+      : [
+          rowButtons('circuits', {
+            testId: 'dc-hp-circuits',
+            buttons: model.circuits.map((c) => (
+              <CircuitButton key={c.id} circuit={c} onPick={actions.onCircuit} t={t} />
+            )),
+          }),
+        ]),
+    ...(model.system.length === 0
+      ? []
+      : [
+          rowButtons('system', {
+            testId: 'dc-hp-system',
+            buttons: model.system.map((m) => (
+              <SystemMode key={m.id} mode={m} onChange={actions.onSystemMode} t={t} />
+            )),
+          }),
+        ]),
+  ]
 }
 
 /**
@@ -296,7 +298,7 @@ export function HeatPumpCard({
             </div>
           </div>
         ),
-        bottom: bottomRow(model, actions, t),
+        bottom: bottomRows(model, actions, t),
       }}
     />
   )
