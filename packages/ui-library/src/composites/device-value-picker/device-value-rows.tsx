@@ -10,6 +10,7 @@ import { Checkbox } from '../../primitives/checkbox'
 import { Radio } from '../../primitives/radio'
 import { Skeleton } from '../../primitives/skeleton'
 import { useDeviceNameIndex } from '../device-name/device-fleet'
+import { resolveDeviceLabel, useDeviceNameNouns } from '../device-name/use-device-label'
 import { ErrorBox } from '../error-box'
 import {
   isPicked,
@@ -113,7 +114,10 @@ function DeviceRow({
   expandedId,
   onDrill,
   showType,
-}: DeviceRowsProps & { readonly item: DeviceSearchItem; readonly showType: boolean }): JSX.Element {
+}: DeviceRowsProps & {
+  readonly item: DeviceSearchItem
+  readonly showType: boolean
+}): JSX.Element {
   const t = useUiText()
   const fleet = useDeviceNameIndex()
   // Unknown until the fleet answers: no fleet, or a device it does not list, claims nothing (D315).
@@ -270,6 +274,14 @@ export function ValuesPage({
   readonly onBack: () => void
 }): JSX.Element {
   const t = useUiText()
+  const fleet = useDeviceNameIndex()
+  const nouns = useDeviceNameNouns()
+  const known = fleet?.byId.get(item.id)
+  // The page is one device's: its title is the resolver's name (with its parent), as in the field.
+  const title =
+    fleet === null || known === undefined
+      ? item.name
+      : resolveDeviceLabel(known, 'compact', fleet, nouns)
   return (
     <div onKeyDown={moveFocusWithArrows}>
       <Button
@@ -280,7 +292,7 @@ export function ValuesPage({
         aria-label={t('uiLibrary.deviceValuePicker.back', 'Back to devices')}
       >
         <ChevronLeft className="h-3.5 w-3.5 shrink-0" />
-        <span className="truncate">{item.name}</span>
+        <span className="truncate">{title}</span>
         {item.online === false && <OfflineBadge />}
       </Button>
       <ValueRows item={item} multiple={multiple} picked={picked} onSelect={onSelect} />
@@ -325,7 +337,9 @@ export function ListState({
   const text =
     state.kind === 'empty'
       ? hasCap
-        ? t('uiLibrary.deviceValuePicker.empty', 'No device provides {{cap}}', { cap: capLabel })
+        ? t('uiLibrary.deviceValuePicker.empty', 'No device provides {{cap}}', {
+            cap: capLabel,
+          })
         : t('uiLibrary.deviceValuePicker.emptyAny', 'No devices')
       : hasCap
         ? t(

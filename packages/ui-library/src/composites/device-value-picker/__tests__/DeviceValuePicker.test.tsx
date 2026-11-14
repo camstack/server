@@ -20,7 +20,12 @@ const temp = {
   label: 'Temperature',
   reading: '22.3 °C',
 }
-const hum = { cap: 'temperature-sensor', path: 'humidity', label: 'Humidity', reading: '41 %' }
+const hum = {
+  cap: 'temperature-sensor',
+  path: 'humidity',
+  label: 'Humidity',
+  reading: '41 %',
+}
 
 function device(id: number, name: string, values: DeviceSearchItem['values']): DeviceSearchItem {
   return {
@@ -120,6 +125,15 @@ vi.mock('../../../generated/system-hooks', () => ({
           }
     return { data, isError: false, isPending: false }
   },
+  useIntegrationsList: () => ({
+    data: [
+      { id: 'hue', addonId: 'provider-hue', name: 'Hue' },
+      { id: 'zwave', addonId: 'provider-unknown', name: 'Z-Wave' },
+    ],
+  }),
+  useAddonsList: () => ({
+    data: [{ manifest: { id: 'provider-hue', name: 'Philips Hue' } }],
+  }),
 }))
 
 const { DeviceValuePicker } = await import('../DeviceValuePicker')
@@ -129,7 +143,11 @@ const { DeviceFleetProvider } = await import('../../device-name/device-fleet')
 const requires = { caps: ['temperature-sensor'] }
 
 beforeEach(() => {
-  state.list = { data: result([cucina, stazione]), isError: false, isPending: false }
+  state.list = {
+    data: result([cucina, stazione]),
+    isError: false,
+    isPending: false,
+  }
   state.resolved = { data: undefined }
   state.hasNextPage = false
   state.resolveByIds = false
@@ -193,10 +211,16 @@ describe('DeviceValuePicker', () => {
   })
 
   it('says one generic thing when no device provides the capability, and another for a search miss', async () => {
-    state.list = { data: result([], { compatibleTotal: 0 }), isError: false, isPending: false }
+    state.list = {
+      data: result([], { compatibleTotal: 0 }),
+      isError: false,
+      isPending: false,
+    }
     openSingle()
     expect(screen.getByText('No device provides Temperature sensor')).toBeTruthy()
-    fireEvent.change(screen.getByLabelText('Search devices'), { target: { value: 'zzz' } })
+    fireEvent.change(screen.getByLabelText('Search devices'), {
+      target: { value: 'zzz' },
+    })
     expect(await screen.findByText('No device with Temperature sensor matches “zzz”')).toBeTruthy()
   })
 
@@ -219,8 +243,14 @@ describe('DeviceValuePicker', () => {
     state.hasNextPage = true
     openSingle()
     const scroll = screen.getByTestId('dvp-scroll')
-    Object.defineProperty(scroll, 'scrollHeight', { value: 500, configurable: true })
-    Object.defineProperty(scroll, 'clientHeight', { value: 300, configurable: true })
+    Object.defineProperty(scroll, 'scrollHeight', {
+      value: 500,
+      configurable: true,
+    })
+    Object.defineProperty(scroll, 'clientHeight', {
+      value: 300,
+      configurable: true,
+    })
     fireEvent.scroll(scroll, { target: { scrollTop: 190 } })
     expect(state.fetchNextPage).toHaveBeenCalled()
   })
@@ -271,7 +301,9 @@ describe('device-picker UX', () => {
 
   it('shows the name of the parent device on a row whose device has one', () => {
     render(
-      <DeviceFleetProvider devices={[fleetRow(1, 'Cucina', 10), fleetRow(10, 'Living room hub', null)]}>
+      <DeviceFleetProvider
+        devices={[fleetRow(1, 'Cucina', 10), fleetRow(10, 'Living room hub', null)]}
+      >
         <DeviceValuePicker multiple requires={requires} value={[]} onChange={vi.fn()} />
       </DeviceFleetProvider>,
     )
@@ -279,6 +311,43 @@ describe('device-picker UX', () => {
     const row = screen.getByRole('option', { name: /Cucina/ })
     expect(row.textContent).toContain('Living room hub')
     expect(screen.getByRole('option', { name: /Stazione meteo/ }).textContent).not.toContain('hub')
+  })
+
+  it('names a selected child device through the shared resolver, with its parent', () => {
+    state.resolved.data = result([cucina])
+    const fleet = [fleetRow(1, 'Cucina', 10), fleetRow(10, 'Living room hub', null)]
+    render(
+      <DeviceFleetProvider devices={fleet}>
+        <DeviceValuePicker pick="device" value={{ deviceId: 1 }} onChange={vi.fn()} testId="one" />
+        <DeviceValuePicker
+          pick="device"
+          multiple
+          value={[{ deviceId: 1 }]}
+          onChange={vi.fn()}
+          testId="many"
+        />
+      </DeviceFleetProvider>,
+    )
+    expect(screen.getByTestId('one').textContent).toContain('Living room hub')
+    expect(screen.getByTestId('many').textContent).toContain('Living room hub')
+  })
+
+  it('keeps the search answer name for a selected device while the fleet is unknown', () => {
+    state.resolved.data = result([cucina])
+    render(
+      <DeviceValuePicker pick="device" value={{ deviceId: 1 }} onChange={vi.fn()} testId="one" />,
+    )
+    expect(screen.getByTestId('one').textContent).toContain('Cucina')
+    expect(screen.getByTestId('one').textContent).not.toContain('hub')
+  })
+
+  it('shows who offers an integration instance in the Integration facet', () => {
+    render(<DeviceValuePicker multiple requires={requires} value={[]} onChange={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: /add device/i }))
+    fireEvent.click(screen.getByRole('button', { name: /Integration/ }))
+    const providers = screen.getAllByTestId('dvp-facet-provider')
+    expect(providers.map((p) => p.textContent)).toEqual(['Philips Hue'])
+    expect(providers[0]?.closest('label')?.getAttribute('title')).toBe('Hue · Philips Hue')
   })
 
   it('shows no parent while the fleet has not answered (D315)', () => {
@@ -292,7 +361,13 @@ describe('device-picker UX', () => {
     state.resolved = { data: result([stazione, cucina]) }
     state.resolveByIds = true
     render(
-      <DeviceValuePicker multiple requires={requires} recentKey="k" value={[]} onChange={vi.fn()} />,
+      <DeviceValuePicker
+        multiple
+        requires={requires}
+        recentKey="k"
+        value={[]}
+        onChange={vi.fn()}
+      />,
     )
     fireEvent.click(screen.getByRole('button', { name: /add device/i }))
     const recentNames = () => {
@@ -313,7 +388,13 @@ describe('device-picker UX', () => {
     state.resolved = { data: result([stazione, cucina]) }
     state.resolveByIds = true
     render(
-      <DeviceValuePicker multiple requires={requires} recentKey="k" value={[]} onChange={vi.fn()} />,
+      <DeviceValuePicker
+        multiple
+        requires={requires}
+        recentKey="k"
+        value={[]}
+        onChange={vi.fn()}
+      />,
     )
     const trigger = screen.getByRole('button', { name: /add device/i })
     fireEvent.click(trigger)
@@ -344,7 +425,9 @@ describe('device-select form field', () => {
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: /select device/i }))
-    expect(state.lastQuery).toMatchObject({ requires: { caps: ['temperature-sensor'] } })
+    expect(state.lastQuery).toMatchObject({
+      requires: { caps: ['temperature-sensor'] },
+    })
     fireEvent.click(screen.getByRole('option', { name: /Stazione meteo/ }))
     expect(onChange).toHaveBeenCalledWith('2')
   })

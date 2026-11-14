@@ -7,6 +7,8 @@ import { Button } from '../../primitives/button'
 import { IconButton } from '../../primitives/icon-button'
 import { Popover, PopoverContent, PopoverTrigger } from '../../primitives/popover'
 import { INPUT_SHELL, SelectedChip } from '../device-picker/SelectedChip'
+import { useDeviceNameIndex } from '../device-name/device-fleet'
+import { resolveDeviceLabel, useDeviceNameNouns } from '../device-name/use-device-label'
 import { emptyDevicesWidens } from '../device-picker/device-selection'
 import {
   DevicesWidenWarning,
@@ -83,9 +85,14 @@ export interface DeviceValuePickerMultiProps extends DeviceValuePickerCommon {
 
 export type DeviceValuePickerProps = DeviceValuePickerSingleProps | DeviceValuePickerMultiProps
 
+/** The closed field is as tall as a `Select`, picked or empty, so the two line up in one row. */
+const FIELD_HEIGHT = 'h-7 py-0'
+
 function describeLine(d: PickedDescription, t: ReturnType<typeof useUiText>): string {
   if (d.status === 'gone') {
-    return t('uiLibrary.deviceValuePicker.gone', 'Device #{{id}} not found', { id: d.deviceId })
+    return t('uiLibrary.deviceValuePicker.gone', 'Device #{{id}} not found', {
+      id: d.deviceId,
+    })
   }
   const name = d.deviceName ?? `#${d.deviceId}`
   const base = d.valueName === null ? name : `${name} › ${d.valueName}`
@@ -128,7 +135,20 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
   const ids = useMemo(() => [...new Set(pickedList.map((p) => p.deviceId))], [pickedList])
   const resolved = useResolvedDevices(ids, props.requires)
   const { byId, missing } = useMemo(() => indexResolved(resolved.result), [resolved.result])
-  const describe = (p: PickedValue) => describePicked(p, byId.get(p.deviceId), missing)
+  const fleet = useDeviceNameIndex()
+  const nouns = useDeviceNameNouns()
+  // The selected value is named by the one device-name resolver: a child reads
+  // with its parent, as it does everywhere else. Without a fleet the search
+  // answer's own name stands.
+  const describe = (p: PickedValue): PickedDescription => {
+    const described = describePicked(p, byId.get(p.deviceId), missing)
+    const known = fleet?.byId.get(p.deviceId)
+    if (described.deviceName === null || fleet === null || known === undefined) return described
+    return {
+      ...described,
+      deviceName: resolveDeviceLabel(known, 'compact', fleet, nouns),
+    }
+  }
 
   const onSelect = useCallback(
     (value: PickedValue) => {
@@ -230,7 +250,7 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
       className={cn('flex flex-col gap-1', props.className)}
     >
       <Popover open={open} onOpenChange={setOpen} className="block w-full">
-        <div className={cn(INPUT_SHELL, 'justify-between')}>
+        <div className={cn(INPUT_SHELL, FIELD_HEIGHT, 'justify-between')}>
           <PopoverTrigger
             disabled={props.disabled}
             className="flex min-w-0 flex-1 items-center justify-between gap-2 text-left text-xs disabled:opacity-50"
@@ -265,6 +285,7 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
               variant="ghost"
               size="sm"
               icon={X}
+              className="h-5 w-5"
               aria-label={t('uiLibrary.deviceValuePicker.clear', 'Clear')}
               onClick={() => props.onChange(null)}
             />
@@ -347,7 +368,9 @@ function MultiPicker(m: MultiPickerProps): JSX.Element {
               className="rounded-md bg-surface px-1.5 py-0.5 text-[11px] text-foreground-muted hover:bg-surface-hover"
               onClick={m.expandChips}
             >
-              {t('uiLibrary.deviceValuePicker.moreChips', '+{{count}}', { count: hidden })}
+              {t('uiLibrary.deviceValuePicker.moreChips', '+{{count}}', {
+                count: hidden,
+              })}
             </Button>
           )}
         </div>
@@ -367,6 +390,7 @@ function MultiPicker(m: MultiPickerProps): JSX.Element {
             disabled={props.disabled}
             className={cn(
               INPUT_SHELL,
+              FIELD_HEIGHT,
               'w-full justify-between text-left text-xs text-foreground-subtle disabled:opacity-50',
             )}
           >

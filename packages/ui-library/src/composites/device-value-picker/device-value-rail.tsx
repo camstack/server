@@ -12,6 +12,7 @@ import {
   facetSummary,
   topFacetOptions,
 } from './device-value-picker-model'
+import { useIntegrationProviders } from './use-integration-providers'
 
 /** Options a facet shows before "N more". */
 const FACET_TOP = 5
@@ -20,6 +21,8 @@ interface FacetOption {
   readonly value: string
   readonly label: string
   readonly count: number
+  /** Who offers an integration instance; absent when not known. */
+  readonly detail?: string
 }
 
 interface FacetView {
@@ -30,18 +33,30 @@ interface FacetView {
 
 function facetViews(
   facets: DeviceSearchFacets,
-  names: { readonly location: string; readonly integration: string; readonly type: string },
+  names: {
+    readonly location: string
+    readonly integration: string
+    readonly type: string
+  },
 ): readonly FacetView[] {
   return [
     {
       key: 'locations',
       name: names.location,
-      options: facets.locations.map((f) => ({ value: f.value, label: f.value, count: f.count })),
+      options: facets.locations.map((f) => ({
+        value: f.value,
+        label: f.value,
+        count: f.count,
+      })),
     },
     {
       key: 'integrationIds',
       name: names.integration,
-      options: facets.integrations.map((f) => ({ value: f.id, label: f.label, count: f.count })),
+      options: facets.integrations.map((f) => ({
+        value: f.id,
+        label: f.label,
+        count: f.count,
+      })),
     },
     {
       key: 'types',
@@ -80,6 +95,9 @@ export function DeviceValueRail({
   }).filter((v) => v.options.length > 1 || selection[v.key].length > 0)
   if (views.length === 0) return null
   const any = t('uiLibrary.deviceValuePicker.facetAny', 'any')
+  const providers = useIntegrationProviders(open === 'integrationIds')
+  const detailOf = (key: FacetKey, value: string): string | undefined =>
+    key === 'integrationIds' ? providers.get(value) : undefined
 
   return (
     <nav
@@ -108,19 +126,33 @@ export function DeviceValueRail({
             </Button>
             {isOpen && (
               <div className="flex flex-col pb-1 pl-3">
-                {shown.map((opt) => (
-                  <label
-                    key={opt.value}
-                    className="flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-foreground hover:bg-surface-hover"
-                  >
-                    <Checkbox
-                      checked={selection[view.key].includes(opt.value)}
-                      onChange={() => onToggle(view.key, opt.value)}
-                    />
-                    <span className="min-w-0 flex-1 truncate">{opt.label}</span>
-                    <span className="text-foreground-subtle">{opt.count}</span>
-                  </label>
-                ))}
+                {shown.map((opt) => {
+                  const detail = detailOf(view.key, opt.value)
+                  return (
+                    <label
+                      key={opt.value}
+                      title={detail === undefined ? opt.label : `${opt.label} · ${detail}`}
+                      className="flex cursor-pointer items-center gap-1.5 rounded-md px-1.5 py-1 text-foreground hover:bg-surface-hover"
+                    >
+                      <Checkbox
+                        checked={selection[view.key].includes(opt.value)}
+                        onChange={() => onToggle(view.key, opt.value)}
+                      />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate">{opt.label}</span>
+                        {detail !== undefined && (
+                          <span
+                            className="truncate text-[11px] text-foreground-muted"
+                            data-testid="dvp-facet-provider"
+                          >
+                            {detail}
+                          </span>
+                        )}
+                      </span>
+                      <span className="text-foreground-subtle">{opt.count}</span>
+                    </label>
+                  )
+                })}
                 {more > 0 && (
                   <Button
                     variant="unstyled"
