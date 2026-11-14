@@ -51,12 +51,12 @@ import {
 import {
   DEFAULT_GOOGLE_CONFIG,
   DEFAULT_OAUTH_STATE,
-  GOOGLE_CALENDAR_LIST_URL,
   GOOGLE_USERINFO_URL,
   type GoogleOauthAccount,
   type GoogleOauthState,
   type GoogleServicesConfig,
 } from './google-types.js'
+import { probeGoogleAccount } from './google-connection-probe.js'
 import { pickOauthRedirectOrigin } from './oauth-redirect-origin.js'
 import {
   type GoogleBrokerBody,
@@ -418,47 +418,23 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
       })
     }
     try {
-      const started = Date.now()
-      // Always refresh on Test — a stale/empty access token still leaves
-      // isConnected true (refresh present) and userinfo then 401s with
-      // "missing required authentication credential".
-      // Probe Calendar (granted by calendar.readonly). Do NOT use userinfo
-      // here: tokens minted before userinfo.email was in GOOGLE_OAUTH_SCOPES
-      // 401 on userinfo with "missing required authentication credential".
-      const token = await this.ensureAccessToken(id, { forceRefresh: true })
-      if (token.trim().length === 0) {
-        return {
-          ok: false,
-          error: 'No access token after refresh — Sign out and Sign in again',
-        }
-      }
-      let res = await fetch(GOOGLE_CALENDAR_LIST_URL, {
-        headers: { Authorization: `Bearer ${token}` },
+      const result = await probeGoogleAccount({
+        ensureAccessToken: (opts) => this.ensureAccessToken(id, opts),
+        grantedScopes: () => this.registry.getOauth(id)?.scopes ?? '',
       })
-      if (res.status === 401) {
-        const retryToken = await this.ensureAccessToken(id, { forceRefresh: true })
-        res = await fetch(GOOGLE_CALENDAR_LIST_URL, {
-          headers: { Authorization: `Bearer ${retryToken}` },
-        })
-      }
-      if (!res.ok) {
-        const text = await res.text()
-        return {
-          ok: false,
-          error: `Google Calendar probe failed (${res.status}): ${text.slice(0, 200)}`,
+      if (result.ok) {
+        // Best-effort email fill when the (now cached, just-refreshed) token has userinfo.email.
+        const email = await this.fetchAccountEmail(await this.ensureAccessToken(id))
+        if (email.length > 0) {
+          const oauth = this.registry.getOauth(id)
+          if (oauth !== null && oauth.accountEmail !== email) {
+            const next = { ...oauth, accountEmail: email }
+            await this.persistSession(next)
+            this.registry.setOauth(next)
+          }
         }
       }
-      // Best-effort email fill when the token already has userinfo.email.
-      const email = await this.fetchAccountEmail(token)
-      if (email.length > 0) {
-        const oauth = this.registry.getOauth(id)
-        if (oauth !== null && oauth.accountEmail !== email) {
-          const next = { ...oauth, accountEmail: email }
-          await this.persistSession(next)
-          this.registry.setOauth(next)
-        }
-      }
-      return { ok: true, latencyMs: Date.now() - started }
+      return result
     } catch (err) {
       return { ok: false, error: err instanceof Error ? err.message : String(err) }
     }

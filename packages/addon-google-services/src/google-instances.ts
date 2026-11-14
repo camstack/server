@@ -34,6 +34,7 @@ export interface GoogleInstancesDeps {
     readonly ok: boolean
     readonly error?: string
     readonly latencyMs?: number
+    readonly detail?: string
   }>
   readonly testClient: (
     clientId: string,
@@ -42,6 +43,7 @@ export interface GoogleInstancesDeps {
     readonly ok: boolean
     readonly error?: string
     readonly latencyMs?: number
+    readonly detail?: string
   }>
 }
 
@@ -49,12 +51,14 @@ function asTestResult(r: {
   readonly ok: boolean
   readonly error?: string
   readonly latencyMs?: number
+  readonly detail?: string
 }): IntegrationTestConnectionResult {
   return r.ok
     ? {
         success: true,
         status: 'validated',
         ...(r.latencyMs !== undefined ? { latencyMs: r.latencyMs } : {}),
+        ...(r.detail !== undefined ? { detail: r.detail } : {}),
       }
     : { success: false, status: 'rejected', error: r.error ?? 'Google rejected the check' }
 }

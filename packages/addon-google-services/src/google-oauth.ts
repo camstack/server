@@ -106,7 +106,7 @@ export function needsRefresh(state: GoogleOauthState, nowMs: number = Date.now()
 }
 
 export type GoogleClientProbeResult =
-  | { readonly ok: true; readonly latencyMs: number }
+  | { readonly ok: true; readonly latencyMs: number; readonly detail?: string }
   | { readonly ok: false; readonly error: string }
 
 /**

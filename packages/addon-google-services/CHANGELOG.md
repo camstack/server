@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Testing a Google account also checks whether the Gmail send scope was granted, not only Calendar — an account connected before gmail.send was requested looked validated while email sending would still 403.
+
 ## [0.2.50] - 2026-11-13
 
 ### Changed
