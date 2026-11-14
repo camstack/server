@@ -1,11 +1,11 @@
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
-import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
-import { InfoTile } from '../../parts/InfoTile'
+import { columnButton, columnValue } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation } from '../../shell/model'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 import { withError } from '../action/model'
 
 export interface NotifierCardModel {
@@ -65,25 +65,34 @@ export function NotifierCard({
       }}
       scene={{
         alert: failed,
-        left:
-          model.queued > 0 ? (
-            <InfoTile
-              label={t('uiLibrary.deviceCard.notifier.queued', 'Queued')}
-              value={String(model.queued)}
-              testId="dc-notifier-queued"
-            />
-          ) : null,
+        columns: {
+          left:
+            model.queued > 0
+              ? [
+                  columnValue('queued', {
+                    value: String(model.queued),
+                    caption: t('uiLibrary.deviceCard.notifier.queued', 'Queued'),
+                    testId: 'dc-notifier-queued',
+                  }),
+                ]
+              : [],
+          right: model.testable
+            ? [
+                columnButton('test', {
+                  glyph: 'send',
+                  label: t('uiLibrary.deviceCard.notifier.test', 'Send test'),
+                  testId: 'dc-notifier-test',
+                  onPress: actions.onTest,
+                }),
+              ]
+            : [],
+        },
         image: (
           <CardIcon
             glyph="send"
-            className={cn('h-20 w-20', failed ? 'text-danger' : 'text-foreground-muted')}
+            className={cn(SCENE_ICON_CLASS, failed ? 'text-danger' : 'text-foreground-muted')}
           />
         ),
-        right: model.testable ? (
-          <CardButton glyph="send" data-testid="dc-notifier-test" onClick={actions.onTest}>
-            {t('uiLibrary.deviceCard.notifier.test', 'Send test')}
-          </CardButton>
-        ) : null,
       }}
     />
   )
