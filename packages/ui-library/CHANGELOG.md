@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.444] - 2026-11-14
+
 ### Changed
 
 - The device pickers' phone sheet keeps the filter panel above the search box instead of painting over it, and the sheet can be dismissed by dragging its handle down.
