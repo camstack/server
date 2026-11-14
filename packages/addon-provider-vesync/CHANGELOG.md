@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A stored hub device is no longer converted into an integration on restore. A backup from before that conversion is left as-is.
+- The retired hub-to-integration migration is declared, so databases that already ran it no longer raise a newer-database alert
 
 ## [0.2.158] - 2026-11-12
 

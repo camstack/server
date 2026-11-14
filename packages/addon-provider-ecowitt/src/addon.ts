@@ -58,7 +58,11 @@ import {
   ecowittRecordKinds,
   settingsReadOf,
 } from './ecowitt-instances.js'
-import { ECOWITT_ROWS_TO_RECORD_ID, ECOWITT_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
+import {
+  ECOWITT_RETIRED_MIGRATION_IDS,
+  ECOWITT_ROWS_TO_RECORD_ID,
+  ECOWITT_ROWS_TO_RECORD_MIGRATION,
+} from './migrations/index.js'
 
 /**
  * Ecowitt weather-station provider, `mode: account` and broker-less. An integration is one
@@ -101,6 +105,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       kind: ecowittConnectionsEntryKind,
       initialBody: (name) => ({ name }),
     })
+    this.declareRetiredMigrations(ECOWITT_RETIRED_MIGRATION_IDS)
     await this.runMigrations(this.migrationCatalogue(), { only: [ECOWITT_ROWS_TO_RECORD_ID] })
     this.clients = new EcowittClientRegistry(this.ctx.logger, {
       onOnline: (_integrationId, gatewayKey, online) =>

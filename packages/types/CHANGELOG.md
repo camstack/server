@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The hub device type is gone. A stored hub value is unknown and is not read as a gateway.
+- An addon can declare migration ids it removed on purpose, so their applied ledger rows are not read as a newer database
 
 ## [1.2.564] - 2026-11-14
 

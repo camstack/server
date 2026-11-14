@@ -90,6 +90,8 @@ export const migrationsCapability = {
       z.object({
         owner: z.string().min(1),
         metas: z.array(MigrationMetaSchema),
+        /** Ids the owner deliberately removed: an applied row of one is fine, never "newer". */
+        retired: z.array(z.string().min(1)).optional(),
       }),
       z.object({
         bootId: z.string(),

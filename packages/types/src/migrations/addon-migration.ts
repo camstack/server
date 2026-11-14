@@ -140,6 +140,11 @@ export interface AddonMigrationRunOptions {
    * untouched, neither started nor reported — a later call runs them.
    */
   readonly only?: readonly string[]
+  /**
+   * Ids this owner deliberately REMOVED from its catalogue. They are never run; an applied
+   * ledger row of one is reported `applied`, not `skipped-newer`, and raises no alert.
+   */
+  readonly retired?: readonly string[]
 }
 
 const NOT_RUN: AddonMigrationRunReport = {
@@ -170,7 +175,11 @@ export async function runAddonMigrations(
   const byId = new Map(migrations.map((m) => [m.meta.id, m]))
   let declaration: Awaited<ReturnType<AddonMigrationHost['declareOwner']>>
   try {
-    declaration = await host.declareOwner({ owner, metas: migrations.map((m) => m.meta) })
+    declaration = await host.declareOwner({
+      owner,
+      metas: migrations.map((m) => m.meta),
+      ...(options.retired === undefined ? {} : { retired: [...options.retired] }),
+    })
   } catch (err) {
     log.error('the migration engine refused or could not take this addon catalogue — none ran', {
       meta: { error: errMsg(err) },

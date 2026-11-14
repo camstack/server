@@ -19,7 +19,11 @@ import {
 import { VESYNC_SYSTEM, type VeSyncConnectionConfig } from './config.js'
 import { VeSyncGatewayDevice } from './devices/vesync-gateway-device.js'
 import { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'
-import { VESYNC_ROWS_TO_RECORD_ID, VESYNC_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
+import {
+  VESYNC_RETIRED_MIGRATION_IDS,
+  VESYNC_ROWS_TO_RECORD_ID,
+  VESYNC_ROWS_TO_RECORD_MIGRATION,
+} from './migrations/index.js'
 import { vesyncAccounts } from './vesync-account-resolver.js'
 import { buildVeSyncAdoptionProvider } from './vesync-adoption-provider.js'
 import { gatewayStableId } from './vesync-discovery.js'
@@ -71,6 +75,7 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
       kind: vesyncConnectionsEntryKind,
       initialBody: (name) => ({ name }),
     })
+    this.declareRetiredMigrations(VESYNC_RETIRED_MIGRATION_IDS)
     await this.runMigrations(this.migrationCatalogue(), { only: [VESYNC_ROWS_TO_RECORD_ID] })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()

@@ -90,6 +90,8 @@ export class MigrationEngine {
   private readonly statuses = new Map<string, PassStatus>()
   /** Addon catalogues offered this boot, by owner (M3): the owner drives, the engine gates. */
   private readonly addonMetas = new Map<string, readonly MigrationMeta[]>()
+  /** Ids each owner deliberately removed: an applied row of one is fine, not a newer database. */
+  private readonly addonRetired = new Map<string, ReadonlySet<string>>()
   /** Files whose pre-migration snapshot was refused: nothing runs on them, owner or hub. */
   private readonly snapshotRefused = new Map<DataStoreDatabase, string>()
   /** Ids whose `startMigration` said proceed and whose `finishMigration` has not landed yet. */
@@ -263,6 +265,7 @@ export class MigrationEngine {
     const declared = this.addonMetas.get(entry.owner)
     // The owner's catalogue is not loaded in this process: applied, but not judgeable here.
     if (declared === undefined) return { ...entry, ownerNotLoaded: true }
+    if (this.addonRetired.get(entry.owner)?.has(entry.id) === true) return entry
     return declared.some((meta) => meta.id === entry.id)
       ? entry
       : { ...entry, status: 'skipped-newer' }
@@ -500,6 +503,7 @@ export class MigrationEngine {
     owner: string,
     offered: readonly MigrationMeta[],
     caller: string | null,
+    retired: readonly string[] = [],
   ): Promise<{
     readonly bootId: string
     readonly snapshot: 'none' | 'written' | 'refused'
@@ -509,13 +513,17 @@ export class MigrationEngine {
       .catch(() => undefined)
       .then(() => {
         this.assertOwnerCaller(owner, caller)
-        return this.declare(owner, offered)
+        return this.declare(owner, offered, retired)
       })
     this.tail = run
     return run
   }
 
-  private async declare(owner: string, offered: readonly MigrationMeta[]) {
+  private async declare(
+    owner: string,
+    offered: readonly MigrationMeta[],
+    retired: readonly string[],
+  ) {
     const metas = offered.map((meta) => MigrationMetaSchema.parse(meta))
     const refusal = this.refusalOfCatalogue(owner, metas)
     if (refusal !== null) {
@@ -552,6 +560,7 @@ export class MigrationEngine {
       if (
         entry.owner === owner &&
         !metas.some((meta) => meta.id === entry.id) &&
+        !retired.includes(entry.id) &&
         entry.status === 'applied'
       ) {
         log.warn(
@@ -570,6 +579,7 @@ export class MigrationEngine {
     }
     // Registered only now: a declare that failed above leaves the engine as it found it.
     this.addonMetas.set(owner, metas)
+    this.addonRetired.set(owner, new Set(retired))
     return { bootId: this.bootId, snapshot, steps }
   }
 

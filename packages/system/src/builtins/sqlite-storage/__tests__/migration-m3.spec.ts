@@ -456,6 +456,30 @@ describe('addon-owned catalogue', () => {
     await second.file.stop()
   }, 90_000)
 
+  it('an applied row of a RETIRED id is applied, never newer and never alerted; an unknown id still is', async () => {
+    const first = await boot()
+    await run(first.provider, [
+      planEntry('one', 1, { edits: [] }),
+      planEntry('gone', 2, { edits: [] }),
+      planEntry('unknown', 3, { edits: [] }),
+    ])
+    await first.file.stop()
+    const second = await boot()
+    await runAddonMigrations(
+      hostOf(second.provider),
+      defineAddonMigrations([planEntry('one', 1, { edits: [] })], {}),
+      recordingLogger(h.lines, 'Addon'),
+      { retired: [`${OWNER}/2026-11-01-gone`] },
+    )
+    const ledger = await second.engine.listLedger()
+    const statusOf = (slug: string) => ledger.find((e) => e.id.endsWith(`-${slug}`))?.status
+    expect(statusOf('gone')).toBe('applied')
+    expect(statusOf('unknown')).toBe('skipped-newer')
+    const newerLines = h.lines.filter((l) => l.message.includes('skipped-newer'))
+    expect(newerLines.map((l) => JSON.stringify(l))).toEqual([expect.stringContaining('-unknown')])
+    await second.file.stop()
+  }, 90_000)
+
   it('two boot phases of ONE catalogue (a first step before the rest) never read an applied id as newer', async () => {
     const { file, provider, engine } = await boot()
     const whole = [planEntry('one', 1, { edits: [] }), planEntry('two', 2, { edits: [] })]

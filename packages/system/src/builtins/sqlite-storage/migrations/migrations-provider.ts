@@ -98,20 +98,22 @@ export class MigrationsProvider implements IMigrationsProvider {
     return { entries: [...(await this.engine.retry(input.id))] }
   }
 
-  declareOwner(input: { owner: string; metas: MigrationMeta[] }): Promise<{
+  declareOwner(input: { owner: string; metas: MigrationMeta[]; retired?: string[] }): Promise<{
     bootId: string
     snapshot: 'none' | 'written' | 'refused'
     steps: MigrationOwnerStep[]
     migrationApi: { version: number; methods: string[] }
   }> {
-    return this.engine.declareOwner(input.owner, input.metas, callerOf(input)).then((out) => ({
-      ...out,
-      steps: [...out.steps],
-      migrationApi: {
-        version: MIGRATION_API_VERSION,
-        methods: Object.keys(MIGRATION_API_V1_METHODS),
-      },
-    }))
+    return this.engine
+      .declareOwner(input.owner, input.metas, callerOf(input), input.retired)
+      .then((out) => ({
+        ...out,
+        steps: [...out.steps],
+        migrationApi: {
+          version: MIGRATION_API_VERSION,
+          methods: Object.keys(MIGRATION_API_V1_METHODS),
+        },
+      }))
   }
 
   startMigration(input: { id: string }): Promise<{

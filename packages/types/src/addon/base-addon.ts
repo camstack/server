@@ -434,6 +434,16 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     this.registrySwitchSpec = spec
   }
 
+  /**
+   * Ids this addon removed from its catalogue on purpose (`declareRetiredMigrations`): sent with
+   * every declaration so the engine does not read their applied rows as a newer database.
+   */
+  private retiredMigrationIds: readonly string[] = []
+
+  protected declareRetiredMigrations(ids: readonly string[]): void {
+    this.retiredMigrationIds = ids
+  }
+
   private registrySwitchSpec: {
     readonly kind: DefinedRecordKind
     readonly initialBody: (name: string) => Readonly<Record<string, unknown>>
@@ -475,10 +485,14 @@ export abstract class BaseAddon<TConfig extends object = Record<string, unknown>
     const added = this.registrySwitchBound()
     const migrations = [...declared, ...added]
     // A phased run (`only`) always carries the switch: it follows the rows-to-record move.
-    const phased =
+    const widened =
       options?.only === undefined || added.length === 0
         ? options
         : { ...options, only: [...options.only, ...added.map((m) => m.meta.id)] }
+    const phased: AddonMigrationRunOptions =
+      this.retiredMigrationIds.length === 0
+        ? (widened ?? {})
+        : { ...widened, retired: this.retiredMigrationIds }
     const api = this.ctx.api.migrations
     const report = await runAddonMigrations(
       {

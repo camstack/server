@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A database whose ledger holds a migration an addon deliberately removed is no longer reported as newer than this version
+
 ## [1.2.864] - 2026-11-14
 
 ### Changed

@@ -51,6 +51,9 @@ reached only through the owner's connection or worker (D679). For each migration
    reason `snapshot-refused`. `events.db` is snapshotted only when a migration touches it.
 4. A ledger id this code does not know (a newer database restored under older code)
    is `skipped-newer`: nothing is written and a warning is raised.
+   An owner that deliberately removes a migration lists its id as RETIRED in its
+   declaration (`declareRetiredMigrations`): an applied row of a retired id stays
+   `applied` and raises nothing.
 5. After `restorePreMigration` the migrations that snapshot predates are `held`: they
    do not rerun until the operator retries or a new code version ships.
 6. The ledger is the authority for what failed. The Alert Center reconciles one
