@@ -1,4 +1,4 @@
-import { type ReactNode, useEffect, type JSX } from 'react'
+import { type CSSProperties, type PointerEvent, type ReactNode, useEffect, useRef, useState, type JSX } from 'react'
 import { X } from 'lucide-react'
 import { cn } from '../lib/cn'
 
@@ -10,6 +10,9 @@ export interface BottomSheetProps {
   className?: string
 }
 
+/** Downward travel of the handle, in px, past which releasing it dismisses the sheet. */
+export const DISMISS_DRAG_PX = 80
+
 export function BottomSheet({
   open,
   onClose,
@@ -17,6 +20,25 @@ export function BottomSheet({
   children,
   className,
 }: BottomSheetProps): JSX.Element | null {
+  const [dragY, setDragY] = useState(0)
+  const dragStart = useRef<number | null>(null)
+
+  const onHandleDown = (e: PointerEvent<HTMLDivElement>): void => {
+    dragStart.current = e.clientY
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+  }
+  const onHandleMove = (e: PointerEvent<HTMLDivElement>): void => {
+    if (dragStart.current === null) return
+    setDragY(Math.max(0, e.clientY - dragStart.current))
+  }
+  const onHandleUp = (e: PointerEvent<HTMLDivElement>): void => {
+    if (dragStart.current === null) return
+    const travelled = e.clientY - dragStart.current
+    dragStart.current = null
+    setDragY(0)
+    if (travelled >= DISMISS_DRAG_PX) onClose()
+  }
+
   useEffect(() => {
     if (!open) return
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -48,6 +70,8 @@ export function BottomSheet({
       <div
         role="dialog"
         aria-modal="true"
+        // ui-check-ok: the sheet follows the dragged handle; a transform is geometry, not a token
+        style={dragY > 0 ? ({ transform: `translateY(${dragY}px)` } satisfies CSSProperties) : undefined}
         className={cn(
           // `bottom-0` is the VIEWPORT bottom, which under `viewport-fit=cover`
           // sits behind the iOS home indicator. The sheet must stay flush with
@@ -60,7 +84,17 @@ export function BottomSheet({
         )}
       >
         {/* Handle bar */}
-        <div className="flex justify-center pt-2 pb-1">
+        <div
+          data-testid="bottom-sheet-handle"
+          className="flex touch-none cursor-grab justify-center pt-2 pb-3"
+          onPointerDown={onHandleDown}
+          onPointerMove={onHandleMove}
+          onPointerUp={onHandleUp}
+          onPointerCancel={() => {
+            dragStart.current = null
+            setDragY(0)
+          }}
+        >
           <div className="h-1 w-8 rounded-full bg-foreground-subtle/30" />
         </div>
 

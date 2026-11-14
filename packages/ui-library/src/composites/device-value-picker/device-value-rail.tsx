@@ -1,6 +1,6 @@
 import type { DeviceSearchFacets } from '@camstack/types'
 import { ChevronRight } from 'lucide-react'
-import { type JSX, useState } from 'react'
+import { type JSX, type ReactNode, useState } from 'react'
 import { Button } from '../../primitives/button'
 import { useUiText } from '../../contexts/ui-text'
 import { humanizeIdentifier } from '../../lib/capability-label'
@@ -76,6 +76,33 @@ function facetViews(
  * choice; expanded it lists the top options with counts and "N more". A
  * facet with nothing to choose between is not drawn.
  */
+/**
+ * The rail's box in the panel. On a phone it stacks above the search column and
+ * must keep its full height in the flow (`shrink-0`): a `min-h-0` wrapper let
+ * the flex column squash it below its content, so the expanded facets were
+ * painted over the search box and the list. Past 40% of the viewport it
+ * scrolls inside itself. From `sm` up it dissolves into the panel's row.
+ */
+export function DeviceValueRailFrame({
+  open,
+  children,
+}: {
+  readonly open: boolean
+  readonly children: ReactNode
+}): JSX.Element {
+  return (
+    <div
+      data-testid="dvp-rail-frame"
+      className={cn(
+        'flex max-h-[40dvh] shrink-0 flex-col overflow-y-auto sm:max-h-none sm:contents',
+        !open && 'hidden',
+      )}
+    >
+      {children}
+    </div>
+  )
+}
+
 export function DeviceValueRail({
   facets,
   selection,
