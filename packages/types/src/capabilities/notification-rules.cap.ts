@@ -2136,6 +2136,8 @@ export const NC_CONDITION_CATALOG: readonly NcConditionDescriptor[] = [
         label: 'Storage location critical',
       },
       { value: 'storage-location-ok', label: 'Storage location ok again' },
+      { value: 'storage-drain-progress', label: 'Storage drain progress' },
+      { value: 'storage-drain-complete', label: 'Storage drain complete' },
       {
         value: 'addon-crash-loop',
         label: 'Addon stopped after repeated crashes',

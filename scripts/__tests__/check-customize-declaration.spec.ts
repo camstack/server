@@ -291,6 +291,7 @@ describe('customize declaration guard', () => {
     const caps = await loadCustomizeCaps()
     expect(caps.map((cap) => cap.capName).toSorted()).toEqual([
       'battery',
+      'climate-control',
       'consumables',
       'doorbell',
       'fan-control',

@@ -77,6 +77,8 @@ describe('every kind has exactly one family', () => {
       'storage-location-low',
       'storage-location-critical',
       'storage-location-ok',
+      'storage-drain-progress',
+      'storage-drain-complete',
       'alert-critical',
       'alert-error',
       'alert-critical-resolved',
