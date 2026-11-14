@@ -8,7 +8,7 @@ import { CardButton } from '../../parts/CardButton'
 import { LevelBar } from '../../parts/LevelBar'
 import { MenuButton } from '../../parts/MenuButton'
 import { PopoverButton } from '../../parts/PopoverButton'
-import { CardReadings } from '../../parts/Readings'
+import { type ColumnItem, columnValue } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type {
@@ -74,6 +74,16 @@ const degrees = (value: number | null): string | null =>
   value === null ? null : `${value.toFixed(1)}°`
 const kilowatts = (watts: number | null): string | null =>
   watts === null ? null : `${(watts / 1000).toFixed(1)} kW`
+
+/** A reading the gateway may not report: a dash, never a zero. */
+function reading(id: string, label: string, value: string | null): ColumnItem {
+  return columnValue(id, {
+    value: value ?? '—',
+    caption: label,
+    tone: value === null ? 'muted' : 'primary',
+    testId: `dc-hp-${id}`,
+  })
+}
 
 function CircuitButton({
   circuit,
@@ -153,7 +163,10 @@ function SystemMode({
       testId={`dc-hp-system-${mode.id}`}
       ariaLabel={label}
       triggerLabel={current === undefined ? label : `${label} · ${current.label}`}
-      options={mode.options.map((o) => ({ ...o, glyph: SYSTEM_GLYPH[mode.id] }))}
+      options={mode.options.map((o) => ({
+        ...o,
+        glyph: SYSTEM_GLYPH[mode.id],
+      }))}
       value={mode.value}
       onChange={(value) => onChange(mode.id, value)}
     />
@@ -225,37 +238,50 @@ export function HeatPumpCard({
             swing={false}
           />
         ),
-        left: (
-          <CardReadings
-            testId="dc-hp-temps"
-            align="end"
-            items={[
-              {
-                id: 'outdoor',
-                label: t('uiLibrary.deviceCard.heatPump.outdoor', 'Outdoor'),
-                value: degrees(model.temperatures.outdoor),
-              },
-              {
-                id: 'supply',
-                label: t('uiLibrary.deviceCard.heatPump.supply', 'Flow'),
-                value: degrees(model.temperatures.supply),
-              },
-              {
-                id: 'return',
-                label: t('uiLibrary.deviceCard.heatPump.return', 'Return'),
-                value: degrees(model.temperatures.return),
-              },
-              {
-                id: 'pressure',
-                label: t('uiLibrary.deviceCard.heatPump.pressure', 'Pressure'),
-                value: model.pressureBar === null ? null : `${model.pressureBar} bar`,
-              },
-            ]}
-          />
-        ),
+        columns: {
+          left: [
+            reading(
+              'outdoor',
+              t('uiLibrary.deviceCard.heatPump.outdoor', 'Outdoor'),
+              degrees(model.temperatures.outdoor),
+            ),
+            reading(
+              'supply',
+              t('uiLibrary.deviceCard.heatPump.supply', 'Flow'),
+              degrees(model.temperatures.supply),
+            ),
+            reading(
+              'return',
+              t('uiLibrary.deviceCard.heatPump.return', 'Return'),
+              degrees(model.temperatures.return),
+            ),
+            reading(
+              'pressure',
+              t('uiLibrary.deviceCard.heatPump.pressure', 'Pressure'),
+              model.pressureBar === null ? null : `${model.pressureBar} bar`,
+            ),
+          ],
+          right: [
+            reading(
+              'thermal',
+              t('uiLibrary.deviceCard.heatPump.thermal', 'Thermal'),
+              kilowatts(model.thermalW),
+            ),
+            reading(
+              'electrical',
+              t('uiLibrary.deviceCard.heatPump.electrical', 'Electrical'),
+              kilowatts(model.electricalW),
+            ),
+            reading(
+              'cop',
+              t('uiLibrary.deviceCard.heatPump.cop', 'COP'),
+              model.cop === null ? null : model.cop.toFixed(1),
+            ),
+          ],
+        },
         image: (
-          <div className="grid w-26 justify-items-center gap-1.5">
-            <HeatPumpIllustration compressorPct={comp} cold={cold} className="h-auto w-26" />
+          <div className="grid w-full min-w-26 max-w-52 justify-items-center gap-1.5">
+            <HeatPumpIllustration compressorPct={comp} cold={cold} className="h-auto w-full" />
             <div
               data-testid="dc-hp-compressor"
               className="grid w-full gap-1 text-center text-xs text-foreground-muted"
@@ -269,28 +295,6 @@ export function HeatPumpCard({
               />
             </div>
           </div>
-        ),
-        right: (
-          <CardReadings
-            testId="dc-hp-power"
-            items={[
-              {
-                id: 'thermal',
-                label: t('uiLibrary.deviceCard.heatPump.thermal', 'Thermal'),
-                value: kilowatts(model.thermalW),
-              },
-              {
-                id: 'electrical',
-                label: t('uiLibrary.deviceCard.heatPump.electrical', 'Electrical'),
-                value: kilowatts(model.electricalW),
-              },
-              {
-                id: 'cop',
-                label: t('uiLibrary.deviceCard.heatPump.cop', 'COP'),
-                value: model.cop === null ? null : model.cop.toFixed(1),
-              },
-            ]}
-          />
         ),
         bottom: bottomRow(model, actions, t),
       }}

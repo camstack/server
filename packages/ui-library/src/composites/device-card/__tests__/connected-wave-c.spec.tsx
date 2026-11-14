@@ -163,8 +163,8 @@ describe('a heat pump', () => {
   it('draws the readings, the compressor and the pump’s own draw in the corner', () => {
     hub.hpSlice = HEAT_PUMP
     render(<ConnectedHeatPumpCard deviceId={1} optimistic={false} />)
-    expect(screen.getByTestId('dc-hp-temps').textContent).toContain('8.3°')
-    expect(screen.getByTestId('dc-hp-power').textContent).toContain('3.9')
+    expect(screen.getByTestId('dc-hp-outdoor').textContent).toContain('8.3°')
+    expect(screen.getByTestId('dc-hp-cop').textContent).toContain('3.9')
     expect(screen.getByTestId('dc-hp-compressor').textContent).toContain('45%')
     expect(screen.getByText('1600 W')).toBeTruthy()
   })

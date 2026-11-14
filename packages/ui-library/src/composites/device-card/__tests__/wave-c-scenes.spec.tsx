@@ -173,7 +173,7 @@ describe('fixtures', () => {
   it.each(heatPumpFixtures().map((f) => [f.id, f] as const))('heat pump %s renders', (_, f) => {
     render(<HeatPumpCard model={f.model} actions={hpActions()} orientation={f.orientation} />)
     expect(screen.getByTestId('device-card').getAttribute('data-card-kind')).toBe('heat-pump')
-    expect(screen.getByTestId('dc-hp-temps')).toBeTruthy()
+    expect(screen.getByTestId('dc-hp-outdoor')).toBeTruthy()
   })
 
   it('toggles a system mode to its on value and back to off', () => {
