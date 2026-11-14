@@ -70,6 +70,8 @@ function world(
     readonly assumptions?: { current: RemoteAssumedState | null }
     /** A driver's native media-player cap reads the device. */
     readonly native?: boolean
+    /** Answers `reportedStatus` instead of `reported` (the real hook's re-entry). */
+    readonly reportedVia?: (deviceId: number) => Promise<MediaPlayerStatus | null>
     /** The device of the linked plug. */
     readonly plugDevice?: number | null
     /** Counts every read the service makes of the world. */
@@ -107,7 +109,8 @@ function world(
       if (options.reads) options.reads.count += 1
       return options.mediaPlayer ?? true
     },
-    reportedStatus: async () => options.reported ?? null,
+    reportedStatus: async (deviceId) =>
+      options.reportedVia ? options.reportedVia(deviceId) : (options.reported ?? null),
     runningState: async () => options.running ?? null,
     plugOn: async () => (options.plugState ? options.plugState.current : (options.plug ?? null)),
     sleep: async (ms) => {
@@ -1075,11 +1078,27 @@ describe('declared sources (planning#460)', () => {
 
   it('a source comes only from a native reading', async () => {
     const reported: MediaPlayerStatus = { ...nativeStatus('on'), source: 'HDMI 2' }
-    const w = world(declared(), { plug: true, reported })
+    const w = world(declared(), { plug: true, native: true, reported })
     await select(w, 'HDMI 1')
     const status = await w.service.assumedStatus(TV)
     expect(status?.source).toBe('HDMI 2')
     expect(status?.assumedFields).not.toContain('source')
+  })
+
+  it('without a native media-player the status never asks getStatus, which the remote itself answers', async () => {
+    // The real dispatch hook answers getStatus for a device with no native
+    // provider FROM this service: a status that asked it would recurse forever.
+    let asked = 0
+    const w = world(declared(), {
+      plug: true,
+      reportedVia: async (deviceId) => {
+        asked += 1
+        if (asked > 3) throw new Error('getStatus re-entered the remote status')
+        return w.service.assumedStatus(deviceId)
+      },
+    })
+    expect((await w.service.assumedStatus(TV))?.source).toBe('')
+    expect(asked).toBe(0)
   })
 
   it('a native source reading is not shown while the set is off', async () => {

@@ -450,8 +450,13 @@ export class RemoteService implements IRemoteProvider {
     return null
   }
 
-  /** The input as a native source READS it, else '': a send is never a reading. */
+  /**
+   * The input as a native source READS it, else '': a send is never a reading.
+   * Without a native media-player the device's `getStatus` is answered by THIS
+   * service, so asking it would re-enter `statusOf` without end: it is not asked.
+   */
   private async currentSource(deviceId: number): Promise<string> {
+    if (!this.deps.hasNative(deviceId)) return ''
     const reported = await this.deps.reportedStatus(deviceId)
     return reported !== null ? reported.source : ''
   }
