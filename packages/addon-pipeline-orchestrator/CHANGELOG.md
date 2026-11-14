@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Serves viewer 1.0.711 (debug timing marks for the device card).
+
 ## [1.2.685] - 2026-11-14
 
 ### Changed
