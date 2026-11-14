@@ -41,6 +41,7 @@ export function SensorCard({
       {...(actions === undefined ? {} : { actions })}
       scene={{
         fx: visual === null ? null : <MeasurementFx visual={visual} />,
+        columns: {},
         image: (
           <div
             data-testid="dc-sensor"
