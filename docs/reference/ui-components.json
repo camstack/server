@@ -2873,7 +2873,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/climate/ClimateCard.tsx",
-      "summary": "Climate, every role: the dial sets the target, the left column steps it, the right column holds power / mode / fan, the bottom row presets and swing. A block the device does not declare is not drawn.",
+      "summary": "Climate, every role: the dial sets the target, the left column steps it, the right column holds power and the fan key, the bottom row the mode, presets and swing. A block the device does not declare is not drawn.",
       "props": [
         {
           "name": "model",
@@ -3117,11 +3117,39 @@
       "summary": "Lower number = higher priority (kept longest as width shrinks). `name` = 0 (never dropped); `previewActions` = 1 (always visible). The optional columns drop in REVERSE priority order as width shrinks — highest number …"
     },
     {
+      "name": "columnButton",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "A button in a side column: an icon, optionally with one short word."
+    },
+    {
+      "name": "ColumnItem",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "What a side column may hold: a compact control or a single short value. A `ColumnItem` can only be made by the factories below, and the factories take no selector, picker, segmented choice or long text — so a scene ca…"
+    },
+    {
       "name": "columnsForContext",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-list/columns.ts",
       "summary": "Device-mode column model: a fixed catalog, a per-context subset matrix, a responsive priority, and a priority-derived breakpoint mapping. Each consumer declares its `TableContext`; the table renders only the columns t…"
+    },
+    {
+      "name": "columnSlider",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "A level in a side column."
+    },
+    {
+      "name": "columnValue",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "One short reading in a side column."
     },
     {
       "name": "COMMIT_DEDUPE_TOLERANCE_MS",
@@ -11296,6 +11324,12 @@
           "type": "string | null",
           "optional": true,
           "doc": "What a TV tile names (the input)."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": "Sizes the tile; the default is a fixed square, a scene may let it fill its zone."
         }
       ]
     },
@@ -11422,7 +11456,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/media/MediaPlayerCard.tsx",
-      "summary": "A media player: the volume on the left, what is playing in the middle (its cover, a TV's input, or nothing when the content is not known), power and the source on the right, the track position and the transport below.…",
+      "summary": "A media player: the volume on the left, what is playing in the middle (its cover, a TV's input, or nothing when the content is not known), power on the right, the track position, the transport and the source picker be…",
       "props": [
         {
           "name": "model",
@@ -15063,6 +15097,20 @@
       "summary": "The lighting variants an operator is OFFERED. The resolver can also report `night`, `dawn` and `dusk`; those are shown when present but never demanded, because most installs only ever see day and IR."
     },
     {
+      "name": "SCENE_COLUMN_PCT",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/scene-layout.ts",
+      "summary": "The scene's proportions, a property of the grid and not of any one scene. Both side columns are EXACTLY the same width; whatever they leave is the drawing, so the drawing never gets less than ."
+    },
+    {
+      "name": "SCENE_MIN_PCT",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/scene-layout.ts",
+      "summary": "The share of the card width the drawing keeps at least (two columns subtracted from 100)."
+    },
+    {
       "name": "SceneBackdrop",
       "kind": "component",
       "area": "composites",
@@ -15106,28 +15154,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/SceneGrid.tsx",
-      "summary": "The scene: left column, drawing, right column, and a bottom row — the same four zones for every device type. A zone with nothing in it is not rendered.",
-      "propsExtends": ["SceneZones"],
-      "props": [
-        {
-          "name": "corners",
-          "type": "ReactNode",
-          "optional": false,
-          "doc": "The four corners, placed by the shell."
-        },
-        {
-          "name": "bottomCorners",
-          "type": "boolean",
-          "optional": false,
-          "doc": "A bottom corner is drawn: leave room under the zones."
-        },
-        {
-          "name": "activity",
-          "type": "string",
-          "optional": true,
-          "doc": ""
-        }
-      ]
+      "summary": "The scene: left column, drawing, right column, and a bottom row — the same four zones for every device type. A zone with nothing in it is not rendered."
     },
     {
       "name": "SceneMonitorEditor",
@@ -15135,6 +15162,45 @@
       "area": "root",
       "file": "packages/ui-library/src/index.ts",
       "summary": "Lazy-wrapped `SceneMonitorEditor` — code-split off the main bundle for the same reason: it mounts `MaskShapeCanvas`, which chains react-konva. Render inside `<Suspense>`; the admin-ui `/scenes` dialog is its only caller."
+    },
+    {
+      "name": "ScenePower",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/ScenePower.tsx",
+      "summary": "Power ON the scene: for a device whose only control is on / off, tapping the drawing toggles it and no separate power button sits beside it. A switch to assistive tech (`role=\"switch\"`, `aria-checked`, the label), a k…",
+      "props": [
+        {
+          "name": "on",
+          "type": "boolean",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "The accessible name of the switch (\"Power\", the device name)."
+        },
+        {
+          "name": "onToggle",
+          "type": "(next: boolean) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The drawing."
+        }
+      ]
     },
     {
       "name": "SCENES_WITH_ART",

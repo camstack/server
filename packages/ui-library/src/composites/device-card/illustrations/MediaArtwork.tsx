@@ -12,6 +12,8 @@ export interface MediaArtworkProps {
   readonly imageUrl?: string | null
   /** What a TV tile names (the input). */
   readonly caption?: string | null
+  /** Sizes the tile; the default is a fixed square, a scene may let it fill its zone. */
+  readonly className?: string
 }
 
 const TILE = 'grid h-30 w-30 shrink-0 place-items-center overflow-hidden rounded-[14px] text-center'
@@ -21,7 +23,13 @@ const TILE = 'grid h-30 w-30 shrink-0 place-items-center overflow-hidden rounded
  * accent for music, the input's name on a dark screen for a TV, nothing when
  * the content is not known. Quiet while the player is off.
  */
-export function MediaArtwork({ kind, on, imageUrl, caption }: MediaArtworkProps): ReactElement {
+export function MediaArtwork({
+  kind,
+  on,
+  imageUrl,
+  caption,
+  className,
+}: MediaArtworkProps): ReactElement {
   if (on && typeof imageUrl === 'string' && imageUrl.length > 0) {
     return (
       <img
@@ -29,7 +37,7 @@ export function MediaArtwork({ kind, on, imageUrl, caption }: MediaArtworkProps)
         alt=""
         data-testid="dc-media-art"
         data-kind="image"
-        className={cn(TILE, 'object-cover')}
+        className={cn(TILE, 'object-cover', className)}
       />
     )
   }
@@ -41,7 +49,7 @@ export function MediaArtwork({ kind, on, imageUrl, caption }: MediaArtworkProps)
         ? 'bg-linear-135 from-primary to-info text-primary-foreground'
         : 'bg-surface-hover text-foreground-muted'
   return (
-    <div data-testid="dc-media-art" data-kind={kind} aria-hidden className={cn(TILE, tone)}>
+    <div data-testid="dc-media-art" data-kind={kind} aria-hidden className={cn(TILE, tone, className)}>
       {kind === 'tv' && on ? (
         <span className="px-2 text-base font-semibold">{caption ?? ''}</span>
       ) : kind === 'blank' ? null : (

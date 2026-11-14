@@ -188,15 +188,14 @@ export function EnergyCard({
       }}
       scene={{
         fx: null,
-        left: null,
+        columns: {},
         image: (
           <EnergyFlowIllustration
             nodes={energyNodes(model.flows, t)}
             ariaLabel={t('uiLibrary.deviceCard.energy.flows', 'Energy flows')}
-            className="h-auto w-full max-w-67"
+            className="h-auto w-full max-w-96"
           />
         ),
-        right: null,
         bottom:
           model.today === null ? null : (
             <Today today={model.today} t={t} omitCharge={sceneShowsBatteryCharge(model.flows)} />

@@ -10,6 +10,7 @@ import { Dial, type DialTone } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
 import { type DialRange, RangeDial } from '../../parts/RangeDial'
 import { ValueChip } from '../../parts/ValueChip'
+import { type ColumnItem, columnButton, columnValue } from '../../shell/column-items'
 import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import { cardToneClass } from '../../shell/Corner'
 import type { CardOrientation, CardTone } from '../../shell/model'
@@ -45,7 +46,8 @@ const bare = (value: number): string => String(Number(value.toFixed(1)))
 
 /**
  * Climate, every role: the dial sets the target, the left column steps it, the
- * right column holds power / mode / fan, the bottom row presets and swing. A
+ * right column holds power and the fan key, the bottom row the mode, presets
+ * and swing. A
  * block the device does not declare is not drawn.
  */
 export function ClimateCard({
@@ -179,67 +181,82 @@ export function ClimateCard({
       ) : null}
     </div>
   )
-  const left =
-    range !== null && band !== null ? (
-      <span
-        className="flex flex-col items-center text-center leading-tight"
-        data-testid="dc-climate-range"
-      >
-        <b
-          className={cn(
-            'whitespace-nowrap text-sm tabular-nums',
-            model.on ? 'text-primary' : 'text-foreground-muted',
-          )}
-        >
-          {bare(band.low)}–{bare(band.high)}°
-        </b>
-        <small className="text-xs lowercase text-foreground-muted">
-          {t('uiLibrary.deviceCard.climate.rangeShort', 'range')}
-        </small>
-      </span>
-    ) : target === null || shown === null ? null : (
-      <>
-        <CardButton
-          glyph="plus"
-          aria-label={t('uiLibrary.deviceCard.climate.raise', 'Raise the target')}
-          disabled={!model.on || target.value >= target.max}
-          onClick={() => stepBy(1)}
-        />
-        <span className="flex flex-col items-center leading-tight" data-testid="dc-climate-target">
-          <b
-            className={cn(
-              'text-sm tabular-nums',
-              model.on ? 'text-primary' : 'text-foreground-muted',
-            )}
-          >
-            {degrees(shown, 1)}
-          </b>
-          <small className="text-xs lowercase text-foreground-muted">
-            {target.label ?? t('uiLibrary.deviceCard.climate.targetShort', 'target')}
-          </small>
-        </span>
-        <CardButton
-          glyph="minus"
-          aria-label={t('uiLibrary.deviceCard.climate.lower', 'Lower the target')}
-          disabled={!model.on || target.value <= target.min}
-          onClick={() => stepBy(-1)}
-        />
-      </>
-    )
-  const right = (
+  const left: readonly ColumnItem[] =
+    range !== null && band !== null
+      ? [
+          columnValue('range', {
+            value: `${bare(band.low)}–${bare(band.high)}°`,
+            caption: t('uiLibrary.deviceCard.climate.rangeShort', 'range'),
+            tone: model.on ? 'primary' : 'muted',
+            testId: 'dc-climate-range',
+          }),
+        ]
+      : target === null || shown === null
+        ? []
+        : [
+            columnButton('raise', {
+              glyph: 'plus',
+              label: t('uiLibrary.deviceCard.climate.raise', 'Raise the target'),
+              disabled: !model.on || target.value >= target.max,
+              onPress: () => stepBy(1),
+            }),
+            columnValue('target', {
+              value: degrees(shown, 1),
+              caption: target.label ?? t('uiLibrary.deviceCard.climate.targetShort', 'target'),
+              tone: model.on ? 'primary' : 'muted',
+              testId: 'dc-climate-target',
+            }),
+            columnButton('lower', {
+              glyph: 'minus',
+              label: t('uiLibrary.deviceCard.climate.lower', 'Lower the target'),
+              disabled: !model.on || target.value <= target.min,
+              onPress: () => stepBy(-1),
+            }),
+          ]
+  const fanLabel =
+    model.fan === null
+      ? null
+      : (model.fan.options.find((o) => o.id === model.fan?.value)?.label ?? model.fan.value)
+  const right: readonly ColumnItem[] = [
+    ...(model.canPower
+      ? [
+          columnButton('power', {
+            glyph: 'power',
+            label: model.on
+              ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
+              : t('uiLibrary.deviceCard.turnOn', 'Turn on'),
+            tone: model.on ? 'primary' : 'default',
+            testId: 'dc-climate-power',
+            onPress: () => actions.onPower(!model.on),
+          }),
+        ]
+      : []),
+    ...(model.fan === null || fanLabel === null
+      ? []
+      : [
+          columnButton('fan', {
+            glyph: 'fan',
+            label: `${t('uiLibrary.deviceCard.climate.fan', 'Fan')}: ${fanLabel}`,
+            caption: fanLabel,
+            disabled: !model.on,
+            testId: 'dc-climate-fan',
+            onPress: () => {
+              const next = model.fan === null ? null : nextChoice(model.fan)
+              if (next !== null) actions.onFan(next)
+            },
+          }),
+        ]),
+  ]
+  const valveChip = valve !== null && !valveOnly
+  const hasBottom =
+    model.mode !== null ||
+    model.preset !== null ||
+    model.heatCool !== null ||
+    model.swing !== null ||
+    model.swingHorizontal !== null ||
+    valveChip
+  const bottom = hasBottom ? (
     <>
-      {model.canPower ? (
-        <CardButton
-          glyph="power"
-          tone={model.on ? 'primary' : 'default'}
-          data-testid="dc-climate-power"
-          onClick={() => actions.onPower(!model.on)}
-        >
-          {model.on
-            ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
-            : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-        </CardButton>
-      ) : null}
       {model.mode === null ? null : (
         <MenuButton
           options={model.mode.options}
@@ -250,31 +267,6 @@ export function ClimateCard({
           testId="dc-climate-mode"
         />
       )}
-      {model.fan === null ? null : (
-        <CardButton
-          glyph="fan"
-          disabled={!model.on}
-          aria-label={t('uiLibrary.deviceCard.climate.fan', 'Fan')}
-          data-testid="dc-climate-fan"
-          onClick={() => {
-            const next = model.fan === null ? null : nextChoice(model.fan)
-            if (next !== null) actions.onFan(next)
-          }}
-        >
-          {model.fan.options.find((o) => o.id === model.fan?.value)?.label ?? model.fan.value}
-        </CardButton>
-      )}
-    </>
-  )
-  const valveChip = valve !== null && !valveOnly
-  const hasBottom =
-    model.preset !== null ||
-    model.heatCool !== null ||
-    model.swing !== null ||
-    model.swingHorizontal !== null ||
-    valveChip
-  const bottom = hasBottom ? (
-    <>
       {model.preset === null ? null : (
         <ButtonGroup
           options={model.preset.options}
@@ -343,9 +335,8 @@ export function ClimateCard({
         fx: valveOnly ? null : (
           <AmbientFx role={model.role} activity={activity} swing={model.swing === true} />
         ),
-        left,
+        columns: { left, right },
         image,
-        right,
         bottom,
       }}
     />
