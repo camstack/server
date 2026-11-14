@@ -2,8 +2,8 @@ import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
 import { CardIcon } from '../../parts/CardIcon'
-import { InfoTile } from '../../parts/InfoTile'
 import { columnArmedButton, columnLink } from '../../shell/column-items'
+import { rowStats } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation } from '../../shell/model'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
@@ -64,7 +64,9 @@ export function GatewayCard({
       label: t('uiLibrary.deviceCard.gateway.address', 'Address'),
       value: model.facts.address,
     },
-  ].filter((fact) => fact.value !== null)
+  ].flatMap((fact) =>
+    fact.value === null ? [] : [{ id: fact.id, name: fact.label, value: fact.value }],
+  )
   return (
     <DeviceCard
       kind="gateway"
@@ -116,18 +118,13 @@ export function GatewayCard({
           />
         ),
         bottom:
-          facts.length === 0 ? null : (
-            <div className="grid w-full gap-1.5">
-              {facts.map((fact) => (
-                <InfoTile
-                  key={fact.id}
-                  label={fact.label}
-                  value={fact.value}
-                  testId={`dc-gateway-${fact.id}`}
-                />
-              ))}
-            </div>
-          ),
+          facts.length === 0
+            ? []
+            : [
+                rowStats('facts', {
+                  stats: facts.map((fact) => ({ ...fact, testId: `dc-gateway-${fact.id}` })),
+                }),
+              ],
       }}
     />
   )

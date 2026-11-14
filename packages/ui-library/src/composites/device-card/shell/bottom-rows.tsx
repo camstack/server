@@ -80,6 +80,7 @@ export interface RowStat {
   readonly id: string
   readonly name: string
   readonly value: string
+  readonly testId?: string
 }
 
 export interface RowStatsProps extends RowBase {
@@ -103,7 +104,7 @@ export function rowStats(key: string, props: RowStatsProps): BottomRow {
       {props.stats.map((stat) => (
         <li
           key={stat.id}
-          data-testid={props.cellTestId}
+          data-testid={stat.testId ?? props.cellTestId}
           className="flex min-w-0 flex-col items-center rounded-lg bg-surface-hover px-1.5 py-1 text-center text-xs text-foreground-muted"
         >
           <span className="max-w-full truncate">{stat.name}</span>
