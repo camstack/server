@@ -1,4 +1,5 @@
 import { customAction, defineCustomActions } from '@camstack/types'
+import type { HmKeyEventDiagnosis } from 'nodehomematic'
 import { z } from 'zod'
 import {
   AcknowledgeInputSchema,
@@ -48,6 +49,14 @@ import {
  * page). Reads are `query`; every CCU write is a `mutation` whose input carries
  * the operator's `confirmed` flag.
  */
+/**
+ * The library's diagnosis, passed through as it is: a read-only report for an
+ * operator and an agent, shaped and documented by nodehomematic.
+ */
+const KeyEventDiagnosisSchema = z.custom<HmKeyEventDiagnosis>(
+  (value) => typeof value === 'object' && value !== null,
+)
+
 export const homematicActions = defineCustomActions({
   discoverCcu: customAction(
     z.object({}),
@@ -182,6 +191,10 @@ export const homematicActions = defineCustomActions({
     auth: 'admin',
   }),
   getCcuDeviceState: customAction(DeviceRefSchema, CcuDeviceStateSchema, {
+    kind: 'query',
+    auth: 'admin',
+  }),
+  diagnoseCcuKeyEvents: customAction(DeviceRefSchema, KeyEventDiagnosisSchema, {
     kind: 'query',
     auth: 'admin',
   }),

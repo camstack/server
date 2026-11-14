@@ -1,4 +1,4 @@
-import type { HmChannel, HmDataPoint, HmDevice, HmValue } from 'nodehomematic'
+import type { HmChannel, HmDataPoint, HmDevice, HmKeyEventDiagnosis, HmValue } from 'nodehomematic'
 import type { z } from 'zod'
 import type { CcuActionDeps } from './ccu-facade.js'
 import { requireConfirmed, requireFacade } from './ccu-facade.js'
@@ -102,6 +102,18 @@ export function buildCcuDeviceStateHandlers(deps: CcuActionDeps) {
       }
     },
 
+    /**
+     * Read-only: why a key does not deliver presses. The library reads the
+     * central link, direct links, VALUES/MASTER, the CCU's own data point
+     * timestamps and the programs using the key, and when this client last
+     * received each event — every section on its own (nodehomematic 0.8.0).
+     */
+    diagnoseCcuKeyEvents: async (input: DeviceRef): Promise<HmKeyEventDiagnosis> => {
+      const facade = requireFacade(deps, input.integrationId)
+      requireDevice(facade.devices(), input.address)
+      return facade.diagnoseKeyEvents(input.address)
+    },
+
     setCcuValue: async (input: SetValueInput): Promise<OkResult> => {
       requireConfirmed(input.confirmed)
       const facade = requireFacade(deps, input.integrationId)
@@ -116,7 +128,11 @@ export function buildCcuDeviceStateHandlers(deps: CcuActionDeps) {
         throw new Error(`${input.parameter} is not a writable value of ${input.channel}`)
       }
       await facade.setValue(
-        { device: device.address, channel: input.channel, parameter: input.parameter },
+        {
+          device: device.address,
+          channel: input.channel,
+          parameter: input.parameter,
+        },
         input.value,
       )
       deps.logger.info('Homematic: value written', {

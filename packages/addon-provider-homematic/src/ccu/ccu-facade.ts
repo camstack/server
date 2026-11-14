@@ -29,6 +29,7 @@ export type CcuFacade = Pick<
   | 'removeCentralLink'
   | 'ensureKeyEventProgram'
   | 'getKeyEventProgram'
+  | 'diagnoseKeyEvents'
   | 'removeKeyEventProgram'
   | 'programs'
   | 'runProgram'

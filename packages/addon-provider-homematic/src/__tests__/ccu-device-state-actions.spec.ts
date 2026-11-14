@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import type { HmDataPoint } from 'nodehomematic'
+import type { HmDataPoint, HmKeyEventDiagnosis } from 'nodehomematic'
 import { buildCcuDeviceStateHandlers } from '../ccu/ccu-device-state-actions.js'
 import { fakeDeps } from './ccu-fake.js'
 import { hmDataPoint, hmDevice } from './hm-test-fixtures.js'
@@ -25,12 +25,20 @@ function actuator() {
         index: 0,
         type: 'MAINTENANCE',
         dataPoints: [
-          hmDataPoint({ parameter: 'RSSI_DEVICE', type: 'INTEGER', value: -64 }),
+          hmDataPoint({
+            parameter: 'RSSI_DEVICE',
+            type: 'INTEGER',
+            value: -64,
+          }),
           hmDataPoint({ parameter: 'RSSI_PEER', type: 'INTEGER', value: -71 }),
           hmDataPoint({ parameter: 'UNREACH', type: 'BOOL', value: false }),
           hmDataPoint({ parameter: 'LOW_BAT', type: 'BOOL', value: true }),
           hmDataPoint({ parameter: 'DUTY_CYCLE', type: 'BOOL', value: false }),
-          hmDataPoint({ parameter: 'CONFIG_PENDING', type: 'BOOL', value: true }),
+          hmDataPoint({
+            parameter: 'CONFIG_PENDING',
+            type: 'BOOL',
+            value: true,
+          }),
         ],
       },
       {
@@ -144,7 +152,10 @@ describe('getCcuDeviceState', () => {
 describe('setCcuValue', () => {
   it('writes a writable value only once confirmed, logged with the device tag', async () => {
     const setValue = vi.fn(async () => undefined)
-    const { deps, logger } = fakeDeps({ devices: () => [actuator()], setValue })
+    const { deps, logger } = fakeDeps({
+      devices: () => [actuator()],
+      setValue,
+    })
     const handlers = buildCcuDeviceStateHandlers(deps)
     const input = {
       integrationId: 'hm_1',
@@ -189,14 +200,71 @@ describe('setCcuValue', () => {
     const handlers = buildCcuDeviceStateHandlers(deps)
     const base = { integrationId: 'hm_1', value: 1, confirmed: true }
     await expect(
-      handlers.setCcuValue({ ...base, channel: `${ADDRESS}:4`, parameter: 'PROCESS' }),
+      handlers.setCcuValue({
+        ...base,
+        channel: `${ADDRESS}:4`,
+        parameter: 'PROCESS',
+      }),
     ).rejects.toThrow(/not a writable value/)
     await expect(
-      handlers.setCcuValue({ ...base, channel: `${ADDRESS}:4`, parameter: 'LEVEL' }),
+      handlers.setCcuValue({
+        ...base,
+        channel: `${ADDRESS}:4`,
+        parameter: 'LEVEL',
+      }),
     ).rejects.toThrow(/not a writable value/)
     await expect(
       handlers.setCcuValue({ ...base, channel: 'NOPE:1', parameter: 'STATE' }),
     ).rejects.toThrow(/not known/)
     expect(setValue).not.toHaveBeenCalled()
+  })
+})
+
+function diagnosis(address: string): HmKeyEventDiagnosis {
+  return {
+    deviceAddress: address,
+    interfaceId: 'HmIP-RF',
+    takenAt: 1,
+    maintenance: { ok: false, error: 'not read' },
+    maintenanceClient: { channelAddress: `${address}:0`, parameters: [] },
+    channels: [],
+    rega: { available: false, reason: 'no credentials' },
+    interfaceClient: {
+      interfaceId: 'HmIP-RF',
+      state: 'CONNECTED',
+      lastEventAt: null,
+      callbackAlive: true,
+    },
+  }
+}
+
+describe('diagnoseCcuKeyEvents', () => {
+  it('asks the library to diagnose the adopted device and returns its report', async () => {
+    const diagnoseKeyEvents = vi.fn(async (address: string) => diagnosis(address))
+    const { deps } = fakeDeps({
+      devices: () => [actuator()],
+      diagnoseKeyEvents,
+    })
+    const report = await buildCcuDeviceStateHandlers(deps).diagnoseCcuKeyEvents({
+      integrationId: 'hm_1',
+      address: ADDRESS,
+    })
+    expect(diagnoseKeyEvents).toHaveBeenCalledWith(ADDRESS)
+    expect(report).toEqual(diagnosis(ADDRESS))
+  })
+
+  it('refuses a device the CCU does not know, without calling the library', async () => {
+    const diagnoseKeyEvents = vi.fn()
+    const { deps } = fakeDeps({
+      devices: () => [actuator()],
+      diagnoseKeyEvents,
+    })
+    await expect(
+      buildCcuDeviceStateHandlers(deps).diagnoseCcuKeyEvents({
+        integrationId: 'hm_1',
+        address: 'NOPE',
+      }),
+    ).rejects.toThrow('Device NOPE is not known to the CCU')
+    expect(diagnoseKeyEvents).not.toHaveBeenCalled()
   })
 })
