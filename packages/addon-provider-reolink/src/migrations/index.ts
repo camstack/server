@@ -3,7 +3,7 @@ import {
   claimDevicesMigration,
   type DefaultIntegrationPorts,
 } from '@camstack/types'
-import { MIGRATED_FROM_HUB_KEY } from '../reolink-hub-migration.js'
+import { MIGRATED_FROM_HUB_KEY } from '../hub-connection.js'
 import { planDropWebhookIntakeSettings } from './drop-webhook-intake-settings.js'
 import { type EmailPushMigrationPorts, moveEmailPushToMailbox } from './email-push-to-mailbox.js'
 import { REOLINK_ROWS_TO_RECORD_MIGRATION } from './integration-rows-to-record.js'

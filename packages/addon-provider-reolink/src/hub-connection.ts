@@ -184,6 +184,9 @@ export function buildHubConnectionSections(): ConfigUISchema {
   }
 }
 
+/** Stamped on an integration that was created from a Hub device. Not a device type. */
+export const MIGRATED_FROM_HUB_KEY = 'migratedFromHubDeviceId'
+
 /** What tells a hub integration from the default one. */
 export interface HubIntegrationEvidence {
   readonly originStableId?: string | undefined
@@ -198,7 +201,7 @@ export interface HubIntegrationEvidence {
  */
 export function isHubIntegration(evidence: HubIntegrationEvidence): boolean {
   if (evidence.originStableId?.startsWith('reolink-hub-') === true) return true
-  if (evidence.info['migratedFromHubDeviceId'] !== undefined) return true
+  if (evidence.info[MIGRATED_FROM_HUB_KEY] !== undefined) return true
   return stringValue(evidence.settings['host']).length > 0
 }
 

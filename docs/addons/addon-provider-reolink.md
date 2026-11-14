@@ -120,12 +120,12 @@ nobody offline.
 - **Discovery** offers each NVR / Home Hub as a `setupIntegration` candidate whose
   `stableId` is `reolinkHubStableId` (uid, else host), so `originStableId` hides it
   once the integration exists.
-- **Migration** (`reolink-hub-migration.ts`, run from `onRestoreDevices`): an old
-  Hub device becomes an integration named after it, its secret moved through the
-  keychain; its children keep their deviceIds, are re-stamped and un-parented, and
-  the Hub is tombstoned only when the DB shows no child under it. A hub with a
-  locked or empty password is left untouched. Idempotent: the integration records
-  `migratedFromHubDeviceId`.
+- The boot conversion of a Hub device into an integration has already run. That
+  path is gone: a backup from before it is not rewritten. An integration created
+  that way still carries `migratedFromHubDeviceId` (`MIGRATED_FROM_HUB_KEY` in
+  `hub-connection.ts`); `isHubIntegration` is true for that marker, for an origin
+  of `reolink-hub-`, or for a host. The NVR / Home Hub product itself is a
+  Gateway device, not a child of the integration.
 - The relay port is the connection's `rtspPort` (default 554), never the Baichuan
   `port`; a migrated hub carries its `rtspPort` if it had one, else 554.
 - Changes to an integration's connection settings apply at the next reconcile (the

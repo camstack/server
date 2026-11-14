@@ -11,7 +11,6 @@ import type {
   CreationSchemaContext,
   CreateDeviceSpec,
   DeviceConstructor,
-  DeviceRestoreReport,
   DeviceSummary,
   DiscoveryCandidate,
   DiscoveryMode,
@@ -22,7 +21,6 @@ import type {
   IScopedLogger,
   LogChannelsProviderHandle,
   RecordIntegrationInstances,
-  SavedDevice,
   SystemEvent,
 } from '@camstack/types'
 import {
@@ -102,12 +100,6 @@ import {
 } from './reolink-discovery-map.js'
 import { ReolinkGatewayDevice } from './reolink-gateway-device.js'
 import { createReolinkHubManager, type ReolinkHubManager } from './reolink-hub-manager.js'
-import {
-  type HubMigrationPorts,
-  type PendingHubRetirement,
-  planHubMigration,
-  retireMigratedHubs,
-} from './reolink-hub-migration.js'
 import { hubGatewayNativeId, reolinkHubSessions } from './reolink-hub-session.js'
 import {
   REOLINK_DISCOVERY_MODES,
@@ -806,70 +798,6 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
       },
       logger: this.ctx.logger,
     })
-  }
-
-  private buildMigrationPorts(): HubMigrationPorts {
-    const devices = this.ctx.kernel.devices
-    if (!devices) throw new Error('reolink hub migration: kernel.devices unavailable')
-    return {
-      addonId: this.ctx.id,
-      logger: this.ctx.logger,
-      listIntegrations: async () =>
-        (await this.ctx.api.integrations.list.query()).map((i) => ({
-          id: i.id,
-          addonId: i.addonId,
-          name: i.name,
-          info: i.info,
-          ...(i.originStableId !== undefined ? { originStableId: i.originStableId } : {}),
-        })),
-      createIntegration: async (input) => {
-        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
-          addonId: input.addonId,
-          name: input.name,
-          seed: { info: { ...input.info } },
-          ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
-          values: { ...input.settings },
-        })
-        return { id: created.id }
-      },
-      setIntegrationId: async (deviceId, integrationId) => {
-        await this.ctx.api.deviceManager.setIntegrationId.mutate({
-          deviceId,
-          integrationId,
-        })
-      },
-      persistConfig: async (stableId, config) => {
-        await devices.persistInitialConfig(stableId, config)
-      },
-      childIdsOf: async (parentDeviceId) =>
-        (await this.ctx.api.deviceManager.getChildren.query({ parentDeviceId })).map((c) => c.id),
-      removeDevice: async (deviceId) => {
-        await this.ctx.api.deviceManager.remove.mutate({ deviceId })
-      },
-    }
-  }
-
-  /**
-   * Boot migration of the old Hub devices into integrations (D985), then the normal restore.
-   * Order matters: the integration's session must exist BEFORE its cameras restore (a camera
-   * borrows the session's socket), and the Hub device is retired only AFTER every child came back
-   * un-parented — removing a parent cascades into its children.
-   */
-  protected override async onRestoreDevices(
-    savedDevices: readonly SavedDevice[],
-  ): Promise<DeviceRestoreReport | void> {
-    let rows = savedDevices
-    let retirements: readonly PendingHubRetirement[] = []
-    if (savedDevices.some((row) => row.type === DeviceType.Hub)) {
-      const ports = this.buildMigrationPorts()
-      const plan = await planHubMigration(savedDevices, ports)
-      rows = plan.rows
-      retirements = plan.retirements
-      if (retirements.length > 0) await this.reconcileIntegrations()
-    }
-    const report = await super.onRestoreDevices(rows)
-    if (retirements.length > 0) await retireMigratedHubs(retirements, this.buildMigrationPorts())
-    return report
   }
 
   /**
