@@ -245,7 +245,7 @@ describe('a supply-fed washer', () => {
     const power = screen.getByTestId('dc-appliance-power')
     fireEvent.click(power)
     expect(hub.setState).not.toHaveBeenCalled()
-    expect(power.textContent).toBe('Confirm: interrupts')
+    expect(power.textContent).toBe('Confirm')
     fireEvent.click(power)
     await vi.waitFor(() => expect(hub.setState).toHaveBeenCalledWith({ on: false }))
   })

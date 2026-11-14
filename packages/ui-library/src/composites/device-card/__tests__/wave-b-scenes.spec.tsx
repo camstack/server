@@ -103,7 +103,7 @@ describe('the appliance scene', () => {
     render(<ApplianceCard model={run.model} actions={actions} />)
     fireEvent.click(screen.getByTestId('dc-appliance-power'))
     expect(actions.onPower).not.toHaveBeenCalled()
-    expect(screen.getByTestId('dc-appliance-power').textContent).toBe('Confirm: interrupts')
+    expect(screen.getByTestId('dc-appliance-power').textContent).toBe('Confirm')
     fireEvent.click(screen.getByTestId('dc-appliance-power'))
     expect(actions.onPower).toHaveBeenCalledWith(false)
     cleanup()
@@ -132,7 +132,7 @@ describe('the appliance scene', () => {
     )
     const value = screen.getByTestId('dc-appliance-program-value')
     expect(value.className).toContain('break-words')
-    expect(value.closest('[data-zone="left"]')?.className).toContain('overflow-x-clip')
+    expect(value.closest('[data-zone="bottom"]')?.className).toContain('overflow-x-clip')
     expect(screen.getByTestId('dc-appliance-start').className).toContain('break-words')
   })
 

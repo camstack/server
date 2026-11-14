@@ -2,11 +2,16 @@ import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement, ReactNode } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { ApplianceIllustration } from '../../illustrations/ApplianceIllustration'
-import { ArmedButton } from '../../parts/ArmedButton'
 import { CardButton } from '../../parts/CardButton'
-import { StepColumn } from '../../parts/StepColumn'
+import {
+  type ColumnItem,
+  columnArmedButton,
+  columnButton,
+  columnStep,
+} from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
 import {
   type ApplianceCardActions,
   type ApplianceCardModel,
@@ -57,7 +62,14 @@ export function appliancePhaseLabel(model: ApplianceCardModel, t: UiTextFn): str
   }
 }
 
-function programColumn({ model, actions }: ApplianceCardProps, t: UiTextFn): ReactNode {
+interface ProgramZones {
+  readonly steps: readonly ColumnItem[]
+  readonly info: ReactNode
+}
+
+const noop = (): void => undefined
+
+function programColumn({ model, actions }: ApplianceCardProps, t: UiTextFn): ProgramZones | null {
   const program = model.program
   if (program === null || program.options.length === 0) return null
   const index = program.options.findIndex((p) => p.id === program.selected)
@@ -85,92 +97,110 @@ function programColumn({ model, actions }: ApplianceCardProps, t: UiTextFn): Rea
           : model.endsAt === null
             ? []
             : [
-                t('uiLibrary.deviceCard.appliance.endsAt', 'ends {{time}}', { time: model.endsAt }),
+                t('uiLibrary.deviceCard.appliance.endsAt', 'ends {{time}}', {
+                  time: model.endsAt,
+                }),
               ]),
       ]
-  return (
-    <StepColumn
-      testId="dc-appliance-program"
-      value={current?.label ?? program.selected}
-      notes={notes}
-      up={{
+  return {
+    steps: columnStep('program', {
+      testId: 'dc-appliance-program',
+      value: null,
+      up: {
         glyph: 'up',
         label: t('uiLibrary.deviceCard.appliance.prevProgram', 'Previous program'),
         disabled: !canStep || index <= 0,
-        ...(program.selectable ? { onPress: step(-1) } : {}),
-      }}
-      down={{
+        onPress: program.selectable ? step(-1) : noop,
+      },
+      down: {
         glyph: 'down',
         label: t('uiLibrary.deviceCard.appliance.nextProgram', 'Next program'),
         disabled: !canStep || index < 0 || index >= program.options.length - 1,
-        ...(program.selectable ? { onPress: step(1) } : {}),
-      }}
-    />
-  )
+        onPress: program.selectable ? step(1) : noop,
+      },
+    }),
+    info: (
+      <div
+        className="grid w-full justify-items-center gap-0.5 text-center"
+        data-testid="dc-appliance-program"
+      >
+        <b
+          data-testid="dc-appliance-program-value"
+          className="max-w-full break-words text-sm text-foreground"
+        >
+          {current?.label ?? program.selected}
+        </b>
+        {notes.map((note, i) => (
+          <small key={i} className="text-xs text-foreground-muted">
+            {note}
+          </small>
+        ))}
+      </div>
+    ),
+  }
 }
 
-function powerButton({ model, actions }: ApplianceCardProps, t: UiTextFn): ReactNode {
-  if (model.power === null) return null
+function powerItems({ model, actions }: ApplianceCardProps, t: UiTextFn): readonly ColumnItem[] {
+  if (model.power === null) return []
   if (!model.power.on) {
-    return (
-      <CardButton
-        glyph="power"
-        data-testid="dc-appliance-power"
-        onClick={() => actions.onPower(true)}
-      >
-        {t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-      </CardButton>
-    )
+    return [
+      columnButton('power', {
+        glyph: 'power',
+        label: t('uiLibrary.deviceCard.turnOn', 'Turn on'),
+        testId: 'dc-appliance-power',
+        onPress: () => actions.onPower(true),
+      }),
+    ]
   }
   const label = t('uiLibrary.deviceCard.turnOff', 'Turn off')
   // Cutting the power ends a cycle, running or paused: it asks first.
   if (model.phase === 'run' || model.phase === 'pause') {
-    return (
-      <ArmedButton
-        glyph="power"
-        tone="primary"
-        testId="dc-appliance-power"
-        armedLabel={t('uiLibrary.deviceCard.appliance.confirmInterrupt', 'Confirm: interrupts')}
-        onConfirm={() => actions.onPower(false)}
-      >
-        {label}
-      </ArmedButton>
-    )
+    return [
+      columnArmedButton('power', {
+        glyph: 'power',
+        tone: 'primary',
+        label,
+        testId: 'dc-appliance-power',
+        onConfirm: () => actions.onPower(false),
+      }),
+    ]
   }
-  return (
-    <CardButton
-      glyph="power"
-      tone="primary"
-      data-testid="dc-appliance-power"
-      onClick={() => actions.onPower(false)}
-    >
-      {label}
-    </CardButton>
-  )
+  return [
+    columnButton('power', {
+      glyph: 'power',
+      tone: 'primary',
+      label,
+      testId: 'dc-appliance-power',
+      onPress: () => actions.onPower(false),
+    }),
+  ]
 }
 
-function cycleButtons({ model, actions }: ApplianceCardProps, t: UiTextFn): ReactNode {
+function cycleItems({ model, actions }: ApplianceCardProps, t: UiTextFn): readonly ColumnItem[] {
   const c = model.controls
-  if (c === null || (model.phase !== 'run' && model.phase !== 'pause')) return null
-  return (
-    <>
-      {model.phase === 'run' && c.pause ? (
-        <CardButton glyph="pause" data-testid="dc-appliance-pause" onClick={actions.onPause}>
-          {t('uiLibrary.deviceCard.pause', 'Pause')}
-        </CardButton>
-      ) : null}
-      {c.stop ? (
-        <ArmedButton
-          glyph="stop"
-          testId="dc-appliance-stop"
-          armedLabel={t('uiLibrary.deviceCard.appliance.confirmStop', 'Confirm: stop')}
-          onConfirm={actions.onStop}
-        >
-          {t('uiLibrary.deviceCard.stop', 'Stop')}
-        </ArmedButton>
-      ) : null}
-    </>
-  )
+  if (c === null || (model.phase !== 'run' && model.phase !== 'pause')) return []
+  return [
+    ...(model.phase === 'run' && c.pause
+      ? [
+          columnButton('pause', {
+            glyph: 'pause',
+            label: t('uiLibrary.deviceCard.pause', 'Pause'),
+            testId: 'dc-appliance-pause',
+            onPress: actions.onPause,
+          }),
+        ]
+      : []),
+    ...(c.stop
+      ? [
+          columnArmedButton('stop', {
+            glyph: 'stop',
+            label: t('uiLibrary.deviceCard.stop', 'Stop'),
+            testId: 'dc-appliance-stop',
+            onConfirm: actions.onStop,
+          }),
+        ]
+      : []),
+  ]
 }
 
 function startBox({ model, actions }: ApplianceCardProps, t: UiTextFn): ReactNode {
@@ -223,13 +253,8 @@ export function ApplianceCard({
   const label = appliancePhaseLabel(model, t)
   const cycle = model.phase === 'run' || model.phase === 'pause'
   const props = { model, actions }
-  const right = (
-    <>
-      {powerButton(props, t)}
-      {cycleButtons(props, t)}
-    </>
-  )
-  const hasRight = model.power !== null || (model.controls !== null && cycle)
+  const program = programColumn(props, t)
+  const start = startBox(props, t)
   return (
     <DeviceCard
       kind="appliance"
@@ -240,7 +265,10 @@ export function ApplianceCard({
       activity={model.phase}
       state={{ label, since: model.since, tone: TONE[model.phase] }}
       scene={{
-        left: programColumn(props, t),
+        columns: {
+          left: program?.steps ?? [],
+          right: [...powerItems(props, t), ...cycleItems(props, t)],
+        },
         image: (
           <ApplianceIllustration
             kind={model.kind}
@@ -248,10 +276,16 @@ export function ApplianceCard({
             lit={cycle}
             progress={model.program === null || !cycle ? null : (model.progress ?? 0)}
             label={label}
+            className={SCENE_DRAWING_CLASS}
           />
         ),
-        right: hasRight ? right : null,
-        bottom: startBox(props, t),
+        bottom:
+          program === null && start === null ? null : (
+            <>
+              {program?.info}
+              {start}
+            </>
+          ),
       }}
     />
   )
