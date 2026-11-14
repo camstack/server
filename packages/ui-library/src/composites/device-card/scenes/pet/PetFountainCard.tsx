@@ -1,10 +1,12 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { PetFountainIllustration } from '../../illustrations/PetFountainIllustration'
 import { CardButton } from '../../parts/CardButton'
 import { LevelRow } from '../../parts/LevelRow'
+import { type ColumnItem, columnButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
 import {
   FOUNTAIN_LOW_PERCENT,
   fountainMillilitres,
@@ -47,44 +49,39 @@ export function petFountainStateLabel(activity: PetFountainActivity, t: UiTextFn
   }
 }
 
-function pumpButtons(
+function pumpItems(
   model: PetFountainCardModel,
   actions: PetFountainCardActions,
   t: UiTextFn,
-): ReactNode {
-  if (!model.pumpSwitchable) return null
+): readonly ColumnItem[] {
+  if (!model.pumpSwitchable) return []
   const on = t('uiLibrary.deviceCard.turnOn', 'Turn on')
   const off = t('uiLibrary.deviceCard.turnOff', 'Turn off')
   if (model.pump === null) {
-    return (
-      <>
-        <CardButton
-          glyph="power"
-          data-testid="dc-fountain-pump-on"
-          onClick={() => actions.onPump(true)}
-        >
-          {on}
-        </CardButton>
-        <CardButton
-          glyph="power"
-          data-testid="dc-fountain-pump-off"
-          onClick={() => actions.onPump(false)}
-        >
-          {off}
-        </CardButton>
-      </>
-    )
+    return [
+      columnButton('pump-on', {
+        glyph: 'power',
+        label: on,
+        testId: 'dc-fountain-pump-on',
+        onPress: () => actions.onPump(true),
+      }),
+      columnButton('pump-off', {
+        glyph: 'power',
+        label: off,
+        testId: 'dc-fountain-pump-off',
+        onPress: () => actions.onPump(false),
+      }),
+    ]
   }
-  return (
-    <CardButton
-      glyph="power"
-      tone={model.pump ? 'primary' : 'default'}
-      data-testid="dc-fountain-pump"
-      onClick={() => actions.onPump(model.pump !== true)}
-    >
-      {model.pump ? off : on}
-    </CardButton>
-  )
+  return [
+    columnButton('pump', {
+      glyph: 'power',
+      tone: model.pump ? 'primary' : 'default',
+      label: model.pump ? off : on,
+      testId: 'dc-fountain-pump',
+      onPress: () => actions.onPump(model.pump !== true),
+    }),
+  ]
 }
 
 function minuteRow(
@@ -104,18 +101,24 @@ function minuteRow(
       <span>{label}</span>
       <CardButton
         glyph="minus"
-        aria-label={t('uiLibrary.petFountain.decrease', 'Decrease {{label}}', { label })}
+        aria-label={t('uiLibrary.petFountain.decrease', 'Decrease {{label}}', {
+          label,
+        })}
         disabled={minutes === null || current <= 0}
         onClick={() => step(-1)}
       />
       <b className="tabular-nums">
         {minutes === null
           ? '—'
-          : t('uiLibrary.petFountain.minutes', '{{count}} min', { count: current })}
+          : t('uiLibrary.petFountain.minutes', '{{count}} min', {
+              count: current,
+            })}
       </b>
       <CardButton
         glyph="plus"
-        aria-label={t('uiLibrary.petFountain.increase', 'Increase {{label}}', { label })}
+        aria-label={t('uiLibrary.petFountain.increase', 'Increase {{label}}', {
+          label,
+        })}
         disabled={minutes === null || current >= MAX_PUMP_MINUTES}
         onClick={() => step(1)}
       />
@@ -198,10 +201,10 @@ export function PetFountainCard({
           <PetFountainIllustration
             water={model.waterLevel === null ? null : model.waterLevel / 100}
             pumping={pumping}
-            className="h-auto w-28"
+            className={SCENE_DRAWING_CLASS}
           />
         ),
-        right: pumpButtons(model, actions, t),
+        columns: { right: pumpItems(model, actions, t) },
         bottom: (
           <div className="grid w-full justify-items-center gap-1.5">
             <LevelRow
