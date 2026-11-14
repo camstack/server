@@ -22447,6 +22447,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "A centred card with a fade on every platform (a notice, not a sheet)."
+        },
+        {
+          "name": "retain",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw the sheet in the tree instead of a native modal, and keep its children mounted after it closes. The device card uses this so its docume"
         }
       ]
     },

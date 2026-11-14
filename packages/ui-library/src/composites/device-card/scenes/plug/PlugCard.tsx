@@ -45,7 +45,7 @@ export function PlugCard({
         image: (
           <ScenePower
             on={on}
-            label={t('uiLibrary.deviceCard.power', 'Power')}
+            label={t('uiLibrary.deviceCard.powerLabel', 'Power')}
             testId="dc-plug-power"
             onToggle={actions.onPower}
           >

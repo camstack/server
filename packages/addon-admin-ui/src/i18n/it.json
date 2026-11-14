@@ -10520,7 +10520,8 @@
           "waiting": "In attesa del dispositivo",
           "applying": "Applicazione"
         }
-      }
+      },
+      "powerLabel": "Potenza"
     },
     "language": "it",
     "measurement": {

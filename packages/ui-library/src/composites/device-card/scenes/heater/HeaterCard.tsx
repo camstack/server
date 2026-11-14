@@ -51,7 +51,7 @@ export function HeaterCard({
         image: (
           <ScenePower
             on={on}
-            label={t('uiLibrary.deviceCard.power', 'Power')}
+            label={t('uiLibrary.deviceCard.powerLabel', 'Power')}
             testId="dc-heater-power"
             onToggle={actions.onPower}
           >
