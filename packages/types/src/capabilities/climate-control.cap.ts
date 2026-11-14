@@ -5,6 +5,7 @@ import {
   type InferProvider,
   optionalMethod,
 } from './capability-definition.js'
+import type { CapabilityCustomizeSpec, ScalarCustomizeTarget } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
@@ -52,9 +53,21 @@ export const HvacModeSchema = z.enum([
 ])
 export type HvacMode = z.infer<typeof HvacModeSchema>
 
+/**
+ * What the device is DOING right now, as opposed to the mode it is set to
+ * (`mode: 'heat'` with the valve shut is `idle`). Optional and nullable: a
+ * device that does not say leaves it absent or null, and a consumer reads that
+ * as "unknown", never as `idle` (D393).
+ */
+export const ClimateActionSchema = z.enum(['heating', 'cooling', 'drying', 'fan', 'idle', 'off'])
+export type ClimateAction = z.infer<typeof ClimateActionSchema>
+
 export const ClimateControlStatusSchema = z.object({
   /** Active HVAC mode. */
   mode: HvacModeSchema,
+  /** What the device is doing now (`heating` while the valve is open, `idle`
+   *  at setpoint). Absent or null = the device does not say; never a guess (D393). */
+  action: ClimateActionSchema.nullable().optional(),
   /** Available HVAC modes the device accepts. Subset of HvacMode. */
   availableModes: z.array(HvacModeSchema),
   /** Active fan mode (`auto` / `low` / `medium` / `high` / `on` / `off`
@@ -110,6 +123,41 @@ export const ClimateControlStatusSchema = z.object({
 })
 
 export type ClimateControlStatus = z.infer<typeof ClimateControlStatusSchema>
+
+/**
+ * Linked room sensor (Customize): the OPERATOR may replace the thermostat's own
+ * `currentTemp` / `currentHumidity` with a sensor in the room. Never linked on
+ * its own (D356). Once linked it ALWAYS replaces the native value, a null
+ * native included — the operator chose the better reading.
+ */
+const CLIMATE_CUSTOMIZE_DEVICE_TYPES = [DeviceType.Climate] as const
+
+function roomSensorTarget(
+  id: 'room-temperature' | 'room-humidity',
+  path: 'currentTemp' | 'currentHumidity',
+): ScalarCustomizeTarget {
+  return {
+    id,
+    cardinality: 'scalar',
+    vocabulary: { cap: 'climate-control', stateField: path },
+    deviceTypes: CLIMATE_CUSTOMIZE_DEVICE_TYPES,
+    apply: 'replace',
+    path,
+    sources: [{ kind: 'numeric', transforms: [{ kind: 'identity' }] }],
+    sourceReport: { status: 'assignment-status' },
+  }
+}
+
+const CLIMATE_CONTROL_TARGETS: readonly ScalarCustomizeTarget[] = [
+  roomSensorTarget('room-temperature', 'currentTemp'),
+  roomSensorTarget('room-humidity', 'currentHumidity'),
+]
+
+const climateControlCustomize = {
+  version: 1,
+  overridable: CLIMATE_CONTROL_TARGETS.map((target) => ({ path: target.path, by: target.id })),
+  targets: CLIMATE_CONTROL_TARGETS,
+} as const satisfies CapabilityCustomizeSpec
 
 export const climateControlCapability = {
   name: 'climate-control',
@@ -437,6 +485,7 @@ export const climateControlCapability = {
    * on every push without re-querying the provider.
    */
   runtimeState: ClimateControlStatusSchema,
+  customize: climateControlCustomize,
 
   /**
    * Runtime-state durability: **session** — as `brightness`; `currentTemp` moves continuously and is re-published on connect.

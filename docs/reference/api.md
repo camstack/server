@@ -2039,7 +2039,7 @@
 
 ### `climate-control` → `climateControl.*`
 
-- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:114`
+- **Source:** `packages/types/src/capabilities/climate-control.cap.ts:162`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `climate`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IClimateControlProvider`

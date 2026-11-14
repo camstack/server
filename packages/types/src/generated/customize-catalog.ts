@@ -7,7 +7,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Customize catalog, projected from every `*.cap.ts` `customize` block.
- * 11 caps. Field keys are `runtimeState` paths. No Zod.
+ * 12 caps. Field keys are `runtimeState` paths. No Zod.
  */
 export const CAP_CUSTOMIZE_CATALOG = {
   'battery': {
@@ -71,6 +71,77 @@ export const CAP_CUSTOMIZE_CATALOG = {
             when: 'add',
           },
         ],
+      },
+    ],
+  },
+  'climate-control': {
+    version: 1,
+    targets: [
+      {
+        id: 'room-temperature',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Climate],
+        apply: 'replace',
+        vocabularyCap: 'climate-control',
+        vocabularyStateField: 'currentTemp',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        path: 'currentTemp',
+        valueKind: 'number',
+        nullable: true,
+      },
+      {
+        id: 'room-humidity',
+        cardinality: 'scalar',
+        deviceTypes: [DeviceType.Climate],
+        apply: 'replace',
+        vocabularyCap: 'climate-control',
+        vocabularyStateField: 'currentHumidity',
+        sources: [
+          {
+            kind: 'numeric',
+            transformKinds: [
+              'identity',
+            ],
+            transforms: [
+              {
+                kind: 'identity',
+              },
+            ],
+          },
+        ],
+        sourceReport: {
+          status: 'assignment-status',
+        },
+        advancedExpression: false,
+        path: 'currentHumidity',
+        valueKind: 'number',
+        nullable: true,
+      },
+    ],
+    overridable: [
+      {
+        path: 'currentTemp',
+        by: 'room-temperature',
+      },
+      {
+        path: 'currentHumidity',
+        by: 'room-humidity',
       },
     ],
   },

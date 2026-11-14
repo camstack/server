@@ -978,6 +978,7 @@ Enum: `"pull-rtsp" \| "pull-rtmp" \| "pull-http" \| "pull-flv" \| "pull-rfc4571"
 ### `ClimateControlStatusSchema`
 
 - `mode`: `HvacModeSchema`
+- `action?`: `"heating" \| "cooling" \| "drying" \| "fan" \| "idle" \| "off" \| null`
 - `availableModes`: `HvacModeSchema[]`
 - `fanMode`: `string`
 - `availableFanModes`: `string[]`
