@@ -181,7 +181,7 @@ export function ControlCard({
       ? numericZones(control, model.settable, actions.onSet, t)
       : editorZones(model, actions.onSet, t)
   const left: readonly ColumnItem[] =
-    control.kind === 'numeric' || control.kind === 'select'
+    control.kind === 'numeric'
       ? [columnValue('value', { value: shownValue(control), testId: 'dc-control-value' })]
       : []
   return (
