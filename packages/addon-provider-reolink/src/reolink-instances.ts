@@ -43,7 +43,7 @@ export const reolinkConnectionsEntryKind = defineEntryKind('connections', {
   title: 'Reolink integrations',
   schema: ReolinkConnectionBodySchema,
   writeTrigger:
-    'an operator adds, edits or removes a Reolink integration, or a Hub device is migrated into one',
+    'an operator adds, edits or removes a Reolink integration',
 })
 
 /** Every kind this addon declares, keyed by its name. */

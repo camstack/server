@@ -29,8 +29,7 @@ export type EcowittSensorEntry = z.infer<typeof ecowittSensorEntrySchema>
 
 /**
  * Persisted config for one Ecowitt gateway-group Container. `gatewayId` selects
- * the parent gateway's live nodewitt client (the gateway Hub device's
- * `stableId`); `sensors[]` is the additively-reconciled list of sensors that fan
+ * the parent gateway's live nodewitt client (the gateway key, see `gatewayKeyOf`); `sensors[]` is the additively-reconciled list of sensors that fan
  * out as accessory children (updated by the gateway device via `applyDerivedSpec`
  * on every `snapshot` push). `system`/`integrationId`/`name` are provenance.
  */

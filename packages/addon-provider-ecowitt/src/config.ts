@@ -140,7 +140,7 @@ export function sameConnection(a: EcowittConfig, b: EcowittConfig): boolean {
 
 /**
  * The key the live client, the group Containers and their sensors share (their `gatewayId`):
- * the stableId of the Hub device an integration replaced (its `originStableId`), else one derived
+ * the integration's `originStableId` when it records one, else one derived
  * from the integration id. It never changes once children carry it.
  */
 export function gatewayKeyOf(integration: {

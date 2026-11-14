@@ -33,7 +33,7 @@ export const ecowittConnectionsEntryKind = defineEntryKind('connections', {
   title: 'Ecowitt gateways',
   schema: EcowittConnectionBodySchema,
   writeTrigger:
-    'an operator adds, edits or removes an Ecowitt gateway, or a Hub device is migrated into one',
+    'an operator adds, edits or removes an Ecowitt gateway',
 })
 
 /** Every kind this addon declares, keyed by its name. */

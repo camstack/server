@@ -76,8 +76,8 @@ export function looksLikeReolinkHub(model: string | undefined): boolean {
 
 /**
  * The stableId of an NVR / Home Hub candidate. UID first (it survives a DHCP lease change), host
- * second. The boot migration derives the SAME id for an old Hub device, so the integration it
- * creates hides this candidate through `originStableId`.
+ * second. An integration adopted from this candidate records it as `originStableId`, which
+ * hides the candidate.
  */
 export function reolinkHubStableId(identity: {
   readonly uid?: string | undefined

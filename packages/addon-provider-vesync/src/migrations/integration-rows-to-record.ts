@@ -1,8 +1,8 @@
 /**
  * Every VeSync integration moves from legacy `integration_settings` rows into its own
- * `connections` record (planning#416, D1007). The hub migration writes that record in the
- * same boot; this pass is what clears the rows once the record reads back, and what builds
- * the record when a boot died between creating the integration and putting the record.
+ * `connections` record (planning#416, D1007). This pass writes the record, clears the rows
+ * once the record reads back, and rebuilds the record when a boot died between creating the
+ * integration and putting the record.
  * Devices are not touched.
  */
 import { integrationRowsMigration } from '@camstack/types'
@@ -15,7 +15,7 @@ const base = integrationRowsMigration({
   fixtureMark: 'email',
 })
 
-/** Seq 2: the hub migration of the same owner is seq 1. */
+/** Seq 2: seq 1 belonged to the hub-to-integration migration, deleted 2026-11-14 (#545). */
 export const VESYNC_ROWS_TO_RECORD_MIGRATION = {
   ...base,
   meta: { ...base.meta, seq: 2 },

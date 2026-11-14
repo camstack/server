@@ -85,11 +85,11 @@ interface TableLayoutProps extends DeviceRowsProps {
 //       relying solely on the "Under: <parent>" badge
 //   2 → accessory under any parent (handled by `isAccessoryRow` →
 //       index.tsx maps to indentLevel 2)
-const HUB_LIKE_PARENT_TYPES: ReadonlySet<string> = new Set(['nvr'])
+const INDENTING_PARENT_TYPES: ReadonlySet<string> = new Set(['nvr'])
 
 function topLevelIndentLevel(device: DeviceItemDevice, parentType: string | null): 0 | 1 {
   if (device.parentDeviceId === null || parentType === null) return 0
-  if (HUB_LIKE_PARENT_TYPES.has(parentType.toLowerCase())) return 1
+  if (INDENTING_PARENT_TYPES.has(parentType.toLowerCase())) return 1
   return 0
 }
 

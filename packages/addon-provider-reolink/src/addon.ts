@@ -1319,7 +1319,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
    * Route a `debugRawRead` custom action to the owning camera. Covers both
    * standalone cameras and NVR-adopted children — every live ReolinkCamera
    * in this runner is in the kernel device registry. Read-only end to end
-   * (see `raw-read.ts`); a hub device or an unknown id refuses with a
+   * (see `raw-read.ts`); an unknown id refuses with a
    * message that names what it looked for.
    */
   private async debugRawRead(input: RawReadInput): Promise<RawReadResult> {

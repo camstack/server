@@ -61,8 +61,7 @@ export interface VeSyncAccountRead {
 }
 
 /**
- * The account of one integration as the runtime reads it: from the record, never from a
- * hub device. Null while the record is absent or holds no email and password.
+ * The account of one integration as the runtime reads it: from the record. Null while the record is absent or holds no email and password.
  */
 export async function vesyncConnectionOf(
   instances: Pick<RecordIntegrationInstances<VeSyncConnectionBody>, 'readResolved'>,

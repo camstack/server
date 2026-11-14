@@ -25,7 +25,7 @@ export interface ChannelRepair {
  * ones whose persisted `channel` is missing or wrong.
  *
  * A child's stableId ENDS with `-${childNativeId}` (the prefix is the integration it was
- * adopted into, or the retired Hub's stableId for a migrated child), and `childNativeId` is built
+ * adopted into), and `childNativeId` is built
  * from the camera's UID — so identity survives a channel move, while `channel` does not.
  * The hub is the authority on which slot a UID currently occupies.
  *
