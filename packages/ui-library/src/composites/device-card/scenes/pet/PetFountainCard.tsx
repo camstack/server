@@ -4,6 +4,7 @@ import { PetFountainIllustration } from '../../illustrations/PetFountainIllustra
 import { CardButton } from '../../parts/CardButton'
 import { LevelRow } from '../../parts/LevelRow'
 import { type ColumnItem, columnButton } from '../../shell/column-items'
+import { rowBlock, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -205,30 +206,33 @@ export function PetFountainCard({
           />
         ),
         columns: { right: pumpItems(model, actions, t) },
-        bottom: (
-          <div className="grid w-full justify-items-center gap-1.5">
-            <LevelRow
-              testId="dc-fountain-level"
-              label={t('uiLibrary.deviceCard.petFountain.water', 'Water')}
-              percent={model.waterLevel}
-              warn={low}
-            />
-            {volume === null ? null : (
-              <p
-                data-testid="dc-fountain-volume"
-                className="text-xs tabular-nums text-foreground-muted"
-              >
-                {volume}
-              </p>
-            )}
-            {model.cycle === null ? null : cycleControls(model.cycle, actions, t)}
-            {model.fault === null ? null : (
-              <p data-testid="dc-fountain-fault" className="text-xs text-danger">
-                {model.fault}
-              </p>
-            )}
-          </div>
-        ),
+        bottom: [
+          rowBlock('level', {
+            content: (
+              <LevelRow
+                testId="dc-fountain-level"
+                label={t('uiLibrary.deviceCard.petFountain.water', 'Water')}
+                percent={model.waterLevel}
+                warn={low}
+              />
+            ),
+          }),
+          ...(volume === null
+            ? []
+            : [rowText('volume', { text: volume, testId: 'dc-fountain-volume' })]),
+          ...(model.cycle === null
+            ? []
+            : [rowBlock('cycle', { content: cycleControls(model.cycle, actions, t) })]),
+          ...(model.fault === null
+            ? []
+            : [
+                rowText('fault', {
+                  text: model.fault,
+                  tone: 'danger',
+                  testId: 'dc-fountain-fault',
+                }),
+              ]),
+        ],
       }}
     />
   )
