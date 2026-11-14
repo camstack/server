@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.21] - 2026-11-14
+
 ### Changed
 
 - Enpal: the grid frequency shows in Hz, and the LTE RSRQ and SNR in dB

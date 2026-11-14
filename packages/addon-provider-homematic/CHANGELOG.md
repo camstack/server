@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.198] - 2026-11-14
+
 ### Changed
 
 - The Homematic CCU page lists programs and can run, enable, delete, or create a key-event program for an HmIP button.
