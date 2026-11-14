@@ -55,6 +55,14 @@ export const DIAL_GEOMETRY: {
   sweepDeg: SWEEP_DEG,
 }
 
+/**
+ * The box every round control is drawn in: it fills the scene's drawing (the
+ * drawing is at least 70% of the card), square, between 104 px and 208 px. It
+ * is a size container, so what sits inside can grow with it.
+ */
+export const DIAL_BOX_CLASS: string =
+  '@container relative aspect-square w-full min-w-26 max-w-52'
+
 export const DIAL_TONE_CLASS: Readonly<Record<DialTone, string>> = {
   primary: 'text-primary',
   info: 'text-info',
@@ -142,7 +150,7 @@ export function Dial({
 
   return (
     <div
-      className={cn('relative h-26 w-26', gating.blocked && 'dc-gated')}
+      className={cn(DIAL_BOX_CLASS, gating.blocked && 'dc-gated')}
       title={gating.blocked ? (gating.reason ?? undefined) : undefined}
     >
       <svg

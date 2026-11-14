@@ -6,7 +6,7 @@ import { ClimateRoleGlyph } from '../../illustrations/ClimateRoleGlyph'
 import { ButtonGroup } from '../../parts/ButtonGroup'
 import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
-import { Dial, type DialTone } from '../../parts/Dial'
+import { DIAL_BOX_CLASS, Dial, type DialTone } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
 import { type DialRange, RangeDial } from '../../parts/RangeDial'
 import { ValueChip } from '../../parts/ValueChip'
@@ -95,16 +95,16 @@ export function ClimateCard({
   const centre =
     model.flow !== null ? (
       <>
-        <span className="text-xl font-semibold tabular-nums">{degrees(model.flow, 0)}</span>
+        <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">{degrees(model.flow, 0)}</span>
         <span className="text-xs text-foreground-muted">
           {t('uiLibrary.deviceCard.climate.flow', 'flow')}
         </span>
       </>
     ) : model.current !== null ? (
-      <span className="text-xl font-semibold tabular-nums">{degrees(model.current, 1)}</span>
+      <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">{degrees(model.current, 1)}</span>
     ) : valveOnly ? (
       <>
-        <span className="text-xl font-semibold tabular-nums" data-testid="dc-climate-valve">
+        <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl" data-testid="dc-climate-valve">
           {valveText}
         </span>
         <span className="text-xs lowercase text-foreground-muted">
@@ -123,7 +123,7 @@ export function ClimateCard({
         {centre}
         {model.humidity === null ? null : (
           <span
-            className="inline-flex items-center gap-0.5 text-xs text-foreground-muted"
+            className="inline-flex items-center gap-0.5 text-xs text-foreground-muted @[10rem]:text-sm"
             data-testid="dc-climate-humidity"
           >
             <CardIcon glyph="humidity" className="h-3 w-3 text-info" />
@@ -138,7 +138,7 @@ export function ClimateCard({
     </>
   )
   const image = (
-    <div className="relative" data-testid="dc-climate-dial">
+    <div className="relative flex w-full justify-center" data-testid="dc-climate-dial">
       {range !== null && band !== null ? (
         <RangeDial
           low={band.low}
@@ -157,7 +157,7 @@ export function ClimateCard({
           {inside}
         </RangeDial>
       ) : target === null || shown === null ? (
-        <div className="relative flex h-26 w-26 flex-col items-center justify-center">{inside}</div>
+        <div className={cn(DIAL_BOX_CLASS, 'flex flex-col items-center justify-center')}>{inside}</div>
       ) : (
         <Dial
           value={shown}

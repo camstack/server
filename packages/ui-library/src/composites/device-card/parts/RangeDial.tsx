@@ -8,7 +8,14 @@ import {
 } from 'react'
 import { cn } from '../../../lib/cn'
 import { useCardGating } from '../shell/gating'
-import { DIAL_GEOMETRY, DIAL_TONE_CLASS, type DialTone, dialFractionAt, dialSnap } from './Dial'
+import {
+  DIAL_BOX_CLASS,
+  DIAL_GEOMETRY,
+  DIAL_TONE_CLASS,
+  type DialTone,
+  dialFractionAt,
+  dialSnap,
+} from './Dial'
 
 export interface DialRange {
   readonly low: number
@@ -149,7 +156,7 @@ export function RangeDial({
 
   return (
     <div
-      className={cn('relative h-26 w-26', gating.blocked && 'dc-gated')}
+      className={cn(DIAL_BOX_CLASS, gating.blocked && 'dc-gated')}
       title={gating.blocked ? (gating.reason ?? undefined) : undefined}
     >
       <svg
