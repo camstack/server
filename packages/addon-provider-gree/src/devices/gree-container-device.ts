@@ -17,6 +17,8 @@ import { greeConnections } from '../gree-gateway.js'
 import { GreeIntegrationManager, type GreeMoved } from '../gree-integration-manager.js'
 import { greeScanScope, sweepGreeSubnets } from '../gree-sweep.js'
 import { GreeAcDevice } from './gree-ac-device.js'
+import { GreeSensorDevice } from './gree-sensor-device.js'
+import { planGreeSensorChildren } from '../gree-extras.js'
 import { GreeToggleDevice, type GreeToggleKind } from './gree-toggle-device.js'
 
 /**
@@ -44,6 +46,8 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
   private readonly integrationId: string | undefined
   private connection: GreeConfig
   private manager: GreeIntegrationManager | null = null
+  private extrasUnsub: (() => void) | null = null
+  private sensorPlanKey = ''
 
   constructor(ctx: DeviceContext) {
     const cfg = greeAcDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -129,6 +133,20 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    this.sensorPlanKey = this.currentSensorPlanKey()
+    // The extra columns are first answered after the bind: when the set of
+    // sensor children the unit earns changes, re-run the accessory reconcile.
+    this.extrasUnsub = greeConnections.onExtras(this.connectionKey, () => {
+      const key = this.currentSensorPlanKey()
+      if (key === this.sensorPlanKey) return
+      this.sensorPlanKey = key
+      void this.reprobe().catch((err: unknown) => {
+        this.ctx.logger.warn('Gree AC: sensor children reconcile failed', {
+          tags: { deviceId: this.id },
+          meta: { greeMac: this.greeMac, error: errMsg(err) },
+        })
+      })
+    })
     // Best-effort first dial. A manager may already be adopted from create; on
     // restore we build + start one here. Failures are logged; the AC handle is
     // simply absent until the next successful bind.
@@ -143,6 +161,8 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
   }
 
   override async removeDevice(): Promise<void> {
+    this.extrasUnsub?.()
+    this.extrasUnsub = null
     const mgr = this.manager
     this.manager = null
     if (mgr) {
@@ -249,7 +269,40 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
       config,
       factory: (childCtx: DeviceContext): IDevice => new GreeAcDevice(childCtx),
     }
-    return [acChild, ...this.toggleChildren()]
+    return [acChild, ...this.toggleChildren(), ...this.sensorChildren()]
+  }
+
+  private currentSensorPlanKey(): string {
+    return planGreeSensorChildren(greeConnections.getExtras(this.connectionKey, this.greeMac))
+      .map((p) => p.kind)
+      .join(',')
+  }
+
+  /** Outdoor-temperature and fault-code sensors, only for the columns the unit answered. */
+  private sensorChildren(): readonly AccessoryChildSpec[] {
+    const extras = greeConnections.getExtras(this.connectionKey, this.greeMac)
+    return planGreeSensorChildren(extras).map((p): AccessoryChildSpec => {
+      const childMeta: AccessoryChildSpec['meta'] = {
+        type: p.type,
+        role: p.role,
+        name: `${this.name} ${p.label}`,
+        linkDeviceId: this.id,
+        ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
+      }
+      const childConfig: Record<string, unknown> = {
+        kind: p.kind,
+        greeMac: this.greeMac,
+        connectionKey: this.connectionKey,
+        system: 'gree',
+        ...(this.integrationId !== undefined ? { integrationId: this.integrationId } : {}),
+      }
+      return {
+        stableIdSuffix: p.suffix,
+        meta: childMeta,
+        config: childConfig,
+        factory: (childCtx: DeviceContext): IDevice => new GreeSensorDevice(childCtx),
+      }
+    })
   }
 
   /**

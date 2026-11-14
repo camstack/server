@@ -1,0 +1,79 @@
+import { DeviceType, DeviceRole } from '@camstack/types'
+import { describe, expect, it } from 'vitest'
+import {
+  GREE_EXTRA_COLUMNS,
+  GREE_TEMP_OFFSET,
+  greeClimateAction,
+  greeErrorValue,
+  parseGreeExtras,
+  planGreeSensorChildren,
+} from '../gree-extras.js'
+
+describe('parseGreeExtras', () => {
+  it('asks for the three columns nobody read before', () => {
+    expect([...GREE_EXTRA_COLUMNS]).toEqual(['OutEnvTem', 'Defrost', 'AllErr'])
+  })
+
+  it('removes the +40 offset from the outdoor temperature', () => {
+    expect(GREE_TEMP_OFFSET).toBe(40)
+    expect(parseGreeExtras({ OutEnvTem: 46, Defrost: 0, AllErr: 0 })).toEqual({
+      outdoorTemp: 6,
+      defrost: false,
+      errorCode: 0,
+    })
+  })
+
+  it('reads defrost 1 as active and a non-zero AllErr as the code', () => {
+    const x = parseGreeExtras({ OutEnvTem: 40, Defrost: 1, AllErr: 7 })
+    expect(x.defrost).toBe(true)
+    expect(x.errorCode).toBe(7)
+    expect(x.outdoorTemp).toBe(0)
+  })
+
+  it('a column the unit did not answer is null, never 0', () => {
+    expect(parseGreeExtras({})).toEqual({ outdoorTemp: null, defrost: null, errorCode: null })
+    expect(parseGreeExtras({ OutEnvTem: Number.NaN })).toMatchObject({ outdoorTemp: null })
+  })
+})
+
+describe('greeClimateAction', () => {
+  it('power off is off, defrost is idle, otherwise unknown', () => {
+    expect(greeClimateAction({ power: false, defrost: true })).toBe('off')
+    expect(greeClimateAction({ power: true, defrost: true })).toBe('idle')
+    expect(greeClimateAction({ power: true, defrost: false })).toBeNull()
+    expect(greeClimateAction({ power: true, defrost: null })).toBeNull()
+  })
+})
+
+describe('greeErrorValue', () => {
+  it('0 is ok, anything else carries the code', () => {
+    expect(greeErrorValue(0)).toBe('ok')
+    expect(greeErrorValue(12)).toBe('E12')
+  })
+})
+
+describe('planGreeSensorChildren', () => {
+  it('a unit that answers no column gets no sensor child', () => {
+    expect(planGreeSensorChildren(null)).toEqual([])
+    expect(
+      planGreeSensorChildren({ outdoorTemp: null, defrost: null, errorCode: null }),
+    ).toEqual([])
+  })
+
+  it('declares the outdoor temperature sensor and the error sensor', () => {
+    const plan = planGreeSensorChildren({ outdoorTemp: 6, defrost: false, errorCode: 0 })
+    expect(plan.map((p) => p.kind)).toEqual(['outdoor', 'error'])
+    expect(plan[0]).toMatchObject({
+      suffix: 'outdoor',
+      label: 'Temperatura esterna',
+      type: DeviceType.Sensor,
+      role: DeviceRole.TemperatureSensor,
+    })
+    expect(plan[1]).toMatchObject({ suffix: 'error', type: DeviceType.Sensor })
+  })
+
+  it('declares only what answered', () => {
+    const plan = planGreeSensorChildren({ outdoorTemp: 6, defrost: null, errorCode: null })
+    expect(plan.map((p) => p.kind)).toEqual(['outdoor'])
+  })
+})

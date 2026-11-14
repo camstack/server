@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Each Gree air conditioner now shows its outdoor temperature ("Temperatura esterna") and a fault-code sensor, read from the unit's own status columns; units that do not answer them get no sensor.
+
 ## [0.2.158] - 2026-11-11
 
 ### Changed

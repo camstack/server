@@ -6,6 +6,7 @@ import {
 } from '@apocaliss92/nodegree'
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import { type GreeConfig, settingsToGreeConfig, toNodegreeOptions } from './config.js'
+import { type GreeExtras, startGreeExtrasPoll } from './gree-extras.js'
 import { type GreeConnectionSurface, macKey } from './gree-gateway.js'
 
 /** Status of a single Gree AC connection. */
@@ -38,6 +39,8 @@ export type GreeFacadeFactory = (config: GreeConfig) => GreeFacadeLike
 /** Sink the manager publishes its live connection surface to (the resolver). */
 export interface GreeSurfaceSink {
   set(connectionKey: string, surface: GreeConnectionSurface | null): void
+  /** Latest extra-column read of one AC (outdoor temperature, defrost, error code). */
+  setExtras?(connectionKey: string, mac: string, extras: GreeExtras): void
 }
 
 /** Outcome of a successful bind — the durable identity the caller persists. */
@@ -489,6 +492,20 @@ export class GreeIntegrationManager {
       ac.on('error', onError)
       ac.on('offline', onOffline)
       ac.on('stateChanged', onState)
+      if (this.#pollIntervalMs > 0) {
+        this.#disposers.push(
+          startGreeExtrasPoll({
+            ac,
+            intervalMs: this.#pollIntervalMs,
+            onExtras: (extras) => this.#surfaceSink.setExtras?.(this.#id, mac, extras),
+            onError: (err) =>
+              this.#logger.debug('GreeIntegrationManager: extra columns not read', {
+                tags: this.#tags(),
+                meta: { mac, error: errMsg(err) },
+              }),
+          }),
+        )
+      }
       this.#disposers.push(() => {
         ac.off('error', onError)
         ac.off('offline', onOffline)

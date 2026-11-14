@@ -1,4 +1,5 @@
 import type { AcDevice, DiscoveredDevice } from '@apocaliss92/nodegree'
+import type { GreeExtras } from './gree-extras.js'
 
 /**
  * A live Gree AC's connection surface: the bind-scan responder row(s) plus the
@@ -43,6 +44,8 @@ export class GreeConnectionResolver {
    * listener cap. Mirrors the Ecowitt facade-resolver fan-out.
    */
   readonly #subs: Map<string, Set<() => void>> = new Map()
+  readonly #extras: Map<string, GreeExtras> = new Map()
+  readonly #extraSubs: Map<string, Set<() => void>> = new Map()
 
   /** Publish or remove the connection surface for a connection key. `null` removes. */
   set(connectionKey: string, surface: GreeConnectionSurface | null): void {
@@ -80,6 +83,40 @@ export class GreeConnectionResolver {
     }
   }
 
+  /** Publish the latest extra-column read of one AC and tell its children. */
+  setExtras(connectionKey: string, mac: string, extras: GreeExtras): void {
+    this.#extras.set(`${connectionKey}|${macKey(mac)}`, extras)
+    const subs = this.#extraSubs.get(connectionKey)
+    if (!subs) return
+    for (const cb of subs) {
+      try {
+        cb()
+      } catch {
+        // best-effort — one bad subscriber must not starve the rest
+      }
+    }
+  }
+
+  /** The latest extra-column read of an AC, or null before the first answer. */
+  getExtras(connectionKey: string, mac: string): GreeExtras | null {
+    return this.#extras.get(`${connectionKey}|${macKey(mac)}`) ?? null
+  }
+
+  /** Subscribe to extra-column reads for a connection key. Returns unsubscribe. */
+  onExtras(connectionKey: string, cb: () => void): () => void {
+    let set = this.#extraSubs.get(connectionKey)
+    if (!set) {
+      set = new Set()
+      this.#extraSubs.set(connectionKey, set)
+    }
+    set.add(cb)
+    return () => {
+      const current = this.#extraSubs.get(connectionKey)
+      current?.delete(cb)
+      if (current && current.size === 0) this.#extraSubs.delete(connectionKey)
+    }
+  }
+
   /** The bind-scan rows for a connection key, or empty when unknown. */
   discovered(connectionKey: string): readonly DiscoveredDevice[] {
     return this.#surfaces.get(connectionKey)?.discovered ?? []
@@ -107,6 +144,8 @@ export class GreeConnectionResolver {
   clear(): void {
     this.#surfaces.clear()
     this.#subs.clear()
+    this.#extras.clear()
+    this.#extraSubs.clear()
   }
 }
 
