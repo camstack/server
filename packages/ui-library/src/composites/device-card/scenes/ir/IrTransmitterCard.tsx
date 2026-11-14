@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { CardReadings } from '../../parts/Readings'
+import { rowBlock, rowButtons, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import type { IrTransmitterCardActions, IrTransmitterCardModel } from './model'
@@ -36,25 +37,34 @@ export function IrTransmitterCard({
             <CardIcon glyph="remote" className="h-auto w-2/5" />
           </div>
         ),
-        bottom: (
-          <div className="flex w-full flex-col items-stretch gap-2" data-testid="dc-ir-facts">
-            <CardButton
-              glyph="remote"
-              tone="primary"
-              disabled={!model.learnEnabled}
-              onClick={actions.onLearn}
-              data-testid="dc-ir-learn"
-            >
-              {model.learnLabel}
-            </CardButton>
-            <CardReadings items={model.readings} testId="dc-ir-readings" />
-            {model.learned === null ? null : (
-              <p className="text-center text-sm text-foreground" data-testid="dc-ir-learned">
-                {model.learned}
-              </p>
-            )}
-          </div>
-        ),
+        bottom: [
+          rowButtons('learn', {
+            buttons: [
+              <CardButton
+                key="learn"
+                glyph="remote"
+                tone="primary"
+                disabled={!model.learnEnabled}
+                onClick={actions.onLearn}
+                data-testid="dc-ir-learn"
+              >
+                {model.learnLabel}
+              </CardButton>,
+            ],
+          }),
+          rowBlock('readings', {
+            content: <CardReadings items={model.readings} testId="dc-ir-readings" />,
+          }),
+          ...(model.learned === null
+            ? []
+            : [
+                rowText('learned', {
+                  text: model.learned,
+                  tone: 'default',
+                  testId: 'dc-ir-learned',
+                }),
+              ]),
+        ],
       }}
     />
   )
