@@ -5,7 +5,7 @@ import { MediaArtwork } from '../../illustrations/MediaArtwork'
 import { CardButton } from '../../parts/CardButton'
 import { MenuButton } from '../../parts/MenuButton'
 import { HorizontalSlider } from '../../parts/sliders'
-import { type BottomRow, rowBlock, rowSelector, rowSlider } from '../../shell/bottom-rows'
+import { type BottomRow, rowButtons, rowSelector, rowSlider } from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton, columnSlider, columnValue } from '../../shell/column-items'
 import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import { ScenePower } from '../../shell/ScenePower'
@@ -115,71 +115,84 @@ function volumeItems(
   ]
 }
 
-function transportRow(model: MediaCardModel, actions: MediaCardActions, t: UiTextFn): ReactNode {
+function transportButtons(
+  model: MediaCardModel,
+  actions: MediaCardActions,
+  t: UiTextFn,
+): readonly ReactElement[] {
   const tr = model.transport
-  if (tr === null) return null
+  if (tr === null) return []
   const off = model.phase === 'off'
   const play = t('uiLibrary.deviceCard.media.play', 'Play')
   const pause = t('uiLibrary.deviceCard.pause', 'Pause')
   if (tr.blind) {
-    return (
-      <div className="flex justify-center gap-2" data-testid="dc-media-transport">
-        <CardButton
-          glyph="play"
-          aria-label={play}
-          title={play}
-          disabled={off}
-          onClick={actions.onPlay}
-        />
-        <CardButton
-          glyph="pause"
-          aria-label={pause}
-          title={pause}
-          disabled={off}
-          onClick={actions.onPause}
-        />
-        {tr.stop ? (
-          <CardButton
-            glyph="stop"
-            aria-label={t('uiLibrary.deviceCard.stop', 'Stop')}
-            title={t('uiLibrary.deviceCard.stop', 'Stop')}
-            disabled={off}
-            onClick={actions.onStop}
-          />
-        ) : null}
-      </div>
-    )
+    const stop = t('uiLibrary.deviceCard.stop', 'Stop')
+    return [
+      <CardButton
+        key="play"
+        glyph="play"
+        aria-label={play}
+        title={play}
+        disabled={off}
+        onClick={actions.onPlay}
+      />,
+      <CardButton
+        key="pause"
+        glyph="pause"
+        aria-label={pause}
+        title={pause}
+        disabled={off}
+        onClick={actions.onPause}
+      />,
+      ...(tr.stop
+        ? [
+            <CardButton
+              key="stop"
+              glyph="stop"
+              aria-label={stop}
+              title={stop}
+              disabled={off}
+              onClick={actions.onStop}
+            />,
+          ]
+        : []),
+    ]
   }
   const playing = model.phase === 'playing'
-  return (
-    <div className="flex justify-center gap-2" data-testid="dc-media-transport">
-      {tr.previous ? (
-        <CardButton
-          glyph="previous"
-          aria-label={t('uiLibrary.deviceCard.media.previous', 'Previous')}
-          disabled={off}
-          onClick={actions.onPrevious}
-        />
-      ) : null}
-      <CardButton
-        glyph={playing ? 'pause' : 'play'}
-        tone="primary"
-        aria-label={playing ? pause : play}
-        title={playing ? pause : play}
-        disabled={off}
-        data-testid="dc-media-play"
-        onClick={playing ? actions.onPause : actions.onPlay}
-      />
-      {tr.next ? (
-        <CardButton
-          glyph="next"
-          aria-label={t('uiLibrary.deviceCard.media.next', 'Next')}
-          disabled={off}
-          onClick={actions.onNext}
-        />
-      ) : null}
-    </div>
-  )
+  return [
+    ...(tr.previous
+      ? [
+          <CardButton
+            key="previous"
+            glyph="previous"
+            aria-label={t('uiLibrary.deviceCard.media.previous', 'Previous')}
+            disabled={off}
+            onClick={actions.onPrevious}
+          />,
+        ]
+      : []),
+    <CardButton
+      key="play"
+      glyph={playing ? 'pause' : 'play'}
+      tone="primary"
+      aria-label={playing ? pause : play}
+      title={playing ? pause : play}
+      disabled={off}
+      data-testid="dc-media-play"
+      onClick={playing ? actions.onPause : actions.onPlay}
+    />,
+    ...(tr.next
+      ? [
+          <CardButton
+            key="next"
+            glyph="next"
+            aria-label={t('uiLibrary.deviceCard.media.next', 'Next')}
+            disabled={off}
+            onClick={actions.onNext}
+          />,
+        ]
+      : []),
+  ]
 }
 
 function repeatWord(repeat: MediaPlayerRepeat, t: UiTextFn): string {
@@ -236,7 +249,7 @@ function bottomRows(
   t: UiTextFn,
 ): readonly BottomRow[] {
   const seek = model.seek
-  const transport = transportRow(model, actions, t)
+  const transport = transportButtons(model, actions, t)
   const sourceLabel = t('uiLibrary.deviceCard.media.source', 'Source')
   return [
     ...(seek === null
@@ -259,7 +272,9 @@ function bottomRows(
             ),
           }),
         ]),
-    ...(transport === null ? [] : [rowBlock('transport', { content: <>{transport}</> })]),
+    ...(transport.length === 0
+      ? []
+      : [rowButtons('transport', { buttons: transport, testId: 'dc-media-transport' })]),
     ...(model.sources.length === 0
       ? []
       : [

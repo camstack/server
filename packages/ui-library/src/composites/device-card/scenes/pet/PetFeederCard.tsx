@@ -1,11 +1,10 @@
-import { type ReactElement, type ReactNode, useState } from 'react'
+import { type ReactElement, useState } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { PetFeederIllustration } from '../../illustrations/PetFeederIllustration'
 import { ButtonGroup } from '../../parts/ButtonGroup'
 import { CardButton } from '../../parts/CardButton'
-import { LevelRow } from '../../parts/LevelRow'
 import { type ColumnItem, columnButton, columnPopover, columnStep } from '../../shell/column-items'
-import { rowBlock, rowButtons, rowSelector, rowText } from '../../shell/bottom-rows'
+import { type RowLevel, rowButtons, rowLevels, rowSelector, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type {
@@ -126,24 +125,23 @@ function settingsPanel(
   ]
 }
 
-function levels(model: PetFeederCardModel, t: UiTextFn): ReactNode {
+function levels(model: PetFeederCardModel, t: UiTextFn): readonly RowLevel[] {
   const food = t('uiLibrary.deviceCard.petFeeder.food', 'Food')
   if (model.hoppers === null) {
-    return (
-      <LevelRow
-        testId="dc-feeder-level"
-        label={food}
-        percent={model.foodLevel}
-        warn={model.lowFood}
-      />
-    )
+    return [
+      {
+        id: 'food',
+        testId: 'dc-feeder-level',
+        label: food,
+        percent: model.foodLevel,
+        warn: model.lowFood,
+      },
+    ]
   }
-  return (
-    <>
-      <LevelRow label={`${food} 1`} percent={model.hoppers[0]} warn={model.lowFood} />
-      <LevelRow label={`${food} 2`} percent={model.hoppers[1]} warn={model.lowFood} />
-    </>
-  )
+  return [
+    { id: 'hopper1', label: `${food} 1`, percent: model.hoppers[0], warn: model.lowFood },
+    { id: 'hopper2', label: `${food} 2`, percent: model.hoppers[1], warn: model.lowFood },
+  ]
 }
 
 /**
@@ -279,7 +277,7 @@ export function PetFeederCard({
                 }),
               ]
             : []),
-          rowBlock('levels', { content: <>{levels(model, t)}</> }),
+          rowLevels('levels', { levels: levels(model, t) }),
           ...(model.fault === null
             ? []
             : [rowText('fault', { text: model.fault, tone: 'danger', testId: 'dc-feeder-fault' })]),

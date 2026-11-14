@@ -4,12 +4,12 @@
 
 # Guards
 
-246 repository guards: 241 in `scripts/`,
+247 repository guards: 242 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (236)
+## Enforced by CI checks (237)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -72,6 +72,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-deps.ts` | Verify that every @camstack/* import in each package is declared as a dependency (dependencies, peerDependencies, or devDependencies). |
 | `scripts/check-desktop-update-feeds.ts` | Desktop update-feed guard — two products, never one feed file. |
 | `scripts/check-device-card-parts.ts` | GUARD: a device card is assembled from the shared parts, never redrawn. |
+| `scripts/check-device-card-scene-layout.ts` | GUARD: every device-card scene sits on the one fixed layout. |
 | `scripts/check-device-field-quantity-names.ts` | A device-scoped capability's status field names its QUANTITY, not its unit (`power`, not `watts`; `signal`, not `signalPercent`). The unit is the D944 base of the quantity, displayed and converted elsewhere. |
 | `scripts/check-device-name-in-sync.ts` | The device-name rule has one definition. The viewer cannot import ui-library (it is a web package; the viewer is React Native) and it resolves `@camstack/types` from an installed release, so it keeps a copy of `format-device-name.ts`. Th… |
 | `scripts/check-device-name-rendered-via-component.ts` | A device's name is painted by `DeviceName` / `useDeviceLabel`. A JSX file that interpolates `device.name` (and the sibling shapes below) is a second naming rule. |

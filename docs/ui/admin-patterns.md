@@ -884,9 +884,13 @@ D1042), never a per-capability setter.
   anything longer goes in `bottom`; the type refuses a `ReactNode` in a column.
   `bottom` is a list of typed rows (`shell/bottom-rows.tsx`): `rowSelector`,
   `rowPills`, `rowStats` (name over value, up to four to a row: group readings
-  rather than listing pills), `rowButtons`, `rowSlider`, `rowText`, and `rowBlock`
-  for a composed control the others cannot express. One renderer in `SceneGrid`
-  draws them; an optional short `label` captions a row.
+  rather than listing pills), `rowButtons`, `rowSlider`, `rowText`, `rowLines`, `rowList`,
+  `rowLevels`, `rowTimer`, `rowEntry`, `rowCodePad` and `rowStepper`. Every kind
+  takes typed data (or, for `rowSelector` / `rowButtons`, the control elements);
+  none takes an arbitrary node, and `check-device-card-scene-layout` refuses the
+  old `rowBlock` escape hatch by name. A new need is a new typed kind, never a
+  loose node. One renderer in `SceneGrid` draws them; an optional short `label`
+  captions a row, and it goes through the card's `t()` like every other string.
   A device whose only control is power wraps its drawing in `ScenePower`
   (`role="switch"`, keyboard toggle, the shell's gating): the drawing is the
   switch and no power button sits beside it. Every scene is on these

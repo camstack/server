@@ -1,8 +1,7 @@
 import type { ReactElement } from 'react'
 import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
-import { CardReadings } from '../../parts/Readings'
-import { rowBlock, rowButtons, rowText } from '../../shell/bottom-rows'
+import { rowButtons, rowStats, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import type { IrTransmitterCardActions, IrTransmitterCardModel } from './model'
@@ -52,8 +51,9 @@ export function IrTransmitterCard({
               </CardButton>,
             ],
           }),
-          rowBlock('readings', {
-            content: <CardReadings items={model.readings} testId="dc-ir-readings" />,
+          rowStats('readings', {
+            testId: 'dc-ir-readings',
+            stats: model.readings.map((r) => ({ id: r.id, name: r.label, value: r.value ?? '—' })),
           }),
           ...(model.learned === null
             ? []

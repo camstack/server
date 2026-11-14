@@ -2,8 +2,7 @@ import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
 import { CardIcon } from '../../parts/CardIcon'
-import { InfoTile } from '../../parts/InfoTile'
-import { rowBlock } from '../../shell/bottom-rows'
+import { type BottomRow, rowList } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation } from '../../shell/model'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
@@ -53,63 +52,32 @@ export interface EventCardProps {
 /** At most this many entries of the vocabulary are listed. */
 export const EVENT_CARD_ENTRIES = 6
 
-interface EventEntryRowsProps {
-  readonly entries: readonly EventCardEntry[]
-  readonly last: EventCardModel['last']
-  readonly grouped: boolean
-  readonly t: UiTextFn
-}
-
-interface EventVocabularyListProps {
-  readonly model: EventCardModel
-  readonly t: UiTextFn
-}
-
-function EventEntryRows({ entries, last, grouped, t }: EventEntryRowsProps): ReactElement {
-  return (
-    <>
-      {entries.map((entry) => {
-        const key = eventEntryKey(entry)
-        const fired = last !== null && sameEvent(last, entry)
-        return (
-          <div key={key} data-testid="dc-event-row" data-event-key={key}>
-            <InfoTile
-              layout="row"
-              glyph={fired ? 'event' : undefined}
-              label={eventEntryText(entry, grouped, t)}
-              value={fired && last !== null ? (last.since ?? '') : ''}
-              tone={fired ? 'warning' : 'default'}
-              testId={fired ? 'dc-event-last' : undefined}
-            />
-          </div>
-        )
-      })}
-    </>
-  )
-}
-
 /** The declared events, at most {@link EVENT_CARD_ENTRIES}, grouped when several parts declare them. */
-function EventVocabularyList({ model, t }: EventVocabularyListProps): ReactElement | null {
+function vocabularyRow(model: EventCardModel, t: UiTextFn): BottomRow {
   const listed = model.entries.slice(0, EVENT_CARD_ENTRIES)
-  if (listed.length === 0) return null
   const grouped = eventSourcesMany(listed)
-  const groups = groupEventEntries(listed)
-  return (
-    <div className="grid w-full gap-2" data-testid="dc-event-list">
-      {groups.map((group) => (
-        <div
-          key={group.source?.id ?? ''}
-          className="grid gap-1"
-          data-testid={grouped ? 'dc-event-group' : undefined}
-        >
-          {grouped && group.source !== null ? (
-            <p className="text-xs font-semibold text-foreground-muted">{group.source.label}</p>
-          ) : null}
-          <EventEntryRows entries={group.entries} last={model.last} grouped={grouped} t={t} />
-        </div>
-      ))}
-    </div>
-  )
+  return rowList('vocabulary', {
+    testId: 'dc-event-list',
+    groups: groupEventEntries(listed).map((group) => ({
+      id: group.source?.id ?? '',
+      title: grouped && group.source !== null ? group.source.label : undefined,
+      testId: grouped ? 'dc-event-group' : undefined,
+      items: group.entries.map((entry) => {
+        const key = eventEntryKey(entry)
+        const fired = model.last !== null && sameEvent(model.last, entry)
+        return {
+          id: key,
+          dataKey: key,
+          rowTestId: 'dc-event-row',
+          glyph: fired ? ('event' as const) : undefined,
+          label: eventEntryText(entry, grouped, t),
+          value: fired && model.last !== null ? (model.last.since ?? '') : '',
+          tone: fired ? ('warning' as const) : ('default' as const),
+          testId: fired ? 'dc-event-last' : undefined,
+        }
+      }),
+    })),
+  })
 }
 
 /**
@@ -144,10 +112,7 @@ export function EventCard({
       scene={{
         columns: {},
         image: <CardIcon glyph="event" className={cn(SCENE_ICON_CLASS, 'text-foreground-muted')} />,
-        bottom:
-          model.entries.length === 0
-            ? []
-            : [rowBlock('vocabulary', { content: <EventVocabularyList model={model} t={t} /> })],
+        bottom: model.entries.length === 0 ? [] : [vocabularyRow(model, t)],
       }}
     />
   )

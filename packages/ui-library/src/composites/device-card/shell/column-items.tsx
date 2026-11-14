@@ -223,15 +223,18 @@ export function columnValue(key: string, props: ColumnValueProps): ColumnItem {
       data-testid={props.testId}
     >
       <b
+        title={props.value}
         className={cn(
-          'max-w-full truncate text-sm tabular-nums',
+          'max-w-full text-sm tabular-nums',
+          // A reading with a unit ("1.6 bar") wraps at the space; a single word is cut, never split.
+          props.value.includes(' ') ? 'whitespace-normal break-words' : 'truncate',
           VALUE_TONE[props.tone ?? 'primary'],
         )}
       >
         {props.value}
       </b>
       {props.caption === undefined ? null : (
-        <small className="max-w-full truncate whitespace-nowrap text-xs lowercase text-foreground-muted">
+        <small className="max-w-full truncate whitespace-nowrap text-[11px] lowercase text-foreground-muted">
           {props.caption}
         </small>
       )}

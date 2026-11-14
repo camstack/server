@@ -15027,18 +15027,46 @@
       "summary": "`<BrowserRouter basename>`: the mount without its trailing slash."
     },
     {
-      "name": "rowBlock",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
-      "summary": "The escape hatch: one composed block. Prefer a typed row."
-    },
-    {
       "name": "rowButtons",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
       "summary": "Commands side by side on a row."
+    },
+    {
+      "name": "rowCodePad",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "The digit pad of a device that asks for a code before it acts."
+    },
+    {
+      "name": "rowEntry",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "A typed value with its Save: a text, a date, a time."
+    },
+    {
+      "name": "rowLevels",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "Level bars, one line each: water, food, tank."
+    },
+    {
+      "name": "rowLines",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "A headline over a few small notes: the chosen program and its time."
+    },
+    {
+      "name": "rowList",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "Grouped one-line tiles (name left, value right): a vocabulary of declared things."
     },
     {
       "name": "rowPills",
@@ -15069,11 +15097,25 @@
       "summary": "Name over value, up to four cells sharing a row: the compact way to show readings."
     },
     {
+      "name": "rowStepper",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "A name, a value and a minus / plus pair on one line."
+    },
+    {
       "name": "rowText",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
       "summary": "A sentence or a short fact on a row."
+    },
+    {
+      "name": "rowTimer",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "The switch's timed run: \"- Run 25 min +\", then \"Stop · mm:ss\"."
     },
     {
       "name": "rowWeightsOf",

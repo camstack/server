@@ -1,5 +1,5 @@
 import { NOT_REPORTED } from '@camstack/types'
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { ApplianceIllustration } from '../../illustrations/ApplianceIllustration'
 import { CardButton } from '../../parts/CardButton'
@@ -9,7 +9,7 @@ import {
   columnButton,
   columnStep,
 } from '../../shell/column-items'
-import { rowBlock } from '../../shell/bottom-rows'
+import { type BottomRow, rowButtons, rowLines, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -65,7 +65,8 @@ export function appliancePhaseLabel(model: ApplianceCardModel, t: UiTextFn): str
 
 interface ProgramZones {
   readonly steps: readonly ColumnItem[]
-  readonly info: ReactNode
+  readonly headline: string
+  readonly notes: readonly string[]
 }
 
 const noop = (): void => undefined
@@ -81,7 +82,7 @@ function programColumn({ model, actions }: ApplianceCardProps, t: UiTextFn): Pro
     const next = program.options[Math.max(0, index + delta)]
     if (next !== undefined && next.id !== program.selected) actions.onProgram(next.id)
   }
-  const notes: ReactNode[] = idle
+  const notes: string[] = idle
     ? current?.minutes == null
       ? []
       : [formatCycleMinutes(current.minutes)]
@@ -120,24 +121,8 @@ function programColumn({ model, actions }: ApplianceCardProps, t: UiTextFn): Pro
         onPress: program.selectable ? step(1) : noop,
       },
     }),
-    info: (
-      <div
-        className="grid w-full justify-items-center gap-0.5 text-center"
-        data-testid="dc-appliance-program"
-      >
-        <b
-          data-testid="dc-appliance-program-value"
-          className="max-w-full break-words text-sm text-foreground"
-        >
-          {current?.label ?? program.selected}
-        </b>
-        {notes.map((note, i) => (
-          <small key={i} className="text-xs text-foreground-muted">
-            {note}
-          </small>
-        ))}
-      </div>
-    ),
+    headline: current?.label ?? program.selected ?? '',
+    notes,
   }
 }
 
@@ -204,37 +189,38 @@ function cycleItems({ model, actions }: ApplianceCardProps, t: UiTextFn): readon
   ]
 }
 
-function startBox({ model, actions }: ApplianceCardProps, t: UiTextFn): ReactNode {
+function startRows({ model, actions }: ApplianceCardProps, t: UiTextFn): readonly BottomRow[] {
   const c = model.controls
-  if (c === null || model.phase === 'run') return null
+  if (c === null || model.phase === 'run') return []
   const resuming = model.phase === 'pause'
-  if (resuming ? !c.resume : !c.start) return null
+  if (resuming ? !c.resume : !c.start) return []
   const program = model.program?.options.find((p) => p.id === model.program?.selected) ?? null
-  return (
-    <div className="flex flex-col items-center gap-1">
-      <CardButton
-        glyph="play"
-        tone="primary"
-        data-testid="dc-appliance-start"
-        disabled={model.startBlocked !== null}
-        onClick={resuming ? actions.onResume : actions.onStart}
-        className="max-w-full whitespace-normal break-words text-center"
-      >
-        {resuming
-          ? t('uiLibrary.deviceCard.resume', 'Resume')
-          : program === null
-            ? t('uiLibrary.deviceCard.start', 'Start')
-            : t('uiLibrary.deviceCard.appliance.startProgram', 'Start {{program}}', {
-                program: program.label,
-              })}
-      </CardButton>
-      {model.startBlocked === null ? null : (
-        <small className="text-center text-xs text-danger" data-testid="dc-appliance-why">
-          {model.startBlocked}
-        </small>
-      )}
-    </div>
-  )
+  return [
+    rowButtons('start', {
+      buttons: [
+        <CardButton
+          key="start"
+          glyph="play"
+          tone="primary"
+          data-testid="dc-appliance-start"
+          disabled={model.startBlocked !== null}
+          onClick={resuming ? actions.onResume : actions.onStart}
+          className="max-w-full whitespace-normal break-words text-center"
+        >
+          {resuming
+            ? t('uiLibrary.deviceCard.resume', 'Resume')
+            : program === null
+              ? t('uiLibrary.deviceCard.start', 'Start')
+              : t('uiLibrary.deviceCard.appliance.startProgram', 'Start {{program}}', {
+                  program: program.label,
+                })}
+        </CardButton>,
+      ],
+    }),
+    ...(model.startBlocked === null
+      ? []
+      : [rowText('why', { text: model.startBlocked, tone: 'danger', testId: 'dc-appliance-why' })]),
+  ]
 }
 
 /**
@@ -255,7 +241,7 @@ export function ApplianceCard({
   const cycle = model.phase === 'run' || model.phase === 'pause'
   const props = { model, actions }
   const program = programColumn(props, t)
-  const start = startBox(props, t)
+  const start = startRows(props, t)
   return (
     <DeviceCard
       kind="appliance"
@@ -280,15 +266,19 @@ export function ApplianceCard({
             className={SCENE_DRAWING_CLASS}
           />
         ),
-        bottom:
-          program === null && start === null
+        bottom: [
+          ...(program === null
             ? []
             : [
-                ...(program === null
-                  ? []
-                  : [rowBlock('program', { content: <>{program.info}</> })]),
-                ...(start === null ? [] : [rowBlock('start', { content: <>{start}</> })]),
-              ],
+                rowLines('program', {
+                  testId: 'dc-appliance-program',
+                  headlineTestId: 'dc-appliance-program-value',
+                  headline: program.headline,
+                  notes: program.notes,
+                }),
+              ]),
+          ...start,
+        ],
       }}
     />
   )

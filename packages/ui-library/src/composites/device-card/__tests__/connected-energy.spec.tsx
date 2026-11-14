@@ -210,7 +210,7 @@ describe('the energy system card', () => {
       'Exported7.3 kWh',
       'Self-use60%',
       'Self-sufficiency81%',
-      'Heat pump now67%',
+      'Now67%',
       'Health96%',
       'Autonomy≈ 8.2 h',
       'Charged6.1 kWh',

@@ -35,6 +35,16 @@ describe('findSceneLayoutProblems — every scene is on the fixed layout', () =>
     expect(rules('scenes/fan/FanCard.tsx', '        bottom: [rowText(')).toEqual([])
   })
 
+  it('refuses the rowBlock escape hatch wherever it is named', () => {
+    expect(
+      rules('scenes/fan/FanCard.tsx', "import { rowBlock } from '../../shell/bottom-rows'"),
+    ).toEqual(['bottom-row-node'])
+    expect(rules('shell/bottom-rows.tsx', 'export function rowBlock(key: string) {')).toEqual([
+      'bottom-row-node',
+    ])
+    expect(rules('scenes/fan/FanCard.tsx', "rowTimer('timer', { timer, actions })")).toEqual([])
+  })
+
   it('lets only bottom-rows.tsx build a BottomRow', () => {
     const source = "return new BottomRow('k', 'text', undefined, node)"
     expect(rules('shell/bottom-rows.tsx', source)).toEqual([])

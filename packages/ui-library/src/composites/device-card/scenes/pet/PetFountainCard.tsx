@@ -2,9 +2,8 @@ import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { PetFountainIllustration } from '../../illustrations/PetFountainIllustration'
 import { CardButton } from '../../parts/CardButton'
-import { LevelRow } from '../../parts/LevelRow'
 import { type ColumnItem, columnButton } from '../../shell/column-items'
-import { rowBlock, rowText } from '../../shell/bottom-rows'
+import { type BottomRow, rowButtons, rowLevels, rowStepper, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -85,85 +84,73 @@ function pumpItems(
   ]
 }
 
-function minuteRow(
-  testId: string,
-  label: string,
-  minutes: number | null,
-  onChange: (minutes: number) => void,
-  t: UiTextFn,
-): ReactElement {
-  const current = minutes ?? 0
-  const step = (delta: number): void => {
-    if (minutes === null) return
-    onChange(Math.min(MAX_PUMP_MINUTES, Math.max(0, current + delta)))
-  }
-  return (
-    <span data-testid={testId} className="inline-flex items-center justify-center gap-1 text-xs">
-      <span>{label}</span>
-      <CardButton
-        glyph="minus"
-        aria-label={t('uiLibrary.petFountain.decrease', 'Decrease {{label}}', {
-          label,
-        })}
-        disabled={minutes === null || current <= 0}
-        onClick={() => step(-1)}
-      />
-      <b className="tabular-nums">
-        {minutes === null
-          ? '—'
-          : t('uiLibrary.petFountain.minutes', '{{count}} min', {
-              count: current,
-            })}
-      </b>
-      <CardButton
-        glyph="plus"
-        aria-label={t('uiLibrary.petFountain.increase', 'Increase {{label}}', {
-          label,
-        })}
-        disabled={minutes === null || current >= MAX_PUMP_MINUTES}
-        onClick={() => step(1)}
-      />
-    </span>
-  )
-}
-
-function cycleControls(
+function cycleRows(
   cycle: PetFountainCycle,
   actions: PetFountainCardActions,
   t: UiTextFn,
-): ReactElement {
+): readonly BottomRow[] {
   const on = cycle.enabled === true
-  return (
-    <div className="grid justify-items-center gap-1">
-      <CardButton
-        glyph="timer"
-        tone={on ? 'on' : 'default'}
-        aria-pressed={on}
-        data-testid="dc-fountain-cycle"
-        onClick={() => actions.onCycle(!on)}
-      >
-        {t('uiLibrary.petFountain.cycle', 'On / off cycle')}
-      </CardButton>
-      {on ? (
-        <>
-          {minuteRow(
+  const minuteRow = (
+    key: string,
+    testId: string,
+    name: string,
+    minutes: number | null,
+    onChange: (minutes: number) => void,
+  ): BottomRow => {
+    const current = minutes ?? 0
+    const step = (delta: number): void => {
+      if (minutes === null) return
+      onChange(Math.min(MAX_PUMP_MINUTES, Math.max(0, current + delta)))
+    }
+    return rowStepper(key, {
+      testId,
+      name,
+      valueText:
+        minutes === null
+          ? null
+          : t('uiLibrary.petFountain.minutes', '{{count}} min', { count: current }),
+      decreaseLabel: t('uiLibrary.petFountain.decrease', 'Decrease {{label}}', { label: name }),
+      increaseLabel: t('uiLibrary.petFountain.increase', 'Increase {{label}}', { label: name }),
+      canDecrease: minutes !== null && current > 0,
+      canIncrease: minutes !== null && current < MAX_PUMP_MINUTES,
+      onDecrease: () => step(-1),
+      onIncrease: () => step(1),
+    })
+  }
+  return [
+    rowButtons('cycle', {
+      buttons: [
+        <CardButton
+          key="cycle"
+          glyph="timer"
+          tone={on ? 'on' : 'default'}
+          aria-pressed={on}
+          data-testid="dc-fountain-cycle"
+          onClick={() => actions.onCycle(!on)}
+        >
+          {t('uiLibrary.petFountain.cycle', 'On / off cycle')}
+        </CardButton>,
+      ],
+    }),
+    ...(on
+      ? [
+          minuteRow(
+            'cycle-run',
             'dc-fountain-run',
             t('uiLibrary.petFountain.runMinutes', 'Runs for'),
             cycle.runMinutes,
             actions.onRunMinutes,
-            t,
-          )}
-          {minuteRow(
+          ),
+          minuteRow(
+            'cycle-rest',
             'dc-fountain-rest',
             t('uiLibrary.petFountain.restMinutes', 'Rests for'),
             cycle.restMinutes,
             actions.onRestMinutes,
-            t,
-          )}
-        </>
-      ) : null}
-    </div>
-  )
+          ),
+        ]
+      : []),
+  ]
 }
 
 /**
@@ -207,22 +194,21 @@ export function PetFountainCard({
         ),
         columns: { right: pumpItems(model, actions, t) },
         bottom: [
-          rowBlock('level', {
-            content: (
-              <LevelRow
-                testId="dc-fountain-level"
-                label={t('uiLibrary.deviceCard.petFountain.water', 'Water')}
-                percent={model.waterLevel}
-                warn={low}
-              />
-            ),
+          rowLevels('level', {
+            levels: [
+              {
+                id: 'water',
+                testId: 'dc-fountain-level',
+                label: t('uiLibrary.deviceCard.petFountain.water', 'Water'),
+                percent: model.waterLevel,
+                warn: low,
+              },
+            ],
           }),
           ...(volume === null
             ? []
             : [rowText('volume', { text: volume, testId: 'dc-fountain-volume' })]),
-          ...(model.cycle === null
-            ? []
-            : [rowBlock('cycle', { content: cycleControls(model.cycle, actions, t) })]),
+          ...(model.cycle === null ? [] : cycleRows(model.cycle, actions, t)),
           ...(model.fault === null
             ? []
             : [

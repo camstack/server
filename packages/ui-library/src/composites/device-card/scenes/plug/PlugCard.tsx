@@ -2,8 +2,7 @@ import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { PlugIllustration } from '../../illustrations/PlugIllustration'
-import { SwitchTimer } from '../../parts/SwitchTimer'
-import { rowBlock } from '../../shell/bottom-rows'
+import { rowTimer } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -53,14 +52,7 @@ export function PlugCard({
             <PlugIllustration on={on} className={SCENE_DRAWING_CLASS} />
           </ScenePower>
         ),
-        bottom:
-          model.timer === null
-            ? []
-            : [
-                rowBlock('timer', {
-                  content: <SwitchTimer timer={model.timer} actions={actions} />,
-                }),
-              ],
+        bottom: model.timer === null ? [] : [rowTimer('timer', { timer: model.timer, actions })],
       }}
     />
   )

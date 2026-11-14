@@ -5,9 +5,8 @@ import type { CardGlyph } from '../../icons'
 import { CardIcon } from '../../parts/CardIcon'
 import { MenuButton } from '../../parts/MenuButton'
 import { HorizontalSlider } from '../../parts/sliders'
-import { ValueEntry } from '../../parts/ValueEntry'
 import { type ColumnItem, columnButton, columnValue } from '../../shell/column-items'
-import { type BottomRow, rowBlock, rowSelector, rowSlider } from '../../shell/bottom-rows'
+import { type BottomRow, rowEntry, rowSelector, rowSlider } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
@@ -147,34 +146,26 @@ function editorZones(
     case 'text':
       return {
         bottom: [
-          rowBlock('entry', {
-            content: (
-              <ValueEntry
-                type="text"
-                value={control.value}
-                ariaLabel={label}
-                saveLabel={save}
-                onSave={onSet}
-                testId="dc-control-entry"
-              />
-            ),
+          rowEntry('entry', {
+            type: 'text',
+            value: control.value,
+            ariaLabel: label,
+            saveLabel: save,
+            onSave: onSet,
+            testId: 'dc-control-entry',
           }),
         ],
       }
     case 'datetime':
       return {
         bottom: [
-          rowBlock('entry', {
-            content: (
-              <ValueEntry
-                type={control.editor}
-                value={control.value}
-                ariaLabel={label}
-                saveLabel={save}
-                onSave={onSet}
-                testId="dc-control-entry"
-              />
-            ),
+          rowEntry('entry', {
+            type: control.editor,
+            value: control.value,
+            ariaLabel: label,
+            saveLabel: save,
+            onSave: onSet,
+            testId: 'dc-control-entry',
           }),
         ],
       }

@@ -10255,7 +10255,13 @@
         "health": "Health",
         "autonomy": "Autonomy",
         "chargedToday": "Charged",
-        "dischargedToday": "Discharged"
+        "dischargedToday": "Discharged",
+        "rowFlows": "Energy",
+        "rowShare": "Share",
+        "rowBattery": "Battery",
+        "rowHeatPump": "Heat pump",
+        "hpToday": "Today",
+        "hpNow": "Now"
       },
       "ir": {
         "canLearn": "Can learn",

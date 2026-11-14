@@ -3,7 +3,6 @@ import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import type { RobotActivity } from '../../illustrations/RobotIllustration'
 import { RobotIllustration } from '../../illustrations/RobotIllustration'
 import { CardButton } from '../../parts/CardButton'
-import { CardIcon } from '../../parts/CardIcon'
 import {
   type ColumnItem,
   columnArmedButton,
@@ -11,7 +10,7 @@ import {
   columnStep,
   columnValue,
 } from '../../shell/column-items'
-import { rowBlock, rowButtons } from '../../shell/bottom-rows'
+import { rowButtons, rowText } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -182,15 +181,7 @@ export function RobotCard({
   const label = robotStateLabel(model, t)
   const mapShown = showMap && model.mapUrl !== null
   const robotError =
-    model.activity === 'err' && !model.mower && model.errorLabel !== null ? (
-      <div
-        className="flex items-start justify-center gap-1 text-center text-xs font-semibold text-danger"
-        data-testid="dc-robot-error"
-      >
-        <CardIcon glyph="warning" />
-        {model.errorLabel}
-      </div>
-    ) : null
+    model.activity === 'err' && !model.mower && model.errorLabel !== null ? model.errorLabel : null
   return (
     <DeviceCard
       kind={model.mower ? 'mower' : 'vacuum'}
@@ -221,7 +212,16 @@ export function RobotCard({
           />
         ),
         bottom: [
-          ...(robotError === null ? [] : [rowBlock('error', { content: robotError })]),
+          ...(robotError === null
+            ? []
+            : [
+                rowText('error', {
+                  text: robotError,
+                  tone: 'danger',
+                  glyph: 'warning',
+                  testId: 'dc-robot-error',
+                }),
+              ]),
           ...(model.mapUrl === null
             ? []
             : [

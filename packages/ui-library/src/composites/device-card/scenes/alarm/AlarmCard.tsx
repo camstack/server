@@ -1,10 +1,9 @@
-import { type ReactElement, type ReactNode, useState } from 'react'
+import { type ReactElement, useState } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { AlarmIllustration, type AlarmLook } from '../../illustrations/AlarmIllustration'
 import { ButtonGroup } from '../../parts/ButtonGroup'
 import { CardButton } from '../../parts/CardButton'
-import { CodePad } from '../../parts/CodePad'
-import { rowBlock, rowSelector } from '../../shell/bottom-rows'
+import { type BottomRow, rowButtons, rowCodePad, rowSelector } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -80,30 +79,44 @@ function selectedMode(model: AlarmCardModel): string | null {
   return model.activity === 'disarmed' ? ALARM_DISARMED : model.mode
 }
 
-function confirmRow(
+function confirmRows(
   pending: Pending,
   model: AlarmCardModel,
   run: (code: string | null) => void,
   cancel: () => void,
   t: UiTextFn,
-): ReactNode {
+): readonly BottomRow[] {
   const label =
     pending.kind === 'disarm'
       ? t('uiLibrary.deviceCard.alarm.disarm', 'Disarm')
       : `${t('uiLibrary.deviceCard.alarm.arm', 'Arm')} · ${alarmModeLabel(pending.mode, t)}`
   if (model.requiresCode) {
-    return <CodePad testId="dc-alarm-code" submitLabel={label} onSubmit={run} onCancel={cancel} />
+    return [
+      rowCodePad('confirm', {
+        testId: 'dc-alarm-code',
+        submitLabel: label,
+        onSubmit: run,
+        onCancel: cancel,
+      }),
+    ]
   }
-  return (
-    <span className="inline-flex items-center gap-2">
-      <CardButton tone="danger" data-testid="dc-alarm-confirm" onClick={() => run(null)}>
-        {label}
-      </CardButton>
-      <CardButton glyph="cancel" data-testid="dc-alarm-cancel" onClick={cancel}>
-        {t('uiLibrary.deviceCard.cancel', 'Cancel')}
-      </CardButton>
-    </span>
-  )
+  return [
+    rowButtons('confirm', {
+      buttons: [
+        <CardButton
+          key="confirm"
+          tone="danger"
+          data-testid="dc-alarm-confirm"
+          onClick={() => run(null)}
+        >
+          {label}
+        </CardButton>,
+        <CardButton key="cancel" glyph="cancel" data-testid="dc-alarm-cancel" onClick={cancel}>
+          {t('uiLibrary.deviceCard.cancel', 'Cancel')}
+        </CardButton>,
+      ],
+    }),
+  ]
 }
 
 /**
@@ -175,11 +188,7 @@ export function AlarmCard({
           options.length === 0
             ? []
             : pending !== null
-              ? [
-                  rowBlock('confirm', {
-                    content: <>{confirmRow(pending, model, run, () => setPending(null), t)}</>,
-                  }),
-                ]
+              ? confirmRows(pending, model, run, () => setPending(null), t)
               : [
                   rowSelector('modes', {
                     control: (

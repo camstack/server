@@ -7,9 +7,9 @@ import { type FanAxisDrawing, FanIllustration } from '../../illustrations/FanIll
 import { MenuButton } from '../../parts/MenuButton'
 import { PopoverButton } from '../../parts/PopoverButton'
 import { HorizontalSlider } from '../../parts/sliders'
-import { SwitchTimer, useTimerSince } from '../../parts/SwitchTimer'
+import { useTimerSince } from '../../parts/SwitchTimer'
 import { columnButton, columnSlider } from '../../shell/column-items'
-import { rowBlock, rowButtons, rowSelector } from '../../shell/bottom-rows'
+import { rowButtons, rowSelector, rowTimer } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -276,13 +276,7 @@ export function FanCard({
                   ],
                 }),
               ]),
-          ...(model.timer === null
-            ? []
-            : [
-                rowBlock('timer', {
-                  content: <SwitchTimer timer={model.timer} actions={actions} />,
-                }),
-              ]),
+          ...(model.timer === null ? [] : [rowTimer('timer', { timer: model.timer, actions })]),
         ],
       }}
     />

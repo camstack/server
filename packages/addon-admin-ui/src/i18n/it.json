@@ -10194,7 +10194,7 @@
         "cooling": "Raffresca",
         "cop": "COP",
         "defrost": "Sbrinamento",
-        "electrical": "Elettrica",
+        "electrical": "Elettr.",
         "heating": "Riscalda",
         "holiday": "Vacanza",
         "hotWater": "Acqua calda",
@@ -10204,11 +10204,11 @@
         "noSettings": "Niente da impostare su questo circuito",
         "openCircuit": "Apri {{name}}",
         "outdoor": "Esterna",
-        "pressure": "Pressione",
+        "pressure": "Press.",
         "programmeN": "Programma {{n}}",
         "return": "Ritorno",
         "silent": "Silenzioso",
-        "supply": "Mandata",
+        "supply": "Andata",
         "thermal": "Termica",
         "value": {
           "auto": "Auto",
@@ -10277,7 +10277,13 @@
         "health": "Salute",
         "autonomy": "Autonomia",
         "chargedToday": "Caricati",
-        "dischargedToday": "Scaricati"
+        "dischargedToday": "Scaricati",
+        "rowFlows": "Energia",
+        "rowShare": "Quota",
+        "rowBattery": "Batteria",
+        "rowHeatPump": "Pompa di calore",
+        "hpToday": "Oggi",
+        "hpNow": "Ora"
       },
       "ir": {
         "canLearn": "Può apprendere",
@@ -10382,7 +10388,7 @@
         "low": "Cibo in esaurimento",
         "markRefilled": "Segna ricaricato",
         "more": "Porzione più grande",
-        "portion": "porzione",
+        "portion": "porz.",
         "ready": "Pronto",
         "settings": "Opzioni"
       },

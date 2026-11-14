@@ -115,8 +115,14 @@ function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readon
       cells: [
         ['self', e('selfConsumption', 'Self-use'), pct(today.selfConsumptionPct)],
         ['sufficiency', e('selfSufficiency', 'Self-sufficiency'), pct(today.selfSufficiencyPct)],
-        ['heatPump', e('heatPumpToday', 'Heat pump'), kwh(today.heatPumpKwh)],
-        ['heatPumpNow', e('heatPumpNow', 'Heat pump now'), pct(today.heatPumpShareNowPct)],
+      ],
+    },
+    {
+      id: 'heatPump',
+      label: e('rowHeatPump', 'Heat pump'),
+      cells: [
+        ['heatPump', e('hpToday', 'Today'), kwh(today.heatPumpKwh)],
+        ['heatPumpNow', e('hpNow', 'Now'), pct(today.heatPumpShareNowPct)],
       ],
     },
     {
