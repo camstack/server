@@ -5,6 +5,7 @@ import { cn } from '../../../../lib/cn'
 import { DIAL_BOX_CLASS } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
 import { type ColumnItem, columnButton, columnStep } from '../../shell/column-items'
+import { rowSelector } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type { HumidifierActivity, HumidifierCardActions, HumidifierCardModel } from './model'
@@ -140,17 +141,23 @@ export function HumidifierCard({
           </div>
         ),
         bottom:
-          model.modes.length === 0 ? null : (
-            <MenuButton
-              testId="dc-humid-mode"
-              layout="stacked"
-              ariaLabel={t('uiLibrary.deviceCard.humidifier.modeMenu', 'Mode')}
-              options={model.modes}
-              value={model.mode}
-              disabled={held}
-              onChange={actions.onMode}
-            />
-          ),
+          model.modes.length === 0
+            ? []
+            : [
+                rowSelector('mode', {
+                  control: (
+                    <MenuButton
+                      testId="dc-humid-mode"
+                      layout="stacked"
+                      ariaLabel={t('uiLibrary.deviceCard.humidifier.modeMenu', 'Mode')}
+                      options={model.modes}
+                      value={model.mode}
+                      disabled={held}
+                      onChange={actions.onMode}
+                    />
+                  ),
+                }),
+              ],
       }}
     />
   )
