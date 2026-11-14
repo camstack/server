@@ -58,5 +58,35 @@ export function weatherStationFixtures(): readonly WeatherStationFixture[] {
       orientation: 'vertical',
       model: { ...sparse, common: home() },
     },
+    {
+      id: 'station-wind',
+      caption: 'Solo vento',
+      orientation: 'vertical',
+      model: {
+        ...sparse,
+        since: 'aggiornata ora',
+        temperature: null,
+        windSpeed: 5.4,
+        windGust: 9.1,
+        windBearing: 45,
+        common: deviceCommon({ name: 'Anemometro', integration: 'Ecowitt' }),
+      },
+    },
+    {
+      id: 'station-wind-rain',
+      caption: 'Vento e pioggia',
+      orientation: 'vertical',
+      model: {
+        ...sparse,
+        since: 'aggiornata ora',
+        temperature: null,
+        windSpeed: 6.2,
+        windGust: 11,
+        windBearing: 180,
+        rainRate: 0.8,
+        rainDaily: 3.1,
+        common: deviceCommon({ name: 'Tetto', integration: 'Ecowitt' }),
+      },
+    },
   ]
 }

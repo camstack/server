@@ -1,3 +1,4 @@
+import { STATION_CUP_HUB, STATION_VANE_PIVOT } from './scenes/weather-station/station-geometry'
 import { SCENE_COLUMN_PCT } from './shell/scene-layout'
 
 /**
@@ -151,5 +152,9 @@ export const DEVICE_CARD_CSS: string = `
 .dc-jet{animation:dc-jet 1.2s ease-in-out infinite;transform-box:fill-box}
 @keyframes dc-jet{50%{transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.dc-lock-moving,.dc-ring-pulse,.dc-wave,.dc-jet{animation:none!important}}
-@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *,.dc-hp *,.dc-tank *,.dc-energy *{animation:none!important}}
+@property --dc-station-bearing{syntax:"<angle>";inherits:true;initial-value:0deg}
+.dc-station-cups{transform-box:view-box;transform-origin:${STATION_CUP_HUB.x}px ${STATION_CUP_HUB.y}px}
+.dc-station[data-spin="true"] .dc-station-cups{animation:dc-spin var(--dc-station-period,1.6s) linear infinite}
+.dc-station-vane{transform-box:view-box;transform-origin:${STATION_VANE_PIVOT.x}px ${STATION_VANE_PIVOT.y}px;transform:rotate(var(--dc-station-bearing,0deg));transition:--dc-station-bearing .7s ease}
+@media (prefers-reduced-motion:reduce){.dc-fx *,.dc-fx{animation:none!important}.dc-fx-p,.dc-fx-air,.dc-fx-wisps,.dc-fx-draft,.dc-fx-breeze{display:none}.dc-fan *,.dc-fan,.dc-heater *,.dc-appl *,.dc-robot *,.dc-hp *,.dc-tank *,.dc-energy *,.dc-station *,.dc-station{animation:none!important}.dc-station-vane{transition:none}}
 `

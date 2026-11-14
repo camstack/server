@@ -1,16 +1,20 @@
 import { formatReading, type ReadingQuantity } from '@camstack/types'
 import type { ReactElement } from 'react'
-import { useUiText } from '../../../../contexts/ui-text'
+import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../../contexts/unit-preferences'
-import { cn } from '../../../../lib/cn'
 import { preferenceForQuantity, type UnitPreferences } from '../../../../lib/unit-preferences'
-import { CardIcon } from '../../parts/CardIcon'
-import { rowStats } from '../../shell/bottom-rows'
+import { type BottomRow, rowStats } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
-import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
+import { WeatherStationIllustration } from './WeatherStationIllustration'
 import {
+  anemometerSpinRate,
+  stationCategories,
   stationCompassOf,
+  stationModules,
+  type StationCategoryId,
+  type StationReadingId,
   type WeatherStationCardActions,
   type WeatherStationCardModel,
 } from './model'
@@ -22,20 +26,29 @@ export interface WeatherStationCardProps {
   readonly showName?: boolean
 }
 
-interface StationStat {
-  readonly id: string
-  readonly name: string
-  readonly value: string
-  readonly testId: string
+const DASH = '—'
+
+const READING_TEST_ID: Readonly<Record<StationReadingId, string>> = {
+  temperature: 'dc-station-temp',
+  humidity: 'dc-station-humidity',
+  dew: 'dc-station-dew',
+  speed: 'dc-station-wind',
+  gust: 'dc-station-gust',
+  bearing: 'dc-station-bearing',
+  rate: 'dc-station-rain',
+  daily: 'dc-station-rain-daily',
+  event: 'dc-station-rain-event',
+  solar: 'dc-station-solar',
+  uv: 'dc-station-uv',
+  pressure: 'dc-station-pressure',
 }
 
-function formatStationReading(
-  value: number | null,
+function formatQuantity(
+  value: number,
   quantity: ReadingQuantity,
   preferences: UnitPreferences,
   precision: number,
-): string | null {
-  if (value === null) return null
+): string {
   const rendered = formatReading({
     value,
     quantity,
@@ -45,10 +58,108 @@ function formatStationReading(
   return rendered.unit.length === 0 ? rendered.text : `${rendered.text}${rendered.unit}`
 }
 
+function textOf(value: number | null, format: (n: number) => string): string {
+  return value === null ? DASH : format(value)
+}
+
+function categoryLabel(id: StationCategoryId, t: UiTextFn): string {
+  switch (id) {
+    case 'climate':
+      return t('uiLibrary.deviceCard.weatherStation.catClimate', 'Temperature & humidity')
+    case 'wind':
+      return t('uiLibrary.deviceCard.weatherStation.catWind', 'Wind')
+    case 'rain':
+      return t('uiLibrary.deviceCard.weatherStation.catRain', 'Rain')
+    case 'sun':
+      return t('uiLibrary.deviceCard.weatherStation.catSun', 'Sun')
+    case 'pressure':
+      return t('uiLibrary.deviceCard.weatherStation.catPressure', 'Pressure')
+  }
+}
+
+function readingName(id: StationReadingId, t: UiTextFn): string {
+  switch (id) {
+    case 'temperature':
+      return t('uiLibrary.deviceCard.weatherStation.temperature', 'Temperature')
+    case 'humidity':
+      return t('uiLibrary.deviceCard.weatherStation.humidity', 'Humidity')
+    case 'dew':
+      return t('uiLibrary.deviceCard.weatherStation.dewPoint', 'Dew point')
+    case 'speed':
+      return t('uiLibrary.deviceCard.weatherStation.speed', 'Speed')
+    case 'gust':
+      return t('uiLibrary.deviceCard.weatherStation.gust', 'Gust')
+    case 'bearing':
+      return t('uiLibrary.deviceCard.weatherStation.direction', 'Direction')
+    case 'rate':
+      return t('uiLibrary.deviceCard.weatherStation.rainRate', 'Rain')
+    case 'daily':
+      return t('uiLibrary.deviceCard.weatherStation.rainDaily', 'Today')
+    case 'event':
+      return t('uiLibrary.deviceCard.weatherStation.rainEvent', 'Event')
+    case 'solar':
+      return t('uiLibrary.deviceCard.weatherStation.solar', 'Solar')
+    case 'uv':
+      return t('uiLibrary.deviceCard.weatherStation.uv', 'UV')
+    case 'pressure':
+      return t('uiLibrary.deviceCard.weatherStation.pressure', 'Pressure')
+  }
+}
+
+function readingValue(
+  id: StationReadingId,
+  value: number | null,
+  preferences: UnitPreferences,
+): string {
+  switch (id) {
+    case 'temperature':
+    case 'dew':
+      return textOf(value, (n) => formatQuantity(n, 'temperature', preferences, 1))
+    case 'humidity':
+      return textOf(value, (n) => `${Math.round(n)}%`)
+    case 'speed':
+    case 'gust':
+      return textOf(value, (n) => formatQuantity(n, 'speed', preferences, 1))
+    case 'bearing':
+      return textOf(value, (n) => stationCompassOf(n))
+    case 'rate':
+      return textOf(value, (n) => formatQuantity(n, 'precipitation-rate', preferences, 1))
+    case 'daily':
+    case 'event':
+      return textOf(value, (n) => formatQuantity(n, 'precipitation', preferences, 1))
+    case 'solar':
+      return textOf(value, (n) => formatQuantity(n, 'irradiance', preferences, 0))
+    case 'uv':
+      return textOf(value, (n) => String(Math.round(n * 10) / 10))
+    case 'pressure':
+      return textOf(value, (n) => formatQuantity(n, 'pressure', preferences, 0))
+  }
+}
+
+/** One labelled row per category that has a reading, same rows as the energy card. */
+function categoryRows(
+  model: WeatherStationCardModel,
+  t: UiTextFn,
+  preferences: UnitPreferences,
+): readonly BottomRow[] {
+  return stationCategories(model).map((cat) =>
+    rowStats(`station-${cat.id}`, {
+      label: categoryLabel(cat.id, t),
+      testId: `dc-station-cat-${cat.id}`,
+      stats: cat.readings.map((reading) => ({
+        id: reading.id,
+        name: readingName(reading.id, t),
+        value: readingValue(reading.id, reading.value, preferences),
+        testId: READING_TEST_ID[reading.id],
+      })),
+    }),
+  )
+}
+
 /**
- * One physical station: temperature large, the rest only when the station
- * reports them. A missing reading is an em dash on the primary row and is
- * omitted from the rest — never a zero.
+ * One outdoor station: the mast draws the modules the readings support, and
+ * the numbers sit in categories. A category with nothing to say is omitted;
+ * a gap inside one that is drawn is a dash.
  */
 export function WeatherStationCard({
   model,
@@ -58,90 +169,6 @@ export function WeatherStationCard({
 }: WeatherStationCardProps): ReactElement {
   const t = useUiText()
   const preferences = useUnitPreferences()
-  const temperature = formatStationReading(model.temperature, 'temperature', preferences, 1)
-  const speed = formatStationReading(model.windSpeed, 'speed', preferences, 1)
-  const gust = formatStationReading(model.windGust, 'speed', preferences, 1)
-  const wind =
-    speed === null && model.windBearing === null
-      ? null
-      : [speed ?? '—', model.windBearing === null ? null : stationCompassOf(model.windBearing)]
-          .filter((part) => part !== null)
-          .join(' ')
-  const primary: StationStat[] = [
-    {
-      id: 'humidity',
-      name: t('uiLibrary.deviceCard.weatherStation.humidity', 'Humidity'),
-      value: model.humidity === null ? '—' : `${Math.round(model.humidity)}%`,
-      testId: 'dc-station-humidity',
-    },
-    {
-      id: 'wind',
-      name: t('uiLibrary.deviceCard.weatherStation.wind', 'Wind'),
-      value: wind ?? '—',
-      testId: 'dc-station-wind',
-    },
-    {
-      id: 'pressure',
-      name: t('uiLibrary.deviceCard.weatherStation.pressure', 'Pressure'),
-      value: formatStationReading(model.pressure, 'pressure', preferences, 0) ?? '—',
-      testId: 'dc-station-pressure',
-    },
-  ]
-  const extra: StationStat[] = []
-  const rain = formatStationReading(model.rainRate, 'precipitation-rate', preferences, 1)
-  const daily = formatStationReading(model.rainDaily, 'precipitation', preferences, 1)
-  const eventRain = formatStationReading(model.rainEvent, 'precipitation', preferences, 1)
-  const dew = formatStationReading(model.dewPoint, 'temperature', preferences, 1)
-  const solar = formatStationReading(model.solarRadiation, 'irradiance', preferences, 0)
-  if (gust !== null)
-    extra.push({
-      id: 'gust',
-      name: t('uiLibrary.deviceCard.weatherStation.gust', 'Gust'),
-      value: gust,
-      testId: 'dc-station-gust',
-    })
-  if (rain !== null)
-    extra.push({
-      id: 'rain-rate',
-      name: t('uiLibrary.deviceCard.weatherStation.rainRate', 'Rain'),
-      value: rain,
-      testId: 'dc-station-rain',
-    })
-  if (daily !== null)
-    extra.push({
-      id: 'rain-daily',
-      name: t('uiLibrary.deviceCard.weatherStation.rainDaily', 'Today'),
-      value: daily,
-      testId: 'dc-station-rain-daily',
-    })
-  if (eventRain !== null)
-    extra.push({
-      id: 'rain-event',
-      name: t('uiLibrary.deviceCard.weatherStation.rainEvent', 'Event'),
-      value: eventRain,
-      testId: 'dc-station-rain-event',
-    })
-  if (model.uv !== null)
-    extra.push({
-      id: 'uv',
-      name: t('uiLibrary.deviceCard.weatherStation.uv', 'UV'),
-      value: String(Math.round(model.uv * 10) / 10),
-      testId: 'dc-station-uv',
-    })
-  if (solar !== null)
-    extra.push({
-      id: 'solar',
-      name: t('uiLibrary.deviceCard.weatherStation.solar', 'Solar'),
-      value: solar,
-      testId: 'dc-station-solar',
-    })
-  if (dew !== null)
-    extra.push({
-      id: 'dew',
-      name: t('uiLibrary.deviceCard.weatherStation.dewPoint', 'Dew point'),
-      value: dew,
-      testId: 'dc-station-dew',
-    })
   return (
     <DeviceCard
       kind="weather-station"
@@ -149,7 +176,6 @@ export function WeatherStationCard({
       actions={actions}
       orientation={orientation}
       showName={showName}
-      activity="cloudy"
       state={{
         label: t('uiLibrary.deviceCard.weatherStation.state', 'Station'),
         since: model.since,
@@ -157,17 +183,14 @@ export function WeatherStationCard({
       }}
       scene={{
         image: (
-          <span className="flex items-center justify-center gap-3">
-            <b className="text-xl tabular-nums text-primary" data-testid="dc-station-temp">
-              {temperature ?? '—'}
-            </b>
-            <CardIcon glyph="cloudy" className={cn(SCENE_ICON_CLASS, 'text-info')} />
-          </span>
+          <WeatherStationIllustration
+            modules={stationModules(model)}
+            spinRate={anemometerSpinRate(model.windSpeed)}
+            bearing={model.windBearing}
+            className={SCENE_DRAWING_CLASS}
+          />
         ),
-        bottom: [
-          rowStats('readings', { stats: primary }),
-          ...(extra.length === 0 ? [] : [rowStats('extra', { stats: extra })]),
-        ],
+        bottom: categoryRows(model, t, preferences),
       }}
     />
   )

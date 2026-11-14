@@ -1113,6 +1113,20 @@
       "summary": "The instant a window ends at, rounded so the query key is stable between renders and the view refreshes at a pace its width justifies."
     },
     {
+      "name": "ANEMOMETER_REVS_PER_MPS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": "Cup revolutions per second for each metre per second of wind."
+    },
+    {
+      "name": "anemometerSpinRate",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": "How fast the cups turn. Zero when the wind is unknown, calm, or negative — a higher speed is always a faster spin."
+    },
+    {
       "name": "APP_BRANDS",
       "kind": "constant",
       "area": "composites",
@@ -17191,11 +17205,46 @@
       ]
     },
     {
+      "name": "STATION_CATEGORY_ORDER",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": ""
+    },
+    {
+      "name": "STATION_MODULE_ORDER",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": "Sensor modules on the mast, in drawing order. Chosen from the readings the station actually reports — never from the vendor."
+    },
+    {
+      "name": "stationBearingDeg",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": "Degrees clockwise from north, 0..360. Null when the vane has no bearing."
+    },
+    {
+      "name": "stationCategories",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": "Categories that have at least one reading. A null slot stays, for the dash."
+    },
+    {
       "name": "stationCompassOf",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
       "summary": "The eight-point compass word for a bearing."
+    },
+    {
+      "name": "stationModules",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": ""
     },
     {
       "name": "StatusBadge",
@@ -20299,7 +20348,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/WeatherStationCard.tsx",
-      "summary": "One physical station: temperature large, the rest only when the station reports them. A missing reading is an em dash on the primary row and is omitted from the rest — never a zero.",
+      "summary": "One outdoor station: the mast draws the modules the readings support, and the numbers sit in categories. A category with nothing to say is omitted; a gap inside one that is drawn is a dash.",
       "props": [
         {
           "name": "model",

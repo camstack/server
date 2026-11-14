@@ -10526,7 +10526,15 @@
         "uv": "UV",
         "solar": "Solar",
         "dewPoint": "Dew point",
-        "state": "Station"
+        "state": "Station",
+        "catClimate": "Temperature & humidity",
+        "catWind": "Wind",
+        "catRain": "Rain",
+        "catSun": "Sun",
+        "catPressure": "Pressure",
+        "temperature": "Temperature",
+        "speed": "Speed",
+        "direction": "Direction"
       }
     },
     "language": "en",
