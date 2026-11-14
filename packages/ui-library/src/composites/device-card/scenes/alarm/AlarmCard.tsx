@@ -4,6 +4,7 @@ import { AlarmIllustration, type AlarmLook } from '../../illustrations/AlarmIllu
 import { ButtonGroup } from '../../parts/ButtonGroup'
 import { CardButton } from '../../parts/CardButton'
 import { CodePad } from '../../parts/CodePad'
+import { rowBlock, rowSelector } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -171,18 +172,28 @@ export function AlarmCard({
         image: <AlarmIllustration look={LOOK[model.activity]} className={SCENE_DRAWING_CLASS} />,
         columns: {},
         bottom:
-          options.length === 0 ? null : pending !== null ? (
-            confirmRow(pending, model, run, () => setPending(null), t)
-          ) : (
-            <ButtonGroup
-              testId="dc-alarm-modes"
-              ariaLabel={t('uiLibrary.deviceCard.alarm.modes', 'Alarm mode')}
-              options={options}
-              value={selectedMode(model)}
-              disabled={moving}
-              onChange={choose}
-            />
-          ),
+          options.length === 0
+            ? []
+            : pending !== null
+              ? [
+                  rowBlock('confirm', {
+                    content: <>{confirmRow(pending, model, run, () => setPending(null), t)}</>,
+                  }),
+                ]
+              : [
+                  rowSelector('modes', {
+                    control: (
+                      <ButtonGroup
+                        testId="dc-alarm-modes"
+                        ariaLabel={t('uiLibrary.deviceCard.alarm.modes', 'Alarm mode')}
+                        options={options}
+                        value={selectedMode(model)}
+                        disabled={moving}
+                        onChange={choose}
+                      />
+                    ),
+                  }),
+                ],
       }}
     />
   )
