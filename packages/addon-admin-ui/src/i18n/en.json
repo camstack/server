@@ -10535,7 +10535,8 @@
         "temperature": "Temperature",
         "speed": "Speed",
         "direction": "Direction"
-      }
+      },
+      "fault": "Fault"
     },
     "language": "en",
     "measurement": {
