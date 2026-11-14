@@ -8,7 +8,7 @@ import type { ReactNode } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import type { AutomationDevice } from '../../automation/automation-data'
 import type { CommandStep as CommandStepValue } from '../command-vocab'
-import type { ActionPickDraft } from '../../../../components/device/customize/source-selector/SourceSelectorAction'
+import type { ActionPickDraft } from '../../../../components/device-do-action/ActionPicker'
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
@@ -27,8 +27,8 @@ vi.mock('../DynamicArgField', async () => {
 
 const roundSeen: { value: readonly number[] | undefined } = { value: undefined }
 
-vi.mock('../../../../components/device/customize/source-selector/SourceSelectorAction', () => ({
-  SourceSelectorAction: (props: {
+vi.mock('../../../../components/device-do-action/ActionPicker', () => ({
+  ActionPicker: (props: {
     readonly value: ActionPickDraft
     readonly onChange: (next: ActionPickDraft) => void
     readonly roundDevices?: readonly number[]

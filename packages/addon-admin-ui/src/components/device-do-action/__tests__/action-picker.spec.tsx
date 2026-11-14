@@ -1,5 +1,5 @@
 /**
- * `SourceSelector` with `intent: 'action'` — the device modal asking what a
+ * The action picker — the device modal asking what a
  * device should DO:
  *  - one device lists its own commands, grouped by cap;
  *  - several devices list only the commands ALL of them offer;
@@ -10,16 +10,12 @@
 import { DeviceType } from '@camstack/types'
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
-import {
-  withDeviceSearchHub,
-  type SearchHubDevice,
-} from '../../../../../test-setup/device-search-hub'
-import '../../../../../i18n'
-import { SourceSelector } from '../SourceSelector'
-import type { ActionPickDraft } from '../SourceSelectorAction'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { withDeviceSearchHub, type SearchHubDevice } from '../../../test-setup/device-search-hub'
+import '../../../i18n'
+import { ActionPicker, type ActionPickDraft } from '../ActionPicker'
 
-vi.mock('../../../../../../../ui-library/src/contexts/system-context.js', () => ({
+vi.mock('../../../../../ui-library/src/contexts/system-context.js', () => ({
   useSystem: () => ({
     trpcClient: {
       deviceManager: { listAll: { query: () => new Promise(() => undefined) } },
@@ -46,6 +42,8 @@ const fleet = [
   fleetRow(2, 'Lamp', 'light'),
   fleetRow(3, 'Feeder', 'pet-feeder'),
   fleetRow(4, 'Hall hub', 'container'),
+  fleetRow(5, 'Fan', 'fan'),
+  fleetRow(6, 'Fan 2', 'fan'),
 ]
 
 const CAPS = new Map<number, readonly string[]>([
@@ -53,6 +51,8 @@ const CAPS = new Map<number, readonly string[]>([
   [2, ['switch']],
   [3, ['pet-feeder', 'switch']],
   [4, ['switch']],
+  [5, ['fan-control']],
+  [6, ['fan-control']],
 ])
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
@@ -60,14 +60,24 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   useDeviceManagerListAll: () => ({ status: 'success', data: fleet }),
 }))
 
-vi.mock('../../../../device-do-action/use-device-bound-caps', () => ({
+vi.mock('../use-device-bound-caps', () => ({
   useDevicesBoundCaps: () => ({ status: 'success', data: CAPS, error: null }),
 }))
+
+beforeEach(() => {
+  try {
+    localStorage.clear()
+  } catch {
+    // no storage in this environment: nothing was remembered either
+  }
+})
 
 function Harness(props: {
   readonly initial?: ActionPickDraft
   readonly round?: readonly number[]
   readonly excludeTypes?: readonly string[]
+  readonly multiple?: boolean
+  readonly withArgs?: boolean
 }) {
   const [draft, setDraft] = useState<ActionPickDraft>(
     props.initial ?? { target: null, actionId: null },
@@ -75,12 +85,12 @@ function Harness(props: {
   return (
     <>
       <output data-testid="draft">{JSON.stringify(draft)}</output>
-      <SourceSelector
-        kind="action"
-        intent="action"
+      <ActionPicker
         value={draft}
         onChange={setDraft}
         allowTriggerDevice
+        {...(props.multiple === undefined ? {} : { multiple: props.multiple })}
+        {...(props.withArgs === true ? { args: <p data-testid="args-slot">args</p> } : {})}
         {...(props.round === undefined ? {} : { roundDevices: props.round })}
         {...(props.excludeTypes === undefined ? {} : { excludeTypes: props.excludeTypes })}
       />
@@ -89,8 +99,20 @@ function Harness(props: {
 }
 
 const SEARCH_FLEET: readonly SearchHubDevice[] = [
-  { id: 1, name: 'Kitchen blind', type: DeviceType.Cover, location: 'Kitchen', caps: ['cover'] },
-  { id: 2, name: 'Lamp', type: DeviceType.Light, location: 'Kitchen', caps: ['switch'] },
+  {
+    id: 1,
+    name: 'Kitchen blind',
+    type: DeviceType.Cover,
+    location: 'Kitchen',
+    caps: ['cover'],
+  },
+  {
+    id: 2,
+    name: 'Lamp',
+    type: DeviceType.Light,
+    location: 'Kitchen',
+    caps: ['switch'],
+  },
   {
     id: 3,
     name: 'Feeder',
@@ -98,7 +120,27 @@ const SEARCH_FLEET: readonly SearchHubDevice[] = [
     location: 'Kitchen',
     caps: ['pet-feeder', 'switch'],
   },
-  { id: 4, name: 'Hall hub', type: DeviceType.Container, location: 'Kitchen', caps: ['switch'] },
+  {
+    id: 4,
+    name: 'Hall hub',
+    type: DeviceType.Container,
+    location: 'Kitchen',
+    caps: ['switch'],
+  },
+  {
+    id: 5,
+    name: 'Fan',
+    type: DeviceType.Fan,
+    location: 'Kitchen',
+    caps: ['fan-control'],
+  },
+  {
+    id: 6,
+    name: 'Fan 2',
+    type: DeviceType.Fan,
+    location: 'Kitchen',
+    caps: ['fan-control'],
+  },
 ]
 
 function mount(props: Parameters<typeof Harness>[0] = {}) {
@@ -110,11 +152,11 @@ const commands = () =>
   within(screen.getByTestId('action-command-column'))
     .queryAllByRole('radio')
     .map((r) => r.getAttribute('data-testid')?.replace('action-row-', ''))
-const pickDevice = async (name: RegExp): Promise<void> => {
+const pickDevice = async (name: RegExp | string): Promise<void> => {
   fireEvent.click(await screen.findByRole('checkbox', { name }))
 }
 
-describe('SourceSelector intent action — by device', () => {
+describe('ActionPicker — by device', () => {
   it('one device lists its own commands, grouped under the cap title', async () => {
     mount()
     await pickDevice(/Kitchen blind/)
@@ -125,7 +167,10 @@ describe('SourceSelector intent action — by device', () => {
       within(screen.getByTestId('action-command-column')).getAllByRole('heading').length,
     ).toBeGreaterThan(0)
     fireEvent.click(screen.getByTestId('action-row-cover.open'))
-    expect(draft()).toEqual({ target: { kind: 'devices', ids: [1] }, actionId: 'cover.open' })
+    expect(draft()).toEqual({
+      target: { kind: 'devices', ids: [1] },
+      actionId: 'cover.open',
+    })
   })
 
   it('several devices list only the commands all of them offer', async () => {
@@ -141,9 +186,17 @@ describe('SourceSelector intent action — by device', () => {
   })
 
   it('a device that drops the picked command drops the command, not the device', async () => {
-    mount({ initial: { target: { kind: 'devices', ids: [3] }, actionId: 'petFeeder.feed' } })
+    mount({
+      initial: {
+        target: { kind: 'devices', ids: [3] },
+        actionId: 'petFeeder.feed',
+      },
+    })
     await pickDevice(/Lamp/)
-    expect(draft()).toEqual({ target: { kind: 'devices', ids: [3, 2] }, actionId: null })
+    expect(draft()).toEqual({
+      target: { kind: 'devices', ids: [3, 2] },
+      actionId: null,
+    })
   })
 
   it('never offers an excluded type: a container is not a pick (D356)', async () => {
@@ -172,7 +225,7 @@ describe('SourceSelector intent action — by device', () => {
   })
 })
 
-describe('SourceSelector intent action — by action', () => {
+describe('ActionPicker — by action', () => {
   it('lists the fleet’s commands, then only the devices that offer the picked one', async () => {
     mount()
     fireEvent.click(screen.getByRole('radio', { name: /By action|byAction/ }))
@@ -192,17 +245,91 @@ describe('SourceSelector intent action — by action', () => {
   it('searches the commands', () => {
     mount()
     fireEvent.click(screen.getByRole('radio', { name: /By action|byAction/ }))
-    fireEvent.change(screen.getByTestId('action-search'), { target: { value: 'open' } })
+    fireEvent.change(screen.getByTestId('action-search'), {
+      target: { value: 'open' },
+    })
     expect(commands()).toContain('cover.open')
     expect(commands()).not.toContain('petFeeder.feed')
   })
 
   it('switching mode keeps a compatible pick', () => {
-    mount({ initial: { target: { kind: 'devices', ids: [2, 3] }, actionId: 'switch.on' } })
+    mount({
+      initial: {
+        target: { kind: 'devices', ids: [2, 3] },
+        actionId: 'switch.on',
+      },
+    })
     fireEvent.click(screen.getByRole('radio', { name: /By action|byAction/ }))
-    expect(draft()).toEqual({ target: { kind: 'devices', ids: [2, 3] }, actionId: 'switch.on' })
+    expect(draft()).toEqual({
+      target: { kind: 'devices', ids: [2, 3] },
+      actionId: 'switch.on',
+    })
     fireEvent.click(screen.getByRole('radio', { name: /By device|byDevice/ }))
-    expect(draft()).toEqual({ target: { kind: 'devices', ids: [2, 3] }, actionId: 'switch.on' })
+    expect(draft()).toEqual({
+      target: { kind: 'devices', ids: [2, 3] },
+      actionId: 'switch.on',
+    })
+  })
+})
+
+describe('ActionPicker — behaviours the command step relies on', () => {
+  it('draws the host\u2019s args under the columns only once a target and a command are picked', async () => {
+    mount({ withArgs: true })
+    expect(screen.queryByTestId('action-args')).toBeNull()
+    await pickDevice(/Kitchen blind/)
+    expect(screen.queryByTestId('action-args')).toBeNull()
+    fireEvent.click(screen.getByTestId('action-row-cover.open'))
+    expect(within(screen.getByTestId('action-args')).getByTestId('args-slot')).toBeTruthy()
+  })
+
+  it('a single-device surface replaces the device instead of adding one', async () => {
+    mount({ multiple: false })
+    fireEvent.click(await screen.findByRole('option', { name: /Lamp/ }))
+    fireEvent.click(await screen.findByRole('option', { name: /Feeder/ }))
+    expect(draft().target).toEqual({ kind: 'devices', ids: [3] })
+  })
+
+  it('a command whose argument one device answers is not offered to several devices', async () => {
+    mount()
+    await pickDevice('Fan')
+    expect(commands()).toContain('fan.preset')
+    await pickDevice('Fan 2')
+    expect(commands()).not.toContain('fan.preset')
+  })
+
+  it('by action, a dynamic command keeps one device: the last one picked', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('radio', { name: /By action|byAction/ }))
+    fireEvent.click(screen.getByTestId('action-row-fan.preset'))
+    await pickDevice('Fan')
+    await pickDevice('Fan 2')
+    expect(draft()).toEqual({
+      target: { kind: 'devices', ids: [6] },
+      actionId: 'fan.preset',
+    })
+  })
+
+  it('by action, devices wait for a command and the trigger device waits with them', () => {
+    mount()
+    fireEvent.click(screen.getByRole('radio', { name: /By action|byAction/ }))
+    expect(
+      screen.getByTestId('action-device-column').querySelector('input[type="checkbox"]'),
+    ).toBeNull()
+    expect(screen.queryByTestId('action-target-var-deviceId')).toBeNull()
+    fireEvent.click(screen.getByTestId('action-row-switch.on'))
+    expect(screen.getByTestId('action-target-var-deviceId')).toBeTruthy()
+  })
+
+  it('by action, a picked device that does not offer the command leaves the target', () => {
+    mount({
+      initial: { target: { kind: 'devices', ids: [1, 2] }, actionId: null },
+    })
+    fireEvent.click(screen.getByRole('radio', { name: /By action|byAction/ }))
+    fireEvent.click(screen.getByTestId('action-row-switch.on'))
+    expect(draft()).toEqual({
+      target: { kind: 'devices', ids: [2] },
+      actionId: 'switch.on',
+    })
   })
 })
 

@@ -15,8 +15,8 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   type ActionPickDraft,
-  SourceSelectorAction,
-} from '../../../components/device/customize/source-selector/SourceSelectorAction'
+  ActionPicker,
+} from '../../../components/device-do-action/ActionPicker'
 import type { AutomationDevice } from '../automation/automation-data'
 import { ArgField, type ScopeVariable } from './ArgField'
 import { BUILD_EXCLUDED_TYPES } from './build-device-filters'
@@ -195,9 +195,7 @@ export function CommandPickerDialog({
         </>
       }
     >
-      <SourceSelectorAction
-        kind="action"
-        intent="action"
+      <ActionPicker
         value={draft}
         onChange={change}
         allowTriggerDevice={!singleTarget}

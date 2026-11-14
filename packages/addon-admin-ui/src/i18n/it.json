@@ -6356,7 +6356,11 @@
       "entersRange": "entra nell'intervallo",
       "leavesRange": "esce dall'intervallo",
       "rangeFrom": "Da",
-      "rangeTo": "A"
+      "rangeTo": "A",
+      "eventsNone": "Questo dispositivo non dichiara eventi.",
+      "eventsLoading": "Caricamento degli eventi del dispositivo…",
+      "eventsFailed": "Impossibile leggere gli eventi del dispositivo.",
+      "eventNotDeclared": "non dichiarato"
     },
     "valueInput": {
       "oneTwoThree": "uno, due, tre"

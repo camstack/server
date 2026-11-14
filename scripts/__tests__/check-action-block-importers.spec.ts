@@ -66,6 +66,16 @@ describe('check-action-block-importers', () => {
     expect(out[0]?.message).toContain('vocabulary')
   })
 
+  it('lets the block\u2019s own action picker read the vocabulary offers', () => {
+    const sources = [
+      file(
+        'packages/addon-admin-ui/src/components/device-do-action/ActionPicker.tsx',
+        "import type { ResolvedVocabAction } from '@camstack/types'\n",
+      ),
+    ]
+    expect(findViolations(sources, {})).toEqual([])
+  })
+
   it('ignores a type-only import of the device target type', () => {
     const sources = [
       file(

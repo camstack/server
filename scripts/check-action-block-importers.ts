@@ -34,8 +34,14 @@ export const IMPORTERS: Readonly<Record<string, string>> = {
   'packages/addon-admin-ui/src/pages/build/actions/ActionEditor.tsx': 'the steps of an Action',
   'packages/addon-admin-ui/src/pages/build/schedulers/PointEditor.tsx':
     'the steps of a scheduler point',
-  'packages/addon-admin-ui/src/components/fan-presets/FanPresetDialog.tsx':
-    'the steps of a fan preset',
+  'packages/addon-admin-ui/src/pages/build/automation/ChooseFields.tsx':
+    'the steps of each branch of a choose step',
+  'packages/addon-admin-ui/src/pages/build/automation/RepeatFields.tsx':
+    'the steps of a repeat loop',
+  'packages/addon-admin-ui/src/pages/build/templates/AutomationTemplateEditor.tsx':
+    'the steps of an automation template',
+  'packages/addon-admin-ui/src/pages/build/templates/TemplateActionPicker.tsx':
+    'the command of a template step (its arguments are the shared CommandArgs)',
   'packages/addon-admin-ui/src/components/remote/BindingPanel.tsx':
     'the command a remote key sends',
 }

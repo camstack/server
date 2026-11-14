@@ -17,8 +17,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ),
 }))
 
-vi.mock('../../device/customize/source-selector/SourceSelectorAction', () => ({
-  SourceSelectorAction: () => <div />,
+vi.mock('../../device-do-action/ActionPicker', () => ({
+  ActionPicker: () => <div />,
 }))
 
 import { BindingPanel } from '../BindingPanel'

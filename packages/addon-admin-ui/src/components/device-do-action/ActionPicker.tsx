@@ -1,6 +1,6 @@
 /**
- * `SourceSelector` with `intent: 'action'`: the same device modal, asking
- * "what should it DO" instead of "which value". Two ways in, one toggle:
+ * The action picker of the shared action block (`CommandStep` mounts it): the device
+ * modal asking "what should it DO" instead of "which value". Two ways in, one toggle:
  *
  *  - By device: devices left (one or several, plus "the device that triggered
  *    this run" / "the device of this round"), the commands they ALL offer right;
@@ -27,10 +27,10 @@ import {
 } from '@camstack/ui-library'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useDevicesBoundCaps } from '../../../device-do-action/use-device-bound-caps'
-import { type PickerDevice, toPickerDevices } from '../source-picker-model'
-import { vocabularyCapTitle } from '../vocabulary-field-label'
-import { SourceSelectorColumns } from './source-selector-columns'
+import { useDevicesBoundCaps } from './use-device-bound-caps'
+import { type PickerDevice, toPickerDevices } from '../device/customize/source-picker-model'
+import { vocabularyCapTitle } from '../device/customize/vocabulary-field-label'
+import { SourceSelectorColumns } from '../device/customize/source-selector/source-selector-columns'
 import {
   type ActionFleetDevice,
   type ActionPickMode,
@@ -42,8 +42,12 @@ import {
   TRIGGER_DEVICE_VAR,
   targetActions,
   targetDeviceIds,
-} from './source-selector-action-model'
-import { type SourceSelectorStep, stepAfterBack, stepAfterDone } from './source-selector-steps'
+} from './action-picker-model'
+import {
+  type SourceSelectorStep,
+  stepAfterBack,
+  stepAfterDone,
+} from '../device/customize/source-selector/source-selector-steps'
 
 /** What the operator has picked so far. */
 export interface ActionPickDraft {
@@ -51,9 +55,7 @@ export interface ActionPickDraft {
   readonly actionId: string | null
 }
 
-export interface SourceSelectorActionProps {
-  readonly kind: 'action'
-  readonly intent: 'action'
+export interface ActionPickerProps {
   readonly value: ActionPickDraft
   readonly onChange: (next: ActionPickDraft) => void
   /** Offer "the device that triggered this run" (`{ $var: 'deviceId' }`). */
@@ -195,7 +197,7 @@ function oneDeviceForDynamic(
   return last === undefined ? target : { kind: 'devices', ids: [last] }
 }
 
-export function SourceSelectorAction({
+export function ActionPicker({
   value,
   onChange,
   allowTriggerDevice = false,
@@ -204,7 +206,7 @@ export function SourceSelectorAction({
   excludeTypes,
   args,
   fillHeight = false,
-}: SourceSelectorActionProps): ReactNode {
+}: ActionPickerProps): ReactNode {
   const { t, i18n } = useTranslation()
   const locale = localeOf(i18n.language)
   const [mode, setMode] = useState<ActionPickMode>('by-device')

@@ -23,7 +23,7 @@ import {
   fleetActions,
   hasDynamicArg,
   targetActions,
-} from '../../../components/device/customize/source-selector/source-selector-action-model'
+} from '../../../components/device-do-action/action-picker-model'
 import type { AutomationDevice } from '../automation/automation-data'
 import { CommandArgs } from '../flow/CommandStep'
 import {
@@ -65,7 +65,9 @@ function useOfferedActions(target: ActionTarget, devices: readonly AutomationDev
   const caps = useDevicesBoundCaps(ids)
   // A domain that covers no device is an answer (it offers nothing); an unread fleet is not.
   const answered =
-    target.kind === 'domain' ? index !== null && (ids.length === 0 || caps.data !== undefined) : caps.data !== undefined
+    target.kind === 'domain'
+      ? index !== null && (ids.length === 0 || caps.data !== undefined)
+      : caps.data !== undefined
   const fleet: readonly ActionFleetDevice[] = ids.map((id) => {
     const type = devices.find((d) => d.id === id)?.type
     return { id, caps: caps.data?.get(id) ?? [], ...(type === undefined ? {} : { type }) }
@@ -139,7 +141,9 @@ export function ActionEditor({
       {picked !== undefined && picked.openArgs.length > 0 && (
         <CommandArgs
           action={picked}
-          deviceId={target.kind === 'devices' && target.ids.length === 1 ? (target.ids[0] ?? null) : null}
+          deviceId={
+            target.kind === 'devices' && target.ids.length === 1 ? (target.ids[0] ?? null) : null
+          }
           values={values}
           locale={locale}
           variables={[]}

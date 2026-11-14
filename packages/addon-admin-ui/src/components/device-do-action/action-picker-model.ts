@@ -1,5 +1,5 @@
 /**
- * The pure half of `SourceSelector` with `intent: 'action'`: which commands a
+ * The pure half of the action picker: which commands a
  * target offers, which devices offer a command, and what survives switching
  * between "By device" and "By action".
  *

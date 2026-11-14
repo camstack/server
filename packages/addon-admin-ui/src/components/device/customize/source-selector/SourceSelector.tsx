@@ -38,7 +38,6 @@ type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>
 
 import { ModeLine } from '../event/event-mode-line'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
-import { SourceSelectorAction, type SourceSelectorActionProps } from './SourceSelectorAction'
 import { SourceSelectorMembers, type SourceSelectorMembersProps } from './SourceSelectorMembers'
 import {
   type EventPickedRow,
@@ -145,17 +144,13 @@ export interface SourceSelectorEventProps {
 }
 
 export type SourceSelectorProps =
-  | SourceSelectorActionProps
   | SourceSelectorScalarProps
   | SourceSelectorKeyedProps
   | SourceSelectorFormulaProps
   | SourceSelectorEventProps
   | SourceSelectorMembersProps
 
-type SingleSelectorProps = Exclude<
-  SourceSelectorProps,
-  SourceSelectorMembersProps | SourceSelectorActionProps
->
+type SingleSelectorProps = Exclude<SourceSelectorProps, SourceSelectorMembersProps>
 
 function toCandidates(
   fleet: readonly PickerDevice[],
@@ -194,7 +189,6 @@ function conversionKey(name: 'threshold' | 'scale' | 'invert' | 'enum-map'): str
 
 export function SourceSelector(props: SourceSelectorProps): ReactNode {
   if (props.kind === 'members') return <SourceSelectorMembers {...props} />
-  if (props.kind === 'action') return <SourceSelectorAction {...props} />
   return <SourceSelectorSingle {...props} />
 }
 
@@ -374,14 +368,18 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       props.preview
     ) : chosenRow === undefined ? undefined : (
       <p data-testid="source-preview-reads" className="text-[11px] text-foreground-muted">
-        {t('customize.sourceSelector.sourceReads', { value: chosenRow.currentText })}
+        {t('customize.sourceSelector.sourceReads', {
+          value: chosenRow.currentText,
+        })}
       </p>
     )
   if (search.kind === 'none') {
     return (
       <EmptyState
         className="py-6"
-        title={t('customize.sourceSelector.nothingFeeds', { title: props.destination.title })}
+        title={t('customize.sourceSelector.nothingFeeds', {
+          title: props.destination.title,
+        })}
       />
     )
   }
@@ -391,7 +389,9 @@ function SourceSelectorSingle(props: SingleSelectorProps): ReactNode {
       deviceListTestId={devicePickerTestId}
       fillHeight={fillHeight}
       pickerOnly={props.kind === 'formula' && props.intent === 'value'}
-      heading={t('customize.sourceSelector.pickDevice', { title: props.destination.title })}
+      heading={t('customize.sourceSelector.pickDevice', {
+        title: props.destination.title,
+      })}
       {...(search.kind === 'requires' ? { requires: search.requires } : {})}
       contextDeviceId={props.hostId}
       suggestions={

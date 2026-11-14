@@ -6281,7 +6281,11 @@
       "entersRange": "enters the range",
       "leavesRange": "leaves the range",
       "rangeFrom": "From",
-      "rangeTo": "To"
+      "rangeTo": "To",
+      "eventsNone": "This device declares no events.",
+      "eventsLoading": "Loading the device's events…",
+      "eventsFailed": "Could not read the device's events.",
+      "eventNotDeclared": "not declared"
     },
     "valueInput": {
       "oneTwoThree": "one, two, three"

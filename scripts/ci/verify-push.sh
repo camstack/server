@@ -257,10 +257,13 @@ fi
 # it runs then.
 # Test-load and single-engine guards (~1 s, no build needed): every
 # vitest.config.ts takes the shared worker default, and no TS 6 type-check
-# path comes back.
+# path comes back. The admin UI's one-action-block guard (D983, a ~1 s source
+# scan) rides here too: it sat red on main unseen because no stage ran it.
 echo "verify:push: test-load guards"
 stage_begin
-if npx tsx scripts/check-vitest-max-workers.ts && npx tsx scripts/check-no-tsc6-typecheck.ts; then
+if npx tsx scripts/check-vitest-max-workers.ts \
+  && npx tsx scripts/check-no-tsc6-typecheck.ts \
+  && npx tsx scripts/check-action-block-importers.ts; then
   LOAD_GUARDS_RESULT="ok"
 else
   LOAD_GUARDS_RESULT="RED"
