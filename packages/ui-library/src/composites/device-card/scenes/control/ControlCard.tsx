@@ -1,4 +1,4 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
 import type { CardGlyph } from '../../icons'
