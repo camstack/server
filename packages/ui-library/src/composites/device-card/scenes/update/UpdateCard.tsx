@@ -1,11 +1,12 @@
 import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
-import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { InfoTile } from '../../parts/InfoTile'
+import { columnButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 import {
   type UpdateCardActions,
   type UpdateCardModel,
@@ -71,7 +72,34 @@ export function UpdateCard({
         tone: model.phase === 'installing' ? 'primary' : pending ? 'warning' : 'success',
       }}
       scene={{
-        left: (
+        image: (
+          <CardIcon
+            glyph="update"
+            className={cn(
+              SCENE_ICON_CLASS,
+              model.phase === 'installing'
+                ? 'animate-pulse text-primary'
+                : pending
+                  ? 'text-warning'
+                  : 'text-foreground-muted',
+            )}
+          />
+        ),
+        columns: {
+          right:
+            pending && model.installable
+              ? [
+                  columnButton('install', {
+                    glyph: 'install',
+                    tone: 'primary',
+                    label: t('uiLibrary.deviceCard.update.install', 'Install'),
+                    testId: 'dc-update-install',
+                    onPress: actions.onInstall,
+                  }),
+                ]
+              : [],
+        },
+        bottom: (
           <div className="grid w-full gap-1.5">
             <InfoTile
               label={t('uiLibrary.deviceCard.update.installed', 'Installed')}
@@ -86,30 +114,6 @@ export function UpdateCard({
             />
           </div>
         ),
-        image: (
-          <CardIcon
-            glyph="update"
-            className={cn(
-              'h-20 w-20',
-              model.phase === 'installing'
-                ? 'animate-pulse text-primary'
-                : pending
-                  ? 'text-warning'
-                  : 'text-foreground-muted',
-            )}
-          />
-        ),
-        right:
-          pending && model.installable ? (
-            <CardButton
-              glyph="install"
-              tone="primary"
-              data-testid="dc-update-install"
-              onClick={actions.onInstall}
-            >
-              {t('uiLibrary.deviceCard.update.install', 'Install')}
-            </CardButton>
-          ) : null,
       }}
     />
   )
