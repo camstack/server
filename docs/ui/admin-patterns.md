@@ -12,6 +12,7 @@ applies-to:
   - packages/ui-library/src/composites/device-card/index.ts
   - packages/addon-admin-ui/src/modules/device-detail/DeviceDetailModule.tsx
   - scripts/check-device-card-parts.ts
+  - scripts/check-device-card-scene-layout.ts
   - packages/ui-library/src/composites/charts/time-series-model.ts
   - packages/ui-library/src/composites/charts/chart-scale.ts
   - packages/ui-library/src/composites/device-history/DeviceHistoryView.tsx
@@ -877,14 +878,15 @@ D1042), never a per-capability setter.
   two side columns of exactly the same width (15% each, both orientations) and a
   drawing that keeps at least 70% of the card. A scene on these proportions
   passes `columns: { left, right }` of `ColumnItem`s, built only by
-  `columnButton` / `columnSlider` / `columnValue` (`shell/column-items.tsx`):
+  `columnButton` / `columnSlider` / `columnValue` / `columnStep` /
+  `columnArmedButton` / `columnLink` / `columnPopover` (`shell/column-items.tsx`):
   a compact control or one short value. A selector, segmented choice, dropdown or
   anything longer goes in `bottom`; the type refuses a `ReactNode` in a column.
   A device whose only control is power wraps its drawing in `ScenePower`
   (`role="switch"`, keyboard toggle, the shell's gating): the drawing is the
-  switch and no power button sits beside it. Scenes not yet moved keep free
-  `left` / `right` nodes on the old grid until they follow, device by device
-  (done: climate, media, energy).
+  switch and no power button sits beside it. Every scene is on these
+  proportions and the drawing fills its zone (`SCENE_DRAWING_CLASS`); the free
+  layout is gone, and `scripts/check-device-card-scene-layout.ts` keeps it so.
 - **`parts/`** are the controls a scene composes: `CardButton`, `ArmedButton`
   (the one two-step confirmation: 5 s to confirm, with Cancel), `MenuButton`
   (`layout="stacked"` puts the glyph over the whole label in a narrow side column),

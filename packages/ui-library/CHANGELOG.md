@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device lists no longer treat a hub parent as a device type. Labels, icons and controls no longer include it.
 - A device card reports when it has finished loading, including a fallback.
 - Device cards: the two side columns are equal (15% each) and take only compact controls, so selectors now sit below the scene; the scene keeps at least 70% of the width and a power-only device toggles by a tap on the drawing (climate, media and energy first)
+- Device cards: every card now has the same fixed layout, two equal side columns with only compact controls and values, the drawing filling the middle, and selectors and long text below
 
 ## [1.2.441] - 2026-11-14
 

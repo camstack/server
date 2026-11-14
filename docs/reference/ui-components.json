@@ -1414,6 +1414,24 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": true,
+          "doc": "The accessible name of the main button, when its face is only a glyph."
+        },
+        {
+          "name": "stacked",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Confirm and Cancel stack vertically, for a side column; the default sits them side by side."
+        },
+        {
+          "name": "buttonClassName",
+          "type": "string",
+          "optional": true,
+          "doc": "Added to both buttons (a column passes its compact size)."
         }
       ]
     },
@@ -3117,6 +3135,13 @@
       "summary": "Lower number = higher priority (kept longest as width shrinks). `name` = 0 (never dropped); `previewActions` = 1 (always visible). The optional columns drop in REVERSE priority order as width shrinks — highest number …"
     },
     {
+      "name": "columnArmedButton",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "A two-step button in a side column: the first press arms it, Confirm and Cancel stack."
+    },
+    {
       "name": "columnButton",
       "kind": "function",
       "area": "composites",
@@ -3131,6 +3156,20 @@
       "summary": "What a side column may hold: a compact control or a single short value. A `ColumnItem` can only be made by the factories below, and the factories take no selector, picker, segmented choice or long text — so a scene ca…"
     },
     {
+      "name": "columnLink",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "A link that leaves the card (opens in a new tab), drawn as a column button."
+    },
+    {
+      "name": "columnPopover",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "A button that opens a small panel (a palette, a sweep) over the scene."
+    },
+    {
       "name": "columnsForContext",
       "kind": "function",
       "area": "composites",
@@ -3143,6 +3182,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
       "summary": "A level in a side column."
+    },
+    {
+      "name": "columnStep",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/column-items.tsx",
+      "summary": "A value with a step above and a step below: three items of the column, in order."
     },
     {
       "name": "columnValue",
@@ -6730,6 +6776,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "DIAL_BOX_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
+      "summary": "The box every round control is drawn in: it fills the scene's drawing (the drawing is at least 70% of the card), square, between 104 px and 208 px. It is a size container, so what sits inside can grow with it."
     },
     {
       "name": "DIAL_GEOMETRY",
@@ -13489,6 +13542,12 @@
           "doc": ""
         },
         {
+          "name": "buttonClassName",
+          "type": "string",
+          "optional": true,
+          "doc": "Added to the trigger (a side column passes its compact size)."
+        },
+        {
           "name": "children",
           "type": "ReactNode",
           "optional": false,
@@ -15102,6 +15161,20 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/scene-layout.ts",
       "summary": "The scene's proportions, a property of the grid and not of any one scene. Both side columns are EXACTLY the same width; whatever they leave is the drawing, so the drawing never gets less than ."
+    },
+    {
+      "name": "SCENE_DRAWING_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/scene-layout.ts",
+      "summary": "A drawing (an illustration, an SVG) fills the space the columns leave it: the full width of its zone, never smaller than a dial and never larger than the biggest one, its height following its own proportions. Scenes s…"
+    },
+    {
+      "name": "SCENE_ICON_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/scene-layout.ts",
+      "summary": "The same for a glyph standing in for a device that has no drawing of its own."
     },
     {
       "name": "SCENE_MIN_PCT",
@@ -16879,45 +16952,6 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/step-inspector/step-detail-dock.tsx",
       "summary": "Width of the desktop dock — what the matrix keeps clear of it."
-    },
-    {
-      "name": "StepColumn",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/parts/StepColumn.tsx",
-      "summary": "",
-      "props": [
-        {
-          "name": "up",
-          "type": "StepButton",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "down",
-          "type": "StepButton",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "value",
-          "type": "ReactNode",
-          "optional": false,
-          "doc": "The current value, bold; null draws no value (not known)."
-        },
-        {
-          "name": "notes",
-          "type": "readonly ReactNode[]",
-          "optional": true,
-          "doc": "The lines under the value (\"vol\", \"2 h 35\", \"fine 11:58\")."
-        },
-        {
-          "name": "testId",
-          "type": "string",
-          "optional": true,
-          "doc": ""
-        }
-      ]
     },
     {
       "name": "StepDetailDock",
