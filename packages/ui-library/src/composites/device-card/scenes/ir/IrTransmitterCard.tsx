@@ -30,9 +30,10 @@ export function IrTransmitterCard({
       activity={model.tone}
       state={{ label: model.headline, since: model.since, tone: model.tone }}
       scene={{
+        columns: {},
         image: (
-          <div className="grid h-30 w-30 place-items-center rounded-2xl border border-border bg-surface text-foreground">
-            <CardIcon glyph="remote" className="h-10 w-10" />
+          <div className="grid aspect-square w-full min-w-26 max-w-40 place-items-center rounded-2xl border border-border bg-surface text-foreground">
+            <CardIcon glyph="remote" className="h-auto w-2/5" />
           </div>
         ),
         bottom: (
