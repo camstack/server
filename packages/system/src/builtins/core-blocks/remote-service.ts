@@ -27,9 +27,10 @@
  *    steps in order under the device's lock (no other press interleaves),
  *    `stepDelayMs` apart; a refusal is typed (`unknown-source`,
  *    `unbound-step`, `undeclared-channel`) and a failed step stops the
- *    sequence and names itself. The source last sent is ASSUMED, and forgotten
- *    when the device is switched off, when the plug reads off and when a
- *    channel step moves the channel.
+ *    sequence and names itself. The source last sent is NEVER a state: an
+ *    infrared set cannot report its input and its own remote changes it
+ *    unseen, so the status names a source only when a native source READS it
+ *    (the picker then offers momentary choices, like a mute key).
  *  - **Precedence** (`sendMediaCommand`): a media-player command takes the
  *    remote when its role is bound, else answers `not-routed` so the native
  *    cap runs. The dispatch redirect asks this for every caller.
@@ -312,22 +313,20 @@ export class RemoteService implements IRemoteProvider {
   }
 
   /**
-   * What the remote ASSUMES (the last power and source it sent), or null when it
-   * knows neither. A mute is never assumed: without a reading it has no state. No plug, no running-state: that is `assumedStatus`.
+   * What the remote ASSUMES (the last power it sent), or null when it knows
+   * none. A mute and a source are never assumed: without a reading they have no
+   * state. No plug, no running-state: that is `assumedStatus`.
    */
   readonly getAssumedStatus: IRemoteProvider['getAssumedStatus'] = async ({ deviceId }) => {
     const kept = await this.readAssumed(deviceId)
-    if (kept.power === null && kept.source === null) return null
+    if (kept.power === null) return null
     const config = await this.deps.store.read(deviceId)
-    const assumedFields: MediaPlayerAssumedField[] = []
-    if (kept.power !== null) assumedFields.push('state')
-    if (kept.source !== null) assumedFields.push('source')
     return this.buildStatus({
-      state: kept.power?.state ?? 'standby',
-      assumedFields,
+      state: kept.power.state,
+      assumedFields: ['state'],
       muted: null,
-      source: kept.source?.name ?? '',
-      changedAt: Math.max(kept.power?.at ?? 0, kept.source?.at ?? 0),
+      source: '',
+      changedAt: kept.power.at,
       sources: config.sources,
     })
   }
@@ -336,8 +335,8 @@ export class RemoteService implements IRemoteProvider {
    * The device's state as the remote knows it, or null when it knows no power
    * state. Power truth, in order: a `running-state` reading; the linked plug
    * (off is `off`, a reading; on is `standby` until a power command was sent,
-   * then what the remote sent); the remote's own assumption. Mute comes from
-   * the native reading only; the remote never assumes it.
+   * then what the remote sent); the remote's own assumption. Mute and source
+   * come from the native reading only; the remote never assumes either.
    */
   async assumedStatus(deviceId: number): Promise<MediaPlayerStatus | null> {
     return this.statusOf(deviceId, true)
@@ -345,21 +344,18 @@ export class RemoteService implements IRemoteProvider {
 
   /** `forget`: whether a plug that is off drops the kept power guess (a read's side effect). */
   private async statusOf(deviceId: number, forget: boolean): Promise<MediaPlayerStatus | null> {
-    const kept = await this.readAssumed(deviceId)
     const truth = await this.powerTruth(deviceId, forget)
     if (truth === null) return null
     const assumedFields: MediaPlayerAssumedField[] = truth.assumed ? ['state'] : []
     const state = truth.state
-    const changedAt = truth.at
-    const source = state === 'off' ? null : (kept.source ?? null)
-    if (source !== null) assumedFields.push('source')
+    const source = state === 'off' ? '' : await this.currentSource(deviceId)
     const config = await this.deps.store.read(deviceId)
     return this.buildStatus({
       state,
       assumedFields,
       muted: null,
-      source: source?.name ?? '',
-      changedAt: Math.max(changedAt, source?.at ?? 0),
+      source,
+      changedAt: truth.at,
       sources: config.sources,
     })
   }
@@ -443,8 +439,8 @@ export class RemoteService implements IRemoteProvider {
     const plug = await this.deps.plugOn(deviceId)
     const kept = await this.readAssumed(deviceId)
     if (plug === false) {
-      if (forget && (kept.power !== null || kept.source !== null)) {
-        await this.deps.assumptions.write(deviceId, { ...kept, power: null, source: null })
+      if (forget && kept.power !== null) {
+        await this.deps.assumptions.write(deviceId, { ...kept, power: null })
       }
       return { state: 'off', assumed: false, at: this.now() }
     }
@@ -452,6 +448,12 @@ export class RemoteService implements IRemoteProvider {
     if (keptPower !== null) return { state: keptPower.state, assumed: true, at: keptPower.at }
     if (plug === true) return { state: 'standby', assumed: true, at: this.now() }
     return null
+  }
+
+  /** The input as a native source READS it, else '': a send is never a reading. */
+  private async currentSource(deviceId: number): Promise<string> {
+    const reported = await this.deps.reportedStatus(deviceId)
+    return reported !== null ? reported.source : ''
   }
 
   /** The mute as a native source READS it, else unknown: a send is never a reading. */
@@ -632,7 +634,6 @@ export class RemoteService implements IRemoteProvider {
             tags: { deviceId },
             meta: { source: source.name, step: at + 1, role },
           })
-          if (at > 0) await this.forgetSource(deviceId)
           return {
             status: 'refused',
             reason: 'press-timeout',
@@ -642,8 +643,6 @@ export class RemoteService implements IRemoteProvider {
         }
         const result = await this.runRole(deviceId, config, role, 1)
         if (result.status === 'refused') {
-          // The set already moved by the steps pressed: the old source no longer holds.
-          if (at > 0) await this.forgetSource(deviceId)
           this.deps.logger.warn('remote: a step of the source failed, the sequence stopped', {
             tags: { deviceId },
             meta: { source: source.name, step: at + 1, role, reason: result.reason },
@@ -655,11 +654,6 @@ export class RemoteService implements IRemoteProvider {
           }
         }
       }
-      const kept = await this.readAssumed(deviceId)
-      await this.deps.assumptions.write(deviceId, {
-        ...kept,
-        source: { name: source.name, at: this.now() },
-      })
       await this.refreshSlice(deviceId)
       return { status: 'sent', sends: steps.length }
     })
@@ -699,11 +693,6 @@ export class RemoteService implements IRemoteProvider {
         })
         return { status: 'refused', reason: 'action-failed', detail: errorText(err) }
       }
-      const kept = await this.readAssumed(deviceId)
-      await this.deps.assumptions.write(deviceId, {
-        ...kept,
-        source: { name: source.name, at: this.now() },
-      })
       await this.refreshSlice(deviceId)
       return { status: 'sent', sends: 1 }
     })
@@ -722,11 +711,6 @@ export class RemoteService implements IRemoteProvider {
     }
     const { timings, settings } = toTimings(payload)
     return { timings, settings }
-  }
-
-  private async forgetSource(deviceId: number): Promise<void> {
-    const kept = await this.readAssumed(deviceId)
-    if (kept.source !== null) await this.deps.assumptions.write(deviceId, { ...kept, source: null })
   }
 
   private async runRole(
@@ -803,8 +787,6 @@ export class RemoteService implements IRemoteProvider {
       await this.deps.assumptions.write(deviceId, {
         ...kept,
         power: { state: wantsState, at: this.now() },
-        // Off forgets the source; on does not say which one the set woke on.
-        source: wantsState === 'off' ? null : kept.source,
       })
       return
     }
@@ -815,14 +797,7 @@ export class RemoteService implements IRemoteProvider {
       await this.deps.assumptions.write(deviceId, {
         ...kept,
         power: { state: next, at: this.now() },
-        source: next === 'off' ? null : kept.source,
       })
-      return
-    }
-    if (role === 'channel_up' || role === 'channel_down') {
-      // The channel moved by an unknown amount: the declared source no longer holds.
-      if (kept.source !== null)
-        await this.deps.assumptions.write(deviceId, { ...kept, source: null })
       return
     }
   }

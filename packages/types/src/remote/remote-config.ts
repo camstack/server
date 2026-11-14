@@ -264,7 +264,10 @@ export const EMPTY_REMOTE_CONFIG: RemoteConfig = {
 export const RemoteAssumedStateSchema = z.object({
   power: z.object({ state: z.enum(['on', 'off']), at: z.number() }).nullable(),
   muted: z.object({ value: z.boolean(), at: z.number() }).nullable(),
-  /** The declared source last sent; unknown after a power off or a channel step. */
+  /**
+   * Retired: a sent source is never a state (an infrared set cannot report its
+   * input). Kept only so records written before parse; nothing writes or reads it.
+   */
   source: z.object({ name: z.string(), at: z.number() }).nullable().default(null),
 })
 export type RemoteAssumedState = z.infer<typeof RemoteAssumedStateSchema>

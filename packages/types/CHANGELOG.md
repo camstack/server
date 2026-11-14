@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Remote: the source last sent by an infrared remote is no longer kept as state
+
 ## [1.2.566] - 2026-11-14
 
 ### Changed

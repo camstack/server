@@ -861,11 +861,11 @@ describe('declared sources (planning#460)', () => {
     })
 
   it('lists exactly the declared sources, with their kind and number', async () => {
-    const w = world(declared({ customButtons: [{ key: 'x', name: 'Not a source' }] }))
-    const status = await w.service.getAssumedStatus({ deviceId: TV })
-    expect(status).toBeNull()
+    const w = world(declared({ customButtons: [{ key: 'x', name: 'Not a source' }] }), {
+      plug: true,
+    })
     await select(w, 'Rai 1')
-    expect(await w.service.getAssumedStatus({ deviceId: TV })).toMatchObject({
+    expect(await w.service.assumedStatus(TV)).toMatchObject({
       availableSources: ['Rai 1', 'Canale 24', 'HDMI 1'],
       declaredSources: [
         { name: 'Rai 1', kind: 'digits', number: '1' },
@@ -883,8 +883,8 @@ describe('declared sources (planning#460)', () => {
     payload: { kind: 'raw', timings: [9000, -4500, 560, -560], settings: { carrierHz: 38000 } },
   }
 
-  it('an infrared source sends its own code through its transmitter, once, and is remembered', async () => {
-    const w = world(declared({ sources: [RAI1, HDMI2] }))
+  it('an infrared source sends its own code through its transmitter, once, and is not remembered as a state', async () => {
+    const w = world(declared({ sources: [RAI1, HDMI2] }), { plug: true })
     expect(await select(w, 'HDMI 2')).toEqual({ status: 'sent', sends: 1 })
     expect(w.calls).toEqual([
       {
@@ -894,9 +894,9 @@ describe('declared sources (planning#460)', () => {
         args: { timings: [9000, -4500, 560, -560], settings: { carrierHz: 38000 } },
       },
     ])
-    expect(w.kept()?.source).toMatchObject({ name: 'HDMI 2' })
-    expect(await w.service.getAssumedStatus({ deviceId: TV })).toMatchObject({
-      source: 'HDMI 2',
+    expect(w.kept()?.source ?? null).toBeNull()
+    expect(await w.service.assumedStatus(TV)).toMatchObject({
+      source: '',
       declaredSources: [
         { name: 'Rai 1', kind: 'digits', number: '1' },
         { name: 'HDMI 2', kind: 'ir' },
@@ -974,7 +974,7 @@ describe('declared sources (planning#460)', () => {
     await select(byName, 'canale 24')
     await select(byNumber, '25')
     expect(tags(byName.calls)).toEqual(tags(byNumber.calls))
-    expect(byNumber.kept()?.source).toMatchObject({ name: 'Canale 24' })
+    expect(byNumber.kept()?.source ?? null).toBeNull()
   })
 
   it('runs a sequence source step by step', async () => {
@@ -983,7 +983,7 @@ describe('declared sources (planning#460)', () => {
     expect(tags(w.calls)).toEqual(['in', 'dn', 'ok'])
   })
 
-  it('playMedia channel presses the declared digits and assumes that source', async () => {
+  it('playMedia channel presses the declared digits and keeps no source', async () => {
     const w = world(declared())
     expect(
       await w.service.sendMediaCommand({
@@ -995,7 +995,7 @@ describe('declared sources (planning#460)', () => {
       }),
     ).toEqual({ status: 'sent', sends: 2 })
     expect(tags(w.calls)).toEqual(['d2', 'd5'])
-    expect(w.kept()?.source).toMatchObject({ name: 'Canale 24' })
+    expect(w.kept()?.source ?? null).toBeNull()
   })
 
   it('refuses a channel number no source declares, sending nothing', async () => {
@@ -1064,50 +1064,28 @@ describe('declared sources (planning#460)', () => {
     expect(tags(w.calls)).toEqual(['d2', 'd5', 'ch+'])
   })
 
-  it('assumes the last declared source sent, marked assumed', async () => {
-    const w = world(declared({ bindings: { ...declared().bindings } }), {
-      plug: true,
-    })
-    await select(w, 'HDMI 1')
-    const status = await w.service.assumedStatus(TV)
-    expect(status).toMatchObject({ source: 'HDMI 1' })
-    expect(status?.assumedFields).toContain('source')
-  })
-
-  it('forgets the source when the remote powers the set off', async () => {
+  it('a sent source is never a state: no source, never assumed', async () => {
     const w = world(declared(), { plug: true })
     await select(w, 'HDMI 1')
-    await w.service.sendCommand({ deviceId: TV, role: 'power_off', repeat: 1 })
-    expect(w.kept()?.source).toBeNull()
+    const status = await w.service.assumedStatus(TV)
+    expect(status?.source).toBe('')
+    expect(status?.assumedFields).not.toContain('source')
+    expect(w.kept()?.source ?? null).toBeNull()
+  })
+
+  it('a source comes only from a native reading', async () => {
+    const reported: MediaPlayerStatus = { ...nativeStatus('on'), source: 'HDMI 2' }
+    const w = world(declared(), { plug: true, reported })
+    await select(w, 'HDMI 1')
+    const status = await w.service.assumedStatus(TV)
+    expect(status?.source).toBe('HDMI 2')
+    expect(status?.assumedFields).not.toContain('source')
+  })
+
+  it('a native source reading is not shown while the set is off', async () => {
+    const reported: MediaPlayerStatus = { ...nativeStatus('on'), source: 'HDMI 2' }
+    const w = world(declared(), { plug: false, reported })
     expect((await w.service.assumedStatus(TV))?.source).toBe('')
-  })
-
-  it('forgets the source when the plug reads off', async () => {
-    const plugState = { current: true as boolean | null }
-    const w = world(declared(), { plugState })
-    await select(w, 'HDMI 1')
-    expect(w.kept()?.source).toMatchObject({ name: 'HDMI 1' })
-    plugState.current = false
-    await w.service.assumedStatus(TV)
-    expect(w.kept()?.source).toBeNull()
-  })
-
-  it('a sequence that fails midway forgets the previous source: the set already moved', async () => {
-    const assumptions = {
-      current: { power: null, muted: null, source: { name: 'Rai 1', at: 1 } },
-    }
-    const w = world(declared(), { failOn: 2, plug: true, assumptions })
-    expect(await select(w, 'HDMI 1')).toMatchObject({ status: 'refused', step: { index: 2 } })
-    expect(w.kept()?.source).toBeNull()
-  })
-
-  it('a sequence refused at its first step keeps the previous source', async () => {
-    const assumptions = {
-      current: { power: null, muted: null, source: { name: 'Rai 1', at: 1 } },
-    }
-    const w = world(declared(), { failOn: 1, plug: true, assumptions })
-    await select(w, 'HDMI 1')
-    expect(w.kept()?.source).toMatchObject({ name: 'Rai 1' })
   })
 
   it('a press that never finishes is given up and does not wedge the presses behind it', async () => {
@@ -1133,16 +1111,5 @@ describe('declared sources (planning#460)', () => {
     await new Promise((resolve) => setTimeout(resolve, 20))
     expect(tags(w.calls)).toEqual(['d2'])
     expect(w.kept()?.source ?? null).toBeNull()
-  })
-
-  it('forgets the source on a channel step', async () => {
-    const w = world(declared(), { plug: true })
-    await select(w, 'Rai 1')
-    await w.service.sendCommand({
-      deviceId: TV,
-      role: 'channel_up',
-      repeat: 1,
-    })
-    expect(w.kept()?.source).toBeNull()
   })
 })
