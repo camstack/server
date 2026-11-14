@@ -134,3 +134,26 @@ describe('EspActuatorDevice cover features', () => {
     expect(cover({ supportsStop: false }).features).not.toContain('cover-stoppable')
   })
 })
+
+describe('EspActuatorDevice select navigation (#544)', () => {
+  interface StepProvider {
+    next(input: { cycle?: boolean }): Promise<unknown>
+  }
+  function isStepProvider(value: unknown): value is StepProvider {
+    return typeof value === 'object' && value !== null && 'next' in value
+  }
+
+  it('a select steps to the next option on the board', async () => {
+    const link = new FakeLink([entity({ id: 'select-mode', type: 'select' })])
+    espLinkHub.attach(BROKER, link)
+    const { ctx, providers } = makeCtx(
+      { brokerId: BROKER, kind: 'select-control', entityId: 'select-mode', options: ['eco', 'comfort', 'boost'] },
+      { type: DeviceType.Control },
+    )
+    new EspActuatorDevice(ctx)
+    const provider = providers.get('control')
+    if (!isStepProvider(provider)) throw new Error('control provider has no next')
+    await provider.next({ cycle: true })
+    expect(link.commands).toEqual([{ type: 'select', id: 'select-mode', state: 'comfort' }])
+  })
+})

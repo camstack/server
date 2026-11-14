@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- ESPHome selects can step to the next, previous, first or last option
+
 ## [0.1.21] - 2026-11-13
 
 ### Changed

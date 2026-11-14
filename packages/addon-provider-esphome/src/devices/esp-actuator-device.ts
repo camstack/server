@@ -4,6 +4,7 @@ import {
   controlCapability,
   coverCapability,
   DeviceFeature,
+  selectNavigationMethods,
   switchCapability,
   type BrightnessStatus,
   type ControlStatus,
@@ -171,9 +172,10 @@ export class EspActuatorDevice extends EspChildDevice {
   }
 
   private registerControl(): void {
+    const getStatus = async (): Promise<ControlStatus> =>
+      this.runtimeState.getCapState<ControlStatus>('control') ?? this.coldControl()
     const provider: InferNativeProvider<typeof controlCapability> = {
-      getStatus: async () =>
-        this.runtimeState.getCapState<ControlStatus>('control') ?? this.coldControl(),
+      getStatus,
       setValue: async ({ control }) => {
         if (control.kind === 'numeric' && this.child.kind === 'number-control') {
           this.send({ type: 'number', id: this.entityId, state: control.value })
@@ -185,6 +187,13 @@ export class EspActuatorDevice extends EspChildDevice {
         }
         this.unsupported(`control kind '${control.kind}'`)
       },
+      // next/previous/first/last (#544) — select entities only, through the
+      // one shared stepping helper.
+      ...(this.child.kind === 'select-control'
+        ? selectNavigationMethods(getStatus, async (value) => {
+            this.send({ type: 'select', id: this.entityId, state: value })
+          })
+        : {}),
     }
     this.ctx.registerNativeCap(controlCapability, provider)
     this.runtimeState.setCapState('control', this.coldControl())
