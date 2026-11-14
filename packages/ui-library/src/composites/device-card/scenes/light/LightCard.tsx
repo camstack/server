@@ -3,10 +3,11 @@ import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { LightIllustration, rgbCss } from '../../illustrations/LightIllustration'
 import { CardButton } from '../../parts/CardButton'
-import { PopoverButton } from '../../parts/PopoverButton'
-import { HorizontalSlider, VerticalSlider } from '../../parts/sliders'
+import { HorizontalSlider } from '../../parts/sliders'
+import { columnButton, columnPopover, columnSlider } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
 import {
   LIGHT_PALETTE,
   LIGHT_WHITE_MAX_K,
@@ -72,77 +73,85 @@ export function LightCard({
       activity={on ? 'on' : 'off'}
       state={{ label, since, tone: on ? 'primary' : 'muted' }}
       scene={{
-        left:
-          model.brightness === null ? null : (
-            <VerticalSlider
-              value={model.brightness}
-              min={1}
-              max={100}
-              ariaLabel={brightnessLabel}
-              disabled={!on}
-              valueLabel={(v) => (on ? `${v}%` : null)}
-              onCommit={actions.onBrightness}
-              testId="dc-light-brightness"
-            />
-          ),
+        columns: {
+          left:
+            model.brightness === null
+              ? []
+              : [
+                  columnSlider('brightness', {
+                    value: model.brightness,
+                    min: 1,
+                    max: 100,
+                    ariaLabel: brightnessLabel,
+                    disabled: !on,
+                    valueLabel: (v) => (on ? `${v}%` : null),
+                    onCommit: actions.onBrightness,
+                    testId: 'dc-light-brightness',
+                  }),
+                ],
+          right: [
+            columnButton('power', {
+              glyph: 'power',
+              tone: on ? 'primary' : 'default',
+              label: on
+                ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
+                : t('uiLibrary.deviceCard.turnOn', 'Turn on'),
+              testId: 'dc-light-power',
+              onPress: () => actions.onPower(!on),
+            }),
+            ...(model.palette
+              ? [
+                  columnPopover('colour', {
+                    glyph: 'colour',
+                    label: colourLabel,
+                    align: 'end',
+                    disabled: !on,
+                    testId: 'dc-light-colour',
+                    panel: <Palette onColor={actions.onColor} />,
+                  }),
+                ]
+              : []),
+            ...(model.white === null
+              ? []
+              : [
+                  columnPopover('white', {
+                    glyph: 'white',
+                    label: whiteLabel,
+                    align: 'end',
+                    disabled: !on,
+                    testId: 'dc-light-white',
+                    panel: (
+                      <>
+                        <div className="flex items-center justify-between text-xs text-foreground-muted">
+                          <span>{t('uiLibrary.deviceCard.light.warm', 'Warm')}</span>
+                          <span>{t('uiLibrary.deviceCard.light.cold', 'Cold')}</span>
+                        </div>
+                        <HorizontalSlider
+                          value={model.white.kelvin ?? LIGHT_WHITE_MIN_K}
+                          min={LIGHT_WHITE_MIN_K}
+                          max={LIGHT_WHITE_MAX_K}
+                          step={LIGHT_WHITE_STEP_K}
+                          ariaLabel={t(
+                            'uiLibrary.deviceCard.light.whiteTemperature',
+                            'White temperature',
+                          )}
+                          valueLabel={(k) => `${k} K`}
+                          onCommit={actions.onWhite}
+                          testId="dc-light-kelvin"
+                        />
+                      </>
+                    ),
+                  }),
+                ]),
+          ],
+        },
         image: (
           <LightIllustration
             on={on}
             color={model.color}
             brightness={model.brightness}
-            className="h-35 w-30"
+            className={SCENE_DRAWING_CLASS}
           />
-        ),
-        right: (
-          <>
-            <CardButton
-              glyph="power"
-              tone={on ? 'primary' : 'default'}
-              data-testid="dc-light-power"
-              onClick={() => actions.onPower(!on)}
-            >
-              {on
-                ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
-                : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-            </CardButton>
-            {model.palette ? (
-              <PopoverButton
-                glyph="colour"
-                label={colourLabel}
-                ariaLabel={colourLabel}
-                disabled={!on}
-                align="end"
-                testId="dc-light-colour"
-              >
-                <Palette onColor={actions.onColor} />
-              </PopoverButton>
-            ) : null}
-            {model.white === null ? null : (
-              <PopoverButton
-                glyph="white"
-                label={whiteLabel}
-                ariaLabel={whiteLabel}
-                disabled={!on}
-                align="end"
-                testId="dc-light-white"
-              >
-                <div className="flex items-center justify-between text-xs text-foreground-muted">
-                  <span>{t('uiLibrary.deviceCard.light.warm', 'Warm')}</span>
-                  <span>{t('uiLibrary.deviceCard.light.cold', 'Cold')}</span>
-                </div>
-                <HorizontalSlider
-                  value={model.white.kelvin ?? LIGHT_WHITE_MIN_K}
-                  min={LIGHT_WHITE_MIN_K}
-                  max={LIGHT_WHITE_MAX_K}
-                  step={LIGHT_WHITE_STEP_K}
-                  ariaLabel={t('uiLibrary.deviceCard.light.whiteTemperature', 'White temperature')}
-                  valueLabel={(k) => `${k} K`}
-                  onCommit={actions.onWhite}
-                  testId="dc-light-kelvin"
-                />
-              </PopoverButton>
-            )}
-          </>
         ),
       }}
     />

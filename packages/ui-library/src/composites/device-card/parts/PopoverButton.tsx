@@ -14,6 +14,8 @@ export interface PopoverButtonProps {
   /** Which edge of the button the panel lines up with (default: start). */
   readonly align?: 'start' | 'end'
   readonly testId?: string
+  /** Added to the trigger (a side column passes its compact size). */
+  readonly buttonClassName?: string
   readonly children: ReactNode
 }
 
@@ -30,6 +32,7 @@ export function PopoverButton({
   disabled,
   align = 'start',
   testId,
+  buttonClassName,
   children,
 }: PopoverButtonProps): ReactElement {
   const pop = usePopover()
@@ -43,6 +46,7 @@ export function PopoverButton({
         aria-expanded={pop.open}
         disabled={disabled}
         data-testid={testId}
+        className={buttonClassName}
         onClick={pop.toggle}
       >
         {label}

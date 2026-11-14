@@ -1,9 +1,10 @@
-import type { ReactElement } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { cn } from '../../../lib/cn'
 import type { CardGlyph } from '../icons'
 import { ArmedButton } from '../parts/ArmedButton'
 import { type CardButtonTone, CardButton, cardButtonClass } from '../parts/CardButton'
 import { CardIcon } from '../parts/CardIcon'
+import { PopoverButton } from '../parts/PopoverButton'
 import { type CardSliderProps, VerticalSlider } from '../parts/sliders'
 
 let makeItem!: (key: string, node: ReactElement) => ColumnItem
@@ -115,6 +116,35 @@ export function columnLink(key: string, props: ColumnLinkProps): ColumnItem {
     >
       <CardIcon glyph={props.glyph} />
     </a>,
+  )
+}
+
+export interface ColumnPopoverProps {
+  readonly glyph: CardGlyph
+  readonly label: string
+  /** Which edge the panel lines up with: `end` for the right column, `start` for the left. */
+  readonly align: 'start' | 'end'
+  /** The panel that opens under the button; it may hold anything, the column holds only the button. */
+  readonly panel: ReactNode
+  readonly disabled?: boolean
+  readonly testId?: string
+}
+
+/** A button that opens a small panel (a palette, a sweep) over the scene. */
+export function columnPopover(key: string, props: ColumnPopoverProps): ColumnItem {
+  return makeItem(
+    key,
+    <PopoverButton
+      glyph={props.glyph}
+      label={null}
+      ariaLabel={props.label}
+      disabled={props.disabled}
+      align={props.align}
+      testId={props.testId}
+      buttonClassName={COLUMN_BUTTON_CLASS}
+    >
+      {props.panel}
+    </PopoverButton>,
   )
 }
 
