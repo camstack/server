@@ -122,8 +122,8 @@
   },
   "lint-staged": {
     "*.{ts,tsx}": [
-      "oxlint",
-      "biome format --write",
+      "oxlint --no-error-on-unmatched-pattern",
+      "biome format --write --no-errors-on-unmatched",
       "biome lint --no-errors-on-unmatched"
     ]
   },
