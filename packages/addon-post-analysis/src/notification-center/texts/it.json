@@ -407,6 +407,26 @@
     "one": "{{summaryCount}} aggiornamento disponibile",
     "other": "{{summaryCount}} aggiornamenti disponibili"
   },
+  "group.window.device-battery-low": {
+    "one": "{{summaryCount}} batteria scarica",
+    "other": "{{summaryCount}} batterie scariche"
+  },
+  "group.window.device-consumable-low": {
+    "one": "{{summaryCount}} consumabile da sostituire",
+    "other": "{{summaryCount}} consumabili da sostituire"
+  },
+  "group.window.alert-critical": {
+    "one": "{{summaryCount}} avviso critico",
+    "other": "{{summaryCount}} avvisi critici"
+  },
+  "group.window.alert-critical-resolved": {
+    "one": "{{summaryCount}} avviso critico risolto",
+    "other": "{{summaryCount}} avvisi critici risolti"
+  },
+  "group.window.alert-error": {
+    "one": "{{summaryCount}} avviso di errore",
+    "other": "{{summaryCount}} avvisi di errore"
+  },
   "system.state-summary.body": "{{summaryText}}",
   "system.state-summary.section.title": "{{summarySection}}: {{summaryCount}}",
   "system.state-summary.section.body": "{{summaryText}}",

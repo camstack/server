@@ -1,10 +1,14 @@
 /**
- * The title of a group-window burst: how many of one kind, not the rule's name.
+ * The title of a group-window burst: how many of one kind, not the rule's name
+ * and not the state-summary section.
  *
- * A burst that is only devices coming back, only devices going offline, or both,
- * and the same three shapes for nodes, and a burst that is only updates becoming
- * available, each has its own catalog key. Anything else keeps the state-summary
- * title, which names the sections.
+ * A section name describes the problem ("Offline or off", "Nodes with
+ * problems") for both edges of that section. A burst whose members are all
+ * one kind is titled from that kind, so a recovery (devices or nodes back
+ * online) is never named as the outage. A mix of the two device edges, or of
+ * the two node edges, keeps the mixed count. Anything else keeps the
+ * state-summary title (the section names, or the rule name when the kind has
+ * no section).
  */
 
 export interface GroupWindowTitleChoice {
@@ -14,79 +18,72 @@ export interface GroupWindowTitleChoice {
   readonly onlineCount: number
 }
 
-const DEVICE_ONLINE: ReadonlySet<string> = new Set(['device-online', 'camera-online'])
-const DEVICE_OFFLINE: ReadonlySet<string> = new Set(['device-offline', 'camera-offline'])
-const UPDATE_AVAILABLE: ReadonlySet<string> = new Set([
-  'addon-update-available',
-  'server-update-available',
-  'wrapper-update-available',
-])
-
-interface KindTally {
-  readonly deviceOnline: number
-  readonly deviceOffline: number
-  readonly nodeOnline: number
-  readonly nodeOffline: number
-  readonly updates: number
-  readonly other: number
+/** One catalog key per kind a burst may be made of. Updates share one key. */
+const KIND_TITLE: Readonly<Record<string, string>> = {
+  'device-online': 'group.window.device-online',
+  'camera-online': 'group.window.device-online',
+  'device-offline': 'group.window.device-offline',
+  'camera-offline': 'group.window.device-offline',
+  'node-online': 'group.window.node-online',
+  'node-offline': 'group.window.node-offline',
+  'device-battery-low': 'group.window.device-battery-low',
+  'device-consumable-low': 'group.window.device-consumable-low',
+  'alert-critical': 'group.window.alert-critical',
+  'alert-critical-resolved': 'group.window.alert-critical-resolved',
+  'alert-error': 'group.window.alert-error',
+  'addon-update-available': 'group.window.updates',
+  'server-update-available': 'group.window.updates',
+  'wrapper-update-available': 'group.window.updates',
 }
 
-function tallyOf(kinds: readonly string[]): KindTally {
-  let deviceOnline = 0
-  let deviceOffline = 0
-  let nodeOnline = 0
-  let nodeOffline = 0
-  let updates = 0
-  let other = 0
+const DEVICE_ONLINE_KEY = 'group.window.device-online'
+const DEVICE_OFFLINE_KEY = 'group.window.device-offline'
+const NODE_ONLINE_KEY = 'group.window.node-online'
+const NODE_OFFLINE_KEY = 'group.window.node-offline'
+
+/** `null` when any member has no per-kind title — the burst is not one shape. */
+function titleKeysOf(kinds: readonly string[]): readonly string[] | null {
+  const keys: string[] = []
   for (const kind of kinds) {
-    if (DEVICE_ONLINE.has(kind)) deviceOnline += 1
-    else if (DEVICE_OFFLINE.has(kind)) deviceOffline += 1
-    else if (kind === 'node-online') nodeOnline += 1
-    else if (kind === 'node-offline') nodeOffline += 1
-    else if (UPDATE_AVAILABLE.has(kind)) updates += 1
-    else other += 1
+    const key = KIND_TITLE[kind]
+    if (key === undefined) return null
+    keys.push(key)
   }
-  return { deviceOnline, deviceOffline, nodeOnline, nodeOffline, updates, other }
+  return keys
+}
+
+function sameKey(keys: readonly string[]): string | null {
+  const first = keys[0]
+  if (first === undefined) return null
+  return keys.every((key) => key === first) ? first : null
+}
+
+function counted(titleKey: string, kinds: readonly string[]): GroupWindowTitleChoice {
+  let offlineCount = 0
+  let onlineCount = 0
+  for (const kind of kinds) {
+    const key = KIND_TITLE[kind]
+    if (key === DEVICE_OFFLINE_KEY || key === NODE_OFFLINE_KEY) offlineCount += 1
+    if (key === DEVICE_ONLINE_KEY || key === NODE_ONLINE_KEY) onlineCount += 1
+  }
+  return { titleKey, count: kinds.length, offlineCount, onlineCount }
+}
+
+function deviceEdgesOnly(keys: readonly string[]): boolean {
+  return keys.every((key) => key === DEVICE_ONLINE_KEY || key === DEVICE_OFFLINE_KEY)
+}
+
+function nodeEdgesOnly(keys: readonly string[]): boolean {
+  return keys.every((key) => key === NODE_ONLINE_KEY || key === NODE_OFFLINE_KEY)
 }
 
 /** `null` when the burst is not one of the titled shapes. */
 export function groupWindowTitleChoice(kinds: readonly string[]): GroupWindowTitleChoice | null {
-  const tally = tallyOf(kinds)
-  if (tally.other > 0) return null
-  const devices = tally.deviceOnline + tally.deviceOffline
-  const nodes = tally.nodeOnline + tally.nodeOffline
-  const busy = [devices > 0, nodes > 0, tally.updates > 0].filter(Boolean).length
-  if (busy !== 1) return null
-  if (tally.updates > 0) {
-    return {
-      titleKey: 'group.window.updates',
-      count: tally.updates,
-      offlineCount: 0,
-      onlineCount: 0,
-    }
-  }
-  if (nodes > 0) {
-    const mixed = tally.nodeOnline > 0 && tally.nodeOffline > 0
-    return {
-      titleKey: mixed
-        ? 'group.window.node-mixed'
-        : tally.nodeOnline > 0
-          ? 'group.window.node-online'
-          : 'group.window.node-offline',
-      count: nodes,
-      offlineCount: tally.nodeOffline,
-      onlineCount: tally.nodeOnline,
-    }
-  }
-  const mixed = tally.deviceOnline > 0 && tally.deviceOffline > 0
-  return {
-    titleKey: mixed
-      ? 'group.window.device-mixed'
-      : tally.deviceOnline > 0
-        ? 'group.window.device-online'
-        : 'group.window.device-offline',
-    count: devices,
-    offlineCount: tally.deviceOffline,
-    onlineCount: tally.deviceOnline,
-  }
+  const keys = titleKeysOf(kinds)
+  if (keys === null || keys.length === 0) return null
+  const uniform = sameKey(keys)
+  if (uniform !== null) return counted(uniform, kinds)
+  if (deviceEdgesOnly(keys)) return counted('group.window.device-mixed', kinds)
+  if (nodeEdgesOnly(keys)) return counted('group.window.node-mixed', kinds)
+  return null
 }

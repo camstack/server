@@ -2,11 +2,13 @@
  * A burst of deliveries worded as a state summary.
  *
  * The evening digest (`state-summary.ts`) is the structure: a title that
- * counts the burst (`group.window.*`, or the section name when the kinds
- * mix) and a body of bullet lines. A burst of the bad edge (devices
- * offline) uses that digest's section block, heading included. A burst of
- * the recovery edge uses the same bullets without the "still offline"
- * heading, which would describe the wrong fact.
+ * counts the burst (`group.window.*` when every member is one kind, or the
+ * section name when the kinds mix) and a body of bullet lines. A burst of
+ * the bad edge (devices offline) uses that digest's section block, heading
+ * included. A burst of the recovery edge uses the same bullets without the
+ * "still offline" heading, which would describe the wrong fact. The title
+ * does not use that heading either: the device-state section is named
+ * "Offline or off" for both edges, so a recovery takes `group.window.device-online`.
  */
 
 import { NC_SYSTEM_EVENT_CLASS_SPECS, type NcRule, type NcSystemEventKind } from '@camstack/types'

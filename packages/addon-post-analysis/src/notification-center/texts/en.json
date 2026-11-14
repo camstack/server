@@ -407,6 +407,26 @@
     "one": "{{summaryCount}} update available",
     "other": "{{summaryCount}} updates available"
   },
+  "group.window.device-battery-low": {
+    "one": "{{summaryCount}} low battery",
+    "other": "{{summaryCount}} low batteries"
+  },
+  "group.window.device-consumable-low": {
+    "one": "{{summaryCount}} consumable to replace",
+    "other": "{{summaryCount}} consumables to replace"
+  },
+  "group.window.alert-critical": {
+    "one": "{{summaryCount}} critical alert",
+    "other": "{{summaryCount}} critical alerts"
+  },
+  "group.window.alert-critical-resolved": {
+    "one": "{{summaryCount}} critical alert resolved",
+    "other": "{{summaryCount}} critical alerts resolved"
+  },
+  "group.window.alert-error": {
+    "one": "{{summaryCount}} error alert",
+    "other": "{{summaryCount}} error alerts"
+  },
   "system.state-summary.body": "{{summaryText}}",
   "system.state-summary.section.title": "{{summarySection}}: {{summaryCount}}",
   "system.state-summary.section.body": "{{summaryText}}",
