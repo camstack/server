@@ -10024,7 +10024,10 @@
         "rangeLow": "Heat below",
         "rangeHigh": "Cool above",
         "rangeShort": "range",
-        "swingHorizontal": "Side swing"
+        "swingHorizontal": "Side swing",
+        "current": "Current {{value}}",
+        "drying": "Drying",
+        "fanOnly": "Fan"
       },
       "days": "{{n}} d",
       "hours": "{{n}} h",

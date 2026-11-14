@@ -1,3 +1,4 @@
+import type { ClimateAction } from '@camstack/types'
 import type { ClimateAmbientActivity } from '../../illustrations/AmbientFx'
 import type { ClimateRole } from '../../illustrations/ClimateRoleGlyph'
 import type { MenuOption } from '../../parts/MenuButton'
@@ -44,6 +45,8 @@ export interface ClimateCardModel {
   /** False when nothing turns the device on or off (a valve that only reports). */
   readonly canPower: boolean
   readonly activity: ClimateActivity
+  /** What the device reports it is doing; null = it does not say (no activity label). */
+  readonly action: ClimateAction | null
   /** After the state word: "for 40 min", or the mode when the state is assumed. */
   readonly since: string | null
   /** Room temperature; null when the device does not measure it. */
@@ -82,22 +85,44 @@ export function nextChoice(choice: ClimateChoice): string | null {
   return choice.options[(at + 1) % choice.options.length]?.id ?? null
 }
 
-/** What the device is doing, when it does not say: read from mode, target and room. */
-export function deriveClimateActivity(input: {
+/**
+ * What the device is doing, from the action it reports. The gap between the
+ * target and the room is never read: a device that does not say is `unknown`.
+ */
+export function climateActivityOf(input: {
   readonly on: boolean
-  readonly cooling: boolean
-  readonly target: number | null
-  readonly current: number | null
-  /** The band of a device that holds two setpoints; it wins over `target`. */
-  readonly range?: { readonly low: number; readonly high: number } | null
+  readonly action: ClimateAction | null
 }): ClimateActivity {
   if (!input.on) return 'off'
-  if (input.range !== undefined && input.range !== null) {
-    if (input.current === null) return 'unknown'
-    if (input.current < input.range.low) return 'heat'
-    return input.current > input.range.high ? 'cool' : 'idle'
+  switch (input.action) {
+    case 'heating':
+      return 'heat'
+    case 'cooling':
+      return 'cool'
+    case 'idle':
+      return 'idle'
+    case 'off':
+      return 'off'
+    default:
+      return 'unknown'
   }
-  if (input.current === null || input.target === null) return 'unknown'
-  if (input.cooling) return input.target < input.current ? 'cool' : 'idle'
-  return input.target > input.current ? 'heat' : 'idle'
+}
+
+/** The dial's extras: the hollow marker at the room and, while working, the band to the target. */
+export interface ClimateGauge {
+  readonly marker: number
+  /** Filled between room and target; null unless the device is heating or cooling. */
+  readonly band: { readonly from: number; readonly to: number } | null
+}
+
+/** Null when there is no single-setpoint dial or no room reading to mark. */
+export function climateGauge(
+  model: Pick<ClimateCardModel, 'action' | 'current' | 'target' | 'range'>,
+): ClimateGauge | null {
+  if (model.current === null || model.target === null || model.range !== null) return null
+  const working = model.action === 'heating' || model.action === 'cooling'
+  return {
+    marker: model.current,
+    band: working ? { from: model.current, to: model.target.value } : null,
+  }
 }

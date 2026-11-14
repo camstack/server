@@ -12,14 +12,13 @@ import {
   type HeatingValveStatus,
   type HvacMode,
 } from '@camstack/types'
-import { climateOffersCooling } from '../../device-controls/climate-offers-cooling'
 import type { CardGlyph } from '../icons'
 import type { ClimateRole } from '../illustrations/ClimateRoleGlyph'
 import {
   type ClimateCardModel,
   type ClimateChoice,
   type ClimateRange,
-  deriveClimateActivity,
+  climateActivityOf,
 } from '../scenes/climate/model'
 
 export type ClimateSceneModel = Omit<ClimateCardModel, 'common'>
@@ -113,6 +112,7 @@ function valveOnlyModel(role: string | null, valve: HeatingValveStatus | null): 
     on: true,
     canPower: false,
     activity: position === null ? 'unknown' : position > 0 ? 'heat' : 'idle',
+    action: null,
     since: null,
     current: null,
     flow: null,
@@ -140,24 +140,13 @@ export function climateModelOf(input: ClimateModelInput): ClimateSceneModel | nu
   const range = climateRangeOf(climate, commands.targetRange)
   const target = range === null ? climate.target : null
   const current = climate.currentTemp
-  // A room above its target is cooled only by a device that CAN cool: a
-  // heat-only thermostat in auto just stops heating (idle). A device that
-  // reports NO modes is unknown, not heat-only: it keeps the old reading. The
-  // cap reports no running action, so this derivation is the only source.
-  const cannotCool =
-    climate.availableModes.length > 0 && !climateOffersCooling(climate.availableModes)
-  const cooling =
-    climate.mode === 'cool' ||
-    ((climate.mode === 'auto' || climate.mode === 'heat_cool') &&
-      !cannotCool &&
-      target !== null &&
-      current !== null &&
-      target < current)
+  const action = climate.action ?? null
   return {
     role: climateRoleOf(role, hasValve),
     on,
     canPower: true,
-    activity: deriveClimateActivity({ on, cooling, target, current, range }),
+    activity: climateActivityOf({ on, action }),
+    action,
     since: null,
     current,
     flow: null,

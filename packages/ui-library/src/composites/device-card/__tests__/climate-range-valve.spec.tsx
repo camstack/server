@@ -114,10 +114,10 @@ describe('a held band (heat_cool) — two setpoints on one dial', () => {
     expect(model.range?.low).toBe(19)
     expect(model.range?.high).toBe(24)
     expect(model.target).toBeNull()
-    // In the band: idle. Under it: heating. Over it: cooling.
-    expect(model.activity).toBe('idle')
-    expect(modelOf({ ...band, currentTemp: 17 }).activity).toBe('heat')
-    expect(modelOf({ ...band, currentTemp: 26 }).activity).toBe('cool')
+    // The activity is what the device reports, never the room against the band.
+    expect(model.activity).toBe('unknown')
+    expect(modelOf({ ...band, currentTemp: 17, action: 'heating' }).activity).toBe('heat')
+    expect(modelOf({ ...band, currentTemp: 26, action: 'cooling' }).activity).toBe('cool')
   })
 
   it('draws exactly two handles, the band, and no single-setpoint stepper', () => {

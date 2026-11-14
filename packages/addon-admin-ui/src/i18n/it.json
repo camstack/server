@@ -10022,7 +10022,7 @@
       "climate": {
         "cooling": "Raffresca",
         "heating": "Riscalda",
-        "idle": "In attesa",
+        "idle": "Inattivo",
         "window": "Finestra aperta",
         "resumes": "Riprende alla chiusura",
         "flow": "mandata",
@@ -10046,7 +10046,10 @@
         "rangeLow": "Riscalda sotto",
         "rangeHigh": "Raffresca sopra",
         "rangeShort": "intervallo",
-        "swingHorizontal": "Oscill. laterale"
+        "swingHorizontal": "Oscill. laterale",
+        "current": "Attuale {{value}}",
+        "drying": "Deumidifica",
+        "fanOnly": "Ventola"
       },
       "days": "{{n}} g",
       "hours": "{{n}} h",

@@ -25,9 +25,20 @@ export interface DialProps {
   readonly onInput?: (value: number) => void
   /** The value to send: on release, and on each arrow key. */
   readonly onCommit: (value: number) => void
+  /**
+   * Gauge mode: a hollow marker at `marker` and, when `band` is set, a filled
+   * arc between its two ends. The plain fill from the start of the arc is not
+   * drawn. Absent: the dial fills from the start up to `value`.
+   */
+  readonly gauge?: DialGauge
   /** Centre content and the role glyph. */
   readonly children?: ReactNode
   readonly testId?: string
+}
+
+export interface DialGauge {
+  readonly marker: number
+  readonly band: { readonly from: number; readonly to: number } | null
 }
 
 const SIZE = 150
@@ -60,8 +71,7 @@ export const DIAL_GEOMETRY: {
  * drawing is at least 70% of the card), square, between 104 px and 208 px. It
  * is a size container, so what sits inside can grow with it.
  */
-export const DIAL_BOX_CLASS: string =
-  '@container relative aspect-square w-full min-w-26 max-w-52'
+export const DIAL_BOX_CLASS: string = '@container relative aspect-square w-full min-w-26 max-w-52'
 
 export const DIAL_TONE_CLASS: Readonly<Record<DialTone, string>> = {
   primary: 'text-primary',
@@ -72,6 +82,22 @@ export const DIAL_TONE_CLASS: Readonly<Record<DialTone, string>> = {
 }
 
 const TONE = DIAL_TONE_CLASS
+
+/** A value as a 0..1 fraction of the arc. */
+export function dialValueFraction(value: number, min: number, max: number): number {
+  return max > min ? Math.min(1, Math.max(0, (value - min) / (max - min))) : 0
+}
+
+/** The dash offset and length (as arc fractions) of the band between two values. */
+export function dialBandSpan(
+  band: { readonly from: number; readonly to: number },
+  min: number,
+  max: number,
+): { readonly start: number; readonly length: number } {
+  const a = dialValueFraction(band.from, min, max)
+  const b = dialValueFraction(band.to, min, max)
+  return { start: Math.min(a, b), length: Math.abs(b - a) }
+}
 
 /** The value a pointer at (x, y) from the dial centre names, as a 0..1 fraction. */
 export function dialFractionAt(x: number, y: number): number {
@@ -98,6 +124,7 @@ export function Dial({
   enabled = true,
   onInput,
   onCommit,
+  gauge,
   children,
   testId,
 }: DialProps): ReactElement {
@@ -105,7 +132,12 @@ export function Dial({
   const active = enabled && !gating.blocked
   const [dragging, setDragging] = useState(false)
   const last = useRef(value)
-  const fraction = max > min ? Math.min(1, Math.max(0, (value - min) / (max - min))) : 0
+  const fraction = dialValueFraction(value, min, max)
+  const bandSpan = gauge?.band == null ? null : dialBandSpan(gauge.band, min, max)
+  const markerAngle =
+    gauge === undefined
+      ? null
+      : ((START_DEG + dialValueFraction(gauge.marker, min, max) * SWEEP_DEG) * Math.PI) / 180
   const angle = ((START_DEG + fraction * SWEEP_DEG) * Math.PI) / 180
 
   const valueAt = useCallback(
@@ -180,16 +212,43 @@ export function Dial({
           strokeDasharray={`${ARC} 400`}
           transform={`rotate(${START_DEG} ${CENTER} ${CENTER})`}
         />
-        <circle
-          cx={CENTER}
-          cy={CENTER}
-          r={RADIUS}
-          strokeWidth={10}
-          className="dc-arc"
-          stroke="currentColor"
-          strokeDasharray={`${fraction * ARC} 400`}
-          transform={`rotate(${START_DEG} ${CENTER} ${CENTER})`}
-        />
+        {gauge === undefined ? (
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r={RADIUS}
+            strokeWidth={10}
+            className="dc-arc"
+            stroke="currentColor"
+            strokeDasharray={`${fraction * ARC} 400`}
+            transform={`rotate(${START_DEG} ${CENTER} ${CENTER})`}
+          />
+        ) : null}
+        {bandSpan === null ? null : (
+          <circle
+            cx={CENTER}
+            cy={CENTER}
+            r={RADIUS}
+            strokeWidth={10}
+            className="dc-arc"
+            stroke="currentColor"
+            strokeDasharray={`${bandSpan.length * ARC} 400`}
+            strokeDashoffset={-bandSpan.start * ARC}
+            transform={`rotate(${START_DEG} ${CENTER} ${CENTER})`}
+            data-testid={testId === undefined ? undefined : `${testId}-band`}
+          />
+        )}
+        {markerAngle === null ? null : (
+          <circle
+            cx={CENTER + RADIUS * Math.cos(markerAngle)}
+            cy={CENTER + RADIUS * Math.sin(markerAngle)}
+            r={5}
+            strokeWidth={2.5}
+            className="fill-transparent text-foreground"
+            stroke="currentColor"
+            data-testid={testId === undefined ? undefined : `${testId}-marker`}
+          />
+        )}
         {enabled ? (
           <circle
             cx={CENTER + RADIUS * Math.cos(angle)}

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Climate card gauge: target large in the centre with the current temperature under it, a hollow marker at the room temperature, and the band to the target only while the device reports heating or cooling; the activity label follows the reported action instead of target versus room The idle state reads "Inattivo" in Italian.
+
 ## [1.2.446] - 2026-11-14
 
 ### Added
@@ -25,7 +29,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The device pickers' phone sheet keeps the filter panel above the search box instead of painting over it, and the sheet can be dismissed by dragging its handle down.
 ### Changed
-
 
 ## [1.2.443] - 2026-11-14
 

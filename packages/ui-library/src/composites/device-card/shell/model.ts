@@ -104,6 +104,7 @@ export interface CardCommonActions {
 }
 
 export interface CardState {
+  /** Empty when the device does not say what it is doing: nothing is drawn. */
   readonly label: string
   readonly since: string | null
   readonly tone: CardTone

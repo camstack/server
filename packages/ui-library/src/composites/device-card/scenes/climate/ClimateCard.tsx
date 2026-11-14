@@ -18,6 +18,7 @@ import {
   type ClimateActivity,
   type ClimateCardActions,
   type ClimateCardModel,
+  climateGauge,
   nextChoice,
 } from './model'
 
@@ -69,14 +70,28 @@ export function ClimateCard({
   /** A band is always drawn in a colour while the device is on: grey reads as no band. */
   const bandTone: DialTone = dialTone === 'muted' ? 'primary' : dialTone
   const shown = draft ?? target?.value ?? null
-  const words: Readonly<Record<ClimateActivity, string>> = {
-    off: t('uiLibrary.deviceCard.off', 'Off'),
-    cool: t('uiLibrary.deviceCard.climate.cooling', 'Cooling'),
-    heat: t('uiLibrary.deviceCard.climate.heating', 'Heating'),
-    idle: t('uiLibrary.deviceCard.climate.idle', 'Idle'),
-    window: t('uiLibrary.deviceCard.climate.window', 'Window open'),
-    unknown: t('uiLibrary.deviceCard.on', 'On'),
-  }
+  const gauge = climateGauge({ action: model.action, current: model.current, target, range })
+  /** The activity word comes from the action the device reports; none when it does not say. */
+  const stateLabel =
+    activity === 'window'
+      ? t('uiLibrary.deviceCard.climate.window', 'Window open')
+      : !model.on
+        ? t('uiLibrary.deviceCard.off', 'Off')
+        : model.action === 'heating'
+          ? t('uiLibrary.deviceCard.climate.heating', 'Heating')
+          : model.action === 'cooling'
+            ? t('uiLibrary.deviceCard.climate.cooling', 'Cooling')
+            : model.action === 'idle'
+              ? t('uiLibrary.deviceCard.climate.idle', 'Idle')
+              : model.action === 'drying'
+                ? t('uiLibrary.deviceCard.climate.drying', 'Drying')
+                : model.action === 'fan'
+                  ? t('uiLibrary.deviceCard.climate.fanOnly', 'Fan')
+                  : model.action === 'off'
+                    ? t('uiLibrary.deviceCard.off', 'Off')
+                    : valveOnly
+                      ? t('uiLibrary.deviceCard.on', 'On')
+                      : ''
   const commit = (value: number): void => {
     setDraft(null)
     actions.onTarget(value)
@@ -101,6 +116,25 @@ export function ClimateCard({
         <span className="text-xs text-foreground-muted">
           {t('uiLibrary.deviceCard.climate.flow', 'flow')}
         </span>
+      </>
+    ) : target !== null && shown !== null ? (
+      <>
+        <span
+          className="text-xl font-semibold tabular-nums @[10rem]:text-4xl"
+          data-testid="dc-climate-centre-target"
+        >
+          {degrees(shown, 1)}
+        </span>
+        {model.current === null ? null : (
+          <span
+            className="text-xs text-foreground-muted @[10rem]:text-sm"
+            data-testid="dc-climate-current"
+          >
+            {t('uiLibrary.deviceCard.climate.current', 'Current {{value}}', {
+              value: degrees(model.current, 1),
+            })}
+          </span>
+        )}
       </>
     ) : model.current !== null ? (
       <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">
@@ -178,6 +212,7 @@ export function ClimateCard({
           ariaLabel={t('uiLibrary.deviceCard.climate.target', 'Target temperature')}
           onInput={setDraft}
           onCommit={commit}
+          {...(gauge === null ? {} : { gauge })}
           testId="dc-dial"
         >
           {inside}
@@ -362,7 +397,7 @@ export function ClimateCard({
       showName={showName}
       initialView={initialView}
       activity={activity}
-      state={{ label: words[activity], since: model.since, tone }}
+      state={{ label: stateLabel, since: model.since, tone }}
       scene={{
         // A valve that only reports has no appliance drawn for an animation to rise from.
         fx: valveOnly ? null : (

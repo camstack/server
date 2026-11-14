@@ -9,7 +9,7 @@ import {
   stepSwitchTimer,
   SWITCH_TIMER_MIN_MINUTES,
 } from '../parts/switch-timer-model'
-import { deriveClimateActivity, nextChoice } from '../scenes/climate/model'
+import { climateActivityOf, nextChoice } from '../scenes/climate/model'
 import { CardGatingProvider } from '../shell/gating'
 
 afterEach(() => {
@@ -143,14 +143,11 @@ describe('climate model', () => {
     expect(nextChoice({ value: null, options: [] })).toBeNull()
   })
 
-  it('derives what the unit is doing from the gap to the target', () => {
-    expect(deriveClimateActivity({ on: false, cooling: true, target: 22, current: 25 })).toBe('off')
-    expect(deriveClimateActivity({ on: true, cooling: true, target: 22, current: 25 })).toBe('cool')
-    expect(deriveClimateActivity({ on: true, cooling: false, target: 22, current: 19 })).toBe(
-      'heat',
-    )
-    expect(deriveClimateActivity({ on: true, cooling: false, target: 22, current: 22 })).toBe(
-      'idle',
-    )
+  it('reads what the unit is doing from its action, not from the gap to the target', () => {
+    expect(climateActivityOf({ on: false, action: 'cooling' })).toBe('off')
+    expect(climateActivityOf({ on: true, action: 'cooling' })).toBe('cool')
+    expect(climateActivityOf({ on: true, action: 'heating' })).toBe('heat')
+    expect(climateActivityOf({ on: true, action: 'idle' })).toBe('idle')
+    expect(climateActivityOf({ on: true, action: null })).toBe('unknown')
   })
 })

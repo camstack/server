@@ -66,11 +66,13 @@ export function StateCorner({ state, onOpenHistory }: StateCornerProps): ReactEl
   const t = useUiText()
   const body = (
     <>
-      <span
-        className={cn('shrink-0 font-semibold uppercase tracking-wide', TONE_TEXT[state.tone])}
-      >
-        {state.label}
-      </span>
+      {state.label === '' ? null : (
+        <span
+          className={cn('shrink-0 font-semibold uppercase tracking-wide', TONE_TEXT[state.tone])}
+        >
+          {state.label}
+        </span>
+      )}
       {state.since === null ? null : (
         <small className="min-w-0 truncate text-foreground-muted">· {state.since}</small>
       )}

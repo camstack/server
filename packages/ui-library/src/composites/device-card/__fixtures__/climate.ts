@@ -182,6 +182,16 @@ const SPECS: readonly Spec[] = [
   },
 ]
 
+/** What each drawn activity means as a reported action; the infrared unit and the window say none. */
+const ACTION_OF: Readonly<Record<ClimateActivity, ClimateCardModel['action']>> = {
+  heat: 'heating',
+  cool: 'cooling',
+  idle: 'idle',
+  off: 'off',
+  unknown: null,
+  window: null,
+}
+
 function build(spec: Spec, orientation: CardOrientation): ClimateFixture {
   return {
     id: orientation === 'vertical' ? spec.id : `${spec.id}-horizontal`,
@@ -216,6 +226,7 @@ function build(spec: Spec, orientation: CardOrientation): ClimateFixture {
       on: spec.activity !== 'off',
       canPower: true,
       activity: spec.activity,
+      action: ACTION_OF[spec.activity],
       since: spec.since,
       current: spec.current,
       flow: spec.flow ?? null,
@@ -264,6 +275,7 @@ function extra(
 export const CLIMATE_EXTRA_FIXTURES: readonly ClimateFixture[] = [
   ...extra('climate-band', 'Banda caldo / freddo', 'vertical', {
     activity: 'idle',
+    action: 'idle',
     target: null,
     range: { low: 19, high: 24, min: 16, max: 30, step: 0.5, editable: true },
     preset: null,
@@ -272,6 +284,7 @@ export const CLIMATE_EXTRA_FIXTURES: readonly ClimateFixture[] = [
   }),
   ...extra('climate-band-horizontal', 'Banda, orizzontale', 'horizontal', {
     activity: 'idle',
+    action: 'idle',
     target: null,
     range: { low: 19, high: 24, min: 16, max: 30, step: 0.5, editable: true },
   }),

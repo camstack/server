@@ -2894,6 +2894,13 @@
       "summary": ""
     },
     {
+      "name": "climateActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/climate/model.ts",
+      "summary": "What the device is doing, from the action it reports. The gap between the target and the room is never read: a device that does not say is `unknown`."
+    },
+    {
       "name": "ClimateCard",
       "kind": "component",
       "area": "composites",
@@ -2938,6 +2945,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/panel-controls.tsx",
       "summary": "Panel-backed InlineControl and HeroCard wrappers for all non-Cover actuator types."
+    },
+    {
+      "name": "climateGauge",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/climate/model.ts",
+      "summary": "Null when there is no single-setpoint dial or no room reading to mark."
     },
     {
       "name": "climateModelOf",
@@ -4872,13 +4886,6 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/remote/layout-model.ts",
       "summary": "Delete a group; its buttons stay as loose keys or go with it."
-    },
-    {
-      "name": "deriveClimateActivity",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/scenes/climate/model.ts",
-      "summary": "What the device is doing, when it does not say: read from mode, target and room."
     },
     {
       "name": "deriveDeviceKind",
@@ -6930,6 +6937,12 @@
           "doc": "The value to send: on release, and on each arrow key."
         },
         {
+          "name": "gauge",
+          "type": "DialGauge",
+          "optional": true,
+          "doc": "Gauge mode: a hollow marker at `marker` and, when `band` is set, a filled arc between its two ends. The plain fill from the start of the arc"
+        },
+        {
           "name": "children",
           "type": "ReactNode",
           "optional": true,
@@ -6963,6 +6976,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
       "summary": ""
+    },
+    {
+      "name": "dialBandSpan",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
+      "summary": "The dash offset and length (as arc fractions) of the band between two values."
     },
     {
       "name": "dialFractionAt",
@@ -7074,6 +7094,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
       "summary": ""
+    },
+    {
+      "name": "dialValueFraction",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/Dial.tsx",
+      "summary": "A value as a 0..1 fraction of the arc."
     },
     {
       "name": "DisclosureChevron",
