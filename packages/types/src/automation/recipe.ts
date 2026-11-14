@@ -289,7 +289,7 @@ const plainStepSchemas = [
  * A plain step: a flow step with no condition of its own and no step inside
  * it. The second (last) level of nesting holds these only.
  */
-const AutomationBranchStepSchema = z.discriminatedUnion('kind', plainStepSchemas, {
+export const AutomationBranchStepSchema = z.discriminatedUnion('kind', plainStepSchemas, {
   error: nestTooDeep,
 })
 export type AutomationBranchStep = z.infer<typeof AutomationBranchStepSchema>

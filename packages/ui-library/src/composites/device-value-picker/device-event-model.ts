@@ -8,6 +8,7 @@
  */
 import {
   EventEmitterStatusSchema,
+  type DeviceFiredLeaf,
   type EventVocabularyEntry,
   readEventVocabulary,
 } from '@camstack/types'
@@ -38,6 +39,48 @@ export function deviceEventVocabularyOf(read: DeviceEventRead): DeviceEventVocab
   const parsed = EventEmitterStatusSchema.safeParse(read.data)
   if (!parsed.success) return { kind: 'unknown' }
   return { kind: 'known', entries: readEventVocabulary(parsed.data) }
+}
+
+/** A picked event as the automation stores it: a whole `device-fired` leaf. */
+export type DeviceFiredEntry = DeviceFiredLeaf
+
+/** A fresh leaf id: what a `triggered-by` of the entry's row reads. */
+export function newEntryId(): string {
+  return `ev-${Math.random().toString(36).slice(2, 8)}`
+}
+
+/** The event a leaf names, or undefined when it names none (or several) the picker cannot show. */
+export function pickOfFiredEntry(entry: DeviceFiredEntry): PickedDeviceEvent | undefined {
+  const eventId = entry.eventIds?.[0]
+  if (eventId === undefined || entry.eventIds?.length !== 1) return undefined
+  const sourceId = entry.sourceIds?.[0]
+  return { deviceId: entry.deviceId, eventId, ...(sourceId === undefined ? {} : { sourceId }) }
+}
+
+export function firedEntryOfPick(pick: PickedDeviceEvent, id: string): DeviceFiredEntry {
+  return {
+    kind: 'device-fired',
+    id,
+    deviceId: pick.deviceId,
+    eventIds: [pick.eventId],
+    ...(pick.sourceId === undefined ? {} : { sourceIds: [pick.sourceId] }),
+  }
+}
+
+/** Add the leaf of the pick, or remove it when it is already there; never past `max`. */
+export function toggleFiredEntry(
+  value: readonly DeviceFiredEntry[],
+  pick: PickedDeviceEvent,
+  max: number | undefined,
+  makeId: () => string = newEntryId,
+): readonly DeviceFiredEntry[] {
+  const same = (entry: DeviceFiredEntry): boolean => {
+    const own = pickOfFiredEntry(entry)
+    return own !== undefined && sameDeviceEvent(own, pick)
+  }
+  if (value.some(same)) return value.filter((entry) => !same(entry))
+  if (max !== undefined && value.length >= max) return value
+  return [...value, firedEntryOfPick(pick, makeId())]
 }
 
 export function sameDeviceEvent(a: PickedDeviceEvent, b: PickedDeviceEvent): boolean {

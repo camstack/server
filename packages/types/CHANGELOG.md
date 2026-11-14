@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Automation templates: a group row can hold groups, so the Buttons → devices template takes several events and several actions per button (automations made from the old shape must be recreated)
 - Automation templates: an optional time-window input and a gate binding wrap an automation's condition as all[time-is, original] only when filled
+- The Buttons template's When and Actions are the automation's own triggers and steps, copied verbatim; a button's action can target every device of a type or room
 
 ## [1.2.565] - 2026-11-14
 

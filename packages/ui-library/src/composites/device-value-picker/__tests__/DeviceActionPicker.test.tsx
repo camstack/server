@@ -6,7 +6,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { type ReactNode, useState } from 'react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { PickedDeviceAction } from '../DeviceActionPicker'
+import type { AutomationCommandStep } from '@camstack/types'
 
 vi.mock('../device-value-panel', () => ({
   DeviceValuePanel: (props: { readonly onSelect: (v: { deviceId: number }) => void }) => (
@@ -20,24 +20,32 @@ vi.mock('../device-value-panel', () => ({
 
 const { DeviceActionPicker } = await import('../DeviceActionPicker')
 
+const OFF: AutomationCommandStep = {
+  kind: 'command',
+  target: { kind: 'devices', ids: [7] },
+  actionId: 'switch.off',
+}
+
 function Harness({
   start,
   onValue,
 }: {
-  readonly start: readonly PickedDeviceAction[]
-  readonly onValue: (next: readonly PickedDeviceAction[]) => void
+  readonly start: readonly AutomationCommandStep[]
+  readonly onValue: (next: readonly AutomationCommandStep[]) => void
 }): ReactNode {
   const [value, setValue] = useState(start)
   return (
     <DeviceActionPicker
       testId="actions"
       value={value}
-      useEntryLabel={(pick) => ({ label: `${pick.action.actionId} · ${pick.deviceIds.join(',')}` })}
+      useEntryLabel={(step) => ({ label: `${step.actionId} · ${JSON.stringify(step.target)}` })}
       renderEditor={(editor) => (
         <button
           type="button"
           data-testid="choose-action"
-          onClick={() => editor.onChange({ actionId: 'switch.toggle' })}
+          onClick={() =>
+            editor.onChange({ kind: 'command', target: editor.target, actionId: 'switch.toggle' })
+          }
         />
       )}
       onChange={(next) => {
@@ -61,24 +69,39 @@ describe('DeviceActionPicker', () => {
     fireEvent.click(screen.getByTestId('choose-action'))
     fireEvent.click(screen.getByTestId('dap-confirm'))
     expect(onValue).toHaveBeenLastCalledWith([
-      { deviceIds: [7], action: { actionId: 'switch.toggle' } },
+      { kind: 'command', target: { kind: 'devices', ids: [7] }, actionId: 'switch.toggle' },
     ])
-    expect(screen.getByText('switch.toggle · 7')).toBeTruthy()
+    expect(screen.getByText('switch.toggle · {"kind":"devices","ids":[7]}')).toBeTruthy()
+  })
+
+  it('adds a domain step from "By room/type": no device list, a domain target', () => {
+    const onValue = vi.fn()
+    render(<Harness start={[]} onValue={onValue} />)
+    fireEvent.click(screen.getByRole('button', { name: /add action/i }))
+    fireEvent.click(screen.getByRole('tab', { name: 'By room/type' }))
+    expect(screen.queryByTestId('pick-device')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', false)
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }))
+    fireEvent.click(screen.getByTestId('choose-action'))
+    fireEvent.click(screen.getByTestId('dap-confirm'))
+    expect(onValue).toHaveBeenLastCalledWith([
+      { kind: 'command', target: { kind: 'domain' }, actionId: 'switch.toggle' },
+    ])
   })
 
   it('reopens an entry on its action and replaces it', () => {
     const onValue = vi.fn()
     render(
       <Harness
-        start={[{ deviceIds: [7], action: { actionId: 'switch.turn_off' } }]}
+        start={[OFF]}
         onValue={onValue}
       />,
     )
-    fireEvent.click(screen.getByText('switch.turn_off · 7'))
+    fireEvent.click(screen.getByText('switch.off · {"kind":"devices","ids":[7]}'))
     fireEvent.click(screen.getByTestId('choose-action'))
     fireEvent.click(screen.getByTestId('dap-confirm'))
     expect(onValue).toHaveBeenLastCalledWith([
-      { deviceIds: [7], action: { actionId: 'switch.toggle' } },
+      { kind: 'command', target: { kind: 'devices', ids: [7] }, actionId: 'switch.toggle' },
     ])
   })
 
@@ -86,7 +109,7 @@ describe('DeviceActionPicker', () => {
     const onValue = vi.fn()
     render(
       <Harness
-        start={[{ deviceIds: [7], action: { actionId: 'switch.turn_off' } }]}
+        start={[OFF]}
         onValue={onValue}
       />,
     )

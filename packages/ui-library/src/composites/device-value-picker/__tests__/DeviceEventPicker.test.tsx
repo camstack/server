@@ -7,7 +7,7 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { type ReactNode, useState } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { PickedDeviceEvent } from '../device-event-model'
+import type { DeviceFiredEntry } from '../device-event-model'
 
 const source = (id: string) => ({ id, label: `Button ${id}` })
 const VOCABULARY = ['1', '2'].flatMap((id) => [
@@ -41,8 +41,8 @@ function Harness({
   start,
   onValue,
 }: {
-  readonly start: readonly PickedDeviceEvent[]
-  readonly onValue: (next: readonly PickedDeviceEvent[]) => void
+  readonly start: readonly DeviceFiredEntry[]
+  readonly onValue: (next: readonly DeviceFiredEntry[]) => void
 }): ReactNode {
   const [value, setValue] = useState(start)
   return (
@@ -80,14 +80,27 @@ describe('DeviceEventPicker', () => {
     const second = screen.getByRole('group', { name: 'Button 2' })
     fireEvent.click(first.querySelectorAll('input')[0] ?? document.body)
     fireEvent.click(second.querySelectorAll('input')[1] ?? document.body)
-    expect(onValue).toHaveBeenLastCalledWith([
-      { deviceId: 1, sourceId: '1', eventId: 'press_short' },
-      { deviceId: 1, sourceId: '2', eventId: 'press_long' },
+    // Each pick is a whole device-fired leaf with its own id.
+    const leaves = onValue.mock.lastCall?.[0] as readonly DeviceFiredEntry[]
+    expect(leaves).toEqual([
+      {
+        kind: 'device-fired',
+        id: expect.stringMatching(/^ev-/),
+        deviceId: 1,
+        sourceIds: ['1'],
+        eventIds: ['press_short'],
+      },
+      {
+        kind: 'device-fired',
+        id: expect.stringMatching(/^ev-/),
+        deviceId: 1,
+        sourceIds: ['2'],
+        eventIds: ['press_long'],
+      },
     ])
+    expect(leaves[0]?.id).not.toBe(leaves[1]?.id)
     fireEvent.click(first.querySelectorAll('input')[0] ?? document.body)
-    expect(onValue).toHaveBeenLastCalledWith([
-      { deviceId: 1, sourceId: '2', eventId: 'press_long' },
-    ])
+    expect(onValue.mock.lastCall?.[0]).toEqual([leaves[1]])
     fireEvent.click(screen.getByRole('button', { name: /back to devices/i }))
     expect(screen.getByTestId('pick-device')).toBeTruthy()
   })
@@ -95,7 +108,15 @@ describe('DeviceEventPicker', () => {
   it('reads a pick as "device · part · event", the device named with its parent', () => {
     render(
       <Harness
-        start={[{ deviceId: 1, sourceId: '1', eventId: 'press_short' }]}
+        start={[
+          {
+            kind: 'device-fired',
+            id: 'ev-a',
+            deviceId: 1,
+            sourceIds: ['1'],
+            eventIds: ['press_short'],
+          },
+        ]}
         onValue={vi.fn()}
       />,
     )

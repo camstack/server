@@ -22,8 +22,7 @@ export interface BuiltinAutomationTemplate {
 
 /** One choose branch per row, so the rows a group takes are the branches a choose takes. */
 const BUTTON_ROWS_MAX = 6
-const ROW_EVENTS_MAX = 8
-const ROW_COMMANDS_MAX = 10
+const ROW_ENTRIES_MAX = 10
 
 /** The optional limit both built-ins end with: no value, no limit. */
 const ACTIVE_WINDOW_KEY = 'active'
@@ -46,7 +45,7 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
   name: 'Buttons → devices',
   payload: {
     version: AUTOMATION_TEMPLATE_VERSION,
-    description: 'Each row: when a button sends an event, run one or more actions.',
+    description: 'Each button: when it sends an event, run one or more actions.',
     body: {
       when: { kind: 'any', children: [] },
       actions: [{ kind: 'choose', branches: [] }],
@@ -61,64 +60,28 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
         maxRows: BUTTON_ROWS_MAX,
         inputs: [
           {
-            kind: 'group',
-            key: 'events',
+            kind: 'entries',
+            key: 'when',
             label: 'When',
-            rowLabel: 'event',
-            maxRows: ROW_EVENTS_MAX,
-            inputs: [
-              {
-                kind: 'device',
-                key: 'button',
-                label: 'Button',
-                filter: { capability: 'event-emitter' },
-              },
-              {
-                kind: 'event',
-                key: 'event',
-                label: 'Event',
-                deviceInput: 'button',
-              },
-            ],
+            entry: 'trigger',
+            allow: ['device-fired'],
+            maxItems: ROW_ENTRIES_MAX,
           },
           {
-            kind: 'group',
-            key: 'commands',
+            kind: 'entries',
+            key: 'do',
             label: 'Actions',
-            rowLabel: 'action',
-            maxRows: ROW_COMMANDS_MAX,
-            inputs: [
-              {
-                kind: 'device',
-                key: 'targets',
-                label: 'Devices',
-                multiple: true,
-              },
-              {
-                kind: 'action',
-                key: 'action',
-                label: 'Action',
-                deviceInput: 'targets',
-              },
-            ],
+            entry: 'step',
+            allow: ['command'],
+            maxItems: ROW_ENTRIES_MAX,
           },
         ],
       },
       activeWindowInput,
     ],
     bindings: [
-      {
-        kind: 'rows',
-        input: 'buttons',
-        nested: 'events',
-        path: ['when', 'children'],
-        item: { kind: 'device-fired' },
-        bindings: [
-          { kind: 'row-id', path: ['id'] },
-          { kind: 'value', input: 'button', path: ['deviceId'] },
-          { kind: 'value', input: 'event', path: [] },
-        ],
-      },
+      // Every button's triggers, verbatim, are the automation's `any`.
+      { kind: 'entries', input: 'when', in: 'buttons', path: ['when', 'children'] },
       {
         kind: 'rows',
         input: 'buttons',
@@ -128,22 +91,8 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
           steps: [],
         },
         bindings: [
-          { kind: 'row-ids', input: 'events', path: ['if', 'leafIds'] },
-          {
-            kind: 'rows',
-            input: 'commands',
-            path: ['steps'],
-            item: { kind: 'command' },
-            bindings: [
-              {
-                kind: 'value',
-                input: 'targets',
-                path: ['target'],
-                as: 'target',
-              },
-              { kind: 'value', input: 'action', path: [] },
-            ],
-          },
+          { kind: 'row-ids', input: 'when', path: ['if', 'leafIds'] },
+          { kind: 'entries', input: 'do', path: ['steps'] },
         ],
       },
       activeWindowGate,

@@ -14,11 +14,13 @@ export {
   type PickKind,
 } from './device-value-picker-model'
 export { deviceIdsOf, pickedFromDeviceIds } from './device-id-values'
+export { type DomainChoices, useActionTargetLabel, useDomainChoices } from './action-target-label'
 export { DeviceEventPicker, type DeviceEventPickerProps } from './DeviceEventPicker'
 export {
   describeDeviceEvent,
   type DeviceEventVocabulary,
   deviceEventVocabularyOf,
+  type DeviceFiredEntry,
   type PickedDeviceEvent,
 } from './device-event-model'
 export {
@@ -26,5 +28,4 @@ export {
   type DeviceActionEditorProps,
   type DeviceActionEntryLabel,
   type DeviceActionPickerProps,
-  type PickedDeviceAction,
 } from './DeviceActionPicker'

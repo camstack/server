@@ -10,6 +10,7 @@
  * that input, by its dotted address (`buttons.0.commands.1.targets`).
  */
 import {
+  type ActionTarget,
   type AutomationTemplatePayload,
   type DeviceFiredLeaf,
   type TemplateActionValue,
@@ -27,7 +28,6 @@ import {
   type TemplateScalarValue,
   TemplateTimeWindowValueSchema,
 } from '@camstack/types'
-import type { PickedDeviceAction, PickedDeviceEvent } from '@camstack/ui-library'
 import {
   Button,
   DeviceEventPicker,
@@ -43,13 +43,14 @@ import {
 import { Plus, Trash2, X } from 'lucide-react'
 import { Fragment, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useAutomationDevices } from '../automation/automation-data'
+import { type AutomationDevice, useAutomationDevices } from '../automation/automation-data'
 import { PickerLabel } from '../automation/FieldPicker'
 import { TimeIsFields } from '../automation/TimeIsFields'
 import { withWindow } from '../automation/time-is-model'
 import { FiredFields } from '../automation/FiredFields'
 import { EVENT_EMITTER_CAP, firedVocabularyOf } from '../automation/fired-model'
 import { ActionEditor, TemplateActionPicker } from './TemplateActionPicker'
+import { commandStepsOf, entriesValueOf, firedLeavesOf } from './entries-values'
 import { DurationValueInput } from './DurationValueInput'
 import {
   groupBounds,
@@ -221,6 +222,17 @@ function entryOf(inputs: readonly TemplateScalarInput[], row: Siblings): Summary
 /** What a card is titled by: the devices its row reads first — its own, else its first nested group's. */
 function summaryEntries(group: TemplateGroupInput, row: TemplateGroupRow): readonly SummaryEntry[] {
   const scalars = group.inputs.filter((i): i is TemplateScalarInput => i.kind !== 'group')
+  const fired = scalars.flatMap((input) =>
+    input.kind === 'entries' && input.entry === 'trigger'
+      ? firedLeavesOf(row[input.key]).map(
+          (leaf): SummaryEntry => ({
+            deviceId: leaf.deviceId,
+            event: { eventIds: leaf.eventIds, sourceIds: leaf.sourceIds },
+          }),
+        )
+      : [],
+  )
+  if (fired.length > 0) return fired
   const own = entryOf(scalars, row)
   if (own !== undefined) return [own]
   for (const input of group.inputs) {
@@ -375,82 +387,6 @@ interface NestedGroupFieldProps {
   readonly onChange: (next: TemplateInputValues) => void
 }
 
-interface EventPair {
-  readonly device: string
-  readonly event: string
-}
-
-/** A nested group that is only "a device and an event of it": drawn as one events field. */
-function eventPairOf(group: TemplateNestedGroupInput): EventPair | undefined {
-  if (group.inputs.length !== 2) return undefined
-  const device = group.inputs.find((input) => input.kind === 'device' && input.multiple !== true)
-  const event = group.inputs.find(
-    (input) => input.kind === 'event' && input.deviceInput === device?.key,
-  )
-  if (device === undefined || event === undefined) return undefined
-  return { device: device.key, event: event.key }
-}
-
-function picksOf(
-  rows: readonly TemplateNestedRow[],
-  pair: EventPair,
-): readonly PickedDeviceEvent[] {
-  return rows.flatMap((row): readonly PickedDeviceEvent[] => {
-    const deviceId = deviceIdsOf(row[pair.device])[0]
-    const eventId = eventValueOf(row[pair.event])?.eventIds?.[0]
-    if (deviceId === undefined || eventId === undefined) return []
-    const sourceId = eventValueOf(row[pair.event])?.sourceIds?.[0]
-    return [{ deviceId, eventId, ...(sourceId === undefined ? {} : { sourceId }) }]
-  })
-}
-
-function rowsOfPicks(
-  picks: readonly PickedDeviceEvent[],
-  pair: EventPair,
-): readonly TemplateNestedRow[] {
-  return picks.map((pick) => ({
-    [pair.device]: pick.deviceId,
-    [pair.event]: {
-      eventIds: [pick.eventId],
-      ...(pick.sourceId === undefined ? {} : { sourceIds: [pick.sourceId] }),
-    },
-  }))
-}
-
-interface ActionPair {
-  readonly devices: string
-  readonly action: string
-}
-
-/** A nested group that is only "some devices and an action they share": drawn as one actions field. */
-function actionPairOf(group: TemplateNestedGroupInput): ActionPair | undefined {
-  if (group.inputs.length !== 2) return undefined
-  const devices = group.inputs.find((input) => input.kind === 'device' && input.multiple === true)
-  const action = group.inputs.find(
-    (input) => input.kind === 'action' && input.deviceInput === devices?.key,
-  )
-  if (devices === undefined || action === undefined) return undefined
-  return { devices: devices.key, action: action.key }
-}
-
-function actionPicksOf(
-  rows: readonly TemplateNestedRow[],
-  pair: ActionPair,
-): readonly PickedDeviceAction[] {
-  return rows.flatMap((row): readonly PickedDeviceAction[] => {
-    const deviceIds = deviceIdsOf(row[pair.devices])
-    const action = actionValueOf(row[pair.action])
-    return deviceIds.length === 0 || action === undefined ? [] : [{ deviceIds, action }]
-  })
-}
-
-function rowsOfActionPicks(
-  picks: readonly PickedDeviceAction[],
-  pair: ActionPair,
-): readonly TemplateNestedRow[] {
-  return picks.map((pick) => ({ [pair.devices]: [...pick.deviceIds], [pair.action]: pick.action }))
-}
-
 /** A group inside a card: a small heading, one line per entry, and its own "Add". */
 function NestedGroupField({
   at,
@@ -465,52 +401,6 @@ function NestedGroupField({
   const group = at.group
   const bounds = groupBounds(group)
   const noun = group.rowLabel
-  const pair = eventPairOf(group)
-  const actionPair = actionPairOf(group)
-  const devices = useAutomationDevices()
-  if (actionPair !== undefined) {
-    return (
-      <div className="space-y-1" data-testid={`template-nested-${address}`}>
-        <h5 className="text-xs font-medium text-foreground-muted">{group.label}</h5>
-        <TemplateActionPicker
-          testId={`template-input-${address}`}
-          recentKey={`template-input-${group.key}`}
-          disabled={disabled}
-          devices={devices}
-          maxItems={bounds.max}
-          value={actionPicksOf(rows, actionPair)}
-          onChange={(next) =>
-            onChange(withNestedRows(values, at, rowsOfActionPicks(next, actionPair)))
-          }
-        />
-        <ProblemLines
-          problems={problems.filter(
-            (p) => p.input === address || p.input?.startsWith(`${address}.`) === true,
-          )}
-        />
-      </div>
-    )
-  }
-  if (pair !== undefined) {
-    return (
-      <div className="space-y-1" data-testid={`template-nested-${address}`}>
-        <h5 className="text-xs font-medium text-foreground-muted">{group.label}</h5>
-        <DeviceEventPicker
-          testId={`template-input-${address}`}
-          recentKey={`template-input-${group.key}`}
-          disabled={disabled}
-          maxItems={bounds.max}
-          value={picksOf(rows, pair)}
-          onChange={(next) => onChange(withNestedRows(values, at, rowsOfPicks(next, pair)))}
-        />
-        <ProblemLines
-          problems={problems.filter(
-            (p) => p.input === address || p.input?.startsWith(`${address}.`) === true,
-          )}
-        />
-      </div>
-    )
-  }
   return (
     <div className="space-y-2" data-testid={`template-nested-${address}`}>
       <h5 className="text-xs font-medium text-foreground-muted">{group.label}</h5>
@@ -653,6 +543,40 @@ interface ScalarControlProps {
   readonly onChange: (next: TemplateScalarValue | undefined) => void
 }
 
+function entriesPicker(
+  input: Extract<TemplateScalarInput, { kind: 'entries' }>,
+  value: TemplateInputValue | undefined,
+  disabled: boolean,
+  address: string,
+  devices: readonly AutomationDevice[],
+  onChange: (next: TemplateScalarValue | undefined) => void,
+): ReactNode {
+  const max = input.maxItems
+  if (input.entry === 'trigger') {
+    return (
+      <DeviceEventPicker
+        testId={`template-input-${address}`}
+        recentKey={`template-input-${input.key}`}
+        disabled={disabled}
+        {...(max === undefined ? {} : { maxItems: max })}
+        value={firedLeavesOf(value)}
+        onChange={(next) => onChange(entriesValueOf(next))}
+      />
+    )
+  }
+  return (
+    <TemplateActionPicker
+      testId={`template-input-${address}`}
+      recentKey={`template-input-${input.key}`}
+      disabled={disabled}
+      devices={devices}
+      {...(max === undefined ? {} : { maxItems: max })}
+      value={commandStepsOf(value)}
+      onChange={(next) => onChange(entriesValueOf(next))}
+    />
+  )
+}
+
 function ScalarControl({
   input,
   value,
@@ -757,16 +681,32 @@ function ScalarControl({
           </p>
         )
       }
+      const target: ActionTarget = { kind: 'devices', ids: [...targetIds] }
+      const stored = actionValueOf(value)
       return (
         <ActionEditor
-          deviceIds={targetIds}
+          target={target}
           devices={devices}
-          value={actionValueOf(value)}
+          value={
+            stored === undefined
+              ? undefined
+              : { kind: 'command', target, actionId: stored.actionId, ...(stored.args === undefined ? {} : { args: stored.args }) }
+          }
           disabled={disabled}
           testId={`template-input-${address}`}
-          onChange={onChange}
+          onChange={(step) =>
+            onChange(
+              step === undefined
+                ? undefined
+                : { actionId: step.actionId, ...(step.args === undefined ? {} : { args: step.args }) },
+            )
+          }
         />
       )
+    }
+    case 'entries': {
+      const picker = entriesPicker(input, value, disabled, address, devices, onChange)
+      return picker
     }
     case 'duration':
       return (

@@ -5175,17 +5175,17 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-value-picker/DeviceActionPicker.tsx",
-      "summary": "The device picker's action mode: one field picks WHICH action goes to WHICH devices. The closed field lists the entries one per line (\"action · devices\", a × each); \"Add action…\" opens the shared device panel, then a …",
+      "summary": "The device picker's action mode: one field picks WHICH action goes to WHICH target. The closed field lists the entries one per line (\"action · target\", a × each); \"Add action…\" opens the shared device panel (or, besid…",
       "props": [
         {
           "name": "value",
-          "type": "readonly PickedDeviceAction[]",
+          "type": "readonly AutomationCommandStep[]",
           "optional": false,
-          "doc": ""
+          "doc": "Whole `command` steps, as the automation stores them."
         },
         {
           "name": "onChange",
-          "type": "(next: readonly PickedDeviceAction[]) => void",
+          "type": "(next: readonly AutomationCommandStep[]) => void",
           "optional": false,
           "doc": ""
         },
@@ -5193,11 +5193,11 @@
           "name": "renderEditor",
           "type": "(props: DeviceActionEditorProps) => ReactNode",
           "optional": false,
-          "doc": "The action select and its args for the chosen devices (the library knows no action vocabulary)."
+          "doc": "The action select and its args for the chosen target (the library knows no action vocabulary)."
         },
         {
           "name": "useEntryLabel",
-          "type": "(pick: PickedDeviceAction) => DeviceActionEntryLabel",
+          "type": "(step: AutomationCommandStep) => DeviceActionEntryLabel",
           "optional": false,
           "doc": "A hook: names one entry through the shared resolvers. Called once per entry."
         },
@@ -5473,13 +5473,13 @@
       "props": [
         {
           "name": "value",
-          "type": "readonly PickedDeviceEvent[]",
+          "type": "readonly DeviceFiredEntry[]",
           "optional": false,
-          "doc": ""
+          "doc": "Whole `device-fired` leaves, as the automation stores them; ids are generated on add and kept."
         },
         {
           "name": "onChange",
-          "type": "(next: readonly PickedDeviceEvent[]) => void",
+          "type": "(next: readonly DeviceFiredEntry[]) => void",
           "optional": false,
           "doc": ""
         },
@@ -18903,6 +18903,13 @@
       "summary": "Unit preferences in the signed-in user's ACCOUNT preferences (D894): one row, namespace `admin.units`, synced to every device signed in as that user."
     },
     {
+      "name": "useActionTargetLabel",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/action-target-label.ts",
+      "summary": "The name of an action target, through the shared device resolvers: the devices by their compact label, a domain as \"all <type> in <room>\"."
+    },
+    {
       "name": "useAddonT",
       "kind": "hook",
       "area": "i18n",
@@ -19258,6 +19265,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/display-palette-context.tsx",
       "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled CamStack preset. Only `ready` replaces it. Callers that must say the store was…"
+    },
+    {
+      "name": "useDomainChoices",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/action-target-label.ts",
+      "summary": "The types and rooms the fleet holds, for the \"By room/type\" form. Empty until the fleet answered."
     },
     {
       "name": "useDoorbellEvents",

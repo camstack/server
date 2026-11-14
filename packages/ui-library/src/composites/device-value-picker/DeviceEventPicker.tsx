@@ -10,6 +10,7 @@ import { INPUT_SHELL, SelectedChip } from '../device-picker/SelectedChip'
 import { useDeviceLabelById } from '../device-name/use-device-label'
 import {
   DEVICE_EVENT_CAP,
+  type DeviceFiredEntry,
   describeDeviceEvent,
   type DeviceEventVocabulary,
   deviceEventVocabularyOf,
@@ -17,8 +18,9 @@ import {
   isDeviceEventGone,
   type PickedDeviceEvent,
   pickOfEntry,
+  pickOfFiredEntry,
   sameDeviceEvent,
-  toggleDeviceEvent,
+  toggleFiredEntry,
 } from './device-event-model'
 import { DeviceValuePanel } from './device-value-panel'
 import { useRecentDevices } from './use-recent-devices'
@@ -27,8 +29,9 @@ const REQUIRES = { caps: [DEVICE_EVENT_CAP] } as const
 const NO_PICKS = [] as const
 
 export interface DeviceEventPickerProps {
-  readonly value: readonly PickedDeviceEvent[]
-  readonly onChange: (next: readonly PickedDeviceEvent[]) => void
+  /** Whole `device-fired` leaves, as the automation stores them; ids are generated on add and kept. */
+  readonly value: readonly DeviceFiredEntry[]
+  readonly onChange: (next: readonly DeviceFiredEntry[]) => void
   readonly maxItems?: number
   readonly disabled?: boolean
   readonly placeholder?: string
@@ -49,18 +52,19 @@ function useDeviceEventVocabulary(deviceId: number): DeviceEventVocabulary {
 
 /** One picked event: "device · part · event", the device named by the shared resolver. */
 function EventChip({
-  pick,
+  entry,
   onRemove,
 }: {
-  readonly pick: PickedDeviceEvent
+  readonly entry: DeviceFiredEntry
   readonly onRemove?: () => void
 }): JSX.Element {
-  const device = useDeviceLabelById(pick.deviceId, 'compact')
-  const vocabulary = useDeviceEventVocabulary(pick.deviceId)
+  const device = useDeviceLabelById(entry.deviceId, 'compact')
+  const vocabulary = useDeviceEventVocabulary(entry.deviceId)
+  const pick = pickOfFiredEntry(entry)
   return (
     <SelectedChip
-      label={`${device} · ${describeDeviceEvent(pick, vocabulary)}`}
-      warning={isDeviceEventGone(pick, vocabulary)}
+      label={pick === undefined ? device : `${device} · ${describeDeviceEvent(pick, vocabulary)}`}
+      warning={pick !== undefined && isDeviceEventGone(pick, vocabulary)}
       {...(onRemove === undefined ? {} : { onRemove })}
     />
   )
@@ -68,7 +72,7 @@ function EventChip({
 
 interface EventsPageProps {
   readonly deviceId: number
-  readonly value: readonly PickedDeviceEvent[]
+  readonly value: readonly DeviceFiredEntry[]
   readonly onToggle: (pick: PickedDeviceEvent) => void
   readonly onBack: () => void
 }
@@ -125,7 +129,10 @@ function EventsPage({ deviceId, value, onToggle, onBack }: EventsPageProps): JSX
                     className="flex w-full cursor-pointer items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-surface-hover"
                   >
                     <Checkbox
-                      checked={value.some((v) => sameDeviceEvent(v, pick))}
+                      checked={value.some((v) => {
+                        const own = pickOfFiredEntry(v)
+                        return own !== undefined && sameDeviceEvent(own, pick)
+                      })}
                       onChange={() => onToggle(pick)}
                     />
                     <span className="min-w-0 flex-1 truncate">{entry.label}</span>
@@ -164,15 +171,14 @@ export function DeviceEventPicker(props: DeviceEventPickerProps): JSX.Element {
     >
       {props.value.length > 0 && (
         <div className="flex flex-wrap items-center gap-1">
-          {props.value.map((pick) => (
+          {props.value.map((entry, index) => (
             <EventChip
-              key={`${String(pick.deviceId)}|${pick.sourceId ?? ''}|${pick.eventId}`}
-              pick={pick}
+              key={entry.id ?? `${String(entry.deviceId)}-${String(index)}`}
+              entry={entry}
               {...(props.disabled === true
                 ? {}
                 : {
-                    onRemove: () =>
-                      props.onChange(props.value.filter((v) => !sameDeviceEvent(v, pick))),
+                    onRemove: () => props.onChange(props.value.filter((v) => v !== entry)),
                   })}
             />
           ))}
@@ -210,7 +216,7 @@ export function DeviceEventPicker(props: DeviceEventPickerProps): JSX.Element {
               deviceId={deviceId}
               value={props.value}
               onToggle={(pick) =>
-                props.onChange(toggleDeviceEvent(props.value, pick, props.maxItems))
+                props.onChange(toggleFiredEntry(props.value, pick, props.maxItems))
               }
               onBack={() => setDeviceId(null)}
             />

@@ -72,6 +72,16 @@ export function patchInput(input: Scalar, patch: InputPatch): TemplateInput {
     }
     case 'time-window':
       return { kind: 'time-window', ...base, ...description }
+    case 'entries':
+      // Which elements it holds is fixed by the template; only the label and the bounds are edited.
+      return {
+        kind: 'entries',
+        ...base,
+        ...description,
+        entry: input.entry,
+        allow: input.allow,
+        ...(input.maxItems === undefined ? {} : { maxItems: input.maxItems }),
+      }
     case 'boolean': {
       const def = pick(patch, 'default', input.default, asBoolean)
       return {

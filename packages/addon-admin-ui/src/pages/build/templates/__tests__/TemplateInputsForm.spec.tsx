@@ -7,11 +7,13 @@
  */
 
 import {
+  type AutomationCommandStep,
   BUILTIN_AUTOMATION_TEMPLATES,
+  type DeviceFiredLeaf,
+  DeviceType,
   type TemplateInputValues,
   type TemplateInstanceProblem,
 } from '@camstack/types'
-import type { PickedDeviceAction, PickedDeviceEvent } from '@camstack/ui-library'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { type ReactNode, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -29,8 +31,33 @@ vi.mock('../../automation/FiredFields', () => ({
 
 interface FakeEventsProps {
   readonly testId?: string
-  readonly value: readonly PickedDeviceEvent[]
-  readonly onChange: (next: readonly PickedDeviceEvent[]) => void
+  readonly value: readonly DeviceFiredLeaf[]
+  readonly onChange: (next: readonly DeviceFiredLeaf[]) => void
+}
+
+const FIRED: DeviceFiredLeaf = {
+  kind: 'device-fired',
+  id: 'ev-1',
+  deviceId: 301,
+  sourceIds: ['1'],
+  eventIds: ['press_short'],
+}
+const LONG: DeviceFiredLeaf = {
+  kind: 'device-fired',
+  id: 'ev-2',
+  deviceId: 9,
+  sourceIds: ['2'],
+  eventIds: ['press_long'],
+}
+const TOGGLE: AutomationCommandStep = {
+  kind: 'command',
+  target: { kind: 'devices', ids: [302] },
+  actionId: 'switch.toggle',
+}
+const ROOM_OFF: AutomationCommandStep = {
+  kind: 'command',
+  target: { kind: 'domain', deviceType: DeviceType.Light, roomId: 'Kitchen' },
+  actionId: 'switch.off',
 }
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
@@ -45,9 +72,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
         type="button"
         data-testid={props.testId}
         data-picks={JSON.stringify(props.value)}
-        onClick={() =>
-          props.onChange([...props.value, { deviceId: 9, sourceId: '2', eventId: 'press_long' }])
-        }
+        onClick={() => props.onChange([...props.value, LONG])}
       />
     ),
     useDeviceLabelById: (id: number) => `Device ${String(id)}`,
@@ -57,8 +82,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 
 interface FakeActionsProps {
   readonly testId?: string
-  readonly value: readonly PickedDeviceAction[]
-  readonly onChange: (next: readonly PickedDeviceAction[]) => void
+  readonly value: readonly AutomationCommandStep[]
+  readonly onChange: (next: readonly AutomationCommandStep[]) => void
 }
 
 vi.mock('../TemplateActionPicker', () => ({
@@ -67,12 +92,7 @@ vi.mock('../TemplateActionPicker', () => ({
       <button
         type="button"
         data-testid="fake-add-action"
-        onClick={() =>
-          props.onChange([
-            ...props.value,
-            { deviceIds: [304], action: { actionId: 'light.turn_on' } },
-          ])
-        }
+        onClick={() => props.onChange([...props.value, ROOM_OFF])}
       />
       <button
         type="button"
@@ -109,114 +129,59 @@ function Harness({ start, problems = [], onValues }: HarnessProps): ReactNode {
   )
 }
 
-const FILLED_COMMANDS = [
-  { targets: [302], action: { actionId: 'switch.toggle' } },
-  { targets: [303], action: { actionId: 'switch.turn_off' } },
-]
-
-const FILLED: TemplateInputValues = {
-  buttons: [
-    {
-      events: [{ button: 301, event: { eventIds: ['press_short'] } }],
-      commands: [
-        { targets: [302], action: { actionId: 'switch.toggle' } },
-        { targets: [303], action: { actionId: 'switch.turn_off' } },
-      ],
-    },
-  ],
-}
+const FILLED: TemplateInputValues = { buttons: [{ when: [FIRED], do: [TOGGLE] }] }
 
 describe('the Buttons → devices form', () => {
-  it('starts as one card named "New button" with one events field and one actions field', () => {
+  it('starts as one card named "New button" with one trigger field and one step field', () => {
     render(<Harness start={initialValues(PAYLOAD)} onValues={vi.fn()} />)
     expect(screen.getAllByTestId('template-group-buttons-row')).toHaveLength(1)
     expect(screen.getByTestId('template-group-buttons-summary').textContent).toBe('New button')
-    expect(screen.getByTestId('template-input-buttons.0.events').getAttribute('data-picks')).toBe(
-      '[]',
-    )
-    expect(screen.getByTestId('template-input-buttons.0.commands').getAttribute('data-picks')).toBe(
-      '[]',
-    )
+    expect(screen.getByTestId('template-input-buttons.0.when').getAttribute('data-picks')).toBe('[]')
+    expect(screen.getByTestId('template-input-buttons.0.do').getAttribute('data-picks')).toBe('[]')
     expect(screen.getByTestId('template-group-buttons-add').textContent).toContain('Add button')
   })
 
-  it('titles a card by the device its events read, then what fires', () => {
+  it('titles a card by the device its triggers read, then what fires', () => {
     render(<Harness start={FILLED} onValues={vi.fn()} />)
     expect(screen.getByTestId('template-group-buttons-summary').textContent).toBe(
-      'Device 301 · press_short',
+      'Device 301 · 1 · press_short',
     )
   })
 
-  it('draws the actions of a button as one field: an entry is a {targets, action} row', () => {
+  it('stores a command step verbatim, domain target included, beside the others', () => {
     const onValues = vi.fn()
     render(<Harness start={FILLED} onValues={onValues} />)
-    const field = screen.getByTestId('template-input-buttons.0.commands')
-    expect(JSON.parse(field.getAttribute('data-picks') ?? '')).toEqual([
-      { deviceIds: [302], action: { actionId: 'switch.toggle' } },
-      { deviceIds: [303], action: { actionId: 'switch.turn_off' } },
-    ])
-    expect(screen.queryByTestId('template-nested-buttons.0.commands-add')).toBeNull()
+    expect(JSON.parse(screen.getByTestId('template-input-buttons.0.do').getAttribute('data-picks') ?? '')).toEqual([TOGGLE])
     fireEvent.click(screen.getByTestId('fake-add-action'))
     expect(onValues).toHaveBeenLastCalledWith({
-      buttons: [
-        {
-          events: [{ button: 301, event: { eventIds: ['press_short'] } }],
-          commands: [
-            ...FILLED_COMMANDS,
-            { targets: [304], action: { actionId: 'light.turn_on' } },
-          ],
-        },
-      ],
+      buttons: [{ when: [FIRED], do: [TOGGLE, ROOM_OFF] }],
     })
   })
 
   it('removes the entry asked for', () => {
     const onValues = vi.fn()
-    render(<Harness start={FILLED} onValues={onValues} />)
+    render(<Harness start={{ buttons: [{ when: [FIRED], do: [TOGGLE, ROOM_OFF] }] }} onValues={onValues} />)
     fireEvent.click(screen.getByTestId('fake-remove-action'))
-    expect(onValues).toHaveBeenLastCalledWith({
-      buttons: [
-        {
-          events: [{ button: 301, event: { eventIds: ['press_short'] } }],
-          commands: [{ targets: [303], action: { actionId: 'switch.turn_off' } }],
-        },
-      ],
-    })
+    expect(onValues).toHaveBeenLastCalledWith({ buttons: [{ when: [FIRED], do: [ROOM_OFF] }] })
   })
 
-  it('draws the events of a button as one field: a pick is a row of that device and event', () => {
+  it('stores a trigger as a whole device-fired leaf, its id kept', () => {
     const onValues = vi.fn()
     render(<Harness start={FILLED} onValues={onValues} />)
-    const field = screen.getByTestId('template-input-buttons.0.events')
-    expect(JSON.parse(field.getAttribute('data-picks') ?? '')).toEqual([
-      { deviceId: 301, eventId: 'press_short' },
-    ])
-    expect(screen.queryByTestId('template-nested-buttons.0.events-add')).toBeNull()
+    const field = screen.getByTestId('template-input-buttons.0.when')
+    expect(JSON.parse(field.getAttribute('data-picks') ?? '')).toEqual([FIRED])
     fireEvent.click(field)
     expect(onValues).toHaveBeenLastCalledWith({
-      buttons: [
-        {
-          events: [
-            { button: 301, event: { eventIds: ['press_short'] } },
-            { button: 9, event: { eventIds: ['press_long'], sourceIds: ['2'] } },
-          ],
-          commands: FILLED_COMMANDS,
-        },
-      ],
+      buttons: [{ when: [FIRED, LONG], do: [TOGGLE] }],
     })
   })
 
   it('shows a problem under the field its address names', () => {
     const problems: readonly TemplateInstanceProblem[] = [
-      {
-        code: 'missing-input',
-        input: 'buttons.0.commands.1.targets',
-        detail: 'Devices is required',
-      },
+      { code: 'missing-input', input: 'buttons.0.do', detail: 'add at least one' },
     ]
     render(<Harness start={FILLED} problems={problems} onValues={vi.fn()} />)
-    const nested = screen.getByTestId('template-nested-buttons.0.commands')
-    expect(within(nested).getByRole('alert').textContent).toBe('Devices is required')
+    expect(screen.getByText('add at least one')).toBeTruthy()
   })
 })
 

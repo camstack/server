@@ -41,11 +41,18 @@
  */
 import { z } from 'zod'
 import { findVocabAction } from '../device/cap-vocabulary/action-index.js'
-import { AutomationRecipeSchema, type AutomationRecipe } from '../automation/recipe.js'
+import {
+  AutomationBranchStepSchema,
+  AutomationRecipeSchema,
+  type AutomationRecipe,
+} from '../automation/recipe.js'
+import { AutomationWhenSchema, EVENT_LEAF_ID_RE } from '../automation/when.js'
 import {
   TemplateActionValueSchema,
+  TemplateEntriesValueSchema,
   TemplateEventValueSchema,
   TemplateTimeWindowValueSchema,
+  type TemplateEntry,
   type TemplateGroupRow,
   type TemplateInputValue,
   type TemplateInputValues,
@@ -133,7 +140,23 @@ const TimeWindowInputSchema = z.object({
   ...inputBase,
 })
 
+export const TEMPLATE_ENTRIES_MAX = 20
+/**
+ * A list of automation elements, verbatim: `trigger` entries are event leaves
+ * of a `when` tree (`device-fired`), `step` entries are steps of a branch
+ * (`command`, `wait`). `allow` names the kinds the list takes; each entry is
+ * judged by the automation's own schema, then by `allow`.
+ */
+const EntriesInputSchema = z.object({
+  kind: z.literal('entries'),
+  ...inputBase,
+  entry: z.enum(['trigger', 'step']),
+  allow: z.array(z.string().min(1)).min(1).max(10),
+  maxItems: z.number().int().min(1).max(TEMPLATE_ENTRIES_MAX).optional(),
+})
+
 export const TemplateScalarInputSchema = z.discriminatedUnion('kind', [
+  EntriesInputSchema,
   DeviceInputSchema,
   EventInputSchema,
   ActionInputSchema,
@@ -202,6 +225,21 @@ export const TemplateRowIdBindingSchema = z.object({
   path: TemplatePathSchema,
 })
 
+/**
+ * Appends an `entries` input's elements, verbatim, to the list at `path`. In a
+ * row's bindings `input` is the row's own entries input and `path` is from the
+ * row's item; at the top level, with `in`, it appends the `input` entries of
+ * EVERY row of the group `in` (all buttons' triggers into one `when`), and
+ * without `in` it appends a top-level entries input.
+ */
+export const TemplateEntriesBindingSchema = z.object({
+  kind: z.literal('entries'),
+  input: inputKey,
+  path: TemplatePathSchema,
+  in: inputKey.optional(),
+})
+export type TemplateEntriesBinding = z.infer<typeof TemplateEntriesBindingSchema>
+
 /** What fills the item of a row that holds values only. */
 export const TemplateLeafRowBindingSchema = z.discriminatedUnion('kind', [
   TemplateValueBindingSchema,
@@ -231,6 +269,7 @@ export type TemplateNestedRowsBinding = z.infer<typeof TemplateNestedRowsBinding
 
 export const TemplateRowItemBindingSchema = z.discriminatedUnion('kind', [
   TemplateValueBindingSchema,
+  TemplateEntriesBindingSchema,
   TemplateRowIdBindingSchema,
   TemplateRowIdsBindingSchema,
   TemplateNestedRowsBindingSchema,
@@ -264,6 +303,7 @@ export type TemplateGateBinding = z.infer<typeof TemplateGateBindingSchema>
 
 export const TemplateBindingSchema = z.discriminatedUnion('kind', [
   TemplateValueBindingSchema,
+  TemplateEntriesBindingSchema,
   TemplateRowsBindingSchema,
   TemplateGateBindingSchema,
 ])
@@ -339,15 +379,29 @@ function leafBindingProblems(
         issues.push(`row binding names "${row.input}", which group "${owner.key}" does not declare`)
       } else if (input.kind === 'group') {
         issues.push(`group "${input.key}" is bound with rows, not a value`)
+      } else if (input.kind === 'entries') {
+        issues.push(`entries "${input.key}" are bound with entries, not a value`)
       }
       continue
     }
     const nested = owner.inputs.find((i) => i.key === row.input)
+    if (row.kind === 'entries') {
+      if (nested === undefined || nested.kind !== 'entries') {
+        issues.push(`"${row.input}" is not an entries input inside "${owner.key}"`)
+      }
+      continue
+    }
+    if (row.kind === 'row-ids') {
+      if (nested === undefined || (nested.kind !== 'group' && nested.kind !== 'entries')) {
+        issues.push(`"${row.input}" is not a group or entries input inside "${owner.key}"`)
+      }
+      continue
+    }
     if (nested === undefined || nested.kind !== 'group') {
       issues.push(`"${row.input}" is not a group inside "${owner.key}"`)
       continue
     }
-    if (row.kind === 'rows') issues.push(...leafBindingProblems(row.bindings, nested))
+    issues.push(...leafBindingProblems(row.bindings, nested))
   }
   return issues
 }
@@ -381,6 +435,21 @@ function bindingProblems(
     })
   }
   payload.bindings.forEach((binding, index) => {
+    if (binding.kind === 'entries' && binding.in !== undefined) {
+      const group = byKey.get(binding.in)
+      const entries =
+        group !== undefined && group.kind === 'group'
+          ? group.inputs.find((i) => i.key === binding.input)
+          : undefined
+      if (entries === undefined || entries.kind !== 'entries') {
+        ctx.addIssue({
+          code: 'custom',
+          message: `"${binding.input}" is not an entries input inside the group "${binding.in}"`,
+          path: ['bindings', index],
+        })
+      }
+      return
+    }
     const input = byKey.get(binding.input)
     if (input === undefined) {
       ctx.addIssue({
@@ -396,6 +465,18 @@ function bindingProblems(
         message: `group "${input.key}" is bound with rows, not a value`,
         path: ['bindings', index],
       })
+    }
+    if ((binding.kind === 'entries') !== (input.kind === 'entries') && binding.kind !== 'rows') {
+      if (binding.kind === 'entries' || binding.kind === 'value') {
+        ctx.addIssue({
+          code: 'custom',
+          message:
+            binding.kind === 'entries'
+              ? `entries bindings read an entries input: "${input.key}" is ${input.kind}`
+              : `entries "${input.key}" are bound with entries, not a value`,
+          path: ['bindings', index],
+        })
+      }
     }
     if ((binding.kind === 'gate') !== (input.kind === 'time-window')) {
       ctx.addIssue({
@@ -480,7 +561,33 @@ function valueProblem(input: TemplateScalarInput, value: TemplateInputValue): st
       const parsed = TemplateTimeWindowValueSchema.safeParse(value)
       return parsed.success ? null : (parsed.error.issues[0]?.message ?? 'pick a time window')
     }
+    case 'entries':
+      return entriesProblem(input, value)
   }
+}
+
+/** Each entry is judged by the automation's own schema, then by the kinds the input allows. */
+function entriesProblem(
+  input: Extract<TemplateScalarInput, { kind: 'entries' }>,
+  value: TemplateInputValue,
+): string | null {
+  const list = TemplateEntriesValueSchema.safeParse(value)
+  if (!list.success) return 'a list of entries is required'
+  if (list.data.length === 0) return 'add at least one'
+  if (input.maxItems !== undefined && list.data.length > input.maxItems) {
+    return `at most ${input.maxItems}`
+  }
+  for (const entry of list.data) {
+    const parsed =
+      input.entry === 'trigger'
+        ? AutomationWhenSchema.safeParse(entry)
+        : AutomationBranchStepSchema.safeParse(entry)
+    if (!parsed.success) return parsed.error.issues[0]?.message ?? 'an entry is not valid'
+    if (!input.allow.includes(parsed.data.kind)) {
+      return `"${parsed.data.kind}" is not allowed here`
+    }
+  }
+  return null
 }
 
 function defaultOf(input: TemplateScalarInput): TemplateScalarValue | undefined {
@@ -538,16 +645,23 @@ function resolveScalars(
       }
       continue
     }
-    const problem = isScalar(raw) ? valueProblem(input, raw) : 'a single value is required'
-    if (problem !== null || !isScalar(raw)) {
+    const problem =
+      input.kind === 'entries' || isScalar(raw)
+        ? valueProblem(input, raw)
+        : 'a single value is required'
+    if (problem !== null) {
       problems.push({
         code: 'invalid-input',
         input: address,
-        detail: problem ?? 'invalid value',
+        detail: problem,
       })
       continue
     }
-    out.set(input.key, raw)
+    if (input.kind === 'entries') {
+      out.set(input.key, TemplateEntriesValueSchema.parse(raw))
+    } else if (isScalar(raw)) {
+      out.set(input.key, raw)
+    }
   }
   return out
 }
@@ -713,6 +827,23 @@ function appendAt(
   return setAt(root, path, [...list, ...items])
 }
 
+/** The entries a row holds under `key`, each trigger carrying the leaf id the `triggered-by` of its row reads. */
+function entriesOf(
+  row: ResolvedLevel,
+  input: Extract<TemplateRowInput, { kind: 'entries' }>,
+  rowId: string,
+): readonly TemplateEntry[] {
+  const value = row.scalars.get(input.key)
+  const parsed = TemplateEntriesValueSchema.safeParse(value)
+  const entries = parsed.success ? parsed.data : []
+  if (input.entry !== 'trigger') return entries
+  return entries.map((entry, index) => {
+    const id = Reflect.get(entry, 'id')
+    const named = typeof id === 'string' && EVENT_LEAF_ID_RE.test(id)
+    return named ? entry : { ...entry, id: rowIdOf(rowId, input.key, index) }
+  })
+}
+
 /** One row's item: the template JSON with the row's values, ids and nested rows written in. */
 function fillItem(
   template: unknown,
@@ -735,6 +866,19 @@ function fillItem(
       continue
     }
     const nested = group.inputs.find((i) => i.key === binding.input)
+    if (binding.kind === 'entries') {
+      if (nested === undefined || nested.kind !== 'entries') continue
+      item = appendAt(item, binding.path, entriesOf(row, nested, rowId), nested.key)
+      continue
+    }
+    if (binding.kind === 'row-ids' && nested !== undefined && nested.kind === 'entries') {
+      item = setAt(
+        item,
+        binding.path,
+        entriesOf(row, nested, rowId).map((entry) => Reflect.get(entry, 'id')),
+      )
+      continue
+    }
     if (nested === undefined || nested.kind !== 'group') continue
     const nestedRows = row.groups.get(nested.key) ?? []
     if (binding.kind === 'row-ids') {
@@ -791,6 +935,23 @@ function applyRows(
   return appendAt(root, binding.path, items, nested.key)
 }
 
+/** The `input` entries of EVERY row of the group `binding.in`, concatenated onto the list at the path. */
+function applyEntriesOfRows(
+  root: unknown,
+  binding: TemplateEntriesBinding,
+  inputs: readonly TemplateInput[],
+  resolved: ResolvedLevel,
+): unknown {
+  const group = inputs.find((i) => i.key === binding.in)
+  if (group === undefined || group.kind !== 'group') return root
+  const entries = group.inputs.find((i) => i.key === binding.input)
+  if (entries === undefined || entries.kind !== 'entries') return root
+  const items = (resolved.groups.get(group.key) ?? []).flatMap((row, index) =>
+    entriesOf(row, entries, rowIdOf(null, group.key, index)),
+  )
+  return appendAt(root, binding.path, items, entries.key)
+}
+
 // ── expansion ────────────────────────────────────────────────────────────
 
 export type AutomationTemplateExpansion =
@@ -811,6 +972,10 @@ export function expandAutomationTemplate(
   let body: unknown = payload.body
   try {
     for (const binding of payload.bindings) {
+      if (binding.kind === 'entries' && binding.in !== undefined) {
+        body = applyEntriesOfRows(body, binding, payload.inputs, resolved)
+        continue
+      }
       const input = payload.inputs.find((i) => i.key === binding.input)
       if (input === undefined) continue
       if (binding.kind === 'rows') {
@@ -821,6 +986,11 @@ export function expandAutomationTemplate(
       if (input.kind === 'group') continue
       const value = resolved.scalars.get(input.key)
       if (value === undefined) continue
+      if (binding.kind === 'entries') {
+        const list = TemplateEntriesValueSchema.safeParse(value)
+        if (list.success) body = appendAt(body, binding.path, list.data, input.key)
+        continue
+      }
       body =
         binding.kind === 'gate'
           ? writeGate(body, binding, value)

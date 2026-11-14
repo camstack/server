@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 import {
-  ActionStepSchema,
   AutomationTemplateLinkSchema,
   AutomationTemplatePayloadSchema,
   BUILTIN_AUTOMATION_TEMPLATES,
@@ -16,6 +15,40 @@ import {
 import { ConditionMirror, evaluateWhenTree } from '../../automation/condition-eval.js'
 import type { TimeSite } from '../../time/time-spec.js'
 
+const FIRED = { kind: 'device-fired', deviceId: 5656, sourceIds: ['1'], eventIds: ['press_short'] }
+const STEP = { kind: 'command', actionId: 'switch.on', target: { kind: 'devices', ids: [50] } }
+
+/** The operator's: Tasto 1 short press toggles two lights; a second button turns a room's switches off. */
+const BUTTONS_2: TemplateInputValues = {
+  buttons: [
+    {
+      when: [FIRED],
+      do: [
+        { kind: 'command', actionId: 'switch.toggle', target: { kind: 'devices', ids: [6001] } },
+        { kind: 'command', actionId: 'switch.toggle', target: { kind: 'devices', ids: [6002] } },
+      ],
+    },
+    {
+      when: [
+        {
+          kind: 'device-fired',
+          id: 'btn-b',
+          deviceId: 5656,
+          sourceIds: ['2'],
+          eventIds: ['press_long'],
+        },
+      ],
+      do: [
+        {
+          kind: 'command',
+          actionId: 'switch.off',
+          target: { kind: 'domain', deviceType: 'switch', roomId: 'Bagno' },
+        },
+      ],
+    },
+  ],
+}
+
 function payloadOf(id: string) {
   const found = builtinAutomationTemplate(id)
   if (found === undefined) throw new Error(`no built-in ${id}`)
@@ -30,46 +63,8 @@ describe('built-in automation templates', () => {
     }
   })
 
-  it('Buttons → devices: two keys of one button drive two switches', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
-      buttons: [
-        {
-          events: [{ button: 40, event: { sourceIds: ['1'], kinds: ['press'] } }],
-          commands: [{ targets: [50], action: { actionId: 'switch.on' } }],
-        },
-        {
-          events: [{ button: 40, event: { sourceIds: ['2'], kinds: ['press'] } }],
-          commands: [{ targets: [51], action: { actionId: 'switch.off' } }],
-        },
-      ],
-    })
-    expect(out.ok).toBe(true)
-    if (!out.ok) return
-    expect(out.recipe.when).toMatchObject({
-      kind: 'any',
-      children: [{ id: 'buttons-0-events-0' }, { id: 'buttons-1-events-0' }],
-    })
-    expect(out.recipe.actions).toHaveLength(1)
-  })
-
-  it('Buttons → devices: a row with two events of two devices and two actions is two leaves and one branch', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
-      buttons: [
-        {
-          events: [
-            {
-              button: 40,
-              event: { sourceIds: ['1'], eventIds: ['press_short'] },
-            },
-            { button: 41, event: { kinds: ['long-press'] } },
-          ],
-          commands: [
-            { targets: [50], action: { actionId: 'switch.toggle' } },
-            { targets: [51, 52], action: { actionId: 'switch.off' } },
-          ],
-        },
-      ],
-    })
+  it('Buttons → devices: two buttons are one `any` and one branch each, steps verbatim', () => {
+    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), BUTTONS_2)
     expect(out.ok).toBe(true)
     if (!out.ok) return
     expect(out.recipe.when).toEqual({
@@ -77,102 +72,101 @@ describe('built-in automation templates', () => {
       children: [
         {
           kind: 'device-fired',
-          id: 'buttons-0-events-0',
-          deviceId: 40,
+          id: 'buttons-0-when-0',
+          deviceId: 5656,
           sourceIds: ['1'],
           eventIds: ['press_short'],
         },
         {
           kind: 'device-fired',
-          id: 'buttons-0-events-1',
-          deviceId: 41,
-          kinds: ['long-press'],
+          id: 'btn-b',
+          deviceId: 5656,
+          sourceIds: ['2'],
+          eventIds: ['press_long'],
         },
       ],
     })
-    const choose = out.recipe.actions[0]
-    expect(choose).toMatchObject({
-      kind: 'choose',
-      branches: [
-        {
-          if: {
-            kind: 'triggered-by',
-            leafIds: ['buttons-0-events-0', 'buttons-0-events-1'],
+    expect(out.recipe.actions).toEqual([
+      {
+        kind: 'choose',
+        branches: [
+          {
+            if: { kind: 'triggered-by', leafIds: ['buttons-0-when-0'] },
+            steps: [
+              { kind: 'command', actionId: 'switch.toggle', target: { kind: 'devices', ids: [6001] } },
+              { kind: 'command', actionId: 'switch.toggle', target: { kind: 'devices', ids: [6002] } },
+            ],
           },
-          steps: [
-            {
-              kind: 'command',
-              actionId: 'switch.toggle',
-              target: { kind: 'devices', ids: [50] },
-            },
-            {
-              kind: 'command',
-              actionId: 'switch.off',
-              target: { kind: 'devices', ids: [51, 52] },
-            },
-          ],
-        },
-      ],
-    })
-    if (choose?.kind !== 'choose') return
-    expect(choose.branches).toHaveLength(1)
-    for (const step of choose.branches[0]?.steps ?? []) {
-      expect(ActionStepSchema.safeParse(step).success).toBe(true)
-    }
-  })
-
-  it('Buttons → devices names a missing value of a nested row by its address', () => {
-    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
-      buttons: [
-        {
-          events: [{ button: 40, event: { kinds: ['press'] } }],
-          commands: [
-            { targets: [50], action: { actionId: 'switch.on' } },
-            { action: { actionId: 'switch.off' } },
-          ],
-        },
-      ],
-    })
-    expect(out.ok).toBe(false)
-    if (out.ok) return
-    expect(out.problems).toEqual([
-      expect.objectContaining({
-        code: 'missing-input',
-        input: 'buttons.0.commands.1.targets',
-      }),
+          {
+            if: { kind: 'triggered-by', leafIds: ['btn-b'] },
+            steps: [
+              {
+                kind: 'command',
+                actionId: 'switch.off',
+                target: { kind: 'domain', deviceType: 'switch', roomId: 'Bagno' },
+              },
+            ],
+          },
+        ],
+      },
     ])
   })
 
-  it('Buttons → devices refuses a row with no action', () => {
+  it('Buttons → devices: a domain-target command is stored and expands unchanged', () => {
+    const step = {
+      kind: 'command',
+      actionId: 'switch.off',
+      target: { kind: 'domain', deviceType: 'switch', roomId: 'Bagno' },
+    }
     const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
-      buttons: [
-        {
-          events: [{ button: 40, event: { kinds: ['press'] } }],
-          commands: [],
-        },
-      ],
+      buttons: [{ when: [FIRED], do: [step] }],
+    })
+    expect(out.ok).toBe(true)
+    if (!out.ok) return
+    const choose = out.recipe.actions[0]
+    expect(choose?.kind === 'choose' ? choose.branches[0]?.steps : undefined).toEqual([step])
+  })
+
+  it('Buttons → devices: an entry of a kind the input does not allow is refused', () => {
+    const wait = { kind: 'wait', seconds: 5 }
+    const manual = { kind: 'manual' }
+    const cases = [
+      { when: [FIRED], do: [wait], at: 'buttons.0.do' },
+      { when: [manual], do: [STEP], at: 'buttons.0.when' },
+    ]
+    for (const c of cases) {
+      const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+        buttons: [{ when: c.when, do: c.do }],
+      })
+      expect(out.ok).toBe(false)
+      if (out.ok) return
+      expect(out.problems).toEqual([
+        expect.objectContaining({ code: 'invalid-input', input: c.at }),
+      ])
+    }
+  })
+
+  it('Buttons → devices: an entry that is not an automation element is refused', () => {
+    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+      buttons: [{ when: [FIRED], do: [{ kind: 'command', actionId: 'no.such_action' }] }],
+    })
+    expect(out.ok).toBe(false)
+  })
+
+  it('Buttons → devices names a missing list by its address', () => {
+    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+      buttons: [{ when: [FIRED], do: [] }],
     })
     expect(out.ok).toBe(false)
     if (out.ok) return
     expect(out.problems).toEqual([
-      expect.objectContaining({
-        code: 'missing-input',
-        input: 'buttons.0.commands',
-      }),
+      expect.objectContaining({ code: 'invalid-input', input: 'buttons.0.do' }),
     ])
   })
 
   it('Buttons → devices: a new instance keeps its link and re-expands to the same body', () => {
-    const values = {
-      buttons: [
-        {
-          events: [{ button: 40, event: { kinds: ['press' as const] } }],
-          commands: [{ targets: [50], action: { actionId: 'switch.on' } }],
-        },
-      ],
-    }
     const payload = payloadOf('builtin:buttons-to-devices')
-    const made = instantiateAutomationTemplate('builtin:buttons-to-devices', payload, values)
+    const made = instantiateAutomationTemplate('builtin:buttons-to-devices', payload, BUTTONS_2)
     expect(made.ok).toBe(true)
     if (!made.ok) return
     expect(AutomationTemplateLinkSchema.safeParse(made.recipe.template).success).toBe(true)
@@ -182,10 +176,7 @@ describe('built-in automation templates', () => {
   })
 
   it('Buttons → devices refuses a seventh row (one choose branch per row)', () => {
-    const row: TemplateGroupRow = {
-      events: [{ button: 40, event: { kinds: ['press'] } }],
-      commands: [{ targets: [50], action: { actionId: 'switch.on' } }],
-    }
+    const row: TemplateGroupRow = { when: [FIRED], do: [STEP] }
     const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
       buttons: Array.from({ length: 7 }, () => row),
     })
@@ -213,14 +204,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
     between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
     days: ['mon', 'tue', 'wed', 'thu', 'fri'],
   }
-  const buttons: TemplateInputValues = {
-    buttons: [
-      {
-        events: [{ button: 40, event: { sourceIds: ['1'], kinds: ['press'] } }],
-        commands: [{ targets: [50], action: { actionId: 'switch.on' } }],
-      },
-    ],
-  }
+  const buttons: TemplateInputValues = { buttons: [{ when: [FIRED], do: [STEP] }] }
   const motion: TemplateInputValues = { sensor: 3, lights: [4, 5] }
 
   /** The built-in as it was before the window existed: no input, no gate. */
@@ -286,7 +270,7 @@ describe('built-in automation templates: the optional "Only when" window', () =>
     if (branchIf === undefined) throw new Error('expected a guarded branch')
     const guard = evaluateWhenTree(branchIf, mirror, tuesdayNight, {
       site: ROME,
-      trigger: { leafId: 'buttons-0-events-0' },
+      trigger: { leafId: 'buttons-0-when-0' },
     })
     expect(guard.pass).toBe(true)
   })

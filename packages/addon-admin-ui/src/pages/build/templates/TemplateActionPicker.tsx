@@ -7,18 +7,21 @@
  * What the devices offer is unknown until their bindings answer: the select
  * then offers nothing rather than claiming the devices can do nothing (D315).
  */
+import type { ActionTarget, AutomationCommandStep } from '@camstack/types'
 import {
   type DeviceActionEditorProps,
   type DeviceActionEntryLabel,
   DeviceActionPicker,
-  type PickedDeviceAction,
   Select,
-  useDeviceLabelsByIds,
+  useActionTargetLabel,
+  useDeviceNameIndex,
 } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { useDevicesBoundCaps } from '../../../components/device-do-action/use-device-bound-caps'
 import {
   type ActionFleetDevice,
+  fleetActions,
+  hasDynamicArg,
   targetActions,
 } from '../../../components/device/customize/source-selector/source-selector-action-model'
 import type { AutomationDevice } from '../automation/automation-data'
@@ -33,15 +36,46 @@ import {
 
 const NONE = ''
 
-function useOfferedActions(deviceIds: readonly number[], devices: readonly AutomationDevice[]) {
-  const caps = useDevicesBoundCaps(deviceIds)
-  const known = caps.data !== undefined
-  const fleet: readonly ActionFleetDevice[] = deviceIds.map((id) => {
+/** The ids of the fleet devices a domain target covers: its type and its room, each optional. */
+function domainDeviceIds(
+  index: ReturnType<typeof useDeviceNameIndex>,
+  target: Extract<ActionTarget, { kind: 'domain' }>,
+): readonly number[] | null {
+  if (index === null) return null
+  const room = target.roomId?.trim().toLowerCase()
+  return [...index.byId.values()]
+    .filter(
+      (device) =>
+        (target.deviceType === undefined || device.type === target.deviceType) &&
+        (room === undefined || device.location?.trim().toLowerCase() === room),
+    )
+    .map((device) => device.id)
+}
+
+const NO_IDS: readonly number[] = []
+
+function useOfferedActions(target: ActionTarget, devices: readonly AutomationDevice[]) {
+  const index = useDeviceNameIndex()
+  const ids =
+    target.kind === 'devices'
+      ? target.ids
+      : target.kind === 'domain'
+        ? (domainDeviceIds(index, target) ?? NO_IDS)
+        : NO_IDS
+  const caps = useDevicesBoundCaps(ids)
+  // A domain that covers no device is an answer (it offers nothing); an unread fleet is not.
+  const answered =
+    target.kind === 'domain' ? index !== null && (ids.length === 0 || caps.data !== undefined) : caps.data !== undefined
+  const fleet: readonly ActionFleetDevice[] = ids.map((id) => {
     const type = devices.find((d) => d.id === id)?.type
     return { id, caps: caps.data?.get(id) ?? [], ...(type === undefined ? {} : { type }) }
   })
-  const target = { kind: 'devices' as const, ids: [...deviceIds] }
-  return { known, target, actions: known ? targetActions(fleet, target, {}) : [] }
+  const actions = !answered
+    ? []
+    : target.kind === 'domain'
+      ? fleetActions(fleet).filter((a) => !hasDynamicArg(a))
+      : targetActions(fleet, target, {})
+  return { known: answered, actions }
 }
 
 export interface ActionEditorProps extends DeviceActionEditorProps {
@@ -50,9 +84,9 @@ export interface ActionEditorProps extends DeviceActionEditorProps {
   readonly testId?: string
 }
 
-/** One select over what the devices all offer, and the open args of the pick. */
+/** One select over what the target offers, and the open args of the pick. */
 export function ActionEditor({
-  deviceIds,
+  target,
   value,
   onChange,
   devices,
@@ -61,7 +95,7 @@ export function ActionEditor({
 }: ActionEditorProps) {
   const { t, i18n } = useTranslation()
   const locale = vocabLocale(i18n.language)
-  const { known, target, actions } = useOfferedActions(deviceIds, devices)
+  const { known, actions } = useOfferedActions(target, devices)
   const picked = value === undefined ? undefined : actions.find((a) => a.id === value.actionId)
   const values: StepArgValues =
     picked === undefined || value === undefined
@@ -74,8 +108,7 @@ export function ActionEditor({
       onChange(undefined)
       return
     }
-    const step = buildCommandStep(action, target, argValues ?? defaultArgValues(action))
-    onChange({ actionId: step.actionId, ...(step.args === undefined ? {} : { args: step.args }) })
+    onChange(buildCommandStep(action, target, argValues ?? defaultArgValues(action)))
   }
 
   const placeholder = known
@@ -106,7 +139,7 @@ export function ActionEditor({
       {picked !== undefined && picked.openArgs.length > 0 && (
         <CommandArgs
           action={picked}
-          deviceId={deviceIds.length === 1 ? (deviceIds[0] ?? null) : null}
+          deviceId={target.kind === 'devices' && target.ids.length === 1 ? (target.ids[0] ?? null) : null}
           values={values}
           locale={locale}
           variables={[]}
@@ -118,8 +151,8 @@ export function ActionEditor({
 }
 
 export interface TemplateActionPickerProps {
-  readonly value: readonly PickedDeviceAction[]
-  readonly onChange: (next: readonly PickedDeviceAction[]) => void
+  readonly value: readonly AutomationCommandStep[]
+  readonly onChange: (next: readonly AutomationCommandStep[]) => void
   readonly devices: readonly AutomationDevice[]
   readonly maxItems?: number
   readonly disabled?: boolean
@@ -130,12 +163,12 @@ export interface TemplateActionPickerProps {
 export function TemplateActionPicker({ devices, ...props }: TemplateActionPickerProps) {
   const { i18n } = useTranslation()
   const locale = vocabLocale(i18n.language)
-  const useEntryLabel = (pick: PickedDeviceAction): DeviceActionEntryLabel => {
-    const names = useDeviceLabelsByIds(pick.deviceIds, 'compact')
-    const { known, actions } = useOfferedActions(pick.deviceIds, devices)
-    const offered = actions.find((a) => a.id === pick.action.actionId)
+  const useEntryLabel = (step: AutomationCommandStep): DeviceActionEntryLabel => {
+    const where = useActionTargetLabel(step.target)
+    const { known, actions } = useOfferedActions(step.target, devices)
+    const offered = actions.find((a) => a.id === step.actionId)
     return {
-      label: `${offered?.label[locale] ?? pick.action.actionId} · ${names.join(', ')}`,
+      label: `${offered?.label[locale] ?? step.actionId} · ${where}`,
       warning: known && offered === undefined,
     }
   }

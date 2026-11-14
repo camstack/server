@@ -50,7 +50,7 @@ export function intersectActions(
   )
 }
 
-function hasDynamicArg(action: ResolvedVocabAction): boolean {
+export function hasDynamicArg(action: ResolvedVocabAction): boolean {
   return action.openArgs.some((arg) => arg.offer.kind === 'dynamic')
 }
 

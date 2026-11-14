@@ -43,6 +43,16 @@ export type TemplateActionValue = z.infer<typeof TemplateActionValueSchema>
 export const TemplateTimeWindowValueSchema = TimeIsWindowSchema
 export type TemplateTimeWindowValue = z.infer<typeof TemplateTimeWindowValueSchema>
 
+/**
+ * An `entries` input's value: automation elements VERBATIM — event leaves of a
+ * `when` tree, or steps of a branch. Judged with the automation's own schemas
+ * (`valueProblem` in the template engine), so there is no second shape here.
+ */
+export const TemplateEntrySchema = z.record(z.string(), z.unknown())
+export type TemplateEntry = z.infer<typeof TemplateEntrySchema>
+export const TemplateEntriesValueSchema = z.array(TemplateEntrySchema)
+export type TemplateEntriesValue = z.infer<typeof TemplateEntriesValueSchema>
+
 /** The value of one non-group input. Which member is right is the input kind's to judge. */
 export const TemplateScalarValueSchema = z.union([
   z.number(),
@@ -52,6 +62,7 @@ export const TemplateScalarValueSchema = z.union([
   TemplateEventValueSchema,
   TemplateActionValueSchema,
   TemplateTimeWindowValueSchema,
+  TemplateEntriesValueSchema,
 ])
 export type TemplateScalarValue = z.infer<typeof TemplateScalarValueSchema>
 

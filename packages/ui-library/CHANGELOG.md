@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device picker: the selected device is named with its parent like everywhere else, the Integration filter shows which provider each instance belongs to, and the closed field is as tall as a select
 - Device picker: an event mode (DeviceEventPicker) picks several events of several devices in one field — device, then its parts and events
 - The device picker has an action mode: one field lists the chosen actions and a two-step picker (devices, then the action they share and its args) adds or edits one
+- The device picker's event mode yields whole device-fired triggers and its action mode whole command steps, with a By room/type choice for an action's target
 
 ## [1.2.442] - 2026-11-14
 
