@@ -20,6 +20,16 @@
  *    writes `<group>-<index>`, so a row's event leaf and the branch that reads it
  *    (`triggered-by`) agree on one name.
  *
+ * A group row may hold one more level of groups (a button row with a list of
+ * events and a list of commands). Three bindings reach that level:
+ *  - a `rows` binding INSIDE a row's bindings appends one copy of its item per
+ *    nested row, at a path relative to the parent row's item (a branch's steps);
+ *  - a top-level `rows` binding with `nested` appends one item per nested row of
+ *    EVERY row, flat (one event leaf per event of every button);
+ *  - `row-ids` writes the ids of a row's nested rows
+ *    (`<group>-<index>-<nested>-<index>`), the same ids `row-id` gives those
+ *    nested rows, so a branch can name every leaf of its row.
+ *
  * Everything here is pure: the admin UI expands on save and the hub re-expands
  * every instance when a template changes, with the same function.
  */
@@ -123,12 +133,31 @@ export const TemplateScalarInputSchema = z.discriminatedUnion('kind', [
 export type TemplateScalarInput = z.infer<typeof TemplateScalarInputSchema>
 
 export const TEMPLATE_GROUP_ROWS_MAX = 20
-const GroupInputSchema = z.object({
+const groupBase = {
   kind: z.literal('group'),
   ...inputBase,
-  inputs: z.array(TemplateScalarInputSchema).min(1).max(10),
+  /** What one row is, in the singular and lower case ("button"): "Add button". */
+  rowLabel: z.string().min(1).max(40).optional(),
   minRows: z.number().int().min(0).max(TEMPLATE_GROUP_ROWS_MAX).optional(),
   maxRows: z.number().int().min(1).max(TEMPLATE_GROUP_ROWS_MAX).optional(),
+}
+/** A group inside a group row: its rows hold values only, never another group. */
+const NestedGroupInputSchema = z.object({
+  ...groupBase,
+  inputs: z.array(TemplateScalarInputSchema).min(1).max(10),
+})
+export type TemplateNestedGroupInput = z.infer<typeof NestedGroupInputSchema>
+
+export const TemplateRowInputSchema = z.discriminatedUnion('kind', [
+  ...TemplateScalarInputSchema.options,
+  NestedGroupInputSchema,
+])
+/** What a group row may hold: a value, or one more level of rows. */
+export type TemplateRowInput = z.infer<typeof TemplateRowInputSchema>
+
+const GroupInputSchema = z.object({
+  ...groupBase,
+  inputs: z.array(TemplateRowInputSchema).min(1).max(10),
 })
 export type TemplateGroupInput = z.infer<typeof GroupInputSchema>
 
@@ -159,15 +188,49 @@ export const TemplateRowIdBindingSchema = z.object({
   path: TemplatePathSchema,
 })
 
+/** What fills the item of a row that holds values only. */
+export const TemplateLeafRowBindingSchema = z.discriminatedUnion('kind', [
+  TemplateValueBindingSchema,
+  TemplateRowIdBindingSchema,
+])
+export type TemplateLeafRowBinding = z.infer<typeof TemplateLeafRowBindingSchema>
+
+/** The ids of a row's nested rows, as a list (a branch that reads every leaf of its row). */
+export const TemplateRowIdsBindingSchema = z.object({
+  kind: z.literal('row-ids'),
+  /** The nested group whose rows are named. */
+  input: inputKey,
+  path: TemplatePathSchema,
+})
+
+/** One copy of `item` per nested row, appended inside the parent row's item. */
+export const TemplateNestedRowsBindingSchema = z.object({
+  kind: z.literal('rows'),
+  /** The nested group, declared by the parent row's group. */
+  input: inputKey,
+  /** The list the nested rows are appended to, from the parent row's item. */
+  path: TemplatePathSchema,
+  item: z.unknown(),
+  bindings: z.array(TemplateLeafRowBindingSchema).max(40),
+})
+export type TemplateNestedRowsBinding = z.infer<typeof TemplateNestedRowsBindingSchema>
+
 export const TemplateRowItemBindingSchema = z.discriminatedUnion('kind', [
   TemplateValueBindingSchema,
   TemplateRowIdBindingSchema,
+  TemplateRowIdsBindingSchema,
+  TemplateNestedRowsBindingSchema,
 ])
 export type TemplateRowItemBinding = z.infer<typeof TemplateRowItemBindingSchema>
 
 export const TemplateRowsBindingSchema = z.object({
   kind: z.literal('rows'),
   input: inputKey,
+  /**
+   * A group the rows of `input` hold: the binding then appends one item per
+   * NESTED row of every row, and its bindings read the nested row.
+   */
+  nested: inputKey.optional(),
   /** The list in the body the rows are appended to. */
   path: TemplatePathSchema,
   /** The JSON copied once per row. */
@@ -184,6 +247,92 @@ export type TemplateBinding = z.infer<typeof TemplateBindingSchema>
 
 export const AUTOMATION_TEMPLATE_VERSION = 1
 
+interface BindingIssue {
+  readonly message: string
+  readonly path: readonly (string | number)[]
+}
+
+function scalarsOf(
+  inputs: readonly (TemplateInput | TemplateRowInput)[],
+): readonly TemplateScalarInput[] {
+  return inputs.filter((input): input is TemplateScalarInput => input.kind !== 'group')
+}
+
+/** Twice-declared keys and event / action inputs that read no device beside them. */
+function levelProblems(
+  inputs: readonly (TemplateInput | TemplateRowInput)[],
+  path: readonly (string | number)[],
+): readonly BindingIssue[] {
+  const issues: BindingIssue[] = []
+  const seen = new Set<string>()
+  for (const input of inputs) {
+    if (seen.has(input.key)) {
+      issues.push({ message: `input "${input.key}" is declared twice`, path })
+    }
+    seen.add(input.key)
+    if (input.kind === 'group') {
+      issues.push(...levelProblems(input.inputs, path))
+      continue
+    }
+    if (input.kind !== 'event' && input.kind !== 'action') continue
+    if (input.deviceInput === undefined) continue
+    const device = inputs.find((sibling) => sibling.key === input.deviceInput)
+    if (device === undefined || device.kind !== 'device') {
+      issues.push({
+        message: `"${input.key}" reads the device input "${input.deviceInput}", which is not a device input beside it`,
+        path,
+      })
+    }
+  }
+  return issues
+}
+
+function nestedGroupOf(
+  group: TemplateGroupInput,
+  key: string,
+): TemplateNestedGroupInput | undefined {
+  const found = group.inputs.find((input) => input.key === key)
+  return found !== undefined && found.kind === 'group' ? found : undefined
+}
+
+function leafBindingProblems(
+  bindings: readonly TemplateRowItemBinding[],
+  owner: TemplateGroupInput | TemplateNestedGroupInput,
+): readonly string[] {
+  const issues: string[] = []
+  for (const row of bindings) {
+    if (row.kind === 'row-id') continue
+    if (row.kind === 'value') {
+      const input = owner.inputs.find((i) => i.key === row.input)
+      if (input === undefined) {
+        issues.push(`row binding names "${row.input}", which group "${owner.key}" does not declare`)
+      } else if (input.kind === 'group') {
+        issues.push(`group "${input.key}" is bound with rows, not a value`)
+      }
+      continue
+    }
+    const nested = owner.inputs.find((i) => i.key === row.input)
+    if (nested === undefined || nested.kind !== 'group') {
+      issues.push(`"${row.input}" is not a group inside "${owner.key}"`)
+      continue
+    }
+    if (row.kind === 'rows') issues.push(...leafBindingProblems(row.bindings, nested))
+  }
+  return issues
+}
+
+function rowsBindingProblems(
+  binding: TemplateRowsBinding,
+  group: TemplateGroupInput,
+): readonly string[] {
+  if (binding.nested === undefined) return leafBindingProblems(binding.bindings, group)
+  const nested = nestedGroupOf(group, binding.nested)
+  if (nested === undefined) {
+    return [`"${binding.nested}" is not a group inside "${group.key}"`]
+  }
+  return leafBindingProblems(binding.bindings, nested)
+}
+
 function bindingProblems(
   payload: {
     readonly inputs: readonly TemplateInput[]
@@ -192,29 +341,14 @@ function bindingProblems(
   ctx: z.RefinementCtx,
 ): void {
   const byKey = new Map<string, TemplateInput>()
-  payload.inputs.forEach((input, index) => {
-    if (byKey.has(input.key)) {
-      ctx.addIssue({
-        code: 'custom',
-        message: `input "${input.key}" is declared twice`,
-        path: ['inputs', index],
-      })
-    }
-    byKey.set(input.key, input)
-    const siblings = input.kind === 'group' ? input.inputs : payload.inputs
-    for (const scalar of input.kind === 'group' ? input.inputs : [input]) {
-      if (scalar.kind !== 'event' && scalar.kind !== 'action') continue
-      if (scalar.deviceInput === undefined) continue
-      const device = siblings.find((s) => s.key === scalar.deviceInput)
-      if (device === undefined || device.kind !== 'device') {
-        ctx.addIssue({
-          code: 'custom',
-          message: `"${scalar.key}" reads the device input "${scalar.deviceInput}", which is not a device input beside it`,
-          path: ['inputs', index],
-        })
-      }
-    }
-  })
+  for (const input of payload.inputs) byKey.set(input.key, input)
+  for (const issue of levelProblems(payload.inputs, ['inputs'])) {
+    ctx.addIssue({
+      code: 'custom',
+      message: issue.message,
+      path: [...issue.path],
+    })
+  }
   payload.bindings.forEach((binding, index) => {
     const input = byKey.get(binding.input)
     if (input === undefined) {
@@ -241,14 +375,8 @@ function bindingProblems(
         })
         return
       }
-      for (const row of binding.bindings) {
-        if (row.kind === 'value' && !input.inputs.some((i) => i.key === row.input)) {
-          ctx.addIssue({
-            code: 'custom',
-            message: `row binding names "${row.input}", which group "${input.key}" does not declare`,
-            path: ['bindings', index],
-          })
-        }
+      for (const message of rowsBindingProblems(binding, input)) {
+        ctx.addIssue({ code: 'custom', message, path: ['bindings', index] })
       }
     }
   })
@@ -339,9 +467,18 @@ function isRowList(value: TemplateInputValue): value is TemplateGroupRow[] {
 
 type ScalarValues = ReadonlyMap<string, TemplateScalarValue>
 
+/** One level of values, judged: its own values and the rows of each group it holds. */
+interface ResolvedLevel {
+  readonly scalars: ScalarValues
+  readonly groups: ReadonlyMap<string, readonly ResolvedLevel[]>
+}
+
+type LevelValues = Readonly<Record<string, TemplateInputValue>>
+type LevelGroup = TemplateGroupInput | TemplateNestedGroupInput
+
 function resolveScalars(
   inputs: readonly TemplateScalarInput[],
-  values: Readonly<Record<string, TemplateInputValue>>,
+  values: LevelValues,
   prefix: string,
   problems: TemplateInstanceProblem[],
 ): Map<string, TemplateScalarValue> {
@@ -361,7 +498,11 @@ function resolveScalars(
     }
     const problem = isScalar(raw) ? valueProblem(input, raw) : 'a single value is required'
     if (problem !== null || !isScalar(raw)) {
-      problems.push({ code: 'invalid-input', input: address, detail: problem ?? 'invalid value' })
+      problems.push({
+        code: 'invalid-input',
+        input: address,
+        detail: problem ?? 'invalid value',
+      })
       continue
     }
     out.set(input.key, raw)
@@ -369,54 +510,56 @@ function resolveScalars(
   return out
 }
 
-interface ResolvedValues {
-  readonly scalars: ScalarValues
-  readonly groups: ReadonlyMap<string, readonly ScalarValues[]>
+/** The rows of one group, each resolved; `null` when the list itself is refused. */
+function resolveRows(
+  group: LevelGroup,
+  values: LevelValues,
+  prefix: string,
+  problems: TemplateInstanceProblem[],
+): readonly ResolvedLevel[] | null {
+  const address = `${prefix}${group.key}`
+  const raw = values[group.key] ?? []
+  if (!isRowList(raw)) {
+    problems.push({
+      code: 'invalid-input',
+      input: address,
+      detail: 'a list of rows is required',
+    })
+    return null
+  }
+  const min = group.minRows ?? (group.optional === true ? 0 : 1)
+  const max = group.maxRows ?? TEMPLATE_GROUP_ROWS_MAX
+  if (raw.length < min) {
+    problems.push({
+      code: raw.length === 0 ? 'missing-input' : 'invalid-input',
+      input: address,
+      detail: `"${group.label}" needs at least ${min} row(s)`,
+    })
+    return null
+  }
+  if (raw.length > max) {
+    problems.push({
+      code: 'invalid-input',
+      input: address,
+      detail: `"${group.label}" takes at most ${max} row(s)`,
+    })
+    return null
+  }
+  return raw.map((row, index) => resolveLevel(group.inputs, row, `${address}.${index}.`, problems))
 }
 
-function resolveValues(
-  payload: AutomationTemplatePayload,
-  values: TemplateInputValues,
+function resolveLevel(
+  inputs: readonly (TemplateInput | TemplateRowInput)[],
+  values: LevelValues,
+  prefix: string,
   problems: TemplateInstanceProblem[],
-): ResolvedValues {
-  const scalarInputs = payload.inputs.filter((i): i is TemplateScalarInput => i.kind !== 'group')
-  const scalars = resolveScalars(scalarInputs, values, '', problems)
-  const groups = new Map<string, ScalarValues[]>()
-  for (const input of payload.inputs) {
+): ResolvedLevel {
+  const scalars = resolveScalars(scalarsOf(inputs), values, prefix, problems)
+  const groups = new Map<string, readonly ResolvedLevel[]>()
+  for (const input of inputs) {
     if (input.kind !== 'group') continue
-    const raw = values[input.key] ?? []
-    if (!isRowList(raw)) {
-      problems.push({
-        code: 'invalid-input',
-        input: input.key,
-        detail: 'a list of rows is required',
-      })
-      continue
-    }
-    const min = input.minRows ?? (input.optional === true ? 0 : 1)
-    const max = input.maxRows ?? TEMPLATE_GROUP_ROWS_MAX
-    if (raw.length < min) {
-      problems.push({
-        code: raw.length === 0 ? 'missing-input' : 'invalid-input',
-        input: input.key,
-        detail: `"${input.label}" needs at least ${min} row(s)`,
-      })
-      continue
-    }
-    if (raw.length > max) {
-      problems.push({
-        code: 'invalid-input',
-        input: input.key,
-        detail: `"${input.label}" takes at most ${max} row(s)`,
-      })
-      continue
-    }
-    groups.set(
-      input.key,
-      raw.map((row, index) =>
-        resolveScalars(input.inputs, row, `${input.key}.${index}.`, problems),
-      ),
-    )
+    const rows = resolveRows(input, values, prefix, problems)
+    if (rows !== null) groups.set(input.key, rows)
   }
   return { scalars, groups }
 }
@@ -497,37 +640,110 @@ function writeValue(
   }
 }
 
+/** The name a row is known by: `buttons-0`, and `buttons-0-events-1` for a nested row. */
+function rowIdOf(parentId: string | null, groupKey: string, index: number): string {
+  const own = `${groupKey}-${index}`
+  return parentId === null ? own : `${parentId}-${own}`
+}
+
+function appendAt(
+  root: unknown,
+  path: TemplatePath,
+  items: readonly unknown[],
+  key: string,
+): unknown {
+  const existing = getAt(root, path)
+  const list = existing === undefined ? [] : existing
+  if (!Array.isArray(list)) throw new PathError(`rows of "${key}" need a list`)
+  return setAt(root, path, [...list, ...items])
+}
+
+/** One row's item: the template JSON with the row's values, ids and nested rows written in. */
+function fillItem(
+  template: unknown,
+  bindings: readonly TemplateRowItemBinding[],
+  group: LevelGroup,
+  row: ResolvedLevel,
+  rowId: string,
+): unknown {
+  let item = template
+  for (const binding of bindings) {
+    if (binding.kind === 'row-id') {
+      item = setAt(item, binding.path, rowId)
+      continue
+    }
+    if (binding.kind === 'value') {
+      const input = group.inputs.find((i) => i.key === binding.input)
+      const value = row.scalars.get(binding.input)
+      if (input === undefined || input.kind === 'group' || value === undefined) continue
+      item = writeValue(item, binding, input, value)
+      continue
+    }
+    const nested = group.inputs.find((i) => i.key === binding.input)
+    if (nested === undefined || nested.kind !== 'group') continue
+    const nestedRows = row.groups.get(nested.key) ?? []
+    if (binding.kind === 'row-ids') {
+      item = setAt(
+        item,
+        binding.path,
+        nestedRows.map((_, index) => rowIdOf(rowId, nested.key, index)),
+      )
+      continue
+    }
+    item = appendAt(
+      item,
+      binding.path,
+      nestedRows.map((nestedRow, index) =>
+        fillItem(
+          binding.item,
+          binding.bindings,
+          nested,
+          nestedRow,
+          rowIdOf(rowId, nested.key, index),
+        ),
+      ),
+      nested.key,
+    )
+  }
+  return item
+}
+
 function applyRows(
   root: unknown,
   binding: TemplateRowsBinding,
   group: TemplateGroupInput,
-  rows: readonly ScalarValues[],
+  rows: readonly ResolvedLevel[],
 ): unknown {
-  const existing = getAt(root, binding.path)
-  const list = existing === undefined ? [] : existing
-  if (!Array.isArray(list)) throw new PathError(`rows of "${group.key}" need a list`)
-  const items = rows.map((row, index) => {
-    let item: unknown = binding.item
-    for (const rowBinding of binding.bindings) {
-      if (rowBinding.kind === 'row-id') {
-        item = setAt(item, rowBinding.path, `${group.key}-${index}`)
-        continue
-      }
-      const input = group.inputs.find((i) => i.key === rowBinding.input)
-      const value = row.get(rowBinding.input)
-      if (input === undefined || value === undefined) continue
-      item = writeValue(item, rowBinding, input, value)
-    }
-    return item
-  })
-  return setAt(root, binding.path, [...list, ...items])
+  if (binding.nested === undefined) {
+    const items = rows.map((row, index) =>
+      fillItem(binding.item, binding.bindings, group, row, rowIdOf(null, group.key, index)),
+    )
+    return appendAt(root, binding.path, items, group.key)
+  }
+  const nested = nestedGroupOf(group, binding.nested)
+  if (nested === undefined) return root
+  const items = rows.flatMap((row, index) =>
+    (row.groups.get(nested.key) ?? []).map((nestedRow, nestedIndex) =>
+      fillItem(
+        binding.item,
+        binding.bindings,
+        nested,
+        nestedRow,
+        rowIdOf(rowIdOf(null, group.key, index), nested.key, nestedIndex),
+      ),
+    ),
+  )
+  return appendAt(root, binding.path, items, nested.key)
 }
 
 // ── expansion ────────────────────────────────────────────────────────────
 
 export type AutomationTemplateExpansion =
   | { readonly ok: true; readonly recipe: AutomationRecipe }
-  | { readonly ok: false; readonly problems: readonly TemplateInstanceProblem[] }
+  | {
+      readonly ok: false
+      readonly problems: readonly TemplateInstanceProblem[]
+    }
 
 /** The body with the values written in, as a recipe — or every reason it is not one. */
 export function expandAutomationTemplate(
@@ -535,7 +751,7 @@ export function expandAutomationTemplate(
   values: TemplateInputValues,
 ): AutomationTemplateExpansion {
   const problems: TemplateInstanceProblem[] = []
-  const resolved = resolveValues(payload, values, problems)
+  const resolved = resolveLevel(payload.inputs, values, '', problems)
   if (problems.length > 0) return { ok: false, problems }
   let body: unknown = payload.body
   try {
@@ -554,7 +770,10 @@ export function expandAutomationTemplate(
     }
   } catch (error: unknown) {
     if (!(error instanceof PathError)) throw error
-    return { ok: false, problems: [{ code: 'invalid-recipe', detail: error.message }] }
+    return {
+      ok: false,
+      problems: [{ code: 'invalid-recipe', detail: error.message }],
+    }
   }
   const parsed = AutomationRecipeSchema.safeParse(body)
   if (!parsed.success) {
@@ -578,7 +797,10 @@ export function instantiateAutomationTemplate(
 ): AutomationTemplateExpansion {
   const expanded = expandAutomationTemplate(payload, values)
   if (!expanded.ok) return expanded
-  return { ok: true, recipe: { ...expanded.recipe, template: { templateId, values } } }
+  return {
+    ok: true,
+    recipe: { ...expanded.recipe, template: { templateId, values } },
+  }
 }
 
 export interface AutomationInstanceReexpansion {
@@ -602,7 +824,12 @@ export function reexpandAutomationInstance(
     payload === null
       ? {
           ok: false,
-          problems: [{ code: 'missing-template', detail: `template "${link.templateId}" is gone` }],
+          problems: [
+            {
+              code: 'missing-template',
+              detail: `template "${link.templateId}" is gone`,
+            },
+          ],
         }
       : expandAutomationTemplate(payload, link.values)
   if (expanded.ok) {

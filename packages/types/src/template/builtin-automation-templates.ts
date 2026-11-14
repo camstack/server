@@ -20,13 +20,15 @@ export interface BuiltinAutomationTemplate {
 
 /** One choose branch per row, so the rows a group takes are the branches a choose takes. */
 const BUTTON_ROWS_MAX = 6
+const ROW_EVENTS_MAX = 8
+const ROW_COMMANDS_MAX = 10
 
 const buttonsToDevices: BuiltinAutomationTemplate = {
   id: `${BUILTIN_TEMPLATE_ID_PREFIX}buttons-to-devices`,
   name: 'Buttons → devices',
   payload: {
     version: AUTOMATION_TEMPLATE_VERSION,
-    description: 'Each row: when a button sends an event, run an action on a set of devices.',
+    description: 'Each row: when a button sends an event, run one or more actions.',
     body: {
       when: { kind: 'any', children: [] },
       actions: [{ kind: 'choose', branches: [] }],
@@ -37,17 +39,51 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
         kind: 'group',
         key: 'buttons',
         label: 'Buttons',
+        rowLabel: 'button',
         maxRows: BUTTON_ROWS_MAX,
         inputs: [
           {
-            kind: 'device',
-            key: 'button',
-            label: 'Button',
-            filter: { capability: 'event-emitter' },
+            kind: 'group',
+            key: 'events',
+            label: 'When',
+            rowLabel: 'event',
+            maxRows: ROW_EVENTS_MAX,
+            inputs: [
+              {
+                kind: 'device',
+                key: 'button',
+                label: 'Button',
+                filter: { capability: 'event-emitter' },
+              },
+              {
+                kind: 'event',
+                key: 'event',
+                label: 'Event',
+                deviceInput: 'button',
+              },
+            ],
           },
-          { kind: 'event', key: 'event', label: 'Event', deviceInput: 'button' },
-          { kind: 'device', key: 'targets', label: 'Devices', multiple: true },
-          { kind: 'action', key: 'action', label: 'Action', deviceInput: 'targets' },
+          {
+            kind: 'group',
+            key: 'commands',
+            label: 'Actions',
+            rowLabel: 'action',
+            maxRows: ROW_COMMANDS_MAX,
+            inputs: [
+              {
+                kind: 'device',
+                key: 'targets',
+                label: 'Devices',
+                multiple: true,
+              },
+              {
+                kind: 'action',
+                key: 'action',
+                label: 'Action',
+                deviceInput: 'targets',
+              },
+            ],
+          },
         ],
       },
     ],
@@ -55,6 +91,7 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
       {
         kind: 'rows',
         input: 'buttons',
+        nested: 'events',
         path: ['when', 'children'],
         item: { kind: 'device-fired' },
         bindings: [
@@ -69,12 +106,25 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
         path: ['actions', 0, 'branches'],
         item: {
           if: { kind: 'triggered-by', leafIds: [] },
-          steps: [{ kind: 'command' }],
+          steps: [],
         },
         bindings: [
-          { kind: 'row-id', path: ['if', 'leafIds', 0] },
-          { kind: 'value', input: 'targets', path: ['steps', 0, 'target'], as: 'target' },
-          { kind: 'value', input: 'action', path: ['steps', 0] },
+          { kind: 'row-ids', input: 'events', path: ['if', 'leafIds'] },
+          {
+            kind: 'rows',
+            input: 'commands',
+            path: ['steps'],
+            item: { kind: 'command' },
+            bindings: [
+              {
+                kind: 'value',
+                input: 'targets',
+                path: ['target'],
+                as: 'target',
+              },
+              { kind: 'value', input: 'action', path: [] },
+            ],
+          },
         ],
       },
     ],
@@ -89,7 +139,12 @@ const motionLight: BuiltinAutomationTemplate = {
     description:
       'Turns lights on when a motion sensor detects motion and off once it has been quiet for the delay. New motion restarts the delay.',
     body: {
-      when: { kind: 'device-becomes', cap: 'motion', fieldPath: 'detected', becomes: true },
+      when: {
+        kind: 'device-becomes',
+        cap: 'motion',
+        fieldPath: 'detected',
+        becomes: true,
+      },
       actions: [
         { kind: 'command', actionId: 'switch.on' },
         { kind: 'wait', seconds: 300 },
@@ -122,9 +177,19 @@ const motionLight: BuiltinAutomationTemplate = {
     ],
     bindings: [
       { kind: 'value', input: 'sensor', path: ['when', 'deviceId'] },
-      { kind: 'value', input: 'lights', path: ['actions', 0, 'target'], as: 'target' },
+      {
+        kind: 'value',
+        input: 'lights',
+        path: ['actions', 0, 'target'],
+        as: 'target',
+      },
       { kind: 'value', input: 'delay', path: ['actions', 1, 'seconds'] },
-      { kind: 'value', input: 'lights', path: ['actions', 2, 'target'], as: 'target' },
+      {
+        kind: 'value',
+        input: 'lights',
+        path: ['actions', 2, 'target'],
+        as: 'target',
+      },
     ],
   },
 }

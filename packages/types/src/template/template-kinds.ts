@@ -32,5 +32,8 @@ export type TemplatePayloadCheck =
 export function checkTemplatePayload(kind: TemplateKind, payload: unknown): TemplatePayloadCheck {
   const parsed = TEMPLATE_PAYLOAD_SCHEMAS[kind].safeParse(payload)
   if (parsed.success) return { ok: true, payload: parsed.data }
-  return { ok: false, detail: parsed.error.issues.map((i) => i.message).join('; ') }
+  return {
+    ok: false,
+    detail: parsed.error.issues.map((i) => i.message).join('; '),
+  }
 }

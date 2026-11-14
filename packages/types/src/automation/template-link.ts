@@ -46,8 +46,19 @@ export const TemplateScalarValueSchema = z.union([
 ])
 export type TemplateScalarValue = z.infer<typeof TemplateScalarValueSchema>
 
+/** One row of a group inside a group row: row-input key → value. */
+export const TemplateNestedRowSchema = z.record(z.string(), TemplateScalarValueSchema)
+export type TemplateNestedRow = z.infer<typeof TemplateNestedRowSchema>
+
+/** What a group row holds under one key: a value, or the rows of a group it nests. */
+export const TemplateRowValueSchema = z.union([
+  TemplateScalarValueSchema,
+  z.array(TemplateNestedRowSchema),
+])
+export type TemplateRowValue = z.infer<typeof TemplateRowValueSchema>
+
 /** One row of a repeatable group: row-input key → value. */
-export const TemplateGroupRowSchema = z.record(z.string(), TemplateScalarValueSchema)
+export const TemplateGroupRowSchema = z.record(z.string(), TemplateRowValueSchema)
 export type TemplateGroupRow = z.infer<typeof TemplateGroupRowSchema>
 
 export const TemplateInputValueSchema = z.union([
@@ -74,7 +85,7 @@ export const TEMPLATE_INSTANCE_PROBLEM_CODES = [
 ] as const
 export const TemplateInstanceProblemSchema = z.object({
   code: z.enum(TEMPLATE_INSTANCE_PROBLEM_CODES),
-  /** Dotted input address (`buttons.2.targets`); absent for a whole-recipe problem. */
+  /** Dotted input address (`buttons.2.targets`, `buttons.0.commands.1.targets`); absent for a whole-recipe problem. */
   input: z.string().optional(),
   detail: z.string(),
 })

@@ -17,7 +17,12 @@ import { readRecipeLiteral } from '../../automation/recipe-literal.js'
 const MOTION: AutomationTemplatePayload = AutomationTemplatePayloadSchema.parse({
   version: 1,
   body: {
-    when: { kind: 'device-becomes', cap: 'motion', fieldPath: 'detected', becomes: true },
+    when: {
+      kind: 'device-becomes',
+      cap: 'motion',
+      fieldPath: 'detected',
+      becomes: true,
+    },
     actions: [
       { kind: 'command', actionId: 'switch.on' },
       { kind: 'wait', seconds: 300 },
@@ -26,11 +31,23 @@ const MOTION: AutomationTemplatePayload = AutomationTemplatePayloadSchema.parse(
   inputs: [
     { kind: 'device', key: 'sensor', label: 'Sensor' },
     { kind: 'device', key: 'lights', label: 'Lights', multiple: true },
-    { kind: 'duration', key: 'delay', label: 'Delay', min: 10, max: 3600, default: 300 },
+    {
+      kind: 'duration',
+      key: 'delay',
+      label: 'Delay',
+      min: 10,
+      max: 3600,
+      default: 300,
+    },
   ],
   bindings: [
     { kind: 'value', input: 'sensor', path: ['when', 'deviceId'] },
-    { kind: 'value', input: 'lights', path: ['actions', 0, 'target'], as: 'target' },
+    {
+      kind: 'value',
+      input: 'lights',
+      path: ['actions', 0, 'target'],
+      as: 'target',
+    },
     { kind: 'value', input: 'delay', path: ['actions', 1, 'seconds'] },
   ],
 })
@@ -50,9 +67,19 @@ const BUTTONS: AutomationTemplatePayload = AutomationTemplatePayloadSchema.parse
       maxRows: 6,
       inputs: [
         { kind: 'device', key: 'button', label: 'Button' },
-        { kind: 'event', key: 'event', label: 'Event', deviceInput: 'button' },
+        {
+          kind: 'event',
+          key: 'event',
+          label: 'Event',
+          deviceInput: 'button',
+        },
         { kind: 'device', key: 'targets', label: 'Devices', multiple: true },
-        { kind: 'action', key: 'action', label: 'Action', deviceInput: 'targets' },
+        {
+          kind: 'action',
+          key: 'action',
+          label: 'Action',
+          deviceInput: 'targets',
+        },
       ],
     },
   ],
@@ -72,10 +99,18 @@ const BUTTONS: AutomationTemplatePayload = AutomationTemplatePayloadSchema.parse
       kind: 'rows',
       input: 'buttons',
       path: ['actions', 0, 'branches'],
-      item: { if: { kind: 'triggered-by', leafIds: [] }, steps: [{ kind: 'command' }] },
+      item: {
+        if: { kind: 'triggered-by', leafIds: [] },
+        steps: [{ kind: 'command' }],
+      },
       bindings: [
         { kind: 'row-id', path: ['if', 'leafIds', 0] },
-        { kind: 'value', input: 'targets', path: ['steps', 0, 'target'], as: 'target' },
+        {
+          kind: 'value',
+          input: 'targets',
+          path: ['steps', 0, 'target'],
+          as: 'target',
+        },
         { kind: 'value', input: 'action', path: ['steps', 0] },
       ],
     },
@@ -87,14 +122,27 @@ describe('expandAutomationTemplate', () => {
     const out = expandAutomationTemplate(MOTION, { sensor: 7, lights: [3, 4] })
     expect(out.ok).toBe(true)
     if (!out.ok) return
-    expect(out.recipe.when).toMatchObject({ kind: 'device-becomes', deviceId: 7 })
-    expect(out.recipe.actions[0]).toMatchObject({ target: { kind: 'devices', ids: [3, 4] } })
+    expect(out.recipe.when).toMatchObject({
+      kind: 'device-becomes',
+      deviceId: 7,
+    })
+    expect(out.recipe.actions[0]).toMatchObject({
+      target: { kind: 'devices', ids: [3, 4] },
+    })
     expect(out.recipe.actions[1]).toEqual({ kind: 'wait', seconds: 300 })
   })
 
   it('a changed input value changes the expansion', () => {
-    const a = expandAutomationTemplate(MOTION, { sensor: 7, lights: [3], delay: 60 })
-    const b = expandAutomationTemplate(MOTION, { sensor: 9, lights: [3], delay: 120 })
+    const a = expandAutomationTemplate(MOTION, {
+      sensor: 7,
+      lights: [3],
+      delay: 60,
+    })
+    const b = expandAutomationTemplate(MOTION, {
+      sensor: 9,
+      lights: [3],
+      delay: 120,
+    })
     expect(a.ok && b.ok).toBe(true)
     if (!a.ok || !b.ok) return
     expect(a.recipe.when).toMatchObject({ deviceId: 7 })
@@ -107,7 +155,11 @@ describe('expandAutomationTemplate', () => {
     expect(out.ok).toBe(false)
     if (out.ok) return
     expect(out.problems).toEqual([
-      { code: 'missing-input', input: 'sensor', detail: '"Sensor" is required' },
+      {
+        code: 'missing-input',
+        input: 'sensor',
+        detail: '"Sensor" is required',
+      },
       { code: 'invalid-input', input: 'delay', detail: 'at least 10' },
     ])
   })
@@ -134,8 +186,20 @@ describe('expandAutomationTemplate', () => {
     expect(out.recipe.when).toEqual({
       kind: 'any',
       children: [
-        { kind: 'device-fired', id: 'buttons-0', deviceId: 11, sourceIds: ['1'], kinds: ['press'] },
-        { kind: 'device-fired', id: 'buttons-1', deviceId: 11, sourceIds: ['2'], kinds: ['press'] },
+        {
+          kind: 'device-fired',
+          id: 'buttons-0',
+          deviceId: 11,
+          sourceIds: ['1'],
+          kinds: ['press'],
+        },
+        {
+          kind: 'device-fired',
+          id: 'buttons-1',
+          deviceId: 11,
+          sourceIds: ['2'],
+          kinds: ['press'],
+        },
       ],
     })
     expect(out.recipe.actions[0]).toMatchObject({
@@ -144,13 +208,21 @@ describe('expandAutomationTemplate', () => {
         {
           if: { kind: 'triggered-by', leafIds: ['buttons-0'] },
           steps: [
-            { kind: 'command', actionId: 'switch.on', target: { kind: 'devices', ids: [20] } },
+            {
+              kind: 'command',
+              actionId: 'switch.on',
+              target: { kind: 'devices', ids: [20] },
+            },
           ],
         },
         {
           if: { kind: 'triggered-by', leafIds: ['buttons-1'] },
           steps: [
-            { kind: 'command', actionId: 'switch.off', target: { kind: 'devices', ids: [21, 22] } },
+            {
+              kind: 'command',
+              actionId: 'switch.off',
+              target: { kind: 'devices', ids: [21, 22] },
+            },
           ],
         },
       ],
@@ -271,5 +343,146 @@ describe('the automation payload', () => {
     expect(AutomationTemplateExportSchema.parse(JSON.parse(JSON.stringify(doc)))).toEqual(doc)
     expect(doc.format).toBe('camstack.automation-template')
     expect(doc.version).toBe(1)
+  })
+})
+
+describe('a group inside a group row', () => {
+  const nested = (bindings: unknown) => ({
+    version: 1,
+    body: {
+      when: { kind: 'any', children: [] },
+      actions: [{ kind: 'choose', branches: [] }],
+    },
+    inputs: [
+      {
+        kind: 'group',
+        key: 'rows',
+        label: 'Rows',
+        inputs: [
+          {
+            kind: 'group',
+            key: 'fires',
+            label: 'Fires',
+            inputs: [{ kind: 'device', key: 'source', label: 'Source' }],
+          },
+          {
+            kind: 'group',
+            key: 'steps',
+            label: 'Steps',
+            inputs: [{ kind: 'duration', key: 'pause', label: 'Pause' }],
+          },
+        ],
+      },
+    ],
+    bindings,
+  })
+  const BINDINGS = [
+    {
+      kind: 'rows',
+      input: 'rows',
+      nested: 'fires',
+      path: ['when', 'children'],
+      item: { kind: 'device-fired' },
+      bindings: [
+        { kind: 'row-id', path: ['id'] },
+        { kind: 'value', input: 'source', path: ['deviceId'] },
+      ],
+    },
+    {
+      kind: 'rows',
+      input: 'rows',
+      path: ['actions', 0, 'branches'],
+      item: { if: { kind: 'triggered-by', leafIds: [] }, steps: [] },
+      bindings: [
+        { kind: 'row-ids', input: 'fires', path: ['if', 'leafIds'] },
+        {
+          kind: 'rows',
+          input: 'steps',
+          path: ['steps'],
+          item: { kind: 'wait' },
+          bindings: [{ kind: 'value', input: 'pause', path: ['seconds'] }],
+        },
+      ],
+    },
+  ]
+
+  it('appends nested rows inside the parent item and flat across every row', () => {
+    const payload = AutomationTemplatePayloadSchema.parse(nested(BINDINGS))
+    const out = expandAutomationTemplate(payload, {
+      rows: [
+        { fires: [{ source: 1 }, { source: 2 }], steps: [{ pause: 5 }] },
+        { fires: [{ source: 3 }], steps: [{ pause: 7 }, { pause: 9 }] },
+      ],
+    })
+    expect(out.ok).toBe(true)
+    if (!out.ok) return
+    expect(out.recipe.when).toEqual({
+      kind: 'any',
+      children: [
+        { kind: 'device-fired', id: 'rows-0-fires-0', deviceId: 1 },
+        { kind: 'device-fired', id: 'rows-0-fires-1', deviceId: 2 },
+        { kind: 'device-fired', id: 'rows-1-fires-0', deviceId: 3 },
+      ],
+    })
+    expect(out.recipe.actions[0]).toEqual({
+      kind: 'choose',
+      branches: [
+        {
+          if: {
+            kind: 'triggered-by',
+            leafIds: ['rows-0-fires-0', 'rows-0-fires-1'],
+          },
+          steps: [{ kind: 'wait', seconds: 5 }],
+        },
+        {
+          if: { kind: 'triggered-by', leafIds: ['rows-1-fires-0'] },
+          steps: [
+            { kind: 'wait', seconds: 7 },
+            { kind: 'wait', seconds: 9 },
+          ],
+        },
+      ],
+    })
+  })
+
+  it('refuses a binding that names a nested group the row does not declare', () => {
+    const flat = [{ ...BINDINGS[0], nested: 'missing' }]
+    const inner = [
+      {
+        ...BINDINGS[1],
+        bindings: [{ kind: 'row-ids', input: 'missing', path: ['if', 'leafIds'] }],
+      },
+    ]
+    const wrongValue = [
+      {
+        ...BINDINGS[0],
+        bindings: [{ kind: 'value', input: 'pause', path: ['deviceId'] }],
+      },
+    ]
+    for (const bindings of [flat, inner, wrongValue]) {
+      expect(AutomationTemplatePayloadSchema.safeParse(nested(bindings)).success).toBe(false)
+    }
+  })
+
+  it('refuses a group nested two levels deep', () => {
+    const raw = nested(BINDINGS)
+    const deep = {
+      ...raw,
+      inputs: [
+        {
+          ...raw.inputs[0],
+          inputs: [
+            {
+              kind: 'group',
+              key: 'fires',
+              label: 'Fires',
+              inputs: raw.inputs[0]?.inputs,
+            },
+          ],
+        },
+      ],
+      bindings: [],
+    }
+    expect(AutomationTemplatePayloadSchema.safeParse(deep).success).toBe(false)
   })
 })
