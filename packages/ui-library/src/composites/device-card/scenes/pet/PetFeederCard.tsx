@@ -4,8 +4,7 @@ import { PetFeederIllustration } from '../../illustrations/PetFeederIllustration
 import { ButtonGroup } from '../../parts/ButtonGroup'
 import { CardButton } from '../../parts/CardButton'
 import { LevelRow } from '../../parts/LevelRow'
-import { PopoverButton } from '../../parts/PopoverButton'
-import { StepColumn } from '../../parts/StepColumn'
+import { type ColumnItem, columnButton, columnPopover, columnStep } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import type {
@@ -52,7 +51,7 @@ function settingsPanel(
   model: PetFeederCardModel,
   actions: PetFeederCardActions,
   t: UiTextFn,
-): ReactNode {
+): readonly ColumnItem[] {
   const s = model.settings
   const toggles: readonly {
     readonly id: string
@@ -80,15 +79,10 @@ function settingsPanel(
     },
   ]
   const shown = toggles.filter((toggle) => toggle.on !== null)
-  if (shown.length === 0 && s.volume === null) return null
+  if (shown.length === 0 && s.volume === null) return []
   const volume = s.volume
-  return (
-    <PopoverButton
-      testId="dc-feeder-settings"
-      label={t('uiLibrary.deviceCard.petFeeder.settings', 'Options')}
-      ariaLabel={t('uiLibrary.deviceCard.petFeeder.settings', 'Options')}
-      align="end"
-    >
+  const panel = (
+    <>
       <div className="grid gap-1.5">
         {shown.map((toggle) => (
           <CardButton
@@ -118,8 +112,17 @@ function settingsPanel(
           </span>
         )}
       </div>
-    </PopoverButton>
+    </>
   )
+  return [
+    columnPopover('settings', {
+      glyph: 'menu',
+      label: t('uiLibrary.deviceCard.petFeeder.settings', 'Options'),
+      align: 'end',
+      testId: 'dc-feeder-settings',
+      panel,
+    }),
+  ]
 }
 
 function levels(model: PetFeederCardModel, t: UiTextFn): ReactNode {
@@ -180,72 +183,75 @@ export function PetFeederCard({
       }}
       scene={{
         alert: fault,
-        left: model.canFeed ? (
-          <StepColumn
-            testId="dc-feeder-portion"
-            value={`${portion} g`}
-            notes={[t('uiLibrary.deviceCard.petFeeder.portion', 'portion')]}
-            up={{
-              glyph: 'plus',
-              label: t('uiLibrary.deviceCard.petFeeder.more', 'Larger portion'),
-              disabled: fault || portion >= model.portionMax,
-              onPress: step(PORTION_STEP),
-            }}
-            down={{
-              glyph: 'minus',
-              label: t('uiLibrary.deviceCard.petFeeder.less', 'Smaller portion'),
-              disabled: fault || portion <= model.portionMin,
-              onPress: step(-PORTION_STEP),
-            }}
-          />
-        ) : null,
+        columns: {
+          left: model.canFeed
+            ? columnStep('portion', {
+                testId: 'dc-feeder-portion',
+                value: `${portion} g`,
+                caption: t('uiLibrary.deviceCard.petFeeder.portion', 'portion'),
+                up: {
+                  glyph: 'plus',
+                  label: t('uiLibrary.deviceCard.petFeeder.more', 'Larger portion'),
+                  disabled: fault || portion >= model.portionMax,
+                  onPress: step(PORTION_STEP),
+                },
+                down: {
+                  glyph: 'minus',
+                  label: t('uiLibrary.deviceCard.petFeeder.less', 'Smaller portion'),
+                  disabled: fault || portion <= model.portionMin,
+                  onPress: step(-PORTION_STEP),
+                },
+              })
+            : [],
+          right: [
+            ...(feeding && model.canCancel
+              ? [
+                  columnButton('cancel', {
+                    glyph: 'cancel',
+                    label: t('uiLibrary.deviceCard.cancel', 'Cancel'),
+                    testId: 'dc-feeder-cancel',
+                    onPress: actions.onCancelFeed,
+                  }),
+                ]
+              : model.canFeed
+                ? [
+                    columnButton('feed', {
+                      glyph: 'feed',
+                      tone: 'primary',
+                      disabled: fault || feeding,
+                      label: t('uiLibrary.deviceCard.petFeeder.feed', 'Feed'),
+                      testId: 'dc-feeder-feed',
+                      onPress: () => actions.onFeed(portion, hopper),
+                    }),
+                  ]
+                : []),
+            ...(model.canCallPet
+              ? [
+                  columnButton('call', {
+                    glyph: 'bell',
+                    disabled: fault,
+                    label: t('uiLibrary.deviceCard.petFeeder.callPet', 'Call pet'),
+                    testId: 'dc-feeder-call',
+                    onPress: actions.onCallPet,
+                  }),
+                ]
+              : []),
+            ...settingsPanel(model, actions, t),
+          ],
+        },
         image: (
-          <div className="grid justify-items-center gap-0.5">
+          <div className="grid w-full min-w-26 max-w-52 justify-items-center gap-0.5">
             <PetFeederIllustration
               food={model.foodLevel === null ? null : model.foodLevel / 100}
               bowlFull={model.bowlFull}
               low={model.lowFood}
               feeding={feeding}
-              className="h-auto w-26"
+              className="h-auto w-full"
             />
             <small data-testid="dc-feeder-bowl" className="text-xs text-foreground-muted">
               {t('uiLibrary.deviceCard.petFeeder.inBowl', 'In bowl')} {model.bowl ?? '—'}
             </small>
           </div>
-        ),
-        right: (
-          <>
-            {feeding && model.canCancel ? (
-              <CardButton
-                glyph="cancel"
-                data-testid="dc-feeder-cancel"
-                onClick={actions.onCancelFeed}
-              >
-                {t('uiLibrary.deviceCard.cancel', 'Cancel')}
-              </CardButton>
-            ) : model.canFeed ? (
-              <CardButton
-                glyph="feed"
-                tone="primary"
-                disabled={fault || feeding}
-                data-testid="dc-feeder-feed"
-                onClick={() => actions.onFeed(portion, hopper)}
-              >
-                {t('uiLibrary.deviceCard.petFeeder.feed', 'Feed')}
-              </CardButton>
-            ) : null}
-            {model.canCallPet ? (
-              <CardButton
-                glyph="bell"
-                disabled={fault}
-                data-testid="dc-feeder-call"
-                onClick={actions.onCallPet}
-              >
-                {t('uiLibrary.deviceCard.petFeeder.callPet', 'Call pet')}
-              </CardButton>
-            ) : null}
-            {settingsPanel(model, actions, t)}
-          </>
         ),
         bottom: (
           <div className="grid w-full justify-items-center gap-1.5">
