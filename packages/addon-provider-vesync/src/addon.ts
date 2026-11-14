@@ -14,21 +14,12 @@ import {
   integrationInstancesCapability,
   integrationRowsPortsOver,
   type RecordIntegrationInstances,
-  type SavedDevice,
   type SystemEvent,
-  type DeviceRestoreReport,
 } from '@camstack/types'
 import { VESYNC_SYSTEM, type VeSyncConnectionConfig } from './config.js'
 import { VeSyncGatewayDevice } from './devices/vesync-gateway-device.js'
 import { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'
-import {
-  ADDON_MIGRATIONS,
-  VESYNC_HUB_MIGRATION_ID,
-  VESYNC_ROWS_TO_RECORD_ID,
-  VESYNC_ROWS_TO_RECORD_MIGRATION,
-  type VeSyncMigrationPorts,
-} from './migrations/index.js'
-import { restoreAfterMigration } from './migrations/restore-after-migration.js'
+import { VESYNC_ROWS_TO_RECORD_ID, VESYNC_ROWS_TO_RECORD_MIGRATION } from './migrations/index.js'
 import { vesyncAccounts } from './vesync-account-resolver.js'
 import { buildVeSyncAdoptionProvider } from './vesync-adoption-provider.js'
 import { gatewayStableId } from './vesync-discovery.js'
@@ -50,8 +41,7 @@ import { VeSyncIntegrationManager } from './vesync-integration-manager.js'
  * VeSync account: email, password, region and poll interval live on its `connections`
  * record (the password in the keychain). Discovery offers the account as a
  * {@link DeviceType.Gateway} and each air purifier as a {@link DeviceType.Fan} sibling
- * of it. The old Hub device that held `config.connection` is retired by the
- * `provider-vesync` migration (D987), run from {@link onRestoreDevices}.
+ * of it.
  */
 export class VeSyncProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-vesync'
@@ -76,17 +66,12 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
       onChanged: () => this.reconcileIntegrations(),
     })
     this.instances = instances
-    // Rows move before the instances provider registers. The hub migration needs the
-    // persisted devices and runs from `onRestoreDevices`. The whole catalogue is declared
-    // either way; `only` names the phase.
+    // Rows move before the instances provider registers.
     this.declareRegistrySwitch({
       kind: vesyncConnectionsEntryKind,
       initialBody: (name) => ({ name }),
     })
-    await this.runMigrations(
-      this.migrationCatalogue(this.buildMigrationPorts([], async () => undefined)),
-      { only: [VESYNC_ROWS_TO_RECORD_ID] },
-    )
+    await this.runMigrations(this.migrationCatalogue(), { only: [VESYNC_ROWS_TO_RECORD_ID] })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()
     return {
@@ -114,27 +99,6 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
     vesyncAccounts.clear()
     this.names.clear()
     await super.onShutdown()
-  }
-
-  protected override async onRestoreDevices(
-    savedDevices: readonly SavedDevice[],
-  ): Promise<DeviceRestoreReport | void> {
-    return restoreAfterMigration({
-      saved: savedDevices,
-      migrationId: VESYNC_HUB_MIGRATION_ID,
-      logger: this.ctx.logger,
-      runMigration: (restoreRows) => {
-        const ports = this.buildMigrationPorts(savedDevices, restoreRows)
-        return this.runMigrations(this.migrationCatalogue(ports), {
-          only: [VESYNC_HUB_MIGRATION_ID],
-        })
-      },
-      restoreRows: async (rows) => {
-        await this.reconcileIntegrations()
-        await super.onRestoreDevices(rows)
-      },
-      restoreRest: (rows) => super.onRestoreDevices(rows),
-    })
   }
 
   override async supportsDiscovery(): Promise<boolean> {
@@ -180,7 +144,7 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
     return this.instances
   }
 
-  private migrationCatalogue(hubPorts: VeSyncMigrationPorts) {
+  private migrationCatalogue() {
     const records = this.requireRecords()
     const rowsPorts = integrationRowsPortsOver({
       api: defaultIntegrationApiOver(this.ctx.api),
@@ -189,67 +153,7 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
       kind: vesyncConnectionsEntryKind,
       warn: (message) => this.ctx.logger.warn(message),
     })
-    return [
-      ...defineAddonMigrations(ADDON_MIGRATIONS, hubPorts),
-      ...defineAddonMigrations([VESYNC_ROWS_TO_RECORD_MIGRATION], rowsPorts),
-    ]
-  }
-
-  private buildMigrationPorts(
-    saved: readonly SavedDevice[],
-    restoreRows: (rows: readonly SavedDevice[]) => Promise<void>,
-  ): VeSyncMigrationPorts {
-    const devices = this.ctx.kernel.devices
-    const records = this.requireRecords()
-    const handle = records.kind(vesyncConnectionsEntryKind)
-    return {
-      addonId: this.ctx.id,
-      logger: this.ctx.logger,
-      listSavedDevices: async () => saved,
-      restoreRows,
-      listIntegrations: async () =>
-        (await this.ctx.api.integrations.list.query()).map((i) => ({
-          id: i.id,
-          addonId: i.addonId,
-          name: i.name,
-          info: i.info,
-          ...(i.originStableId !== undefined ? { originStableId: i.originStableId } : {}),
-        })),
-      createIntegration: async (input) => {
-        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
-          addonId: input.addonId,
-          name: input.name,
-          seed: { info: { ...input.info } },
-          ...(input.originStableId !== undefined ? { originStableId: input.originStableId } : {}),
-          values: { ...input.settings },
-        })
-        return { id: created.id }
-      },
-      setIntegrationId: async (deviceId, integrationId) => {
-        await this.ctx.api.deviceManager.setIntegrationId.mutate({ deviceId, integrationId })
-      },
-      persistConfig: async (stableId, config) => {
-        if (!devices) throw new Error('vesync hub migration: kernel.devices unavailable')
-        await devices.persistInitialConfig(stableId, config)
-      },
-      childIdsOf: async (parentDeviceId) =>
-        (await this.ctx.api.deviceManager.getChildren.query({ parentDeviceId })).map((c) => c.id),
-      createGateway: async ({ integrationId, name }) => this.adoptGateway(integrationId, name),
-      removeDevice: async (deviceId) => {
-        await this.ctx.api.deviceManager.remove.mutate({ deviceId })
-      },
-      putAccountRecord: async (integrationId, body) => {
-        const existing = await handle.get(integrationId)
-        if (existing !== null) return 'exists'
-        const data = vesyncConnectionsEntryKind.schema.parse(body)
-        await handle.put({ id: integrationId, data }, { ifRev: 0 })
-        return 'created'
-      },
-      readAccountRecord: async (integrationId) => {
-        const row = await handle.getResolved(integrationId)
-        return row === null ? null : accountBodyRecord(row.data)
-      },
-    }
+    return defineAddonMigrations([VESYNC_ROWS_TO_RECORD_MIGRATION], rowsPorts)
   }
 
   private async reconcileIntegrations(): Promise<void> {
@@ -491,13 +395,4 @@ function sameAccount(a: VeSyncConnectionConfig, b: VeSyncConnectionConfig): bool
     a.region === b.region &&
     a.pollIntervalMs === b.pollIntervalMs
   )
-}
-
-function accountBodyRecord(data: VeSyncConnectionBody): Record<string, unknown> {
-  const out: Record<string, unknown> = { name: data.name }
-  if (data.email !== undefined) out['email'] = data.email
-  if (data.password !== undefined) out['password'] = data.password
-  if (data.region !== undefined) out['region'] = data.region
-  if (data.pollIntervalMs !== undefined) out['pollIntervalMs'] = data.pollIntervalMs
-  return out
 }
