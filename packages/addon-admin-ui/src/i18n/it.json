@@ -6180,7 +6180,10 @@
       "newRow": "Nuova riga",
       "removeNamed": "Rimuovi {{noun}}",
       "readingActions": "Lettura di cosa possono fare questi dispositivi…",
-      "actionNotOffered": "{{id}} (non disponibile)"
+      "actionNotOffered": "{{id}} (non disponibile)",
+      "timeWindow": {
+        "limit": "Esegui solo in certi orari"
+      }
     }
   },
   "automation": {

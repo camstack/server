@@ -10,7 +10,7 @@ set of globs — is the only hand-written input, in `docs/subsystems.yaml`.
 Everything else on this page is a join over the workspace and over document
 frontmatter, so it cannot disagree with the repository.
 
-**31 subsystems · 8760 source files · 1311 file(s) in no subsystem.**
+**31 subsystems · 8764 source files · 1311 file(s) in no subsystem.**
 
 Status: ✅ its own owner page claims it · ⚠️ described only by other documents
 (often decision records, which are normative and never re-verified) · ❌ no
@@ -50,10 +50,10 @@ commits. A generated page may not.
 | Alerts, liveness and system health | 57 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0850-numeric-history-has-one-mechanism-device-history.md`, +44 more | 2026-10-13 | ⚠️ |
 | Logging and log shipping | 43 | `architecture/logging.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +11 more, 1 ADR | 2026-10-21 | ⚠️ |
 | LLM runtimes and AI actions | 55 | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 | ⚠️ |
-| Admin UI and the shared component library | 1722 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +169 more, 15 ADRs | 2026-11-12 | ✅ |
+| Admin UI and the shared component library | 1725 | `architecture/ui.md`, `ui/conventions.md`, `decisions/adr-1013-one-instance-model.md`, +169 more, 15 ADRs | 2026-11-12 | ✅ |
 | Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack | 115 | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 7 ADRs | 2026-11-10 | ⚠️ |
 | Cloud training | 161 | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +17 more, 2 ADRs | 2026-10-14 | ✅ |
-| Benchmarks, model studio and developer tooling | 867 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +184 more, 14 ADRs | 2026-11-12 | ⚠️ |
+| Benchmarks, model studio and developer tooling | 868 | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, +184 more, 14 ADRs | 2026-11-12 | ⚠️ |
 
 ## What each subsystem is, and what is uncovered inside it
 
@@ -306,7 +306,7 @@ The operator's web console, and the design-system package every CamStack surface
 
 - **Owner doc**: `docs/architecture/ui.md`
 - **Code**: `packages/addon-admin-ui/**`, `packages/addon-agent-ui/**`, `packages/ui-library/**`
-- **Files**: 1722 (1722 claimed by some document)
+- **Files**: 1725 (1725 claimed by some document)
 - **Uncovered**: —
 
 ### ⚠️ Device-facing surfaces — snapshots, OSD, terminal, camera grids, autotrack
@@ -333,8 +333,8 @@ Everything that measures or builds CamStack rather than running it — the bench
 
 - **Owner doc**: `docs/reference/guards.md`
 - **Code**: `packages/addon-benchmark/**`, `packages/addon-model-studio/**`, `packages/cli/**`, `packages/sdk/**`, `packages/desktop/**`, `packages/nx-plugin/**`, `scripts/**`, `e2e/**`, `packages/addon-pipeline/scripts/**`
-- **Files**: 867 (447 claimed by some document)
-- **Uncovered**: `scripts` (185), `scripts/ui/shots/fixtures` (130), `scripts/lib` (20), `packages/cli/src/commands` (14), `scripts/ui/shots/harness` (14), `e2e/fixtures` (9), +18 more directories
+- **Files**: 868 (447 claimed by some document)
+- **Uncovered**: `scripts` (185), `scripts/ui/shots/fixtures` (131), `scripts/lib` (20), `packages/cli/src/commands` (14), `scripts/ui/shots/harness` (14), `e2e/fixtures` (9), +18 more directories
 
 ## Claimed by no subsystem
 

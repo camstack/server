@@ -30,6 +30,12 @@
  *    (`<group>-<index>-<nested>-<index>`), the same ids `row-id` gives those
  *    nested rows, so a branch can name every leaf of its row.
  *
+ * A `time-window` input is an optional limit on WHEN the automation may run. Its
+ * `gate` binding wraps the tree at a path as `all[time-is, <that tree>]`; left
+ * without a value the tree is not touched at all. A gate is declared after the
+ * bindings that write into the tree it wraps, because it moves that tree one
+ * level down.
+ *
  * Everything here is pure: the admin UI expands on save and the hub re-expands
  * every instance when a template changes, with the same function.
  */
@@ -39,6 +45,7 @@ import { AutomationRecipeSchema, type AutomationRecipe } from '../automation/rec
 import {
   TemplateActionValueSchema,
   TemplateEventValueSchema,
+  TemplateTimeWindowValueSchema,
   type TemplateGroupRow,
   type TemplateInputValue,
   type TemplateInputValues,
@@ -120,6 +127,12 @@ const BooleanInputSchema = z.object({
   default: z.boolean().optional(),
 })
 
+/** A limit on when the automation may run; only a `gate` binding reads it. */
+const TimeWindowInputSchema = z.object({
+  kind: z.literal('time-window'),
+  ...inputBase,
+})
+
 export const TemplateScalarInputSchema = z.discriminatedUnion('kind', [
   DeviceInputSchema,
   EventInputSchema,
@@ -129,6 +142,7 @@ export const TemplateScalarInputSchema = z.discriminatedUnion('kind', [
   TextInputSchema,
   SelectInputSchema,
   BooleanInputSchema,
+  TimeWindowInputSchema,
 ])
 export type TemplateScalarInput = z.infer<typeof TemplateScalarInputSchema>
 
@@ -239,9 +253,19 @@ export const TemplateRowsBindingSchema = z.object({
 })
 export type TemplateRowsBinding = z.infer<typeof TemplateRowsBindingSchema>
 
+/** Wraps the condition tree at `path` as `all[time-is, <tree>]` when the input has a value. */
+export const TemplateGateBindingSchema = z.object({
+  kind: z.literal('gate'),
+  /** A top-level `time-window` input. */
+  input: inputKey,
+  path: TemplatePathSchema,
+})
+export type TemplateGateBinding = z.infer<typeof TemplateGateBindingSchema>
+
 export const TemplateBindingSchema = z.discriminatedUnion('kind', [
   TemplateValueBindingSchema,
   TemplateRowsBindingSchema,
+  TemplateGateBindingSchema,
 ])
 export type TemplateBinding = z.infer<typeof TemplateBindingSchema>
 
@@ -262,6 +286,7 @@ function scalarsOf(
 function levelProblems(
   inputs: readonly (TemplateInput | TemplateRowInput)[],
   path: readonly (string | number)[],
+  inRow = false,
 ): readonly BindingIssue[] {
   const issues: BindingIssue[] = []
   const seen = new Set<string>()
@@ -271,8 +296,14 @@ function levelProblems(
     }
     seen.add(input.key)
     if (input.kind === 'group') {
-      issues.push(...levelProblems(input.inputs, path))
+      issues.push(...levelProblems(input.inputs, path, true))
       continue
+    }
+    if (input.kind === 'time-window' && inRow) {
+      issues.push({
+        message: `time window "${input.key}" limits the whole automation: it is not a row input`,
+        path,
+      })
     }
     if (input.kind !== 'event' && input.kind !== 'action') continue
     if (input.deviceInput === undefined) continue
@@ -366,6 +397,13 @@ function bindingProblems(
         path: ['bindings', index],
       })
     }
+    if ((binding.kind === 'gate') !== (input.kind === 'time-window')) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `a gate reads a time window and a time window is bound with a gate: "${input.key}" is ${input.kind}`,
+        path: ['bindings', index],
+      })
+    }
     if (binding.kind === 'rows') {
       if (input.kind !== 'group') {
         ctx.addIssue({
@@ -438,6 +476,10 @@ function valueProblem(input: TemplateScalarInput, value: TemplateInputValue): st
         : 'pick one of the options'
     case 'boolean':
       return typeof value === 'boolean' ? null : 'on or off'
+    case 'time-window': {
+      const parsed = TemplateTimeWindowValueSchema.safeParse(value)
+      return parsed.success ? null : (parsed.error.issues[0]?.message ?? 'pick a time window')
+    }
   }
 }
 
@@ -640,6 +682,19 @@ function writeValue(
   }
 }
 
+/** The tree at the path, under an `all` beside the window. */
+function writeGate(
+  root: unknown,
+  binding: TemplateGateBinding,
+  value: TemplateScalarValue,
+): unknown {
+  const window = TemplateTimeWindowValueSchema.parse(value)
+  return setAt(root, binding.path, {
+    kind: 'all',
+    children: [{ kind: 'time-is', ...window }, getAt(root, binding.path)],
+  })
+}
+
 /** The name a row is known by: `buttons-0`, and `buttons-0-events-1` for a nested row. */
 function rowIdOf(parentId: string | null, groupKey: string, index: number): string {
   const own = `${groupKey}-${index}`
@@ -766,7 +821,10 @@ export function expandAutomationTemplate(
       if (input.kind === 'group') continue
       const value = resolved.scalars.get(input.key)
       if (value === undefined) continue
-      body = writeValue(body, binding, input, value)
+      body =
+        binding.kind === 'gate'
+          ? writeGate(body, binding, value)
+          : writeValue(body, binding, input, value)
     }
   } catch (error: unknown) {
     if (!(error instanceof PathError)) throw error

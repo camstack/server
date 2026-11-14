@@ -8,6 +8,8 @@
 import {
   AUTOMATION_TEMPLATE_VERSION,
   type AutomationTemplatePayload,
+  type TemplateGateBinding,
+  type TemplateScalarInput,
 } from './automation-template.js'
 
 export const BUILTIN_TEMPLATE_ID_PREFIX = 'builtin:'
@@ -22,6 +24,22 @@ export interface BuiltinAutomationTemplate {
 const BUTTON_ROWS_MAX = 6
 const ROW_EVENTS_MAX = 8
 const ROW_COMMANDS_MAX = 10
+
+/** The optional limit both built-ins end with: no value, no limit. */
+const ACTIVE_WINDOW_KEY = 'active'
+const activeWindowInput: TemplateScalarInput = {
+  kind: 'time-window',
+  key: ACTIVE_WINDOW_KEY,
+  label: 'Only when',
+  description: 'Limit the automation to a time of day, to some days, or both.',
+  optional: true,
+}
+/** Declared last: it moves the tree the other bindings write into one level down. */
+const activeWindowGate: TemplateGateBinding = {
+  kind: 'gate',
+  input: ACTIVE_WINDOW_KEY,
+  path: ['when'],
+}
 
 const buttonsToDevices: BuiltinAutomationTemplate = {
   id: `${BUILTIN_TEMPLATE_ID_PREFIX}buttons-to-devices`,
@@ -86,6 +104,7 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
           },
         ],
       },
+      activeWindowInput,
     ],
     bindings: [
       {
@@ -127,6 +146,7 @@ const buttonsToDevices: BuiltinAutomationTemplate = {
           },
         ],
       },
+      activeWindowGate,
     ],
   },
 }
@@ -174,6 +194,7 @@ const motionLight: BuiltinAutomationTemplate = {
         max: 3600,
         default: 300,
       },
+      activeWindowInput,
     ],
     bindings: [
       { kind: 'value', input: 'sensor', path: ['when', 'deviceId'] },
@@ -190,6 +211,7 @@ const motionLight: BuiltinAutomationTemplate = {
         path: ['actions', 2, 'target'],
         as: 'target',
       },
+      activeWindowGate,
     ],
   },
 }

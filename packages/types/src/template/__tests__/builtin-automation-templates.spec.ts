@@ -10,7 +10,11 @@ import {
   isBuiltinTemplateId,
   reexpandAutomationInstance,
   type TemplateGroupRow,
+  type TemplateInputValues,
+  type TemplateTimeWindowValue,
 } from '../../index.js'
+import { ConditionMirror, evaluateWhenTree } from '../../automation/condition-eval.js'
+import type { TimeSite } from '../../time/time-spec.js'
 
 function payloadOf(id: string) {
   const found = builtinAutomationTemplate(id)
@@ -200,5 +204,102 @@ describe('built-in automation templates', () => {
       actionId: 'switch.off',
       target: { kind: 'devices', ids: [4, 5] },
     })
+  })
+})
+
+describe('built-in automation templates: the optional "Only when" window', () => {
+  const ROME: TimeSite = { lat: 41.9028, lon: 12.4964, timeZone: 'Europe/Rome' }
+  const nightWeekdays: TemplateTimeWindowValue = {
+    between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
+    days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+  }
+  const buttons: TemplateInputValues = {
+    buttons: [
+      {
+        events: [{ button: 40, event: { sourceIds: ['1'], kinds: ['press'] } }],
+        commands: [{ targets: [50], action: { actionId: 'switch.on' } }],
+      },
+    ],
+  }
+  const motion: TemplateInputValues = { sensor: 3, lights: [4, 5] }
+
+  /** The built-in as it was before the window existed: no input, no gate. */
+  function withoutWindow(id: string) {
+    const payload = payloadOf(id)
+    return {
+      ...payload,
+      inputs: payload.inputs.filter((input) => input.kind !== 'time-window'),
+      bindings: payload.bindings.filter((binding) => binding.kind !== 'gate'),
+    }
+  }
+
+  it('left empty, both built-ins expand to the very body they had without it', () => {
+    const cases: readonly (readonly [string, TemplateInputValues])[] = [
+      ['builtin:buttons-to-devices', buttons],
+      ['builtin:motion-light', motion],
+    ]
+    for (const [id, values] of cases) {
+      const out = expandAutomationTemplate(payloadOf(id), values)
+      const bare = expandAutomationTemplate(withoutWindow(id), values)
+      expect(out.ok && bare.ok).toBe(true)
+      if (!out.ok || !bare.ok) return
+      expect(JSON.stringify(out.recipe)).toBe(JSON.stringify(bare.recipe))
+    }
+  })
+
+  it('filled, the tree is all[time-is, <the tree it had>] on both built-ins', () => {
+    for (const [id, values] of [
+      ['builtin:buttons-to-devices', buttons],
+      ['builtin:motion-light', motion],
+    ] as const) {
+      const bare = expandAutomationTemplate(withoutWindow(id), values)
+      const out = expandAutomationTemplate(payloadOf(id), { ...values, active: nightWeekdays })
+      expect(out.ok && bare.ok).toBe(true)
+      if (!out.ok || !bare.ok) return
+      expect(out.recipe.when).toEqual({
+        kind: 'all',
+        children: [{ kind: 'time-is', ...nightWeekdays }, bare.recipe.when],
+      })
+      expect(out.recipe.actions).toEqual(bare.recipe.actions)
+    }
+  })
+
+  it('a button press runs its branch inside the window and nothing outside it', () => {
+    const out = expandAutomationTemplate(payloadOf('builtin:buttons-to-devices'), {
+      ...buttons,
+      active: nightWeekdays,
+    })
+    expect(out.ok).toBe(true)
+    if (!out.ok) return
+    const mirror = new ConditionMirror([])
+    const pressed = { firedPath: 'when.1.0', site: ROME }
+    const tuesdayNight = Date.parse('2026-01-13T22:00:00Z')
+    const saturdayNight = Date.parse('2026-01-17T22:00:00Z')
+    const tuesdayNoon = Date.parse('2026-01-13T11:00:00Z')
+    expect(evaluateWhenTree(out.recipe.when, mirror, tuesdayNight, pressed).pass).toBe(true)
+    expect(evaluateWhenTree(out.recipe.when, mirror, saturdayNight, pressed).pass).toBe(false)
+    expect(evaluateWhenTree(out.recipe.when, mirror, tuesdayNoon, pressed).pass).toBe(false)
+    // The branch still knows which leaf started the run, one level further down.
+    const [choose] = out.recipe.actions
+    if (choose?.kind !== 'choose') throw new Error('expected a choose step')
+    const branchIf = choose.branches[0]?.if
+    if (branchIf === undefined) throw new Error('expected a guarded branch')
+    const guard = evaluateWhenTree(branchIf, mirror, tuesdayNight, {
+      site: ROME,
+      trigger: { leafId: 'buttons-0-events-0' },
+    })
+    expect(guard.pass).toBe(true)
+  })
+
+  it('a window with neither a time nor a day is refused at its own address', () => {
+    const out = expandAutomationTemplate(payloadOf('builtin:motion-light'), {
+      ...motion,
+      active: { days: [] },
+    })
+    expect(out.ok).toBe(false)
+    if (out.ok) return
+    expect(out.problems).toEqual([
+      expect.objectContaining({ code: 'invalid-input', input: 'active' }),
+    ])
   })
 })

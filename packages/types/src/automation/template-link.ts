@@ -13,6 +13,7 @@
  */
 import { z } from 'zod'
 import { EventVocabularyKindSchema } from '../capabilities/event-vocabulary.js'
+import { TimeIsWindowSchema } from './when.js'
 
 /** An `event` input's value: the same three narrowing lists a `device-fired` row takes. */
 export const TemplateEventValueSchema = z
@@ -35,6 +36,13 @@ export const TemplateActionValueSchema = z.object({
 })
 export type TemplateActionValue = z.infer<typeof TemplateActionValueSchema>
 
+/**
+ * A `time-window` input's value: what a `time-is` leaf holds beside its kind.
+ * "No limit" is the input left without a value, never an empty object.
+ */
+export const TemplateTimeWindowValueSchema = TimeIsWindowSchema
+export type TemplateTimeWindowValue = z.infer<typeof TemplateTimeWindowValueSchema>
+
 /** The value of one non-group input. Which member is right is the input kind's to judge. */
 export const TemplateScalarValueSchema = z.union([
   z.number(),
@@ -43,6 +51,7 @@ export const TemplateScalarValueSchema = z.union([
   z.array(z.number().int().nonnegative()),
   TemplateEventValueSchema,
   TemplateActionValueSchema,
+  TemplateTimeWindowValueSchema,
 ])
 export type TemplateScalarValue = z.infer<typeof TemplateScalarValueSchema>
 

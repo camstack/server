@@ -486,3 +486,50 @@ describe('a group inside a group row', () => {
     expect(AutomationTemplatePayloadSchema.safeParse(deep).success).toBe(false)
   })
 })
+
+describe('a time window and its gate', () => {
+  const window = { kind: 'time-window', key: 'active', label: 'Only when', optional: true }
+  const gate = { kind: 'gate', input: 'active', path: ['when'] }
+  const gated = AutomationTemplatePayloadSchema.parse({
+    ...MOTION,
+    inputs: [...MOTION.inputs, window],
+    bindings: [...MOTION.bindings, gate],
+  })
+  const values = { sensor: 3, lights: [4] }
+
+  it('wraps the tree only when the window has a value', () => {
+    const plain = expandAutomationTemplate(MOTION, values)
+    const empty = expandAutomationTemplate(gated, values)
+    const filled = expandAutomationTemplate(gated, { ...values, active: { days: ['sat', 'sun'] } })
+    expect(plain.ok && empty.ok && filled.ok).toBe(true)
+    if (!plain.ok || !empty.ok || !filled.ok) return
+    expect(JSON.stringify(empty.recipe)).toBe(JSON.stringify(plain.recipe))
+    expect(filled.recipe.when).toEqual({
+      kind: 'all',
+      children: [{ kind: 'time-is', days: ['sat', 'sun'] }, plain.recipe.when],
+    })
+  })
+
+  it('refuses a gate on another input, a window bound as a value, and a window inside a row', () => {
+    const messagesOf = (payload: unknown): readonly string[] => {
+      const parsed = AutomationTemplatePayloadSchema.safeParse(payload)
+      return parsed.success ? [] : parsed.error.issues.map((i) => i.message)
+    }
+    expect(
+      messagesOf({ ...MOTION, bindings: [...MOTION.bindings, { ...gate, input: 'delay' }] }),
+    ).toEqual([expect.stringContaining('"delay" is duration')])
+    expect(
+      messagesOf({
+        ...MOTION,
+        inputs: [...MOTION.inputs, window],
+        bindings: [...MOTION.bindings, { kind: 'value', input: 'active', path: ['when'] }],
+      }),
+    ).toEqual([expect.stringContaining('bound with a gate')])
+    expect(
+      messagesOf({
+        ...MOTION,
+        inputs: [...MOTION.inputs, { kind: 'group', key: 'rows', label: 'Rows', inputs: [window] }],
+      }),
+    ).toEqual([expect.stringContaining('not a row input')])
+  })
+})

@@ -222,3 +222,36 @@ describe('the Buttons → devices form', () => {
     expect(within(lines[0] ?? document.body).queryByRole('alert')).toBeNull()
   })
 })
+
+describe('the optional "Only when" window', () => {
+  it('starts without a value and without fields: no limit', () => {
+    render(<Harness start={FILLED} onValues={vi.fn()} />)
+    expect(screen.getByTestId('template-input-active-limit').getAttribute('aria-checked')).toBe(
+      'false',
+    )
+    expect(screen.queryByTestId('time-is-fields')).toBeNull()
+  })
+
+  it('opens the automation editor time fields and stores {between, days}, then clears on off', () => {
+    const onValues = vi.fn()
+    render(<Harness start={FILLED} onValues={onValues} />)
+    fireEvent.click(screen.getByTestId('template-input-active-limit'))
+    expect(screen.getByTestId('time-is-fields')).toBeTruthy()
+    expect(onValues).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        active: {
+          between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
+        },
+      }),
+    )
+    const firstDay = within(screen.getByRole('group', { name: 'Days' })).getAllByRole('button')[0]
+    if (firstDay === undefined) throw new Error('no day buttons')
+    fireEvent.click(firstDay)
+    expect(onValues.mock.lastCall?.[0].active).toMatchObject({
+      days: ['tue', 'wed', 'thu', 'fri', 'sat', 'sun'],
+    })
+    fireEvent.click(screen.getByTestId('template-input-active-limit'))
+    expect('active' in onValues.mock.lastCall?.[0]).toBe(false)
+    expect(screen.queryByTestId('time-is-fields')).toBeNull()
+  })
+})

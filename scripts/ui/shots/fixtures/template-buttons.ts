@@ -6,6 +6,7 @@
  * shot too. Invented data.
  */
 import { generateAutomationBlock } from '../../../../packages/types/src/automation/codegen.ts'
+import type { TemplateTimeWindowValue } from '../../../../packages/types/src/automation/template-link.ts'
 import { instantiateAutomationTemplate } from '../../../../packages/types/src/template/automation-template.ts'
 import { BUILTIN_AUTOMATION_TEMPLATES } from '../../../../packages/types/src/template/builtin-automation-templates.ts'
 import { defineFixtures } from './_define'
@@ -165,30 +166,40 @@ const bindingsOf = (deviceId: number) => ({
 })
 
 const NAME = 'Pulsante bagno'
-const made = instantiateAutomationTemplate(TEMPLATE_ID, BUTTONS.payload, {
-  buttons: [
-    {
-      events: [{ button: 301, event: { sourceIds: ['1'], eventIds: ['press_short'] } }],
-      commands: [
-        { targets: [302], action: { actionId: 'switch.toggle' } },
-        { targets: [303], action: { actionId: 'switch.toggle' } },
-      ],
-    },
-  ],
-})
-if (!made.ok) throw new Error(`fixture instance: ${made.problems.map((p) => p.detail).join('; ')}`)
+/** The window the "with a window" variant of this fixture fills in: weeknights. */
+const NIGHT_WEEKDAYS: TemplateTimeWindowValue = {
+  between: { from: { kind: 'clock', hh: 22, mm: 0 }, to: { kind: 'clock', hh: 6, mm: 0 } },
+  days: ['mon', 'tue', 'wed', 'thu', 'fri'],
+}
 
-const INSTANCE = {
-  id: 'blk-buttons',
-  name: NAME,
-  code: generateAutomationBlock({ name: NAME, recipe: made.recipe }),
-  enabled: true,
-  placement: 'hub',
-  createdAt: NOW - 86_400_000,
-  updatedAt: NOW - 3_600_000,
-  createdBy: 'admin',
-  status: 'running',
-  lastChangedAt: NOW - 3_600_000,
+function instanceOf(window: TemplateTimeWindowValue | undefined) {
+  const made = instantiateAutomationTemplate(TEMPLATE_ID, BUTTONS.payload, {
+    ...(window === undefined ? {} : { active: window }),
+    buttons: [
+      {
+        events: [{ button: 301, event: { sourceIds: ['1'], eventIds: ['press_short'] } }],
+        commands: [
+          { targets: [302], action: { actionId: 'switch.toggle' } },
+          { targets: [303], action: { actionId: 'switch.toggle' } },
+        ],
+      },
+    ],
+  })
+  if (!made.ok) {
+    throw new Error(`fixture instance: ${made.problems.map((p) => p.detail).join('; ')}`)
+  }
+  return {
+    id: 'blk-buttons',
+    name: NAME,
+    code: generateAutomationBlock({ name: NAME, recipe: made.recipe }),
+    enabled: true,
+    placement: 'hub',
+    createdAt: NOW - 86_400_000,
+    updatedAt: NOW - 3_600_000,
+    createdBy: 'admin',
+    status: 'running',
+    lastChangedAt: NOW - 3_600_000,
+  }
 }
 
 const BUTTON_SOURCES = [
@@ -200,41 +211,53 @@ const VOCABULARY = BUTTON_SOURCES.flatMap((source) => [
   { id: 'press_long', source, label: 'Long press', kind: 'long-press' },
 ])
 
-export default defineFixtures({
-  area: 'template-buttons',
-  description: 'An automation made from the Buttons → devices template: one button, two actions',
-  handlers: {
-    ...templates.handlers,
-    'coreBlocks.list': { blocks: [INSTANCE] },
-    'deviceManager.listAll': ROWS.map(fleetDevice),
-    'deviceManager.getDevice': (input: { deviceId?: number }) => {
-      const row = ROWS.find((r) => r.id === input.deviceId)
-      return row === undefined ? null : fleetDevice(row)
+export function buttonsFixtures(
+  area: string,
+  description: string,
+  window?: TemplateTimeWindowValue,
+) {
+  return defineFixtures({
+    area,
+    description,
+    handlers: {
+      ...templates.handlers,
+      'coreBlocks.list': { blocks: [instanceOf(window)] },
+      'deviceManager.listAll': ROWS.map(fleetDevice),
+      'deviceManager.getDevice': (input: { deviceId?: number }) => {
+        const row = ROWS.find((r) => r.id === input.deviceId)
+        return row === undefined ? null : fleetDevice(row)
+      },
+      'deviceManager.search': searchAnswer,
+      'deviceManager.getBindings': (input: { deviceId?: number }) =>
+        bindingsOf(input.deviceId ?? 0),
+      'deviceManager.getBindingsBatch': (input: { deviceIds?: readonly number[] }) =>
+        (input.deviceIds ?? []).map(bindingsOf),
+      'deviceState.getCapSlice': (input: { deviceId?: number; capName?: string }) =>
+        input.deviceId === 301 && input.capName === 'event-emitter'
+          ? {
+              eventTypes: ['press_short', 'press_long'],
+              vocabulary: VOCABULARY,
+              lastEvent: null,
+              eventCountSinceStart: 0,
+            }
+          : null,
+      'integrations.list': INTEGRATIONS.map((i) => ({
+        ...i,
+        enabled: true,
+        info: {},
+        createdAt: 0,
+        updatedAt: 0,
+        processState: 'running',
+      })),
+      'addons.list': ADDONS.map((a) => ({
+        manifest: { id: a.id, name: a.name, packageName: a.id, packageVersion: '1' },
+        source: 'npm',
+      })),
     },
-    'deviceManager.search': searchAnswer,
-    'deviceManager.getBindings': (input: { deviceId?: number }) => bindingsOf(input.deviceId ?? 0),
-    'deviceManager.getBindingsBatch': (input: { deviceIds?: readonly number[] }) =>
-      (input.deviceIds ?? []).map(bindingsOf),
-    'deviceState.getCapSlice': (input: { deviceId?: number; capName?: string }) =>
-      input.deviceId === 301 && input.capName === 'event-emitter'
-        ? {
-            eventTypes: ['press_short', 'press_long'],
-            vocabulary: VOCABULARY,
-            lastEvent: null,
-            eventCountSinceStart: 0,
-          }
-        : null,
-    'integrations.list': INTEGRATIONS.map((i) => ({
-      ...i,
-      enabled: true,
-      info: {},
-      createdAt: 0,
-      updatedAt: 0,
-      processState: 'running',
-    })),
-    'addons.list': ADDONS.map((a) => ({
-      manifest: { id: a.id, name: a.name, packageName: a.id, packageVersion: '1' },
-      source: 'npm',
-    })),
-  },
-})
+  })
+}
+
+export default buttonsFixtures(
+  'template-buttons',
+  'An automation made from the Buttons → devices template: one button, two actions',
+)

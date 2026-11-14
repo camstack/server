@@ -70,6 +70,8 @@ export function patchInput(input: Scalar, patch: InputPatch): TemplateInput {
         ...(def === undefined ? {} : { default: def }),
       }
     }
+    case 'time-window':
+      return { kind: 'time-window', ...base, ...description }
     case 'boolean': {
       const def = pick(patch, 'default', input.default, asBoolean)
       return {

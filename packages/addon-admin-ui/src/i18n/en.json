@@ -6105,7 +6105,10 @@
       "newRow": "New row",
       "removeNamed": "Remove {{noun}}",
       "readingActions": "Reading what these devices can do…",
-      "actionNotOffered": "{{id}} (not offered)"
+      "actionNotOffered": "{{id}} (not offered)",
+      "timeWindow": {
+        "limit": "Only run at certain times"
+      }
     }
   },
   "automation": {

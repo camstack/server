@@ -25,6 +25,7 @@ import {
   type TemplateNestedRow,
   type TemplateScalarInput,
   type TemplateScalarValue,
+  TemplateTimeWindowValueSchema,
 } from '@camstack/types'
 import type { PickedDeviceEvent } from '@camstack/ui-library'
 import {
@@ -44,6 +45,8 @@ import { Fragment, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../automation/automation-data'
 import { PickerLabel } from '../automation/FieldPicker'
+import { TimeIsFields } from '../automation/TimeIsFields'
+import { withWindow } from '../automation/time-is-model'
 import { FiredFields } from '../automation/FiredFields'
 import { EVENT_EMITTER_CAP, firedVocabularyOf } from '../automation/fired-model'
 import { CommandActionField } from '../flow/CommandActionField'
@@ -770,5 +773,65 @@ function ScalarControl({
           label={input.label}
         />
       )
+    case 'time-window':
+      return (
+        <TimeWindowControl
+          testId={`template-input-${address}`}
+          value={value}
+          disabled={disabled}
+          onChange={onChange}
+        />
+      )
   }
+}
+
+interface TimeWindowControlProps {
+  readonly testId: string
+  readonly value: TemplateInputValue | undefined
+  readonly disabled: boolean
+  readonly onChange: (next: TemplateScalarValue | undefined) => void
+}
+
+/**
+ * A `time-window` input: off leaves it without a value (no limit), on opens the
+ * automation editor's own `time-is` fields. The window never holds an empty day
+ * list: releasing the last day does nothing, so a value is always one the
+ * template accepts.
+ */
+function TimeWindowControl({
+  testId,
+  value,
+  disabled,
+  onChange,
+}: TimeWindowControlProps): ReactNode {
+  const { t } = useTranslation()
+  const parsed = TemplateTimeWindowValueSchema.safeParse(value)
+  const leaf = parsed.success ? ({ kind: 'time-is', ...parsed.data } as const) : null
+  return (
+    <div className="flex flex-col gap-2" data-testid={testId}>
+      <Switch
+        data-testid={`${testId}-limit`}
+        disabled={disabled}
+        checked={leaf !== null}
+        onCheckedChange={(checked) => {
+          if (!checked) return onChange(undefined)
+          const { kind: _kind, ...window } = withWindow({ kind: 'time-is' }, true)
+          onChange(window)
+        }}
+        label={t('build.templates.timeWindow.limit', 'Only run at certain times')}
+      />
+      {leaf === null ? null : (
+        <fieldset disabled={disabled} className="contents">
+          <TimeIsFields
+            leaf={leaf}
+            onChange={(next) => {
+              if (next.days?.length === 0) return
+              const { kind: _kind, ...window } = next
+              onChange(window)
+            }}
+          />
+        </fieldset>
+      )}
+    </div>
+  )
 }

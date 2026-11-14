@@ -262,29 +262,41 @@ const StationaryPresentLeafSchema = z.object({
  * (`kind: 'date'`) is refused: only a clock time or a sun event makes a window
  * that repeats every day.
  */
-const TimeIsLeafSchema = z
-  .object({
-    kind: z.literal('time-is'),
-    between: z.object({ from: TimeSpecSchema, to: TimeSpecSchema }).optional(),
-    days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
-  })
-  .superRefine((leaf, ctx) => {
-    if (leaf.between === undefined && leaf.days === undefined) {
+const timeIsWindowShape = {
+  between: z.object({ from: TimeSpecSchema, to: TimeSpecSchema }).optional(),
+  days: z.array(WeekdayKeySchema).min(1).max(7).optional(),
+}
+
+function timeIsWindowProblems(window: TimeIsWindow, ctx: z.RefinementCtx): void {
+  if (window.between === undefined && window.days === undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      message: 'a time-is leaf needs a between window, days, or both',
+    })
+  }
+  for (const end of ['from', 'to'] as const) {
+    if (window.between?.[end].kind === 'date') {
       ctx.addIssue({
         code: 'custom',
-        message: 'a time-is leaf needs a between window, days, or both',
+        message: 'a one-date time cannot bound a daily window: use a clock time or a sun event',
+        path: ['between', end],
       })
     }
-    for (const end of ['from', 'to'] as const) {
-      if (leaf.between?.[end].kind === 'date') {
-        ctx.addIssue({
-          code: 'custom',
-          message: 'a one-date time cannot bound a daily window: use a clock time or a sun event',
-          path: ['between', end],
-        })
-      }
-    }
-  })
+  }
+}
+
+const TimeIsWindowObjectSchema = z.object(timeIsWindowShape)
+
+/**
+ * What a `time-is` leaf holds beside its kind, judged by the leaf's own rules.
+ * A template's time-window input stores exactly this.
+ */
+export const TimeIsWindowSchema = TimeIsWindowObjectSchema.superRefine(timeIsWindowProblems)
+export type TimeIsWindow = z.infer<typeof TimeIsWindowObjectSchema>
+
+const TimeIsLeafSchema = z
+  .object({ kind: z.literal('time-is'), ...timeIsWindowShape })
+  .superRefine(timeIsWindowProblems)
 
 /** How many event leaves one `triggered-by` names. */
 export const TRIGGERED_BY_MAX_IDS = 20
