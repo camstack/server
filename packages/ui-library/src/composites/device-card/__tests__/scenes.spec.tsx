@@ -223,7 +223,7 @@ describe('shell behaviour shared by every scene', () => {
     expect(screen.getAllByText(common.offlineLabel ?? 'Offline')).toHaveLength(1)
     expect(screen.queryByTestId('dc-reason')).toBeNull()
     const power = screen.getByTestId('dc-plug-power')
-    expect(power).toHaveProperty('disabled', true)
+    expect(power.getAttribute('aria-disabled')).toBe('true')
     fireEvent.click(power)
     expect(actions.onPower).not.toHaveBeenCalled()
   })
@@ -237,7 +237,7 @@ describe('shell behaviour shared by every scene', () => {
       />,
     )
     expect(present('dc-reason')).toBe(true)
-    expect(screen.getByTestId('dc-plug-power')).toHaveProperty('disabled', true)
+    expect(screen.getByTestId('dc-plug-power').getAttribute('aria-disabled')).toBe('true')
     expect(screen.getByTestId('dc-plug-timer-stop')).toHaveProperty('disabled', true)
   })
 

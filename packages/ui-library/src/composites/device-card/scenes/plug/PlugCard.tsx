@@ -2,10 +2,11 @@ import { NOT_REPORTED } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { PlugIllustration } from '../../illustrations/PlugIllustration'
-import { CardButton } from '../../parts/CardButton'
 import { SwitchTimer } from '../../parts/SwitchTimer'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
+import { ScenePower } from '../../shell/ScenePower'
 import type { PlugCardActions, PlugCardModel } from './model'
 
 export interface PlugCardProps {
@@ -42,22 +43,14 @@ export function PlugCard({
       state={{ label, since: model.since, tone: on ? 'primary' : 'muted' }}
       scene={{
         image: (
-          <PlugIllustration
+          <ScenePower
             on={on}
-            className={orientation === 'vertical' ? 'h-24 w-24' : 'h-27.5 w-27.5'}
-          />
-        ),
-        right: (
-          <CardButton
-            glyph="power"
-            tone={on ? 'primary' : 'default'}
-            data-testid="dc-plug-power"
-            onClick={() => actions.onPower(!on)}
+            label={t('uiLibrary.deviceCard.power', 'Power')}
+            testId="dc-plug-power"
+            onToggle={actions.onPower}
           >
-            {on
-              ? t('uiLibrary.deviceCard.turnOff', 'Turn off')
-              : t('uiLibrary.deviceCard.turnOn', 'Turn on')}
-          </CardButton>
+            <PlugIllustration on={on} className={SCENE_DRAWING_CLASS} />
+          </ScenePower>
         ),
         bottom: model.timer === null ? null : <SwitchTimer timer={model.timer} actions={actions} />,
       }}
