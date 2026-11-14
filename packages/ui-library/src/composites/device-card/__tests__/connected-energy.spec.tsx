@@ -6,7 +6,7 @@
  * because the system is not a device that runs on a battery (#522).
  */
 import { DeviceType, type EnergySystemStatus } from '@camstack/types'
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { plugFixtures } from '../__fixtures__/plug'
 import { ConnectedEnergyCard } from '../connected/ConnectedEnergyCard'
@@ -195,16 +195,14 @@ describe('the energy system card', () => {
     hub.slice = FULL
     render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
     expect(screen.getByText('Charging · 74%')).toBeTruthy()
-    expect(screen.getByTestId('dc-energy-today').textContent).toContain('18.4 kWh')
+    expect(screen.getAllByTestId('dc-energy-today')[0]?.textContent).toContain('18.4 kWh')
     expect(screen.queryByText('19%')).toBeNull()
   })
 
   it('every total of today is its own pill, and each names its unit', () => {
     hub.slice = FULL
     render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
-    const chips = within(screen.getByTestId('dc-energy-today')).getAllByTestId(
-      'dc-energy-today-chip',
-    )
+    const chips = screen.getAllByTestId('dc-energy-today-chip')
     expect(chips.map((chip) => chip.textContent)).toEqual([
       'Produced18.4 kWh',
       'House11.2 kWh',
@@ -237,9 +235,7 @@ describe('the energy system card', () => {
     }
     render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
     expect(screen.queryByText('Charging · 74%')).toBeNull()
-    const chips = within(screen.getByTestId('dc-energy-today')).getAllByTestId(
-      'dc-energy-today-chip',
-    )
+    const chips = screen.getAllByTestId('dc-energy-today-chip')
     expect(chips.map((chip) => chip.textContent)).toContain('Charge74%')
   })
 

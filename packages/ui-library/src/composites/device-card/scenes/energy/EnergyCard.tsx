@@ -1,11 +1,11 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import {
   EnergyFlowIllustration,
   type EnergyNodeId,
   type EnergyNodeView,
 } from '../../illustrations/EnergyFlowIllustration'
-import { ValueChip } from '../../parts/ValueChip'
+import { type BottomRow, rowStats } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import {
@@ -76,8 +76,6 @@ export function energySince(flows: EnergyFlows, t: UiTextFn): string | null {
   return null
 }
 
-type TodayPill = readonly [string, string, string | null]
-
 const kwh = (v: number | null): string | null => (v === null ? null : `${v} kWh`)
 const pct = (v: number | null): string | null => (v === null ? null : `${Math.round(v)}%`)
 const hours = (v: number | null): string | null => (v === null ? null : `≈ ${v.toFixed(1)} h`)
@@ -87,75 +85,77 @@ function sceneShowsBatteryCharge(flows: EnergyFlows): boolean {
   return flows.batteryW !== null && flows.batteryPct !== null
 }
 
-function todayPills(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readonly TodayPill[] {
+interface TodayRowSpec {
+  readonly id: string
+  readonly label: string
+  readonly cells: readonly (readonly [string, string, string | null])[]
+}
+
+/**
+ * Today's totals gathered by what they answer, at most four to a row: where the
+ * energy went, how much of it stayed home, the battery, and what it cycled.
+ */
+function todayRows(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readonly TodayRowSpec[] {
+  const e = (key: string, fallback: string): string =>
+    t(`uiLibrary.deviceCard.energy.${key}`, fallback)
   return [
-    ['produced', t('uiLibrary.deviceCard.energy.produced', 'Produced'), kwh(today.producedKwh)],
-    ['house', t('uiLibrary.deviceCard.energy.houseToday', 'House'), kwh(today.houseKwh)],
-    ['imported', t('uiLibrary.deviceCard.energy.imported', 'Imported'), kwh(today.importedKwh)],
-    ['exported', t('uiLibrary.deviceCard.energy.exported', 'Exported'), kwh(today.exportedKwh)],
-    [
-      'self',
-      t('uiLibrary.deviceCard.energy.selfConsumption', 'Self-use'),
-      pct(today.selfConsumptionPct),
-    ],
-    [
-      'sufficiency',
-      t('uiLibrary.deviceCard.energy.selfSufficiency', 'Self-sufficiency'),
-      pct(today.selfSufficiencyPct),
-    ],
-    [
-      'heatPump',
-      t('uiLibrary.deviceCard.energy.heatPumpToday', 'Heat pump'),
-      kwh(today.heatPumpKwh),
-    ],
-    [
-      'heatPumpNow',
-      t('uiLibrary.deviceCard.energy.heatPumpNow', 'Heat pump now'),
-      pct(today.heatPumpShareNowPct),
-    ],
-    ...(omitCharge
-      ? []
-      : [['soc', t('uiLibrary.deviceCard.energy.soc', 'Charge'), pct(today.socPct)] as const]),
-    ['health', t('uiLibrary.deviceCard.energy.health', 'Health'), pct(today.healthPct)],
-    ['autonomy', t('uiLibrary.deviceCard.energy.autonomy', 'Autonomy'), hours(today.autonomyHours)],
-    [
-      'charged',
-      t('uiLibrary.deviceCard.energy.chargedToday', 'Charged'),
-      kwh(today.chargedTodayKwh),
-    ],
-    [
-      'discharged',
-      t('uiLibrary.deviceCard.energy.dischargedToday', 'Discharged'),
-      kwh(today.dischargedTodayKwh),
-    ],
+    {
+      id: 'flows',
+      label: e('rowFlows', 'Energy'),
+      cells: [
+        ['produced', e('produced', 'Produced'), kwh(today.producedKwh)],
+        ['house', e('houseToday', 'House'), kwh(today.houseKwh)],
+        ['imported', e('imported', 'Imported'), kwh(today.importedKwh)],
+        ['exported', e('exported', 'Exported'), kwh(today.exportedKwh)],
+      ],
+    },
+    {
+      id: 'share',
+      label: e('rowShare', 'Share'),
+      cells: [
+        ['self', e('selfConsumption', 'Self-use'), pct(today.selfConsumptionPct)],
+        ['sufficiency', e('selfSufficiency', 'Self-sufficiency'), pct(today.selfSufficiencyPct)],
+        ['heatPump', e('heatPumpToday', 'Heat pump'), kwh(today.heatPumpKwh)],
+        ['heatPumpNow', e('heatPumpNow', 'Heat pump now'), pct(today.heatPumpShareNowPct)],
+      ],
+    },
+    {
+      id: 'battery',
+      label: e('rowBattery', 'Battery'),
+      cells: [
+        ...(omitCharge ? [] : [['soc', e('soc', 'Charge'), pct(today.socPct)] as const]),
+        ['health', e('health', 'Health'), pct(today.healthPct)],
+        ['autonomy', e('autonomy', 'Autonomy'), hours(today.autonomyHours)],
+      ],
+    },
+    {
+      id: 'cycle',
+      label: e('rowCycle', 'Cycled'),
+      cells: [
+        ['charged', e('chargedToday', 'Charged'), kwh(today.chargedTodayKwh)],
+        ['discharged', e('dischargedToday', 'Discharged'), kwh(today.dischargedTodayKwh)],
+      ],
+    },
   ]
 }
 
-interface TodayProps {
-  readonly today: EnergyToday
-  readonly t: UiTextFn
-  readonly omitCharge: boolean
-}
-
-function Today(props: TodayProps): ReactNode {
-  const { today, t, omitCharge } = props
-  const items = todayPills(today, t, omitCharge)
-  return (
-    <ul data-testid="dc-energy-today" className="flex flex-wrap justify-center gap-1.5">
-      {items.flatMap(([id, label, value]) =>
-        value === null
-          ? []
-          : [
-              <li key={id}>
-                <ValueChip data-testid="dc-energy-today-chip">
-                  <span>{label}</span>
-                  <span className="font-semibold tabular-nums text-foreground">{value}</span>
-                </ValueChip>
-              </li>,
-            ],
-      )}
-    </ul>
-  )
+/** One `rowStats` per group that has a value; a missing input is omitted, never 0. */
+function todayBottom(today: EnergyToday, t: UiTextFn, omitCharge: boolean): readonly BottomRow[] {
+  return todayRows(today, t, omitCharge).flatMap((row) => {
+    const stats = row.cells.flatMap(([id, name, value]) =>
+      value === null ? [] : [{ id, name, value }],
+    )
+    return stats.length === 0
+      ? []
+      : [
+          rowStats(`today-${row.id}`, {
+            label: row.label,
+            stats,
+            testId: 'dc-energy-today',
+            cellTestId: 'dc-energy-today-chip',
+          }),
+        ]
+  })
 }
 
 /**
@@ -197,9 +197,9 @@ export function EnergyCard({
           />
         ),
         bottom:
-          model.today === null ? null : (
-            <Today today={model.today} t={t} omitCharge={sceneShowsBatteryCharge(model.flows)} />
-          ),
+          model.today === null
+            ? []
+            : todayBottom(model.today, t, sceneShowsBatteryCharge(model.flows)),
       }}
     />
   )
