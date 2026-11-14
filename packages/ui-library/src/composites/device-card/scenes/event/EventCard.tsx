@@ -3,6 +3,7 @@ import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
 import { CardIcon } from '../../parts/CardIcon'
 import { InfoTile } from '../../parts/InfoTile'
+import { rowBlock } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation } from '../../shell/model'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
@@ -143,7 +144,10 @@ export function EventCard({
       scene={{
         columns: {},
         image: <CardIcon glyph="event" className={cn(SCENE_ICON_CLASS, 'text-foreground-muted')} />,
-        bottom: <EventVocabularyList model={model} t={t} />,
+        bottom:
+          model.entries.length === 0
+            ? []
+            : [rowBlock('vocabulary', { content: <EventVocabularyList model={model} t={t} /> })],
       }}
     />
   )
