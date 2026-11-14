@@ -2,8 +2,8 @@ import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
 import { CardIcon } from '../../parts/CardIcon'
-import { InfoTile } from '../../parts/InfoTile'
 import { columnButton } from '../../shell/column-items'
+import { rowStats } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
@@ -99,21 +99,25 @@ export function UpdateCard({
                 ]
               : [],
         },
-        bottom: (
-          <div className="grid w-full gap-1.5">
-            <InfoTile
-              label={t('uiLibrary.deviceCard.update.installed', 'Installed')}
-              value={model.current}
-              testId="dc-update-current"
-            />
-            <InfoTile
-              label={t('uiLibrary.deviceCard.update.latest', 'Available')}
-              value={model.available}
-              tone={pending ? 'warning' : 'default'}
-              testId="dc-update-available"
-            />
-          </div>
-        ),
+        bottom: [
+          rowStats('versions', {
+            stats: [
+              {
+                id: 'current',
+                name: t('uiLibrary.deviceCard.update.installed', 'Installed'),
+                value: model.current ?? '—',
+                testId: 'dc-update-current',
+              },
+              {
+                id: 'available',
+                name: t('uiLibrary.deviceCard.update.latest', 'Available'),
+                value: model.available ?? '—',
+                tone: pending ? 'warning' : 'default',
+                testId: 'dc-update-available',
+              },
+            ],
+          }),
+        ],
       }}
     />
   )
