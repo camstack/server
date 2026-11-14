@@ -40,6 +40,7 @@ import {
   verticalSwingToBool,
 } from '../gree-domain-mapping.js'
 import { greeConnections } from '../gree-gateway.js'
+import { greeClimateAction } from '../gree-extras.js'
 
 const CLIMATE_CAP = 'climate-control'
 const FAN_CAP = 'fan-control'
@@ -152,6 +153,7 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
   private readonly connectionKey: string
   private stateChangedUnsub: (() => void) | null = null
   private surfaceUnsub: (() => void) | null = null
+  private extrasUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const persisted = greeAcSchema.parse(ctx.persistedConfig ?? {})
@@ -186,10 +188,14 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
       this.attachStateListener()
       this.recomputeSlices()
     })
+    // A defrost read changes the climate action; recompute when extras land.
+    this.extrasUnsub = greeConnections.onExtras(this.connectionKey, () => this.recomputeSlices())
   }
 
   override async removeDevice(): Promise<void> {
     this.detachStateListener()
+    this.extrasUnsub?.()
+    this.extrasUnsub = null
     if (this.surfaceUnsub) {
       try {
         this.surfaceUnsub()
@@ -358,6 +364,11 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
       minTemp: GREE_MIN_TEMP,
       maxTemp: GREE_MAX_TEMP,
       tempStep: GREE_TEMP_STEP,
+      // Only what the unit's flags prove: off, or idle while defrosting; else unknown.
+      action: greeClimateAction({
+        power: ac.power,
+        defrost: greeConnections.getExtras(this.connectionKey, this.greeMac)?.defrost ?? null,
+      }),
       lastFetchedAt: now,
     }
     this.runtimeState.setCapState(CLIMATE_CAP, this.applyClimateFilters(climateSlice))

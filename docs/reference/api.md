@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**206 capabilities · 1487 methods.**
+**206 capabilities · 1491 methods.**
 
 ## Method index
 
@@ -201,6 +201,10 @@
 | `contact.getStatus` | query | protected | contact (auto) |
 | `control.getStatus` | query | protected | control (auto) |
 | `control.setValue` | mutation | protected | control |
+| `control.next` | mutation | protected | control |
+| `control.previous` | mutation | protected | control |
+| `control.first` | mutation | protected | control |
+| `control.last` | mutation | protected | control |
 | `coreBlocks.list` | query | admin | core-blocks |
 | `coreBlocks.get` | query | admin | core-blocks |
 | `coreBlocks.create` | mutation | admin | core-blocks |
@@ -2135,7 +2139,7 @@
 
 ### `control` → `control.*`
 
-- **Source:** `packages/types/src/capabilities/control.cap.ts:82`
+- **Source:** `packages/types/src/capabilities/control.cap.ts:104`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `control`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IControlProvider`
@@ -2145,10 +2149,14 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `control.getStatus` | query | protected | `{ deviceId: number }` | `ControlStatusSchema` |
 | setValue | `control.setValue` | mutation | protected | `{ deviceId: number; control: { kind: "numeric"; value: number } \| { kind: "select"; value: string } \| { kind: "text"; value: string } \| { kind: "datetime"; value: string } }` | `void` |
+| next | `control.next` | mutation | protected | `{ deviceId: number; cycle?: boolean = true }` | `void` |
+| previous | `control.previous` | mutation | protected | `{ deviceId: number; cycle?: boolean = true }` | `void` |
+| first | `control.first` | mutation | protected | `{ deviceId: number }` | `void` |
+| last | `control.last` | mutation | protected | `{ deviceId: number }` | `void` |
 
 ### `core-blocks` → `coreBlocks.*`
 
-- **Source:** `packages/types/src/capabilities/core-blocks.cap.ts:389`
+- **Source:** `packages/types/src/capabilities/core-blocks.cap.ts:400`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ICoreBlocksProvider`

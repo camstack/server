@@ -44,7 +44,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `connectivity` | 1 | ✓ | ✓ | 1 series | — | — |
 | `consumables` | 2 | ✓ | ✓ | 3 per item | — | `bosch-home-connect` `provider-dreame` `provider-petkit` |
 | `contact` | 1 | ✓ | ✓ | 1 series | — | — |
-| `control` | 2 | ✓ | ✓ | none | — | — |
+| `control` | 6 | ✓ | ✓ | none | — | — |
 | `cover` | 6 | ✓ | ✓ | 1 series | — | — |
 | `day-night` | 3 | ✓ | ✓ | none | — | `provider-amcrest` `provider-hikvision` |
 | `detection-pipeline` | 3 | — | — | — | — | `detection-pipeline` |

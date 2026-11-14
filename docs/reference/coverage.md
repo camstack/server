@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**250 units · 8772 source files · 243 units claimed by at least one document (8741 files).**
+**250 units · 8775 source files · 243 units claimed by at least one document (8744 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -24,7 +24,7 @@ it never describes how the thing works, and it is never re-verified.
 | `scripts` | 605 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +152 more, 14 ADRs | 2026-11-12 |
 | `packages/system/src/builtins` | 507 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, +197 more, 21 ADRs | 2026-11-08 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 477 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
-| `packages/types/src/capabilities` | 237 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +228 more, 41 ADRs | 2026-11-12 |
+| `packages/types/src/capabilities` | 238 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +228 more, 41 ADRs | 2026-11-12 |
 | `packages/addon-post-analysis/src/notification-center` | 225 | `notification-center` | `architecture/notifications.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, `decisions/adr-1013-one-instance-model.md`, +92 more, 27 ADRs | 2026-11-12 |
 | `packages/addon-admin-ui/src/pages` | 202 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +57 more, 8 ADRs | 2026-11-12 |
 | `packages/addon-pipeline/src/stream-broker` | 188 | `recorder`, `stream-broker` | `architecture/data-planes.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-29-media-plane-memory-comparison.md` _(covers)_, +62 more, 21 ADRs | 2026-11-12 |
@@ -112,6 +112,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-tailscale` | 17 | `remote-access` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md` | — |
 | `packages/addon-agent-ui` | 16 | `admin-ui` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0839-the-agent-finds-hubs-the-way-the-cli-does-one-shared-mdns-browse-in-develop.md`, `decisions/adr-0841-the-agent-ui-lists-addons-and-their-runners-as-one-joined-list.md` | — |
 | `packages/addon-post-analysis/src/embedding-encoder` | 16 | `recognition` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, +4 more | 2026-10-01 |
+| `packages/addon-provider-gree` | 16 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-homematic/src/ccu` | 16 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-vesync` | 16 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-remote-storage` | 16 | `storage` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0384-never-ran-must-never-look-like-ran.md`, `decisions/adr-0298-a-storage-kind-declares-how-it-reaches-its-bytes-and-a-provider-that-cannot-is-refused.md` | — |
@@ -121,7 +122,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-training/src/orchestrator` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0805-cloud-training-is-one-orchestrator-over-a-provider-collection-and-never-registers-on-its-own.md`, +3 more | 2026-10-14 |
 | `packages/addon-training/src/providers` | 15 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0828-training-provider-entries-are-edited-via-updateentry-not-settings-array.md`, +3 more | 2026-10-14 |
 | `packages/system/src/tls` | 15 | `remote-access` | `decisions/adr-0227-the-hub-reissues-its-certificate-only-when-it-cannot-do-its-job.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, +5 more | — |
-| `packages/addon-provider-gree` | 14 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/catalogs` | 14 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0939-the-display-palette-is-one-hub-capability.md`, `decisions/adr-0715-a-root-detector-that-declares-a-step-fills-it-and-tier-1-has-one-writer-per-effect.md`, +7 more, 1 ADR | — |
 | `packages/addon-model-studio` | 13 | `tooling` | `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +2 more | — |
 | `packages/mcp-develop` | 13 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0849-retrain-annotations-keep-their-origin.md` | — |
