@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.667] - 2026-11-14
+
 ### Changed
 
 - Automations from a template: one card per button with its events and actions as one-line entries, Add event / Add action, and the same device picker everywhere

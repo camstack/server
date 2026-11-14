@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.566] - 2026-11-14
+
 ### Changed
 
 - Automation templates: a group row can hold groups, so the Buttons → devices template takes several events and several actions per button (automations made from the old shape must be recreated)

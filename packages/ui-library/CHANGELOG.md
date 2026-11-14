@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.443] - 2026-11-14
+
 ### Changed
 
 - Device cards: the two side columns are equal (15% each) and take only compact controls, so selectors now sit below the scene; the scene keeps at least 70% of the width and a power-only device toggles by a tap on the drawing (climate, media and energy first)
