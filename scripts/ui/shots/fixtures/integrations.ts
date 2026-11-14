@@ -59,7 +59,7 @@ export default defineFixtures({
           candidates: [
             {
               stableId: 'bosch-shc:shc0123',
-              type: 'hub',
+              type: 'gateway',
               suggestedName: 'Bosch SHC [lab]',
               prefilledConfig: { host: '192.0.2.20' },
               setupIntegration: true,
@@ -73,7 +73,7 @@ export default defineFixtures({
           candidates: [
             {
               stableId: 'hue:bridge-1',
-              type: 'hub',
+              type: 'gateway',
               suggestedName: 'Hue Bridge',
               prefilledConfig: { host: '192.0.2.41' },
               selectable: false,

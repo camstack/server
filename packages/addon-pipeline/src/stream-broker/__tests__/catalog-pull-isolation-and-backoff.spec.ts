@@ -277,7 +277,7 @@ describe('catalog reconcile — a DeviceRegistered for a non-camera pulls nothin
       return [MAIN_DESCRIPTOR]
     })
     const rows = [
-      { id: 5348, type: 'hub', isCamera: false, disabled: false },
+      { id: 5348, type: 'gateway', isCamera: false, disabled: false },
       { id: 101, type: 'camera', isCamera: true, disabled: false },
     ]
     const api = {

@@ -34,6 +34,5 @@ export const SUPPORTED_DEVICE_KINDS: readonly string[] = [
   'container',
   'image',
   'pet-feeder',
-  'hub',
   ...PLUG_APPLIANCE_TYPES,
 ]

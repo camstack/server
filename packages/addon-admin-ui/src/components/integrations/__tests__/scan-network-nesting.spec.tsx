@@ -20,7 +20,7 @@ const found = vi.hoisted(() => ({
       candidates: [
         {
           stableId: 'hue:bridge',
-          type: 'hub',
+          type: 'gateway',
           suggestedName: 'Bridge',
           prefilledConfig: { host: '192.0.2.40' },
           selectable: false,

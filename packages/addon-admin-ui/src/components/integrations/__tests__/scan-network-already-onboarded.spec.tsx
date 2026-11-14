@@ -18,7 +18,7 @@ const found = vi.hoisted(() => ({
       candidates: [
         {
           stableId: 'host-192.0.2.60',
-          type: 'hub',
+          type: 'gateway',
           suggestedName: 'Home Hub',
           prefilledConfig: { host: '192.0.2.60' },
           alreadyOnboarded: true,

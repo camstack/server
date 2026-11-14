@@ -40,7 +40,7 @@ const PARENT = {
   name: 'Porch motion sensor',
   addonId: 'provider-homeassistant',
   stableId: 'device.porch',
-  type: 'hub',
+  type: DeviceType.Gateway,
   location: 'Porch',
   disabled: false,
   parentDeviceId: null,

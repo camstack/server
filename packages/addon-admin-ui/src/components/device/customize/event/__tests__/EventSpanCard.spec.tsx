@@ -38,7 +38,7 @@ const PARENT: CandidateDevice = {
   name: 'Porch motion sensor',
   addonId: 'provider-homeassistant',
   stableId: 'device.porch',
-  type: 'hub',
+  type: DeviceType.Gateway,
   location: 'Porch',
   isCamera: false,
   integration: null,

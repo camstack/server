@@ -13,7 +13,7 @@ const adopt = vi.hoisted(() => vi.fn(async () => ({ id: 1 })))
 
 const shcCandidate = {
   stableId: 'bosch-shc:shc0123',
-  type: 'hub' as const,
+  type: 'gateway' as const,
   suggestedName: 'Bosch SHC [lab]',
   prefilledConfig: { host: '192.0.2.20', setupIntegration: true },
 }
