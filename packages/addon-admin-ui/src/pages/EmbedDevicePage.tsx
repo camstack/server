@@ -30,11 +30,18 @@ import {
   useThemeMode,
 } from '@camstack/ui-library'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { type ReactNode, useEffect } from 'react'
+import { type ReactNode, useCallback, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from '../contexts/auth-context'
 import { DeviceDetailModule, type DeviceModuleLocale } from '../modules/device-detail'
+import {
+  applyEmbedAccessToken,
+  embedHostAction,
+  embedHostData,
+  embedHostEventTrusted,
+  postEmbedCardReady,
+} from './embed-device-host'
 
 type EmbedTheme = 'light' | 'dark'
 
@@ -105,6 +112,41 @@ export function EmbedDevicePage(): ReactNode {
     if (requestedTheme !== null) setMode(requestedTheme)
   }, [requestedTheme, setMode])
   const inViewer = parseEmbedHost(search.get('host')) === 'viewer'
+  const announced = useRef<number | null>(null)
+  // Either report means the skeleton is gone: `true` is the card, `false` is
+  // the settled fallback. One post per device; the next device posts again.
+  const onDrawn = useCallback(
+    (_drawn: boolean) => {
+      if (deviceId === null || announced.current === deviceId) return
+      announced.current = deviceId
+      postEmbedCardReady(deviceId)
+    },
+    [deviceId],
+  )
+  useEffect(() => {
+    const onMessage = (event: Event): void => {
+      if (!(event instanceof MessageEvent)) return
+      const data = embedHostData(event.data)
+      const action = embedHostAction(
+        embedHostEventTrusted(
+          { origin: event.origin, source: event.source },
+          window.location.origin,
+          window.parent,
+          window,
+        ),
+        data,
+        search.toString(),
+      )
+      if (action.kind === 'show') navigate(action.path)
+      else if (action.kind === 'token') applyEmbedAccessToken(action.token, system)
+    }
+    window.addEventListener('message', onMessage)
+    document.addEventListener('message', onMessage)
+    return () => {
+      window.removeEventListener('message', onMessage)
+      document.removeEventListener('message', onMessage)
+    }
+  }, [navigate, search, system])
   // The canvas is painted on <html> (`index.css`); the viewer's sheet is the
   // background here, so the page drops it while it is hosted there.
   useEffect(() => {
@@ -149,6 +191,7 @@ export function EmbedDevicePage(): ReactNode {
             locale={parseEmbedLocale(search.get('lang')) ?? heroLang(i18n.language)}
             canActuate={canActuate}
             showName={!inViewer}
+            onDrawn={onDrawn}
             onOpenDevice={(id) => navigate(`/embed/device/${String(id)}?${search.toString()}`)}
           />
         </DeviceCardFrameProvider>

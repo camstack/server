@@ -220,8 +220,11 @@ signs in through the admin's STORED session (`camstack_admin_token` in
 localStorage); the httpOnly cookie alone does not sign it in, and no token is
 ever in the URL. The viewer's device detail (`camstack/src/device-embed/`) is
 this page: its WebView seeds that key with the viewer's access token before the
-page boots and clears the refresh pair (the viewer owns the refresh); its web
-build frames the page only when served by the hub (same origin, where an
+page boots and clears the refresh pair (the viewer owns the refresh). A later
+device and a renewed access token are messages the page applies without a new
+document (`show-device`, `set-token`); it posts `card-ready` with the device id
+once that card has left its skeleton. Its web build frames the page only when
+served by the hub (same origin, where an
 existing admin session is left alone) and otherwise opens it in a new tab. On
 web the viewer remembers the token it seeded and its sign-out removes that key
 while it still holds that token (`camstack/src/device-embed/seeded-session.ts`).

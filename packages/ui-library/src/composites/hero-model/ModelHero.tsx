@@ -100,9 +100,12 @@ export function ModelHero({
       model.data,
       bindings.data.entries.map((e) => e.capName),
     )
+  // Pending is still the skeleton: a `false` then would read as "settled on the
+  // fallback" to a host that shows the card when this reports either way.
   useEffect(() => {
+    if (model.status === 'pending' || bindings.status === 'pending') return
     onDrawn?.(drawn)
-  }, [drawn, onDrawn])
+  }, [bindings.status, drawn, model.status, onDrawn])
 
   if (model.status === 'pending' || bindings.status === 'pending') {
     return <Skeleton className="h-72 w-full" />

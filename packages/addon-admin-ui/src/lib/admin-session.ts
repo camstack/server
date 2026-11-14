@@ -55,6 +55,17 @@ export function storeSession(session: SessionTokens): void {
   write(ACCESS_EXPIRES_KEY, session.expiresAt !== undefined ? String(session.expiresAt) : null)
 }
 
+/**
+ * The viewer's renewed access token, written into the stored session without a
+ * refresh pair. The viewer owns the refresh; a refresh token left here would
+ * rotate a credential the page was never given.
+ */
+export function replaceAccessToken(token: string): void {
+  write(ACCESS_TOKEN_KEY, token)
+  write(REFRESH_TOKEN_KEY, null)
+  write(ACCESS_EXPIRES_KEY, null)
+}
+
 export function clearStoredSession(): void {
   write(ACCESS_TOKEN_KEY, null)
   write(REFRESH_TOKEN_KEY, null)

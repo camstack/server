@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A siren card stays pending until its switch answers, instead of looking blank or silent.
 - The energy card no longer repeats the battery charge as a Charge pill when the scene already shows it.
 - Device lists no longer treat a hub parent as a device type. Labels, icons and controls no longer include it.
+- A device card reports when it has finished loading, including a fallback.
 
 ## [1.2.441] - 2026-11-14
 
