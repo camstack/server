@@ -1,12 +1,12 @@
 import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
-import { ArmedButton } from '../../parts/ArmedButton'
-import { cardButtonClass } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
 import { InfoTile } from '../../parts/InfoTile'
+import { columnArmedButton, columnLink } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation } from '../../shell/model'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 
 /** What the box reports about itself; each fact is drawn only when present. */
 export interface GatewayFacts {
@@ -65,7 +65,6 @@ export function GatewayCard({
       value: model.facts.address,
     },
   ].filter((fact) => fact.value !== null)
-  const showRight = model.rebootable || model.adminLink !== null
   return (
     <DeviceCard
       kind="gateway"
@@ -86,7 +85,37 @@ export function GatewayCard({
       }}
       scene={{
         alert: unreachable,
-        left:
+        columns: {
+          right: [
+            ...(model.rebootable
+              ? [
+                  columnArmedButton('reboot', {
+                    glyph: 'restart',
+                    label: t('uiLibrary.deviceCard.gateway.reboot', 'Restart'),
+                    testId: 'dc-gateway-reboot',
+                    onConfirm: actions.onReboot,
+                  }),
+                ]
+              : []),
+            ...(model.adminLink === null
+              ? []
+              : [
+                  columnLink('admin', {
+                    glyph: 'open',
+                    label: model.adminLink.label,
+                    href: model.adminLink.url,
+                    testId: 'dc-gateway-admin',
+                  }),
+                ]),
+          ],
+        },
+        image: (
+          <CardIcon
+            glyph="gateway"
+            className={cn(SCENE_ICON_CLASS, unreachable ? 'text-danger' : 'text-foreground-muted')}
+          />
+        ),
+        bottom:
           facts.length === 0 ? null : (
             <div className="grid w-full gap-1.5">
               {facts.map((fact) => (
@@ -99,35 +128,6 @@ export function GatewayCard({
               ))}
             </div>
           ),
-        image: (
-          <CardIcon
-            glyph="gateway"
-            className={cn('h-20 w-20', unreachable ? 'text-danger' : 'text-foreground-muted')}
-          />
-        ),
-        right: showRight ? (
-          <>
-            {model.rebootable ? (
-              <ArmedButton testId="dc-gateway-reboot" glyph="restart" onConfirm={actions.onReboot}>
-                {t('uiLibrary.deviceCard.gateway.reboot', 'Restart')}
-              </ArmedButton>
-            ) : null}
-            {model.adminLink === null ? null : (
-              <a
-                href={model.adminLink.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                data-testid="dc-gateway-admin"
-                title={model.adminLink.label}
-                aria-label={model.adminLink.label}
-                className={cardButtonClass('default', false)}
-              >
-                <CardIcon glyph="open" />
-                {t('uiLibrary.deviceCard.gateway.open', 'Open')}
-              </a>
-            )}
-          </>
-        ) : null,
       }}
     />
   )
