@@ -7,6 +7,7 @@ import { MenuButton } from '../../parts/MenuButton'
 import { HorizontalSlider } from '../../parts/sliders'
 import { ValueEntry } from '../../parts/ValueEntry'
 import { type ColumnItem, columnButton, columnValue } from '../../shell/column-items'
+import { type BottomRow, rowBlock, rowSelector, rowSlider } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
@@ -59,7 +60,7 @@ function shownValue(control: ControlCardValue): string {
 
 interface ControlZones {
   readonly right?: readonly ColumnItem[]
-  readonly bottom?: ReactNode
+  readonly bottom?: readonly BottomRow[]
 }
 
 function numericZones(
@@ -88,22 +89,28 @@ function numericZones(
       }),
     ],
     bottom:
-      ranged && control.min !== null && control.max !== null ? (
-        <HorizontalSlider
-          value={control.value}
-          min={control.min}
-          max={control.max}
-          step={control.step ?? 1}
-          ariaLabel={t('uiLibrary.deviceCard.control.value', 'Value')}
-          onCommit={onSet}
-          testId="dc-control-slider"
-          trailing={
-            <small className="text-xs text-foreground-subtle">
-              {`${control.min} – ${control.max}${control.unit === null ? '' : ` ${control.unit}`}`}
-            </small>
-          }
-        />
-      ) : null,
+      ranged && control.min !== null && control.max !== null
+        ? [
+            rowSlider('value', {
+              slider: (
+                <HorizontalSlider
+                  value={control.value}
+                  min={control.min}
+                  max={control.max}
+                  step={control.step ?? 1}
+                  ariaLabel={t('uiLibrary.deviceCard.control.value', 'Value')}
+                  onCommit={onSet}
+                  testId="dc-control-slider"
+                  trailing={
+                    <small className="text-xs text-foreground-subtle">
+                      {`${control.min} – ${control.max}${control.unit === null ? '' : ` ${control.unit}`}`}
+                    </small>
+                  }
+                />
+              ),
+            }),
+          ]
+        : undefined,
   }
 }
 
@@ -121,43 +128,55 @@ function editorZones(
       return control.options.length < 2
         ? {}
         : {
-            bottom: (
-              <MenuButton
-                layout="stacked"
-                options={control.options.map((option) => ({ id: option, label: option }))}
-                value={control.value}
-                onChange={onSet}
-                ariaLabel={label}
-                triggerLabel={t('uiLibrary.deviceCard.control.change', 'Change')}
-                testId="dc-control-select"
-              />
-            ),
+            bottom: [
+              rowSelector('select', {
+                control: (
+                  <MenuButton
+                    layout="stacked"
+                    options={control.options.map((option) => ({ id: option, label: option }))}
+                    value={control.value}
+                    onChange={onSet}
+                    ariaLabel={label}
+                    triggerLabel={t('uiLibrary.deviceCard.control.change', 'Change')}
+                    testId="dc-control-select"
+                  />
+                ),
+              }),
+            ],
           }
     case 'text':
       return {
-        bottom: (
-          <ValueEntry
-            type="text"
-            value={control.value}
-            ariaLabel={label}
-            saveLabel={save}
-            onSave={onSet}
-            testId="dc-control-entry"
-          />
-        ),
+        bottom: [
+          rowBlock('entry', {
+            content: (
+              <ValueEntry
+                type="text"
+                value={control.value}
+                ariaLabel={label}
+                saveLabel={save}
+                onSave={onSet}
+                testId="dc-control-entry"
+              />
+            ),
+          }),
+        ],
       }
     case 'datetime':
       return {
-        bottom: (
-          <ValueEntry
-            type={control.editor}
-            value={control.value}
-            ariaLabel={label}
-            saveLabel={save}
-            onSave={onSet}
-            testId="dc-control-entry"
-          />
-        ),
+        bottom: [
+          rowBlock('entry', {
+            content: (
+              <ValueEntry
+                type={control.editor}
+                value={control.value}
+                ariaLabel={label}
+                saveLabel={save}
+                onSave={onSet}
+                testId="dc-control-entry"
+              />
+            ),
+          }),
+        ],
       }
     default:
       return {}
