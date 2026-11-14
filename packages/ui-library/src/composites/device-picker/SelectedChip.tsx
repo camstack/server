@@ -5,6 +5,7 @@
  */
 import { useUiText } from '../../contexts/ui-text'
 import { X } from 'lucide-react'
+import { Button } from '../../primitives/button'
 import { EventKindGlyph } from '../event-kind-visuals.js'
 import { type JSX } from 'react'
 
@@ -21,6 +22,8 @@ export interface SelectedChipProps {
   /** Brand / raster icon URL (e.g. notifier kind icon). */
   readonly iconUrl?: string
   readonly testId?: string
+  /** Makes the label a button (an entry that reopens its editor). */
+  readonly onSelect?: () => void
 }
 
 /** One selected entry as a removable chip. */
@@ -31,6 +34,7 @@ export function SelectedChip({
   iconId,
   iconUrl,
   testId,
+  onSelect,
 }: SelectedChipProps): JSX.Element {
   const t = useUiText()
   return (
@@ -47,7 +51,18 @@ export function SelectedChip({
       ) : iconId !== undefined ? (
         <EventKindGlyph iconId={iconId} size={12} />
       ) : null}
-      <span className="truncate">{label}</span>
+      {onSelect === undefined ? (
+        <span className="truncate">{label}</span>
+      ) : (
+        <Button
+          variant="unstyled"
+          type="button"
+          className="truncate text-left hover:underline"
+          onClick={onSelect}
+        >
+          {label}
+        </Button>
+      )}
       {onRemove !== undefined && (
         <button
           type="button"

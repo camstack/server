@@ -114,3 +114,18 @@ export function useDeviceLabelById(id: number, form: DeviceNameForm, pendingName
   if (device === undefined) return `#${String(id)}`
   return resolveDeviceLabel(device, form, index, nouns)
 }
+
+/** The labels of several devices by id, each as `useDeviceLabelById` reads it. */
+export function useDeviceLabelsByIds(
+  ids: readonly number[],
+  form: DeviceNameForm,
+): readonly string[] {
+  const index = useDeviceNameIndex()
+  const nouns = useDeviceNameNouns()
+  return ids.map((id) => {
+    const device = index?.byId.get(id)
+    return index === null || device === undefined
+      ? `#${String(id)}`
+      : resolveDeviceLabel(device, form, index, nouns)
+  })
+}

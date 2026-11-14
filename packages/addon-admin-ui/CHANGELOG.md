@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Automations from a template: one card per button with its events and actions as one-line entries, Add event / Add action, and the same device picker everywhere
 - Automations from a template: the events of a button are one field that picks the device, its part and the event, several at once
 - Template forms: the built-in templates end with an optional "Only when" schedule window, edited with the automation editor's time fields
+- A template's actions are one field: a list of entries, each "action · devices", added and edited through the device picker
 
 ## [1.2.666] - 2026-11-14
 

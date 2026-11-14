@@ -40,5 +40,6 @@ export {
   resolveDeviceLabel,
   useDeviceLabel,
   useDeviceLabelById,
+  useDeviceLabelsByIds,
   useDeviceNameNouns,
 } from './use-device-label'

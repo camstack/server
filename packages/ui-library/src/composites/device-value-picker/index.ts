@@ -21,3 +21,10 @@ export {
   deviceEventVocabularyOf,
   type PickedDeviceEvent,
 } from './device-event-model'
+export {
+  DeviceActionPicker,
+  type DeviceActionEditorProps,
+  type DeviceActionEntryLabel,
+  type DeviceActionPickerProps,
+  type PickedDeviceAction,
+} from './DeviceActionPicker'

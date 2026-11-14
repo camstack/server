@@ -5171,6 +5171,81 @@
       "summary": "Short nouns and the stock words they replace."
     },
     {
+      "name": "DeviceActionPicker",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/DeviceActionPicker.tsx",
+      "summary": "The device picker's action mode: one field picks WHICH action goes to WHICH devices. The closed field lists the entries one per line (\"action · devices\", a × each); \"Add action…\" opens the shared device panel, then a …",
+      "props": [
+        {
+          "name": "value",
+          "type": "readonly PickedDeviceAction[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: readonly PickedDeviceAction[]) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "renderEditor",
+          "type": "(props: DeviceActionEditorProps) => ReactNode",
+          "optional": false,
+          "doc": "The action select and its args for the chosen devices (the library knows no action vocabulary)."
+        },
+        {
+          "name": "useEntryLabel",
+          "type": "(pick: PickedDeviceAction) => DeviceActionEntryLabel",
+          "optional": false,
+          "doc": "A hook: names one entry through the shared resolvers. Called once per entry."
+        },
+        {
+          "name": "maxItems",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "recentKey",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "DeviceActivityPanel",
       "kind": "component",
       "area": "composites",
@@ -15953,6 +16028,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "onSelect",
+          "type": "() => void",
+          "optional": true,
+          "doc": "Makes the label a button (an entry that reopens its editor)."
         }
       ]
     },
@@ -19030,6 +19111,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-name/use-device-label.ts",
       "summary": "`#id` until the fleet answers, and `#id` when the id is not in it."
+    },
+    {
+      "name": "useDeviceLabelsByIds",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-name/use-device-label.ts",
+      "summary": "The labels of several devices by id, each as `useDeviceLabelById` reads it."
     },
     {
       "name": "useDeviceListPageSize",

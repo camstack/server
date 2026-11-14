@@ -27,7 +27,7 @@ import {
   type TemplateScalarValue,
   TemplateTimeWindowValueSchema,
 } from '@camstack/types'
-import type { PickedDeviceEvent } from '@camstack/ui-library'
+import type { PickedDeviceAction, PickedDeviceEvent } from '@camstack/ui-library'
 import {
   Button,
   DeviceEventPicker,
@@ -49,7 +49,7 @@ import { TimeIsFields } from '../automation/TimeIsFields'
 import { withWindow } from '../automation/time-is-model'
 import { FiredFields } from '../automation/FiredFields'
 import { EVENT_EMITTER_CAP, firedVocabularyOf } from '../automation/fired-model'
-import { CommandActionField } from '../flow/CommandActionField'
+import { ActionEditor, TemplateActionPicker } from './TemplateActionPicker'
 import { DurationValueInput } from './DurationValueInput'
 import {
   groupBounds,
@@ -417,6 +417,40 @@ function rowsOfPicks(
   }))
 }
 
+interface ActionPair {
+  readonly devices: string
+  readonly action: string
+}
+
+/** A nested group that is only "some devices and an action they share": drawn as one actions field. */
+function actionPairOf(group: TemplateNestedGroupInput): ActionPair | undefined {
+  if (group.inputs.length !== 2) return undefined
+  const devices = group.inputs.find((input) => input.kind === 'device' && input.multiple === true)
+  const action = group.inputs.find(
+    (input) => input.kind === 'action' && input.deviceInput === devices?.key,
+  )
+  if (devices === undefined || action === undefined) return undefined
+  return { devices: devices.key, action: action.key }
+}
+
+function actionPicksOf(
+  rows: readonly TemplateNestedRow[],
+  pair: ActionPair,
+): readonly PickedDeviceAction[] {
+  return rows.flatMap((row): readonly PickedDeviceAction[] => {
+    const deviceIds = deviceIdsOf(row[pair.devices])
+    const action = actionValueOf(row[pair.action])
+    return deviceIds.length === 0 || action === undefined ? [] : [{ deviceIds, action }]
+  })
+}
+
+function rowsOfActionPicks(
+  picks: readonly PickedDeviceAction[],
+  pair: ActionPair,
+): readonly TemplateNestedRow[] {
+  return picks.map((pick) => ({ [pair.devices]: [...pick.deviceIds], [pair.action]: pick.action }))
+}
+
 /** A group inside a card: a small heading, one line per entry, and its own "Add". */
 function NestedGroupField({
   at,
@@ -432,6 +466,31 @@ function NestedGroupField({
   const bounds = groupBounds(group)
   const noun = group.rowLabel
   const pair = eventPairOf(group)
+  const actionPair = actionPairOf(group)
+  const devices = useAutomationDevices()
+  if (actionPair !== undefined) {
+    return (
+      <div className="space-y-1" data-testid={`template-nested-${address}`}>
+        <h5 className="text-xs font-medium text-foreground-muted">{group.label}</h5>
+        <TemplateActionPicker
+          testId={`template-input-${address}`}
+          recentKey={`template-input-${group.key}`}
+          disabled={disabled}
+          devices={devices}
+          maxItems={bounds.max}
+          value={actionPicksOf(rows, actionPair)}
+          onChange={(next) =>
+            onChange(withNestedRows(values, at, rowsOfActionPicks(next, actionPair)))
+          }
+        />
+        <ProblemLines
+          problems={problems.filter(
+            (p) => p.input === address || p.input?.startsWith(`${address}.`) === true,
+          )}
+        />
+      </div>
+    )
+  }
   if (pair !== undefined) {
     return (
       <div className="space-y-1" data-testid={`template-nested-${address}`}>
@@ -699,13 +758,12 @@ function ScalarControl({
         )
       }
       return (
-        <CommandActionField
+        <ActionEditor
           deviceIds={targetIds}
           devices={devices}
           value={actionValueOf(value)}
           disabled={disabled}
           testId={`template-input-${address}`}
-          {...(inline ? { label: input.label } : { ariaLabel: input.label })}
           onChange={onChange}
         />
       )
