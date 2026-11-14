@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Saving an automation template re-expands every automation made from it; an automation that no longer fits is flagged and keeps its last body; a template in use by an automation cannot be deleted
 - Device search filters by vocabulary action, using the same check as the command picker.
 - Toggle on a switch reads its current state and flips it, and refuses when that state is unknown.
+- Storage drain locations now emit a regular progress event and a one-time completion event (#538).
 
 ### Changed
 

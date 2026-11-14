@@ -218,6 +218,15 @@ export const NcSystemEventKindSchema = z.enum([
   'storage-location-low',
   'storage-location-critical',
   'storage-location-ok',
+  // ── A DRAIN'S PROGRESS, SINCE NOBODY GOT ONE (#538) ───────────────────
+  //
+  // `storage-drain-progress`: a regular ping while a location drains —
+  // bytes left, the observed cede rate, the estimated empty date, or
+  // unknown fields when the sweep's occupancy read failed (D393). Cadence is
+  // the named constant plus once on drain start — no operator knob.
+  // `storage-drain-complete` fires once when the location reaches zero.
+  'storage-drain-progress',
+  'storage-drain-complete',
   // ── THE THIRD SILENT FAILURE: A RUNNER NOBODY WILL RESTART ────────────
   //
   // `addon-crash-loop` is the D6 crash circuit-breaker having given up. The

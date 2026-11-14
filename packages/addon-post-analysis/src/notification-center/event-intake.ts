@@ -1532,6 +1532,51 @@ export function incomingFromSystemEvent(
         ...(nodeId !== undefined ? { nodeId } : {}),
       })
     }
+    case 'storage.drain.progress':
+    case 'storage.drain.complete': {
+      // #538 — a drain's regular progress ping, and its one completion event.
+      // One subject per location so the two kinds share the same NC slot.
+      const locationId = stringField(data, 'locationId')
+      if (locationId === undefined) return null
+      const nodeId = stringField(data, 'nodeId')
+      const locationName = stringField(data, 'locationName') ?? locationId
+      const complete = event.category === 'storage.drain.complete'
+      const kind: NcSystemEventKind = complete ? 'storage-drain-complete' : 'storage-drain-progress'
+      const bytesRemaining = numberField(data, 'bytesRemaining')
+      const rateBytesPerMs = numberField(data, 'rateBytesPerMs')
+      const estimatedEmptyAtMs = numberField(data, 'estimatedEmptyAtMs')
+      return systemSubject({
+        facts,
+        kind,
+        subject: `storage-drain:${locationId}`,
+        titleKey: `system.${kind}.title`,
+        bodyKey: `system.${kind}.body`,
+        textParams: {
+          locationId,
+          locationName,
+          ...(nodeId !== undefined ? { nodeId } : {}),
+          // D393: a failed sweep's figures are `null`, never 0 — the text says
+          // "unknown" rather than a fabricated 0 B / ETA today.
+          ...(complete
+            ? {}
+            : {
+                bytesRemainingGb:
+                  bytesRemaining === undefined
+                    ? 'unknown'
+                    : (bytesRemaining / 1_000_000_000).toFixed(1),
+                rateGbPerDay:
+                  rateBytesPerMs === undefined
+                    ? 'unknown'
+                    : ((rateBytesPerMs * 86_400_000) / 1_000_000_000).toFixed(2),
+                etaDate:
+                  estimatedEmptyAtMs === undefined
+                    ? 'unknown'
+                    : new Date(estimatedEmptyAtMs).toISOString().slice(0, 10),
+              }),
+        },
+        ...(nodeId !== undefined ? { nodeId } : {}),
+      })
+    }
     case 'notification.rule-broken':
     case 'notification.rule-repaired': {
       // D905 — one subject per RULE, so a broken and its repair share a slot.

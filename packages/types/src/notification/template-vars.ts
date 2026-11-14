@@ -52,6 +52,11 @@ const ALERT_EPISODE: readonly NcSystemEventKind[] = [
   'alert-error',
   'alert-critical-resolved',
 ]
+// #538 — a drain's regular progress ping and its one completion event.
+const STORAGE_DRAIN: readonly NcSystemEventKind[] = [
+  'storage-drain-progress',
+  'storage-drain-complete',
+]
 const DEVICE_ATTENTION: readonly NcSystemEventKind[] = [
   'device-attention-required',
   'device-attention-resolved',
@@ -708,6 +713,7 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
       'storage-location-low',
       'storage-location-critical',
       'storage-location-ok',
+      ...STORAGE_DRAIN,
       ...ALERT_EPISODE,
     ],
   },
@@ -731,6 +737,7 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
       'storage-location-low',
       'storage-location-critical',
       'storage-location-ok',
+      ...STORAGE_DRAIN,
       ...ALERT_EPISODE,
     ],
   },
@@ -893,7 +900,12 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     families: ['rule'],
     fields: [...RULE_TEXT],
     kinds: ['system'],
-    systemEventKinds: ['storage-location-low', 'storage-location-critical', 'storage-location-ok'],
+    systemEventKinds: [
+      'storage-location-low',
+      'storage-location-critical',
+      'storage-location-ok',
+      ...STORAGE_DRAIN,
+    ],
   },
   {
     name: 'locationId',
@@ -903,7 +915,47 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     families: ['rule'],
     fields: [...RULE_TEXT],
     kinds: ['system'],
-    systemEventKinds: ['storage-location-low', 'storage-location-critical', 'storage-location-ok'],
+    systemEventKinds: [
+      'storage-location-low',
+      'storage-location-critical',
+      'storage-location-ok',
+      ...STORAGE_DRAIN,
+    ],
+  },
+  {
+    // #538: evictable bytes remaining on the draining location, or `unknown`
+    // when the sweep's occupancy read failed (D393 — never 0).
+    name: 'bytesRemainingGb',
+    label: 'Bytes remaining (GB)',
+    example: '42.3',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: ['storage-drain-progress'],
+  },
+  {
+    // The growth-matched cede rate observed so far (D386) — `unknown` until a
+    // sweep has measured it.
+    name: 'rateGbPerDay',
+    label: 'Drain rate (GB/day)',
+    example: '1.20',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: ['storage-drain-progress'],
+  },
+  {
+    // `unknown` until the rate has been observed — never a fabricated date.
+    name: 'etaDate',
+    label: 'Estimated empty date',
+    example: '2026-12-01',
+    group: 'system',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['system'],
+    systemEventKinds: ['storage-drain-progress'],
   },
   {
     name: 'freePercent',
@@ -1349,6 +1401,10 @@ export const NC_TEMPLATE_HELD_BACK_SYSTEM_EVENT_KINDS: readonly NcSystemEventKin
   'package-llm-answered',
   // D1022: the device-command kind and its `{{actionLabel}}` / `{{actorLabel}}`.
   'device-command',
+  // #538: a drain's progress ping and its completion event. A phone that has
+  // not mirrored the two kinds would fail the whole catalog parse on them.
+  'storage-drain-progress',
+  'storage-drain-complete',
 ]
 
 /**

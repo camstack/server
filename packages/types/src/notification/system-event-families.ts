@@ -74,6 +74,8 @@ export const NC_SYSTEM_EVENT_FAMILY: Readonly<
   'storage-location-low': 'system',
   'storage-location-critical': 'system',
   'storage-location-ok': 'system',
+  'storage-drain-progress': 'system',
+  'storage-drain-complete': 'system',
   'alarm-triggered': 'alarm',
   'alarm-armed': 'alarm',
   'alarm-disarmed': 'alarm',
@@ -239,6 +241,12 @@ export const NC_SYSTEM_EVENT_KIND_GROUP_SPECS: readonly NcSystemEventKindGroupSp
     family: 'system',
     label: 'Storage locations',
     kinds: ['storage-location-low', 'storage-location-critical', 'storage-location-ok'],
+  },
+  {
+    id: 'storage-drain',
+    family: 'system',
+    label: 'Storage drain progress',
+    kinds: ['storage-drain-progress', 'storage-drain-complete'],
   },
   {
     id: 'alerts',

@@ -147,6 +147,10 @@
   "system.storage-location-critical.body": "La location {{locationName}} è critica: {{reason}}",
   "system.storage-location-ok.title": "Archivio a posto — {{locationName}}",
   "system.storage-location-ok.body": "La location {{locationName}} ha recuperato spazio libero",
+  "system.storage-drain-progress.title": "Svuotamento in corso — {{locationName}}",
+  "system.storage-drain-progress.body": "{{locationName}} ha {{bytesRemainingGb}} GB rimanenti, al ritmo di {{rateGbPerDay}} GB/giorno, vuoto stimato {{etaDate}}",
+  "system.storage-drain-complete.title": "Svuotamento completato — {{locationName}}",
+  "system.storage-drain-complete.body": "{{locationName}} ha terminato lo svuotamento",
   "system.detection-blind.title": "Senza detection — {{deviceLabel}}",
   "system.detection-blind.body": {
     "one": "La camera {{deviceName}} ha avuto movimento per {{minutes}} minuto in {{sessions}} sessioni e il detector non ha prodotto nulla, nemmeno un candidato debole",

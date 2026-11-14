@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Customize: a thermostat can link a room temperature and humidity sensor
+- Notification rules editor can now target a storage location's drain progress and completion events (#538).
 
 ## [1.2.669] - 2026-11-14
 

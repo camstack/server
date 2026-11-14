@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Notification Center can now author rules on a storage drain's progress and completion events (#538).
+
 ## [1.2.703] - 2026-11-13
 
 ### Changed

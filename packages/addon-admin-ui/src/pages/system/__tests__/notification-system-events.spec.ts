@@ -45,6 +45,7 @@ describe('D637 — the field authors ONE family', () => {
       'updates',
       'backups-exports',
       'storage',
+      'storage-drain',
       'alerts',
       'rule-health',
     ])

@@ -116,6 +116,10 @@ import {
   type WritabilityEmission,
 } from './storage-writability-monitor.js'
 import { StorageLocationBandMonitor } from './storage-location-band-monitor.js'
+import {
+  StorageDrainEventMonitor,
+  type StorageDrainEventSample,
+} from './storage-drain-event-monitor.js'
 import { LocationHistoryRecorder, type LocationReading } from './location-history-recorder.js'
 
 const STORAGE_PROVIDER_CAP_NAME = 'storage-provider'
@@ -150,6 +154,8 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
   private service: StorageOrchestratorService | null = null
   private pressureManager: StoragePressureManager | null = null
   private readonly locationBandMonitor = new StorageLocationBandMonitor()
+  /** Drain progress/completion cadence (#538) — a named constant, no operator knob. */
+  private readonly drainEventMonitor = new StorageDrainEventMonitor()
   /**
    * How much of each location CamStack itself holds (D388).
    *
@@ -925,6 +931,7 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
     try {
       await this.pressureManager.sweep()
       await this.emitLocationBandEvents()
+      this.emitDrainEvents()
     } catch (err) {
       // `ctxIfReady`: a sweep in flight across `shutdown()` lands here with no
       // context, and a throw from this catch is an unhandled rejection — which
@@ -1152,6 +1159,75 @@ export class StorageOrchestratorAddon extends BaseAddon<StorageOrchestratorConfi
   /** Drain progress for every draining location, as of the last sweep. */
   private drainProgress(): readonly DrainProgress[] {
     return this.pressureManager?.drainProgressSnapshot() ?? []
+  }
+
+  /**
+   * Regular system events for drain and pruning progress (#538) — a progress
+   * ping on the named cadence (plus on drain start), and the completion
+   * event once a location empties.
+   *
+   * The sample set is the drain PLAN (`resolveDrainPlan`, which locations the
+   * operator put into `drain`), not the progress snapshot: a sweep whose
+   * occupancy read failed for a location is still draining and must still be
+   * sampled, with `null` figures (D393 — never folded to 0), so the cadence
+   * clock keeps ticking instead of restarting as if the drain had just begun.
+   */
+  private emitDrainEvents(): void {
+    const svc = this.service
+    const ctx = this.ctxIfReady
+    if (!svc || !ctx) return
+    const plan = this.resolveDrainPlan()
+    if (plan.length === 0) return
+    const byId = new Map(svc.listLocations().map((loc) => [loc.id, loc]))
+    const progressById = new Map(this.drainProgress().map((p) => [p.locationId, p]))
+    const samples: StorageDrainEventSample[] = plan.map((entry) => {
+      const loc = byId.get(entry.locationId)
+      const progress = progressById.get(entry.locationId)
+      if (progress === undefined) {
+        ctx.logger.debug(
+          'storage drain: no progress figures from this sweep — reporting unknown rather than 0',
+          { meta: { locationId: entry.locationId } },
+        )
+      }
+      return {
+        locationId: entry.locationId,
+        locationName: loc?.displayName ?? entry.locationId,
+        ...(loc?.nodeId !== undefined ? { nodeId: loc.nodeId } : {}),
+        bytesRemaining: progress?.bytesRemaining ?? null,
+        rateBytesPerMs: progress?.rateBytesPerMs ?? null,
+        estimatedEmptyAtMs: progress?.estimatedEmptyAtMs ?? null,
+        drained: progress?.drained ?? false,
+      }
+    })
+    for (const event of this.drainEventMonitor.observe(samples)) {
+      const category =
+        event.kind === 'complete'
+          ? EventCategory.StorageDrainComplete
+          : EventCategory.StorageDrainProgress
+      ctx.logger.info('storage drain: event', {
+        meta: {
+          locationId: event.locationId,
+          kind: event.kind,
+          bytesRemaining: event.bytesRemaining,
+          rateBytesPerMs: event.rateBytesPerMs,
+          estimatedEmptyAtMs: event.estimatedEmptyAtMs,
+        },
+      })
+      ctx.eventBus.emit({
+        id: randomUUID(),
+        timestamp: new Date(),
+        source: { type: 'addon', id: this.ctx.id },
+        category,
+        data: {
+          locationId: event.locationId,
+          locationName: event.locationName,
+          ...(event.nodeId !== undefined ? { nodeId: event.nodeId } : {}),
+          bytesRemaining: event.bytesRemaining,
+          rateBytesPerMs: event.rateBytesPerMs,
+          estimatedEmptyAtMs: event.estimatedEmptyAtMs,
+        },
+      })
+    }
   }
 
   /**

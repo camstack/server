@@ -711,6 +711,32 @@ const SYSTEM_SAMPLES: readonly SystemSample[] = [
       }),
   },
   {
+    // #538 — a drain's regular progress ping.
+    name: 'storage.drain.progress',
+    build: () =>
+      fromBus('storage.drain.progress', {
+        locationId: 'recordingsLow:default',
+        nodeId: 'hub',
+        locationName: 'Low-res recordings',
+        bytesRemaining: 42_300_000_000,
+        rateBytesPerMs: 1 / 86_400,
+        estimatedEmptyAtMs: Date.UTC(2026, 11, 1),
+      }),
+  },
+  {
+    // #538 — the one completion event once a drain empties.
+    name: 'storage.drain.complete',
+    build: () =>
+      fromBus('storage.drain.complete', {
+        locationId: 'recordingsLow:default',
+        nodeId: 'hub',
+        locationName: 'Low-res recordings',
+        bytesRemaining: 0,
+        rateBytesPerMs: null,
+        estimatedEmptyAtMs: null,
+      }),
+  },
+  {
     name: 'notification.rule-broken',
     build: () =>
       fromBus('notification.rule-broken', {

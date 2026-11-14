@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added two system events for a draining storage location: a regular progress ping (#538) and a one-time completion event.
+
 ### Changed
 
 - Thermostats can report what they are doing (heating, cooling, idle) and a room sensor can be linked to replace a thermostat's temperature and humidity

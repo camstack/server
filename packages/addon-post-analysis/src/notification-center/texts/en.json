@@ -160,6 +160,10 @@
   "system.storage-location-critical.body": "Location {{locationName}} is critical: {{reason}}",
   "system.storage-location-ok.title": "Storage ok — {{locationName}}",
   "system.storage-location-ok.body": "Location {{locationName}} has recovered free space",
+  "system.storage-drain-progress.title": "Draining — {{locationName}}",
+  "system.storage-drain-progress.body": "{{locationName}} has {{bytesRemainingGb}} GB left, ceding at {{rateGbPerDay}} GB/day, estimated empty {{etaDate}}",
+  "system.storage-drain-complete.title": "Drain complete — {{locationName}}",
+  "system.storage-drain-complete.body": "{{locationName}} has finished draining",
   "system.addon-update-available.title": {
     "one": "{{count}} addon update available",
     "other": "{{count}} addon updates available"

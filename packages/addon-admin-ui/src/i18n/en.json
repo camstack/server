@@ -3155,7 +3155,9 @@
       "alarm-rearmed": "Alarm re-armed",
       "alarm-sensor-bypass": "Alarm sensor bypassed or restored",
       "alarm-disarmed": "Alarm disarmed",
-      "device-command": "Command given to a device"
+      "device-command": "Command given to a device",
+      "storage-drain-progress": "Storage drain progress",
+      "storage-drain-complete": "Storage drain complete"
     },
     "systemEventGroups": {
       "device-state": "Device state",
@@ -3176,7 +3178,8 @@
       "alerts": "Alerts",
       "rule-health": "Notification rules",
       "alarm": "Alarm",
-      "device-command": "Commands given to devices"
+      "device-command": "Commands given to devices",
+      "storage-drain": "Storage drain progress"
     },
     "systemEventHints": {
       "device-state": "A device the hub can no longer reach, or that came back. Switched off / on is a device an operator turned off or back on — not a fault, a choice.",
@@ -3197,7 +3200,8 @@
       "alerts": "A critical or error alert opening — a runner that failed or was refused, a recording location out of space, an expired sign-in — and (optionally) a critical alert resolving. One notification per alert episode.",
       "rule-health": "A notification rule that cannot work — it no longer loads, or still names a device or destination that was deleted — and (optionally) its repair.",
       "alarm": "The alarm panel refusing to arm, arming, armed, counting down to a siren, going off, re-arming, excluding an open sensor, or being disarmed.",
-      "device-command": "A command an operator, an automation or an addon gave a device, and whether it worked, as the device audit settled it."
+      "device-command": "A command an operator, an automation or an addon gave a device, and whether it worked, as the device audit settled it.",
+      "storage-drain": "A storage location draining — regular progress and the one completion event."
     },
     "schedule": {
       "hint": "Only fire inside these weekly windows. Leave it empty to fire at any time."

@@ -141,6 +141,7 @@ export function systemEventFilterApplies(
         // A storage location lives on one node; v1 narrows by nodeIds only
         // (no locationIds filter yet).
         kind.startsWith('storage-location-') ||
+        kind.startsWith('storage-drain-') ||
         // An alert names the node it is about when it has one (a runner, a
         // storage location); an alert without a node fails closed under it.
         kind.startsWith('alert-')

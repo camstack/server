@@ -190,4 +190,14 @@ describe('progress a UI can render', () => {
     expect(progress.drained).toBe(true)
     expect(progress.estimatedEmptyAtMs).toBeNull()
   })
+
+  it('reports the OBSERVED rate alongside the ETA it was derived from (#538)', () => {
+    const progress = drainProgressOf(state, 90 * GB, 60_000)
+    expect(progress.rateBytesPerMs).toBe((10 * GB) / 60_000)
+  })
+
+  it('reports NO rate when growth has never been observed', () => {
+    const unobserved: DrainState = { ...state, observedGrowthBytes: 0, observedElapsedMs: 0 }
+    expect(drainProgressOf(unobserved, 90 * GB, 60_000).rateBytesPerMs).toBeNull()
+  })
 })

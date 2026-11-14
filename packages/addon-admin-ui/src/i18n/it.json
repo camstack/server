@@ -3230,7 +3230,9 @@
       "alarm-rearmed": "Allarme reinserito",
       "alarm-sensor-bypass": "Sensore allarme escluso o ripristinato",
       "alarm-disarmed": "Allarme disinserito",
-      "device-command": "Comando dato a un dispositivo"
+      "device-command": "Comando dato a un dispositivo",
+      "storage-drain-progress": "Avanzamento svuotamento storage",
+      "storage-drain-complete": "Svuotamento storage completato"
     },
     "systemEventGroups": {
       "device-state": "Stato del dispositivo",
@@ -3251,7 +3253,8 @@
       "alerts": "Avvisi",
       "rule-health": "Regole di notifica",
       "alarm": "Allarme",
-      "device-command": "Comandi dati ai dispositivi"
+      "device-command": "Comandi dati ai dispositivi",
+      "storage-drain": "Avanzamento svuotamento storage"
     },
     "systemEventHints": {
       "device-state": "Un dispositivo che l’hub non raggiunge più, o che è tornato. Spento / acceso è un dispositivo che un operatore ha spento o riacceso — non un guasto, una scelta.",
@@ -3272,7 +3275,8 @@
       "alerts": "Un avviso critico o di errore che si apre — un runner fallito o rifiutato, un archivio di registrazione senza spazio, un accesso scaduto — e se vuoi un avviso critico che si chiude. Una notifica per episodio.",
       "rule-health": "Una regola di notifica che non può funzionare — non si carica più, o nomina ancora un dispositivo o una destinazione cancellati — e se vuoi la sua riparazione.",
       "alarm": "La centrale che rifiuta l’inserimento, che si sta inserendo, inserita, in conto alla rovescia verso la sirena, scattata, reinserita, con un sensore aperto escluso, o disinserita.",
-      "device-command": "Un comando che un operatore, un'automazione o un addon ha dato a un dispositivo, e se è andato a buon fine, come l'ha chiuso l'audit del dispositivo."
+      "device-command": "Un comando che un operatore, un'automazione o un addon ha dato a un dispositivo, e se è andato a buon fine, come l'ha chiuso l'audit del dispositivo.",
+      "storage-drain": "Una location di storage in svuotamento — avanzamento regolare e l'unico evento di completamento."
     },
     "schedule": {
       "hint": "Invia solo in queste finestre settimanali. Lascia vuoto per inviare sempre."

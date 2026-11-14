@@ -94,6 +94,14 @@ export interface DrainProgress {
    * believe the screen.
    */
   readonly estimatedEmptyAtMs: number | null
+  /**
+   * The observed cede rate, bytes per millisecond, or `null` on the same
+   * condition as {@link estimatedEmptyAtMs} — no growth measured yet. #538's
+   * progress event reports this rather than re-deriving it from the other two
+   * fields, so a reader never has to reconstruct a rate the ratchet already
+   * computed.
+   */
+  readonly rateBytesPerMs: number | null
 }
 
 /** The state a drain starts from. No deletion happens on this sweep. */
@@ -181,5 +189,6 @@ export function drainProgressOf(
       rateBytesPerMs === null || bytesRemaining <= 0
         ? null
         : nowMs + Math.ceil(bytesRemaining / rateBytesPerMs),
+    rateBytesPerMs,
   }
 }

@@ -289,6 +289,18 @@ export enum EventCategory {
   StorageLocationCritical = 'storage.location.critical',
   /** Recovery from low/critical on a storage location. */
   StorageLocationOk = 'storage.location.ok',
+  /**
+   * A `drain` location's regular progress ping (#538) — location id + name,
+   * bytes remaining, the observed cede rate and the estimated empty date, or
+   * `null` fields when the occupancy read that sweep failed (D393: never
+   * folded to 0). Cadence is the named constant
+   * `DRAIN_PROGRESS_EVENT_INTERVAL_MS` (15 min) plus once on drain start — no
+   * operator knob. Telemetry (D8): a lost tick is a stale progress bar the
+   * next sweep corrects.
+   */
+  StorageDrainProgress = 'storage.drain.progress',
+  /** Fires once when a draining location reaches zero evictable bytes. */
+  StorageDrainComplete = 'storage.drain.complete',
   RecordingSegmentWritten = 'recording.segment.written',
   RecordingPolicyFallback = 'recording.policy.fallback',
   RecordingRetentionCompleted = 'recording.retention.completed',
