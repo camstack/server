@@ -60,7 +60,7 @@ function doorValue(model: LockCardModel, t: UiTextFn): readonly ColumnItem[] {
     columnValue('door', {
       testId: 'dc-lock-door',
       tone: open ? 'warning' : 'muted',
-      caption: t('uiLibrary.deviceCard.lock.door', 'Door'),
+      caption: door.name,
       value:
         door.reading === 'unknown'
           ? '—'
