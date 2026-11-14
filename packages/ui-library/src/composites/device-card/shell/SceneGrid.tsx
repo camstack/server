@@ -8,7 +8,7 @@ interface SceneZonesBase {
   readonly fx?: ReactNode
   readonly image: ReactNode
   /** Anything longer than a compact control, as typed rows: selectors, pills, stats, buttons, a slider, text. */
-  readonly bottom?: readonly BottomRow[] | ReactNode
+  readonly bottom?: readonly BottomRow[]
   /**
    * The device is in an alarm state (triggered, jammed, sounding, blocked, a
    * leak): the scene is washed in the danger colour.
@@ -42,11 +42,8 @@ export type SceneGridProps = SceneZones & {
 
 const has = (zone: ReactNode): boolean => zone !== undefined && zone !== null && zone !== false
 
-const isRows = (zone: unknown): zone is readonly BottomRow[] => Array.isArray(zone)
-
-// TRANSITIONAL: a scene not yet on rows still passes a node; removed with the last migration.
-const hasRows = (zone: ReactNode | readonly BottomRow[]): boolean =>
-  isRows(zone) ? zone.length > 0 : has(zone)
+const hasRows = (rows: readonly BottomRow[] | undefined): rows is readonly BottomRow[] =>
+  rows !== undefined && rows.length > 0
 
 function columnStack(items: readonly ColumnItem[] | undefined): ReactNode {
   if (items === undefined || items.length === 0) return null
@@ -98,22 +95,20 @@ export function SceneGrid(props: SceneGridProps): ReactElement {
           data-zone="bottom"
           className="dc-bottom flex w-full min-w-0 max-w-full flex-col items-center gap-2.5 overflow-x-clip"
         >
-          {isRows(bottom)
-            ? bottom.map((row) => (
-                <div
-                  key={row.key}
-                  data-row={row.kind}
-                  className="flex w-full min-w-0 flex-col items-center gap-1"
-                >
-                  {row.label === undefined ? null : (
-                    <span className="text-xs uppercase tracking-wide text-foreground-subtle">
-                      {row.label}
-                    </span>
-                  )}
-                  {row.node}
-                </div>
-              ))
-            : bottom}
+          {bottom.map((row) => (
+            <div
+              key={row.key}
+              data-row={row.kind}
+              className="flex w-full min-w-0 flex-col items-center gap-1"
+            >
+              {row.label === undefined ? null : (
+                <span className="text-xs uppercase tracking-wide text-foreground-subtle">
+                  {row.label}
+                </span>
+              )}
+              {row.node}
+            </div>
+          ))}
         </div>
       ) : null}
     </div>

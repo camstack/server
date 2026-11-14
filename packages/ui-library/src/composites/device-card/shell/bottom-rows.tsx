@@ -80,6 +80,7 @@ export interface RowStat {
   readonly id: string
   readonly name: string
   readonly value: string
+  readonly tone?: 'default' | 'warning'
   readonly testId?: string
 }
 
@@ -108,7 +109,12 @@ export function rowStats(key: string, props: RowStatsProps): BottomRow {
           className="flex min-w-0 flex-col items-center rounded-lg bg-surface-hover px-1.5 py-1 text-center text-xs text-foreground-muted"
         >
           <span className="max-w-full truncate">{stat.name}</span>
-          <span className="max-w-full truncate font-semibold tabular-nums text-foreground">
+          <span
+            className={cn(
+              'max-w-full truncate font-semibold tabular-nums',
+              stat.tone === 'warning' ? 'text-warning' : 'text-foreground',
+            )}
+          >
             {stat.value}
           </span>
         </li>
@@ -120,6 +126,7 @@ export function rowStats(key: string, props: RowStatsProps): BottomRow {
 export interface RowButtonsProps extends RowBase {
   /** Buttons, armed buttons or menus, drawn side by side. */
   readonly buttons: readonly ReactElement[]
+  readonly testId?: string
 }
 
 /** Commands side by side on a row. */
@@ -128,7 +135,10 @@ export function rowButtons(key: string, props: RowButtonsProps): BottomRow {
     key,
     'buttons',
     props.label,
-    <div className="flex flex-wrap items-center justify-center gap-2">
+    <div
+      data-testid={props.testId}
+      className="flex max-w-full flex-wrap items-center justify-center gap-2"
+    >
       {props.buttons.map((button, i) => (
         // biome-ignore lint/suspicious/noArrayIndexKey: a fixed list of buttons, never reordered
         <span key={i} className="contents">
@@ -151,11 +161,12 @@ export function rowSlider(key: string, props: RowSliderProps): BottomRow {
 
 export interface RowTextProps extends RowBase {
   readonly text: string
-  readonly tone?: 'muted' | 'warning' | 'danger'
+  readonly tone?: 'default' | 'muted' | 'warning' | 'danger'
   readonly testId?: string
 }
 
 const TEXT_TONE: Readonly<Record<NonNullable<RowTextProps['tone']>, string>> = {
+  default: 'text-foreground',
   muted: 'text-foreground-muted',
   warning: 'text-warning',
   danger: 'text-danger',
