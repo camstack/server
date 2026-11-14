@@ -1,12 +1,8 @@
 import type { ReactElement } from 'react'
+import { cn } from '../../../../lib/cn'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { LockIllustration, type LockLook } from '../../illustrations/LockIllustration'
-import {
-  type ColumnItem,
-  columnArmedButton,
-  columnButton,
-  columnValue,
-} from '../../shell/column-items'
+import { type ColumnItem, columnArmedButton, columnButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -52,23 +48,23 @@ export function lockStateLabel(activity: LockActivity, doorOpen: boolean, t: UiT
   }
 }
 
-function doorValue(model: LockCardModel, t: UiTextFn): readonly ColumnItem[] {
+function doorLine(model: LockCardModel, t: UiTextFn): ReactElement | null {
   const door = model.door
-  if (door === null) return []
-  const open = door.reading === 'open'
-  return [
-    columnValue('door', {
-      testId: 'dc-lock-door',
-      tone: open ? 'warning' : 'muted',
-      caption: door.name,
-      value:
-        door.reading === 'unknown'
-          ? '—'
-          : open
-            ? t('uiLibrary.deviceCard.lock.doorOpen', 'Open')
-            : t('uiLibrary.deviceCard.lock.doorClosed', 'Closed'),
-    }),
-  ]
+  if (door === null) return null
+  const state =
+    door.reading === 'unknown'
+      ? '—'
+      : door.reading === 'open'
+        ? t('uiLibrary.deviceCard.lock.doorOpen', 'Open')
+        : t('uiLibrary.deviceCard.lock.doorClosed', 'Closed')
+  return (
+    <p
+      data-testid="dc-lock-door"
+      className={cn('text-xs', door.reading === 'open' ? 'text-warning' : 'text-foreground-muted')}
+    >
+      {door.name} · {state}
+    </p>
+  )
 }
 
 function unlockButton(
@@ -170,6 +166,7 @@ export function LockCard({
 }: LockCardProps): ReactElement {
   const t = useUiText()
   const waiting = model.activity === 'unlocked' && model.doorOpen && model.canLock
+  const door = doorLine(model, t)
   return (
     <DeviceCard
       kind="lock"
@@ -185,13 +182,19 @@ export function LockCard({
       }}
       scene={{
         alert: model.activity === 'jammed',
-        columns: { left: doorValue(model, t), right: rightColumn(model, actions, t) },
+        columns: { right: rightColumn(model, actions, t) },
         image: <LockIllustration look={LOOK[model.activity]} className={SCENE_DRAWING_CLASS} />,
-        bottom: waiting ? (
-          <p data-testid="dc-lock-wait" className="text-xs text-warning">
-            {t('uiLibrary.deviceCard.lock.closeDoorFirst', 'Close the door first')}
-          </p>
-        ) : null,
+        bottom:
+          door === null && !waiting ? null : (
+            <>
+              {door}
+              {waiting ? (
+                <p data-testid="dc-lock-wait" className="text-xs text-warning">
+                  {t('uiLibrary.deviceCard.lock.closeDoorFirst', 'Close the door first')}
+                </p>
+              ) : null}
+            </>
+          ),
       }}
     />
   )
