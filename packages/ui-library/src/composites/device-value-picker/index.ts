@@ -14,3 +14,10 @@ export {
   type PickKind,
 } from './device-value-picker-model'
 export { deviceIdsOf, pickedFromDeviceIds } from './device-id-values'
+export { DeviceEventPicker, type DeviceEventPickerProps } from './DeviceEventPicker'
+export {
+  describeDeviceEvent,
+  type DeviceEventVocabulary,
+  deviceEventVocabularyOf,
+  type PickedDeviceEvent,
+} from './device-event-model'

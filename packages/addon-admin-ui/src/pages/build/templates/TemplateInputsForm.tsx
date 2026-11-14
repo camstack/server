@@ -3,7 +3,8 @@
  * an operator fills in. One field per declared input, by kind — a device picker,
  * the events of the chosen device, a number. A repeatable group is a list of
  * cards, one per row, each titled by what its row reads; a group inside a row
- * is a list of one-line entries with its own "Add". A device is always picked
+ * is a list of one-line entries with its own "Add" — or, when it is only "a
+ * device and an event of it", one events field: the device picker's event mode. A device is always picked
  * with the one device picker; an action input then only chooses what those
  * devices do. A problem the expansion reported for an input is shown under
  * that input, by its dotted address (`buttons.0.commands.1.targets`).
@@ -25,8 +26,10 @@ import {
   type TemplateScalarInput,
   type TemplateScalarValue,
 } from '@camstack/types'
+import type { PickedDeviceEvent } from '@camstack/ui-library'
 import {
   Button,
+  DeviceEventPicker,
   DeviceValuePicker,
   FormField,
   IconButton,
@@ -53,6 +56,7 @@ import {
   rowsOf,
   withAddedNestedRow,
   withAddedRow,
+  withNestedRows,
   withNestedValue,
   withoutNestedRow,
   withoutRow,
@@ -368,6 +372,48 @@ interface NestedGroupFieldProps {
   readonly onChange: (next: TemplateInputValues) => void
 }
 
+interface EventPair {
+  readonly device: string
+  readonly event: string
+}
+
+/** A nested group that is only "a device and an event of it": drawn as one events field. */
+function eventPairOf(group: TemplateNestedGroupInput): EventPair | undefined {
+  if (group.inputs.length !== 2) return undefined
+  const device = group.inputs.find((input) => input.kind === 'device' && input.multiple !== true)
+  const event = group.inputs.find(
+    (input) => input.kind === 'event' && input.deviceInput === device?.key,
+  )
+  if (device === undefined || event === undefined) return undefined
+  return { device: device.key, event: event.key }
+}
+
+function picksOf(
+  rows: readonly TemplateNestedRow[],
+  pair: EventPair,
+): readonly PickedDeviceEvent[] {
+  return rows.flatMap((row): readonly PickedDeviceEvent[] => {
+    const deviceId = deviceIdsOf(row[pair.device])[0]
+    const eventId = eventValueOf(row[pair.event])?.eventIds?.[0]
+    if (deviceId === undefined || eventId === undefined) return []
+    const sourceId = eventValueOf(row[pair.event])?.sourceIds?.[0]
+    return [{ deviceId, eventId, ...(sourceId === undefined ? {} : { sourceId }) }]
+  })
+}
+
+function rowsOfPicks(
+  picks: readonly PickedDeviceEvent[],
+  pair: EventPair,
+): readonly TemplateNestedRow[] {
+  return picks.map((pick) => ({
+    [pair.device]: pick.deviceId,
+    [pair.event]: {
+      eventIds: [pick.eventId],
+      ...(pick.sourceId === undefined ? {} : { sourceIds: [pick.sourceId] }),
+    },
+  }))
+}
+
 /** A group inside a card: a small heading, one line per entry, and its own "Add". */
 function NestedGroupField({
   at,
@@ -382,6 +428,27 @@ function NestedGroupField({
   const group = at.group
   const bounds = groupBounds(group)
   const noun = group.rowLabel
+  const pair = eventPairOf(group)
+  if (pair !== undefined) {
+    return (
+      <div className="space-y-1" data-testid={`template-nested-${address}`}>
+        <h5 className="text-xs font-medium text-foreground-muted">{group.label}</h5>
+        <DeviceEventPicker
+          testId={`template-input-${address}`}
+          recentKey={`template-input-${group.key}`}
+          disabled={disabled}
+          maxItems={bounds.max}
+          value={picksOf(rows, pair)}
+          onChange={(next) => onChange(withNestedRows(values, at, rowsOfPicks(next, pair)))}
+        />
+        <ProblemLines
+          problems={problems.filter(
+            (p) => p.input === address || p.input?.startsWith(`${address}.`) === true,
+          )}
+        />
+      </div>
+    )
+  }
   return (
     <div className="space-y-2" data-testid={`template-nested-${address}`}>
       <h5 className="text-xs font-medium text-foreground-muted">{group.label}</h5>

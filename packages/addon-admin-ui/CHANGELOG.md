@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hub device type is no longer offered in type pickers or device labels.
 - The device embed card switches device and token without reloading the page.
 - Automations from a template: one card per button with its events and actions as one-line entries, Add event / Add action, and the same device picker everywhere
+- Automations from a template: the events of a button are one field that picks the device, its part and the event, several at once
 
 ## [1.2.665] - 2026-11-14
 

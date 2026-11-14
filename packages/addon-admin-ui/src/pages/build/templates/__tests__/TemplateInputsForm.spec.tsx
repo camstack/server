@@ -12,6 +12,7 @@ import {
   type TemplateInputValues,
   type TemplateInstanceProblem,
 } from '@camstack/types'
+import type { PickedDeviceEvent } from '@camstack/ui-library'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { type ReactNode, useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -27,12 +28,28 @@ vi.mock('../../automation/FiredFields', () => ({
   FiredFields: () => <div data-testid="fired-fields" />,
 }))
 
+interface FakeEventsProps {
+  readonly testId?: string
+  readonly value: readonly PickedDeviceEvent[]
+  readonly onChange: (next: readonly PickedDeviceEvent[]) => void
+}
+
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
     DeviceValuePicker: (props: { readonly testId?: string }) => (
       <div data-testid={props.testId ?? 'device-picker'} data-picker="shared" />
+    ),
+    DeviceEventPicker: (props: FakeEventsProps) => (
+      <button
+        type="button"
+        data-testid={props.testId}
+        data-picks={JSON.stringify(props.value)}
+        onClick={() =>
+          props.onChange([...props.value, { deviceId: 9, sourceId: '2', eventId: 'press_long' }])
+        }
+      />
     ),
     useDeviceLabelById: (id: number) => `Device ${String(id)}`,
     useDeviceStateGetCapSlice: () => ({ status: 'pending', data: undefined }),
@@ -81,6 +98,11 @@ function Harness({ start, problems = [], onValues }: HarnessProps): ReactNode {
   )
 }
 
+const FILLED_COMMANDS = [
+  { targets: [302], action: { actionId: 'switch.toggle' } },
+  { targets: [303], action: { actionId: 'switch.turn_off' } },
+]
+
 const FILLED: TemplateInputValues = {
   buttons: [
     {
@@ -98,7 +120,9 @@ describe('the Buttons → devices form', () => {
     render(<Harness start={initialValues(PAYLOAD)} onValues={vi.fn()} />)
     expect(screen.getAllByTestId('template-group-buttons-row')).toHaveLength(1)
     expect(screen.getByTestId('template-group-buttons-summary').textContent).toBe('New button')
-    expect(screen.getAllByTestId('template-nested-buttons.0.events-row')).toHaveLength(1)
+    expect(screen.getByTestId('template-input-buttons.0.events').getAttribute('data-picks')).toBe(
+      '[]',
+    )
     expect(screen.getAllByTestId('template-nested-buttons.0.commands-row')).toHaveLength(1)
     expect(screen.getByTestId('template-group-buttons-add').textContent).toContain('Add button')
   })
@@ -128,27 +152,32 @@ describe('the Buttons → devices form', () => {
     })
   })
 
-  it('adds an event to a button; the last event cannot be removed', () => {
+  it('draws the events of a button as one field: a pick is a row of that device and event', () => {
     const onValues = vi.fn()
     render(<Harness start={FILLED} onValues={onValues} />)
-    const only = screen.getByTestId('template-nested-buttons.0.events-row')
-    expect(within(only).getByRole('button', { name: 'Remove event' })).toHaveProperty(
-      'disabled',
-      true,
-    )
-    fireEvent.click(screen.getByTestId('template-nested-buttons.0.events-add'))
-    expect(screen.getAllByTestId('template-nested-buttons.0.events-row')).toHaveLength(2)
-    expect(within(only).getByRole('button', { name: 'Remove event' })).toHaveProperty(
-      'disabled',
-      false,
-    )
+    const field = screen.getByTestId('template-input-buttons.0.events')
+    expect(JSON.parse(field.getAttribute('data-picks') ?? '')).toEqual([
+      { deviceId: 301, eventId: 'press_short' },
+    ])
+    expect(screen.queryByTestId('template-nested-buttons.0.events-add')).toBeNull()
+    fireEvent.click(field)
+    expect(onValues).toHaveBeenLastCalledWith({
+      buttons: [
+        {
+          events: [
+            { button: 301, event: { eventIds: ['press_short'] } },
+            { button: 9, event: { eventIds: ['press_long'], sourceIds: ['2'] } },
+          ],
+          commands: FILLED_COMMANDS,
+        },
+      ],
+    })
   })
 
   it('picks every device with the one device picker, and an action only for those devices', () => {
     const onValues = vi.fn()
     render(<Harness start={FILLED} onValues={onValues} />)
     for (const id of [
-      'template-input-buttons.0.events.0.button',
       'template-input-buttons.0.commands.0.targets',
       'template-input-buttons.0.commands.1.targets',
     ]) {

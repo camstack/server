@@ -171,7 +171,8 @@ function nestedRowsAt(
   return row === undefined ? [] : nestedRowsOf(row, at.group.key)
 }
 
-function withNestedRows(
+/** Replace every row of a nested group at once (a field that edits the whole list). */
+export function withNestedRows(
   values: TemplateInputValues,
   at: NestedGroupAt,
   rows: readonly TemplateNestedRow[],

@@ -4888,6 +4888,13 @@
       "summary": "Derive one debug sample. Immutable: `prev` is read, never mutated, and the returned object is the input for the next call."
     },
     {
+      "name": "describeDeviceEvent",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-event-model.ts",
+      "summary": "\"Button 1 · Short press\" for a pick; its raw ids when the vocabulary does not name them."
+    },
+    {
       "name": "describeDeviceSelector",
       "kind": "function",
       "area": "composites",
@@ -5381,6 +5388,76 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "DeviceEventPicker",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/DeviceEventPicker.tsx",
+      "summary": "The device picker's event mode: one field picks WHICH events of WHICH devices — the device from the shared panel, then its parts and events on a second page with a way back. Several events, of several devices, are chi…",
+      "props": [
+        {
+          "name": "value",
+          "type": "readonly PickedDeviceEvent[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: readonly PickedDeviceEvent[]) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "maxItems",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "recentKey",
+          "type": "string",
+          "optional": true,
+          "doc": "Remember what this field picked last (per browser)."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "deviceEventVocabularyOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-value-picker/device-event-model.ts",
+      "summary": "The event mode of the device picker: which events of which devices are picked, and what a device declares it can fire."
     },
     {
       "name": "DeviceExportInstancePanel",

@@ -10525,6 +10525,12 @@
       "forHours": "da {{count}} h",
       "forDays": "da {{count}} g",
       "openHistory": "Apri lo storico"
+    },
+    "deviceEventPicker": {
+      "add": "Aggiungi evento…",
+      "loading": "Lettura degli eventi del dispositivo…",
+      "unknown": "Non è stato possibile leggere gli eventi del dispositivo.",
+      "none": "Questo dispositivo non dichiara eventi."
     }
   },
   "helpers": {
