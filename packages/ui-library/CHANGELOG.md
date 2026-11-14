@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Climate card gauge: target large in the centre with the current temperature under it, a hollow marker at the room temperature, and the band to the target only while the device reports heating or cooling; the activity label follows the reported action instead of target versus room The idle state reads "Inattivo" in Italian.
+- A device-and-value field can show its value column before a device is picked.
 
 ## [1.2.446] - 2026-11-14
 

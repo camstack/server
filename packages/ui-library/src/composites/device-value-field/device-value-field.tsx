@@ -57,6 +57,14 @@ export interface DeviceValueFieldProps {
   readonly onValueChange: (pick: DeviceValuePick) => void
   /** Replaces the value list (a declared, not chosen, value). */
   readonly valuesOverride?: ReactNode
+  /**
+   * `with-device` (absent): the value column waits for a device. On a phone
+   * it is not drawn until one is picked, and `valuesOverride` replaces the
+   * list only then.
+   * `always`: `valuesOverride` is the column even when no device is picked,
+   * on every width. A device-event trigger lists the fleet's events first.
+   */
+  readonly valueColumn?: 'with-device' | 'always'
   /** Above the value list (what is already picked). */
   readonly valuesBefore?: ReactNode
   /** Transform (as is / scale / threshold / map) and its parameters. */
@@ -197,7 +205,7 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
             autoFocus={false}
           />
         </div>
-        {phone && props.deviceId !== null && (
+        {phone && (props.deviceId !== null || props.valueColumn === 'always') && (
           <div data-testid={`${testId}-values`} className="flex flex-col gap-2">
             {values}
           </div>
@@ -235,7 +243,12 @@ function ValuesBody(
   },
 ): ReactNode {
   const t = useUiText()
-  if (props.valuesOverride !== undefined && props.deviceId !== null) return props.valuesOverride
+  if (
+    props.valuesOverride !== undefined &&
+    (props.deviceId !== null || props.valueColumn === 'always')
+  ) {
+    return props.valuesOverride
+  }
   if (props.deviceId === null) {
     return <p className="text-[11px] text-foreground-subtle">{props.noDeviceText}</p>
   }

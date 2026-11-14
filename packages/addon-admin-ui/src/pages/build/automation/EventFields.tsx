@@ -16,18 +16,11 @@
 
 import type { AutomationLeaf, BecomesOperator, DeviceBecomesLeaf, HoldSpec } from '@camstack/types'
 import { BecomesOperatorSchema, holdOf } from '@camstack/types'
-import { DeviceValuePicker, Input, Select } from '@camstack/ui-library'
+import { Input, Select } from '@camstack/ui-library'
 import { Trans, useTranslation } from 'react-i18next'
-import { useDeviceBoundCaps } from '../../../components/device-do-action/use-device-bound-caps'
+import { SourceSelector } from '../../../components/device/customize/source-selector/SourceSelector'
 import { BUILD_EXCLUDED_TYPES } from '../flow/build-device-filters'
-import { vocabLocale } from '../flow/command-vocab'
 import type { AutomationDevice } from './automation-data'
-import {
-  declaredEventOptions,
-  type EventOption,
-  eventSelectOptions,
-  fleetEventOptions,
-} from './event-trigger-options'
 import { HoldFields } from './HoldFields'
 import { FieldPicker, type FieldSelection, PickerLabel, useFieldDescriptor } from './FieldPicker'
 import { type ScalarValue, ScalarValueInput } from './ValueInput'
@@ -324,102 +317,41 @@ interface DeviceEventFieldsProps {
   readonly onChange: (next: DeviceEventLeaf) => void
 }
 
-type DeclaredEvents =
-  | { readonly state: 'ready'; readonly options: readonly EventOption[] }
-  | { readonly state: 'pending' }
-  | { readonly state: 'failed' }
-
-/** The events the vocabulary declares for the picked device (or for any, with none picked). */
-function useDeclaredEvents(
-  deviceId: number | undefined,
-  devices: readonly AutomationDevice[],
-  language: string,
-): DeclaredEvents {
-  const caps = useDeviceBoundCaps(deviceId ?? 0)
-  const locale = vocabLocale(language)
-  if (deviceId === undefined) return { state: 'ready', options: fleetEventOptions(locale) }
-  if (caps.status === 'error') return { state: 'failed' }
-  if (caps.status !== 'success') return { state: 'pending' }
-  const type = devices.find((device) => device.id === deviceId)?.type
-  return { state: 'ready', options: declaredEventOptions(caps.data, type, locale) }
-}
-
+/** A device and one of its declared events, in the shared source selector. */
 export function DeviceEventFields({
   leaf: trigger,
   devices = [],
   onChange,
 }: DeviceEventFieldsProps) {
-  const { t, i18n } = useTranslation()
-  const declared = useDeclaredEvents(trigger.deviceId, devices, i18n.language)
-  const options =
-    declared.state === 'ready'
-      ? eventSelectOptions(
-          declared.options,
-          trigger.category,
-          t('automation.triggerEditor.eventNotDeclared'),
-        )
-      : []
   return (
-    <>
-      <div className="min-w-[15rem] flex-1">
-        <PickerLabel>{t('automation.triggerEditor.eventCategory', 'Event category')}</PickerLabel>
-        {declared.state === 'pending' && (
-          <p
-            role="status"
-            className="text-xs text-foreground-subtle"
-            data-testid="trigger-event-loading"
-          >
-            {t('automation.triggerEditor.eventsLoading')}
-          </p>
-        )}
-        {declared.state === 'failed' && (
-          <p role="alert" className="text-xs text-danger" data-testid="trigger-event-failed">
-            {t('automation.triggerEditor.eventsFailed')}
-          </p>
-        )}
-        {declared.state === 'ready' && options.length === 0 && (
-          <p className="text-xs text-foreground-subtle" data-testid="trigger-event-none">
-            {t('automation.triggerEditor.eventsNone')}
-          </p>
-        )}
-        {declared.state === 'ready' && options.length > 0 && (
-          <Select
-            value={trigger.category}
-            onChange={(e) =>
-              onChange({
-                kind: 'device-event',
-                category: e.target.value,
-                ...(trigger.deviceId === undefined ? {} : { deviceId: trigger.deviceId }),
-              })
-            }
-            options={[
-              {
-                value: '',
-                label: t('automation.triggerEditor.selectAnEvent', 'Select an event…'),
-              },
-              ...options,
-            ]}
-          />
-        )}
-      </div>
-      <div className="min-w-[11rem] flex-1">
-        <PickerLabel>{t('automation.triggerEditor.fromDevice', 'From device')}</PickerLabel>
-        <DeviceValuePicker
-          pick="device"
-          excludeTypes={BUILD_EXCLUDED_TYPES}
-          recentKey="build-targets"
-          value={trigger.deviceId === undefined ? null : { deviceId: trigger.deviceId }}
-          placeholder={t('automation.triggerEditor.anyDevice', 'Any device')}
-          testId="trigger-event-device"
-          onChange={(picked) =>
-            onChange({
-              kind: 'device-event',
-              category: trigger.category,
-              ...(picked === null ? {} : { deviceId: picked.deviceId }),
-            })
-          }
-        />
-      </div>
-    </>
+    <div className="w-full min-w-0">
+      <SourceSelector
+        kind="event"
+        shape="category"
+        devicePickerTestId="trigger-event-device"
+        excludeTypes={BUILD_EXCLUDED_TYPES}
+        deviceId={trigger.deviceId ?? null}
+        category={trigger.category}
+        knownDevices={devices.map((device) => ({
+          id: device.id,
+          name: device.name,
+          ...(device.type === undefined ? {} : { type: device.type }),
+        }))}
+        onDeviceChange={(deviceId) =>
+          onChange({
+            kind: 'device-event',
+            category: trigger.category,
+            ...(deviceId === null ? {} : { deviceId }),
+          })
+        }
+        onCategoryChange={(category) =>
+          onChange({
+            kind: 'device-event',
+            category,
+            ...(trigger.deviceId === undefined ? {} : { deviceId: trigger.deviceId }),
+          })
+        }
+      />
+    </div>
   )
 }

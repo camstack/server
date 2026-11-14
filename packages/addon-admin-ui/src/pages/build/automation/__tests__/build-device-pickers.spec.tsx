@@ -6,7 +6,7 @@
  * `source-selector-action.spec.tsx`.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../../i18n'
@@ -33,10 +33,7 @@ function withHub(ui: ReactElement): ReactElement {
 }
 
 async function openAndList(testId: string): Promise<void> {
-  const [trigger] = within(screen.getByTestId(testId)).getAllByRole('button')
-  if (trigger === undefined) throw new Error(`no picker trigger in ${testId}`)
-  fireEvent.click(trigger)
-  await screen.findByRole('option', { name: /Porch light/ })
+  await within(screen.getByTestId(testId)).findByRole('option', { name: /Porch light/ })
 }
 
 describe('automation device pickers never offer a container', () => {

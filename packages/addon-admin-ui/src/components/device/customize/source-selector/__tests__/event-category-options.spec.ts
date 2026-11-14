@@ -8,7 +8,7 @@ import {
   declaredEventOptions,
   eventSelectOptions,
   fleetEventOptions,
-} from '../event-trigger-options'
+} from '../event-category-options'
 
 describe('declaredEventOptions', () => {
   it('lists the events the device caps declare, labelled for the locale', () => {

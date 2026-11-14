@@ -45,6 +45,21 @@ const binding = (capName: string) => ({
 const capsOf = (deviceId: number): readonly string[] =>
   deviceId === 401 ? ['doorbell', 'battery'] : deviceId === 402 ? ['switch'] : []
 
+function searchItem(row: (typeof DEVICES)[number]) {
+  return {
+    id: row.id,
+    name: row.name,
+    type: row.type,
+    location: row.location,
+    integrationId: 'provider-homeassistant',
+    integrationLabel: 'Home Assistant',
+    online: true,
+    disabled: false,
+    compatible: true,
+    values: [],
+  }
+}
+
 const RECIPE = {
   when: {
     kind: 'any' as const,
@@ -80,6 +95,24 @@ export default defineFixtures({
   handlers: {
     ...build.handlers,
     'deviceManager.listAll': DEVICES,
+    'deviceManager.search': (input: { ids?: number[]; text?: string }) => {
+      const text = (input.text ?? '').toLowerCase()
+      const items = DEVICES.filter((row) => {
+        if (input.ids !== undefined && !input.ids.includes(row.id)) return false
+        return row.name.toLowerCase().includes(text)
+      }).map(searchItem)
+      return {
+        items,
+        nextCursor: null,
+        total: items.length,
+        compatibleTotal: items.length,
+        fleetTotal: DEVICES.length,
+        hiddenIncompatible: 0,
+        facets: { locations: [], integrations: [], types: [] },
+        suggested: [],
+        missingIds: (input.ids ?? []).filter((id) => !DEVICES.some((row) => row.id === id)),
+      }
+    },
     'deviceManager.getDevice': (input: { deviceId?: number }) =>
       DEVICES.find((d) => d.id === input.deviceId) ?? null,
     'deviceManager.getBindings': (input: { deviceId?: number }) => ({

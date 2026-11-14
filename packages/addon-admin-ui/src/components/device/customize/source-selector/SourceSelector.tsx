@@ -38,6 +38,7 @@ type DeviceSnapshot = Readonly<Record<string, Readonly<Record<string, unknown>>>
 
 import { ModeLine } from '../event/event-mode-line'
 import { vocabularyCapTitle, vocabularyFieldLabel } from '../vocabulary-field-label'
+import { EventCategorySource, type SourceSelectorEventCategoryProps } from './event-category-source'
 import { SourceSelectorMembers, type SourceSelectorMembersProps } from './SourceSelectorMembers'
 import {
   type EventPickedRow,
@@ -120,7 +121,7 @@ export interface SourceSelectorFormulaProps {
   readonly fillHeight?: boolean
 }
 
-export interface SourceSelectorEventProps {
+export interface SourceSelectorEventCustomizeProps {
   readonly kind: 'event'
   readonly shape: 'pulse' | 'span'
   readonly destination: SourceDestination
@@ -143,6 +144,10 @@ export interface SourceSelectorEventProps {
   readonly onCooldownSecChange: (seconds: number) => void
 }
 
+export type SourceSelectorEventProps =
+  | SourceSelectorEventCustomizeProps
+  | SourceSelectorEventCategoryProps
+
 export type SourceSelectorProps =
   | SourceSelectorScalarProps
   | SourceSelectorKeyedProps
@@ -150,7 +155,10 @@ export type SourceSelectorProps =
   | SourceSelectorEventProps
   | SourceSelectorMembersProps
 
-type SingleSelectorProps = Exclude<SourceSelectorProps, SourceSelectorMembersProps>
+type SingleSelectorProps = Exclude<
+  SourceSelectorProps,
+  SourceSelectorMembersProps | SourceSelectorEventCategoryProps
+>
 
 function toCandidates(
   fleet: readonly PickerDevice[],
@@ -189,6 +197,8 @@ function conversionKey(name: 'threshold' | 'scale' | 'invert' | 'enum-map'): str
 
 export function SourceSelector(props: SourceSelectorProps): ReactNode {
   if (props.kind === 'members') return <SourceSelectorMembers {...props} />
+  if (props.kind === 'event' && props.shape === 'category')
+    return <EventCategorySource {...props} />
   return <SourceSelectorSingle {...props} />
 }
 

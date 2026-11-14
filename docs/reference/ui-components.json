@@ -6636,6 +6636,12 @@
           "doc": "Replaces the value list (a declared, not chosen, value)."
         },
         {
+          "name": "valueColumn",
+          "type": "'with-device' | 'always'",
+          "optional": true,
+          "doc": "`with-device` (absent): the value column waits for a device. On a phone it is not drawn until one is picked, and `valuesOverride` replaces t"
+        },
+        {
           "name": "valuesBefore",
           "type": "ReactNode",
           "optional": true,

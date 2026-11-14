@@ -238,6 +238,37 @@ describe.each([
     expect(mode()).toBe('card')
   })
 
+  it('keeps a value override behind a picked device', () => {
+    renderField(
+      <DeviceValueField
+        {...props({
+          deviceId: null,
+          valuesOverride: <p data-testid="fleet-events">Fleet</p>,
+        })}
+      />,
+    )
+    expect(screen.queryByTestId('fleet-events')).toBeNull()
+    if (phone) {
+      expect(screen.queryByTestId('device-value-field-values')).toBeNull()
+    } else {
+      expect(screen.getByText('Pick a device')).toBeTruthy()
+    }
+  })
+
+  it('shows the override before a device is picked when the column is always on', () => {
+    renderField(
+      <DeviceValueField
+        {...props({
+          deviceId: null,
+          valueColumn: 'always',
+          valuesOverride: <p data-testid="fleet-events">Fleet</p>,
+        })}
+      />,
+    )
+    expect(screen.getByTestId('fleet-events')).toBeTruthy()
+    expect(screen.queryByText('Pick a device')).toBeNull()
+  })
+
   it('never lists an empty group and never reads an unanswered device as empty', () => {
     renderField(<DeviceValueField {...props({ deviceId: 1 })} />)
     expect(screen.queryByText('Nothing')).toBeNull()
