@@ -10,7 +10,10 @@
  *      the old free zone and is refused;
  *   3. a `ColumnItem` is built by the `column*` factories of
  *      `shell/column-items.tsx` only — never `new ColumnItem(` elsewhere;
- *   4. the column width is `SCENE_COLUMN_PCT`: `card-css.ts` takes it from
+ *   4. the bottom is a list of typed rows (`shell/bottom-rows.tsx`): a scene
+ *      gives `bottom:` row factories, never a JSX node, and a `BottomRow` is
+ *      built by those factories only;
+ *   5. the column width is `SCENE_COLUMN_PCT`: `card-css.ts` takes it from
  *      `scene-layout.ts`, and no other file spells a `grid-template-columns`
  *      percentage of its own.
  *
@@ -26,6 +29,8 @@ export type SceneLayoutRule =
   | 'free-layout'
   | 'free-zone-node'
   | 'column-item-by-hand'
+  | 'loose-bottom-node'
+  | 'bottom-row-by-hand'
   | 'column-percentage'
 
 export interface SceneLayoutFinding {
@@ -37,6 +42,8 @@ export interface SceneLayoutFinding {
 
 const FREE_LAYOUT = /FreeSceneZones|data-columns/
 const FREE_ZONE_NODE = /^\s*(left|right)\s*:\s*[<(]/
+const LOOSE_BOTTOM = /^\s*bottom\s*:\s*[<(]/
+const BOTTOM_ROW_NEW = /new\s+BottomRow\s*\(/
 const COLUMN_ITEM_NEW = /new\s+ColumnItem\s*\(/
 const PERCENT_GRID = /grid-template-columns\s*:\s*[\d.]+%/
 
@@ -54,6 +61,8 @@ export function findSceneLayoutProblems(file: string, source: string): SceneLayo
     }
     if (FREE_LAYOUT.test(text)) push('free-layout')
     if (inScene && FREE_ZONE_NODE.test(text)) push('free-zone-node')
+    if (inScene && LOOSE_BOTTOM.test(text)) push('loose-bottom-node')
+    if (file !== 'shell/bottom-rows.tsx' && BOTTOM_ROW_NEW.test(text)) push('bottom-row-by-hand')
     if (file !== 'shell/column-items.tsx' && COLUMN_ITEM_NEW.test(text)) push('column-item-by-hand')
     if (PERCENT_GRID.test(text)) push('column-percentage')
   })

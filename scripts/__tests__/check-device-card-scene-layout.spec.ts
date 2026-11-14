@@ -27,6 +27,20 @@ describe('findSceneLayoutProblems — every scene is on the fixed layout', () =>
     expect(rules('scenes/fan/FanCard.tsx', source)).toEqual(['column-item-by-hand'])
   })
 
+  it('refuses a loose node as a scene bottom, and accepts rows', () => {
+    expect(rules('scenes/fan/FanCard.tsx', '        bottom: <SwitchTimer />,')).toEqual([
+      'loose-bottom-node',
+    ])
+    expect(rules('scenes/fan/FanCard.tsx', '        bottom: (')).toEqual(['loose-bottom-node'])
+    expect(rules('scenes/fan/FanCard.tsx', '        bottom: [rowText(')).toEqual([])
+  })
+
+  it('lets only bottom-rows.tsx build a BottomRow', () => {
+    const source = "return new BottomRow('k', 'text', undefined, node)"
+    expect(rules('shell/bottom-rows.tsx', source)).toEqual([])
+    expect(rules('scenes/fan/FanCard.tsx', source)).toEqual(['bottom-row-by-hand'])
+  })
+
   it('keeps the column width in one constant', () => {
     expect(rules('card-css.ts', 'grid-template-columns:15% minmax(0,1fr) 15%')).toEqual([
       'column-percentage',

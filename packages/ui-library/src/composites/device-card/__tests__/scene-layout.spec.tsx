@@ -101,6 +101,15 @@ describe('what a side column accepts', () => {
           bottomCorners={false}
         />,
       )
+      render(
+        <SceneGrid
+          image={<i />}
+          // @ts-expect-error the bottom takes BottomRow[] (row factories), never a ReactNode
+          bottom={picker}
+          corners={null}
+          bottomCorners={false}
+        />,
+      )
       // @ts-expect-error a ColumnItem is built by the column factories only
       new ColumnItem('x', picker)
     }
