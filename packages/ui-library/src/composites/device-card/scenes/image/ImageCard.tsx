@@ -1,9 +1,11 @@
 import { type ReactElement, useEffect, useState } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { ImageDetailModal } from '../../../device-controls/image-control'
+import { cn } from '../../../../lib/cn'
 import { CardIcon } from '../../parts/CardIcon'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardCommon, CardCommonActions, CardOrientation } from '../../shell/model'
+import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 
 export interface ImageCardModel {
   readonly common: CardCommon
@@ -60,9 +62,10 @@ export function ImageCard({
         tone: url === null ? 'muted' : 'primary',
       }}
       scene={{
+        columns: {},
         image:
           url === null ? (
-            <CardIcon glyph="image" className="h-20 w-20 text-foreground-subtle" />
+            <CardIcon glyph="image" className={cn(SCENE_ICON_CLASS, 'text-foreground-subtle')} />
           ) : (
             <>
               {/* ui-check-ok: the picture itself opens the zoom, as in ImageHeroCard; a Button variant would restyle it */}
