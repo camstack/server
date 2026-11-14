@@ -9,7 +9,7 @@ import { CardIcon } from '../../parts/CardIcon'
 import { DIAL_BOX_CLASS, Dial, type DialTone } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
 import { type DialRange, RangeDial } from '../../parts/RangeDial'
-import { ValueChip } from '../../parts/ValueChip'
+import { type BottomRow, rowButtons, rowPills, rowSelector } from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton, columnValue } from '../../shell/column-items'
 import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import { cardToneClass } from '../../shell/Corner'
@@ -95,16 +95,23 @@ export function ClimateCard({
   const centre =
     model.flow !== null ? (
       <>
-        <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">{degrees(model.flow, 0)}</span>
+        <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">
+          {degrees(model.flow, 0)}
+        </span>
         <span className="text-xs text-foreground-muted">
           {t('uiLibrary.deviceCard.climate.flow', 'flow')}
         </span>
       </>
     ) : model.current !== null ? (
-      <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">{degrees(model.current, 1)}</span>
+      <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl">
+        {degrees(model.current, 1)}
+      </span>
     ) : valveOnly ? (
       <>
-        <span className="text-xl font-semibold tabular-nums @[10rem]:text-4xl" data-testid="dc-climate-valve">
+        <span
+          className="text-xl font-semibold tabular-nums @[10rem]:text-4xl"
+          data-testid="dc-climate-valve"
+        >
           {valveText}
         </span>
         <span className="text-xs lowercase text-foreground-muted">
@@ -157,7 +164,9 @@ export function ClimateCard({
           {inside}
         </RangeDial>
       ) : target === null || shown === null ? (
-        <div className={cn(DIAL_BOX_CLASS, 'flex flex-col items-center justify-center')}>{inside}</div>
+        <div className={cn(DIAL_BOX_CLASS, 'flex flex-col items-center justify-center')}>
+          {inside}
+        </div>
       ) : (
         <Dial
           value={shown}
@@ -248,78 +257,102 @@ export function ClimateCard({
         ]),
   ]
   const valveChip = valve !== null && !valveOnly
-  const hasBottom =
-    model.mode !== null ||
-    model.preset !== null ||
-    model.heatCool !== null ||
-    model.swing !== null ||
-    model.swingHorizontal !== null ||
-    valveChip
-  const bottom = hasBottom ? (
-    <>
-      {model.mode === null ? null : (
-        <MenuButton
-          options={model.mode.options}
-          value={model.mode.value}
-          onChange={actions.onMode}
-          disabled={!model.on}
-          ariaLabel={t('uiLibrary.deviceCard.climate.mode', 'Mode')}
-          testId="dc-climate-mode"
-        />
-      )}
-      {model.preset === null ? null : (
-        <ButtonGroup
-          options={model.preset.options}
-          value={model.preset.value}
-          onChange={actions.onPreset}
-          disabled={!model.on}
-          ariaLabel={t('uiLibrary.deviceCard.climate.preset', 'Preset')}
-          testId="dc-climate-preset"
-        />
-      )}
-      {model.heatCool === null ? null : (
-        <ButtonGroup
-          options={model.heatCool.options}
-          value={model.heatCool.value}
-          onChange={actions.onHeatCool}
-          disabled={!model.on}
-          ariaLabel={t('uiLibrary.deviceCard.climate.heatCool', 'Heating or cooling')}
-          testId="dc-climate-heatcool"
-        />
-      )}
-      {model.swing === null ? null : (
-        <CardButton
-          glyph="swing"
-          tone={model.swing ? 'on' : 'default'}
-          aria-pressed={model.swing}
-          disabled={!model.on}
-          data-testid="dc-climate-swing"
-          onClick={() => actions.onSwing(model.swing !== true)}
-        >
-          {t('uiLibrary.deviceCard.climate.swing', 'Swing')}
-        </CardButton>
-      )}
-      {model.swingHorizontal === null ? null : (
-        <CardButton
-          glyph="swingHorizontal"
-          tone={model.swingHorizontal ? 'on' : 'default'}
-          aria-pressed={model.swingHorizontal}
-          disabled={!model.on}
-          data-testid="dc-climate-swing-horizontal"
-          onClick={() => actions.onSwingHorizontal(model.swingHorizontal !== true)}
-        >
-          {t('uiLibrary.deviceCard.climate.swingHorizontal', 'Side swing')}
-        </CardButton>
-      )}
-      {valveChip ? (
-        <ValueChip>
-          <span data-testid="dc-climate-valve">
-            {t('uiLibrary.deviceCard.climate.valve', 'Valve')} {valveText}
-          </span>
-        </ValueChip>
-      ) : null}
-    </>
-  ) : null
+  const swings = [
+    ...(model.swing === null
+      ? []
+      : [
+          <CardButton
+            key="swing"
+            glyph="swing"
+            tone={model.swing ? 'on' : 'default'}
+            aria-pressed={model.swing}
+            disabled={!model.on}
+            data-testid="dc-climate-swing"
+            onClick={() => actions.onSwing(model.swing !== true)}
+          >
+            {t('uiLibrary.deviceCard.climate.swing', 'Swing')}
+          </CardButton>,
+        ]),
+    ...(model.swingHorizontal === null
+      ? []
+      : [
+          <CardButton
+            key="swing-horizontal"
+            glyph="swingHorizontal"
+            tone={model.swingHorizontal ? 'on' : 'default'}
+            aria-pressed={model.swingHorizontal}
+            disabled={!model.on}
+            data-testid="dc-climate-swing-horizontal"
+            onClick={() => actions.onSwingHorizontal(model.swingHorizontal !== true)}
+          >
+            {t('uiLibrary.deviceCard.climate.swingHorizontal', 'Side swing')}
+          </CardButton>,
+        ]),
+  ]
+  const bottom: readonly BottomRow[] = [
+    ...(model.mode === null
+      ? []
+      : [
+          rowSelector('mode', {
+            control: (
+              <MenuButton
+                options={model.mode.options}
+                value={model.mode.value}
+                onChange={actions.onMode}
+                disabled={!model.on}
+                ariaLabel={t('uiLibrary.deviceCard.climate.mode', 'Mode')}
+                testId="dc-climate-mode"
+              />
+            ),
+          }),
+        ]),
+    ...(model.preset === null
+      ? []
+      : [
+          rowSelector('preset', {
+            control: (
+              <ButtonGroup
+                options={model.preset.options}
+                value={model.preset.value}
+                onChange={actions.onPreset}
+                disabled={!model.on}
+                ariaLabel={t('uiLibrary.deviceCard.climate.preset', 'Preset')}
+                testId="dc-climate-preset"
+              />
+            ),
+          }),
+        ]),
+    ...(model.heatCool === null
+      ? []
+      : [
+          rowSelector('heat-cool', {
+            control: (
+              <ButtonGroup
+                options={model.heatCool.options}
+                value={model.heatCool.value}
+                onChange={actions.onHeatCool}
+                disabled={!model.on}
+                ariaLabel={t('uiLibrary.deviceCard.climate.heatCool', 'Heating or cooling')}
+                testId="dc-climate-heatcool"
+              />
+            ),
+          }),
+        ]),
+    ...(swings.length === 0 ? [] : [rowButtons('swing', { buttons: swings })]),
+    ...(valveChip
+      ? [
+          rowPills('valve', {
+            pills: [
+              {
+                id: 'valve',
+                text: `${t('uiLibrary.deviceCard.climate.valve', 'Valve')} ${valveText}`,
+                testId: 'dc-climate-valve',
+              },
+            ],
+          }),
+        ]
+      : []),
+  ]
   return (
     <DeviceCard
       kind="climate"
