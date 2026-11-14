@@ -26,7 +26,8 @@ export function parseGreeExtras(raw: Readonly<Record<string, number>>): GreeExtr
   const out = column(raw, 'OutEnvTem')
   const defrost = column(raw, 'Defrost')
   return {
-    outdoorTemp: out === null ? null : out - GREE_TEMP_OFFSET,
+    // A unit without an outdoor probe answers 0 (= -40 °C): not answered, never a reading.
+    outdoorTemp: out === null || out <= 0 ? null : out - GREE_TEMP_OFFSET,
     defrost: defrost === null ? null : defrost !== 0,
     errorCode: column(raw, 'AllErr'),
   }

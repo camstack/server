@@ -10,6 +10,10 @@ import {
 } from '../gree-extras.js'
 
 describe('parseGreeExtras', () => {
+  it('a unit without an outdoor probe (raw 0) has no outdoor reading, never -40', () => {
+    expect(parseGreeExtras({ OutEnvTem: 0, Defrost: 0, AllErr: 0 }).outdoorTemp).toBeNull()
+  })
+
   it('asks for the three columns nobody read before', () => {
     expect([...GREE_EXTRA_COLUMNS]).toEqual(['OutEnvTem', 'Defrost', 'AllErr'])
   })
