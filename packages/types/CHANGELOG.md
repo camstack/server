@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.565] - 2026-11-14
+
 ### Changed
 
 - The hub device type is gone. A stored hub value is unknown and is not read as a gateway.

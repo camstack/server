@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.22] - 2026-11-14
+
 ### Changed
 
 - A house or heat-pump meter still named Consumption is renamed to the current catalogue name on restore; a name you chose is left as it is.
