@@ -85,6 +85,9 @@ export const ENPAL_CONSUMPTION_NAMES = {
   heatpump: { en: 'Heat pump consumption', it: 'Consumo pompa di calore' },
 } as const
 
+/** The name both meters were created with, before the catalogue split them. */
+export const ENPAL_LEGACY_CONSUMPTION_NAME = 'Consumption'
+
 const point = (
   quantity: ReadingQuantity,
   ...sources: ReadonlyArray<string | PointSource>

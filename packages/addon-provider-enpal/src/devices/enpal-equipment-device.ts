@@ -1,6 +1,7 @@
 import {
   BaseDevice,
   DeviceType,
+  errMsg,
   type AccessoryChildSpec,
   type DeviceContext,
   type DeviceFeature,
@@ -12,6 +13,8 @@ import {
   findEquipment,
   primaryChildPreferenceOf,
 } from '../enpal-equipment.js'
+import { ENPAL_LEGACY_CONSUMPTION_NAME } from '../enpal-catalog.js'
+import { renameLegacyCatalogDevices } from './enpal-catalog-rename.js'
 import { enpalConnections } from '../enpal-resolver.js'
 import { EnpalMetadataSync } from './enpal-metadata-sync.js'
 import { backfillPrimaryChildPreference } from './enpal-preference-backfill.js'
@@ -60,6 +63,7 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
       },
       logger: this.ctx.logger,
     })
+    await this.renameLegacyNames()
     const metadata = new EnpalMetadataSync({
       equipment: this.equipment,
       deviceId: this.id,
@@ -73,6 +77,50 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
       void metadata.apply()
     })
     await metadata.apply()
+  }
+
+  /**
+   * A meter created as "Consumption" takes the current catalogue name. A name
+   * the operator changed is left as it is.
+   */
+  private async renameLegacyNames(): Promise<void> {
+    const manager = this.ctx.api.deviceManager
+    try {
+      const children = await manager.getChildren.query({ parentDeviceId: this.id })
+      const legacy = children.flatMap((child) => {
+        const specId = child.config['specId']
+        if (typeof specId !== 'string' || child.name !== ENPAL_LEGACY_CONSUMPTION_NAME) return []
+        return [{ deviceId: child.id, specId, name: child.name }]
+      })
+      const rows = await Promise.all(
+        legacy.map(async (child) => {
+          const meta = await manager.loadMeta.query({ deviceId: child.deviceId })
+          return {
+            ...child,
+            name: meta?.name ?? child.name,
+            userNamed: meta?.userNamed,
+          }
+        }),
+      )
+      await renameLegacyCatalogDevices({
+        children: rows,
+        rename: (deviceId, name, stampUserNamed) =>
+          manager.setName.mutate({
+            deviceId,
+            name,
+            ...(stampUserNamed ? {} : { stampUserNamed: false }),
+          }),
+        logger: this.ctx.logger,
+      })
+    } catch (err: unknown) {
+      this.ctx.logger.warn(
+        'enpal: could not rename devices still carrying the old catalogue name',
+        {
+          tags: { deviceId: this.id },
+          meta: { error: errMsg(err) },
+        },
+      )
+    }
   }
 
   override async removeDevice(): Promise<void> {
