@@ -8,20 +8,17 @@ import { SCENE_COLUMN_PCT } from './shell/scene-layout'
  * `text-<token>` class). Injected once per card with `<style>`.
  */
 export const DEVICE_CARD_CSS: string = `
-.dc-scene{isolation:isolate;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);grid-template-areas:"left img right" "bottom bottom bottom";align-items:center;justify-items:center}
+.dc-scene{isolation:isolate;display:grid;grid-template-columns:${SCENE_COLUMN_PCT}% minmax(0,1fr) ${SCENE_COLUMN_PCT}%;grid-template-areas:"left img right" "bottom bottom bottom";align-items:center;justify-items:center}
 .dc-scene[data-bottom="false"]{grid-template-areas:"left img right"}
-.dc-left{grid-area:left;justify-self:stretch;width:100%;min-width:0;max-width:100%;overflow-x:clip}
-.dc-right{grid-area:right;justify-self:start;width:100%;max-width:min(100%,7rem)}
-.dc-img{grid-area:img}
+.dc-scene[data-sides="0"]{grid-template-columns:minmax(0,1fr);grid-template-areas:"img" "bottom"}
+.dc-scene[data-sides="0"][data-bottom="false"]{grid-template-areas:"img"}
+.dc-left,.dc-right{justify-self:stretch;width:100%;min-width:0;max-width:100%;overflow:visible}
+.dc-left{grid-area:left}
+.dc-right{grid-area:right}
+.dc-img{grid-area:img;justify-self:stretch}
 .dc-bottom{grid-area:bottom;justify-self:stretch;min-width:0;max-width:100%;overflow-x:clip}
 .dc-card{container-type:inline-size}
-@container (max-width:18rem){.dc-scene,.dc-scene[data-bottom="false"]{grid-template-columns:minmax(0,1fr);grid-template-areas:"img" "left" "right" "bottom"}.dc-right{justify-self:stretch;max-width:100%}}
-.dc-scene[data-columns="fixed"]{grid-template-columns:${SCENE_COLUMN_PCT}% minmax(0,1fr) ${SCENE_COLUMN_PCT}%}
-.dc-scene[data-columns="fixed"][data-sides="0"]{grid-template-columns:minmax(0,1fr);grid-template-areas:"img" "bottom"}
-.dc-scene[data-columns="fixed"][data-sides="0"][data-bottom="false"]{grid-template-areas:"img"}
-.dc-scene[data-columns="fixed"] .dc-left,.dc-scene[data-columns="fixed"] .dc-right{justify-self:stretch;width:100%;max-width:100%;overflow:visible}
-.dc-scene[data-columns="fixed"] .dc-img{justify-self:stretch}
-@container (max-width:18rem){.dc-scene[data-columns="fixed"],.dc-scene[data-columns="fixed"][data-bottom="false"]{grid-template-columns:minmax(0,1fr);grid-template-areas:"img" "left" "right" "bottom"}}
+@container (max-width:18rem){.dc-scene,.dc-scene[data-bottom="false"]{grid-template-columns:minmax(0,1fr);grid-template-areas:"img" "left" "right" "bottom"}}
 .dc-blocked .dc-gated{opacity:.45;pointer-events:none}
 .dc-dial{touch-action:none;cursor:grab}
 .dc-dial[aria-disabled="true"]{cursor:default}

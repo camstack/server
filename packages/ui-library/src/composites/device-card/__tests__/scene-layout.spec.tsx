@@ -62,22 +62,16 @@ describe('the scene proportions', () => {
     )
   })
 
-  it('a fixed scene is marked fixed and a column-less one gives the drawing the whole width', () => {
+  it('a column-less scene gives the drawing the whole width', () => {
     render(<SceneGrid image={<i />} columns={{}} corners={null} bottomCorners={false} />)
     const scene = screen.getByTestId('dc-scene')
-    expect(scene.getAttribute('data-columns')).toBe('fixed')
     expect(scene.getAttribute('data-sides')).toBe('0')
   })
 
   it('one filled column still reserves the other, so the two stay equal', () => {
     const only = columnButton('a', { glyph: 'plus', label: 'More', onPress: vi.fn() })
     const { container } = render(
-      <SceneGrid
-        image={<i />}
-        columns={{ left: [only] }}
-        corners={null}
-        bottomCorners={false}
-      />,
+      <SceneGrid image={<i />} columns={{ left: [only] }} corners={null} bottomCorners={false} />,
     )
     expect(container.querySelector('[data-zone="left"]')).not.toBeNull()
     expect(container.querySelector('[data-zone="right"]')).not.toBeNull()
@@ -94,6 +88,15 @@ describe('what a side column accepts', () => {
           image={<i />}
           // @ts-expect-error a column takes ColumnItem[], never a ReactNode
           columns={{ left: picker }}
+          corners={null}
+          bottomCorners={false}
+        />,
+      )
+      render(
+        <SceneGrid
+          image={<i />}
+          // @ts-expect-error free left/right content no longer exists; a side holds column items
+          left={picker}
           corners={null}
           bottomCorners={false}
         />,
@@ -125,7 +128,9 @@ describe('what a side column accepts', () => {
     expect(container.querySelector('[data-zone="bottom"]')?.contains(source)).toBe(true)
     expect(container.querySelector('[data-zone="right"]')?.contains(source) ?? false).toBe(false)
     expect(
-      container.querySelector('[data-zone="left"]')?.contains(screen.getByTestId('dc-media-volume')),
+      container
+        .querySelector('[data-zone="left"]')
+        ?.contains(screen.getByTestId('dc-media-volume')),
     ).toBe(true)
   })
 })
@@ -156,10 +161,7 @@ describe('power on the scene', () => {
     const actions = mediaActions()
     const model = powerOnlyModel()
     render(
-      <MediaPlayerCard
-        model={{ ...model, common: readOnly(model.common) }}
-        actions={actions}
-      />,
+      <MediaPlayerCard model={{ ...model, common: readOnly(model.common) }} actions={actions} />,
     )
     const toggle = screen.getByRole('switch')
     fireEvent.click(toggle)

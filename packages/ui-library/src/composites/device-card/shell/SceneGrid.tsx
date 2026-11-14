@@ -22,8 +22,6 @@ interface SceneZonesBase {
  */
 export interface FixedSceneZones extends SceneZonesBase {
   readonly columns?: SceneColumns
-  readonly left?: never
-  readonly right?: never
 }
 
 export interface SceneColumns {
@@ -31,17 +29,7 @@ export interface SceneColumns {
   readonly right?: readonly ColumnItem[]
 }
 
-/**
- * A scene not yet moved to the fixed proportions: free content in its columns.
- * Each device moves to {@link FixedSceneZones} in turn.
- */
-export interface FreeSceneZones extends SceneZonesBase {
-  readonly left?: ReactNode
-  readonly right?: ReactNode
-  readonly columns?: never
-}
-
-export type SceneZones = FixedSceneZones | FreeSceneZones
+export type SceneZones = FixedSceneZones
 
 export type SceneGridProps = SceneZones & {
   /** The four corners, placed by the shell. */
@@ -64,33 +52,28 @@ function columnStack(items: readonly ColumnItem[] | undefined): ReactNode {
  */
 export function SceneGrid(props: SceneGridProps): ReactElement {
   const { fx, image, bottom, corners, bottomCorners, activity, alert = false } = props
-  const fixed = props.columns !== undefined
-  const left = props.columns === undefined ? props.left : columnStack(props.columns.left)
-  const right = props.columns === undefined ? props.right : columnStack(props.columns.right)
+  const left = columnStack(props.columns?.left)
+  const right = columnStack(props.columns?.right)
   return (
     <div
       data-testid="dc-scene"
       data-act={activity}
       data-bottom={has(bottom)}
       data-alert={alert}
-      data-columns={fixed ? 'fixed' : 'free'}
-      data-sides={fixed ? Number(has(left)) + Number(has(right)) : undefined}
+      data-sides={Number(has(left)) + Number(has(right))}
       className={cn(
         'dc-scene relative gap-y-3.5 rounded-2xl border pt-10',
-        fixed ? 'gap-x-0 px-1' : 'gap-x-2 px-3',
+        'gap-x-0 px-1',
         alert ? 'border-danger/50 bg-danger/10' : 'border-border bg-background-elevated',
         bottomCorners ? 'pb-10' : 'pb-3.5',
       )}
     >
       {fx}
       {corners}
-      {has(left) || (fixed && has(right)) ? (
+      {has(left) || has(right) ? (
         <div
           data-zone="left"
-          className={cn(
-            'dc-left flex w-full min-w-0 max-w-full flex-col items-center gap-2',
-            !fixed && 'overflow-x-clip',
-          )}
+          className="dc-left flex w-full min-w-0 max-w-full flex-col items-center gap-2"
         >
           {left}
         </div>
@@ -98,16 +81,8 @@ export function SceneGrid(props: SceneGridProps): ReactElement {
       <div data-zone="image" className="dc-img relative flex items-center justify-center">
         {image}
       </div>
-      {has(right) || (fixed && has(left)) ? (
-        <div
-          data-zone="right"
-          className={cn(
-            'dc-right flex min-w-0 flex-col gap-2',
-            fixed
-              ? 'items-center'
-              : 'items-stretch [&>*]:min-w-0 [&>*>button]:w-full [&>*>button]:gap-0.5 [&>*>button]:px-1 [&>*>button]:text-xs [&>button]:px-2 [&>button]:text-xs',
-          )}
-        >
+      {has(left) || has(right) ? (
+        <div data-zone="right" className="dc-right flex min-w-0 flex-col items-center gap-2">
           {right}
         </div>
       ) : null}
