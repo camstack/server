@@ -1,13 +1,19 @@
-import { type ReactElement, type ReactNode, useState } from 'react'
+import { type ReactElement, useState } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import type { RobotActivity } from '../../illustrations/RobotIllustration'
 import { RobotIllustration } from '../../illustrations/RobotIllustration'
-import { ArmedButton } from '../../parts/ArmedButton'
 import { CardButton } from '../../parts/CardButton'
 import { CardIcon } from '../../parts/CardIcon'
-import { StepColumn } from '../../parts/StepColumn'
+import {
+  type ColumnItem,
+  columnArmedButton,
+  columnButton,
+  columnStep,
+  columnValue,
+} from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
 import type { RobotCardActions, RobotCardModel } from './model'
 
 export interface RobotCardProps {
@@ -50,97 +56,112 @@ export function robotStateLabel(model: RobotCardModel, t: UiTextFn): string {
   }
 }
 
-function leftColumn(model: RobotCardModel, actions: RobotCardActions, t: UiTextFn): ReactNode {
+function leftColumn(
+  model: RobotCardModel,
+  actions: RobotCardActions,
+  t: UiTextFn,
+): readonly ColumnItem[] {
   if (model.mower) {
-    if (model.progress === null) return null
-    return (
-      <StepColumn
-        testId="dc-robot-progress"
-        value={<span className="text-primary">{`${Math.round(model.progress)}%`}</span>}
-        notes={[t('uiLibrary.deviceCard.robot.completed', 'completed')]}
-        up={{ glyph: 'up', label: '' }}
-        down={{ glyph: 'down', label: '' }}
-      />
-    )
+    if (model.progress === null) return []
+    return [
+      columnValue('progress', {
+        value: `${Math.round(model.progress)}%`,
+        caption: t('uiLibrary.deviceCard.robot.completed', 'completed'),
+        testId: 'dc-robot-progress',
+      }),
+    ]
   }
   const suction = model.suction
-  if (suction === null || suction.options.length === 0) return null
+  if (suction === null || suction.options.length === 0) return []
   const index = suction.options.indexOf(suction.value ?? '')
   const step = (delta: number) => (): void => {
     const next = suction.options[Math.min(suction.options.length - 1, Math.max(0, index + delta))]
     if (next !== undefined && next !== suction.value) actions.onSuction(next)
   }
-  return (
-    <StepColumn
-      testId="dc-robot-suction"
-      value={suction.value}
-      notes={[t('uiLibrary.deviceCard.robot.suction', 'suction')]}
-      up={{
-        glyph: 'up',
-        label: t('uiLibrary.deviceCard.robot.moreSuction', 'More suction'),
-        disabled: index >= suction.options.length - 1,
-        onPress: step(1),
-      }}
-      down={{
-        glyph: 'down',
-        label: t('uiLibrary.deviceCard.robot.lessSuction', 'Less suction'),
-        disabled: index <= 0,
-        onPress: step(-1),
-      }}
-    />
-  )
+  return columnStep('suction', {
+    testId: 'dc-robot-suction',
+    value: suction.value,
+    caption: t('uiLibrary.deviceCard.robot.suction', 'suction'),
+    up: {
+      glyph: 'up',
+      label: t('uiLibrary.deviceCard.robot.moreSuction', 'More suction'),
+      disabled: index >= suction.options.length - 1,
+      onPress: step(1),
+    },
+    down: {
+      glyph: 'down',
+      label: t('uiLibrary.deviceCard.robot.lessSuction', 'Less suction'),
+      disabled: index <= 0,
+      onPress: step(-1),
+    },
+  })
 }
 
-function rightColumn(model: RobotCardModel, actions: RobotCardActions, t: UiTextFn): ReactNode {
+function rightColumn(
+  model: RobotCardModel,
+  actions: RobotCardActions,
+  t: UiTextFn,
+): readonly ColumnItem[] {
   const c = model.controls
   const going = model.activity === 'clean' || model.activity === 'ret'
   const atBase =
     model.activity === 'sleep' || model.activity === 'charge' || model.activity === 'ret'
-  return (
-    <>
-      {going && c.pause ? (
-        <CardButton
-          glyph="pause"
-          tone="primary"
-          data-testid="dc-robot-go"
-          onClick={actions.onPause}
-        >
-          {t('uiLibrary.deviceCard.pause', 'Pause')}
-        </CardButton>
-      ) : !going && c.start ? (
-        <CardButton glyph="play" tone="primary" data-testid="dc-robot-go" onClick={actions.onStart}>
-          {model.mower
-            ? t('uiLibrary.deviceCard.robot.mow', 'Mow')
-            : t('uiLibrary.deviceCard.robot.clean', 'Clean')}
-        </CardButton>
-      ) : null}
-      {c.stop && (model.activity === 'clean' || model.activity === 'pause') ? (
-        <ArmedButton
-          glyph="stop"
-          testId="dc-robot-stop"
-          armedLabel={t('uiLibrary.deviceCard.appliance.confirmStop', 'Confirm: stop')}
-          onConfirm={actions.onStop}
-        >
-          {t('uiLibrary.deviceCard.stop', 'Stop')}
-        </ArmedButton>
-      ) : null}
-      {c.dock ? (
-        <CardButton
-          glyph="home"
-          disabled={atBase}
-          data-testid="dc-robot-dock"
-          onClick={actions.onDock}
-        >
-          {t('uiLibrary.deviceCard.robot.base', 'Base')}
-        </CardButton>
-      ) : null}
-      {!model.mower && c.locate ? (
-        <CardButton glyph="locate" data-testid="dc-robot-locate" onClick={actions.onLocate}>
-          {t('uiLibrary.deviceCard.robot.locate', 'Find')}
-        </CardButton>
-      ) : null}
-    </>
-  )
+  return [
+    ...(going && c.pause
+      ? [
+          columnButton('go', {
+            glyph: 'pause',
+            tone: 'primary',
+            label: t('uiLibrary.deviceCard.pause', 'Pause'),
+            testId: 'dc-robot-go',
+            onPress: actions.onPause,
+          }),
+        ]
+      : !going && c.start
+        ? [
+            columnButton('go', {
+              glyph: 'play',
+              tone: 'primary',
+              label: model.mower
+                ? t('uiLibrary.deviceCard.robot.mow', 'Mow')
+                : t('uiLibrary.deviceCard.robot.clean', 'Clean'),
+              testId: 'dc-robot-go',
+              onPress: actions.onStart,
+            }),
+          ]
+        : []),
+    ...(c.stop && (model.activity === 'clean' || model.activity === 'pause')
+      ? [
+          columnArmedButton('stop', {
+            glyph: 'stop',
+            label: t('uiLibrary.deviceCard.stop', 'Stop'),
+            testId: 'dc-robot-stop',
+            onConfirm: actions.onStop,
+          }),
+        ]
+      : []),
+    ...(c.dock
+      ? [
+          columnButton('dock', {
+            glyph: 'home',
+            disabled: atBase,
+            label: t('uiLibrary.deviceCard.robot.base', 'Base'),
+            testId: 'dc-robot-dock',
+            onPress: actions.onDock,
+          }),
+        ]
+      : []),
+    ...(!model.mower && c.locate
+      ? [
+          columnButton('locate', {
+            glyph: 'locate',
+            label: t('uiLibrary.deviceCard.robot.locate', 'Find'),
+            testId: 'dc-robot-locate',
+            onPress: actions.onLocate,
+          }),
+        ]
+      : []),
+  ]
 }
 
 /**
@@ -159,8 +180,16 @@ export function RobotCard({
   const [showMap, setShowMap] = useState(false)
   const label = robotStateLabel(model, t)
   const mapShown = showMap && model.mapUrl !== null
-  const c = model.controls
-  const hasRight = c.start || c.pause || c.dock || c.stop || (!model.mower && c.locate)
+  const robotError =
+    model.activity === 'err' && !model.mower && model.errorLabel !== null ? (
+      <div
+        className="flex items-start justify-center gap-1 text-center text-xs font-semibold text-danger"
+        data-testid="dc-robot-error"
+      >
+        <CardIcon glyph="warning" />
+        {model.errorLabel}
+      </div>
+    ) : null
   return (
     <DeviceCard
       kind={model.mower ? 'mower' : 'vacuum'}
@@ -171,51 +200,46 @@ export function RobotCard({
       activity={model.activity}
       state={{ label, since: model.since, tone: TONE[model.activity] }}
       scene={{
-        left: leftColumn(model, actions, t),
-        image: (
-          <div className="grid justify-items-center gap-1.5">
-            {mapShown ? (
-              <img
-                src={model.mapUrl ?? undefined}
-                alt={t('uiLibrary.deviceCard.robot.mapAlt', 'Cleaning map')}
-                data-testid="dc-robot-map"
-                className="h-auto w-42.5 rounded-xl"
-              />
-            ) : (
-              <RobotIllustration
-                mower={model.mower}
-                activity={model.activity}
-                progress={model.progress}
-              />
-            )}
-            {model.activity === 'err' && !model.mower && model.errorLabel !== null ? (
-              <div
-                className="flex max-w-32 items-start justify-center gap-1 text-center text-xs font-semibold text-danger"
-                data-testid="dc-robot-error"
-              >
-                <CardIcon glyph="warning" />
-                {model.errorLabel}
-              </div>
-            ) : null}
-          </div>
+        columns: {
+          left: leftColumn(model, actions, t),
+          right: rightColumn(model, actions, t),
+        },
+        image: mapShown ? (
+          <img
+            src={model.mapUrl ?? undefined}
+            alt={t('uiLibrary.deviceCard.robot.mapAlt', 'Cleaning map')}
+            data-testid="dc-robot-map"
+            className="h-auto w-full max-w-52 rounded-xl"
+          />
+        ) : (
+          <RobotIllustration
+            mower={model.mower}
+            activity={model.activity}
+            progress={model.progress}
+            className={SCENE_DRAWING_CLASS}
+          />
         ),
-        right: hasRight ? rightColumn(model, actions, t) : null,
         bottom:
-          model.mapUrl === null ? null : (
-            <CardButton
-              glyph={mapShown ? 'robot' : 'map'}
-              tone={mapShown ? 'on' : 'default'}
-              actuates={false}
-              aria-pressed={mapShown}
-              data-testid="dc-robot-map-toggle"
-              onClick={() => setShowMap((v) => !v)}
-            >
-              {mapShown
-                ? model.mower
-                  ? t('uiLibrary.deviceCard.robot.mower', 'Mower')
-                  : t('uiLibrary.deviceCard.robot.robot', 'Robot')
-                : t('uiLibrary.deviceCard.robot.map', 'Map')}
-            </CardButton>
+          robotError === null && model.mapUrl === null ? null : (
+            <>
+              {robotError}
+              {model.mapUrl === null ? null : (
+                <CardButton
+                  glyph={mapShown ? 'robot' : 'map'}
+                  tone={mapShown ? 'on' : 'default'}
+                  actuates={false}
+                  aria-pressed={mapShown}
+                  data-testid="dc-robot-map-toggle"
+                  onClick={() => setShowMap((v) => !v)}
+                >
+                  {mapShown
+                    ? model.mower
+                      ? t('uiLibrary.deviceCard.robot.mower', 'Mower')
+                      : t('uiLibrary.deviceCard.robot.robot', 'Robot')
+                    : t('uiLibrary.deviceCard.robot.map', 'Map')}
+                </CardButton>
+              )}
+            </>
           ),
       }}
     />
