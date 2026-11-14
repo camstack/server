@@ -1,10 +1,10 @@
-import type { ReactElement, ReactNode } from 'react'
+import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { ValveIllustration } from '../../illustrations/ValveIllustration'
-import { CardButton } from '../../parts/CardButton'
-import { VerticalSlider } from '../../parts/sliders'
+import { type ColumnItem, columnButton, columnSlider } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
 import type { ValveActivity, ValveCardActions, ValveCardModel } from './model'
 
 export interface ValveCardProps {
@@ -49,43 +49,51 @@ export function valveOpenness(model: Pick<ValveCardModel, 'activity' | 'position
   return null
 }
 
-function rightColumn(model: ValveCardModel, actions: ValveCardActions, t: UiTextFn): ReactNode {
+function rightColumn(
+  model: ValveCardModel,
+  actions: ValveCardActions,
+  t: UiTextFn,
+): readonly ColumnItem[] {
   const moving = model.activity === 'opening' || model.activity === 'closing'
   if (moving && model.canStop) {
-    return (
-      <CardButton glyph="stop" tone="primary" data-testid="dc-valve-stop" onClick={actions.onStop}>
-        {t('uiLibrary.deviceCard.valve.stop', 'Stop')}
-      </CardButton>
-    )
+    return [
+      columnButton('stop', {
+        glyph: 'stop',
+        tone: 'primary',
+        label: t('uiLibrary.deviceCard.valve.stop', 'Stop'),
+        testId: 'dc-valve-stop',
+        onPress: actions.onStop,
+      }),
+    ]
   }
   const showOpen = model.canOpen && model.activity !== 'open'
   const showClose = model.canClose && model.activity !== 'closed'
-  return (
-    <>
-      {showOpen ? (
-        <CardButton
-          glyph="water"
-          tone="primary"
-          disabled={moving}
-          data-testid="dc-valve-open"
-          onClick={actions.onOpen}
-        >
-          {t('uiLibrary.deviceCard.valve.openAction', 'Open')}
-        </CardButton>
-      ) : null}
-      {showClose ? (
-        <CardButton
-          glyph="stop"
-          tone={showOpen ? 'default' : 'primary'}
-          disabled={moving}
-          data-testid="dc-valve-close"
-          onClick={actions.onClose}
-        >
-          {t('uiLibrary.deviceCard.valve.closeAction', 'Close')}
-        </CardButton>
-      ) : null}
-    </>
-  )
+  return [
+    ...(showOpen
+      ? [
+          columnButton('open', {
+            glyph: 'water',
+            tone: 'primary',
+            disabled: moving,
+            label: t('uiLibrary.deviceCard.valve.openAction', 'Open'),
+            testId: 'dc-valve-open',
+            onPress: actions.onOpen,
+          }),
+        ]
+      : []),
+    ...(showClose
+      ? [
+          columnButton('close', {
+            glyph: 'stop',
+            tone: showOpen ? 'default' : 'primary',
+            disabled: moving,
+            label: t('uiLibrary.deviceCard.valve.closeAction', 'Close'),
+            testId: 'dc-valve-close',
+            onPress: actions.onClose,
+          }),
+        ]
+      : []),
+  ]
 }
 
 /**
@@ -115,25 +123,29 @@ export function ValveCard({
         tone: TONE[model.activity],
       }}
       scene={{
-        left: model.positionable ? (
-          <VerticalSlider
-            value={model.position ?? 0}
-            min={0}
-            max={100}
-            step={5}
-            ariaLabel={t('uiLibrary.deviceCard.valve.position', 'Opening')}
-            testId="dc-valve-position"
-            onCommit={actions.onPosition}
-          />
-        ) : null,
+        columns: {
+          left: model.positionable
+            ? [
+                columnSlider('position', {
+                  value: model.position ?? 0,
+                  min: 0,
+                  max: 100,
+                  step: 5,
+                  ariaLabel: t('uiLibrary.deviceCard.valve.position', 'Opening'),
+                  testId: 'dc-valve-position',
+                  onCommit: actions.onPosition,
+                }),
+              ]
+            : [],
+          right: rightColumn(model, actions, t),
+        },
         image: (
           <ValveIllustration
             openness={openness}
             flowing={openness !== null && openness > 0}
-            className="h-auto w-28"
+            className={SCENE_DRAWING_CLASS}
           />
         ),
-        right: rightColumn(model, actions, t),
       }}
     />
   )
