@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- control cap: next/previous/first/last for select controls (script- and automation-driven cycling with wrap-around)
 - Added two system events for a draining storage location: a regular progress ping (#538) and a one-time completion event.
 
 ### Changed
@@ -22,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Remote: the source last sent by an infrared remote is no longer kept as state
 ### Changed
 
-- control cap: next/previous/first/last for select controls (script- and automation-driven cycling with wrap-around)
 
 ## [1.2.566] - 2026-11-14
 

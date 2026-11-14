@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- generated hooks for the control cap's new next/previous/first/last methods
+
 ## [1.2.444] - 2026-11-14
 
 ### Changed
@@ -14,7 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device pickers' phone sheet keeps the filter panel above the search box instead of painting over it, and the sheet can be dismissed by dragging its handle down.
 ### Changed
 
-- generated hooks for the control cap's new next/previous/first/last methods
 
 ## [1.2.443] - 2026-11-14
 
