@@ -1,4 +1,5 @@
 import type { ReactElement } from 'react'
+import { cn } from '../../../lib/cn'
 import type { CardGlyph } from '../icons'
 import { ArmedButton } from '../parts/ArmedButton'
 import { type CardButtonTone, CardButton, cardButtonClass } from '../parts/CardButton'
@@ -127,8 +128,14 @@ export interface ColumnValueProps {
   readonly value: string
   /** What it is, one lowercase word ("target", "vol"). */
   readonly caption?: string
-  readonly tone?: 'primary' | 'muted'
+  readonly tone?: 'primary' | 'muted' | 'warning'
   readonly testId?: string
+}
+
+const VALUE_TONE: Readonly<Record<NonNullable<ColumnValueProps['tone']>, string>> = {
+  primary: 'text-primary',
+  muted: 'text-foreground-muted',
+  warning: 'text-warning',
 }
 
 /** One short reading in a side column. */
@@ -140,11 +147,7 @@ export function columnValue(key: string, props: ColumnValueProps): ColumnItem {
       data-testid={props.testId}
     >
       <b
-        className={
-          props.tone === 'muted'
-            ? 'max-w-full truncate text-sm tabular-nums text-foreground-muted'
-            : 'max-w-full truncate text-sm tabular-nums text-primary'
-        }
+        className={cn('max-w-full truncate text-sm tabular-nums', VALUE_TONE[props.tone ?? 'primary'])}
       >
         {props.value}
       </b>
