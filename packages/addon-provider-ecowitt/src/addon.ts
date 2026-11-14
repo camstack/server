@@ -48,6 +48,7 @@ import {
   ecowittScanKey,
 } from './ecowitt-lan-discovery.js'
 import type { EcowittDeviceGroup } from './ecowitt-mapping.js'
+import { ecowittGroupDeviceType, isEcowittGroupType } from './ecowitt-mapping.js'
 import { findDuplicateGatewaySensors, type DuplicateScanRow } from './ecowitt-duplicate-sensors.js'
 import { bucketSensorsByGroup, configDeviceGroup, sensorsEqual } from './ecowitt-sensor-groups.js'
 import { EcowittReconciler, type IntegrationLifecycleKind } from './ecowitt-reconciler.js'
@@ -60,6 +61,8 @@ import {
 } from './ecowitt-instances.js'
 import {
   ECOWITT_RETIRED_MIGRATION_IDS,
+  ECOWITT_RETYPE_OUTDOOR_STATION_ID,
+  ECOWITT_RETYPE_OUTDOOR_STATION_MIGRATION,
   ECOWITT_ROWS_TO_RECORD_ID,
   ECOWITT_ROWS_TO_RECORD_MIGRATION,
 } from './migrations/index.js'
@@ -78,6 +81,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
   // The Sensor children are spawned by the Container's accessory specs, not restored here.
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Container]: EcowittContainerDevice,
+    [DeviceType.WeatherStation]: EcowittContainerDevice,
     [DeviceType.Gateway]: EcowittGatewayDevice,
   }
 
@@ -106,7 +110,9 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       initialBody: (name) => ({ name }),
     })
     this.declareRetiredMigrations(ECOWITT_RETIRED_MIGRATION_IDS)
-    await this.runMigrations(this.migrationCatalogue(), { only: [ECOWITT_ROWS_TO_RECORD_ID] })
+    await this.runMigrations(this.migrationCatalogue(), {
+      only: [ECOWITT_ROWS_TO_RECORD_ID, ECOWITT_RETYPE_OUTDOOR_STATION_ID],
+    })
     this.clients = new EcowittClientRegistry(this.ctx.logger, {
       onOnline: (_integrationId, gatewayKey, online) =>
         this.setGatewayDevicesOnline(gatewayKey, online),
@@ -143,7 +149,33 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       }),
       log: { warn: (message) => this.ctx.logger.warn(message) },
     })
-    return defineAddonMigrations([ECOWITT_ROWS_TO_RECORD_MIGRATION], rowsPorts)
+    return [
+      ...defineAddonMigrations([ECOWITT_ROWS_TO_RECORD_MIGRATION], rowsPorts),
+      ...defineAddonMigrations([ECOWITT_RETYPE_OUTDOOR_STATION_MIGRATION], {
+        listDevices: async () => {
+          const rows = await this.ctx.api.deviceManager.listAll.query({
+            addonId: this.addonId,
+            projection: 'full',
+          })
+          return rows.map((row) => ({
+            id: row.id,
+            stableId: row.stableId,
+            type: row.type,
+            parentDeviceId: row.parentDeviceId,
+            config: row.config,
+          }))
+        },
+        setType: async (deviceId, type) => {
+          if (type !== DeviceType.WeatherStation) {
+            throw new Error(`ecowitt retype: refused type ${type}`)
+          }
+          await this.ctx.api.deviceManager.setType.mutate({
+            deviceId,
+            type: DeviceType.WeatherStation,
+          })
+        },
+      }),
+    ]
   }
 
   protected override async onShutdown(): Promise<void> {
@@ -285,7 +317,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     if (!reg || !devices) return
     const rows: DuplicateScanRow[] = []
     for (const d of reg.getAllForAddon(this.addonId)) {
-      if (d.type !== DeviceType.Container && d.type !== DeviceType.Sensor) continue
+      if (!isEcowittGroupType(d.type) && d.type !== DeviceType.Sensor) continue
       const config = await devices.loadConfig(d.id).catch((): null => null)
       if (config === null) return
       if (config['system'] !== ECOWITT_SYSTEM || config['gatewayId'] !== gatewayKey) continue
@@ -323,7 +355,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     if (!reg || !devices) return false
     let changed = false
     for (const d of reg.getAllForAddon(this.addonId)) {
-      if (d.parentDeviceId !== null || d.type !== DeviceType.Container) continue
+      if (d.parentDeviceId !== null || !isEcowittGroupType(d.type)) continue
       const cfg = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
       if (cfg['system'] !== ECOWITT_SYSTEM || cfg['gatewayId'] !== gatewayKey) continue
       const nextSensors = byGroup.get(configDeviceGroup(cfg)) ?? []
@@ -422,7 +454,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
         }
         const stableId = `${gatewayKey}:${group}`
         const device = await devices.create(stableId, EcowittContainerDevice, config, null, {
-          type: DeviceType.Container,
+          type: ecowittGroupDeviceType(group),
           name,
           integrationId,
         })

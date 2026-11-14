@@ -2364,6 +2364,13 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'each entity (#513).',
   },
   {
+    cap: 'weather-station',
+    reason:
+      'A physical station aggregate. Every reading is already a sensor child of the ' +
+      'same device, which the export maps. Exporting the aggregate would duplicate ' +
+      'each entity. Templates read the station slice directly.',
+  },
+  {
     cap: 'do-not-disturb',
     reason:
       'A vendor switch of a speaker, provided so far only by an imported Echo: its ' +

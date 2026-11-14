@@ -1,5 +1,5 @@
 import type { BatteryUnit, Quantity, SensorCategory } from '@apocaliss92/nodewitt'
-import { DeviceRole, type ReadingQuantity } from '@camstack/types'
+import { DeviceRole, DeviceType, type ReadingQuantity } from '@camstack/types'
 
 /**
  * Pure mapping from an Ecowitt {@link Quantity} to the camstack typed sensor cap
@@ -312,6 +312,16 @@ export function deviceGroupLabel(group: EcowittDeviceGroup): string {
     case 'temp-sensor-ch1':
       return 'Temp Sensor CH1'
   }
+}
+
+/** The outdoor array is a weather station; the console and CH1 stay containers. */
+export function ecowittGroupDeviceType(group: EcowittDeviceGroup): DeviceType {
+  return group === 'weather-station' ? DeviceType.WeatherStation : DeviceType.Container
+}
+
+/** A persisted group parent: the console/CH1 container, or the retyped station. */
+export function isEcowittGroupType(type: string): boolean {
+  return type === DeviceType.Container || type === DeviceType.WeatherStation
 }
 
 /**

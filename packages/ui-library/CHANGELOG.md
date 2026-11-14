@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A weather station has its own device card: temperature beside the sky, and a dash where the station reports nothing.
+
 ## [1.2.445] - 2026-11-14
 
 ### Changed

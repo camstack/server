@@ -359,6 +359,7 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.Generic]: false,
   // Weather inline = condition icon + temperature readout (readout, natural width).
   [DeviceType.Weather]: false,
+  [DeviceType.WeatherStation]: false,
   [DeviceType.Container]: false,
   [DeviceType.Gateway]: false,
   // Image inline = small thumbnail / placeholder (readout, natural width).

@@ -123,6 +123,7 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
   videoclips: { none: NOT_A_HERO_FACT },
   'water-heater': 'contributes',
   weather: 'contributes',
+  'weather-station': 'contributes',
   'webrtc-session': { none: NOT_A_HERO_FACT },
   'zone-analytics': { none: NOT_A_HERO_FACT },
   'zone-rules': { none: NOT_A_HERO_FACT },

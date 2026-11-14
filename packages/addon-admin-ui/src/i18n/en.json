@@ -9381,7 +9381,8 @@
         "gateway": "Gateway",
         "heater": "Heater",
         "heatPump": "Heat pump",
-        "energySystem": "Energy system"
+        "energySystem": "Energy system",
+        "weatherStation": "Weather station"
       },
       "role": {
         "siren": "Siren",
@@ -10506,7 +10507,20 @@
           "applying": "Applying"
         }
       },
-      "powerLabel": "Power"
+      "powerLabel": "Power",
+      "weatherStation": {
+        "gust": "Gust",
+        "humidity": "Humidity",
+        "wind": "Wind",
+        "pressure": "Pressure",
+        "rainRate": "Rain",
+        "rainDaily": "Today",
+        "rainEvent": "Event",
+        "uv": "UV",
+        "solar": "Solar",
+        "dewPoint": "Dew point",
+        "state": "Station"
+      }
     },
     "language": "en",
     "measurement": {

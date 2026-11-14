@@ -44,6 +44,7 @@ export const DEVICE_TYPE_ICON = {
   [DeviceType.Control]: 'sliders-horizontal',
   [DeviceType.Presence]: 'map-pin',
   [DeviceType.Weather]: 'cloud-sun',
+  [DeviceType.WeatherStation]: 'cloud-sun',
   [DeviceType.Vacuum]: 'bot',
   [DeviceType.LawnMower]: 'tractor',
   [DeviceType.Container]: 'box',

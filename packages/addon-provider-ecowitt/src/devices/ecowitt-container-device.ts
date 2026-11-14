@@ -6,10 +6,19 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   type IDevice,
+  type InferNativeProvider,
+  type WeatherStationStatus,
+  weatherStationCapability,
 } from '@camstack/types'
 import { ecowittFacades } from '../ecowitt-gateway.js'
 import { entriesForGroup } from '../ecowitt-sensor-groups.js'
-import { capForQuantity, roleForQuantity, sensorLabel } from '../ecowitt-mapping.js'
+import {
+  capForQuantity,
+  ecowittGroupDeviceType,
+  roleForQuantity,
+  sensorLabel,
+} from '../ecowitt-mapping.js'
+import { stationSliceFromSensors, type StationSensorSample } from '../station-reading.js'
 import { EcowittSensorDevice } from './ecowitt-sensor-device.js'
 
 /** One sensor entry persisted on the gateway container — drives a child spawn. */
@@ -61,14 +70,49 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
 
   private readonly gatewayId: string
   private readonly integrationId: string | undefined
+  private readonly station: boolean
+  private snapshotUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = ecowittContainerSchema.parse(ctx.persistedConfig ?? {})
-    super(ctx, ecowittContainerSchema, { type: DeviceType.Container })
+    super(ctx, ecowittContainerSchema, { type: ecowittGroupDeviceType(cfg.deviceGroup) })
     this.gatewayId = cfg.gatewayId
     this.integrationId = cfg.integrationId
+    this.station = cfg.deviceGroup === 'weather-station'
     this.online = ecowittFacades.get(this.gatewayId) !== null
     void this.updateSourceInfo({ id: this.gatewayId, system: 'ecowitt' })
+  }
+
+  override async onActivate(): Promise<void> {
+    await super.onActivate()
+    if (!this.station) return
+    const provider: InferNativeProvider<typeof weatherStationCapability> = {
+      getStatus: async () => this.readStation(),
+    }
+    this.ctx.registerNativeCap(weatherStationCapability, provider)
+    this.runtimeState.setCapState(weatherStationCapability.name, this.readStation())
+    this.snapshotUnsub = ecowittFacades.onSnapshot(this.gatewayId, () => {
+      try {
+        this.publishStation()
+      } catch (err) {
+        this.ctx.logger.warn('ecowitt station: snapshot handler error', {
+          tags: { deviceId: this.id },
+          meta: { error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+    })
+    this.publishStation()
+  }
+
+  override async removeDevice(): Promise<void> {
+    if (this.snapshotUnsub) {
+      try {
+        this.snapshotUnsub()
+      } catch {
+        // best-effort
+      }
+      this.snapshotUnsub = null
+    }
   }
 
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
@@ -102,5 +146,44 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
         factory: (childCtx: DeviceContext): IDevice => new EcowittSensorDevice(childCtx),
       } satisfies AccessoryChildSpec
     })
+  }
+
+  private readStation(): WeatherStationStatus {
+    return this.stationFromLive().status
+  }
+
+  /** The outdoor group's live sensors, the same snapshot the children read. */
+  private publishStation(): void {
+    const { status, refused } = this.stationFromLive()
+    for (const refusal of refused) {
+      this.ctx.logger.warn('ecowitt station: reading refused', {
+        tags: { deviceId: this.id },
+        meta: { sensorId: refusal.sensorId, unit: refusal.unit, reason: refusal.reason },
+      })
+    }
+    this.runtimeState.setCapState(weatherStationCapability.name, status)
+  }
+
+  private stationFromLive(): ReturnType<typeof stationSliceFromSensors> {
+    const live = ecowittFacades.getSensors(this.gatewayId)
+    const ownIds = new Set(
+      entriesForGroup(this.config.values.sensors, 'weather-station', live).map(
+        (entry) => entry.sensorId,
+      ),
+    )
+    const samples: StationSensorSample[] = []
+    for (const sensor of live) {
+      if (!ownIds.has(sensor.id)) continue
+      samples.push({
+        id: sensor.id,
+        quantity: String(sensor.quantity),
+        name: sensor.name,
+        value:
+          typeof sensor.value === 'number' && Number.isFinite(sensor.value) ? sensor.value : null,
+        unit: typeof sensor.unit === 'string' ? sensor.unit : '',
+        lastUpdated: sensor.lastUpdated > 0 ? sensor.lastUpdated : Date.now(),
+      })
+    }
+    return stationSliceFromSensors(samples)
   }
 }

@@ -9403,7 +9403,8 @@
         "gateway": "Gateway",
         "heater": "Stufa",
         "heatPump": "Pompa di calore",
-        "energySystem": "Sistema energetico"
+        "energySystem": "Sistema energetico",
+        "weatherStation": "Stazione meteo"
       },
       "role": {
         "siren": "Sirena",
@@ -10528,7 +10529,20 @@
           "applying": "Applicazione"
         }
       },
-      "powerLabel": "Potenza"
+      "powerLabel": "Potenza",
+      "weatherStation": {
+        "gust": "Raffica",
+        "humidity": "Umidità",
+        "wind": "Vento",
+        "pressure": "Pressione",
+        "rainRate": "Pioggia",
+        "rainDaily": "Oggi",
+        "rainEvent": "Evento",
+        "uv": "UV",
+        "solar": "Sole",
+        "dewPoint": "Punto di rugiada",
+        "state": "Stazione"
+      }
     },
     "language": "it",
     "measurement": {

@@ -160,6 +160,46 @@ describe('meter, weather, image, control', () => {
       }).state,
     ).toBe('unknown')
   })
+  it('a weather station titles its temperature and omits a null wind', () => {
+    const m = build(DeviceType.WeatherStation, ['weather-station'], {
+      'weather-station': {
+        temperature: 18.4,
+        humidity: 60,
+        pressure: null,
+        windSpeed: null,
+        windGust: null,
+        windBearing: null,
+        rainRate: null,
+        rainDaily: null,
+        rainEvent: null,
+        uv: null,
+        solarRadiation: null,
+        dewPoint: null,
+        lastFetchedAt: 0,
+      },
+    })
+    expect(m.title.en).toBe('18.4°C')
+    expect(m.facts.map((f) => f.text.en)).toEqual(['18.4°C', '60%'])
+    expect(
+      build(DeviceType.WeatherStation, ['weather-station'], {
+        'weather-station': {
+          temperature: null,
+          humidity: null,
+          pressure: null,
+          windSpeed: null,
+          windGust: null,
+          windBearing: null,
+          rainRate: null,
+          rainDaily: null,
+          rainEvent: null,
+          uv: null,
+          solarRadiation: null,
+          dewPoint: null,
+          lastFetchedAt: 0,
+        },
+      }).state,
+    ).toBe('unknown')
+  })
   it('weather reads its condition and facts; a null measurement is absent', () => {
     const m = build(DeviceType.Weather, ['weather'], {
       weather: {

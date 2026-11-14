@@ -3896,6 +3896,9 @@ export const useWaterHeaterGetStatus: typeof trpc.waterHeater.getStatus.useQuery
 /** Generated alias around `trpc.weather.getStatus.useQuery`. */
 export const useWeatherGetStatus: typeof trpc.weather.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.weather.getStatus.useQuery)
 
+/** Generated alias around `trpc.weatherStation.getStatus.useQuery`. */
+export const useWeatherStationGetStatus: typeof trpc.weatherStation.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.weatherStation.getStatus.useQuery)
+
 /** Generated alias around `trpc.webrtcSession.listStreams.useQuery`. */
 export const useWebrtcSessionListStreams: typeof trpc.webrtcSession.listStreams.useQuery = /*#__PURE__*/ alias(() => trpc.webrtcSession.listStreams.useQuery)
 

@@ -108,6 +108,7 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // Weather / image: ControlHero renders the registry-backed
   // WeatherHeroCard / ImageHeroCard (read-only sky scene / framed image).
   [DeviceType.Weather]: ControlHero,
+  [DeviceType.WeatherStation]: ControlHero,
   [DeviceType.Image]: ControlHero,
   [DeviceType.PetFeeder]: ControlHero,
   // Pet fountain: ControlHero renders the registry-backed PetFountainHeroCard

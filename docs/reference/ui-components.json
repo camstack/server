@@ -3881,6 +3881,13 @@
       "summary": "A weather source (`weather`): today's reading. The cap carries no forecast, apparent temperature, rain or UV, so the card draws none of them."
     },
     {
+      "name": "ConnectedWeatherStationCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/connected/ConnectedWeatherStationCard.tsx",
+      "summary": "A physical weather station (`weather-station`): the outdoor readings."
+    },
+    {
       "name": "CONSUMABLE_LOW_PERCENT",
       "kind": "constant",
       "area": "composites",
@@ -7132,6 +7139,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/appliance-model.ts",
       "summary": "Why the machine refuses a remote start, or null when it may start."
+    },
+    {
+      "name": "DISMISS_DRAG_PX",
+      "kind": "constant",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/bottom-sheet.tsx",
+      "summary": "Downward travel of the handle, in px, past which releasing it dismisses the sheet."
     },
     {
       "name": "DisplayPaletteProvider",
@@ -17144,6 +17158,13 @@
       ]
     },
     {
+      "name": "stationCompassOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/model.ts",
+      "summary": "The eight-point compass word for a bearing."
+    },
+    {
       "name": "StatusBadge",
       "kind": "component",
       "area": "composites",
@@ -20239,6 +20260,39 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/weather/model.ts",
       "summary": "The sky drawn for a provider's condition word."
+    },
+    {
+      "name": "WeatherStationCard",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/weather-station/WeatherStationCard.tsx",
+      "summary": "One physical station: temperature large, the rest only when the station reports them. A missing reading is an em dash on the primary row and is omitted from the rest — never a zero.",
+      "props": [
+        {
+          "name": "model",
+          "type": "WeatherStationCardModel",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "actions",
+          "type": "WeatherStationCardActions",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "orientation",
+          "type": "CardOrientation",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "showName",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "weatherTint",

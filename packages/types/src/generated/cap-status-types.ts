@@ -87,6 +87,7 @@ import type { ValveStatusSchema } from '../capabilities/valve.cap.js'
 import type { VibrationStatusSchema } from '../capabilities/vibration.cap.js'
 import type { WaterHeaterStatusSchema } from '../capabilities/water-heater.cap.js'
 import type { WeatherStatusSchema } from '../capabilities/weather.cap.js'
+import type { WeatherStationStatusSchema } from '../capabilities/weather-station.cap.js'
 
 /**
  * Lookup from cap name (literal) → the TypeScript type of that
@@ -178,6 +179,7 @@ export type CapStatusTypeMap = {
   readonly 'vibration': z.infer<typeof VibrationStatusSchema>
   readonly 'water-heater': z.infer<typeof WaterHeaterStatusSchema>
   readonly 'weather': z.infer<typeof WeatherStatusSchema>
+  readonly 'weather-station': z.infer<typeof WeatherStationStatusSchema>
 }
 
 /** Union of every cap name that has a typed status block. */
@@ -273,4 +275,5 @@ export const CAP_NAMES_WITH_STATUS = [
   'vibration',
   'water-heater',
   'weather',
+  'weather-station',
 ] as const satisfies readonly CapNameWithStatus[]

@@ -83,6 +83,7 @@ import { valveCapability } from '../capabilities/valve.cap.js'
 import { vibrationCapability } from '../capabilities/vibration.cap.js'
 import { waterHeaterCapability } from '../capabilities/water-heater.cap.js'
 import { weatherCapability } from '../capabilities/weather.cap.js'
+import { weatherStationCapability } from '../capabilities/weather-station.cap.js'
 import { zoneAnalyticsCapability } from '../capabilities/zone-analytics.cap.js'
 import { zoneRulesCapability } from '../capabilities/zone-rules.cap.js'
 import { zonesCapability } from '../capabilities/zones.cap.js'
@@ -179,6 +180,7 @@ export interface DeviceLocalState {
   vibration: InferRuntimeState<typeof vibrationCapability>
   waterHeater: InferRuntimeState<typeof waterHeaterCapability>
   weather: InferRuntimeState<typeof weatherCapability>
+  weatherStation: InferRuntimeState<typeof weatherStationCapability>
   zoneAnalytics: InferRuntimeState<typeof zoneAnalyticsCapability>
   zoneRules: InferRuntimeState<typeof zoneRulesCapability>
   zones: InferRuntimeState<typeof zonesCapability>
@@ -271,6 +273,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   vibration: vibrationCapability,
   waterHeater: waterHeaterCapability,
   weather: weatherCapability,
+  weatherStation: weatherStationCapability,
   zoneAnalytics: zoneAnalyticsCapability,
   zoneRules: zoneRulesCapability,
   zones: zonesCapability,
@@ -370,6 +373,7 @@ export interface CapNameToRuntimeStateMap {
   'vibration': InferRuntimeState<typeof vibrationCapability>
   'water-heater': InferRuntimeState<typeof waterHeaterCapability>
   'weather': InferRuntimeState<typeof weatherCapability>
+  'weather-station': InferRuntimeState<typeof weatherStationCapability>
   'zone-analytics': InferRuntimeState<typeof zoneAnalyticsCapability>
   'zone-rules': InferRuntimeState<typeof zoneRulesCapability>
   'zones': InferRuntimeState<typeof zonesCapability>

@@ -80,6 +80,7 @@ export const HERO_LAYOUT_BY_TYPE = {
   [DeviceType.Control]: CONTROL_LAYOUT,
   [DeviceType.Presence]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Weather]: HERO_LAYOUT_DEFAULT,
+  [DeviceType.WeatherStation]: HERO_LAYOUT_DEFAULT,
   [DeviceType.Vacuum]: VACUUM_LAYOUT,
   [DeviceType.LawnMower]: MOWER_LAYOUT,
   [DeviceType.Container]: HERO_LAYOUT_DEFAULT,

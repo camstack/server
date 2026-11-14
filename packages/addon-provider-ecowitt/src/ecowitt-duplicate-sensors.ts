@@ -1,5 +1,6 @@
 import { DeviceType } from '@camstack/types'
 import { ECOWITT_SYSTEM } from './config.js'
+import { isEcowittGroupType } from './ecowitt-mapping.js'
 import { configDeviceGroup, sensorKeyOf, sensorOwnerOf } from './ecowitt-sensor-groups.js'
 
 /** One persisted device of this addon, as the cleanup reads it. */
@@ -31,7 +32,7 @@ export function findDuplicateGatewaySensors(rows: readonly DuplicateScanRow[]): 
 } {
   const containers = new Map<number, { gatewayId: string; gateway: boolean }>()
   for (const row of rows) {
-    if (row.type !== DeviceType.Container || row.config['system'] !== ECOWITT_SYSTEM) continue
+    if (!isEcowittGroupType(row.type) || row.config['system'] !== ECOWITT_SYSTEM) continue
     const gatewayId = str(row.config, 'gatewayId')
     if (gatewayId === null) continue
     containers.set(row.id, {

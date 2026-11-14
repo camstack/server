@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 621 methods carry a device reference, of which
+ * Coverage: 622 methods carry a device reference, of which
  * 196 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -629,6 +629,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'waterHeater.setOperationMode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'waterHeater.setTargetTemp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'weather.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'weatherStation.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'webrtcSession.addIceCandidate': [{ name: "deviceId", form: "single", optional: false }] as const,
   'webrtcSession.applyDownlinkProbe': [{ name: "deviceId", form: "single", optional: false }] as const,
   'webrtcSession.closeSession': [{ name: "deviceId", form: "single", optional: false }] as const,

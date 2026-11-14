@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Weather stations are labelled in the device list and open on the station card.
+
 ## [1.2.670] - 2026-11-14
 
 ### Added

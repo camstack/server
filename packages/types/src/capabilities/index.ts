@@ -3440,6 +3440,12 @@ export {
   weatherCapability,
 } from './weather.cap.js'
 export {
+  type IWeatherStationProvider,
+  type WeatherStationStatus,
+  WeatherStationStatusSchema,
+  weatherStationCapability,
+} from './weather-station.cap.js'
+export {
   type CameraOccupancySnapshot,
   type CameraOccupancySnapshotForDevice,
   CameraOccupancySnapshotForDeviceSchema,
@@ -3741,6 +3747,7 @@ import type { videoclipsCapability } from './videoclips.cap.js'
 import type { viewerUiCapability } from './viewer-ui.cap.js'
 import type { waterHeaterCapability } from './water-heater.cap.js'
 import type { weatherCapability } from './weather.cap.js'
+import type { weatherStationCapability } from './weather-station.cap.js'
 import type { webrtcSessionCapability } from './webrtc-session.cap.js'
 import type { trainingCapability } from './training.cap.js'
 import type { trainingProviderCapability } from './training-provider.cap.js'
@@ -3848,6 +3855,7 @@ type AnyCapability =
   | typeof humidifierCapability
   | typeof waterHeaterCapability
   | typeof weatherCapability
+  | typeof weatherStationCapability
   | typeof imageCapability
   | typeof lockControlCapability
   | typeof powerSourceCapability

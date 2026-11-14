@@ -5,9 +5,15 @@ import type { Sensor } from '@apocaliss92/nodewitt'
 import { entriesForGroup } from '../ecowitt-sensor-groups.js'
 
 const GW = 'ecowitt:192-168-20-181'
-const container = (id: number, deviceGroup: string): DuplicateScanRow => ({
+const container = (
+  id: number,
+  deviceGroup: string,
+  type: DeviceType = deviceGroup === 'weather-station'
+    ? DeviceType.WeatherStation
+    : DeviceType.Container,
+): DuplicateScanRow => ({
   id,
-  type: DeviceType.Container,
+  type,
   parentDeviceId: null,
   config: { system: 'ecowitt', gatewayId: GW, deviceGroup },
 })

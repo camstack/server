@@ -9,6 +9,7 @@ import {
   capForQuantity,
   deviceGroupForSensor,
   deviceGroupLabel,
+  ecowittGroupDeviceType,
   ECOWITT_DEVICE_GROUPS,
   type EcowittDeviceGroup,
   sensorLabel,
@@ -121,7 +122,7 @@ export function buildEcowittGatewayCandidates(
     return {
       childNativeId: groupNativeId(input.gatewayId, group),
       name: `${input.gatewayName} — ${deviceGroupLabel(group)}`,
-      type: DeviceType.Container,
+      type: ecowittGroupDeviceType(group),
       status: 'online',
       // The device group is already encoded in `childNativeId`
       // (`ecowitt:<gatewayId>:<group>`); metadata is a closed shape, so we keep
@@ -129,7 +130,7 @@ export function buildEcowittGatewayCandidates(
       metadata: { serialNumber: input.gatewayId },
       alreadyAdopted: adoptedDeviceId !== null,
       adoptedDeviceId,
-      capabilities: [],
+      capabilities: group === 'weather-station' ? ['weather-station'] : [],
       children,
     } satisfies DiscoveredChildDevice
   })

@@ -19,6 +19,7 @@ import {
   ValveCard,
   type ValveCardActions,
   WeatherCard,
+  WeatherStationCard,
 } from '@camstack/ui-library'
 import type { ReactElement, ReactNode } from 'react'
 import { alarmFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/alarm'
@@ -31,6 +32,7 @@ import {
 import { sirenFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/siren'
 import { valveFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/valve'
 import { weatherFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/weather'
+import { weatherStationFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/weather-station'
 
 const noop = (): void => undefined
 
@@ -77,6 +79,7 @@ export const WAVE_D_TYPES: ReadonlySet<string> = new Set([
   'siren',
   'pet',
   'weather',
+  'station',
 ])
 
 export interface WaveDCellProps {
@@ -195,6 +198,14 @@ export function WaveDScene({ type, Cell }: WaveDSceneProps): ReactElement | null
         <>
           {weatherFixtures().map((f) =>
             cell(f, <WeatherCard model={f.model} orientation={f.orientation} />),
+          )}
+        </>
+      )
+    case 'station':
+      return (
+        <>
+          {weatherStationFixtures().map((f) =>
+            cell(f, <WeatherStationCard model={f.model} orientation={f.orientation} />),
           )}
         </>
       )

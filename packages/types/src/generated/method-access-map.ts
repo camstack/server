@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1491 method paths across 206 capabilities.
+ * Coverage: 1492 method paths across 207 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1491,6 +1491,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'waterHeater.setOperationMode': { capName: "water-heater", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'waterHeater.setTargetTemp': { capName: "water-heater", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'weather.getStatus': { capName: "weather", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'weatherStation.getStatus': { capName: "weather-station", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'webrtcSession.addIceCandidate': { capName: "webrtc-session", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'webrtcSession.applyDownlinkProbe': { capName: "webrtc-session", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'webrtcSession.closeSession': { capName: "webrtc-session", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
@@ -1719,6 +1720,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "viewer-ui",
   "water-heater",
   "weather",
+  "weather-station",
   "webrtc-session",
   "zone-analytics",
   "zone-rules",
@@ -1828,6 +1830,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "videoclips",
   "water-heater",
   "weather",
+  "weather-station",
   "webrtc-session",
   "zone-analytics",
   "zone-rules",

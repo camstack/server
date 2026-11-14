@@ -15,6 +15,7 @@ export type CapCardKind =
   | 'pet-feeder'
   | 'pet-fountain'
   | 'weather'
+  | 'weather-station'
   | 'button'
   | 'update'
   | 'script'
@@ -36,6 +37,7 @@ const BY_TYPE: Readonly<
   [DeviceType.PetFeeder]: { cap: 'pet-feeder', kind: 'pet-feeder' },
   [DeviceType.PetFountain]: { cap: 'pet-fountain', kind: 'pet-fountain' },
   [DeviceType.Weather]: { cap: 'weather', kind: 'weather' },
+  [DeviceType.WeatherStation]: { cap: 'weather-station', kind: 'weather-station' },
   [DeviceType.Button]: { cap: 'button', kind: 'button' },
   [DeviceType.Update]: { cap: 'update', kind: 'update' },
   [DeviceType.Script]: { cap: 'script-runner', kind: 'script' },

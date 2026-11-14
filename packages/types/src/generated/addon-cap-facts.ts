@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 84 caps with 419 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 85 caps with 431 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -225,6 +225,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "viewer-ui",
   "water-heater",
   "weather",
+  "weather-station",
   "webrtc-session",
   "zone-analytics",
   "zone-rules",
@@ -316,6 +317,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "vibration": [{"path":"detected","valueType":"boolean"}],
   "water-heater": [{"path":"currentTemp","valueType":"number"}, {"path":"targetTemp","valueType":"number"}, {"path":"operationMode","valueType":"string"}, {"path":"away","valueType":"boolean"}, {"path":"minTemp","valueType":"number"}, {"path":"maxTemp","valueType":"number"}, {"path":"lastActiveMode","valueType":"string"}],
   "weather": [{"path":"condition","valueType":"string"}, {"path":"temperature","valueType":"number"}, {"path":"humidity","valueType":"number"}, {"path":"pressure","valueType":"number"}, {"path":"windSpeed","valueType":"number"}, {"path":"windBearing","valueType":"number"}],
+  "weather-station": [{"path":"temperature","valueType":"number"}, {"path":"humidity","valueType":"number"}, {"path":"pressure","valueType":"number"}, {"path":"windSpeed","valueType":"number"}, {"path":"windGust","valueType":"number"}, {"path":"windBearing","valueType":"number"}, {"path":"rainRate","valueType":"number"}, {"path":"rainDaily","valueType":"number"}, {"path":"rainEvent","valueType":"number"}, {"path":"uv","valueType":"number"}, {"path":"solarRadiation","valueType":"number"}, {"path":"dewPoint","valueType":"number"}],
   "zone-analytics": [{"path":"ts","valueType":"number"}, {"path":"frameWidth","valueType":"number"}, {"path":"frameHeight","valueType":"number"}, {"path":"frame.totalObjects","valueType":"number"}, {"path":"frame.standingObjects","valueType":"number"}, {"path":"frame.transientObjects","valueType":"number"}, {"path":"unzoned.totalObjects","valueType":"number"}, {"path":"unzoned.standingObjects","valueType":"number"}, {"path":"unzoned.transientObjects","valueType":"number"}],
 })
 

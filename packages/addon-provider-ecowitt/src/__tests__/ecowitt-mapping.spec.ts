@@ -292,7 +292,11 @@ describe('buildEcowittGatewayCandidates (Gateway + 3 group containers)', () => {
       ECOWITT_DEVICE_GROUPS.map((g) => groupNativeId('ecowitt_001', g)),
     )
     for (const c of containers) {
-      expect(c.type).toBe(DeviceType.Container)
+      expect(c.type).toBe(
+        c.childNativeId.endsWith(':weather-station')
+          ? DeviceType.WeatherStation
+          : DeviceType.Container,
+      )
       expect(c.status).toBe('online')
     }
   })
@@ -381,7 +385,7 @@ describe('buildEcowittGatewayCandidates (Gateway + 3 group containers)', () => {
       sensors: [],
       adoptedDeviceIdByGroup: {},
     })
-    const containers = candidates.filter((c) => c.type === DeviceType.Container)
+    const containers = candidates.filter((c) => c.type !== DeviceType.Gateway)
     expect(containers).toHaveLength(3)
     for (const c of containers) expect(c.children).toEqual([])
   })

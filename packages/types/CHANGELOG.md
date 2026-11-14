@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - control cap: next/previous/first/last for select controls (script- and automation-driven cycling with wrap-around)
 - Added two system events for a draining storage location: a regular progress ping (#538) and a one-time completion event.
+- A physical weather station is its own device type, with one nullable reading for temperature, wind, rain, pressure, UV and dew point.
 
 ### Changed
 

@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 206 caps (105 device, 101 system).
+ * `*.cap.ts` (D1050): 207 caps (106 device, 101 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -4989,6 +4989,108 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Pressure', it: 'Pressione' },
         unit: 'hPa',
         icon: 'gauge',
+      },
+    ],
+  },
+  'weather-station': {
+    scope: 'device',
+    noun: { en: 'Weather station', it: 'Stazione meteo' },
+    state: [
+      {
+        kind: 'numeric',
+        field: 'temperature',
+        quantity: { en: 'the outdoor temperature', it: 'la temperatura esterna' },
+        label: { en: 'Temperature', it: 'Temperatura' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
+      {
+        kind: 'numeric',
+        field: 'humidity',
+        quantity: { en: 'the outdoor humidity', it: 'l’umidità esterna' },
+        label: { en: 'Humidity', it: 'Umidità' },
+        unit: '%',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'pressure',
+        quantity: { en: 'the air pressure', it: 'la pressione atmosferica' },
+        label: { en: 'Pressure', it: 'Pressione' },
+        unit: 'hPa',
+        icon: 'gauge',
+      },
+      {
+        kind: 'numeric',
+        field: 'windSpeed',
+        quantity: { en: 'the wind speed', it: 'la velocità del vento' },
+        label: { en: 'Wind', it: 'Vento' },
+        unit: 'm/s',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'windGust',
+        quantity: { en: 'the wind gust', it: 'la raffica di vento' },
+        label: { en: 'Gust', it: 'Raffica' },
+        unit: 'm/s',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'windBearing',
+        quantity: { en: 'the wind bearing', it: 'la direzione del vento' },
+        label: { en: 'Wind bearing', it: 'Direzione del vento' },
+        unit: '°',
+        icon: 'wind',
+      },
+      {
+        kind: 'numeric',
+        field: 'rainRate',
+        quantity: { en: 'the rain rate', it: 'l’intensità della pioggia' },
+        label: { en: 'Rain rate', it: 'Intensità pioggia' },
+        unit: 'mm/h',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'rainDaily',
+        quantity: { en: 'the rain today', it: 'la pioggia di oggi' },
+        label: { en: 'Rain today', it: 'Pioggia oggi' },
+        unit: 'mm',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'rainEvent',
+        quantity: { en: 'the rain this event', it: 'la pioggia di questo evento' },
+        label: { en: 'Rain event', it: 'Evento di pioggia' },
+        unit: 'mm',
+        icon: 'droplets',
+      },
+      {
+        kind: 'numeric',
+        field: 'uv',
+        quantity: { en: 'the UV index', it: 'l’indice UV' },
+        label: { en: 'UV', it: 'UV' },
+        unit: '',
+        icon: 'cloud-sun',
+      },
+      {
+        kind: 'numeric',
+        field: 'solarRadiation',
+        quantity: { en: 'the solar radiation', it: 'la radiazione solare' },
+        label: { en: 'Solar', it: 'Sole' },
+        unit: 'W/m²',
+        icon: 'cloud-sun',
+      },
+      {
+        kind: 'numeric',
+        field: 'dewPoint',
+        quantity: { en: 'the dew point', it: 'il punto di rugiada' },
+        label: { en: 'Dew point', it: 'Punto di rugiada' },
+        unit: '°C',
+        icon: 'thermometer',
       },
     ],
   },

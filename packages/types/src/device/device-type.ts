@@ -71,6 +71,9 @@ export enum DeviceType {
   /** Weather provider (HA `weather.*`). Tier-3, low MVP priority.
    *  `weather` cap. */
   Weather = 'weather',
+  /** A physical weather station (Ecowitt outdoor array). `weather-station`
+   *  cap. Distinct from {@link Weather}, which is a forecast provider. */
+  WeatherStation = 'weather-station',
   /** Robot vacuum (HA `vacuum.*`). Tier-3. `vacuum-control` cap. */
   Vacuum = 'vacuum',
   /** Robotic lawn mower (HA `lawn_mower.*`). Tier-3.

@@ -109,6 +109,7 @@ import type { vibrationCapability } from '../capabilities/vibration.cap.js'
 import type { videoclipsCapability } from '../capabilities/videoclips.cap.js'
 import type { waterHeaterCapability } from '../capabilities/water-heater.cap.js'
 import type { weatherCapability } from '../capabilities/weather.cap.js'
+import type { weatherStationCapability } from '../capabilities/weather-station.cap.js'
 import type { webrtcSessionCapability } from '../capabilities/webrtc-session.cap.js'
 import type { zoneAnalyticsCapability } from '../capabilities/zone-analytics.cap.js'
 import type { zoneRulesCapability } from '../capabilities/zone-rules.cap.js'
@@ -220,6 +221,7 @@ export interface DeviceProxyState {
   readonly vibration: SliceHandle<InferRuntimeState<typeof vibrationCapability>>
   readonly waterHeater: SliceHandle<InferRuntimeState<typeof waterHeaterCapability>>
   readonly weather: SliceHandle<InferRuntimeState<typeof weatherCapability>>
+  readonly weatherStation: SliceHandle<InferRuntimeState<typeof weatherStationCapability>>
   readonly zoneAnalytics: SliceHandle<InferRuntimeState<typeof zoneAnalyticsCapability>>
   readonly zoneRules: SliceHandle<InferRuntimeState<typeof zoneRulesCapability>>
   readonly zones: SliceHandle<InferRuntimeState<typeof zonesCapability>>
@@ -344,6 +346,7 @@ export interface DeviceProxy {
   readonly videoclips?: InferDeviceProxyCap<typeof videoclipsCapability>
   readonly waterHeater?: InferDeviceProxyCap<typeof waterHeaterCapability>
   readonly weather?: InferDeviceProxyCap<typeof weatherCapability>
+  readonly weatherStation?: InferDeviceProxyCap<typeof weatherStationCapability>
   readonly webrtcSession?: InferDeviceProxyCap<typeof webrtcSessionCapability>
   readonly zoneAnalytics?: InferDeviceProxyCap<typeof zoneAnalyticsCapability>
   readonly zoneRules?: InferDeviceProxyCap<typeof zoneRulesCapability>
@@ -1189,6 +1192,10 @@ export function createDeviceProxy(
     getStatus: (input?: unknown) => dispatch('weather', 'weather', 'getStatus', 'query', input),
   }
 
+  const weatherStationInterface = {
+    getStatus: (input?: unknown) => dispatch('weather-station', 'weatherStation', 'getStatus', 'query', input),
+  }
+
   const webrtcSessionInterface = {
     listStreams: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'listStreams', 'query', input),
     createSession: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'createSession', 'mutation', input),
@@ -1505,6 +1512,7 @@ export function createDeviceProxy(
       vibration: createSliceHandle<InferRuntimeState<typeof vibrationCapability>>(stateSource, binding.deviceId, 'vibration'),
       waterHeater: createSliceHandle<InferRuntimeState<typeof waterHeaterCapability>>(stateSource, binding.deviceId, 'water-heater'),
       weather: createSliceHandle<InferRuntimeState<typeof weatherCapability>>(stateSource, binding.deviceId, 'weather'),
+      weatherStation: createSliceHandle<InferRuntimeState<typeof weatherStationCapability>>(stateSource, binding.deviceId, 'weather-station'),
       zoneAnalytics: createSliceHandle<InferRuntimeState<typeof zoneAnalyticsCapability>>(stateSource, binding.deviceId, 'zone-analytics'),
       zoneRules: createSliceHandle<InferRuntimeState<typeof zoneRulesCapability>>(stateSource, binding.deviceId, 'zone-rules'),
       zones: createSliceHandle<InferRuntimeState<typeof zonesCapability>>(stateSource, binding.deviceId, 'zones'),
@@ -1610,6 +1618,7 @@ export function createDeviceProxy(
     ...(bound('videoclips') ? { videoclips: videoclipsInterface } : {}),
     ...(bound('water-heater') ? { waterHeater: waterHeaterInterface } : {}),
     ...(bound('weather') ? { weather: weatherInterface } : {}),
+    ...(bound('weather-station') ? { weatherStation: weatherStationInterface } : {}),
     ...(bound('webrtc-session') ? { webrtcSession: webrtcSessionInterface } : {}),
     ...(bound('zone-analytics') ? { zoneAnalytics: zoneAnalyticsInterface } : {}),
     ...(bound('zone-rules') ? { zoneRules: zoneRulesInterface } : {}),

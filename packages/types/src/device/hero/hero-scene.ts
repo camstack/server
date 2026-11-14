@@ -102,6 +102,7 @@ export const HERO_SCENE_BY_TYPE = {
   [DeviceType.Control]: 'control-dial',
   [DeviceType.Presence]: 'presence',
   [DeviceType.Weather]: 'weather',
+  [DeviceType.WeatherStation]: 'weather',
   [DeviceType.Vacuum]: 'vacuum',
   [DeviceType.LawnMower]: 'lawn-mower',
   [DeviceType.Container]: 'generic',

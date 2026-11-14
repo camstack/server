@@ -310,6 +310,10 @@ const DEVICE_TYPE_LABELS: Record<DeviceType, DeviceMetaLabel> = {
     labelKey: 'uiLibrary.deviceMeta.type.weather',
     labelFallback: 'Weather',
   },
+  [DeviceType.WeatherStation]: {
+    labelKey: 'uiLibrary.deviceMeta.type.weatherStation',
+    labelFallback: 'Weather station',
+  },
   [DeviceType.Vacuum]: {
     labelKey: 'uiLibrary.deviceMeta.type.vacuum',
     labelFallback: 'Vacuum',

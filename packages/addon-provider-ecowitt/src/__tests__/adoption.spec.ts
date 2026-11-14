@@ -72,7 +72,8 @@ describe('Ecowitt adoption of a new setup', () => {
     })
     expect(candidates[0]?.type).toBe(DeviceType.Gateway)
     expect(candidates[0]?.childNativeId).toBe(gatewayDeviceNativeId(KEY))
-    expect(candidates.slice(1).every((c) => c.type === DeviceType.Container)).toBe(true)
+    expect(candidates.filter((c) => c.type === DeviceType.WeatherStation)).toHaveLength(1)
+    expect(candidates.filter((c) => c.type === DeviceType.Container)).toHaveLength(2)
     expect(candidates).toHaveLength(4)
   })
 

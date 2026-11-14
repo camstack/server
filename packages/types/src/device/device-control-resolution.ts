@@ -107,6 +107,8 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.Control]: 'control',
   [DeviceType.Presence]: 'sensor',
   [DeviceType.Weather]: 'weather',
+  // The station's card is the device-card scene; the inline control is a dash.
+  [DeviceType.WeatherStation]: 'dummy',
   [DeviceType.Vacuum]: 'vacuum',
   [DeviceType.LawnMower]: 'lawn-mower',
   [DeviceType.Container]: 'dummy',

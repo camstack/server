@@ -463,6 +463,7 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.Control]: CONTROL_LOOK,
   [DeviceType.Presence]: PRESENCE_LOOK,
   [DeviceType.Weather]: WEATHER_LOOK,
+  [DeviceType.WeatherStation]: WEATHER_LOOK,
   [DeviceType.Vacuum]: VACUUM_LOOK,
   [DeviceType.LawnMower]: MOWER_LOOK,
   [DeviceType.Container]: HERO_LOOK_DEFAULT,

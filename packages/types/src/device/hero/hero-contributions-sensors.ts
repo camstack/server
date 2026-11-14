@@ -23,6 +23,7 @@ import { TamperStatusSchema } from '../../capabilities/tamper.cap.js'
 import { UpdateStatusSchema } from '../../capabilities/update.cap.js'
 import { VibrationStatusSchema } from '../../capabilities/vibration.cap.js'
 import { WeatherStatusSchema } from '../../capabilities/weather.cap.js'
+import { WeatherStationStatusSchema } from '../../capabilities/weather-station.cap.js'
 import {
   action,
   asAction,
@@ -509,6 +510,42 @@ function controlRows(slice: ControlStatus): HeroRow[] {
   return []
 }
 
+const weatherStationContribution = contribution(
+  'weather-station',
+  WeatherStationStatusSchema,
+  (slice) => {
+    if (slice === undefined || slice.temperature === null) {
+      return { reading: reading('weather', 'unknown') }
+    }
+    const celsius = `${number(slice.temperature)}°C`
+    const facts: HeroFact[] = [
+      fact('reading', 'thermometer', heroText(celsius, celsius), 'primary'),
+    ]
+    if (slice.humidity !== null) {
+      facts.push(
+        fact(
+          'reading',
+          'droplets',
+          heroText(`${Math.round(slice.humidity)}%`, `${Math.round(slice.humidity)}%`),
+        ),
+      )
+    }
+    if (slice.windSpeed !== null) {
+      facts.push(
+        fact(
+          'reading',
+          'wind',
+          heroText(`${number(slice.windSpeed)} m/s`, `${number(slice.windSpeed)} m/s`),
+        ),
+      )
+    }
+    return {
+      reading: reading('weather', 'on', false, heroText(celsius, celsius)),
+      facts,
+    }
+  },
+)
+
 export const SENSORS_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribution>> = {
   smoke: smokeContribution,
   flood: floodContribution,
@@ -521,6 +558,7 @@ export const SENSORS_FAMILY_CONTRIBUTIONS: Readonly<Record<string, HeroContribut
   doorbell: doorbellContribution,
   meter: meterContribution,
   weather: weatherContribution,
+  'weather-station': weatherStationContribution,
   update: updateContribution,
   image: imageContribution,
   button: buttonContribution,

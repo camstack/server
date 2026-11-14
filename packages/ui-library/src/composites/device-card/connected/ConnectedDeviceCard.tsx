@@ -37,6 +37,7 @@ import { ConnectedUpdateCard } from './ConnectedUpdateCard'
 import { ConnectedValveCard } from './ConnectedValveCard'
 import { ConnectedWaterHeaterCard } from './ConnectedWaterHeaterCard'
 import { ConnectedWeatherCard } from './ConnectedWeatherCard'
+import { ConnectedWeatherStationCard } from './ConnectedWeatherStationCard'
 import { type CapCardKind, capCardKindOf } from './cap-card-kinds'
 
 /** The scenes a real device can be drawn with today. */
@@ -187,6 +188,8 @@ export function ConnectedDeviceCard({
       return <ConnectedPetFountainCard {...props} />
     case 'weather':
       return <ConnectedWeatherCard {...props} />
+    case 'weather-station':
+      return <ConnectedWeatherStationCard {...props} />
     case 'button':
       return <ConnectedButtonCard {...props} />
     case 'update':
