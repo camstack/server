@@ -76,3 +76,33 @@ describe('climateSliceFromState', () => {
     expect(split).toMatchObject({ swingVertical: false, swingHorizontal: true })
   })
 })
+
+describe('climateSliceFromState action (hvac_action)', () => {
+  const action = (hvac?: unknown) =>
+    climateSliceFromState(
+      thermostat(hvac === undefined ? NO_SWING : { ...NO_SWING, hvac_action: hvac }),
+    ).action
+
+  it.each([
+    ['off', 'off'],
+    ['heating', 'heating'],
+    ['cooling', 'cooling'],
+    ['drying', 'drying'],
+    ['fan', 'fan'],
+    ['idle', 'idle'],
+    ['preheating', 'heating'],
+    ['defrosting', 'idle'],
+  ])('maps %s to %s', (raw, expected) => {
+    expect(action(raw)).toBe(expected)
+  })
+
+  it('an unknown value or an absent attribute is null, never idle', () => {
+    expect(action('warming-up')).toBeNull()
+    expect(action()).toBeNull()
+  })
+
+  it('the slice with an action still passes the cap schema', () => {
+    const slice = climateSliceFromState(thermostat({ ...NO_SWING, hvac_action: 'heating' }))
+    expect(climateControlCapability.status.schema.safeParse(slice).success).toBe(true)
+  })
+})

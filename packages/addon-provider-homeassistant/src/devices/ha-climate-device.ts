@@ -4,6 +4,7 @@ import {
   ingestReading,
   type DeviceContext,
   type InferNativeProvider,
+  type ClimateAction,
   type ClimateControlStatus,
   type HvacMode,
 } from '@camstack/types'
@@ -133,6 +134,27 @@ export class HaClimateDevice extends HaBaseChildDevice {
 }
 
 /**
+ * HA `hvac_action` to the cap's `action`. `preheating` is the device heating,
+ * `defrosting` is a pause in heating (idle). A value HA adds later, or an
+ * absent attribute, is `null`: the device does not say (D393).
+ */
+const HVAC_ACTIONS: Readonly<Record<string, ClimateAction>> = {
+  off: 'off',
+  heating: 'heating',
+  preheating: 'heating',
+  cooling: 'cooling',
+  drying: 'drying',
+  fan: 'fan',
+  idle: 'idle',
+  defrosting: 'idle',
+}
+
+function readHvacAction(attrs: Record<string, unknown>): ClimateAction | null {
+  const raw = readStringAttr(attrs, 'hvac_action')
+  return raw === null ? null : (HVAC_ACTIONS[raw.toLowerCase()] ?? null)
+}
+
+/**
  * The `climate-control` slice for one HA `climate.*` state. Pure, and the ONLY
  * place the slice is assembled: every key the cap schema declares is present —
  * `swingVertical` / `swingHorizontal` are `nullable`, not optional, and a slice
@@ -160,6 +182,8 @@ export function climateSliceFromState(state: HaEntityState): ClimateControlStatu
 
   return {
     mode: mode ?? 'off',
+    action: readHvacAction(attrs),
+
     availableModes,
     fanMode,
     availableFanModes,

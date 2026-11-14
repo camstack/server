@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant thermostats now report what they are doing (heating, cooling, idle) from hvac_action
+
 ## [1.2.686] - 2026-11-14
 
 ### Changed
