@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.166] - 2026-11-14
+
 ### Changed
 
 - The outdoor Ecowitt array becomes a weather station, keeping its device id, and publishes that reading from the same gateway poll.

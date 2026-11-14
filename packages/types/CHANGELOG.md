@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.569] - 2026-11-14
+
 ### Added
 
 - A physical weather station is its own device type, with one nullable reading for temperature, wind, rain, pressure, UV and dew point.

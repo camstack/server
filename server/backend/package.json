@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.869",
+  "version": "1.2.870",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,19 +66,12 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.670",
-        "@camstack/addon-agent-ui": ">=1.2.385",
-        "@camstack/addon-google-services": ">=0.2.51",
-        "@camstack/addon-post-analysis": ">=1.2.704",
-        "@camstack/addon-provider-amcrest": ">=0.2.172",
-        "@camstack/addon-provider-dreame": ">=0.2.175",
-        "@camstack/addon-provider-esphome": ">=0.1.22",
-        "@camstack/addon-provider-gree": ">=0.2.159",
-        "@camstack/addon-provider-hikvision": ">=1.2.187",
-        "@camstack/addon-provider-homeassistant": ">=1.2.687",
-        "@camstack/addon-provider-homematic": ">=1.2.201",
-        "@camstack/addon-provider-onvif": ">=1.2.159",
-        "@camstack/addon-provider-tuya": ">=0.2.160"
+        "@camstack/addon-admin-ui": ">=1.2.671",
+        "@camstack/addon-agent-ui": ">=1.2.386",
+        "@camstack/addon-matter-broker": ">=0.2.169",
+        "@camstack/addon-post-analysis": ">=1.2.705",
+        "@camstack/addon-provider-ecowitt": ">=0.2.166",
+        "@camstack/addon-provider-homeassistant": ">=1.2.688"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

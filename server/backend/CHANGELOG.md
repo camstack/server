@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.870] - 2026-11-14
+
 ### Fixed
 
 - Fixed a hub crash loop (out of memory every ~2 minutes) when a TV remote without a native media player computed its status
