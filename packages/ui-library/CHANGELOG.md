@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device cards: the two side columns are equal (15% each) and take only compact controls, so selectors now sit below the scene; the scene keeps at least 70% of the width and a power-only device toggles by a tap on the drawing (climate, media and energy first)
+- Device cards: every card now has the same fixed layout, two equal side columns with only compact controls and values, the drawing filling the middle, and selectors and long text below
+- Device cards: the area below the drawing is now a list of configurable rows (selectors, pills, stats, buttons, a slider, text), and Energy groups its thirteen totals into three compact rows
+- Device cards: every bottom row is a typed kind (no free node), row captions are translated, and narrow phones no longer cut column readings and stats labels
+- Device picker: the selected device is named with its parent like everywhere else, the Integration filter shows which provider each instance belongs to, and the closed field is as tall as a select
+- Device picker: an event mode (DeviceEventPicker) picks several events of several devices in one field — device, then its parts and events
+
 ## [1.2.442] - 2026-11-14
 
 ### Changed
@@ -15,12 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The energy card no longer repeats the battery charge as a Charge pill when the scene already shows it.
 - Device lists no longer treat a hub parent as a device type. Labels, icons and controls no longer include it.
 - A device card reports when it has finished loading, including a fallback.
-- Device cards: the two side columns are equal (15% each) and take only compact controls, so selectors now sit below the scene; the scene keeps at least 70% of the width and a power-only device toggles by a tap on the drawing (climate, media and energy first)
-- Device cards: every card now has the same fixed layout, two equal side columns with only compact controls and values, the drawing filling the middle, and selectors and long text below
-- Device cards: the area below the drawing is now a list of configurable rows (selectors, pills, stats, buttons, a slider, text), and Energy groups its thirteen totals into three compact rows
-- Device cards: every bottom row is a typed kind (no free node), row captions are translated, and narrow phones no longer cut column readings and stats labels
-- Device picker: the selected device is named with its parent like everywhere else, the Integration filter shows which provider each instance belongs to, and the closed field is as tall as a select
-- Device picker: an event mode (DeviceEventPicker) picks several events of several devices in one field — device, then its parts and events
 
 ## [1.2.441] - 2026-11-14
 

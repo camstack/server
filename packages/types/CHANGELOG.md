@@ -7,14 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Automation templates: a group row can hold groups, so the Buttons → devices template takes several events and several actions per button (automations made from the old shape must be recreated)
+- Automation templates: an optional time-window input and a gate binding wrap an automation's condition as all[time-is, original] only when filled
+
 ## [1.2.565] - 2026-11-14
 
 ### Changed
 
 - The hub device type is gone. A stored hub value is unknown and is not read as a gateway.
 - An addon can declare migration ids it removed on purpose, so their applied ledger rows are not read as a newer database
-- Automation templates: a group row can hold groups, so the Buttons → devices template takes several events and several actions per button (automations made from the old shape must be recreated)
-- Automation templates: an optional time-window input and a gate binding wrap an automation's condition as all[time-is, original] only when filled
 
 ## [1.2.564] - 2026-11-14
 
