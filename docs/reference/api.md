@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**208 capabilities · 1493 methods.**
+**208 capabilities · 1494 methods.**
 
 ## Method index
 
@@ -1374,6 +1374,7 @@
 | `terminalSession.listLegacyCameras` | query | admin | terminal-session |
 | `terminalSession.adoptLegacyMonitor` | mutation | admin | terminal-session |
 | `terminalSession.listSessions` | query | admin | terminal-session |
+| `terminalSession.serverShellStatus` | query | admin | terminal-session |
 | `terminalSession.openSession` | mutation | admin | terminal-session |
 | `terminalSession.resize` | mutation | admin | terminal-session |
 | `terminalSession.pullOutput` | mutation | admin | terminal-session |
@@ -4828,7 +4829,7 @@
 
 ### `terminal-session` → `terminalSession.*`
 
-- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:113`
+- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:139`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ITerminalSessionProvider`
@@ -4839,6 +4840,7 @@
 | listLegacyCameras | `terminalSession.listLegacyCameras` | query | admin | `void` | `TerminalLegacyCameraSchema[]` |
 | adoptLegacyMonitor | `terminalSession.adoptLegacyMonitor` | mutation | admin | `{ stableId: string; name?: string }` | `TerminalInstanceInfoSchema` |
 | listSessions | `terminalSession.listSessions` | query | admin | `void` | `TerminalSessionInfoSchema[]` |
+| serverShellStatus | `terminalSession.serverShellStatus` | query | admin | `void` | `{ nodeId: string; enabled: boolean; idleMinutes: number; refusal: { code: "server-shell-disabled"; nodeId: string; message: string } \| null }` |
 | openSession | `terminalSession.openSession` | mutation | admin | `{ profileId: string; cols: number; rows: number; executable?: string; args?: string[]; cwd?: string; environment?: string[] }` | `TerminalSessionInfoSchema` |
 | resize | `terminalSession.resize` | mutation | admin | `{ sessionId: string; cols: number; rows: number }` | `void` |
 | pullOutput | `terminalSession.pullOutput` | mutation | admin | `{ sessionId: string; afterSeq: number; waitMs?: number = 0; waitForOutput?: boolean }` | `TerminalOutputBatchSchema` |

@@ -36,6 +36,14 @@ import { cursesShimDir, cursesShimDirExists, resolveGlancesCursesShimEnv } from 
 import { sanitizeProfileSettings, spawnArgsForInstance } from './profile-settings.js'
 import { ADDON_MIGRATIONS, INSTANCES_TO_RECORDS_ID, terminalPortsOver } from './migrations/index.js'
 import { createNodePtySpawner, resolveExecutable, warmNodePty } from './pty.js'
+import {
+  hostLooksLikeContainer,
+  resolveServerShell,
+  SERVER_SHELL_IDLE_DEFAULT_MINUTES,
+  SERVER_SHELL_PROFILE_ID,
+  serverShellIdleMs,
+  serverShellOptIn,
+} from './server-shell.js'
 import { silenceAnalysisFor } from './silence-analysis.js'
 import {
   buildTerminalInstanceCameraDeclarations,
@@ -121,6 +129,8 @@ interface TerminalAddonConfig {
   readonly glancesArgs: readonly string[]
   readonly allowShell: boolean
   readonly shellPath: string
+  readonly serverShellEnabled: boolean
+  readonly serverShellIdleMinutes: number
   readonly maxSessions: number
   readonly customProfiles: readonly Record<string, unknown>[]
 }
@@ -137,6 +147,8 @@ const DEFAULTS: TerminalAddonConfig = {
   glancesArgs: DEFAULT_GLANCES_ARGS,
   allowShell: false,
   shellPath: '',
+  serverShellEnabled: false,
+  serverShellIdleMinutes: SERVER_SHELL_IDLE_DEFAULT_MINUTES,
   maxSessions: 4,
   customProfiles: [],
 }
@@ -225,9 +237,15 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       glancesEnv: this.glancesEnv,
       allowShell: this.config.allowShell,
       shellPath: this.config.shellPath,
+      serverShell: this.serverShellSpawn(),
+      serverShellEnabled: serverShellOptIn(this.config.serverShellEnabled),
+      serverShellIdleMs: serverShellIdleMs(this.config.serverShellIdleMinutes),
+      nodeId: declarationOwnerNodeId(this.ctx.kernel.localNodeId),
       maxSessions: this.config.maxSessions,
       customProfiles: this.config.customProfiles,
+      cwd: this.ctx.nodeDataDir,
     })
+    manager.startIdleWatch()
     this.manager = manager
 
     if (declarationOwnerNodeId(this.ctx.kernel.localNodeId) === 'hub') {
@@ -381,6 +399,17 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
     )
   }
 
+  /** Login shell, data dir, and the allowlisted environment for this node. */
+  private serverShellSpawn() {
+    return resolveServerShell({
+      platform: process.platform,
+      inContainer: hostLooksLikeContainer(),
+      shellFromEnv: process.env['SHELL'],
+      dataDir: this.ctx.nodeDataDir,
+      processEnv: process.env,
+    })
+  }
+
   protected async onConfigChanged(): Promise<void> {
     this.manager?.reconfigureProfiles({
       btmPath: this.config.btmPath,
@@ -396,6 +425,9 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       glancesEnv: this.glancesEnv,
       allowShell: this.config.allowShell,
       shellPath: this.config.shellPath,
+      serverShell: this.serverShellSpawn(),
+      serverShellEnabled: serverShellOptIn(this.config.serverShellEnabled),
+      serverShellIdleMs: serverShellIdleMs(this.config.serverShellIdleMinutes),
       maxSessions: this.config.maxSessions,
       customProfiles: this.config.customProfiles,
     })
@@ -423,6 +455,7 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
       /* best-effort */
     }
     this.dataPlane = null
+    this.manager?.stopIdleWatch()
     this.manager?.disposeAll()
     this.manager = null
   }
@@ -749,7 +782,10 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
   private instanceForm(): ConfigUISchema {
     const labels = new Map<string, string>()
     for (const profiles of this.cameraProfilesByNode.values()) {
-      for (const profile of profiles) labels.set(profile.profileId, profile.label)
+      for (const profile of profiles) {
+        if (profile.profileId === SERVER_SHELL_PROFILE_ID) continue
+        labels.set(profile.profileId, profile.label)
+      }
     }
     return {
       sections: [
@@ -803,6 +839,9 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
     const body = parsed.data
     if (body.nodeId.length === 0 || body.profileId.length === 0) {
       throw new Error('Pick a node and a profile for the Terminal')
+    }
+    if (body.profileId === SERVER_SHELL_PROFILE_ID) {
+      throw new Error('Server shell is a session on the Terminal page, not a camera profile')
     }
     const relay = this.cameraRelay
     if (relay === null) throw new Error('Terminal instances are managed on the hub')
@@ -1085,6 +1124,36 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
               default: [...DEFAULT_GLANCES_ARGS],
               perNode: true,
               span: 2,
+            }),
+          ],
+        },
+        {
+          id: 'terminal-server-shell',
+          title: 'Server shell',
+          description:
+            'A login shell in this node’s data directory, for admins. Off until this node opts in. Sessions close after they sit idle.',
+          columns: 2,
+          fields: [
+            this.field({
+              type: 'boolean',
+              key: 'serverShellEnabled',
+              label: 'Allow server shell',
+              description:
+                'Lets an admin open a login shell on this node from the Terminal page. Off by default.',
+              default: false,
+              perNode: true,
+            }),
+            this.field({
+              type: 'number',
+              key: 'serverShellIdleMinutes',
+              label: 'Idle timeout',
+              description:
+                'Close a server shell after this many minutes with no input and no output.',
+              default: SERVER_SHELL_IDLE_DEFAULT_MINUTES,
+              min: 1,
+              max: 24 * 60,
+              unit: 'minutes',
+              perNode: true,
             }),
           ],
         },

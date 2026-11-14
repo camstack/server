@@ -229,7 +229,7 @@ Singleton or collection providers, addressed without a device.
 | `stream-broker` | 38 | — | — | — | — | `stream-broker` |
 | `system` | 16 | — | — | — | — | — |
 | `template` | 5 | — | — | — | — | `core-blocks` |
-| `terminal-session` | 9 | — | — | — | — | `terminal` |
+| `terminal-session` | 10 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |
 | `training` | 13 | — | — | — | — | `training` |
 | `training-provider` | 13 | — | — | — | ✓ | `training-modal` |

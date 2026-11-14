@@ -50,7 +50,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'
 import { TERMINAL_ADDON_ID, TerminalNodeSettings } from './terminal/TerminalNodeSettings'
 import { TerminalPanel } from '../../components/TerminalPanel'
@@ -123,6 +123,7 @@ function formatStartedAt(ms: number): string {
 
 export function TerminalPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { nodes: clusterNodes } = useClusterNodes()
   const presence = useCapabilityNodePresence(TERMINAL_CAPABILITY)
 
@@ -370,6 +371,16 @@ export function TerminalPage() {
         'terminalPage.subtitle',
         'Keep a terminal open on a node and export it as a live camera.',
       )}
+      actions={
+        <Button
+          variant="outline"
+          disabled={sessionNodeId === ''}
+          onClick={() => navigate(`/system/terminal/${sessionNodeId}`)}
+        >
+          <TerminalIcon className="h-3.5 w-3.5" aria-hidden />
+          {t('terminalPage.serverShell', 'Server shell')}
+        </Button>
+      }
     >
       {actionError && <ErrorBox message={actionError} />}
 

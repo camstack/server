@@ -152,6 +152,16 @@ export default defineFixtures({
       },
     ],
     'terminalSession.listProfiles': PROFILES,
+    'terminalSession.serverShellStatus': (i: { nodeId?: string }) => ({
+      nodeId: i.nodeId ?? 'hub',
+      enabled: false,
+      idleMinutes: 30,
+      refusal: {
+        code: 'server-shell-disabled',
+        nodeId: i.nodeId ?? 'hub',
+        message: `Server shell is off on node ${i.nodeId ?? 'hub'}. Turn it on in that node's Terminal settings.`,
+      },
+    }),
     'terminalSession.listSessions': [],
     'terminalSession.listLegacyCameras': [
       {

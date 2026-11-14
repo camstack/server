@@ -9,6 +9,7 @@
  * it is fully testable without `node-pty` or `@xterm/headless`.
  */
 import type {
+  CapCaller,
   IScopedLogger,
   ITerminalSessionProvider,
   TerminalOutputEvent as RoutedTerminalOutputEvent,
@@ -19,7 +20,18 @@ import type {
   TerminalSessionInfo,
 } from '@camstack/types'
 import { buildProfiles, findProfile, type TerminalProfile } from './profiles.js'
-import type { PtyProcess, PtySpawner } from './pty.js'
+import type { PtyEnvMode, PtyProcess, PtySpawner } from './pty.js'
+import {
+  resolveServerShell,
+  SERVER_SHELL_IDLE_DEFAULT_MINUTES,
+  SERVER_SHELL_PROFILE_ID,
+  serverShellIdleMs,
+  serverShellRefusal,
+  ServerShellRefusedError,
+  type ServerShellStatus,
+  sessionIdleDue,
+  type ServerShellSpawn,
+} from './server-shell.js'
 import type { TerminalStyledRow } from './terminal-cell-runs.js'
 import { environmentEntriesToRecord, environmentRecordToEntries } from './terminal-instances.js'
 import { settingsSchemaForProfile } from './profile-settings.js'
@@ -75,6 +87,13 @@ export interface TerminalSessionManagerOptions {
   readonly glancesEnv?: Readonly<Record<string, string>>
   readonly allowShell: boolean
   readonly shellPath: string
+  readonly serverShell?: ServerShellSpawn
+  /** Per-node opt-in. Default false. Read once, via {@link serverShellOptIn}, before it arrives here. */
+  readonly serverShellEnabled?: boolean
+  /** Idle window for a server shell with no input and no output. Default 30 minutes. */
+  readonly serverShellIdleMs?: number
+  /** Cluster node id this provider is running on. Named in refusals and audit lines. */
+  readonly nodeId?: string
   readonly customProfiles?: readonly unknown[]
   readonly maxSessions: number
   readonly cwd?: string
@@ -101,6 +120,7 @@ interface LiveSession {
   readonly outputWaiters: Set<() => void>
   outputChars: number
   nextSeq: number
+  lastIoAt: number
   exited: boolean
   disposed: boolean
   lastExit?: { exitCode: number; signal?: number }
@@ -119,6 +139,16 @@ const MAX_ROWS = 500
  */
 const EXITED_RETENTION_MS = 10_000
 const OUTPUT_REPLAY_CHARS = 256 * 1024
+const IDLE_SWEEP_MS = 60_000
+
+const SERVER_SHELL_AUDIT = {
+  opened: 'terminal: server shell opened',
+  attached: 'terminal: server shell attached',
+  closed: 'terminal: server shell closed',
+  'idle-killed': 'terminal: server shell idle-killed',
+} as const
+
+type ServerShellAuditKind = keyof typeof SERVER_SHELL_AUDIT
 
 function clampDimension(value: number, max: number): number {
   if (!Number.isFinite(value)) return MIN_GRID
@@ -137,9 +167,27 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
   private readonly resolveBinary: (file: string) => string | null
   private maxSessions: number
   private instanceControl: TerminalInstanceControl | null = null
+  private serverShell: ServerShellSpawn
+  private serverShellEnabled: boolean
+  private idleTimeoutMs: number
+  private readonly nodeId: string
+  private idleTimer: ReturnType<typeof setInterval> | null = null
 
   constructor(opts: TerminalSessionManagerOptions) {
     this.opts = opts
+    this.serverShell =
+      opts.serverShell ??
+      resolveServerShell({
+        platform: 'linux',
+        inContainer: true,
+        shellFromEnv: undefined,
+        dataDir: opts.cwd ?? '',
+        processEnv: {},
+      })
+    this.serverShellEnabled = opts.serverShellEnabled === true
+    this.idleTimeoutMs =
+      opts.serverShellIdleMs ?? serverShellIdleMs(SERVER_SHELL_IDLE_DEFAULT_MINUTES)
+    this.nodeId = opts.nodeId ?? 'local'
     this.profiles = buildProfiles({
       btmPath: opts.btmPath,
       btmEnabled: opts.btmEnabled,
@@ -154,6 +202,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
       glancesEnv: opts.glancesEnv,
       allowShell: opts.allowShell,
       shellPath: opts.shellPath,
+      serverShell: this.serverShell,
       customProfiles: opts.customProfiles,
       onInvalid: (message) => opts.logger.warn(message),
     })
@@ -180,12 +229,31 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     readonly shellPath: string
     readonly maxSessions: number
     readonly customProfiles?: readonly unknown[]
+    readonly serverShell?: ServerShellSpawn
+    readonly serverShellEnabled?: boolean
+    readonly serverShellIdleMs?: number
   }): void {
+    if (config.serverShell) this.serverShell = config.serverShell
+    if (config.serverShellEnabled !== undefined) {
+      this.serverShellEnabled = config.serverShellEnabled
+    }
+    if (config.serverShellIdleMs !== undefined) this.idleTimeoutMs = config.serverShellIdleMs
     this.profiles = buildProfiles({
       ...config,
+      serverShell: this.serverShell,
       onInvalid: (message) => this.opts.logger.warn(message),
     })
     this.maxSessions = config.maxSessions
+  }
+
+  async serverShellStatus(): Promise<ServerShellStatus> {
+    const enabled = this.serverShellEnabled
+    return {
+      nodeId: this.nodeId,
+      enabled,
+      idleMinutes: Math.round(this.idleTimeoutMs / 60_000),
+      refusal: enabled ? null : serverShellRefusal(this.nodeId),
+    }
   }
 
   async listProfiles(): Promise<readonly TerminalProfileInfo[]> {
@@ -228,10 +296,15 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     readonly args?: readonly string[]
     readonly cwd?: string
     readonly environment?: readonly string[]
+    readonly caller?: CapCaller
   }): Promise<TerminalSessionInfo> {
     const profile = findProfile(this.profiles, input.profileId)
     if (!profile) {
       throw new Error(`Unknown terminal profile: ${input.profileId}`)
+    }
+    const locked = profile.profileId === SERVER_SHELL_PROFILE_ID
+    if (locked && !this.serverShellEnabled) {
+      throw new ServerShellRefusedError(this.nodeId)
     }
     const liveCount = [...this.sessions.values()].filter((s) => !s.exited).length
     if (liveCount >= this.maxSessions) {
@@ -241,21 +314,32 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     const rows = clampDimension(input.rows, MAX_ROWS)
     const sessionId = this.mintId()
 
-    const file = input.executable?.trim() || profile.file
-    const args = input.args !== undefined ? [...input.args] : [...profile.args]
-    const cwd = input.cwd?.trim() || profile.cwd || this.opts.cwd
-    const env = {
-      ...this.opts.env,
-      ...profile.env,
-      ...environmentEntriesToRecord(input.environment ?? []),
-    }
+    const file = locked ? profile.file : input.executable?.trim() || profile.file
+    const args = locked
+      ? [...profile.args]
+      : input.args !== undefined
+        ? [...input.args]
+        : [...profile.args]
+    const cwd = locked
+      ? profile.cwd || this.opts.cwd
+      : input.cwd?.trim() || profile.cwd || this.opts.cwd
+    const env: Record<string, string> = locked
+      ? profile.env === undefined
+        ? {}
+        : { ...profile.env }
+      : {
+          ...this.opts.env,
+          ...profile.env,
+          ...environmentEntriesToRecord(input.environment ?? []),
+        }
+    const envMode: PtyEnvMode = locked ? 'replace' : 'merge'
 
     // Fail loudly BEFORE spawning when the profile's binary is not installed —
     // otherwise node-pty spawns, the child exits 127, and the session vanishes
     // with the UI showing a blank terminal and no reason.
     const executableCandidates = [
       { file, args },
-      ...(input.executable?.trim() ? [] : (profile.fallbacks ?? [])),
+      ...(locked || input.executable?.trim() ? [] : (profile.fallbacks ?? [])),
     ]
     const executable = executableCandidates
       .map((candidate) => ({
@@ -280,6 +364,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
       rows,
       ...(cwd !== undefined && cwd !== '' ? { cwd } : {}),
       ...(Object.keys(env).length > 0 ? { env } : {}),
+      envMode,
     })
     const screen = this.opts.screenFactory(cols, rows)
 
@@ -300,6 +385,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
       outputWaiters: new Set(),
       outputChars: 0,
       nextSeq: 1,
+      lastIoAt: this.now(),
       exited: false,
       disposed: false,
     }
@@ -307,6 +393,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
 
     pty.onData((data) => {
       if (session.exited) return
+      session.lastIoAt = this.now()
       session.screen.write(data)
       this.appendOutput(session, { kind: 'data', data })
       for (const sink of session.sinks) {
@@ -324,6 +411,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     this.opts.logger.info('terminal: session opened', {
       meta: { sessionId, profileId: profile.profileId, pid: pty.pid, cols, rows },
     })
+    if (locked) this.auditServerShell('opened', sessionId, input.caller?.userId ?? 'unknown')
     return info
   }
 
@@ -342,17 +430,13 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     this.sessions.set(input.sessionId, { ...session, info: next })
   }
 
-  async close(input: { readonly sessionId: string }): Promise<void> {
+  async close(input: { readonly sessionId: string; readonly caller?: CapCaller }): Promise<void> {
     const session = this.sessions.get(input.sessionId)
     if (!session) return
-    // A user-initiated close is terminal. Do not wait for node-pty's
-    // asynchronous exit event: leaving the entry live lets output clients keep
-    // polling it and makes a close look like a reconnectable session.
-    this.finishSession(input.sessionId, session, { exitCode: 0 }, false)
-    try {
-      session.pty.kill()
-    } catch {
-      /* already gone */
+    this.terminateSession(input.sessionId, session, false)
+    if (session.info.profileId === SERVER_SHELL_PROFILE_ID) {
+      this.auditServerShell('closed', input.sessionId, input.caller?.userId ?? 'unknown')
+      return
     }
     this.opts.logger.info('terminal: session closed', { meta: { sessionId: input.sessionId } })
   }
@@ -362,9 +446,13 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     readonly afterSeq: number
     readonly waitMs?: number
     readonly waitForOutput?: boolean
+    readonly caller?: CapCaller
   }): Promise<TerminalOutputBatch> {
     const session = this.sessions.get(input.sessionId)
     if (!session) throw new Error(`No such terminal session: ${input.sessionId}`)
+    if (input.afterSeq === 0 && session.info.profileId === SERVER_SHELL_PROFILE_ID) {
+      this.auditServerShell('attached', input.sessionId, input.caller?.userId ?? 'unknown')
+    }
 
     if (
       (input.afterSeq > 0 || input.waitForOutput === true) &&
@@ -444,6 +532,9 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     if (!session) {
       throw new Error(`No such terminal session: ${sessionId}`)
     }
+    if (session.info.profileId === SERVER_SHELL_PROFILE_ID) {
+      this.auditServerShell('attached', sessionId, 'data-plane')
+    }
     if (session.exited) {
       sink({
         kind: 'exit',
@@ -463,7 +554,33 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
   writeInputToSession(sessionId: string, data: string): void {
     const session = this.sessions.get(sessionId)
     if (!session || session.exited) return
+    session.lastIoAt = this.now()
     session.pty.write(data)
+  }
+
+  /** Close server shells that have had no input and no output for the idle window. */
+  sweepIdle(): void {
+    const now = this.now()
+    for (const [sessionId, session] of this.sessions) {
+      if (session.exited) continue
+      if (session.info.profileId !== SERVER_SHELL_PROFILE_ID) continue
+      if (!sessionIdleDue(session.lastIoAt, now, this.idleTimeoutMs)) continue
+      this.terminateSession(sessionId, session, false)
+      this.auditServerShell('idle-killed', sessionId, 'idle')
+    }
+  }
+
+  startIdleWatch(): void {
+    this.stopIdleWatch()
+    const timer = setInterval(() => this.sweepIdle(), IDLE_SWEEP_MS)
+    timer.unref?.()
+    this.idleTimer = timer
+  }
+
+  stopIdleWatch(): void {
+    if (this.idleTimer === null) return
+    clearInterval(this.idleTimer)
+    this.idleTimer = null
   }
 
   private appendOutput(session: LiveSession, event: UnsequencedOutputEvent): void {
@@ -480,14 +597,32 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
 
   /** Kill every live session — called on addon shutdown. */
   disposeAll(): void {
+    this.stopIdleWatch()
     for (const [sessionId, session] of this.sessions) {
-      this.finishSession(sessionId, session, { exitCode: 0 }, false)
-      try {
-        session.pty.kill()
-      } catch {
-        /* ignore */
-      }
+      this.terminateSession(sessionId, session, false)
     }
+  }
+
+  private terminateSession(
+    sessionId: string,
+    session: LiveSession,
+    retainForLateExit: boolean,
+  ): void {
+    // A user-initiated close is terminal. Do not wait for node-pty's
+    // asynchronous exit event: leaving the entry live lets output clients keep
+    // polling it and makes a close look like a reconnectable session.
+    this.finishSession(sessionId, session, { exitCode: 0 }, retainForLateExit)
+    try {
+      session.pty.kill()
+    } catch {
+      /* already gone */
+    }
+  }
+
+  private auditServerShell(kind: ServerShellAuditKind, sessionId: string, userId: string): void {
+    this.opts.logger.info(SERVER_SHELL_AUDIT[kind], {
+      tags: { nodeId: this.nodeId, sessionId, userId },
+    })
   }
 
   private finishSession(

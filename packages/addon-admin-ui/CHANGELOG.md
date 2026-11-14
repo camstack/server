@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The Terminal page opens a full-page server shell for a node, and shows why a node has it turned off.
+
 ## [1.2.673] - 2026-11-15
 
 ### Changed

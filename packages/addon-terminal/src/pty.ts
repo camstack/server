@@ -54,6 +54,8 @@ export interface PtyExit {
   readonly signal?: number
 }
 
+export type PtyEnvMode = 'merge' | 'replace'
+
 export interface PtySpawnOptions {
   readonly file: string
   readonly args: readonly string[]
@@ -61,6 +63,23 @@ export interface PtySpawnOptions {
   readonly rows: number
   readonly cwd?: string
   readonly env?: Readonly<Record<string, string>>
+  /**
+   * `merge` keeps the process environment and overlays `env` (monitor profiles).
+   * `replace` passes `env` alone — required for the server shell, which must
+   * not inherit secrets from the process environment.
+   */
+  readonly envMode?: PtyEnvMode
+}
+
+/** The environment a pty child actually receives. */
+export function ptyEnvironment(
+  inherited: Readonly<Record<string, string>>,
+  override: Readonly<Record<string, string>> | undefined,
+  mode: PtyEnvMode,
+): Record<string, string> {
+  if (mode === 'replace') return override === undefined ? {} : { ...override }
+  if (override === undefined) return { ...inherited }
+  return { ...inherited, ...override }
 }
 
 /** Injectable so the manager is testable without a real pty. */
@@ -136,7 +155,7 @@ export function createNodePtySpawner(): PtySpawner {
       cols: options.cols,
       rows: options.rows,
       cwd: options.cwd,
-      env: { ...inheritedEnv, ...options.env },
+      env: ptyEnvironment(inheritedEnv, options.env, options.envMode ?? 'merge'),
     })
     return {
       pid: term.pid,

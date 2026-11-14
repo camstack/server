@@ -3674,6 +3674,9 @@ export const useTerminalSessionAdoptLegacyMonitor: typeof trpc.terminalSession.a
 /** Generated alias around `trpc.terminalSession.listSessions.useQuery`. */
 export const useTerminalSessionListSessions: typeof trpc.terminalSession.listSessions.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.listSessions.useQuery)
 
+/** Generated alias around `trpc.terminalSession.serverShellStatus.useQuery`. */
+export const useTerminalSessionServerShellStatus: typeof trpc.terminalSession.serverShellStatus.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.serverShellStatus.useQuery)
+
 /** Generated alias around `trpc.terminalSession.openSession.useMutation`. */
 export const useTerminalSessionOpenSession: typeof trpc.terminalSession.openSession.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.openSession.useMutation)
 

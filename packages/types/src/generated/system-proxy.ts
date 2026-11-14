@@ -138,7 +138,7 @@ export interface SystemProxy {
   readonly streamBroker: Pick<InferProvider<typeof streamBrokerCapability>, 'fetchEventMedia' | 'listAllCameraStreams' | 'listAllProfileSlots' | 'getBrokerStats' | 'probeStream' | 'listClients' | 'getLiveViewerCounts' | 'killClient' | 'getStreamUrl' | 'getStreamWithCodec' | 'releaseStreamWithCodec' | 'acquireEgressTranscode' | 'releaseEgressTranscode' | 'subscribeAudioChunks' | 'pullAudioChunks' | 'unsubscribeAudioChunks' | 'setPreBufferDuration' | 'getPreBufferInfo' | 'getRtspPort' | 'getAllRtspEntries' | 'getRtspEntry' | 'regenerateRtspToken' | 'setRtspEnabled' | 'isRtspEnabled'>
   readonly system: Pick<InferProvider<typeof systemCapability>, 'info' | 'health' | 'featureFlags' | 'networkAddresses' | 'getRetentionConfig' | 'setRetentionConfig' | 'forceRetentionCleanup' | 'getSiteLocation' | 'setSiteLocation' | 'detectSiteLocation' | 'getRequestCensus' | 'getLoadContributions' | 'getFailureContributions' | 'getLoggingSettings' | 'setLoggingSettings' | 'debugWatch'>
   readonly template: Pick<InferProvider<typeof templateCapability>, 'list' | 'get' | 'create' | 'update' | 'delete'>
-  readonly terminalSession: Pick<InferProvider<typeof terminalSessionCapability>, 'listProfiles' | 'listLegacyCameras' | 'adoptLegacyMonitor' | 'listSessions' | 'openSession' | 'resize' | 'pullOutput' | 'writeInput' | 'close'>
+  readonly terminalSession: Pick<InferProvider<typeof terminalSessionCapability>, 'listProfiles' | 'listLegacyCameras' | 'adoptLegacyMonitor' | 'listSessions' | 'serverShellStatus' | 'openSession' | 'resize' | 'pullOutput' | 'writeInput' | 'close'>
   readonly toast: Pick<InferProvider<typeof toastCapability>, 'onToast'>
   readonly training: Pick<InferProvider<typeof trainingCapability>, 'listBaseModels' | 'planJob' | 'startJob' | 'startJobBatch' | 'listJobs' | 'getJob' | 'cancelJob' | 'getJobResult' | 'listCanaryTargets' | 'registerResult' | 'canaryResult' | 'rollbackCanary' | 'discardResult'>
   readonly turnProvider: Pick<InferProvider<typeof turnProviderCapability>, 'getTurnServers'>
@@ -1009,6 +1009,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     listLegacyCameras: (input?: unknown) => dispatch('terminalSession', 'listLegacyCameras', 'query', input),
     adoptLegacyMonitor: (input?: unknown) => dispatch('terminalSession', 'adoptLegacyMonitor', 'mutation', input),
     listSessions: (input?: unknown) => dispatch('terminalSession', 'listSessions', 'query', input),
+    serverShellStatus: (input?: unknown) => dispatch('terminalSession', 'serverShellStatus', 'query', input),
     openSession: (input?: unknown) => dispatch('terminalSession', 'openSession', 'mutation', input),
     resize: (input?: unknown) => dispatch('terminalSession', 'resize', 'mutation', input),
     pullOutput: (input?: unknown) => dispatch('terminalSession', 'pullOutput', 'mutation', input),

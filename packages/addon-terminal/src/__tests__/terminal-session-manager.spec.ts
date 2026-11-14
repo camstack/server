@@ -1,6 +1,8 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { IScopedLogger, LogExtras } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { PtyProcess, PtySpawner, PtySpawnOptions } from '../pty.js'
+import { ptyEnvironment } from '../pty.js'
+import { resolveServerShell, ServerShellRefusedError } from '../server-shell.js'
 import {
   type ScreenBuffer,
   type TerminalOutputEvent,
@@ -107,7 +109,7 @@ describe('TerminalSessionManager', () => {
   it('lists only the allowlisted monitor profile by default', async () => {
     const { manager } = makeManager()
     const profiles = await manager.listProfiles()
-    expect(profiles.map((p) => p.profileId)).toEqual(['monitor'])
+    expect(profiles.map((p) => p.profileId)).toEqual(['monitor', 'server-shell'])
   })
 
   it('does not treat profile templates as Terminal instances until hub control adopts one', async () => {
@@ -144,7 +146,11 @@ describe('TerminalSessionManager', () => {
 
   it('adds a shell profile only when allowShell is set', async () => {
     const { manager } = makeManager({ allowShell: true })
-    expect((await manager.listProfiles()).map((p) => p.profileId)).toEqual(['monitor', 'shell'])
+    expect((await manager.listProfiles()).map((p) => p.profileId)).toEqual([
+      'monitor',
+      'shell',
+      'server-shell',
+    ])
   })
 
   it('exposes distinct BTM, Top and embedded-Python Glances profiles', async () => {
@@ -158,6 +164,7 @@ describe('TerminalSessionManager', () => {
       'monitor',
       'top',
       'glances',
+      'server-shell',
     ])
     await manager.openSession({ profileId: 'glances', cols: 80, rows: 24 })
     expect(ptys[0]!.spawnOptions).toMatchObject({
@@ -201,6 +208,7 @@ describe('TerminalSessionManager', () => {
     })
     expect((await manager.listProfiles()).map((profile) => profile.profileId)).toEqual([
       'monitor',
+      'server-shell',
       'gpu-monitor',
     ])
     await manager.openSession({ profileId: 'gpu-monitor', cols: 80, rows: 24 })
@@ -225,7 +233,10 @@ describe('TerminalSessionManager', () => {
         },
       ],
     })
-    expect((await manager.listProfiles()).map((profile) => profile.profileId)).toEqual(['monitor'])
+    expect((await manager.listProfiles()).map((profile) => profile.profileId)).toEqual([
+      'monitor',
+      'server-shell',
+    ])
     expect(warn).toHaveBeenCalledWith(expect.stringMatching(/reserved profile IDs/))
   })
 
@@ -483,5 +494,177 @@ describe('TerminalSessionManager', () => {
     // kill() intentionally does not emit onExit in this fake. The manager must
     // still be terminal rather than waiting forever for that callback.
     expect(ptys).toHaveLength(1)
+  })
+})
+
+const shellCaller = { userId: 'admin-7', isAdmin: true } as const
+
+function auditLogger(): {
+  logger: IScopedLogger
+  lines: { message: string; extras?: LogExtras }[]
+} {
+  const lines: { message: string; extras?: LogExtras }[] = []
+  const logger: IScopedLogger = {
+    ...silentLogger,
+    info: (message, extras) => {
+      lines.push({ message, ...(extras !== undefined ? { extras } : {}) })
+    },
+  }
+  return { logger, lines }
+}
+
+const SHELL_ENV = {
+  PATH: '/usr/bin',
+  HOME: '/data',
+  LANG: 'C',
+  TERM: 'xterm-256color',
+  USER: 'camstack',
+  SECRET_TOKEN: 'must-not-leak',
+  AWS_SECRET_ACCESS_KEY: 'must-not-leak',
+} as const
+
+function shellManager(
+  overrides?: Partial<TerminalSessionManagerOptions> & { readonly now?: () => number },
+) {
+  return makeManager({
+    nodeId: 'hub',
+    serverShellEnabled: true,
+    serverShellIdleMs: 30 * 60_000,
+    serverShell: resolveServerShell({
+      platform: 'linux',
+      inContainer: true,
+      shellFromEnv: '/bin/zsh',
+      dataDir: '/data',
+      processEnv: SHELL_ENV,
+    }),
+    env: { SECRET_TOKEN: 'from-manager', PATH: '/wrong' },
+    ...overrides,
+  })
+}
+
+describe('server shell', () => {
+  it('refuses to open when the node has not opted in, naming the node', async () => {
+    const { manager, ptys } = shellManager({ serverShellEnabled: false })
+    const status = await manager.serverShellStatus()
+    expect(status).toEqual({
+      nodeId: 'hub',
+      enabled: false,
+      idleMinutes: 30,
+      refusal: {
+        code: 'server-shell-disabled',
+        nodeId: 'hub',
+        message: expect.stringContaining('hub'),
+      },
+    })
+    await expect(
+      manager.openSession({
+        profileId: 'server-shell',
+        cols: 80,
+        rows: 24,
+        caller: shellCaller,
+        executable: '/bin/sh',
+        environment: ['SECRET_TOKEN=from-caller'],
+      }),
+    ).rejects.toBeInstanceOf(ServerShellRefusedError)
+    await expect(
+      manager.openSession({ profileId: 'server-shell', cols: 80, rows: 24, caller: shellCaller }),
+    ).rejects.toMatchObject({ code: 'server-shell-disabled', nodeId: 'hub' })
+    expect(ptys).toHaveLength(0)
+  })
+
+  it('spawns the login shell in the data dir with only the allowlisted environment', async () => {
+    const { manager, ptys } = shellManager()
+    await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+      executable: '/bin/evil',
+      args: ['-c', 'steal'],
+      cwd: '/tmp',
+      environment: ['SECRET_TOKEN=from-caller', 'PATH=/attacker'],
+    })
+    expect(ptys[0]!.spawnOptions).toMatchObject({
+      file: '/bin/bash',
+      args: ['-l'],
+      cwd: '/data',
+      envMode: 'replace',
+    })
+    expect(ptys[0]!.spawnOptions.env).toEqual({
+      PATH: '/usr/bin',
+      HOME: '/data',
+      LANG: 'C',
+      TERM: 'xterm-256color',
+      USER: 'camstack',
+    })
+    expect(
+      ptyEnvironment({ ...SHELL_ENV }, ptys[0]!.spawnOptions.env, 'replace'),
+    ).not.toHaveProperty('SECRET_TOKEN')
+    expect(
+      ptyEnvironment({ ...SHELL_ENV }, ptys[0]!.spawnOptions.env, 'replace'),
+    ).not.toHaveProperty('AWS_SECRET_ACCESS_KEY')
+  })
+
+  it('writes an audit line with the node, user and session on open, attach and close', async () => {
+    const { logger, lines } = auditLogger()
+    const { manager } = shellManager({ logger })
+    const info = await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+    })
+    await manager.pullOutput({ sessionId: info.sessionId, afterSeq: 0, caller: shellCaller })
+    await manager.close({ sessionId: info.sessionId, caller: shellCaller })
+    const tags = { nodeId: 'hub', sessionId: info.sessionId, userId: 'admin-7' }
+    expect(lines.map((line) => line.message)).toEqual(
+      expect.arrayContaining([
+        'terminal: server shell opened',
+        'terminal: server shell attached',
+        'terminal: server shell closed',
+      ]),
+    )
+    for (const message of [
+      'terminal: server shell opened',
+      'terminal: server shell attached',
+      'terminal: server shell closed',
+    ]) {
+      expect(lines.find((line) => line.message === message)?.extras?.tags).toEqual(tags)
+    }
+  })
+
+  it('closes a server shell that has had no input and no output for the idle window', async () => {
+    let now = 1_700_000_000_000
+    const { logger, lines } = auditLogger()
+    const { manager, ptys } = shellManager({
+      logger,
+      now: () => now,
+      serverShellIdleMs: 1_000,
+    })
+    const info = await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+    })
+    now += 999
+    manager.sweepIdle()
+    expect(ptys[0]!.killed).toBe(false)
+    ptys[0]!.emitData('prompt')
+    now += 999
+    manager.sweepIdle()
+    expect(ptys[0]!.killed).toBe(false)
+    manager.writeInputToSession(info.sessionId, 'ls\n')
+    now += 1_000
+    manager.sweepIdle()
+    expect(ptys[0]!.killed).toBe(true)
+    expect(await manager.listSessions()).toEqual([])
+    expect(
+      lines.find((line) => line.message === 'terminal: server shell idle-killed')?.extras?.tags,
+    ).toEqual({
+      nodeId: 'hub',
+      sessionId: info.sessionId,
+      userId: 'idle',
+    })
   })
 })

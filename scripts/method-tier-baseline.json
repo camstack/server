@@ -1258,6 +1258,7 @@
   "terminalSession.openSession": "admin",
   "terminalSession.pullOutput": "admin",
   "terminalSession.resize": "admin",
+  "terminalSession.serverShellStatus": "admin",
   "terminalSession.writeInput": "admin",
   "timedRun.cancel": "protected",
   "timedRun.getOptions": "protected",

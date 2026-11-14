@@ -19907,6 +19907,18 @@ export function createCapRouter_terminalSession(
         )
         return p.listSessions()
       }),
+    serverShellStatus: adminProcedure
+      .input(z.object({ nodeId: z.string().optional() }).optional())
+      .output(terminalSessionCapability.methods.serverShellStatus.output)
+      .query(async ({ input, ctx }) => {
+        const p = resolveProvider(
+          'terminal-session',
+          input?.nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        return p.serverShellStatus()
+      }),
     openSession: adminProcedure
       .input(terminalSessionCapability.methods.openSession.input.loose())
       .output(terminalSessionCapability.methods.openSession.output)

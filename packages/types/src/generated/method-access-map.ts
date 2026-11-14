@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1493 method paths across 208 capabilities.
+ * Coverage: 1494 method paths across 208 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1387,6 +1387,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'terminalSession.openSession': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.pullOutput': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.resize': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'terminalSession.serverShellStatus': { capName: "terminal-session", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'terminalSession.writeInput': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'timedRun.cancel': { capName: "timed-run", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'timedRun.getOptions': { capName: "timed-run", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,

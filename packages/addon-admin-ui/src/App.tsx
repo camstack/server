@@ -153,6 +153,9 @@ const CameraGridsPage = lazy(() =>
 const TerminalPage = lazy(() =>
   import('./pages/system/Terminal').then((m) => ({ default: m.TerminalPage })),
 )
+const ServerShellPage = lazy(() =>
+  import('./pages/system/ServerShell').then((m) => ({ default: m.ServerShellPage })),
+)
 const NotificationsPage = lazy(() =>
   import('./pages/system/Notifications').then((m) => ({
     default: m.NotificationsPage,
@@ -586,6 +589,22 @@ export function App() {
                                   element={
                                     <ProtectedRoute requireAdmin>
                                       <CameraGridsPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/system/terminal/:nodeId/:sessionId"
+                                  element={
+                                    <ProtectedRoute requireAdmin>
+                                      <ServerShellPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route
+                                  path="/system/terminal/:nodeId"
+                                  element={
+                                    <ProtectedRoute requireAdmin>
+                                      <ServerShellPage />
                                     </ProtectedRoute>
                                   }
                                 />

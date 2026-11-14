@@ -96,6 +96,32 @@ const TerminalOutputEventSchema = z.discriminatedUnion('kind', [
   }),
 ])
 
+interface ServerShellRefusalShape {
+  readonly code: 'server-shell-disabled'
+  readonly nodeId: string
+  readonly message: string
+}
+
+interface ServerShellStatusShape {
+  readonly nodeId: string
+  readonly enabled: boolean
+  readonly idleMinutes: number
+  readonly refusal: ServerShellRefusalShape | null
+}
+
+const ServerShellRefusalSchema: z.ZodType<ServerShellRefusalShape> = z.object({
+  code: z.literal('server-shell-disabled'),
+  nodeId: z.string(),
+  message: z.string(),
+})
+
+const ServerShellStatusSchema: z.ZodType<ServerShellStatusShape> = z.object({
+  nodeId: z.string(),
+  enabled: z.boolean(),
+  idleMinutes: z.number().int().positive(),
+  refusal: ServerShellRefusalSchema.nullable(),
+})
+
 const TerminalOutputBatchSchema = z.object({
   cursor: z.number().int().nonnegative(),
   reset: z.boolean(),
@@ -137,6 +163,11 @@ export const terminalSessionCapability = {
       auth: 'admin',
     }),
     /**
+     * Whether this node has opted in to the server shell. The refusal names
+     * the node when the opt-in is off. The boolean is decided in the provider.
+     */
+    serverShellStatus: method(z.void(), ServerShellStatusSchema, { auth: 'admin' }),
+    /**
      * Spawn a pty for an allowlisted profile at the given grid size and return
      * its session id. Output/input then flow over the data plane by that id.
      */
@@ -151,7 +182,7 @@ export const terminalSessionCapability = {
         environment: z.array(z.string().max(4096)).max(64).optional(),
       }),
       TerminalSessionInfoSchema,
-      { kind: 'mutation', auth: 'admin' },
+      { kind: 'mutation', auth: 'admin', caller: 'required' },
     ),
     /** Resize a live session's pty (reflows the running program). */
     resize: method(
@@ -181,7 +212,7 @@ export const terminalSessionCapability = {
         waitForOutput: z.boolean().optional(),
       }),
       TerminalOutputBatchSchema,
-      { kind: 'mutation', auth: 'admin', timeoutMs: 15_000 },
+      { kind: 'mutation', auth: 'admin', caller: 'required', timeoutMs: 15_000 },
     ),
     /** Write terminal input through the node-routable capability plane. */
     writeInput: method(
@@ -196,6 +227,7 @@ export const terminalSessionCapability = {
     close: method(z.object({ sessionId: z.string() }), z.void(), {
       kind: 'mutation',
       auth: 'admin',
+      caller: 'required',
     }),
   },
   vocabulary: { notOperatorFacing: NOT_A_DEVICE.CLUSTER },
@@ -209,6 +241,8 @@ export type TerminalInstanceInfo = z.infer<typeof TerminalInstanceInfoSchema>
 export type TerminalLegacyCamera = z.infer<typeof TerminalLegacyCameraSchema>
 export type TerminalOutputEvent = z.infer<typeof TerminalOutputEventSchema>
 export type TerminalOutputBatch = z.infer<typeof TerminalOutputBatchSchema>
+export type ServerShellStatus = z.infer<typeof ServerShellStatusSchema>
+export type ServerShellRefusal = z.infer<typeof ServerShellRefusalSchema>
 
 export {
   TerminalInstanceInfoSchema,
@@ -216,5 +250,7 @@ export {
   TerminalOutputBatchSchema,
   TerminalOutputEventSchema,
   TerminalProfileInfoSchema,
+  ServerShellRefusalSchema,
+  ServerShellStatusSchema,
   TerminalSessionInfoSchema,
 }

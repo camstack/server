@@ -36,6 +36,8 @@ interface TerminalPanelProps {
   readonly nodeId: string
   readonly onExit?: (info: TerminalExitInfo) => void
   readonly className?: string
+  /** Fill the parent instead of the fixed 480px pane. The parent must be a flex column with a height. */
+  readonly fill?: boolean
 }
 
 const RESIZE_DEBOUNCE_MS = 200
@@ -71,7 +73,13 @@ const XTERM_THEME = {
   brightWhite: '#f1f5f9',
 } as const
 
-export function TerminalPanel({ sessionId, nodeId, onExit, className }: TerminalPanelProps) {
+export function TerminalPanel({
+  sessionId,
+  nodeId,
+  onExit,
+  className,
+  fill = false,
+}: TerminalPanelProps) {
   const { t } = useTranslation()
   const hostRef = useRef<HTMLDivElement | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -202,7 +210,7 @@ export function TerminalPanel({ sessionId, nodeId, onExit, className }: Terminal
 
   return (
     <div
-      className={`overflow-hidden rounded-lg border border-border bg-[#0b0d10] ${className ?? ''}`}
+      className={`overflow-hidden rounded-lg border border-border bg-[#0b0d10] ${fill ? 'flex min-h-0 flex-1 flex-col' : ''} ${className ?? ''}`}
     >
       {error && (
         <div className="border-b border-danger/30 bg-danger/10 px-3 py-1.5 text-[11px] text-danger">
@@ -221,7 +229,7 @@ export function TerminalPanel({ sessionId, nodeId, onExit, className }: Terminal
       )}
       {/* xterm sizes to this host; give it a stable min-height so the FitAddon
           has real dimensions to measure on first paint. */}
-      <div ref={hostRef} className="h-[480px] w-full p-2" />
+      <div ref={hostRef} className={fill ? 'min-h-0 w-full flex-1 p-2' : 'h-[480px] w-full p-2'} />
     </div>
   )
 }

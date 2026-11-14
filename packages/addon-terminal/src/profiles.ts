@@ -5,6 +5,7 @@
  * docs/design/2026-07-26-terminal-session-design.md ("profileId, not a command").
  */
 import { z } from 'zod'
+import { SERVER_SHELL_PROFILE_ID, type ServerShellSpawn } from './server-shell.js'
 
 const ProfileIdSchema = z
   .string()
@@ -15,9 +16,12 @@ const ProfileIdSchema = z
 
 export const ConfiguredTerminalProfileSchema = z.object({
   enabled: z.boolean().default(true),
-  profileId: ProfileIdSchema.refine((id) => !['monitor', 'top', 'glances', 'shell'].includes(id), {
-    message: 'monitor, top, glances and shell are reserved profile IDs',
-  }),
+  profileId: ProfileIdSchema.refine(
+    (id) => !['monitor', 'top', 'glances', 'shell', 'server-shell'].includes(id),
+    {
+      message: 'monitor, top, glances, shell and server-shell are reserved profile IDs',
+    },
+  ),
   label: z.string().trim().min(1).max(100),
   description: z.string().trim().max(500).optional().default(''),
   executable: z
@@ -87,6 +91,8 @@ export function buildProfiles(options: {
   readonly glancesEnv?: Readonly<Record<string, string>>
   readonly allowShell: boolean
   readonly shellPath: string
+  /** Login shell for the server-shell profile. Omitted in tests that only build monitor profiles. */
+  readonly serverShell?: ServerShellSpawn
   readonly customProfiles?: readonly unknown[]
   readonly onInvalid?: (message: string) => void
 }): readonly TerminalProfile[] {
@@ -133,6 +139,18 @@ export function buildProfiles(options: {
       description: 'A full interactive login shell. Grants command execution as the server user.',
       file: options.shellPath.trim().length > 0 ? options.shellPath.trim() : '/bin/bash',
       args: ['-l'],
+    })
+  }
+  if (options.serverShell) {
+    profiles.push({
+      profileId: SERVER_SHELL_PROFILE_ID,
+      label: 'Server shell',
+      description:
+        'Login shell in the node data directory. Off until this node opts in; not a camera profile.',
+      file: options.serverShell.file,
+      args: [...options.serverShell.args],
+      cwd: options.serverShell.cwd,
+      env: options.serverShell.env,
     })
   }
   const seen = new Set(profiles.map((profile) => profile.profileId))

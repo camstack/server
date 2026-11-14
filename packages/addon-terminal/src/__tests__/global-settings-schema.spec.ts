@@ -74,6 +74,7 @@ describe('terminal node settings schema', () => {
       'terminal-btm',
       'terminal-top',
       'terminal-glances',
+      'terminal-server-shell',
       'terminal-shell',
       'terminal-profiles',
     ])
@@ -98,6 +99,8 @@ describe('terminal node settings schema', () => {
     expect([...fieldKeysOf(schema)].sort()).toEqual(
       [
         'allowShell',
+        'serverShellEnabled',
+        'serverShellIdleMinutes',
         'btmArgs',
         'btmEnabled',
         'btmPath',
