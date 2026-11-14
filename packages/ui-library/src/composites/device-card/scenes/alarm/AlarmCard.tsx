@@ -6,6 +6,7 @@ import { CardButton } from '../../parts/CardButton'
 import { CodePad } from '../../parts/CodePad'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation, CardTone } from '../../shell/model'
+import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
 import type { AlarmActivity, AlarmArmMode, AlarmCardActions, AlarmCardModel } from './model'
 
 export interface AlarmCardProps {
@@ -167,7 +168,8 @@ export function AlarmCard({
       }}
       scene={{
         alert: model.activity === 'triggered',
-        image: <AlarmIllustration look={LOOK[model.activity]} className="h-auto w-24" />,
+        image: <AlarmIllustration look={LOOK[model.activity]} className={SCENE_DRAWING_CLASS} />,
+        columns: {},
         bottom:
           options.length === 0 ? null : pending !== null ? (
             confirmRow(pending, model, run, () => setPending(null), t)
