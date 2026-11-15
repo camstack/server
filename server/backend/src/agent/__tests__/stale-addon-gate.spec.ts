@@ -173,16 +173,21 @@ describe('the agent spawn set (D1017)', () => {
     const { tracker, events } = trackerOf()
     const grouped = groupCandidatesForSpawn([ml, ok], stale, tracker)
     expect(grouped.get('ml')?.map((c) => c.addonId)).toEqual(['ml', 'ok'])
-    expect(events.map((e) => e.category)).toEqual([EventCategory.AddonUnsupportedVersion])
+    // The supported package clears a card a previous process may have left, once.
+    expect(events.map((e) => [e.category, e.data['packageName']])).toEqual([
+      [EventCategory.AddonUnsupportedResolved, '@camstack/addon-ok'],
+      [EventCategory.AddonUnsupportedVersion, '@camstack/addon-ml'],
+    ])
   })
 
   it('clears the alert of a package that is no longer installed on the node', () => {
     const { tracker, events } = trackerOf()
     groupCandidatesForSpawn([ml], stale, tracker, ['@camstack/addon-ml'])
     groupCandidatesForSpawn([ok], stale, tracker, ['@camstack/addon-ok'])
-    expect(events.map((e) => e.category)).toEqual([
-      EventCategory.AddonUnsupportedVersion,
-      EventCategory.AddonUnsupportedResolved,
+    expect(events.map((e) => [e.category, e.data['packageName']])).toEqual([
+      [EventCategory.AddonUnsupportedVersion, '@camstack/addon-ml'],
+      [EventCategory.AddonUnsupportedResolved, '@camstack/addon-ml'],
+      [EventCategory.AddonUnsupportedResolved, '@camstack/addon-ok'],
     ])
   })
 })
