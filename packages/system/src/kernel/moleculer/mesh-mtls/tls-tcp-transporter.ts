@@ -428,10 +428,14 @@ export class TlsTcpTransporter extends TcpTransporterBase {
             key: material.keyPem,
             cert: material.certPem,
             ca: [material.caCertPem],
-            rejectUnauthorized: true,
+            // The hub judges the server leaf itself in the connect callback, with the same verdict
+            // as the inbound side, so a leaf that only expired can be recovered (#558). An agent
+            // keeps the strict handshake.
+            rejectUnauthorized: !self.hubTlsOnly,
             minVersion: 'TLSv1.3',
             servername: nodeID,
             checkServerIdentity: (hostname, cert) => {
+              if (self.hubTlsOnly) return undefined
               const cn =
                 typeof cert.subject === 'object' && cert.subject !== null && 'CN' in cert.subject
                   ? String((cert.subject as { CN?: string }).CN ?? '')
@@ -454,6 +458,11 @@ export class TlsTcpTransporter extends TcpTransporterBase {
           },
           () => {
             const tlsSock = socket as TlsClientSocket
+            if (self.hubTlsOnly && !self.judgeDialedServer(tlsSock, nodeID, material.caCertPem)) {
+              tlsSock.destroy()
+              reject(new Error(`Mesh TLS server of '${nodeID}' refused by the hub`))
+              return
+            }
             tlsSock.nodeID = nodeID
             ;(tlsSock as NetSocket & { lastUsed?: number }).lastUsed = Date.now()
             tlsSock.setNoDelay(true)
@@ -869,6 +878,46 @@ export class TlsTcpTransporter extends TcpTransporterBase {
       'expired',
     )
     this.reporter()?.expiredLeafAdmitted?.({ nodeId, serial, notAfter })
+  }
+
+  /**
+   * The hub dialed a peer's TLS server: apply the verdict the inbound side applies (chain, CRL,
+   * a leaf that only expired is admitted) plus the CN must be the node dialed. The expired
+   * admission is not announced here: the peer's own inbound connection already hands the node to
+   * the renewal, and a second trigger would only double the log line.
+   */
+  private judgeDialedServer(socket: TlsClientSocket, nodeID: string, caCertPem: string): boolean {
+    const presented = socket.getPeerCertificate(true)
+    const verdict = judgeMeshPeerLeaf({
+      leafDer:
+        presented != null && typeof presented === 'object' && Buffer.isBuffer(presented.raw)
+          ? presented.raw
+          : undefined,
+      authorized: socket.authorized,
+      authorizationError: authorizationCodeOf(socket.authorizationError),
+      caCertPem,
+      crl: this.crl,
+      admitExpired: true,
+      now: Date.now(),
+    })
+    if (!verdict.admit) {
+      if (verdict.reason === 'revoked') {
+        this.noteRevokedPeer(verdict.nodeId ?? nodeID, 'refusing to dial it')
+      } else {
+        this.noteRefusedPeer(verdict.nodeId, verdict.reason, verdict.detail, socket.remoteAddress)
+      }
+      return false
+    }
+    if (verdict.nodeId !== nodeID) {
+      this.noteRefusedPeer(
+        verdict.nodeId,
+        'cn-mismatch',
+        `dialed '${nodeID}' but it presented '${verdict.nodeId}'`,
+        socket.remoteAddress,
+      )
+      return false
+    }
+    return true
   }
 
   private onTlsClientConnected(socket: TlsClientSocket): void {

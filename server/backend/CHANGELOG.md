@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A device that reports its state in steps after a restart no longer shows invented interactions in its details (a field the device is first learned is not a change).
+- The hub now also reconnects to an agent whose mesh certificate already expired, so such an agent comes back online instead of crash-looping
 
 ## [1.2.873] - 2026-11-15
 
