@@ -31,7 +31,7 @@ type OptionSetterName =
 
 /**
  * Salt and rinse aid are consumable items (D915). Their events must not
- * reappear here — the Consumables section is the only surface.
+ * reappear here — the device card's consumables chip is the only surface.
  */
 export function isConsumableDishwasherEvent(event: string): boolean {
   const short = (event.split('.').pop() ?? event).toLowerCase()

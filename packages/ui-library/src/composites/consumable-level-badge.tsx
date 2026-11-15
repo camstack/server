@@ -1,6 +1,6 @@
 /**
  * ConsumableLevelBadge — ONE look for a consumable's level (salt, rinse aid,
- * a filter, a brush, a tank), so the Consumables section and the Customize
+ * a filter, a brush, a tank), so the device card's consumables chip and the Customize
  * list read the same colours.
  *
  * The vocabulary is the consumables cap's level enum (`ok | low | empty |
@@ -25,7 +25,7 @@ export type ConsumableLevel = CapConsumableLevel | null
 
 interface ConsumableLevelLook {
   readonly variant: BadgeVariant
-  /** Fill-bar class for a level drawn as a bar (the Consumables panel). */
+  /** Fill-bar class for a level drawn as a bar (the card popover). */
   readonly barClass: string
   readonly labelKey: string
   readonly labelFallback: string

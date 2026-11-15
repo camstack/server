@@ -264,8 +264,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
         },
       )
     },
-    onConsumableReset: (key: string) =>
-      reset.mutate({ deviceId, key }, { onSuccess: succeed, onError: fail }),
+    onConsumableReset: (key: string) => reset.mutateAsync({ deviceId, key }).then(succeed, fail),
     onRemoteKey: (id: string) => {
       const command = remote.data?.commands.find((c) => c.role === id)
       if (command !== undefined)

@@ -167,8 +167,8 @@ export interface ConfigSection {
    * Zones tab where orchestrator (geometry CRUD) + motion-wasm
    * (motion rules) + detection-pipeline (detection rules) all
    * contribute to one operator surface. `'hero'` shows the section ONCE
-   * directly under the device's hero card, outside every tab — the
-   * Consumables section (D915).
+   * directly under the device's hero card, outside every tab (e.g. the
+   * power meter).
    */
   readonly location?: 'settings' | 'top-tab' | 'hero'
   /** Sort order within the tab. Lower = top. */

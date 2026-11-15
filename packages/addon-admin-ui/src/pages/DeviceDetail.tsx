@@ -412,7 +412,7 @@ export function DeviceDetailPage() {
     })
   }, [primaryChildId, childAggregateData])
   // Under the hero card (D915): every `hero` widget the device's bindings
-  // declare (the Consumables panel), plus the primary child's on a container.
+  // declare (e.g. the power meter), plus the primary child's on a container.
   // Data, not device type — the server emits the section per binding.
   // The model hero draws its own power line (D1023); the legacy strip repeats it.
   const [modelDrawn, setModelDrawn] = useState(false)
@@ -866,7 +866,7 @@ export function DeviceDetailPage() {
           />
         )
         // A tab promoted from the primary child must render its embedded
-        // host-widgets (e.g. the Consumables panel) against the CHILD's device,
+        // host-widgets (e.g. the power meter) against the CHILD's device,
         // not the container's. Those widgets read `useDeviceId()` from context,
         // not the section's `deviceId` prop, so override the context here —
         // otherwise the widget queries the container (#3) and shows
@@ -1370,7 +1370,7 @@ export function DeviceDetailPage() {
                               // so the hero keeps its natural height here.
                               'flex-shrink-0 border-b border-border-subtle bg-surface'
                             : // Desktop: the slot GROWS to fit the hero and the
-                              // widgets under it (the Consumables section, D915) —
+                              // widgets under it (e.g. the power meter) —
                               // a cap clipped them behind the tab block. The tab
                               // block below keeps a minimum height; when the two do
                               // not fit, the column itself scrolls.

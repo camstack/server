@@ -42,8 +42,10 @@ export interface CardConsumable {
   readonly note?: string
   /** 0..100, or null when the device reports no level. */
   readonly percent: number | null
-  /** The word of the reset action ("Cleaned"), or null when it cannot be reset. */
+  /** The word of the reset action ("Cleaned"), or null when the item is not resettable. */
   readonly resetLabel: string | null
+  /** The item is resettable but the viewer may not actuate: the button shows, disabled. */
+  readonly resetDisabled?: boolean
   /**
    * The kind-aware level (`consumableItemLevel`): a full bin or waste tank is
    * `full`, a low part `low`. `null` = the device reports nothing (unknown,
@@ -149,7 +151,8 @@ export interface CardCommon {
 
 export interface CardCommonActions {
   readonly onSupply?: (action: CardSupplyAction) => void
-  readonly onConsumableReset?: (key: string) => void
+  /** A promise lets the card disable that item's Reset while the call is in flight. */
+  readonly onConsumableReset?: (key: string) => void | PromiseLike<unknown>
   readonly onRemoteKey?: (id: string) => void
 }
 

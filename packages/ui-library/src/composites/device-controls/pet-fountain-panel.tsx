@@ -10,7 +10,7 @@
  *     rest minutes belong to the optional `pump-cycle` cap: that section is
  *     drawn only on a fountain that composes it (planning#366). The tank
  *     (also a `water` consumable), the filter, the cleaning and the water
- *     change are consumables: the page's Consumables section draws them (D915).
+ *     change are consumables: the device card's consumables popover draws them (D915, D1023).
  *
  * Every reading may be unknown (`null`) and is drawn as a dash, never as
  * zero. Stored volumes are litres and durations seconds (D944); the card

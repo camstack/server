@@ -523,7 +523,7 @@
       "need": "A consumable's level (salt, rinse aid, a filter, a brush, a tank)",
       "admin": "`ConsumableLevelBadge` (+ `consumableItemLevel` for a `consumables` item, by its `kind`)",
       "viewer": "—",
-      "notes": "The one level → tone map: ok success, low warning, empty danger, full warning, unknown neutral; the state is always in words. A device's consumables are never drawn by its hero card: the `consumables` cap's `ConsumablesPanel` sits directly under it, drawn per item `form` (part, tank, product, bin) and collapsed unless an item needs attention (D915)"
+      "notes": "The one level → tone map: ok success, low warning, empty danger, full warning, unknown neutral; the state is always in words. A device's consumables are drawn by the shared device card itself: a chip (worst item's state word, `+N`) and a compact popover per item `form` (part, tank, product, bin) with Reset; there is no separate section (D1023, supersedes the D915 panel)"
     },
     {
       "need": "Nothing to show yet",
@@ -3941,7 +3941,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/consumable-level-badge.tsx",
-      "summary": "ConsumableLevelBadge — ONE look for a consumable's level (salt, rinse aid, a filter, a brush, a tank), so the Consumables section and the Customize list read the same colours.",
+      "summary": "ConsumableLevelBadge — ONE look for a consumable's level (salt, rinse aid, a filter, a brush, a tank), so the device card's consumables chip and the Customize list read the same colours.",
       "props": [
         {
           "name": "level",
@@ -4017,9 +4017,9 @@
         },
         {
           "name": "onReset",
-          "type": "(key: string) => void",
+          "type": "(key: string) => void | PromiseLike<unknown>",
           "optional": false,
-          "doc": ""
+          "doc": "A promise lets the row disable its Reset while the call is in flight."
         }
       ]
     },
@@ -10618,7 +10618,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-controls/dishwasher-options.tsx",
-      "summary": "Salt and rinse aid are consumable items (D915). Their events must not reappear here — the Consumables section is the only surface."
+      "summary": "Salt and rinse aid are consumable items (D915). Their events must not reappear here — the device card's consumables chip is the only surface."
     },
     {
       "name": "isConsumableLevelField",

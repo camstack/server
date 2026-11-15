@@ -138,7 +138,7 @@ describe('PetFeederHeroCard', () => {
     expect(screen.getByLabelText('Feed sound')).toBeTruthy()
   })
 
-  it('draws no desiccant: that is a consumable, shown by the page Consumables section', () => {
+  it('draws no desiccant: that is a consumable, shown by the device card consumables popover', () => {
     render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
     expect(screen.queryByText('12d desiccant')).toBeNull()
     expect(screen.queryByText('Reset desiccant')).toBeNull()

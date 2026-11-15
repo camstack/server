@@ -12,7 +12,7 @@
  *     dual-hopper models), a maintenance action row (Call pet /
  *     Mark refilled) and the child-lock / indicator-light /
  *     feed-sound / volume settings. The desiccant is a consumable: the
- *     page's Consumables section draws it, never this card (D915).
+ *     device card's consumables popover draws it, never this panel (D915, D1023).
  *
  * Mirrors the AC card's `useDeviceCapability` + inferred-cap pattern so
  * the row and hero never diverge. Actions are gated on `available`.

@@ -1,14 +1,14 @@
-import type { ReactElement } from 'react'
+import { type ReactElement, useState } from 'react'
 import { cn } from '../../../lib/cn'
 import { useUiText } from '../../../contexts/ui-text'
 import { Button } from '../../../primitives/button'
 import { CardButton } from '../parts/CardButton'
 import { CardIcon } from '../parts/CardIcon'
-import { LevelBar } from '../parts/LevelBar'
 import { CardGatingProvider, useCardGating } from './gating'
 import type { ConsumableLevel } from '@camstack/types'
 import type { UiTextFn } from '../../../contexts/ui-text'
 import {
+  ConsumableLevelBadge,
   consumableItemLevel,
   consumableLevelBarClass,
   consumableLevelLabel,
@@ -130,7 +130,8 @@ export interface ConsumablesButtonProps {
   readonly items: readonly CardConsumable[]
   /** Bound to `consumables` but the slice has not landed: loading, never "none" (D315). */
   readonly loading?: boolean
-  readonly onReset: (key: string) => void
+  /** A promise lets the row disable its Reset while the call is in flight. */
+  readonly onReset: (key: string) => void | PromiseLike<unknown>
 }
 
 /** The kind-aware level of a row; absent = a wear part read from its percent. */
@@ -182,10 +183,23 @@ function ConsumableMeter({ c }: { readonly c: CardConsumable }): ReactElement {
       </span>
     )
   }
-  return c.percent === null ? (
+  return percent === null ? (
     <span />
   ) : (
-    <LevelBar percent={c.percent} low={isAttention(level)} ariaLabel={c.label} />
+    <span
+      role="meter"
+      aria-label={c.label}
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(percent)}
+      className="block h-1.5 w-full overflow-hidden rounded-full bg-surface-hover"
+    >
+      <span
+        className={cn('block h-full rounded-full', fill)}
+        // ui-check-ok: computed geometry — the fill's width is the item's %
+        style={{ width: `${percent}%` }}
+      />
+    </span>
   )
 }
 
@@ -201,6 +215,11 @@ export function ConsumablesButton({
 }: ConsumablesButtonProps): ReactElement {
   const t = useUiText()
   const pop = usePopover()
+  const [busyKey, setBusyKey] = useState<string | null>(null)
+  const reset = (key: string): void => {
+    setBusyKey(key)
+    void Promise.resolve(onReset(key)).finally(() => setBusyKey(null))
+  }
   const attention = items
     .filter((c) => isAttention(levelOf(c)))
     .sort((a, b) => {
@@ -235,31 +254,30 @@ export function ConsumablesButton({
         aria-expanded={pop.open}
         data-low={worst !== undefined}
         onClick={pop.toggle}
-        className={cn(
-          CHIP,
-          worst === undefined
-            ? 'border-transparent bg-surface-hover text-foreground-muted'
-            : 'border-danger/40 bg-danger/10 text-danger',
-        )}
+        className={cn(CHIP, 'border-transparent bg-surface-hover text-foreground-muted')}
       >
-        <CardIcon glyph={worst === undefined ? 'consumables' : 'warning'} className="h-3 w-3" />
         {worst !== undefined ? (
           <>
-            {worst.label}{' '}
-            <b className="tabular-nums">
-              {worst.percent === null ? wordOf(worst, t) : `${Math.round(worst.percent)}%`}
-            </b>
+            <ConsumableLevelBadge
+              level={levelOf(worst)}
+              name={worst.label}
+              label={wordOf(worst, t)}
+              size="sm"
+            />
             {attention.length > 1 ? <small>+{attention.length - 1}</small> : null}
           </>
-        ) : unknown === 0 ? (
-          t('uiLibrary.deviceCard.consumables.ok', 'Consumables ok')
-        ) : ok === 0 ? (
-          t('uiLibrary.deviceCard.consumables.unknown', 'Consumables unknown')
         ) : (
-          t('uiLibrary.consumablesPanel.okAndUnknown', '{{ok}} OK · {{unknown}} unknown', {
-            ok,
-            unknown,
-          })
+          <>
+            <CardIcon glyph="consumables" className="h-3 w-3" />
+            {unknown === 0
+              ? t('uiLibrary.deviceCard.consumables.ok', 'Consumables ok')
+              : ok === 0
+                ? t('uiLibrary.deviceCard.consumables.unknown', 'Consumables unknown')
+                : t('uiLibrary.consumablesPanel.okAndUnknown', '{{ok}} OK · {{unknown}} unknown', {
+                    ok,
+                    unknown,
+                  })}
+          </>
         )}
         <CardIcon glyph="info" className="h-3 w-3 opacity-70" />
       </Button>
@@ -267,7 +285,7 @@ export function ConsumablesButton({
         <div
           role="dialog" // ui-check-ok: an anchored in-card popover (card anatomy), not a modal
           data-testid="dc-consumables-pop"
-          className={cn(POP, 'right-0 w-72 max-w-[80vw]')}
+          className={cn(POP, 'right-0 max-h-52 w-72 max-w-[80vw] overflow-y-auto')}
         >
           <p className="text-xs font-semibold text-foreground">
             {t('uiLibrary.deviceCard.consumables.title', 'Consumables')}
@@ -290,19 +308,22 @@ export function ConsumablesButton({
                 )}
               </span>
               <ConsumableMeter c={c} />
-              <span
-                className={cn(
-                  'text-right tabular-nums',
-                  isAttention(levelOf(c)) ? 'text-danger' : 'text-foreground-muted',
-                )}
-              >
-                {wordOf(c, t)}
-                {c.percent === null ? '' : ` ${Math.round(c.percent)}%`}
-              </span>
+              <ConsumableLevelBadge
+                level={levelOf(c)}
+                size="sm"
+                className="justify-self-end whitespace-nowrap tabular-nums"
+                label={
+                  c.percent === null ? wordOf(c, t) : `${wordOf(c, t)} ${Math.round(c.percent)}%`
+                }
+              />
               {c.resetLabel === null ? (
                 <span />
               ) : (
-                <CardButton className="min-h-7 px-2 py-1 text-xs" onClick={() => onReset(c.key)}>
+                <CardButton
+                  className="min-h-7 px-2 py-1 text-xs"
+                  disabled={busyKey === c.key || c.resetDisabled === true}
+                  onClick={() => reset(c.key)}
+                >
                   {c.resetLabel}
                 </CardButton>
               )}

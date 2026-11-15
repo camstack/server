@@ -155,7 +155,7 @@ describe('plug scene — the zones of each mockup variant', () => {
       power: null,
       battery: null,
       supply: null,
-      consumables: [],
+      consumables: null,
       remote: [],
     }
     render(<PlugCard model={{ ...fixture.model, common: bare }} actions={plugActions()} />)

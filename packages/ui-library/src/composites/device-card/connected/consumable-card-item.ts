@@ -77,7 +77,7 @@ export function toCardConsumable(
     form: consumableFormOf(item),
     levelWord: wordOf(item, t),
     ...(parts.length > 0 ? { detail: parts.join(' · ') } : {}),
-    resetLabel:
-      item.resettable && canReset ? t('uiLibrary.deviceCard.consumables.reset', 'Reset') : null,
+    resetLabel: item.resettable ? t('uiLibrary.deviceCard.consumables.reset', 'Reset') : null,
+    ...(item.resettable && !canReset ? { resetDisabled: true } : {}),
   }
 }

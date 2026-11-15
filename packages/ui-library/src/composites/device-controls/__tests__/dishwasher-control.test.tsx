@@ -131,9 +131,9 @@ describe('formatting helpers', () => {
 })
 
 describe('Dishwasher consumables', () => {
-  it('the row draws no salt or rinse aid — the page Consumables section does (D915)', () => {
+  it('the row draws no salt or rinse aid — the device card consumables chip does (D915)', () => {
     // A slice still carrying the old fields, or raising the salt/rinse events,
-    // draws nothing for them. Those items live in the Consumables section.
+    // draws nothing for them. Those items live in the card consumables chip.
     mockResult.slice = {
       ...makeSlice({
         activeEvents: [

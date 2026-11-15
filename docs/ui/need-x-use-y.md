@@ -53,7 +53,7 @@ library's barrel; check a viewer name in the viewer repo's own catalogue.
 | A button | `Button` | — | |
 | A status pill | `StatusBadge`, `Badge` | `ConnectingIndicator`, `ProgressStrip` | |
 | A battery / network / provider / version marker | `BatteryBadge`, `NetworkLinkBadge`, `ProviderBadge`, `VersionBadge` | — | |
-| A consumable's level (salt, rinse aid, a filter, a brush, a tank) | `ConsumableLevelBadge` (+ `consumableItemLevel` for a `consumables` item, by its `kind`) | — | The one level → tone map: ok success, low warning, empty danger, full warning, unknown neutral; the state is always in words. A device's consumables are never drawn by its hero card: the `consumables` cap's `ConsumablesPanel` sits directly under it, drawn per item `form` (part, tank, product, bin) and collapsed unless an item needs attention (D915) |
+| A consumable's level (salt, rinse aid, a filter, a brush, a tank) | `ConsumableLevelBadge` (+ `consumableItemLevel` for a `consumables` item, by its `kind`) | — | The one level → tone map: ok success, low warning, empty danger, full warning, unknown neutral; the state is always in words. A device's consumables are drawn by the shared device card itself: a chip (worst item's state word, `+N`) and a compact popover per item `form` (part, tank, product, bin) with Reset; there is no separate section (D1023, supersedes the D915 panel) |
 | Nothing to show yet | `EmptyState` | — | Loading is not empty: ask `useCapabilityPresence` |
 | An error or warning box | `ErrorBox` | `RenderErrorBoundary` | |
 | A loading placeholder | `Skeleton` | `SkeletonBox` | |

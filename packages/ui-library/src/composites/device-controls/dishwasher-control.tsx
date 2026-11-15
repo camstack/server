@@ -6,7 +6,7 @@
  * (`composites/device-card`, `ConnectedDishwasherCard`).
  *
  * Salt and rinse aid are not here: they are items of the device's `consumables`
- * cap, shown by the page's Consumables section like every device's (D915).
+ * cap, shown by the device card's consumables chip like every device's (D915, D1023).
  *
  * UNKNOWN IS NOT OFF. The slice carries `null` for everything the appliance has not
  * reported, and this view renders that as "—" / a disabled control, never as an unchecked
