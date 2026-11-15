@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.872 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.873 | the update itself | — |
 
 ## Framework (4)
 
@@ -24,8 +24,8 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | --- | --- | --- | --- | --- |
 | `@camstack/develop` | `packages/develop` | 0.1.53 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.158 | `@camstack/server` closure | — |
-| `@camstack/types` | `packages/types` | 1.2.570 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
-| `@camstack/ui-library` | `packages/ui-library` | 1.2.448 | `@camstack/server` closure | — |
+| `@camstack/types` | `packages/types` | 1.2.571 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
+| `@camstack/ui-library` | `packages/ui-library` | 1.2.449 | `@camstack/server` closure | — |
 
 ## Addons (51)
 
@@ -33,8 +33,8 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.673 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
-| `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.387 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.674 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.388 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.182 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.182 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
 | `@camstack/addon-benchmark` | `packages/addon-benchmark` | 1.2.313 | addons dir (image-seeded) | Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound |
@@ -50,12 +50,12 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-mqtt-broker` | `packages/addon-mqtt-broker` | 1.2.159 | addons dir | MQTT broker registry addon for CamStack — manages external broker entries + an optional embedded aedes broker. Consumers spin up their own `mqtt.js` clients via the `mqtt-broker` cap. |
 | `@camstack/addon-notifiers` | `packages/addon-notifiers` | 1.2.639 | addons dir (image-seeded) | System notifiers addon for CamStack — a `notification-output` collection provider hosting per-kind notifier adapters (ntfy, pushover, gotify, telegram, discord, webhook, zentik). |
 | `@camstack/addon-osd-manager` | `packages/addon-osd-manager` | 0.1.318 | addons dir | Binds camera on-screen-display slots to live state and recognitions |
-| `@camstack/addon-pipeline` | `packages/addon-pipeline` | 1.2.652 | addons dir (image-seeded) | Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle. |
+| `@camstack/addon-pipeline` | `packages/addon-pipeline` | 1.2.653 | addons dir (image-seeded) | Pipeline bundle — runner, detection, motion, audio + stream broker. Multi-entry npm package shipping pipeline addons under a single bundle. |
 | `@camstack/addon-pipeline-orchestrator` | `packages/addon-pipeline-orchestrator` | 1.2.689 | addons dir (image-seeded) | Hub-side camera-to-agent load balancer — tracks runner capacity and dispatches attachCamera calls to the optimal pipeline-runner instance |
-| `@camstack/addon-post-analysis` | `packages/addon-post-analysis` | 1.2.706 | addons dir (image-seeded) | Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output. |
+| `@camstack/addon-post-analysis` | `packages/addon-post-analysis` | 1.2.707 | addons dir (image-seeded) | Post-Analysis bundle — enrichment, embedding-encoder, pipeline-analytics. Multi-entry npm package shipping addons that consume pipeline output. |
 | `@camstack/addon-provider-amcrest` | `packages/addon-provider-amcrest` | 0.2.172 | addons dir | Amcrest/Dahua camera device provider addon for CamStack — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config) |
 | `@camstack/addon-provider-bosch` | `packages/addon-provider-bosch` | 0.1.54 | addons dir | Bosch smart-home device-provider addons for CamStack — SHC, Home Connect, and HomeCom cloud integrations (scaffold) |
-| `@camstack/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.2.176 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
+| `@camstack/addon-provider-dreame` | `packages/addon-provider-dreame` | 0.2.177 | addons dir | Dreame robot-vacuum / lawn-mower device-provider addon for CamStack — wraps the @apocaliss92/nodedreame Dreamehome cloud client |
 | `@camstack/addon-provider-dreo` | `packages/addon-provider-dreo` | 0.2.164 | addons dir | Dreo smart-device (fan / air-circulator / purifier / heater / humidifier) device-provider addon for CamStack — wraps the @apocaliss92/nodedreo Dreo cloud client (REST + WebSocket) |
 | `@camstack/addon-provider-ecowitt` | `packages/addon-provider-ecowitt` | 0.2.166 | addons dir | Ecowitt weather-station device-provider addon for CamStack — wraps the @apocaliss92/nodewitt local-poll / push client |
 | `@camstack/addon-provider-enpal` | `packages/addon-provider-enpal` | 0.1.22 | addons dir | Enpal solar-box device-provider addon for CamStack — PV, battery, grid, house and heat-pump readings from the box's own web-page channel, its local InfluxDB or its device page |
@@ -80,7 +80,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-smtp-nodemailer` | `packages/addon-smtp-nodemailer` | 1.2.156 | addons dir | SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons. |
 | `@camstack/addon-static-turn` | `packages/addon-static-turn` | 1.2.147 | addons dir | Static / self-hosted (coturn) TURN provider for CamStack |
 | `@camstack/addon-tailscale` | `packages/addon-tailscale` | 1.2.154 | addons dir | Tailscale bundle for CamStack — joins the host to a tailnet (client) and exposes the hub via Serve/Funnel (ingress). Multi-entry npm package shipping 2 addons under a single bundle. |
-| `@camstack/addon-terminal` | `packages/addon-terminal` | 0.1.164 | addons dir | Interactive terminal sessions (pty + xterm) as a CamStack addon |
+| `@camstack/addon-terminal` | `packages/addon-terminal` | 0.1.165 | addons dir | Interactive terminal sessions (pty + xterm) as a CamStack addon |
 | `@camstack/addon-training` | `packages/addon-training` | 0.1.138 | addons dir | Cloud training for CamStack: fine-tune the root detector on your own frames, on your own GPU-cloud account |
 | `@camstack/addon-waste-collections` | `packages/addon-waste-collections` | 0.1.43 | addons dir | Waste collection schedules via the vendored HACS waste_collection_schedule Python core — full source catalog as calendar-source. |
 | `@camstack/server-framework` | `packages/system` | _private_ | addons dir | Source of the kernel + builtins. Private workspace: its built dist ships inside the @camstack/server tarball as @camstack/server/system. |

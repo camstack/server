@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.177] - 2026-11-15
+
 ### Fixed
 
 - The lawn mower reports its faults, including a low-temperature charging pause, on the error capability

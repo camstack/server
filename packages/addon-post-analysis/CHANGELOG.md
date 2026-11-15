@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.707] - 2026-11-15
+
 ### Changed
 
 - A sensor, button or lock notification is titled with the device and its state, and a camera going offline or coming back is titled with its name.

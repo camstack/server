@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.571] - 2026-11-15
+
 ### Added
 
 - terminal-session reports whether a node's server shell is enabled, and why it is refused.

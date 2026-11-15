@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.165] - 2026-11-15
+
 ### Added
 
 - Admins can open a login shell on a node that opts in; it is off by default, audited, and closed when idle.
