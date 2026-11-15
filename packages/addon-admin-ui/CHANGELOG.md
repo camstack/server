@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device card History and Interactions: single page scroll in the embedded card, exact time and details on each interaction, per-point chips
+- Customize lists the weather station readings
 
 ### Removed
 

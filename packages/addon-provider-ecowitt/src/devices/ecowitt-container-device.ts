@@ -11,7 +11,7 @@ import {
   weatherStationCapability,
 } from '@camstack/types'
 import { ecowittFacades } from '../ecowitt-gateway.js'
-import { entriesForGroup } from '../ecowitt-sensor-groups.js'
+import { childEntriesForGroup, entriesForGroup } from '../ecowitt-sensor-groups.js'
 import {
   capForQuantity,
   ecowittGroupDeviceType,
@@ -19,8 +19,8 @@ import {
   sensorLabel,
 } from '../ecowitt-mapping.js'
 import {
-  isStationReadingSensorId,
-  stationSliceFromSensors,
+  isGatewayPressureSensorId,
+  stationSliceWithGatewayPressure,
   type StationSensorSample,
 } from '../station-reading.js'
 import { EcowittSensorDevice } from './ecowitt-sensor-device.js'
@@ -79,7 +79,9 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
 
   constructor(ctx: DeviceContext) {
     const cfg = ecowittContainerSchema.parse(ctx.persistedConfig ?? {})
-    super(ctx, ecowittContainerSchema, { type: ecowittGroupDeviceType(cfg.deviceGroup) })
+    super(ctx, ecowittContainerSchema, {
+      type: ecowittGroupDeviceType(cfg.deviceGroup),
+    })
     this.gatewayId = cfg.gatewayId
     this.integrationId = cfg.integrationId
     this.station = cfg.deviceGroup === 'weather-station'
@@ -122,16 +124,11 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     // Read the LIVE config so an additive reconcile (re-persisted `sensors[]`
     // via applyDerivedSpec) spawns new children + removes orphaned ones.
-    const inGroup = entriesForGroup(
+    const own = childEntriesForGroup(
       this.config.values.sensors,
       this.config.values.deviceGroup,
       ecowittFacades.getSensors(this.gatewayId),
     )
-    // The station supplies its own readings (and their history) on its slice: no sensor child
-    // is spawned for one. A sensor the slice does not carry (battery, lightning) still is.
-    const own = this.station
-      ? inGroup.filter((sensor) => !isStationReadingSensorId(sensor.sensorId))
-      : inGroup
     return own.map((sensor) => {
       const meta: AccessoryChildSpec['meta'] = {
         type: DeviceType.Sensor,
@@ -167,13 +164,17 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
     for (const refusal of refused) {
       this.ctx.logger.warn('ecowitt station: reading refused', {
         tags: { deviceId: this.id },
-        meta: { sensorId: refusal.sensorId, unit: refusal.unit, reason: refusal.reason },
+        meta: {
+          sensorId: refusal.sensorId,
+          unit: refusal.unit,
+          reason: refusal.reason,
+        },
       })
     }
     this.runtimeState.setCapState(weatherStationCapability.name, status)
   }
 
-  private stationFromLive(): ReturnType<typeof stationSliceFromSensors> {
+  private stationFromLive(): ReturnType<typeof stationSliceWithGatewayPressure> {
     const live = ecowittFacades.getSensors(this.gatewayId)
     const ownIds = new Set(
       entriesForGroup(this.config.values.sensors, 'weather-station', live).map(
@@ -181,9 +182,12 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
       ),
     )
     const samples: StationSensorSample[] = []
+    const gatewaySamples: StationSensorSample[] = []
     for (const sensor of live) {
-      if (!ownIds.has(sensor.id)) continue
-      samples.push({
+      const own = ownIds.has(sensor.id)
+      if (!own && !isGatewayPressureSensorId(sensor.id)) continue
+      const target = own ? samples : gatewaySamples
+      target.push({
         id: sensor.id,
         quantity: String(sensor.quantity),
         name: sensor.name,
@@ -193,6 +197,6 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
         lastUpdated: sensor.lastUpdated > 0 ? sensor.lastUpdated : Date.now(),
       })
     }
-    return stationSliceFromSensors(samples)
+    return stationSliceWithGatewayPressure(samples, gatewaySamples)
   }
 }

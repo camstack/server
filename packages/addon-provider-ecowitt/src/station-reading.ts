@@ -55,6 +55,8 @@ const BY_KEY: Readonly<Record<string, { readonly field: StationField; readonly r
   humidity: { field: 'humidity', rank: 0 },
   baromrelin: { field: 'pressure', rank: 0 },
   baromabsin: { field: 'pressure', rank: 1 },
+  '0x09': { field: 'pressure', rank: 0 },
+  '0x08': { field: 'pressure', rank: 1 },
   windspeedmph: { field: 'windSpeed', rank: 0 },
   windgustmph: { field: 'windGust', rank: 0 },
   winddir: { field: 'windBearing', rank: 0 },
@@ -112,8 +114,8 @@ const QUANTITY_OF: Readonly<Record<StationField, ReadingQuantity>> = {
   solarRadiation: 'irradiance',
   dewPoint: 'temperature',
   feelsLike: 'temperature',
-  // A vapour-pressure deficit is a pressure; the base unit is hPa (1 kPa = 10 hPa).
-  vpd: 'pressure',
+  // A vapour-pressure deficit is stored in kPa, not the pressure base (hPa): see `storedValue`.
+  vpd: 'none',
   windGustMax: 'speed',
   windBearingAvg: 'angle',
   rain24h: 'precipitation',
@@ -176,6 +178,15 @@ function storedValue(
   field: StationField,
 ): { ok: true; value: number } | { ok: false; reason: string } | { ok: true; value: null } {
   if (sensor.value === null || !Number.isFinite(sensor.value)) return { ok: true, value: null }
+  if (field === 'vpd') {
+    // The series is kPa. Read it as a pressure (base hPa) so any pressure unit converts, then back.
+    const hpa = ingestReading({
+      value: sensor.value,
+      rawUnit: sensor.unit.length > 0 ? sensor.unit : 'kPa',
+      quantity: 'pressure',
+    })
+    return hpa.ok ? { ok: true, value: hpa.value / 10 } : { ok: false, reason: hpa.reason }
+  }
   const result = ingestReading({
     value: sensor.value,
     rawUnit: sensor.unit.length > 0 ? sensor.unit : undefined,
@@ -209,7 +220,11 @@ export function stationSliceFromSensors(
     for (const sensor of ordered) {
       const stored = storedValue(sensor, field)
       if (!stored.ok) {
-        refused.push({ sensorId: sensor.id, unit: sensor.unit, reason: stored.reason })
+        refused.push({
+          sensorId: sensor.id,
+          unit: sensor.unit,
+          reason: stored.reason,
+        })
         continue
       }
       readings[field] = stored.value
@@ -217,4 +232,40 @@ export function stationSliceFromSensors(
     }
   }
   return { status: { ...readings, lastFetchedAt }, refused }
+}
+
+/** Barometer keys of the gateway console (relative first); the station's own array may lack one. */
+const GATEWAY_PRESSURE_KEYS: ReadonlySet<string> = new Set([
+  'baromrelin',
+  'baromabsin',
+  '0x09',
+  '0x08',
+])
+
+/** True for a barometer reading the gateway console itself carries. */
+export function isGatewayPressureSensorId(sensorId: string): boolean {
+  return GATEWAY_PRESSURE_KEYS.has(fieldKeyOf(sensorId))
+}
+
+/**
+ * The station slice, with `pressure` borrowed from the gateway console's barometer (relative,
+ * else absolute) when the station's own sensors carry none. The gateway sensors stay devices of
+ * their own: this only reads them.
+ */
+export function stationSliceWithGatewayPressure(
+  own: readonly StationSensorSample[],
+  gateway: readonly StationSensorSample[],
+): StationSliceResult {
+  const result = stationSliceFromSensors(own)
+  if (result.status.pressure !== null) return result
+  const borrowed = stationSliceFromSensors(gateway.filter((s) => isGatewayPressureSensorId(s.id)))
+  if (borrowed.status.pressure === null) return result
+  return {
+    status: {
+      ...result.status,
+      pressure: borrowed.status.pressure,
+      lastFetchedAt: Math.max(result.status.lastFetchedAt, borrowed.status.lastFetchedAt),
+    },
+    refused: [...result.refused, ...borrowed.refused],
+  }
 }

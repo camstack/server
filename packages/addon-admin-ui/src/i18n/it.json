@@ -2941,7 +2941,8 @@
         "remote": "Telecomando",
         "running-state": "In funzione",
         "fan-control": "Ventola",
-        "climate-control": "Sensore stanza"
+        "climate-control": "Sensore stanza",
+        "weather-station": "Stazione meteo"
       },
       "edit": "Modifica",
       "editWhat": "Modifica {{title}}",

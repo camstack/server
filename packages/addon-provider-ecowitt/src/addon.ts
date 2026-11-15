@@ -343,7 +343,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
           meta: { gatewayKey },
         })
       } catch (err) {
-        this.ctx.logger.warn('Ecowitt: duplicate sensor removal failed', {
+        this.ctx.logger.warn('Ecowitt: sensor retire failed (duplicate or station reading)', {
           tags: { deviceId: id },
           meta: { gatewayKey, error: errMsg(err) },
         })

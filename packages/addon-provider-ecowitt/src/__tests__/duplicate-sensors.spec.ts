@@ -6,7 +6,7 @@ import {
   type DuplicateScanRow,
 } from '../ecowitt-duplicate-sensors.js'
 import type { Sensor } from '@apocaliss92/nodewitt'
-import { entriesForGroup } from '../ecowitt-sensor-groups.js'
+import { childEntriesForGroup, entriesForGroup } from '../ecowitt-sensor-groups.js'
 
 const GW = 'ecowitt:192-168-20-181'
 const container = (
@@ -132,5 +132,35 @@ describe('sensor children whose reading the station now supplies', () => {
   it('never touches the gateway indoor readings nor a channel sensor', () => {
     const ids = findStationReadingChildren(rows)
     for (const keep of [291, 293, 4177, 3950]) expect(ids).not.toContain(keep)
+  })
+})
+
+describe('the weather-station container children', () => {
+  const entries = [
+    { sensorId: '8E:0x02', quantity: 'temperature' },
+    { sensorId: '8E:0x13', quantity: 'precipitation' },
+    { sensorId: '8E:wh68batt', quantity: 'battery' },
+    { sensorId: '8E:lightning_num', quantity: 'lightning_count' },
+  ] as const
+  const liveIn = (category: Sensor['category']): Sensor[] =>
+    entries.map((e) => ({
+      id: e.sensorId,
+      quantity: 'temperature',
+      value: 1,
+      unit: '',
+      raw: '1',
+      lastUpdated: 0,
+      category,
+    }))
+
+  it('skips the readings the station supplies, keeps battery and lightning', () => {
+    const ids = childEntriesForGroup(entries, 'weather-station', liveIn('weather-station')).map(
+      (e) => e.sensorId,
+    )
+    expect(ids).toEqual(['8E:wh68batt', '8E:lightning_num'])
+  })
+
+  it('another group keeps every entry', () => {
+    expect(childEntriesForGroup(entries, 'gateway', liveIn('gateway'))).toHaveLength(4)
   })
 })

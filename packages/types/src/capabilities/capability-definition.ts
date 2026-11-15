@@ -528,6 +528,8 @@ export type HistoryUnit =
   | 'fps'
   | 'm/s'
   | 'L'
+  | 'kPa'
+  | 'index'
   | 'mm'
   | 'mm/h'
   | 'W/m²'
@@ -558,6 +560,8 @@ export const HISTORY_UNIT_LABELS: Readonly<Record<HistoryUnit, string>> = {
   bytes: 'bytes',
   kbps: 'kbps',
   fps: 'fps',
+  kPa: 'kPa',
+  index: 'UV index',
   mm: 'mm',
   'mm/h': 'mm/h',
   'W/m²': 'W/m²',

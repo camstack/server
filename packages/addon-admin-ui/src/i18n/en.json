@@ -2866,7 +2866,8 @@
         "remote": "Remote",
         "running-state": "Running",
         "fan-control": "Fan",
-        "climate-control": "Room sensor"
+        "climate-control": "Room sensor",
+        "weather-station": "Weather station"
       },
       "edit": "Edit",
       "editWhat": "Edit {{title}}",

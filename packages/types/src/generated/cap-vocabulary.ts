@@ -5105,7 +5105,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         field: 'vpd',
         quantity: { en: 'the vapour-pressure deficit', it: 'il deficit di pressione di vapore' },
         label: { en: 'VPD', it: 'VPD' },
-        unit: 'hPa',
+        unit: 'kPa',
         icon: 'gauge',
       },
       {

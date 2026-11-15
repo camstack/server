@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - plate-gallery and face-gallery: sample mediaId / key frame + box, PlateInfo.cropMissReason, moveVehicleSample and moveIdentitySample
 - The weather station records its own readings with history and also reports feels-like, VPD, daily maximum gust, average wind bearing and 24 h, weekly, monthly and yearly rain
+- Weather station: vapour-pressure deficit in kPa, UV on its own index unit, and a Customize section that lets any reading be assigned from another device or a device become a station
 
 ### Removed
 

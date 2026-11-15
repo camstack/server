@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   isStationReadingSensorId,
+  stationSliceWithGatewayPressure,
   stationSliceFromSensors,
   type StationSensorSample,
 } from '../station-reading.js'
@@ -21,7 +22,12 @@ function sensor(
 describe('stationSliceFromSensors', () => {
   it('fills the outdoor readings and leaves what the station does not report null', () => {
     const { status, refused } = stationSliceFromSensors([
-      sensor({ id: '8E:tempf', quantity: 'temperature', value: 68, unit: '°F' }),
+      sensor({
+        id: '8E:tempf',
+        quantity: 'temperature',
+        value: 68,
+        unit: '°F',
+      }),
       sensor({ id: '8E:humidity', quantity: 'humidity', value: 55, unit: '%' }),
       sensor({
         id: '8E:windgustmph',
@@ -56,8 +62,18 @@ describe('stationSliceFromSensors', () => {
 
   it('prefers relative pressure over absolute', () => {
     const { status } = stationSliceFromSensors([
-      sensor({ id: 'gw:baromabsin', quantity: 'pressure', value: 1000, unit: 'hPa' }),
-      sensor({ id: 'gw:baromrelin', quantity: 'pressure', value: 1013, unit: 'hPa' }),
+      sensor({
+        id: 'gw:baromabsin',
+        quantity: 'pressure',
+        value: 1000,
+        unit: 'hPa',
+      }),
+      sensor({
+        id: 'gw:baromrelin',
+        quantity: 'pressure',
+        value: 1013,
+        unit: 'hPa',
+      }),
     ])
     expect(status.pressure).toBe(1013)
   })
@@ -99,7 +115,7 @@ describe('the station carries every outdoor reading the standalone sensors used 
 
   it('fills the new fields', () => {
     expect(status.feelsLike).toBe(18)
-    expect(status.vpd).toBeCloseTo(8, 5)
+    expect(status.vpd).toBeCloseTo(0.8, 5)
     expect(status.windGustMax).toBe(9)
     expect(status.windBearingAvg).toBe(100)
     expect(status.rain24h).toBe(3)
@@ -121,5 +137,52 @@ describe('the station carries every outdoor reading the standalone sensors used 
     for (const [id] of live) expect(isStationReadingSensorId(id)).toBe(true)
     expect(isStationReadingSensorId('8E:wh68batt')).toBe(false)
     expect(isStationReadingSensorId('gateway:tempinf')).toBe(false)
+  })
+})
+
+describe('the station borrows the gateway barometer', () => {
+  const outdoor = [sensor({ id: '8E:0x02', quantity: 'temperature', value: 20, unit: '°C' })]
+  const gateway = [
+    sensor({
+      id: 'gateway:baromabsin',
+      quantity: 'pressure',
+      value: 990,
+      unit: 'hPa',
+    }),
+    sensor({
+      id: 'gateway:baromrelin',
+      quantity: 'pressure',
+      value: 1013,
+      unit: 'hPa',
+    }),
+    sensor({
+      id: 'gateway:tempinf',
+      quantity: 'temperature',
+      value: 25,
+      unit: '°C',
+    }),
+  ]
+
+  it('fills pressure from the relative barometer and never touches indoor temperature', () => {
+    const { status } = stationSliceWithGatewayPressure(outdoor, gateway)
+    expect(status.pressure).toBe(1013)
+    expect(status.temperature).toBe(20)
+  })
+
+  it('falls back to the absolute barometer', () => {
+    const { status } = stationSliceWithGatewayPressure(outdoor, gateway.slice(0, 1))
+    expect(status.pressure).toBe(990)
+  })
+
+  it('the station own barometer wins', () => {
+    const own = [
+      ...outdoor,
+      sensor({ id: '8E:0x09', quantity: 'pressure', value: 1000, unit: 'hPa' }),
+    ]
+    expect(stationSliceWithGatewayPressure(own, gateway).status.pressure).toBe(1000)
+  })
+
+  it('stays null without any barometer', () => {
+    expect(stationSliceWithGatewayPressure(outdoor, []).status.pressure).toBeNull()
   })
 })

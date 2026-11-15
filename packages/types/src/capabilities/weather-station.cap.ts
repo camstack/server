@@ -3,6 +3,7 @@ import { DeviceType } from '../device/device-type.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
 import { readingMeta } from '../units/quantity.js'
 import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import type { CapabilityCustomizeSpec, ScalarCustomizeTarget } from './customize-spec.js'
 
 /**
  * A physical weather station (an Ecowitt outdoor array, and the same shape for
@@ -52,11 +53,11 @@ export const WeatherStationReadingsSchema = z.object({
     .number()
     .nullable()
     .meta(readingMeta('temperature', { precision: 1 })),
-  /** Vapour-pressure deficit. Stored as a pressure (hPa, 10 hPa = 1 kPa). */
+  /** Vapour-pressure deficit, stored in kPa (the unit stations and growers read it in). */
   vpd: z
     .number()
     .nullable()
-    .meta(readingMeta('pressure', { precision: 1 })),
+    .meta(readingMeta('none', { precision: 2 })),
   /** Highest wind gust since local midnight. */
   windGustMax: z.number().nullable().meta(readingMeta('speed')),
   /** Wind bearing averaged over the station's own window. */
@@ -101,6 +102,81 @@ const numeric = (
   icon,
 })
 
+/** Every reading of the station with the unit a Customize source must carry ('' = dimensionless). */
+const STATION_FIELD_UNITS = {
+  temperature: '°C',
+  humidity: '%',
+  pressure: 'hPa',
+  windSpeed: 'm/s',
+  windGust: 'm/s',
+  windBearing: '°',
+  rainRate: 'mm/h',
+  rainDaily: 'mm',
+  rainEvent: 'mm',
+  uv: '',
+  solarRadiation: 'W/m²',
+  dewPoint: '°C',
+  feelsLike: '°C',
+  vpd: 'kPa',
+  windGustMax: 'm/s',
+  windBearingAvg: '°',
+  rain24h: 'mm',
+  rainWeekly: 'mm',
+  rainMonthly: 'mm',
+  rainYearly: 'mm',
+} as const satisfies Record<keyof z.infer<typeof WeatherStationReadingsSchema>, string>
+
+type StationField = keyof typeof STATION_FIELD_UNITS
+
+function isStationField(key: string): key is StationField {
+  return Object.prototype.hasOwnProperty.call(STATION_FIELD_UNITS, key)
+}
+
+const STATION_FIELDS: readonly StationField[] =
+  Object.keys(STATION_FIELD_UNITS).filter(isStationField)
+
+/**
+ * One scalar target per reading, `apply: 'add'` and listed in `overridable` by its own id
+ * (the running-state / climate-control mechanism, D984 / D990): a station that reports a
+ * reading natively keeps it until the operator assigns another device to that ONE field,
+ * and a device with no `weather-station` slice becomes one from the sources picked. On an
+ * add, every other reading starts null (a missing sensor is never 0, D393).
+ */
+function stationTarget(field: StationField): ScalarCustomizeTarget {
+  const unit = STATION_FIELD_UNITS[field]
+  return {
+    id: field,
+    cardinality: 'scalar',
+    vocabulary: { cap: 'weather-station', stateField: field },
+    deviceTypes: [DeviceType.WeatherStation],
+    apply: 'add',
+    path: field,
+    sources: [
+      {
+        kind: 'numeric',
+        ...(unit.length > 0 ? { requiredUnit: unit } : {}),
+        transforms: [{ kind: 'identity' }],
+      },
+    ],
+    companions: [
+      ...STATION_FIELDS.filter((other) => other !== field).map((other) => ({
+        kind: 'constant' as const,
+        path: other,
+        value: null,
+        when: 'add' as const,
+      })),
+      { kind: 'clock', path: 'lastFetchedAt', when: 'always' },
+    ],
+    sourceReport: { status: 'assignment-status' },
+  }
+}
+
+const weatherStationCustomize = {
+  version: 1,
+  overridable: STATION_FIELDS.map((field) => ({ path: field, by: field })),
+  targets: STATION_FIELDS.map(stationTarget),
+} as const satisfies CapabilityCustomizeSpec
+
 export const weatherStationCapability = {
   name: 'weather-station',
   scope: 'device',
@@ -129,11 +205,11 @@ export const weatherStationCapability = {
       rainRate: { kind: 'gauge', unit: 'mm/h', deadband: 0.1 },
       rainDaily: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
       rainEvent: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
-      uv: { kind: 'gauge', unit: 'count', deadband: 0.1 },
+      uv: { kind: 'gauge', unit: 'index', deadband: 0.1 },
       solarRadiation: { kind: 'gauge', unit: 'W/m²', deadband: 5 },
       dewPoint: { kind: 'gauge', unit: '°C', deadband: 0.1 },
       feelsLike: { kind: 'gauge', unit: '°C', deadband: 0.1 },
-      vpd: { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
+      vpd: { kind: 'gauge', unit: 'kPa', deadband: 0.05 },
       windGustMax: { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
       windBearingAvg: { kind: 'gauge', unit: '°', deadband: 5 },
       rain24h: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
@@ -142,6 +218,7 @@ export const weatherStationCapability = {
       rainYearly: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
     },
   },
+  customize: weatherStationCustomize,
   /** The poll clock is written but is no reason to commit a row. */
   volatileStateFields: ['lastFetchedAt'],
   /**
@@ -242,7 +319,7 @@ export const weatherStationCapability = {
         'vpd',
         t('the vapour-pressure deficit', 'il deficit di pressione di vapore'),
         t('VPD', 'VPD'),
-        'hPa',
+        'kPa',
         'gauge',
       ),
       numeric(

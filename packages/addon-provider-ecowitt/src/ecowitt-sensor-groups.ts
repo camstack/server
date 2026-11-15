@@ -4,6 +4,7 @@ import {
   ECOWITT_DEVICE_GROUPS,
   type EcowittDeviceGroup,
 } from './ecowitt-mapping.js'
+import { isStationReadingSensorId } from './station-reading.js'
 import type { EcowittSensorEntry } from './devices/ecowitt-container-device.js'
 
 /** Resolve `deviceGroup` from a persisted container config (defaults to 'gateway'). */
@@ -93,4 +94,20 @@ export function entriesForGroup(
         : undefined)
     return sensor === undefined || deviceGroupForSensor(sensor.category, sensor.channel) === group
   })
+}
+
+/**
+ * The entries a Container spawns sensor children for. The weather station supplies its own
+ * readings on its slice (with history), so it spawns none for them; a sensor the slice does not
+ * carry (battery, lightning) still gets a child. Every other group spawns all of its entries.
+ */
+export function childEntriesForGroup(
+  entries: readonly EcowittSensorEntry[],
+  group: EcowittDeviceGroup,
+  live: readonly Sensor[],
+): readonly EcowittSensorEntry[] {
+  const own = entriesForGroup(entries, group, live)
+  return group === 'weather-station'
+    ? own.filter((entry) => !isStationReadingSensorId(entry.sensorId))
+    : own
 }
