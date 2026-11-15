@@ -7,6 +7,7 @@ import {
 } from './homematic-integration-manager.js'
 import { sameConnection, toHomematicOptions, type HomematicConfig } from './config.js'
 import { homematicFacades } from './homematic-facade-resolver.js'
+import { disposeCcuCallLimiter } from './hm-ccu-call-limiter.js'
 
 /**
  * Minimal surface the registry requires from each manager. Both the real
@@ -175,7 +176,7 @@ export class HmClientRegistry {
     if (entry === undefined) return
     this.#entries.delete(integrationId)
     this.#facades.delete(integrationId)
-    homematicFacades.disposeCallLimiter(integrationId)
+    disposeCcuCallLimiter(integrationId)
     homematicFacades.set(integrationId, null)
     homematicFacades.setSession(integrationId, null)
     if (entry.manager !== null) {

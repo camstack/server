@@ -1,11 +1,17 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { HmChannelLinkState, HmDevice } from 'nodehomematic'
 import { buildCcuDevicesHandlers } from '../ccu/ccu-devices-actions.js'
-import { publishKeyLinkStates, type KeyLinkFacade } from '../devices/hm-key-link-states.js'
+import {
+  publishKeyLinkStates,
+  storedKeyLinkStates,
+  type KeyLinkFacade,
+} from '../devices/hm-key-link-states.js'
 import {
   CCU_CALL_CONCURRENCY,
   CCU_TRANSIENT_RETRY_DELAYS_MS,
   CcuCallLimiterDisposedError,
+  ccuCallLimiter,
+  disposeCcuCallLimiter,
   HmCcuCallLimiter,
   isTransientCcuError,
 } from '../hm-ccu-call-limiter.js'
@@ -90,6 +96,34 @@ describe('CCU calls after a reconnect are bounded per integration', () => {
     expect(peak()).toBeLessThanOrEqual(CCU_CALL_CONCURRENCY)
   })
 
+  it('a refresh cut short by the session stopping publishes nothing and logs no failure', async () => {
+    vi.useFakeTimers()
+    const device = devices[0]
+    if (device === undefined) throw new Error('fixture')
+    const facade: KeyLinkFacade = {
+      devices: () => [device],
+      getKeyEventProgram: async () => null,
+      getChannelLinkState: async () => {
+        throw namedError('NoConnectionError')
+      },
+    }
+    const logger = new RecordingLogger()
+    const pending = publishKeyLinkStates(INTEGRATION, {
+      facade,
+      device,
+      deviceAddress: device.address,
+      deviceId: 100,
+      logger,
+    })
+    await vi.advanceTimersByTimeAsync(100)
+    disposeCcuCallLimiter(INTEGRATION)
+    await vi.runAllTimersAsync()
+    await expect(pending).resolves.toBeNull()
+    expect(storedKeyLinkStates(INTEGRATION, device.address)).toEqual([])
+    expect(logger.lines.filter((l) => l.level === 'warn')).toEqual([])
+    expect(logger.lines.find((l) => l.level === 'debug')?.tags).toMatchObject({ deviceId: 100 })
+  })
+
   it('the CCU page device list shares the same bound', async () => {
     const { facade, peak } = countingFacade()
     const { deps } = fakeDeps(facade)
@@ -170,11 +204,29 @@ describe('HmCcuCallLimiter', () => {
     await expect(first).resolves.toBeUndefined()
   })
 
-  it('the resolver hands one limiter per integration and drops it on clear', () => {
-    const a = homematicFacades.callLimiter('a')
-    expect(homematicFacades.callLimiter('a')).toBe(a)
-    expect(homematicFacades.callLimiter('b')).not.toBe(a)
+  it('one limiter per integration, dropped when the resolver clears', () => {
+    const a = ccuCallLimiter('a')
+    expect(ccuCallLimiter('a')).toBe(a)
+    expect(ccuCallLimiter('b')).not.toBe(a)
     homematicFacades.clear()
-    expect(homematicFacades.callLimiter('a')).not.toBe(a)
+    expect(ccuCallLimiter('a')).not.toBe(a)
+  })
+
+  it('a call waiting out a backoff is not re-run once the session stops', async () => {
+    vi.useFakeTimers()
+    const limiter = new HmCcuCallLimiter({ retryDelaysMs: [10_000] })
+    const call = vi.fn().mockRejectedValue(namedError('BackendUnavailableError'))
+    const pending = limiter.run(call)
+    const outcome = pending.then(
+      () => 'resolved',
+      (err: unknown) => err,
+    )
+    await vi.advanceTimersByTimeAsync(1_000)
+    expect(call).toHaveBeenCalledTimes(1)
+    limiter.dispose()
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(call).toHaveBeenCalledTimes(1)
+    expect(await outcome).toBeInstanceOf(CcuCallLimiterDisposedError)
+    expect(vi.getTimerCount()).toBe(0)
   })
 })

@@ -40,7 +40,7 @@ export function isTransientCcuError(err: unknown): err is TransientCcuError {
   return err instanceof Error && TRANSIENT_CCU_ERROR_NAMES.has(err.name)
 }
 
-/** Raised for a call still queued when its integration's session is stopped. */
+/** Raised for a call still queued, or waiting out a backoff, when its integration's session is stopped. */
 export class CcuCallLimiterDisposedError extends Error {
   constructor() {
     super('Homematic session stopped before the CCU call ran')
@@ -69,6 +69,8 @@ export class HmCcuCallLimiter {
   readonly #concurrency: number
   readonly #retryDelaysMs: readonly number[]
   readonly #queue: QueuedCall[] = []
+  /** Backoff sleeps in progress; dispose cancels them so no call runs after it. */
+  readonly #sleeps: Set<QueuedCall> = new Set()
   #active = 0
   #disposed = false
 
@@ -87,10 +89,15 @@ export class HmCcuCallLimiter {
     }
   }
 
-  /** Stop retrying and reject every queued call. In-flight calls finish on their own. */
+  /**
+   * Stop retrying: reject every queued call and every call waiting out a
+   * backoff. A call already on the wire finishes on its own.
+   */
   dispose(): void {
     this.#disposed = true
     for (const queued of this.#queue.splice(0)) queued.cancel(new CcuCallLimiterDisposedError())
+    for (const sleep of [...this.#sleeps]) sleep.cancel(new CcuCallLimiterDisposedError())
+    this.#sleeps.clear()
   }
 
   #acquire(): Promise<void> {
@@ -122,10 +129,33 @@ export class HmCcuCallLimiter {
       } catch (err: unknown) {
         const delay = this.#retryDelaysMs[attempt]
         if (this.#disposed || delay === undefined || !isTransientCcuError(err)) throw err
-        await new Promise<void>((resolve) => setTimeout(resolve, delay))
+        await this.#sleep(delay)
       }
     }
   }
+
+  /** A backoff wait that {@link dispose} rejects with {@link CcuCallLimiterDisposedError}. */
+  #sleep(delayMs: number): Promise<void> {
+    return new Promise<void>((resolve, reject) => {
+      const sleep: QueuedCall = {
+        start: () => {
+          this.#sleeps.delete(sleep)
+          resolve()
+        },
+        cancel: (err) => {
+          clearTimeout(timer)
+          reject(err)
+        },
+      }
+      const timer = setTimeout(sleep.start, delayMs)
+      this.#sleeps.add(sleep)
+    })
+  }
+}
+
+/** True when a CCU call was dropped because its session stopped — not a read failure. */
+export function isCcuCallDisposed(err: unknown): err is CcuCallLimiterDisposedError {
+  return err instanceof CcuCallLimiterDisposedError
 }
 
 /** One limiter per integration id, shared by its devices and the CCU page. */

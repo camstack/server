@@ -2,7 +2,7 @@ import type { IScopedLogger } from '@camstack/types'
 import type { HmChannel, HmDevice, Homematic } from 'nodehomematic'
 import { directLinksOfKey, isHmipDevice, keyEventProgramName } from '../ccu/ccu-button-events.js'
 import { channelNameLookup, type HmChannelNames } from '../ccu/hm-channel-names.js'
-import { ccuCallLimiter } from '../hm-ccu-call-limiter.js'
+import { ccuCallLimiter, isCcuCallDisposed } from '../hm-ccu-call-limiter.js'
 import type { HmKeyLinkState } from './hm-button-events-section.js'
 import { channelIndexFromAddress } from './hm-cold-start.js'
 import { hmKeyChannels } from './hm-key-vocabulary.js'
@@ -59,7 +59,9 @@ interface OneKeyRead {
  * Read each key channel's central link from the CCU and publish that list.
  * `null` when the device has no key channel — the previous snapshot stays,
  * because an empty channel list is not evidence the buttons are gone.
- * A failed read is published as `central: null` and `failed: true`.
+ * A failed read is published as `central: null` and `failed: true`. A read
+ * dropped because the session stopped is not a failure: nothing is published
+ * and the result is `null`.
  *
  * Every CCU read goes through the integration's call limiter: a reconnect makes
  * every device call this at once, and a booting CCU must not see that burst.
@@ -71,6 +73,24 @@ export async function publishKeyLinkStates(
   const keys = hmKeyChannels(read.device)
   if (keys.length === 0) return null
   const names = channelNameLookup(read.facade.devices())
+  try {
+    return await readAndPublish(integrationId, read, keys, names)
+  } catch (err: unknown) {
+    if (!isCcuCallDisposed(err)) throw err
+    read.logger.debug('Homematic session stopped during the key link refresh, nothing published', {
+      tags: { deviceId: read.deviceId },
+      meta: { address: read.deviceAddress },
+    })
+    return null
+  }
+}
+
+async function readAndPublish(
+  integrationId: string,
+  read: KeyLinkRead,
+  keys: readonly HmChannel[],
+  names: (channelAddress: string) => HmChannelNames,
+): Promise<KeyLinkPublishResult> {
   const limiter = ccuCallLimiter(integrationId)
   const coverage = await keyEventCoverage(read, (name) =>
     limiter.run(() => read.facade.getKeyEventProgram(name)),
@@ -104,6 +124,7 @@ async function keyEventCoverage(
     if (program === null) return new Map()
     return new Map(program.channelAddresses.map((address) => [address, name]))
   } catch (err: unknown) {
+    if (isCcuCallDisposed(err)) throw err
     read.logger.warn('Homematic key event program could not be read', {
       tags: { deviceId: read.deviceId },
       meta: {
@@ -139,6 +160,7 @@ async function readKey(
       },
     }
   } catch (err: unknown) {
+    if (isCcuCallDisposed(err)) throw err
     read.logger.warn('Homematic key channel link state could not be read', {
       tags: { deviceId: read.deviceId },
       meta: {

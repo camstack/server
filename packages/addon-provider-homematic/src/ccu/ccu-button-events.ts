@@ -6,7 +6,7 @@ import type { CcuActionDeps, CcuFacade } from './ccu-facade.js'
 import { errorText, requireConfirmed, requireFacade } from './ccu-facade.js'
 import type { CcuDeviceRow, KeyChannelLink, KeyDirectLink } from './ccu-schemas.js'
 import { channelNameLookup, type HmChannelNames } from './hm-channel-names.js'
-import { ccuCallLimiter } from '../hm-ccu-call-limiter.js'
+import { ccuCallLimiter, isCcuCallDisposed } from '../hm-ccu-call-limiter.js'
 
 /** The channels this key actuates: links where it is the SENDER. */
 export function directLinksOfKey(
@@ -69,6 +69,7 @@ async function programChannelsOf(
     const program = await ccuCallLimiter(integrationId).run(() => facade.getKeyEventProgram(name))
     return new Set(program?.channelAddresses ?? [])
   } catch (err: unknown) {
+    if (isCcuCallDisposed(err)) throw sessionStopped(deps, integrationId, device.address, deviceId)
     deps.logger.warn('Homematic key event program could not be read', {
       ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
       meta: { integrationId, address: device.address, error: errorText(err) },
@@ -104,6 +105,7 @@ async function keyChannelRow(
       links: directLinksOfKey(channel.address, state.links, names),
     }
   } catch (err: unknown) {
+    if (isCcuCallDisposed(err)) throw sessionStopped(deps, integrationId, channel.address, deviceId)
     deps.logger.warn('Homematic key channel link state could not be read', {
       ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
       meta: { integrationId, address: channel.address, error: errorText(err) },
@@ -112,9 +114,27 @@ async function keyChannelRow(
   }
 }
 
-/** Something that can say whether a CCU address is adopted (a set or the id map). */
+/**
+ * A dropped call is not a read failure: the session stopped under the request,
+ * so the request fails as a whole instead of showing the keys as `unknown`.
+ */
+function sessionStopped(
+  deps: CcuActionDeps,
+  integrationId: string,
+  address: string,
+  deviceId: number | undefined,
+): Error {
+  deps.logger.debug('Homematic session stopped during a CCU page read', {
+    ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
+    meta: { integrationId, address },
+  })
+  return new Error('Homematic session stopped before the CCU answered')
+}
+
+/** CCU address → CamStack device id of the adopted devices (a missing address is not adopted). */
 export interface AdoptedAddressIndex {
   has(address: string): boolean
+  get(address: string): number | undefined
 }
 
 /** Key-channel central-link rows for adopted devices. */
@@ -131,7 +151,7 @@ export async function keyChannelsForDevice(
   const facade = deps.facade(integrationId)
   if (facade === null) return []
   const names = channelNameLookup(facade.devices())
-  const deviceId = (await deps.adoptedAddresses(integrationId)).get(device.address)
+  const deviceId = adopted.get(device.address)
   const programChannels = isHmipDevice(device)
     ? await programChannelsOf(deps, integrationId, facade, device, deviceId)
     : undefined
