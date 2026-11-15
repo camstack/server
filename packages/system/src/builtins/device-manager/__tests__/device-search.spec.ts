@@ -162,7 +162,11 @@ describe('searchDevices', () => {
     const deps = makeDeps({ fleet: smallFleet })
     const ids = async (text: string) =>
       (await searchDevices(deps, { text, limit: 200 })).items.map((i) => i.id)
-    expect(await ids('00007')).toEqual([7])
+    const byDigits = await ids('00007')
+    // The padded name "00007" is an exact word. A neighbour such as "00017"
+    // is one edit away, so the shared fuzzy rank includes it afterwards.
+    expect(byDigits[0]).toBe(7)
+    expect(byDigits.indexOf(17)).toBeGreaterThan(0)
     expect((await ids('garage')).every((id) => LOCATIONS[id % 5] === 'Garage')).toBe(true)
     expect((await ids('philips')).every((id) => INTEGRATIONS[id % 3] === 'hue')).toBe(true)
     expect((await ids('camera')).length).toBe(20)
@@ -321,6 +325,101 @@ describe('searchDevices', () => {
       await searchDevices(deps, { requires: { caps: ['temperature'] }, limit: 5 })
       const ids = readStatus.mock.calls[0]?.[0] ?? []
       expect(ids.length).toBeLessThanOrEqual(5)
+    })
+  })
+
+  describe('order by name', () => {
+    // A Sensor named "Alfa" and a Camera named "Zeta": type order would put
+    // the camera first; the picker orders by NAME.
+    const zeta = device(1, { name: 'Zeta porta', type: DeviceType.Camera, location: 'Hall' })
+    const alfa = device(2, { name: 'Alfa porta', type: DeviceType.Sensor, location: 'Hall' })
+    const fleet = [zeta, alfa]
+
+    it('empty text lists devices alphabetically, whatever their type', async () => {
+      const res = await searchDevices(makeDeps({ fleet }), { limit: 20 })
+      expect(res.items.map((item) => item.id)).toEqual([2, 1])
+    })
+
+    it('with text, one rank tier is ordered by name', async () => {
+      const res = await searchDevices(makeDeps({ fleet }), { text: 'porta', limit: 20 })
+      expect(res.items.map((item) => item.id)).toEqual([2, 1])
+    })
+  })
+
+  describe('text ranking', () => {
+    const parent = device(1, {
+      name: 'Bagno camerette',
+      type: DeviceType.Camera,
+      location: 'Upstairs',
+    })
+    const child = device(2, {
+      name: 'Movimento',
+      parentDeviceId: 1,
+      type: DeviceType.Sensor,
+      location: 'Hall',
+      stableId: 'motion-1',
+    })
+    const exactTypo = device(3, {
+      name: 'Bagn camerete',
+      type: DeviceType.Light,
+      location: 'Office',
+    })
+    const device102 = device(102, {
+      name: 'Cortile',
+      stableId: 'stable-102',
+      location: 'Garden',
+      type: DeviceType.Camera,
+    })
+    const device108 = device(108, {
+      name: 'Ingresso',
+      stableId: 'stable-108',
+      location: 'Hall',
+      type: DeviceType.Sensor,
+    })
+    const fleet = [parent, child, exactTypo, device102, device108]
+
+    it('finds a child whose parent container is named "Bagno camerette"', async () => {
+      const deps = makeDeps({ fleet })
+      const res = await searchDevices(deps, { text: 'bagno camerette', limit: 20 })
+      expect(res.items.map((item) => item.id)).toContain(2)
+      expect(res.total).toBe(2)
+      expect(res.facets.types.find((facet) => facet.value === DeviceType.Sensor)?.count).toBe(1)
+    })
+
+    it('a typo of the parent name still finds the child', async () => {
+      const deps = makeDeps({ fleet })
+      const res = await searchDevices(deps, { text: 'bagn camerete', limit: 20 })
+      expect(res.items.map((item) => item.id)).toContain(2)
+    })
+
+    it('ranks an exact name above a fuzzy hit', async () => {
+      const deps = makeDeps({ fleet })
+      const res = await searchDevices(deps, { text: 'bagn camerete', limit: 20 })
+      const ids = res.items.map((item) => item.id)
+      expect(ids[0]).toBe(3)
+      expect(ids.indexOf(3)).toBeLessThan(ids.indexOf(2))
+    })
+
+    it('never fuzzy-matches device 102 when the query is 108', async () => {
+      const deps = makeDeps({ fleet })
+      const as108 = await searchDevices(deps, { text: '108', limit: 20 })
+      expect(as108.items.map((item) => item.id)).toEqual([108])
+      const asHash = await searchDevices(deps, { text: '#102', limit: 20 })
+      expect(asHash.items.map((item) => item.id)).toEqual([102])
+    })
+
+    it('pages the ranked list without repeats or gaps', async () => {
+      const deps = makeDeps({ fleet })
+      const full = await searchDevices(deps, { text: 'bagn camerete', limit: 20 })
+      const seen: number[] = []
+      let cursor: string | null = null
+      do {
+        const page = await searchDevices(deps, { text: 'bagn camerete', limit: 1, cursor })
+        seen.push(...page.items.map((item) => item.id))
+        cursor = page.nextCursor
+      } while (cursor !== null)
+      expect(seen).toEqual(full.items.map((item) => item.id))
+      expect(new Set(seen).size).toBe(seen.length)
     })
   })
 

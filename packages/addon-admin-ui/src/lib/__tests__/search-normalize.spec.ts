@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { normalizeSearchText } from '../search-normalize'
+import { normalizeSearchText } from '@camstack/types'
 
 describe('normalizeSearchText', () => {
   it('lowercases', () => {

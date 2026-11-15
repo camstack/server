@@ -109,6 +109,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A stored token grant, internal action or composed device that names the retired thermostat type loads again, read as climate
 - New messages for an email target with no sender, or a sender that no longer exists.
 - A remote reports that it does not read the player's mute back
+- The device picker finds a device by its parent container's name, including a typo, and lists an exact name first.
 
 ### Removed
 

@@ -2765,3 +2765,4 @@ export {
 export * from './migrations/api/migration-api.v1.js'
 export * from './migrations/api/migration-api.v1.schema.js'
 export * from './migrations/api/migration-api-ports.js'
+export { normalizeSearchText, searchRank, type SearchRankFields } from './search/search-match.js'

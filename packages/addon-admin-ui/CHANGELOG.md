@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Admin search uses the same matcher as the device picker, so a typo in a parent name or other keyword matches.
+
 ## [1.2.674] - 2026-11-15
 
 ### Added

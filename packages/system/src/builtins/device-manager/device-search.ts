@@ -30,6 +30,7 @@ import {
   DEVICE_SEARCH_MAX_LIMIT,
   deviceOffersActions,
   errMsg,
+  searchRank,
 } from '@camstack/types'
 
 /** The wireable fields of one capability, as `wireableEntryForDef` derives them. */
@@ -67,45 +68,103 @@ const SUGGESTED_MAX = 8
 
 interface Candidate {
   readonly device: DeviceInfo
-  readonly haystack: string
   readonly integrationId: string | null
   readonly integrationLabel: string | null
+  /** `searchRank` when the query has text; `null` when it does not (the old order). */
+  readonly rank: number | null
   /** Required caps this device holds (empty when nothing is required). */
   matchedCaps: readonly string[]
   compatible: boolean
 }
 
-type SortKey = readonly [number, string, string, number]
+/** Empty-text order: compatible, then by NAME (type and id only break ties). */
+type UnrankedKey = readonly [number, string, string, number]
+/** Text order: rank tier, then the empty-text order (name). The cursor carries whichever was used. */
+type RankedKey = readonly [number, number, string, string, number]
+type SortKey = UnrankedKey | RankedKey
 
-function sortKeyOf(c: Candidate): SortKey {
-  return [c.compatible ? 0 : 1, c.device.type, c.device.name.toLowerCase(), c.device.id]
+function unrankedKeyOf(c: Candidate): UnrankedKey {
+  return [c.compatible ? 0 : 1, c.device.name.toLowerCase(), c.device.type, c.device.id]
 }
 
-function compareKeys(a: SortKey, b: SortKey): number {
+function sortKeyOf(c: Candidate): SortKey {
+  const base = unrankedKeyOf(c)
+  if (c.rank === null) return base
+  return [c.rank, base[0], base[1], base[2], base[3]]
+}
+
+function compareUnranked(a: UnrankedKey, b: UnrankedKey): number {
   if (a[0] !== b[0]) return a[0] - b[0]
   if (a[1] !== b[1]) return a[1] < b[1] ? -1 : 1
   if (a[2] !== b[2]) return a[2] < b[2] ? -1 : 1
   return a[3] - b[3]
 }
 
+function compareKeys(a: SortKey, b: SortKey): number {
+  if (a.length === 5 && b.length === 5) {
+    if (a[0] !== b[0]) return a[0] - b[0]
+    return compareUnranked([a[1], a[2], a[3], a[4]], [b[1], b[2], b[3], b[4]])
+  }
+  if (a.length === 4 && b.length === 4) return compareUnranked(a, b)
+  return a.length - b.length
+}
+
 function encodeCursor(key: SortKey): string {
   return Buffer.from(JSON.stringify(key), 'utf8').toString('base64url')
+}
+
+function unrankedFrom(parsed: readonly unknown[]): UnrankedKey | null {
+  const compatible = parsed[0]
+  const name = parsed[1]
+  const type = parsed[2]
+  const id = parsed[3]
+  if (typeof compatible !== 'number' || typeof name !== 'string' || typeof type !== 'string') {
+    return null
+  }
+  if (typeof id !== 'number') return null
+  return [compatible, name, type, id]
 }
 
 function decodeCursor(cursor: string): SortKey | null {
   try {
     const parsed: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8'))
-    if (!Array.isArray(parsed) || parsed.length !== 4) return null
-    const c: unknown = parsed[0]
-    const t: unknown = parsed[1]
-    const n: unknown = parsed[2]
-    const i: unknown = parsed[3]
-    if (typeof c !== 'number' || typeof t !== 'string' || typeof n !== 'string') return null
-    if (typeof i !== 'number') return null
-    return [c, t, n, i]
+    if (!Array.isArray(parsed)) return null
+    if (parsed.length === 4) return unrankedFrom(parsed)
+    if (parsed.length !== 5) return null
+    const rank = parsed[0]
+    const rest = unrankedFrom(parsed.slice(1))
+    if (typeof rank !== 'number' || rest === null) return null
+    return [rank, rest[0], rest[1], rest[2], rest[3]]
   } catch {
     return null
   }
+}
+
+function parentName(device: DeviceInfo, nameById: ReadonlyMap<number, string>): string | null {
+  if (device.parentDeviceId === null) return null
+  return nameById.get(device.parentDeviceId) ?? null
+}
+
+/** Label is the device name. The parent name is a keyword, so a container is searchable. */
+function textRank(
+  text: string,
+  device: DeviceInfo,
+  containerName: string | null,
+  integrationLabel: string | null,
+): number | null {
+  const keywords = [
+    containerName,
+    device.location,
+    device.type,
+    integrationLabel,
+    device.integrationId ?? null,
+    device.stableId,
+  ].filter((value): value is string => value !== null && value.length > 0)
+  return searchRank(text, {
+    label: device.name,
+    keywords,
+    identifiers: [String(device.id), `#${device.id}`],
+  })
 }
 
 /** `colourTemperature` / `battery_level` → `Colour temperature` / `Battery level`. */
@@ -185,6 +244,9 @@ export async function searchDevices(
 ): Promise<DeviceSearchResult> {
   const [fleet, labels] = await Promise.all([deps.listDevices(), deps.integrationLabels()])
   const req = requireOf(input)
+  const nameById = new Map(fleet.map((device) => [device.id, device.name]))
+  const text = input.text ?? ''
+  const hasText = text.trim().length > 0
 
   const candidates = fleet.map((device): Candidate => {
     const integrationId = device.integrationId ?? null
@@ -193,16 +255,7 @@ export async function searchDevices(
       device,
       integrationId,
       integrationLabel,
-      haystack: [
-        device.name,
-        device.location ?? '',
-        device.type,
-        integrationId ?? '',
-        integrationLabel ?? '',
-        String(device.id),
-      ]
-        .join('\u0000')
-        .toLowerCase(),
+      rank: hasText ? textRank(text, device, parentName(device, nameById), integrationLabel) : null,
       matchedCaps: [],
       compatible: !needsBindings(req),
     }
@@ -212,9 +265,7 @@ export async function searchDevices(
     return resolveIds(deps, input, candidates)
   }
 
-  const needle = (input.text ?? '').trim().toLowerCase()
-  const textPass =
-    needle === '' ? candidates : candidates.filter((c) => c.haystack.includes(needle))
+  const textPass = hasText ? candidates.filter((c) => c.rank !== null) : candidates
 
   if (needsBindings(req)) {
     const bound = await deps.boundCaps(textPass.map((c) => c.device.id))

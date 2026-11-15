@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**250 units · 8797 source files · 243 units claimed by at least one document (8766 files).**
+**251 units · 8797 source files · 244 units claimed by at least one document (8766 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -38,9 +38,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline` | 71 | `detection-execution`, `tooling` | `architecture/detection-execution.md`, `decisions/adr-0742-a-coreml-package-is-loaded-once-in-a-child-before-the-pool-loads-it-and-a-yolo26-coreml-export-is-static.md`, `decisions/adr-0823-onnx-webgpu-holds-one-inference-session-per-os-process.md`, +21 more | 2026-10-24 |
 | `packages/cli/src/mcp` | 70 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +3 more | 2026-11-04 |
 | `packages/types/src/composition` | 68 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +19 more | 2026-11-08 |
-| `packages/addon-admin-ui/src/lib` | 63 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
 | `packages/addon-provider-reolink` | 63 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +22 more, 2 ADRs | 2026-11-08 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
+| `packages/addon-admin-ui/src/lib` | 62 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
 | `packages/addon-pipeline/src/detection-pipeline` | 62 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `decisions/adr-1013-one-instance-model.md`, +52 more, 5 ADRs | 2026-10-24 |
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +3 more, 1 ADR | 2026-10-14 |
 | `packages/addon-pipeline/src/pipeline-runner` | 58 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +43 more, 14 ADRs | 2026-10-24 |
@@ -260,6 +260,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/history` | 1 | — | `architecture/device-history.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-11-08 |
 | `packages/types/src/media` | 1 | `post-analysis` | `decisions/adr-0476-a-media-key-names-its-table-and-the-codec-is-the-only-place-that-spells-it.md`, `decisions/adr-0482-a-media-row-is-addressed-by-its-own-id.md`, `decisions/adr-0560-a-clip-source-over-recorded-footage-is-registered-by-the-addon-that-owns-the-footage-and-the-half-that-went-remote-is-the-half-that-needs-a-degradation.md`, +2 more | 2026-10-04 |
 | `packages/types/src/process` | 1 | `alerts-and-health` | `architecture/load-ledger.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
+| `packages/types/src/search` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/system` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0861-the-hub-has-a-human-name-in-one-setting-an-unset-name-reads-as-the-hostname-and-is-never-written-by-the-hub.md` | — |
 | `packages/ui-library/src/generated` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/testing` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
