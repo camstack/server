@@ -5184,6 +5184,13 @@
       "summary": "How many runs the panel and the bands are given; the cap's page size."
     },
     {
+      "name": "DEVICE_TEMPLATE_DOCS_URL",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-template-field/DeviceTemplateField.tsx",
+      "summary": ""
+    },
+    {
       "name": "DEVICE_TYPE_CONTROL",
       "kind": "constant",
       "area": "composites",
@@ -6436,7 +6443,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-template-field/DeviceTemplateField.tsx",
-      "summary": "A text field for a device template (`{{ alias.field | filter }}`). Device references show as chips (alias.field, the device name on hover) until the field is edited; an \"insert value\" button picks device → field and w…",
+      "summary": "The one device-template editor. A consumer passes the text, `onChange` and its context; this owns the box, \"+ Device value\", \"+ Function\", Ctrl+Space, the help link and the hub's validation and preview.",
       "props": [
         {
           "name": "handle",
@@ -6496,7 +6503,7 @@
           "name": "preview",
           "type": "boolean",
           "optional": true,
-          "doc": "Show the rendered text under the field (one hub call per pause in typing)."
+          "doc": "Show the rendered text under the field. Default on — the hub renders it."
         },
         {
           "name": "allowedDeviceIds",
@@ -6541,7 +6548,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-template-field/device-template-model.ts",
-      "summary": "The token for one value. The short form `{{ alias.field }}` resolves only when exactly one cap of the device carries a field of that name; otherwise the cap is spelled out (`{{ alias.cap_name.field }}`), as the render…"
+      "summary": ""
     },
     {
       "name": "deviceTypeLabel",

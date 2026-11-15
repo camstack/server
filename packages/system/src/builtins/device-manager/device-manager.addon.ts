@@ -950,6 +950,7 @@ export class DeviceManagerAddon extends BaseAddon {
       renderDeviceTemplates: (input) => templates.render(input),
       checkDeviceTemplates: (input) => templates.check(input),
       setLocation: (input) => metaActions.setLocation(pctx, input),
+      setTags: (input) => metaActions.setTags(pctx, input),
       setType: (input) => metaActions.setType(pctx, input),
       setIntegrationId: (input) => metaActions.setIntegrationId(pctx, input),
       setLinkDeviceId: (input) => metaActions.setLinkDeviceId(pctx, input),

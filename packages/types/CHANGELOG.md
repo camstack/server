@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Tags: owner records carry optional tags, and the new tags capability lists, styles, renames and removes a tag everywhere in one call
+
 ## [1.2.575] - 2026-11-15
 
 ### Changed

@@ -332,6 +332,7 @@ export async function listAll(
       ...(m.primaryChildPreference !== undefined
         ? { primaryChildPreference: m.primaryChildPreference }
         : {}),
+      ...(m.tags !== undefined ? { tags: m.tags } : {}),
       ...(m.display !== undefined ? { display: m.display } : {}),
       // Forked-worker accessory children (e.g. HA sensor entities)
       // persist entityId + system in the config blob. Reconstruct
@@ -416,6 +417,7 @@ export async function getDevice(
     ...(m.primaryChildPreference !== undefined
       ? { primaryChildPreference: m.primaryChildPreference }
       : {}),
+    ...(m.tags !== undefined ? { tags: m.tags } : {}),
     ...(m.display !== undefined ? { display: m.display } : {}),
     // Forked-worker accessory children (e.g. HA sensor entities)
     // persist entityId + system in the config blob. Reconstruct
@@ -537,6 +539,7 @@ function projectChildren(
       ...(m.primaryChildPreference !== undefined
         ? { primaryChildPreference: m.primaryChildPreference }
         : {}),
+      ...(m.tags !== undefined ? { tags: m.tags } : {}),
       ...(m.display !== undefined ? { display: m.display } : {}),
       // Forked-worker accessory children (e.g. HA sensor entities)
       // persist entityId + system in the config blob. Reconstruct

@@ -19,6 +19,7 @@ import {
   IDLE_ACTION_STATUS,
   internalActionId,
   isInternalActionId,
+  normalizeTags,
   INTERNAL_ACTION_PREFIX,
   type IScopedLogger,
   type RecordKindHandle,
@@ -31,6 +32,12 @@ export interface ActionsStoreOptions {
   readonly logger?: IScopedLogger
   readonly now?: () => number
   readonly newId?: () => string
+}
+
+/** The stored `tags` of a write: normalised, and absent when there are none. */
+function tagsBody(tags: readonly string[] | undefined): { tags?: string[] } {
+  const normalized = normalizeTags(tags ?? [])
+  return normalized.length === 0 ? {} : { tags: normalized }
 }
 
 function uuidOf(actionId: string): string {
@@ -64,6 +71,7 @@ export class ActionsStore {
       ...(body.minDelaySec === undefined || body.minDelaySec === 0
         ? {}
         : { minDelaySec: body.minDelaySec }),
+      ...(body.tags === undefined || body.tags.length === 0 ? {} : { tags: body.tags }),
       status: IDLE_ACTION_STATUS,
     }
   }
@@ -126,6 +134,7 @@ export class ActionsStore {
       ...(input.minDelaySec === undefined || input.minDelaySec === 0
         ? {}
         : { minDelaySec: input.minDelaySec }),
+      ...tagsBody(input.tags),
       createdAt: at,
       updatedAt: at,
     }
@@ -143,11 +152,20 @@ export class ActionsStore {
       ...(input.minDelaySec === undefined || input.minDelaySec === 0
         ? {}
         : { minDelaySec: input.minDelaySec }),
+      ...tagsBody(input.tags),
       createdAt: existing.data.createdAt,
       updatedAt: this.now(),
     }
     await this.actions.put({ id: existing.id, data: body })
     return ActionsStore.entryOf(existing.id, body)
+  }
+
+  /** Replace the tags of an internal action; its steps and `updatedAt` are left as they are. */
+  async setTags(actionId: string, tags: readonly string[]): Promise<void> {
+    const existing = isInternalActionId(actionId) ? await this.actions.get(uuidOf(actionId)) : null
+    if (existing === null) throw new ActionError('not-found', `no internal action "${actionId}"`)
+    const { tags: _previous, ...rest } = existing.data
+    await this.actions.put({ id: existing.id, data: { ...rest, ...tagsBody(tags) } })
   }
 
   async delete(actionId: string): Promise<boolean> {

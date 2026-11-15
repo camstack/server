@@ -9,6 +9,7 @@
 import { randomUUID } from 'node:crypto'
 import {
   type RecordKindHandle,
+  normalizeTags,
   type Scheduler,
   SchedulerError,
   type SchedulerInput,
@@ -20,6 +21,13 @@ export interface SchedulersStoreOptions {
   readonly state: RecordKindHandle<SchedulerStateRowBody>
   readonly now?: () => number
   readonly newId?: () => string
+}
+
+/** The input with its tags normalised; an empty list is stored as absent (D1054). */
+function withNormalizedTags(input: SchedulerInput): SchedulerInput {
+  const { tags, ...rest } = input
+  const normalized = normalizeTags(tags ?? [])
+  return normalized.length === 0 ? rest : { ...rest, tags: normalized }
 }
 
 export class SchedulersStore {
@@ -59,7 +67,7 @@ export class SchedulersStore {
   async create(input: SchedulerInput): Promise<Scheduler> {
     const id = this.newId()
     const at = this.now()
-    const body: SchedulerRowBody = { ...input, createdAt: at, updatedAt: at }
+    const body: SchedulerRowBody = { ...withNormalizedTags(input), createdAt: at, updatedAt: at }
     await this.schedulers.put({ id, data: body })
     // A new scheduler never replays the past.
     await this.setProcessedUntil(id, at)
@@ -71,7 +79,7 @@ export class SchedulersStore {
     if (existing === null) throw new SchedulerError('not-found', `no scheduler "${schedulerId}"`)
     const at = this.now()
     const body: SchedulerRowBody = {
-      ...input,
+      ...withNormalizedTags(input),
       createdAt: existing.data.createdAt,
       updatedAt: at,
     }
@@ -79,6 +87,20 @@ export class SchedulersStore {
     // An edit never replays the past either: points before now belong to the old timeline.
     await this.setProcessedUntil(existing.id, at)
     return SchedulersStore.of(existing.id, body)
+  }
+
+  /**
+   * Replace the tags of a scheduler without touching its timeline: no
+   * processed-until reset (a tag is not an edit of the timeline) and the same
+   * `updatedAt`.
+   */
+  async setTags(schedulerId: string, tags: readonly string[]): Promise<void> {
+    const existing = await this.schedulers.get(schedulerId)
+    if (existing === null) throw new SchedulerError('not-found', `no scheduler "${schedulerId}"`)
+    const { tags: _previous, ...rest } = existing.data
+    const normalized = normalizeTags(tags)
+    const body: SchedulerRowBody = normalized.length === 0 ? rest : { ...rest, tags: normalized }
+    await this.schedulers.put({ id: existing.id, data: body })
   }
 
   async delete(schedulerId: string): Promise<boolean> {

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1496 method paths across 208 capabilities.
+ * Coverage: 1501 method paths across 209 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -415,6 +415,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.setRoleDisplayDefaults': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setSiteZone': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setStreamProfileMap': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.setTags': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setType': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setWrapperActive': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.testCreationField': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1374,6 +1375,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'system.setLoggingSettings': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'system.setRetentionConfig': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'system.setSiteLocation': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'tags.list': { capName: "tags", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'tags.remove': { capName: "tags", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'tags.rename': { capName: "tags", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'tags.setStyle': { capName: "tags", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'tamper.getStatus': { capName: "tamper", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'temperatureSensor.getStatus': { capName: "temperature-sensor", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'template.create': { capName: "template", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1705,6 +1710,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "stream-signals",
   "switch",
   "system",
+  "tags",
   "tamper",
   "temperature-sensor",
   "template",
@@ -1936,6 +1942,7 @@ export const SYSTEM_CAP_NAMES: readonly string[] = [
   "storage-provider",
   "stream-broker",
   "system",
+  "tags",
   "template",
   "terminal-session",
   "toast",

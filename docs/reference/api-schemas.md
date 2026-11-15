@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1086 shared schemas.**
+**1088 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1376,6 +1376,7 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 - `placement`: `CoreBlockPlacementSchema`
 - `integrationId?`: `string`
 - `settingsSchema?`: `<custom>`
+- `tags?`: `string[]`
 
 ### `CoreBlockPlacementSchema`
 
@@ -1392,6 +1393,7 @@ Enum: `"numeric" \| "select" \| "text" \| "datetime"`
 - `placement`: `CoreBlockPlacementSchema`
 - `integrationId?`: `string`
 - `settingsSchema?`: `<custom>`
+- `tags?`: `string[]`
 - `id`: `string`
 - `createdAt`: `number`
 - `updatedAt`: `number`
@@ -1679,6 +1681,7 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 - `name`: `string`
 - `alias?`: `string`
 - `location`: `string \| null`
+- `tags?`: `string[]`
 - `disabled`: `boolean`
 - `parentDeviceId`: `number \| null`
 - `role?`: `string \| null`
@@ -7099,6 +7102,22 @@ Enum: `"jwt-signing-key"`
 - `gpuPercent?`: `number`
 - `gpuMemoryPercent?`: `number`
 
+### `TagEntrySchema`
+
+- `name`: `string`
+- `color`: `"tag-a" \| "tag-b" \| "tag-c" \| "tag-d" \| "tag-e" \| "tag-f" \| "tag-g" \| "tag-h"`
+- `icon`: `<custom>`
+- `styled`: `boolean`
+- `counts`: `TagUsageCountsSchema`
+
+### `TagUsageCountsSchema`
+
+- `coreBlocks`: `number`
+- `schedulers`: `number`
+- `templates`: `number`
+- `actions`: `number`
+- `devices`: `number`
+
 ### `TamperStatusSchema`
 
 - `tampered`: `boolean`
@@ -7171,6 +7190,7 @@ Enum: `"jwt-signing-key"`
 - `createdAt`: `number`
 - `updatedAt`: `number`
 - `builtIn?`: `true`
+- `tags?`: `string[]`
 
 ### `TemplateUserSchema`
 

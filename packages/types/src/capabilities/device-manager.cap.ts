@@ -36,6 +36,7 @@ import {
 } from '../device/location-icon.js'
 import { SiteZoneSchema } from '../device/site-zone.js'
 import { SourceInfoSchema } from '../device/source-info.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 import { ReadingQuantitySchema } from '../units/quantity.js'
 import { DeviceSearchInputSchema, DeviceSearchResultSchema } from './device-search.js'
 import { AdoptionJobSchema } from '../interfaces/adoption-job.js'
@@ -141,6 +142,8 @@ export const DeviceInfoSchema = z.object({
   alias: DeviceAliasSchema.optional(),
   /** Operator-organisational location label. `null` when unset. */
   location: z.string().nullable(),
+  /** Operator tags (D1054), kept on the device meta beside `location`. Absent = no tags. */
+  tags: TagsFieldSchema.optional(),
   /** Soft-disabled flag. */
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
@@ -341,6 +344,8 @@ export const SavedDeviceRowSchema = z.object({
   name: z.string(),
   /** Operator-organisational location label. `null` when unset. */
   location: z.string().nullable(),
+  /** Operator tags (D1054), kept on the device meta beside `location`. Absent = no tags. */
+  tags: TagsFieldSchema.optional(),
   /** Soft-disabled flag. */
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
@@ -364,6 +369,8 @@ export const DeviceMetaSchema = z.object({
    *  `DeviceMeta.userNamed`. */
   userNamed: z.boolean().optional(),
   location: z.string().nullable(),
+  /** Operator tags (D1054), kept on the device meta beside `location`. Absent = no tags. */
+  tags: TagsFieldSchema.optional(),
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
@@ -748,6 +755,15 @@ export const deviceManagerCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
 
+    /** Replace the operator tags of one device (D1054). The list is normalised
+     *  on write (trimmed, deduplicated case-insensitively); `[]` clears them.
+     *  Tags are not inherited: unlike `setLocation`, nothing cascades to
+     *  descendants. */
+    setTags: method(z.object({ deviceId: z.number(), tags: TagsFieldSchema }), z.void(), {
+      kind: 'mutation',
+      auth: 'admin',
+    }),
+
     /** Update the device type. Writes the meta row, emits a
      *  `DeviceMetaChanged` event. Used by the kernel to apply
      *  `initialMeta.type` before device construction so the device
@@ -913,6 +929,7 @@ export const deviceManagerCapability = {
         deviceId: z.number(),
         name: z.string().optional(),
         location: z.string().nullable().optional(),
+        tags: TagsFieldSchema.optional(),
         type: z.enum(DeviceType).optional(),
         integrationId: z.string().optional(),
         linkDeviceId: z.number().nullable().optional(),

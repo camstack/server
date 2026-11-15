@@ -16,6 +16,7 @@
 import { z } from 'zod'
 import { AutomationRunOutcomeSchema } from './trace.js'
 import { ActionStepSchema } from './recipe.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 
 /** What a variable's value is. `select` takes one of `options`. */
 export const ActionVariableTypeSchema = z.enum(['string', 'number', 'boolean', 'select'])
@@ -177,6 +178,8 @@ export const ActionEntrySchema = z
      * action (two rules, a button, an automation).
      */
     minDelaySec: ActionMinDelaySecSchema.optional(),
+    /** Internal only: operator tags (D1054). Absent = no tags. */
+    tags: TagsFieldSchema.optional(),
     status: ActionStatusSchema,
   })
   .superRefine((entry, ctx) => {
@@ -220,6 +223,7 @@ export const ActionInputSchema = z.object({
   steps: z.array(ActionStepSchema).min(1).max(50),
   variables: z.array(ActionVariableSchema).max(20).optional(),
   minDelaySec: ActionMinDelaySecSchema.optional(),
+  tags: TagsFieldSchema.optional(),
 })
 export type ActionInput = z.infer<typeof ActionInputSchema>
 

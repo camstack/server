@@ -5,6 +5,9 @@ import {
   ActionMinDelaySecSchema,
   ActionStepSchema,
   ActionVariableSchema,
+  TagsFieldSchema,
+  TagStyleSchema,
+  type TagStyle,
   type Scheduler,
   SchedulerSchema,
   AutomationStateDocSchema,
@@ -65,6 +68,7 @@ export type ActionRowBody = {
   readonly steps: z.infer<typeof ActionStepSchema>[]
   readonly variables?: z.infer<typeof ActionVariableSchema>[]
   readonly minDelaySec?: number
+  readonly tags?: string[]
   readonly createdAt: number
   readonly updatedAt: number
 }
@@ -73,6 +77,7 @@ export const ActionRowBodySchema: z.ZodType<ActionRowBody> = z.object({
   steps: z.array(ActionStepSchema).min(1).max(50),
   variables: z.array(ActionVariableSchema).max(20).optional(),
   minDelaySec: ActionMinDelaySecSchema.optional(),
+  tags: TagsFieldSchema.optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })
@@ -104,6 +109,7 @@ export type TemplateRowBody = {
   readonly kind: z.infer<typeof TemplateKindSchema>
   readonly name: string
   readonly payload: unknown
+  readonly tags?: string[]
   readonly createdAt: number
   readonly updatedAt: number
 }
@@ -111,9 +117,18 @@ export const TemplateRowBodySchema: z.ZodType<TemplateRowBody> = z.object({
   kind: TemplateKindSchema,
   name: z.string().min(1).max(120),
   payload: z.unknown(),
+  tags: TagsFieldSchema.optional(),
   createdAt: z.number(),
   updatedAt: z.number(),
 })
+
+/**
+ * The style of one tag (D1054): colour token and icon. The row id is the tag's
+ * comparison key (`tagKey`: trimmed, lower-cased); `name` keeps the spelling the
+ * operator chose. A tag lives on the record it labels — only the style is stored here.
+ */
+export type TagStyleRowBody = TagStyle
+export const TagStyleRowBodySchema: z.ZodType<TagStyleRowBody> = TagStyleSchema
 
 /**
  * A pending timed run (D993): the device is on and the hub owes it an off at
@@ -214,6 +229,14 @@ const _coreBlocksRecordKinds = defineRecordKinds({
     retention: { none: 'operator delete only; a template a device still uses is refused' },
     maxDataBytes: 256 * 1024,
   },
+  'tag-styles': {
+    schema: TagStyleRowBodySchema,
+    class: 'config',
+    writeTrigger: 'the operator styles a tag (setStyle); a rename moves it; a remove deletes it',
+    device: 'none',
+    at: 'none',
+    retention: { none: 'operator action only: removing or renaming the tag' },
+  },
   settings: {
     schema: CoreBlockSettingsBodySchema,
     class: 'config',
@@ -233,6 +256,7 @@ export type CoreBlocksRecordKindsMap = {
   readonly 'scheduler-state': DefinedRecordKind<z.ZodType<SchedulerStateRowBody>>
   readonly 'action-links': DefinedRecordKind<z.ZodType<ActionLinksRowBody>>
   readonly templates: DefinedRecordKind<z.ZodType<TemplateRowBody>>
+  readonly 'tag-styles': DefinedRecordKind<z.ZodType<TagStyleRowBody>>
   readonly settings: DefinedRecordKind<z.ZodType<CoreBlockSettingsBody>>
 }
 

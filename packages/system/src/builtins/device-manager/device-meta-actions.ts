@@ -36,6 +36,7 @@ import {
   type IconKey,
   InferProvider,
   locationIconKey,
+  normalizeTags,
   normalizeUnit,
   reconcileReportedFeatures,
   type RoleDisplayDefault,
@@ -1280,6 +1281,37 @@ export async function setLocation(
   }
 }
 
+/** The tags a write stores: normalised, `null` (the column's absent form) when none are left. */
+function storedTags(tags: readonly string[]): string[] | null {
+  const normalized = normalizeTags(tags)
+  return normalized.length === 0 ? null : normalized
+}
+
+/**
+ * Replace the operator tags of one device (D1054). Normalised on write; `[]`
+ * clears them. Unlike `setLocation`, nothing cascades: a tag labels the record
+ * it is on. Emits `DeviceMetaChanged` (`field: 'tags'`).
+ */
+export async function setTags(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['setTags']>[0],
+): ReturnType<IDeviceManagerProvider['setTags']> {
+  const { deviceId } = input
+  const tags = storedTags(input.tags)
+  await pctx.metaStore.withMetaWriteLock(async () => {
+    const persisted = await pctx.metaStore.resolvePersistedById(deviceId)
+    if (!persisted) throw new Error(`[device-manager] setTags: unknown device id=${deviceId}`)
+    await pctx.metaStore.rows.patch(deviceId, { tags })
+  })
+  pctx.host.ctx.eventBus.emit({
+    id: randomUUID(),
+    timestamp: new Date(),
+    source: { type: 'device', id: deviceId },
+    category: EventCategory.DeviceMetaChanged,
+    data: { deviceId, field: 'tags', value: tags ?? [] },
+  })
+}
+
 /**
  * Update the device type. Writes the meta row, emits a
  * `DeviceMetaChanged` event. Used by the kernel to apply
@@ -1589,7 +1621,7 @@ export async function applyInitialMeta(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['applyInitialMeta']>[0],
 ): ReturnType<IDeviceManagerProvider['applyInitialMeta']> {
-  const { deviceId, name, location, type, integrationId, linkDeviceId, role } = input
+  const { deviceId, name, location, tags, type, integrationId, linkDeviceId, role } = input
   await pctx.metaStore.withMetaWriteLock(async () => {
     const persisted = await pctx.metaStore.resolvePersistedById(deviceId)
     if (!persisted)
@@ -1600,6 +1632,7 @@ export async function applyInitialMeta(
     await pctx.metaStore.rows.patch(deviceId, {
       ...(name !== undefined ? { name } : {}),
       ...(location !== undefined ? { location } : {}),
+      ...(tags !== undefined ? { tags: storedTags(tags) } : {}),
       ...(type !== undefined ? { type } : {}),
       ...(integrationId !== undefined ? { integrationId } : {}),
       ...(linkDeviceId !== undefined ? { linkDeviceId } : {}),
@@ -1620,6 +1653,7 @@ export async function applyInitialMeta(
   }
   if (name !== undefined) emitMetaChanged('name', name)
   if (location !== undefined) emitMetaChanged('location', location)
+  if (tags !== undefined) emitMetaChanged('tags', storedTags(tags) ?? [])
   if (type !== undefined) emitMetaChanged('type', type)
   if (integrationId !== undefined) emitMetaChanged('integrationId', integrationId)
   if (linkDeviceId !== undefined) emitMetaChanged('linkDeviceId', linkDeviceId)

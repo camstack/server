@@ -851,6 +851,9 @@ export const useDeviceManagerCheckDeviceTemplates: typeof trpc.deviceManager.che
 /** Generated alias around `trpc.deviceManager.setLocation.useMutation`. */
 export const useDeviceManagerSetLocation: typeof trpc.deviceManager.setLocation.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setLocation.useMutation)
 
+/** Generated alias around `trpc.deviceManager.setTags.useMutation`. */
+export const useDeviceManagerSetTags: typeof trpc.deviceManager.setTags.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setTags.useMutation)
+
 /** Generated alias around `trpc.deviceManager.setType.useMutation`. */
 export const useDeviceManagerSetType: typeof trpc.deviceManager.setType.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setType.useMutation)
 
@@ -3646,6 +3649,18 @@ export const useSystemSetLoggingSettings: typeof trpc.system.setLoggingSettings.
 
 /** Generated alias around `trpc.system.debugWatch.useMutation`. */
 export const useSystemDebugWatch: typeof trpc.system.debugWatch.useMutation = /*#__PURE__*/ alias(() => trpc.system.debugWatch.useMutation)
+
+/** Generated alias around `trpc.tags.list.useQuery`. */
+export const useTagsList: typeof trpc.tags.list.useQuery = /*#__PURE__*/ alias(() => trpc.tags.list.useQuery)
+
+/** Generated alias around `trpc.tags.setStyle.useMutation`. */
+export const useTagsSetStyle: typeof trpc.tags.setStyle.useMutation = /*#__PURE__*/ alias(() => trpc.tags.setStyle.useMutation)
+
+/** Generated alias around `trpc.tags.rename.useMutation`. */
+export const useTagsRename: typeof trpc.tags.rename.useMutation = /*#__PURE__*/ alias(() => trpc.tags.rename.useMutation)
+
+/** Generated alias around `trpc.tags.remove.useMutation`. */
+export const useTagsRemove: typeof trpc.tags.remove.useMutation = /*#__PURE__*/ alias(() => trpc.tags.remove.useMutation)
 
 /** Generated alias around `trpc.tamper.getStatus.useQuery`. */
 export const useTamperGetStatus: typeof trpc.tamper.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.tamper.getStatus.useQuery)

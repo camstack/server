@@ -491,6 +491,9 @@
             "name": "template"
           },
           {
+            "name": "tags"
+          },
+          {
             "name": "remote"
           },
           {

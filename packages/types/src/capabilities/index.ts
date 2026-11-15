@@ -2254,6 +2254,14 @@ export {
   templateCapability,
 } from './template.cap.js'
 export {
+  type ITagsProvider,
+  type TagEntry,
+  TagEntrySchema,
+  type TagUsageCounts,
+  TagUsageCountsSchema,
+  tagsCapability,
+} from './tags.cap.js'
+export {
   type IRemoteLayoutComponentsProvider,
   remoteLayoutComponentsCapability,
 } from './remote-layout-components.cap.js'
@@ -3592,6 +3600,7 @@ import type { remoteCapability } from './remote.cap.js'
 import type { heroLayoutCapability } from './hero-layout.cap.js'
 import type { fanPresetsCapability } from './fan-presets.cap.js'
 import type { templateCapability } from './template.cap.js'
+import type { tagsCapability } from './tags.cap.js'
 import type { remoteLayoutComponentsCapability } from './remote-layout-components.cap.js'
 import type { calendarSourceCapability } from './calendar-source.cap.js'
 import type { calendarsCapability } from './calendars.cap.js'
@@ -3961,6 +3970,7 @@ type AnyCapability =
   | typeof heroLayoutCapability
   | typeof fanPresetsCapability
   | typeof templateCapability
+  | typeof tagsCapability
   | typeof remoteLayoutComponentsCapability
   | typeof cameraCredentialsCapability
   | typeof deviceStatusCapability

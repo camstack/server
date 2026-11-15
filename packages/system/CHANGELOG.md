@@ -111,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A remote reports that it does not read the player's mute back
 - The device picker finds a device by its parent container's name, including a typo, and lists an exact name first.
 - Device template grammar takes its filter list and argument limits from the shared catalogue.
+- Core blocks, schedulers, templates, actions and devices keep operator tags; renaming or removing a tag rewrites all of them in one call
 
 ### Removed
 

@@ -206,6 +206,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "stream-signals",
   "switch",
   "system",
+  "tags",
   "tamper",
   "temperature-sensor",
   "template",

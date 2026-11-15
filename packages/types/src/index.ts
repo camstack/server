@@ -493,6 +493,23 @@ export {
   assignNodeColorId,
 } from './node-color.js'
 export type { NodeColorId } from './node-color.js'
+export {
+  DEFAULT_TAG_ICON,
+  TAG_COLOR_IDS,
+  TAG_NAME_MAX_LENGTH,
+  TAGS_PER_RECORD_MAX,
+  TagColorIdSchema,
+  TagNameSchema,
+  TagStyleSchema,
+  TagsFieldSchema,
+  defaultTagColorId,
+  normalizeTags,
+  removeFromTags,
+  renameInTags,
+  sameTag,
+  tagKey,
+} from './tags/tag.js'
+export type { TagColorId, TagName, TagStyle } from './tags/tag.js'
 export * from './types/analytics.js'
 export * from './types/appearance.js'
 export type { CameraPipelineConfig } from './types/camera-pipeline.js'

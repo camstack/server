@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 208 caps (107 device, 101 system).
+ * `*.cap.ts` (D1050): 209 caps (107 device, 102 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -5700,6 +5700,10 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
   'system': {
     scope: 'system',
     notOperatorFacing: 'cluster administration — nodes, server package, metrics',
+  },
+  'tags': {
+    scope: 'system',
+    notOperatorFacing: 'tags are managed from the tag picker and the tags manager, not actuated',
   },
   'template': {
     scope: 'system',

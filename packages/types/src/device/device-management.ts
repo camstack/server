@@ -38,6 +38,8 @@ export interface SavedDevice {
    * Kitchen" filters.
    */
   readonly location: string | null
+  /** Operator tags (D1054). Absent = no tags. */
+  readonly tags?: readonly string[]
   /**
    * Soft-disabled flag. When `true`, the device class is still
    * instantiated and visible in the UI (so the operator can flip it
@@ -156,6 +158,8 @@ export interface DeviceMeta {
    *  auto-derived children land with the flag unset and self-heal their names. */
   readonly userNamed?: boolean
   readonly location: string | null
+  /** Operator tags (D1054). Absent = no tags. */
+  readonly tags?: readonly string[]
   readonly disabled: boolean
   readonly parentDeviceId: number | null
   /** Hardware + identity blob; null when nothing has been populated yet. */

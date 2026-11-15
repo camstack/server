@@ -21,6 +21,7 @@ import {
   RawSecretMigrationReportSchema,
 } from './raw-secret-migration.js'
 import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 
 /**
  * core-blocks — user-authored TypeScript, stored in the kernel and executed in
@@ -163,6 +164,8 @@ export const CoreBlockInputFieldsSchema = z.object({
    * it. Absent ⇒ `getBlockSettings` returns null until one is known.
    */
   settingsSchema: CoreBlockSettingsSchemaBridge.optional(),
+  /** Operator tags (D1054), kept on the record. Absent = no tags. */
+  tags: TagsFieldSchema.optional(),
 })
 
 /** Client-authored fields for create — requires `code` or `files[entry]`. */
@@ -271,6 +274,8 @@ export const CoreBlockSchema = z.object({
   placement: CoreBlockPlacementSchema,
   integrationId: z.string().optional(),
   settingsSchema: CoreBlockSettingsSchemaBridge.optional(),
+  /** Operator tags (D1054). Absent = no tags. */
+  tags: TagsFieldSchema.optional(),
   id: z.string(),
   createdAt: z.number(),
   updatedAt: z.number(),

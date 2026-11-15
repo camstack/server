@@ -4,7 +4,7 @@
 
 # Capabilities
 
-208 capability definitions in `packages/types/src/capabilities/`.
+209 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -131,7 +131,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |
 
-## System-scoped (101)
+## System-scoped (102)
 
 Singleton or collection providers, addressed without a device.
 
@@ -167,7 +167,7 @@ Singleton or collection providers, addressed without a device.
 | `device-credentials` | 8 | — | — | — | — | `local-auth` |
 | `device-export` | 14 | ✓ | — | — | — | `export-alexa` `export-google` `export-hap` `homeassistant-export` |
 | `device-history` | 13 | — | — | — | — | `device-history` |
-| `device-manager` | 101 | — | — | — | — | `device-manager` |
+| `device-manager` | 102 | — | — | — | — | `device-manager` |
 | `device-provider` | 16 | — | — | — | — | `import-alexa` `matter-broker` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` |
 | `device-removal-hook` | 2 | — | — | — | ✓ | `stream-broker` `recorder` `pipeline-analytics` `provider-reolink` `device-history` |
 | `device-state` | 9 | — | — | — | — | `device-manager` |
@@ -228,6 +228,7 @@ Singleton or collection providers, addressed without a device.
 | `storage-provider` | 16 | — | — | — | ✓ | `sftp-storage` `s3-storage` `webdav-storage` `smb-storage` `filesystem-storage` |
 | `stream-broker` | 38 | — | — | — | — | `stream-broker` |
 | `system` | 16 | — | — | — | — | — |
+| `tags` | 4 | — | — | — | — | `core-blocks` |
 | `template` | 5 | — | — | — | — | `core-blocks` |
 | `terminal-session` | 10 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |

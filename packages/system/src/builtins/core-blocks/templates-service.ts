@@ -19,6 +19,7 @@ import {
   builtinAutomationTemplate,
   checkTemplatePayload,
   isBuiltinTemplateId,
+  normalizeTags,
   type BuiltinAutomationTemplate,
   type IScopedLogger,
   type ITemplateProvider,
@@ -50,9 +51,16 @@ function recordOf(id: string, body: TemplateRowBody): TemplateRecord {
     kind: body.kind,
     name: body.name,
     payload: body.payload,
+    ...(body.tags === undefined || body.tags.length === 0 ? {} : { tags: body.tags }),
     createdAt: body.createdAt,
     updatedAt: body.updatedAt,
   }
+}
+
+/** The stored `tags` of a write: normalised, absent when there are none. */
+function tagsBody(tags: readonly string[] | undefined): { tags?: string[] } {
+  const normalized = normalizeTags(tags ?? [])
+  return normalized.length === 0 ? {} : { tags: normalized }
 }
 
 /** A shipped template as a record: read-only, timeless. */
@@ -101,7 +109,7 @@ export class TemplatesService implements ITemplateProvider {
     return row === null ? null : recordOf(row.id, row.data)
   }
 
-  readonly create: ITemplateProvider['create'] = async ({ kind, name, payload }) => {
+  readonly create: ITemplateProvider['create'] = async ({ kind, name, payload, tags }) => {
     const checked = checkTemplatePayload(kind, payload)
     if (!checked.ok) {
       this.deps.logger.warn('template: a payload its kind does not accept was refused', {
@@ -114,6 +122,7 @@ export class TemplatesService implements ITemplateProvider {
       kind,
       name,
       payload: checked.payload,
+      ...tagsBody(tags),
       createdAt: at,
       updatedAt: at,
     }
@@ -122,7 +131,7 @@ export class TemplatesService implements ITemplateProvider {
     return { status: 'saved', template: recordOf(id, body) }
   }
 
-  readonly update: ITemplateProvider['update'] = async ({ id, name, payload }) => {
+  readonly update: ITemplateProvider['update'] = async ({ id, name, payload, tags }) => {
     if (isBuiltinTemplateId(id)) {
       return { status: 'refused', reason: 'read-only', detail: `"${id}" ships with CamStack` }
     }
@@ -145,6 +154,7 @@ export class TemplatesService implements ITemplateProvider {
       kind: existing.data.kind,
       name: name ?? existing.data.name,
       payload: nextPayload,
+      ...tagsBody(tags === undefined ? existing.data.tags : tags),
       createdAt: existing.data.createdAt,
       updatedAt: this.now(),
     }

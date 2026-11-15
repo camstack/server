@@ -298,6 +298,7 @@ export function toDeviceInfo(
     ...(metaRow?.primaryChildPreference !== undefined
       ? { primaryChildPreference: metaRow.primaryChildPreference }
       : {}),
+    ...(metaRow?.tags !== undefined ? { tags: metaRow.tags } : {}),
     ...(metaRow?.display !== undefined ? { display: metaRow.display } : {}),
   }
 }

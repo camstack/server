@@ -118,6 +118,8 @@ export interface PersistedDeviceMeta {
    * snapshot. Free-text — providers don't interpret it.
    */
   location: string | null
+  /** Operator tags (D1054), normalised on write. Absent = no tags. */
+  tags?: string[]
   /**
    * Soft-disabled flag. When `true`, the device class is still
    * instantiated and visible in the UI (so the operator can flip

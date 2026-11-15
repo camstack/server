@@ -122,6 +122,8 @@ export const DEVICE_ROWS_COLUMNS: readonly CollectionColumn[] = [
   { name: 'alias', type: 'TEXT' },
   { name: 'userNamed', type: 'BOOLEAN' },
   { name: 'location', type: 'TEXT' },
+  // Operator tags (D1054): a JSON array of names, absent = none.
+  { name: 'tags', type: 'JSON' },
   { name: 'disabled', type: 'BOOLEAN', notNull: true, defaultValue: false },
   { name: 'parentDeviceId', type: 'INTEGER' },
   { name: 'registered', type: 'BOOLEAN', notNull: true, defaultValue: false },
@@ -242,6 +244,7 @@ export interface DeviceRowPatch {
   readonly alias?: string
   readonly userNamed?: boolean
   readonly location?: string | null
+  readonly tags?: readonly string[] | null
   readonly disabled?: boolean
   readonly parentDeviceId?: number | null
   readonly registered?: boolean
@@ -364,6 +367,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
   }
 
   const location = readString(data['location'])
+  const tags = readStringArray(data['tags'])
   const parentDeviceId = readNumber(data['parentDeviceId'])
   const userNamed = readBoolean(data['userNamed'])
   const features = readStringArray(data['features'])
@@ -390,6 +394,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
     type,
     name,
     location: location ?? null,
+    ...(tags !== undefined && tags.length > 0 ? { tags: [...tags] } : {}),
     disabled: readBoolean(data['disabled']) ?? false,
     parentDeviceId: parentDeviceId ?? null,
     ...(alias !== undefined ? { alias } : {}),
@@ -445,6 +450,7 @@ export function encodeDeviceRow(
     alias: meta.alias ?? null,
     userNamed: meta.userNamed ?? null,
     location: meta.location,
+    tags: meta.tags === undefined || meta.tags.length === 0 ? null : [...meta.tags],
     disabled: meta.disabled,
     parentDeviceId: meta.parentDeviceId,
     registered: extra.registered ?? false,

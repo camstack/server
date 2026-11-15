@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The API serves the tags capability and deviceManager.setTags
+
 ## [1.2.877] - 2026-11-15
 
 ### Changed

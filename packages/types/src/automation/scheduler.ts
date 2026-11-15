@@ -30,6 +30,7 @@ import {
   validateWhenTree,
 } from './when.js'
 import { stepGuardSiteIssues, type WhenSiteIssue, whenSiteIssues } from './when-site.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 
 /** A `when` tree that is a STATE: no event leaf, and legal as a tree. */
 export const SchedulerStateTreeSchema: z.ZodType<AutomationWhen> = AutomationWhenSchema.superRefine(
@@ -137,6 +138,8 @@ export const SchedulerInputSchema = z.object({
     .max(24 * 3_600_000)
     .default(DEFAULT_MAX_LATE_MS),
   profiles: z.array(SchedulerProfileSchema).max(20),
+  /** Operator tags (D1054). Absent = no tags. */
+  tags: TagsFieldSchema.optional(),
 })
 export type SchedulerInput = z.infer<typeof SchedulerInputSchema>
 

@@ -28,6 +28,7 @@ import {
   CoreBlockSchema,
   coreBlockSourceKind,
   normalizeCoreBlockWrite,
+  normalizeTags,
   resolveCoreBlockEntry,
 } from '@camstack/types'
 import { coreBlocksRecordKinds, type CoreBlockRowBodySchema } from './record-kinds.js'
@@ -238,6 +239,7 @@ export class CoreBlockStore {
     const block: CoreBlock = CoreBlockSchema.parse({
       ...input,
       ...normalized,
+      ...(input.tags === undefined ? {} : { tags: normalizeTags(input.tags) }),
       id: this.newId(),
       createdBy,
       createdAt: now,
@@ -292,6 +294,7 @@ export class CoreBlockStore {
       ...existing,
       ...patch,
       ...(sourcePatch !== null ? { code: nextCode, files: nextFiles, entry: nextEntry } : {}),
+      ...(patch.tags === undefined ? {} : { tags: normalizeTags(patch.tags) }),
       id: existing.id,
       createdBy: existing.createdBy,
       createdAt: existing.createdAt,

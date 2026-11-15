@@ -63,6 +63,7 @@ import type { storageCapability } from '../capabilities/storage.cap.js'
 import type { storageMigrationCapability } from '../capabilities/storage-migration.cap.js'
 import type { streamBrokerCapability } from '../capabilities/stream-broker.cap.js'
 import type { systemCapability } from '../capabilities/system.cap.js'
+import type { tagsCapability } from '../capabilities/tags.cap.js'
 import type { templateCapability } from '../capabilities/template.cap.js'
 import type { terminalSessionCapability } from '../capabilities/terminal-session.cap.js'
 import type { toastCapability } from '../capabilities/toast.cap.js'
@@ -137,6 +138,7 @@ export interface SystemProxy {
   readonly storageMigration: Pick<InferProvider<typeof storageMigrationCapability>, 'plan' | 'start' | 'status' | 'cancel' | 'movers' | 'moverClearance' | 'residue' | 'drain' | 'cleanupStart' | 'cleanupStatus' | 'cleanupCancel' | 'history'>
   readonly streamBroker: Pick<InferProvider<typeof streamBrokerCapability>, 'fetchEventMedia' | 'listAllCameraStreams' | 'listAllProfileSlots' | 'getBrokerStats' | 'probeStream' | 'listClients' | 'getLiveViewerCounts' | 'killClient' | 'getStreamUrl' | 'getStreamWithCodec' | 'releaseStreamWithCodec' | 'acquireEgressTranscode' | 'releaseEgressTranscode' | 'subscribeAudioChunks' | 'pullAudioChunks' | 'unsubscribeAudioChunks' | 'setPreBufferDuration' | 'getPreBufferInfo' | 'getRtspPort' | 'getAllRtspEntries' | 'getRtspEntry' | 'regenerateRtspToken' | 'setRtspEnabled' | 'isRtspEnabled'>
   readonly system: Pick<InferProvider<typeof systemCapability>, 'info' | 'health' | 'featureFlags' | 'networkAddresses' | 'getRetentionConfig' | 'setRetentionConfig' | 'forceRetentionCleanup' | 'getSiteLocation' | 'setSiteLocation' | 'detectSiteLocation' | 'getRequestCensus' | 'getLoadContributions' | 'getFailureContributions' | 'getLoggingSettings' | 'setLoggingSettings' | 'debugWatch'>
+  readonly tags: Pick<InferProvider<typeof tagsCapability>, 'list' | 'setStyle' | 'rename' | 'remove'>
   readonly template: Pick<InferProvider<typeof templateCapability>, 'list' | 'get' | 'create' | 'update' | 'delete'>
   readonly terminalSession: Pick<InferProvider<typeof terminalSessionCapability>, 'listProfiles' | 'listLegacyCameras' | 'adoptLegacyMonitor' | 'listSessions' | 'serverShellStatus' | 'openSession' | 'resize' | 'pullOutput' | 'writeInput' | 'close'>
   readonly toast: Pick<InferProvider<typeof toastCapability>, 'onToast'>
@@ -998,6 +1000,13 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     debugWatch: (input?: unknown) => dispatch('system', 'debugWatch', 'mutation', input),
   }
 
+  const tagsInterface = {
+    list: (input?: unknown) => dispatch('tags', 'list', 'query', input),
+    setStyle: (input?: unknown) => dispatch('tags', 'setStyle', 'mutation', input),
+    rename: (input?: unknown) => dispatch('tags', 'rename', 'mutation', input),
+    remove: (input?: unknown) => dispatch('tags', 'remove', 'mutation', input),
+  }
+
   const templateInterface = {
     list: (input?: unknown) => dispatch('template', 'list', 'query', input),
     get: (input?: unknown) => dispatch('template', 'get', 'query', input),
@@ -1128,6 +1137,7 @@ export function createSystemProxy(api: AddonApi): SystemProxy {
     storageMigration: storageMigrationInterface,
     streamBroker: streamBrokerInterface,
     system: systemInterface,
+    tags: tagsInterface,
     template: templateInterface,
     terminalSession: terminalSessionInterface,
     toast: toastInterface,

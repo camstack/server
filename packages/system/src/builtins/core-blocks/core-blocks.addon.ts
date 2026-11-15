@@ -48,6 +48,7 @@ import {
   fanPresetsCapability,
   actionSourceCapability,
   remoteLayoutComponentsCapability,
+  tagsCapability,
   templateCapability,
   EventCategory,
   historyRetentionFromSettings,
@@ -102,6 +103,8 @@ import { writeComposedDeviceName } from './sync-composed-device-name.js'
 import { describeCompositionSources } from './composition-sources.js'
 import { CoreBlockStore } from './core-block-store.js'
 import { coreBlocksRecordKinds } from './record-kinds.js'
+import { buildTagsService } from './tags-wiring.js'
+import type { TagsService } from './tags-service.js'
 import { extractSettingsSchema } from './extract-settings-schema.js'
 
 /**
@@ -288,6 +291,7 @@ export class CoreBlocksAddon extends BaseAddon {
       },
       { capability: actionsCapability, provider: this.requireActions().service },
       { capability: schedulersCapability, provider: schedulers.service },
+      { capability: tagsCapability, provider: this.buildTags() },
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
       { capability: timedRunCapability, provider: timedRun },
       // The built-in palette needs no store: it is served even when the remote is not.
@@ -296,6 +300,18 @@ export class CoreBlocksAddon extends BaseAddon {
       ...this.remoteRegistrations(),
       ...this.fanPresetRegistrations(),
     ]
+  }
+
+  /** The tag styles and the one rename / remove that rewrites every owner (D1054). */
+  private buildTags(): TagsService {
+    const records = this.ctx.records
+    if (records === undefined) throw new Error('core-blocks needs ctx.records on the hub')
+    return buildTagsService({
+      records,
+      blocks: () => this.requireStore(),
+      api: () => this.ctx.api,
+      logger: this.ctx.logger.child('tags'),
+    })
   }
 
   /** Read-only: the fixed layouts and the model built from the device's bindings and slices. */

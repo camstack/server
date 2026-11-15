@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { TemplateKindSchema } from '../template/template-kinds.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 
 /**
  * template — the generic store of reusable, named operator data (D963). A
@@ -26,6 +27,8 @@ export const TemplateRecordSchema = z.object({
   updatedAt: z.number(),
   /** Shipped with CamStack (`builtin:` ids): listed beside the operator's, never updated or deleted. */
   builtIn: z.literal(true).optional(),
+  /** Operator tags (D1054). Absent = no tags. */
+  tags: TagsFieldSchema.optional(),
 })
 export type TemplateRecord = z.infer<typeof TemplateRecordSchema>
 
@@ -84,6 +87,7 @@ export const templateCapability = {
         kind: TemplateKindSchema,
         name: z.string().min(1).max(120),
         payload: z.unknown(),
+        tags: TagsFieldSchema.optional(),
       }),
       TemplateWriteResultSchema,
       { kind: 'mutation', auth: 'admin' },
@@ -93,6 +97,7 @@ export const templateCapability = {
         id: z.string().min(1),
         name: z.string().min(1).max(120).optional(),
         payload: z.unknown().optional(),
+        tags: TagsFieldSchema.optional(),
       }),
       TemplateWriteResultSchema,
       { kind: 'mutation', auth: 'admin' },
