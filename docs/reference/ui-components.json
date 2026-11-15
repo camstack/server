@@ -18623,6 +18623,51 @@
       ]
     },
     {
+      "name": "ToggleChipRow",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/toggle-chip-row.tsx",
+      "summary": "ToggleChipRow — one horizontally scrolling row of on/off chips, the first of which is \"All\". Every chip starts on; a tap flips it. \"All\" turns every chip on, and turns them all off when they already are. The chips are…",
+      "props": [
+        {
+          "name": "chips",
+          "type": "readonly ToggleChip[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "off",
+          "type": "ReadonlySet<string>",
+          "optional": false,
+          "doc": "Ids that are switched OFF. Empty = all on."
+        },
+        {
+          "name": "onChange",
+          "type": "(off: ReadonlySet<string>) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "allLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "ariaLabel",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "toggleDataTableFacet",
       "kind": "function",
       "area": "composites",

@@ -13,7 +13,7 @@ import type { DeviceRun } from '@camstack/types'
 import { useUiText, type UiTextFn } from '../contexts/ui-text'
 import { Badge } from '../primitives/badge'
 import { CollapsibleCard } from '../primitives/collapsible-card'
-import { DataTable, TABLE_SCROLL_MAX_H, type DataColumn } from './data-table'
+import { DataTable, type DataColumn } from './data-table'
 import {
   formatKwh,
   formatRunDuration,
@@ -116,6 +116,9 @@ function runColumns(now: number, t: UiTextFn): readonly DataColumn<DeviceRun>[] 
   ]
 }
 
+/** Rows per page: the panel takes its natural height (one scroll: the host's), long lists page. */
+const RUNS_PAGE_SIZE = 10
+
 export function DeviceRunsPanel({
   runs,
   now,
@@ -149,7 +152,7 @@ export function DeviceRunsPanel({
         rows={runs}
         rowKey={(r) => r.runId}
         onRowClick={(r) => onSelectWindow(runWindow(r, now))}
-        maxBodyHeight={TABLE_SCROLL_MAX_H}
+        pageSize={RUNS_PAGE_SIZE}
         bordered={false}
         minWidthPx={640}
       />

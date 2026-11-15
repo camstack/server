@@ -9827,7 +9827,9 @@
         "title": "Cicli",
         "count_one": "{{count}} ciclo",
         "count_other": "{{count}} cicli"
-      }
+      },
+      "allPoints": "Tutti",
+      "pointsFilter": "Punti mostrati"
     },
     "consumableLevel": {
       "ok": "OK",
@@ -10012,7 +10014,19 @@
           "unconfirmed": "Non confermato",
           "failed": "Non riuscito"
         },
-        "sectionSwitch": "Sezioni dello storico"
+        "sectionSwitch": "Sezioni dello storico",
+        "actorUser": "Utente",
+        "detail": {
+          "when": "Quando",
+          "capability": "Capability",
+          "field": "Campo",
+          "change": "Variazione",
+          "actor": "Chi",
+          "command": "Comando",
+          "outcome": "Esito",
+          "id": "Id riga",
+          "toggle": "Dettagli"
+        }
       },
       "plug": {
         "on": "Accesa",

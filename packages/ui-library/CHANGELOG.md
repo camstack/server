@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device card History: the Runs table no longer scrolls inside the card, each interaction shows its exact time with an inline details button, and a chip row picks which points the history charts show
+
 ## [1.2.449] - 2026-11-15
 
 ### Added

@@ -61,9 +61,9 @@ export interface DataTableFilterBarProps {
   readonly onToggleGroupFacet?: (groupId: string, value: string) => void
 }
 
-const CHIP_ON =
+export const CHIP_ON =
   'rounded-full border border-primary bg-primary/10 px-2 py-0.5 text-[10px] text-foreground'
-const CHIP_OFF =
+export const CHIP_OFF =
   'rounded-full border border-border px-2 py-0.5 text-[10px] text-foreground-muted hover:bg-surface-hover'
 
 export function DataTableFilterBar({

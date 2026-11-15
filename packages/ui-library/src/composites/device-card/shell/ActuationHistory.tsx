@@ -3,12 +3,14 @@
  * field, newest first. The capability is asked, not assumed (an unanswered
  * read is never "no actuations").
  */
-import { useMemo, type ReactElement } from 'react'
+import { useMemo, useState, type ReactElement } from 'react'
+import { Info } from 'lucide-react'
 import { useUiText, type UiTextFn } from '../../../contexts/ui-text'
 import { useActionsList } from '../../../generated/system-hooks'
 import { useCapabilityPresence } from '../../../hooks/use-capability-presence'
 import { Badge } from '../../../primitives/badge'
 import { Button } from '../../../primitives/button'
+import { IconButton } from '../../../primitives/icon-button'
 import { Skeleton } from '../../../primitives/skeleton'
 import { trpc } from '../../../trpc-react'
 import { ErrorBox } from '../../error-box'
@@ -44,6 +46,7 @@ function phrasesOf(t: UiTextFn): ActuationPhrases {
     off: t('uiLibrary.deviceCard.history.off', 'Off'),
     unknown: '—',
     device: t('uiLibrary.deviceCard.history.actorDevice', 'The device'),
+    user: t('uiLibrary.deviceCard.history.actorUser', 'User'),
     automation: t('uiLibrary.deviceCard.history.actorAutomation', 'Automation'),
     addon: t('uiLibrary.deviceCard.history.actorAddon', 'Add-on'),
     scheduler: t('uiLibrary.deviceCard.history.actorScheduler', 'Schedule'),
@@ -67,30 +70,118 @@ interface ActuationRowsProps {
   readonly rows: readonly ActuationRowView[]
 }
 
+interface DetailLine {
+  readonly label: string
+  readonly value: string
+}
+
+function detailLines(row: ActuationRowView, t: UiTextFn): readonly DetailLine[] {
+  const d = row.details
+  const lines: DetailLine[] = [
+    {
+      label: t('uiLibrary.deviceCard.history.detail.when', 'When'),
+      value: d.exact,
+    },
+    {
+      label: t('uiLibrary.deviceCard.history.detail.capability', 'Capability'),
+      value: d.capability,
+    },
+    {
+      label: t('uiLibrary.deviceCard.history.detail.field', 'Field'),
+      value: d.field,
+    },
+    {
+      label: t('uiLibrary.deviceCard.history.detail.change', 'Change'),
+      value: `${d.from} → ${d.to}`,
+    },
+    {
+      label: t('uiLibrary.deviceCard.history.detail.actor', 'Who'),
+      value: d.actorKind === d.actorName ? d.actorName : `${d.actorKind} · ${d.actorName}`,
+    },
+  ]
+  if (d.command !== null) {
+    lines.push({
+      label: t('uiLibrary.deviceCard.history.detail.command', 'Command'),
+      value: d.command,
+    })
+  }
+  lines.push(
+    {
+      label: t('uiLibrary.deviceCard.history.detail.outcome', 'Outcome'),
+      value: d.outcome,
+    },
+    {
+      label: t('uiLibrary.deviceCard.history.detail.id', 'Row id'),
+      value: d.rowId,
+    },
+  )
+  return lines
+}
+
+function ActuationRow({ row }: { readonly row: ActuationRowView }): ReactElement {
+  const t = useUiText()
+  const [open, setOpen] = useState(false)
+  const detailsId = `dc-actuation-details-${row.id}`
+  return (
+    <li
+      data-testid="dc-actuation-row"
+      data-outcome={row.outcome}
+      className="flex flex-col gap-0.5 border-b border-border-subtle py-1.5 last:border-b-0"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <time
+          className="min-w-0 truncate text-xs tabular-nums text-foreground-muted"
+          title={row.details.exact}
+        >
+          {row.relative}
+        </time>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <Badge size="sm" variant={row.tone}>
+            {row.outcomeLabel}
+          </Badge>
+          <span className="text-xs tabular-nums text-foreground" data-testid="dc-actuation-clock">
+            {row.clock}
+          </span>
+          <IconButton
+            icon={Info}
+            size="sm"
+            variant="ghost"
+            aria-label={t('uiLibrary.deviceCard.history.detail.toggle', 'Details')}
+            aria-expanded={open}
+            aria-controls={detailsId}
+            data-testid="dc-actuation-info"
+            onClick={() => setOpen((v) => !v)}
+          />
+        </div>
+      </div>
+      <p className="min-w-0 text-sm text-foreground">
+        <span className="font-medium">{row.field}</span>{' '}
+        <span className="text-foreground-muted">{row.change}</span>
+      </p>
+      <p className="truncate text-xs text-foreground-muted">{row.actor}</p>
+      {open ? (
+        <dl
+          id={detailsId}
+          data-testid="dc-actuation-details"
+          className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 rounded-md bg-surface p-2 text-xs"
+        >
+          {detailLines(row, t).map((line) => (
+            <div key={line.label} className="contents">
+              <dt className="text-foreground-muted">{line.label}</dt>
+              <dd className="min-w-0 break-words text-foreground">{line.value}</dd>
+            </div>
+          ))}
+        </dl>
+      ) : null}
+    </li>
+  )
+}
+
 function ActuationRows({ rows }: ActuationRowsProps): ReactElement {
   return (
     <ul className="flex flex-col" data-testid="dc-actuation-rows">
       {rows.map((row) => (
-        <li
-          key={row.id}
-          data-testid="dc-actuation-row"
-          data-outcome={row.outcome}
-          className="flex flex-col gap-0.5 border-b border-border-subtle py-1.5 last:border-b-0"
-        >
-          <div className="flex items-center justify-between gap-2">
-            <time className="text-xs tabular-nums text-foreground-muted" title={row.absolute}>
-              {row.relative}
-            </time>
-            <Badge size="sm" variant={row.tone}>
-              {row.outcomeLabel}
-            </Badge>
-          </div>
-          <p className="min-w-0 text-sm text-foreground">
-            <span className="font-medium">{row.field}</span>{' '}
-            <span className="text-foreground-muted">{row.change}</span>
-          </p>
-          <p className="truncate text-xs text-foreground-muted">{row.actor}</p>
-        </li>
+        <ActuationRow key={row.id} row={row} />
       ))}
     </ul>
   )
@@ -115,7 +206,11 @@ export function ActuationHistory({ deviceId }: ActuationHistoryProps): ReactElem
   const hasAction = transitions.some((entry) => entry.actor.kind === 'action')
   const namesQuery = useActionsList(
     {},
-    { enabled: presence === 'present' && hasAction, retry: false, staleTime: 60_000 },
+    {
+      enabled: presence === 'present' && hasAction,
+      retry: false,
+      staleTime: 60_000,
+    },
   )
   const book = useMemo<ActuationNameBook>(() => {
     const names = actionNamesFromList(namesQuery.data)

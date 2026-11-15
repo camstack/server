@@ -9805,7 +9805,9 @@
         "title": "Runs",
         "count_one": "{{count}} run",
         "count_other": "{{count}} runs"
-      }
+      },
+      "allPoints": "All",
+      "pointsFilter": "Points shown"
     },
     "consumableLevel": {
       "ok": "OK",
@@ -9990,7 +9992,19 @@
           "unconfirmed": "Unconfirmed",
           "failed": "Failed"
         },
-        "sectionSwitch": "History sections"
+        "sectionSwitch": "History sections",
+        "actorUser": "User",
+        "detail": {
+          "when": "When",
+          "capability": "Capability",
+          "field": "Field",
+          "change": "Change",
+          "actor": "Who",
+          "command": "Command",
+          "outcome": "Outcome",
+          "id": "Row id",
+          "toggle": "Details"
+        }
       },
       "plug": {
         "on": "On",

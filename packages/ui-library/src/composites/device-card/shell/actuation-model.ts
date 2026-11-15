@@ -32,6 +32,7 @@ export interface ActuationPhrases {
   readonly off: string
   readonly unknown: string
   readonly device: string
+  readonly user: string
   readonly automation: string
   readonly addon: string
   readonly scheduler: string
@@ -57,15 +58,40 @@ export interface ActuationRowView {
   readonly field: string
   readonly change: string
   readonly actor: string
+  /** HH:MM:SS, with the day in front when it is not today. Always shown on the row. */
+  readonly clock: string
+  /** The detail block (ⓘ): everything the ledger knows about this change. */
+  readonly details: ActuationDetails
   readonly outcome: TransitionOutcome
   readonly tone: ActuationOutcomeTone
   readonly outcomeLabel: string
 }
 
+export interface ActuationDetails {
+  /** Date and time down to the millisecond. */
+  readonly exact: string
+  readonly capability: string
+  readonly field: string
+  readonly from: string
+  readonly to: string
+  /** The kind of actor (user, automation, device ...). */
+  readonly actorKind: string
+  /** The named actor: the user, the automation, the add-on. */
+  readonly actorName: string
+  /** The command that caused the change, with its arguments; null when none was matched. */
+  readonly command: string | null
+  readonly outcome: string
+  readonly rowId: string
+}
+
 export type ActuationAsk =
   | { readonly status: 'pending' }
   | { readonly status: 'error' }
-  | { readonly status: 'ok'; readonly count: number; readonly nextCursor: string | null }
+  | {
+      readonly status: 'ok'
+      readonly count: number
+      readonly nextCursor: string | null
+    }
 
 export type ActuationSectionView =
   | { readonly kind: 'hidden' }
@@ -196,6 +222,63 @@ export function actuationAbsoluteTime(at: number, locale: string): string {
   return new Date(at).toLocaleString(locale)
 }
 
+function clockParts(at: number): {
+  readonly time: string
+  readonly ms: string
+} {
+  const d = new Date(at)
+  const two = (n: number): string => String(n).padStart(2, '0')
+  return {
+    time: `${two(d.getHours())}:${two(d.getMinutes())}:${two(d.getSeconds())}`,
+    ms: String(d.getMilliseconds()).padStart(3, '0'),
+  }
+}
+
+/** HH:MM:SS; a transition from another day carries its day (locale order) in front. */
+export function actuationClock(at: number, now: number, locale: string): string {
+  const { time } = clockParts(at)
+  if (new Date(at).toDateString() === new Date(now).toDateString()) return time
+  const day = new Date(at).toLocaleDateString(locale, {
+    day: '2-digit',
+    month: '2-digit',
+  })
+  return `${day} ${time}`
+}
+
+/** Full local date and time with milliseconds. */
+export function actuationExactTime(at: number, locale: string): string {
+  const { time, ms } = clockParts(at)
+  return `${new Date(at).toLocaleDateString(locale)} ${time}.${ms}`
+}
+
+/** The kind of actor, in the operator's words. */
+export function actuationActorKindLabel(actor: TransitionActor, phrases: ActuationPhrases): string {
+  switch (actor.kind) {
+    case 'user':
+      return phrases.user
+    case 'action':
+      return phrases.automation
+    case 'addon':
+      return phrases.addon
+    case 'scheduler':
+      return phrases.scheduler
+    case 'composition':
+      return phrases.composition
+    case 'node':
+      return phrases.node
+    case 'device':
+      return phrases.device
+  }
+}
+
+function commandText(transition: DeviceTransition): string | null {
+  const command = transition.command
+  if (command === undefined) return null
+  const args = Object.keys(command.args).length === 0 ? '' : JSON.stringify(command.args)
+  const call = `${command.method}(${args})`
+  return command.error === undefined ? call : `${call} — ${command.error}`
+}
+
 /** One row, newest-friendly: the caller sorts. */
 export function actuationRow(
   transition: DeviceTransition,
@@ -206,13 +289,28 @@ export function actuationRow(
 ): ActuationRowView {
   const from = formatSide(transition.capName, transition.field, transition.from, locale, phrases)
   const to = formatSide(transition.capName, transition.field, transition.to, locale, phrases)
+  const field = actuationFieldLabel(transition.capName, transition.field, locale)
+  const actor = actuationActorLabel(transition.actor, names, phrases)
   return {
     id: transition.id,
+    clock: actuationClock(transition.at, now, locale),
+    details: {
+      exact: actuationExactTime(transition.at, locale),
+      capability: transition.capName,
+      field,
+      from,
+      to,
+      actorKind: actuationActorKindLabel(transition.actor, phrases),
+      actorName: actor,
+      command: commandText(transition),
+      outcome: outcomeLabel(transition.outcome, phrases),
+      rowId: transition.id,
+    },
     relative: actuationRelativeTime(transition.at, now, phrases),
     absolute: actuationAbsoluteTime(transition.at, locale),
-    field: actuationFieldLabel(transition.capName, transition.field, locale),
+    field,
     change: `${from} → ${to}`,
-    actor: actuationActorLabel(transition.actor, names, phrases),
+    actor,
     outcome: transition.outcome,
     tone: actuationOutcomeTone(transition.outcome),
     outcomeLabel: outcomeLabel(transition.outcome, phrases),

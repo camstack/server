@@ -25,6 +25,7 @@ import { Skeleton } from '../../primitives/skeleton'
 import { EmptyState } from '../empty-state'
 import { ErrorBox } from '../error-box'
 import { KebabMenu } from '../kebab-menu'
+import { ToggleChipRow } from '../toggle-chip-row'
 import { DeviceRunsPanel } from '../DeviceRunsPanel'
 import { HistoryChart } from './HistoryChart'
 import {
@@ -62,7 +63,11 @@ export function humanizeName(name: string): string {
 
 function refsOf(deviceId: number, spec: HistoryChartSpec): readonly HistorySeriesRef[] {
   const list = spec.type === 'lines' || spec.type === 'occupancy' ? spec.series : [spec.series]
-  return list.map((s) => ({ subject: { kind: 'device', deviceId }, key: s.key, scope: s.scope }))
+  return list.map((s) => ({
+    subject: { kind: 'device', deviceId },
+    key: s.key,
+    scope: s.scope,
+  }))
 }
 
 export function DeviceHistoryView({
@@ -95,19 +100,42 @@ export function DeviceHistoryView({
     () => (list.status === 'ok' ? groupDeviceSeries(list.data, humanizeName) : []),
     [list],
   )
-  const visible = useMemo(
+  // Points the chip row switched off (every point starts on).
+  const [pointsOff, setPointsOff] = useState<ReadonlySet<string>>(new Set())
+  const offered = useMemo(
     () =>
       sections
-        .map((s) => ({ ...s, charts: s.charts.filter((c) => !hidden.has(c.id)) }))
+        .map((s) => ({
+          ...s,
+          charts: s.charts.filter((c) => !hidden.has(c.id)),
+        }))
         .filter((s) => s.charts.length > 0),
     [sections, hidden],
+  )
+  const chips = useMemo(
+    () => offered.flatMap((s) => s.charts.map((c) => ({ id: c.id, label: c.title }))),
+    [offered],
+  )
+  const visible = useMemo(
+    () =>
+      offered
+        .map((s) => ({
+          ...s,
+          charts: s.charts.filter((c) => !pointsOff.has(c.id)),
+        }))
+        .filter((s) => s.charts.length > 0),
+    [offered, pointsOff],
   )
   const hiddenCount = sections.reduce(
     (n, s) => n + s.charts.filter((c) => hidden.has(c.id)).length,
     0,
   )
   const items = useMemo<readonly DeviceHistoryQueryManyItem[]>(
-    () => chartKeys(visible.flatMap((s) => s.charts)).map((key) => ({ deviceId, key })),
+    () =>
+      chartKeys(visible.flatMap((s) => s.charts)).map((key) => ({
+        deviceId,
+        key,
+      })),
     [visible, deviceId],
   )
   const reads = useHistoryReads(items, range, compare, list.status === 'ok')
@@ -210,12 +238,25 @@ export function DeviceHistoryView({
               <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
               {t(
                 'uiLibrary.history.showHidden',
-                { one: 'Show {{count}} hidden chart', other: 'Show {{count}} hidden charts' },
+                {
+                  one: 'Show {{count}} hidden chart',
+                  other: 'Show {{count}} hidden charts',
+                },
                 { count: hiddenCount },
               )}
             </Button>
           )}
         </div>
+      )}
+      {fixedWindow === undefined && chips.length > 1 && (
+        <ToggleChipRow
+          chips={chips}
+          off={pointsOff}
+          onChange={setPointsOff}
+          allLabel={t('uiLibrary.history.allPoints', 'All')}
+          ariaLabel={t('uiLibrary.history.pointsFilter', 'Points shown')}
+          testId="dc-history-points"
+        />
       )}
       {fixedWindow === undefined && runs !== undefined && (
         <DeviceRunsPanel runs={runs} now={now} onSelectWindow={showWindow} />

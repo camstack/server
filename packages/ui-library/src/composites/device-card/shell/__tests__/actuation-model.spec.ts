@@ -7,6 +7,8 @@ import {
   actuationOutcomeTone,
   actuationRelativeTime,
   actuationRow,
+  actuationClock,
+  actuationExactTime,
   actuationSection,
   mergeActuationPages,
   type ActuationNameBook,
@@ -24,6 +26,7 @@ const PHRASES: ActuationPhrases = {
   off: 'Off',
   unknown: '—',
   device: 'The device',
+  user: 'User',
   automation: 'Automation',
   addon: 'Add-on',
   scheduler: 'Schedule',
@@ -89,7 +92,14 @@ describe('actuation field labels and values', () => {
     expect(mode.change).toBe('Automatico → Riscaldamento')
 
     const bare = actuationRow(
-      row({ id: 'c', at: NOW, capName: 'not-a-cap', field: 'customFlag', from: 'x', to: 'y' }),
+      row({
+        id: 'c',
+        at: NOW,
+        capName: 'not-a-cap',
+        field: 'customFlag',
+        from: 'x',
+        to: 'y',
+      }),
       NOW,
       'en',
       PHRASES,
@@ -150,7 +160,12 @@ describe('actuation actors and outcomes', () => {
     ).toBe('Good night')
     expect(
       actuationActorLabel(
-        { kind: 'action', addonId: 'core-blocks', actionId: 'act-x', runId: 'run-2' },
+        {
+          kind: 'action',
+          addonId: 'core-blocks',
+          actionId: 'act-x',
+          runId: 'run-2',
+        },
         NO_NAMES,
         PHRASES,
       ),
@@ -189,7 +204,11 @@ describe('actuation list state', () => {
     expect(actuationSection('present', { status: 'ok', count: 0, nextCursor: null }).kind).toBe(
       'empty',
     )
-    const list = actuationSection('present', { status: 'ok', count: 2, nextCursor: 'c2' })
+    const list = actuationSection('present', {
+      status: 'ok',
+      count: 2,
+      nextCursor: 'c2',
+    })
     expect(list).toEqual({ kind: 'list', nextCursor: 'c2' })
   })
 
@@ -210,5 +229,48 @@ describe('actuation list state', () => {
         { id: 1, name: 'no' },
       ]).get('a'),
     ).toBe('Night')
+  })
+})
+
+describe('actuation clock and details', () => {
+  const at = new Date(2026, 9, 9, 8, 5, 3, 42).getTime()
+  const noon = new Date(2026, 9, 9, 12, 0, 0, 0).getTime()
+
+  it('shows HH:MM:SS today and prefixes the day on another day', () => {
+    expect(actuationClock(at, noon, 'en')).toBe('08:05:03')
+    expect(actuationClock(at, noon + 86_400_000, 'en')).toBe('10/09 08:05:03')
+  })
+
+  it('keeps the milliseconds in the exact time', () => {
+    expect(actuationExactTime(at, 'en').endsWith('08:05:03.042')).toBe(true)
+  })
+
+  it('carries capability, who, command and the row id into the details', () => {
+    const view = actuationRow(
+      row({
+        id: '201:1:0',
+        at,
+        command: {
+          commandId: 'c1',
+          method: 'setTarget',
+          args: { value: 22 },
+          requestedAt: at,
+          matchedAfterMs: 120,
+        },
+      }),
+      noon,
+      'en',
+      PHRASES,
+      NO_NAMES,
+    )
+    expect(view.clock).toBe('08:05:03')
+    expect(view.details).toMatchObject({
+      capability: 'climate-control',
+      actorKind: 'User',
+      actorName: 'Ada',
+      command: 'setTarget({"value":22})',
+      outcome: 'Confirmed',
+      rowId: '201:1:0',
+    })
   })
 })

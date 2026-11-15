@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Admin search uses the same matcher as the device picker, so a typo in a parent name or other keyword matches.
+- Device card History and Interactions: single page scroll in the embedded card, exact time and details on each interaction, per-point chips
 
 ## [1.2.674] - 2026-11-15
 

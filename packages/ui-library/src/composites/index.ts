@@ -290,6 +290,7 @@ export type {
   DataTableFilterBarProps,
 } from './data-table-filter-bar'
 export { DataTableFilterBar } from './data-table-filter-bar'
+export { ToggleChipRow, type ToggleChip, type ToggleChipRowProps } from './toggle-chip-row'
 export type {
   DataTableFilter,
   DataTableFilterGroupView,
