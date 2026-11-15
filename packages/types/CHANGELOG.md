@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.575] - 2026-11-15
+
 ### Changed
 
 - energy-system: documented that house excludes the heat pump when one is reported

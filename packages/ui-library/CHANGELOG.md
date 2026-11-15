@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.452] - 2026-11-15
+
 ### Changed
 
 - Energy card: the heat pump share is computed against house plus heat pump and stays within 0-100%
