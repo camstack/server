@@ -273,7 +273,8 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
 
   /** Every integration this addon holds a record or a top-level device for. */
   private async knownIntegrationIds(): Promise<readonly string[]> {
-    const ids = new Set<string>()
+    // A signed-out integration may hold only a session alert: its name entry keeps it known.
+    const ids = new Set<string>(this.integrationNames.keys())
     for (const row of await this.requireInstances().instances.listResolved()) ids.add(row.id)
     const reg = this.ctx.kernel.deviceRegistry
     const devices = this.ctx.kernel.devices
