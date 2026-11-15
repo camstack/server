@@ -18,7 +18,8 @@
  * Only `npm install` into an explicit staging directory is walked. `npm view`,
  * `npm ls`, and a cwd of `process.cwd()` (a Finder-launched app's `/`) get the
  * hard ceiling only. The walk itself is bounded: a poll that cannot finish is
- * progress unknown, not a stall.
+ * progress unknown, not a stall by itself. While polls stay unknown, one
+ * unbounded walk per stall window decides — an unchanged tree is a stall.
  *
  * The child is spawned `detached` so it is a process-group leader. A stall
  * or the hard ceiling signals the GROUP (`SIGTERM`, then `SIGKILL`), which
@@ -456,14 +457,24 @@ interface DiskBaseline {
   readonly bytes: number | null
 }
 
+/** One unbounded walk of the tree, kept while the bounded polls say `unknown`. */
+interface FullWalkMark {
+  readonly token: string
+  readonly at: number
+}
+
 interface PollWatch {
   readonly enabled: boolean
   readonly startedAt: number
   baseline: DiskBaseline
   lastOutput: number
   lastGrowthAt: number
+  /** Null until a poll comes back `unknown`; cleared by any observed growth. */
+  fullWalk: FullWalkMark | null
   readOutput(): number
   measure(): Promise<ProgressSample>
+  /** No entry or time budget: a tree larger than the bounded walk is still judged. */
+  measureFull(): Promise<ProgressSample>
   noteUnknown(sample: ProgressUnknown): void
 }
 
@@ -497,6 +508,27 @@ function progressReader(
       previousCheap: previousCheap(),
       aborted,
       entryBudget: options.progressEntryBudget,
+    })
+}
+
+/**
+ * The walk a bounded poll could not finish, without a budget. It runs at most
+ * once per stall window while the bounded polls say `unknown` — the 8–20 s
+ * cost the budget exists to avoid, paid only when a stall must be decided.
+ */
+function fullWalkReader(
+  options: RunWatchedCommandOptions,
+  aborted: () => boolean,
+): () => Promise<ProgressSample> {
+  return () =>
+    measureInstallProgress({
+      stagingDir: options.cwd,
+      progressDirs: options.progressDirs ?? [],
+      env: options.env ?? {},
+      previousCheap: null,
+      aborted,
+      entryBudget: Number.POSITIVE_INFINITY,
+      timeBudgetMs: Number.POSITIVE_INFINITY,
     })
 }
 
@@ -537,8 +569,10 @@ async function prepareWatch(
     baseline: { cheap: null, bytes: null },
     lastOutput: 0,
     lastGrowthAt: startedAt,
+    fullWalk: null,
     readOutput,
     measure: () => Promise.resolve({ kind: 'aborted', entries: 0 }),
+    measureFull: fullWalkReader(options, () => false),
     noteUnknown: budgetLogger(options),
   }
   watch.measure = progressReader(
@@ -556,6 +590,7 @@ function bindAbortableMeasure(
   aborted: () => boolean,
 ): void {
   watch.measure = progressReader(options, () => watch.baseline.cheap, aborted)
+  watch.measureFull = fullWalkReader(options, aborted)
 }
 
 function noteChildOutput(output: CapturedOutput, chunk: string, sink: 'out' | 'err'): void {
@@ -667,7 +702,43 @@ function noteSample(watch: PollWatch, sample: ProgressMark, output: number, now:
     bytes: sample.bytes === null ? watch.baseline.bytes : sample.bytes,
   }
   watch.lastOutput = output
-  if (changed || first) watch.lastGrowthAt = now
+  if (changed || first) {
+    watch.lastGrowthAt = now
+    watch.fullWalk = null
+  }
+}
+
+type UnknownVerdict = 'stall' | 'continue' | 'aborted'
+
+/**
+ * A poll whose bounded walk hit its budget. It used to be skipped, so a
+ * closure larger than the budget (21k entries on the prod hub) was never
+ * judged and a hung postinstall ran to the 3 h ceiling. Output still counts as
+ * progress. Otherwise the first `unknown` takes an unbounded walk as the
+ * reference, and one stall window later a second unbounded walk decides: the
+ * same tree is a stall, a different one is progress and the new reference.
+ */
+async function judgeUnknown(
+  options: RunWatchedCommandOptions,
+  watch: PollWatch,
+  now: number,
+): Promise<UnknownVerdict> {
+  const output = watch.readOutput()
+  if (output !== watch.lastOutput) {
+    watch.lastOutput = output
+    watch.lastGrowthAt = now
+    watch.fullWalk = null
+    return 'continue'
+  }
+  const reference = watch.fullWalk
+  if (reference !== null && now - reference.at < options.stallMs) return 'continue'
+  const full = await watch.measureFull()
+  if (full.kind !== 'mark') return 'aborted'
+  const token = `${full.cheap}:${full.bytes ?? 'none'}`
+  if (reference !== null && reference.token === token) return 'stall'
+  if (reference !== null) watch.lastGrowthAt = now
+  watch.fullWalk = { token, at: now }
+  return 'continue'
 }
 
 async function pollUntilCut(
@@ -685,8 +756,12 @@ async function pollUntilCut(
       // The child can exit while the walk is in progress. The walk stops on
       // abort; the exit is the result, not a stall and not the ceiling.
       if (readExit() !== null || sample.kind === 'aborted') return null
-      if (sample.kind === 'unknown') watch.noteUnknown(sample)
-      else {
+      if (sample.kind === 'unknown') {
+        watch.noteUnknown(sample)
+        const verdict = await judgeUnknown(options, watch, now)
+        if (readExit() !== null || verdict === 'aborted') return null
+        if (verdict === 'stall') return 'timeout-stall'
+      } else {
         noteSample(watch, sample, watch.readOutput(), now)
         if (now - watch.lastGrowthAt >= options.stallMs) return 'timeout-stall'
       }

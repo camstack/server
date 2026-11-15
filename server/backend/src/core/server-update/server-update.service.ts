@@ -117,7 +117,7 @@ export class ServerUpdateService extends RootUpdateService {
       runningPackageJsonPath:
         options.runningPackageJsonPath ?? path.resolve(__dirname, '..', '..', '..', 'package.json'),
       workspaceProbeDir: __dirname,
-      // Default to the runNpm-backed adapter so a host without system npm (a
+      // Default to the system-npm adapter (watched: stall cut + process group) so a host without system npm (a
       // packaged desktop app with a bare bundled Node) can still stage a root
       // update. `cacheDir` mirrors AddonInstaller's `<dataDir>/addons/.npm-bootstrap`.
       execNpm:

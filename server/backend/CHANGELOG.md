@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A server update no longer re-downloads ffmpeg when node-av did not change (the seeded install pins the exact version), and a hung npm install is now cut after 5 minutes without progress instead of running to the 3-hour ceiling
+
 ## [1.2.882] - 2026-11-15
 
 ### Changed

@@ -43,6 +43,7 @@ interface WalkBudget {
   exceeded: boolean
   aborted(): boolean
   readonly entryLimit: number
+  readonly timeLimitMs: number
 }
 
 type WalkStop = 'budget' | 'aborted'
@@ -77,6 +78,8 @@ export interface MeasureProgressOptions {
   readonly aborted: () => boolean
   /** Entries a walk may read before it gives up; defaults to {@link PROGRESS_WALK_ENTRY_BUDGET}. */
   readonly entryBudget?: number
+  /** Wall-clock cap of the walk; defaults to {@link PROGRESS_WALK_TIME_BUDGET_MS}. */
+  readonly timeBudgetMs?: number
 }
 
 /**
@@ -92,6 +95,7 @@ export async function measureInstallProgress(
     exceeded: false,
     aborted: options.aborted,
     entryLimit: options.entryBudget ?? PROGRESS_WALK_ENTRY_BUDGET,
+    timeLimitMs: options.timeBudgetMs ?? PROGRESS_WALK_TIME_BUDGET_MS,
   }
   const cheap = await collectCheap(options.stagingDir, options.progressDirs, options.env, budget)
   if (cheap === 'aborted') return { kind: 'aborted', entries: budget.entries }
@@ -137,7 +141,7 @@ function combineMarks(left: ProgressMarkParts, right: ProgressMarkParts): Progre
 function consume(budget: WalkBudget): 'ok' | WalkStop {
   if (budget.aborted()) return 'aborted'
   const overEntries = budget.entries >= budget.entryLimit
-  const overTime = Date.now() - budget.startedMs >= PROGRESS_WALK_TIME_BUDGET_MS
+  const overTime = Date.now() - budget.startedMs >= budget.timeLimitMs
   if (overEntries || overTime) {
     budget.exceeded = true
     return 'budget'

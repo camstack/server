@@ -1,21 +1,21 @@
 /**
- * buildSystemExecNpm — the runNpm-backed `execNpm` adapter injected into the
- * shared `RootUpdateService` at both construction sites (hub + agent). It lets
- * root-package updates stage a closure on a host that has NO system `npm` on
- * PATH (a packaged desktop app shipping a bare bundled Node) by routing every
- * npm invocation through `@camstack/server/system`'s `runNpm` (system → bootstrapped
- * → bootstrap), instead of the raw `execFile('npm', ...)` default that dies
- * with ENOENT there.
+ * buildSystemExecNpm — the `execNpm` adapter injected into the shared
+ * `RootUpdateService` at both construction sites (hub + agent). It resolves a
+ * working npm through `@camstack/server/system` (system → bootstrapped →
+ * bootstrap), so a packaged desktop with no npm on PATH can still stage.
  *
- * The suite injects a fake `runNpm` via the module-level DI parameter so it
- * asserts the arg/cwd/timeout mapping without touching the network or disk.
+ * It must ALSO run that npm under the install watcher. On 2026-11-15 the prod
+ * hub's `npm install @camstack/server@1.2.881` sat 28 minutes in node-av's
+ * ffmpeg postinstall: this adapter ran npm through `execFile` with the 3 h
+ * ceiling as its only timeout, so the 5-minute stall cut in
+ * `npm-install-watch` never ran on a hub or an agent, and a cut would have
+ * left the postinstall grandchild alive.
  */
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
+import type { NpmInvocation } from '@camstack/server/system'
+import { NPM_INSTALL_STALL_MS, type RunWatchedCommandOptions } from '../server-root/index.js'
 import { buildSystemExecNpm } from '../core/server-update/system-exec-npm.js'
-
-/** The npm runner `buildSystemExecNpm` takes in place of the real one. */
-type RunNpmFn = NonNullable<Parameters<typeof buildSystemExecNpm>[1]>
 
 function fakeLogger(): IScopedLogger {
   const logger: IScopedLogger = {
@@ -29,35 +29,65 @@ function fakeLogger(): IScopedLogger {
   return logger
 }
 
+const SYSTEM_NPM: NpmInvocation = { command: 'npm', argsPrefix: [] }
+
+function harness(invocation: NpmInvocation): {
+  readonly calls: RunWatchedCommandOptions[]
+  readonly execNpm: ReturnType<typeof buildSystemExecNpm>
+} {
+  const calls: RunWatchedCommandOptions[] = []
+  const execNpm = buildSystemExecNpm(
+    { cacheDir: '/tmp/cache', logger: fakeLogger(), registry: 'https://npm.example' },
+    {
+      resolveInvocation: vi.fn(async () => invocation),
+      runWatched: async (options) => {
+        calls.push(options)
+        return { stdout: 'ok' }
+      },
+      progressDirs: async () => ['/tmp/npm-cache'],
+    },
+  )
+  return { calls, execNpm }
+}
+
 describe('buildSystemExecNpm', () => {
-  it('routes args/cwd/timeout through runNpm', async () => {
-    const fakeRunNpm = vi.fn(async () => ({ stdout: 'ok', stderr: '' }))
-    const execNpm = buildSystemExecNpm({ cacheDir: '/tmp/cache', logger: fakeLogger() }, fakeRunNpm)
+  it('runs an install into a staging directory under the stall watcher', async () => {
+    const { calls, execNpm } = harness(SYSTEM_NPM)
     const out = await execNpm(['install', '@camstack/server@1.2.0'], {
-      cwd: '/tmp/x',
+      cwd: '/tmp/staging',
       timeoutMs: 5000,
     })
     expect(out.stdout).toBe('ok')
-    expect(fakeRunNpm).toHaveBeenCalledWith(
-      ['install', '@camstack/server@1.2.0'],
-      expect.objectContaining({ cacheDir: '/tmp/cache', cwd: '/tmp/x', timeout: 5000 }),
+    expect(calls).toHaveLength(1)
+    expect(calls[0]).toMatchObject({
+      command: 'npm',
+      args: ['install', '@camstack/server@1.2.0'],
+      cwd: '/tmp/staging',
+      watchProgress: true,
+      stallMs: NPM_INSTALL_STALL_MS,
+      ceilingMs: 5000,
+      progressDirs: ['/tmp/npm-cache'],
+    })
+  })
+
+  it('prefixes a bootstrapped npm and puts the running node first on PATH', async () => {
+    const { calls, execNpm } = harness({
+      command: process.execPath,
+      argsPrefix: ['/tmp/cache/npm/bin/npm-cli.js'],
+    })
+    await execNpm(['install', 'x@1.0.0'], { cwd: '/tmp/staging', timeoutMs: 1000 })
+    expect(calls[0]?.command).toBe(process.execPath)
+    expect(calls[0]?.args).toEqual(['/tmp/cache/npm/bin/npm-cli.js', 'install', 'x@1.0.0'])
+    const pathVar = calls[0]?.env?.['PATH'] ?? ''
+    expect(pathVar.startsWith(process.execPath.slice(0, process.execPath.lastIndexOf('/')))).toBe(
+      true,
     )
   })
 
-  it('forwards the optional registry and omits cwd when the caller gives none', async () => {
-    const fakeRunNpm = vi.fn<RunNpmFn>(async () => ({ stdout: '1.2.0\n', stderr: '' }))
-    const execNpm = buildSystemExecNpm(
-      { cacheDir: '/tmp/cache', logger: fakeLogger(), registry: 'https://npm.example' },
-      fakeRunNpm,
-    )
-    const out = await execNpm(['view', '@camstack/server@latest', 'version'], { timeoutMs: 20000 })
-    expect(out.stdout).toBe('1.2.0\n')
-    const opts = fakeRunNpm.mock.calls[0]?.[1]
-    expect(opts).toMatchObject({
-      cacheDir: '/tmp/cache',
-      registry: 'https://npm.example',
-      timeout: 20000,
-    })
-    expect(opts).not.toHaveProperty('cwd')
+  it('does not walk progress for npm view without a directory', async () => {
+    const { calls, execNpm } = harness(SYSTEM_NPM)
+    await execNpm(['view', '@camstack/server@latest', 'version'], { timeoutMs: 20000 })
+    expect(calls[0]).toMatchObject({ watchProgress: false, ceilingMs: 20000 })
+    expect(calls[0]?.progressDirs).toBeUndefined()
   })
 })

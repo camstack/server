@@ -152,8 +152,8 @@ export function scheduleAgentRestart(
 export interface AgentUpdateServiceOptions {
   /**
    * Full scoped logger — an `IScopedLogger` (satisfies the engine's structural
-   * `RootUpdateLogger`) so the injected runNpm-backed `execNpm` can pass it to
-   * `runNpm` (which needs `child`/`withTags`).
+   * `RootUpdateLogger`) so the injected system-npm `execNpm` can pass it to
+   * `resolveNpmInvocation` (which needs `child`/`withTags`).
    */
   readonly logger: IScopedLogger
   /** The agent's resolved data dir (config.dataDir). */
@@ -280,7 +280,7 @@ export class AgentUpdateService extends RootUpdateService {
       runningPackageJsonPath:
         options.runningPackageJsonPath ?? resolveAgentPackageJsonPath(__dirname),
       workspaceProbeDir: __dirname,
-      // Default to the runNpm-backed adapter — a packaged desktop agent ships a
+      // Default to the system-npm adapter (watched) — a packaged desktop agent ships a
       // bare Node with no system npm, so the raw `execFile('npm')` default would
       // ENOENT. `cacheDir` mirrors AddonInstaller's `<dataDir>/addons/.npm-bootstrap`.
       execNpm:

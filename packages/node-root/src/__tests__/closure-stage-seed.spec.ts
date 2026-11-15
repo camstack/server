@@ -42,7 +42,17 @@ function readVersion(file: string): string | null {
   return parsed['version']
 }
 
-/** What npm does: an unchanged package does not run its install script again. */
+/**
+ * What npm does: an unchanged package does not run its install script again,
+ * and `npm install <pkg>@X` saves `^X` as the root dependency unless
+ * `--save-exact` is passed (npm 11, checked by hand 2026-11-15). The fake
+ * once saved `X` itself, which hid that the seeded tree check refused every
+ * real seeded install (`dependency @camstack/server is ^1.2.881`).
+ */
+function savedSpec(args: readonly string[], version: string): string {
+  return args.includes('--save-exact') ? version : `^${version}`
+}
+
 function scriptAwareInstall(serverVersion: string, nodeAvWanted: string): NpmExecFn {
   return async (args, opts) => {
     if (args[0] !== 'install' || opts.cwd === undefined) return { stdout: '' }
@@ -73,7 +83,7 @@ function scriptAwareInstall(serverVersion: string, nodeAvWanted: string): NpmExe
         packages: {
           '': {
             name: 'camstack-node-root',
-            dependencies: { '@camstack/server': serverVersion },
+            dependencies: { '@camstack/server': savedSpec(args, serverVersion) },
           },
           'node_modules/@camstack/server': { version: serverVersion },
           'node_modules/node-av': { version: nodeAvWanted },

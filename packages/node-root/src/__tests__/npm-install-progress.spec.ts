@@ -1,6 +1,7 @@
 /**
  * Bounds on install progress: only an explicit npm install is walked, a
- * shrink counts, a tree over the budget does not stall by itself, and a
+ * shrink counts, a tree over the budget is judged by a full walk once per
+ * stall window (a frozen one is cut, a growing one is not), and a
  * walk stops when the child has already exited.
  */
 import * as fs from 'node:fs'
@@ -239,10 +240,16 @@ describe('bounded install progress', () => {
     fs.rmSync(dir, { recursive: true, force: true })
   })
 
-  it('does not stall a tree over the walk budget on its own', async () => {
+  // 2026-11-15, prod hub: the closure holds ~21k entries, over the 20k walk
+  // budget, so every poll of a hung node-av postinstall came back `unknown`
+  // and the stall was never judged. The install hung 28 minutes until it was
+  // killed by hand; only the 3 h ceiling would have cut it.
+  it('cuts a frozen tree over the walk budget within the stall window', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-budget-'))
     fillFiles(dir, 51)
     const lines: string[] = []
+    const stallMs = 5 * 60_000
+    const pollMs = 60_000
     let clock = 0
     const spawnProcess: WatchedSpawner = () => deferredChild(7105).child
     const outcome = runWatchedCommand({
@@ -250,9 +257,9 @@ describe('bounded install progress', () => {
       args: ['-e', ''],
       cwd: dir,
       progressEntryBudget: 50,
-      stallMs: 1_000,
-      ceilingMs: 1_000,
-      pollMs: 1_000,
+      stallMs,
+      ceilingMs: 3 * 60 * 60_000,
+      pollMs,
       graceMs: 0,
       now: () => clock,
       sleep: async (ms) => {
@@ -261,10 +268,44 @@ describe('bounded install progress', () => {
       log: capturingLog(lines),
       spawnProcess,
     })
-    await expect(outcome).rejects.toMatchObject({ kind: 'timeout-ceiling' })
-    expect(clock).toBeGreaterThanOrEqual(1_000)
-    const budgetLogs = lines.filter((line) => line.startsWith('debug:'))
+    await expect(outcome).rejects.toMatchObject({ kind: 'timeout-stall' })
+    expect(clock).toBeGreaterThanOrEqual(stallMs)
+    expect(clock).toBeLessThanOrEqual(stallMs + 2 * pollMs)
+    const budgetLogs = lines.filter((line) => line.startsWith('debug:install progress walk'))
     expect(budgetLogs).toHaveLength(1)
+    fs.rmSync(dir, { recursive: true, force: true })
+  }, 30_000)
+
+  it('does not cut a tree over the walk budget whose nested zip keeps growing', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-budget-grow-'))
+    fillFiles(dir, 51)
+    const zip = path.join(dir, 'node_modules', 'node-av', 'binary', 'ffmpeg', 'ffmpeg.zip')
+    fs.mkdirSync(path.dirname(zip), { recursive: true })
+    fs.writeFileSync(zip, '')
+    const stallMs = 5 * 60_000
+    const pollMs = 60_000
+    let clock = 0
+    const handle = deferredChild(7108)
+    const outcome = runWatchedCommand({
+      command: process.execPath,
+      args: ['-e', ''],
+      cwd: dir,
+      progressEntryBudget: 50,
+      stallMs,
+      ceilingMs: 3 * 60 * 60_000,
+      pollMs,
+      graceMs: 0,
+      now: () => clock,
+      sleep: async (ms) => {
+        fs.appendFileSync(zip, 'z'.repeat(64))
+        clock += ms
+        if (clock > 4 * stallMs) handle.exit(0)
+      },
+      log: silentLog,
+      spawnProcess: () => handle.child,
+    })
+    await expect(outcome).resolves.toEqual({ stdout: '' })
+    expect(clock).toBeGreaterThan(4 * stallMs)
     fs.rmSync(dir, { recursive: true, force: true })
   }, 30_000)
 

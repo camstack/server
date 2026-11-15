@@ -1143,7 +1143,18 @@ export class RootUpdateService {
       // `file:` and pins every other uploaded package through `overrides`.
       const devDir = devUploadVersionDir(rootDir, target)
       const registry = this.env['CAMSTACK_NPM_REGISTRY']
-      const installArgs = ['install', '--omit=dev', '--no-audit', '--no-fund', '--loglevel=error']
+      // `--save-exact`: `npm install <pkg>@X` otherwise saves `^X` as the root
+      // dependency, and the seeded tree check refuses anything but `X` — every
+      // seeded update fell back to an empty directory and re-ran node-av's
+      // ffmpeg download (1.2.866 → 1.2.881, 2026-11-15).
+      const installArgs = [
+        'install',
+        '--omit=dev',
+        '--save-exact',
+        '--no-audit',
+        '--no-fund',
+        '--loglevel=error',
+      ]
       if (fs.existsSync(devDir)) {
         fs.writeFileSync(
           path.join(stagingDir, 'package.json'),
