@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.885] - 2026-11-15
+
 ### Fixed
 
 - An addon's 'version unsupported' alert now clears after the node restarts on a server that supports it.
