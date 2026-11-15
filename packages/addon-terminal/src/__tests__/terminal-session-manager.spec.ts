@@ -666,7 +666,42 @@ describe('server shell', () => {
     ).toEqual({
       nodeId: 'hub',
       sessionId: info.sessionId,
-      userId: 'idle',
+      userId: 'admin-7',
+      reason: 'idle',
+    })
+  })
+
+  it('counts pty output after a resize, so a busy shell is not idle-killed', async () => {
+    let now = 1_700_000_000_000
+    const { logger, lines } = auditLogger()
+    const { manager, ptys } = shellManager({
+      logger,
+      now: () => now,
+      serverShellIdleMs: 1_000,
+    })
+    const info = await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+    })
+    await manager.resize({ sessionId: info.sessionId, cols: 120, rows: 40 })
+    for (let i = 0; i < 3; i++) {
+      now += 1_000
+      ptys[0]!.emitData(`chunk-${i}\n`)
+      manager.sweepIdle()
+      expect(ptys[0]!.killed).toBe(false)
+    }
+    now += 1_000
+    manager.sweepIdle()
+    expect(ptys[0]!.killed).toBe(true)
+    expect(
+      lines.find((line) => line.message === 'terminal: server shell idle-killed')?.extras?.tags,
+    ).toEqual({
+      nodeId: 'hub',
+      sessionId: info.sessionId,
+      userId: 'admin-7',
+      reason: 'idle',
     })
   })
 

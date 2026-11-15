@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Turning a node's server shell off closes its live shells, and a later read or keystroke is refused.
 
+### Fixed
+
+- Pty output after a resize still counts as activity, so a busy server shell is not closed at the idle limit. The idle audit names the user who opened the shell.
+
 ## [0.1.164] - 2026-11-11
 
 ### Changed

@@ -117,7 +117,8 @@ export interface TerminalSessionManagerOptions {
 }
 
 interface LiveSession {
-  readonly info: TerminalSessionInfo
+  /** Grid size changes in place. The map entry itself is never replaced. */
+  info: TerminalSessionInfo
   readonly pty: PtyProcess
   readonly screen: ScreenBuffer
   readonly sinks: Set<TerminalOutputSink>
@@ -153,6 +154,9 @@ const IDLE_SWEEP_MS = 60_000
 const OPT_IN_CLOSED_LIMIT = 64
 const SERVER_SHELL_UNATTRIBUTED_USER = 'unattributed'
 const SERVER_SHELL_OPT_OUT_REASON = 'opt-in-disabled'
+const SERVER_SHELL_IDLE_REASON = 'idle'
+
+type ServerShellAuditReason = typeof SERVER_SHELL_OPT_OUT_REASON | typeof SERVER_SHELL_IDLE_REASON
 
 const SERVER_SHELL_AUDIT = {
   opened: 'terminal: server shell opened',
@@ -451,8 +455,10 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     const rows = clampDimension(input.rows, MAX_ROWS)
     session.pty.resize(cols, rows)
     session.screen.resize(cols, rows)
-    const next: TerminalSessionInfo = { ...session.info, cols, rows }
-    this.sessions.set(input.sessionId, { ...session, info: next })
+    // One record per id. `pty.onData` closes over this object and bumps
+    // `lastIoAt` here; a spread copy in the map would leave a busy shell
+    // looking idle and get it killed.
+    session.info = { ...session.info, cols, rows }
   }
 
   async close(input: { readonly sessionId: string; readonly caller?: CapCaller }): Promise<void> {
@@ -610,7 +616,12 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
       if (session.info.profileId !== SERVER_SHELL_PROFILE_ID) continue
       if (!sessionIdleDue(session.lastIoAt, now, this.idleTimeoutMs)) continue
       this.terminateSession(sessionId, session, false)
-      this.auditServerShell('idle-killed', sessionId, 'idle')
+      this.auditServerShell(
+        'idle-killed',
+        sessionId,
+        session.openedByUserId,
+        SERVER_SHELL_IDLE_REASON,
+      )
     }
   }
 
@@ -704,7 +715,7 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     kind: ServerShellAuditKind,
     sessionId: string,
     userId: string,
-    reason?: typeof SERVER_SHELL_OPT_OUT_REASON,
+    reason?: ServerShellAuditReason,
   ): void {
     const message =
       userId === SERVER_SHELL_UNATTRIBUTED_USER
