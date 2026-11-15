@@ -206,8 +206,9 @@ describe('camstack-ops MCP server (stdio, --toolsets ops)', { timeout: TEST_CEIL
       expect(names, `missing ${required}`).toContain(required)
     }
     expect(names).not.toContain('scaffold_capability')
-    // Without --allow-mutations the two cluster mutations do not exist at all.
+    // Without --allow-mutations the cluster mutations do not exist at all.
     expect(names).not.toContain('benchmark_run')
+    expect(names).not.toContain('benchmark_image_run')
     expect(names).not.toContain('model_studio_import')
     // Read-only everywhere except the tools that write under scratchpad/ (never the cluster).
     const WRITES_WORKSPACE = ['eval_model', 'fetch_retrain_export', 'hub_logs_export']
@@ -246,9 +247,9 @@ describe('camstack-ops MCP server (stdio, --allow-mutations)', { timeout: TEST_C
     fs.rmSync(home, { recursive: true, force: true })
   }, 30_000)
 
-  it('lists the two mutating tools, annotated as cluster mutations', async () => {
+  it('lists the mutating tools, annotated as cluster mutations', async () => {
     const tools = (await client.listTools()).tools
-    for (const name of ['benchmark_run', 'model_studio_import']) {
+    for (const name of ['benchmark_run', 'benchmark_image_run', 'model_studio_import']) {
       const tool = tools.find((t) => t.name === name)
       expect(tool, `missing ${name}`).toBeDefined()
       expect(tool?.annotations?.readOnlyHint).toBe(false)

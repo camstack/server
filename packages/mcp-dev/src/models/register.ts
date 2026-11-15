@@ -6,6 +6,7 @@ import type { OpsMutator } from '../ops/hub.js'
 import { QueryRefusedError } from '../ops/hub.js'
 import type { GatedResult, MutationGate } from '@camstack/develop'
 import { BenchmarkPlanSchema, benchmarkRun, benchmarkStatus } from './benchmark.js'
+import { benchmarkImageRun, ImageRunArgsSchema } from './benchmark-image.js'
 import { evalModel, EvalArgsSchema, type ProcessRunner } from './eval.js'
 import { fetchRetrainExport, FetchExportArgsSchema } from './export.js'
 import { modelFloors } from './floors.js'
@@ -101,6 +102,20 @@ export function registerModelTools(tool: RegisterTool, deps: ModelToolDeps): voi
         benchmarkRun(
           { gate: deps.gate, hub: deps.getHub, mutator: deps.getMutator },
           BenchmarkPlanSchema.parse(plan),
+          confirm_token,
+        ),
+      ),
+  )
+
+  tool(
+    'benchmark_image_run',
+    'MUTATES THE CLUSTER: one inference run (the Benchmark page Image run) of one model on a chosen node and accelerator device, against a reference image the hub holds. A run puts load on that node while it lasts (at most 55 s); it returns the inference time, the detections and the step timings. For the full load test use benchmark_run. First call = dry run + one-shot confirm_token; second call with the SAME arguments plus the token runs it. Requires --allow-mutations.',
+    { ...objectShape(ImageRunArgsSchema), ...ConfirmShape },
+    ({ confirm_token, ...args }) =>
+      guardedGated(() =>
+        benchmarkImageRun(
+          { gate: deps.gate, mutator: deps.getMutator },
+          ImageRunArgsSchema.parse(args),
           confirm_token,
         ),
       ),

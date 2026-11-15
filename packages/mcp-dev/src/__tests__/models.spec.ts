@@ -200,7 +200,7 @@ describe('the mutator allow-list (the last wall behind the gate)', () => {
     const { sent, mutator } = mutatorWith('admin')
     await expect(
       mutator.mutate('addons.custom', { addonId: 'terminal', action: 'run', input: {} }),
-    ).rejects.toThrow(/model-studio/)
+    ).rejects.toThrow(/"model-studio" and "benchmark" only/)
     await expect(
       mutator.mutate('addons.custom', {
         addonId: 'model-studio',

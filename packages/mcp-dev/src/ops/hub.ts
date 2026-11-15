@@ -74,20 +74,31 @@ export type MutationInputCheck = (input: unknown) => string | null
 
 const MODEL_STUDIO_ACTIONS: ReadonlySet<string> = new Set(['ensureFormatsThenDistribute'])
 
-function checkModelStudioAction(input: unknown): string | null {
+/** The Benchmark page's Image run — one inference on a chosen node and device. */
+const BENCHMARK_ACTIONS: ReadonlySet<string> = new Set(['runPipelineTest'])
+
+const CUSTOM_ACTIONS: ReadonlyMap<string, ReadonlySet<string>> = new Map([
+  ['model-studio', MODEL_STUDIO_ACTIONS],
+  ['benchmark', BENCHMARK_ACTIONS],
+])
+
+function checkCustomAction(input: unknown): string | null {
   if (input === null || typeof input !== 'object') return 'addons.custom input must be an object'
   const addonId: unknown = Reflect.get(input, 'addonId')
   const action: unknown = Reflect.get(input, 'action')
-  if (addonId !== 'model-studio') return 'addons.custom is allowed for addonId "model-studio" only'
-  if (typeof action !== 'string' || !MODEL_STUDIO_ACTIONS.has(action)) {
-    return `model-studio action "${String(action)}" is not allow-listed (allowed: ${[...MODEL_STUDIO_ACTIONS].join(', ')})`
+  const allowed = typeof addonId === 'string' ? CUSTOM_ACTIONS.get(addonId) : undefined
+  if (allowed === undefined) {
+    return `addons.custom is allowed for addonId ${[...CUSTOM_ACTIONS.keys()].map((id) => `"${id}"`).join(' and ')} only`
+  }
+  if (typeof action !== 'string' || !allowed.has(action)) {
+    return `${String(addonId)} action "${String(action)}" is not allow-listed (allowed: ${[...allowed].join(', ')})`
   }
   return null
 }
 
 export const MUTATION_ALLOWLIST: ReadonlyMap<string, MutationInputCheck> = new Map([
   ['pipelineOrchestrator.startNodeBenchmark', () => null],
-  ['addons.custom', checkModelStudioAction],
+  ['addons.custom', checkCustomAction],
 ])
 
 export interface GatedMutatorDeps {
