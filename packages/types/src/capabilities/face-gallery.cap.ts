@@ -19,6 +19,18 @@ const IdentitySampleInfoSchema = z.object({
   addedAt: z.number().int(),
   deviceId: z.number().int().optional(),
   base64: z.string().optional(), // crop image, inline
+  /**
+   * The sample's own crop, when it has one. The bytes stay on the event-media
+   * plane — this list does not inline them.
+   */
+  mediaId: z.number().int().optional(),
+  /**
+   * The source face's key frame (or the photo the sample was cut from), when
+   * the sample has no crop of its own. Draw {@link faceBbox} on it.
+   */
+  keyFrameMediaId: z.number().int().optional(),
+  /** The face box on {@link keyFrameMediaId}, pixel space. */
+  faceBbox: BoundingBoxSchema.optional(),
 })
 export type IdentitySampleInfo = z.infer<typeof IdentitySampleInfoSchema>
 
@@ -275,6 +287,16 @@ export const faceGalleryCapability = {
       kind: 'mutation',
       auth: 'admin',
     }),
+    /**
+     * Move an enrolled sample onto another person. The crop is re-owned, the
+     * source face keeps its link and follows (`recognizedIdentityId`), and an
+     * unknown person is refused.
+     */
+    moveIdentitySample: method(
+      z.object({ sampleId: z.string().min(1), toIdentityId: z.string().min(1) }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
     listRecentFaces: method(
       z
         .object({

@@ -11,7 +11,7 @@
   "auth.share-never-expiring-extend": "A never-expiring share token cannot be extended",
   "auth.share-owner-only-extend": "Only the token owner or an admin can extend a share token",
   "auth.share-owner-only-revoke": "Only the token owner or an admin can revoke a share token",
-  "auth.share-token-not-found": "Share token not found: {id}",
+  "auth.share-token-not-found": "Share token not found: {{id}}",
   "auth.password-incorrect": "Password is incorrect",
   "auth.session-required": "Requires a signed-in user session",
   "auth.admin-required": "Admin required",
@@ -25,7 +25,7 @@
   "device.certificates-unavailable": "Device certificates are not available",
   "device.not-found": "Device {id} not found",
   "device.credentials-unavailable": "Device credentials not available",
-  "device.credential-not-found": "Device credential not found: {id}",
+  "device.credential-not-found": "Device credential not found: {{id}}",
   "storage.no-provider": "No storage provider configured",
   "preferences.forbidden": "This credential cannot reach account preferences",
   "preferences.unavailable": "Account preferences are not available",
@@ -234,7 +234,7 @@
   "server.app-confirmations-busy": "Too many pending app confirmations",
   "server.step-up-busy": "Too many pending step-up proofs",
   "server.login-unavailable": "Login unavailable — `user-management` capability not registered",
-  "server.share-token-expired": "Share token expired: {id}",
+  "server.share-token-expired": "Share token expired: {{id}}",
   "server.package-not-allowed": "Package \"{name}\" is not an allowed @camstack/* package",
   "server.package-protected": "Cannot uninstall protected package \"{name}\"",
   "server.package-required": "Package {packageName} is required and cannot be uninstalled",
@@ -265,5 +265,7 @@
   "ir-transmitter.learn-undecodable": "The code learned by {{name}} could not be read",
   "ir-transmitter.learn-busy": "The transmitter {{name}} is already learning a code",
   "ir-transmitter.native-unsupported": "The transmitter {{name}} cannot send this kind of code",
-  "ir-transmitter.no-code": "Nothing to send: give a pulse train or a native code"
+  "ir-transmitter.no-code": "Nothing to send: give a pulse train or a native code",
+  "gallery.unknown-target": "Unknown gallery target: {{id}}",
+  "gallery.unknown-sample": "Unknown gallery sample: {{id}}"
 }

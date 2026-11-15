@@ -11,7 +11,7 @@
   "auth.share-never-expiring-extend": "Un token di condivisione senza scadenza non può essere prorogato",
   "auth.share-owner-only-extend": "Solo il proprietario del token o un amministratore può prorogare un token di condivisione",
   "auth.share-owner-only-revoke": "Solo il proprietario del token o un amministratore può revocare un token di condivisione",
-  "auth.share-token-not-found": "Token di condivisione non trovato: {id}",
+  "auth.share-token-not-found": "Token di condivisione non trovato: {{id}}",
   "auth.password-incorrect": "La password non è corretta",
   "auth.session-required": "Serve una sessione utente con accesso effettuato",
   "auth.admin-required": "Serve un amministratore",
@@ -25,7 +25,7 @@
   "device.certificates-unavailable": "I certificati dei dispositivi non sono disponibili",
   "device.not-found": "Dispositivo {id} non trovato",
   "device.credentials-unavailable": "Le credenziali del dispositivo non sono disponibili",
-  "device.credential-not-found": "Credenziale del dispositivo non trovata: {id}",
+  "device.credential-not-found": "Credenziale del dispositivo non trovata: {{id}}",
   "storage.no-provider": "Nessun provider di archiviazione configurato",
   "preferences.forbidden": "Questa credenziale non può accedere alle preferenze dell’account",
   "preferences.unavailable": "Le preferenze dell’account non sono disponibili",
@@ -234,7 +234,7 @@
   "server.app-confirmations-busy": "Troppe conferme di app in attesa",
   "server.step-up-busy": "Troppe verifiche di sicurezza in attesa",
   "server.login-unavailable": "Accesso non disponibile — la capacità `user-management` non è registrata",
-  "server.share-token-expired": "Token di condivisione scaduto: {id}",
+  "server.share-token-expired": "Token di condivisione scaduto: {{id}}",
   "server.package-not-allowed": "Il pacchetto \"{name}\" non è un pacchetto @camstack/* consentito",
   "server.package-protected": "Impossibile disinstallare il pacchetto protetto \"{name}\"",
   "server.package-required": "Il pacchetto {packageName} è necessario e non può essere disinstallato",
@@ -265,5 +265,7 @@
   "ir-transmitter.learn-undecodable": "Il codice appreso da {{name}} non può essere letto",
   "ir-transmitter.learn-busy": "Il trasmettitore {{name}} sta già apprendendo un codice",
   "ir-transmitter.native-unsupported": "Il trasmettitore {{name}} non può inviare questo tipo di codice",
-  "ir-transmitter.no-code": "Niente da inviare: indica un treno di impulsi o un codice nativo"
+  "ir-transmitter.no-code": "Niente da inviare: indica un treno di impulsi o un codice nativo",
+  "gallery.unknown-target": "Destinazione della galleria sconosciuta: {{id}}",
+  "gallery.unknown-sample": "Campione della galleria sconosciuto: {{id}}"
 }

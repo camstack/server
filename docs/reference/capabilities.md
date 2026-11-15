@@ -173,7 +173,7 @@ Singleton or collection providers, addressed without a device.
 | `device-state` | 9 | — | — | — | — | `device-manager` |
 | `display-palette` | 3 | — | — | — | — | `pipeline-orchestrator` |
 | `embedding-encoder` | 4 | — | — | — | ✓ | `embedding-encoder` |
-| `face-gallery` | 16 | — | — | — | — | `pipeline-analytics` |
+| `face-gallery` | 17 | — | — | — | — | `pipeline-analytics` |
 | `failure-contribution` | 1 | — | — | — | ✓ | `pipeline-runner` `pipeline-analytics` `provider-hikvision` `provider-reolink` |
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
@@ -207,7 +207,7 @@ Singleton or collection providers, addressed without a device.
 | `pipeline-executor` | 30 | — | — | — | — | `detection-pipeline` |
 | `pipeline-orchestrator` | 64 | — | — | — | — | `pipeline-orchestrator` |
 | `pipeline-runner` | 18 | — | — | — | — | `pipeline-runner` |
-| `plate-gallery` | 17 | — | — | — | — | `pipeline-analytics` |
+| `plate-gallery` | 18 | — | — | — | — | `pipeline-analytics` |
 | `platform-probe` | 5 | — | — | — | — | `platform-probe` |
 | `record-entries` | 4 | — | — | — | — | `record-entries` |
 | `recording-archive` | 34 | ✓ | — | — | — | `recorder` |

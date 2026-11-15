@@ -7721,6 +7721,15 @@ export function createCapRouter_faceGallery(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeSample(methodInput as any)
       }),
+    moveIdentitySample: adminProcedure
+      .input(faceGalleryCapability.methods.moveIdentitySample.input.loose())
+      .output(faceGalleryCapability.methods.moveIdentitySample.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('face-gallery', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.moveIdentitySample(methodInput as any)
+      }),
     listRecentFaces: protectedProcedure
       .input(faceGalleryCapability.methods.listRecentFaces.input)
       .output(faceGalleryCapability.methods.listRecentFaces.output)
@@ -15385,6 +15394,20 @@ export function createCapRouter_plateGallery(
         )
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.removeVehicleSample(methodInput as any)
+      }),
+    moveVehicleSample: adminProcedure
+      .input(plateGalleryCapability.methods.moveVehicleSample.input.loose())
+      .output(plateGalleryCapability.methods.moveVehicleSample.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'plate-gallery',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.moveVehicleSample(methodInput as any)
       }),
     assignPlate: adminProcedure
       .input(plateGalleryCapability.methods.assignPlate.input.loose())

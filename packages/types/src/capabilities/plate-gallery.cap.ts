@@ -21,6 +21,18 @@ const VehicleSampleInfoSchema = z.object({
   addedAt: z.number().int(),
   deviceId: z.number().int().optional(),
   base64: z.string().optional(), // plate crop image, inline
+  /**
+   * The sample's own crop, when it has one. Prefer this over {@link base64}:
+   * the bytes are on the event-media plane (`/m/<mediaId>`), never inlined.
+   */
+  mediaId: z.number().int().optional(),
+  /**
+   * The source plate's key frame, when the sample has no crop of its own.
+   * Draw {@link plateBbox} on it. Absent when {@link mediaId} is set.
+   */
+  keyFrameMediaId: z.number().int().optional(),
+  /** The plate box on {@link keyFrameMediaId}, pixel space. */
+  plateBbox: BoundingBoxSchema.optional(),
 })
 export type VehicleSampleInfo = z.infer<typeof VehicleSampleInfoSchema>
 
@@ -53,6 +65,16 @@ const PlateInfoSchema = z.object({
    * left at its `true` default.
    */
   cropUrl: z.string().optional(),
+  /**
+   * Why {@link cropUrl} is absent. One of `no-frame-handle`,
+   * `live-capture-missed`, `live-capture-threw`, `no-key-frame`,
+   * `derive-not-wired`, `subject-moved`, `temporal-skew`, `key-frame-absent`,
+   * `bad-frame-size`, `decode-empty`, `derive-threw`, `derive-returned-null`,
+   * `put-failed`. A crossing vehicle whose live capture missed is
+   * `subject-moved`: the key frame is a different instant, and the crop is
+   * legitimately absent.
+   */
+  cropMissReason: z.string().optional(),
 })
 export type PlateInfo = z.infer<typeof PlateInfoSchema>
 
@@ -204,6 +226,16 @@ export const plateGalleryCapability = {
     ),
     removeVehicleSample: method(
       z.object({ vehicleId: z.string(), sampleId: z.string() }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Move an enrolled sample onto another vehicle. The crop is re-owned, the
+     * source plate keeps its link and follows (`recognizedVehicleId`), and an
+     * unknown vehicle is refused.
+     */
+    moveVehicleSample: method(
+      z.object({ sampleId: z.string().min(1), toVehicleId: z.string().min(1) }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),

@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1494 method paths across 208 capabilities.
+ * Coverage: 1496 method paths across 208 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -505,6 +505,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'faceGallery.listIdentities': { capName: "face-gallery", capScope: "system", addonId: null, access: "view", role: "viewer" } as const,
   'faceGallery.listIdentitySamples': { capName: "face-gallery", capScope: "system", addonId: null, access: "view", role: "feature:face-assignment" } as const,
   'faceGallery.listRecentFaces': { capName: "face-gallery", capScope: "system", addonId: null, access: "view", role: "feature:face-assignment" } as const,
+  'faceGallery.moveIdentitySample': { capName: "face-gallery", capScope: "system", addonId: null, access: "create", role: "feature:face-assignment" } as const,
   'faceGallery.removeSample': { capName: "face-gallery", capScope: "system", addonId: null, access: "delete", role: "feature:face-assignment" } as const,
   'faceGallery.renameIdentity': { capName: "face-gallery", capScope: "system", addonId: null, access: "create", role: "feature:face-assignment" } as const,
   'faceGallery.suggestFaceClusters': { capName: "face-gallery", capScope: "system", addonId: null, access: "view", role: "feature:face-assignment" } as const,
@@ -1065,6 +1066,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'plateGallery.listPlates': { capName: "plate-gallery", capScope: "system", addonId: null, access: "view", role: "feature:plate-assignment" } as const,
   'plateGallery.listVehicles': { capName: "plate-gallery", capScope: "system", addonId: null, access: "view", role: "feature:plate-assignment" } as const,
   'plateGallery.listVehicleSamples': { capName: "plate-gallery", capScope: "system", addonId: null, access: "view", role: "feature:plate-assignment" } as const,
+  'plateGallery.moveVehicleSample': { capName: "plate-gallery", capScope: "system", addonId: null, access: "create", role: "feature:plate-assignment" } as const,
   'plateGallery.removeVehicleSample': { capName: "plate-gallery", capScope: "system", addonId: null, access: "delete", role: "feature:plate-assignment" } as const,
   'plateGallery.renameVehicle': { capName: "plate-gallery", capScope: "system", addonId: null, access: "create", role: "feature:plate-assignment" } as const,
   'plateGallery.searchPlates': { capName: "plate-gallery", capScope: "system", addonId: null, access: "view", role: "feature:plate-assignment" } as const,

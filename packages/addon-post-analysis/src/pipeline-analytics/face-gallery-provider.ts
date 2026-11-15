@@ -11,17 +11,18 @@
  * see LEGACY_MODEL_ID for what a row that recorded none is assumed to be.
  */
 
-import type {
-  FaceCluster,
-  FaceInfo,
-  Identity,
-  IdentitySampleAudit,
-  IdentitySampleInfo,
-  IFaceGalleryProvider,
-  IScopedLogger,
-  ListRecentFacesInput,
-  PipelineAnalyticsFaceGalleryChangedPayload,
-  SuggestFaceClustersInput,
+import {
+  type FaceCluster,
+  type FaceInfo,
+  type Identity,
+  type IdentitySampleAudit,
+  type IdentitySampleInfo,
+  type IFaceGalleryProvider,
+  type IScopedLogger,
+  type ListRecentFacesInput,
+  type PipelineAnalyticsFaceGalleryChangedPayload,
+  type SuggestFaceClustersInput,
+  userError,
 } from '@camstack/types'
 import { type GalleryMediaRow, toGalleryMediaRow } from './gallery-media-row.js'
 import { resolveIncludeCrops } from './include-crops-default.js'
@@ -31,12 +32,28 @@ import { applyTrackLabelCandidate } from './pipeline/apply-track-label.js'
 import { clusterByEmbedding } from './pipeline/face-clustering.js'
 import { enrollmentPromiscuity } from './pipeline/face-matcher.js'
 import type { EventStore } from './store/event-store.js'
-import { type Face, FACE_SWEEP_PAGE, type FaceStore } from './store/face-store.js'
-import type { AddIdentitySampleInput, IdentityStore } from './store/identity-store.js'
+import {
+  type Face,
+  FACE_SWEEP_PAGE,
+  type FaceSampleRef,
+  type FaceStore,
+} from './store/face-store.js'
+import type {
+  AddIdentitySampleInput,
+  IdentitySampleSummary,
+  IdentityStore,
+} from './store/identity-store.js'
 import { type AuditSampleInput, auditIdentitySamples } from './identity-audit.js'
 import { alignmentForCapturedFace } from './face-alignment-version.js'
 import type { MediaStore } from './store/media-store.js'
 import type { TrackStore } from './store/track-store.js'
+
+/** What an identity sample can be drawn from — its crop, or the source frame. */
+interface IdentitySampleDrawing {
+  readonly mediaId?: number
+  readonly keyFrameMediaId?: number
+  readonly faceBbox?: Face['faceBbox']
+}
 
 /** The source frame an enrolment carries into the sample (D644). */
 interface EnrolledSourceFrame {
@@ -320,20 +337,152 @@ export class FaceGalleryProvider implements IFaceGalleryProvider {
     const rows = await this.identityStore.listSamples(input.identityId)
     const result: IdentitySampleInfo[] = []
     for (const row of rows) {
-      let base64: string | undefined
-      if (row.mediaId !== undefined) {
-        const media = await this.mediaStore.getById(row.mediaId)
-        if (media) base64 = media.base64
-      }
-      result.push({
+      const drawn = await this.drawableForIdentitySample(input.identityId, row)
+      const info = {
         id: row.id,
         source: row.source,
         addedAt: row.addedAt,
         ...(row.deviceId !== undefined ? { deviceId: row.deviceId } : {}),
-        ...(base64 !== undefined ? { base64 } : {}),
-      })
+        ...(drawn.mediaId !== undefined ? { mediaId: drawn.mediaId } : {}),
+        ...(drawn.keyFrameMediaId !== undefined ? { keyFrameMediaId: drawn.keyFrameMediaId } : {}),
+        ...(drawn.faceBbox !== undefined ? { faceBbox: drawn.faceBbox } : {}),
+      }
+      result.push(info)
     }
     return result
+  }
+
+  /**
+   * Own crop, or the source face's key frame and box (a photo uses its source
+   * frame). Never the JPEG bytes.
+   */
+  private async drawableForIdentitySample(
+    identityId: string,
+    sample: IdentitySampleSummary,
+  ): Promise<IdentitySampleDrawing> {
+    if (sample.mediaId !== undefined) return { mediaId: sample.mediaId }
+    const faces = await this.faceStore.listFacesForSample(identityId, sample.id)
+    const faceId = faces[0]?.faceId
+    if (faceId !== undefined) {
+      const face = await this.faceStore.get(faceId)
+      if (face?.keyFrameMediaId !== undefined) {
+        return {
+          keyFrameMediaId: face.keyFrameMediaId,
+          ...(face.faceBbox !== undefined ? { faceBbox: face.faceBbox } : {}),
+        }
+      }
+    }
+    if (sample.sourceMediaId !== undefined && sample.sourceBbox !== undefined) {
+      return {
+        keyFrameMediaId: sample.sourceMediaId,
+        faceBbox: {
+          x: sample.sourceBbox.x,
+          y: sample.sourceBbox.y,
+          w: sample.sourceBbox.width,
+          h: sample.sourceBbox.height,
+        },
+      }
+    }
+    return {}
+  }
+
+  async moveIdentitySample(input: { sampleId: string; toIdentityId: string }): Promise<void> {
+    const target = (await this.identityStore.listIdentities()).find(
+      (i) => i.id === input.toIdentityId,
+    )
+    if (target === undefined) {
+      throw userError(
+        'gallery.unknown-target',
+        { id: input.toIdentityId },
+        `Unknown identity: ${input.toIdentityId}`,
+      )
+    }
+    const sample = await this.identityStore.getSample(input.sampleId)
+    if (sample === null) {
+      throw userError(
+        'gallery.unknown-sample',
+        { id: input.sampleId },
+        `Unknown identity sample: ${input.sampleId}`,
+      )
+    }
+    if (sample.identityId === input.toIdentityId) return
+    const faces = await this.faceStore.listFacesForSample(sample.identityId, sample.id)
+    const mediaId = await this.reownIdentityMedia(
+      sample.mediaId,
+      sample.identityId,
+      input.toIdentityId,
+    )
+    const sourceMediaId = await this.reownIdentityMedia(
+      sample.sourceMediaId,
+      sample.identityId,
+      input.toIdentityId,
+    )
+    await this.identityStore.retargetSample({
+      sampleId: input.sampleId,
+      toIdentityId: input.toIdentityId,
+      ...(mediaId !== undefined ? { mediaId } : {}),
+      ...(sourceMediaId !== undefined ? { sourceMediaId } : {}),
+    })
+    await this.followMovedFaces(faces, input.toIdentityId, target.name, mediaId, sourceMediaId)
+    this.refreshGallery()
+  }
+
+  /** Re-own an identity blob. A row that is not this identity's is left as it is. */
+  private async reownIdentityMedia(
+    mediaId: number | undefined,
+    fromIdentityId: string,
+    toIdentityId: string,
+  ): Promise<number | undefined> {
+    if (mediaId === undefined) return undefined
+    const owner = await this.mediaStore.ownerOf(mediaId)
+    if (owner === null || owner.ownerKind !== 'identity' || owner.ownerId !== fromIdentityId) {
+      return mediaId
+    }
+    return this.mediaStore.reown({
+      fromOwnerKind: 'identity',
+      fromOwnerId: fromIdentityId,
+      toOwnerKind: 'identity',
+      toOwnerId: toIdentityId,
+      mediaId,
+    })
+  }
+
+  /** Each source face follows the sample: identity, crop id, label, gallery event. */
+  private async followMovedFaces(
+    faces: readonly FaceSampleRef[],
+    toIdentityId: string,
+    identityName: string,
+    mediaId: number | undefined,
+    sourceMediaId: number | undefined,
+  ): Promise<void> {
+    for (const ref of faces) {
+      const face = await this.faceStore.get(ref.faceId)
+      if (face === null) continue
+      await this.faceStore.update(ref.faceId, {
+        recognizedIdentityId: toIdentityId,
+        ...(mediaId !== undefined ? { mediaId } : {}),
+        ...(sourceMediaId !== undefined ? { sourceFrameMediaId: sourceMediaId } : {}),
+      })
+      await applyTrackLabelCandidate(
+        { trackStore: this.trackStore, eventStore: this.eventStore, logger: this.logger },
+        face.deviceId,
+        face.trackId,
+        {
+          text: identityName,
+          tier: 2,
+          score: 1,
+          stepId: OPERATOR_FACE_STEP_ID,
+          decidedAt: Date.now(),
+          operatorAuthority: true,
+          identityId: toIdentityId,
+        },
+      )
+      this.safeEmitFaceGalleryChanged({
+        deviceId: face.deviceId,
+        faceId: face.id,
+        kind: 'assigned',
+      })
+    }
   }
 
   /**

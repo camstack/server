@@ -10,13 +10,14 @@
  * `FaceGalleryProvider.assignFace`, substituting embeddings with text + score.
  */
 
-import type {
-  IPlateGalleryProvider,
-  IScopedLogger,
-  PipelineAnalyticsPlateGalleryChangedPayload,
-  PlateInfo,
-  Vehicle,
-  VehicleSampleInfo,
+import {
+  type IPlateGalleryProvider,
+  type IScopedLogger,
+  type PipelineAnalyticsPlateGalleryChangedPayload,
+  type PlateInfo,
+  type Vehicle,
+  type VehicleSampleInfo,
+  userError,
 } from '@camstack/types'
 import { type GalleryMediaRow, toGalleryMediaRow } from './gallery-media-row.js'
 import { resolveIncludeCrops } from './include-crops-default.js'
@@ -27,7 +28,7 @@ import { mediaFileUrl } from './media-file-url.js'
 import type { MediaStore } from './store/media-store.js'
 import type { Plate, PlateStore } from './store/plate-store.js'
 import type { TrackStore } from './store/track-store.js'
-import type { VehicleStore } from './store/vehicle-store.js'
+import type { VehicleSampleListItem, VehicleStore } from './store/vehicle-store.js'
 
 /** Attribution of a vehicle name BOUND BY THE OPERATOR in the plate gallery. */
 const OPERATOR_PLATE_STEP_ID = 'operator:plate-gallery'
@@ -67,6 +68,13 @@ export interface PlateGalleryProviderDeps {
  *  crop lives in, when there is one (D482). */
 interface PlateCropSource {
   readonly mediaId?: number
+}
+
+/** What a vehicle sample can be drawn from — its crop, or the source frame. */
+interface VehicleSampleDrawing {
+  readonly mediaId?: number
+  readonly keyFrameMediaId?: number
+  readonly plateBbox?: Plate['plateBbox']
 }
 
 export class PlateGalleryProvider implements IPlateGalleryProvider {
@@ -141,7 +149,7 @@ export class PlateGalleryProvider implements IPlateGalleryProvider {
     // `z.string().optional()` which REJECTS null → output validation would fail.
     const vehicleName =
       plate.recognizedVehicleId != null ? nameMap?.get(plate.recognizedVehicleId) : undefined
-    return {
+    const info = {
       plateId: plate.id,
       deviceId: plate.deviceId,
       trackId: plate.trackId,
@@ -158,7 +166,11 @@ export class PlateGalleryProvider implements IPlateGalleryProvider {
       ...(plate.keyFrameMediaId !== undefined ? { keyFrameMediaId: plate.keyFrameMediaId } : {}),
       ...(base64 !== undefined ? { base64 } : {}),
       ...(cropUrl !== undefined ? { cropUrl } : {}),
+      ...(plate.mediaId === undefined && plate.cropMissReason !== undefined
+        ? { cropMissReason: plate.cropMissReason }
+        : {}),
     }
+    return info
   }
 
   /**
@@ -348,21 +360,115 @@ export class PlateGalleryProvider implements IPlateGalleryProvider {
     const rows = await this.vehicleStore.listSamples(input.vehicleId)
     const result: VehicleSampleInfo[] = []
     for (const row of rows) {
-      let base64: string | undefined
-      if (row.mediaId) {
-        const media = await this.mediaStore.getById(row.mediaId)
-        if (media) base64 = media.base64
-      }
-      result.push({
+      const drawn = await this.drawableForVehicleSample(row)
+      const info = {
         id: row.id,
         text: row.text,
         score: row.score,
         addedAt: row.addedAt,
         ...(row.deviceId !== undefined ? { deviceId: row.deviceId } : {}),
-        ...(base64 !== undefined ? { base64 } : {}),
-      })
+        ...(drawn.mediaId !== undefined ? { mediaId: drawn.mediaId } : {}),
+        ...(drawn.keyFrameMediaId !== undefined ? { keyFrameMediaId: drawn.keyFrameMediaId } : {}),
+        ...(drawn.plateBbox !== undefined ? { plateBbox: drawn.plateBbox } : {}),
+      }
+      result.push(info)
     }
     return result
+  }
+
+  /**
+   * Own crop, or the source plate's key frame and box. Never the JPEG bytes:
+   * a sample enrolled from a plate that had no crop still has a frame to draw.
+   */
+  private async drawableForVehicleSample(
+    row: VehicleSampleListItem,
+  ): Promise<VehicleSampleDrawing> {
+    if (row.mediaId !== undefined) return { mediaId: row.mediaId }
+    if (row.sourcePlateId === undefined) return {}
+    const plate = await this.plateStore.get(row.sourcePlateId)
+    if (plate === null) return {}
+    return {
+      ...(plate.keyFrameMediaId !== undefined ? { keyFrameMediaId: plate.keyFrameMediaId } : {}),
+      ...(plate.plateBbox !== undefined ? { plateBbox: plate.plateBbox } : {}),
+    }
+  }
+
+  async moveVehicleSample(input: { sampleId: string; toVehicleId: string }): Promise<void> {
+    const target = (await this.vehicleStore.listVehicles()).find((v) => v.id === input.toVehicleId)
+    if (target === undefined) {
+      throw userError(
+        'gallery.unknown-target',
+        { id: input.toVehicleId },
+        `Unknown vehicle: ${input.toVehicleId}`,
+      )
+    }
+    const sample = await this.vehicleStore.getSample(input.sampleId)
+    if (sample === null) {
+      throw userError(
+        'gallery.unknown-sample',
+        { id: input.sampleId },
+        `Unknown vehicle sample: ${input.sampleId}`,
+      )
+    }
+    if (sample.vehicleId === input.toVehicleId) return
+    const mediaId = await this.reownVehicleCrop(sample.mediaId, sample.vehicleId, input.toVehicleId)
+    await this.vehicleStore.retargetSample({
+      sampleId: input.sampleId,
+      toVehicleId: input.toVehicleId,
+      ...(mediaId !== undefined ? { mediaId } : {}),
+    })
+    await this.followMovedPlate(sample.sourcePlateId, input.toVehicleId, mediaId, target.name)
+    this.refreshGallery()
+  }
+
+  private async reownVehicleCrop(
+    mediaId: number | undefined,
+    fromVehicleId: string,
+    toVehicleId: string,
+  ): Promise<number | undefined> {
+    if (mediaId === undefined) return undefined
+    return this.mediaStore.reown({
+      fromOwnerKind: 'vehicle',
+      fromOwnerId: fromVehicleId,
+      toOwnerKind: 'vehicle',
+      toOwnerId: toVehicleId,
+      mediaId,
+    })
+  }
+
+  /** The source plate keeps its sample link and takes the new vehicle. */
+  private async followMovedPlate(
+    sourcePlateId: string | undefined,
+    toVehicleId: string,
+    mediaId: number | undefined,
+    vehicleName: string,
+  ): Promise<void> {
+    if (sourcePlateId === undefined) return
+    const plate = await this.plateStore.get(sourcePlateId)
+    if (plate === null) return
+    await this.plateStore.update(sourcePlateId, {
+      recognizedVehicleId: toVehicleId,
+      ...(mediaId !== undefined ? { mediaId } : {}),
+    })
+    await applyTrackLabelCandidate(
+      { trackStore: this.trackStore, eventStore: this.eventStore, logger: this.logger },
+      plate.deviceId,
+      plate.trackId,
+      {
+        text: vehicleName,
+        tier: 2,
+        score: 1,
+        stepId: OPERATOR_PLATE_STEP_ID,
+        decidedAt: Date.now(),
+        operatorAuthority: true,
+        identityId: toVehicleId,
+      },
+    )
+    this.safeEmitPlateGalleryChanged({
+      deviceId: plate.deviceId,
+      plateId: plate.id,
+      kind: 'assigned',
+    })
   }
 
   async removeVehicleSample(input: { vehicleId: string; sampleId: string }): Promise<void> {

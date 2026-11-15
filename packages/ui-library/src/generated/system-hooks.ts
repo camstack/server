@@ -1334,6 +1334,9 @@ export const useFaceGalleryAuditIdentitySamples: typeof trpc.faceGallery.auditId
 /** Generated alias around `trpc.faceGallery.removeSample.useMutation`. */
 export const useFaceGalleryRemoveSample: typeof trpc.faceGallery.removeSample.useMutation = /*#__PURE__*/ alias(() => trpc.faceGallery.removeSample.useMutation)
 
+/** Generated alias around `trpc.faceGallery.moveIdentitySample.useMutation`. */
+export const useFaceGalleryMoveIdentitySample: typeof trpc.faceGallery.moveIdentitySample.useMutation = /*#__PURE__*/ alias(() => trpc.faceGallery.moveIdentitySample.useMutation)
+
 /** Generated alias around `trpc.faceGallery.listRecentFaces.useQuery`. */
 export const useFaceGalleryListRecentFaces: typeof trpc.faceGallery.listRecentFaces.useQuery = /*#__PURE__*/ alias(() => trpc.faceGallery.listRecentFaces.useQuery)
 
@@ -2866,6 +2869,9 @@ export const usePlateGalleryListVehicleSamples: typeof trpc.plateGallery.listVeh
 
 /** Generated alias around `trpc.plateGallery.removeVehicleSample.useMutation`. */
 export const usePlateGalleryRemoveVehicleSample: typeof trpc.plateGallery.removeVehicleSample.useMutation = /*#__PURE__*/ alias(() => trpc.plateGallery.removeVehicleSample.useMutation)
+
+/** Generated alias around `trpc.plateGallery.moveVehicleSample.useMutation`. */
+export const usePlateGalleryMoveVehicleSample: typeof trpc.plateGallery.moveVehicleSample.useMutation = /*#__PURE__*/ alias(() => trpc.plateGallery.moveVehicleSample.useMutation)
 
 /** Generated alias around `trpc.plateGallery.assignPlate.useMutation`. */
 export const usePlateGalleryAssignPlate: typeof trpc.plateGallery.assignPlate.useMutation = /*#__PURE__*/ alias(() => trpc.plateGallery.assignPlate.useMutation)

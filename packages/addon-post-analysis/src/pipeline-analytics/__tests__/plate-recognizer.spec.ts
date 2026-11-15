@@ -1,4 +1,4 @@
-import type { IScopedLogger } from '@camstack/types'
+import type { FrameHandle, IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import type { TrackedDetectionOut } from '../pipeline/frame-processor.js'
 import { createKeyFrameCrop } from '../pipeline/keyframe-crop.js'
@@ -243,15 +243,15 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
     derive?: PlateRecognizerDeps['deriveCropFromKeyFrame']
     keyFrameMediaId?: number | undefined
     /** Collect the recognizer's own info lines (the reported-hole assertion). */
-    onInfo?: (message: string) => void
+    onInfo?: (message: string, context?: { readonly tags?: { readonly deviceId?: number } }) => void
   }): {
     rec: PlateRecognizer
     puts: Put[]
-    inserts: { mediaId?: number }[]
+    inserts: { mediaId?: number; cropMissReason?: string }[]
     deriveArgs: unknown[]
   } {
     const puts: Put[] = []
-    const inserts: { mediaId?: number }[] = []
+    const inserts: { mediaId?: number; cropMissReason?: string }[] = []
     const deriveArgs: unknown[] = []
     let nextMediaId = 0
     const deps: PlateRecognizerDeps = {
@@ -259,6 +259,7 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
         insert: async (p) => {
           inserts.push({
             ...(p.mediaId !== undefined ? { mediaId: p.mediaId } : {}),
+            ...(p.cropMissReason !== undefined ? { cropMissReason: p.cropMissReason } : {}),
           })
         },
       },
@@ -284,7 +285,11 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
           }
         : {}),
       logger: opts.onInfo
-        ? { ...makeSilentLogger(), info: (message: string) => opts.onInfo!(message) }
+        ? {
+            ...makeSilentLogger(),
+            info: (message: string, context?: { tags?: { deviceId?: number } }) =>
+              opts.onInfo!(message, context),
+          }
         : makeSilentLogger(),
     }
     return { rec: new PlateRecognizer(deps), puts, inserts, deriveArgs }
@@ -343,6 +348,9 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
     expect(puts).toHaveLength(0)
     expect(inserts).toHaveLength(1)
     expect(inserts[0]!.mediaId).toBeUndefined()
+    // The row names WHY the crop did not land. A hole with no reason reads as
+    // "the crop was never attempted".
+    expect(inserts[0]!.cropMissReason).toBe('derive-returned-null')
   })
 
   it('does NOT invoke the keyFrame fallback when the live crop is present', async () => {
@@ -356,6 +364,53 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
 
     expect(deriveArgs).toHaveLength(0)
     expect(puts[0]!.data).toBe(live)
+  })
+
+  it('keeps a crop already captured when a sharper read misses', async () => {
+    const puts: Buffer[] = []
+    let calls = 0
+    const { rec } = makeRecognizer([], [], {
+      captureCrop: async () => {
+        calls += 1
+        return calls === 1 ? Buffer.from('FIRST') : null
+      },
+      mediaStore: {
+        put: async (input) => {
+          puts.push(input.data)
+          return 1
+        },
+      },
+    })
+    const frameHandle: FrameHandle = {
+      shmId: 's',
+      slot: 0,
+      seq: 2,
+      width: 640,
+      height: 360,
+      format: 'jpeg',
+      pts: 1,
+      byteLength: 1,
+      nodeId: 'n',
+      slotCount: 1,
+    }
+    const read = (score: number) =>
+      rec.observePlateRead({
+        deviceId: 9,
+        trackId: 'tkeep',
+        text: 'AB123CD',
+        score,
+        bbox: { x: 1, y: 2, w: 3, h: 4 },
+        timestamp: 5,
+        frameWidth: 640,
+        frameHeight: 360,
+        cropPadding: 0,
+        frameHandle,
+      })
+    await read(0.4)
+    await read(0.9)
+    await rec.onTrackEnd(9, 'tkeep')
+    expect(puts).toHaveLength(1)
+    expect(puts[0]!.toString()).toBe('FIRST')
   })
 
   it('does NOT invoke the keyFrame fallback when no keyFrame key exists', async () => {
@@ -406,12 +461,16 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
       })
     }
 
-    it('a CROSSING vehicle: no crop is stored, and the hole is reported', async () => {
-      const infos: string[] = []
+    it('a CROSSING vehicle: no crop is stored, and the row names why', async () => {
+      const infos: Array<{ message: string; deviceId?: number }> = []
       const { rec, puts, inserts } = makeRec({
         liveCrop: null,
         derive: realDerive(),
-        onInfo: (message) => infos.push(message),
+        onInfo: (message, context) =>
+          infos.push({
+            message,
+            ...(context?.tags?.deviceId !== undefined ? { deviceId: context.tags.deviceId } : {}),
+          }),
       })
       await observe(rec)
       await rec.onTrackEnd(9, 't1', trail(300))
@@ -420,7 +479,14 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
       // The plate row still lands — the TEXT was read off the right frame.
       expect(inserts).toHaveLength(1)
       expect(inserts[0]!.mediaId).toBeUndefined()
-      expect(infos).toContain('plate crop not recovered — keyFrame derive refused or missed')
+      // Live capture missed AND the key frame is the wrong instant (the car
+      // moved). The refusal is the reason the crop never lands, on the row
+      // and on one line tagged with the camera.
+      expect(inserts[0]!.cropMissReason).toBe('subject-moved')
+      expect(infos).toContainEqual({
+        message: 'plate crop absent: subject-moved',
+        deviceId: 9,
+      })
     })
 
     it('a PARKED vehicle at the identical skew: the crop is stored', async () => {

@@ -2,7 +2,7 @@ import { FACE_ARCFACE_INDEX, IDENTITY_ARCFACE_INDEX } from '../store/embedding-v
 /**
  * FaceGalleryProvider — Task 5 + Task 6 tests
  *
- * Task 5: createIdentity→listIdentities; listIdentitySamples inlines base64;
+ * Task 5: createIdentity→listIdentities; listIdentitySamples names a media id;
  * removeSample deletes durable media; deleteIdentity cascades sample media.
  *
  * Task 6: listRecentFaces, getFaceByTrack, getFaceMedia, assignFace, unassignFace.
@@ -288,7 +288,7 @@ describe('FaceGalleryProvider — listIdentitySamples', () => {
     expect(samples).toHaveLength(0)
   })
 
-  it('inlines base64 for a sample whose mediaId resolves to stored media', async () => {
+  it('returns mediaId and does not inline the JPEG', async () => {
     const { provider, identityStore, mediaStore } = await makeProvider()
     const id = await provider.createIdentity({ name: 'Eve' })
     const imageData = Buffer.from([0xff, 0xd8, 0xff, 0xe0])
@@ -318,9 +318,8 @@ describe('FaceGalleryProvider — listIdentitySamples', () => {
     expect(samples[0]!.id).toBe(sample.id)
     expect(samples[0]!.source).toBe('detected')
     expect(samples[0]!.deviceId).toBe(7)
-    // base64 should be inlined
-    expect(samples[0]!.base64).toBeDefined()
-    expect(Buffer.from(samples[0]!.base64!, 'base64')).toEqual(imageData)
+    expect(samples[0]!.mediaId).toBe(mediaId)
+    expect(samples[0]!.base64).toBeUndefined()
   })
 
   it('omits base64 when the media blob is missing', async () => {
@@ -338,8 +337,78 @@ describe('FaceGalleryProvider — listIdentitySamples', () => {
 
     const samples = await provider.listIdentitySamples({ identityId: id.id })
     expect(samples).toHaveLength(1)
-    // base64 should be omitted (media id not found)
+    expect(samples[0]!.mediaId).toBe(9999)
     expect(samples[0]!.base64).toBeUndefined()
+  })
+
+  it('a sample without its own crop returns the source face key frame and box', async () => {
+    const { provider, faceStore } = await makeProviderWithSpies()
+    const identity = await provider.createIdentity({ name: 'Bare' })
+    await faceStore.insert({
+      id: 'face-bare',
+      deviceId: 7,
+      trackId: 'tb',
+      timestamp: 1,
+      embedding: [0.2, 0.3],
+      assigned: false,
+      keyFrameMediaId: 55,
+      faceBbox: { x: 1, y: 2, w: 3, h: 4 },
+    })
+    await provider.assignFace({ faceId: 'face-bare', identityId: identity.id })
+    const samples = await provider.listIdentitySamples({ identityId: identity.id })
+    expect(samples[0]!.mediaId).toBeUndefined()
+    expect(samples[0]!.base64).toBeUndefined()
+    expect(samples[0]!.keyFrameMediaId).toBe(55)
+    expect(samples[0]!.faceBbox).toEqual({ x: 1, y: 2, w: 3, h: 4 })
+  })
+})
+
+describe('FaceGalleryProvider — moveIdentitySample', () => {
+  it('reowns the crop, the face follows, and an unknown identity is refused', async () => {
+    const { provider, faceStore, mediaStore, emitFake } = await makeProviderWithSpies()
+    const mediaId = await mediaStore.put({
+      deviceId: 7,
+      ownerKind: 'face',
+      ownerId: 'face-move',
+      kind: 'crop',
+      timestamp: 1,
+      data: Buffer.from([9, 8, 7]),
+    })
+    await faceStore.insert({
+      id: 'face-move',
+      deviceId: 7,
+      trackId: 'tm',
+      timestamp: 1,
+      embedding: [0.4, 0.5],
+      assigned: false,
+      mediaId,
+    })
+    const from = await provider.createIdentity({ name: 'From' })
+    const to = await provider.createIdentity({ name: 'To' })
+    await provider.assignFace({ faceId: 'face-move', identityId: from.id })
+    const enrolled = await provider.listIdentitySamples({ identityId: from.id })
+    const sampleId = enrolled[0]!.id
+    await provider.moveIdentitySample({ sampleId, toIdentityId: to.id })
+
+    const moved = await provider.listIdentitySamples({ identityId: to.id })
+    expect(moved).toHaveLength(1)
+    expect(moved[0]!.id).toBe(sampleId)
+    expect(moved[0]!.mediaId).toBeDefined()
+    expect(await mediaStore.ownerOf(moved[0]!.mediaId!)).toEqual({
+      ownerKind: 'identity',
+      ownerId: to.id,
+    })
+    const face = await faceStore.get('face-move')
+    expect(face?.recognizedIdentityId).toBe(to.id)
+    expect(face?.assignedSampleId).toBe(sampleId)
+    expect(emitFake.emitted.at(-1)).toEqual({
+      deviceId: 7,
+      faceId: 'face-move',
+      kind: 'assigned',
+    })
+    await expect(
+      provider.moveIdentitySample({ sampleId, toIdentityId: 'missing' }),
+    ).rejects.toMatchObject({ i18nCode: 'gallery.unknown-target' })
   })
 })
 

@@ -5,7 +5,7 @@ import type {
 } from '@camstack/types'
 import type { LiveHierarchyCapture } from './ensure-track-hierarchy.js'
 import type { TrackedDetectionOut } from './pipeline/frame-processor.js'
-import type { KeyFrameCropFn } from './pipeline/keyframe-crop.js'
+import type { KeyFrameCropFn, KeyFrameCropRefusalReason } from './pipeline/keyframe-crop.js'
 import { isPlausiblePlateRead, normalizePlate } from './pipeline/plate-clustering.js'
 import {
   DEFAULT_PLATE_MATCH_OPTS,
@@ -35,7 +35,27 @@ interface HeldPlate {
   frameHeight: number
   cropPadding: number
   crop?: Buffer
+  /** Why the live capture produced no JPEG. Cleared once a crop is held. */
+  cropMiss?: PlateCropMissReason
 }
+
+/**
+ * Why a plate row was stored with no crop.
+ *
+ * The same vocabulary as `PlateInfo.cropMissReason`. A crossing vehicle whose
+ * live capture missed is `subject-moved` — the key frame is a different
+ * instant, and cutting it would store the wrong scene. That absence is
+ * legitimate; silence on the row is not.
+ */
+export type PlateCropMissReason =
+  | 'no-frame-handle'
+  | 'live-capture-missed'
+  | 'live-capture-threw'
+  | KeyFrameCropRefusalReason
+  | 'no-key-frame'
+  | 'derive-not-wired'
+  | 'derive-returned-null'
+  | 'put-failed'
 
 /** Test/debug snapshot of a track's held plate — see {@link PlateRecognizer.heldPlate}. */
 export interface HeldPlateSnapshot {
@@ -65,6 +85,8 @@ export interface PlateStoreInsertInput {
     readonly w: number
     readonly h: number
   }
+  /** Set when {@link mediaId} is absent — the branch that produced no crop. */
+  readonly cropMissReason?: PlateCropMissReason
 }
 
 /** The plate-row store surface this recognizer touches. */
@@ -338,43 +360,31 @@ export class PlateRecognizer {
     const vote: PlateReadVote = { text: input.text, score: input.score }
     if (held !== undefined && input.score <= held.score) {
       if (held.reads.length < MAX_VOTING_READS) held.reads.push(vote)
+      // A softer read is not the tile — unless the sharp one never produced a
+      // picture. Dropping the only crop we captured is how a plate with a
+      // key frame and a box still lands with no image.
+      if (held.crop === undefined) {
+        const filled = await this.capturePlateCrop(input)
+        if (filled.crop !== undefined) {
+          held.crop = filled.crop
+          held.cropMiss = undefined
+          this.noteLiveHierarchy(input)
+        } else if (held.cropMiss === undefined && filled.miss !== undefined) {
+          held.cropMiss = filled.miss
+        }
+      }
       return
     }
     const reads = held?.reads ?? []
     if (reads.length < MAX_VOTING_READS) reads.push(vote)
 
-    let crop: Buffer | undefined
-    if (input.frameHandle !== undefined) {
-      try {
-        const captured = await this.deps.captureCrop(
-          input.frameHandle,
-          input.bbox,
-          input.frameWidth,
-          input.frameHeight,
-          input.cropPadding,
-          input.trackId,
-          input.deviceId,
-        )
-        crop = captured ?? undefined
-      } catch (err) {
-        this.deps.logger.debug('PlateRecognizer crop capture failed', {
-          tags: { deviceId: input.deviceId },
-          meta: { trackId: input.trackId, error: String(err) },
-        })
-      }
-    }
-    if (crop !== undefined && input.frameHandle !== undefined && input.bodyBbox !== undefined) {
-      this.deps.onLiveHierarchy?.({
-        deviceId: input.deviceId,
-        trackId: input.trackId,
-        timestamp: input.timestamp,
-        bodyBbox: input.bodyBbox,
-        frameWidth: input.frameWidth,
-        frameHeight: input.frameHeight,
-        cropPadding: input.cropPadding,
-        frameHandle: input.frameHandle,
-      })
-    }
+    const captured = await this.capturePlateCrop(input)
+    // A sharper read whose capture missed must not throw away the crop the
+    // previous read already held. The geometry follows the sharp read; the
+    // pixels stay until a sharper capture actually lands.
+    const crop = captured.crop ?? held?.crop
+    const cropMiss = crop === undefined ? (captured.miss ?? held?.cropMiss) : undefined
+    if (captured.crop !== undefined) this.noteLiveHierarchy(input)
     this.bestPlate.set(input.trackId, {
       text: input.text,
       score: input.score,
@@ -385,6 +395,63 @@ export class PlateRecognizer {
       frameHeight: input.frameHeight,
       cropPadding: input.cropPadding,
       ...(crop !== undefined ? { crop } : {}),
+      ...(cropMiss !== undefined ? { cropMiss } : {}),
+    })
+  }
+
+  /** Live gallery crop. A miss names which branch failed; it never throws. */
+  private async capturePlateCrop(input: {
+    readonly deviceId: number
+    readonly trackId: string
+    readonly frameHandle?: FrameHandle
+    readonly bbox: { x: number; y: number; w: number; h: number }
+    readonly frameWidth: number
+    readonly frameHeight: number
+    readonly cropPadding: number
+  }): Promise<{ readonly crop?: Buffer; readonly miss?: PlateCropMissReason }> {
+    if (input.frameHandle === undefined) return { miss: 'no-frame-handle' }
+    try {
+      const captured = await this.deps.captureCrop(
+        input.frameHandle,
+        input.bbox,
+        input.frameWidth,
+        input.frameHeight,
+        input.cropPadding,
+        input.trackId,
+        input.deviceId,
+      )
+      if (captured === null) return { miss: 'live-capture-missed' }
+      return { crop: captured }
+    } catch (err) {
+      this.deps.logger.debug('PlateRecognizer crop capture failed', {
+        tags: { deviceId: input.deviceId },
+        meta: { trackId: input.trackId, error: String(err) },
+      })
+      return { miss: 'live-capture-threw' }
+    }
+  }
+
+  /** The vehicle hierarchy capture rides the same handle as a landed plate crop. */
+  private noteLiveHierarchy(input: {
+    readonly deviceId: number
+    readonly trackId: string
+    readonly timestamp: number
+    readonly frameWidth: number
+    readonly frameHeight: number
+    readonly cropPadding: number
+    readonly frameHandle?: FrameHandle
+    readonly bodyBbox?: { x: number; y: number; w: number; h: number }
+  }): void {
+    if (input.frameHandle === undefined || input.bodyBbox === undefined) return
+    this.deps.onLiveHierarchy?.({
+      deviceId: input.deviceId,
+      trackId: input.trackId,
+      timestamp: input.timestamp,
+      bodyBbox: input.bodyBbox,
+      frameWidth: input.frameWidth,
+      frameHeight: input.frameHeight,
+      cropPadding: input.cropPadding,
+      frameHandle: input.frameHandle,
     })
   }
 
@@ -436,6 +503,105 @@ export class PlateRecognizer {
   }
 
   /**
+   * The JPEG to store, or the reason there isn't one.
+   *
+   * Live crop first. Otherwise the key frame, and only when the subject had
+   * not left the rectangle. Every refusal is a named reason — a null from the
+   * derive is not a reason until `onRefused` says which.
+   */
+  private async resolvePlateCrop(
+    deviceId: number,
+    trackId: string,
+    plateId: string,
+    held: HeldPlate,
+    keyFrameMediaId: number | undefined,
+    subjectPath: readonly SubjectPathSample[] | undefined,
+  ): Promise<{ readonly jpeg?: Buffer; readonly miss?: PlateCropMissReason }> {
+    if (held.crop !== undefined) return { jpeg: held.crop }
+    if (keyFrameMediaId === undefined) return { miss: 'no-key-frame' }
+    const derive = this.deps.deriveCropFromKeyFrame
+    if (derive === undefined) return { miss: 'derive-not-wired' }
+    let refusal: KeyFrameCropRefusalReason | undefined
+    try {
+      const derived = await derive({
+        deviceId,
+        mediaId: keyFrameMediaId,
+        bbox: held.bbox,
+        frameWidth: held.frameWidth,
+        frameHeight: held.frameHeight,
+        padding: held.cropPadding,
+        // The OCR read's instant — the moment the rectangle was measured.
+        timestamp: held.timestamp,
+        onRefused: (reason) => {
+          refusal = reason
+        },
+        ...(subjectPath !== undefined ? { subjectPath } : {}),
+      })
+      if (!derived) return { miss: refusal ?? 'derive-returned-null' }
+      this.deps.logger.info('plate crop recovered from keyFrame (live capture missed)', {
+        tags: { deviceId, trackId },
+        meta: {
+          plateId,
+          skewMs: derived.skewMs,
+          motion: derived.motion,
+          subjectIou: derived.subjectIou ?? null,
+        },
+      })
+      return { jpeg: derived.jpeg }
+    } catch (err) {
+      this.deps.logger.debug('PlateRecognizer keyFrame crop derive failed', {
+        tags: { deviceId },
+        meta: { plateId, error: String(err) },
+      })
+      return { miss: 'derive-threw' }
+    }
+  }
+
+  /** Persist the crop, or name the miss. One info line when nothing lands. */
+  private async landPlateCrop(
+    deviceId: number,
+    trackId: string,
+    plateId: string,
+    held: HeldPlate,
+    keyFrameMediaId: number | undefined,
+    subjectPath: readonly SubjectPathSample[] | undefined,
+  ): Promise<{ readonly mediaId?: number; readonly cropMissReason?: PlateCropMissReason }> {
+    const resolved = await this.resolvePlateCrop(
+      deviceId,
+      trackId,
+      plateId,
+      held,
+      keyFrameMediaId,
+      subjectPath,
+    )
+    if (resolved.jpeg === undefined) {
+      const reason = resolved.miss ?? 'live-capture-missed'
+      this.deps.logger.info(`plate crop absent: ${reason}`, {
+        tags: { deviceId, trackId },
+        meta: { plateId, kind: 'crop', reason },
+      })
+      return { cropMissReason: reason }
+    }
+    try {
+      const mediaId = await this.deps.mediaStore.put({
+        deviceId,
+        ownerKind: 'plate',
+        ownerId: plateId,
+        kind: 'crop',
+        timestamp: held.timestamp,
+        data: resolved.jpeg,
+      })
+      return { mediaId }
+    } catch (err) {
+      this.deps.logger.info('plate crop absent: put-failed', {
+        tags: { deviceId, trackId },
+        meta: { plateId, kind: 'crop', reason: 'put-failed', error: String(err) },
+      })
+      return { cropMissReason: 'put-failed' }
+    }
+  }
+
+  /**
    * Persist the held best plate for a finished track as one PlateStore row
    * (crop → MediaStore under ownerKind 'plate'), then drop in-memory state.
    *
@@ -463,74 +629,15 @@ export class PlateRecognizer {
     // tier — cross-node frame eviction before the async detail read routed back.
     // Cut the plate ROI out of the persisted native keyFrame instead (temporally
     // guarded). Honest native image; never upscaled, never wrong-scene.
-    let cropData = held.crop
-    if (
-      cropData === undefined &&
-      keyFrameMediaId !== undefined &&
-      this.deps.deriveCropFromKeyFrame
-    ) {
-      try {
-        const derived = await this.deps.deriveCropFromKeyFrame({
-          deviceId,
-          mediaId: keyFrameMediaId,
-          bbox: held.bbox,
-          frameWidth: held.frameWidth,
-          frameHeight: held.frameHeight,
-          padding: held.cropPadding,
-          // The OCR read's instant — the moment the rectangle was measured.
-          timestamp: held.timestamp,
-          ...(subjectPath !== undefined ? { subjectPath } : {}),
-        })
-        if (derived) {
-          cropData = derived.jpeg
-          this.deps.logger.info('plate crop recovered from keyFrame (live capture missed)', {
-            tags: { deviceId, trackId },
-            meta: {
-              plateId,
-              skewMs: derived.skewMs,
-              // Which bound admitted the cross-time cut: `agrees` = the trail
-              // proved the vehicle stood still, `unknown` = no trail evidence
-              // and the temporal bound carried it alone.
-              motion: derived.motion,
-              subjectIou: derived.subjectIou ?? null,
-            },
-          })
-        } else {
-          // A refused derive means the plate row persists with NO image. That
-          // is a visible hole in the gallery, so it is never silent — and the
-          // refusal's own reason line (motion vs skew) is already written by
-          // the derive, tagged with the same deviceId.
-          this.deps.logger.info('plate crop not recovered — keyFrame derive refused or missed', {
-            tags: { deviceId, trackId },
-            meta: { plateId },
-          })
-        }
-      } catch (err) {
-        this.deps.logger.debug('PlateRecognizer keyFrame crop derive failed', {
-          tags: { deviceId },
-          meta: { plateId, error: String(err) },
-        })
-      }
-    }
-
-    let mediaId: number | undefined
-    if (cropData !== undefined) {
-      try {
-        mediaId = await this.deps.mediaStore.put({
-          deviceId,
-          ownerKind: 'plate',
-          ownerId: plateId,
-          kind: 'crop',
-          timestamp: held.timestamp,
-          data: cropData,
-        })
-      } catch (err) {
-        this.deps.logger.warn('PlateRecognizer plate crop put failed', {
-          tags: { deviceId },
-          meta: { plateId, error: String(err) },
-        })
-      }
-    }
+    // A miss is named on the row (`cropMissReason`) and on one info line.
+    const landed = await this.landPlateCrop(
+      deviceId,
+      trackId,
+      plateId,
+      held,
+      keyFrameMediaId,
+      subjectPath,
+    )
     // The stored text is the per-character VOTE over the track's reads — not
     // the max-score read. A vote that comes back implausible (too short, no
     // digit/letter mix) falls back to the max-score read rather than storing
@@ -549,7 +656,8 @@ export class PlateRecognizer {
         timestamp: held.timestamp,
         text,
         score: held.score,
-        ...(mediaId !== undefined ? { mediaId } : {}),
+        ...(landed.mediaId !== undefined ? { mediaId: landed.mediaId } : {}),
+        ...(landed.cropMissReason !== undefined ? { cropMissReason: landed.cropMissReason } : {}),
         corrected: false,
         assigned: false,
         ...(match !== null ? { recognizedVehicleId: match.vehicleId } : {}),
@@ -574,7 +682,8 @@ export class PlateRecognizer {
           reads: held.reads.map((r) => `${normalizePlate(r.text)}@${r.score.toFixed(2)}`),
           votedFromReads: held.reads.length,
           score: held.score,
-          hasCrop: mediaId !== undefined,
+          hasCrop: landed.mediaId !== undefined,
+          ...(landed.cropMissReason !== undefined ? { cropMissReason: landed.cropMissReason } : {}),
           recognizedVehicleId: match?.vehicleId ?? null,
         },
       })

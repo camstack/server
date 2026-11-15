@@ -53,6 +53,9 @@ export const PLATE_COLUMNS = [
   // detail view can draw the box over the native frame (see PlateInfo).
   { name: 'keyFrameMediaId', type: 'INTEGER' as const },
   { name: 'plateBbox', type: 'JSON' as const },
+  // Why `mediaId` is absent. A plate with a key frame and a box and no crop
+  // used to look like the crop was never attempted (D400).
+  { name: 'cropMissReason', type: 'TEXT' as const },
 ] as const
 
 /**
@@ -102,6 +105,8 @@ export interface Plate {
     readonly w: number
     readonly h: number
   }
+  /** Why {@link mediaId} is absent. Absent when the crop landed. */
+  readonly cropMissReason?: string
 }
 
 /**
@@ -147,6 +152,7 @@ export class PlateStore {
       assignedSampleId?: string | null
       keyFrameMediaId?: number | null
       plateBbox?: Plate['plateBbox'] | null
+      cropMissReason?: string | null
     }
     return {
       id: r.id,
@@ -159,6 +165,7 @@ export class PlateStore {
       assignedSampleId: data.assignedSampleId ?? undefined,
       keyFrameMediaId: data.keyFrameMediaId ?? undefined,
       plateBbox: data.plateBbox ?? undefined,
+      cropMissReason: typeof data.cropMissReason === 'string' ? data.cropMissReason : undefined,
     }
   }
 

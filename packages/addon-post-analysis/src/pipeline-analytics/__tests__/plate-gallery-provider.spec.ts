@@ -205,6 +205,64 @@ describe('PlateGalleryProvider — vehicles + assign', () => {
     expect(samples[0]!.score).toBe(0.9)
   })
 
+  it('a sample without its own crop returns the source plate key frame and box', async () => {
+    const h = await makeHarness()
+    await h.plateStore.update('plate-t1', {
+      keyFrameMediaId: 77,
+      plateBbox: { x: 4, y: 5, w: 6, h: 7 },
+    })
+    const v = await h.provider.createVehicle({ name: 'Van' })
+    await h.provider.assignPlate({ plateId: 'plate-t1', vehicleId: v.id })
+    const samples = await h.provider.listVehicleSamples({ vehicleId: v.id })
+    expect(samples[0]!.mediaId).toBeUndefined()
+    expect(samples[0]!.base64).toBeUndefined()
+    expect(samples[0]!.keyFrameMediaId).toBe(77)
+    expect(samples[0]!.plateBbox).toEqual({ x: 4, y: 5, w: 6, h: 7 })
+  })
+
+  it('moveVehicleSample reowns the crop, the plate follows, and an unknown vehicle is refused', async () => {
+    const h = await makeHarness()
+    const mediaId = await h.mediaStore.put({
+      deviceId: 9,
+      ownerKind: 'plate',
+      ownerId: 'plate-t1',
+      kind: 'crop',
+      timestamp: 1,
+      data: Buffer.from([1, 2, 3]),
+    })
+    await h.plateStore.update('plate-t1', { mediaId })
+    const from = await h.provider.createVehicle({ name: 'A' })
+    const to = await h.provider.createVehicle({ name: 'B' })
+    await h.provider.assignPlate({ plateId: 'plate-t1', vehicleId: from.id })
+    const enrolled = await h.provider.listVehicleSamples({ vehicleId: from.id })
+    const sampleId = enrolled[0]!.id
+    await h.provider.moveVehicleSample({ sampleId, toVehicleId: to.id })
+
+    const moved = await h.provider.listVehicleSamples({ vehicleId: to.id })
+    expect(moved).toHaveLength(1)
+    expect(moved[0]!.id).toBe(sampleId)
+    expect(moved[0]!.mediaId).toBeDefined()
+    expect(await h.mediaStore.ownerOf(moved[0]!.mediaId!)).toEqual({
+      ownerKind: 'vehicle',
+      ownerId: to.id,
+    })
+    const plate = await h.plateStore.get('plate-t1')
+    expect(plate?.recognizedVehicleId).toBe(to.id)
+    expect(plate?.assignedSampleId).toBe(sampleId)
+    expect(await h.vehicleStore.getSample(sampleId)).toMatchObject({
+      vehicleId: to.id,
+      sourcePlateId: 'plate-t1',
+    })
+    expect(h.emitFake.emitted.at(-1)).toEqual({
+      deviceId: 9,
+      plateId: 'plate-t1',
+      kind: 'assigned',
+    })
+    await expect(
+      h.provider.moveVehicleSample({ sampleId, toVehicleId: 'missing' }),
+    ).rejects.toMatchObject({ i18nCode: 'gallery.unknown-target' })
+  })
+
   it('listPlates resolves recognizedVehicleId → vehicleName after assign', async () => {
     const h = await makeHarness()
     const v = await h.provider.createVehicle({ name: 'Van' })

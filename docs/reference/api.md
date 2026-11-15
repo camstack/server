@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**208 capabilities · 1494 methods.**
+**208 capabilities · 1496 methods.**
 
 ## Method index
 
@@ -492,6 +492,7 @@
 | `faceGallery.listIdentitySamples` | query | protected | face-gallery |
 | `faceGallery.auditIdentitySamples` | query | admin | face-gallery |
 | `faceGallery.removeSample` | mutation | admin | face-gallery |
+| `faceGallery.moveIdentitySample` | mutation | admin | face-gallery |
 | `faceGallery.listRecentFaces` | query | protected | face-gallery |
 | `faceGallery.getFaceByTrack` | query | protected | face-gallery |
 | `faceGallery.getFaceMedia` | query | protected | face-gallery |
@@ -1058,6 +1059,7 @@
 | `plateGallery.deleteVehicle` | mutation | admin | plate-gallery |
 | `plateGallery.listVehicleSamples` | query | protected | plate-gallery |
 | `plateGallery.removeVehicleSample` | mutation | admin | plate-gallery |
+| `plateGallery.moveVehicleSample` | mutation | admin | plate-gallery |
 | `plateGallery.assignPlate` | mutation | admin | plate-gallery |
 | `plateGallery.unassignPlate` | mutation | admin | plate-gallery |
 | `plateGallery.assignPlates` | mutation | admin | plate-gallery |
@@ -2763,7 +2765,7 @@
 
 ### `face-gallery` → `faceGallery.*`
 
-- **Source:** `packages/types/src/capabilities/face-gallery.cap.ts:205`
+- **Source:** `packages/types/src/capabilities/face-gallery.cap.ts:217`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IFaceGalleryProvider`
@@ -2774,9 +2776,10 @@
 | createIdentity | `faceGallery.createIdentity` | mutation | admin | `{ name: string }` | `{ id: string; name: string; sampleCount: number; coverMediaId?: number; coverBase64?: string }` |
 | renameIdentity | `faceGallery.renameIdentity` | mutation | admin | `{ id: string; name: string }` | `void` |
 | deleteIdentity | `faceGallery.deleteIdentity` | mutation | admin | `{ id: string }` | `void` |
-| listIdentitySamples | `faceGallery.listIdentitySamples` | query | protected | `{ identityId: string }` | `({ id: string; source: "detected" \| "photo"; addedAt: number; deviceId?: number; base64?: string })[]` |
+| listIdentitySamples | `faceGallery.listIdentitySamples` | query | protected | `{ identityId: string }` | `({ id: string; source: "detected" \| "photo"; addedAt: number; deviceId?: number; base64?: string; mediaId?: number; keyFrameMediaId?: number; faceBbox?: BoundingBoxSchema })[]` |
 | auditIdentitySamples | `faceGallery.auditIdentitySamples` | query | admin | `{ identityId: string }` | `{ identityId: string; name: string; modelId: string; totalSamples: number; comparableSamples: number; flagged: number; flagThreshold: number; rows: ({ sampleId: string; enrolledAt: number; deviceId?: number; source: "detected" \| "photo"; mediaId?: number; comparable: boolean; selfMean: number \| null; bestForeign?: { identityId: string; name: string; score: number }; suspicion: number })[] }` |
 | removeSample | `faceGallery.removeSample` | mutation | admin | `{ identityId: string; sampleId: string }` | `void` |
+| moveIdentitySample | `faceGallery.moveIdentitySample` | mutation | admin | `{ sampleId: string; toIdentityId: string }` | `void` |
 | listRecentFaces | `faceGallery.listRecentFaces` | query | protected | `{ deviceId?: number; deviceIds?: number[]; limit?: number; filter?: "unassigned" \| "recognized" \| "identified" \| "all"; since?: number; until?: number; sortBy?: "timestamp" \| "suggestionConfidence"; sortDirection?: "asc" \| "desc"; includeCrops?: boolean }?` | `({ faceId: string; deviceId: number; trackId: string; timestamp: number; recognizedIdentityId?: string; identityName?: string; assigned: boolean; base64?: string; cropUrl?: string; faceBbox?: BoundingBoxSchema; keyFrameMediaId?: number; bestMatchScore?: number; nativeFaceShortSidePx?: number; suggestedIdentityId?: string; suggestedMatchScore?: number })[]` |
 | getFaceByTrack | `faceGallery.getFaceByTrack` | query | protected | `{ deviceId: number; trackId: string }` | `{ faceId: string; deviceId: number; trackId: string; timestamp: number; recognizedIdentityId?: string; identityName?: string; assigned: boolean; base64?: string; cropUrl?: string; faceBbox?: BoundingBoxSchema; keyFrameMediaId?: number; bestMatchScore?: number; nativeFaceShortSidePx?: number; suggestedIdentityId?: string; suggestedMatchScore?: number } \| null` |
 | getFaceMedia | `faceGallery.getFaceMedia` | query | protected | `{ faceId: string }` | `({ mediaId: number; kind: string; url: string; sizeBytes: number; timestamp: number })[]` |
@@ -4033,17 +4036,17 @@
 
 ### `plate-gallery` → `plateGallery.*`
 
-- **Source:** `packages/types/src/capabilities/plate-gallery.cap.ts:100`
+- **Source:** `packages/types/src/capabilities/plate-gallery.cap.ts:122`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IPlateGalleryProvider`
 
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
-| listPlates | `plateGallery.listPlates` | query | protected | `{ deviceId?: number; limit?: number; includeCrops?: boolean }?` | `({ plateId: string; deviceId: number; trackId: string; timestamp: number; text: string; score: number; corrected: boolean; recognizedVehicleId?: string; vehicleName?: string; assigned: boolean; plateBbox?: BoundingBoxSchema; keyFrameMediaId?: number; base64?: string; cropUrl?: string })[]` |
-| getPlateByTrack | `plateGallery.getPlateByTrack` | query | protected | `{ deviceId: number; trackId: string }` | `{ plateId: string; deviceId: number; trackId: string; timestamp: number; text: string; score: number; corrected: boolean; recognizedVehicleId?: string; vehicleName?: string; assigned: boolean; plateBbox?: BoundingBoxSchema; keyFrameMediaId?: number; base64?: string; cropUrl?: string } \| null` |
+| listPlates | `plateGallery.listPlates` | query | protected | `{ deviceId?: number; limit?: number; includeCrops?: boolean }?` | `({ plateId: string; deviceId: number; trackId: string; timestamp: number; text: string; score: number; corrected: boolean; recognizedVehicleId?: string; vehicleName?: string; assigned: boolean; plateBbox?: BoundingBoxSchema; keyFrameMediaId?: number; base64?: string; cropUrl?: string; cropMissReason?: string })[]` |
+| getPlateByTrack | `plateGallery.getPlateByTrack` | query | protected | `{ deviceId: number; trackId: string }` | `{ plateId: string; deviceId: number; trackId: string; timestamp: number; text: string; score: number; corrected: boolean; recognizedVehicleId?: string; vehicleName?: string; assigned: boolean; plateBbox?: BoundingBoxSchema; keyFrameMediaId?: number; base64?: string; cropUrl?: string; cropMissReason?: string } \| null` |
 | getPlateMedia | `plateGallery.getPlateMedia` | query | protected | `{ plateId: string }` | `({ mediaId: number; kind: string; url: string; sizeBytes: number; timestamp: number })[]` |
-| searchPlates | `plateGallery.searchPlates` | query | protected | `{ text: string; maxDistance?: number; limit?: number; includeCrops?: boolean }` | `({ plateId: string; deviceId: number; trackId: string; timestamp: number; text: string; score: number; corrected: boolean; recognizedVehicleId?: string; vehicleName?: string; assigned: boolean; plateBbox?: BoundingBoxSchema; keyFrameMediaId?: number; base64?: string; cropUrl?: string })[]` |
+| searchPlates | `plateGallery.searchPlates` | query | protected | `{ text: string; maxDistance?: number; limit?: number; includeCrops?: boolean }` | `({ plateId: string; deviceId: number; trackId: string; timestamp: number; text: string; score: number; corrected: boolean; recognizedVehicleId?: string; vehicleName?: string; assigned: boolean; plateBbox?: BoundingBoxSchema; keyFrameMediaId?: number; base64?: string; cropUrl?: string; cropMissReason?: string })[]` |
 | suggestPlateClusters | `plateGallery.suggestPlateClusters` | query | protected | `{ maxDistance?: number; minClusterSize?: number; limit?: number }?` | `({ plateIds: string[]; representativePlateId: string; representativeText: string; size: number; cohesion: number })[]` |
 | correctPlateText | `plateGallery.correctPlateText` | mutation | admin | `{ plateId: string; text: string }` | `void` |
 | deletePlate | `plateGallery.deletePlate` | mutation | admin | `{ plateId: string }` | `void` |
@@ -4051,8 +4054,9 @@
 | createVehicle | `plateGallery.createVehicle` | mutation | admin | `{ name: string }` | `{ id: string; name: string; sampleCount: number; coverMediaId?: number; coverBase64?: string }` |
 | renameVehicle | `plateGallery.renameVehicle` | mutation | admin | `{ id: string; name: string }` | `void` |
 | deleteVehicle | `plateGallery.deleteVehicle` | mutation | admin | `{ id: string }` | `void` |
-| listVehicleSamples | `plateGallery.listVehicleSamples` | query | protected | `{ vehicleId: string }` | `({ id: string; text: string; score: number; addedAt: number; deviceId?: number; base64?: string })[]` |
+| listVehicleSamples | `plateGallery.listVehicleSamples` | query | protected | `{ vehicleId: string }` | `({ id: string; text: string; score: number; addedAt: number; deviceId?: number; base64?: string; mediaId?: number; keyFrameMediaId?: number; plateBbox?: BoundingBoxSchema })[]` |
 | removeVehicleSample | `plateGallery.removeVehicleSample` | mutation | admin | `{ vehicleId: string; sampleId: string }` | `void` |
+| moveVehicleSample | `plateGallery.moveVehicleSample` | mutation | admin | `{ sampleId: string; toVehicleId: string }` | `void` |
 | assignPlate | `plateGallery.assignPlate` | mutation | admin | `{ plateId: string; vehicleId: string }` | `void` |
 | unassignPlate | `plateGallery.unassignPlate` | mutation | admin | `{ plateId: string }` | `void` |
 | assignPlates | `plateGallery.assignPlates` | mutation | admin | `{ plateIds: string[]; vehicleId: string }` | `{ assigned: number; failed: string[] }` |

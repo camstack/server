@@ -199,6 +199,15 @@ export interface AddIdentitySampleInput {
   readonly replacesSampleId?: string
 }
 
+/** One sample's owner and media, for a move. Never the vector. */
+export interface IdentitySampleOwner {
+  readonly id: string
+  readonly identityId: string
+  readonly mediaId?: number
+  readonly sourceMediaId?: number
+  readonly deviceId?: number
+}
+
 /** One row of `listSamples` — the metadata, never the vector. */
 export type IdentitySampleSummary = Pick<
   IdentitySample,
@@ -663,6 +672,94 @@ export class IdentityStore {
   async sampleExists(sampleId: string): Promise<boolean> {
     const row = await this.sampleLedger.get(sampleId)
     return row !== null
+  }
+
+  /** One sample's owner and media, or null when the row is gone. No vector. */
+  async getSample(sampleId: string): Promise<IdentitySampleOwner | null> {
+    const row = await this.sampleLedger.get(sampleId)
+    if (row === null) return null
+    const identityId = row.data['identityId']
+    if (typeof identityId !== 'string') return null
+    const mediaId = row.data['mediaId']
+    const sourceMediaId = row.data['sourceMediaId']
+    const deviceId = row.data['deviceId']
+    return {
+      id: sampleId,
+      identityId,
+      ...(typeof mediaId === 'number' ? { mediaId } : {}),
+      ...(typeof sourceMediaId === 'number' ? { sourceMediaId } : {}),
+      ...(typeof deviceId === 'number' ? { deviceId } : {}),
+    }
+  }
+
+  /**
+   * Point a sample at another identity. The vector stays — it is keyed by the
+   * sample id, not the person. Counts and the cover follow. The caller re-owns
+   * the media first and passes the new ids.
+   */
+  async retargetSample(input: {
+    readonly sampleId: string
+    readonly toIdentityId: string
+    readonly mediaId?: number
+    readonly sourceMediaId?: number
+  }): Promise<void> {
+    const current = await this.getSample(input.sampleId)
+    if (current === null) return
+    const nextMedia = input.mediaId ?? current.mediaId
+    await this.sampleLedger.update(input.sampleId, {
+      identityId: input.toIdentityId,
+      ...(input.mediaId !== undefined ? { mediaId: input.mediaId } : {}),
+      ...(input.sourceMediaId !== undefined ? { sourceMediaId: input.sourceMediaId } : {}),
+    })
+    if (current.identityId === input.toIdentityId) {
+      if (input.mediaId !== undefined && input.mediaId !== current.mediaId) {
+        await this.repointIdentityCover(input.toIdentityId, current.mediaId, input.mediaId)
+      }
+      return
+    }
+    await this.noteIdentitySampleLeft(current.identityId, current.mediaId)
+    await this.noteIdentitySampleJoined(input.toIdentityId, nextMedia)
+  }
+
+  private async noteIdentitySampleLeft(
+    identityId: string,
+    mediaId: number | undefined,
+  ): Promise<void> {
+    const identity = (await this.listIdentities()).find((i) => i.id === identityId)
+    if (!identity) return
+    const patch: Record<string, unknown> = {
+      sampleCount: Math.max(0, identity.sampleCount - 1),
+      updatedAt: Date.now(),
+    }
+    if (mediaId !== undefined && identity.coverMediaId === mediaId) {
+      const remaining = await this.listSamples(identityId)
+      patch['coverMediaId'] = remaining.find((r) => r.mediaId !== undefined)?.mediaId ?? null
+    }
+    await this.identityLedger.update(identityId, patch)
+  }
+
+  private async noteIdentitySampleJoined(
+    identityId: string,
+    mediaId: number | undefined,
+  ): Promise<void> {
+    const identity = (await this.listIdentities()).find((i) => i.id === identityId)
+    if (!identity) return
+    const patch: Record<string, unknown> = {
+      sampleCount: identity.sampleCount + 1,
+      updatedAt: Date.now(),
+    }
+    if (identity.coverMediaId == null && mediaId !== undefined) patch['coverMediaId'] = mediaId
+    await this.identityLedger.update(identityId, patch)
+  }
+
+  private async repointIdentityCover(
+    identityId: string,
+    from: number | undefined,
+    to: number,
+  ): Promise<void> {
+    const identity = (await this.listIdentities()).find((i) => i.id === identityId)
+    if (!identity || from === undefined || identity.coverMediaId !== from) return
+    await this.identityLedger.update(identityId, { coverMediaId: to, updatedAt: Date.now() })
   }
 
   /**

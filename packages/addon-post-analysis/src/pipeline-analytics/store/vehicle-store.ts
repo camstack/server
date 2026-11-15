@@ -100,7 +100,7 @@ export interface AddSampleInput {
 
 export type VehicleSampleListItem = Pick<
   VehicleSample,
-  'id' | 'text' | 'score' | 'mediaId' | 'addedAt' | 'deviceId'
+  'id' | 'text' | 'score' | 'mediaId' | 'addedAt' | 'deviceId' | 'sourcePlateId'
 >
 
 export class VehicleStore {
@@ -228,8 +228,88 @@ export class VehicleStore {
         addedAt: Number(d.addedAt ?? 0),
         ...(d.mediaId != null ? { mediaId: d.mediaId } : {}),
         ...(d.deviceId != null ? { deviceId: d.deviceId } : {}),
+        ...(typeof d.sourcePlateId === 'string' ? { sourcePlateId: d.sourcePlateId } : {}),
       }
     })
+  }
+
+  /** One sample by id, or null when the row is gone. */
+  async getSample(sampleId: string): Promise<VehicleSample | null> {
+    const row = await this.sampleLedger.get(sampleId)
+    if (row === null) return null
+    const d = row.data as Partial<VehicleSample>
+    if (typeof d.vehicleId !== 'string' || typeof d.text !== 'string') return null
+    return {
+      id: sampleId,
+      vehicleId: d.vehicleId,
+      text: d.text,
+      score: Number(d.score ?? 0),
+      addedAt: Number(d.addedAt ?? 0),
+      ...(typeof d.sourcePlateId === 'string' ? { sourcePlateId: d.sourcePlateId } : {}),
+      ...(typeof d.mediaId === 'number' ? { mediaId: d.mediaId } : {}),
+      ...(typeof d.deviceId === 'number' ? { deviceId: d.deviceId } : {}),
+    }
+  }
+
+  /**
+   * Point a sample at another vehicle. Counts and the cover follow.
+   * The caller re-owns the media first and passes the new id.
+   */
+  async retargetSample(input: {
+    readonly sampleId: string
+    readonly toVehicleId: string
+    readonly mediaId?: number
+  }): Promise<void> {
+    const current = await this.getSample(input.sampleId)
+    if (current === null) return
+    const nextMedia = input.mediaId ?? current.mediaId
+    await this.sampleLedger.update(input.sampleId, {
+      vehicleId: input.toVehicleId,
+      ...(input.mediaId !== undefined ? { mediaId: input.mediaId } : {}),
+    })
+    if (current.vehicleId === input.toVehicleId) {
+      if (input.mediaId !== undefined && input.mediaId !== current.mediaId) {
+        await this.repointCover(input.toVehicleId, current.mediaId, input.mediaId)
+      }
+      return
+    }
+    await this.noteSampleLeft(current.vehicleId, current.mediaId)
+    await this.noteSampleJoined(input.toVehicleId, nextMedia)
+  }
+
+  private async noteSampleLeft(vehicleId: string, mediaId: number | undefined): Promise<void> {
+    const vehicle = (await this.listVehicles()).find((v) => v.id === vehicleId)
+    if (!vehicle) return
+    const patch: Record<string, unknown> = {
+      sampleCount: Math.max(0, vehicle.sampleCount - 1),
+      updatedAt: Date.now(),
+    }
+    if (mediaId !== undefined && vehicle.coverMediaId === mediaId) {
+      const remaining = await this.listSamples(vehicleId)
+      patch['coverMediaId'] = remaining.find((r) => r.mediaId !== undefined)?.mediaId ?? null
+    }
+    await this.vehicleLedger.update(vehicleId, patch)
+  }
+
+  private async noteSampleJoined(vehicleId: string, mediaId: number | undefined): Promise<void> {
+    const vehicle = (await this.listVehicles()).find((v) => v.id === vehicleId)
+    if (!vehicle) return
+    const patch: Record<string, unknown> = {
+      sampleCount: vehicle.sampleCount + 1,
+      updatedAt: Date.now(),
+    }
+    if (vehicle.coverMediaId == null && mediaId !== undefined) patch['coverMediaId'] = mediaId
+    await this.vehicleLedger.update(vehicleId, patch)
+  }
+
+  private async repointCover(
+    vehicleId: string,
+    from: number | undefined,
+    to: number,
+  ): Promise<void> {
+    const vehicle = (await this.listVehicles()).find((v) => v.id === vehicleId)
+    if (!vehicle || from === undefined || vehicle.coverMediaId !== from) return
+    await this.vehicleLedger.update(vehicleId, { coverMediaId: to, updatedAt: Date.now() })
   }
 
   async removeSample(vehicleId: string, sampleId: string): Promise<void> {

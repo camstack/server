@@ -64,7 +64,22 @@ export interface KeyFrameCropInput {
    * only the temporal bound — the pre-guard behaviour, never a silent pass.
    */
   readonly subjectPath?: readonly SubjectPathSample[]
+  /**
+   * Called with the reason immediately before this function returns null.
+   * The caller persists it; a null with no reason is how a missing tile
+   * becomes undiagnosable.
+   */
+  readonly onRefused?: (reason: KeyFrameCropRefusalReason) => void
 }
+
+/** Why {@link createKeyFrameCrop} produced no JPEG. */
+export type KeyFrameCropRefusalReason =
+  | 'bad-frame-size'
+  | 'key-frame-absent'
+  | 'subject-moved'
+  | 'temporal-skew'
+  | 'decode-empty'
+  | 'derive-threw'
 
 export interface KeyFrameCropDeps {
   /** Fetch the persisted media row (JPEG bytes + its frame timestamp). No base64 (D867). */
@@ -111,9 +126,13 @@ export type KeyFrameCropFn = (input: KeyFrameCropInput) => Promise<KeyFrameCropR
 
 export function createKeyFrameCrop(deps: KeyFrameCropDeps): KeyFrameCropFn {
   return async (input) => {
-    if (input.frameWidth <= 0 || input.frameHeight <= 0) return null
+    const refuse = (reason: KeyFrameCropRefusalReason): null => {
+      input.onRefused?.(reason)
+      return null
+    }
+    if (input.frameWidth <= 0 || input.frameHeight <= 0) return refuse('bad-frame-size')
     const media = await deps.getMedia(input.mediaId)
-    if (!media) return null
+    if (!media) return refuse('key-frame-absent')
     const skewMs = Math.abs(media.timestamp - input.timestamp)
     const verdict = subjectAgreement({
       path: input.subjectPath ?? [],
@@ -133,7 +152,7 @@ export function createKeyFrameCrop(deps: KeyFrameCropDeps): KeyFrameCropFn {
           sampleGapMs: verdict.sampleGapMs,
         },
       })
-      return null
+      return refuse('subject-moved')
     }
     if (verdict.kind === 'unknown' && skewMs > deps.maxSkewMs) {
       deps.logger.info('keyframe crop refused — temporal skew too large, no motion evidence', {
@@ -145,11 +164,11 @@ export function createKeyFrameCrop(deps: KeyFrameCropDeps): KeyFrameCropFn {
           unknownReason: verdict.reason,
         },
       })
-      return null
+      return refuse('temporal-skew')
     }
     try {
       const rgb = await deps.decodeJpegToRgb(media.bytes)
-      if (rgb.width <= 0 || rgb.height <= 0) return null
+      if (rgb.width <= 0 || rgb.height <= 0) return refuse('decode-empty')
       const norm = padBbox(
         {
           x: input.bbox.x / input.frameWidth,
@@ -168,7 +187,7 @@ export function createKeyFrameCrop(deps: KeyFrameCropDeps): KeyFrameCropFn {
         tags: { deviceId: input.deviceId },
         meta: { mediaId: input.mediaId, error: err instanceof Error ? err.message : String(err) },
       })
-      return null
+      return refuse('derive-threw')
     }
   }
 }
