@@ -7272,7 +7272,15 @@
     "env": "Environment NAME=value (one per line)",
     "saveProfileSettings": "Save profile settings",
     "adoptLegacy": "Adopt legacy cameras ({{count}})",
-    "adoptLegacyFailed": "Failed to adopt the legacy cameras."
+    "adoptLegacyFailed": "Failed to adopt the legacy cameras.",
+    "serverShell": "Server shell",
+    "serverShellLoading": "Checking which nodes run a terminal",
+    "serverShellUnknown": "The terminal registry did not answer. Try again in a moment.",
+    "serverShellAbsent": "Terminal is not installed on this node",
+    "serverShellSubtitle": "A login shell in this node’s data directory. It stays open after you leave, and closes when it sits idle.",
+    "backToTerminals": "Terminals",
+    "serverShellOff": "Server shell is off",
+    "serverShellSettings": "Turn it on in Terminal settings"
   },
   "deviceQuickDetail": {
     "discard": "Discard",

@@ -7347,7 +7347,15 @@
     "env": "Ambiente NOME=valore (uno per riga)",
     "saveProfileSettings": "Salva impostazioni profilo",
     "adoptLegacy": "Adotta le camere storiche ({{count}})",
-    "adoptLegacyFailed": "Impossibile adottare le camere storiche."
+    "adoptLegacyFailed": "Impossibile adottare le camere storiche.",
+    "serverShell": "Shell del server",
+    "serverShellLoading": "Verifica dei nodi che eseguono un terminale",
+    "serverShellUnknown": "Il registro dei terminali non ha risposto. Riprova tra poco.",
+    "serverShellAbsent": "Il terminale non è installato su questo nodo",
+    "serverShellSubtitle": "Una shell di login nella cartella dati di questo nodo. Resta aperta quando esci e si chiude quando resta inattiva.",
+    "backToTerminals": "Terminali",
+    "serverShellOff": "La shell del server è disattivata",
+    "serverShellSettings": "Attivala nelle impostazioni del Terminale"
   },
   "deviceQuickDetail": {
     "discard": "Annulla",
