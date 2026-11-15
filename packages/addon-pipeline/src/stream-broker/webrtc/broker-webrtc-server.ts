@@ -1500,6 +1500,7 @@ export class BrokerWebrtcServer {
             ? 'clip-intent session: no clip source wired — opening as a live session'
             : 'clip-intent session went live: re-offer opens as a live session',
         {
+          tags: { deviceId },
           meta: {
             brokerId,
             deferLive,
@@ -2148,40 +2149,90 @@ export class BrokerWebrtcServer {
     // re-offer decides what it becomes. Going live re-offers the same stream
     // as an ordinary live session: the wake, the warm-up and the camera's
     // codec all happen there, in the one place a live session gets them.
-    let reofferRequested = false
+    // Set on a session re-offered at a clip's codec (see the timeline wiring),
+    // run once at `onConnected`, cleared when the client goes live first.
+    let replayClip: (() => void) | null = null
+    // `live` outranks a pending clip-codec re-offer: the viewer's choice to go
+    // live wins over a clip it has left. Every refused or superseded request
+    // is logged — a silent one reads as "the client never asked".
+    let pendingReoffer: ClipReoffer['kind'] | null = null
     const requestClipReoffer = (next: ClipReoffer, reason: string): void => {
-      if (!deferLive || reofferRequested || this.sessions.get(sessionId) !== entry) return
-      reofferRequested = true
+      const refuse = (why: string): void => {
+        sessionLogger.info(`clip-intent session: re-offer refused — ${why}`, {
+          tags: { deviceId },
+          meta: { sessionId, brokerId, requested: next.kind, pending: pendingReoffer, reason },
+        })
+      }
+      if (!deferLive) return refuse('the session is live already')
+      if (this.sessions.get(sessionId) !== entry) return refuse('the session was replaced')
+      if (pendingReoffer === 'live') return refuse('a live re-offer is pending')
+      if (pendingReoffer === 'clip-codec' && next.kind === 'clip-codec') {
+        return refuse('a clip-codec re-offer is pending')
+      }
+      const superseded = pendingReoffer
+      pendingReoffer = next.kind
       this.clipReoffer.set(sessionId, next)
-      const target = sameStreamTarget(streamId)
-      const epoch = (session.pendingRenegotiation?.epoch ?? 0) + 1
-      session.pendingRenegotiation = { target, epoch }
-      sessionLogger.info(`clip-intent session: re-offer requested — ${reason}`, {
-        meta: { sessionId, brokerId, reoffer: next.kind, sessionCodec, target, epoch },
-      })
+      // Going live also cancels the clip this session would have replayed.
+      if (next.kind === 'live') replayClip = null
+      // A superseded request keeps its epoch: the client re-offers once, and
+      // that re-offer reads the record as it is then.
+      if (superseded === null) {
+        const target = sameStreamTarget(streamId)
+        const epoch = (session.pendingRenegotiation?.epoch ?? 0) + 1
+        session.pendingRenegotiation = { target, epoch }
+      }
+      sessionLogger.info(
+        superseded === null
+          ? `clip-intent session: re-offer requested — ${reason}`
+          : `clip-intent session: pending ${superseded} re-offer superseded by ${next.kind} — ${reason}`,
+        {
+          tags: { deviceId },
+          meta: {
+            sessionId,
+            brokerId,
+            reoffer: next.kind,
+            superseded,
+            sessionCodec,
+            epoch: session.pendingRenegotiation?.epoch ?? null,
+          },
+        },
+      )
     }
-    // A clip in the other codec, on a session re-offered at the clip's codec
-    // already, is a client that cannot take it: refused once, by name.
+    // A clip in a codec the session did not negotiate re-offers at that codec,
+    // once per codec: the codecs this id was already re-offered at travel in
+    // the record, so a client that cannot take one is refused, never looped.
     let clipCodecRefusalLogged = false
     const onClipCodecMismatch = (clip: ClipPlaybackHandle, clipCodec: ClipVideoCodec): void => {
-      if (clipReoffer?.kind === 'clip-codec') {
+      const tried = clipReoffer?.kind === 'clip-codec' ? clipReoffer.tried : []
+      if (tried.includes(clipCodec)) {
         if (clipCodecRefusalLogged) return
         clipCodecRefusalLogged = true
         sessionLogger.warn('clip playback: the client did not negotiate the clip codec', {
           tags: { deviceId: clip.deviceId },
-          meta: { sessionId, clipId: clip.clipId, clipCodec, negotiated: sessionCodec },
+          meta: {
+            sessionId,
+            clipId: clip.clipId,
+            clipCodec,
+            negotiated: session.debugNegotiatedCodec,
+            tried,
+          },
         })
         return
       }
       requestClipReoffer(
-        { kind: 'clip-codec', codec: clipCodec, clip, offsetMs: lastClipOffsetMs },
+        {
+          kind: 'clip-codec',
+          codec: clipCodec,
+          clip,
+          offsetMs: lastClipOffsetMs,
+          tried: [...tried, clipCodec],
+        },
         `clip is ${clipCodec}, session negotiated ${session.debugNegotiatedCodec}`,
       )
     }
     // Where the client last asked the clip to start: the re-offered session
     // puts the clip back there, once it is connected (see `onConnected`).
     let lastClipOffsetMs = 0
-    let replayClip: (() => void) | null = null
     // A clip-intent session's clip access units are gated on the negotiated
     // codec; every other recorded push is unchanged.
     const pushRecordedVideo = (clip: ClipPlaybackHandle | null): PushVideoAccessUnit => {

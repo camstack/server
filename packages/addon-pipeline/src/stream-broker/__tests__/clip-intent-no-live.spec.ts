@@ -187,7 +187,22 @@ function makeSleepingBroker(demand: LiveDemand, codec?: 'h264' | 'h265'): IStrea
     preBufferPackets: 0,
   }
   const noop: Unsubscribe = () => {}
-  return {
+  // The whole interface, typed: the members the server never reaches on a
+  // session are inert, so a fake cannot supply a value production forgot.
+  const broker: IStreamBroker = {
+    deviceId: '3628',
+    status: 'idle',
+    suspended: false,
+    start: async () => {},
+    stop: async () => {},
+    pushEncodedPacket: () => {},
+    subscribeAudioChunks: () => ({ subscriptionId: 'none' }),
+    pullAudioChunks: () => [],
+    unsubscribeAudioChunks: () => false,
+    getLocalStreamUrl: () => '',
+    setPreBufferDuration: () => {},
+    getPreBufferDuration: () => 0,
+    setPreBufferEnabled: () => {},
     getStats: () => stats,
     getPreBuffer: () => [],
     getRtpPreBuffer: () => [],
@@ -209,9 +224,10 @@ function makeSleepingBroker(demand: LiveDemand, codec?: 'h264' | 'h265'): IStrea
     getSdpParameterSets: (): ReadonlyArray<Buffer> | null => null,
     onSdpParameterSets: (_cb: (ps: ReadonlyArray<Buffer>) => void): Unsubscribe => noop,
     onSourceRestart: (_cb: (reason: string) => void): Unsubscribe => noop,
-    getSourceType: (): string | null => 'push-rtp',
+    getSourceType: () => 'push-rtp',
     isRtpSource: (): boolean => true,
-  } as unknown as IStreamBroker
+  }
+  return broker
 }
 
 const SETTLED = Symbol('settled')
@@ -326,6 +342,76 @@ describe('a clip-intent session on a sleeping camera (#566)', () => {
     await vi.advanceTimersByTimeAsync(50)
     expect(lastSession().sourceCodec).toBe('H265')
     expect(handles.pushed).toEqual([{ sessionId: SESSION, codec: 'H265' }])
+    expect(demand).toEqual({ encoded: [], rtp: [] })
+  })
+
+  it('goLive while a clip-codec re-offer is pending makes the re-offer live, with no clip replay', async () => {
+    setUp()
+    handles.clipCodec = 'H265'
+    await offer({ intent: 'clip' })
+    playClip()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(lastSession().pendingRenegotiation?.epoch).toBe(1)
+
+    // The viewer leaves the clip before its player re-offered.
+    send({ t: 'goLive' })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(lastSession().pendingRenegotiation?.epoch).toBe(1)
+    // The provider wakes the camera for this re-offer.
+    expect(server.isClipIntentOffer({}, SESSION)).toBe(false)
+
+    await offer({})
+    // An ordinary live session: the cold broker is warmed up, live attached.
+    expect(demand.encoded).toEqual(['warmup', 'webrtc-browser'])
+    expect(demand.rtp).toEqual(['webrtc-browser'])
+    lastSession().onConnected?.()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(handles.pushed).toEqual([])
+  })
+
+  it('goLive on the session re-offered at the clip codec cancels its pending clip replay', async () => {
+    setUp()
+    handles.clipCodec = 'H265'
+    await offer({ intent: 'clip' })
+    playClip()
+    await vi.advanceTimersByTimeAsync(50)
+    await offer({})
+    // Live is asked for before the re-offered session reports connected.
+    send({ t: 'goLive' })
+    await vi.advanceTimersByTimeAsync(0)
+    lastSession().onConnected?.()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(handles.pushed).toEqual([])
+    expect(lastSession().pendingRenegotiation?.epoch).toBe(1)
+  })
+
+  it('a re-offered clip that meets the other codec re-offers once more, then refuses', async () => {
+    setUp()
+    handles.clipCodec = 'H265'
+    await offer({ intent: 'clip' })
+    playClip()
+    await vi.advanceTimersByTimeAsync(50)
+    await offer({})
+    lastSession().onConnected?.()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(lastSession().sourceCodec).toBe('H265')
+
+    // The next clip is H.264: one more re-offer, at H.264.
+    handles.clipCodec = 'H264'
+    playClip()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(lastSession().pendingRenegotiation?.epoch).toBe(1)
+    await offer({})
+    lastSession().onConnected?.()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(lastSession().sourceCodec).toBe('H264')
+    expect(handles.pushed.at(-1)).toEqual({ sessionId: SESSION, codec: 'H264' })
+
+    // Back to H.265, already tried on this id: refused, no third re-offer.
+    handles.clipCodec = 'H265'
+    playClip()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(lastSession().pendingRenegotiation).toBeNull()
     expect(demand).toEqual({ encoded: [], rtp: [] })
   })
 

@@ -31,6 +31,8 @@ export type ClipReoffer =
       readonly clip: ClipPlaybackHandle
       /** Where the client last asked the clip to start. */
       readonly offsetMs: number
+      /** Every codec this session id was re-offered at, this one included. */
+      readonly tried: readonly ClipVideoCodec[]
     }
 
 /** Is this offer a clip-intent one? A pending re-offer record outranks the hints. */
