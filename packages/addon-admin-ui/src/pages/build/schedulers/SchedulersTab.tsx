@@ -9,7 +9,6 @@ import {
   type BadgeVariant,
   Button,
   type DataColumn,
-  DataTable,
   EmptyState,
   ErrorBox,
   Skeleton,
@@ -19,7 +18,9 @@ import {
   useSchedulersGetStatus,
   useSchedulersList,
   useSchedulersSetEnabled,
+  TaggedDataTable,
 } from '@camstack/ui-library'
+import { schedulerSearchText, schedulerTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, Plus } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
@@ -191,7 +192,11 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
           }
         />
       ) : (
-        <DataTable
+        <TaggedDataTable
+          section="schedulers"
+          getTags={schedulerTags}
+          searchText={schedulerSearchText}
+          searchLabel={t('schedulers.list.search', 'Search schedulers')}
           columns={columns}
           rows={entries}
           rowKey={(entry) => entry.id}

@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Logs page: an Export button downloads the logs of chosen components and devices over a time range as NDJSON
+
+### Changed
+
+- Automations, scripts, actions, schedulers, templates, custom devices and devices can carry tags: edit them in each editor, filter and group each list by tag, rename or remove a tag from the filter menu
+
 ### Fixed
 
 - The Add device link to an integration is built with the shared integration page address
@@ -16,7 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Integration editor: the account sign-in buttons (Sign in again, Sign out) now reach the integration for an existing instance
-- Logs page: an Export button downloads the logs of chosen components and devices over a time range as NDJSON.
 
 ## [1.2.682] - 2026-11-15
 

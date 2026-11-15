@@ -8,6 +8,7 @@ import {
   useDeviceManagerSetLocation,
   useDeviceManagerSetName,
   useDeviceManagerSetRole,
+  useDeviceManagerSetTags,
   useConfirm,
   Button,
 } from '@camstack/ui-library'
@@ -29,6 +30,7 @@ import {
   identitySaveRefusal,
   identityWrites,
   quickDetailSaveState,
+  tagListsEqual,
   seedIdentityDraft,
   type DisplayForm,
   type IdentityDraft,
@@ -47,6 +49,7 @@ interface QuickDetailSaveApi {
   readonly setIdentityName: (name: string) => void
   readonly setIdentityLocation: (location: string) => void
   readonly setIdentityRole: (role: string | null) => void
+  readonly setIdentityTags: (tags: readonly string[]) => void
   readonly setIdentityDisplay: (patch: Partial<DisplayForm>) => void
   readonly register: (contribution: QuickDetailContribution) => () => void
 }
@@ -85,6 +88,8 @@ export function QuickDetailSaveProvider({
       next.name !== identity.name ||
       next.location !== identity.location ||
       next.role !== identity.role ||
+      !tagListsEqual(next.tags, identity.tags) ||
+      !tagListsEqual(next.baseTags, identity.baseTags) ||
       !displayFormsEqual(next.display, identity.display) ||
       next.baseName !== identity.baseName ||
       next.baseLocation !== identity.baseLocation ||
@@ -138,6 +143,9 @@ export function QuickDetailSaveProvider({
       },
       setIdentityRole: (role: string | null) => {
         setIdentity((prev) => (prev === null ? prev : { ...prev, role }))
+      },
+      setIdentityTags: (tags: readonly string[]) => {
+        setIdentity((prev) => (prev === null ? prev : { ...prev, tags }))
       },
       setIdentityDisplay: (patch: Partial<DisplayForm>) => {
         setIdentity((prev) =>
@@ -226,6 +234,7 @@ function QuickDetailSaveFooter({
   const setLocation = useDeviceManagerSetLocation()
   const setRole = useDeviceManagerSetRole()
   const setDisplay = useDeviceManagerSetDisplay()
+  const setTags = useDeviceManagerSetTags()
 
   const identitySlice: QuickDetailSlice = {
     dirty: identityDirty(identity),
@@ -246,6 +255,7 @@ function QuickDetailSaveFooter({
         location: identity.baseLocation,
         role: identity.baseRole,
         display: identity.baseDisplay,
+        tags: identity.baseTags,
       })
     }
     for (const contribution of contributions) contribution.discard()
@@ -274,6 +284,9 @@ function QuickDetailSaveFooter({
         if (identity !== null && writes.role !== undefined) {
           await setRole.mutateAsync({ deviceId, role: writes.role })
         }
+        if (identity !== null && writes.tags !== undefined) {
+          await setTags.mutateAsync({ deviceId, tags: writes.tags })
+        }
         if (identity !== null && writes.display !== undefined) {
           await setDisplay.mutateAsync({ deviceId, display: writes.display })
         }
@@ -288,6 +301,7 @@ function QuickDetailSaveFooter({
             baseLocation: location,
             baseRole: identity.role,
             baseDisplay: identity.display,
+            baseTags: identity.tags,
             persistedDisplay:
               writes.display !== undefined
                 ? (writes.display ?? undefined)

@@ -34,18 +34,19 @@ import {
 import {
   Badge,
   Button,
-  DataTable,
   ErrorBox,
   formatLastSeen,
   ItemFormDialog,
   LogStream,
   TABLE_SCROLL_MAX_H,
+  TaggedDataTable,
   useConfirm,
   useItemFormUrl,
   useSystem,
   type DataColumn,
   useUiText,
 } from '@camstack/ui-library'
+import { blockSearchText, blockTags } from './tag-accessors'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Code2, RotateCw, ScrollText, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -413,7 +414,11 @@ export function ScriptsTab({
         />
       )}
 
-      <DataTable
+      <TaggedDataTable
+        section="scripts"
+        getTags={blockTags}
+        searchText={blockSearchText}
+        searchLabel={t('build.scriptsTab.search', 'Search scripts')}
         columns={columns}
         rows={blocks}
         rowKey={(b) => b.id}

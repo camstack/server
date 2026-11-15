@@ -52,6 +52,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useDeviceManagerSetRole: () => ({ mutate: vi.fn(), isPending: false }),
     useDeviceManagerSetDisplay: () => ({ mutate: vi.fn(), isPending: false }),
     useDeviceManagerSetName: mutation,
+    useDeviceManagerSetTags: mutation,
     useDeviceManagerSetLocation: mutation,
     useDeviceManagerListLocations: () => ({ data: [] }),
     useDeviceManagerGetRoleDisplayDefaults: () => ({ data: { defaults: {} } }),

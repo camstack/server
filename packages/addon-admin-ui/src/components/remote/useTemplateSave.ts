@@ -26,8 +26,18 @@ export function useTemplateSave(): TemplateSave {
     try {
       const result =
         next.id === null
-          ? await create.mutateAsync({ kind: next.kind, name: next.name, payload: next.payload })
-          : await update.mutateAsync({ id: next.id, name: next.name, payload: next.payload })
+          ? await create.mutateAsync({
+              kind: next.kind,
+              name: next.name,
+              payload: next.payload,
+              ...tagsOf(next),
+            })
+          : await update.mutateAsync({
+              id: next.id,
+              name: next.name,
+              payload: next.payload,
+              ...tagsOf(next),
+            })
       if (result.status === 'refused') {
         setError(result.detail)
         return false
@@ -46,4 +56,9 @@ export function useTemplateSave(): TemplateSave {
     error,
     clearError: () => setError(null),
   }
+}
+
+/** The tags of a save: sent only when the editor holds them (absent keeps the stored ones). */
+function tagsOf(draft: TemplateDraft): { tags?: string[] } {
+  return draft.tags === undefined ? {} : { tags: [...draft.tags] }
 }

@@ -79,6 +79,7 @@ export function CustomizeTab({ deviceId }: CustomizeTabProps): ReactNode {
         location: device.location ?? '',
         role: device.role ?? null,
         display: device.display,
+        tags: device.tags,
       }}
     >
       {body}

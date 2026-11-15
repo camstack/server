@@ -15,6 +15,7 @@ import {
   Input,
   IconButton,
   Select,
+  TagInput,
   useHotkey,
 } from '@camstack/ui-library'
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react'
@@ -29,6 +30,8 @@ export interface TemplateDraft {
   readonly kind: TemplateKind
   readonly name: string
   readonly payload: unknown
+  /** Operator tags (D1054); absent leaves the stored tags alone. */
+  readonly tags?: readonly string[]
 }
 
 export interface TemplateEditorDialogProps {
@@ -102,6 +105,7 @@ export function TemplateEditorBody({
 }: BodyProps): ReactNode {
   const { t } = useTranslation()
   const [name, setName] = useState(draft.name)
+  const [tags, setTags] = useState<readonly string[] | undefined>(draft.tags)
   // Kind, preset and payload move together, so one undo step never leaves a
   // payload under the wrong kind. The name is a text field and keeps its own undo.
   const [history, dispatch] = useReducer(
@@ -172,6 +176,15 @@ export function TemplateEditorBody({
               data-testid="template-name"
             />
           </FormField>
+          <div className="text-sm sm:col-span-2">
+            <span className="text-foreground-subtle">{t('common.tags', 'Tags')}</span>
+            <TagInput
+              className="mt-1"
+              value={tags ?? []}
+              onChange={setTags}
+              label={t('common.tags', 'Tags')}
+            />
+          </div>
           {draft.id === null && CREATABLE_TEMPLATE_KINDS.length > 1 && (
             <FormField label={t('remote.templates.kind.label')}>
               <Select
@@ -233,7 +246,15 @@ export function TemplateEditorBody({
         </Button>
         <Button
           disabled={!canSave}
-          onClick={() => onSave({ id: draft.id, kind, name: name.trim(), payload: clean })}
+          onClick={() =>
+            onSave({
+              id: draft.id,
+              kind,
+              name: name.trim(),
+              payload: clean,
+              ...(tags === undefined ? {} : { tags }),
+            })
+          }
           data-testid="template-save"
         >
           {t('common.save')}

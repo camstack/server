@@ -77,6 +77,8 @@ export interface IdentitySeed {
   readonly location: string
   readonly role: string | null
   readonly display: DeviceDisplayOverride | undefined
+  /** Operator tags (D1054) on the device meta; absent = none. */
+  readonly tags?: readonly string[]
 }
 
 export interface IdentityDraft {
@@ -84,25 +86,30 @@ export interface IdentityDraft {
   readonly location: string
   readonly role: string | null
   readonly display: DisplayForm
+  readonly tags: readonly string[]
   readonly baseName: string
   readonly baseLocation: string
   readonly baseRole: string | null
   readonly baseDisplay: DisplayForm
+  readonly baseTags: readonly string[]
   /** The server override at seed time, so a save keeps `perCap`. */
   readonly persistedDisplay: DeviceDisplayOverride | undefined
 }
 
 function draftFromSeed(seed: IdentitySeed): IdentityDraft {
   const display = formFromOverride(seed.display)
+  const tags = seed.tags ?? []
   return {
     name: seed.name,
     location: seed.location,
     role: seed.role,
     display,
+    tags,
     baseName: seed.name,
     baseLocation: seed.location,
     baseRole: seed.role,
     baseDisplay: display,
+    baseTags: tags,
     persistedDisplay: seed.display,
   }
 }
@@ -115,6 +122,7 @@ export function seedIdentityDraft(prev: IdentityDraft | null, seed: IdentitySeed
     prev.name === seed.name &&
     prev.location === seed.location &&
     prev.role === seed.role &&
+    tagListsEqual(prev.tags, seed.tags ?? []) &&
     displayFormsEqual(prev.display, incoming)
   if (!identityDirty(prev) || serverMatchesDraft) return draftFromSeed(seed)
   return prev
@@ -126,8 +134,14 @@ export function identityDirty(draft: IdentityDraft | null): boolean {
     draft.name !== draft.baseName ||
     draft.location !== draft.baseLocation ||
     draft.role !== draft.baseRole ||
+    !tagListsEqual(draft.tags, draft.baseTags) ||
     !displayFormsEqual(draft.display, draft.baseDisplay)
   )
+}
+
+/** Same tags in the same order — the order is the operator's. */
+export function tagListsEqual(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((tag, index) => tag === b[index])
 }
 
 /** A cleared name cannot be saved. `null` means the draft may be written. */
@@ -142,6 +156,7 @@ export interface IdentityWrites {
   readonly location?: string | null
   readonly role?: string | null
   readonly display?: DeviceDisplayOverride | null
+  readonly tags?: string[]
 }
 
 export function identityWrites(draft: IdentityDraft): IdentityWrites {
@@ -151,6 +166,7 @@ export function identityWrites(draft: IdentityDraft): IdentityWrites {
     ...(name !== draft.baseName ? { name } : {}),
     ...(location !== draft.baseLocation ? { location: location === '' ? null : location } : {}),
     ...(draft.role !== draft.baseRole ? { role: draft.role } : {}),
+    ...(!tagListsEqual(draft.tags, draft.baseTags) ? { tags: [...draft.tags] } : {}),
     ...(!displayFormsEqual(draft.display, draft.baseDisplay)
       ? { display: overrideFromForm(draft.display, draft.persistedDisplay) }
       : {}),

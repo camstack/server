@@ -60,6 +60,7 @@ export default defineConfig({
     globals: true,
     setupFiles: [
       './src/test-setup/i18n.ts',
+      './src/test-setup/tag-registry.ts',
       './src/components/cluster/__tests__/setup.ts',
       './src/components/addons/__tests__/setup.ts',
       './src/components/brokers/__tests__/setup.ts',

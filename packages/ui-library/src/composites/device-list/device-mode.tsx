@@ -28,6 +28,19 @@ import { columnsForContext, type TableContext } from './columns'
 import { nextSort, sortRows, type DeviceSort, type SortableColumnId } from './sort'
 import type { MultiSelectOption } from './multi-select'
 import type { DeviceIntegrationResolution, DeviceIntegrationResolver } from './device-integration'
+import { TagChip } from '../tags/tag-chip'
+import { TagEntriesProvider } from '../tags/tag-entries-context'
+import { TagFilterMenu } from '../tags/tag-filter-bar'
+import {
+  type TagViewMode,
+  filterByTags,
+  groupByTag,
+  readTagViewMode,
+  tagsInRows,
+  tagViewStorageKey,
+  writeTagViewMode,
+} from '../tags/tag-model'
+import { useTagRegistry } from '../tags/use-tag-registry'
 
 /** One chip of the integration filter. `id` is the INTEGRATION id
  *  (`IntegrationWithState.id`), matched against `integrationOf(device)` —
@@ -187,6 +200,19 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
     batchActions,
   } = props
 
+  // Tags (D1054): an any-of filter, the search matches tag names too, and a
+  // flat | by-tag view remembered per list. Not URL state: a tag is the
+  // operator's own label, not a link anyone shares.
+  const tagRegistry = useTagRegistry()
+  const [selectedTags, setSelectedTags] = useState<readonly string[]>([])
+  const tagViewKey = tagViewStorageKey(lsKey)
+  const [tagMode, setTagModeState] = useState<TagViewMode>(() => readTagViewMode(tagViewKey))
+  const setTagMode = (next: TagViewMode): void => {
+    setTagModeState(next)
+    writeTagViewMode(tagViewKey, next)
+  }
+  const tagCounts = useMemo(() => tagsInRows(devices, deviceTags), [devices])
+
   // Batch mode: OFF by default. Only relevant when `batchActions` is
   // provided — the list then owns activation + selection state and
   // renders its own responsive bulk-actions bar.
@@ -306,15 +332,28 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
     const q = url.state.q
     const addonSet = effectiveAddons.length > 0 ? new Set(effectiveAddons) : null
     const typeSet = url.state.types.length > 0 ? new Set(url.state.types) : null
-    return devices.filter((d) => {
+    return filterByTags(devices, deviceTags, selectedTags).filter((d) => {
       if (addonSet && !belongsToAny(integrationOfRow(d), addonSet)) return false
       if (typeSet && !typeSet.has(effectiveType(d, childrenByParent.get(d.id)))) return false
-      if (q.trim() !== '' && !fuzzyMatch(q, d.name) && !fuzzyMatch(q, d.stableId)) {
+      if (
+        q.trim() !== '' &&
+        !fuzzyMatch(q, d.name) &&
+        !fuzzyMatch(q, d.stableId) &&
+        !(d.tags ?? []).some((tag) => fuzzyMatch(q, tag))
+      ) {
         return false
       }
       return true
     })
-  }, [devices, childrenByParent, effectiveAddons, integrationOfRow, url.state.types, url.state.q])
+  }, [
+    devices,
+    childrenByParent,
+    effectiveAddons,
+    integrationOfRow,
+    url.state.types,
+    url.state.q,
+    selectedTags,
+  ])
 
   const grouped = useMemo(() => groupTopLevelAndAccessories(filtered), [filtered])
 
@@ -376,7 +415,14 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
 
   useDeviceListRealtimeSync()
 
-  const isFiltered = effectiveAddons.length > 0 || url.state.types.length > 0 || url.state.q !== ''
+  const tagGroups = useMemo(() => groupByTag(sortedTopLevel, deviceTags), [sortedTopLevel])
+  const showTagGroups = tagMode === 'grouped' && tagCounts.length > 0
+
+  const isFiltered =
+    effectiveAddons.length > 0 ||
+    url.state.types.length > 0 ||
+    url.state.q !== '' ||
+    selectedTags.length > 0
   const isEmpty = totalItems === 0
   // An integration filter over rows whose integration is not KNOWN yet (the
   // integrations query has not answered) matched nothing because it could
@@ -385,6 +431,36 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
   const integrationPending = useMemo(
     () => effectiveAddons.length > 0 && devices.some((d) => integrationOfRow(d).kind === 'unknown'),
     [effectiveAddons, devices, integrationOfRow],
+  )
+
+  const renderTable = (rows: readonly DeviceItemDevice[]): ReactNode => (
+    <TableLayout
+      rows={rows}
+      accessoriesByParent={grouped.accessoriesByParent}
+      expandedParents={openParents}
+      onToggleExpand={toggleParent}
+      visibleColumns={visibleColumns}
+      sort={sort}
+      onSort={onSort}
+      // Pass the FILTERED list, not the unfiltered `devices` prop:
+      // the indent computation looks up parent.type to flag adopted
+      // rows. If the parent is filtered out (e.g. user picks
+      // type='camera' and the Home hub disappears), we don't want
+      // the orphaned child to keep its indent — the visual cue is
+      // meaningful only when the parent is also visible.
+      devices={filtered}
+      trpc={trpc}
+      resolveIntegrationIcon={rowIntegrationIcon}
+      resolveParent={resolveParent ?? null}
+      onNavigate={onNavigate ?? null}
+      renderRowAction={renderRowAction ?? null}
+      onDeleteDevice={onDeleteDevice ?? null}
+      rowOperation={rowOperation ?? null}
+      selectable={showCheckboxes}
+      rowClickSelects={rowClickSelects}
+      activeSelected={activeSelected}
+      onToggleSelection={toggleSelection}
+    />
   )
 
   return (
@@ -402,12 +478,21 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
             // would let the next debounce tick write the old term straight
             // back and re-filter the list the operator just cleared.
             setSearchInput('')
+            setSelectedTags([])
             url.clearFilters()
           }}
           onAddonsChange={url.setAddons}
           hideAddons={forceIntegrationId !== undefined}
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <TagFilterMenu
+            tags={tagCounts}
+            selected={selectedTags}
+            onSelectedChange={setSelectedTags}
+            mode={tagMode}
+            onModeChange={setTagMode}
+            registry={tagRegistry}
+          />
           {batchActions !== undefined &&
             (batchActive ? (
               <button
@@ -436,11 +521,11 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder={t(
                 'uiLibrary.deviceModeList.searchPlaceholder',
-                'Search by name or stableId',
+                'Search by name, stableId or tag',
               )}
               aria-label={t(
                 'uiLibrary.deviceModeList.searchAria',
-                'Search devices by name or stableId',
+                'Search devices by name, stableId or tag',
               )}
               className="h-7 pl-7 pr-2.5 rounded-md border border-border bg-surface text-[11px] text-foreground placeholder:text-foreground-subtle/60 focus:outline-none focus:ring-1 focus:ring-primary/40 w-56"
             />
@@ -467,37 +552,39 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
           onClearFilters={isFiltered && !integrationPending ? url.clearFilters : undefined}
         />
       ) : (
-        <ContainerChildrenProvider value={grouped.accessoriesByParent}>
-          <RowModelsProvider deviceIds={rowModelIds}>
-            <TableLayout
-              rows={pageRows}
-              accessoriesByParent={grouped.accessoriesByParent}
-              expandedParents={openParents}
-              onToggleExpand={toggleParent}
-              visibleColumns={visibleColumns}
-              sort={sort}
-              onSort={onSort}
-              // Pass the FILTERED list, not the unfiltered `devices` prop:
-              // the indent computation looks up parent.type to flag adopted
-              // rows. If the parent is filtered out (e.g. user picks
-              // type='camera' and the Home hub disappears), we don't want
-              // the orphaned child to keep its indent — the visual cue is
-              // meaningful only when the parent is also visible.
-              devices={filtered}
-              trpc={trpc}
-              resolveIntegrationIcon={rowIntegrationIcon}
-              resolveParent={resolveParent ?? null}
-              onNavigate={onNavigate ?? null}
-              renderRowAction={renderRowAction ?? null}
-              onDeleteDevice={onDeleteDevice ?? null}
-              rowOperation={rowOperation ?? null}
-              selectable={showCheckboxes}
-              rowClickSelects={rowClickSelects}
-              activeSelected={activeSelected}
-              onToggleSelection={toggleSelection}
-            />
-          </RowModelsProvider>
-        </ContainerChildrenProvider>
+        <TagEntriesProvider value={tagRegistry.entries}>
+          <ContainerChildrenProvider value={grouped.accessoriesByParent}>
+            {showTagGroups ? (
+              <div className="space-y-4" data-testid="tag-groups-devices">
+                {tagGroups.map((group) => (
+                  <section
+                    key={group.key}
+                    className="space-y-1.5"
+                    aria-label={group.tag ?? t('uiLibrary.tags.untagged', 'No tag')}
+                  >
+                    <h4 className="flex items-center gap-2 text-xs font-medium text-foreground-muted">
+                      {group.tag === null ? (
+                        t('uiLibrary.tags.untagged', 'No tag')
+                      ) : (
+                        <TagChip name={group.tag} entries={tagRegistry.entries} />
+                      )}
+                      <span className="tabular-nums text-foreground-subtle">
+                        {group.rows.length}
+                      </span>
+                    </h4>
+                    <RowModelsProvider
+                      deviceIds={rowModelDeviceIds(group.rows, grouped.accessoriesByParent)}
+                    >
+                      {renderTable(group.rows)}
+                    </RowModelsProvider>
+                  </section>
+                ))}
+              </div>
+            ) : (
+              <RowModelsProvider deviceIds={rowModelIds}>{renderTable(pageRows)}</RowModelsProvider>
+            )}
+          </ContainerChildrenProvider>
+        </TagEntriesProvider>
       )}
 
       {/* Bottom controls — per-page size selector + total count alongside the
@@ -511,7 +598,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
        * On a single page (totalItems <= tablePageSize) the pager hides, and
        * the standalone total is the only count. The "Per page" selector is
        * always visible (list non-empty). */}
-      {!isEmpty && (
+      {!isEmpty && !showTagGroups && (
         <div className="flex items-center justify-between gap-4 flex-wrap pt-2 text-[11px] text-foreground-subtle">
           <div className="inline-flex items-center gap-2">
             {totalItems <= tablePageSize && (
@@ -579,6 +666,11 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
       )}
     </div>
   )
+}
+
+/** A device's operator tags (D1054); stable, so it keys the filter memos. */
+function deviceTags(device: DeviceItemDevice): readonly string[] | undefined {
+  return device.tags
 }
 
 /**

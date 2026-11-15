@@ -13,7 +13,6 @@ import {
   type BadgeVariant,
   Button,
   type DataColumn,
-  DataTable,
   EmptyState,
   ErrorBox,
   Skeleton,
@@ -21,7 +20,9 @@ import {
   useActionsList,
   useActionsRun,
   useItemFormUrl,
+  TaggedDataTable,
 } from '@camstack/ui-library'
+import { actionSearchText, actionTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
 import { ListChecks, Play, Plus } from 'lucide-react'
 import { useEffect, useMemo } from 'react'
@@ -204,7 +205,11 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
               onRetry={() => void list.refetch()}
             />
           )}
-          <DataTable
+          <TaggedDataTable
+            section="actions"
+            getTags={actionTags}
+            searchText={actionSearchText}
+            searchLabel={t('actions.list.search', 'Search actions')}
             columns={columns}
             rows={entries}
             rowKey={(entry) => entry.id}

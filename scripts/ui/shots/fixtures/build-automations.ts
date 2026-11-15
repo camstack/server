@@ -8,6 +8,7 @@
  */
 import { generateAutomationBlock } from '../../../../packages/types/src/automation/codegen.ts'
 import { defineFixtures } from './_define'
+import { tagHandlers } from './_tags'
 import { MINUTE, NOW } from './_time'
 import build from './build'
 
@@ -29,6 +30,7 @@ const block = (
   enabled: boolean,
   minutes: number,
   updatedAgo: number,
+  tags: readonly string[] = [],
 ) => ({
   id,
   name,
@@ -40,13 +42,14 @@ const block = (
   createdBy: 'admin',
   status: enabled ? 'running' : 'stopped',
   lastChangedAt: NOW - updatedAgo,
+  tags,
 })
 
 const FIRST = (build.handlers['coreBlocks.list'] as { blocks: readonly unknown[] }).blocks[0]
 
 const BLOCKS = [
-  FIRST,
-  block('blk-night', 'Lock up for the night', true, 1440, 5 * 3_600_000),
+  typeof FIRST === 'object' && FIRST !== null ? { ...FIRST, tags: ['Garden'] } : FIRST,
+  block('blk-night', 'Lock up for the night', true, 1440, 5 * 3_600_000, ['Night', 'Garden']),
   block('blk-garage', 'Garage light when someone arrives', false, 60, 2 * 86_400_000),
 ]
 
@@ -182,6 +185,11 @@ export default defineFixtures({
   description: 'Build → Automations: list, editor with run values, picker with a long value list',
   handlers: {
     ...build.handlers,
+    ...tagHandlers,
+    'schedulers.list': [],
+    'template.list': [],
+    'auth.listLoginMethods': [],
+    'preferences.get': { rows: [] },
     'coreBlocks.list': { blocks: BLOCKS },
     'coreBlocks.getTraces': (input: { blockId?: string }) => ({
       traces:

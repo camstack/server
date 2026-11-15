@@ -74,6 +74,7 @@ function DeviceQuickDetailModal({
                   location: deviceLocation,
                   role: typeof device.role === 'string' ? device.role : null,
                   display: device.display,
+                  tags: device.tags,
                 }
               : null
           }

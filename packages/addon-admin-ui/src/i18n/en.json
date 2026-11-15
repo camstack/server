@@ -1412,7 +1412,8 @@
     "rooms_other": "{{count}} rooms",
     "parkedSince": "parked {{since}}",
     "motionWord": "motion",
-    "stale": "stale"
+    "stale": "stale",
+    "tags": "Tags"
   },
   "connection": {
     "disconnected": "Server unreachable — reconnecting…",
@@ -5931,7 +5932,8 @@
       "triggerNotSortable": "Read from the recipe",
       "lastRun": "Last run",
       "lastRunNotSortable": "Read per automation",
-      "enabled": "Enabled"
+      "enabled": "Enabled",
+      "search": "Search automations"
     },
     "blockEditor": {
       "loadExample": "Load example",
@@ -5995,7 +5997,8 @@
       "deviceListPending": "the device list has not answered yet",
       "deleteThisComposedDevice": "Delete this composed device?",
       "deleteMessage": "{{name}} will be deleted. This cannot be undone.",
-      "builtAs": "Built as"
+      "builtAs": "Built as",
+      "search": "Search {{list}}"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Could not list devices:",
@@ -6031,7 +6034,8 @@
       "noScriptsYet": "No scripts yet.",
       "edit": "Edit {{name}}",
       "newScript": "New script",
-      "deleteMessage": "{{name}} and its source will be deleted. This cannot be undone."
+      "deleteMessage": "{{name}} and its source will be deleted. This cannot be undone.",
+      "search": "Search scripts"
     },
     "newAction": "New action",
     "newAutomation": "New automation",
@@ -6117,7 +6121,8 @@
       "timeWindow": {
         "limit": "Only run at certain times"
       },
-      "actionLabel": "Action"
+      "actionLabel": "Action",
+      "search": "Search templates"
     }
   },
   "automation": {
@@ -8897,8 +8902,8 @@
       "showingFiltered_other": "Showing {{shown}} of {{count}} devices · filtered by <0>{{names}}</0>",
       "showing_one": "Showing {{shown}} of {{count}} device",
       "showing_other": "Showing {{shown}} of {{count}} devices",
-      "searchPlaceholder": "Search by name or stableId",
-      "searchAria": "Search devices by name or stableId"
+      "searchPlaceholder": "Search by name, stableId or tag",
+      "searchAria": "Search devices by name, stableId or tag"
     },
     "devicePicker": {
       "nounCamera": "camera",
@@ -10773,6 +10778,44 @@
     },
     "resizableColumns": {
       "handle": "Resize columns"
+    },
+    "tags": {
+      "styleNamed": "Colour and icon of {{name}}",
+      "removeNamed": "Remove {{name}}",
+      "styleTitle": "Tag style",
+      "preview": "Preview",
+      "colour": "Colour",
+      "colourN": "Colour {{n}}",
+      "icon": "Icon",
+      "iconTrigger": "Change the icon of {{name}}",
+      "iconPanel": "Icon for {{name}}",
+      "iconSearch": "Search icons",
+      "iconDefault": "Default icon",
+      "iconNoMatches": "No icon matches that",
+      "cancel": "Cancel",
+      "save": "Save",
+      "label": "Tags",
+      "placeholder": "Add a tag",
+      "create": "Add",
+      "renameTitle": "Rename tag",
+      "renameMessage": "Every element tagged {{name}} gets the new name.",
+      "newName": "New name",
+      "rename": "Rename",
+      "removeTitle": "Remove tag?",
+      "removeMessage": "{{name}} is removed from every element that carries it, and its colour and icon are forgotten.",
+      "remove": "Remove",
+      "renameNamed": "Rename {{name}}",
+      "removeEverywhere": "Remove {{name}} everywhere",
+      "searchPlaceholder": "Search names and tags",
+      "filterLabel": "Tags",
+      "viewLabel": "Show",
+      "viewFlat": "List",
+      "viewGrouped": "By tag",
+      "clear": "Clear",
+      "column": "Tags",
+      "columnNotSortable": "A row can carry several tags",
+      "noMatches": "Nothing matches this filter.",
+      "untagged": "No tag"
     }
   },
   "helpers": {
@@ -12203,7 +12246,8 @@
       "runNotSortable": "A control",
       "source": "Source",
       "status": "Status",
-      "statusNotSortable": "Derived from the latest run"
+      "statusNotSortable": "Derived from the latest run",
+      "search": "Search actions"
     },
     "source": {
       "internal": "Internal"
@@ -12854,7 +12898,8 @@
       "profiles": "Profiles",
       "status": "Now",
       "statusNotSortable": "Derived from the live hold",
-      "updated": "Updated"
+      "updated": "Updated",
+      "search": "Search schedulers"
     },
     "point": {
       "addEdge": "Edge",

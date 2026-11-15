@@ -27,6 +27,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       data: { id: 7, name: 'Driveway', location: 'Hall' },
     }),
     useDeviceManagerSetName: () => ({ mutateAsync: vi.fn() }),
+    useDeviceManagerSetTags: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerSetLocation: () => ({ mutateAsync: vi.fn() }),
     useDeviceManagerSetRole: () => ({ mutateAsync: vi.fn() }),
     useDeviceManagerSetDisplay: () => ({ mutateAsync: vi.fn() }),

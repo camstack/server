@@ -25,6 +25,7 @@ import {
   useActionsRun,
   useActionsUpdate,
   useConfirm,
+  TagInput,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { ListChecks, Loader2, Play, Trash2 } from 'lucide-react'
@@ -175,6 +176,14 @@ export function ActionEditor({ entry, onClose, onSaved, preset = null }: ActionE
             {readOnly ? (entry?.addonId ?? '') : t('actions.source.internal', 'Internal')}
           </Badge>
         </div>
+        {!readOnly && (
+          <TagInput
+            className="max-w-md"
+            value={draft.tags ?? []}
+            onChange={(tags) => setDraft({ ...draft, tags })}
+            label={t('common.tags', 'Tags')}
+          />
+        )}
 
         {readOnly ? (
           <p className="rounded-md border border-border bg-surface p-3 text-sm text-foreground-muted">

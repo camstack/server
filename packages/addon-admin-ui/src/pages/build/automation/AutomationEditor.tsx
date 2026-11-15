@@ -35,6 +35,7 @@ import {
   Input,
   LogStream,
   useCoreBlocksGetTraces,
+  TagInput,
   useSystemGetSiteLocation,
 } from '@camstack/ui-library'
 import { Loader2, ScrollText } from 'lucide-react'
@@ -101,6 +102,7 @@ export function AutomationEditor({
 }: AutomationEditorProps) {
   const { t } = useTranslation()
   const [name, setName] = useState(existing?.name ?? '')
+  const [tags, setTags] = useState<string[]>(() => [...(existing?.tags ?? [])])
   const [recipe, setRecipeState] = useState<AutomationRecipe>(() => normalizeRecipe(initialRecipe))
   // A row that asks which trigger fired names trigger rows by id: every edit leaves them all named.
   const setRecipe = (next: AutomationRecipe): void => setRecipeState(ensureTriggerIds(next))
@@ -155,6 +157,7 @@ export function AutomationEditor({
       code: generated.code,
       enabled: existing?.enabled ?? true,
       placement: HUB,
+      tags,
     })
   }
 
@@ -176,6 +179,15 @@ export function AutomationEditor({
               )}
             />
           </label>
+          <div className="max-w-md text-sm">
+            <span className="text-foreground-subtle">{t('common.tags', 'Tags')}</span>
+            <TagInput
+              className="mt-1"
+              value={tags}
+              onChange={setTags}
+              label={t('common.tags', 'Tags')}
+            />
+          </div>
 
           <TraceBlock
             step="when"

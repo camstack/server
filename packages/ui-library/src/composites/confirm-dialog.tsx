@@ -172,6 +172,13 @@ export function usePrompt(): (options: PromptOptions) => Promise<string | null> 
   return useDialogContext().prompt
 }
 
+/** `usePrompt`, or undefined where no `ConfirmDialogProvider` is mounted (a control that must then not offer the question). */
+export function usePromptIfAvailable():
+  | ((options: PromptOptions) => Promise<string | null>)
+  | undefined {
+  return useContext(ConfirmContext)?.prompt
+}
+
 // ---------------------------------------------------------------------------
 // Internal state — one discriminated union, one open dialog at a time
 // ---------------------------------------------------------------------------

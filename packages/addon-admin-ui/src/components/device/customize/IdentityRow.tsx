@@ -12,6 +12,9 @@ import {
   SECTION_BODY,
   SECTION_CARD,
   Select,
+  TagChipList,
+  TagInput,
+  useTagRegistry,
   useUiText,
 } from '@camstack/ui-library'
 import type { UiTextFn } from '@camstack/ui-library'
@@ -32,10 +35,12 @@ export function IdentityRow({ device }: IdentityRowProps): ReactNode {
   const { t } = useTranslation()
   const uiText = useUiText()
   const save = useQuickDetailSave()
+  const tagRegistry = useTagRegistry()
   const draft = save?.identity ?? null
   const name = draft?.name ?? device.name
   const location = draft?.location ?? device.location ?? ''
   const role = draft?.role ?? device.role ?? null
+  const tags = draft?.tags ?? device.tags ?? []
   const hidden = draft?.display.hidden ?? device.display?.hidden === true
   const bound = save !== null && draft !== null
 
@@ -71,6 +76,23 @@ export function IdentityRow({ device }: IdentityRowProps): ReactNode {
             value={location === '' ? t('common.unset') : location}
           />
         )}
+        <InfoRow
+          label={t('common.tags', 'Tags')}
+          layout="stacked"
+          value={
+            bound ? (
+              <TagInput
+                value={tags}
+                onChange={save.setIdentityTags}
+                label={t('common.tags', 'Tags')}
+              />
+            ) : tags.length > 0 ? (
+              <TagChipList tags={tags} entries={tagRegistry.entries} />
+            ) : (
+              t('common.unset')
+            )
+          }
+        />
         <InfoRow label={t('customize.identity.type')} layout="stacked" value={device.type} />
         <InfoRow
           label={t('customize.identity.hidden')}

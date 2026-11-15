@@ -41,6 +41,8 @@ export interface FleetDevice {
   readonly stableId: string
   readonly name: string
   readonly type: string
+  /** The device's operator tags (D1054); absent = none. */
+  readonly tags?: readonly string[]
 }
 
 /**
@@ -117,6 +119,12 @@ export interface CompositionRow {
    * device — that would be a link built from a guess (D315).
    */
   readonly reportedDeviceId: number | null
+  /**
+   * The tags of the device the row is about (D1054) — the composed device or
+   * the customized one, read from the device list; empty while it has not
+   * answered. A composed device is tagged like any device, from its page.
+   */
+  readonly tags: readonly string[]
 }
 
 export interface CompositionRowLists {
@@ -315,6 +323,7 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
       state,
       sources,
       reportedDeviceId: reported,
+      tags: self?.tags ?? [],
     }
   }
   const namePresence = presenceOf(self)
@@ -329,6 +338,7 @@ function toRow(view: CompositionView, fleet: FleetLookup): CompositionRow | null
     state,
     sources,
     reportedDeviceId: reported,
+    tags: self?.tags ?? [],
   }
 }
 

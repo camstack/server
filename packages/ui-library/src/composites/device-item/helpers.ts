@@ -91,6 +91,8 @@ export interface DeviceItemDevice {
    *  conversion) + `displayRoleLabel` / `deviceLeadIcon` (label/icon); `hidden`
    *  filters the row out of list surfaces. Absent ⇒ role/slice defaults. */
   readonly display?: DeviceDisplayOverride
+  /** Operator tags (D1054). Mirrors `DeviceInfo.tags`; absent = none. */
+  readonly tags?: readonly string[]
   /** Soft-link to another device id. For a CONTAINER device this is the
    *  LEGACY picker-chosen primary child (numeric id); the row/hero resolve the
    *  primary child via `resolveContainerPrimary(children, linkDeviceId)`.

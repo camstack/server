@@ -90,7 +90,7 @@ function renderList(devices: readonly DeviceItemDevice[]) {
 
 /** Type a term and let the 300 ms debounce push it into the list state. */
 function search(term: string): void {
-  fireEvent.change(screen.getByLabelText('Search devices by name or stableId'), {
+  fireEvent.change(screen.getByLabelText('Search devices by name, stableId or tag'), {
     target: { value: term },
   })
   act(() => {

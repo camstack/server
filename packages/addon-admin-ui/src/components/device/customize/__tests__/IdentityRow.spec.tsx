@@ -27,6 +27,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       isPending: false,
     }),
     useDeviceManagerSetName: () => ({ mutateAsync: setName, isPending: false }),
+    useDeviceManagerSetTags: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerSetLocation: () => ({ mutateAsync: setLocation, isPending: false }),
     useDeviceManagerListLocations: () => ({ data: ['Porch'] }),
     useDeviceManagerGetRoleDisplayDefaults: () => ({ data: { defaults: {} } }),

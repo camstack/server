@@ -107,6 +107,17 @@ describe('buildCompositionRows', () => {
     ])
   })
 
+  it("carries the row's device tags (D1054), and none while the list has not answered", () => {
+    const fleet = fleetLookupOf([
+      { id: 101, ...CAMERA, name: 'Front camera', type: 'camera', tags: ['Garden', 'Night'] },
+    ])
+    expect(buildCompositionRows([customization()], fleet).customizations[0]?.tags).toEqual([
+      'Garden',
+      'Night',
+    ])
+    expect(buildCompositionRows([customization()], UNANSWERED).customizations[0]?.tags).toEqual([])
+  })
+
   it('an unanswered device list makes nothing missing (D315)', () => {
     const row = buildCompositionRows([customization()], UNANSWERED).customizations[0]
     expect(row?.namePresence).toBe('unknown')

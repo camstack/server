@@ -41,6 +41,7 @@ import {
   useSystem,
   useThemeMode,
   Select,
+  TagInput,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { AlertTriangle, CheckCircle2, Loader2, RotateCw, ScrollText } from 'lucide-react'
@@ -114,6 +115,7 @@ export function BlockEditor({
     entry: existing?.entry,
   })
   const [name, setName] = useState(existing?.name ?? '')
+  const [tags, setTags] = useState<string[]>(() => [...(existing?.tags ?? [])])
   const [files, setFiles] = useState<Record<string, string>>(initialFiles.files)
   const [entry, setEntry] = useState(initialFiles.entry)
   const [activeFile, setActiveFile] = useState(initialFiles.entry)
@@ -162,6 +164,7 @@ export function BlockEditor({
     entry !== stored.entry ||
     name.trim() !== existing.name ||
     placement !== existing.placement ||
+    tags.join('\n') !== (existing.tags ?? []).join('\n') ||
     (integrationId.trim() === '' ? undefined : integrationId.trim()) !== existing.integrationId
 
   const save = (): void => {
@@ -172,6 +175,7 @@ export function BlockEditor({
       entry,
       enabled: existing?.enabled ?? true,
       placement,
+      tags,
       ...(integrationId.trim() !== '' ? { integrationId: integrationId.trim() } : {}),
     })
   }
@@ -279,6 +283,15 @@ export function BlockEditor({
             )}
           />
         </label>
+        <div className="text-sm sm:col-span-2">
+          <span className="text-foreground-subtle">{t('common.tags', 'Tags')}</span>
+          <TagInput
+            className="mt-1"
+            value={tags}
+            onChange={setTags}
+            label={t('common.tags', 'Tags')}
+          />
+        </div>
       </div>
 
       {existing === null && offerExamples && (

@@ -29,6 +29,20 @@ const ENTRY: ActionEntry = {
 }
 
 describe('action draft', () => {
+  it('carries the tags from the entry through to the saved input (D1054)', () => {
+    const draft = draftOf({ ...ENTRY, tags: ['Garden', 'pets'] })
+    expect(draft.tags).toEqual(['Garden', 'pets'])
+    const check = checkDraft(draft)
+    expect(check.ok).toBe(true)
+    if (!check.ok) return
+    expect(check.input.tags).toEqual(['Garden', 'pets'])
+  })
+
+  it('saves an emptied tag list as [] so the server clears it', () => {
+    const check = checkDraft({ ...draftOf({ ...ENTRY, tags: ['x'] }), tags: [] })
+    expect(check.ok && check.input.tags).toEqual([])
+  })
+
   it('prefills a trigger-the-alarm Action as one alarm.trigger command step', () => {
     const check = checkDraft(triggerAlarmDraft(1023, 'Trigger the alarm'))
     expect(check.ok).toBe(true)

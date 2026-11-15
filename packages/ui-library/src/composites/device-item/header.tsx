@@ -97,6 +97,8 @@ export interface DeviceItemHeaderProps {
    * `compact`: a child shown on its own names the container.
    */
   readonly nameForm?: DeviceNameForm
+  /** A last secondary line under the name (the table row's tag chips, D1054). */
+  readonly below?: ReactNode
 }
 
 export function DeviceItemHeader({
@@ -113,6 +115,7 @@ export function DeviceItemHeader({
   stacked = false,
   nameOverflow = 'truncate',
   nameForm = 'compact',
+  below,
 }: DeviceItemHeaderProps): ReactNode {
   const t = useUiText()
   // A Container shows its primary child's icon; resolve that child set from the
@@ -253,6 +256,7 @@ export function DeviceItemHeader({
             </span>
           </button>
         )}
+        {below}
       </div>
     </div>
   )

@@ -26,6 +26,7 @@ import {
   useSchedulersGetTraces,
   useSchedulersUpdate,
   useSystemGetSiteLocation,
+  TagInput,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { CalendarClock, Loader2, Plus, Trash2 } from 'lucide-react'
@@ -241,6 +242,12 @@ export function SchedulerEditor({ entry, onClose, onSaved }: SchedulerEditorProp
             onChange={(e) => setDraft({ ...draft, name: e.target.value })}
           />
         </div>
+        <TagInput
+          className="max-w-md"
+          value={draft.tags ?? []}
+          onChange={(tags) => setDraft({ ...draft, tags })}
+          label={t('common.tags', 'Tags')}
+        />
 
         <SectionCard
           headingId="scheduler-settings"

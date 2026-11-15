@@ -14,14 +14,14 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**252 units · 8827 source files · 245 units claimed by at least one document (8796 files).**
+**253 units · 8840 source files · 246 units claimed by at least one document (8809 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
+| `packages/ui-library/src/composites` | 652 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +56 more, 3 ADRs | 2026-11-11 |
 | `packages/addon-admin-ui/src/components` | 650 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +84 more, 4 ADRs | 2026-11-11 |
-| `packages/ui-library/src/composites` | 642 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +56 more, 3 ADRs | 2026-11-11 |
-| `scripts` | 609 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +152 more, 14 ADRs | 2026-11-12 |
+| `scripts` | 610 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +152 more, 14 ADRs | 2026-11-12 |
 | `packages/system/src/builtins` | 509 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +198 more, 21 ADRs | 2026-11-08 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 477 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
 | `packages/types/src/capabilities` | 241 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +230 more, 41 ADRs | 2026-11-14 |
@@ -178,6 +178,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/cli` | 5 | `tooling` | `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md` | — |
 | `packages/types/src/i18n` | 5 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md`, `architecture/notifications.md`, +1 more | 2026-11-12 |
 | `packages/addon-admin-ui` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +4 more | 2026-11-11 |
+| `packages/addon-admin-ui/src/test-setup` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-export-alexa/src/detection-sensors` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0772-alexa-detection-sensors-are-motionsensor-endpoints-fed-by-tracks-and-reconciled.md`, `decisions/adr-0778-alexa-detection-sensor-classes-are-chosen-per-camera-from-what-its-pipeline-produces-default-none.md`, +4 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-export-alexa/src/vision` | 4 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0779-alexa-object-detection-and-event-history-ship-as-a-switchable-experiment-on-the-camera-endpoint.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +3 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-post-analysis/src/durable` | 4 | `post-analysis` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0642-a-consumable-is-judged-at-each-rules-threshold-and-tanks-notify.md`, `design/2026-08-13-durable-value-tracking-and-runtime-state.md`, +1 more, 1 ADR | 2026-10-03 |
@@ -192,7 +193,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/ui-library/src/hotkeys` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/icons` | 4 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/addon-admin-ui/src/i18n` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
-| `packages/addon-admin-ui/src/test-setup` | 3 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-11-11 |
 | `packages/addon-export-alexa/src/snapshots` | 3 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0773-alexa-snapshots-are-signed-ten-minute-token-checked-urls-behind-an-integration-switch.md`, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +3 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-pipeline-orchestrator/src/migrations` | 3 | — | `decisions/adr-1013-one-instance-model.md`, 1 ADR | — |
 | `packages/addon-pipeline/src/durable` | 3 | `storage` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0185-a-forked-addons-settings-row-holds-config-not-a-workload.md`, `design/2026-08-29-recorder-heap-what-is-retained.md` _(covers)_, +1 more | 2026-08-30 |
@@ -264,6 +264,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/system` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0861-the-hub-has-a-human-name-in-one-setting-an-unset-name-reads-as-the-hostname-and-is-never-written-by-the-hub.md` | — |
 | `packages/types/src/tags` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/ui-library/src/generated` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
+| `packages/ui-library/src/test-setup` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/testing` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `packages/ui-library/src/widgets` | 1 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +2 more | 2026-11-02 |
 | `server/backend/src/i18n` | 1 | — | `decisions/adr-0863-settings-texts-and-user-facing-errors-are-translated-by-the-hub-from-catalogs-the-english-text-always-travels-beside-the-key.md` | — |

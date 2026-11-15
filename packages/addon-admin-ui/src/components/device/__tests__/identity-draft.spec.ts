@@ -35,6 +35,19 @@ describe('quick-detail identity draft', () => {
     })
   })
 
+  it('tags (D1054) are part of the draft: an edit dirties it and one save writes the list', () => {
+    const seeded = seedIdentityDraft(null, { ...SEED, tags: ['Garden'] })
+    expect(identityDirty(seeded)).toBe(false)
+    expect(identityWrites(seeded)).toEqual({})
+    const edited = { ...seeded, tags: ['Garden', 'Night'] }
+    expect(identityDirty(edited)).toBe(true)
+    expect(identityWrites(edited)).toEqual({ tags: ['Garden', 'Night'] })
+    // A server refresh that does not carry the edit keeps the draft.
+    expect(seedIdentityDraft(edited, { ...SEED, tags: ['Garden'] })).toEqual(edited)
+    // A device without tags seeds an empty list.
+    expect(seedIdentityDraft(null, SEED).tags).toEqual([])
+  })
+
   it('refuses a blank name and joins section errors', () => {
     const draft = seedIdentityDraft(null, { ...SEED, location: '' })
     expect(identitySaveRefusal({ ...draft, name: '  ' })).toBe('name')

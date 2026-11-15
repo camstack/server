@@ -14,5 +14,6 @@ export default defineConfig({
     ...vitestWorkers(),
     environment: 'jsdom',
     globals: true,
+    setupFiles: ['./src/test-setup/tag-registry.ts'],
   },
 })

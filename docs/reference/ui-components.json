@@ -254,6 +254,54 @@
       "light": "#e34948"
     },
     {
+      "name": "tag-a",
+      "viewerKey": "tagA",
+      "dark": "var(--color-chart-series-a)",
+      "light": null
+    },
+    {
+      "name": "tag-b",
+      "viewerKey": "tagB",
+      "dark": "var(--color-chart-series-b)",
+      "light": null
+    },
+    {
+      "name": "tag-c",
+      "viewerKey": "tagC",
+      "dark": "var(--color-chart-series-c)",
+      "light": null
+    },
+    {
+      "name": "tag-d",
+      "viewerKey": "tagD",
+      "dark": "var(--color-chart-series-d)",
+      "light": null
+    },
+    {
+      "name": "tag-e",
+      "viewerKey": "tagE",
+      "dark": "var(--color-chart-series-e)",
+      "light": null
+    },
+    {
+      "name": "tag-f",
+      "viewerKey": "tagF",
+      "dark": "var(--color-chart-series-f)",
+      "light": null
+    },
+    {
+      "name": "tag-g",
+      "viewerKey": "tagG",
+      "dark": "var(--color-chart-series-g)",
+      "light": null
+    },
+    {
+      "name": "tag-h",
+      "viewerKey": "tagH",
+      "dark": "var(--color-chart-series-h)",
+      "light": null
+    },
+    {
       "name": "node-a",
       "viewerKey": "nodeA",
       "dark": "#7dd3fc",
@@ -416,6 +464,12 @@
       "admin": "`HeroCardA` + `HeroScene`",
       "viewer": "—",
       "notes": "One-line top row, scene (id + state + params from the hero model), rows, a utility section (`HeroUtilityGrid`: history, consumables, power source; 2 columns, an odd last button spans both). The on/off is the scene caption and cover/valve/lock/vacuum/media commands sit under the animation (`placement: \"scene\"` on the model row). One animation per state; reduced motion stops it"
+    },
+    {
+      "need": "Tags on a record, and a list filtered or grouped by tag (D1054)",
+      "admin": "Editor: `TagInput`; list: `TaggedDataTable` (`section`, `getTags`, `searchText`); a list with its own toolbar: `TagFilterMenu` + `useTagFilter`; chips: `TagChip` / `TagChipList`",
+      "viewer": "—",
+      "notes": "Free text with autocomplete of tags in use; colour and icon live in `TagStyleDialog`, opened from a chip or a suggestion. Rename and remove are in the filter menu. No tags page"
     },
     {
       "need": "Switch a list between table and grid",
@@ -841,6 +895,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "addTag",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "`current` plus `raw`, trimmed; unchanged when `raw` is empty or already there."
     },
     {
       "name": "AdminLinkQuickAction",
@@ -8269,6 +8330,13 @@
       ]
     },
     {
+      "name": "filterByTags",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "Rows carrying ANY of the selected tags; every row when none is selected."
+    },
+    {
       "name": "filterDataTableRows",
       "kind": "function",
       "area": "composites",
@@ -8845,6 +8913,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/remote/layout-model.ts",
       "summary": "The pure model behind the remote layout editor (D964): a grid of columns × rows and the buttons placed on it. Every operation returns a NEW grid or a typed refusal — an overlap or a button leaving the grid is refused …"
+    },
+    {
+      "name": "groupByTag",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "Group rows by tag: a row with two tags appears in both groups. Groups sort by tag name (first spelling seen wins); the untagged group comes last and is absent when every row carries a tag. Row order inside a group is …"
     },
     {
       "name": "groupChildrenByLayout",
@@ -11580,6 +11655,13 @@
       "area": "hotkeys",
       "file": "packages/ui-library/src/hotkeys/combo.ts",
       "summary": "Keys a combo may name. Extend this union to support a new key."
+    },
+    {
+      "name": "matchesTagSearch",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "A row matches a search when its text OR one of its tags contains the query."
     },
     {
       "name": "MeasurementFx",
@@ -14452,6 +14534,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-grouping.ts",
       "summary": "The stored choice; the default when storage is absent, throws or is unreadable."
+    },
+    {
+      "name": "readTagViewMode",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "The remembered view mode; `flat` when nothing (readable) is stored."
     },
     {
       "name": "readUnitPreferences",
@@ -18117,6 +18206,13 @@
       "summary": "Strip a redundant parent-name prefix from a child device's name. Providers name container children fully-qualified so the entity reads cleanly on its own detail page / exports / Alexa / the parent badge — Dreame joins…"
     },
     {
+      "name": "suggestTags",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "Autocomplete: known tags not already on the record, prefix matches first, then substring matches, each alphabetical."
+    },
+    {
       "name": "summarizeHubCandidates",
       "kind": "function",
       "area": "composites",
@@ -18341,6 +18437,330 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "TAG_CHIP_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-chip.tsx",
+      "summary": "Literal class strings per colour id, so the Tailwind scan sees every one."
+    },
+    {
+      "name": "TAG_SUGGESTION_LIMIT",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "The pure half of the tag UI (D1054). A tag lives on the record it labels; the `tags` cap only registers its style. Everything here is shared by every section that shows tags (the BYS sections, the devices list) so the…"
+    },
+    {
+      "name": "TAG_SWATCH_CLASS",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-chip.tsx",
+      "summary": "Solid swatch per colour id (the style dialog)."
+    },
+    {
+      "name": "TagChip",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-chip.tsx",
+      "summary": "TagChip — one operator tag (D1054): its icon and name on a tint of its colour token. An unstyled tag shows the colour derived from its name and the default icon. `onStyle` makes the chip itself the \"style\" affordance;…",
+      "props": [
+        {
+          "name": "name",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "entries",
+          "type": "readonly TagEntry[] | undefined",
+          "optional": true,
+          "doc": "The registry's answer; `undefined` draws the derived style. Ignored when `look` is given."
+        },
+        {
+          "name": "look",
+          "type": "TagStyleView",
+          "optional": true,
+          "doc": "An explicit style (the style dialog's preview)."
+        },
+        {
+          "name": "onStyle",
+          "type": "() => void",
+          "optional": true,
+          "doc": "Makes the chip a button that opens the tag's style."
+        },
+        {
+          "name": "onRemove",
+          "type": "() => void",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "TagChipList",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-chip.tsx",
+      "summary": "The tags of one row, wrapped. Renders nothing for a row with no tags.",
+      "props": [
+        {
+          "name": "tags",
+          "type": "readonly string[] | undefined",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "entries",
+          "type": "readonly TagEntry[] | undefined",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "TagEntriesProvider",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-entries-context.tsx",
+      "summary": "The tag registry's answered entries for a whole list (D1054), so a row deep in a table colours its chips without each row asking the registry itself. Absent provider = no entries: chips fall back to the name-derived c…"
+    },
+    {
+      "name": "TagFilterBar",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-filter-bar.tsx",
+      "summary": "TagFilterBar — the search box, the Tags filter menu and the flat | by-tag view switch of one section (D1054). The search matches row text AND tag names (the caller filters with `matchesTagSearch`). The Tags menu filte…",
+      "propsExtends": ["TagFilterMenuProps"],
+      "props": [
+        {
+          "name": "search",
+          "type": "string",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onSearch",
+          "type": "(search: string) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "searchLabel",
+          "type": "string",
+          "optional": false,
+          "doc": "Accessible name of the search box — say which list."
+        },
+        {
+          "name": "searchPlaceholder",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "TagFilterMenu",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-filter-bar.tsx",
+      "summary": "The Tags filter menu (with style / rename / remove per tag) and the flat | by-tag switch — the part of a list with its own search box (the device list) places in its own toolbar. Renders nothing while no row carries a…",
+      "props": [
+        {
+          "name": "tags",
+          "type": "readonly TagCount[]",
+          "optional": false,
+          "doc": "The tags the section's rows carry."
+        },
+        {
+          "name": "selected",
+          "type": "readonly string[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onSelectedChange",
+          "type": "(next: readonly string[]) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "mode",
+          "type": "TagViewMode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onModeChange",
+          "type": "(mode: TagViewMode) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "registry",
+          "type": "TagRegistry",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "TaggedDataTable",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tagged-data-table.tsx",
+      "summary": "TaggedDataTable — a `DataTable` with the section's tag filter above it and a Tags column (D1054). Flat: one table of the filtered rows. By tag: one table per tag, a row with two tags in both, the untagged group last. …",
+      "propsExtends": ["Omit<DataTableProps<T>, 'rows' | 'columns'>"],
+      "props": [
+        {
+          "name": "section",
+          "type": "string",
+          "optional": false,
+          "doc": "Names the remembered flat | by-tag view."
+        },
+        {
+          "name": "rows",
+          "type": "readonly T[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "columns",
+          "type": "readonly DataColumn<T>[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "getTags",
+          "type": "(row: T) => readonly string[] | undefined",
+          "optional": false,
+          "doc": "Stable (memoised) accessors: they key the filter's memos."
+        },
+        {
+          "name": "searchText",
+          "type": "(row: T) => readonly string[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "searchLabel",
+          "type": "string",
+          "optional": false,
+          "doc": "Accessible name of the search box (\"Search automations\")."
+        },
+        {
+          "name": "tagsColumnIndex",
+          "type": "number",
+          "optional": true,
+          "doc": "Where the Tags column goes; default right after the first column."
+        }
+      ]
+    },
+    {
+      "name": "TagInput",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-input.tsx",
+      "summary": "TagInput — the tags of one record (D1054), typed freely with autocomplete of the tags already in use. Each suggestion and each chip carries the \"style\" affordance that opens {@link TagStyleDialog}; there is no separat…",
+      "props": [
+        {
+          "name": "value",
+          "type": "readonly string[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onChange",
+          "type": "(next: string[]) => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": true,
+          "doc": "Accessible name of the text box (\"Tags\")."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "tagsInRows",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "The tags the rows carry, sorted by name, each counted once per row."
+    },
+    {
+      "name": "TagStyleDialog",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-style-dialog.tsx",
+      "summary": "TagStyleDialog — choose the colour and icon of one tag (D1054). Opened from the tag input's suggestions and chips and from the filter menu; there is no tags page. The colour is one of the tag-colour tokens, the icon a…",
+      "props": [
+        {
+          "name": "name",
+          "type": "string | null",
+          "optional": false,
+          "doc": "The tag being styled; `null` keeps the dialog closed."
+        },
+        {
+          "name": "entries",
+          "type": "readonly TagEntry[] | undefined",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onClose",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onSave",
+          "type": "(name: string, color: TagColorId, icon: IconKey) => Promise<void>",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "tagStyleFor",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "The style a tag is drawn with. A registered style wins; otherwise the colour derived from its name and the default icon. While the registry has not answered (`entries` undefined) every tag is drawn with its derived st…"
+    },
+    {
+      "name": "tagViewStorageKey",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "The `localStorage` key of one section's view mode."
     },
     {
       "name": "TankIllustration",
@@ -19093,6 +19513,13 @@
       "summary": "The signed-in user's unit preferences, published by context so every reading renders in the same units without a query of its own. Without a provider (a spec, a standalone addon page) the default applies: metric, °C."
     },
     {
+      "name": "UNTAGGED_GROUP_KEY",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "The pure half of the tag UI (D1054). A tag lives on the record it labels; the `tags` cap only registers its style. Everything here is shared by every section that shows tags (the BYS sections, the devices list) so the…"
+    },
+    {
       "name": "UpdateCard",
       "kind": "component",
       "area": "composites",
@@ -19721,6 +20148,13 @@
       "summary": "One text input with OK/Cancel. Replaces `window.prompt`."
     },
     {
+      "name": "usePromptIfAvailable",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/confirm-dialog.tsx",
+      "summary": "`usePrompt`, or undefined where no `ConfirmDialogProvider` is mounted (a control that must then not offer the question)."
+    },
+    {
       "name": "usePTZ",
       "kind": "hook",
       "area": "hooks",
@@ -19824,6 +20258,27 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-system-query.ts",
       "summary": "useSystemQuery / useSystemMutation — generic escape hatches over the unified `System` SDK class for tRPC calls that don't (yet) have a codegen'd named hook."
+    },
+    {
+      "name": "useTagEntries",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-entries-context.tsx",
+      "summary": "The tag registry's answered entries for a whole list (D1054), so a row deep in a table colours its chips without each row asking the registry itself. Absent provider = no entries: chips fall back to the name-derived c…"
+    },
+    {
+      "name": "useTagFilter",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/use-tag-filter.ts",
+      "summary": "useTagFilter — one section's tag filter state (D1054): the search (row text and tag names), the chosen tags (any of), and the flat | by-tag view, which is remembered per section in `localStorage`. Works over any row t…"
+    },
+    {
+      "name": "useTagRegistry",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/use-tag-registry.ts",
+      "summary": "The tag style registry as the UI reads it (D1054): the `tags` cap's list plus its three writes. Every tag component goes through this one hook so the pending / failed / absent states are decided once (D315): `entries`…"
     },
     {
       "name": "useThemeMode",
@@ -20752,6 +21207,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-grouping.ts",
       "summary": "Remember the choice; a storage that refuses keeps it for this page only."
+    },
+    {
+      "name": "writeTagViewMode",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "Remember a view mode; a storage that refuses only loses the memory."
     },
     {
       "name": "ZoneEditingProvider",

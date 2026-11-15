@@ -16,7 +16,6 @@ import {
   type CoreBlockInput,
 } from '@camstack/types'
 import {
-  DataTable,
   ErrorBox,
   TABLE_SCROLL_MAX_H,
   Skeleton,
@@ -24,8 +23,10 @@ import {
   useItemFormUrl,
   useSystem,
   useTemplateCreate,
+  TaggedDataTable,
   type DataColumn,
 } from '@camstack/ui-library'
+import { blockSearchText, blockTags } from './tag-accessors'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { Workflow } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -419,7 +420,11 @@ export function AutomationsTab({
       {knowsThereAreNone ? (
         <AutomationEmptyState onCreate={() => setChooserOpen(true)} />
       ) : (
-        <DataTable
+        <TaggedDataTable
+          section="automations"
+          getTags={blockTags}
+          searchText={blockSearchText}
+          searchLabel={t('build.automationsTab.search', 'Search automations')}
           columns={columns}
           rows={automations}
           rowKey={(b) => b.id}

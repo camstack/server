@@ -11,7 +11,15 @@ import {
   type AutomationTemplatePayload,
   exportAutomationTemplate,
 } from '@camstack/types'
-import { Badge, Button, FormField, Input, SectionCard, Textarea } from '@camstack/ui-library'
+import {
+  Badge,
+  Button,
+  FormField,
+  Input,
+  SectionCard,
+  TagInput,
+  Textarea,
+} from '@camstack/ui-library'
 import { Copy, Download, Loader2 } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -32,6 +40,8 @@ export interface AutomationTemplateTarget {
   readonly name: string
   readonly payload: AutomationTemplatePayload
   readonly builtIn: boolean
+  /** Operator tags (D1054). */
+  readonly tags?: readonly string[]
 }
 
 export interface AutomationTemplateEditorProps {
@@ -72,6 +82,7 @@ export function AutomationTemplateEditor({
   const { t } = useTranslation()
   const readOnly = template.builtIn
   const [name, setName] = useState(template.name)
+  const [tags, setTags] = useState<readonly string[]>(template.tags ?? [])
   const [payload, setPayload] = useState<AutomationTemplatePayload>(template.payload)
   const devices = useAutomationDevices()
   const recipe = useMemo(() => recipeOfBody(payload.body), [payload.body])
@@ -85,6 +96,7 @@ export function AutomationTemplateEditor({
     kind: 'automation',
     name: name.trim(),
     payload,
+    tags,
   })
 
   return (
@@ -120,6 +132,17 @@ export function AutomationTemplateEditor({
             data-testid="template-name"
           />
         </FormField>
+        {!readOnly && (
+          <div className="text-sm sm:col-span-2">
+            <span className="text-foreground-subtle">{t('common.tags', 'Tags')}</span>
+            <TagInput
+              className="mt-1"
+              value={tags}
+              onChange={setTags}
+              label={t('common.tags', 'Tags')}
+            />
+          </div>
+        )}
         <FormField label={t('build.templates.description', 'Description')}>
           <Textarea
             rows={2}

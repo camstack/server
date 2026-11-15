@@ -23,6 +23,8 @@ export interface ActionDraft {
   readonly name: string
   readonly steps: readonly ActionStep[]
   readonly variables: readonly ActionVariable[]
+  /** Operator tags (D1054); absent on a draft that never had any. */
+  readonly tags?: readonly string[]
 }
 
 export type DraftCheck =
@@ -63,6 +65,7 @@ export function draftOf(entry: ActionEntry | null): ActionDraft {
     name: entry.name,
     steps: entry.steps ?? [],
     variables: entry.variables ?? [],
+    ...(entry.tags === undefined ? {} : { tags: entry.tags }),
   }
 }
 
@@ -106,6 +109,7 @@ export function checkDraft(draft: ActionDraft): DraftCheck {
     name: draft.name.trim(),
     steps: draft.steps,
     ...(draft.variables.length === 0 ? {} : { variables: draft.variables }),
+    ...(draft.tags === undefined ? {} : { tags: draft.tags }),
   })
   if (!parsed.success) {
     const issue = parsed.error.issues[0]

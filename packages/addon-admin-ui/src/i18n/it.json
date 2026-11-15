@@ -1412,7 +1412,8 @@
     "rooms_other": "{{count}} stanze",
     "parkedSince": "parcheggiato {{since}}",
     "motionWord": "movimento",
-    "stale": "obsoleto"
+    "stale": "obsoleto",
+    "tags": "Tag"
   },
   "connection": {
     "disconnected": "Server non raggiungibile — riconnessione in corso…",
@@ -6006,7 +6007,8 @@
       "triggerNotSortable": "Letto dalla ricetta",
       "lastRun": "Ultima esecuzione",
       "lastRunNotSortable": "Letto per automazione",
-      "enabled": "Attiva"
+      "enabled": "Attiva",
+      "search": "Cerca automazioni"
     },
     "blockEditor": {
       "loadExample": "Carica esempio",
@@ -6070,7 +6072,8 @@
       "deviceListPending": "l'elenco dei dispositivi non ha ancora risposto",
       "deleteThisComposedDevice": "Eliminare questo dispositivo composto?",
       "deleteMessage": "{{name}} verrà eliminato. L'operazione non può essere annullata.",
-      "builtAs": "Creato come"
+      "builtAs": "Creato come",
+      "search": "Cerca in {{list}}"
     },
     "scriptDevicesPanel": {
       "couldNotListDevices": "Impossibile elencare i dispositivi:",
@@ -6106,7 +6109,8 @@
       "noScriptsYet": "Nessuno script.",
       "edit": "Modifica {{name}}",
       "newScript": "Nuovo script",
-      "deleteMessage": "{{name}} e il suo sorgente verranno eliminati. L'operazione non può essere annullata."
+      "deleteMessage": "{{name}} e il suo sorgente verranno eliminati. L'operazione non può essere annullata.",
+      "search": "Cerca script"
     },
     "newAction": "Nuova azione",
     "newAutomation": "Nuova automazione",
@@ -6192,7 +6196,8 @@
       "timeWindow": {
         "limit": "Esegui solo in certi orari"
       },
-      "actionLabel": "Azione"
+      "actionLabel": "Azione",
+      "search": "Cerca modelli"
     }
   },
   "automation": {
@@ -8919,8 +8924,8 @@
       "showingFiltered_other": "Visualizzati {{shown}} di {{count}} dispositivi · filtrati per <0>{{names}}</0>",
       "showing_one": "Visualizzati {{shown}} di {{count}} dispositivo",
       "showing_other": "Visualizzati {{shown}} di {{count}} dispositivi",
-      "searchPlaceholder": "Cerca per nome o stableId",
-      "searchAria": "Cerca dispositivi per nome o stableId"
+      "searchPlaceholder": "Cerca per nome, stableId o tag",
+      "searchAria": "Cerca dispositivi per nome, stableId o tag"
     },
     "devicePicker": {
       "nounCamera": "telecamera",
@@ -10795,6 +10800,44 @@
     },
     "resizableColumns": {
       "handle": "Ridimensiona le colonne"
+    },
+    "tags": {
+      "styleNamed": "Colore e icona di {{name}}",
+      "removeNamed": "Rimuovi {{name}}",
+      "styleTitle": "Stile del tag",
+      "preview": "Anteprima",
+      "colour": "Colore",
+      "colourN": "Colore {{n}}",
+      "icon": "Icona",
+      "iconTrigger": "Cambia l'icona di {{name}}",
+      "iconPanel": "Icona per {{name}}",
+      "iconSearch": "Cerca icone",
+      "iconDefault": "Icona predefinita",
+      "iconNoMatches": "Nessuna icona corrisponde",
+      "cancel": "Annulla",
+      "save": "Salva",
+      "label": "Tag",
+      "placeholder": "Aggiungi un tag",
+      "create": "Aggiungi",
+      "renameTitle": "Rinomina tag",
+      "renameMessage": "Ogni elemento con il tag {{name}} riceve il nuovo nome.",
+      "newName": "Nuovo nome",
+      "rename": "Rinomina",
+      "removeTitle": "Eliminare il tag?",
+      "removeMessage": "{{name}} viene tolto da ogni elemento che lo porta, e il suo colore e la sua icona vengono dimenticati.",
+      "remove": "Elimina",
+      "renameNamed": "Rinomina {{name}}",
+      "removeEverywhere": "Elimina {{name}} ovunque",
+      "searchPlaceholder": "Cerca nomi e tag",
+      "filterLabel": "Tag",
+      "viewLabel": "Mostra",
+      "viewFlat": "Elenco",
+      "viewGrouped": "Per tag",
+      "clear": "Azzera",
+      "column": "Tag",
+      "columnNotSortable": "Una riga può avere più tag",
+      "noMatches": "Nulla corrisponde a questo filtro.",
+      "untagged": "Senza tag"
     }
   },
   "helpers": {
@@ -12225,7 +12268,8 @@
       "runNotSortable": "Un comando",
       "source": "Origine",
       "status": "Stato",
-      "statusNotSortable": "Ricavato dall'ultima esecuzione"
+      "statusNotSortable": "Ricavato dall'ultima esecuzione",
+      "search": "Cerca azioni"
     },
     "source": {
       "internal": "Interna"
@@ -12876,7 +12920,8 @@
       "profiles": "Profili",
       "status": "Adesso",
       "statusNotSortable": "Derivato dal mantenimento in corso",
-      "updated": "Aggiornato"
+      "updated": "Aggiornato",
+      "search": "Cerca pianificazioni"
     },
     "point": {
       "addEdge": "Evento",

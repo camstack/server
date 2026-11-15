@@ -41,6 +41,8 @@ import {
 import { DeviceItemPreview } from './preview'
 import { DeviceQuickDetailAction } from './quick-detail-action'
 import { StatusDot } from './status-dot'
+import { TagChipList } from '../tags/tag-chip'
+import { useTagEntries } from '../tags/tag-entries-context'
 
 export type { ChildLayoutSection, GroupedChildren } from './child-layout'
 export { groupChildrenByLayout } from './child-layout'
@@ -483,6 +485,7 @@ const INDENT_CLASS: Readonly<Record<0 | 1 | 2, string>> = {
 
 function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
   const t = useUiText()
+  const tagEntries = useTagEntries()
   const {
     trpc,
     device,
@@ -656,6 +659,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
             // The table is the one layout with somewhere to scroll TO, so it is
             // the one layout where the name never has to be cut.
             nameOverflow="scroll"
+            below={<TagChipList tags={device.tags} entries={tagEntries} className="mt-1" />}
           />
         </div>
       </td>

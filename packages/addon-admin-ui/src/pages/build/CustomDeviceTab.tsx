@@ -10,11 +10,11 @@ import {
   Badge,
   Button,
   Card,
-  DataTable,
   type DataColumn,
   ErrorBox,
   ItemFormDialog,
   TABLE_SCROLL_MAX_H,
+  TaggedDataTable,
   useConfirm,
   useCoreBlocksDelete,
   useCoreBlocksListCompositions,
@@ -309,7 +309,11 @@ function CompositionSection({
         <h3 className="font-medium">{title}</h3>
         <p className="text-xs text-foreground-subtle">{hint}</p>
       </div>
-      <DataTable<CompositionRow>
+      <TaggedDataTable<CompositionRow>
+        section={kind === 'composed' ? 'composed-devices' : 'customizations'}
+        getTags={compositionTags}
+        searchText={compositionSearchText}
+        searchLabel={t('build.customDeviceTab.search', 'Search {{list}}', { list: title })}
         columns={columnsFor(nameHeader, kind, handlers, t)}
         rows={rows}
         rowKey={(row) => row.blockId}
@@ -320,6 +324,14 @@ function CompositionSection({
       />
     </section>
   )
+}
+
+function compositionTags(row: CompositionRow): readonly string[] {
+  return row.tags
+}
+
+function compositionSearchText(row: CompositionRow): readonly string[] {
+  return [row.name, row.type ?? '', ...row.features]
 }
 
 function columnsFor(

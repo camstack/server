@@ -16,7 +16,6 @@ import {
   Badge,
   Button,
   type DataColumn,
-  DataTable,
   Dialog,
   DialogBody,
   DialogContent,
@@ -32,7 +31,9 @@ import {
   useTemplateCreate,
   useTemplateDelete,
   useTemplateList,
+  TaggedDataTable,
 } from '@camstack/ui-library'
+import { templateSearchText, templateTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
 import { Copy, LayoutTemplate, Pencil, Plus, Trash2, Workflow } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
@@ -57,7 +58,13 @@ export interface TemplatesTabProps {
 function targetOf(row: TemplateRecord): AutomationTemplateTarget | null {
   const parsed = AutomationTemplatePayloadSchema.safeParse(row.payload)
   return parsed.success
-    ? { id: row.id, name: row.name, payload: parsed.data, builtIn: row.builtIn === true }
+    ? {
+        id: row.id,
+        name: row.name,
+        payload: parsed.data,
+        builtIn: row.builtIn === true,
+        tags: row.tags ?? [],
+      }
     : null
 }
 
@@ -111,7 +118,13 @@ export function TemplatesTab({
       return
     }
     setAutomation(null)
-    setDraft({ id: row.id, kind: row.kind, name: row.name, payload: row.payload })
+    setDraft({
+      id: row.id,
+      kind: row.kind,
+      name: row.name,
+      payload: row.payload,
+      tags: row.tags ?? [],
+    })
   }
 
   useEffect(() => {
@@ -366,7 +379,11 @@ export function TemplatesTab({
           }
         />
       ) : (
-        <DataTable
+        <TaggedDataTable
+          section="templates"
+          getTags={templateTags}
+          searchText={templateSearchText}
+          searchLabel={t('build.templates.search', 'Search templates')}
           columns={columns}
           rows={rows}
           rowKey={(r) => r.id}

@@ -55,6 +55,18 @@
   --color-chart-series-g: #008300;
   --color-chart-series-h: #e66767;
 
+  /* Operator tag colours (D1054) — the tag-colour enum in @camstack/types. They
+     follow the validated chart palette per theme, so a tag never introduces a hue
+     the system does not already have. Drawn as a tint plus coloured text. */
+  --color-tag-a: var(--color-chart-series-a);
+  --color-tag-b: var(--color-chart-series-b);
+  --color-tag-c: var(--color-chart-series-c);
+  --color-tag-d: var(--color-chart-series-d);
+  --color-tag-e: var(--color-chart-series-e);
+  --color-tag-f: var(--color-chart-series-f);
+  --color-tag-g: var(--color-chart-series-g);
+  --color-tag-h: var(--color-chart-series-h);
+
   /* Cluster node identity — vivid pastels (never stone/gray: that reads disabled) */
   --color-node-a: #7dd3fc;
   --color-node-b: #f9a8d4;

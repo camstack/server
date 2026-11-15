@@ -14,6 +14,10 @@ export interface MultiSelectDropdownProps {
   readonly options: readonly MultiSelectOption[]
   readonly selected: readonly string[]
   readonly onChange: (selected: readonly string[]) => void
+  /** Draw an option's caption (a tag chip, …) instead of its plain `label`. */
+  readonly renderOption?: (option: MultiSelectOption) => ReactNode
+  /** Controls at the end of an option's row (style, rename, remove…), outside its toggle. */
+  readonly optionActions?: (option: MultiSelectOption) => ReactNode
 }
 
 /**
@@ -28,6 +32,8 @@ export function MultiSelectDropdown({
   options,
   selected,
   onChange,
+  renderOption,
+  optionActions,
 }: MultiSelectDropdownProps): ReactNode {
   const t = useUiText()
   const [open, setOpen] = useState(false)
@@ -98,14 +104,14 @@ export function MultiSelectDropdown({
           {options.map((o) => {
             const active = selectedSet.has(o.id)
             const Icon = o.icon
-            return (
+            const toggleButton = (
               <button
                 key={o.id}
                 type="button"
                 role="option"
                 aria-selected={active}
                 onClick={() => toggle(o.id)}
-                className="flex w-full items-center gap-2 px-3 py-1.5 text-left text-[10.5px] text-foreground hover:bg-surface-hover"
+                className="flex w-full min-w-0 items-center gap-2 px-3 py-1.5 text-left text-[10.5px] text-foreground hover:bg-surface-hover"
               >
                 <span
                   className={`flex h-3.5 w-3.5 items-center justify-center rounded border shrink-0 ${active ? 'border-primary bg-primary' : 'border-border'}`}
@@ -113,8 +119,15 @@ export function MultiSelectDropdown({
                   {active && <Check className="h-2.5 w-2.5 text-primary-foreground" />}
                 </span>
                 {Icon && <Icon className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" />}
-                <span className="truncate">{o.label}</span>
+                {renderOption ? renderOption(o) : <span className="truncate">{o.label}</span>}
               </button>
+            )
+            if (optionActions === undefined) return toggleButton
+            return (
+              <div key={o.id} className="flex items-center pr-1">
+                {toggleButton}
+                <span className="flex shrink-0 items-center">{optionActions(o)}</span>
+              </div>
             )
           })}
         </div>

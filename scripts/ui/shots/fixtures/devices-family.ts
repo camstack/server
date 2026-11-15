@@ -4,6 +4,7 @@
  * `--fixtures devices-family --route /devices`.
  */
 import { defineFixtures } from './_define'
+import { tagHandlers } from './_tags'
 
 const ENPAL = 'provider-enpal'
 const NVR = 'provider-reolink'
@@ -38,12 +39,17 @@ const row = (
 
 const CONTAINER = row(5684, 'Enpal system', 'container', ENPAL, null, 'enpal-system', {
   primaryChildPreference: ['energy'],
+  tags: ['Energy'],
 })
 const ENERGY = row(5766, 'Energy system', 'energy-system', ENPAL, 5684, 'enpal-system-energy')
 const GRID = row(5767, 'Grid', 'sensor', ENPAL, 5684, 'enpal-system-grid')
-const OWN = row(8802, 'Cottage energy', 'energy-system', ENPAL, null, 'cottage-energy')
+const OWN = row(8802, 'Cottage energy', 'energy-system', ENPAL, null, 'cottage-energy', {
+  tags: ['Energy'],
+})
 const HUB = row(8803, 'Home hub', 'hub', NVR, null, 'home-hub')
-const PORCH = row(8804, 'Porch', 'camera', NVR, 8803, 'home-hub-porch')
+const PORCH = row(8804, 'Porch', 'camera', NVR, 8803, 'home-hub-porch', {
+  tags: ['Garden', 'Night'],
+})
 
 const DEVICES = [CONTAINER, ENERGY, GRID, OWN, HUB, PORCH]
 
@@ -78,6 +84,7 @@ export default defineFixtures({
   description:
     'Devices list: an Enpal container with its primary energy child and a part, plus a hub-adopted camera',
   handlers: {
+    ...tagHandlers,
     'integrations.list': [
       {
         id: 'int_enpal',

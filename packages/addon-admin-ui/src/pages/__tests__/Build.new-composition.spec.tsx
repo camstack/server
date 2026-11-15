@@ -71,6 +71,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     }),
     useDeviceCapSlice: () => undefined,
     useDeviceManagerSetName: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceManagerSetTags: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerSetLocation: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerListPersistedByAddon: () => ({
       data: [],
