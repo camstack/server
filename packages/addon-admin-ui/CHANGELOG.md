@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device template fields show the shared catalogue of filters, functions and variables in English and Italian.
 
+### Fixed
+
+- The admin UI build resolves the device-template catalogue subpath, so the template editor loads.
+
 ## [1.2.678] - 2026-11-15
 
 ### Changed

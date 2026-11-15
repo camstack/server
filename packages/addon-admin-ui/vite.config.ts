@@ -238,6 +238,10 @@ export default defineConfig(({ command }) => ({
       // `/client` first: the alias table matches by prefix, so the bare key
       // below would turn `@camstack/types/client` into `index.ts/client`.
       '@camstack/types/client': path.resolve(__dirname, '../types/src/client.ts'),
+      '@camstack/types/device-template-catalogue': path.resolve(
+        __dirname,
+        '../types/src/device-template-catalogue.ts',
+      ),
       '@camstack/types': path.resolve(__dirname, '../types/src/index.ts'),
     },
     // Hoist tRPC packages to a single instance across the monorepo.
