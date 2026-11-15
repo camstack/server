@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.578] - 2026-11-15
+
 ### Changed
+
 - Device template functions declare typed value sources (units of the piped field, choices, ranges) for their parameters
 
 ## [1.2.577] - 2026-11-15
