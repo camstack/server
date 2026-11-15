@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.574] - 2026-11-15
+
 ### Changed
 
 - The weather station records its own readings with history and also reports feels-like, VPD, daily maximum gust, average wind bearing and 24 h, weekly, monthly and yearly rain
