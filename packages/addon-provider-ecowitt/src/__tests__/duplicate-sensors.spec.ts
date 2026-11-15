@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   findDuplicateGatewaySensors,
   findStationReadingChildren,
+  restoredGatewayKeys,
   type DuplicateScanRow,
 } from '../ecowitt-duplicate-sensors.js'
 import type { Sensor } from '@apocaliss92/nodewitt'
@@ -163,5 +164,18 @@ describe('the weather-station container children', () => {
 
   it('another group keeps every entry', () => {
     expect(childEntriesForGroup(entries, 'gateway', liveIn('gateway'))).toHaveLength(4)
+  })
+})
+
+describe('the gateways a restore brings back', () => {
+  it('lists each gateway once, and ignores a row without one', () => {
+    expect(
+      restoredGatewayKeys([
+        { config: { gatewayId: GW } },
+        { config: { gatewayId: GW, deviceGroup: 'weather-station' } },
+        { config: { gatewayId: 'ecowitt:10-0-0-2' } },
+        { config: {} },
+      ]),
+    ).toEqual([GW, 'ecowitt:10-0-0-2'])
   })
 })

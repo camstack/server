@@ -82,3 +82,18 @@ export function findStationReadingChildren(rows: readonly DuplicateScanRow[]): r
   }
   return ids
 }
+
+/** A persisted row as far as the restore-time scan needs it. */
+export interface RestoredRow {
+  readonly config: Record<string, unknown>
+}
+
+/** The distinct gateways the restored rows belong to, so the retire scan can run per gateway. */
+export function restoredGatewayKeys(rows: readonly RestoredRow[]): readonly string[] {
+  const keys = new Set<string>()
+  for (const row of rows) {
+    const key = str(row.config, 'gatewayId')
+    if (key !== null) keys.add(key)
+  }
+  return [...keys]
+}

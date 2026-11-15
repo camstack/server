@@ -52,6 +52,7 @@ import { ecowittGroupDeviceType, isEcowittGroupType } from './ecowitt-mapping.js
 import {
   findDuplicateGatewaySensors,
   findStationReadingChildren,
+  restoredGatewayKeys,
   type DuplicateScanRow,
 } from './ecowitt-duplicate-sensors.js'
 import { bucketSensorsByGroup, configDeviceGroup, sensorsEqual } from './ecowitt-sensor-groups.js'
@@ -217,7 +218,17 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     savedDevices: readonly SavedDevice[],
   ): Promise<DeviceRestoreReport | void> {
     this.savedRows = savedDevices
-    return super.onRestoreDevices(savedDevices)
+    const report = await super.onRestoreDevices(savedDevices)
+    // The first gateway snapshot can arrive before the restore, when the registry is still
+    // empty, and the scan only re-runs on a changed sensor set: run it once the rows exist.
+    for (const gatewayKey of restoredGatewayKeys(savedDevices)) {
+      await this.removeDuplicateGatewaySensors(gatewayKey).catch((err) => {
+        this.ctx.logger.warn('Ecowitt: retire scan after restore failed', {
+          meta: { gatewayKey, error: errMsg(err) },
+        })
+      })
+    }
+    return report
   }
 
   // ── Integrations: one live client each ──────────────────────────────────
@@ -310,6 +321,9 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
   /** Gateway keys whose duplicate scan already saw spawned sensor children (idempotent anyway). */
   private readonly duplicatesChecked = new Set<string>()
 
+  /** Ids this process already removed, so a later scan over the restore snapshot skips them. */
+  private readonly retiredIds = new Set<number>()
+
   /**
    * Idempotent cleanup of the sensors minted under the `gateway` Container that duplicate a
    * sensor of the weather-station / CH1 Container (see {@link findDuplicateGatewaySensors}).
@@ -323,7 +337,14 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     for (const d of reg.getAllForAddon(this.addonId)) {
       if (!isEcowittGroupType(d.type) && d.type !== DeviceType.Sensor) continue
       const config = await devices.loadConfig(d.id).catch((): null => null)
-      if (config === null) return
+      if (config === null) {
+        // A failed read removes nothing (D49); say so, or the retire looks like it never ran.
+        this.ctx.logger.warn('Ecowitt: retire scan skipped, a device config could not be read', {
+          tags: { deviceId: d.id },
+          meta: { gatewayKey },
+        })
+        return
+      }
       // Rows are already this addon's; a Container carries no `system`, only its gateway.
       if (config['gatewayId'] !== gatewayKey) continue
       rows.push({
@@ -333,12 +354,29 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
         config,
       })
     }
+    // A sensor the station no longer spawns is persisted but never instantiated, so the
+    // registry cannot see it: the rows saved at restore carry it.
+    const live = new Set(rows.map((r) => r.id))
+    for (const saved of this.savedRows) {
+      if (live.has(saved.id) || this.retiredIds.has(saved.id)) continue
+      if (saved.config['gatewayId'] !== gatewayKey) continue
+      rows.push({
+        id: saved.id,
+        type: saved.type,
+        parentDeviceId: saved.parentDeviceId,
+        config: saved.config,
+      })
+    }
     const { duplicates, scanned } = findDuplicateGatewaySensors(rows)
     if (scanned > 0) this.duplicatesChecked.add(gatewayKey)
     const retired = findStationReadingChildren(rows)
+    this.ctx.logger.info('Ecowitt: retire scan', {
+      meta: { gatewayKey, rows: rows.length, scanned, duplicates, stationReadings: retired },
+    })
     for (const id of [...duplicates, ...retired.filter((r) => !duplicates.includes(r))]) {
       try {
         await devices.remove(id)
+        this.retiredIds.add(id)
         this.ctx.logger.info('Ecowitt: sensor retired, its reading is supplied by the station', {
           tags: { deviceId: id },
           meta: { gatewayKey },
