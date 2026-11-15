@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The device card's consumables chip now carries everything the removed Consumables section showed: a full bin or tank warns, an unknown reading never reads as ok, remaining time, Replaced date, the state in words, Reset, and the empty and loading lines.
+
 ## [1.2.450] - 2026-11-15
 
 ### Changed
 
 - Device card History: the Runs table no longer scrolls inside the card, each interaction shows its exact time with an inline details button, and a chip row picks which points the history charts show
-- The device card's consumables chip now carries everything the removed Consumables section showed: a full bin or tank warns, an unknown reading never reads as ok, remaining time, Replaced date, the state in words, Reset, and the empty and loading lines.
 
 ## [1.2.449] - 2026-11-15
 
@@ -52,8 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The device pickers' phone sheet keeps the filter panel above the search box instead of painting over it, and the sheet can be dismissed by dragging its handle down.
-### Changed
-
 ## [1.2.443] - 2026-11-14
 
 ### Changed
@@ -184,8 +185,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The device card of a container (and any card in a narrow column) stacks its controls under the drawing instead of cutting them off
 - System hooks include the ir-transmitter learn method
-### Changed
-
 ## [1.2.430] - 2026-11-12
 
 ### Changed

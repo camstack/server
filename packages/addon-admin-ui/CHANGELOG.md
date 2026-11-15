@@ -7,16 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.676] - 2026-11-15
-
 ### Changed
 
-- Device card History and Interactions: single page scroll in the embedded card, exact time and details on each interaction, per-point chips
 - Customize lists the weather station readings
 
 ### Removed
 
 - The device page no longer shows a separate Consumables section under the hero card; consumables are in the device card (chip and popover).
+
+## [1.2.676] - 2026-11-15
+
+### Changed
+
+- Device card History and Interactions: single page scroll in the embedded card, exact time and details on each interaction, per-point chips
 
 ## [1.2.675] - 2026-11-15
 
@@ -191,8 +194,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Creating an integration whose kind brings devices leaves the id to the hub, so it is no longer refused
 - The remote editor gets a Learn button for IR transmitters that can learn a code
-### Changed
-
 ## [1.2.650] - 2026-11-12
 
 ### Changed
@@ -214,8 +215,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
-### Added
-
 ## [1.2.647] - 2026-11-12
 
 ### Changed

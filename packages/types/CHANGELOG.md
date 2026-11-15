@@ -7,17 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.573] - 2026-11-15
-
 ### Changed
 
-- plate-gallery and face-gallery: sample mediaId / key frame + box, PlateInfo.cropMissReason, moveVehicleSample and moveIdentitySample
 - The weather station records its own readings with history and also reports feels-like, VPD, daily maximum gust, average wind bearing and 24 h, weekly, monthly and yearly rain
 - Weather station: vapour-pressure deficit in kPa, UV on its own index unit, and a Customize section that lets any reading be assigned from another device or a device become a station
 
 ### Removed
 
 - The consumables capability no longer declares a device-page widget; consumables are shown by the device card.
+
+## [1.2.573] - 2026-11-15
+
+### Changed
+
+- plate-gallery and face-gallery: sample mediaId / key frame + box, PlateInfo.cropMissReason, moveVehicleSample and moveIdentitySample
 
 ## [1.2.572] - 2026-11-15
 
@@ -60,8 +63,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Remote: the source last sent by an infrared remote is no longer kept as state
-### Changed
-
 ## [1.2.566] - 2026-11-14
 
 ### Changed
@@ -170,10 +171,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - IR transmitters can learn a code and replay device-native (Tuya) codes: ir-transmitter gains learn, send takes a native code, and a remote command can store one
-### Changed
-
-### Changed
-
 ## [1.2.554] - 2026-11-12
 
 ### Changed
