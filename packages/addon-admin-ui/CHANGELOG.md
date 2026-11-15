@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.681] - 2026-11-15
+
 ### Changed
+
 - Device History tab shows grouped charts and a per-chart unit switch
 
 ## [1.2.680] - 2026-11-15
