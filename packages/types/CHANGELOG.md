@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.581] - 2026-11-15
+
 ### Changed
 
 - The WebRTC session hints accept an optional intent (live or clip).
