@@ -83,12 +83,52 @@ export function valueSplits(range: readonly [number, number], spec: ValueAxisSpe
   return out
 }
 
+/** Width of a value axis in a synced view: fits the widest label the axis ever clips to. */
+export const SYNCED_AXIS_SIZE = 72
+/** Space right of the plot that every chart keeps, so the last tick label is not cut. */
+const PLOT_RIGHT_MARGIN = 30
+/** Left gutter of a standalone chart that has no value axis (state bands). */
+const STANDALONE_LEFT_GUTTER = 40
+
+/** The size of a value axis: sized to its labels, or the shared fixed width in a synced view. */
+export function valueAxisSize(longestLabel: number, synced: boolean): number {
+  if (synced) return SYNCED_AXIS_SIZE
+  return Math.max(28, Math.min(SYNCED_AXIS_SIZE, longestLabel * 6 + 10))
+}
+
+export interface PlotGutterInput {
+  /** The chart shares a crosshair with others (a `syncKey` is set). */
+  readonly synced: boolean
+  /** The chart draws a value axis on the left / on the right. */
+  readonly leftAxis: boolean
+  readonly rightAxis: boolean
+  readonly top: number
+}
+
+/**
+ * uPlot padding `[top, right, bottom, left]`. In a synced view every chart ends
+ * up with the same left and right gutter (axis or padding), so the plot areas
+ * share their x extent and the crosshair lands on the same instant everywhere.
+ */
+export function plotPadding(g: PlotGutterInput): [number, number, number, number] {
+  if (!g.synced) {
+    return [g.top, PLOT_RIGHT_MARGIN, 0, g.leftAxis ? 0 : STANDALONE_LEFT_GUTTER]
+  }
+  return [
+    g.top,
+    PLOT_RIGHT_MARGIN + (g.rightAxis ? 0 : SYNCED_AXIS_SIZE),
+    0,
+    g.leftAxis ? 0 : SYNCED_AXIS_SIZE,
+  ]
+}
+
 /** One value axis. `side` 3 = left, 1 = right. */
 export function valueAxis(
   scaleKey: string,
   side: 1 | 3,
   format: (v: number) => string,
   showGrid: boolean,
+  synced = false,
 ): uPlot.Axis {
   return {
     scale: scaleKey,
@@ -96,7 +136,7 @@ export function valueAxis(
     font: axisFont(),
     size: (_u, values) => {
       const longest = (values ?? []).reduce((m, v) => Math.max(m, String(v).length), 0)
-      return Math.max(28, Math.min(72, longest * 6 + 10))
+      return valueAxisSize(longest, synced)
     },
     gap: 4,
     stroke: () => resolveChartColor('foreground-subtle'),

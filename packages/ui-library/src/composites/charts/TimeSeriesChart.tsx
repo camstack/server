@@ -25,6 +25,7 @@ import {
   formatChartValue,
   gapShadeHook,
   timeAxis,
+  plotPadding,
   valueAxis,
   valueRange,
   valueSplits,
@@ -241,7 +242,13 @@ export function TimeSeriesChart<TId extends string = string>({
           },
         }
         const unit = u === '' ? null : u
-        const ax = valueAxis(key, ui % 2 === 0 ? 3 : 1, (v) => fmt(v, unit), ui === 0)
+        const ax = valueAxis(
+          key,
+          ui % 2 === 0 ? 3 : 1,
+          (v) => fmt(v, unit),
+          ui === 0,
+          syncKey !== undefined,
+        )
         axes.push({
           ...ax,
           splits: (_self, _axisIdx, min, max) => valueSplits([min, max], spec),
@@ -303,7 +310,12 @@ export function TimeSeriesChart<TId extends string = string>({
       return {
         ms: 1,
         legend: { show: false },
-        padding: [8, 30, 0, 0],
+        padding: plotPadding({
+          synced: syncKey !== undefined,
+          leftAxis: true,
+          rightAxis: axes.length > 2,
+          top: 8,
+        }),
         scales,
         axes,
         series: uSeries,

@@ -27,7 +27,7 @@ import {
   withAlpha,
   type ChartSwatchToken,
 } from './chart-palette'
-import { chartCursor, timeAxis } from './chart-uplot'
+import { chartCursor, plotPadding, timeAxis } from './chart-uplot'
 import { stateSpanAt, stateTooltipBody } from './chart-tooltip-model'
 import type { ChartRange } from './TimeSeriesChart'
 import { UPlotHost, type ChartPlotOptions, type ChartTooltipSpec } from './uplot-host'
@@ -147,7 +147,12 @@ export function StateTimeline({
       ms: 1,
       legend: { show: false },
       // The left gutter lines the bands up with the value axis of a line chart above.
-      padding: [0, 30, 0, 40],
+      padding: plotPadding({
+        synced: syncKey !== undefined,
+        leftAxis: false,
+        rightAxis: false,
+        top: 0,
+      }),
       scales: {
         x: {
           time: true,

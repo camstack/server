@@ -20,6 +20,7 @@ import {
   chartCursor,
   formatChartValue,
   timeAxis,
+  plotPadding,
   valueAxis,
   valueRange,
   valueSplits,
@@ -166,7 +167,14 @@ export function BarSeries<TId extends string = string>({
       return {
         ms: 1,
         legend: { show: false },
-        padding: compact ? [0, 0, 0, 0] : [8, 30, 0, 0],
+        padding: compact
+          ? [0, 0, 0, 0]
+          : plotPadding({
+              synced: syncKey !== undefined,
+              leftAxis: true,
+              rightAxis: false,
+              top: 8,
+            }),
         scales: {
           x: {
             time: true,
@@ -187,7 +195,7 @@ export function BarSeries<TId extends string = string>({
           : [
               timeAxis(() => live.current.range.to - live.current.range.from),
               {
-                ...valueAxis('y', 3, (v) => live.current.fmt(v), true),
+                ...valueAxis('y', 3, (v) => live.current.fmt(v), true, syncKey !== undefined),
                 splits: (_s, _i, min, max) => valueSplits([min, max], spec),
               },
             ],
