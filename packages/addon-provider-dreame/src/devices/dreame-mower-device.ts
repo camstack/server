@@ -15,6 +15,7 @@ import {
   clampBatteryLevel,
   clampPercent,
   mapMowerStatusToActivity,
+  mowerErrorReading,
 } from '../dreame-mower-decode.js'
 import { DreameChildDevice } from './dreame-child-device.js'
 import {
@@ -61,9 +62,9 @@ const COLD_START: LawnMowerControlStatus = {
 }
 
 /**
- * Dreame robotic lawn-mower device. Registers the `lawn-mower-control` and
- * `consumables` caps and maps the library `MowerDevice` getters → the cap slice
- * on every `stateChanged` push.
+ * Dreame robotic lawn-mower device. Registers the `lawn-mower-control`,
+ * `consumables` and `error` caps and maps the library `MowerDevice` getters →
+ * the cap slices on every `stateChanged` push.
  *
  * Commands route to the live handle: `startMowing`→`startMowing()`, `pause`→
  * `pause()`, `dock`→`dock()`. The library's `stop`/`resume` are NOT surfaced —
@@ -127,6 +128,7 @@ export class DreameMowerDevice extends DreameChildDevice {
         this.runtimeState.getCapState<RunningStateStatus>(RUNNING_CAP) ?? RUNNING_STATE_COLD,
     }
     this.ctx.registerNativeCap(runningStateCapability, runningProvider)
+    this.registerErrorCap()
     this.runtimeState.setCapState(CAP_NAME, COLD_START)
     this.runtimeState.setCapState(RUNNING_CAP, RUNNING_STATE_COLD)
 
@@ -220,6 +222,11 @@ export class DreameMowerDevice extends DreameChildDevice {
     this.runtimeState.setCapState(
       RUNNING_CAP,
       runningFromLawnMower(activityForRunning, previous, fetchedAt, slice.lastChangedAt),
+    )
+    // The mower's fault, served by the generic `error` cap. Edges raise / close
+    // the attention episode. A null device code stays unknown.
+    void this.publishError(
+      mowerErrorReading({ faultRaw: code, charging: mower.charging }, fetchedAt),
     )
 
     // Ride the wake window: the CMS custom-action answers only while the mower is

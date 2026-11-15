@@ -1,9 +1,13 @@
 import {
   type MowerConsumableKey,
   type MowerConsumableReading,
+  MowerChargingStatus,
+  MowerFault,
   MowerStatus,
+  mowerFaultSeverity,
 } from '@apocaliss92/nodedreame'
-import type { ConsumableItem, LawnMowerActivity } from '@camstack/types'
+import { ERROR_STATUS_COLD } from '@camstack/types'
+import type { ConsumableItem, DeviceFault, ErrorStatus, LawnMowerActivity } from '@camstack/types'
 
 /**
  * Pure decode helper for the Dreame mower. Translate the library's
@@ -45,6 +49,73 @@ export function mapMowerStatusToActivity(status: MowerStatus | null): LawnMowerA
 export function clampBatteryLevel(value: number | null): number | null {
   if (value === null || !Number.isFinite(value)) return null
   return Math.max(0, Math.min(100, value))
+}
+
+/**
+ * The mower fields the `error` cap reading is built from. `faultRaw` is
+ * DEVICE_CODE (2:2); `charging` is CHARGING_STATUS (3:2).
+ */
+export interface MowerErrorInput {
+  /** `null` means the shadow has not answered — the reading stays unknown. */
+  faultRaw: number | null
+  charging: MowerChargingStatus | null
+}
+
+/**
+ * Charging paused because the battery is too cold (donor issue #40). A warning
+ * of its own: it is the principal fault only when no device fault is active.
+ */
+const LOW_TEMPERATURE_CHARGE_PAUSE: DeviceFault = {
+  code: `charging-${MowerChargingStatus.ChargingPausedLowTemperature}`,
+  label: 'Charging paused: battery too cold',
+  severity: 'warning',
+}
+
+/** Split a PascalCase enum name into words, the same way the vacuum does. */
+function faultWords(name: string): string {
+  return name.replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+}
+
+/**
+ * One device-code fault, or null when the code is info (a status, not a fault)
+ * — including `NoDeviceCode`. Severity comes from {@link mowerFaultSeverity}.
+ */
+function deviceFault(code: number): DeviceFault | null {
+  const severity = mowerFaultSeverity(code)
+  if (severity === 'info') return null
+  const name = MowerFault[code]
+  const label = typeof name === 'string' ? faultWords(name) : `Error ${code}`
+  return { code: String(code), label, severity }
+}
+
+/**
+ * The `error` cap reading for a mower. A `null` device code is UNKNOWN
+ * (`active: null`, never "no fault"). Info codes are a clean `active: false`.
+ * A warning or error code is active at that severity. A low-temperature
+ * charging pause is an extra warning in `faults`, and the principal only when
+ * the device code itself is not a fault.
+ */
+export function mowerErrorReading(input: MowerErrorInput, now: number): ErrorStatus {
+  if (input.faultRaw === null) return { ...ERROR_STATUS_COLD, lastFetchedAt: now }
+  const faults: DeviceFault[] = []
+  const device = deviceFault(input.faultRaw)
+  if (device !== null) faults.push(device)
+  if (input.charging === MowerChargingStatus.ChargingPausedLowTemperature) {
+    faults.push(LOW_TEMPERATURE_CHARGE_PAUSE)
+  }
+  const principal = faults[0]
+  if (principal === undefined) {
+    return { ...ERROR_STATUS_COLD, active: false, lastFetchedAt: now }
+  }
+  return {
+    active: true,
+    code: principal.code,
+    label: principal.label,
+    severity: principal.severity,
+    since: null,
+    faults,
+    lastFetchedAt: now,
+  }
 }
 
 /** Clamp a 0..100 percentage (mowing progress), null-safe. */
