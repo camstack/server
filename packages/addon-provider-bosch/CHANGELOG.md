@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A refused Bosch HomeCom sign-in (expired or revoked refresh token) now reads 'authentication failed — sign in again' and raises one alert with a Sign in again action, cleared when the integration reconnects.
+
 ## [0.1.54] - 2026-11-12
 
 ### Changed

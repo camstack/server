@@ -199,6 +199,15 @@ export function homeComResourceUrl(gatewayId: string, resourcePath: string): str
   return `${HOMECOM_POINTT_API_ORIGIN}${HOMECOM_GATEWAYS_PATH}${encodeURIComponent(gatewayId)}/resource${path}`
 }
 
+async function isInvalidGrantBody(res: { json(): Promise<unknown> }): Promise<boolean> {
+  try {
+    const body: unknown = await res.json()
+    return isRecord(body) && body['error'] === 'invalid_grant'
+  } catch {
+    return false
+  }
+}
+
 export function createHomeComApiClient(
   config: HomeComConfig,
   gatewayId: string,
@@ -343,6 +352,10 @@ export function createHomeComApiClient(
     })
     if (!res.ok) {
       if (res.status === 401 || res.status === 403) throw new HomeComAuthError('refresh refused')
+      // OAuth answers an expired, spent or revoked refresh token with 400 invalid_grant.
+      if (res.status === 400 && (await isInvalidGrantBody(res))) {
+        throw new HomeComAuthError('refresh refused')
+      }
       throw new Error(`HomeCom token refresh failed: HTTP ${res.status}`)
     }
     const body: unknown = await res.json()

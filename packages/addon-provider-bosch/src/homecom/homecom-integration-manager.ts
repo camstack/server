@@ -40,6 +40,8 @@ export interface HomeComIntegrationManagerOptions {
   readonly onTokensRotated?: (tokens: HomeComTokens) => Promise<void>
   /** Called when the integration settled on a gateway it had not stored yet. */
   readonly onGatewayChosen?: (gatewayId: string) => void
+  /** Called when the cloud refused the stored sign-in (a refused refresh token). */
+  readonly onAuthFailed?: (integrationId: string) => void
   readonly pollIntervalMs?: number
 }
 
@@ -54,6 +56,7 @@ export class HomeComIntegrationManager {
   readonly #makeClient: (config: HomeComConfig, gatewayId: string) => HomeComApiClient
   readonly #pollIntervalMs: number
   readonly #onGatewayChosen: (gatewayId: string) => void
+  readonly #onAuthFailed: (integrationId: string) => void
 
   #gateways: readonly HomeComGatewayListing[] = []
   #client: HomeComApiClient | null = null
@@ -74,6 +77,7 @@ export class HomeComIntegrationManager {
     const fetchFn = options.fetchFn
     const bridge = options.bridge
     this.#onGatewayChosen = options.onGatewayChosen ?? (() => undefined)
+    this.#onAuthFailed = options.onAuthFailed ?? (() => undefined)
     const onTokensRotated = async (tokens: HomeComTokens): Promise<void> => {
       // The live connection follows the rotation, so a later client never presents a spent token.
       this.#connection = {
@@ -149,8 +153,9 @@ export class HomeComIntegrationManager {
       }, this.#pollIntervalMs)
     } catch (err: unknown) {
       this.#status = 'error'
-      this.#error =
-        err instanceof HomeComAuthError ? 'authentication failed — sign in again' : errMsg(err)
+      const authFailed = err instanceof HomeComAuthError
+      this.#error = authFailed ? 'authentication failed — sign in again' : errMsg(err)
+      if (authFailed) this.#onAuthFailed(this.#id)
       this.#client = null
       this.#surfaceSink.set(this.#id, null)
       this.#onDisconnected(this.#id)
@@ -185,6 +190,7 @@ export class HomeComIntegrationManager {
       this.#surfaceSink.updateSnapshot(this.#id, snapshot)
       this.#lastCheckedAt = Date.now()
     } catch (err: unknown) {
+      if (err instanceof HomeComAuthError) this.#onAuthFailed(this.#id)
       this.#logger.warn('HomeCom poll failed', {
         meta: { integrationId: this.#id, error: errMsg(err) },
       })

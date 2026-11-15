@@ -18,6 +18,7 @@ import {
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { homeComActions } from './custom-actions.js'
+import { createHomeComSessionAlert, type HomeComSessionAlert } from './homecom-session-alert.js'
 import { createHomeComExploreAction, homeComExploreDeps } from './homecom-explore-action.js'
 import {
   finishHomeComSignIn,
@@ -61,6 +62,8 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
 
   private clients: HomeComClientRegistry | null = null
   private instances: HomeComInstances | null = null
+  private sessionAlert: HomeComSessionAlert | null = null
+  private readonly integrationNames = new Map<string, string>()
 
   constructor() {
     super({})
@@ -93,12 +96,20 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     const persistTokens = buildHomeComTokenPersister(persistDeps)
     const persistGateway = buildHomeComGatewayPersister(persistDeps)
     const bridge = await this.createBridge()
+    const sessionAlert = createHomeComSessionAlert({
+      logger: this.ctx.logger,
+      getAlerts: () => this.ctx.api.alerts,
+      nameOf: (id) => this.integrationNames.get(id) ?? id,
+    })
+    this.sessionAlert = sessionAlert
     this.clients = new HomeComClientRegistry(this.ctx.logger, {
+      onAuthFailed: (integrationId) => sessionAlert.authFailed(integrationId),
       ...(bridge !== null ? { bridge } : {}),
       onTokensRotated: (integrationId, tokens) => persistTokens(integrationId, tokens),
       onGatewayChosen: (integrationId, gatewayId) => void persistGateway(integrationId, gatewayId),
     })
     this.clients.setOnConnected((integrationId) => {
+      void sessionAlert.connected(integrationId)
       this.setIntegrationDevicesOnline(integrationId, true)
     })
     this.clients.setOnDisconnected((integrationId) => {
@@ -159,6 +170,8 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     }
     this.clients = null
     this.instances = null
+    this.sessionAlert?.dispose()
+    this.sessionAlert = null
     await super.onShutdown()
   }
 
@@ -212,6 +225,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
             integration.id,
           )
           if (!connection) continue
+          this.integrationNames.set(integration.id, integration.name)
           await reg.upsert(integration.id, integration.name, connection)
           surviving.add(integration.id)
         } catch (err) {
@@ -222,6 +236,10 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       }
       const vanished = reg.list().filter((id) => !surviving.has(id))
       await reg.retain(surviving)
+      for (const integrationId of vanished) {
+        this.integrationNames.delete(integrationId)
+        void this.sessionAlert?.removed(integrationId)
+      }
       const deviceReg = this.ctx.kernel.deviceRegistry
       const deviceApi = this.ctx.kernel.devices
       if (deviceReg && deviceApi) {

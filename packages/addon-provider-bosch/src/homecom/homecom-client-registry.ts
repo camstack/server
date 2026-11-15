@@ -19,6 +19,7 @@ export type ManagerFactory = (opts: {
   readonly onDisconnected: (integrationId: string) => void
   readonly onTokensRotated: (tokens: HomeComTokens) => Promise<void>
   readonly onGatewayChosen: (gatewayId: string) => void
+  readonly onAuthFailed: (integrationId: string) => void
 }) => ManagerLike
 
 export interface HomeComClientRegistryDeps {
@@ -28,6 +29,8 @@ export interface HomeComClientRegistryDeps {
   readonly onTokensRotated?: (integrationId: string, tokens: HomeComTokens) => Promise<void>
   /** Store the gateway an integration settled on. */
   readonly onGatewayChosen?: (integrationId: string, gatewayId: string) => void
+  /** The cloud refused the stored sign-in of an integration. */
+  readonly onAuthFailed?: (integrationId: string) => void
   readonly makeManager?: ManagerFactory
   readonly fetchFn?: FetchFn
   /** The `homecom_alt` bridge, shared by every integration; absent when Python is not. */
@@ -47,6 +50,7 @@ export class HomeComClientRegistry {
   readonly #makeManager: ManagerFactory
   readonly #onTokensRotated: (integrationId: string, tokens: HomeComTokens) => Promise<void>
   readonly #onGatewayChosen: (integrationId: string, gatewayId: string) => void
+  readonly #onAuthFailed: (integrationId: string) => void
 
   readonly #entries: Map<string, HomeComClientEntry> = new Map()
 
@@ -56,6 +60,7 @@ export class HomeComClientRegistry {
     this.#onDisconnected = deps.onDisconnected ?? (() => undefined)
     this.#onTokensRotated = deps.onTokensRotated ?? (async () => undefined)
     this.#onGatewayChosen = deps.onGatewayChosen ?? (() => undefined)
+    this.#onAuthFailed = deps.onAuthFailed ?? (() => undefined)
     const fetchFn = deps.fetchFn
     const makeClient = deps.makeClient
     const bridge = deps.bridge
@@ -71,6 +76,7 @@ export class HomeComClientRegistry {
           onDisconnected: opts.onDisconnected,
           onTokensRotated: opts.onTokensRotated,
           onGatewayChosen: opts.onGatewayChosen,
+          onAuthFailed: opts.onAuthFailed,
           surfaceSink: homeComConnections,
           fetchFn,
           makeClient,
@@ -120,6 +126,7 @@ export class HomeComClientRegistry {
       onDisconnected: (id) => this.#onDisconnected(id),
       onTokensRotated: (tokens) => this.#onTokensRotated(integrationId, tokens),
       onGatewayChosen: (gatewayId) => this.#onGatewayChosen(integrationId, gatewayId),
+      onAuthFailed: (id) => this.#onAuthFailed(id),
     })
     this.#entries.set(integrationId, { manager, connection })
     try {
