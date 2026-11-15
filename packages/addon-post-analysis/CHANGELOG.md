@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.708] - 2026-11-15
+
 ### Changed
 
 - A plate whose sharper read missed its live crop keeps the earlier crop, and a plate saved with no crop now records why; saved vehicle and person samples list a mediaId or a key frame with its box so every sample can be drawn, and a sample can be moved to another vehicle or person

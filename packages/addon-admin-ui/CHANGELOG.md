@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.676] - 2026-11-15
+
 ### Changed
 
 - Device card History and Interactions: single page scroll in the embedded card, exact time and details on each interaction, per-point chips

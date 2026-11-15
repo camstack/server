@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.875] - 2026-11-15
+
 ### Changed
 
 - Face and plate gallery samples can be moved to another identity or vehicle, and a plate record says why it has no crop
