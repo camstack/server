@@ -7,11 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- Device History draws one chart per value unless the capability groups them, counters as per-period bars, with a per-chart unit switch
+- Energy, weather-station and climate cards now show a 24-hour trend of the device's primary series, and a history chart with an unknown unit shows no unit and no unit switch
+
 ## [1.2.454] - 2026-11-15
 ### Changed
 
-- Device History draws one chart per value unless the capability groups them, counters as per-period bars, with a per-chart unit switch
-- Energy, weather-station and climate cards now show a 24-hour trend of the device's primary series, and a history chart with an unknown unit shows no unit and no unit switch
 
 ### Fixed
 
