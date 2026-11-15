@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Hooks for the node server shell (enabled state and refusal reason).
+
 ## [1.2.448] - 2026-11-15
 
 ### Fixed

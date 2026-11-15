@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Routes for the opt-in server shell on each node.
+
 ## [1.2.872] - 2026-11-15
 
 ### Changed
