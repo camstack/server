@@ -1,4 +1,9 @@
-import { customAction, defineCustomActions } from '@camstack/types'
+import {
+  customAction,
+  defineCustomActions,
+  isSecretFieldView,
+  type SecretFieldView,
+} from '@camstack/types'
 import { z } from 'zod'
 import { HomeComBrandSchema, HomeComRegionSchema } from './config.js'
 import {
@@ -11,12 +16,7 @@ import {
 } from './homecom-resource-explorer.js'
 
 /** A stored secret as the form sees it (`SecretFieldView`): set or not, never the value. */
-const secretView = z.object({
-  $secret: z.string().nullable(),
-  v: z.literal(1),
-  set: z.literal(true),
-  inline: z.literal(true).optional(),
-})
+const secretView = z.custom<SecretFieldView>(isSecretFieldView, 'a stored secret view')
 
 /**
  * A sign-in secret in the result: in clear only for a form that has no record yet (the wizard
