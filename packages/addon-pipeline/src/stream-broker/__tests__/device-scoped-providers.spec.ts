@@ -13,7 +13,7 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { CameraStreamsProvider, WebrtcSessionProvider } from '../device-scoped-providers.js'
 import { StreamBrokerManager } from '../stream-broker/stream-broker-manager.js'
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import type { AddonApi, IScopedLogger, WebrtcClientHints } from '@camstack/types'
 import { nodePin } from '@camstack/types'
 import { WEBRTC_FALLBACK_PROFILE } from '../webrtc/webrtc-fallback-profile.js'
 import type { IStreamBrokerWithSourceProvider } from '../webrtc/remote-encoded-source-broker.js'
@@ -704,9 +704,13 @@ describe('WebrtcSessionProvider — a clip-intent offer never wakes the camera (
       wakeBatteryDeviceOnPlay: vi.fn().mockResolvedValue(undefined),
     }
   }
-  function makeOfferServer() {
+  function makeOfferServer(
+    isClipIntentOffer: (hints: WebrtcClientHints, sessionId?: string) => boolean = (hints) =>
+      hints.intent === 'clip',
+  ) {
     return {
       handleOffer: vi.fn().mockResolvedValue({ sessionId: 's1', sdpAnswer: 'answer' }),
+      isClipIntentOffer,
     } as unknown as import('../webrtc/broker-webrtc-server.js').BrokerWebrtcServer
   }
 
@@ -728,6 +732,24 @@ describe('WebrtcSessionProvider — a clip-intent offer never wakes the camera (
       manager as unknown as import('../stream-broker/stream-broker-manager.js').StreamBrokerManager,
     )
     await facade.handleOffer({ deviceId: 3628, sdpOffer: 'v=0' })
+    expect(manager.wakeBatteryDeviceOnPlay).toHaveBeenCalledWith(3628, '3628/adaptive', undefined)
+  })
+
+  it('wakes on the re-offer of a clip session that went live, whatever hints it resends', async () => {
+    const manager = makeWakeManager()
+    // The server holds the session's re-offer record: this id went live.
+    const isClipIntentOffer = vi.fn((_hints: WebrtcClientHints, _sessionId?: string) => false)
+    const facade = new WebrtcSessionProvider(
+      makeOfferServer(isClipIntentOffer),
+      manager as unknown as import('../stream-broker/stream-broker-manager.js').StreamBrokerManager,
+    )
+    await facade.handleOffer({
+      deviceId: 3628,
+      sdpOffer: 'v=0',
+      sessionId: 's1',
+      hints: { intent: 'clip' },
+    })
+    expect(isClipIntentOffer).toHaveBeenCalledWith({ intent: 'clip' }, 's1')
     expect(manager.wakeBatteryDeviceOnPlay).toHaveBeenCalledWith(3628, '3628/adaptive', undefined)
   })
 })
@@ -759,6 +781,7 @@ describe('WebrtcSessionProvider — cross-node ingest wiring (Slice 3 Task 3)', 
       setStreamOriginResolver: vi.fn(),
       setEgressTranscodeProvider: vi.fn(),
       setEnsureAdaptiveTierBrokerHook: vi.fn(),
+      isClipIntentOffer: vi.fn().mockReturnValue(false),
       handleAnswer: vi.fn(),
       closeSession: vi.fn(),
     } as unknown as import('../webrtc/broker-webrtc-server.js').BrokerWebrtcServer

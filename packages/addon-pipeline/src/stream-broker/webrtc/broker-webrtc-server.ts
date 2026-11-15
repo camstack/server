@@ -38,6 +38,14 @@ import {
 import { AdaptiveSession, type IceServerEntry, type IceCandidatePayload } from './session.js'
 import { BrokerLingerRegistry } from './broker-linger-registry.js'
 import {
+  gateClipCodec,
+  isClipIntent,
+  sameStreamTarget,
+  type ClipReoffer,
+  type ClipVideoCodec,
+  type PushVideoAccessUnit,
+} from './clip-intent.js'
+import {
   AdaptiveController,
   wireLadderCause,
   type LadderDecision,
@@ -474,9 +482,10 @@ interface SessionEntry {
    * Has this session ever put demand on its broker? `false` only for a
    * clip-intent session that has not gone live (#566): it never dialled the
    * camera, so its teardown arms no linger ghost — that ghost would dial a
-   * sleeping camera nobody asked to watch.
+   * sleeping camera nobody asked to watch. Going live is a re-offer, so a
+   * session never changes this after setup.
    */
-  liveDemanded: boolean
+  readonly liveDemanded: boolean
 }
 
 /** The setup-time facts an in-place tier switch rebinds a session with (D733). */
@@ -904,6 +913,13 @@ export class BrokerWebrtcServer {
     null
   /** sessionId → session entry. */
   private readonly sessions = new Map<string, SessionEntry>()
+  /**
+   * What the next offer on a session id that opened for a clip must be
+   * (#566, see `clip-intent.ts`). Written when a clip session goes live or
+   * meets a clip in another codec, consumed by `setupSessionForBroker` and
+   * written again on the recreated session, cleared on close.
+   */
+  private readonly clipReoffer = new Map<string, ClipReoffer>()
   /**
    * Carries the adaptive controller's desired tier (+ forced transcode-down)
    * across a close-and-recreate re-offer, so the recreated session resolves
@@ -1460,23 +1476,37 @@ export class BrokerWebrtcServer {
     // than failing the session entirely.
     //
     // A CLIP-intent session skips it, and every other live subscription below
-    // waits for `goLive` (#566): the client opened this session to play a
-    // stored clip, so dialling the camera would only wake a sleeping battery
-    // camera to watch our own footage — and its 2.5 s wait on parameter sets
-    // the camera will never send held the clip request back. It needs the
-    // recorded accessors AND a clip byte source; without them `playClip` is
-    // refused anyway and the session is an ordinary live one.
+    // (#566): the client opened this session to play a stored clip, so
+    // dialling the camera would only wake a sleeping battery camera to watch
+    // our own footage — and its 2.5 s wait on parameter sets the camera will
+    // never send held the clip request back. Going live is a RE-OFFER, which
+    // `clipReoffer` turns into an ordinary live session (wake, warm-up, the
+    // camera's codec) whatever hints it resends. It needs the recorded
+    // accessors AND a clip byte source; without them `playClip` is refused
+    // anyway and the session is an ordinary live one.
+    const clipReoffer =
+      opts.sessionId !== undefined ? this.clipReoffer.get(opts.sessionId) : undefined
+    const clipIntent = isClipIntent(hints, clipReoffer)
     const deferLive =
-      hints.intent === 'clip' &&
+      clipIntent &&
       this.locateRecordedSegment !== undefined &&
       this.readRecordedSegmentBytes !== undefined &&
       (this.readClipBytes !== undefined || this.dialClipStream !== undefined)
-    if (hints.intent === 'clip') {
+    if (clipIntent || clipReoffer !== undefined) {
       sessionLogger.info(
         deferLive
-          ? 'clip-intent session: live deferred until goLive — the camera is not dialled'
-          : 'clip-intent session: no clip source wired — opening as a live session',
-        { meta: { brokerId, deferLive, knownCodec: broker.getStats().codec ?? null } },
+          ? 'clip-intent session: live is a re-offer — the camera is not dialled'
+          : clipIntent
+            ? 'clip-intent session: no clip source wired — opening as a live session'
+            : 'clip-intent session went live: re-offer opens as a live session',
+        {
+          meta: {
+            brokerId,
+            deferLive,
+            reoffer: clipReoffer?.kind ?? null,
+            knownCodec: broker.getStats().codec ?? null,
+          },
+        },
       )
     }
     let warmUpUnsubscribe: Unsubscribe | null = null
@@ -1514,7 +1544,10 @@ export class BrokerWebrtcServer {
 
     const brokerCodec = broker.getStats().codec ?? 'h264'
     const isHevc = brokerCodec === 'h265' || brokerCodec === 'hevc'
-    const sessionCodec = isHevc ? 'H265' : ('H264' as const)
+    // A clip re-offered at its own codec negotiates that codec: the broker's
+    // is the camera's, which the clip session never reads.
+    const sessionCodec: ClipVideoCodec =
+      clipReoffer?.kind === 'clip-codec' ? clipReoffer.codec : isHevc ? 'H265' : 'H264'
     // RTP-bearing brokers expose source RTP via `onVideoRtp` — that's
     // RTSP (pull) and `push-rtp` (provider-synthesised RTP). AnnexB-
     // only push brokers (Reolink Baichuan today)
@@ -1800,10 +1833,10 @@ export class BrokerWebrtcServer {
       }
     }
     // The AnnexB subscription is DEMAND: it is what dials the camera. A
-    // clip-intent session attaches it at `goLive` instead (see `deferLive`).
-    const subscribeLiveEncoded = (): Unsubscribe =>
-      broker.onEncodedData(onLiveEncoded, annexbAttribution)
-    const unsubBroker: Unsubscribe = deferLive ? () => {} : subscribeLiveEncoded()
+    // clip-intent session never makes it (see `deferLive`).
+    const unsubBroker: Unsubscribe = deferLive
+      ? () => {}
+      : broker.onEncodedData(onLiveEncoded, annexbAttribution)
     // Real consumer attached → release the warm-up ghost. The add-then-
     // remove ordering keeps `checkDemand` from ever seeing zero
     // subscribers, so the dial we just woke stays up.
@@ -2006,18 +2039,6 @@ export class BrokerWebrtcServer {
     }
     let unsubRtp: Unsubscribe | null = null
     let unsubSdpParams: Unsubscribe | null = null
-    const subscribeLiveRtp = (): Unsubscribe =>
-      broker.onVideoRtp(
-        makeSourceRtpForwarder({
-          session,
-          sessionLogger,
-          sessionId,
-          deviceId,
-          brokerId,
-          sessionCodec,
-        }),
-        rtpAttribution,
-      )
     if (useRtpRepacketizer) {
       const sdpPs = broker.getSdpParameterSets()
       if (sdpPs && sdpPs.length > 0) {
@@ -2053,7 +2074,19 @@ export class BrokerWebrtcServer {
           }
         })
       }
-      if (!deferLive) unsubRtp = subscribeLiveRtp()
+      if (!deferLive) {
+        unsubRtp = broker.onVideoRtp(
+          makeSourceRtpForwarder({
+            session,
+            sessionLogger,
+            sessionId,
+            deviceId,
+            brokerId,
+            sessionCodec,
+          }),
+          rtpAttribution,
+        )
+      }
     }
 
     // Recover in place when the broker re-dials this source. Subscribed for
@@ -2106,21 +2139,60 @@ export class BrokerWebrtcServer {
     )
 
     session.onClosed = () => this.cleanupSession(sessionId)
+    // The re-offer record outlives the stale session it was read from: a later
+    // re-offer of this id (a tier switch, a reconnect) must still be what the
+    // first re-offer was.
+    if (clipReoffer !== undefined) this.clipReoffer.set(sessionId, clipReoffer)
 
-    // A clip-intent session attaches live the first time the client leaves the
-    // clip for live (`goLive`). Everything a live session subscribed at setup
-    // is subscribed here instead; parameter sets and source restarts were
-    // never deferred (they put no demand on the broker).
-    const attachDeferredLive = (): void => {
-      if (entry.liveDemanded || this.sessions.get(sessionId) !== entry) return
-      entry.liveDemanded = true
-      entry.unsubBroker = subscribeLiveEncoded()
-      if (useRtpRepacketizer) entry.unsubRtp = subscribeLiveRtp()
-      this.brokerLinger.cancel(brokerId)
-      sessionLogger.info('clip-intent session: client went live — live attached', {
-        meta: { sessionId, brokerId, sessionCodec, useRtpRepacketizer },
+    // A clip-intent session asks the client to re-offer, ONCE, and the
+    // re-offer decides what it becomes. Going live re-offers the same stream
+    // as an ordinary live session: the wake, the warm-up and the camera's
+    // codec all happen there, in the one place a live session gets them.
+    let reofferRequested = false
+    const requestClipReoffer = (next: ClipReoffer, reason: string): void => {
+      if (!deferLive || reofferRequested || this.sessions.get(sessionId) !== entry) return
+      reofferRequested = true
+      this.clipReoffer.set(sessionId, next)
+      const target = sameStreamTarget(streamId)
+      const epoch = (session.pendingRenegotiation?.epoch ?? 0) + 1
+      session.pendingRenegotiation = { target, epoch }
+      sessionLogger.info(`clip-intent session: re-offer requested — ${reason}`, {
+        meta: { sessionId, brokerId, reoffer: next.kind, sessionCodec, target, epoch },
       })
-      if (isAdaptiveStream) this.armAdaptive(entry, deviceId, brokerId, sessionId, hints, intent)
+    }
+    // A clip in the other codec, on a session re-offered at the clip's codec
+    // already, is a client that cannot take it: refused once, by name.
+    let clipCodecRefusalLogged = false
+    const onClipCodecMismatch = (clip: ClipPlaybackHandle, clipCodec: ClipVideoCodec): void => {
+      if (clipReoffer?.kind === 'clip-codec') {
+        if (clipCodecRefusalLogged) return
+        clipCodecRefusalLogged = true
+        sessionLogger.warn('clip playback: the client did not negotiate the clip codec', {
+          tags: { deviceId: clip.deviceId },
+          meta: { sessionId, clipId: clip.clipId, clipCodec, negotiated: sessionCodec },
+        })
+        return
+      }
+      requestClipReoffer(
+        { kind: 'clip-codec', codec: clipCodec, clip, offsetMs: lastClipOffsetMs },
+        `clip is ${clipCodec}, session negotiated ${session.debugNegotiatedCodec}`,
+      )
+    }
+    // Where the client last asked the clip to start: the re-offered session
+    // puts the clip back there, once it is connected (see `onConnected`).
+    let lastClipOffsetMs = 0
+    let replayClip: (() => void) | null = null
+    // A clip-intent session's clip access units are gated on the negotiated
+    // codec; every other recorded push is unchanged.
+    const pushRecordedVideo = (clip: ClipPlaybackHandle | null): PushVideoAccessUnit => {
+      const push: PushVideoAccessUnit = (data, ts, codec) =>
+        session.pushRecordedAccessUnit(data, ts, codec)
+      if (clip === null || !deferLive) return push
+      return gateClipCodec(
+        push,
+        () => session.debugNegotiatedCodec,
+        (clipCodec) => onClipCodecMismatch(clip, clipCodec),
+      )
     }
 
     // Recorded playback over WebRTC: when the recording-cap accessors are wired,
@@ -2296,14 +2368,12 @@ export class BrokerWebrtcServer {
               audio: streamAudio,
               sink: session.isOpusAudio
                 ? {
-                    pushAccessUnit: (data, ts, codec) =>
-                      session.pushRecordedAccessUnit(data, ts, codec),
+                    pushAccessUnit: pushRecordedVideo(clip),
                     pushAudioOpus: (opus, ts) =>
                       session.writeRecordedAudioOpus(Buffer.from(opus), ts),
                   }
                 : {
-                    pushAccessUnit: (data, ts, codec) =>
-                      session.pushRecordedAccessUnit(data, ts, codec),
+                    pushAccessUnit: pushRecordedVideo(clip),
                     pushAudioPcmu: (pcmu, ts) => session.writeRecordedAudio(Buffer.from(pcmu), ts),
                   },
               onState: onClipState,
@@ -2320,11 +2390,11 @@ export class BrokerWebrtcServer {
         const opusSession = session.isOpusAudio
         const audioSink: FeederSink = opusSession
           ? {
-              pushAccessUnit: (data, ts, codec) => session.pushRecordedAccessUnit(data, ts, codec),
+              pushAccessUnit: pushRecordedVideo(clip),
               pushAudioOpus: (opus, ts) => session.writeRecordedAudioOpus(Buffer.from(opus), ts),
             }
           : {
-              pushAccessUnit: (data, ts, codec) => session.pushRecordedAccessUnit(data, ts, codec),
+              pushAccessUnit: pushRecordedVideo(clip),
               pushAudioPcmu: (pcmu, ts) => session.writeRecordedAudio(Buffer.from(pcmu), ts),
             }
         const demuxAudio = opusSession
@@ -2481,7 +2551,8 @@ export class BrokerWebrtcServer {
       })
       session.onControlMessage((raw) => {
         const msg = parseControlMessage(raw)
-        if (msg?.t === 'goLive') attachDeferredLive()
+        if (msg?.t === 'goLive') requestClipReoffer({ kind: 'live' }, 'client went live')
+        if (msg?.t === 'playClip') lastClipOffsetMs = msg.offsetMs
         if (msg) {
           void timeline.handleControl(msg).catch((err) => {
             sessionLogger.warn('timeline.handleControl threw', {
@@ -2490,6 +2561,32 @@ export class BrokerWebrtcServer {
           })
         }
       })
+      // A clip re-offered at its own codec: the client asked for it on the
+      // session this one replaced, so the server puts it back on the pointer.
+      if (deferLive && clipReoffer?.kind === 'clip-codec') {
+        const { clip, offsetMs } = clipReoffer
+        replayClip = () => {
+          sessionLogger.info('clip playback: replaying the clip at its own codec', {
+            tags: { deviceId: clip.deviceId },
+            meta: { sessionId, clipId: clip.clipId, codec: sessionCodec, offsetMs },
+          })
+          void timeline
+            .handleControl({
+              t: 'playClip',
+              deviceId: clip.deviceId,
+              clipId: clip.clipId,
+              provider: clip.provider,
+              offsetMs,
+              ...(clip.profile !== null ? { profile: clip.profile } : {}),
+            })
+            .catch((err) => {
+              sessionLogger.warn('clip playback: replay failed', {
+                tags: { deviceId: clip.deviceId },
+                meta: { sessionId, clipId: clip.clipId, error: errMsg(err) },
+              })
+            })
+        }
+      }
       // Chain disposal onto the existing onClosed (cleanupSession), don't clobber it.
       const prevOnClosed = session.onClosed
       session.onClosed = () => {
@@ -2513,6 +2610,10 @@ export class BrokerWebrtcServer {
     // pending `attributionTimer` is cleared on teardown (`cleanupSession`) so
     // no timer fires after the session is gone.
     session.onConnected = () => {
+      // Once: an ICE reconnect must not restart the clip the viewer is watching.
+      const replay = replayClip
+      replayClip = null
+      replay?.()
       // Live Opus egress (demand gate): once negotiation has settled (ICE
       // connected ⇒ the answer is applied and the audio sender's codec is
       // bound), spin up the broker's PCM→Opus encoder for Opus-negotiated
@@ -2565,10 +2666,15 @@ export class BrokerWebrtcServer {
     // ladder controller that can switch the session to a different-tier broker
     // mid-stream. Non-adaptive sessions (pinned profile / cam-stream targets)
     // are left UNCHANGED — they keep the single broker they were created on.
-    // A clip-intent session arms it when it goes live: a ladder that probes
-    // tiers would dial the camera the clip was opened not to touch.
+    // A clip-intent session never arms it: a ladder that probes tiers would
+    // dial the camera the clip was opened not to touch. Its live re-offer does.
     if (isAdaptiveStream && !deferLive) {
-      this.armAdaptive(entry, deviceId, brokerId, sessionId, hints, intent)
+      const initialTier: Tier = this.profileTierResolver?.(brokerId) ?? 'high'
+      // `intent` was consumed at the top of this setup; its failure memory is
+      // the only record that survives the close-and-recreate re-offer.
+      // The offer's probe (if any) joins the device's probe memory; newest wins.
+      this.recordDeviceProbe(deviceId, probeFromHints(hints.downlinkMbps, Date.now()))
+      this.startAdaptive(entry, deviceId, initialTier, sessionId, intent)
     }
 
     return {
@@ -2721,6 +2827,17 @@ export class BrokerWebrtcServer {
 
   /** Live signaling state for a session — used by the webrtc-session
    *  provider's getSessionState. Returns a null pending when unknown. */
+  /**
+   * Is this offer a clip-intent one (#566)? The hints say so on a first offer;
+   * on a re-offer of a session that opened for a clip, the record that session
+   * left decides — a session that went live re-offers as live whatever hints
+   * the client resends. The provider asks before it wakes the camera.
+   */
+  isClipIntentOffer(hints: ClientHints, sessionId?: string): boolean {
+    const reoffer = sessionId !== undefined ? this.clipReoffer.get(sessionId) : undefined
+    return isClipIntent(hints, reoffer)
+  }
+
   getSessionRenegotiationState(sessionId: string): {
     pendingRenegotiation: { target: WebrtcStreamTarget; epoch: number } | null
     alive: boolean
@@ -2897,26 +3014,6 @@ export class BrokerWebrtcServer {
    * whichever produces the higher loss ratio across its window. The async
    * poll is guarded against overlapping ticks via `tickInFlight`.
    */
-  /**
-   * Arm the adaptive ladder on a session created via the `${deviceId}/adaptive`
-   * alias: at setup for a live session, at `goLive` for a clip-intent one.
-   * `intent` was consumed at the top of the setup; its failure memory is the
-   * only record that survives the close-and-recreate re-offer. The offer's
-   * probe (if any) joins the device's probe memory; newest wins.
-   */
-  private armAdaptive(
-    entry: SessionEntry,
-    deviceId: number,
-    brokerId: string,
-    sessionId: string,
-    hints: ClientHints,
-    intent: AdaptiveIntent | undefined,
-  ): void {
-    const initialTier: Tier = this.profileTierResolver?.(brokerId) ?? 'high'
-    this.recordDeviceProbe(deviceId, probeFromHints(hints.downlinkMbps, Date.now()))
-    this.startAdaptive(entry, deviceId, initialTier, sessionId, intent)
-  }
-
   private startAdaptive(
     entry: SessionEntry,
     deviceId: number,
@@ -3657,6 +3754,9 @@ export class BrokerWebrtcServer {
     // where a switch was scheduled but the client disconnected before
     // re-offering.
     this.adaptiveIntent.delete(sessionId)
+    // Same lifetime as the adaptive intent: read at the top of the re-offer's
+    // setup before this runs for the stale session, re-written on the new one.
+    this.clipReoffer.delete(sessionId)
     // The device's last adaptive session is gone: its probe describes a viewer
     // that left (review N1). The try backoff deliberately stays (TTL-bounded).
     if (entry.adaptiveController !== undefined) {

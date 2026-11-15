@@ -444,6 +444,7 @@ export class WebrtcSessionProvider {
     brokerId: string,
     camStreamId: string | undefined,
     hints: WebrtcClientHints | undefined,
+    sessionId?: string,
   ): Promise<void> {
     if (typeof this.manager.ensureBrokerForWebrtcSession !== 'function') return
     await this.manager.ensureBrokerForWebrtcSession(deviceId, brokerId, camStreamId)
@@ -460,9 +461,11 @@ export class WebrtcSessionProvider {
     //
     // A clip-intent offer never wakes (#566): the client opened the session to
     // play a stored clip, and the camera has no part in that. A missing broker
-    // then fails the offer by name in `BrokerWebrtcServer` instead.
+    // then fails the offer by name in `BrokerWebrtcServer` instead. The server
+    // decides: the re-offer of a clip session that went live is a live offer,
+    // whatever hints the client resends, and it wakes.
     if (typeof this.manager.wakeBatteryDeviceOnPlay !== 'function') return
-    if (hints?.intent === 'clip') return
+    if (this.webrtcServer.isClipIntentOffer(hints ?? {}, sessionId)) return
     await this.manager.wakeBatteryDeviceOnPlay(deviceId, brokerId, camStreamId)
   }
 
@@ -657,7 +660,13 @@ export class WebrtcSessionProvider {
     const target: WebrtcStreamTarget = input.target ?? { kind: 'adaptive' }
     const streamId = this.resolveTargetToStreamId(input.deviceId, target)
     const camStreamId = this.resolveCamStreamId(input.deviceId, target)
-    await this.ensureBrokerAvailable(input.deviceId, streamId, camStreamId, input.hints)
+    await this.ensureBrokerAvailable(
+      input.deviceId,
+      streamId,
+      camStreamId,
+      input.hints,
+      input.sessionId,
+    )
     const streamingDebug = this.resolveSessionDebug(input.deviceId)
     const transcodeProfile = this.resolveTranscodeProfile(input.deviceId, camStreamId)
     try {

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- A clip opened from the viewer with the clip intent plays without dialling or waking the camera; live attaches only when you switch back to live.
+- A clip opened from the viewer with the clip intent plays without dialling or waking the camera. Switching back to live renegotiates the session as a normal live one (wake, warm-up, the camera's codec), and an H.265 clip renegotiates at H.265 instead of playing black.
 
 ## [1.2.654] - 2026-11-15
 

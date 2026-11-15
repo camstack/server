@@ -6,30 +6,51 @@
  * a cold broker made the session wait 2.5 s on parameter sets the camera will
  * never send before the clip request could even reach the server.
  *
- * The broker here is that sleeping camera: no codec known, no parameter sets
- * ever, and every live subscription is recorded by consumer kind. A session
- * offered with `intent: 'clip'` must answer at once, subscribe nothing, and
- * still serve the clip. Going live afterwards is what attaches live. A session
- * without the hint keeps today's behaviour.
+ * The intent covers the INITIAL negotiation only. Going live is a re-offer of
+ * the same session id that is an ordinary live session (wake, warm-up, codec
+ * from the camera); a clip whose codec is not the negotiated one is a re-offer
+ * at the clip's codec, with the clip put back on the pointer by the server.
+ *
+ * The broker here is a sleeping camera: every live subscription is recorded
+ * by consumer kind, parameter sets never arrive. The clip feeder is a fake
+ * that pushes one access unit of the codec the fixture names.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type {
   BrokerConsumerAttribution,
   BrokerStats,
-  CamProfile,
   EncodedPacket,
   IScopedLogger,
   IStreamBroker,
   Unsubscribe,
+  WebrtcStreamTarget,
 } from '@camstack/types'
 import { BrokerWebrtcServer } from '../webrtc/broker-webrtc-server.js'
 import { ControlMessageSchema } from '../recorded/control-protocol.js'
 
-interface SessionHandles {
-  controlCb: ((raw: string) => void) | null
+type Codec = 'H264' | 'H265'
+
+interface PushedUnit {
+  readonly sessionId: string
+  readonly codec: Codec
 }
 
-const handles: SessionHandles = { controlCb: null }
+interface MockSessionView {
+  readonly sessionId: string
+  readonly sourceCodec: Codec
+  pendingRenegotiation: { target: WebrtcStreamTarget; epoch: number } | null
+  onConnected: (() => void) | null
+}
+
+interface SessionHandles {
+  controlCb: ((raw: string) => void) | null
+  sessions: MockSessionView[]
+  pushed: PushedUnit[]
+  /** The codec the fake clip feeder's access units carry. */
+  clipCodec: Codec
+}
+
+const handles: SessionHandles = { controlCb: null, sessions: [], pushed: [], clipCodec: 'H264' }
 
 vi.mock('../webrtc/session.js', () => {
   class MockAdaptiveSession {
@@ -37,15 +58,26 @@ vi.mock('../webrtc/session.js', () => {
     static readonly H264_REPACKETIZER_MTU = 1100
     readonly sessionId: string
     readonly source: AsyncGenerator<unknown>
+    readonly sourceCodec: Codec
     readonly isOpusAudio = false
     readonly isLiveFeedGated = false
     onClosed: (() => void) | null = null
     onConnected: (() => void) | null = null
-    pendingRenegotiation: null = null
+    pendingRenegotiation: { target: WebrtcStreamTarget; epoch: number } | null = null
     private _closed = false
-    constructor(options: { sessionId: string; source: AsyncGenerator<unknown> }) {
+    constructor(options: {
+      sessionId: string
+      source: AsyncGenerator<unknown>
+      sourceCodec: Codec
+    }) {
       this.sessionId = options.sessionId
       this.source = options.source
+      this.sourceCodec = options.sourceCodec
+      handles.sessions.push(this)
+    }
+    /** The client accepts whatever the server offers. */
+    get debugNegotiatedCodec(): Codec {
+      return this.sourceCodec
     }
     readNominatedPair() {
       return null
@@ -61,7 +93,9 @@ vi.mock('../webrtc/session.js', () => {
       handles.controlCb = cb
     }
     setLiveFeedGate() {}
-    pushRecordedAccessUnit() {}
+    pushRecordedAccessUnit(_annexB: Uint8Array, _ts: number, codec: Codec) {
+      handles.pushed.push({ sessionId: this.sessionId, codec })
+    }
     writeRecordedAudio() {}
     writeRecordedAudioOpus() {}
     requestKeyframe() {}
@@ -74,6 +108,9 @@ vi.mock('../webrtc/session.js', () => {
     onSourceRestarted() {}
     async createOffer() {
       return { sdp: 'v=0\r\n', type: 'offer' as const }
+    }
+    async handleOffer() {
+      return { sdp: 'v=0\r\n', type: 'answer' as const }
     }
     async handleAnswer() {}
     async close() {
@@ -88,6 +125,27 @@ vi.mock('../webrtc/session.js', () => {
   return { AdaptiveSession: MockAdaptiveSession }
 })
 
+/** A clip feeder that pushes one access unit of `handles.clipCodec` on its first seek. */
+vi.mock('../recorded/recorded-feeder.js', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../recorded/recorded-feeder.js')>()
+  class FakeFeeder {
+    private readonly sink: { pushAccessUnit: (d: Uint8Array, ts: number, c: Codec) => void }
+    constructor(opts: { sink: { pushAccessUnit: (d: Uint8Array, ts: number, c: Codec) => void } }) {
+      this.sink = opts.sink
+    }
+    async seek(): Promise<void> {
+      this.sink.pushAccessUnit(new Uint8Array([0, 0, 0, 1, 0x26, 0x01]), 0, handles.clipCodec)
+    }
+    setRate() {}
+    stepFrame() {}
+    beginScrub() {}
+    scrubTo() {}
+    scrubAck() {}
+    dispose() {}
+  }
+  return { ...actual, RecordedFeeder: FakeFeeder }
+})
+
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {
     info: vi.fn(),
@@ -100,7 +158,7 @@ function makeLogger(): IScopedLogger {
   return l
 }
 
-/** What the sleeping camera's broker was asked for, by subscription kind. */
+/** What the camera's broker was asked for, by subscription kind. */
 interface LiveDemand {
   readonly encoded: string[]
   readonly rtp: string[]
@@ -108,11 +166,10 @@ interface LiveDemand {
 
 /**
  * A battery camera asleep: its catalog is known (the broker is registered)
- * but nothing has dialled it, so the codec is unknown and parameter sets
- * never arrive. Every `onEncodedData` / `onVideoRtp` call is demand — the
- * subscription that would dial it.
+ * but nothing has dialled it. `codec` is what the publisher declared, if
+ * anything. Every `onEncodedData` / `onVideoRtp` call is demand.
  */
-function makeSleepingBroker(demand: LiveDemand): IStreamBroker {
+function makeSleepingBroker(demand: LiveDemand, codec?: 'h264' | 'h265'): IStreamBroker {
   const stats: BrokerStats = {
     status: 'idle',
     inputFps: 0,
@@ -120,6 +177,7 @@ function makeSleepingBroker(demand: LiveDemand): IStreamBroker {
     uptimeMs: 0,
     bitrateKbps: 0,
     idrIntervalMs: 0,
+    ...(codec !== undefined ? { codec } : {}),
     totalBytes: 0,
     packetCount: 0,
     rtspClients: 0,
@@ -156,18 +214,6 @@ function makeSleepingBroker(demand: LiveDemand): IStreamBroker {
   } as unknown as IStreamBroker
 }
 
-/** `readClipBytes` as the server is handed it, recording each read. */
-function makeReadClipBytes() {
-  return vi.fn(
-    async (_args: {
-      deviceId: number
-      clipId: string
-      provider: string
-      profile: CamProfile | null
-    }): Promise<Uint8Array> => new Uint8Array([0, 0, 0, 1]),
-  )
-}
-
 const SETTLED = Symbol('settled')
 const PENDING = Symbol('pending')
 
@@ -175,8 +221,6 @@ const PENDING = Symbol('pending')
 async function settlesWithoutWaiting<T>(p: Promise<T>): Promise<boolean> {
   const winner = await Promise.race([
     p.then(() => SETTLED),
-    // Several microtask turns, zero wall-clock: the setup awaits ICE
-    // resolution and the offer, never a timer, when it does not wait on live.
     (async () => {
       for (let i = 0; i < 50; i++) await Promise.resolve()
       return PENDING
@@ -185,34 +229,58 @@ async function settlesWithoutWaiting<T>(p: Promise<T>): Promise<boolean> {
   return winner === SETTLED
 }
 
-/** Open a clip-intent session, letting any timer the setup waits on run out. */
-async function openClipSession(server: BrokerWebrtcServer): Promise<string> {
-  const created = server.createSession('3628/native:sub', { intent: 'clip' })
-  await vi.advanceTimersByTimeAsync(2_500)
-  return (await created).sessionId
-}
+const STREAM = '3628/native:main'
+const SESSION = 'sess-clip'
 
 function send(msg: unknown): void {
   handles.controlCb?.(JSON.stringify(ControlMessageSchema.parse(msg)))
 }
 
+function playClip(): void {
+  send({
+    t: 'playClip',
+    deviceId: 3628,
+    clipId: 'clip-1',
+    provider: 'recorder',
+    offsetMs: 0,
+    profile: 'high',
+  })
+}
+
+function lastSession(): MockSessionView {
+  const s = handles.sessions.at(-1)
+  if (s === undefined) throw new Error('no session')
+  return s
+}
+
 describe('a clip-intent session on a sleeping camera (#566)', () => {
   let server: BrokerWebrtcServer
   let demand: LiveDemand
-  let readClipBytes: ReturnType<typeof makeReadClipBytes>
+
+  /** Offer (or re-offer) the fixed session id, letting any setup timer run out. */
+  async function offer(hints: { intent?: 'live' | 'clip' }): Promise<void> {
+    const answered = server.handleOffer(STREAM, 'v=0', hints, { sessionId: SESSION })
+    await vi.advanceTimersByTimeAsync(2_500)
+    await answered
+  }
+
+  function setUp(codec?: 'h264' | 'h265'): void {
+    server.registerBroker(STREAM, makeSleepingBroker(demand, codec))
+  }
 
   beforeEach(() => {
     vi.useFakeTimers()
     handles.controlCb = null
+    handles.sessions = []
+    handles.pushed = []
+    handles.clipCodec = 'H264'
     demand = { encoded: [], rtp: [] }
-    readClipBytes = makeReadClipBytes()
     server = new BrokerWebrtcServer({
       logger: makeLogger(),
       locateRecordedSegment: () => Promise.reject(new Error('no footage in this fixture')),
       readRecordedSegmentBytes: () => Promise.reject(new Error('no footage in this fixture')),
-      readClipBytes,
+      readClipBytes: async () => new Uint8Array([0, 0, 0, 1]),
     })
-    server.registerBroker('3628/native:sub', makeSleepingBroker(demand))
   })
 
   afterEach(async () => {
@@ -221,48 +289,95 @@ describe('a clip-intent session on a sleeping camera (#566)', () => {
   })
 
   it('answers at once, subscribes no live consumer, and serves the clip', async () => {
-    const created = server.createSession('3628/native:sub', { intent: 'clip' })
-    expect(await settlesWithoutWaiting(created)).toBe(true)
-    await created
-
+    setUp()
+    const answered = server.handleOffer(STREAM, 'v=0', { intent: 'clip' }, { sessionId: SESSION })
+    expect(await settlesWithoutWaiting(answered)).toBe(true)
+    await answered
     expect(demand).toEqual({ encoded: [], rtp: [] })
 
-    send({
-      t: 'playClip',
-      deviceId: 3628,
-      clipId: 'clip-1',
-      provider: 'recorder',
-      offsetMs: 0,
-      profile: 'low',
-    })
+    playClip()
     await vi.advanceTimersByTimeAsync(50)
 
-    expect(readClipBytes).toHaveBeenCalledWith(
-      expect.objectContaining({ deviceId: 3628, clipId: 'clip-1', provider: 'recorder' }),
-    )
-    // Serving the clip demanded nothing from the camera either.
+    expect(handles.pushed).toEqual([{ sessionId: SESSION, codec: 'H264' }])
     expect(demand).toEqual({ encoded: [], rtp: [] })
   })
 
-  it('attaches live only when the client goes live', async () => {
-    await openClipSession(server)
+  it('an H.265 clip on a cold broker re-offers at the clip codec and replays the clip, never dialling', async () => {
+    setUp()
+    handles.clipCodec = 'H265'
+    await offer({ intent: 'clip' })
+    expect(lastSession().sourceCodec).toBe('H264')
+
+    playClip()
+    await vi.advanceTimersByTimeAsync(50)
+    // Never packetised under the wrong payload type: that is a black picture.
+    expect(handles.pushed).toEqual([])
+    expect(lastSession().pendingRenegotiation).toEqual({
+      target: { kind: 'cam-stream', camStreamId: 'native:main' },
+      epoch: 1,
+    })
+    expect(server.isClipIntentOffer({}, SESSION)).toBe(true)
+
+    // The player re-offers on the same id; the re-offer carries no hint.
+    // The server puts the clip back once the new session is connected.
+    await offer({})
+    expect(handles.pushed).toEqual([])
+    lastSession().onConnected?.()
+    await vi.advanceTimersByTimeAsync(50)
+    expect(lastSession().sourceCodec).toBe('H265')
+    expect(handles.pushed).toEqual([{ sessionId: SESSION, codec: 'H265' }])
     expect(demand).toEqual({ encoded: [], rtp: [] })
+  })
+
+  it('goLive on an H.265 camera re-offers as a live session at the camera codec', async () => {
+    setUp('h265')
+    await offer({ intent: 'clip' })
     send({ t: 'goLive' })
     await vi.advanceTimersByTimeAsync(0)
+    expect(lastSession().pendingRenegotiation?.epoch).toBe(1)
+    expect(server.isClipIntentOffer({ intent: 'clip' }, SESSION)).toBe(false)
+
+    // A viewer that resends its first hints still gets live: the intent
+    // belonged to the initial negotiation only.
+    await offer({ intent: 'clip' })
+    expect(lastSession().sourceCodec).toBe('H265')
     expect(demand.encoded).toEqual(['webrtc-browser'])
     expect(demand.rtp).toEqual(['webrtc-browser'])
   })
 
+  it('a second goLive asks for one renegotiation, not two', async () => {
+    setUp()
+    await offer({ intent: 'clip' })
+    send({ t: 'goLive' })
+    send({ t: 'goLive' })
+    await vi.advanceTimersByTimeAsync(0)
+    expect(lastSession().pendingRenegotiation?.epoch).toBe(1)
+    expect(demand).toEqual({ encoded: [], rtp: [] })
+  })
+
+  it('after goLive and the re-offer, teardown releases live and arms the linger', async () => {
+    setUp('h264')
+    await offer({ intent: 'clip' })
+    send({ t: 'goLive' })
+    await vi.advanceTimersByTimeAsync(0)
+    await offer({})
+    expect(demand.encoded).toEqual(['webrtc-browser'])
+
+    await server.closeSession(SESSION)
+    // The linger ghost: a `warmup`-kind hold on the broker the viewer left.
+    expect(demand.encoded).toEqual(['webrtc-browser', 'warmup'])
+  })
+
   it('leaves no linger ghost behind a clip-only session', async () => {
-    const sessionId = await openClipSession(server)
-    await server.closeSession(sessionId)
+    setUp()
+    await offer({ intent: 'clip' })
+    await server.closeSession(SESSION)
     expect(demand.encoded).toEqual([])
   })
 
   it('without the hint keeps today’s behaviour: a warm-up dial on a cold broker', async () => {
-    const created = server.createSession('3628/native:sub', {})
-    await vi.advanceTimersByTimeAsync(2_500)
-    await created
+    setUp()
+    await offer({})
     expect(demand.encoded[0]).toBe('warmup')
     expect(demand.encoded).toContain('webrtc-browser')
     expect(demand.rtp).toEqual(['webrtc-browser'])
