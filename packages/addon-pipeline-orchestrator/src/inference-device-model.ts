@@ -90,8 +90,8 @@ export function defaultModelIdForDevice(deviceKey: string): string {
   }
   // Coral Edge TPU — YOLOv9-s @320 (D908; yolo26 has no tflite build).
   if (backend === 'edgetpu') return 'yolov9s-320-edgetpu'
-  // Apple CoreML (ANE) — our CoreML yolov9 @320.
-  if (backend === 'coreml') return 'yolov9m-320'
+  // Apple CoreML (ANE) — our CoreML yolov9 @640 (D1053).
+  if (backend === 'coreml') return 'yolov9m-640'
   // onnx / cpu / cuda / anything else → the step's universal nano default.
   return 'yolo26n'
 }

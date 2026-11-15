@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Fixed false 'no recordings' gaps on the timeline when part of an hour's footage lives on a second recordings root
 - Fix: a camera with no elected device now plans root-model supplies on the node's real default detection model instead of the flat yolo26n
+- Apple Neural Engine nodes now default to the yolov9m 640 detector (better recall on distant people)
 
 ## [1.2.652] - 2026-11-14
 

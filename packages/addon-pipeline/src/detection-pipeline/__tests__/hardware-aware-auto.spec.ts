@@ -37,9 +37,9 @@ describe('resolveInputSteps — hardware-aware Auto (object-detection)', () => {
     expect(steps[0]?.modelId).toBe(resolveDefaultDetectionModel('openvino', 'gpu', 'openvino'))
   })
 
-  it('absent modelId + apple-ane engine resolves the CoreML v9 default (yolov9m-320)', () => {
+  it('absent modelId + apple-ane engine resolves the CoreML v9 default (yolov9m-640)', () => {
     const { steps } = resolveInputSteps([detectionStep()], 'coreml', APPLE_ANE)
-    expect(steps[0]?.modelId).toBe('yolov9m-320')
+    expect(steps[0]?.modelId).toBe('yolov9m-640')
   })
 
   it('absent modelId + cpu engine resolves the safe nano (yolo26n)', () => {

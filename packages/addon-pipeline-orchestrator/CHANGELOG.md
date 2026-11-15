@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Apple Neural Engine nodes now default to the yolov9m 640 detector
+
 ## [1.2.689] - 2026-11-15
 
 ### Changed

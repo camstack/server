@@ -102,7 +102,7 @@ describe('inference-device-model — pure default model map', () => {
     expect(defaultModelIdForDevice('openvino:cpu')).toBe('yolov9m-320-int8')
     expect(defaultModelIdForDevice('edgetpu:usb')).toBe('yolov9s-320-edgetpu')
     expect(defaultModelIdForDevice('edgetpu:usb:1')).toBe('yolov9s-320-edgetpu')
-    expect(defaultModelIdForDevice('coreml:all')).toBe('yolov9m-320')
+    expect(defaultModelIdForDevice('coreml:all')).toBe('yolov9m-640')
     expect(defaultModelIdForDevice('cpu')).toBe('yolo26n')
     expect(defaultModelIdForDevice('cuda:gpu')).toBe('yolo26n')
     expect(defaultModelIdForDevice('mystery:thing')).toBe('yolo26n')

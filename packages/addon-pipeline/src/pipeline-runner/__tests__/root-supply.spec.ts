@@ -108,7 +108,7 @@ describe('planRootSupplies', () => {
       'yolov9m-320-int8',
     )
     expect(planRootSupplies(tree(undefined, undefined), resolve, 'coreml:all').rootModelId).toBe(
-      'yolov9m-320',
+      'yolov9m-640',
     )
     // A pin is the pin, whatever the device.
     expect(planRootSupplies(tree(PLUS.id, undefined), resolve, 'openvino:gpu').rootModelId).toBe(
@@ -120,7 +120,7 @@ describe('planRootSupplies', () => {
     )
   })
 
-  it('no elected device on a CoreML runtime plans the supplies on yolov9m-320, not the flat default', () => {
+  it('no elected device on a CoreML runtime plans the supplies on the ANE default (yolov9m-640, D1053), not the flat default', () => {
     // Live: an on-motion session dispatched to the runner's default pool has no
     // deviceKey, yet the executor ran `coreml/all` + yolov9m-320. The plan named
     // `yolo26n` and judged the classifier supplies on a model that was not running.
@@ -131,7 +131,7 @@ describe('planRootSupplies', () => {
       device: 'all',
     }
     const plan = planRootSupplies(tree(undefined, undefined), resolve, undefined, coreml)
-    expect(plan.rootModelId).toBe('yolov9m-320')
+    expect(plan.rootModelId).toBe('yolov9m-640')
     // A pin and an elected device both beat the node engine.
     expect(planRootSupplies(tree(PLUS.id, undefined), resolve, undefined, coreml).rootModelId).toBe(
       PLUS.id,

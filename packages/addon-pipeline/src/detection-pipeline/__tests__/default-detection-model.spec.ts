@@ -12,8 +12,8 @@ import { getStepDefinition } from '../registry/step-definitions'
 
 describe('resolveDefaultDetectionModel — real catalog', () => {
   it('Apple ANE (coreml) → yolov9m-320 (CoreML v9)', () => {
-    expect(resolveDefaultDetectionModel('coreml', 'all', 'coreml')).toBe('yolov9m-320')
-    expect(resolveDefaultDetectionModel('coreml', 'ane', 'coreml')).toBe('yolov9m-320')
+    expect(resolveDefaultDetectionModel('coreml', 'all', 'coreml')).toBe('yolov9m-640')
+    expect(resolveDefaultDetectionModel('coreml', 'ane', 'coreml')).toBe('yolov9m-640')
   })
 
   it('Intel NPU (openvino/npu) → yolov9m-320-int8 (yolo26 does not compile on NPU)', () => {
@@ -45,13 +45,12 @@ describe('resolveDefaultDetectionModel — real catalog', () => {
     expect(resolveDefaultDetectionModel('', null, 'onnx')).toBe('yolo26n')
   })
 
-  it('never promotes hardware-aware defaults to 640 (pipeline-frame-model-eval)', () => {
+  it('never promotes the non-ANE hardware-aware defaults to 640 (pipeline-frame-model-eval)', () => {
     // Pin: docs/benchmarks/pipeline-frame-model-eval.md — 640 recovered 0/3
     // misses at the current 0.50 threshold and failed FP/capacity gates.
     // Hardware-aware defaults stay the 320 family; 640 is operator-only.
+    // The Apple ANE is the one exception (D1053), asserted above.
     const accelerated: ReadonlyArray<[string, string | null, ModelFormat]> = [
-      ['coreml', 'all', 'coreml'],
-      ['coreml', 'ane', 'coreml'],
       ['openvino', 'npu', 'openvino'],
       ['openvino', 'gpu', 'openvino'],
       ['openvino', 'auto', 'openvino'],

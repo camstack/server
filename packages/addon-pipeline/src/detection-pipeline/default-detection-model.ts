@@ -45,9 +45,10 @@ type AcceleratorClass =
  * INTEL NPU + iGPU default to the Ultralytics YOLOv9 re-export (int8 @320), which
  * runs on both (~298 fps measured on the NPU). OpenVINO CPU (AMD Zen4 path) uses
  * the same int8 IR. AMD iGPU WebGPU uses the ONNX fp32 @320 build. Apple ANE uses
- * the CoreML yolov9 @320 build.
+ * the CoreML yolov9 @640 build (D1053): the ANE runs it at ~10 ms (98 fps
+ * measured) and its person recall is 0.85 against 0.65 at 320.
  *
- * Do **not** promote these ids to `yolov9m-640` / `*-640`. The controlled
+ * Do **not** promote the OTHER ids to `*-640`. The controlled
  * evaluation recovered 0/3 misses at the current 0.50 threshold and failed the
  * false-positive and capacity gates — see
  * `docs/benchmarks/pipeline-frame-model-eval.md`. 640 remains an explicit
@@ -56,7 +57,7 @@ type AcceleratorClass =
  * load, and writes it only after the operator confirmed the plan.
  */
 const MODEL_BY_CLASS: Readonly<Record<AcceleratorClass, string | null>> = {
-  'apple-ane': 'yolov9m-320',
+  'apple-ane': 'yolov9m-640',
   'intel-npu': 'yolov9m-320-int8',
   'intel-gpu': 'yolov9m-320-int8',
   'openvino-cpu': 'yolov9m-320-int8',
