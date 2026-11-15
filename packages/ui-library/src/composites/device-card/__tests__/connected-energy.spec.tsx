@@ -22,7 +22,7 @@ const FULL: EnergySystemStatus = {
     importTodayKwh: 2.1,
     exportTodayKwh: 7.3,
   },
-  house: { powerW: 900, energyKwh: 8000, todayKwh: 11.2 },
+  house: { powerW: 300, energyKwh: 6500, todayKwh: null },
   heatPump: { powerW: 600, energyKwh: 1500, todayKwh: null },
   storage: {
     stateOfChargePct: 74,
@@ -76,9 +76,9 @@ afterEach(cleanup)
 describe('energyDailyFacts', () => {
   it('derives each fact from the slice', () => {
     const facts = energyDailyFacts(FULL)
-    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 11.2) * 100, 5)
+    expect(facts.selfSufficiencyPct).toBeCloseTo((1 - 2.1 / 13.24) * 100, 5)
     expect(facts.producedKwh).toBe(18.4)
-    expect(facts.houseKwh).toBe(11.2)
+    expect(facts.houseKwh).toBe(13.2)
     expect(facts.importedKwh).toBe(2.1)
     expect(facts.exportedKwh).toBe(7.3)
     expect(facts.autonomyHours).toBeCloseTo(7.4 / 0.9, 5)
@@ -87,6 +87,24 @@ describe('energyDailyFacts', () => {
     expect(facts.socPct).toBe(74)
     expect(facts.healthPct).toBe(96)
     expect(facts.heatPumpShareNowPct).toBeCloseTo((600 / 900) * 100, 5)
+  })
+
+  it('the heat pump share is of house + heat pump: 1000 / (500 + 1000)', () => {
+    const facts = energyDailyFacts({
+      ...FULL,
+      house: { powerW: 500, energyKwh: null, todayKwh: null },
+      heatPump: { powerW: 1000, energyKwh: null, todayKwh: null },
+    })
+    expect(facts.heatPumpShareNowPct).toBeCloseTo(66.667, 2)
+  })
+
+  it('a heat pump whose power is unknown leaves the share and autonomy unknown', () => {
+    const facts = energyDailyFacts({
+      ...FULL,
+      heatPump: { powerW: null, energyKwh: 1500, todayKwh: null },
+    })
+    expect(facts.heatPumpShareNowPct).toBeNull()
+    expect(facts.autonomyHours).toBeNull()
   })
 
   it('derives house consumption from produced + import − export when the day total is absent', () => {
@@ -141,6 +159,7 @@ describe('energyDailyFacts', () => {
       energyDailyFacts({
         ...FULL,
         house: { powerW: 900, energyKwh: 1, todayKwh: 4 },
+        heatPump: null,
         grid,
       }).selfSufficiencyPct,
     ).toBe(0)
@@ -148,6 +167,7 @@ describe('energyDailyFacts', () => {
       energyDailyFacts({
         ...FULL,
         house: { powerW: 900, energyKwh: 1, todayKwh: 4 },
+        heatPump: null,
         grid: { ...grid, importTodayKwh: 0 },
       }).selfSufficiencyPct,
     ).toBe(100)
@@ -205,11 +225,11 @@ describe('the energy system card', () => {
     const chips = screen.getAllByTestId('dc-energy-today-chip')
     expect(chips.map((chip) => chip.textContent)).toEqual([
       'Produced18.4 kWh',
-      'House11.2 kWh',
+      'House13.2 kWh',
       'Imported2.1 kWh',
       'Exported7.3 kWh',
       'Self-use60%',
-      'Self-sufficiency81%',
+      'Self-sufficiency84%',
       'Now67%',
       'Health96%',
       'Autonomy≈ 8.2 h',

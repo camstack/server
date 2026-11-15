@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - The consumables capability no longer declares a device-page widget; consumables are shown by the device card.
+- energy-system: documented that house excludes the heat pump when one is reported
 
 ## [1.2.573] - 2026-11-15
 

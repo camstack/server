@@ -36,7 +36,12 @@ type Row = readonly [string, number, string | undefined]
 function snapshotOf(rows: readonly Row[]): EnpalSnapshot {
   return createSnapshot(
     'influxdb',
-    rows.map(([key, value, unit]) => ({ key, value, unit, measurement: undefined })),
+    rows.map(([key, value, unit]) => ({
+      key,
+      value,
+      unit,
+      measurement: undefined,
+    })),
     1_000,
   )
 }
@@ -83,7 +88,7 @@ describe('computeEnergySystemStatus', () => {
         importTodayKwh: 2.1,
         exportTodayKwh: 7.3,
       },
-      house: { powerW: 900, energyKwh: 8000, todayKwh: 11.2 },
+      house: { powerW: 300, energyKwh: 6500, todayKwh: null },
       heatPump: { powerW: 600, energyKwh: 1500, todayKwh: null },
       storage: {
         stateOfChargePct: 74,
@@ -100,6 +105,45 @@ describe('computeEnergySystemStatus', () => {
     })
   })
 
+  it('house excludes the heat pump: total 1500 W, pump 1000 W is a 500 W house', () => {
+    const rows = FULL.map(
+      (r): Row =>
+        r[0] === 'Power.Consumption.Total'
+          ? [r[0], 1500, r[2]]
+          : r[0] === 'Heatpump.Power.Consumption.Total'
+            ? [r[0], 1000, r[2]]
+            : r,
+    )
+    const s = status(rows)
+    expect(s.house?.powerW).toBe(500)
+    expect(s.heatPump?.powerW).toBe(1000)
+  })
+
+  it('a pump drawing more than the total clamps the house at 0, never negative', () => {
+    const rows = FULL.map(
+      (r): Row => (r[0] === 'Heatpump.Power.Consumption.Total' ? [r[0], 2000, r[2]] : r),
+    )
+    expect(status(rows).house?.powerW).toBe(0)
+  })
+
+  it('a pump whose power is unreadable makes the house power unknown, not the inflated total', () => {
+    const rows = FULL.filter(([key]) => key !== 'Heatpump.Power.Consumption.Total')
+    const s = status(rows)
+    expect(s.heatPump).not.toBeNull()
+    expect(s.heatPump?.powerW).toBeNull()
+    expect(s.house?.powerW).toBeNull()
+    expect(s.house?.energyKwh).toBe(6500)
+  })
+
+  it('without a heat pump the house is the total as reported, day total included', () => {
+    const rows = FULL.filter(([key]) => !key.startsWith('Heatpump.'))
+    expect(status(rows).house).toEqual({
+      powerW: 900,
+      energyKwh: 8000,
+      todayKwh: 11.2,
+    })
+  })
+
   it('a box without a heat pump or a storage has neither part, not zeros', () => {
     const rows = FULL.filter(([key]) => !key.startsWith('Heatpump.') && !key.includes('Battery'))
     const s = status(rows)
@@ -110,7 +154,11 @@ describe('computeEnergySystemStatus', () => {
 
   it('an unreported value inside a part is null', () => {
     const rows = FULL.filter(([key]) => key !== 'Energy.Production.Total.Day')
-    expect(status(rows).solar).toEqual({ powerW: 4200, energyKwh: 12000, todayKwh: null })
+    expect(status(rows).solar).toEqual({
+      powerW: 4200,
+      energyKwh: 12000,
+      todayKwh: null,
+    })
   })
 
   it('the storage power is + charging, and the invert setting flips it', () => {
@@ -172,7 +220,11 @@ describe('the Energy system child of the System container', () => {
 
   it('is not spawned under the heat pump or the box', () => {
     for (const equipment of ['heatpump', 'box']) {
-      const children = accessoryChildSpecs({ equipment, specIds: [], integrationId: 'int-1' })
+      const children = accessoryChildSpecs({
+        equipment,
+        specIds: [],
+        integrationId: 'int-1',
+      })
       expect(children.some((c) => c.stableIdSuffix === ENERGY_SYSTEM_CHILD_KEY)).toBe(false)
     }
   })
@@ -212,7 +264,11 @@ describe('EnpalEnergySystemDevice', () => {
       },
       persistedConfig: { integrationId: 'int-1', system: 'enpal' },
       initialRuntimeState: {},
-      eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
+      eventBus: {
+        emit: vi.fn(),
+        subscribe: vi.fn(() => () => {}),
+        getRecent: vi.fn(() => []),
+      },
       persistConfig: vi.fn(async () => {}),
       bindRuntimeState: (rs: IDeviceRuntimeState) => {
         runtime = rs

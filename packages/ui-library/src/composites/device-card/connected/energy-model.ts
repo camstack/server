@@ -45,8 +45,16 @@ const tenth = (v: number | null): number | null => (v === null ? null : Math.rou
  * reported one; otherwise produced + imported − exported, and only when all
  * three of those are known. A missing input stays null, never 0 (D393).
  */
+function reportedConsumptionTodayKwh(status: EnergySystemStatus): number | null {
+  const house = status.house?.todayKwh ?? null
+  if (status.heatPump === null) return house
+  // The house excludes the heat pump: both day totals are needed to sum them.
+  const pump = status.heatPump.todayKwh
+  return house === null || pump === null ? null : house + pump
+}
+
 function houseConsumptionTodayKwh(status: EnergySystemStatus): number | null {
-  const reported = status.house?.todayKwh ?? null
+  const reported = reportedConsumptionTodayKwh(status)
   if (reported !== null) return reported
   const produced = status.solar?.todayKwh ?? null
   const imported = status.grid?.importTodayKwh ?? null
@@ -60,20 +68,32 @@ function selfSufficiencyPct(houseKwh: number | null, importKwh: number | null): 
   return Math.max(0, Math.min(100, (1 - importKwh / houseKwh) * 100))
 }
 
-/** Stored kWh ÷ current house load (kW). Hidden when the load is ≤ 0 or unknown. */
+/**
+ * Everything the installation consumes right now: the house (which excludes the heat
+ * pump) plus the heat pump. Null when a part that exists has no reading (D393).
+ */
+function totalConsumptionW(status: EnergySystemStatus): number | null {
+  const houseW = status.house?.powerW ?? null
+  if (status.heatPump === null) return houseW
+  const pumpW = status.heatPump.powerW
+  if (pumpW === null) return null
+  return (houseW ?? 0) + pumpW
+}
+
+/** Stored kWh ÷ current total load (kW). Hidden when the load is ≤ 0 or unknown. */
 function autonomyHours(status: EnergySystemStatus): number | null {
   const stored = status.storage?.storedKwh ?? null
-  const houseW = status.house?.powerW ?? null
+  const houseW = totalConsumptionW(status)
   if (stored === null || houseW === null || houseW <= 0) return null
   return stored / (houseW / 1000)
 }
 
-/** Heat pump's share of the house load right now. Null when either power is unknown. */
+/** Heat pump's share of the total consumption (house + heat pump) right now, 0..100. */
 function heatPumpShareNowPct(status: EnergySystemStatus): number | null {
   const heatPumpW = status.heatPump?.powerW ?? null
-  const houseW = status.house?.powerW ?? null
-  if (heatPumpW === null || houseW === null || houseW <= 0) return null
-  return (heatPumpW / houseW) * 100
+  const totalW = totalConsumptionW(status)
+  if (heatPumpW === null || totalW === null || totalW <= 0) return null
+  return Math.max(0, Math.min(100, (heatPumpW / totalW) * 100))
 }
 
 /** The daily facts of one energy-system slice. Pure; a missing input is null. */

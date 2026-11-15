@@ -13,6 +13,10 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * system did not report is `null`, never `0` (D393).
  *
  * Signs, all in watts:
+ * - The branches are DISJOINT: `house` is the consumption EXCLUDING the heat pump
+ *   whenever `heatPump` is reported, so solar + grid import + storage discharge =
+ *   house + heatPump + grid export + storage charge. A provider whose meter totals
+ *   include the pump subtracts it; when it cannot, `house` is null (D393).
  * - `solar.powerW`, `house.powerW`, `heatPump.powerW` are magnitudes (≥ 0);
  * - `grid.powerW` is + importing, − exporting;
  * - `storage.powerW` is + charging, − discharging.
@@ -127,20 +131,55 @@ export const energySystemCapability = {
    */
   history: {
     fields: {
-      'solar.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Solar power' },
-      'solar.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'Solar energy' },
-      'grid.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Grid power' },
-      'grid.importKwh': { kind: 'counter', unit: 'kWh', displayName: 'Grid import' },
-      'grid.exportKwh': { kind: 'counter', unit: 'kWh', displayName: 'Grid export' },
-      'house.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'House power' },
-      'house.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'House energy' },
+      'solar.powerW': {
+        kind: 'gauge',
+        unit: 'W',
+        deadband: 50,
+        displayName: 'Solar power',
+      },
+      'solar.energyKwh': {
+        kind: 'counter',
+        unit: 'kWh',
+        displayName: 'Solar energy',
+      },
+      'grid.powerW': {
+        kind: 'gauge',
+        unit: 'W',
+        deadband: 50,
+        displayName: 'Grid power',
+      },
+      'grid.importKwh': {
+        kind: 'counter',
+        unit: 'kWh',
+        displayName: 'Grid import',
+      },
+      'grid.exportKwh': {
+        kind: 'counter',
+        unit: 'kWh',
+        displayName: 'Grid export',
+      },
+      'house.powerW': {
+        kind: 'gauge',
+        unit: 'W',
+        deadband: 50,
+        displayName: 'House power',
+      },
+      'house.energyKwh': {
+        kind: 'counter',
+        unit: 'kWh',
+        displayName: 'House energy',
+      },
       'heatPump.powerW': {
         kind: 'gauge',
         unit: 'W',
         deadband: 50,
         displayName: 'Heat pump power',
       },
-      'heatPump.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'Heat pump energy' },
+      'heatPump.energyKwh': {
+        kind: 'counter',
+        unit: 'kWh',
+        displayName: 'Heat pump energy',
+      },
       'storage.stateOfChargePct': {
         kind: 'gauge',
         unit: '%',
@@ -159,7 +198,11 @@ export const energySystemCapability = {
         deadband: 50,
         displayName: 'Storage power',
       },
-      'storage.chargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage charged' },
+      'storage.chargedKwh': {
+        kind: 'counter',
+        unit: 'kWh',
+        displayName: 'Storage charged',
+      },
       'storage.dischargedKwh': {
         kind: 'counter',
         unit: 'kWh',

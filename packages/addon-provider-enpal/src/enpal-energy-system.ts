@@ -71,6 +71,18 @@ function present<T extends Readonly<Record<string, number | null>>>(part: T): T 
 }
 
 /**
+ * A house reading without the heat pump, from Enpal's total that includes it. Both known:
+ * the difference, floored at 0. No pump in the system: the total as reported. A pump that
+ * exists but whose reading is unknown makes the result unknown, never the inflated total.
+ */
+function withoutPump(total: number | null, pump: number | null, hasPump: boolean): number | null {
+  if (total === null) return null
+  if (!hasPump) return total
+  if (pump === null) return null
+  return Math.max(0, total - pump)
+}
+
+/**
  * The grid power, + import / − export, from the two halves the catalog splits it into.
  * With both halves known it is their difference. With one half only, it is that half
  * while it flows: a zero import with no export reading cannot say whether the house
@@ -105,16 +117,19 @@ export function computeEnergySystemStatus(
     importTodayKwh: read.numeric('grid-import-day'),
     exportTodayKwh: read.numeric('grid-export-day'),
   }
-  const house: EnergyConsumer = {
-    powerW: read.power('house'),
-    energyKwh: read.energy('house'),
-    todayKwh: read.numeric('house-energy-day'),
-  }
-  // Enpal reports no day total for the heat pump: the card draws none.
+  // Enpal's consumption total INCLUDES the heat pump; the cap's house excludes it.
   const heatPump: EnergyConsumer = {
     powerW: read.power('heatpump'),
     energyKwh: read.energy('heatpump'),
+    // Enpal reports no day total for the heat pump.
     todayKwh: null,
+  }
+  const hasPump = present(heatPump) !== null
+  const house: EnergyConsumer = {
+    powerW: withoutPump(read.power('house'), heatPump.powerW, hasPump),
+    energyKwh: withoutPump(read.energy('house'), heatPump.energyKwh, hasPump),
+    // With a pump the day total cannot be split, so it stays unknown (D393).
+    todayKwh: hasPump ? null : read.numeric('house-energy-day'),
   }
   const storage: EnergyStorage = {
     stateOfChargePct: read.numeric('battery'),
@@ -175,7 +190,10 @@ export class EnergySystemCounterGuards {
       heatPump:
         heatPump === null
           ? null
-          : { ...heatPump, energyKwh: this.guard('heatPump', heatPump.energyKwh) },
+          : {
+              ...heatPump,
+              energyKwh: this.guard('heatPump', heatPump.energyKwh),
+            },
       storage:
         storage === null
           ? null
