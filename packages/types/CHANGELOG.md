@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Tags: owner records carry optional tags, and the new tags capability lists, styles, renames and removes a tag everywhere in one call
+- OSD static overlay text may be up to 1024 characters, same as named templates.
+- Device templates share one catalogue of filters, functions and variables; the renderer allow-list is derived from it.
 
 ## [1.2.575] - 2026-11-15
 
@@ -120,8 +122,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A cluster update can name a server install that stalled or hit its time limit.
 ### Changed
 
-- OSD static overlay text may be up to 1024 characters, same as named templates.
-- Device templates share one catalogue of filters, functions and variables; the renderer allow-list is derived from it.
 
 ## [1.2.562] - 2026-11-13
 

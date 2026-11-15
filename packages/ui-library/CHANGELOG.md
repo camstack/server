@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated hooks for the new tags capability (list, setStyle, rename, remove) and the device setTags method
+- A device template field inserts device values and functions, completes with Ctrl+Space, and previews through the hub.
 
 ## [1.2.452] - 2026-11-15
 
@@ -132,7 +133,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
 ### Changed
 
-- A device template field inserts device values and functions, completes with Ctrl+Space, and previews through the hub.
 
 ## [1.2.438] - 2026-11-13
 
