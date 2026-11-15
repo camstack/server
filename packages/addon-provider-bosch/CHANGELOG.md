@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.57] - 2026-11-15
+
 ### Fixed
 
 - Home Connect: Sign out on an existing account clears its stored tokens and pairing keys and takes its appliances offline; a signed-out account keeps its devices instead of losing them

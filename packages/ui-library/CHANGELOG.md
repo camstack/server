@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.458] - 2026-11-15
+
 ### Changed
 
 - Tags: a shared tag input, chips, a per-list tag filter with a List / By tag view, and a colour-and-icon dialog for a tag

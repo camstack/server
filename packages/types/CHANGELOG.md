@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.580] - 2026-11-15
+
 ### Fixed
 
 - A session-lost alert always opens the providing addon's integration page on the instance: addonId is required on SessionHealthTracker and IntegrationSessionReporter.bind
