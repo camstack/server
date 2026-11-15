@@ -3,16 +3,15 @@
  * meta row, a re-registration keeps it, and nothing cascades to descendants
  * (a tag labels the record it is on; a location is organisational).
  */
-import type {
-  AddonContext,
-  IDeviceManagerProvider,
-  IEventBus,
-  IScopedLogger,
-  ProviderRegistration,
-} from '@camstack/types'
+import type { IDeviceManagerProvider, IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'
+import {
+  isDeviceManagerProvider,
+  makeAddonContext,
+  registrationsOf,
+} from './typed-addon-context.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
 import type { FakeSettingsStore } from './settings-store-api.js'
 import { makeSettingsStoreApi } from './settings-store-api.js'
@@ -49,6 +48,9 @@ function makeSettings() {
     writeDeviceStore: vi.fn(async (id: number, data: Record<string, unknown>) => {
       deviceStores[id] = { ...data }
     }),
+    listDeviceStoreIds: vi.fn(async () => Object.keys(deviceStores).map(Number)),
+    getSection: vi.fn(async () => ({})),
+    setSection: vi.fn(async () => undefined),
     clearDeviceStore: vi.fn(async (id: number) => {
       delete deviceStores[id]
     }),
@@ -71,7 +73,6 @@ interface PersistentState {
 interface BootHandle {
   readonly provider: IDeviceManagerProvider
   readonly logger: IScopedLogger
-  readonly bus: IEventBus
   readonly state: PersistentState
 }
 
@@ -86,31 +87,23 @@ async function boot(shared?: PersistentState): Promise<BootHandle> {
     settings: makeSettings(),
   }
   const addon = new DeviceManagerAddon()
-  const bus: IEventBus = {
-    emit: vi.fn(),
-    subscribe: () => () => {},
-    getRecent: () => [],
-  } as unknown as IEventBus
   const logger = makeLogger()
   const records = await makeRecordsAccessForOwner('device-manager')
-  const ctx = {
-    api: { settingsStore: state.store.api },
+  const ctx = makeAddonContext({
     id: 'device-manager',
     logger,
-    eventBus: bus,
-    addonConfig: {},
-    dataDir: '/tmp',
     settings: state.settings,
-    records,
+    api: { settingsStore: state.store.api },
     kernel: { deviceRegistry: new DeviceRegistry() },
+    records,
+  })
+  const first = registrationsOf(await addon.initialize(ctx)).find((r) =>
+    isDeviceManagerProvider(r.provider),
+  )
+  if (!first || !isDeviceManagerProvider(first.provider)) {
+    throw new Error('no device-manager registration')
   }
-  const initResult = await addon.initialize(ctx as unknown as AddonContext)
-  let providers: readonly ProviderRegistration[] | undefined
-  if (Array.isArray(initResult)) providers = initResult
-  else if (initResult) providers = initResult.providers
-  const first = providers?.[0]
-  if (!first) throw new Error('no provider registrations')
-  return { provider: first.provider as IDeviceManagerProvider, logger, bus, state }
+  return { provider: first.provider, logger, state }
 }
 
 /** Register a device through the canonical action path. */

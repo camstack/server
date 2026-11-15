@@ -306,6 +306,23 @@ export class CoreBlockStore {
   }
 
   /**
+   * Replace the tags of a block. Unlike {@link update} this does NOT move
+   * `updatedAt`: that stamp is the version an open composition editor holds as
+   * `expectedUpdatedAt`, and a tag rename must not make its next save stale.
+   */
+  async setTags(blockId: string, tags: readonly string[]): Promise<void> {
+    const existing = this.byId.get(blockId)
+    if (!existing) throw new Error(`core block not found: ${blockId}`)
+    const { tags: _previous, ...rest } = existing
+    const normalized = normalizeTags(tags)
+    const next: CoreBlock = CoreBlockSchema.parse(
+      normalized.length === 0 ? rest : { ...rest, tags: normalized },
+    )
+    await this.persist(next)
+    this.byId.set(next.id, next)
+  }
+
+  /**
    * Store a composition block (D659): hub-placed, no code, never `running` on
    * creation — the composer's verdict, mirrored by the supervisor, says that.
    */

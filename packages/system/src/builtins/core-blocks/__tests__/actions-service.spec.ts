@@ -340,6 +340,19 @@ describe('actions — internal actions', () => {
     expect(cleared.action.minDelaySec).toBeUndefined()
   })
 
+  it('update through the service: omitted tags keep, tags replace, [] clears', async () => {
+    const w = await world()
+    const { action } = await w.service.create({
+      action: { name: 'Tagged', steps: [STEP(1)], tags: ['Garden'] },
+    })
+    const renamed = await w.service.update({ actionId: action.id, action: { name: 'Renamed' } })
+    expect(renamed.action.tags).toEqual(['Garden'])
+    const replaced = await w.service.update({ actionId: action.id, action: { tags: ['Yard'] } })
+    expect(replaced.action.tags).toEqual(['Yard'])
+    const cleared = await w.service.update({ actionId: action.id, action: { tags: [] } })
+    expect(cleared.action.tags ?? []).toEqual([])
+  })
+
   it('emits onRunChanged when a run starts and when it ends', async () => {
     const w = await world()
     const { action } = await w.service.create({

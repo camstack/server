@@ -161,7 +161,13 @@ export class SchedulersService implements ISchedulersProvider {
     scheduler: SchedulerInput
   }): Promise<{ scheduler: Scheduler }> {
     const prepared = await this.prepare(input.scheduler)
-    const scheduler = await this.deps.store.update(input.schedulerId, prepared)
+    // Omitted = keep, [] = clear (D1054): an editor that does not send tags must not wipe them.
+    const existing = await this.deps.store.get(input.schedulerId)
+    const tags = prepared.tags ?? existing?.tags
+    const scheduler = await this.deps.store.update(
+      input.schedulerId,
+      tags === undefined ? prepared : { ...prepared, tags },
+    )
     this.deps.logger.info('scheduler updated', {
       meta: { schedulerId: scheduler.id },
     })

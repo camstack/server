@@ -698,6 +698,8 @@ export class ActionsService implements IActionsProvider {
       ...((patch.minDelaySec ?? existing.minDelaySec) === undefined
         ? {}
         : { minDelaySec: patch.minDelaySec ?? existing.minDelaySec }),
+      // Omitted = keep, [] = clear (D1054): an edit that does not mention tags must not wipe them.
+      ...((patch.tags ?? existing.tags) === undefined ? {} : { tags: patch.tags ?? existing.tags }),
     })
     this.logger.info('internal action updated', {
       meta: { actionId: action.id },

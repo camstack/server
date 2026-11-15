@@ -130,6 +130,27 @@ describe('schedulers service', () => {
     expect(w.logs.lines.some((l) => l.extras?.tags?.['deviceId'] === 1)).toBe(true)
   })
 
+  it('update: an edit without tags keeps them, tags replace, [] clears', async () => {
+    const { svc } = await service()
+    const base = holdScheduler(true, 0)
+    const { scheduler } = await svc.create({ scheduler: { ...base, tags: ['Garden'] } })
+    const kept = await svc.update({
+      schedulerId: scheduler.id,
+      scheduler: { ...base, name: 'Renamed' },
+    })
+    expect(kept.scheduler.tags).toEqual(['Garden'])
+    const replaced = await svc.update({
+      schedulerId: scheduler.id,
+      scheduler: { ...base, tags: ['Yard'] },
+    })
+    expect(replaced.scheduler.tags).toEqual(['Yard'])
+    const cleared = await svc.update({
+      schedulerId: scheduler.id,
+      scheduler: { ...base, tags: [] },
+    })
+    expect(cleared.scheduler.tags ?? []).toEqual([])
+  })
+
   it('previews the resolved day timeline', async () => {
     const { svc } = await service()
     const { scheduler } = await svc.create({

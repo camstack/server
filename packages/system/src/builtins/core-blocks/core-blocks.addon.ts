@@ -43,6 +43,7 @@ import {
   type IScopedLogger,
   normalizeCoreBlockWrite,
   type ProviderRegistration,
+  type RecordsAccess,
   heroLayoutCapability,
   remoteCapability,
   fanPresetsCapability,
@@ -291,7 +292,7 @@ export class CoreBlocksAddon extends BaseAddon {
       },
       { capability: actionsCapability, provider: this.requireActions().service },
       { capability: schedulersCapability, provider: schedulers.service },
-      { capability: tagsCapability, provider: this.buildTags() },
+      ...this.tagsRegistrations(),
       { capability: powerSourceCapability, provider: this.buildPowerSource() },
       { capability: timedRunCapability, provider: timedRun },
       // The built-in palette needs no store: it is served even when the remote is not.
@@ -303,9 +304,16 @@ export class CoreBlocksAddon extends BaseAddon {
   }
 
   /** The tag styles and the one rename / remove that rewrites every owner (D1054). */
-  private buildTags(): TagsService {
+  private tagsRegistrations(): ProviderRegistration[] {
     const records = this.ctx.records
-    if (records === undefined) throw new Error('core-blocks needs ctx.records on the hub')
+    if (records === undefined) {
+      this.ctx.logger.warn('tags: no ctx.records on this node — the tags cap is not registered')
+      return []
+    }
+    return [{ capability: tagsCapability, provider: this.buildTags(records) }]
+  }
+
+  private buildTags(records: RecordsAccess): TagsService {
     return buildTagsService({
       records,
       blocks: () => this.requireStore(),

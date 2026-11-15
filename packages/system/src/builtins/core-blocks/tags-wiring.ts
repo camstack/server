@@ -31,7 +31,7 @@ function coreBlocksPort(blocks: () => CoreBlockStore): TagOwnerPort {
         .list()
         .map((b) => ({ id: b.id, tags: b.tags ?? [] })),
     setTags: async (id, tags) => {
-      await blocks().update(id, { tags })
+      await blocks().setTags(id, tags)
     },
   }
 }

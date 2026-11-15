@@ -20,6 +20,8 @@ import {
   type TagUsageCounts,
   removeFromTags,
   renameInTags,
+  TAGS_PER_RECORD_MAX,
+  TagNameSchema,
   tagKey,
 } from '@camstack/types'
 import type { TagStyleRowBody } from './record-kinds.js'
@@ -65,9 +67,13 @@ const NO_UPDATES: TagUsageCounts = {
 }
 
 function requireName(value: string, what: string): string {
-  const name = value.trim()
-  if (name.length === 0) throw new Error(`[tags] ${what} must not be empty`)
-  return name
+  const parsed = TagNameSchema.safeParse(value)
+  if (!parsed.success) {
+    throw new Error(
+      `[tags] ${what} is not a valid tag name: ${parsed.error.issues[0]?.message ?? 'invalid'}`,
+    )
+  }
+  return parsed.data
 }
 
 export class TagsService implements ITagsProvider {
@@ -158,32 +164,40 @@ export class TagsService implements ITagsProvider {
   ): Promise<TagUsageCounts> {
     const updated = { ...NO_UPDATES }
     const failed: string[] = []
+    // Plan every write first: a record pushed past the cap refuses the whole call
+    // before anything is written, so the fleet never ends up half renamed.
+    const plan: { kind: TagOwnerKind; id: string; next: string[] }[] = []
     for (const kind of OWNER_KINDS) {
-      const port = this.deps.owners[kind]
-      for (const record of await port.list()) {
+      for (const record of await this.deps.owners[kind].list()) {
         const next = change(record.tags)
         if (next === null) continue
-        try {
-          await port.setTags(record.id, next)
-          updated[kind] += 1
-        } catch (err) {
-          failed.push(`${kind}:${record.id}`)
-          const deviceId = kind === 'devices' ? Number(record.id) : undefined
-          this.deps.logger.error(
-            'tag rewrite failed for one record — the rest were still attempted',
-            {
-              ...(deviceId === undefined || !Number.isFinite(deviceId)
-                ? {}
-                : { tags: { deviceId } }),
-              meta: {
-                tag,
-                kind,
-                recordId: record.id,
-                error: err instanceof Error ? err.message : String(err),
-              },
-            },
+        if (next.length > TAGS_PER_RECORD_MAX) {
+          throw new Error(
+            `[tags] "${tag}" cannot be applied: ${kind}:${record.id} would carry ${next.length} tags (max ${TAGS_PER_RECORD_MAX}); nothing was written`,
           )
         }
+        plan.push({ kind, id: record.id, next })
+      }
+    }
+    for (const { kind, id, next } of plan) {
+      try {
+        await this.deps.owners[kind].setTags(id, next)
+        updated[kind] += 1
+      } catch (err) {
+        failed.push(`${kind}:${id}`)
+        const deviceId = kind === 'devices' ? Number(id) : undefined
+        this.deps.logger.error(
+          'tag rewrite failed for one record — the rest were still attempted',
+          {
+            ...(deviceId === undefined || !Number.isFinite(deviceId) ? {} : { tags: { deviceId } }),
+            meta: {
+              tag,
+              kind,
+              recordId: id,
+              error: err instanceof Error ? err.message : String(err),
+            },
+          },
+        )
       }
     }
     if (failed.length > 0) {

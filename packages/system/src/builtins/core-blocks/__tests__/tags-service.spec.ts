@@ -215,6 +215,31 @@ describe('rename', () => {
     ])
   })
 
+  it('a rename leaves a core block updatedAt alone', async () => {
+    const before = w.blocks.get('blk-1')?.updatedAt
+    expect(before).toBeDefined()
+    await w.tags.rename({ from: 'Garden', to: 'Yard' })
+    expect(w.blocks.get('blk-1')?.updatedAt).toBe(before)
+  })
+
+  it('a 41-character target is refused and nothing is written', async () => {
+    await expect(w.tags.rename({ from: 'Garden', to: 'x'.repeat(41) })).rejects.toThrow(
+      /not a valid tag name/,
+    )
+    expect(w.blocks.get('blk-1')?.tags).toEqual(['Garden', 'Solo'])
+    expect(w.devices[0]?.tags).toEqual(['Garden'])
+  })
+
+  it('a rename that would leave a record past the per-record cap refuses before any write', async () => {
+    const crowded = Array.from({ length: 20 }, (_, i) => `t${i}`)
+    w.devices.push({ id: 44, tags: ['Garden', ...crowded], mark: 'crowded' })
+    await expect(w.tags.rename({ from: 'Garden', to: 'Yard' })).rejects.toThrow(
+      /nothing was written/,
+    )
+    expect(w.blocks.get('blk-1')?.tags).toEqual(['Garden', 'Solo'])
+    expect(w.devices[0]?.tags).toEqual(['Garden'])
+  })
+
   it('a rename does not reset a scheduler timeline', async () => {
     await w.schedulers.setProcessedUntil('sch-1', 123)
     await w.tags.rename({ from: 'Garden', to: 'Yard' })
@@ -237,7 +262,9 @@ describe('rename', () => {
   })
 
   it('an empty target throws before anything is written', async () => {
-    await expect(w.tags.rename({ from: 'Garden', to: '   ' })).rejects.toThrow(/must not be empty/)
+    await expect(w.tags.rename({ from: 'Garden', to: '   ' })).rejects.toThrow(
+      /not a valid tag name/,
+    )
     expect(w.blocks.get('blk-1')?.tags).toEqual(['Garden', 'Solo'])
     expect(w.devices[0]?.tags).toEqual(['Garden'])
   })
