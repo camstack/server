@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.579] - 2026-11-15
+
 ### Changed
 
 - Session-lost alerts link to the integration's real page (/integrations/<addon>?instance=<id>) through the new shared integrationPageHref, and can be raised as critical
