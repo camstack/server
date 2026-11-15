@@ -18,6 +18,7 @@
 
 import type { Alert, AlertSeverity } from '../capabilities/alerts.cap.js'
 import type { IScopedLogger } from '../interfaces/logging.js'
+import { integrationPageHref } from './integration-page.js'
 
 /** Why the session ended. `kicked` = the same account signed in elsewhere. */
 export type SessionLossReason =
@@ -67,6 +68,12 @@ export interface BuildSessionLostAlertInput {
   readonly integrationId: string
   readonly integrationName: string
   readonly reason: SessionLossReason
+  /**
+   * The addon that provides the integration: the default action opens its page on this
+   * instance. Without it the default action opens the integrations list (an instance id is
+   * never an addon id).
+   */
+  readonly addonId?: string
   /** Defaults to "Open integration" (the admin integration page). */
   readonly action?: SessionAlertAction
   readonly severity?: AlertSeverity
@@ -84,7 +91,10 @@ export function buildSessionLostAlert(input: BuildSessionLostAlertInput): Alert 
     message: `${input.integrationName} lost its ${input.providerName} session: ${REASON_TEXT[input.reason]}.`,
     action: input.action ?? {
       label: 'Open integration',
-      href: `/integrations/${encodeURIComponent(input.integrationId)}`,
+      href:
+        input.addonId !== undefined
+          ? integrationPageHref(input.addonId, input.integrationId)
+          : '/integrations',
     },
     status: 'active',
     read: false,
@@ -102,6 +112,10 @@ export interface SessionHealthTrackerOptions {
   /** Read lazily: `ctx.api.alerts` may be absent early in boot. */
   readonly getAlerts: () => SessionHealthAlertsPort | undefined
   readonly debounceMs?: number
+  /** The providing addon, for the default "Open integration" action. */
+  readonly addonId?: string
+  /** Defaults to `error`. A session that only a person can restore is `critical`. */
+  readonly severity?: AlertSeverity
 }
 
 export interface SessionLostInfo {
@@ -242,6 +256,8 @@ export class SessionHealthTracker {
           integrationId,
           integrationName: entry.info.integrationName,
           reason: entry.info.reason,
+          ...(this.#opts.addonId !== undefined ? { addonId: this.#opts.addonId } : {}),
+          ...(this.#opts.severity !== undefined ? { severity: this.#opts.severity } : {}),
           ...(entry.info.action !== undefined ? { action: entry.info.action } : {}),
         }),
       )

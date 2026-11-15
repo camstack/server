@@ -3429,6 +3429,12 @@
           "doc": "Callback to clear a probe result when a field value changes"
         },
         {
+          "name": "onAction",
+          "type": "FieldActionFn",
+          "optional": true,
+          "doc": "A field's action (an account sign-in's begin / complete / sign out, an inline icon action): the host routes it to the owning addon. A field "
+        },
+        {
           "name": "bare",
           "type": "boolean",
           "optional": true,

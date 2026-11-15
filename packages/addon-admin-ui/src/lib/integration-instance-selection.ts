@@ -3,10 +3,12 @@
  * page (`/integrations/<addonId>?instance=<integrationId>`) and the rule that
  * reads it. The one place that builds the URL.
  *
- * Pure: no router, no React.
+ * Pure: no router, no React. The address itself is `integrationPageHref` in `@camstack/types`,
+ * shared with the addons that link to their own page (an alert action).
  */
+import { INTEGRATION_INSTANCE_PARAM, integrationPageHref } from '@camstack/types'
 
-export const INSTANCE_PARAM = 'instance'
+export const INSTANCE_PARAM = INTEGRATION_INSTANCE_PARAM
 
 export interface InstanceRef {
   readonly id: string
@@ -28,8 +30,5 @@ export function resolveSelectedInstanceId(
 
 /** `/integrations/<addonId>` with the instance named when one is given. */
 export function integrationDetailUrl(addonId: string, instanceId?: string): string {
-  const base = `/integrations/${encodeURIComponent(addonId)}`
-  return instanceId === undefined || instanceId.length === 0
-    ? base
-    : `${base}?${INSTANCE_PARAM}=${encodeURIComponent(instanceId)}`
+  return integrationPageHref(addonId, instanceId)
 }

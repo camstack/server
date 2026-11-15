@@ -231,7 +231,7 @@ export {
   variantLabel,
 } from './cap-settings/scene-monitor-copy'
 export * from './code-block'
-export type { TranslationFn } from './config-form-builder'
+export type { FieldActionFn, TranslationFn } from './config-form-builder'
 // --- Config Form Builder (ConfigUISchema renderer) ---
 export { ConfigFormBuilder } from './config-form-builder'
 export type { ProbeState } from './config-form-field'

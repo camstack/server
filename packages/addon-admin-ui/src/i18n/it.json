@@ -7405,7 +7405,8 @@
       "signedInCount": "Accesso effettuato come {{account}} · {{detail}}",
       "working": "Operazione in corso…",
       "yourAccount": "il tuo account",
-      "pasteHint": "Incolla l'indirizzo su cui si è fermato il browser, o solo il suo codice."
+      "pasteHint": "Incolla l'indirizzo su cui si è fermato il browser, o solo il suo codice.",
+      "unavailable": "Accesso non disponibile qui: questo modulo non raggiunge l'integrazione."
     },
     "runningBadge": {
       "running": "In funzione",

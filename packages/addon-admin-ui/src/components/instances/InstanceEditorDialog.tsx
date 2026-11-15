@@ -21,6 +21,7 @@ import {
 import {
   Button,
   ConfigFormBuilder,
+  type FieldActionFn,
   ItemFormDialog,
   pickedValues,
   useSystem,
@@ -95,6 +96,19 @@ export interface InstanceEditorDialogProps {
 
 const NO_VALUES: Readonly<Record<string, unknown>> = {}
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * A field action's input for the providing addon: what the field sent, plus the instance it acts
+ * on when the record exists (an account sign-in stores its tokens there, a sign out clears them).
+ */
+function instanceActionInput(params: unknown, instanceId: string | null): Record<string, unknown> {
+  const base = isRecord(params) ? params : {}
+  return instanceId === null ? { ...base } : { ...base, integrationId: instanceId }
+}
+
 export function InstanceEditorDialog({
   addonId,
   providerName,
@@ -111,6 +125,18 @@ export function InstanceEditorDialog({
   const system = useSystem()
   const queryClient = useQueryClient()
   const instanceId = instance?.id ?? null
+  // A field action (an account sign-in) reaches the providing addon through `addons.custom`,
+  // like the wizard's form.
+  const onFieldAction: FieldActionFn = async (action, _key, params) => {
+    const result = await system.trpcClient.addons.custom.mutate({
+      addonId,
+      action,
+      input: instanceActionInput(params, instanceId),
+    })
+    // A sign-in or sign-out on an existing record changed it on the hub: refresh the table.
+    if (instanceId !== null) void queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
+    return result
+  }
 
   const kinds = description.kinds ?? []
   // A provider with several kinds (storage: one per place) is not what the operator is adding:
@@ -542,6 +568,7 @@ export function InstanceEditorDialog({
               schema={withoutFields(hydrated, widgetOwnedKeys)}
               values={values}
               onChange={setValues}
+              onAction={onFieldAction}
             />
             {connectionWidgets.map(({ id, widget: { Component } }) => (
               <Component key={id} schema={hydrated} values={values} onValuesChange={setValues} />

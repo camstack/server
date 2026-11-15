@@ -155,15 +155,16 @@ describe('HomeCom sign-in alert', () => {
         update: { mutate: async (u) => void updates.push(u) },
       }),
       nameOf: () => 'Home',
+      addonId: 'bosch-homecom',
       debounceMs: 0,
     })
     alert.authFailed('int-1')
     alert.authFailed('int-1')
     await vi.waitFor(() => expect(emitted).toHaveLength(1))
-    expect(emitted[0]?.severity).not.toBe('info')
+    expect(emitted[0]?.severity).toBe('critical')
     expect(emitted[0]?.action).toEqual({
       label: 'Sign in again',
-      href: '/integrations/int-1',
+      href: '/integrations/bosch-homecom?instance=int-1',
       navigation: 'app',
     })
     expect(JSON.stringify(emitted[0])).not.toMatch(/refresh-\d|access-\d/)

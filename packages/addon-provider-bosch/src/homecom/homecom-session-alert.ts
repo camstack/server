@@ -1,4 +1,5 @@
 import {
+  integrationPageHref,
   SessionHealthTracker,
   type IScopedLogger,
   type SessionHealthAlertsPort,
@@ -9,6 +10,8 @@ export interface HomeComSessionAlertDeps {
   /** Read lazily: `ctx.api.alerts` may be absent early in boot. */
   readonly getAlerts: () => SessionHealthAlertsPort | undefined
   readonly nameOf: (integrationId: string) => string
+  /** The providing addon: "Sign in again" opens its integration page on the instance. */
+  readonly addonId: string
   /** Tests pass 0; the cloud refusing the sign-in is definitive, so production does too. */
   readonly debounceMs?: number
 }
@@ -30,6 +33,9 @@ export function createHomeComSessionAlert(deps: HomeComSessionAlertDeps): HomeCo
     logger: deps.logger,
     getAlerts: deps.getAlerts,
     debounceMs: deps.debounceMs ?? 0,
+    addonId: deps.addonId,
+    // Nothing comes back until a person signs in again.
+    severity: 'critical',
   })
   return {
     authFailed: (integrationId) =>
@@ -38,7 +44,7 @@ export function createHomeComSessionAlert(deps: HomeComSessionAlertDeps): HomeCo
         reason: 'token-expired',
         action: {
           label: 'Sign in again',
-          href: `/integrations/${encodeURIComponent(integrationId)}`,
+          href: integrationPageHref(deps.addonId, integrationId),
           navigation: 'app',
         },
       }),

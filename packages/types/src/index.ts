@@ -90,6 +90,7 @@ export type {
   SessionLossReason,
   SessionLostInfo,
 } from './addon/session-health.js'
+export { INTEGRATION_INSTANCE_PARAM, integrationPageHref } from './addon/integration-page.js'
 export {
   buildSessionLostAlert,
   DEFAULT_SESSION_LOST_DEBOUNCE_MS,

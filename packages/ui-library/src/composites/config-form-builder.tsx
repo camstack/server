@@ -10,6 +10,12 @@ import type { ProbeState } from './config-form-field'
 
 export type TranslationFn = (key: string) => string
 
+/** A field's action, routed by the host: `(action, fieldKey, input)` -> the action's result. */
+export type FieldActionFn = (action: string, key: string, value?: unknown) => Promise<unknown>
+
+/** Several form keys at once (a sign-in result written back into the form). */
+type ChangeManyFn = (patch: Record<string, unknown>) => void
+
 function isI18nKey(value: string): boolean {
   return /^[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)+$/.test(value)
 }
@@ -35,6 +41,11 @@ interface FormBuilderProps {
   probeResults?: Record<string, ProbeState>
   /** Callback to clear a probe result when a field value changes */
   onClearProbe?: (key: string) => void
+  /**
+   * A field's action (an account sign-in's begin / complete / sign out, an inline icon action):
+   * the host routes it to the owning addon. A field that needs it and has none is disabled.
+   */
+  onAction?: FieldActionFn
   /**
    * Fields only — no section border, title or description. For a parent that
    * already frames the form (or wants a single field with no chrome).
@@ -96,6 +107,8 @@ function SectionCard({
   translationFn,
   onTestField,
   probeResults,
+  onAction,
+  onChangeMany,
 }: {
   section: ConfigSection
   /** Every field of the form: a `showWhen` may name a field of another section. */
@@ -106,6 +119,8 @@ function SectionCard({
   translationFn?: TranslationFn
   onTestField?: (key: string, value: unknown) => Promise<FieldProbeResult>
   probeResults?: Record<string, ProbeState>
+  onAction?: FieldActionFn
+  onChangeMany: ChangeManyFn
 }) {
   const [collapsed, setCollapsed] = useState(section.defaultCollapsed ?? false)
   const isAccordion = section.style === 'accordion'
@@ -164,6 +179,8 @@ function SectionCard({
               translationFn={translationFn}
               onTestField={onTestField}
               externalProbe={probeResults?.[field.key]}
+              onAction={onAction}
+              onChangeMany={onChangeMany}
             />
           ))}
         </div>
@@ -185,11 +202,16 @@ export function ConfigFormBuilder({
   onTestField,
   probeResults,
   onClearProbe,
+  onAction,
   bare = false,
 }: FormBuilderProps): JSX.Element {
   const handleFieldChange = (key: string, value: unknown) => {
     onChange({ ...values, [key]: value })
     onClearProbe?.(key)
+  }
+  const handleChangeMany: ChangeManyFn = (patch) => {
+    onChange({ ...values, ...patch })
+    for (const key of Object.keys(patch)) onClearProbe?.(key)
   }
 
   const allFields = schema.sections.flatMap((section) => section.fields)
@@ -214,6 +236,8 @@ export function ConfigFormBuilder({
                   translationFn={translationFn}
                   onTestField={onTestField}
                   externalProbe={probeResults?.[field.key]}
+                  onAction={onAction}
+                  onChangeMany={handleChangeMany}
                 />
               ))}
             </div>
@@ -236,6 +260,8 @@ export function ConfigFormBuilder({
           translationFn={translationFn}
           onTestField={onTestField}
           probeResults={probeResults}
+          onAction={onAction}
+          onChangeMany={handleChangeMany}
         />
       ))}
     </div>

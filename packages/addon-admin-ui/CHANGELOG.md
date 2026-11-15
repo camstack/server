@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Integration editor: the account sign-in buttons (Sign in again, Sign out) now reach the integration for an existing instance
+
 ## [1.2.682] - 2026-11-15
 
 ### Changed

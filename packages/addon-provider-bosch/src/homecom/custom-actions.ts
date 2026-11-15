@@ -61,6 +61,8 @@ export const homeComActions = defineCustomActions({
     z.object({
       attemptId: z.string().min(1),
       callback: z.string().min(1),
+      /** An existing instance: the new sign-in is stored on it and applied at once. */
+      integrationId: z.string().min(1).optional(),
     }),
     z.object({
       token: z.string().min(1).meta({ secret: true }),
@@ -77,7 +79,8 @@ export const homeComActions = defineCustomActions({
     { kind: 'mutation', auth: 'admin' },
   ),
   signOut: customAction(
-    z.object({}),
+    /** An existing instance: its stored sign-in is cleared and its connection stopped. */
+    z.object({ integrationId: z.string().min(1).optional() }),
     z.object({ signedOut: z.literal(true), summary: z.string() }),
     { kind: 'mutation', auth: 'admin' },
   ),

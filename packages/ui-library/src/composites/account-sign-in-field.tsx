@@ -112,6 +112,9 @@ export function AccountSignInField({
     (field.countKey !== undefined ? countFromValue(values[field.countKey]) : null) ??
     (field.countFromKey !== undefined ? countFromValue(values[field.countFromKey]) : null)
   const showPaste = phase === 'pasting' || (!signedIn && attemptId !== null)
+  // Without a handler the buttons could only do nothing: disabled, and the reason is shown.
+  const unavailable = onAction === undefined
+  const locked = disabled === true || working || unavailable
 
   const applyResult = (result: Record<string, unknown>): void => {
     const patch: Record<string, unknown> = {}
@@ -250,7 +253,7 @@ export function AccountSignInField({
               }))}
               value={selectedChoice(values[field.choiceKey])}
               onChange={(event) => pick(event.target.value)}
-              disabled={disabled || working}
+              disabled={disabled === true || working}
             />
           )}
           <div className="flex flex-wrap gap-2">
@@ -258,7 +261,7 @@ export function AccountSignInField({
               type="button"
               variant="outline"
               size="sm"
-              disabled={disabled || working}
+              disabled={locked}
               onClick={() => void begin()}
             >
               {t('uiLibrary.accountSignIn.again', 'Sign in again')}
@@ -267,7 +270,7 @@ export function AccountSignInField({
               type="button"
               variant="ghost"
               size="sm"
-              disabled={disabled || working}
+              disabled={locked}
               onClick={() => void signOut()}
             >
               {t('uiLibrary.accountSignIn.signOut', 'Sign out')}
@@ -279,7 +282,7 @@ export function AccountSignInField({
           type="button"
           variant="primary"
           size="sm"
-          disabled={disabled || working}
+          disabled={locked}
           onClick={() => void begin()}
         >
           {working && phase !== 'pasting'
@@ -312,7 +315,7 @@ export function AccountSignInField({
             aria-label={t('uiLibrary.accountSignIn.paste', 'Redirect address or code')}
             placeholder={field.pastePlaceholder}
             value={paste}
-            disabled={disabled || working}
+            disabled={locked}
             onChange={(event) => {
               const next = event.target.value
               setPaste(next)
@@ -320,6 +323,14 @@ export function AccountSignInField({
             }}
           />
         </div>
+      )}
+      {unavailable && (
+        <p className="text-[11px] text-foreground-muted">
+          {t(
+            'uiLibrary.accountSignIn.unavailable',
+            'Sign-in is not available here: this form cannot reach the integration.',
+          )}
+        </p>
       )}
       {error !== null && <p className="text-[11px] text-danger">{error}</p>}
     </div>

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- HomeCom: the sign-in-lost alert is critical and opens the integration's own page; Sign out really clears the stored tokens and stops the connection (devices go offline, nothing is deleted); signing in again on an existing integration reconnects at once
+
 ## [0.1.55] - 2026-11-15
 
 ### Fixed

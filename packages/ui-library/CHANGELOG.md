@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Account sign-in field: the form passes its action handler, so Sign in again / Sign out work when editing an existing integration; with no handler the buttons are disabled and say why
+
 ## [1.2.456] - 2026-11-15
 
 ### Changed

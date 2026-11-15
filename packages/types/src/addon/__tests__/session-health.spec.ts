@@ -91,7 +91,7 @@ describe('SessionHealthTracker', () => {
     expect(alert?.title).toContain('PetKit')
     expect(alert?.message).toContain('Home')
     expect(alert?.message).toContain('signed in on another device')
-    expect(alert?.action).toEqual({ label: 'Open integration', href: '/integrations/int-1' })
+    expect(alert?.action).toEqual({ label: 'Open integration', href: '/integrations' })
     expect(alert?.status).toBe('active')
   })
 

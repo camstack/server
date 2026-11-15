@@ -18,6 +18,8 @@ import {
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { homeComActions } from './custom-actions.js'
+import { signOutHomeComInstance, storeHomeComSignIn } from './homecom-account.js'
+import { reconcileHomeComIntegrations } from './homecom-reconcile.js'
 import { createHomeComSessionAlert, type HomeComSessionAlert } from './homecom-session-alert.js'
 import { createHomeComExploreAction, homeComExploreDeps } from './homecom-explore-action.js'
 import {
@@ -100,6 +102,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
       logger: this.ctx.logger,
       getAlerts: () => this.ctx.api.alerts,
       nameOf: (id) => this.integrationNames.get(id) ?? id,
+      addonId: this.addonId,
     })
     this.sessionAlert = sessionAlert
     this.clients = new HomeComClientRegistry(this.ctx.logger, {
@@ -142,19 +145,40 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
           ...publishHomeComSignIn(homeComSignInAttempts, Date.now()),
           summary: 'Open the sign-in page, sign in, then paste the address the browser stops on.',
         }),
-        finishSignIn: async (input) =>
-          finishHomeComSignIn(
+        finishSignIn: async (input) => {
+          const finished = await finishHomeComSignIn(
             {
               attemptId: input.attemptId,
               callback: input.callback,
               nowMs: Date.now(),
             },
             homeComSignInAttempts,
-          ),
-        signOut: async () => ({
-          signedOut: true as const,
-          summary: 'Signed out.',
-        }),
+          )
+          const integrationId = input.integrationId
+          if (integrationId !== undefined) {
+            await this.storeSignIn(integrationId, () =>
+              storeHomeComSignIn(integrationId, finished, built.instances),
+            )
+          }
+          return finished
+        },
+        signOut: async (input) => {
+          const integrationId = input.integrationId
+          if (integrationId === undefined) {
+            // A form that has no record yet: nothing is stored, the form clears its own fields.
+            return { signedOut: true as const, summary: 'Signed out.' }
+          }
+          await this.storeSignIn(integrationId, () =>
+            signOutHomeComInstance(integrationId, built.instances),
+          )
+          this.ctx.logger.info('HomeCom signed out — stored sign-in cleared', {
+            tags: { integrationId },
+          })
+          return {
+            signedOut: true as const,
+            summary: 'Signed out. The devices stay offline until you sign in again.',
+          }
+        },
         exploreResources: explore,
       },
     }
@@ -212,53 +236,52 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
     return homeComStableId(integrationId, nativeId)
   }
 
+  /** Write a sign-in change on an instance that exists; a missing one is refused by name. */
+  private async storeSignIn(integrationId: string, write: () => Promise<void>): Promise<void> {
+    const stored = await homeComStoredOf(this.requireInstances().instances, integrationId)
+    if (stored === null) {
+      throw new Error(`HomeCom integration ${integrationId} does not exist`)
+    }
+    await write()
+  }
+
   private async reconcileIntegrations(): Promise<void> {
     const reg = this.requireClients()
     try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const surviving = new Set<string>()
-      for (const integration of mine) {
-        try {
-          const connection = await homeComConnectionOf(
-            this.requireInstances().instances,
-            integration.id,
-          )
-          if (!connection) continue
-          this.integrationNames.set(integration.id, integration.name)
-          await reg.upsert(integration.id, integration.name, connection)
-          surviving.add(integration.id)
-        } catch (err) {
-          this.ctx.logger.warn('HomeCom reconcile failed for integration', {
-            meta: { integrationId: integration.id, error: errMsg(err) },
-          })
-        }
-      }
-      const vanished = reg.list().filter((id) => !surviving.has(id))
-      await reg.retain(surviving)
-      for (const integrationId of vanished) {
-        this.integrationNames.delete(integrationId)
-        void this.sessionAlert?.removed(integrationId)
-      }
-      const deviceReg = this.ctx.kernel.deviceRegistry
-      const deviceApi = this.ctx.kernel.devices
-      if (deviceReg && deviceApi) {
-        for (const integrationId of vanished) {
-          await cascadeRemoveDevicesForIntegration({
-            reg: deviceReg,
-            devices: deviceApi,
-            addonId: this.addonId,
-            system: 'homecom',
-            integrationId,
-            logger: this.ctx.logger,
-          })
-        }
-      }
+      await reconcileHomeComIntegrations({
+        listEnabled: async () => {
+          const all = await this.ctx.api.integrations.list.query()
+          return all.filter((i) => i.addonId === this.ctx.id && i.enabled)
+        },
+        connectionOf: (id) => homeComConnectionOf(this.requireInstances().instances, id),
+        registry: reg,
+        onNamed: (id, name) => this.integrationNames.set(id, name),
+        onSignedOut: (id) => this.setIntegrationDevicesOnline(id, false),
+        onVanished: (id) => this.dropIntegration(id),
+        logger: this.ctx.logger,
+      })
     } catch (err) {
       this.ctx.logger.warn('HomeCom integration reconcile failed', {
         meta: { error: errMsg(err) },
       })
     }
+  }
+
+  /** The integration is gone: its alert and its devices go with it. */
+  private async dropIntegration(integrationId: string): Promise<void> {
+    this.integrationNames.delete(integrationId)
+    void this.sessionAlert?.removed(integrationId)
+    const deviceReg = this.ctx.kernel.deviceRegistry
+    const deviceApi = this.ctx.kernel.devices
+    if (!deviceReg || !deviceApi) return
+    await cascadeRemoveDevicesForIntegration({
+      reg: deviceReg,
+      devices: deviceApi,
+      addonId: this.addonId,
+      system: 'homecom',
+      integrationId,
+      logger: this.ctx.logger,
+    })
   }
 
   private subscribeIntegrationLifecycle(): void {

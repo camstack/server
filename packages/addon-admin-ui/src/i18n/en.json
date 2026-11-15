@@ -7383,7 +7383,8 @@
       "signedInCount": "Signed in as {{account}} · {{detail}}",
       "working": "Working…",
       "yourAccount": "your account",
-      "pasteHint": "Paste the address the browser stopped on, or only its code."
+      "pasteHint": "Paste the address the browser stopped on, or only its code.",
+      "unavailable": "Sign-in is not available here: this form cannot reach the integration."
     },
     "runningBadge": {
       "running": "Running",
