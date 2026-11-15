@@ -64,7 +64,10 @@ describe('UnsupportedAddonTracker', () => {
       EventCategory.AddonUnsupportedVersion,
       EventCategory.AddonUnsupportedResolved,
     ])
-    expect(events[1]?.data).toMatchObject({ packageName: '@camstack/addon-ml', nodeId: 'hub' })
+    expect(events[1]?.data).toMatchObject({
+      packageName: '@camstack/addon-ml',
+      nodeId: 'hub',
+    })
   })
 
   it('resolves a package that is absent from the full installed set, and only then', () => {
@@ -97,7 +100,9 @@ describe('UnsupportedAddonTracker', () => {
     const { tracker, events } = harness()
     tracker.observe([OLD.packageName], [OLD])
     tracker.observe(['@camstack/addon-other'], [])
-    expect(events.map((e) => e.category)).toEqual([EventCategory.AddonUnsupportedVersion])
+    expect(
+      events.filter((e) => e.data['packageName'] === OLD.packageName).map((e) => e.category),
+    ).toEqual([EventCategory.AddonUnsupportedVersion])
   })
 
   it('an update that is still below the minimum raises a new streak with the new installed version', () => {
@@ -112,7 +117,9 @@ describe('UnsupportedAddonTracker', () => {
     try {
       const events: Captured[] = []
       const tracker = new UnsupportedAddonTracker({
-        eventBus: { emit: (e) => void events.push({ category: e.category, data: e.data }) },
+        eventBus: {
+          emit: (e) => void events.push({ category: e.category, data: e.data }),
+        },
         nodeId: 'hub',
         log: () => undefined,
       })
@@ -133,5 +140,48 @@ describe('UnsupportedAddonTracker', () => {
     tracker.observe([OLD.packageName], [])
     tracker.stop()
     expect(events).toEqual([])
+  })
+
+  it('a fresh tracker (a restart) clears the card of a supported package it never raised, once', () => {
+    const { tracker, events } = harness()
+    tracker.observe([OLD.packageName], [])
+    tracker.observe([OLD.packageName], [])
+    expect(events.map((e) => e.category)).toEqual([EventCategory.AddonUnsupportedResolved])
+    expect(events[0]?.data).toMatchObject({
+      packageName: '@camstack/addon-ml',
+      nodeId: 'hub',
+    })
+  })
+
+  it('holds that clear through the settle window, then emits it once', () => {
+    vi.useFakeTimers()
+    try {
+      const events: Captured[] = []
+      const tracker = new UnsupportedAddonTracker({
+        eventBus: {
+          emit: (e) => void events.push({ category: e.category, data: e.data }),
+        },
+        nodeId: 'hub',
+        log: () => undefined,
+      })
+      tracker.observe([OLD.packageName], [])
+      expect(events).toEqual([])
+      vi.advanceTimersByTime(UNSUPPORTED_ADDON_SETTLE_MS)
+      expect(events.map((e) => e.category)).toEqual([EventCategory.AddonUnsupportedResolved])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('a package that becomes unsupported after being announced supported raises and resolves again', () => {
+    const { tracker, events } = harness()
+    tracker.observe([OLD.packageName], [])
+    tracker.observe([OLD.packageName], [OLD])
+    tracker.observe([OLD.packageName], [])
+    expect(events.map((e) => e.category)).toEqual([
+      EventCategory.AddonUnsupportedResolved,
+      EventCategory.AddonUnsupportedVersion,
+      EventCategory.AddonUnsupportedResolved,
+    ])
   })
 })

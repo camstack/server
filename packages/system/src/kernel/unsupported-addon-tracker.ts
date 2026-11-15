@@ -21,8 +21,12 @@ import { EventCategory } from '@camstack/types'
  *
  * One tracker per process; the verdict is re-judged on every spawn path, and
  * `observe` is idempotent; given the node's full installed set, a streak whose
- * package is no longer installed is resolved too. State is in memory: a restart raises a still-
- * unsupported addon once more, and AlertCenter upserts it under the same id.
+ * package is no longer installed is resolved too. State is in memory, so a restart
+ * forgets which alerts this tracker raised: a still-unsupported addon is raised once
+ * more (AlertCenter upserts it under the same id), and a package judged supported with
+ * no streak is announced as resolved ONCE per process (after the settle window), because
+ * the persisted card of the previous process may still be active and dismissing a
+ * missing card is a no-op.
  */
 export const UNSUPPORTED_ADDON_SETTLE_MS = 60_000
 
@@ -62,6 +66,10 @@ export class UnsupportedAddonTracker {
   private readonly startedAt: number
   private timer: NodeJS.Timeout | null = null
   private readonly logged = new Set<string>()
+  /** Supported packages whose `AddonUnsupportedResolved` is due once the settle window is over. */
+  private readonly pendingClear = new Set<string>()
+  /** Supported packages already announced as resolved in this process. */
+  private readonly announcedSupported = new Set<string>()
 
   constructor(private readonly options: UnsupportedAddonTrackerOptions) {
     this.settleMs = options.settleMs ?? UNSUPPORTED_ADDON_SETTLE_MS
@@ -115,13 +123,24 @@ export class UnsupportedAddonTracker {
       `[unsupported-addon] ${facts.addonId} (${facts.packageName}@${facts.installedVersion}) runs below what this server requires: ${facts.unmet.join('; ')}`,
     )
     this.streaks.set(facts.packageName, { facts, raised: false })
+    this.pendingClear.delete(facts.packageName)
+    this.announcedSupported.delete(facts.packageName)
   }
 
   private resolve(packageName: string): void {
     const streak = this.streaks.get(packageName)
-    if (streak === undefined) return
+    if (streak === undefined) {
+      // No streak in this process: a card from before a restart may still be active.
+      if (!this.announcedSupported.has(packageName)) this.pendingClear.add(packageName)
+      return
+    }
     this.streaks.delete(packageName)
-    if (!streak.raised) return
+    this.announcedSupported.add(packageName)
+    if (!streak.raised) {
+      this.pendingClear.add(packageName)
+      return
+    }
+    this.pendingClear.delete(packageName)
     this.options.log(
       `[unsupported-addon] ${streak.facts.addonId} (${packageName}) is supported again, alert cleared`,
     )
@@ -136,7 +155,7 @@ export class UnsupportedAddonTracker {
   private flush(): void {
     const remaining = this.startedAt + this.settleMs - this.now()
     if (remaining > 0) {
-      if (this.timer === null && this.streaks.size > 0) {
+      if (this.timer === null && (this.streaks.size > 0 || this.pendingClear.size > 0)) {
         this.timer = setTimeout(() => {
           this.timer = null
           this.flush()
@@ -144,6 +163,14 @@ export class UnsupportedAddonTracker {
         this.timer.unref()
       }
       return
+    }
+    for (const packageName of [...this.pendingClear]) {
+      this.pendingClear.delete(packageName)
+      this.announcedSupported.add(packageName)
+      this.emit(EventCategory.AddonUnsupportedResolved, {
+        packageName,
+        nodeId: this.options.nodeId,
+      })
     }
     for (const streak of this.streaks.values()) {
       if (streak.raised) continue
