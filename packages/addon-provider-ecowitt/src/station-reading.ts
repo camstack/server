@@ -227,6 +227,8 @@ export function stationSliceFromSensors(
         })
         continue
       }
+      // A sensor with no value yet must not shadow a lower-ranked one that has one.
+      if (stored.value === null) continue
       readings[field] = stored.value
       break
     }
@@ -263,8 +265,8 @@ export function stationSliceWithGatewayPressure(
   return {
     status: {
       ...result.status,
+      // lastFetchedAt stays the station's own clock: a gateway sample is not a station fetch.
       pressure: borrowed.status.pressure,
-      lastFetchedAt: Math.max(result.status.lastFetchedAt, borrowed.status.lastFetchedAt),
     },
     refused: [...result.refused, ...borrowed.refused],
   }

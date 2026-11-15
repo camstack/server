@@ -174,6 +174,28 @@ describe('the station borrows the gateway barometer', () => {
     expect(status.pressure).toBe(990)
   })
 
+  it('a relative barometer with no value falls through to the absolute one', () => {
+    const noRelative = [
+      sensor({ id: 'gateway:baromrelin', quantity: 'pressure', value: null, unit: 'hPa' }),
+      gateway[0],
+    ].filter((s) => s !== undefined)
+    expect(stationSliceWithGatewayPressure(outdoor, noRelative).status.pressure).toBe(990)
+  })
+
+  it('a station relative barometer with no value falls through to its absolute one', () => {
+    const own = [
+      sensor({ id: '8E:0x09', quantity: 'pressure', value: null, unit: 'hPa' }),
+      sensor({ id: '8E:0x08', quantity: 'pressure', value: 980, unit: 'hPa' }),
+    ]
+    expect(stationSliceFromSensors(own).status.pressure).toBe(980)
+  })
+
+  it('a borrowed gateway sample does not move the station clock', () => {
+    const stamped = gateway.map((g) => ({ ...g, lastUpdated: 9_999 }))
+    const own = [{ ...outdoor[0]!, lastUpdated: 100 }]
+    expect(stationSliceWithGatewayPressure(own, stamped).status.lastFetchedAt).toBe(100)
+  })
+
   it('the station own barometer wins', () => {
     const own = [
       ...outdoor,

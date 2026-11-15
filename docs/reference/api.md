@@ -5123,7 +5123,7 @@
 
 ### `weather-station` → `weatherStation.*`
 
-- **Source:** `packages/types/src/capabilities/weather-station.cap.ts:180`
+- **Source:** `packages/types/src/capabilities/weather-station.cap.ts:186`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `weather-station`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IWeatherStationProvider`

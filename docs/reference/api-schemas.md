@@ -7873,26 +7873,26 @@ Enum: `"cosine" \| "dot" \| "euclidean"`
 
 ### `WeatherStationStatusSchema`
 
-- `temperature`: `number \| null`
-- `humidity`: `number \| null`
-- `pressure`: `number \| null`
-- `windSpeed`: `number \| null`
-- `windGust`: `number \| null`
-- `windBearing`: `number \| null`
-- `rainRate`: `number \| null`
-- `rainDaily`: `number \| null`
-- `rainEvent`: `number \| null`
-- `uv`: `number \| null`
-- `solarRadiation`: `number \| null`
-- `dewPoint`: `number \| null`
-- `feelsLike`: `number \| null`
-- `vpd`: `number \| null`
-- `windGustMax`: `number \| null`
-- `windBearingAvg`: `number \| null`
-- `rain24h`: `number \| null`
-- `rainWeekly`: `number \| null`
-- `rainMonthly`: `number \| null`
-- `rainYearly`: `number \| null`
+- `temperature?`: `number \| null = null`
+- `humidity?`: `number \| null = null`
+- `pressure?`: `number \| null = null`
+- `windSpeed?`: `number \| null = null`
+- `windGust?`: `number \| null = null`
+- `windBearing?`: `number \| null = null`
+- `rainRate?`: `number \| null = null`
+- `rainDaily?`: `number \| null = null`
+- `rainEvent?`: `number \| null = null`
+- `uv?`: `number \| null = null`
+- `solarRadiation?`: `number \| null = null`
+- `dewPoint?`: `number \| null = null`
+- `feelsLike?`: `number \| null = null`
+- `vpd?`: `number \| null = null`
+- `windGustMax?`: `number \| null = null`
+- `windBearingAvg?`: `number \| null = null`
+- `rain24h?`: `number \| null = null`
+- `rainWeekly?`: `number \| null = null`
+- `rainMonthly?`: `number \| null = null`
+- `rainYearly?`: `number \| null = null`
 - `lastFetchedAt`: `number`
 
 ### `WeatherStatusSchema`

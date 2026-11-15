@@ -21,62 +21,74 @@ export const WeatherStationReadingsSchema = z.object({
   temperature: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('temperature', { precision: 1 })),
-  humidity: z.number().min(0).max(100).nullable().meta(readingMeta('humidity')),
-  pressure: z.number().nullable().meta(readingMeta('pressure')),
-  windSpeed: z.number().nullable().meta(readingMeta('speed')),
-  windGust: z.number().nullable().meta(readingMeta('speed')),
-  windBearing: z.number().nullable().meta(readingMeta('angle')),
+  humidity: z.number().min(0).max(100).nullable().default(null).meta(readingMeta('humidity')),
+  pressure: z.number().nullable().default(null).meta(readingMeta('pressure')),
+  windSpeed: z.number().nullable().default(null).meta(readingMeta('speed')),
+  windGust: z.number().nullable().default(null).meta(readingMeta('speed')),
+  windBearing: z.number().nullable().default(null).meta(readingMeta('angle')),
   rainRate: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('precipitation-rate', { precision: 1 })),
   rainDaily: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('precipitation', { precision: 1 })),
   rainEvent: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('precipitation', { precision: 1 })),
   uv: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('index', { precision: 1 })),
-  solarRadiation: z.number().nullable().meta(readingMeta('irradiance')),
+  solarRadiation: z.number().nullable().default(null).meta(readingMeta('irradiance')),
   dewPoint: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('temperature', { precision: 1 })),
   /** Apparent ("feels like") temperature. */
   feelsLike: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('temperature', { precision: 1 })),
   /** Vapour-pressure deficit, stored in kPa (the unit stations and growers read it in). */
   vpd: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('none', { precision: 2 })),
   /** Highest wind gust since local midnight. */
-  windGustMax: z.number().nullable().meta(readingMeta('speed')),
+  windGustMax: z.number().nullable().default(null).meta(readingMeta('speed')),
   /** Wind bearing averaged over the station's own window. */
-  windBearingAvg: z.number().nullable().meta(readingMeta('angle')),
+  windBearingAvg: z.number().nullable().default(null).meta(readingMeta('angle')),
   rain24h: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('precipitation', { precision: 1 })),
   rainWeekly: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('precipitation', { precision: 1 })),
   rainMonthly: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('precipitation', { precision: 1 })),
   rainYearly: z
     .number()
     .nullable()
+    .default(null)
     .meta(readingMeta('precipitation', { precision: 1 })),
 })
 
@@ -140,7 +152,9 @@ const STATION_FIELDS: readonly StationField[] =
  * (the running-state / climate-control mechanism, D984 / D990): a station that reports a
  * reading natively keeps it until the operator assigns another device to that ONE field,
  * and a device with no `weather-station` slice becomes one from the sources picked. On an
- * add, every other reading starts null (a missing sensor is never 0, D393).
+ * add, every other reading is absent from the claim and the schema defaults it to null
+ * (a missing sensor is never 0, D393) — the fan-control precedent, never a cross-field companion
+ * (the scalar merge treats a companion as owned by its target).
  */
 function stationTarget(field: StationField): ScalarCustomizeTarget {
   const unit = STATION_FIELD_UNITS[field]
@@ -158,15 +172,7 @@ function stationTarget(field: StationField): ScalarCustomizeTarget {
         transforms: [{ kind: 'identity' }],
       },
     ],
-    companions: [
-      ...STATION_FIELDS.filter((other) => other !== field).map((other) => ({
-        kind: 'constant' as const,
-        path: other,
-        value: null,
-        when: 'add' as const,
-      })),
-      { kind: 'clock', path: 'lastFetchedAt', when: 'always' },
-    ],
+    companions: [{ kind: 'clock', path: 'lastFetchedAt', when: 'add' }],
     sourceReport: { status: 'assignment-status' },
   }
 }
