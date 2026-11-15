@@ -3,7 +3,7 @@ import type { ReactElement } from 'react'
 import { type UiTextFn, useUiText } from '../../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../../contexts/unit-preferences'
 import { preferenceForQuantity, type UnitPreferences } from '../../../../lib/unit-preferences'
-import { type BottomRow, rowStats } from '../../shell/bottom-rows'
+import { type BottomRow, rowStats, rowTrend } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -24,6 +24,8 @@ export interface WeatherStationCardProps {
   readonly actions?: WeatherStationCardActions
   readonly orientation?: CardOrientation
   readonly showName?: boolean
+  /** The primary trend line, drawn under the readings. */
+  readonly trend?: ReactElement
 }
 
 const DASH = '—'
@@ -166,6 +168,7 @@ export function WeatherStationCard({
   actions,
   orientation = 'vertical',
   showName = true,
+  trend,
 }: WeatherStationCardProps): ReactElement {
   const t = useUiText()
   const preferences = useUnitPreferences()
@@ -190,7 +193,10 @@ export function WeatherStationCard({
             className={SCENE_DRAWING_CLASS}
           />
         ),
-        bottom: categoryRows(model, t, preferences),
+        bottom: [
+          ...categoryRows(model, t, preferences),
+          ...(trend === undefined ? [] : [rowTrend('trend', { trend })]),
+        ],
       }}
     />
   )

@@ -9,7 +9,13 @@ import { CardIcon } from '../../parts/CardIcon'
 import { DIAL_BOX_CLASS, Dial, type DialTone } from '../../parts/Dial'
 import { MenuButton } from '../../parts/MenuButton'
 import { type DialRange, RangeDial } from '../../parts/RangeDial'
-import { type BottomRow, rowButtons, rowPills, rowSelector } from '../../shell/bottom-rows'
+import {
+  type BottomRow,
+  rowButtons,
+  rowPills,
+  rowSelector,
+  rowTrend,
+} from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton, columnValue } from '../../shell/column-items'
 import { DeviceCard, type DeviceCardView } from '../../shell/DeviceCard'
 import { cardToneClass } from '../../shell/Corner'
@@ -30,6 +36,8 @@ export interface ClimateCardProps {
   readonly showName?: boolean
   /** Opens on this view. The shot harness uses `history` so the list is on screen. */
   readonly initialView?: DeviceCardView
+  /** The primary trend line, drawn under the controls. */
+  readonly trend?: ReactElement
 }
 
 const TONE: Readonly<Record<ClimateActivity, Exclude<CardTone, 'success' | 'danger'>>> = {
@@ -57,6 +65,7 @@ export function ClimateCard({
   orientation = 'vertical',
   showName = true,
   initialView = 'scene',
+  trend,
 }: ClimateCardProps): ReactElement {
   const t = useUiText()
   const [draft, setDraft] = useState<number | null>(null)
@@ -405,7 +414,7 @@ export function ClimateCard({
         ),
         columns: { left, right },
         image,
-        bottom,
+        bottom: trend === undefined ? bottom : [...bottom, rowTrend('trend', { trend })],
       }}
     />
   )

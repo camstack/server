@@ -2957,6 +2957,12 @@
           "type": "DeviceCardView",
           "optional": true,
           "doc": "Opens on this view. The shot harness uses `history` so the list is on screen."
+        },
+        {
+          "name": "trend",
+          "type": "ReactElement",
+          "optional": true,
+          "doc": "The primary trend line, drawn under the controls."
         }
       ]
     },
@@ -7576,6 +7582,12 @@
           "type": "boolean",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "trend",
+          "type": "ReactElement",
+          "optional": true,
+          "doc": "The primary trend line, drawn under the readings."
         }
       ]
     },
@@ -15344,6 +15356,13 @@
       "summary": "The switch's timed run: \"- Run 25 min +\", then \"Stop · mm:ss\"."
     },
     {
+      "name": "rowTrend",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/shell/bottom-rows.tsx",
+      "summary": "A small trend line under the scene."
+    },
+    {
       "name": "rowWeightsOf",
       "kind": "function",
       "area": "composites",
@@ -20424,6 +20443,12 @@
           "type": "boolean",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "trend",
+          "type": "ReactElement",
+          "optional": true,
+          "doc": "The primary trend line, drawn under the readings."
         }
       ]
     },

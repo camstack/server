@@ -50,6 +50,12 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
   }),
   useDeviceStateSlice: (slice: unknown) => slice,
 }))
+// The trend reads history through tRPC; the card's wiring is what these specs judge.
+vi.mock('../connected/PrimaryTrend', () => ({
+  PrimaryTrend: ({ deviceId }: { deviceId: number }) => (
+    <span data-testid="dc-primary-trend" data-device-id={deviceId} />
+  ),
+}))
 vi.mock('../connected/use-card-common', () => ({
   useCardCommon: () => {
     const common = plugFixtures(0)[0]?.model.common
@@ -236,6 +242,12 @@ describe('the energy system card', () => {
       'Charged6.1 kWh',
       'Discharged4.2 kWh',
     ])
+  })
+
+  it('mounts the primary trend of THIS device under the readings', () => {
+    hub.slice = FULL
+    render(<ConnectedEnergyCard deviceId={42} optimistic={false} />)
+    expect(screen.getByTestId('dc-primary-trend').getAttribute('data-device-id')).toBe('42')
   })
 
   it('keeps the Charge pill when the scene does not draw the battery', () => {

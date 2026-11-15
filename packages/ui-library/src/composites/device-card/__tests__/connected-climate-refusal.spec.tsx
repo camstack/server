@@ -40,6 +40,12 @@ vi.mock('../../../hooks/use-device-proxy', () => ({
   // The fake proxy carries the slice value itself.
   useDeviceStateSlice: (slice: unknown) => slice,
 }))
+// The trend reads history through tRPC; the card's wiring is what these specs judge.
+vi.mock('../connected/PrimaryTrend', () => ({
+  PrimaryTrend: ({ deviceId }: { deviceId: number }) => (
+    <span data-testid="dc-primary-trend" data-device-id={deviceId} />
+  ),
+}))
 // The shell's data comes from a fixture; the notice is the REAL hook, so the
 // path under test is command -> refusal -> notice -> reason line.
 vi.mock('../connected/use-card-common', async () => {

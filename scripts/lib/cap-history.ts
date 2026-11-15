@@ -59,6 +59,8 @@ export type HistoryViolationRule =
   | 'group-mixed-dimension'
   | 'group-mixed-nature'
   | 'group-single-member'
+  | 'group-counter'
+  | 'group-in-items'
   | 'primary-invalid'
 
 export interface HistoryViolation {
@@ -314,7 +316,15 @@ export function judgeGroups(
         ? (unitDimension(spec.unit) ?? `unit:${spec.unit}`)
         : `from:${spec.unitFrom ?? ''}`
     for (const [field, spec] of members) {
-      if (spec.kind !== 'gauge' && spec.kind !== 'counter') {
+      if (spec.kind === 'counter') {
+        add(
+          'group-counter',
+          field,
+          'a counter is drawn as its own per-period bar chart and takes no group',
+        )
+        continue
+      }
+      if (spec.kind !== 'gauge') {
         add('group-not-numeric', field, `\`${spec.kind}\` is a state, not a chartable quantity`)
         continue
       }
@@ -452,6 +462,14 @@ function judgeItems(
   // runtimeState roots, never item fields, so it does not apply inside an item.
   const itemView: HistoryCapView = { ...cap, volatileStateFields: [] }
   for (const [field, spec] of Object.entries(items.fields)) {
+    if (spec.group !== undefined) {
+      out.push({
+        capName: cap.capName,
+        rule: 'group-in-items',
+        field: `${items.path}[].${field}`,
+        message: 'a keyed-array item field is one chart per item scope and takes no `group`',
+      })
+    }
     out.push(
       ...judgeField(itemView, item, field, spec).map((v) => ({
         ...v,

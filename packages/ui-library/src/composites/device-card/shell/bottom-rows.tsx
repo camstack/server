@@ -32,6 +32,7 @@ export type BottomRowKind =
   | 'entry'
   | 'codepad'
   | 'stepper'
+  | 'trend'
 
 /**
  * One horizontal row of a scene's bottom area: n rows, each of one kind, drawn
@@ -435,4 +436,14 @@ export function rowStepper(key: string, props: RowStepperProps): BottomRow {
       />
     </span>,
   )
+}
+
+export interface RowTrendProps extends RowBase {
+  /** The trend line itself (a sparkline). */
+  readonly trend: ReactElement
+}
+
+/** A small trend line under the scene. */
+export function rowTrend(key: string, props: RowTrendProps): BottomRow {
+  return makeRow(key, 'trend', props.label, props.trend)
 }

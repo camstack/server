@@ -76,7 +76,13 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
     const t = build(DeviceType.Sensor, ['enum-sensor'], {
       'enum-sensor': { value: 'Eco', lastFetchedAt: NOW },
     })
-    expect(t.measurement).toMatchObject({ quantity: 'text', icon: null, value: { en: 'Eco' } })
+    // a cap with no declared primary series (missing from the history catalog) has no trend
+    expect(t.measurement).toMatchObject({
+      quantity: 'text',
+      icon: null,
+      value: { en: 'Eco' },
+      historyKey: null,
+    })
   })
 
   it('two measuring caps or a non-sensor keep the old card', () => {

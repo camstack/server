@@ -5,6 +5,7 @@ import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-p
 import { WeatherStationCard } from '../scenes/weather-station/WeatherStationCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { sinceText } from './since-text'
+import { PrimaryTrend } from './PrimaryTrend'
 import { useCardCommon } from './use-card-common'
 
 /** A physical weather station (`weather-station`): the outdoor readings. */
@@ -28,6 +29,7 @@ export function ConnectedWeatherStationCard({
     <WeatherStationCard
       orientation={orientation}
       showName={showName}
+      trend={<PrimaryTrend deviceId={deviceId} label={card.common.name} />}
       actions={card.actions}
       model={{
         common: card.common,

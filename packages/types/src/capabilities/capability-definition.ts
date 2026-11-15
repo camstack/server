@@ -609,10 +609,11 @@ export interface CapabilityHistoryField {
   readonly displayName?: string
   /**
    * Fields of ONE cap that name the same group share a History chart; a field
-   * with no group gets a chart of its own. Only closely related readings belong
+   * with no group gets a chart of its own. Only closely related GAUGES belong
    * together (the five `powerW` of an energy system), so the members must share
-   * a unit dimension and a nature: gauges with gauges, counters with counters,
-   * never a boolean or an enum. Judged by `scripts/check-cap-history-declared.ts`.
+   * a unit dimension. A counter is always its own per-period bar chart and takes
+   * no group; neither does a state, nor a field of a keyed `items` array. Judged
+   * by `scripts/check-cap-history-declared.ts`.
    */
   readonly group?: string
   /** Drop a change smaller than this (ABSOLUTE) — anti-jitter for noisy gauges. */

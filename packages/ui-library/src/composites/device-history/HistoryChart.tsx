@@ -34,7 +34,7 @@ import {
   type HistoryChartSpec,
   type OccupancyFilter,
 } from './history-model'
-import { chartUnitChoices, convertPoints, defaultChartUnit } from './history-units'
+import { chartUnitState, convertPoints } from './history-units'
 import type { HistoryReads } from './use-device-history'
 import type { HistoryWindow } from './history-window'
 
@@ -78,10 +78,7 @@ export function booleanLabels(
       off: t('uiLibrary.history.state.clear', 'clear'),
     }
   }
-  return {
-    on: t('uiLibrary.history.state.on', 'on'),
-    off: t('uiLibrary.history.state.off', 'off'),
-  }
+  return { on: t('uiLibrary.history.state.on', 'on'), off: t('uiLibrary.history.state.off', 'off') }
 }
 
 function failure(entry: DeviceHistoryQueryManyEntry | undefined): string | null {
@@ -208,9 +205,7 @@ function useChartUnit(base: string | null): {
 } {
   const preferences = useUnitPreferences()
   const [picked, setPicked] = useState<string | null>(null)
-  const choices = chartUnitChoices(base)
-  const unit = base === null ? null : (picked ?? defaultChartUnit(base, preferences))
-  return { unit, choices, pick: setPicked }
+  return { ...chartUnitState(base, picked, preferences), pick: setPicked }
 }
 
 function EnergyChart({
@@ -228,16 +223,15 @@ function EnergyChart({
   readonly pending: boolean
   readonly actions?: ReactNode
 }): JSX.Element {
-  const base = spec.series.unit ?? 'kWh'
+  const base = spec.series.unit
   const { unit, choices, pick } = useChartUnit(base)
-  const shown = unit ?? base
   const { buckets, bucketMs } = energyBuckets(result)
   const converted =
-    shown === base
+    base === null || unit === null || unit === base
       ? buckets
       : buckets.map((b) => ({
           ...b,
-          values: b.values.map((v) => (v === null ? null : convertUnit(v, base, shown))),
+          values: b.values.map((v) => (v === null ? null : convertUnit(v, base, unit))),
         }))
   return (
     <BarSeries
@@ -246,13 +240,13 @@ function EnergyChart({
       buckets={converted}
       bucketMs={bucketMs}
       range={window}
-      unit={shown}
+      unit={unit}
       showTotal
       syncKey={syncKey}
       pending={pending}
       actions={
         <>
-          <UnitSwitch choices={choices} value={shown} onChange={pick} />
+          <UnitSwitch choices={choices} value={unit ?? ''} onChange={pick} />
           {actions}
         </>
       }
@@ -443,10 +437,7 @@ function OccupancyChart({
           onChange={(e) => setCls(e.target.value)}
           className="h-6 text-[10px] py-0"
           options={[
-            {
-              value: ALL,
-              label: t('uiLibrary.history.allClasses', 'All classes'),
-            },
+            { value: ALL, label: t('uiLibrary.history.allClasses', 'All classes') },
             ...facets.classes.map((c) => ({ value: c, label: c })),
           ]}
         />

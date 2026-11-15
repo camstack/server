@@ -7,6 +7,7 @@ import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
 import { ClimateCard } from '../scenes/climate/ClimateCard'
 import { climateModelOf } from './climate-model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
+import { PrimaryTrend } from './PrimaryTrend'
 import { useCardCommon } from './use-card-common'
 import { reportedCommand } from './use-command-notice'
 
@@ -73,6 +74,7 @@ export function ConnectedClimateCard({
     <ClimateCard
       orientation={orientation}
       showName={showName}
+      trend={<PrimaryTrend deviceId={deviceId} label={common.name} />}
       model={{ common, ...scene }}
       actions={{
         ...actions,

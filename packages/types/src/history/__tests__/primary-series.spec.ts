@@ -8,6 +8,8 @@ describe('primary series', () => {
     expect(primarySeriesKey('weather-station')).toBe('cap:weather-station.temperature')
     expect(primarySeriesKey('climate-control')).toBe('cap:climate-control.currentTemp')
     expect(primarySeriesKey('switch')).toBeNull()
+    // a cap missing from the catalog entirely has no series to trend
+    expect(primarySeriesKey('no-such-cap')).toBeNull()
   })
 
   it('picks the highest priority enabled cap that has data', () => {

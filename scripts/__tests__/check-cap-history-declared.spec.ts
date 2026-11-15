@@ -101,7 +101,7 @@ describe('history groups and primary', () => {
     ).toEqual(['group-mixed-dimension'])
   })
 
-  it('rejects a counter grouped with a gauge, even in one dimension', () => {
+  it('rejects a group on a counter (a counter is its own bar chart)', () => {
     expect(
       rules(
         view({
@@ -109,7 +109,7 @@ describe('history groups and primary', () => {
           b: { kind: 'counter', unit: 'kWh', group: 'g' },
         }),
       ),
-    ).toEqual(['group-mixed-nature'])
+    ).toEqual(['group-counter'])
   })
 
   it('rejects a state in a group and a group of one', () => {
@@ -253,6 +253,31 @@ describe('judgeCapHistory', () => {
     const spec = JSON.parse('{"kind":"boolean","excludeDeviceTypes":["toaster"]}')
     const bad = cap({ history: { fields: { on: spec } } })
     expect(rules(bad)).toEqual(['unknown-exclude-device-type'])
+  })
+})
+
+describe('groups and primary against keyed items', () => {
+  const items = (fields: object, extra: object = {}): HistoryCapView =>
+    cap({
+      history: {
+        fields: { celsius: { kind: 'gauge', unit: '°C' } },
+        items: { path: 'keyed', key: 'key', label: 'label', fields: { ...fields } },
+        ...extra,
+      } as HistoryCapView['history'],
+    })
+
+  it('rejects a group on an item field', () => {
+    expect(rules(items({ level: { kind: 'gauge', unit: '%', group: 'g' } }))).toEqual([
+      'group-in-items',
+    ])
+  })
+
+  it('rejects a primary that names an item field', () => {
+    expect(
+      rules(
+        items({ level: { kind: 'gauge', unit: '%' } }, { primary: 'keyed[].level', priority: 1 }),
+      ),
+    ).toEqual(['primary-invalid'])
   })
 })
 

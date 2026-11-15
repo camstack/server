@@ -7,6 +7,7 @@ import { EnergyCard, energySince } from '../scenes/energy/EnergyCard'
 import { energyActivityOf } from '../scenes/energy/model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { energyFlowsOf, energyTodayOf } from './energy-model'
+import { PrimaryTrend } from './PrimaryTrend'
 import { useCardCommon } from './use-card-common'
 
 /**
@@ -35,6 +36,7 @@ export function ConnectedEnergyCard({
     <EnergyCard
       orientation={orientation}
       showName={showName}
+      trend={<PrimaryTrend deviceId={deviceId} label={card.common.name} />}
       model={{
         common: { ...card.common, battery: null, power: null },
         activity: energyActivityOf(flows),

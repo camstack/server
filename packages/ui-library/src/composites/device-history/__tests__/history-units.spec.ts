@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { chartUnitChoices, convertPoints, defaultChartUnit } from '../history-units'
+import { chartUnitChoices, chartUnitState, convertPoints, defaultChartUnit } from '../history-units'
 
 describe('chart unit choices', () => {
   it('lists only units of the series dimension', () => {
@@ -42,5 +42,17 @@ describe('convertPoints', () => {
   it('is the identity for the same unit', () => {
     const pts = [{ t: 0, v: 3 }]
     expect(convertPoints(pts, 'W', 'W')).toBe(pts)
+  })
+})
+
+describe('chartUnitState', () => {
+  const metric = { system: 'metric', temperature: 'celsius' } as const
+  it('shows no unit and offers no switch when the stored unit is unknown', () => {
+    expect(chartUnitState(null, null, metric)).toEqual({ unit: null, choices: [] })
+    expect(chartUnitState(null, 'kWh', metric)).toEqual({ unit: null, choices: [] })
+  })
+  it('honours a pick inside the dimension only', () => {
+    expect(chartUnitState('kWh', 'MWh', metric).unit).toBe('MWh')
+    expect(chartUnitState('kWh', '°F', metric).unit).toBe('kWh')
   })
 })

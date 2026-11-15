@@ -69,3 +69,22 @@ export function convertPoints(
     ...(p.max === undefined ? {} : { max: convertOrNull(p.max, from, to) }),
   }))
 }
+
+export interface ChartUnitState {
+  /** The unit shown; `null` when the stored unit is unknown — never a guess. */
+  readonly unit: string | null
+  readonly choices: readonly string[]
+}
+
+/** What a chart stored in `base` shows and offers, given the user's pick and preferences. */
+export function chartUnitState(
+  base: string | null,
+  picked: string | null,
+  preferences: UnitPreferences,
+): ChartUnitState {
+  if (base === null) return { unit: null, choices: [] }
+  const choices = chartUnitChoices(base)
+  const unit =
+    picked !== null && choices.includes(picked) ? picked : defaultChartUnit(base, preferences)
+  return { unit, choices }
+}

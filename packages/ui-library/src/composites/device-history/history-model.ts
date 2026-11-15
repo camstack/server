@@ -246,12 +246,7 @@ export function groupDeviceSeries(
         return fieldRank(cap, fx) - fieldRank(cap, fy) || x.scope.localeCompare(y.scope)
       })
       const id = `cap:${cap}`
-      return {
-        id,
-        kind: 'cap',
-        name: cap,
-        charts: chartsOf(id, capTitle(cap), sorted, true),
-      }
+      return { id, kind: 'cap', name: cap, charts: chartsOf(id, capTitle(cap), sorted, true) }
     })
   if (occupancy.length > 0) {
     const list = producers.get('pipeline-analytics') ?? []
@@ -381,10 +376,7 @@ export function stateRow(
             : 'false'
         : s.before.state
   if (result.resolution === 'raw') {
-    const changes: StateChange[] = s.points.map((p) => ({
-      t: p.t,
-      state: nameOf(p),
-    }))
+    const changes: StateChange[] = s.points.map((p) => ({ t: p.t, state: nameOf(p) }))
     const segments = segmentsFromChanges(changes, from, to, beforeState)
     const totals = new Map<string, number>()
     for (const seg of segments) {
@@ -462,10 +454,7 @@ export function energyBuckets(result: DeviceHistoryQueryResult | undefined): {
       bucketMs,
     }
   }
-  return {
-    buckets: (s?.points ?? []).map((p) => ({ t: p.t, values: [p.delta] })),
-    bucketMs,
-  }
+  return { buckets: (s?.points ?? []).map((p) => ({ t: p.t, values: [p.delta] })), bucketMs }
 }
 
 // ── Occupancy (zone × class) ────────────────────────────────────────────
@@ -483,11 +472,7 @@ export function occupancyLines(
 ): readonly OccupancyScopeLine[] {
   return series.map((s) => {
     const parsed = parseOccupancyScope(s.scope)
-    return {
-      scope: s.scope,
-      zoneId: parsed.zoneId,
-      className: parsed.className,
-    }
+    return { scope: s.scope, zoneId: parsed.zoneId, className: parsed.className }
   })
 }
 

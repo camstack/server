@@ -5,7 +5,7 @@ import {
   type EnergyNodeId,
   type EnergyNodeView,
 } from '../../illustrations/EnergyFlowIllustration'
-import { type BottomRow, rowStats } from '../../shell/bottom-rows'
+import { type BottomRow, rowStats, rowTrend } from '../../shell/bottom-rows'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import {
@@ -22,6 +22,8 @@ export interface EnergyCardProps {
   readonly actions: EnergyCardActions
   readonly orientation?: CardOrientation
   readonly showName?: boolean
+  /** The primary trend line, drawn under the readings. */
+  readonly trend?: ReactElement
 }
 
 function gridLabel(watts: number, t: UiTextFn): string {
@@ -175,6 +177,7 @@ export function EnergyCard({
   actions,
   orientation = 'vertical',
   showName = true,
+  trend,
 }: EnergyCardProps): ReactElement {
   const t = useUiText()
   const producing = model.activity === 'sun'
@@ -203,10 +206,12 @@ export function EnergyCard({
             className="h-auto w-full max-w-96"
           />
         ),
-        bottom:
-          model.today === null
+        bottom: [
+          ...(model.today === null
             ? []
-            : todayBottom(model.today, t, sceneShowsBatteryCharge(model.flows)),
+            : todayBottom(model.today, t, sceneShowsBatteryCharge(model.flows))),
+          ...(trend === undefined ? [] : [rowTrend('trend', { trend })]),
+        ],
       }}
     />
   )
