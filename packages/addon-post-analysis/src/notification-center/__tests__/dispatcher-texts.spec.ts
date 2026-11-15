@@ -265,11 +265,11 @@ describe('system events', () => {
       data: {},
     })
     const english = await deliver(en(), entry)
-    expect(english.notification.title).toBe('Offline — Vialetto')
+    expect(english.notification.title).toBe('Vialetto offline')
     expect(english.notification.body).toBe('Device Vialetto is offline')
 
     const italiano = await deliver(italian(), entry)
-    expect(italiano.notification.title).toBe('Non raggiungibile — Vialetto')
+    expect(italiano.notification.title).toBe('Vialetto non raggiungibile')
     expect(italiano.notification.body).toBe('Il dispositivo Vialetto è offline')
   })
 

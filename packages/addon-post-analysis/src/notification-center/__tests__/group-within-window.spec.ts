@@ -264,7 +264,7 @@ describe('a system rule groups deliveries that arrive within a few seconds', () 
     expect(box.sent).toHaveLength(0)
     box.clock.now = BASE + 5_000
     await box.center.runDrainTickForTest()
-    expect(box.sent).toEqual([{ title: 'Offline — 3395', body: expect.any(String) }])
+    expect(box.sent).toEqual([{ title: '3395 offline', body: expect.any(String) }])
     expect(box.sent[0]?.title).not.toContain('Dispositivi:')
   })
 
@@ -277,10 +277,7 @@ describe('a system rule groups deliveries that arrive within a few seconds', () 
     box.center.onSystemEvent(liveness(3502, false))
     await untilDevices(box.world, [3395, 3502])
     await box.center.runDrainTickForTest()
-    expect(box.sent.map((sent) => sent.title).toSorted()).toEqual([
-      'Offline — 3395',
-      'Offline — 3502',
-    ])
+    expect(box.sent.map((sent) => sent.title).toSorted()).toEqual(['3395 offline', '3502 offline'])
   })
 
   it('a restart inside the window still delivers the summary', async () => {

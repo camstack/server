@@ -133,6 +133,7 @@ import {
   type NcApplianceCycleFacts,
   type NcResolveApplianceCycleFacts,
 } from './appliance-cycle.js'
+import { localizedSensorState, sensorStateToken } from './sensor-state-label.js'
 import { NcTextCatalog, type NcLanguage } from './text-catalog.js'
 import {
   ncDetectionSummary,
@@ -3989,6 +3990,14 @@ export function buildTemplateVars(
     eventType: subject.eventType ?? '',
     // DEVICE-EVENT — the sensor's own name, frozen at enqueue.
     sensor: subject.sensor?.name ?? '',
+    // DEVICE-EVENT — the state it moved to, in this catalog's language.
+    // A row enqueued before the token was frozen still reads a short press
+    // off `eventType` (`press` → pressed).
+    sensorState: localizedSensorState(
+      texts,
+      subject.sensorState ?? sensorStateToken(undefined, subject.eventType),
+      subject.className,
+    ),
     // A FINISHED appliance cycle: duration / energy and their sentence
     // fragments; empty on every other row, per the missing-var rule.
     ...(cycle !== undefined ? ncApplianceCycleVars(texts, cycle) : NC_EMPTY_CYCLE_VARS),
@@ -4236,13 +4245,44 @@ export function renderRowTitle(
     ...(count !== undefined ? { count } : {}),
     frozen: systemEvent?.title ?? entry.payload.ruleName,
   })
-  // Catalog titles open on a lowercase noun (`{{headline}}`, `{{device}}`).
-  // Capitalise the first letter only, and only when the operator wrote no title.
+  return finishCatalogTitle(entry, rendered, vars)
+}
+
+/** Online/offline titles are "<device> <state>". A blank name is not a title. */
+const DEVICE_PRESENCE_TITLE_KEYS: ReadonlySet<string> = new Set([
+  'system.device-online.title',
+  'system.device-offline.title',
+  'system.camera-online.title',
+  'system.camera-offline.title',
+])
+
+/**
+ * Catalog titles are trimmed. A sensor with no name, an online/offline row
+ * with no device name, and a title that rendered blank all keep the rule
+ * name. An operator title is returned as written. Detection and appliance
+ * catalog titles still capitalise their first letter.
+ */
+function finishCatalogTitle(
+  entry: NcOutboxEntry,
+  rendered: string,
+  vars: Readonly<Record<string, string>>,
+): string {
+  const intrusion = entry.payload.alarmIntrusion !== undefined
+  const authoredTitle = entry.payload.template?.title
+  const authored = !intrusion && authoredTitle !== undefined && authoredTitle.trim().length > 0
+  if (authored) return rendered
+  const sensorName = entry.payload.subject.sensor?.name.trim() ?? ''
+  if (!intrusion && entry.payload.subject.sensor !== undefined && sensorName.length === 0) {
+    return entry.payload.ruleName
+  }
   const key = titleKeyFor(entry)
-  const catalogOwn =
-    entry.payload.template?.title === undefined &&
-    (key === 'appliance.finished.title' || key === 'detection.title')
-  return catalogOwn ? ncSentenceCaseBody(rendered) : rendered
+  if (DEVICE_PRESENCE_TITLE_KEYS.has(key) && (vars['deviceName'] ?? '').trim().length === 0) {
+    return entry.payload.ruleName
+  }
+  const trimmed = rendered.trim()
+  if (trimmed.length === 0) return entry.payload.ruleName
+  const catalogOwn = key === 'appliance.finished.title' || key === 'detection.title'
+  return catalogOwn ? ncSentenceCaseBody(trimmed) : trimmed
 }
 
 /** The default TITLE key — same shape, same pre-catalog reasoning. */

@@ -513,6 +513,17 @@ export const NC_TEMPLATE_VARS: readonly NcTemplateVarDescriptor[] = [
     kinds: ['sensor'],
   },
   {
+    name: 'sensorState',
+    label: 'Sensor state',
+    description:
+      'The state a sensor, button or lock moved to, in the notification language (unlocked, open, pressed); empty when the event has no state.',
+    example: 'unlocked',
+    group: 'sensor',
+    families: ['rule'],
+    fields: [...RULE_TEXT],
+    kinds: ['sensor'],
+  },
+  {
     name: 'duration',
     label: 'Cycle duration',
     description:

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - terminal-session reports whether a node's server shell is enabled, and why it is refused.
+- Notification templates can use {{sensorState}}, the sensor, button or lock state in the notification language.
 
 ## [1.2.570] - 2026-11-14
 

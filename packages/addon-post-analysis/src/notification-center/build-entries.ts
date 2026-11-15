@@ -4,6 +4,7 @@
  */
 
 import { applianceCycleOf, sensorOf } from './appliance-cycle.js'
+import { frozenSensorState } from './sensor-state-label.js'
 import { alarmIncidentGroup } from './alarm/alarm-incident-group.js'
 import { ruleCropZoneIds } from './close-grouped-pass.js'
 import { frozenConfirmPolicy } from './confirm-policy.js'
@@ -368,6 +369,8 @@ export function buildEntries(
           : {}),
         // DEVICE-EVENT — the device's own token, for `{{eventType}}`.
         ...(subject.eventType !== undefined ? { eventType: subject.eventType } : {}),
+        // DEVICE-EVENT — the state word (`unlocked`, `pressed`) for the title.
+        ...frozenSensorState(subject.sensorState, subject.eventType),
         ...applianceCycleOf(subject),
         ...sensorOf(subject, (id) => host.sensorName(id)),
         ...(subject.systemEvent !== undefined ? { systemEvent: subject.systemEvent } : {}),

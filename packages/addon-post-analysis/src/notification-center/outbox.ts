@@ -606,6 +606,10 @@ export interface NcOutboxPayload {
     /** DEVICE-EVENT rows only: the device's raw event token (`press`, `open`),
      *  for `{{eventType}}`. Absent when the device sends none. */
     readonly eventType?: string
+    /** DEVICE-EVENT rows only: the state token the device moved to (`unlocked`,
+     *  `open`, `pressed`), frozen at enqueue for `{{sensorState}}`. Absent when
+     *  the slice and the event token name no state. */
+    readonly sensorState?: string
     /** A FINISHED appliance cycle only: the appliance (the sensor, never the
      *  camera linked to it) whose duration and energy the default sentence
      *  reads. Absent on every other row. */

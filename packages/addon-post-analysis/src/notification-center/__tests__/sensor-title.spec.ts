@@ -1,7 +1,8 @@
 /**
- * The default TITLE of a sensor notification is the SENSOR's name — not the
- * rule's name (the old `detection.title` fall-through) and not the camera's
- * (`{{device}}` on a sensor row resolves to the linked camera).
+ * The default TITLE of a sensor notification names the SENSOR — not the
+ * rule (the old `detection.title` fall-through) and not the camera
+ * (`{{device}}` on a sensor row resolves to the linked camera). A row that
+ * also froze a state appends it (`state-title.spec.ts`).
  */
 import { describe, expect, it } from 'vitest'
 import { sensorOf } from '../appliance-cycle.js'
