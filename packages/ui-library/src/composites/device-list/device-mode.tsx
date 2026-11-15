@@ -35,7 +35,9 @@ import {
   type TagViewMode,
   filterByTags,
   groupByTag,
+  pageTagGroups,
   readTagViewMode,
+  tagGroupRowCount,
   tagsInRows,
   tagViewStorageKey,
   writeTagViewMode,
@@ -396,11 +398,19 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
     })
   }, [])
 
-  const totalItems = grouped.topLevel.length
+  // By tag, the pager pages over the grouped rows laid end to end (a device
+  // with two tags counts twice); each header still counts its whole group.
+  const tagGroups = useMemo(() => groupByTag(sortedTopLevel, deviceTags), [sortedTopLevel])
+  const showTagGroups = tagMode === 'grouped' && tagCounts.length > 0
+  const totalItems = showTagGroups ? tagGroupRowCount(tagGroups) : grouped.topLevel.length
   const totalPages = Math.max(1, Math.ceil(totalItems / currentPageSize))
   const safePage = Math.min(url.state.page, totalPages)
   const startIdx = (safePage - 1) * currentPageSize
   const pageRows = sortedTopLevel.slice(startIdx, startIdx + currentPageSize)
+  const pageTagGroupRows = useMemo(
+    () => pageTagGroups(tagGroups, startIdx, currentPageSize),
+    [tagGroups, startIdx, currentPageSize],
+  )
   const rowModelIds = useMemo(
     () => rowModelDeviceIds(pageRows, grouped.accessoriesByParent),
     [pageRows, grouped.accessoriesByParent],
@@ -414,9 +424,6 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
   }, [safePage])
 
   useDeviceListRealtimeSync()
-
-  const tagGroups = useMemo(() => groupByTag(sortedTopLevel, deviceTags), [sortedTopLevel])
-  const showTagGroups = tagMode === 'grouped' && tagCounts.length > 0
 
   const isFiltered =
     effectiveAddons.length > 0 ||
@@ -556,7 +563,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
           <ContainerChildrenProvider value={grouped.accessoriesByParent}>
             {showTagGroups ? (
               <div className="space-y-4" data-testid="tag-groups-devices">
-                {tagGroups.map((group) => (
+                {pageTagGroupRows.map((group) => (
                   <section
                     key={group.key}
                     className="space-y-1.5"
@@ -568,9 +575,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
                       ) : (
                         <TagChip name={group.tag} entries={tagRegistry.entries} />
                       )}
-                      <span className="tabular-nums text-foreground-subtle">
-                        {group.rows.length}
-                      </span>
+                      <span className="tabular-nums text-foreground-subtle">{group.total}</span>
                     </h4>
                     <RowModelsProvider
                       deviceIds={rowModelDeviceIds(group.rows, grouped.accessoriesByParent)}
@@ -598,7 +603,7 @@ export function DeviceModeList(props: DeviceListDeviceProps): ReactNode {
        * On a single page (totalItems <= tablePageSize) the pager hides, and
        * the standalone total is the only count. The "Per page" selector is
        * always visible (list non-empty). */}
-      {!isEmpty && !showTagGroups && (
+      {!isEmpty && (
         <div className="flex items-center justify-between gap-4 flex-wrap pt-2 text-[11px] text-foreground-subtle">
           <div className="inline-flex items-center gap-2">
             {totalItems <= tablePageSize && (

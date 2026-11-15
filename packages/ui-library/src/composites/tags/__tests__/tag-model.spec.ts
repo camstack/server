@@ -1,5 +1,5 @@
 /**
- * The pure half of the tag UI (D1054): style fallback, search, filter,
+ * The pure half of the tag UI (D1054): style fallback, filter, paging,
  * grouping, suggestions and the remembered view mode.
  */
 import type { TagEntry } from '@camstack/types'
@@ -9,11 +9,13 @@ import {
   addTag,
   filterByTags,
   groupByTag,
-  matchesTagSearch,
+  followTagRename,
+  pageTagGroups,
   readTagViewMode,
   suggestTags,
   tagStyleFor,
   tagsInRows,
+  tagGroupRowCount,
   tagViewStorageKey,
   writeTagViewMode,
 } from '../tag-model'
@@ -67,18 +69,35 @@ describe('tagStyleFor', () => {
   })
 })
 
-describe('matchesTagSearch', () => {
-  it('matches every row on an empty query', () => {
-    expect(matchesTagSearch('  ', ['x'], undefined)).toBe(true)
+describe('pageTagGroups', () => {
+  const GROUPS = [
+    { key: 'a', tag: 'A', rows: [1, 2, 3] },
+    { key: 'b', tag: 'B', rows: [4, 5] },
+    { key: '__untagged', tag: null, rows: [6] },
+  ]
+  it('counts every grouped row, a row in two groups twice', () => {
+    expect(tagGroupRowCount(GROUPS)).toBe(6)
   })
-  it('matches the row text', () => {
-    expect(matchesTagSearch('lawn', ['Water lawn'], ['night'])).toBe(true)
+  it('pages over the groups in order and keeps each group total', () => {
+    expect(pageTagGroups(GROUPS, 2, 3)).toEqual([
+      { key: 'a', tag: 'A', rows: [3], total: 3 },
+      { key: 'b', tag: 'B', rows: [4, 5], total: 2 },
+    ])
+    expect(pageTagGroups(GROUPS, 5, 3)).toEqual([
+      { key: '__untagged', tag: null, rows: [6], total: 1 },
+    ])
   })
-  it('matches a tag name the text does not contain', () => {
-    expect(matchesTagSearch('NIGHT', ['Water lawn'], ['night'])).toBe(true)
+})
+
+describe('followTagRename', () => {
+  it('a renamed tag stays selected under its new name', () => {
+    expect(followTagRename(['Night', 'Garden'], 'night', 'Evening')).toEqual(['Evening', 'Garden'])
   })
-  it('refuses a row neither text nor tags contain', () => {
-    expect(matchesTagSearch('porch', ['Water lawn'], ['night'])).toBe(false)
+  it('a removed tag leaves the selection', () => {
+    expect(followTagRename(['Night', 'Garden'], 'Night', null)).toEqual(['Garden'])
+  })
+  it('a rename onto a tag already selected keeps one', () => {
+    expect(followTagRename(['Night', 'Evening'], 'Night', 'evening')).toEqual(['evening'])
   })
 })
 

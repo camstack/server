@@ -36,11 +36,34 @@ export const EMPTY_DATA_TABLE_FILTER: DataTableFilterState = {
 }
 
 /** One independent chip row — status, owner, kind… */
-export interface DataTableFacetGroupConfig<T> {
+export type DataTableFacetGroupConfig<T> =
+  | SingleValueFacetGroupConfig<T>
+  | MultiValueFacetGroupConfig<T>
+
+export interface SingleValueFacetGroupConfig<T> {
   /** Stable id; the key of `DataTableFilterState.groups`. */
   readonly id: string
   /** The value this row contributes to THIS group's chips. */
   readonly value: (row: T) => string
+  readonly values?: never
+}
+
+/**
+ * A group where a row carries SEVERAL values (its tags): the row counts toward
+ * each, and passes when ANY of them is chosen.
+ */
+export interface MultiValueFacetGroupConfig<T> {
+  readonly id: string
+  readonly values: (row: T) => readonly string[]
+  readonly value?: never
+}
+
+/** Every value a row carries in `group` — one for a single-valued group. */
+export function facetGroupValues<T>(
+  group: DataTableFacetGroupConfig<T>,
+  row: T,
+): readonly string[] {
+  return group.values !== undefined ? group.values(row) : [group.value(row)]
 }
 
 /** A group's chips, derived from the rows. */
@@ -76,14 +99,7 @@ export function dataTableFacets<T>(
   facetValue: ((row: T) => string) | undefined,
 ): readonly DataTableFacet[] {
   if (facetValue === undefined) return []
-  const counts = new Map<string, number>()
-  for (const row of rows) {
-    const value = facetValue(row)
-    counts.set(value, (counts.get(value) ?? 0) + 1)
-  }
-  return [...counts.entries()]
-    .map(([value, count]) => ({ value, count }))
-    .toSorted((a, b) => b.count - a.count || a.value.localeCompare(b.value))
+  return countFacets(rows.map(facetValue))
 }
 
 /** One chip row per configured group, each derived like {@link dataTableFacets}. */
@@ -93,8 +109,16 @@ export function dataTableFacetGroups<T>(
 ): readonly DataTableFacetGroup[] {
   return (groups ?? []).map((group) => ({
     id: group.id,
-    facets: dataTableFacets(rows, group.value),
+    facets: countFacets(rows.flatMap((row) => facetGroupValues(group, row))),
   }))
+}
+
+function countFacets(values: readonly string[]): readonly DataTableFacet[] {
+  const counts = new Map<string, number>()
+  for (const value of values) counts.set(value, (counts.get(value) ?? 0) + 1)
+  return [...counts.entries()]
+    .map(([value, count]) => ({ value, count }))
+    .toSorted((a, b) => b.count - a.count || a.value.localeCompare(b.value))
 }
 
 export function isDataTableFilterActive(state: DataTableFilterState): boolean {
@@ -111,6 +135,15 @@ export function toggleDataTableGroupFacet(
   const current = state.groups?.[groupId] ?? []
   const next = current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
   return { ...state, groups: { ...state.groups, [groupId]: next } }
+}
+
+/** A new state with group `groupId`'s selection replaced by `values`. */
+export function setDataTableGroupFacets(
+  state: DataTableFilterState,
+  groupId: string,
+  values: readonly string[],
+): DataTableFilterState {
+  return { ...state, groups: { ...state.groups, [groupId]: [...values] } }
 }
 
 /** A new state with `value` added to, or removed from, the selected facets. */
@@ -143,15 +176,21 @@ export function filterDataTableRows<T>(
   const selected = new Set(state.facets.filter((v) => present.has(v)))
   // Same "a chip nobody carries is ignored" rule, per group.
   const groupGates = (config.facetGroups ?? []).flatMap((group) => {
-    const presentInGroup = new Set(dataTableFacets(rows, group.value).map((f) => f.value))
+    const presentInGroup = new Set(rows.flatMap((row) => facetGroupValues(group, row)))
     const chosen = new Set((state.groups?.[group.id] ?? []).filter((v) => presentInGroup.has(v)))
-    return chosen.size === 0 ? [] : [{ value: group.value, chosen }]
+    return chosen.size === 0 ? [] : [{ group, chosen }]
   })
   return rows.filter((row) => {
     if (selected.size > 0 && facetValue !== undefined && !selected.has(facetValue(row))) {
       return false
     }
-    if (groupGates.some((gate) => !gate.chosen.has(gate.value(row)))) return false
+    if (
+      groupGates.some(
+        (gate) => !facetGroupValues(gate.group, row).some((value) => gate.chosen.has(value)),
+      )
+    ) {
+      return false
+    }
     if (needle !== '' && !config.searchText(row).some((text) => fuzzyMatch(needle, text))) {
       return false
     }

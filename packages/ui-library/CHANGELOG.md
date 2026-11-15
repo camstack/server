@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Tags: a shared tag input, chips, a per-list tag filter with a List / By tag view, and a colour-and-icon dialog for a tag
+- Tags filter uses the shared table filter bar; the device list keeps its pager in By-tag view
 
 ## [1.2.457] - 2026-11-15
 

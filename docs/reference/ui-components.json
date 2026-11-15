@@ -4845,6 +4845,12 @@
           "type": "(groupId: string, value: string) => void",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "trailing",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Further controls of the same toolbar, before Clear (a view switch)."
         }
       ]
     },
@@ -8560,6 +8566,13 @@
       "summary": "Hyphen, underscore and whitespace fold together — the namesake comparison."
     },
     {
+      "name": "followTagRename",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "A tag filter's selection after a rename (`to`) or a remove (`to: null`): the renamed tag stays selected under its new name, a removed one leaves."
+    },
+    {
       "name": "formatChartBytes",
       "kind": "function",
       "area": "composites",
@@ -11657,13 +11670,6 @@
       "summary": "Keys a combo may name. Extend this union to support a new key."
     },
     {
-      "name": "matchesTagSearch",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
-      "summary": "A row matches a search when its text OR one of its tags contains the query."
-    },
-    {
       "name": "MeasurementFx",
       "kind": "component",
       "area": "composites",
@@ -12925,6 +12931,13 @@
           "doc": "Accessible name — names what is being paged (\"Devices per page\")."
         }
       ]
+    },
+    {
+      "name": "pageTagGroups",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "One page of a by-tag list: the window `[start, start + size)` over the groups' rows laid end to end, so a page never shows more rows than the page size. A group the window touches keeps its header and its whole-group …"
     },
     {
       "name": "paginateRows",
@@ -18446,6 +18459,13 @@
       "summary": "Literal class strings per colour id, so the Tailwind scan sees every one."
     },
     {
+      "name": "TAG_FACET_GROUP",
+      "kind": "constant",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/use-tag-filter.ts",
+      "summary": "The facet group id the tags occupy in the table filter."
+    },
+    {
       "name": "TAG_SUGGESTION_LIMIT",
       "kind": "constant",
       "area": "composites",
@@ -18539,45 +18559,11 @@
       "summary": "The tag registry's answered entries for a whole list (D1054), so a row deep in a table colours its chips without each row asking the registry itself. Absent provider = no entries: chips fall back to the name-derived c…"
     },
     {
-      "name": "TagFilterBar",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/tags/tag-filter-bar.tsx",
-      "summary": "TagFilterBar — the search box, the Tags filter menu and the flat | by-tag view switch of one section (D1054). The search matches row text AND tag names (the caller filters with `matchesTagSearch`). The Tags menu filte…",
-      "propsExtends": ["TagFilterMenuProps"],
-      "props": [
-        {
-          "name": "search",
-          "type": "string",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "onSearch",
-          "type": "(search: string) => void",
-          "optional": false,
-          "doc": ""
-        },
-        {
-          "name": "searchLabel",
-          "type": "string",
-          "optional": false,
-          "doc": "Accessible name of the search box — say which list."
-        },
-        {
-          "name": "searchPlaceholder",
-          "type": "string",
-          "optional": true,
-          "doc": ""
-        }
-      ]
-    },
-    {
       "name": "TagFilterMenu",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/tags/tag-filter-bar.tsx",
-      "summary": "The Tags filter menu (with style / rename / remove per tag) and the flat | by-tag switch — the part of a list with its own search box (the device list) places in its own toolbar. Renders nothing while no row carries a…",
+      "summary": "The Tags menu and the view switch for a list with its own toolbar (the device list), beside its other filter menus. Renders nothing while no row carries a tag.",
       "props": [
         {
           "name": "tags",
@@ -18668,6 +18654,13 @@
           "doc": "Where the Tags column goes; default right after the first column."
         }
       ]
+    },
+    {
+      "name": "tagGroupRowCount",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-model.ts",
+      "summary": "How many rows a by-tag list shows: a row in two groups counts twice."
     },
     {
       "name": "TagInput",
@@ -18761,6 +18754,27 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/tags/tag-model.ts",
       "summary": "The `localStorage` key of one section's view mode."
+    },
+    {
+      "name": "TagViewSwitch",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-filter-bar.tsx",
+      "summary": "The flat | by-tag switch of a tagged list.",
+      "props": [
+        {
+          "name": "mode",
+          "type": "TagViewMode",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onModeChange",
+          "type": "(mode: TagViewMode) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "TankIllustration",
@@ -20271,7 +20285,14 @@
       "kind": "hook",
       "area": "composites",
       "file": "packages/ui-library/src/composites/tags/use-tag-filter.ts",
-      "summary": "useTagFilter — one section's tag filter state (D1054): the search (row text and tag names), the chosen tags (any of), and the flat | by-tag view, which is remembered per section in `localStorage`. Works over any row t…"
+      "summary": "useTagFilter — one section's tag filter (D1054), built on the shared table filter (`useDataTableFilter`): the search matches the row text and its tag names, the tags are one multi-valued facet group, and the flat | by…"
+    },
+    {
+      "name": "useTagMenuActions",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/tags/tag-filter-bar.tsx",
+      "summary": "The tag-specific parts of a Tags menu. Rename and remove ask first; where no dialog host is mounted they are not offered."
     },
     {
       "name": "useTagRegistry",

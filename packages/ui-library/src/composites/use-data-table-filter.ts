@@ -14,6 +14,7 @@ import {
   EMPTY_DATA_TABLE_FILTER,
   filterDataTableRows,
   isDataTableFilterActive,
+  setDataTableGroupFacets,
   toggleDataTableFacet,
   toggleDataTableGroupFacet,
   type DataTableFacet,
@@ -33,6 +34,8 @@ export interface DataTableFilter<T> {
   readonly setSearch: (search: string) => void
   readonly toggleFacet: (value: string) => void
   readonly toggleGroupFacet: (groupId: string, value: string) => void
+  /** Replace one group's selection (a renamed value follows, a removed one drops). */
+  readonly setGroupFacets: (groupId: string, values: readonly string[]) => void
   /** One entry per `facetGroups` config, chips derived from the UNFILTERED rows. */
   readonly groups: readonly DataTableFilterGroupView[]
   readonly clear: () => void
@@ -62,6 +65,9 @@ export function useDataTableFilter<T>(
   const toggleGroupFacet = useCallback((groupId: string, value: string): void => {
     setState((prev) => toggleDataTableGroupFacet(prev, groupId, value))
   }, [])
+  const setGroupFacets = useCallback((groupId: string, values: readonly string[]): void => {
+    setState((prev) => setDataTableGroupFacets(prev, groupId, values))
+  }, [])
   const clear = useCallback((): void => setState(EMPTY_DATA_TABLE_FILTER), [])
 
   const { searchText, facetValue, facetGroups } = config
@@ -84,6 +90,7 @@ export function useDataTableFilter<T>(
     setSearch,
     toggleFacet,
     toggleGroupFacet,
+    setGroupFacets,
     groups,
     clear,
     facets,

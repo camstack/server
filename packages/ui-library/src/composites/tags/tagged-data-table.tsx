@@ -8,9 +8,10 @@
 import type { JSX } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { type DataColumn, DataTable, type DataTableProps } from '../data-table'
+import { DataTableFilterBar } from '../data-table-filter-bar'
 import { TagChip, TagChipList } from './tag-chip'
-import { TagFilterBar } from './tag-filter-bar'
-import { useTagFilter } from './use-tag-filter'
+import { TagViewSwitch, useTagMenuActions } from './tag-filter-bar'
+import { TAG_FACET_GROUP, useTagFilter } from './use-tag-filter'
 import { useTagRegistry } from './use-tag-registry'
 
 export interface TaggedDataTableProps<T> extends Omit<DataTableProps<T>, 'rows' | 'columns'> {
@@ -41,6 +42,12 @@ export function TaggedDataTable<T>({
   const uiText = useUiText()
   const registry = useTagRegistry()
   const filter = useTagFilter({ section, rows, getTags, searchText })
+  const actions = useTagMenuActions({
+    registry,
+    countOf: (name) => filter.tagFacets.find((facet) => facet.value === name)?.count,
+    onRenamed: filter.followRename,
+  })
+  const hasTags = filter.tagFacets.length > 0
 
   const tagsColumn: DataColumn<T> = {
     key: 'tags',
@@ -54,26 +61,46 @@ export function TaggedDataTable<T>({
     tagsColumn,
     ...columns.slice(tagsColumnIndex),
   ]
-  const filtering = filter.search.trim().length > 0 || filter.selected.length > 0
   const empty =
-    filtering && rows.length > 0
+    filter.filter.active && rows.length > 0
       ? uiText('uiLibrary.tags.noMatches', 'Nothing matches this filter.')
       : emptyMessage
 
   return (
     <div className="space-y-3">
-      <TagFilterBar
-        search={filter.search}
-        onSearch={filter.setSearch}
-        searchLabel={searchLabel}
-        tags={filter.tags}
-        selected={filter.selected}
-        onSelectedChange={filter.setSelected}
-        mode={filter.mode}
-        onModeChange={filter.setMode}
-        registry={registry}
+      <DataTableFilterBar
+        state={filter.filter.state}
+        facets={[]}
+        labels={{
+          searchPlaceholder: uiText('uiLibrary.tags.searchPlaceholder', 'Search names and tags'),
+          searchLabel,
+          facetsLabel: uiText('uiLibrary.tags.filterLabel', 'Tags'),
+          clearLabel: uiText('uiLibrary.tags.clear', 'Clear'),
+        }}
+        onSearch={filter.filter.setSearch}
+        onToggleFacet={() => undefined}
+        onClear={filter.filter.clear}
+        groups={[
+          {
+            id: TAG_FACET_GROUP,
+            label: uiText('uiLibrary.tags.filterLabel', 'Tags'),
+            facets: filter.tagFacets,
+            selected: filter.selected,
+            display: 'menu',
+            minFacets: 1,
+            renderOption: actions.renderOption,
+            optionActions: actions.optionActions,
+          },
+        ]}
+        onToggleGroupFacet={filter.filter.toggleGroupFacet}
+        trailing={
+          <>
+            {hasTags && <TagViewSwitch mode={filter.mode} onModeChange={filter.setMode} />}
+            {actions.overlay}
+          </>
+        }
       />
-      {filter.mode === 'grouped' && filter.tags.length > 0 && filter.visible.length > 0 ? (
+      {filter.mode === 'grouped' && hasTags && filter.visible.length > 0 ? (
         <div className="space-y-4" data-testid={`tag-groups-${section}`}>
           {filter.groups.map((group) => (
             <section

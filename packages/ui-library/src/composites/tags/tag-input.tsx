@@ -14,6 +14,7 @@ import { type JSX, type KeyboardEvent, useId, useMemo, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
 import { IconButton } from '../../primitives/icon-button'
+import { Input } from '../../primitives/input'
 import { TagChip } from './tag-chip'
 import { addTag, suggestTags } from './tag-model'
 import { TagStyleDialog } from './tag-style-dialog'
@@ -106,49 +107,44 @@ export function TagInput({
   const showList = open && !disabled && !full && rows.length > 0
 
   return (
-    <div className={cn('relative', className)}>
-      <div
-        className={cn(
-          'flex min-h-8 flex-wrap items-center gap-1 rounded border border-border bg-background px-1.5 py-1',
-          'focus-within:border-primary',
-          disabled && 'opacity-60',
-        )}
-      >
-        {value.map((tag) => (
-          <TagChip
-            key={tag}
-            name={tag}
-            entries={registry.entries}
-            onStyle={canStyle && !disabled ? () => setStyling(tag) : undefined}
-            onRemove={disabled ? undefined : () => removeAt(tag)}
-          />
-        ))}
-        {!full && (
-          <input
-            type="text"
-            role="combobox"
-            aria-expanded={showList}
-            aria-controls={listId}
-            aria-autocomplete="list"
-            aria-label={label ?? uiText('uiLibrary.tags.label', 'Tags')}
-            value={draft}
-            maxLength={TAG_NAME_MAX_LENGTH}
-            disabled={disabled}
-            placeholder={
-              value.length === 0 ? uiText('uiLibrary.tags.placeholder', 'Add a tag') : undefined
-            }
-            onChange={(e) => {
-              setDraft(e.target.value)
-              setOpen(true)
-              setActive(0)
-            }}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setOpen(false)}
-            onKeyDown={onKeyDown}
-            className="min-w-[6rem] flex-1 bg-transparent py-0.5 text-xs text-foreground outline-none placeholder:text-foreground-subtle"
-          />
-        )}
-      </div>
+    <div className={cn('relative space-y-1', className)}>
+      {value.length > 0 && (
+        <div className={cn('flex flex-wrap items-center gap-1', disabled && 'opacity-60')}>
+          {value.map((tag) => (
+            <TagChip
+              key={tag}
+              name={tag}
+              entries={registry.entries}
+              onStyle={canStyle && !disabled ? () => setStyling(tag) : undefined}
+              onRemove={disabled ? undefined : () => removeAt(tag)}
+            />
+          ))}
+        </div>
+      )}
+      {!full && (
+        <Input
+          type="text"
+          role="combobox"
+          aria-expanded={showList}
+          aria-controls={listId}
+          aria-autocomplete="list"
+          aria-label={label ?? uiText('uiLibrary.tags.label', 'Tags')}
+          value={draft}
+          maxLength={TAG_NAME_MAX_LENGTH}
+          disabled={disabled}
+          placeholder={
+            value.length === 0 ? uiText('uiLibrary.tags.placeholder', 'Add a tag') : undefined
+          }
+          onChange={(e) => {
+            setDraft(e.target.value)
+            setOpen(true)
+            setActive(0)
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setOpen(false)}
+          onKeyDown={onKeyDown}
+        />
+      )}
       {showList && (
         <ul
           id={listId}

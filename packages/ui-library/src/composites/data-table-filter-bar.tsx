@@ -9,9 +9,9 @@
  * the caller's i18n does.
  */
 import { Search, X } from 'lucide-react'
-import { useRef, type JSX } from 'react'
+import { useRef, type JSX, type ReactNode } from 'react'
 import { useSearchFieldHotkey } from '../hotkeys/use-search-field-hotkey'
-import { MultiSelectDropdown } from './device-list/multi-select'
+import { MultiSelectDropdown, type MultiSelectOption } from './device-list/multi-select'
 import {
   isDataTableFilterActive,
   type DataTableFacet,
@@ -33,6 +33,16 @@ export interface DataTableFilterBarGroup {
    * with many values or a bar with many groups, so the bar stays one row.
    */
   readonly display?: 'chips' | 'menu'
+  /**
+   * The fewest values that make the group worth drawing. Default 2: one value
+   * of a single-valued group is the row set itself. A multi-valued group
+   * (tags) passes 1 — one tag still splits tagged rows from the rest.
+   */
+  readonly minFacets?: number
+  /** `menu` only: draw an option's row (a tag chip and its count). */
+  readonly renderOption?: (option: MultiSelectOption) => ReactNode
+  /** `menu` only: per-option actions beside the checkbox (style, rename, remove). */
+  readonly optionActions?: (option: MultiSelectOption) => ReactNode
 }
 
 export interface DataTableFilterBarLabels {
@@ -59,6 +69,8 @@ export interface DataTableFilterBarProps {
   /** Further chip rows (status, owner, kind…), each its own group. */
   readonly groups?: readonly DataTableFilterBarGroup[]
   readonly onToggleGroupFacet?: (groupId: string, value: string) => void
+  /** Further controls of the same toolbar, before Clear (a view switch). */
+  readonly trailing?: ReactNode
 }
 
 export const CHIP_ON =
@@ -76,6 +88,7 @@ export function DataTableFilterBar({
   facetLabel,
   groups = [],
   onToggleGroupFacet,
+  trailing,
 }: DataTableFilterBarProps): JSX.Element {
   const searchRef = useRef<HTMLInputElement>(null)
   useSearchFieldHotkey(searchRef)
@@ -117,7 +130,7 @@ export function DataTableFilterBar({
         </div>
       )}
       {groups
-        .filter((group) => group.facets.length > 1)
+        .filter((group) => group.facets.length >= (group.minFacets ?? 2))
         .map((group) =>
           group.display === 'menu' ? (
             <MultiSelectDropdown
@@ -128,6 +141,8 @@ export function DataTableFilterBar({
                 label: `${group.facetLabel ? group.facetLabel(facet.value) : facet.value} (${String(facet.count)})`,
               }))}
               selected={group.selected}
+              renderOption={group.renderOption}
+              optionActions={group.optionActions}
               onChange={(next) => {
                 const chosen = new Set(next)
                 for (const facet of group.facets) {
@@ -168,6 +183,7 @@ export function DataTableFilterBar({
             </div>
           ),
         )}
+      {trailing}
       {active && (
         <button
           type="button"

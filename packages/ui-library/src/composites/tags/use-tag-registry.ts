@@ -28,6 +28,32 @@ export interface TagRegistry {
   readonly remove: (name: string) => Promise<void>
 }
 
+/**
+ * The routers whose queries return records that carry tags — the owners the
+ * `tags` cap rewrites (automations and scripts are `coreBlocks`; devices and a
+ * device's Customize page are `deviceManager`) — plus the tag list itself.
+ */
+const TAG_OWNER_ROUTERS: ReadonlySet<string> = new Set([
+  'tags',
+  'coreBlocks',
+  'schedulers',
+  'template',
+  'actions',
+  'deviceManager',
+])
+
+/** The router a query belongs to: tRPC keys are `[[router, proc], …]`, hand-written ones `[router, …]`. */
+function queryRouter(queryKey: readonly unknown[]): string | undefined {
+  const head = queryKey[0]
+  const first = Array.isArray(head) ? head[0] : head
+  return typeof first === 'string' ? first : undefined
+}
+
+function isTagOwnerQuery(queryKey: readonly unknown[]): boolean {
+  const router = queryRouter(queryKey)
+  return router !== undefined && TAG_OWNER_ROUTERS.has(router)
+}
+
 export function useTagRegistry(): TagRegistry {
   const presence = useCapabilityPresence('tags')
   const list = useTagsList({}, { enabled: presence === 'present' })
@@ -36,10 +62,12 @@ export function useTagRegistry(): TagRegistry {
   const renameMutation = useTagsRename()
   const removeMutation = useTagsRemove()
 
-  // A rename or remove rewrites records of every kind, owned by several
-  // sections with their own queries: refresh everything, not only the list.
-  const refreshAll = useCallback(async (): Promise<void> => {
-    await queryClient.invalidateQueries()
+  // A rename or remove rewrites the records of every owner kind (D1054):
+  // refresh the queries of those owners and the tag list, nothing else.
+  const refreshOwners = useCallback(async (): Promise<void> => {
+    await queryClient.invalidateQueries({
+      predicate: (query) => isTagOwnerQuery(query.queryKey),
+    })
   }, [queryClient])
 
   const setStyle = useCallback(
@@ -52,16 +80,16 @@ export function useTagRegistry(): TagRegistry {
   const rename = useCallback(
     async (from: string, to: string): Promise<void> => {
       await renameMutation.mutateAsync({ from, to })
-      await refreshAll()
+      await refreshOwners()
     },
-    [renameMutation, refreshAll],
+    [renameMutation, refreshOwners],
   )
   const remove = useCallback(
     async (name: string): Promise<void> => {
       await removeMutation.mutateAsync({ name })
-      await refreshAll()
+      await refreshOwners()
     },
-    [removeMutation, refreshAll],
+    [removeMutation, refreshOwners],
   )
 
   return {

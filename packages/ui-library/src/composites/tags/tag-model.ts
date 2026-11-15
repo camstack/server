@@ -38,18 +38,6 @@ export function tagStyleFor(name: string, entries: readonly TagEntry[] | undefin
   return { name, color: defaultTagColorId(name), icon: DEFAULT_TAG_ICON, styled: false }
 }
 
-/** A row matches a search when its text OR one of its tags contains the query. */
-export function matchesTagSearch(
-  query: string,
-  texts: readonly string[],
-  tags: readonly string[] | undefined,
-): boolean {
-  const q = query.trim().toLowerCase()
-  if (q.length === 0) return true
-  if (texts.some((text) => text.toLowerCase().includes(q))) return true
-  return (tags ?? []).some((tag) => tagKey(tag).includes(q))
-}
-
 /** Rows carrying ANY of the selected tags; every row when none is selected. */
 export function filterByTags<T>(
   rows: readonly T[],
@@ -104,6 +92,55 @@ export function groupByTag<T>(
   return untagged.length === 0
     ? tagged
     : [...tagged, { key: UNTAGGED_GROUP_KEY, tag: null, rows: untagged }]
+}
+
+/** A group of one page of a by-tag list: `total` is the whole group's size. */
+export interface PagedTagGroup<T> extends TagGroup<T> {
+  readonly total: number
+}
+
+/** How many rows a by-tag list shows: a row in two groups counts twice. */
+export function tagGroupRowCount<T>(groups: readonly TagGroup<T>[]): number {
+  return groups.reduce((sum, group) => sum + group.rows.length, 0)
+}
+
+/**
+ * One page of a by-tag list: the window `[start, start + size)` over the groups'
+ * rows laid end to end, so a page never shows more rows than the page size.
+ * A group the window touches keeps its header and its whole-group `total`.
+ */
+export function pageTagGroups<T>(
+  groups: readonly TagGroup<T>[],
+  start: number,
+  size: number,
+): PagedTagGroup<T>[] {
+  const end = start + size
+  const page: PagedTagGroup<T>[] = []
+  let offset = 0
+  for (const group of groups) {
+    const from = Math.max(start - offset, 0)
+    const to = Math.min(end - offset, group.rows.length)
+    if (from < to)
+      page.push({ ...group, rows: group.rows.slice(from, to), total: group.rows.length })
+    offset += group.rows.length
+    if (offset >= end) break
+  }
+  return page
+}
+
+/**
+ * A tag filter's selection after a rename (`to`) or a remove (`to: null`): the
+ * renamed tag stays selected under its new name, a removed one leaves.
+ */
+export function followTagRename(
+  selected: readonly string[],
+  from: string,
+  to: string | null,
+): string[] {
+  const next = selected.flatMap((name) =>
+    sameTag(name, from) ? (to === null ? [] : [to]) : [name],
+  )
+  return normalizeTags(next)
 }
 
 /** One tag in use in a list, with how many rows carry it. */

@@ -99,4 +99,27 @@ describe('<DeviceList> — tags', () => {
     expect(within(groups[1] as HTMLElement).getByText('Porch cam')).toBeTruthy()
     expect(within(groups[2] as HTMLElement).getByText('Hall cam')).toBeTruthy()
   })
+
+  it('by tag: the pager stays, and a page holds only its window of grouped rows', () => {
+    const many = [
+      ...Array.from({ length: 40 }, (_, i) =>
+        dev(i + 1, { name: `Garden ${i + 1}`, tags: ['Garden'] }),
+      ),
+      ...Array.from({ length: 20 }, (_, i) => dev(i + 41, { name: `Plain ${i + 41}` })),
+    ]
+    renderList(many)
+    fireEvent.click(screen.getByRole('radio', { name: 'By tag' }))
+    // 60 grouped rows, 50 per page: Garden 40 + the first 10 untagged.
+    expect(screen.getByText('Showing 1–50 of 60 devices')).toBeTruthy()
+    expect(screen.getByLabelText('Devices per page')).toBeTruthy()
+    expect(screen.getByText('Plain 50')).toBeTruthy()
+    expect(screen.queryByText('Plain 51')).toBeNull()
+    fireEvent.click(screen.getByLabelText('Next page'))
+    expect(screen.queryByText('Garden 1')).toBeNull()
+    expect(screen.getByText('Plain 51')).toBeTruthy()
+    // The group header counts the whole group, not the page's slice.
+    const groups = within(screen.getByTestId('tag-groups-devices')).getAllByRole('region')
+    expect(groups.map((g) => g.getAttribute('aria-label'))).toEqual(['No tag'])
+    expect(within(groups[0] as HTMLElement).getByText('20')).toBeTruthy()
+  })
 })
