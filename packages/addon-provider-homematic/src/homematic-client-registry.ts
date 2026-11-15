@@ -49,12 +49,16 @@ export type HmSessionListItem = HmSessionInfo
 
 /**
  * Delays (ms) between background retries after a failed `facade.start()` (e.g.
- * CCU `ECONNREFUSED`). Six attempts ~ 2+5+10+20+30+60 s. Exported for specs
- * that drive the schedule with fake timers.
+ * CCU `ECONNREFUSED`): 2+5+10+20+30 s, then every 60 s for as long as the
+ * integration exists. A CCU can take minutes to boot, and the integration must
+ * come back on its own. Exported for specs that drive the schedule with fake timers.
  */
 export const START_RETRY_DELAYS_MS: readonly number[] = [
   2_000, 5_000, 10_000, 20_000, 30_000, 60_000,
 ]
+
+/** The retry delay used if {@link START_RETRY_DELAYS_MS} were ever emptied. */
+const FALLBACK_RETRY_DELAY_MS = 60_000
 
 /** What the registry keeps per integration: the wish, and the live manager when one is up. */
 interface HmClientEntry {
@@ -70,8 +74,9 @@ interface HmClientEntry {
  * its products) resolves its session through {@link homematicFacades}.
  *
  * `upsert` never throws: a CCU that is down at boot or on a settings change is
- * retried on {@link START_RETRY_DELAYS_MS}, and the integration reconcile
- * (which runs on every integration lifecycle event) retries it again.
+ * retried on {@link START_RETRY_DELAYS_MS} until it answers or the integration
+ * is removed, and the integration reconcile (which runs on every integration
+ * lifecycle event) retries it too.
  */
 export class HmClientRegistry {
   readonly #logger: IScopedLogger
@@ -170,6 +175,7 @@ export class HmClientRegistry {
     if (entry === undefined) return
     this.#entries.delete(integrationId)
     this.#facades.delete(integrationId)
+    homematicFacades.disposeCallLimiter(integrationId)
     homematicFacades.set(integrationId, null)
     homematicFacades.setSession(integrationId, null)
     if (entry.manager !== null) {
@@ -183,7 +189,9 @@ export class HmClientRegistry {
       }
     }
     homematicFacades.emitSnapshot(integrationId)
-    this.#logger.info('HmClientRegistry: session removed', { tags: { integrationId } })
+    this.#logger.info('HmClientRegistry: session removed', {
+      tags: { integrationId },
+    })
   }
 
   /** Remove every session whose integration is not in `keep`. */
@@ -269,6 +277,13 @@ export class HmClientRegistry {
       await this.#abandon(integrationId, manager)
       throw err
     }
+    if (this.#entries.get(integrationId)?.manager !== manager) {
+      // Removed (or shut down) while the CCU was answering: the remove already
+      // stopped this manager, but its start finished after that stop. Stop it
+      // again so no session outlives its integration.
+      await this.#stopOrphan(integrationId, manager)
+      return
+    }
     this.#clearRetry(integrationId)
     this.#logger.info('HmClientRegistry: session started', {
       tags: { integrationId },
@@ -296,6 +311,23 @@ export class HmClientRegistry {
     homematicFacades.emitSnapshot(integrationId)
   }
 
+  async #stopOrphan(integrationId: string, manager: ManagerLike): Promise<void> {
+    this.#logger.info(
+      'HmClientRegistry: session started after its integration was removed, stopping it',
+      {
+        tags: { integrationId },
+      },
+    )
+    try {
+      await manager.stop()
+    } catch (err: unknown) {
+      this.#logger.debug('HmClientRegistry: orphan stop failed', {
+        tags: { integrationId },
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
   #clearRetry(integrationId: string): void {
     const pending = this.#retryTimers.get(integrationId)
     if (pending !== undefined) {
@@ -305,20 +337,15 @@ export class HmClientRegistry {
   }
 
   /**
-   * Schedule attempt `attemptIndex` of {@link START_RETRY_DELAYS_MS}. Stops
-   * quietly when the registry is shutting down; warns once when the schedule is
-   * exhausted (the next integration reconcile still retries).
+   * Schedule attempt `attemptIndex`: the delay of {@link START_RETRY_DELAYS_MS}
+   * at that index, the last delay past its end. Never gives up on its own; stops
+   * quietly when the registry is shutting down or the integration was removed.
    */
   #scheduleRetry(integrationId: string, attemptIndex: number): void {
-    if (this.#shuttingDown) return
-    const delay = START_RETRY_DELAYS_MS[attemptIndex]
-    if (delay === undefined) {
-      this.#logger.warn('HmClientRegistry: start retries exhausted', {
-        tags: { integrationId },
-        meta: { attempts: START_RETRY_DELAYS_MS.length },
-      })
-      return
-    }
+    if (this.#shuttingDown || !this.#entries.has(integrationId)) return
+    const delay =
+      START_RETRY_DELAYS_MS[Math.min(attemptIndex, START_RETRY_DELAYS_MS.length - 1)] ??
+      FALLBACK_RETRY_DELAY_MS
     this.#clearRetry(integrationId)
     const timer = setTimeout(() => {
       this.#retryTimers.delete(integrationId)

@@ -6,6 +6,7 @@ import type { CcuActionDeps, CcuFacade } from './ccu-facade.js'
 import { errorText, requireConfirmed, requireFacade } from './ccu-facade.js'
 import type { CcuDeviceRow, KeyChannelLink, KeyDirectLink } from './ccu-schemas.js'
 import { channelNameLookup, type HmChannelNames } from './hm-channel-names.js'
+import { ccuCallLimiter } from '../hm-ccu-call-limiter.js'
 
 /** The channels this key actuates: links where it is the SENDER. */
 export function directLinksOfKey(
@@ -64,7 +65,8 @@ async function programChannelsOf(
   deviceId: number | undefined,
 ): Promise<ReadonlySet<string> | null> {
   try {
-    const program = await facade.getKeyEventProgram(keyEventProgramName(device))
+    const name = keyEventProgramName(device)
+    const program = await ccuCallLimiter(integrationId).run(() => facade.getKeyEventProgram(name))
     return new Set(program?.channelAddresses ?? [])
   } catch (err: unknown) {
     deps.logger.warn('Homematic key event program could not be read', {
@@ -81,6 +83,7 @@ async function keyChannelRow(
   facade: CcuFacade,
   names: (channelAddress: string) => HmChannelNames,
   channel: HmChannel,
+  deviceId: number | undefined,
   /** Present for a HmIP device: the channels its program covers (`null` = unread). */
   programChannels?: ReadonlySet<string> | null,
 ): Promise<KeyChannelLink> {
@@ -90,7 +93,9 @@ async function keyChannelRow(
     name: hmName(channel.name),
   }
   try {
-    const state = await facade.getChannelLinkState(channel.address)
+    const state = await ccuCallLimiter(integrationId).run(() =>
+      facade.getChannelLinkState(channel.address),
+    )
     if (programChannels === null) return { ...row, central: 'unknown', links: [] }
     const covered = programChannels === undefined || programChannels.has(channel.address)
     return {
@@ -100,6 +105,7 @@ async function keyChannelRow(
     }
   } catch (err: unknown) {
     deps.logger.warn('Homematic key channel link state could not be read', {
+      ...(deviceId !== undefined ? { tags: { deviceId } } : {}),
       meta: { integrationId, address: channel.address, error: errorText(err) },
     })
     return { ...row, central: 'unknown', links: [] }
@@ -125,18 +131,13 @@ export async function keyChannelsForDevice(
   const facade = deps.facade(integrationId)
   if (facade === null) return []
   const names = channelNameLookup(facade.devices())
+  const deviceId = (await deps.adoptedAddresses(integrationId)).get(device.address)
   const programChannels = isHmipDevice(device)
-    ? await programChannelsOf(
-        deps,
-        integrationId,
-        facade,
-        device,
-        (await deps.adoptedAddresses(integrationId)).get(device.address),
-      )
+    ? await programChannelsOf(deps, integrationId, facade, device, deviceId)
     : undefined
   return Promise.all(
     keys.map((channel) =>
-      keyChannelRow(deps, integrationId, facade, names, channel, programChannels),
+      keyChannelRow(deps, integrationId, facade, names, channel, deviceId, programChannels),
     ),
   )
 }

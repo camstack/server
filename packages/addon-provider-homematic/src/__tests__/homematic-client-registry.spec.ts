@@ -70,6 +70,11 @@ function makeFake(opts: ManagerFactoryOptions, failStarts: { left: number }): Fa
   }
 }
 
+/** A manager whose start always fails. */
+function fakeFailing(opts: ManagerFactoryOptions): ManagerLike {
+  return makeFake(opts, { left: Number.POSITIVE_INFINITY })
+}
+
 function setup(failStarts = 0) {
   const fails = { left: failStarts }
   const built: FakeManager[] = []
@@ -173,6 +178,30 @@ describe('remove / retain / shutdown', () => {
     expect(reg.list()).toEqual(['int-b'])
   })
 
+  it('shutdown waits for every session to stop (the CCU logout) before it resolves', async () => {
+    let finishStop: () => void = () => undefined
+    const reg = new HmClientRegistry(new RecordingLogger(), {
+      makeManager: (opts) => ({
+        ...makeFake(opts, { left: 0 }),
+        stop: () =>
+          new Promise<void>((resolve) => {
+            finishStop = resolve
+          }),
+        facade: null,
+      }),
+    })
+    await reg.upsert('int-a', 'A', CONN)
+    let done = false
+    const shutdown = reg.shutdown().then(() => {
+      done = true
+    })
+    await new Promise<void>((resolve) => setImmediate(resolve))
+    expect(done).toBe(false)
+    finishStop()
+    await shutdown
+    expect(done).toBe(true)
+  })
+
   it('shutdown stops every session', async () => {
     const { reg, built } = setup()
     await reg.upsert('int-a', 'A', CONN)
@@ -204,13 +233,53 @@ describe('start retry schedule', () => {
     await reg.shutdown()
   })
 
-  it('warns once when the schedule is exhausted', async () => {
-    const { reg, lines } = setup(100)
+  it('keeps retrying a CCU that boots slower than the schedule, reusing the last delay', async () => {
+    const { reg, built, lines } = setup(100)
     await reg.upsert('int-a', 'A', CONN)
+    const lastDelay = START_RETRY_DELAYS_MS[START_RETRY_DELAYS_MS.length - 1] ?? 0
     for (const delay of START_RETRY_DELAYS_MS) await vi.advanceTimersByTimeAsync(delay)
-    expect(lines.filter((l) => l.message.includes('start retries exhausted'))).toHaveLength(1)
+    const afterSchedule = built.length
+    // 130 s is past the old schedule (~127 s); three more 60 s periods must still retry.
+    await vi.advanceTimersByTimeAsync(lastDelay * 3)
+    expect(built.length).toBe(afterSchedule + 3)
+    expect(lines.some((l) => l.message.includes('exhausted'))).toBe(false)
+    const scheduled = lines.filter((l) => l.message.includes('scheduling start retry'))
+    expect(scheduled.at(-1)?.tags).toMatchObject({ integrationId: 'int-a' })
+    expect(scheduled.at(-1)?.extras?.meta).toMatchObject({ delayMs: lastDelay })
     expect(reg.has('int-a')).toBe(true)
     await reg.shutdown()
+  })
+
+  it('stops retrying once the integration is removed, even with a retry in flight', async () => {
+    let failStart: (err: Error) => void = () => undefined
+    const built: ManagerLike[] = []
+    const reg = new HmClientRegistry(new RecordingLogger(), {
+      makeManager: (opts) => {
+        const fake = makeFake(opts, { left: 0 })
+        const inFlight: ManagerLike = {
+          ...fake,
+          start: () =>
+            new Promise<void>((_, reject) => {
+              failStart = reject
+            }),
+          getConnection: fake.getConnection,
+          getInfo: fake.getInfo,
+          facade: null,
+        }
+        built.push(inFlight)
+        return built.length === 1 ? fakeFailing(opts) : inFlight
+      },
+    })
+    await reg.upsert('int-a', 'A', CONN)
+    await vi.advanceTimersByTimeAsync(START_RETRY_DELAYS_MS[0] ?? 0)
+    expect(built).toHaveLength(2)
+    await reg.remove('int-a')
+    failStart(new Error('connect ECONNREFUSED'))
+    await vi.advanceTimersByTimeAsync(0)
+    expect(vi.getTimerCount()).toBe(0)
+    await vi.advanceTimersByTimeAsync(10 * 60_000)
+    expect(built).toHaveLength(2)
+    expect(reg.has('int-a')).toBe(false)
   })
 
   it('cancels pending retries on shutdown', async () => {

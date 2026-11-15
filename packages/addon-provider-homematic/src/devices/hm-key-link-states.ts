@@ -2,6 +2,7 @@ import type { IScopedLogger } from '@camstack/types'
 import type { HmChannel, HmDevice, Homematic } from 'nodehomematic'
 import { directLinksOfKey, isHmipDevice, keyEventProgramName } from '../ccu/ccu-button-events.js'
 import { channelNameLookup, type HmChannelNames } from '../ccu/hm-channel-names.js'
+import { ccuCallLimiter } from '../hm-ccu-call-limiter.js'
 import type { HmKeyLinkState } from './hm-button-events-section.js'
 import { channelIndexFromAddress } from './hm-cold-start.js'
 import { hmKeyChannels } from './hm-key-vocabulary.js'
@@ -59,6 +60,9 @@ interface OneKeyRead {
  * `null` when the device has no key channel — the previous snapshot stays,
  * because an empty channel list is not evidence the buttons are gone.
  * A failed read is published as `central: null` and `failed: true`.
+ *
+ * Every CCU read goes through the integration's call limiter: a reconnect makes
+ * every device call this at once, and a booting CCU must not see that burst.
  */
 export async function publishKeyLinkStates(
   integrationId: string,
@@ -67,11 +71,20 @@ export async function publishKeyLinkStates(
   const keys = hmKeyChannels(read.device)
   if (keys.length === 0) return null
   const names = channelNameLookup(read.facade.devices())
-  const coverage = await keyEventCoverage(read)
+  const limiter = ccuCallLimiter(integrationId)
+  const coverage = await keyEventCoverage(read, (name) =>
+    limiter.run(() => read.facade.getKeyEventProgram(name)),
+  )
   const states: HmKeyLinkState[] = []
   let failed = false
   for (const channel of keys) {
-    const one = await readKey(read, names, channel, coverage.get(channel.address) ?? null)
+    const one = await readKey(
+      read,
+      names,
+      channel,
+      coverage.get(channel.address) ?? null,
+      (address) => limiter.run(() => read.facade.getChannelLinkState(address)),
+    )
     if (one.failed) failed = true
     states.push(one.state)
   }
@@ -80,11 +93,14 @@ export async function publishKeyLinkStates(
 }
 
 /** Channel address → program name, for keys the device's key-event program covers. */
-async function keyEventCoverage(read: KeyLinkRead): Promise<ReadonlyMap<string, string>> {
+async function keyEventCoverage(
+  read: KeyLinkRead,
+  getKeyEventProgram: KeyLinkFacade['getKeyEventProgram'],
+): Promise<ReadonlyMap<string, string>> {
   if (!isHmipDevice(read.device)) return new Map()
   const name = keyEventProgramName(read.device)
   try {
-    const program = await read.facade.getKeyEventProgram(name)
+    const program = await getKeyEventProgram(name)
     if (program === null) return new Map()
     return new Map(program.channelAddresses.map((address) => [address, name]))
   } catch (err: unknown) {
@@ -104,6 +120,7 @@ async function readKey(
   names: (channelAddress: string) => HmChannelNames,
   channel: HmChannel,
   programName: string | null,
+  getChannelLinkState: KeyLinkFacade['getChannelLinkState'],
 ): Promise<OneKeyRead> {
   const base = {
     address: channel.address,
@@ -112,7 +129,7 @@ async function readKey(
     programName,
   }
   try {
-    const state = await read.facade.getChannelLinkState(channel.address)
+    const state = await getChannelLinkState(channel.address)
     return {
       failed: false,
       state: {

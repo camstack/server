@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- After a CCU reboot or outage the integration keeps reconnecting on its own (every 60 s, no addon restart needed), and the device refresh after a reconnect reads at most 2 CCU calls at a time, retrying while the CCU is still booting
+
 ## [1.2.202] - 2026-11-15
 
 ### Changed

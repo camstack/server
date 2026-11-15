@@ -1,5 +1,11 @@
 import type { Homematic } from 'nodehomematic'
 import { clearStoredKeyLinkStates } from './devices/hm-key-link-states.js'
+import {
+  ccuCallLimiter,
+  clearCcuCallLimiters,
+  disposeCcuCallLimiter,
+  type HmCcuCallLimiter,
+} from './hm-ccu-call-limiter.js'
 import type { HmIntegrationManager } from './homematic-integration-manager.js'
 
 /**
@@ -83,8 +89,22 @@ export class HmFacadeResolver {
     }
   }
 
+  /**
+   * The CCU call limiter of one integration: every fan-out of reads against
+   * that CCU (a reconnect refresh of each device, the CCU page) goes through it.
+   */
+  callLimiter(integrationId: string): HmCcuCallLimiter {
+    return ccuCallLimiter(integrationId)
+  }
+
+  /** Stop the retries and queued calls of one integration (its session was removed). */
+  disposeCallLimiter(integrationId: string): void {
+    disposeCcuCallLimiter(integrationId)
+  }
+
   /** Remove everything (called on full shutdown). */
   clear(): void {
+    clearCcuCallLimiters()
     this.#facades.clear()
     this.#sessions.clear()
     this.#snapshotSubs.clear()
