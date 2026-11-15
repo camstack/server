@@ -363,6 +363,7 @@ export class PlateRecognizer {
       // A softer read is not the tile — unless the sharp one never produced a
       // picture. Dropping the only crop we captured is how a plate with a
       // key frame and a box still lands with no image.
+      // Accepted: these pixels may come from a softer read than `plateBbox`.
       if (held.crop === undefined) {
         const filled = await this.capturePlateCrop(input)
         if (filled.crop !== undefined) {
@@ -593,7 +594,7 @@ export class PlateRecognizer {
       })
       return { mediaId }
     } catch (err) {
-      this.deps.logger.info('plate crop absent: put-failed', {
+      this.deps.logger.warn('plate crop absent: put-failed', {
         tags: { deviceId, trackId },
         meta: { plateId, kind: 'crop', reason: 'put-failed', error: String(err) },
       })

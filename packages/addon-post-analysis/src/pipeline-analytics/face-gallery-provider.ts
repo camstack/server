@@ -417,14 +417,68 @@ export class FaceGalleryProvider implements IFaceGalleryProvider {
       sample.identityId,
       input.toIdentityId,
     )
-    await this.identityStore.retargetSample({
-      sampleId: input.sampleId,
-      toIdentityId: input.toIdentityId,
-      ...(mediaId !== undefined ? { mediaId } : {}),
-      ...(sourceMediaId !== undefined ? { sourceMediaId } : {}),
-    })
+    try {
+      await this.identityStore.retargetSample({
+        sampleId: input.sampleId,
+        toIdentityId: input.toIdentityId,
+        ...(mediaId !== undefined ? { mediaId } : {}),
+        ...(sourceMediaId !== undefined ? { sourceMediaId } : {}),
+      })
+    } catch (err) {
+      // The move re-owned the blobs under new ids; hand them back and point
+      // the sample at the restored ids, so it never references a deleted row.
+      const restoredMedia = await this.restoreIdentityMedia(
+        mediaId,
+        sample.mediaId,
+        sample.identityId,
+        input.toIdentityId,
+      )
+      const restoredSource = await this.restoreIdentityMedia(
+        sourceMediaId,
+        sample.sourceMediaId,
+        sample.identityId,
+        input.toIdentityId,
+      )
+      await this.identityStore
+        .retargetSample({
+          sampleId: input.sampleId,
+          toIdentityId: sample.identityId,
+          ...(restoredMedia !== undefined ? { mediaId: restoredMedia } : {}),
+          ...(restoredSource !== undefined ? { sourceMediaId: restoredSource } : {}),
+        })
+        .catch((rollbackErr: unknown) =>
+          this.logger.warn('moveIdentitySample: rollback failed', {
+            meta: { sampleId: input.sampleId, error: String(rollbackErr) },
+          }),
+        )
+      throw err
+    }
     await this.followMovedFaces(faces, input.toIdentityId, target.name, mediaId, sourceMediaId)
     this.refreshGallery()
+  }
+
+  /** Hand a moved blob back to its identity; returns its new id, or undefined when nothing moved. */
+  private async restoreIdentityMedia(
+    movedId: number | undefined,
+    originalId: number | undefined,
+    fromIdentityId: string,
+    toIdentityId: string,
+  ): Promise<number | undefined> {
+    if (movedId === undefined || movedId === originalId) return undefined
+    try {
+      return await this.mediaStore.reown({
+        fromOwnerKind: 'identity',
+        fromOwnerId: toIdentityId,
+        toOwnerKind: 'identity',
+        toOwnerId: fromIdentityId,
+        mediaId: movedId,
+      })
+    } catch (err) {
+      this.logger.warn('moveIdentitySample: reown rollback failed', {
+        meta: { mediaId: movedId, error: String(err) },
+      })
+      return undefined
+    }
   }
 
   /** Re-own an identity blob. A row that is not this identity's is left as it is. */

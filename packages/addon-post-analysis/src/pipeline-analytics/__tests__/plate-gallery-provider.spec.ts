@@ -263,6 +263,52 @@ describe('PlateGalleryProvider — vehicles + assign', () => {
     ).rejects.toMatchObject({ i18nCode: 'gallery.unknown-target' })
   })
 
+  it('moveVehicleSample still moves a sample whose media is stale or foreign', async () => {
+    const h = await makeHarness()
+    const from = await h.provider.createVehicle({ name: 'A' })
+    const to = await h.provider.createVehicle({ name: 'B' })
+    const sample = await h.vehicleStore.addSample({
+      vehicleId: from.id,
+      text: 'AB123CD',
+      score: 0.9,
+      mediaId: 987654,
+    })
+    await h.provider.moveVehicleSample({ sampleId: sample.id, toVehicleId: to.id })
+    expect(await h.vehicleStore.getSample(sample.id)).toMatchObject({ vehicleId: to.id })
+    await expect(
+      h.provider.moveVehicleSample({ sampleId: 'nope', toVehicleId: to.id }),
+    ).rejects.toMatchObject({ i18nCode: 'gallery.unknown-sample' })
+  })
+
+  it('moveVehicleSample puts the media back when the retarget fails', async () => {
+    const h = await makeHarness()
+    const from = await h.provider.createVehicle({ name: 'A' })
+    const to = await h.provider.createVehicle({ name: 'B' })
+    const mediaId = await h.mediaStore.put({
+      deviceId: 9,
+      ownerKind: 'vehicle',
+      ownerId: from.id,
+      kind: 'crop',
+      timestamp: 1,
+      data: Buffer.from([1, 2, 3]),
+    })
+    const sample = await h.vehicleStore.addSample({
+      vehicleId: from.id,
+      text: 'AB123CD',
+      score: 0.9,
+      mediaId,
+    })
+    vi.spyOn(h.vehicleStore, 'retargetSample').mockRejectedValueOnce(new Error('boom'))
+    await expect(
+      h.provider.moveVehicleSample({ sampleId: sample.id, toVehicleId: to.id }),
+    ).rejects.toThrow('boom')
+    const after = await h.vehicleStore.getSample(sample.id)
+    expect(after).toMatchObject({ vehicleId: from.id })
+    const kept = after?.mediaId
+    expect(kept).toBeDefined()
+    expect(await h.mediaStore.ownerOf(kept!)).toEqual({ ownerKind: 'vehicle', ownerId: from.id })
+  })
+
   it('listPlates resolves recognizedVehicleId → vehicleName after assign', async () => {
     const h = await makeHarness()
     const v = await h.provider.createVehicle({ name: 'Van' })

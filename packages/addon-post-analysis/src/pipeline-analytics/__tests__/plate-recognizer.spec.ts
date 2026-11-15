@@ -413,6 +413,52 @@ describe('PlateRecognizer — durable keyFrame-derived crop fallback (live captu
     expect(puts[0]!.toString()).toBe('FIRST')
   })
 
+  it('fills a missing crop from a softer read that captures one', async () => {
+    const puts: Buffer[] = []
+    let calls = 0
+    const { rec } = makeRecognizer([], [], {
+      captureCrop: async () => {
+        calls += 1
+        return calls === 1 ? null : Buffer.from('SOFTER')
+      },
+      mediaStore: {
+        put: async (input) => {
+          puts.push(input.data)
+          return 1
+        },
+      },
+    })
+    const frameHandle: FrameHandle = {
+      shmId: 's',
+      slot: 0,
+      seq: 2,
+      width: 640,
+      height: 360,
+      format: 'jpeg',
+      pts: 1,
+      byteLength: 1,
+      nodeId: 'n',
+      slotCount: 1,
+    }
+    const read = (score: number) =>
+      rec.observePlateRead({
+        deviceId: 9,
+        trackId: 'tsoft',
+        text: 'AB123CD',
+        score,
+        bbox: { x: 1, y: 2, w: 3, h: 4 },
+        timestamp: 5,
+        frameWidth: 640,
+        frameHeight: 360,
+        cropPadding: 0,
+        frameHandle,
+      })
+    await read(0.9)
+    await read(0.4)
+    await rec.onTrackEnd(9, 'tsoft')
+    expect(puts.map((b) => b.toString())).toEqual(['SOFTER'])
+  })
+
   it('does NOT invoke the keyFrame fallback when no keyFrame key exists', async () => {
     const { rec, puts, deriveArgs } = makeRec({
       liveCrop: null,

@@ -409,6 +409,9 @@ describe('FaceGalleryProvider — moveIdentitySample', () => {
     await expect(
       provider.moveIdentitySample({ sampleId, toIdentityId: 'missing' }),
     ).rejects.toMatchObject({ i18nCode: 'gallery.unknown-target' })
+    await expect(
+      provider.moveIdentitySample({ sampleId: 'nope', toIdentityId: to.id }),
+    ).rejects.toMatchObject({ i18nCode: 'gallery.unknown-sample' })
   })
 })
 

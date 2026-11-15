@@ -412,11 +412,37 @@ export class PlateGalleryProvider implements IPlateGalleryProvider {
     }
     if (sample.vehicleId === input.toVehicleId) return
     const mediaId = await this.reownVehicleCrop(sample.mediaId, sample.vehicleId, input.toVehicleId)
-    await this.vehicleStore.retargetSample({
-      sampleId: input.sampleId,
-      toVehicleId: input.toVehicleId,
-      ...(mediaId !== undefined ? { mediaId } : {}),
-    })
+    try {
+      await this.vehicleStore.retargetSample({
+        sampleId: input.sampleId,
+        toVehicleId: input.toVehicleId,
+        ...(mediaId !== undefined ? { mediaId } : {}),
+      })
+    } catch (err) {
+      // The move re-owned the blob under a new id; hand it back and point
+      // the sample at the restored id, so it never references a deleted row.
+      if (mediaId !== undefined && mediaId !== sample.mediaId) {
+        try {
+          const restored = await this.mediaStore.reown({
+            fromOwnerKind: 'vehicle',
+            fromOwnerId: input.toVehicleId,
+            toOwnerKind: 'vehicle',
+            toOwnerId: sample.vehicleId,
+            mediaId,
+          })
+          await this.vehicleStore.retargetSample({
+            sampleId: input.sampleId,
+            toVehicleId: sample.vehicleId,
+            mediaId: restored,
+          })
+        } catch (rollbackErr) {
+          this.logger.warn('moveVehicleSample: rollback failed', {
+            meta: { sampleId: input.sampleId, error: String(rollbackErr) },
+          })
+        }
+      }
+      throw err
+    }
     await this.followMovedPlate(sample.sourcePlateId, input.toVehicleId, mediaId, target.name)
     this.refreshGallery()
   }
@@ -427,6 +453,11 @@ export class PlateGalleryProvider implements IPlateGalleryProvider {
     toVehicleId: string,
   ): Promise<number | undefined> {
     if (mediaId === undefined) return undefined
+    // A stale, missing or foreign blob stays where it is; the move still happens.
+    const owner = await this.mediaStore.ownerOf(mediaId)
+    if (owner === null || owner.ownerKind !== 'vehicle' || owner.ownerId !== fromVehicleId) {
+      return mediaId
+    }
     return this.mediaStore.reown({
       fromOwnerKind: 'vehicle',
       fromOwnerId: fromVehicleId,
