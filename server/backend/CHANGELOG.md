@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.874] - 2026-11-15
+
 ### Changed
 
 - A device that reports its state in steps after a restart no longer shows invented interactions in its details (a field the device is first learned is not a change).

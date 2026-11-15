@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.160] - 2026-11-15
+
 ### Changed
 
 - A Gree air conditioner no longer publishes placeholder values (target 0, fan unknown) before the unit answers, which showed as phantom interactions after every restart.

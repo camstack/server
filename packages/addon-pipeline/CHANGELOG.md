@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.654] - 2026-11-15
+
 ### Changed
 
 - Fix: a camera with no elected device now plans root-model supplies on the node's real default detection model instead of the flat yolo26n
