@@ -80,6 +80,10 @@ npx tsx scripts/pipeline-frame-model-eval.ts report --python python3.13
   [`decode-path.md`](../design/decode-path.md) and
   [`data-planes.md`](../architecture/data-planes.md). There is no env that
   promotes 640.
+- Amended 2026-11-15 (D1053): the Apple ANE class defaults to `yolov9m-640`.
+  The capacity gate does not hold there (~10 ms, 98 fps measured on the ANE),
+  and a distant person stayed under the floor at 320. Every other class keeps
+  the conclusion above.
 
 ## Limits
 

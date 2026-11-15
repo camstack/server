@@ -36,8 +36,9 @@
 > The operator Decoder Backend selector was removed; persisted
 > `backend@<nodeId>` rows are inert and unread.
 
-> **Detector default stays 320.** Hardware-aware picks are `yolov9m-320` /
-> `yolov9m-320-int8`. 640 is not the default — see
+> **Detector default is 320, except the Apple ANE.** Hardware-aware picks are
+> `yolov9m-320-int8` (Intel) and `yolov9m-640` on the Apple ANE (D1053). 640 is
+> not the default elsewhere — see
 > [`pipeline-frame-model-eval.md`](../benchmarks/pipeline-frame-model-eval.md).
 
 ## The chain
@@ -121,10 +122,11 @@ This is the path Task 2–4 shipped. It is **not** shm, **not** a poller, and
    worst-case 640×640×3 until hydrate). No-detection leaves zero retained
    bytes. Native hold + subject tiles (below) stay the primary late-crop
    path; the RAM fallback is a content-sized JPEG pulled after the result.
-5. **Hardware-aware detector default stays 320.**
-   `resolveDefaultDetectionModel` maps ANE → `yolov9m-320`, Intel NPU/iGPU
-   → `yolov9m-320-int8`. 640 is catalogued and runnable as an operator
-   pick; it is **not** the default. The controlled eval recovered **0/3**
+5. **Hardware-aware detector default stays 320, except the Apple ANE.**
+   `resolveDefaultDetectionModel` maps ANE → `yolov9m-640` (D1053: ~10 ms on
+   the ANE, person recall 0.85 against 0.65 at 320), Intel NPU/iGPU
+   → `yolov9m-320-int8`. Elsewhere 640 is catalogued and runnable as an
+   operator pick; it is **not** the default. The controlled eval recovered **0/3**
    misses at the current 0.50 threshold and failed the false-positive and
    capacity gates —
    [`pipeline-frame-model-eval.md`](../benchmarks/pipeline-frame-model-eval.md).
