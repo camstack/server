@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**252 units · 8819 source files · 245 units claimed by at least one document (8788 files).**
+**252 units · 8821 source files · 245 units claimed by at least one document (8790 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -53,12 +53,12 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-import-alexa` | 44 | `ecosystem-exports` | `addons/addon-import-alexa.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, `decisions/adr-1013-one-instance-model.md`, +5 more | — |
 | `packages/addon-export-hap/src/mappers` | 42 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +6 more, 9 ADRs | 2026-09-29 |
 | `packages/mcp-dev` | 41 | — | `decisions/adr-0836-a-cluster-mutation-from-the-developer-mcp-exists-only-behind-allow-mutations-and-a-dry-run-whose-one-shot-token-is-bound-to-the-exact-arguments.md`, `decisions/adr-0661-model-licences-live-in-the-catalog-and-every-licence-surface-is-generated-from-them.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, +1 more | — |
+| `packages/addon-provider-bosch/src/home-connect` | 39 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +2 more | 2026-11-08 |
 | `packages/addon-provider-homeassistant/src/ha-export` | 39 | `device-providers`, `ecosystem-exports` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, +10 more, 9 ADRs | 2026-11-08 |
 | `packages/develop` | 39 | — | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `decisions/adr-0835-hub-credentials-and-tls-trust-live-in-develop-one-chain-pinned-ca-never-a-password.md`, `decisions/adr-0884-the-cli-session-is-the-logged-in-user.md`, +2 more | — |
 | `packages/addon-provider-homeassistant` | 38 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +7 more | 2026-11-08 |
 | `packages/types/src/automation` | 38 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0954-actions-are-declared-list-entries-not-devices-one-actions-surface-over-action-source-providers.md`, `decisions/adr-0972-a-number-tied-to-a-quantity-is-entered-in-a-unit-the-person-picks.md`, +16 more | — |
 | `packages/ui-library/src/hooks` | 38 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +6 more | 2026-11-11 |
-| `packages/addon-provider-bosch/src/home-connect` | 37 | `device-providers` | `addons/addon-provider-bosch-home-connect.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, +2 more | 2026-11-08 |
 | `packages/addon-provider-enpal` | 36 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `server/backend/src/auth` | 36 | `auth` | `architecture/authentication.md`, `decisions/adr-0858-the-native-app-signs-in-through-dedicated-hub-app-flows-never-the-admin-ui.md`, `decisions/adr-0782-an-oidc-identity-signs-in-only-the-user-who-linked-it-from-their-own-session.md`, +13 more, 2 ADRs | 2026-10-21 |
 | `packages/addon-provider-amcrest` | 35 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0615-an-amcrest-clip-catalog-gates-on-findfile-and-an-ambiguous-refusal-is-settled-by-a-control-search.md`, +9 more | 2026-11-08 |

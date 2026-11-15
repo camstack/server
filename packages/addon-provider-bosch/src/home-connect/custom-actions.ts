@@ -29,7 +29,8 @@ export const homeConnectActions = defineCustomActions({
     { kind: 'mutation', auth: 'admin' },
   ),
   signOut: customAction(
-    z.object({}),
+    /** An existing instance: its stored sign-in is cleared and its connection stopped. */
+    z.object({ integrationId: z.string().min(1).optional() }),
     z.object({ signedOut: z.literal(true), summary: z.string() }),
     { kind: 'mutation', auth: 'admin' },
   ),

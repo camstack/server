@@ -24,17 +24,14 @@ import {
   publishHomeConnectSignIn,
 } from './home-connect-login.js'
 import { homeConnectFinishResult } from './home-connect-sign-in-result.js'
+import { signOutHomeConnectInstance } from './home-connect-account.js'
+import { reconcileHomeConnectIntegrations } from './home-connect-reconcile.js'
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { buildHomeConnectAdoptionProvider } from './home-connect-adoption-provider.js'
 import { HomeConnectClientRegistry } from './home-connect-client-registry.js'
 import { buildHomeConnectConnectionTestProvider } from './home-connect-connection-test.js'
-import {
-  appliancesWithoutCredential,
-  connectionFromSettings,
-  logHomeConnectSettingsGap,
-  type HomeConnectConfig,
-} from './config.js'
+import type { HomeConnectConfig } from './config.js'
 import { buildHomeConnectConnectionPersister } from './home-connect-connection-persist.js'
 import { homeConnectConnections } from './home-connect-gateway.js'
 import { HomeConnectApplianceDevice } from './devices/home-connect-appliance-device.js'
@@ -138,10 +135,25 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
               homeConnectSignInAttempts,
             ),
           ),
-        signOut: async () => ({
-          signedOut: true as const,
-          summary: 'Signed out.',
-        }),
+        signOut: async (input) => {
+          const integrationId = input.integrationId
+          if (integrationId === undefined) {
+            // A form that has no record yet: nothing is stored, the form clears its own fields.
+            return { signedOut: true as const, summary: 'Signed out.' }
+          }
+          const stored = await homeConnectStoredOf(built.instances, integrationId)
+          if (stored === null) {
+            throw new Error(`Home Connect integration ${integrationId} does not exist`)
+          }
+          await signOutHomeConnectInstance(integrationId, built.instances)
+          this.ctx.logger.info('Home Connect signed out — stored sign-in cleared', {
+            tags: { integrationId },
+          })
+          return {
+            signedOut: true as const,
+            summary: 'Signed out. The appliances stay offline until you sign in again.',
+          }
+        },
       },
     }
   }
@@ -199,78 +211,55 @@ export class BoschHomeConnectProviderAddon extends BaseDeviceProvider {
   private async reconcileIntegrations(): Promise<void> {
     const reg = this.requireClients()
     try {
-      const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
-      const surviving = new Set<string>()
-      for (const integration of mine) {
-        try {
-          const stored = await homeConnectStoredOf(
-            this.requireInstances().instances,
-            integration.id,
-          )
-          if (stored === null) continue
-          if (stored.locked) {
-            // Stored, not absent: keep the client it has rather than reconfigure it without tokens (D49).
-            this.ctx.logger.warn('Home Connect reconcile skipped: the keychain is locked', {
-              meta: { integrationId: integration.id },
-            })
-            continue
-          }
-          const settings = stored.settings
-          const connection = connectionFromSettings(settings)
-          if (!connection) {
-            logHomeConnectSettingsGap(this.ctx.logger, integration.id, settings)
-            continue
-          }
-          for (const haId of appliancesWithoutCredential(settings)) {
-            this.ctx.logger.warn(
-              'Home Connect appliance has no usable pairing key — cannot connect to it',
-              {
-                tags: { integrationId: integration.id },
-                meta: { haId },
-              },
-            )
-          }
-          await reg.upsert(integration.id, integration.name, connection)
-          const brokerInfo = reg.getInfo(integration.id)
-          const applianceCount =
-            typeof brokerInfo?.info['applianceCount'] === 'number'
-              ? brokerInfo.info['applianceCount']
-              : 0
-          this.ctx.logger.info('Home Connect integration reconciled', {
-            meta: {
-              integrationId: integration.id,
-              applianceCount,
-            },
-          })
-          surviving.add(integration.id)
-        } catch (err) {
-          this.ctx.logger.warn('Home Connect reconcile failed for integration', {
-            meta: { integrationId: integration.id, error: errMsg(err) },
-          })
-        }
-      }
-      const vanished = reg.list().filter((id) => !surviving.has(id))
-      await reg.retain(surviving)
-      const deviceReg = this.ctx.kernel.deviceRegistry
-      const deviceApi = this.ctx.kernel.devices
-      if (deviceReg && deviceApi) {
-        for (const integrationId of vanished) {
-          await cascadeRemoveDevicesForIntegration({
-            reg: deviceReg,
-            devices: deviceApi,
-            addonId: this.addonId,
-            system: 'home-connect',
-            integrationId,
-            logger: this.ctx.logger,
-          })
-        }
-      }
+      await reconcileHomeConnectIntegrations({
+        listEnabled: async () => {
+          const all = await this.ctx.api.integrations.list.query()
+          return all.filter((i) => i.addonId === this.ctx.id && i.enabled)
+        },
+        knownIds: () => this.knownIntegrationIds(),
+        storedOf: (id) => homeConnectStoredOf(this.requireInstances().instances, id),
+        registry: reg,
+        onSignedOut: (id) => this.setIntegrationDevicesOnline(id, false),
+        onVanished: (id) => this.dropIntegrationDevices(id),
+        logger: this.ctx.logger,
+      })
     } catch (err) {
       this.ctx.logger.warn('Home Connect integration reconcile failed', {
         meta: { error: errMsg(err) },
       })
     }
+  }
+
+  /** Every integration this addon holds a record or a top-level device for. */
+  private async knownIntegrationIds(): Promise<readonly string[]> {
+    const ids = new Set<string>()
+    for (const row of await this.requireInstances().instances.listResolved()) ids.add(row.id)
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (reg && devices) {
+      for (const d of reg.getAllForAddon(this.addonId)) {
+        if (d.parentDeviceId !== null) continue
+        const cfg = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
+        const brokerId = cfg['brokerId']
+        if (cfg['system'] === 'home-connect' && typeof brokerId === 'string') ids.add(brokerId)
+      }
+    }
+    return [...ids]
+  }
+
+  /** The integration is gone: its devices go with it. */
+  private async dropIntegrationDevices(integrationId: string): Promise<void> {
+    const deviceReg = this.ctx.kernel.deviceRegistry
+    const deviceApi = this.ctx.kernel.devices
+    if (!deviceReg || !deviceApi) return
+    await cascadeRemoveDevicesForIntegration({
+      reg: deviceReg,
+      devices: deviceApi,
+      addonId: this.addonId,
+      system: 'home-connect',
+      integrationId,
+      logger: this.ctx.logger,
+    })
   }
 
   private subscribeIntegrationLifecycle(): void {
