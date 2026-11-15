@@ -54,6 +54,7 @@ import { registerAddonUploadRoute } from './api/addon-upload'
 import { registerMeshMembershipRoutes } from './api/mesh-membership-routes'
 import { registerAuthWhoamiRoute } from './api/auth-whoami'
 import { registerBackupDownloadRoute } from './api/backup-download.js'
+import { registerLogsExportRoute } from './api/logs-export-route.js'
 import { buildSettingsStoreGateway } from './api/core/cap-providers'
 import { LoggingSettingsService } from './api/core/logging-settings'
 import { RequestCensusService } from './api/core/request-census-settings'
@@ -1211,6 +1212,16 @@ async function bootstrap() {
       verifier: app.get(AuthService),
       capabilities: capabilityRegistry,
       logger: app.get(LoggingService).createLogger('backup-download'),
+    })
+
+    // GET /api/logs/export — the Logs page's and the ops MCP's NDJSON export
+    // (#570): components and/or devices over a time range, streamed at the
+    // pace the client reads (D447). Selection lives in core/logging/log-export.
+    registerLogsExportRoute(fastify, {
+      verifier: app.get(AuthService),
+      registry: capabilityRegistry,
+      tail: app.get(LoggingService),
+      logger: app.get(LoggingService).createLogger('logs-export'),
     })
 
     // POST /api/auth/session — upgrade a tRPC-issued JWT to a browser cookie.

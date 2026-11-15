@@ -6883,7 +6883,20 @@
         "destinations": "Destinazioni",
         "levels": "Livelli",
         "diagnostics": "Diagnostica",
-        "watch": "Osserva"
+        "watch": "Osserva",
+        "export": {
+          "open": "Esporta",
+          "title": "Esporta i log",
+          "hint": "Scarica un file NDJSON, una riga per voce con i suoi tag. Lascia vuoto un filtro per includere tutto.",
+          "components": "Componenti",
+          "allComponents": "Tutti i componenti",
+          "devices": "Dispositivi",
+          "range": "Intervallo di tempo",
+          "lastHours": "Ultime {{hours}} h",
+          "failed": "L'esportazione non è riuscita",
+          "downloading": "Download in corso…",
+          "download": "Scarica"
+        }
       },
       "secrets": {
         "revealRefused": "Rivelazione rifiutata",

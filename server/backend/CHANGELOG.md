@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A server update no longer re-downloads ffmpeg when node-av did not change (the seeded install pins the exact version), and a hung npm install is now cut after 5 minutes without progress instead of running to the 3-hour ceiling
+- Logs page export: download the logs of chosen components and/or devices over a time range (default everything, last 6 h) as one NDJSON file (GET /api/logs/export, streamed).
 
 ## [1.2.882] - 2026-11-15
 

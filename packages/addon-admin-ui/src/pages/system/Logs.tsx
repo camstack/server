@@ -3,22 +3,39 @@
  *
  * Shell is library `SectionedPage` (OSD template).
  */
-import { ScrollText } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { LogStream } from '@camstack/ui-library'
-import { AdminSectionedPage } from '../../components/AdminSectionedPage'
 
+import { Button, LogStream } from '@camstack/ui-library'
+import { Download, ScrollText } from 'lucide-react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { AdminPage } from '../../components/AdminPage'
+import { AdminSectionedPage } from '../../components/AdminSectionedPage'
+import { LogExportDialog } from '../../components/logs/LogExportDialog'
 import { INTEGRATION_HUB_OWNED_PARAMS, INTEGRATION_HUB_PAGES } from '../../lib/integration-hub-url'
 import { navChromeForPath } from '../../lib/nav-items'
-import { LoggingPage } from './Logging'
 import { LogDiagnosticsPage } from './LogDiagnostics'
+import { LoggingPage } from './Logging'
 import { LogLevelsPage } from './LogLevels'
 import { LogWatchPage } from './LogWatch'
 
 function LogViewerTab() {
+  const { t } = useTranslation()
+  const [exporting, setExporting] = useState(false)
   return (
     <AdminPage embedded>
+      <div className="mb-2 flex justify-end">
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
+          onClick={() => setExporting(true)}
+          data-testid="log-export-open"
+        >
+          <Download className="h-3.5 w-3.5" />
+          {t('admin.system.logs.export.open', 'Export')}
+        </Button>
+      </div>
+      {exporting && <LogExportDialog onClose={() => setExporting(false)} />}
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
         <LogStream
           limit={500}

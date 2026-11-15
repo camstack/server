@@ -591,7 +591,7 @@ export function createServer(
       if (!connected) throw new Error('the hub connection is not ready')
       return connected
     }
-    registerOpsTools(tool, getHub, ready)
+    registerOpsTools(tool, getHub, ready, root)
 
     const runner = options.runProcess ?? spawnRunner
     tool(

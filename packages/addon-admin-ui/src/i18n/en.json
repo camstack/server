@@ -6808,7 +6808,20 @@
         "destinations": "Destinations",
         "levels": "Levels",
         "diagnostics": "Diagnostics",
-        "watch": "Watch"
+        "watch": "Watch",
+        "export": {
+          "open": "Export",
+          "title": "Export logs",
+          "hint": "Downloads one NDJSON file, one line per entry with its tags. Leave a filter empty to include everything.",
+          "components": "Components",
+          "allComponents": "All components",
+          "devices": "Devices",
+          "range": "Time range",
+          "lastHours": "Last {{hours}} h",
+          "failed": "The export failed",
+          "downloading": "Downloading…",
+          "download": "Download"
+        }
       },
       "secrets": {
         "revealRefused": "Reveal refused",

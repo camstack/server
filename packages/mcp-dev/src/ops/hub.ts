@@ -11,20 +11,21 @@
  * Nothing here reads a password, a `.pw`, or `$CAMSTACK_TOKEN`, and TLS is
  * pinned or the system store — never switched off.
  */
+
+import type { ApiIndex } from '@camstack/develop'
 import {
   adminRejectedHint,
-  connectHub,
-  HubHttpError,
-  HubRpcError,
   type CredentialSource,
   type CredentialTier,
+  connectHub,
+  gateQuery,
   type HubClient,
-  type HubConnectOptions,
   type HubConnection,
+  type HubConnectOptions,
+  HubHttpError,
+  HubRpcError,
 } from '@camstack/develop'
-import type { ApiIndex } from '@camstack/develop'
 import { createHubDownloader } from './download.js'
-import { gateQuery } from '@camstack/develop'
 
 /** The gate said no. The message is safe to show and says how to proceed. */
 export class QueryRefusedError extends Error {
@@ -170,14 +171,14 @@ export function createGatedHub(deps: GatedHubDeps): OpsHub {
       }
     },
     async download(urlPath, destFile, maxBytes) {
-      if (!isRetrainExportPath(urlPath)) {
+      if (!isRetrainExportPath(urlPath) && !isLogsExportPath(urlPath)) {
         throw new QueryRefusedError(
-          `${urlPath} is not an allow-listed data-plane download (only /addon/<id>/retrain-export)`,
+          `${urlPath} is not an allow-listed data-plane download (only /addon/<id>/retrain-export and /api/logs/export)`,
         )
       }
       if (deps.tier !== 'admin') {
         throw new QueryRefusedError(
-          'the retrain export is admin-only; this credential is not admin-scoped',
+          'this export is admin-only; this credential is not admin-scoped',
         )
       }
       if (!deps.downloader) throw new Error('no downloader configured for this hub')
@@ -190,6 +191,13 @@ const RETRAIN_EXPORT_PATH = /^\/addon\/[A-Za-z0-9._-]+\/retrain-export(?:\?[^#\s
 
 export function isRetrainExportPath(urlPath: string): boolean {
   return RETRAIN_EXPORT_PATH.test(urlPath)
+}
+
+const LOGS_EXPORT_PATH = /^\/api\/logs\/export(?:\?[^#\s]*)?$/
+
+/** The hub's NDJSON log export (#570) — read-only, admin-only on the hub. */
+export function isLogsExportPath(urlPath: string): boolean {
+  return LOGS_EXPORT_PATH.test(urlPath)
 }
 
 export interface ConnectOptions extends HubConnectOptions {

@@ -93,7 +93,7 @@ const BY_CLASS: Readonly<Record<string, readonly string[]>> = {
     'release_status',
   ],
   WRITE_LOCAL: ['scaffold_capability', 'scaffold_addon', 'scaffold_ui_component', 'run_checks'],
-  WRITE_LOCAL_OPEN: ['eval_model', 'fetch_retrain_export'],
+  WRITE_LOCAL_OPEN: ['eval_model', 'fetch_retrain_export', 'hub_logs_export'],
   MUTATES_CLUSTER: ['benchmark_run', 'model_studio_import'],
   WRITE_LOCAL_DESTRUCTIVE: ['run_codegen', 'method_tiers_diff', 'extend_addon'],
 }

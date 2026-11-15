@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Integration editor: the account sign-in buttons (Sign in again, Sign out) now reach the integration for an existing instance
+- Logs page: an Export button downloads the logs of chosen components and devices over a time range as NDJSON.
 
 ## [1.2.682] - 2026-11-15
 

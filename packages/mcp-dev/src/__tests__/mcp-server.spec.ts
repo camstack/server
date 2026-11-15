@@ -1,11 +1,11 @@
-import { Client } from '@modelcontextprotocol/sdk/client/index.js'
-import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 import * as path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { requireWorkspaceRoot } from '@camstack/develop'
+import { Client } from '@modelcontextprotocol/sdk/client/index.js'
+import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js'
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
 const HERE = path.dirname(fileURLToPath(import.meta.url))
 const PKG_ROOT = path.resolve(HERE, '../..')
@@ -201,6 +201,7 @@ describe('camstack-ops MCP server (stdio, --toolsets ops)', { timeout: TEST_CEIL
       'eval_model',
       'fetch_retrain_export',
       'benchmark_status',
+      'hub_logs_export',
     ]) {
       expect(names, `missing ${required}`).toContain(required)
     }
@@ -208,8 +209,8 @@ describe('camstack-ops MCP server (stdio, --toolsets ops)', { timeout: TEST_CEIL
     // Without --allow-mutations the two cluster mutations do not exist at all.
     expect(names).not.toContain('benchmark_run')
     expect(names).not.toContain('model_studio_import')
-    // Read-only everywhere except the two tools that write under scratchpad/ (never the cluster).
-    const WRITES_WORKSPACE = ['eval_model', 'fetch_retrain_export']
+    // Read-only everywhere except the tools that write under scratchpad/ (never the cluster).
+    const WRITES_WORKSPACE = ['eval_model', 'fetch_retrain_export', 'hub_logs_export']
     for (const t of tools) {
       expect(t.annotations?.readOnlyHint, t.name).toBe(!WRITES_WORKSPACE.includes(t.name))
       expect(t.annotations?.destructiveHint, t.name).toBe(false)

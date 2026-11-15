@@ -1,17 +1,18 @@
 /** The `ops` toolset: read-only hub tools, registered on the MCP server. */
+
+import { text, textError, toToolOutput } from '@camstack/develop'
 import type { ToolCallback } from '@modelcontextprotocol/sdk/server/mcp.js'
 import type { ZodRawShapeCompat } from '@modelcontextprotocol/sdk/server/zod-compat.js'
 import { z } from 'zod'
-import { text, textError } from '@camstack/develop'
-import { auditTracksTool } from './track-audit.js'
 import { keyframePresence, modelPinCensus, retrainCensus } from './censuses.js'
-import { birthDecisions, eventDensity } from './density.js'
 import { capProviders, opsStatus, recentTracks, topology, trackDetail } from './curated.js'
+import { birthDecisions, eventDensity } from './density.js'
 import type { OpsHub } from './hub.js'
 import { QueryRefusedError } from './hub.js'
 import { hubLogs, listLogProviders } from './logs.js'
+import { hubLogsExport, LogsExportArgsSchema } from './logs-export.js'
 import { lokiQuery } from './loki.js'
-import { toToolOutput } from '@camstack/develop'
+import { auditTracksTool } from './track-audit.js'
 
 export type RegisterTool = <Args extends ZodRawShapeCompat>(
   name: string,
@@ -48,6 +49,8 @@ export function registerOpsTools(
   tool: RegisterTool,
   getHub: HubProvider,
   ready: HubReady = async () => undefined,
+  /** The workspace root; the logs export writes under its scratchpad. */
+  root?: () => string,
 ): void {
   const guarded = (run: () => Promise<unknown>): Promise<ToolResult> => guardedRun(ready, run)
   tool(
@@ -168,6 +171,15 @@ export function registerOpsTools(
     },
     (args) => guarded(() => hubLogs(getHub(), args)),
   )
+
+  if (root !== undefined) {
+    tool(
+      'hub_logs_export',
+      'The Logs page export as one NDJSON file in scratchpad/logs-export/: components (addonIds, OR) and/or devices (OR) over a time range — default everything over the last 6 hours, the same route and defaults as the admin UI. Returns the path and a bounded summary (lines, span, busiest devices/components, truncated). Read-only on the cluster; admin credential.',
+      LogsExportArgsSchema.shape,
+      (args) => guarded(() => hubLogsExport(root(), getHub(), LogsExportArgsSchema.parse(args))),
+    )
+  }
 
   tool(
     'loki_query',

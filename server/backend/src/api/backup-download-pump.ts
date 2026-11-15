@@ -101,9 +101,9 @@ export type PumpResult =
   /** The storage cap failed or returned an empty chunk; the response was destroyed with the error. */
   | (PumpCounters & { readonly status: 'source-failed'; readonly error: string })
 
-type DrainOutcome = 'drained' | 'closed' | 'timeout'
+export type DrainOutcome = 'drained' | 'closed' | 'timeout'
 
-function waitForDrain(sink: DownloadSink, graceMs: number): Promise<DrainOutcome> {
+export function waitForDrain(sink: DownloadSink, graceMs: number): Promise<DrainOutcome> {
   return new Promise<DrainOutcome>((resolve) => {
     const settle = (outcome: DrainOutcome): void => {
       sink.off('drain', onDrain)

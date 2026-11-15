@@ -6,18 +6,20 @@
  * everything; viewers/protected users only see entries matching their
  * allowed providers scope (filtered in `query`).
  */
-import { z } from 'zod'
-import type { LoggingService } from '../../core/logging/logging.service.js'
-import { trpcRouter, adminProcedure, iterableSubscription } from '../trpc/trpc.middleware.js'
+
 import { randomUUID } from 'node:crypto'
 import { lineContainsText } from '@camstack/server/system'
 import type { ILogDestination, LogEntry, LogReadEntry, LogReadQuery } from '@camstack/types'
+import { z } from 'zod'
+import { toWireLogLine } from '../../core/logging/log-export.js'
 import {
   DEFAULT_LOG_SOURCE,
   DEFAULT_PAGE_LIMIT,
   RING_LOG_SOURCE,
   readLogHistory,
 } from '../../core/logging/log-history.js'
+import type { LoggingService } from '../../core/logging/logging.service.js'
+import { adminProcedure, iterableSubscription, trpcRouter } from '../trpc/trpc.middleware.js'
 
 const LogLevelSchema = z.enum(['debug', 'info', 'warn', 'error'])
 
@@ -144,22 +146,9 @@ function readFiltersFromTags(tags: LogTagsInput | undefined): LogReadScope {
   }
 }
 
+/** The same wire line the export writes (#570): every tag as a string. */
 function toWire(entry: LogReadEntry): WireLogEntry {
-  return {
-    ...(entry.id !== undefined ? { id: entry.id } : {}),
-    timestamp: new Date(entry.timestamp).toISOString(),
-    level: entry.level,
-    ...(entry.scope !== undefined ? { scope: entry.scope } : {}),
-    message: entry.message,
-    ...(entry.tags !== undefined
-      ? {
-          tags: Object.fromEntries(
-            Object.entries(entry.tags).map(([k, v]) => [k, String(v)] as const),
-          ),
-        }
-      : {}),
-    ...(entry.meta !== undefined ? { meta: entry.meta } : {}),
-  }
+  return toWireLogLine(entry)
 }
 
 /** The one registry read this router makes — `CapabilityRegistry` satisfies it. */
@@ -170,7 +159,7 @@ export interface LogDestinationRegistry {
 }
 
 /** Hub-local providers only: an agent's own files hold lines the hub already has. */
-function hubLocalDestinations(
+export function hubLocalDestinations(
   registry: LogDestinationRegistry | null,
 ): ReadonlyArray<readonly [string, ILogDestination]> {
   if (registry === null) return []
