@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Homematic devices no longer overwrite their stored state with a placeholder at boot, so restarting the hub stops logging phantom open/closed and mode changes in the device history.
+
 ## [1.2.201] - 2026-11-14
 
 ### Changed

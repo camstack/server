@@ -14,7 +14,7 @@ import {
   registerPowerMeterCap,
   registerTemperatureCap,
 } from '../homematic-sensor-caps.js'
-import { COLD_MOTION, coldMotionKeepingRise } from './hm-cold-start.js'
+import { COLD_MOTION } from './hm-cold-start.js'
 import { changeStamp, type HmValueOrigin } from './hm-change-stamp.js'
 
 /** Sensor child config: the source channel + the cap(s) it registers. */
@@ -77,10 +77,6 @@ export class HmSensorDevice extends HmChildDevice<typeof hmSensorSchema> {
         (this.runtimeState.getCapState<MotionStatus>('motion') ?? COLD_MOTION).detected,
     }
     this.ctx.registerNativeCap(motionCapability, provider)
-    this.runtimeState.setCapState(
-      'motion',
-      coldMotionKeepingRise(this.runtimeState.getCapState<MotionStatus>('motion')),
-    )
   }
 
   private handleValueChanged(event: ValueChangedEvent, origin: HmValueOrigin): void {

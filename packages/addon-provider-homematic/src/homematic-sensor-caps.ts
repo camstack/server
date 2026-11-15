@@ -33,9 +33,6 @@ export function registerTemperatureCap(
       runtimeState.getCapState<TemperatureSensorStatus>('temperature-sensor') ?? COLD_TEMPERATURE,
   }
   ctx.registerNativeCap(temperatureSensorCapability, provider)
-  // Seed cold-start defaults AFTER registerNativeCap so the schema is
-  // installed by the kernel context factory before the first write.
-  runtimeState.setCapState('temperature-sensor', COLD_TEMPERATURE)
 }
 
 export function registerHumidityCap(ctx: DeviceContext, runtimeState: IDeviceRuntimeState): void {
@@ -44,9 +41,6 @@ export function registerHumidityCap(ctx: DeviceContext, runtimeState: IDeviceRun
       runtimeState.getCapState<HumiditySensorStatus>('humidity-sensor') ?? COLD_HUMIDITY,
   }
   ctx.registerNativeCap(humiditySensorCapability, provider)
-  // Seed cold-start defaults AFTER registerNativeCap so the schema is
-  // installed by the kernel context factory before the first write.
-  runtimeState.setCapState('humidity-sensor', COLD_HUMIDITY)
 }
 
 export function registerAmbientLightCap(
@@ -59,9 +53,6 @@ export function registerAmbientLightCap(
       COLD_AMBIENT_LIGHT,
   }
   ctx.registerNativeCap(ambientLightSensorCapability, provider)
-  // Seed cold-start defaults AFTER registerNativeCap so the schema is
-  // installed by the kernel context factory before the first write.
-  runtimeState.setCapState('ambient-light-sensor', COLD_AMBIENT_LIGHT)
 }
 
 export function registerPowerMeterCap(ctx: DeviceContext, runtimeState: IDeviceRuntimeState): void {
@@ -69,7 +60,4 @@ export function registerPowerMeterCap(ctx: DeviceContext, runtimeState: IDeviceR
     getStatus: async () => runtimeState.getCapState<PowerMeterStatus>('power-meter') ?? COLD_POWER,
   }
   ctx.registerNativeCap(powerMeterCapability, provider)
-  // Seed cold-start defaults AFTER registerNativeCap so the schema is
-  // installed by the kernel context factory before the first write.
-  runtimeState.setCapState('power-meter', COLD_POWER)
 }

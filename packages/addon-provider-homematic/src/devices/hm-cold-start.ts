@@ -19,7 +19,10 @@ import type { HmChannel } from 'nodehomematic'
  */
 
 /**
- * Cold-start defaults so reads never miss a slice before the first push.
+ * Cold-start defaults so reads never miss a slice before the first push. They
+ * are READ fallbacks (`getCapState(...) ?? COLD_X`), never written: a placeholder
+ * published at construction overwrote the hydrated slice and diffed against the
+ * CCU replay as phantom device transitions after every boot (planning#561).
  * `lastChangedAt: 0` marks each as a PLACEHOLDER — the value is a guess, and
  * consumers read it as unknown. A replayed CCU value is stamped
  * `HM_SEEDED_CHANGED_AT` instead (`hm-change-stamp.ts`).
@@ -36,21 +39,6 @@ export const COLD_MOTION: MotionStatus = {
   detected: false,
   lastDetectedAt: null,
   autoClearAfterMs: null,
-}
-
-/**
- * The motion seed a constructor writes OVER the slice hydrated from the
- * persisted runtime state. The level is a placeholder (`false`) until the
- * CCU says otherwise, but a stored rise is a fact: `lastDetectedAt: null`
- * means "never detected" (`motion.cap.ts`), and a restart must not turn
- * "fired an hour ago" into that.
- */
-export function coldMotionKeepingRise(stored: Readonly<MotionStatus> | undefined): MotionStatus {
-  const rise = stored?.lastDetectedAt
-  return {
-    ...COLD_MOTION,
-    lastDetectedAt: typeof rise === 'number' && Number.isFinite(rise) && rise > 0 ? rise : null,
-  }
 }
 
 export const CLIMATE_MODES: readonly HvacMode[] = ['off', 'heat', 'auto']

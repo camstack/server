@@ -68,7 +68,6 @@ export class HmDiagnosticDevice extends HmChildDevice<typeof hmDiagnosticSchema>
             this.runtimeState.getCapState<BinaryStatus>('binary') ?? COLD_BINARY,
         }
         this.ctx.registerNativeCap(binaryCapability, provider)
-        this.runtimeState.setCapState('binary', COLD_BINARY)
         return
       }
       case 'temperature-sensor': {
@@ -78,7 +77,6 @@ export class HmDiagnosticDevice extends HmChildDevice<typeof hmDiagnosticSchema>
             COLD_TEMP,
         }
         this.ctx.registerNativeCap(temperatureSensorCapability, provider)
-        this.runtimeState.setCapState('temperature-sensor', COLD_TEMP)
         return
       }
       case 'numeric-sensor':
@@ -89,7 +87,6 @@ export class HmDiagnosticDevice extends HmChildDevice<typeof hmDiagnosticSchema>
             this.runtimeState.getCapState<NumericSensorStatus>('numeric-sensor') ?? cold,
         }
         this.ctx.registerNativeCap(numericSensorCapability, provider)
-        this.runtimeState.setCapState('numeric-sensor', cold)
         return
       }
     }

@@ -18,7 +18,7 @@ import {
 import type { HmDevice, HmValue, Homematic, ValueChangedEvent } from 'nodehomematic'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { HmActuatorDevice } from '../devices/hm-actuator-device.js'
-import { HM_SEEDED_CHANGED_AT, changeStamp } from '../devices/hm-change-stamp.js'
+import { changeStamp, HM_SEEDED_CHANGED_AT } from '../devices/hm-change-stamp.js'
 import { HmDiagnosticDevice } from '../devices/hm-diagnostic-device.js'
 import { HmSensorDevice } from '../devices/hm-sensor-device.js'
 import { homematicFacades } from '../homematic-facade-resolver.js'
@@ -43,6 +43,8 @@ interface Harness {
     capName: string,
   ) => Readonly<T> | undefined
   readonly infos: readonly InfoRecord[]
+  /** Every value written to a cap slice, in order (`setCapState` calls). */
+  readonly writes: (capName: string) => readonly unknown[]
 }
 
 /** Overrides for the one field every child schema disagrees about: the
@@ -56,6 +58,7 @@ interface CtxOverrides {
 
 function makeCtx(overrides: CtxOverrides = {}): Harness {
   let runtimeStateRef: IDeviceRuntimeState | null = null
+  const written: { readonly cap: string; readonly value: unknown }[] = []
   const infos: InfoRecord[] = []
   const logger = {
     debug: () => undefined,
@@ -93,6 +96,11 @@ function makeCtx(overrides: CtxOverrides = {}): Harness {
     persistConfig: async () => {},
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtimeStateRef = rs
+      const original = rs.setCapState.bind(rs)
+      rs.setCapState = (cap, value) => {
+        written.push({ cap, value })
+        return original(cap, value)
+      }
     },
     registerNativeCap: (cap: { name: string; runtimeState?: unknown }) => {
       if (cap.runtimeState && runtimeStateRef) {
@@ -113,6 +121,7 @@ function makeCtx(overrides: CtxOverrides = {}): Harness {
     getCap: <T extends Record<string, unknown> = Record<string, unknown>>(capName: string) =>
       runtimeStateRef?.getCapState<T>(capName),
     infos,
+    writes: (capName) => written.filter((w) => w.cap === capName).map((w) => w.value),
   }
 }
 
@@ -317,13 +326,13 @@ describe('HmActuatorDevice lock — seeded values are known, never fresh', () =>
     expect(h.lock()).toEqual({ state: 'unlocked', lastChangedAt: HM_SEEDED_CHANGED_AT })
   })
 
-  it('an UNKNOWN LOCK_STATE leaves the cold placeholder a placeholder, and says so', () => {
+  it('an UNKNOWN LOCK_STATE publishes nothing (the slice stays a placeholder), and says so', () => {
     const { facade } = makeFacade('UNKNOWN')
     homematicFacades.set(INTEGRATION_ID, facade)
     const h = makeCtx()
     new HmActuatorDevice(h.ctx)
 
-    expect(h.lock()).toEqual({ state: 'unlocked', lastChangedAt: 0 })
+    expect(h.lock()).toBeUndefined()
     expect(h.infos).toHaveLength(1)
     expect(h.infos[0]?.extras).toMatchObject({
       tags: { deviceId: DEVICE_ID },
@@ -467,18 +476,14 @@ describe('HmSensorDevice motion — a stored rise survives a restart', () => {
     motion: { detected: true, lastDetectedAt: STORED_RISE, autoClearAfterMs: null },
   }
 
-  it('the constructor seed keeps the stored rise; the level stays a placeholder', () => {
+  it('the constructor writes nothing over the hydrated slice, so the stored rise survives', () => {
     const h = makeCtx({
       type: DeviceType.Sensor,
       persistedConfig: MOTION_CONFIG,
       initialRuntimeState: stored,
     })
     new HmSensorDevice(h.ctx)
-    expect(h.getCap('motion')).toEqual({
-      detected: false,
-      lastDetectedAt: STORED_RISE,
-      autoClearAfterMs: null,
-    })
+    expect(h.getCap('motion')).toEqual(stored.motion)
   })
 
   it('a replayed MOTION=false after the restart keeps the stored rise', () => {
@@ -504,13 +509,70 @@ describe('HmSensorDevice motion — a stored rise survives a restart', () => {
     })
   })
 
-  it('nothing stored ⇒ null, never an invented time', () => {
+  it('nothing stored ⇒ no slice published, reads fall back to the cold constant', async () => {
     const h = makeCtx({ type: DeviceType.Sensor, persistedConfig: MOTION_CONFIG })
     new HmSensorDevice(h.ctx)
-    expect(h.getCap('motion')).toEqual({
-      detected: false,
-      lastDetectedAt: null,
-      autoClearAfterMs: null,
+    expect(h.getCap('motion')).toBeUndefined()
+  })
+})
+
+/**
+ * planning#561: a constructor that wrote its COLD placeholder over the hydrated slice
+ * made the device-transition recorder log `open→closed, 60→null` and then the reverse
+ * when the CCU replayed the real value, at every boot.
+ */
+describe('a cold placeholder is never published', () => {
+  const COVER_CONFIG = {
+    address: ADDRESS,
+    integrationId: INTEGRATION_ID,
+    channel: CHANNEL,
+    kind: 'cover',
+  }
+  const PERSISTED_COVER = {
+    state: 'open',
+    position: 60,
+    tiltPosition: null,
+    lastChangedAt: LIVE_TS,
+  }
+
+  it('a persisted cover slice is never replaced by closed/null before the CCU replay', () => {
+    homematicFacades.set(
+      INTEGRATION_ID,
+      makeSeedFacade({
+        channelType: 'SHUTTER_VIRTUAL_RECEIVER',
+        parameter: 'LEVEL',
+        dpType: 'FLOAT',
+        value: 0.6,
+      }),
+    )
+    const h = makeCtx({
+      type: DeviceType.Cover,
+      persistedConfig: COVER_CONFIG,
+      initialRuntimeState: { cover: PERSISTED_COVER },
     })
+    new HmActuatorDevice(h.ctx)
+
+    expect(h.writes('cover')).not.toContainEqual(
+      expect.objectContaining({ state: 'closed', position: null }),
+    )
+    expect(h.getCap('cover')).toMatchObject({ state: 'open', position: 60 })
+  })
+
+  it('a climate device publishes nothing before the first CCU value', () => {
+    const h = makeCtx({
+      type: DeviceType.Climate,
+      persistedConfig: { ...COVER_CONFIG, kind: 'climate' },
+    })
+    new HmActuatorDevice(h.ctx)
+    expect(h.getCap('climate-control')).toBeUndefined()
+  })
+
+  it('a switch publishes nothing before the first CCU value', () => {
+    const h = makeCtx({
+      type: DeviceType.Switch,
+      persistedConfig: { ...COVER_CONFIG, kind: 'switch' },
+    })
+    new HmActuatorDevice(h.ctx)
+    expect(h.getCap('switch')).toBeUndefined()
   })
 })

@@ -103,7 +103,6 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       },
     }
     this.ctx.registerNativeCap(switchCapability, provider)
-    this.runtimeState.setCapState('switch', COLD_SWITCH)
     this.registeredCap = 'switch'
   }
 
@@ -129,7 +128,6 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       setTiltPosition: async () => this.unsupported('cover tilt'),
     }
     this.ctx.registerNativeCap(coverCapability, provider)
-    this.runtimeState.setCapState('cover', COLD_COVER)
     this.registeredCap = 'cover'
   }
 
@@ -151,7 +149,6 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
       },
     }
     this.ctx.registerNativeCap(lockControlCapability, provider)
-    this.runtimeState.setCapState('lock-control', COLD_LOCK)
     this.registeredCap = 'lock-control'
   }
 
@@ -203,7 +200,6 @@ export class HmActuatorDevice extends HmChildDevice<typeof hmActuatorSchema> {
     }
     this.ctx.registerNativeCap(climateControlCapability, provider)
     registerPowerSwitch(this, climateControlCapability, provider)
-    this.runtimeState.setCapState('climate-control', COLD_CLIMATE)
     this.registeredCap = 'climate-control'
   }
 

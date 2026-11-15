@@ -273,9 +273,9 @@ describe('HmActuatorDevice climate OFF', () => {
     installFacade(facade)
     const device = new HmActuatorDevice(climateContext([], logger))
 
-    expect(device.runtimeState.getCapState<ClimateControlStatus>('climate-control')?.mode).toBe(
-      'auto',
-    )
+    // The unmapped mode changes nothing, and nothing was published before it: the slice
+    // stays absent and reads fall back to the cold constant (planning#561).
+    expect(device.runtimeState.getCapState<ClimateControlStatus>('climate-control')).toBeUndefined()
     const dropped = logger.lines.find((line) => line.message.includes('SET_POINT_MODE'))
     expect(dropped?.level).toBe('debug')
     expect(dropped?.tags).toEqual({ deviceId: DEVICE_ID })
