@@ -57,8 +57,8 @@ export const airQualitySensorCapability = {
     fields: {
       co2: { kind: 'gauge', unit: 'ppm', deadband: 5 },
       voc: { kind: 'gauge', unit: 'ppb', deadband: 5 },
-      pm25: { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
-      pm10: { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
+      pm25: { group: 'particulates', kind: 'gauge', unit: 'µg/m³', deadband: 1 },
+      pm10: { group: 'particulates', kind: 'gauge', unit: 'µg/m³', deadband: 1 },
       aqi: { kind: 'gauge', unit: 'count', deadband: 1 },
     },
   },

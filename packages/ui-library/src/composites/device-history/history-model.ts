@@ -4,9 +4,10 @@
  *
  * Grouping mirrors the State panel: one section per capability in
  * `HISTORY_CATALOG` order (its fields in catalog order), then one section per
- * producer addon, sorted. Inside a section: one line chart per UNIT (never
- * two units on one axis), one state timeline per boolean or enum, the
- * derived energy as bars. A camera's occupancy is ONE chart of every
+ * producer addon, sorted. Inside a capability section: one chart per value
+ * unless the cap declares fields as one `group`, a counter as per-period bars,
+ * one state timeline per boolean or enum, the derived energy as bars. A
+ * producer section keeps one line chart per unit. A camera's occupancy is ONE chart of every
  * (zone × class) scope.
  */
 import {
@@ -32,6 +33,8 @@ export type HistoryChartSpec =
       readonly id: string
       readonly title: string
       readonly unit: string | null
+      /** The cap's declared `group` the series share; `null` = a single value or a producer's unit chart. */
+      readonly group: string | null
       readonly series: readonly DeviceHistorySeriesInfo[]
     }
   | {
@@ -97,30 +100,96 @@ function fieldRank(cap: string, field: string): number {
 
 const isState = (s: DeviceHistorySeriesInfo): boolean => s.kind === 'boolean' || s.kind === 'enum'
 
-/** One section's charts: a line chart per unit (first-seen order), then one timeline per state. */
+/** `power-flow` → `power flow`: a group's name as a chart-title suffix. */
+function groupWords(group: string): string {
+  return group.replace(/-/g, ' ')
+}
+
+/** The history `group` a capability field declares; `null` = it is its own chart. */
+function declaredGroup(key: string): string | null {
+  const parsed = parseCapKey(key)
+  if (parsed === null) return null
+  return HISTORY_CATALOG[parsed.cap]?.[parsed.field]?.group ?? null
+}
+
+function linesChart(
+  sectionId: string,
+  idPart: string,
+  title: string,
+  group: string | null,
+  series: readonly DeviceHistorySeriesInfo[],
+): HistoryChartSpec {
+  const names = [...new Set(series.map((s) => s.displayName))]
+  const unit = series[0]?.unit ?? null
+  return {
+    type: 'lines',
+    id: `${sectionId}:${idPart}`,
+    title:
+      names.length === 1
+        ? (names[0] ?? title)
+        : group === null
+          ? title
+          : `${title} · ${groupWords(group)}`,
+    unit,
+    group,
+    series,
+  }
+}
+
+/**
+ * One section's charts. A capability section draws every value as its OWN
+ * chart, except the fields its history declaration puts in one `group`; a
+ * counter is a per-period bar chart, never a cumulative line. A producer
+ * section (no declaration) keeps one line chart per unit. Then one timeline
+ * per boolean or enum.
+ */
 function chartsOf(
   sectionId: string,
   title: string,
   list: readonly DeviceHistorySeriesInfo[],
+  declared: boolean,
 ): HistoryChartSpec[] {
-  const out: HistoryChartSpec[] = []
-  const byUnit = new Map<string, DeviceHistorySeriesInfo[]>()
+  const bars: HistoryChartSpec[] = []
+  const buckets = new Map<string, { group: string | null; series: DeviceHistorySeriesInfo[] }>()
   for (const s of list) {
     if (s.key === DEVICE_HISTORY_ENERGY_KEY) {
-      out.push({ type: 'energy', id: `${sectionId}:energy`, title: s.displayName, series: s })
+      bars.push({
+        type: 'energy',
+        id: `${sectionId}:energy`,
+        title: s.displayName,
+        series: s,
+      })
       continue
     }
     if (isState(s)) continue
-    const u = s.unit ?? ''
-    byUnit.set(u, [...(byUnit.get(u) ?? []), s])
+    if (declared && s.kind === 'counter') {
+      bars.push({
+        type: 'energy',
+        id: `${sectionId}:counter:${s.key}:${s.scope}`,
+        title: s.displayName,
+        series: s,
+      })
+      continue
+    }
+    const group = declared ? declaredGroup(s.key) : null
+    const bucketKey = declared
+      ? group === null
+        ? `series:${s.key}`
+        : `group:${group}`
+      : `unit:${s.unit ?? ''}`
+    const bucket = buckets.get(bucketKey) ?? { group, series: [] }
+    buckets.set(bucketKey, { group, series: [...bucket.series, s] })
   }
-  const lines: HistoryChartSpec[] = [...byUnit.entries()].map(([unit, series]) => {
+  const lines: HistoryChartSpec[] = [...buckets.entries()].map(([bucketKey, { group, series }]) => {
+    if (declared) return linesChart(sectionId, bucketKey, title, group, series)
+    const unit = series[0]?.unit ?? ''
     const names = [...new Set(series.map((s) => s.displayName))]
     return {
       type: 'lines',
-      id: `${sectionId}:unit:${unit}`,
+      id: `${sectionId}:${bucketKey}`,
       title: names.length === 1 ? (names[0] ?? title) : unit === '' ? title : `${title} (${unit})`,
       unit: unit === '' ? null : unit,
+      group: null,
       series,
     }
   })
@@ -130,7 +199,7 @@ function chartsOf(
     title: s.displayName,
     series: s,
   }))
-  return [...lines, ...out, ...states]
+  return [...lines, ...bars, ...states]
 }
 
 /**
@@ -177,7 +246,12 @@ export function groupDeviceSeries(
         return fieldRank(cap, fx) - fieldRank(cap, fy) || x.scope.localeCompare(y.scope)
       })
       const id = `cap:${cap}`
-      return { id, kind: 'cap', name: cap, charts: chartsOf(id, capTitle(cap), sorted) }
+      return {
+        id,
+        kind: 'cap',
+        name: cap,
+        charts: chartsOf(id, capTitle(cap), sorted, true),
+      }
     })
   if (occupancy.length > 0) {
     const list = producers.get('pipeline-analytics') ?? []
@@ -187,7 +261,7 @@ export function groupDeviceSeries(
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([addon, list]) => {
       const id = `addon:${addon}`
-      const charts = chartsOf(id, capTitle(addon), list)
+      const charts = chartsOf(id, capTitle(addon), list, false)
       const occ: HistoryChartSpec[] =
         addon === 'pipeline-analytics' && occupancy.length > 0
           ? [
@@ -307,7 +381,10 @@ export function stateRow(
             : 'false'
         : s.before.state
   if (result.resolution === 'raw') {
-    const changes: StateChange[] = s.points.map((p) => ({ t: p.t, state: nameOf(p) }))
+    const changes: StateChange[] = s.points.map((p) => ({
+      t: p.t,
+      state: nameOf(p),
+    }))
     const segments = segmentsFromChanges(changes, from, to, beforeState)
     const totals = new Map<string, number>()
     for (const seg of segments) {
@@ -372,7 +449,23 @@ export function energyBuckets(result: DeviceHistoryQueryResult | undefined): {
     result === undefined || result.resolution === 'raw'
       ? RESOLUTION_BUCKET_MS['1h']
       : RESOLUTION_BUCKET_MS[result.resolution]
-  return { buckets: (s?.points ?? []).map((p) => ({ t: p.t, values: [p.delta] })), bucketMs }
+  if (result?.resolution === 'raw') {
+    // A raw point's delta is the growth since the previous point: sum them into the hour they fall in.
+    const perHour = new Map<number, number | null>()
+    for (const p of s?.points ?? []) {
+      const t = Math.floor(p.t / bucketMs) * bucketMs
+      const prev = perHour.get(t) ?? null
+      perHour.set(t, p.delta === null ? prev : (prev ?? 0) + p.delta)
+    }
+    return {
+      buckets: [...perHour.entries()].map(([t, v]) => ({ t, values: [v] })),
+      bucketMs,
+    }
+  }
+  return {
+    buckets: (s?.points ?? []).map((p) => ({ t: p.t, values: [p.delta] })),
+    bucketMs,
+  }
 }
 
 // ── Occupancy (zone × class) ────────────────────────────────────────────
@@ -390,7 +483,11 @@ export function occupancyLines(
 ): readonly OccupancyScopeLine[] {
   return series.map((s) => {
     const parsed = parseOccupancyScope(s.scope)
-    return { scope: s.scope, zoneId: parsed.zoneId, className: parsed.className }
+    return {
+      scope: s.scope,
+      zoneId: parsed.zoneId,
+      className: parsed.className,
+    }
   })
 }
 

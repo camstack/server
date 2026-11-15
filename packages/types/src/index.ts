@@ -1764,10 +1764,13 @@ export {
   HISTORY_BUCKET_MS,
   MAX_REQUEUED_BUCKETS_PER_SERIES,
 } from './history/bucket-accumulator.js'
+export { pickPrimarySeriesKey, primarySeriesKey } from './history/primary-series.js'
+export type { PickPrimarySeriesInput } from './history/primary-series.js'
 // ── Generated history catalog (codegen, D850) ────────────────────────
 export {
   HISTORY_CATALOG,
   HISTORY_ITEM_CATALOG,
+  HISTORY_PRIMARY,
   HISTORY_NONE_CAPS,
   historyFieldsFor,
 } from './generated/history-catalog.js'

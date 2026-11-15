@@ -9798,7 +9798,8 @@
         "count_other": "{{count}} runs"
       },
       "allPoints": "All",
-      "pointsFilter": "Points shown"
+      "pointsFilter": "Points shown",
+      "unitSwitch": "Unit"
     },
     "consumableLevel": {
       "ok": "OK",

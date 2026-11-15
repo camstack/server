@@ -156,12 +156,14 @@ export const heatPumpStatusCapability = {
   history: {
     fields: {
       'power.thermalW': {
+        group: 'power',
         kind: 'gauge',
         unit: 'W',
         deadband: 50,
         displayName: 'Thermal power',
       },
       'power.electricalW': {
+        group: 'power',
         kind: 'gauge',
         unit: 'W',
         deadband: 50,
@@ -174,12 +176,14 @@ export const heatPumpStatusCapability = {
         displayName: 'Compressor',
       },
       'temperatures.supply': {
+        group: 'loop',
         kind: 'gauge',
         unit: '°C',
         deadband: 0.5,
         displayName: 'Supply',
       },
       'temperatures.return': {
+        group: 'loop',
         kind: 'gauge',
         unit: '°C',
         deadband: 0.5,

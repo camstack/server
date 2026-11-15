@@ -76,6 +76,64 @@ const occupancyAt =
     return Math.max(0, Math.round((1.6 + 1.4 * wave(t, 3 * H)) * busy * weight * 3))
   }
 
+/** Daylight shape 0..1, peaking at 13:00 UTC. */
+const sun = (t: number): number => Math.max(0, Math.sin(((hourOf(t) - 6) / 14) * Math.PI))
+
+const energyGauge = (key: string, unit: string, displayName: string, at: SeriesSpec['at']) =>
+  spec({ key: `cap:energy-system.${key}`, scope: '', kind: 'gauge', unit, displayName, at })
+
+/** A lifetime meter that grows at `perDay` kWh a day, from `start`. */
+const energyCounter = (key: string, displayName: string, start: number, perDay: number) =>
+  spec({
+    key: `cap:energy-system.${key}`,
+    scope: '',
+    kind: 'counter',
+    unit: 'kWh',
+    displayName,
+    at: (t) => start + ((t - (NOW - 365 * D)) / D) * perDay,
+  })
+
+/** An invented home energy system: five powers, battery state, and seven lifetime meters. */
+const ENERGY_SYSTEM_SERIES: readonly SeriesSpec[] = [
+  energyGauge('solar.powerW', 'W', 'Solar power', (t) => 4200 * sun(t) ** 1.5),
+  energyGauge(
+    'grid.powerW',
+    'W',
+    'Grid power',
+    (t) => 350 - 2600 * sun(t) ** 2 + 400 * wave(t, 3 * H),
+  ),
+  energyGauge(
+    'house.powerW',
+    'W',
+    'House power',
+    (t) => 620 + 380 * Math.max(0, wave(t, 6 * H)) + 900 * sun(t),
+  ),
+  energyGauge('heatPump.powerW', 'W', 'Heat pump power', (t) =>
+    hourOf(t) > 5 && hourOf(t) < 22 ? 780 + 260 * wave(t, 2 * H) : 120,
+  ),
+  energyGauge('storage.powerW', 'W', 'Storage power', (t) => 1500 * Math.sin(DAY_PHASE(t) - 2)),
+  energyGauge(
+    'storage.stateOfChargePct',
+    '%',
+    'Storage charge',
+    (t) => 52 + 38 * Math.sin(DAY_PHASE(t) - 2.4),
+  ),
+  energyGauge(
+    'storage.storedKwh',
+    'kWh',
+    'Stored energy',
+    (t) => 4.2 + 3.1 * Math.sin(DAY_PHASE(t) - 2.4),
+  ),
+  energyGauge('storage.healthPct', '%', 'Storage health', () => 96),
+  energyCounter('solar.energyKwh', 'Solar energy', 5210, 18.4),
+  energyCounter('grid.importKwh', 'Grid import', 3120, 6.8),
+  energyCounter('grid.exportKwh', 'Grid export', 2480, 9.3),
+  energyCounter('house.energyKwh', 'House energy', 6900, 15.2),
+  energyCounter('heatPump.energyKwh', 'Heat pump energy', 2210, 5.1),
+  energyCounter('storage.chargedKwh', 'Storage charged', 1840, 4.6),
+  energyCounter('storage.dischargedKwh', 'Storage discharged', 1690, 4.2),
+]
+
 export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
   101: [
     spec({
@@ -221,6 +279,7 @@ export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
       at: () => 1,
     }),
   ],
+  203: ENERGY_SYSTEM_SERIES,
 }
 
 const RUNNERS = ['__root__', 'pipeline-runner', 'stream-broker', 'recorder'] as const
@@ -365,7 +424,11 @@ function bucketPoint(s: SeriesSpec, t: number, bucketMs: number): DeviceHistoryQ
     min: Math.min(...vals),
     max: Math.max(...vals),
     last,
-    delta: isEnergy ? (mean * bucketMs) / H : s.kind === 'counter' ? (2.1 * bucketMs) / D : null,
+    delta: isEnergy
+      ? (mean * bucketMs) / H
+      : s.kind === 'counter'
+        ? (s.at(t + bucketMs) ?? last) - (s.at(t) ?? last)
+        : null,
     state: null,
     states: null,
   }

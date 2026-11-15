@@ -203,6 +203,7 @@ export type {
   PowerHintMethods,
   PowerHintMode,
   CapabilityHistoryItems,
+  CapabilityHistoryPrimary,
   HistoryUnit,
   ProviderKind,
   RuntimeStateDurability,

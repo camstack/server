@@ -130,8 +130,11 @@ export const energySystemCapability = {
    * counters' difference over the day.
    */
   history: {
+    primary: 'house.powerW',
+    priority: 50,
     fields: {
       'solar.powerW': {
+        group: 'power-flow',
         kind: 'gauge',
         unit: 'W',
         deadband: 50,
@@ -143,6 +146,7 @@ export const energySystemCapability = {
         displayName: 'Solar energy',
       },
       'grid.powerW': {
+        group: 'power-flow',
         kind: 'gauge',
         unit: 'W',
         deadband: 50,
@@ -159,6 +163,7 @@ export const energySystemCapability = {
         displayName: 'Grid export',
       },
       'house.powerW': {
+        group: 'power-flow',
         kind: 'gauge',
         unit: 'W',
         deadband: 50,
@@ -170,6 +175,7 @@ export const energySystemCapability = {
         displayName: 'House energy',
       },
       'heatPump.powerW': {
+        group: 'power-flow',
         kind: 'gauge',
         unit: 'W',
         deadband: 50,
@@ -193,6 +199,7 @@ export const energySystemCapability = {
         displayName: 'Stored energy',
       },
       'storage.powerW': {
+        group: 'power-flow',
         kind: 'gauge',
         unit: 'W',
         deadband: 50,

@@ -29,6 +29,58 @@ const info = (
 
 const H = 3_600_000
 
+describe('groupDeviceSeries — a value is its own chart unless the cap groups it', () => {
+  const E = (field: string, kind: 'gauge' | 'counter', unit: string): DeviceHistorySeriesInfo =>
+    info(`cap:energy-system.${field}`, { kind, unit, displayName: field })
+  const enpal = [
+    E('solar.powerW', 'gauge', 'W'),
+    E('solar.energyKwh', 'counter', 'kWh'),
+    E('grid.powerW', 'gauge', 'W'),
+    E('grid.importKwh', 'counter', 'kWh'),
+    E('grid.exportKwh', 'counter', 'kWh'),
+    E('house.powerW', 'gauge', 'W'),
+    E('house.energyKwh', 'counter', 'kWh'),
+    E('heatPump.powerW', 'gauge', 'W'),
+    E('heatPump.energyKwh', 'counter', 'kWh'),
+    E('storage.stateOfChargePct', 'gauge', '%'),
+    E('storage.storedKwh', 'gauge', 'kWh'),
+    E('storage.powerW', 'gauge', 'W'),
+    E('storage.chargedKwh', 'counter', 'kWh'),
+    E('storage.dischargedKwh', 'counter', 'kWh'),
+    E('storage.healthPct', 'gauge', '%'),
+  ]
+  const charts = groupDeviceSeries(enpal, (c) => c)[0]?.charts ?? []
+
+  it('draws the five powers as ONE power-flow chart', () => {
+    const flow = charts.filter((c) => c.type === 'lines' && c.group === 'power-flow')
+    expect(flow).toHaveLength(1)
+    const only = flow[0]
+    expect(only?.type === 'lines' ? only.series.map((s) => s.key) : []).toEqual([
+      'cap:energy-system.solar.powerW',
+      'cap:energy-system.grid.powerW',
+      'cap:energy-system.house.powerW',
+      'cap:energy-system.heatPump.powerW',
+      'cap:energy-system.storage.powerW',
+    ])
+  })
+
+  it('never puts a gauge with a counter, nor SoC with health', () => {
+    const lines = charts.flatMap((c) => (c.type === 'lines' ? [c] : []))
+    expect(lines.map((c) => c.series.map((s) => s.key.split('.').slice(1).join('.')))).toEqual([
+      ['solar.powerW', 'grid.powerW', 'house.powerW', 'heatPump.powerW', 'storage.powerW'],
+      ['storage.stateOfChargePct'],
+      ['storage.storedKwh'],
+      ['storage.healthPct'],
+    ])
+  })
+
+  it('draws each counter as its own per-period bar chart', () => {
+    const bars = charts.flatMap((c) => (c.type === 'energy' ? [c.series.key] : []))
+    expect(bars).toHaveLength(7)
+    expect(bars.every((k) => k.endsWith('Kwh'))).toBe(true)
+  })
+})
+
 describe('groupDeviceSeries — scope grouping', () => {
   const series = [
     info('cap:power-meter.power', { unit: 'W' }),
@@ -36,7 +88,11 @@ describe('groupDeviceSeries — scope grouping', () => {
     info('cap:climate-control.currentTemp', { unit: '°C' }),
     info('cap:climate-control.target', { unit: '°C' }),
     info('cap:contact.entryOpen', { kind: 'boolean' }),
-    info('derived:energy.kwh', { kind: 'counter', unit: 'kWh', source: 'derived' }),
+    info('derived:energy.kwh', {
+      kind: 'counter',
+      unit: 'kWh',
+      source: 'derived',
+    }),
     info('addon:pipeline-analytics/occupancy', { scope: 'porch|person' }),
     info('addon:pipeline-analytics/occupancy', { scope: '' }),
     info('addon:pipeline-analytics/motion'),
@@ -124,9 +180,29 @@ const result = (
   ],
 })
 
+describe('energyBuckets — raw counter growth', () => {
+  it('sums raw deltas into hourly bars instead of stretching each over an hour', () => {
+    const r = result('raw', [
+      { t: 0, delta: 1 },
+      { t: 20 * 60_000, delta: 0.5 },
+      { t: H + 5, delta: 2 },
+    ])
+    const out = energyBuckets(r)
+    expect(out.bucketMs).toBe(H)
+    expect(out.buckets.map((b) => [b.t, b.values[0]])).toEqual([
+      [0, 1.5],
+      [H, 2],
+    ])
+  })
+})
+
 describe('linePoints', () => {
   it('opens a held cap series on the value in force before the window', () => {
-    const r = result('raw', [{ t: 5 * H, last: 21 }], { t: -H, value: 19, state: null })
+    const r = result('raw', [{ t: 5 * H, last: 21 }], {
+      t: -H,
+      value: 19,
+      state: null,
+    })
     const out = linePoints(info('cap:x.y'), r, 0)
     expect(out.points.map((p) => [p.t, p.v])).toEqual([
       [0, 19],
@@ -145,7 +221,12 @@ describe('linePoints', () => {
 
   it('prefers the time-weighted mean and carries the bucket spread as a band', () => {
     const r = result('1h', [{ t: 0, twMean: 20.5, mean: 30, min: 19, max: 22 }])
-    expect(linePoints(info('cap:x.y'), r, 0).points[0]).toEqual({ t: 0, v: 20.5, min: 19, max: 22 })
+    expect(linePoints(info('cap:x.y'), r, 0).points[0]).toEqual({
+      t: 0,
+      v: 20.5,
+      min: 19,
+      max: 22,
+    })
   })
 
   it('answers no point (never a zero) when the read has nothing', () => {
@@ -160,7 +241,10 @@ describe('stateRow — enum durations', () => {
       { t: H, state: 'idle', states: { idle: H } },
     ])
     const row = stateRow(
-      info('cap:dishwasher.state', { kind: 'enum', values: ['idle', 'running'] }),
+      info('cap:dishwasher.state', {
+        kind: 'enum',
+        values: ['idle', 'running'],
+      }),
       r,
       0,
       2 * H,
@@ -171,7 +255,11 @@ describe('stateRow — enum durations', () => {
   })
 
   it('turns raw boolean points into changes, starting at the held state', () => {
-    const r = result('raw', [{ t: H, last: 0 }], { t: -1, value: 1, state: null })
+    const r = result('raw', [{ t: H, last: 0 }], {
+      t: -1,
+      value: 1,
+      state: null,
+    })
     const row = stateRow(info('cap:contact.entryOpen', { kind: 'boolean' }), r, 0, 3 * H)
     expect(row.states).toEqual(['false', 'true'])
     expect(row.totals.get('true')).toBe(H)
@@ -209,7 +297,10 @@ describe('occupancy zone × class', () => {
   )
 
   it('offers the zones and classes that exist', () => {
-    expect(occupancyFacets(lines)).toEqual({ zones: ['', 'drive'], classes: ['car', 'person'] })
+    expect(occupancyFacets(lines)).toEqual({
+      zones: ['', 'drive'],
+      classes: ['car', 'person'],
+    })
   })
 
   it('shows the per-zone aggregates with no class picked (never a double count)', () => {

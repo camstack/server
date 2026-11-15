@@ -323,9 +323,20 @@ happened.
   `DeviceHistoryView` (`packages/ui-library/src/composites/device-history/`):
   `listSeries`, then `queryMany` in batches of 24 with `resolution: 'auto'`.
   A principal `queryMany` refuses (it is admin-only) reads each device series
-  through `query` instead. Sections follow `HISTORY_CATALOG` order, one chart
-  per unit, one timeline per boolean/enum, energy as bars with the window total,
-  the camera's occupancy as ONE chart of every zone × class scope.
+  through `query` instead. Sections follow `HISTORY_CATALOG` order. Every cap
+  value is its OWN chart unless the cap declares fields as one `group` on the
+  history field (same unit dimension, same nature — gauge with gauge; judged by
+  `check-cap-history-declared`); a counter is a per-period bar chart of its
+  `delta`, never a cumulative line; one timeline per boolean/enum; the derived
+  energy as bars with the window total; the camera's occupancy as ONE chart of
+  every zone × class scope. A producer section (no declaration) keeps one chart
+  per unit. A chart whose unit has siblings (W/kW, °C/°F, hPa/inHg …) carries a
+  unit switch that opens in the user's unit preference.
+- **The card's trend series** is declared per cap: `history.primary` (a numeric
+  field) with a numeric `priority`, projected into `HISTORY_PRIMARY`;
+  `pickPrimarySeriesKey` takes the data-bearing primary of the highest-priority
+  ENABLED cap. `hero-measurement` reads its `historyKey` from the same
+  declarations.
 - **System → History** (`/system/history`) overlays up to 24 series of any
   device or node over one window; node series are read with `forNodeId`. Saved
   panels and the charts an operator hid live in the ACCOUNT preference row

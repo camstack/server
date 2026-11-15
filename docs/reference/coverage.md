@@ -14,13 +14,13 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**252 units · 8807 source files · 245 units claimed by at least one document (8776 files).**
+**252 units · 8809 source files · 245 units claimed by at least one document (8778 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
 | `packages/addon-admin-ui/src/components` | 648 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +84 more, 4 ADRs | 2026-11-11 |
-| `packages/ui-library/src/composites` | 634 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +56 more, 3 ADRs | 2026-11-11 |
+| `packages/ui-library/src/composites` | 635 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +56 more, 3 ADRs | 2026-11-11 |
 | `scripts` | 609 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +152 more, 14 ADRs | 2026-11-12 |
 | `packages/system/src/builtins` | 509 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +198 more, 21 ADRs | 2026-11-08 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 477 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
@@ -227,6 +227,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/system/src/repl` | 2 | `api-surface` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md` | — |
 | `packages/types/src/audio` | 2 | `audio` | `architecture/data-planes.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0455-the-audio-plane-carries-the-source-bytes-and-only-to-a-consumer-that-declared-it-reads-them.md`, +2 more | 2026-10-08 |
 | `packages/types/src/audit` | 2 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1022-device-transitions-are-recorded-with-their-actor.md` | — |
+| `packages/types/src/history` | 2 | — | `architecture/device-history.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-11-08 |
 | `packages/types/src/inference` | 2 | `detection-execution` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/lifecycle` | 2 | `kernel` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/metrics` | 2 | `alerts-and-health` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/load-ledger.md` _(covers)_, `decisions/adr-0260-the-load-series-is-durable-on-a-fixed-cadence-with-a-row-cap-behind-the-retention-knob.md`, +1 more | — |
@@ -257,7 +258,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/clips` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0923-a-camera-recorded-clip-carries-our-detections-joined-by-its-provider-with-the-one-overlap-rule.md` | — |
 | `packages/types/src/geometry` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0903-the-subject-path-is-one-geometry-in-camstack-types.md` | — |
 | `packages/types/src/health` | 1 | `alerts-and-health` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
-| `packages/types/src/history` | 1 | — | `architecture/device-history.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | 2026-11-08 |
 | `packages/types/src/media` | 1 | `post-analysis` | `decisions/adr-0476-a-media-key-names-its-table-and-the-codec-is-the-only-place-that-spells-it.md`, `decisions/adr-0482-a-media-row-is-addressed-by-its-own-id.md`, `decisions/adr-0560-a-clip-source-over-recorded-footage-is-registered-by-the-addon-that-owns-the-footage-and-the-half-that-went-remote-is-the-half-that-needs-a-degradation.md`, +2 more | 2026-10-04 |
 | `packages/types/src/process` | 1 | `alerts-and-health` | `architecture/load-ledger.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |
 | `packages/types/src/search` | 1 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md` | — |

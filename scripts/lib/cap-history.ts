@@ -22,6 +22,7 @@ import {
   type CapabilityHistoryField,
   type CapabilityHistoryItems,
 } from '../../packages/types/src/capabilities/capability-definition.js'
+import { unitDimension } from '../../packages/types/src/units/convert.js'
 import { parseAllCaps } from './parse-cap.js'
 
 type RuntimeStateSchema = z.ZodObject<z.core.$ZodLooseShape>
@@ -54,6 +55,11 @@ export type HistoryViolationRule =
   | 'skip-when-set-invalid'
   | 'items-not-keyed-array'
   | 'items-key-invalid'
+  | 'group-not-numeric'
+  | 'group-mixed-dimension'
+  | 'group-mixed-nature'
+  | 'group-single-member'
+  | 'primary-invalid'
 
 export interface HistoryViolation {
   readonly capName: string
@@ -273,6 +279,96 @@ export function enumValuesOf(
   return resolved.leaf.options.map((o) => String(o))
 }
 
+/**
+ * Fields sharing a `group` share ONE chart, so they must be one quantity: the
+ * same unit dimension (or the same `unitFrom`), the same nature (gauge with
+ * gauge, counter with counter), and a number — a state or boolean has its own
+ * timeline. A group of one is a typo.
+ */
+export function judgeGroups(
+  capName: string,
+  fields: Readonly<Record<string, CapabilityHistoryField>>,
+): readonly HistoryViolation[] {
+  const groups = new Map<string, [string, CapabilityHistoryField][]>()
+  for (const [field, spec] of Object.entries(fields)) {
+    if (spec.group === undefined) continue
+    groups.set(spec.group, [...(groups.get(spec.group) ?? []), [field, spec]])
+  }
+  const out: HistoryViolation[] = []
+  for (const [group, members] of groups) {
+    const add = (rule: HistoryViolationRule, field: string, message: string): void => {
+      out.push({
+        capName,
+        rule,
+        field,
+        message: `group \`${group}\`: ${message}`,
+      })
+    }
+    if (members.length < 2) {
+      add('group-single-member', members[0]?.[0] ?? group, 'a group needs two or more fields')
+      continue
+    }
+    const [firstField, first] = members[0] ?? ['', { kind: 'gauge' as const }]
+    const dimensionOf = (spec: CapabilityHistoryField): string =>
+      spec.unit !== undefined
+        ? (unitDimension(spec.unit) ?? `unit:${spec.unit}`)
+        : `from:${spec.unitFrom ?? ''}`
+    for (const [field, spec] of members) {
+      if (spec.kind !== 'gauge' && spec.kind !== 'counter') {
+        add('group-not-numeric', field, `\`${spec.kind}\` is a state, not a chartable quantity`)
+        continue
+      }
+      if (spec.kind !== first.kind) {
+        add(
+          'group-mixed-nature',
+          field,
+          `\`${field}\` is a ${spec.kind}, \`${firstField}\` a ${first.kind}`,
+        )
+      }
+      if (dimensionOf(spec) !== dimensionOf(first)) {
+        add(
+          'group-mixed-dimension',
+          field,
+          `\`${field}\` (${dimensionOf(spec)}) and \`${firstField}\` (${dimensionOf(first)}) differ in dimension`,
+        )
+      }
+    }
+  }
+  return out
+}
+
+function judgePrimary(
+  cap: HistoryCapView,
+  history: Exclude<CapabilityHistory, 'none'>,
+): readonly HistoryViolation[] {
+  const { primary, priority } = history
+  if (primary === undefined && priority === undefined) return []
+  const field = primary === undefined ? undefined : history.fields[primary]
+  if (
+    primary === undefined ||
+    field === undefined ||
+    (field.kind !== 'gauge' && field.kind !== 'counter')
+  ) {
+    return [
+      {
+        capName: cap.capName,
+        rule: 'primary-invalid',
+        message: '`primary` must name a numeric `history.fields` key',
+      },
+    ]
+  }
+  if (priority === undefined || !Number.isFinite(priority)) {
+    return [
+      {
+        capName: cap.capName,
+        rule: 'primary-invalid',
+        message: '`primary` needs a numeric `priority`',
+      },
+    ]
+  }
+  return []
+}
+
 /** Judge one cap's `history` block. Empty array = clean. */
 export function judgeCapHistory(cap: HistoryCapView): readonly HistoryViolation[] {
   const { capName, runtimeState, history } = cap
@@ -309,7 +405,11 @@ export function judgeCapHistory(cap: HistoryCapView): readonly HistoryViolation[
       },
     ]
   }
-  const top = entries.flatMap(([field, spec]) => judgeField(cap, runtimeState, field, spec))
+  const top = [
+    ...entries.flatMap(([field, spec]) => judgeField(cap, runtimeState, field, spec)),
+    ...judgeGroups(cap.capName, history.fields),
+    ...judgePrimary(cap, history),
+  ]
   return history.items === undefined
     ? top
     : [...top, ...judgeItems(cap, runtimeState, history.items)]

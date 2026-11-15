@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Capability history declares which fields share a chart (group) and which series a device card trends (primary, priority)
+
 ## [1.2.576] - 2026-11-15
 
 ### Changed

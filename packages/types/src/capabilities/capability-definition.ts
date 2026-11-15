@@ -607,6 +607,14 @@ export interface CapabilityHistoryField {
    */
   readonly unitFrom?: string
   readonly displayName?: string
+  /**
+   * Fields of ONE cap that name the same group share a History chart; a field
+   * with no group gets a chart of its own. Only closely related readings belong
+   * together (the five `powerW` of an energy system), so the members must share
+   * a unit dimension and a nature: gauges with gauges, counters with counters,
+   * never a boolean or an enum. Judged by `scripts/check-cap-history-declared.ts`.
+   */
+  readonly group?: string
   /** Drop a change smaller than this (ABSOLUTE) — anti-jitter for noisy gauges. */
   readonly deadband?: number
   /**
@@ -676,7 +684,21 @@ export type CapabilityHistory =
   | {
       readonly fields: Readonly<Record<string, CapabilityHistoryField>>
       readonly items?: CapabilityHistoryItems
+      /**
+       * The field a device card trends: a numeric `fields` key. Declared with
+       * {@link priority}; the card shows the primary of the ENABLED cap with the
+       * highest priority that has data on the device.
+       */
+      readonly primary?: string
+      /** Higher wins between the caps of one device; required with `primary`. */
+      readonly priority?: number
     }
+
+/** A cap's declared card series: a numeric history field and its rank between caps. */
+export interface CapabilityHistoryPrimary {
+  readonly field: string
+  readonly priority: number
+}
 
 /** Capture floor (ms) applied to `gauge` / `counter` series when a field states none. */
 export const HISTORY_DEFAULT_MIN_INTERVAL_MS = 10_000

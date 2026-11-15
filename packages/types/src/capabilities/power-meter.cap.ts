@@ -150,6 +150,8 @@ export const powerMeterCapability = {
    * History (D850): recorded series. Gauges are floored at 30 s; `energy` is the one monotonic meter (counter).
    */
   history: {
+    primary: 'power',
+    priority: 80,
     fields: {
       power: { kind: 'gauge', unit: 'W', deadband: 1, minIntervalMs: 30000 },
       energy: {

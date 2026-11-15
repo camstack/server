@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ## [1.2.454] - 2026-11-15
+### Changed
+
+- Device History draws one chart per value unless the capability groups them, counters as per-period bars, with a per-chart unit switch
 
 ### Fixed
 

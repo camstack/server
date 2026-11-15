@@ -153,10 +153,10 @@ export const streamParamsCapability = {
    */
   history: {
     fields: {
-      'main.bitrate': { kind: 'gauge', unit: 'kbps' },
-      'main.framerate': { kind: 'gauge', unit: 'fps' },
-      'sub.bitrate': { kind: 'gauge', unit: 'kbps' },
-      'sub.framerate': { kind: 'gauge', unit: 'fps' },
+      'main.bitrate': { group: 'bitrate', kind: 'gauge', unit: 'kbps' },
+      'main.framerate': { group: 'framerate', kind: 'gauge', unit: 'fps' },
+      'sub.bitrate': { group: 'bitrate', kind: 'gauge', unit: 'kbps' },
+      'sub.framerate': { group: 'framerate', kind: 'gauge', unit: 'fps' },
     },
   },
   /** Clock fields: written, but excluded from the compare that decides

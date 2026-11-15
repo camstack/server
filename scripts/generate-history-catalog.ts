@@ -85,6 +85,18 @@ async function main(): Promise<void> {
     })
     .join('\n')
 
+  const primaries = caps.flatMap((c) =>
+    c.history === undefined ||
+    c.history === 'none' ||
+    c.history.primary === undefined ||
+    c.history.priority === undefined
+      ? []
+      : [{ cap: c.capName, field: c.history.primary, priority: c.history.priority }],
+  )
+  const primaryEntries = primaries
+    .map((p) => `  '${p.cap}': { field: '${p.field}', priority: ${p.priority} },`)
+    .join('\n')
+
   const itemEntries = withItems
     .map(({ cap, items }) => {
       const rows = Object.entries(items.fields)
@@ -102,6 +114,7 @@ async function main(): Promise<void> {
 import type {
   CapabilityHistoryField,
   CapabilityHistoryItems,
+  CapabilityHistoryPrimary,
 } from '../capabilities/capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 
@@ -121,6 +134,14 @@ ${entries}
  */
 export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItems>> = {
 ${itemEntries}
+}
+
+/**
+ * The series a device card trends, per cap (\`history.primary\` + \`history.priority\`):
+ * ${primaries.length} caps. The card shows the primary of the enabled cap with the highest priority.
+ */
+export const HISTORY_PRIMARY: Readonly<Record<string, CapabilityHistoryPrimary>> = {
+${primaryEntries}
 }
 
 /** Caps that declared \`history: 'none'\`, sorted. */

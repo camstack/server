@@ -5,6 +5,7 @@
 import type {
   CapabilityHistoryField,
   CapabilityHistoryItems,
+  CapabilityHistoryPrimary,
 } from '../capabilities/capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 
@@ -17,8 +18,8 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
   'air-quality-sensor': {
     'co2': { kind: 'gauge', unit: 'ppm', deadband: 5 },
     'voc': { kind: 'gauge', unit: 'ppb', deadband: 5 },
-    'pm25': { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
-    'pm10': { kind: 'gauge', unit: 'µg/m³', deadband: 1 },
+    'pm25': { group: 'particulates', kind: 'gauge', unit: 'µg/m³', deadband: 1 },
+    'pm10': { group: 'particulates', kind: 'gauge', unit: 'µg/m³', deadband: 1 },
     'aqi': { kind: 'gauge', unit: 'count', deadband: 1 },
   },
   'alarm-panel': {
@@ -41,11 +42,11 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'detected': { kind: 'boolean' },
   },
   'climate-control': {
-    'currentTemp': { kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'currentTemp': { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.1 },
     'currentHumidity': { kind: 'gauge', unit: '%', deadband: 0.5 },
-    'target': { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
-    'targetHigh': { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
-    'targetLow': { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
+    'target': { group: 'temperature', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
+    'targetHigh': { group: 'target-range', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
+    'targetLow': { group: 'target-range', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
   },
   'connectivity': {
     'connected': { kind: 'boolean' },
@@ -71,18 +72,18 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'enabled': { kind: 'boolean' },
   },
   'energy-system': {
-    'solar.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Solar power' },
+    'solar.powerW': { group: 'power-flow', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Solar power' },
     'solar.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'Solar energy' },
-    'grid.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Grid power' },
+    'grid.powerW': { group: 'power-flow', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Grid power' },
     'grid.importKwh': { kind: 'counter', unit: 'kWh', displayName: 'Grid import' },
     'grid.exportKwh': { kind: 'counter', unit: 'kWh', displayName: 'Grid export' },
-    'house.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'House power' },
+    'house.powerW': { group: 'power-flow', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'House power' },
     'house.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'House energy' },
-    'heatPump.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Heat pump power' },
+    'heatPump.powerW': { group: 'power-flow', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Heat pump power' },
     'heatPump.energyKwh': { kind: 'counter', unit: 'kWh', displayName: 'Heat pump energy' },
     'storage.stateOfChargePct': { kind: 'gauge', unit: '%', deadband: 1, displayName: 'Storage charge' },
     'storage.storedKwh': { kind: 'gauge', unit: 'kWh', deadband: 0.05, displayName: 'Stored energy' },
-    'storage.powerW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Storage power' },
+    'storage.powerW': { group: 'power-flow', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Storage power' },
     'storage.chargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage charged' },
     'storage.dischargedKwh': { kind: 'counter', unit: 'kWh', displayName: 'Storage discharged' },
     'storage.healthPct': { kind: 'gauge', unit: '%', deadband: 1, displayName: 'Storage health' },
@@ -101,11 +102,11 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'detected': { kind: 'boolean' },
   },
   'heat-pump-status': {
-    'power.thermalW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Thermal power' },
-    'power.electricalW': { kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Electrical power' },
+    'power.thermalW': { group: 'power', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Thermal power' },
+    'power.electricalW': { group: 'power', kind: 'gauge', unit: 'W', deadband: 50, displayName: 'Electrical power' },
     'power.compressorPct': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'Compressor' },
-    'temperatures.supply': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Supply' },
-    'temperatures.return': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Return' },
+    'temperatures.supply': { group: 'loop', kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Supply' },
+    'temperatures.return': { group: 'loop', kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Return' },
     'temperatures.outdoor': { kind: 'gauge', unit: '°C', deadband: 0.5, displayName: 'Outdoor' },
     'energy.thermalKwh': { kind: 'counter', unit: 'kWh', displayName: 'Thermal energy' },
     'energy.electricalKwh': { kind: 'counter', unit: 'kWh', displayName: 'Electrical energy' },
@@ -175,10 +176,10 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'detected': { kind: 'boolean' },
   },
   'stream-params': {
-    'main.bitrate': { kind: 'gauge', unit: 'kbps' },
-    'main.framerate': { kind: 'gauge', unit: 'fps' },
-    'sub.bitrate': { kind: 'gauge', unit: 'kbps' },
-    'sub.framerate': { kind: 'gauge', unit: 'fps' },
+    'main.bitrate': { group: 'bitrate', kind: 'gauge', unit: 'kbps' },
+    'main.framerate': { group: 'framerate', kind: 'gauge', unit: 'fps' },
+    'sub.bitrate': { group: 'bitrate', kind: 'gauge', unit: 'kbps' },
+    'sub.framerate': { group: 'framerate', kind: 'gauge', unit: 'fps' },
   },
   'switch': {
     'on': { kind: 'boolean' },
@@ -199,8 +200,8 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'detected': { kind: 'boolean' },
   },
   'water-heater': {
-    'currentTemp': { kind: 'gauge', unit: '°C', deadband: 0.5 },
-    'targetTemp': { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
+    'currentTemp': { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.5 },
+    'targetTemp': { group: 'temperature', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
   },
   'weather': {
     'temperature': { kind: 'gauge', unit: '°C', deadband: 0.2 },
@@ -209,22 +210,22 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'windSpeed': { kind: 'gauge', unit: 'm/s', deadband: 0.5 },
   },
   'weather-station': {
-    'temperature': { kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'temperature': { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.1 },
     'humidity': { kind: 'gauge', unit: '%', deadband: 1 },
     'pressure': { kind: 'gauge', unit: 'hPa', deadband: 0.2 },
-    'windSpeed': { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
-    'windGust': { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
-    'windBearing': { kind: 'gauge', unit: '°', deadband: 5 },
+    'windSpeed': { group: 'wind-speed', kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+    'windGust': { group: 'wind-speed', kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+    'windBearing': { group: 'wind-bearing', kind: 'gauge', unit: '°', deadband: 5 },
     'rainRate': { kind: 'gauge', unit: 'mm/h', deadband: 0.1 },
     'rainDaily': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
     'rainEvent': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
     'uv': { kind: 'gauge', unit: 'index', deadband: 0.1 },
     'solarRadiation': { kind: 'gauge', unit: 'W/m²', deadband: 5 },
-    'dewPoint': { kind: 'gauge', unit: '°C', deadband: 0.1 },
-    'feelsLike': { kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'dewPoint': { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'feelsLike': { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.1 },
     'vpd': { kind: 'gauge', unit: 'kPa', deadband: 0.05 },
-    'windGustMax': { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
-    'windBearingAvg': { kind: 'gauge', unit: '°', deadband: 5 },
+    'windGustMax': { group: 'wind-speed', kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+    'windBearingAvg': { group: 'wind-bearing', kind: 'gauge', unit: '°', deadband: 5 },
     'rain24h': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
     'rainWeekly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
     'rainMonthly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
@@ -258,6 +259,19 @@ export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItem
       'mode': { kind: 'enum', displayName: 'Mode' },
     },
   },
+}
+
+/**
+ * The series a device card trends, per cap (`history.primary` + `history.priority`):
+ * 6 caps. The card shows the primary of the enabled cap with the highest priority.
+ */
+export const HISTORY_PRIMARY: Readonly<Record<string, CapabilityHistoryPrimary>> = {
+  'climate-control': { field: 'currentTemp', priority: 70 },
+  'energy-system': { field: 'house.powerW', priority: 50 },
+  'humidity-sensor': { field: 'humidity', priority: 90 },
+  'power-meter': { field: 'power', priority: 80 },
+  'temperature-sensor': { field: 'temperature', priority: 100 },
+  'weather-station': { field: 'temperature', priority: 60 },
 }
 
 /** Caps that declared `history: 'none'`, sorted. */

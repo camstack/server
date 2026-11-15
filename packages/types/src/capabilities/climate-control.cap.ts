@@ -499,12 +499,14 @@ export const climateControlCapability = {
    * History (D850): recorded series. Celsius by contract; setpoints keep every change (`minIntervalMs: 0`).
    */
   history: {
+    primary: 'currentTemp',
+    priority: 70,
     fields: {
-      currentTemp: { kind: 'gauge', unit: '°C', deadband: 0.1 },
+      currentTemp: { group: 'temperature', kind: 'gauge', unit: '°C', deadband: 0.1 },
       currentHumidity: { kind: 'gauge', unit: '%', deadband: 0.5 },
-      target: { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
-      targetHigh: { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
-      targetLow: { kind: 'gauge', unit: '°C', minIntervalMs: 0 },
+      target: { group: 'temperature', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
+      targetHigh: { group: 'target-range', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
+      targetLow: { group: 'target-range', kind: 'gauge', unit: '°C', minIntervalMs: 0 },
     },
   },
   vocabulary: {

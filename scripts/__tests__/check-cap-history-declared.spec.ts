@@ -60,6 +60,85 @@ function withField(field: string, spec: object): HistoryCapView {
   return cap({ history: { fields: { [field]: { kind: 'gauge', ...spec } } } })
 }
 
+describe('history groups and primary', () => {
+  const F = {
+    a: { kind: 'gauge', unit: 'W', group: 'flow' },
+    b: { kind: 'gauge', unit: 'W', group: 'flow' },
+  } as const
+  const view = (fields: object, extra: object = {}): HistoryCapView =>
+    cap({
+      runtimeState: z.object({
+        a: z.number(),
+        b: z.number(),
+        c: z.number(),
+        d: z.boolean(),
+      }),
+      history: { fields: { ...fields }, ...extra } as HistoryCapView['history'],
+    })
+
+  it('accepts a group of one dimension and one nature, and a valid primary', () => {
+    expect(
+      rules(view({ ...F, c: { kind: 'gauge', unit: 'W' } }, { primary: 'a', priority: 5 })),
+    ).toEqual([])
+    expect(
+      rules(
+        view({
+          a: { kind: 'gauge', unit: 'W', group: 'g' },
+          b: { kind: 'gauge', unit: 'W', group: 'g' },
+        }),
+      ),
+    ).toEqual([])
+  })
+
+  it('rejects a group that mixes unit dimensions', () => {
+    expect(
+      rules(
+        view({
+          a: { kind: 'gauge', unit: 'W', group: 'g' },
+          b: { kind: 'gauge', unit: '%', group: 'g' },
+        }),
+      ),
+    ).toEqual(['group-mixed-dimension'])
+  })
+
+  it('rejects a counter grouped with a gauge, even in one dimension', () => {
+    expect(
+      rules(
+        view({
+          a: { kind: 'gauge', unit: 'kWh', group: 'g' },
+          b: { kind: 'counter', unit: 'kWh', group: 'g' },
+        }),
+      ),
+    ).toEqual(['group-mixed-nature'])
+  })
+
+  it('rejects a state in a group and a group of one', () => {
+    expect(
+      rules(
+        view({
+          a: { kind: 'gauge', unit: 'W', group: 'g' },
+          d: { kind: 'boolean', group: 'g' },
+        }),
+      ),
+    ).toContain('group-not-numeric')
+    expect(rules(view({ a: { kind: 'gauge', unit: 'W', group: 'solo' } }))).toEqual([
+      'group-single-member',
+    ])
+  })
+
+  it('rejects a primary that is not a numeric field or has no priority', () => {
+    expect(
+      rules(view({ a: { kind: 'gauge', unit: 'W' } }, { primary: 'zzz', priority: 1 })),
+    ).toEqual(['primary-invalid'])
+    expect(rules(view({ d: { kind: 'boolean' } }, { primary: 'd', priority: 1 }))).toEqual([
+      'primary-invalid',
+    ])
+    expect(rules(view({ a: { kind: 'gauge', unit: 'W' } }, { primary: 'a' }))).toEqual([
+      'primary-invalid',
+    ])
+  })
+})
+
 describe('judgeCapHistory', () => {
   it('accepts none, and a clean block', () => {
     expect(rules(cap({ history: 'none' }))).toEqual([])
@@ -163,7 +242,11 @@ describe('judgeCapHistory', () => {
 
   it('excludeDeviceTypes must be real DeviceTypes', () => {
     const ok = cap({
-      history: { fields: { on: { kind: 'boolean', excludeDeviceTypes: [DeviceType.Camera] } } },
+      history: {
+        fields: {
+          on: { kind: 'boolean', excludeDeviceTypes: [DeviceType.Camera] },
+        },
+      },
     })
     expect(rules(ok)).toEqual([])
     // JSON.parse yields an untyped value — the way a malformed block would reach the guard.
@@ -178,7 +261,13 @@ describe('keyed items (D917)', () => {
     return cap({
       history: {
         fields: { ...fields },
-        items: { path: 'keyed', key: 'key', label: 'label', fields: {}, ...items },
+        items: {
+          path: 'keyed',
+          key: 'key',
+          label: 'label',
+          fields: {},
+          ...items,
+        },
       },
     })
   }

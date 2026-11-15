@@ -50,6 +50,8 @@ export const humiditySensorCapability = {
    * History (D850): recorded series.
    */
   history: {
+    primary: 'humidity',
+    priority: 90,
     fields: {
       humidity: { kind: 'gauge', unit: '%', deadband: 0.5 },
     },

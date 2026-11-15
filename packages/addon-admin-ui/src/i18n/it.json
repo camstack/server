@@ -9820,7 +9820,8 @@
         "count_other": "{{count}} cicli"
       },
       "allPoints": "Tutti",
-      "pointsFilter": "Punti mostrati"
+      "pointsFilter": "Punti mostrati",
+      "unitSwitch": "Unità"
     },
     "consumableLevel": {
       "ok": "OK",

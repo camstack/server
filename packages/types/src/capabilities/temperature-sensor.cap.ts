@@ -52,6 +52,8 @@ export const temperatureSensorCapability = {
    * History (D850): recorded series.
    */
   history: {
+    primary: 'temperature',
+    priority: 100,
     fields: {
       temperature: { kind: 'gauge', unit: '°C', deadband: 0.1 },
     },

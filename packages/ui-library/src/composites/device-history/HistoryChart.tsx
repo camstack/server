@@ -8,12 +8,15 @@
  * point is the empty state — never a flat zero.
  */
 import { useMemo, useState, type JSX, type ReactNode } from 'react'
+import { convertUnit } from '@camstack/types'
 import type {
+  DeviceHistoryQueryResult,
   DeviceHistoryQueryManyEntry,
   DeviceHistorySeriesInfo,
   DeviceRun,
 } from '@camstack/types'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
+import { useUnitPreferences } from '../../contexts/unit-preferences'
 import { Select } from '../../primitives/select'
 import { BarSeries } from '../charts/BarSeries'
 import { ChartPlaceholder } from '../charts/chart-frame'
@@ -31,6 +34,7 @@ import {
   type HistoryChartSpec,
   type OccupancyFilter,
 } from './history-model'
+import { chartUnitChoices, convertPoints, defaultChartUnit } from './history-units'
 import type { HistoryReads } from './use-device-history'
 import type { HistoryWindow } from './history-window'
 
@@ -74,7 +78,10 @@ export function booleanLabels(
       off: t('uiLibrary.history.state.clear', 'clear'),
     }
   }
-  return { on: t('uiLibrary.history.state.on', 'on'), off: t('uiLibrary.history.state.off', 'off') }
+  return {
+    on: t('uiLibrary.history.state.on', 'on'),
+    off: t('uiLibrary.history.state.off', 'off'),
+  }
 }
 
 function failure(entry: DeviceHistoryQueryManyEntry | undefined): string | null {
@@ -129,16 +136,11 @@ export function HistoryChart({
     const entry = entryFor(spec.series.key, false)
     const err = failure(entry)
     if (err) return <ReadFailed title={spec.title} error={err} actions={actions} />
-    const { buckets, bucketMs } = energyBuckets(entry?.ok ? entry.result : undefined)
     return (
-      <BarSeries
-        title={spec.title}
-        layers={[{ id: 'kwh', label: spec.title, colorIndex: 4 }]}
-        buckets={buckets}
-        bucketMs={bucketMs}
-        range={window}
-        unit={spec.series.unit ?? 'kWh'}
-        showTotal
+      <EnergyChart
+        spec={spec}
+        result={entry?.ok ? entry.result : undefined}
+        window={window}
         syncKey={syncKey}
         pending={pending}
         actions={actions}
@@ -171,6 +173,89 @@ export function HistoryChart({
       runs={spec.series.some((s) => s.key === RUN_BANDS_SERIES_KEY) ? runs : undefined}
       now={now}
       labelOf={(s) => (spec.series.length > 1 || s.scope !== '' ? seriesLabel(s) : spec.title)}
+    />
+  )
+}
+
+/** The small unit selector of a chart; nothing when the dimension offers no choice. */
+function UnitSwitch({
+  choices,
+  value,
+  onChange,
+}: {
+  readonly choices: readonly string[]
+  readonly value: string
+  readonly onChange: (unit: string) => void
+}): JSX.Element | null {
+  const t = useUiText()
+  if (choices.length < 2) return null
+  return (
+    <Select
+      aria-label={t('uiLibrary.history.unitSwitch', 'Unit')}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="h-6 text-[10px] py-0"
+      options={choices.map((u) => ({ value: u, label: u }))}
+    />
+  )
+}
+
+/** The unit a chart shows: the user's pick, else what their unit preferences say. */
+function useChartUnit(base: string | null): {
+  readonly unit: string | null
+  readonly choices: readonly string[]
+  readonly pick: (unit: string) => void
+} {
+  const preferences = useUnitPreferences()
+  const [picked, setPicked] = useState<string | null>(null)
+  const choices = chartUnitChoices(base)
+  const unit = base === null ? null : (picked ?? defaultChartUnit(base, preferences))
+  return { unit, choices, pick: setPicked }
+}
+
+function EnergyChart({
+  spec,
+  result,
+  window,
+  syncKey,
+  pending,
+  actions,
+}: {
+  readonly spec: Extract<HistoryChartSpec, { type: 'energy' }>
+  readonly result: DeviceHistoryQueryResult | undefined
+  readonly window: HistoryWindow
+  readonly syncKey: string
+  readonly pending: boolean
+  readonly actions?: ReactNode
+}): JSX.Element {
+  const base = spec.series.unit ?? 'kWh'
+  const { unit, choices, pick } = useChartUnit(base)
+  const shown = unit ?? base
+  const { buckets, bucketMs } = energyBuckets(result)
+  const converted =
+    shown === base
+      ? buckets
+      : buckets.map((b) => ({
+          ...b,
+          values: b.values.map((v) => (v === null ? null : convertUnit(v, base, shown))),
+        }))
+  return (
+    <BarSeries
+      title={spec.title}
+      layers={[{ id: 'kwh', label: spec.title, colorIndex: 4 }]}
+      buckets={converted}
+      bucketMs={bucketMs}
+      range={window}
+      unit={shown}
+      showTotal
+      syncKey={syncKey}
+      pending={pending}
+      actions={
+        <>
+          <UnitSwitch choices={choices} value={shown} onChange={pick} />
+          {actions}
+        </>
+      }
     />
   )
 }
@@ -212,6 +297,8 @@ function LinesChart({
   now,
 }: LinesChartProps): JSX.Element {
   const t = useUiText()
+  const baseUnit = series[0]?.unit ?? null
+  const chartUnit = useChartUnit(baseUnit)
   const errors = [
     ...new Set(
       series.map((s) => failure(entryFor(s.key, false))).filter((e): e is string => e !== null),
@@ -223,14 +310,19 @@ function LinesChart({
       const cur = entryFor(s.key, false)
       const result = cur?.ok ? cur.result : undefined
       const shaped = linePoints(s, result, window.from)
+      const shown = chartUnit.unit !== null && s.unit !== null ? chartUnit.unit : s.unit
+      const shownPoints =
+        shown !== null && s.unit !== null
+          ? convertPoints(shaped.points, s.unit, shown)
+          : shaped.points
       const color = colorOf?.(s, i) ?? i
       const interpolation = shaped.held && result?.resolution === 'raw' ? 'step' : 'linear'
       out.push({
         id: `${s.key}|${s.scope}`,
         label: labelOf(s),
-        unit: s.unit,
+        unit: shown,
         colorIndex: color,
-        points: shaped.points,
+        points: shownPoints,
         gapMs: shaped.gapMs,
         interpolation,
         band: series.length === 1 && result !== undefined && result.resolution !== 'raw',
@@ -240,14 +332,18 @@ function LinesChart({
         const prevResult = prev?.ok ? prev.result : undefined
         if (prevResult) {
           const prevShaped = linePoints(s, prevResult, window.from - reads.shiftMs)
+          const prevPoints =
+            shown !== null && s.unit !== null
+              ? convertPoints(prevShaped.points, s.unit, shown)
+              : prevShaped.points
           out.push({
             id: `${s.key}|${s.scope}|previous`,
             label: t('uiLibrary.history.previousOf', '{{label}} (previous period)', {
               label: labelOf(s),
             }),
-            unit: s.unit,
+            unit: shown,
             colorIndex: color,
-            points: shiftPoints(prevShaped.points, reads.shiftMs),
+            points: shiftPoints(prevPoints, reads.shiftMs),
             gapMs: prevShaped.gapMs,
             interpolation,
             compare: true,
@@ -256,7 +352,7 @@ function LinesChart({
       }
     })
     return out
-  }, [series, entryFor, window.from, compare, reads, labelOf, colorOf, t])
+  }, [series, entryFor, window.from, compare, reads, labelOf, colorOf, t, chartUnit.unit])
   const bands = useMemo(
     () => (runs === undefined ? [] : runBands(runs, now ?? window.to, window, t)),
     [runs, now, window, t],
@@ -274,6 +370,11 @@ function LinesChart({
       actions={
         <>
           {toolbar}
+          <UnitSwitch
+            choices={chartUnit.choices}
+            value={chartUnit.unit ?? ''}
+            onChange={chartUnit.pick}
+          />
           {actions}
         </>
       }
@@ -342,7 +443,10 @@ function OccupancyChart({
           onChange={(e) => setCls(e.target.value)}
           className="h-6 text-[10px] py-0"
           options={[
-            { value: ALL, label: t('uiLibrary.history.allClasses', 'All classes') },
+            {
+              value: ALL,
+              label: t('uiLibrary.history.allClasses', 'All classes'),
+            },
             ...facets.classes.map((c) => ({ value: c, label: c })),
           ]}
         />

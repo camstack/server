@@ -8,6 +8,7 @@
  * open. Everything the card draws is decided here; a client only paints it.
  */
 import { z } from 'zod'
+import { primarySeriesKey } from '../../history/primary-series.js'
 import { IconKeySchema, type IconKey } from '../icon-catalog.js'
 import { ReadingQuantitySchema, type ReadingQuantity } from '../../units/quantity.js'
 import { HERO_TONES, type HeroTone } from './hero-state.js'
@@ -132,7 +133,7 @@ export function temperatureMeasurement(celsius: number, since: number | null): H
     tone: BAND_TONE[band],
     since,
     sinceKind: 'updated',
-    historyKey: 'cap:temperature-sensor.temperature',
+    historyKey: primarySeriesKey('temperature-sensor'),
   }
 }
 
@@ -155,7 +156,7 @@ export function humidityMeasurement(percent: number, since: number | null): Hero
     tone: dry || humid ? 'warning' : 'info',
     since,
     sinceKind: 'updated',
-    historyKey: 'cap:humidity-sensor.humidity',
+    historyKey: primarySeriesKey('humidity-sensor'),
   }
 }
 
@@ -173,7 +174,7 @@ export function powerMeasurement(watts: number, since: number | null): HeroMeasu
     tone: active ? 'primary' : 'muted',
     since,
     sinceKind: 'updated',
-    historyKey: 'cap:power-meter.power',
+    historyKey: primarySeriesKey('power-meter'),
   }
 }
 
@@ -227,15 +228,20 @@ const QUANTITY_FACE: Readonly<
     icon: 'thermometer',
     unit: '°C',
     sinceKind: 'updated',
-    historyKey: 'cap:temperature-sensor.temperature',
+    historyKey: primarySeriesKey('temperature-sensor'),
   },
   humidity: {
     icon: 'droplets',
     unit: '%',
     sinceKind: 'updated',
-    historyKey: 'cap:humidity-sensor.humidity',
+    historyKey: primarySeriesKey('humidity-sensor'),
   },
-  power: { icon: 'zap', unit: 'W', sinceKind: 'updated', historyKey: 'cap:power-meter.power' },
+  power: {
+    icon: 'zap',
+    unit: 'W',
+    sinceKind: 'updated',
+    historyKey: primarySeriesKey('power-meter'),
+  },
   contact: { icon: null, unit: null, sinceKind: 'changed', historyKey: null },
   text: { icon: null, unit: null, sinceKind: 'updated', historyKey: null },
 }

@@ -54,6 +54,7 @@ const DEVICES: Readonly<Record<number, ReturnType<typeof device>>> = {
     'HM-TC-IT',
   ),
   202: device(202, 'Dishwasher', 'dishwasher', 'provider-homeconnect', 'Kitchen', 'SMV6ZCX'),
+  203: device(203, 'Home energy', 'energy', 'provider-example', 'Basement', 'EX-100'),
 }
 
 const cameraHandler = (path: string): ((i: unknown) => unknown) | undefined => {
@@ -212,6 +213,8 @@ export default defineFixtures({
     'deviceManager.listAll': LIST_ALL,
     // No alert popover over the charts being shot.
     'alerts.list': [],
+    'powerSource.getStatus': { linked: false },
+    'heroLayout.getHeroModel': null,
     'alerts.getUnreadCount': 0,
     'auth.listLoginMethods': [],
     'capabilities.getCapability': (i: { name: string }) => ({
