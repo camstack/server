@@ -83,6 +83,20 @@ function withoutPump(total: number | null, pump: number | null, hasPump: boolean
 }
 
 /**
+ * A lifetime counter without the heat pump's. Two counters that did not start together cannot
+ * be subtracted: a total below the pump's own counter says exactly that, so the house counter is
+ * unknown rather than a floored 0 (a counter is never invented, D393/D944).
+ */
+function counterWithoutPump(
+  total: number | null,
+  pump: number | null,
+  hasPump: boolean,
+): number | null {
+  if (total !== null && pump !== null && hasPump && total < pump) return null
+  return withoutPump(total, pump, hasPump)
+}
+
+/**
  * The grid power, + import / − export, from the two halves the catalog splits it into.
  * With both halves known it is their difference. With one half only, it is that half
  * while it flows: a zero import with no export reading cannot say whether the house
@@ -127,7 +141,7 @@ export function computeEnergySystemStatus(
   const hasPump = present(heatPump) !== null
   const house: EnergyConsumer = {
     powerW: withoutPump(read.power('house'), heatPump.powerW, hasPump),
-    energyKwh: withoutPump(read.energy('house'), heatPump.energyKwh, hasPump),
+    energyKwh: counterWithoutPump(read.energy('house'), heatPump.energyKwh, hasPump),
     // With a pump the day total cannot be split, so it stays unknown (D393).
     todayKwh: hasPump ? null : read.numeric('house-energy-day'),
   }

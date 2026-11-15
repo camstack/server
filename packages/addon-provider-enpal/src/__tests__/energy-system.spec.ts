@@ -126,6 +126,21 @@ describe('computeEnergySystemStatus', () => {
     expect(status(rows).house?.powerW).toBe(0)
   })
 
+  it('a consumption counter below the pump counter leaves the house counter unknown, not 0', () => {
+    // Live: the total lifetime counter started after the pump's (1100 vs 1145 kWh).
+    const rows = FULL.map(
+      (r): Row =>
+        r[0] === 'Energy.Consumption.Total.Lifetime'
+          ? [r[0], 1100, r[2]]
+          : r[0] === 'Heatpump.Energy.Consumption.Total.Lifetime'
+            ? [r[0], 1145, r[2]]
+            : r,
+    )
+    const s = status(rows)
+    expect(s.house?.energyKwh).toBeNull()
+    expect(s.heatPump?.energyKwh).toBe(1145)
+  })
+
   it('a pump whose power is unreadable makes the house power unknown, not the inflated total', () => {
     const rows = FULL.filter(([key]) => key !== 'Heatpump.Power.Consumption.Total')
     const s = status(rows)

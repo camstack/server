@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The house lifetime energy is unknown instead of 0 when Enpal's consumption counter started after the heat pump's
+
 ## [0.1.23] - 2026-11-15
 
 ### Changed
