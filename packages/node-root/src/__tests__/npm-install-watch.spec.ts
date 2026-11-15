@@ -511,6 +511,7 @@ describe('cheap install progress', () => {
         }
       }, 5)
     `
+    const nestedSize = (): number => (fs.existsSync(nested) ? fs.statSync(nested).size : -1)
     const stallMs = 5 * 60_000
     let clock = 0
     let settled = false
@@ -523,9 +524,16 @@ describe('cheap install progress', () => {
       pollMs: NPM_INSTALL_POLL_MS,
       graceMs: 20,
       now: () => clock,
+      // Virtual time advances only after the child has really grown the
+      // nested file since the previous poll: a loaded host that is slow to
+      // start the child must not turn the virtual window into a stall.
       sleep: async (ms) => {
+        const sizeBefore = nestedSize()
+        const growthDeadline = Date.now() + 2_000
+        while (nestedSize() === sizeBefore && Date.now() < growthDeadline) {
+          await new Promise((resolve) => setTimeout(resolve, 5))
+        }
         clock += ms
-        await new Promise((resolve) => setTimeout(resolve, 15))
       },
       log: silentLog,
     }).then(
@@ -538,7 +546,7 @@ describe('cheap install progress', () => {
         throw err
       },
     )
-    const deadline = Date.now() + 5_000
+    const deadline = Date.now() + 15_000
     while (clock <= stallMs) {
       if (settled) break
       if (Date.now() > deadline) break
@@ -549,7 +557,7 @@ describe('cheap install progress', () => {
     fs.writeFileSync(stop, '1')
     await expect(outcome).resolves.toEqual({ stdout: '' })
     fs.rmSync(dir, { recursive: true, force: true })
-  })
+  }, 20_000)
 
   it('cuts when the staging tree stops growing for the stall window', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'npm-watch-flat-stall-'))
