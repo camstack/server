@@ -355,6 +355,15 @@ is not the peer CN is dropped) and answers the third:
 state, so a revocation takes effect on the next packet and nothing waits for a
 handshake-after-the-handshake.
 
+**A mesh leaf has no expiry (D1052).** It is issued with `notAfter` 9999-12-31T23:59:59Z; identity
+ends by revocation or by an explicit `renewMeshOnNode`, never by the clock. A leaf issued before that
+(30 days) which has expired is recovered by the hub: the listener finishes the handshake with
+verification on and `judgeMeshPeerLeaf` admits a peer whose only failure is the clock (chain to the
+mesh CA, client-auth leaf, not on the CRL), logs a WARN with the node id, and renews the node's leaf
+once it registers (`expired-leaf-renewer.ts`). An enrolled agent never admits an expired leaf. Every
+refused handshake is a WARN with its reason, through the process `MeshHandshakeReporter` (the
+transport logger is pinned to `error`).
+
 **The verdict per remote action** (`MeshIdentityGate.admitCall`):
 
 | Action | Node without a verified certificate | Node with one |

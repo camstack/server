@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Routes for the opt-in server shell on each node.
 
+### Changed
+
+- Mesh certificates no longer expire, and the hub recovers an agent whose old 30-day certificate already expired; refused mesh handshakes are now logged as warnings with the reason
+
 ## [1.2.872] - 2026-11-15
 
 ### Changed

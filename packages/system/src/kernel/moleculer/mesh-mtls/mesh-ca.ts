@@ -30,7 +30,7 @@ import {
   CLIENT_AUTH_OID,
   MESH_CA_COMMON_NAME,
   MESH_CA_VALIDITY_DAYS,
-  MESH_LEAF_VALIDITY_DAYS,
+  MESH_LEAF_NOT_AFTER,
   SERVER_AUTH_OID,
 } from './constants.js'
 
@@ -143,7 +143,7 @@ export async function loadMeshCa(certPem: string, keyPem: string): Promise<MeshC
 
 /**
  * Issue a leaf from a CSR. CN must be present; when `expectedNodeId` is set
- * it must match. Validity: 30 days.
+ * it must match. Validity: none (`MESH_LEAF_NOT_AFTER`); `validDays` is a spec seam that forges a short one.
  */
 export async function issueMeshLeafFromCsr(
   ca: MeshCaSigner,
@@ -170,9 +170,11 @@ export async function issueMeshLeafFromCsr(
   }
 
   const now = opts.now ?? new Date()
-  const validDays = opts.validDays ?? MESH_LEAF_VALIDITY_DAYS
   const serialNumber = freshSerial()
-  const notAfter = new Date(now.getTime() + validDays * MS_PER_DAY)
+  const notAfter =
+    opts.validDays === undefined
+      ? new Date(MESH_LEAF_NOT_AFTER)
+      : new Date(now.getTime() + opts.validDays * MS_PER_DAY)
   const extensions: Extension[] = [
     new BasicConstraintsExtension(false, undefined, true),
     new KeyUsagesExtension(KeyUsageFlags.digitalSignature, true),

@@ -4,7 +4,7 @@
 
 # Decisions
 
-1018 architecture decision records. One file per decision, never
+1019 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1031,6 +1031,7 @@ that rots.
 | D1049 | [A device has one exposed name per export instance, and a rename never changes the exported id](adr-1049-a-device-has-one-exposed-name-per-export-instance-and-a-rename-never-changes-the-exported-id.md) | ✅ accepted | 2026-11-12 |
 | D1050 | [A cap's vocabulary is declared on the cap, and the map is generated](adr-1050-a-caps-vocabulary-is-declared-on-the-cap-and-generated.md) | ✅ accepted (supersedes D920) | 2026-11-13 |
 | D1051 | [A server shell is a separate trust level, off until the node opts in](adr-1051-a-server-shell-is-a-separate-trust-level.md) | ✅ accepted | 2026-11-14 |
+| D1052 | [A mesh certificate does not expire, an expired one is recovered by the hub, and revocation is the only kill switch](adr-1052-a-mesh-certificate-does-not-expire-an-expired-one-is-recovered-by-the-hub-and-revocation-is-the-only-kill-switch.md) | ✅ accepted | 2026-11-15 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

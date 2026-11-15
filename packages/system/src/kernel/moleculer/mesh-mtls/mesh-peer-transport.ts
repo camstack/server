@@ -110,3 +110,43 @@ export function emitProcessNodeRegistered(nodeId: string, addonIds?: readonly st
     }
   }
 }
+
+// ── Handshake reporting (#558) ───────────────────────────────────────────
+//
+// The transporter's own logger is a Moleculer one, pinned to `error` for the infrastructure
+// scopes, so a refusal logged through it is invisible. The process publishes a reporter instead
+// (a real scoped logger), and the hub's renewal of an expired leaf hangs off it.
+
+/** A leaf that failed ONLY on time validity and was admitted by the hub for recovery. */
+export interface ExpiredLeafAdmission {
+  readonly nodeId: string
+  readonly serial: string
+  readonly notAfter: number
+}
+
+export interface MeshHandshakeReporter {
+  warn(
+    message: string,
+    extras?: { tags?: Record<string, string>; meta?: Record<string, unknown> },
+  ): void
+  /** The hub admitted an expired leaf: renew that node's leaf now. */
+  expiredLeafAdmitted?(peer: ExpiredLeafAdmission): void
+}
+
+const REPORTER_SLOT = Symbol.for('camstack.cluster.mesh-handshake-reporter')
+
+export function setProcessMeshHandshakeReporter(reporter: MeshHandshakeReporter | null): void {
+  if (reporter === null) Reflect.deleteProperty(globalThis, REPORTER_SLOT)
+  else Reflect.set(globalThis, REPORTER_SLOT, reporter)
+}
+
+function isHandshakeReporter(value: unknown): value is MeshHandshakeReporter {
+  return (
+    value !== null && typeof value === 'object' && typeof Reflect.get(value, 'warn') === 'function'
+  )
+}
+
+export function getProcessMeshHandshakeReporter(): MeshHandshakeReporter | null {
+  const value: unknown = Reflect.get(globalThis, REPORTER_SLOT)
+  return isHandshakeReporter(value) ? value : null
+}

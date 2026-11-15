@@ -7,7 +7,7 @@ export {
   MESH_CA_KEY_REF,
   MESH_CA_SETTINGS_KEY,
   MESH_CA_VALIDITY_DAYS,
-  MESH_LEAF_VALIDITY_DAYS,
+  MESH_LEAF_NOT_AFTER,
   SERVER_AUTH_OID,
 } from './constants.js'
 
@@ -83,6 +83,10 @@ export {
   getProcessNodeMeshTransport,
   isProcessVerifiedMeshPeer,
   setProcessMeshPeerTransportLookup,
+  getProcessMeshHandshakeReporter,
+  setProcessMeshHandshakeReporter,
+  type ExpiredLeafAdmission,
+  type MeshHandshakeReporter,
   type MeshPeerLeaf,
   type MeshPeerTransportLookup,
   type MeshTransport,

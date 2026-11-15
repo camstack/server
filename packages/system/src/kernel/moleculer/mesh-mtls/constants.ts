@@ -19,8 +19,14 @@ export const MESH_CA_SETTINGS_KEY = 'cluster.meshCa'
 /** Field inside the `cluster` section. */
 export const MESH_CA_FIELD = 'meshCa'
 
-/** Leaf lifetimes. */
-export const MESH_LEAF_VALIDITY_DAYS = 30
+/**
+ * A mesh leaf does not expire (#558, amends D857): RFC 5280 section 4.1.2.5 "no well-defined
+ * expiration date" is 9999-12-31T23:59:59Z. Identity ends by revocation (the CRL) or by an explicit
+ * rotation (`certificates.renewMeshOnNode`), never by the clock.
+ */
+export const MESH_LEAF_NOT_AFTER: Date = new Date('9999-12-31T23:59:59Z')
+
+/** The mesh CA lifetime. Leaves outlive it on purpose: chain building does not nest validity. */
 export const MESH_CA_VALIDITY_DAYS = 3650
 
 /** Hub legacy clear TCP (retired on hub — D826) and TLS listen port. */

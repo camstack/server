@@ -25,6 +25,11 @@ import { Transporters } from 'moleculer'
 import { DEFAULT_HUB_TLS_TCP_PORT } from './constants.js'
 import { subjectCn } from './mesh-ca.js'
 import { type MeshCrl, processMeshCrl } from './mesh-crl.js'
+import {
+  getProcessMeshHandshakeReporter,
+  type MeshHandshakeReporter,
+} from './mesh-peer-transport.js'
+import { judgeMeshPeerLeaf, type MeshRefusalReason } from './mesh-peer-verification.js'
 
 /** Field of the gossip HELLO payload carrying the sender's mesh-TLS listen port. */
 export const MESH_TLS_PORT_HELLO_FIELD = 'meshTlsPort'
@@ -115,6 +120,12 @@ export interface TlsTcpTransporterOptions {
   /** When set at construction, TLS starts with the clear reader. */
   readonly meshTls?: MeshTlsMaterial
   readonly crl?: MeshCrl
+  /**
+   * Where handshake refusals are reported (WARN, tagged with the node id) and where an admitted
+   * expired leaf is announced. Default: the process reporter, else the transporter's own logger -
+   * which the broker pins to `error`, so a real deployment always publishes a reporter (#558).
+   */
+  readonly handshakeReporter?: MeshHandshakeReporter
   /** Hub only (D826): never bind clear TCP or UDP discovery. */
   readonly hubTlsOnly?: boolean
   /**
@@ -259,6 +270,8 @@ export class TlsTcpTransporter extends TcpTransporterBase {
   private tlsServer: tls.Server | null = null
   private meshTls: MeshTlsMaterial | null
   private readonly crl: MeshCrl
+  private readonly handshakeReporter: MeshHandshakeReporter | undefined
+  private readonly refusalLoggedAt = new Map<string, number>()
   private readonly revokedPeerLoggedAt = new Map<string, number>()
   private readonly tlsSockets = new Set<TlsClientSocket>()
   /** Node id (certificate CN) → serial of every peer that completed a mutual-TLS handshake. */
@@ -282,6 +295,7 @@ export class TlsTcpTransporter extends TcpTransporterBase {
     super({ ...opts })
     this.meshTls = opts.meshTls ?? null
     this.crl = opts.crl ?? processMeshCrl()
+    this.handshakeReporter = opts.handshakeReporter
     this.hubTlsOnly = opts.hubTlsOnly === true
     this.hubOnlyPeers = opts.hubOnlyPeers === true
     this.hubNodeId = opts.hubNodeId ?? DEFAULT_HUB_NODE_ID
@@ -615,10 +629,30 @@ export class TlsTcpTransporter extends TcpTransporterBase {
     if (last !== undefined && at - last < REVOKED_PEER_LOG_INTERVAL_MS) return
     if (this.revokedPeerLoggedAt.size >= 256) this.revokedPeerLoggedAt.clear()
     this.revokedPeerLoggedAt.set(nodeId, at)
-    this.logger.warn(`Mesh TLS peer presented a revoked certificate - ${action}`, {
-      tags: { nodeId },
-      meta: { reason: 'revoked' },
-    })
+    this.reportWarn(`Mesh TLS peer presented a revoked certificate - ${action}`, nodeId, 'revoked')
+  }
+
+  private reporter(): MeshHandshakeReporter | null {
+    return this.handshakeReporter ?? getProcessMeshHandshakeReporter()
+  }
+
+  /** A WARN that survives the transport log pin: the reporter when there is one, else the logger. */
+  private reportWarn(message: string, nodeId: string, reason: MeshRefusalReason): void {
+    const extras = { tags: { nodeId }, meta: { reason } }
+    const reporter = this.reporter()
+    if (reporter !== null) reporter.warn(message, extras)
+    else this.logger.warn(message, extras)
+  }
+
+  /** A refusal, once per node and reason per minute (a refused box retries every few seconds). */
+  private noteRefusedPeer(nodeId: string, reason: MeshRefusalReason, detail: string): void {
+    const key = `${nodeId}:${reason}`
+    const at = Date.now()
+    const last = this.refusalLoggedAt.get(key)
+    if (last !== undefined && at - last < REVOKED_PEER_LOG_INTERVAL_MS) return
+    if (this.refusalLoggedAt.size >= 256) this.refusalLoggedAt.clear()
+    this.refusalLoggedAt.set(key, at)
+    this.reportWarn(`Mesh TLS handshake refused (${reason}): ${detail}`, nodeId, reason)
   }
 
   /** Close sockets whose peer serial was just revoked. */
@@ -759,14 +793,17 @@ export class TlsTcpTransporter extends TcpTransporterBase {
           cert: material.certPem,
           ca: [material.caCertPem],
           requestCert: true,
-          rejectUnauthorized: true,
+          // Verification stays ON: the handshake finishes and Node reports `authorized` /
+          // `authorizationError`; `onTlsClientConnected` then admits or destroys the socket
+          // explicitly, so a leaf that failed only on the clock can be recovered (#558).
+          rejectUnauthorized: false,
           minVersion: 'TLSv1.3',
         },
         (socket) => this.onTlsClientConnected(socket as TlsClientSocket),
       )
 
       server.on('tlsClientError', (err) => {
-        this.logger.debug('Mesh TLS handshake failed', err)
+        this.noteRefusedPeer('unknown', 'no-certificate', `TLS handshake failed: ${err.message}`)
       })
 
       server.on('error', (err) => {
@@ -789,23 +826,51 @@ export class TlsTcpTransporter extends TcpTransporterBase {
     })
   }
 
+  /**
+   * The hub let a peer in on a leaf that only expired: say so, and hand the node to the renewal,
+   * which swaps it for the no-expiry leaf. The WARN is not rate limited - it is a recovery event.
+   */
+  private admitExpiredLeaf(nodeId: string, serial: string, notAfter: number): void {
+    this.reportWarn(
+      `Mesh leaf of node '${nodeId}' expired ${new Date(notAfter).toISOString()} - admitted for recovery, renewing it`,
+      nodeId,
+      'expired',
+    )
+    this.reporter()?.expiredLeafAdmitted?.({ nodeId, serial, notAfter })
+  }
+
   private onTlsClientConnected(socket: TlsClientSocket): void {
-    const identity = peerIdentity(socket)
-    if (identity === null) {
-      this.logger.warn('Mesh TLS client rejected — no peer certificate CN')
+    const presented = socket.getPeerCertificate(true)
+    const verdict = judgeMeshPeerLeaf({
+      leafDer:
+        presented != null && typeof presented === 'object' && Buffer.isBuffer(presented.raw)
+          ? presented.raw
+          : undefined,
+      authorized: socket.authorized,
+      authorizationError: authorizationCodeOf(socket.authorizationError),
+      caCertPem: (this.meshTls ?? { caCertPem: '' }).caCertPem,
+      crl: this.crl,
+      // Only the hub recovers an expired leaf; an enrolled agent refuses it like any other.
+      admitExpired: this.hubTlsOnly,
+      now: Date.now(),
+    })
+    if (!verdict.admit) {
+      if (verdict.reason === 'revoked') {
+        this.noteRevokedPeer(verdict.nodeId ?? 'unknown', 'rejecting its connection')
+      } else {
+        this.noteRefusedPeer(verdict.nodeId ?? 'unknown', verdict.reason, verdict.detail)
+      }
       socket.destroy()
       return
     }
-    if (this.crl.isRevoked(identity.serial)) {
-      this.noteRevokedPeer(identity.cn, 'rejecting its connection')
-      socket.destroy()
-      return
-    }
+    const identity = { cn: verdict.nodeId, serial: verdict.serial }
     if (this.hubOnlyPeers && identity.cn !== this.hubNodeId) {
       // D848: another agent holds a leaf from the same CA, so the handshake
       // succeeds; the connection is still not one an agent may have.
-      this.logger.warn(
-        `Mesh TLS client rejected — an enrolled agent accepts only '${this.hubNodeId}', not CN=${identity.cn} (D848)`,
+      this.noteRefusedPeer(
+        identity.cn,
+        'cn-mismatch',
+        `an enrolled agent accepts only '${this.hubNodeId}', not CN=${identity.cn} (D848)`,
       )
       socket.destroy()
       return
@@ -815,6 +880,7 @@ export class TlsTcpTransporter extends TcpTransporterBase {
     this.tlsSockets.add(socket)
     this.tlsPeers.set(identity.cn, identity.serial)
     this.rememberPeerLeaf(identity.cn, socket)
+    if (verdict.expired) this.admitExpiredLeaf(identity.cn, identity.serial, verdict.notAfter)
 
     // Reuse the clear reader's connection wiring by temporarily borrowing
     // TcpReader's onTcpClientConnected via the existing reader instance when
@@ -856,6 +922,13 @@ export class TlsTcpTransporter extends TcpTransporterBase {
       socket.destroy()
     })
   }
+}
+
+/** Node types the server-side `authorizationError` as an Error but sets the OpenSSL code name. */
+function authorizationCodeOf(error: unknown): string | null {
+  if (typeof error === 'string') return error
+  if (error instanceof Error) return error.message
+  return null
 }
 
 function isTlsSocket(socket: NetSocket): socket is TlsClientSocket {

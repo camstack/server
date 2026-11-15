@@ -37,6 +37,7 @@ import {
 } from './core/agent/agent-registry.service'
 import { ClusterNodeHistoryStore } from './core/agent/cluster-node-history-store'
 import { createForgottenNodeRevoker } from './core/agent/forgotten-node-revoker'
+import { installMeshHandshakeReporter } from './core/agent/mesh-handshake-wiring'
 import {
   clearForgottenNodeSettings,
   clearSingletonNodeOverrides,
@@ -237,6 +238,11 @@ export async function bootManual(opts: BootOptions): Promise<BootedApp> {
       logger: loggingService.createLogger('ClusterNodes'),
     }),
   )
+  // Refused mesh handshakes are logged at WARN, and a leaf that only expired is renewed (#558).
+  installMeshHandshakeReporter({
+    log: loggingService.createLogger('mesh-handshake'),
+    moleculer: moleculerService,
+  })
   // A1: durable, routing-blind offline-node history — the `cluster-agent`
   // records kind, bound by the addon registry once the records provider is up
   // (unavailable until then, D902). Wired post-construction so the service's
