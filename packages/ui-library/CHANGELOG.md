@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device card History: the Runs table no longer scrolls inside the card, each interaction shows its exact time with an inline details button, and a chip row picks which points the history charts show
+- The device card's consumables chip now carries everything the removed Consumables section showed: a full bin or tank warns, an unknown reading never reads as ok, remaining time, Replaced date, the state in words, Reset, and the empty and loading lines.
 
 ## [1.2.449] - 2026-11-15
 

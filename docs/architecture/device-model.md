@@ -692,7 +692,7 @@ item appended to the composition's own items (a composition that names its own
 `water` item keeps it), and every `pet-fountain` write re-publishes the
 consumables. The device serves the `consumables` cap even when the composition
 has no maintenance entity, so a fountain built from three entities still has its
-tank in the Consumables section. Nothing is bound for it, and the operator picks
+tank in the device card's consumables list. Nothing is bound for it, and the operator picks
 no entity for it. The drink counters (`lastDrink`, `todayDrink`, ...) and
 `resetDailyConsumption` left the cap; core-blocks migration seq 3 drops them
 from stored blocks.

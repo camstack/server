@@ -6,12 +6,14 @@ import { CardButton } from '../parts/CardButton'
 import { CardIcon } from '../parts/CardIcon'
 import { LevelBar } from '../parts/LevelBar'
 import { CardGatingProvider, useCardGating } from './gating'
+import type { ConsumableLevel } from '@camstack/types'
+import type { UiTextFn } from '../../../contexts/ui-text'
 import {
-  type CardConsumable,
-  type CardSupply,
-  type CardSupplyAction,
-  CONSUMABLE_LOW_PERCENT,
-} from './model'
+  consumableItemLevel,
+  consumableLevelBarClass,
+  consumableLevelLabel,
+} from '../../consumable-level-badge'
+import type { CardConsumable, CardSupply, CardSupplyAction } from './model'
 import { usePopover } from './use-popover'
 
 const CHIP = 'inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs'
@@ -126,18 +128,105 @@ export function SupplyChip({ supply, readOnly, onAction }: SupplyChipProps): Rea
 
 export interface ConsumablesButtonProps {
   readonly items: readonly CardConsumable[]
+  /** Bound to `consumables` but the slice has not landed: loading, never "none" (D315). */
+  readonly loading?: boolean
   readonly onReset: (key: string) => void
 }
 
-const isLow = (c: CardConsumable): boolean =>
-  c.percent !== null && c.percent <= CONSUMABLE_LOW_PERCENT
+/** The kind-aware level of a row; absent = a wear part read from its percent. */
+const levelOf = (c: CardConsumable): ConsumableLevel | null =>
+  c.level !== undefined ? c.level : consumableItemLevel({ level: c.percent, status: null })
 
-/** The consumables: one button that warns about the lowest, and the full list. */
-export function ConsumablesButton({ items, onReset }: ConsumablesButtonProps): ReactElement {
+const SEVERITY: Readonly<Record<'empty' | 'full' | 'low', number>> = {
+  empty: 3,
+  full: 2,
+  low: 1,
+}
+const isAttention = (l: ConsumableLevel | null): l is 'empty' | 'full' | 'low' =>
+  l === 'empty' || l === 'full' || l === 'low'
+
+const wordOf = (c: CardConsumable, t: UiTextFn): string =>
+  c.levelWord ?? consumableLevelLabel(levelOf(c), t)
+
+/** The reading drawn by the item's form: a wear bar, a vertical gauge, or three steps. */
+function ConsumableMeter({ c }: { readonly c: CardConsumable }): ReactElement {
+  const level = levelOf(c)
+  const fill = consumableLevelBarClass(level)
+  const percent = c.percent === null ? null : Math.min(100, Math.max(0, c.percent))
+  if (c.form === 'tank' || c.form === 'bin') {
+    return (
+      <span
+        data-testid="dc-consumable-gauge"
+        className="relative h-6 w-2.5 justify-self-center overflow-hidden rounded-sm border border-border bg-surface-hover"
+      >
+        {percent === null ? null : (
+          <span
+            className={cn('absolute inset-x-0 bottom-0', fill)}
+            // ui-check-ok: computed geometry — the gauge's fill height is the item's %
+            style={{ height: `${percent}%` }}
+          />
+        )}
+      </span>
+    )
+  }
+  if (c.form === 'product') {
+    const filled = level === 'low' ? 1 : level === 'empty' || level === null ? 0 : 3
+    return (
+      <span className="flex gap-0.5" data-testid="dc-consumable-steps" data-filled={filled}>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className={cn('h-1.5 w-3 rounded-full', i < filled ? fill : 'bg-surface-hover')}
+          />
+        ))}
+      </span>
+    )
+  }
+  return c.percent === null ? (
+    <span />
+  ) : (
+    <LevelBar percent={c.percent} low={isAttention(level)} ariaLabel={c.label} />
+  )
+}
+
+/**
+ * The consumables: one chip that warns about the worst item (a part running
+ * out, a full bin) and opens the full list. Unknown is never ok (D393) and
+ * "none" is only said once the provider answered (D315).
+ */
+export function ConsumablesButton({
+  items,
+  loading = false,
+  onReset,
+}: ConsumablesButtonProps): ReactElement {
   const t = useUiText()
   const pop = usePopover()
-  const low = items.filter(isLow).sort((a, b) => (a.percent ?? 0) - (b.percent ?? 0))
-  const worst = low[0]
+  const attention = items
+    .filter((c) => isAttention(levelOf(c)))
+    .sort((a, b) => {
+      const la = levelOf(a)
+      const lb = levelOf(b)
+      const d = (isAttention(lb) ? SEVERITY[lb] : 0) - (isAttention(la) ? SEVERITY[la] : 0)
+      return d !== 0 ? d : (a.percent ?? 0) - (b.percent ?? 0)
+    })
+  const worst = attention[0]
+  const unknown = items.filter((c) => levelOf(c) === null).length
+  const ok = items.length - attention.length - unknown
+  if (loading || items.length === 0) {
+    return (
+      <div className="relative ml-auto" data-testid="dc-consumables">
+        <span
+          data-testid={loading ? 'dc-consumables-loading' : 'dc-consumables-empty'}
+          className={cn(CHIP, 'border-transparent bg-surface-hover text-foreground-muted')}
+        >
+          <CardIcon glyph="consumables" className="h-3 w-3" />
+          {loading
+            ? t('uiLibrary.consumablesPanel.loading', 'Reading consumables…')
+            : t('uiLibrary.consumablesPanel.empty', 'No consumables reported.')}
+        </span>
+      </div>
+    )
+  }
   return (
     <div ref={pop.rootRef} className="relative ml-auto" data-testid="dc-consumables">
       <Button
@@ -154,13 +243,23 @@ export function ConsumablesButton({ items, onReset }: ConsumablesButtonProps): R
         )}
       >
         <CardIcon glyph={worst === undefined ? 'consumables' : 'warning'} className="h-3 w-3" />
-        {worst === undefined ? (
-          t('uiLibrary.deviceCard.consumables.ok', 'Consumables ok')
-        ) : (
+        {worst !== undefined ? (
           <>
-            {worst.label} <b className="tabular-nums">{Math.round(worst.percent ?? 0)}%</b>
-            {low.length > 1 ? <small>+{low.length - 1}</small> : null}
+            {worst.label}{' '}
+            <b className="tabular-nums">
+              {worst.percent === null ? wordOf(worst, t) : `${Math.round(worst.percent)}%`}
+            </b>
+            {attention.length > 1 ? <small>+{attention.length - 1}</small> : null}
           </>
+        ) : unknown === 0 ? (
+          t('uiLibrary.deviceCard.consumables.ok', 'Consumables ok')
+        ) : ok === 0 ? (
+          t('uiLibrary.deviceCard.consumables.unknown', 'Consumables unknown')
+        ) : (
+          t('uiLibrary.consumablesPanel.okAndUnknown', '{{ok}} OK · {{unknown}} unknown', {
+            ok,
+            unknown,
+          })
         )}
         <CardIcon glyph="info" className="h-3 w-3 opacity-70" />
       </Button>
@@ -176,21 +275,29 @@ export function ConsumablesButton({ items, onReset }: ConsumablesButtonProps): R
           {items.map((c) => (
             <div
               key={c.key}
-              className="grid grid-cols-[1fr_60px_36px_auto] items-center gap-2 text-xs"
+              data-level={levelOf(c) ?? 'unknown'}
+              className="grid grid-cols-[minmax(0,1fr)_48px_auto_auto] items-center gap-2 text-xs"
             >
-              <span className="min-w-0 truncate text-foreground">
-                {c.label}
-                {c.note === undefined ? null : (
-                  <small className="ml-1 text-foreground-muted">{c.note}</small>
+              <span className="flex min-w-0 flex-col">
+                <span className="truncate text-foreground">
+                  {c.label}
+                  {c.note === undefined ? null : (
+                    <small className="ml-1 text-foreground-muted">{c.note}</small>
+                  )}
+                </span>
+                {c.detail === undefined ? null : (
+                  <small className="truncate text-foreground-subtle">{c.detail}</small>
                 )}
               </span>
-              {c.percent === null ? (
-                <span />
-              ) : (
-                <LevelBar percent={c.percent} low={isLow(c)} ariaLabel={c.label} />
-              )}
-              <span className="text-right tabular-nums text-foreground-muted">
-                {c.percent === null ? '—' : `${Math.round(c.percent)}%`}
+              <ConsumableMeter c={c} />
+              <span
+                className={cn(
+                  'text-right tabular-nums',
+                  isAttention(levelOf(c)) ? 'text-danger' : 'text-foreground-muted',
+                )}
+              >
+                {wordOf(c, t)}
+                {c.percent === null ? '' : ` ${Math.round(c.percent)}%`}
               </span>
               {c.resetLabel === null ? (
                 <span />

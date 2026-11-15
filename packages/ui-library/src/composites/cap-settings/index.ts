@@ -1,5 +1,4 @@
 export { AutotrackSection } from './AutotrackSection'
-export { ConsumablesPanel } from './ConsumablesPanel'
 export { PowerMeterLine } from './PowerMeterLine'
 export type { MaskShapeCanvasProps, MaskShapeItem } from './MaskShapeCanvas'
 export { MaskShapeCanvas } from './MaskShapeCanvas'

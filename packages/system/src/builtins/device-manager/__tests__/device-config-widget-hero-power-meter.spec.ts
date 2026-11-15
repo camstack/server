@@ -1,5 +1,5 @@
 /**
- * D1004: `power-meter` is a hero widget exactly like `consumables` — every
+ * D1004: `power-meter` is a hero widget — every
  * device bound to it, of any type, gets ONE `location: 'hero'` section naming
  * `host/power-meter-line`; nothing here knows a device type.
  */

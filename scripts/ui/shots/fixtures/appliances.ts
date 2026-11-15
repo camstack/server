@@ -1,11 +1,11 @@
 /**
- * Two appliance device pages, each bound to `consumables` (D915) and so each
- * with the ONE Consumables section under its hero card: 501 "Kitchen
+ * Two appliance device pages, each bound to `consumables`, whose items the
+ * device card's consumables chip and popover show (D1023): 501 "Kitchen
  * dishwasher" (`/devices/501` — salt low, rinse aid ok, as `supply` items) and
  * 502 "Robot vacuum" (`/devices/502` — a percent item, a replace item and an
  * unknown one, plus its tanks as `supply` / `waste` items, drawn as tank,
  * product and bin forms), and 503 "Utility dishwasher" (`/devices/503` —
- * every item ok, so the section starts collapsed on "All OK") and 504
+ * every item ok, so the chip says "Consumables ok") and 504
  * "Mopping robot" (`/devices/504` — two tanks, a bin and a product). Their Customize
  * tabs (`?tab=customize`) list the consumables each device already has.
  * `/devices/510?tab=customize` is an HA sensor whose only native cap is
@@ -13,7 +13,7 @@
  * is the same type with a native battery, so the card is absent.
  * 5063 "Pet feeder" is a feeder bound to `pet-feeder` only (no `consumables`
  * binding, as on a hub whose provider has not registered the cap); 5064 is
- * the same feeder WITH the binding, so its Consumables section shows. Data
+ * the same feeder WITH the binding, so its card shows the chip. Data
  * is invented.
  * 505 "Washing machine" (running, 412 W and 18.42 kWh, shown by the power-meter hero line) and 506 "Tumble dryer" (nothing reported)
  * are the appliance hero.
@@ -580,27 +580,6 @@ const FILTER_VIEW = {
   state: { kind: 'answered', state: null },
 }
 
-const consumablesSection = (writerAddonId: string) => ({
-  id: 'consumables-widget',
-  title: 'Consumables',
-  tab: 'consumables',
-  location: 'hero',
-  columns: 1,
-  order: 5,
-  fields: [
-    {
-      type: 'widget',
-      key: '_consumables',
-      label: 'Consumables',
-      widgetId: 'host/consumables-panel',
-      span: 1,
-      source: 'settings',
-      writerCapName: 'consumables',
-      writerAddonId,
-    },
-  ],
-})
-
 /** The `power-meter` hero line (D1004): every device bound to the cap gets it. */
 const powerMeterSection = (writerAddonId: string) => ({
   id: 'power-meter-widget',
@@ -627,17 +606,7 @@ const aggregateFor = (deviceId: number) => ({
   settings: {
     tabs: [],
     sections:
-      deviceId === 502 || deviceId === 504
-        ? [consumablesSection('provider-dreame')]
-        : deviceId === 501 || deviceId === 503
-          ? [consumablesSection('bosch-home-connect')]
-          : deviceId === 5064
-            ? [consumablesSection('provider-petkit')]
-            : deviceId === 5065
-              ? [consumablesSection('composer')]
-              : deviceId === 505 || deviceId === 506
-                ? [powerMeterSection('provider-homeassistant')]
-                : [],
+      deviceId === 505 || deviceId === 506 ? [powerMeterSection('provider-homeassistant')] : [],
   },
   live: { sections: [] },
   tabs: undefined,

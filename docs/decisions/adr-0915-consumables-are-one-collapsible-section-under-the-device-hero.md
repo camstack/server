@@ -1,7 +1,7 @@
 ---
 id: D915
 title: A device's consumables are items of its consumables cap, shown as one collapsible section directly under the device's hero card
-status: accepted
+status: superseded-in-part
 date: 2026-10-23
 supersedes:
 applies-to:
@@ -10,11 +10,12 @@ applies-to:
   - packages/system/src/builtins/device-manager/device-aggregation.ts
   - packages/addon-admin-ui/src/components/device/hero/hero-widgets.ts
   - packages/addon-admin-ui/src/components/device/hero/DeviceHeroWidgets.tsx
-  - packages/ui-library/src/composites/cap-settings/ConsumablesPanel.tsx
-  - packages/ui-library/src/composites/cap-settings/consumable-rows.tsx
-  - packages/ui-library/src/composites/cap-settings/consumables-summary.ts
   - packages/addon-post-analysis/src/notification-center/alerts/consumable-routing.ts
+  - packages/ui-library/src/composites/device-card/shell/BottomLine.tsx
+  - packages/ui-library/src/composites/device-card/connected/consumable-card-item.ts
 ---
+
+> Superseded in part by [D1023](adr-1023-a-device-hero-is-one-model-with-a-look-per-type-and-role.md) on the SURFACE: consumables are no longer a collapsible section under the hero card. They are part of the base device card (its consumables chip and popover), which now carries what the section had: the kind-aware level (a full bin or waste tank warns, an unknown reading never reads as ok), one look per form (wear bar, vertical gauge, three steps), remaining time or cycles, "Replaced <date>", the state said in words, "Reset", and the empty and loading lines. The collapse-by-data rule, `usePersistedDisclosure` and `ConsumablesPanel` are gone, and so is the cap's `deviceConfig` widget; the `placement: 'hero'` mechanism stays (the `power-meter` line uses it). The data model (kind, form, status) below stands.
 
 ## Context
 
@@ -109,13 +110,11 @@ supplies but are not drawn alike.
 
 ## Enforcement
 
-- `device-config-widget-hero.spec.ts` (the cap emits a hero section per
-  binding).
 - `hero-widgets.spec.ts` (the page derives the hero widgets from the
-  aggregate, never from a device type).
-- `consumables-summary.test.ts` (the attention rule and the summary line),
-  `consumables-panel.test.tsx` (the collapse default, the remembered toggle,
-  one look per form), `use-persisted-disclosure.test.tsx`.
+  aggregate, never from a device type) and `consumables-cap.test.ts` (the cap
+  declares no device-page section any more).
+- `consumables-chip.spec.tsx` (the card's kind-aware warning, unknown never ok,
+  the empty and loading lines, the reset).
 - `consumables-cap.test.ts` (the form derivation), `dreame-decode.spec.ts`
   and `home-connect-domain-mapping.spec.ts` (each provider's forms).
 - `vacuum-control-cap.test.ts` and `dishwasher-cap.test.ts` (the old fields

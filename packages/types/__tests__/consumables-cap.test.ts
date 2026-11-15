@@ -130,15 +130,9 @@ describe('consumablesCapability reset input', () => {
   })
 })
 
-describe('consumables deviceConfig widget', () => {
-  it('declares ONE host widget placed under the hero — not a tab (D915)', () => {
-    expect(consumablesCapability.deviceConfig.ui).toMatchObject({
-      kind: 'widget',
-      widgetId: 'host/consumables-panel',
-      placement: 'hero',
-      label: 'Consumables',
-    })
-    expect(consumablesCapability.deviceConfig.ui).not.toHaveProperty('topTab')
+describe('consumables device surface (D1023)', () => {
+  it('declares no device-page widget: consumables live in the device card', () => {
+    expect('deviceConfig' in consumablesCapability).toBe(false)
   })
 })
 

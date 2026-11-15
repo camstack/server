@@ -2,7 +2,12 @@
  * What every device card shows whatever the device is: the shell's data. A
  * scene adds its own zones on top; it never restates any of this.
  */
-import type { RemoteLayoutPayload, RemoteSource } from '@camstack/types'
+import type {
+  ConsumableForm,
+  ConsumableLevel,
+  RemoteLayoutPayload,
+  RemoteSource,
+} from '@camstack/types'
 import type { ReactNode } from 'react'
 import type { CardGlyph } from '../icons'
 import type { CardEvent } from '../parts/EventList'
@@ -39,6 +44,18 @@ export interface CardConsumable {
   readonly percent: number | null
   /** The word of the reset action ("Cleaned"), or null when it cannot be reset. */
   readonly resetLabel: string | null
+  /**
+   * The kind-aware level (`consumableItemLevel`): a full bin or waste tank is
+   * `full`, a low part `low`. `null` = the device reports nothing (unknown,
+   * never ok). Absent: derived from `percent` as a wear part.
+   */
+  readonly level?: ConsumableLevel | null
+  /** How the item is drawn: a wear bar, a vertical gauge (tank, bin) or three steps. */
+  readonly form?: ConsumableForm
+  /** The state said in words ("Low", "Replace", "Refill now"), so colour never carries it alone. */
+  readonly levelWord?: string
+  /** One compact line under the label: remaining time or cycles, "Replaced <date>". */
+  readonly detail?: string
 }
 
 export interface CardRemoteKey {
@@ -112,7 +129,13 @@ export interface CardCommon {
   readonly supply: CardSupply | null
   /** The device's reported fault; absent or null draws no badge. */
   readonly fault?: CardFault | null
+  /**
+   * `null` = the device is not bound to `consumables`; `[]` = bound and the
+   * provider reported none (the card says so).
+   */
   readonly consumables: readonly CardConsumable[] | null
+  /** Bound to `consumables` but the slice has not landed: loading, never "none" (D315). */
+  readonly consumablesLoading?: boolean
   readonly remote: readonly CardRemoteKey[] | null
   /**
    * The layout grid. Set together with `remote` when the device's remote has a
@@ -137,7 +160,5 @@ export interface CardState {
   readonly tone: CardTone
 }
 
-/** Levels at or under this are low (the consumables button turns into a warning). */
-export const CONSUMABLE_LOW_PERCENT = 30
 /** Battery levels under this are drawn as a warning. */
 export const BATTERY_LOW_PERCENT = 20

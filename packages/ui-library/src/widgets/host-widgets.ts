@@ -1,7 +1,6 @@
 import { type ComponentType, lazy } from 'react'
 import { AutotrackSection } from '../composites/cap-settings/AutotrackSection.js'
 import { CameraGridLayoutEditor } from '../composites/cap-settings/CameraGridLayoutEditor.js'
-import { ConsumablesPanel } from '../composites/cap-settings/ConsumablesPanel.js'
 // Import non-konva widgets directly (NOT from the barrel) — the barrel
 // re-exports MaskShapeCanvas/MotionZonesSettings/PrivacyMaskSettings and
 // would chain statically back to react-konva.
@@ -48,7 +47,6 @@ export const HOST_WIDGETS: Readonly<Record<string, ComponentType<HostWidgetProps
   'host/privacy-mask-grid': PrivacyMaskSettingsLazy,
   'host/ptz-panel': PtzPanel,
   'host/navigation-panel': NavigationPanel,
-  'host/consumables-panel': ConsumablesPanel,
   'host/power-meter-line': PowerMeterLine,
   'host/ptz-autotrack': AutotrackSection,
   'host/recording-panel': RecordingPanel,

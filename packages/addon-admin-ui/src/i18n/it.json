@@ -9985,7 +9985,8 @@
       "consumables": {
         "ok": "Consumabili ok",
         "title": "Consumabili",
-        "reset": "Azzera"
+        "reset": "Azzera",
+        "unknown": "Consumabili sconosciuti"
       },
       "history": {
         "charts": "Storico",

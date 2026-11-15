@@ -9963,7 +9963,8 @@
       "consumables": {
         "ok": "Consumables ok",
         "title": "Consumables",
-        "reset": "Reset"
+        "reset": "Reset",
+        "unknown": "Consumables unknown"
       },
       "history": {
         "charts": "History",

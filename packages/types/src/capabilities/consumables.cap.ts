@@ -15,13 +15,14 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * its device tracks consumables registers it; the provider names each item
  * verbatim and says which `kind` it is.
  *
- * The admin UI renders it as ONE collapsible section directly under the
- * device page's hero card (`placement: 'hero'`), for every device bound to
- * this cap — never drawn by a device type's hero card itself (D915).
+ * The admin UI shows it in the device card's consumables chip and popover
+ * (kind-aware level, remaining time, "Reset"), for every device bound to this
+ * cap (D1023). It no longer has a section of its own under the hero card
+ * (D915 on that point).
  *
  * Like `childLayout`, the cap is INERT until a provider sets items: no
  * provider populates it by guessing (no HA inference). The UI renders a
- * "No consumables reported" placeholder when `items` is empty.
+ * "No consumables reported" line when `items` is empty.
  */
 
 /**
@@ -131,7 +132,7 @@ export type ConsumablesStatus = z.infer<typeof ConsumablesStatusSchema>
 
 /** Synthesize seed for a link-built status (no native provider).
  *
- *  ⚠ NO LIVE CALLER since 2026-08-08 (device-links deleted; see
+ *  ! NO LIVE CALLER since 2026-08-08 (device-links deleted; see
  *  `CapabilityStatusSchema.empty`). The wiring guidance below was written for
  *  exactly the case the operator is asking about again — a Dreame's HA
  *  consumable-life sensors — so it is kept for that conversation, not because
@@ -256,19 +257,6 @@ export const consumablesCapability = {
   // register it and no future device type silently fails to bind or drifts
   // out of sync with `device-type.ts`.
   deviceTypes: Object.values(DeviceType),
-  deviceConfig: {
-    // ONE section directly under the device's hero card, for every device
-    // bound to this cap — not a tab of its own, and no hero card draws a
-    // consumable itself (D915).
-    ui: {
-      kind: 'widget',
-      widgetId: 'host/consumables-panel',
-      tab: 'consumables',
-      placement: 'hero',
-      label: 'Consumables',
-      order: 5,
-    },
-  },
   methods: {
     /** Mark a consumable as replaced — resets its remaining life. Only
      *  meaningful when the item's `resettable` is true. */

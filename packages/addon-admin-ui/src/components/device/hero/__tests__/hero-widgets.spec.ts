@@ -2,27 +2,24 @@
  * D915: the device page shows ONE section per `hero` widget the device's
  * capabilities declare, directly under the hero card — driven by the aggregate (which the server
  * builds by walking the device's bindings, D12/D13), never by device type.
- * Today that is the Consumables panel; the helper knows no widget by name.
+ * The helper knows no widget by name. Consumables is NOT one of them any more:
+ * it moved into the device card (D1023), so no hero widget carries its id.
  */
 import type { ConfigSectionWithValues } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { heroDrawnWidgets } from '../hero-drawn-widgets'
 import { heroWidgets } from '../hero-widgets'
 
-const consumables = (order = 5): ConfigSectionWithValues => ({
-  id: 'consumables-widget',
-  title: 'Consumables',
-  tab: 'consumables',
+const EXAMPLE = 'host/example-hero'
+
+/** A hero section carrying one widget, whatever its id: the helper names none. */
+const heroSection = (order = 5, widgetId = EXAMPLE): ConfigSectionWithValues => ({
+  id: `${widgetId}-section`,
+  title: 'Example',
+  tab: 'example',
   location: 'hero',
   order,
-  fields: [
-    {
-      type: 'widget',
-      key: 'consumablesWidget',
-      label: 'Consumables',
-      widgetId: 'host/consumables-panel',
-    },
-  ],
+  fields: [{ type: 'widget', key: 'example', label: 'Example', widgetId }],
 })
 
 const zonesTopTab: ConfigSectionWithValues = {
@@ -34,9 +31,9 @@ const zonesTopTab: ConfigSectionWithValues = {
 }
 
 describe('heroWidgets', () => {
-  it('a device bound to consumables gets the Consumables widget, for its own id', () => {
-    expect(heroWidgets({ sections: [consumables(), zonesTopTab], deviceId: 502 })).toEqual([
-      { widgetId: 'host/consumables-panel', deviceId: 502, order: 5 },
+  it('a device whose cap declares a hero widget gets it, for its own id', () => {
+    expect(heroWidgets({ sections: [heroSection(), zonesTopTab], deviceId: 502 })).toEqual([
+      { widgetId: EXAMPLE, deviceId: 502, order: 5 },
     ])
   })
 
@@ -50,30 +47,30 @@ describe('heroWidgets', () => {
       heroWidgets({
         sections: [],
         deviceId: 3,
-        child: { sections: [consumables()], deviceId: 4 },
+        child: { sections: [heroSection()], deviceId: 4 },
       }),
-    ).toEqual([{ widgetId: 'host/consumables-panel', deviceId: 4, order: 5 }])
+    ).toEqual([{ widgetId: EXAMPLE, deviceId: 4, order: 5 }])
   })
 
   it('the device’s own widget wins a collision with its child’s — ONE section, never two', () => {
     expect(
       heroWidgets({
-        sections: [consumables()],
+        sections: [heroSection()],
         deviceId: 3,
-        child: { sections: [consumables()], deviceId: 4 },
+        child: { sections: [heroSection()], deviceId: 4 },
       }),
-    ).toEqual([{ widgetId: 'host/consumables-panel', deviceId: 3, order: 5 }])
+    ).toEqual([{ widgetId: EXAMPLE, deviceId: 3, order: 5 }])
   })
 
   it('orders several hero widgets by their declared order', () => {
     const other: ConfigSectionWithValues = {
-      ...consumables(1),
+      ...heroSection(1),
       id: 'other-widget',
       fields: [{ type: 'widget', key: 'o', label: 'Other', widgetId: 'host/other' }],
     }
     expect(
-      heroWidgets({ sections: [consumables(5), other], deviceId: 1 }).map((w) => w.widgetId),
-    ).toEqual(['host/other', 'host/consumables-panel'])
+      heroWidgets({ sections: [heroSection(5), other], deviceId: 1 }).map((w) => w.widgetId),
+    ).toEqual(['host/other', EXAMPLE])
   })
 
   it("leaves out a widget the device's own hero card draws, keeping the rest", () => {
@@ -87,11 +84,11 @@ describe('heroWidgets', () => {
     }
     expect(
       heroWidgets({
-        sections: [power, consumables()],
+        sections: [power, heroSection()],
         deviceId: 9,
         drawnByHero: ['host/power-meter-line'],
       }).map((w) => w.widgetId),
-    ).toEqual(['host/consumables-panel'])
+    ).toEqual([EXAMPLE])
   })
 
   it('a Sensor hero draws the reading itself; other types declare nothing', () => {

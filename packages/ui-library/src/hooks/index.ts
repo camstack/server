@@ -41,8 +41,6 @@ export {
   effectivePageSize,
   usePersistedPageSize,
 } from './use-persisted-page-size'
-export type { SetDisclosure } from './use-persisted-disclosure'
-export { usePersistedDisclosure } from './use-persisted-disclosure'
 export type { SetDeviceListPageSize } from './use-device-list-page-size'
 export {
   DEVICE_LIST_PAGE_SIZE_KEY,

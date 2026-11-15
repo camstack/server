@@ -2,7 +2,7 @@
  * The widgets the device page shows directly UNDER its hero card (D915):
  * every widget field of an aggregate section marked `location: 'hero'`. The
  * server emits such a section per binding of a cap that declares
- * `deviceConfig.ui.placement: 'hero'` — today `consumables` — so a device gets
+ * `deviceConfig.ui.placement: 'hero'` (the `power-meter` line, say) so a device gets
  * the section exactly when it is bound to the cap, and this helper names no
  * widget and no device type.
  *

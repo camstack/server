@@ -1,7 +1,7 @@
 /**
  * The block directly under the device's hero card (D915): one section per
- * `hero` widget the device's capabilities declare — the Consumables panel for
- * every device bound to `consumables`, whatever its type. It sits in the same
+ * `hero` widget the device's capabilities declare, whatever the device's type
+ * (consumables are NOT one: they live in the device card, D1023). It sits in the same
  * hero slot of the page (left column on desktop, first row on a phone), so it
  * is in view on every tab. Each widget brings its own card; this block only
  * stacks them and points each at the device it belongs to (a container's

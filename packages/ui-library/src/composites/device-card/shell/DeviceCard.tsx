@@ -157,7 +157,8 @@ export function DeviceCard({
     gating.reason !== null ||
     common.notice !== null ||
     common.supply !== null ||
-    common.consumables !== null
+    common.consumables !== null ||
+    common.consumablesLoading === true
   return (
     <CardGatingProvider value={gating}>
       <article
@@ -230,9 +231,10 @@ export function DeviceCard({
                 onAction={(a) => actions?.onSupply?.(a)}
               />
             )}
-            {common.consumables === null || common.consumables.length === 0 ? null : (
+            {common.consumables === null && common.consumablesLoading !== true ? null : (
               <ConsumablesButton
-                items={common.consumables}
+                items={common.consumables ?? []}
+                loading={common.consumablesLoading === true}
                 onReset={(key) => actions?.onConsumableReset?.(key)}
               />
             )}

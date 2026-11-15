@@ -35,6 +35,7 @@ import type {
   CardSupplyAction,
 } from '../shell/model'
 import { cardFaultOf } from '../shell/model'
+import { toCardConsumable } from './consumable-card-item'
 import { remoteLayoutPending, remotePanelOf } from './remote-panel'
 import { remoteKeyOf } from '../shell/remote-keys'
 import { sinceText } from './since-text'
@@ -188,16 +189,11 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
     }
   }, [meter, t])
 
+  const consumablesBound = dev?.consumables !== undefined
   const items = useMemo((): readonly CardConsumable[] | null => {
-    if (consumables === undefined || consumables.items.length === 0) return null
-    return consumables.items.map((item) => ({
-      key: item.key,
-      label: item.label,
-      percent: item.level,
-      resetLabel:
-        item.resettable && canActuate ? t('uiLibrary.deviceCard.consumables.reset', 'Reset') : null,
-    }))
-  }, [consumables, canActuate, t])
+    if (!consumablesBound || consumables === undefined) return null
+    return consumables.items.map((item) => toCardConsumable(item, canActuate, t))
+  }, [consumablesBound, consumables, canActuate, t])
 
   const seriesReady =
     series.presence === 'present' &&
@@ -233,6 +229,7 @@ export function useCardCommon({ deviceId, canActuate }: CardCommonInput): CardCo
         : null,
     fault: cardFaultOf(fault),
     consumables: items,
+    consumablesLoading: consumablesBound && consumables === undefined,
     remote:
       remote.data === undefined || remote.data === null || remote.data.commands.length === 0
         ? null

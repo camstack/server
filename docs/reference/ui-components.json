@@ -4001,7 +4001,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/shell/BottomLine.tsx",
-      "summary": "The consumables: one button that warns about the lowest, and the full list.",
+      "summary": "The consumables: one chip that warns about the worst item (a part running out, a full bin) and opens the full list. Unknown is never ok (D393) and \"none\" is only said once the provider answered (D315).",
       "props": [
         {
           "name": "items",
@@ -4010,19 +4010,18 @@
           "doc": ""
         },
         {
+          "name": "loading",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Bound to `consumables` but the slice has not landed: loading, never \"none\" (D315)."
+        },
+        {
           "name": "onReset",
           "type": "(key: string) => void",
           "optional": false,
           "doc": ""
         }
       ]
-    },
-    {
-      "name": "ConsumablesPanel",
-      "kind": "component",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/cap-settings/ConsumablesPanel.tsx",
-      "summary": "ConsumablesPanel — the ONE consumables surface of every device (D915): wear parts, tanks (a vacuum's clean and dirty water), products (detergent, a dishwasher's salt and rinse aid) and bins (a dust bin), for whichever…"
     },
     {
       "name": "ContainerChildrenProvider",
@@ -19581,13 +19580,6 @@
       "area": "contexts",
       "file": "packages/ui-library/src/contexts/widget-registry.tsx",
       "summary": "Variant returning `null` when no provider is mounted — for boot splash etc."
-    },
-    {
-      "name": "usePersistedDisclosure",
-      "kind": "hook",
-      "area": "hooks",
-      "file": "packages/ui-library/src/hooks/use-persisted-disclosure.ts",
-      "summary": "usePersistedDisclosure — an open / closed choice the viewer made, remembered per viewer under the caller's key (one key per section and device)."
     },
     {
       "name": "usePersistedPageSize",

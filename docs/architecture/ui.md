@@ -412,9 +412,8 @@ contribute to both; they are two separate methods with two separate payloads.
   device's hero card, in the same slot, on every tab
   (`components/device/hero/DeviceHeroWidgets.tsx`, [D915](../decisions/adr-0915-consumables-are-one-collapsible-section-under-the-device-hero.md));
   a container also shows its primary child's hero widgets, rendered against
-  the child. Such a widget brings its own collapse: the Consumables panel opens
-  itself while an item needs attention and remembers the viewer's toggle per
-  device. `toWireShape` must forward the location — it is an explicit copy,
+  the child. (Consumables are NOT one of them: they live in the device card's
+  consumables chip and popover, D1023.) `toWireShape` must forward the location — it is an explicit copy,
   and dropping it there strips the marker before the client ever sees it.
 - **`section.order`** — sort within the tab, lower first. **`tabs[].order`** —
   sort within the tab bar, lower to the left.
@@ -426,7 +425,7 @@ contribute to both; they are two separate methods with two separate payloads.
 For a cap-derived UI the same placement is expressed on the cap instead:
 `deviceConfig.ui.topTab` is what `device-aggregation.ts` turns into
 `location: 'top-tab'`, and `deviceConfig.ui.placement: 'hero'` into
-`location: 'hero'` (the `consumables` cap). It is the cap-side spelling
+`location: 'hero'` (the `power-meter` cap). It is the cap-side spelling
 of the same key, not a second mechanism.
 
 ### Every surface renders ONE store scope, and says which

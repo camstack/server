@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device card History and Interactions: single page scroll in the embedded card, exact time and details on each interaction, per-point chips
 
+### Removed
+
+- The device page no longer shows a separate Consumables section under the hero card; consumables are in the device card (chip and popover).
+
 ## [1.2.675] - 2026-11-15
 
 ### Changed
