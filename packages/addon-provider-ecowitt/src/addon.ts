@@ -49,7 +49,11 @@ import {
 } from './ecowitt-lan-discovery.js'
 import type { EcowittDeviceGroup } from './ecowitt-mapping.js'
 import { ecowittGroupDeviceType, isEcowittGroupType } from './ecowitt-mapping.js'
-import { findDuplicateGatewaySensors, type DuplicateScanRow } from './ecowitt-duplicate-sensors.js'
+import {
+  findDuplicateGatewaySensors,
+  findStationReadingChildren,
+  type DuplicateScanRow,
+} from './ecowitt-duplicate-sensors.js'
 import { bucketSensorsByGroup, configDeviceGroup, sensorsEqual } from './ecowitt-sensor-groups.js'
 import { EcowittReconciler, type IntegrationLifecycleKind } from './ecowitt-reconciler.js'
 import {
@@ -330,10 +334,11 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     }
     const { duplicates, scanned } = findDuplicateGatewaySensors(rows)
     if (scanned > 0) this.duplicatesChecked.add(gatewayKey)
-    for (const id of duplicates) {
+    const retired = findStationReadingChildren(rows)
+    for (const id of [...duplicates, ...retired.filter((r) => !duplicates.includes(r))]) {
       try {
         await devices.remove(id)
-        this.ctx.logger.info('Ecowitt: duplicate sensor under the gateway container removed', {
+        this.ctx.logger.info('Ecowitt: sensor retired, its reading is supplied by the station', {
           tags: { deviceId: id },
           meta: { gatewayKey },
         })

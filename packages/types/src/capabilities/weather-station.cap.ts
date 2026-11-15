@@ -9,6 +9,9 @@ import { type CapabilityDefinition, type InferProvider } from './capability-defi
  * any later station). Read-only: one slice per station, filled from the
  * station's own poll. `weather` stays the forecast provider.
  *
+ * The station is the ONE owner of its readings and of their history: a provider
+ * does not also declare them as standalone sensor devices.
+ *
  * Every reading is nullable. Null means the station does not report it;
  * a missing sensor is never stored as 0 (D393). Units are the quantity base
  * (D944), declared the same way sibling sensor caps declare them.
@@ -44,6 +47,36 @@ export const WeatherStationReadingsSchema = z.object({
     .number()
     .nullable()
     .meta(readingMeta('temperature', { precision: 1 })),
+  /** Apparent ("feels like") temperature. */
+  feelsLike: z
+    .number()
+    .nullable()
+    .meta(readingMeta('temperature', { precision: 1 })),
+  /** Vapour-pressure deficit. Stored as a pressure (hPa, 10 hPa = 1 kPa). */
+  vpd: z
+    .number()
+    .nullable()
+    .meta(readingMeta('pressure', { precision: 1 })),
+  /** Highest wind gust since local midnight. */
+  windGustMax: z.number().nullable().meta(readingMeta('speed')),
+  /** Wind bearing averaged over the station's own window. */
+  windBearingAvg: z.number().nullable().meta(readingMeta('angle')),
+  rain24h: z
+    .number()
+    .nullable()
+    .meta(readingMeta('precipitation', { precision: 1 })),
+  rainWeekly: z
+    .number()
+    .nullable()
+    .meta(readingMeta('precipitation', { precision: 1 })),
+  rainMonthly: z
+    .number()
+    .nullable()
+    .meta(readingMeta('precipitation', { precision: 1 })),
+  rainYearly: z
+    .number()
+    .nullable()
+    .meta(readingMeta('precipitation', { precision: 1 })),
 })
 
 export const WeatherStationStatusSchema = WeatherStationReadingsSchema.extend({
@@ -81,10 +114,36 @@ export const weatherStationCapability = {
   },
   runtimeState: WeatherStationStatusSchema,
   /**
-   * The sensor children already record each reading. The station slice is the
-   * live aggregate a template reads; it does not keep a second series.
+   * History (D850): the station records its own readings. Rain totals that
+   * reset (event, day, week, month, year) and the sliding 24 h total are
+   * levels, so `gauge`; `counter` is for a monotonic meter only.
    */
-  history: 'none',
+  history: {
+    fields: {
+      temperature: { kind: 'gauge', unit: '°C', deadband: 0.1 },
+      humidity: { kind: 'gauge', unit: '%', deadband: 1 },
+      pressure: { kind: 'gauge', unit: 'hPa', deadband: 0.2 },
+      windSpeed: { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+      windGust: { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+      windBearing: { kind: 'gauge', unit: '°', deadband: 5 },
+      rainRate: { kind: 'gauge', unit: 'mm/h', deadband: 0.1 },
+      rainDaily: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+      rainEvent: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+      uv: { kind: 'gauge', unit: 'count', deadband: 0.1 },
+      solarRadiation: { kind: 'gauge', unit: 'W/m²', deadband: 5 },
+      dewPoint: { kind: 'gauge', unit: '°C', deadband: 0.1 },
+      feelsLike: { kind: 'gauge', unit: '°C', deadband: 0.1 },
+      vpd: { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
+      windGustMax: { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+      windBearingAvg: { kind: 'gauge', unit: '°', deadband: 5 },
+      rain24h: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+      rainWeekly: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+      rainMonthly: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+      rainYearly: { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+    },
+  },
+  /** The poll clock is written but is no reason to commit a row. */
+  volatileStateFields: ['lastFetchedAt'],
   /**
    * Runtime-state durability: **session** — a station reading is stale the
    * moment the hub is down; the provider re-reads on the next poll.
@@ -171,6 +230,62 @@ export const weatherStationCapability = {
         t('Dew point', 'Punto di rugiada'),
         '°C',
         'thermometer',
+      ),
+      numeric(
+        'feelsLike',
+        t('the feels-like temperature', 'la temperatura percepita'),
+        t('Feels like', 'Percepita'),
+        '°C',
+        'thermometer',
+      ),
+      numeric(
+        'vpd',
+        t('the vapour-pressure deficit', 'il deficit di pressione di vapore'),
+        t('VPD', 'VPD'),
+        'hPa',
+        'gauge',
+      ),
+      numeric(
+        'windGustMax',
+        t('the highest gust today', 'la raffica massima di oggi'),
+        t('Max gust', 'Raffica max'),
+        'm/s',
+        'wind',
+      ),
+      numeric(
+        'windBearingAvg',
+        t('the average wind bearing', 'la direzione media del vento'),
+        t('Avg bearing', 'Direzione media'),
+        '°',
+        'wind',
+      ),
+      numeric(
+        'rain24h',
+        t('the rain in the last 24 hours', 'la pioggia delle ultime 24 ore'),
+        t('Rain 24 h', 'Pioggia 24 h'),
+        'mm',
+        'droplets',
+      ),
+      numeric(
+        'rainWeekly',
+        t('the rain this week', 'la pioggia di questa settimana'),
+        t('Rain week', 'Pioggia settimana'),
+        'mm',
+        'droplets',
+      ),
+      numeric(
+        'rainMonthly',
+        t('the rain this month', 'la pioggia di questo mese'),
+        t('Rain month', 'Pioggia mese'),
+        'mm',
+        'droplets',
+      ),
+      numeric(
+        'rainYearly',
+        t('the rain this year', 'la pioggia di quest’anno'),
+        t('Rain year', 'Pioggia anno'),
+        'mm',
+        'droplets',
       ),
     ],
   },

@@ -39,6 +39,14 @@ const EMPTY: Record<StationField, null> = {
   uv: null,
   solarRadiation: null,
   dewPoint: null,
+  feelsLike: null,
+  vpd: null,
+  windGustMax: null,
+  windBearingAvg: null,
+  rain24h: null,
+  rainWeekly: null,
+  rainMonthly: null,
+  rainYearly: null,
 }
 
 /** Field-key → station field. A lower rank wins when two sensors share a field. */
@@ -60,6 +68,34 @@ const BY_KEY: Readonly<Record<string, { readonly field: StationField; readonly r
   solarradiation: { field: 'solarRadiation', rank: 0 },
   dewpoint: { field: 'dewPoint', rank: 0 },
   dewpointf: { field: 'dewPoint', rank: 0 },
+  // Gateway hex ids (8E:<id>) of the same readings, plus the two decimal-string ids.
+  '0x02': { field: 'temperature', rank: 0 },
+  '0x07': { field: 'humidity', rank: 0 },
+  '0x03': { field: 'dewPoint', rank: 0 },
+  '3': { field: 'feelsLike', rank: 0 },
+  '5': { field: 'vpd', rank: 0 },
+  '0x0B': { field: 'windSpeed', rank: 0 },
+  '0x0C': { field: 'windGust', rank: 0 },
+  '0x19': { field: 'windGustMax', rank: 0 },
+  maxdailygust: { field: 'windGustMax', rank: 0 },
+  '0x0A': { field: 'windBearing', rank: 0 },
+  '0x6D': { field: 'windBearingAvg', rank: 0 },
+  winddir_avg10m: { field: 'windBearingAvg', rank: 1 },
+  '0x15': { field: 'solarRadiation', rank: 0 },
+  '0x17': { field: 'uv', rank: 0 },
+  '0x0D': { field: 'rainEvent', rank: 0 },
+  '0x0E': { field: 'rainRate', rank: 0 },
+  '0x7C': { field: 'rain24h', rank: 0 },
+  '0x10': { field: 'rainDaily', rank: 0 },
+  '0x11': { field: 'rainWeekly', rank: 0 },
+  weeklyrainin: { field: 'rainWeekly', rank: 0 },
+  wrain_piezo: { field: 'rainWeekly', rank: 1 },
+  '0x12': { field: 'rainMonthly', rank: 0 },
+  monthlyrainin: { field: 'rainMonthly', rank: 0 },
+  mrain_piezo: { field: 'rainMonthly', rank: 1 },
+  '0x13': { field: 'rainYearly', rank: 0 },
+  yearlyrainin: { field: 'rainYearly', rank: 0 },
+  yrain_piezo: { field: 'rainYearly', rank: 1 },
 }
 
 const QUANTITY_OF: Readonly<Record<StationField, ReadingQuantity>> = {
@@ -75,10 +111,28 @@ const QUANTITY_OF: Readonly<Record<StationField, ReadingQuantity>> = {
   uv: 'index',
   solarRadiation: 'irradiance',
   dewPoint: 'temperature',
+  feelsLike: 'temperature',
+  // A vapour-pressure deficit is a pressure; the base unit is hPa (1 kPa = 10 hPa).
+  vpd: 'pressure',
+  windGustMax: 'speed',
+  windBearingAvg: 'angle',
+  rain24h: 'precipitation',
+  rainWeekly: 'precipitation',
+  rainMonthly: 'precipitation',
+  rainYearly: 'precipitation',
 }
 
 function fieldKeyOf(sensorId: string): string {
   return sensorId.slice(sensorId.lastIndexOf(':') + 1)
+}
+
+/**
+ * True when the sensor id names a reading the station slice carries by key. The station
+ * is the owner of these readings and of their history, so no standalone sensor device is
+ * kept for one. A sensor the key table does not know (battery, lightning, a channel) is not.
+ */
+export function isStationReadingSensorId(sensorId: string): boolean {
+  return Object.prototype.hasOwnProperty.call(BY_KEY, fieldKeyOf(sensorId))
 }
 
 function fieldFromName(sensor: StationSensorSample): { field: StationField; rank: number } | null {

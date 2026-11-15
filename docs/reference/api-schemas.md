@@ -7885,6 +7885,14 @@ Enum: `"cosine" \| "dot" \| "euclidean"`
 - `uv`: `number \| null`
 - `solarRadiation`: `number \| null`
 - `dewPoint`: `number \| null`
+- `feelsLike`: `number \| null`
+- `vpd`: `number \| null`
+- `windGustMax`: `number \| null`
+- `windBearingAvg`: `number \| null`
+- `rain24h`: `number \| null`
+- `rainWeekly`: `number \| null`
+- `rainMonthly`: `number \| null`
+- `rainYearly`: `number \| null`
 - `lastFetchedAt`: `number`
 
 ### `WeatherStatusSchema`

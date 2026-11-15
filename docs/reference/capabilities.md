@@ -125,7 +125,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `videoclips` | 7 | — | — | — | — | `export-hap` `recorder` `provider-amcrest` `provider-hikvision` `provider-reolink` |
 | `water-heater` | 4 | ✓ | ✓ | 2 series | — | `bosch-homecom` `provider-homeassistant` |
 | `weather` | 1 | ✓ | ✓ | 4 series | — | `provider-homeassistant` |
-| `weather-station` | 1 | ✓ | ✓ | none | — | `provider-ecowitt` |
+| `weather-station` | 1 | ✓ | ✓ | 20 series | — | `provider-ecowitt` |
 | `webrtc-session` | 11 | — | — | — | — | `stream-broker` |
 | `zone-analytics` | 5 | — | ✓ | none | — | `pipeline-analytics` |
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |

@@ -1,6 +1,10 @@
 import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { findDuplicateGatewaySensors, type DuplicateScanRow } from '../ecowitt-duplicate-sensors.js'
+import {
+  findDuplicateGatewaySensors,
+  findStationReadingChildren,
+  type DuplicateScanRow,
+} from '../ecowitt-duplicate-sensors.js'
 import type { Sensor } from '@apocaliss92/nodewitt'
 import { entriesForGroup } from '../ecowitt-sensor-groups.js'
 
@@ -98,5 +102,35 @@ describe('the container spawns only sensors of its own group', () => {
   it('the weather-station container keeps it', () => {
     const ids = entriesForGroup(entries, 'weather-station', live).map((e) => e.sensorId)
     expect(ids).toEqual(['gateway:0x02', 'gateway:unseen'])
+  })
+})
+
+describe('sensor children whose reading the station now supplies', () => {
+  const rows: DuplicateScanRow[] = [
+    container(290, 'gateway'),
+    sensor(291, 290, 'gateway:tempinf', 'own'),
+    sensor(293, 290, 'gateway:baromabsin', 'own'),
+    container(295, 'weather-station'),
+    sensor(3900, 295, '8E:0x02'),
+    sensor(3903, 295, '8E:5'),
+    sensor(3907, 295, '8E:0x19'),
+    sensor(3918, 295, '8E:0x13'),
+    sensor(3950, 295, '8E:wh68batt'),
+    container(315, 'temp-sensor-ch1'),
+    sensor(4177, 315, '8E:temp1f'),
+  ]
+
+  it('tombstones the station readings once and keeps every other child', () => {
+    expect([...findStationReadingChildren(rows)].sort()).toEqual([3900, 3903, 3907, 3918])
+  })
+
+  it('is idempotent: nothing is left once they are gone', () => {
+    const left = rows.filter((r) => ![3900, 3903, 3907, 3918].includes(r.id))
+    expect(findStationReadingChildren(left)).toEqual([])
+  })
+
+  it('never touches the gateway indoor readings nor a channel sensor', () => {
+    const ids = findStationReadingChildren(rows)
+    for (const keep of [291, 293, 4177, 3950]) expect(ids).not.toContain(keep)
   })
 })

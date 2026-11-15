@@ -109,7 +109,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'vibration': { durability: 'restored', volatileFields: ['lastChangedAt'] },
   'water-heater': { durability: 'restored', volatileFields: [], restoredFields: ['lastActiveMode'] },
   'weather': { durability: 'session', volatileFields: [] },
-  'weather-station': { durability: 'session', volatileFields: [] },
+  'weather-station': { durability: 'session', volatileFields: ['lastFetchedAt'] },
   'zone-analytics': { durability: 'session', volatileFields: [] },
   'zone-rules': { durability: 'restored', volatileFields: [] },
   'zones': { durability: 'restored', volatileFields: [] },

@@ -1,6 +1,7 @@
 import { DeviceType } from '@camstack/types'
 import { ECOWITT_SYSTEM } from './config.js'
 import { isEcowittGroupType } from './ecowitt-mapping.js'
+import { isStationReadingSensorId } from './station-reading.js'
 import { configDeviceGroup, sensorKeyOf, sensorOwnerOf } from './ecowitt-sensor-groups.js'
 
 /** One persisted device of this addon, as the cleanup reads it. */
@@ -59,4 +60,26 @@ export function findDuplicateGatewaySensors(rows: readonly DuplicateScanRow[]): 
     duplicates: underGateway.filter((s) => ownedElsewhere.has(s.key)).map((s) => s.id),
     scanned,
   }
+}
+
+/**
+ * Sensor children of a weather-station Container whose reading the station now supplies on its
+ * own slice (with history). They are retired once, through the normal device removal. Only a
+ * child whose sensor id the station reading table knows is returned: a battery or lightning
+ * child of the same Container stays.
+ */
+export function findStationReadingChildren(rows: readonly DuplicateScanRow[]): readonly number[] {
+  const stations = new Set<number>()
+  for (const row of rows) {
+    if (!isEcowittGroupType(row.type) || row.config['system'] !== ECOWITT_SYSTEM) continue
+    if (configDeviceGroup(row.config) === 'weather-station') stations.add(row.id)
+  }
+  const ids: number[] = []
+  for (const row of rows) {
+    if (row.type !== DeviceType.Sensor || row.parentDeviceId === null) continue
+    if (!stations.has(row.parentDeviceId)) continue
+    const sensorId = str(row.config, 'sensorId')
+    if (sensorId !== null && isStationReadingSensorId(sensorId)) ids.push(row.id)
+  }
+  return ids
 }

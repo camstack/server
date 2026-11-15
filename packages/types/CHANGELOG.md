@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - plate-gallery and face-gallery: sample mediaId / key frame + box, PlateInfo.cropMissReason, moveVehicleSample and moveIdentitySample
+- The weather station records its own readings with history and also reports feels-like, VPD, daily maximum gust, average wind bearing and 24 h, weekly, monthly and yearly rain
 
 ### Removed
 

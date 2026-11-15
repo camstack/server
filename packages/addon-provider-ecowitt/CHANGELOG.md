@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The weather station now supplies every outdoor reading itself, with history; the standalone outdoor sensor devices are retired and their history is dropped
+
 ## [0.2.166] - 2026-11-14
 
 ### Changed

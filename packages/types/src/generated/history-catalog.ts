@@ -10,7 +10,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 45 caps with series (104 series), 39 caps answered `'none'`.
+ * 46 caps with series (124 series), 38 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -208,6 +208,28 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'pressure': { kind: 'gauge', unit: 'hPa', deadband: 0.5 },
     'windSpeed': { kind: 'gauge', unit: 'm/s', deadband: 0.5 },
   },
+  'weather-station': {
+    'temperature': { kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'humidity': { kind: 'gauge', unit: '%', deadband: 1 },
+    'pressure': { kind: 'gauge', unit: 'hPa', deadband: 0.2 },
+    'windSpeed': { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+    'windGust': { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+    'windBearing': { kind: 'gauge', unit: '°', deadband: 5 },
+    'rainRate': { kind: 'gauge', unit: 'mm/h', deadband: 0.1 },
+    'rainDaily': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+    'rainEvent': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+    'uv': { kind: 'gauge', unit: 'count', deadband: 0.1 },
+    'solarRadiation': { kind: 'gauge', unit: 'W/m²', deadband: 5 },
+    'dewPoint': { kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'feelsLike': { kind: 'gauge', unit: '°C', deadband: 0.1 },
+    'vpd': { kind: 'gauge', unit: 'hPa', deadband: 0.1 },
+    'windGustMax': { kind: 'gauge', unit: 'm/s', deadband: 0.2 },
+    'windBearingAvg': { kind: 'gauge', unit: '°', deadband: 5 },
+    'rain24h': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+    'rainWeekly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+    'rainMonthly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+    'rainYearly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
+  },
 }
 
 /**
@@ -275,7 +297,6 @@ export const HISTORY_NONE_CAPS: readonly string[] = [
   'stream-signals',
   'timed-run',
   'update',
-  'weather-station',
   'zone-analytics',
   'zone-rules',
   'zones',

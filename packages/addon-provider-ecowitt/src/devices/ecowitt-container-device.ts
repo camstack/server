@@ -18,7 +18,11 @@ import {
   roleForQuantity,
   sensorLabel,
 } from '../ecowitt-mapping.js'
-import { stationSliceFromSensors, type StationSensorSample } from '../station-reading.js'
+import {
+  isStationReadingSensorId,
+  stationSliceFromSensors,
+  type StationSensorSample,
+} from '../station-reading.js'
 import { EcowittSensorDevice } from './ecowitt-sensor-device.js'
 
 /** One sensor entry persisted on the gateway container — drives a child spawn. */
@@ -118,11 +122,16 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     // Read the LIVE config so an additive reconcile (re-persisted `sensors[]`
     // via applyDerivedSpec) spawns new children + removes orphaned ones.
-    const own = entriesForGroup(
+    const inGroup = entriesForGroup(
       this.config.values.sensors,
       this.config.values.deviceGroup,
       ecowittFacades.getSensors(this.gatewayId),
     )
+    // The station supplies its own readings (and their history) on its slice: no sensor child
+    // is spawned for one. A sensor the slice does not carry (battery, lightning) still is.
+    const own = this.station
+      ? inGroup.filter((sensor) => !isStationReadingSensorId(sensor.sensorId))
+      : inGroup
     return own.map((sensor) => {
       const meta: AccessoryChildSpec['meta'] = {
         type: DeviceType.Sensor,
