@@ -25,7 +25,12 @@ function buildSerialPatcher(deps: HomeComSettingsPatchDeps) {
     const run = async (): Promise<void> => {
       try {
         const stored = await deps.read(integrationId)
-        if (stored === null) return
+        if (stored === null) {
+          deps.logger.warn(`HomeCom not persisting ${deps.what} — the integration record is gone`, {
+            tags: { integrationId },
+          })
+          return
+        }
         if (stored.locked) {
           deps.logger.warn(`HomeCom not persisting ${deps.what} — stored secrets are locked`, {
             tags: { integrationId },
