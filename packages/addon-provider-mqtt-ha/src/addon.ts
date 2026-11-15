@@ -93,6 +93,7 @@ export class MqttHaProviderAddon extends BaseDeviceProvider<MqttHaProviderConfig
     this.instances = instances
 
     mqttHaSession.bind({
+      addonId: this.ctx.id,
       logger: this.ctx.logger,
       getAlerts: () => this.ctx.api.alerts,
     })

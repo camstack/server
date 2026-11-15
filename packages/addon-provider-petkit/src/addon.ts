@@ -85,6 +85,7 @@ export class PetkitProviderAddon extends BaseDeviceProvider {
     this.instances = instances
 
     petkitSession.bind({
+      addonId: this.ctx.id,
       logger: this.ctx.logger,
       getAlerts: () => this.ctx.api.alerts,
     })

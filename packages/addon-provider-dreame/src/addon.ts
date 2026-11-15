@@ -98,6 +98,7 @@ export class DreameProviderAddon extends BaseDeviceProvider {
     this.instances = instances
 
     dreameSession.bind({
+      addonId: this.ctx.id,
       logger: this.ctx.logger,
       getAlerts: () => this.ctx.api.alerts,
     })

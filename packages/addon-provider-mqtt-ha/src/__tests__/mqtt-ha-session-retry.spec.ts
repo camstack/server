@@ -121,6 +121,7 @@ describe('the operator alert for an MQTT session', () => {
     const emit = vi.fn(async (_alert: Alert) => ({}))
     const update = vi.fn(async () => ({}))
     mqttHaSession.bind({
+      addonId: 'provider-mqtt-ha',
       logger,
       getAlerts: () => ({ emit: { mutate: emit }, update: { mutate: update } }),
       debounceMs: 1000,
@@ -146,6 +147,7 @@ describe('the operator alert for an MQTT session', () => {
   it('names a refused login as a credentials problem', async () => {
     const emit = vi.fn(async (_alert: Alert) => ({}))
     mqttHaSession.bind({
+      addonId: 'provider-mqtt-ha',
       logger,
       getAlerts: () => ({ emit: { mutate: emit } }),
       debounceMs: 10,
@@ -159,6 +161,7 @@ describe('the operator alert for an MQTT session', () => {
   it('a session that connects inside the debounce raises nothing', async () => {
     const emit = vi.fn(async (_alert: Alert) => ({}))
     mqttHaSession.bind({
+      addonId: 'provider-mqtt-ha',
       logger,
       getAlerts: () => ({ emit: { mutate: emit } }),
       debounceMs: 1000,

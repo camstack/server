@@ -8,8 +8,9 @@
  * integration wizard). A FIXED integration is declared by an addon and has no
  * add flow, so it is never offered.
  *
- * Pure: no router, no React.
+ * Pure: no router, no React. The integration page address is `integrationPageHref`.
  */
+import { integrationPageHref } from '@camstack/types'
 
 export interface AddDeviceType {
   readonly addonId: string
@@ -56,7 +57,7 @@ export function computeAddDeviceTargets(
 
 /** The integration page opened on that instance's add / scan / adopt flow (`?add=1`). */
 export function addDeviceUrl(addonId: string, instanceId: string): string {
-  return `/integrations/${encodeURIComponent(addonId)}?instance=${encodeURIComponent(instanceId)}&add=1`
+  return `${integrationPageHref(addonId, instanceId)}&add=1`
 }
 
 /** The existing integration wizard, opened on one addon (`?setup=`). */

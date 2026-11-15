@@ -112,8 +112,11 @@ export interface SessionHealthTrackerOptions {
   /** Read lazily: `ctx.api.alerts` may be absent early in boot. */
   readonly getAlerts: () => SessionHealthAlertsPort | undefined
   readonly debounceMs?: number
-  /** The providing addon, for the default "Open integration" action. */
-  readonly addonId?: string
+  /**
+   * The providing addon: the default "Open integration" action opens its page on the instance
+   * (`integrationPageHref`). Required, so no tracker falls back to the integrations list.
+   */
+  readonly addonId: string
   /** Defaults to `error`. A session that only a person can restore is `critical`. */
   readonly severity?: AlertSeverity
 }
@@ -256,7 +259,7 @@ export class SessionHealthTracker {
           integrationId,
           integrationName: entry.info.integrationName,
           reason: entry.info.reason,
-          ...(this.#opts.addonId !== undefined ? { addonId: this.#opts.addonId } : {}),
+          addonId: this.#opts.addonId,
           ...(this.#opts.severity !== undefined ? { severity: this.#opts.severity } : {}),
           ...(entry.info.action !== undefined ? { action: entry.info.action } : {}),
         }),
@@ -309,6 +312,8 @@ export class SessionHealthTracker {
 const EMPTY_INFO: SessionLostInfo = { integrationName: '', reason: 'connection-lost' }
 
 export interface IntegrationSessionBinding {
+  /** The addon that binds the reporter (`ctx.id`): its page is the alert's default action. */
+  readonly addonId: string
   readonly logger: IScopedLogger
   readonly getAlerts: () => SessionHealthAlertsPort | undefined
   readonly debounceMs?: number
@@ -350,6 +355,7 @@ export class IntegrationSessionReporter {
       providerName: this.#opts.providerName,
       logger: binding.logger,
       getAlerts: binding.getAlerts,
+      addonId: binding.addonId,
       ...(binding.debounceMs !== undefined ? { debounceMs: binding.debounceMs } : {}),
     })
   }

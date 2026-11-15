@@ -108,6 +108,7 @@ export class DreoProviderAddon extends BaseDeviceProvider {
     })
 
     dreoSession.bind({
+      addonId: this.ctx.id,
       logger: this.ctx.logger,
       getAlerts: () => this.ctx.api.alerts,
     })

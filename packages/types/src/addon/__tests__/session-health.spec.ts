@@ -5,6 +5,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Alert } from '../../capabilities/alerts.cap.js'
 import type { IScopedLogger } from '../../interfaces/logging.js'
+import { integrationPageHref } from '../integration-page.js'
 import {
   buildSessionLostAlert,
   IntegrationSessionReporter,
@@ -64,6 +65,7 @@ describe('SessionHealthTracker', () => {
       logger,
       getAlerts: () => alerts,
       debounceMs: DEBOUNCE,
+      addonId: 'provider-petkit',
     })
     return { tracker, logger }
   }
@@ -91,7 +93,12 @@ describe('SessionHealthTracker', () => {
     expect(alert?.title).toContain('PetKit')
     expect(alert?.message).toContain('Home')
     expect(alert?.message).toContain('signed in on another device')
-    expect(alert?.action).toEqual({ label: 'Open integration', href: '/integrations' })
+    // The providing addon's page, on this instance — never the integrations list.
+    expect(alert?.action).toEqual({
+      label: 'Open integration',
+      href: integrationPageHref('provider-petkit', 'int-1'),
+    })
+    expect(alert?.action?.href).toBe('/integrations/provider-petkit?instance=int-1')
     expect(alert?.status).toBe('active')
   })
 
@@ -236,10 +243,37 @@ describe('IntegrationSessionReporter', () => {
         navigation: 'server',
       }),
     })
-    reporter.bind({ logger: fakeLogger(), getAlerts: () => a.port, debounceMs: 100 })
+    reporter.bind({
+      logger: fakeLogger(),
+      getAlerts: () => a.port,
+      debounceMs: 100,
+      addonId: 'provider-acme',
+    })
     reporter.register('i1', 'Main')
     return { reporter, a }
   }
+
+  it("with no addon action, the alert opens the binding addon's page on the instance", async () => {
+    const a = fakeAlerts()
+    const reporter = new IntegrationSessionReporter({
+      kind: 'acme',
+      providerName: 'Acme',
+      classify: () => 'auth-rejected',
+    })
+    reporter.bind({
+      logger: fakeLogger(),
+      getAlerts: () => a.port,
+      debounceMs: 100,
+      addonId: 'provider-acme',
+    })
+    reporter.register('i1', 'Main')
+    reporter.failure('i1', new Error('refused'))
+    await vi.advanceTimersByTimeAsync(100)
+    expect(a.emitted[0]?.action).toEqual({
+      label: 'Open integration',
+      href: '/integrations/provider-acme?instance=i1',
+    })
+  })
 
   it('alerts only for errors the classifier calls a lost session, with the addon action', async () => {
     const { reporter, a } = make()

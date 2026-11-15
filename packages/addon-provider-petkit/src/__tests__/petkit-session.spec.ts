@@ -83,7 +83,12 @@ describe('petkit session reporting', () => {
       update: { mutate: async (u) => void updates.push(u) },
     }
     const reporter = newReporter()
-    reporter.bind({ logger: quietLogger(), getAlerts: () => port, debounceMs: 1000 })
+    reporter.bind({
+      addonId: 'provider-petkit',
+      logger: quietLogger(),
+      getAlerts: () => port,
+      debounceMs: 1000,
+    })
     return { reporter, emitted, updates }
   }
 

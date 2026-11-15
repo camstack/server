@@ -1,3 +1,4 @@
+import { integrationPageHref } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { addDeviceUrl, computeAddDeviceTargets, setupIntegrationUrl } from '../add-device-targets'
 
@@ -48,6 +49,11 @@ describe('urls', () => {
   it('opens the add flow on the instance', () => {
     expect(addDeviceUrl('provider-reolink', 'int 1')).toBe(
       '/integrations/provider-reolink?instance=int%201&add=1',
+    )
+  })
+  it('is the integration page of the instance (the one builder), plus the add flow', () => {
+    expect(addDeviceUrl('provider-reolink', 'int_7')).toBe(
+      `${integrationPageHref('provider-reolink', 'int_7')}&add=1`,
     )
   })
   it('opens the wizard on the addon', () => {

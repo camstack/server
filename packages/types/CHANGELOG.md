@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Session-lost alerts link to the integration's real page (/integrations/<addon>?instance=<id>) through the new shared integrationPageHref, and can be raised as critical
+- A session-lost alert always opens the providing addon's integration page on the instance: addonId is required on SessionHealthTracker and IntegrationSessionReporter.bind
 
 ## [1.2.578] - 2026-11-15
 
