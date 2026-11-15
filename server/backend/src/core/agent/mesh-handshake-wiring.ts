@@ -51,7 +51,12 @@ export function installMeshHandshakeReporter(deps: MeshHandshakeWiringDeps): voi
       log: deps.log,
     })
   }
-  const expiredLeafAdmitted = createExpiredLeafRenewer({ log: deps.log, registrations, renew })
+  const expiredLeafAdmitted = createExpiredLeafRenewer({
+    log: deps.log,
+    registrations,
+    renew,
+    isRegistered: (nodeId) => deps.moleculer.getNodeAddonIds(nodeId).length > 0,
+  })
   setProcessMeshHandshakeReporter({
     warn: (message, extras) => deps.log.warn(message, extras),
     expiredLeafAdmitted,

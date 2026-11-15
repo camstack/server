@@ -21,6 +21,7 @@ export type MeshRefusalReason =
   | 'not-yet-valid'
   | 'revoked'
   | 'cn-mismatch'
+  | 'handshake-failed'
 
 export interface MeshPeerAdmitted {
   readonly admit: true

@@ -637,22 +637,49 @@ export class TlsTcpTransporter extends TcpTransporterBase {
   }
 
   /** A WARN that survives the transport log pin: the reporter when there is one, else the logger. */
-  private reportWarn(message: string, nodeId: string, reason: MeshRefusalReason): void {
-    const extras = { tags: { nodeId }, meta: { reason } }
+  private reportWarn(
+    message: string,
+    nodeId: string | null,
+    reason: MeshRefusalReason,
+    meta: Record<string, unknown> = {},
+  ): void {
+    const extras = {
+      ...(nodeId !== null ? { tags: { nodeId } } : {}),
+      meta: { reason, ...meta },
+    }
     const reporter = this.reporter()
     if (reporter !== null) reporter.warn(message, extras)
     else this.logger.warn(message, extras)
   }
 
-  /** A refusal, once per node and reason per minute (a refused box retries every few seconds). */
-  private noteRefusedPeer(nodeId: string, reason: MeshRefusalReason, detail: string): void {
-    const key = `${nodeId}:${reason}`
+  /**
+   * A refusal, once per window. Only `expired` carries a node id that was proven (the chain to the
+   * mesh CA was checked); every other refusal is of a peer nobody vouched for, whose CN is whatever
+   * it wrote. Those are keyed by remote address, and the claimed CN goes in `meta`, never in
+   * `tags.nodeId` - a peer must not mint a log tag or a rate-limit key per CN.
+   */
+  private noteRefusedPeer(
+    claimedCn: string | null,
+    reason: MeshRefusalReason,
+    detail: string,
+    remoteAddress: string | undefined,
+  ): void {
+    const proven = reason === 'expired' && claimedCn !== null
+    const origin = remoteAddress?.replace(/^::ffff:/, '') ?? 'unknown'
+    const key = proven ? `node:${claimedCn}:${reason}` : `addr:${origin}:${reason}`
     const at = Date.now()
     const last = this.refusalLoggedAt.get(key)
     if (last !== undefined && at - last < REVOKED_PEER_LOG_INTERVAL_MS) return
     if (this.refusalLoggedAt.size >= 256) this.refusalLoggedAt.clear()
     this.refusalLoggedAt.set(key, at)
-    this.reportWarn(`Mesh TLS handshake refused (${reason}): ${detail}`, nodeId, reason)
+    this.reportWarn(
+      `Mesh TLS handshake refused (${reason}): ${detail}`,
+      proven ? claimedCn : null,
+      reason,
+      proven
+        ? { remoteAddress: origin }
+        : { remoteAddress: origin, ...(claimedCn !== null ? { claimedNodeId: claimedCn } : {}) },
+    )
   }
 
   /** Close sockets whose peer serial was just revoked. */
@@ -802,8 +829,13 @@ export class TlsTcpTransporter extends TcpTransporterBase {
         (socket) => this.onTlsClientConnected(socket as TlsClientSocket),
       )
 
-      server.on('tlsClientError', (err) => {
-        this.noteRefusedPeer('unknown', 'no-certificate', `TLS handshake failed: ${err.message}`)
+      server.on('tlsClientError', (err, failed) => {
+        this.noteRefusedPeer(
+          null,
+          'handshake-failed',
+          `TLS handshake failed: ${err.message}`,
+          failed.remoteAddress,
+        )
       })
 
       server.on('error', (err) => {
@@ -858,7 +890,7 @@ export class TlsTcpTransporter extends TcpTransporterBase {
       if (verdict.reason === 'revoked') {
         this.noteRevokedPeer(verdict.nodeId ?? 'unknown', 'rejecting its connection')
       } else {
-        this.noteRefusedPeer(verdict.nodeId ?? 'unknown', verdict.reason, verdict.detail)
+        this.noteRefusedPeer(verdict.nodeId, verdict.reason, verdict.detail, socket.remoteAddress)
       }
       socket.destroy()
       return
@@ -870,7 +902,8 @@ export class TlsTcpTransporter extends TcpTransporterBase {
       this.noteRefusedPeer(
         identity.cn,
         'cn-mismatch',
-        `an enrolled agent accepts only '${this.hubNodeId}', not CN=${identity.cn} (D848)`,
+        `an enrolled agent accepts only '${this.hubNodeId}' (D848)`,
+        socket.remoteAddress,
       )
       socket.destroy()
       return

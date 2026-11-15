@@ -21,6 +21,11 @@ export interface ExpiredLeafRenewerDeps {
   readonly log: MeshLog
   /** The registration completions the renewal waits for. */
   readonly registrations: MeshRegistrations
+  /**
+   * Whether the node has already finished registering. The hub keeps a node's registration across
+   * a reconnect, so an expired leaf admitted for a known node has no registration to wait for.
+   */
+  readonly isRegistered?: (nodeId: string) => boolean
   /** Run the renewal handover for `nodeId`; `null` when the node, the CA or the registry is not there. */
   readonly renew: (nodeId: string) => Promise<RenewMeshResult | null>
   readonly registrationTimeoutMs?: number
@@ -72,6 +77,10 @@ export function createExpiredLeafRenewer(
     const { nodeId } = peer
     if (pending.has(nodeId)) return
     pending.add(nodeId)
+    if (deps.isRegistered?.(nodeId) === true) {
+      void run(nodeId).finally(() => pending.delete(nodeId))
+      return
+    }
     let timer: { cancel(): void } | null = null
     const unsubscribe = deps.registrations.subscribe((registered) => {
       if (registered !== nodeId) return

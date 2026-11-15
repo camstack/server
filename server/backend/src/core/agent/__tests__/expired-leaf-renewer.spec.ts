@@ -14,7 +14,7 @@ interface Logged {
 
 const OK: RenewMeshResult = { ok: true, oldSerial: 'a', newSerial: 'b', newNotAfter: 1 }
 
-function rig(result: RenewMeshResult | null = OK) {
+function rig(result: RenewMeshResult | null = OK, alreadyRegistered: readonly string[] = []) {
   const logs: Logged[] = []
   const log = {
     info: (_m: string, extras?: { tags?: Record<string, string> }) =>
@@ -30,6 +30,7 @@ function rig(result: RenewMeshResult | null = OK) {
   const onExpired = createExpiredLeafRenewer({
     log,
     renew,
+    isRegistered: (nodeId) => alreadyRegistered.includes(nodeId),
     registrations: {
       subscribe: (listener) => {
         listeners.add(listener)
@@ -69,6 +70,16 @@ describe('createExpiredLeafRenewer', () => {
     expect(r.renew).toHaveBeenCalledWith('agent-old')
     expect(r.listeners.size).toBe(0)
     expect(r.logs.some((l) => l.level === 'info' && l.tags?.['nodeId'] === 'agent-old')).toBe(true)
+  })
+
+  it('renews at once a node that is already registered, without waiting for a registration', async () => {
+    const r = rig(OK, ['agent-old'])
+    r.onExpired(peer('agent-old'))
+    await flush()
+    expect(r.renew).toHaveBeenCalledTimes(1)
+    expect(r.renew).toHaveBeenCalledWith('agent-old')
+    expect(r.listeners.size).toBe(0)
+    expect(r.timers).toHaveLength(0)
   })
 
   it('runs one renewal per node even when the handshake is announced twice', async () => {

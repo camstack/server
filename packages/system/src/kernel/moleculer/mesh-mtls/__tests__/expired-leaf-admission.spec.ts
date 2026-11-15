@@ -51,6 +51,7 @@ afterEach(async () => {
 interface Line {
   readonly message: string
   readonly nodeId: string | undefined
+  readonly claimedNodeId: unknown
   readonly reason: unknown
 }
 
@@ -75,6 +76,7 @@ function reporterOf(warnings: Line[], admitted: Admitted[]): MeshHandshakeReport
       warnings.push({
         message,
         nodeId: extras?.tags?.['nodeId'],
+        claimedNodeId: extras?.meta?.['claimedNodeId'],
         reason: extras?.meta?.['reason'],
       })
     },
@@ -198,9 +200,9 @@ describe('the hub recovers a leaf that only expired', { timeout: BUDGET_MS }, ()
     expect(hub.tx.verifiedPeer('agent-old')).toBeUndefined()
     expect(hub.admittedExpired).toEqual([])
     // A client holding a foreign-CA leaf is not even asked to send it (the server names its CA), so
-    // the listener sees no certificate at all; either way the refusal is named.
+    // the handshake fails with no certificate; either way the refusal is named.
     expect(
-      hub.warnings.some((w) => w.reason === 'not-chained' || w.reason === 'no-certificate'),
+      hub.warnings.some((w) => w.reason === 'not-chained' || w.reason === 'handshake-failed'),
     ).toBe(true)
   })
 
@@ -213,9 +215,9 @@ describe('the hub recovers a leaf that only expired', { timeout: BUDGET_MS }, ()
 
     expect(hub.tx.verifiedPeer('agent-old')).toBeUndefined()
     // A client holding a foreign-CA leaf is not even asked to send it (the server names its CA), so
-    // the listener sees no certificate at all; either way the refusal is named.
+    // the handshake fails with no certificate; either way the refusal is named.
     expect(
-      hub.warnings.some((w) => w.reason === 'not-chained' || w.reason === 'no-certificate'),
+      hub.warnings.some((w) => w.reason === 'not-chained' || w.reason === 'handshake-failed'),
     ).toBe(true)
   })
 
@@ -252,14 +254,41 @@ describe('the hub recovers a leaf that only expired', { timeout: BUDGET_MS }, ()
     expect(agent.warnings.some((w) => w.reason === 'expired')).toBe(true)
   })
 
-  it('names a CN that is not the hub on an enrolled agent', async () => {
+  it('names a CN that is not the hub on an enrolled agent, by address, with the CN only claimed', async () => {
     const agent = await startNode({ agent: true })
     const leaf = await issueMeshLeafForNode(agent.ca, 'agent-y')
 
     await dial(agent, leaf)
 
-    expect(agent.warnings.some((w) => w.reason === 'cn-mismatch' && w.nodeId === 'agent-y')).toBe(
-      true,
+    const line = agent.warnings.find((w) => w.reason === 'cn-mismatch')
+    expect(line?.claimedNodeId).toBe('agent-y')
+    expect(line?.nodeId).toBeUndefined()
+  })
+
+  it('logs one WARN per window for unauthenticated peers that vary their CN from one address', async () => {
+    const agent = await startNode({ agent: true })
+    for (const cn of ['agent-1', 'agent-2', 'agent-3']) {
+      await dial(agent, await issueMeshLeafForNode(agent.ca, cn))
+    }
+
+    const lines = agent.warnings.filter((w) => w.reason === 'cn-mismatch')
+    expect(lines).toHaveLength(1)
+    expect(agent.warnings.every((w) => w.nodeId === undefined || w.reason === 'expired')).toBe(true)
+  })
+
+  it('reports a failed handshake as handshake-failed, not as a missing certificate', async () => {
+    const hub = await startNode()
+    await new Promise<void>((resolve) => {
+      const socket = tls.connect(
+        { host: '127.0.0.1', port: hub.tlsPort, rejectUnauthorized: false, maxVersion: 'TLSv1.2' },
+        () => setTimeout(resolve, 150),
+      )
+      sockets.push(socket)
+      socket.on('error', () => setTimeout(resolve, 150))
+    })
+    expect(hub.warnings.some((w) => w.reason === 'handshake-failed')).toBe(true)
+    expect(hub.warnings.some((w) => w.reason === 'no-certificate' && w.nodeId !== undefined)).toBe(
+      false,
     )
   })
 })
