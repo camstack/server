@@ -120,9 +120,11 @@ export function DeviceValueRail({
     integration: t('uiLibrary.deviceValuePicker.facetIntegration', 'Integration'),
     type: t('uiLibrary.deviceValuePicker.facetType', 'Type'),
   }).filter((v) => v.options.length > 1 || selection[v.key].length > 0)
+  // Hooks first: the facets collapse while a search narrows, and an early return above a hook
+  // changes the hook count between renders (React #300).
+  const providers = useIntegrationProviders(open === 'integrationIds')
   if (views.length === 0) return null
   const any = t('uiLibrary.deviceValuePicker.facetAny', 'any')
-  const providers = useIntegrationProviders(open === 'integrationIds')
   const detailOf = (key: FacetKey, value: string): string | undefined =>
     key === 'integrationIds' ? providers.get(value) : undefined
 

@@ -59,6 +59,8 @@ vi.mock('../../../trpc-react', () => ({
 
 vi.mock('../../../generated/system-hooks', () => ({
   useDeviceManagerSearch: () => ({ data: searchAnswer, isError: false, isPending: false }),
+  useIntegrationsList: () => ({ data: [] }),
+  useAddonsList: () => ({ data: [] }),
   useDeviceManagerListAll: () => ({
     status: 'success',
     data: [

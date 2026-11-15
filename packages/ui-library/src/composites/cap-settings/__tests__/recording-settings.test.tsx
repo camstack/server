@@ -50,6 +50,8 @@ vi.mock('../../../trpc-react', () => ({
 }))
 vi.mock('../../../generated/system-hooks', () => ({
   useDeviceManagerSearch: () => ({ data: answer, isError: false, isPending: false }),
+  useIntegrationsList: () => ({ data: [] }),
+  useAddonsList: () => ({ data: [] }),
 }))
 
 import { RecordingSettings } from '../RecordingSettings'

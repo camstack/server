@@ -66,6 +66,8 @@ vi.mock('../../../trpc-react', () => ({
 }))
 vi.mock('../../../generated/system-hooks', () => ({
   useDeviceManagerSearch: () => ({ data: undefined, isError: false, isPending: false }),
+  useIntegrationsList: () => ({ data: [] }),
+  useAddonsList: () => ({ data: [] }),
 }))
 
 const { DeviceValueField } = await import('../device-value-field')

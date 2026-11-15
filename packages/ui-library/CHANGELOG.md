@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Typing in the device search on a phone no longer crashes the page with a React error when the filters collapse
+
 ## [1.2.447] - 2026-11-14
 
 ### Changed
