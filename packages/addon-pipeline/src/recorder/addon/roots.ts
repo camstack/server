@@ -549,6 +549,22 @@ export async function hydrateWindowFromStorage(
   const verify = options?.verifyClosedHours === true
   if (!verify && index.hydrationOf(deviceId, fromMs, toMs) === 'hydrated') return
   const liveHour = Math.floor(Date.now() / HOUR_MS) * HOUR_MS
+  // Decided ONCE, before any root is read. Each root's pass marks the span
+  // walked, so asking `hydrationOf` again for the next root answered "already
+  // hydrated" from the previous root's marker and skipped the directory that
+  // held the rest of the hour (#557): a minute of footage on a second root
+  // stayed out of the index while `hourSegmentsFromIndex` called the hour
+  // complete.
+  const hoursToRead = new Set<number>()
+  for (let hour = Math.floor(fromMs / HOUR_MS) * HOUR_MS; hour < toMs; hour += HOUR_MS) {
+    if (
+      verify ||
+      hour >= liveHour ||
+      index.hydrationOf(deviceId, hour, hour + HOUR_MS) !== 'hydrated'
+    ) {
+      hoursToRead.add(hour)
+    }
+  }
 
   for (const [root, aliases] of aliasesByRoot(locations)) {
     const deviceDir = path.join(root, String(deviceId))
@@ -584,19 +600,11 @@ export async function hydrateWindowFromStorage(
     let sealed = 0
     for (let hour = first; hour < toMs; hour += HOUR_MS) {
       // A CLOSED hour ALREADY WALKED IN THIS PROCESS is not re-read: the past
-      // is immutable, so the directory can only return what the index already
-      // holds. That is the whole skip now — it rests on this process having
-      // listed the directory itself, never on a durable row's claim about it
-      // (D523). The LIVE hour is always re-read until the walk marks it: that
-      // read is the only thing that can recover a tail the previous process
+      // is immutable. The decision was taken before the first root (above), so
+      // one root's marker never skips another root's directory. The LIVE hour
+      // is always re-read: that read recovers a tail the previous process
       // finalized and never persisted.
-      if (
-        !verify &&
-        hour < liveHour &&
-        index.hydrationOf(deviceId, hour, hour + HOUR_MS) === 'hydrated'
-      ) {
-        continue
-      }
+      if (!hoursToRead.has(hour)) continue
       for (const profile of profiles) {
         const rel = hourDirRelPath(deviceId, profile, hour)
         let files: string[]

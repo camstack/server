@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Fixed false 'no recordings' gaps on the timeline when part of an hour's footage lives on a second recordings root
+
 ## [1.2.652] - 2026-11-14
 
 ### Changed
