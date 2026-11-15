@@ -25,6 +25,7 @@ import type {
   CamProfile,
   WebrtcLadderDecision,
   WebrtcSessionDebug,
+  WebrtcClientHints,
 } from '@camstack/types'
 import { isViewerConsumerKind, type ViewerCounts } from '../live-viewers.js'
 import {
@@ -469,6 +470,13 @@ interface SessionEntry {
   readonly rebind?: SessionRebind
   /** The in-place switch in flight, if any (one at a time; a newer one replaces it). */
   pendingSwitch?: { readonly tier: Tier; readonly cancel: () => void }
+  /**
+   * Has this session ever put demand on its broker? `false` only for a
+   * clip-intent session that has not gone live (#566): it never dialled the
+   * camera, so its teardown arms no linger ghost — that ghost would dial a
+   * sleeping camera nobody asked to watch.
+   */
+  liveDemanded: boolean
 }
 
 /** The setup-time facts an in-place tier switch rebinds a session with (D733). */
@@ -783,13 +791,8 @@ export function reduceProfileForTranscodeDown(base: EncodeProfile): EncodeProfil
   }
 }
 
-interface ClientHints {
-  readonly viewportWidth?: number
-  readonly viewportHeight?: number
-  readonly devicePixelRatio?: number
-  readonly downlinkMbps?: number
-  readonly prefersTier?: string
-}
+/** The offer's client hints — the `webrtc-session` cap's own shape. */
+type ClientHints = WebrtcClientHints
 
 /**
  * Wall-clock split of `setupSessionForBroker` — the server half of the
@@ -1455,8 +1458,29 @@ export class BrokerWebrtcServer {
     // bounded so we never block forever on an unreachable camera; on
     // timeout we fall back to the prior default-H.264 behaviour rather
     // than failing the session entirely.
+    //
+    // A CLIP-intent session skips it, and every other live subscription below
+    // waits for `goLive` (#566): the client opened this session to play a
+    // stored clip, so dialling the camera would only wake a sleeping battery
+    // camera to watch our own footage — and its 2.5 s wait on parameter sets
+    // the camera will never send held the clip request back. It needs the
+    // recorded accessors AND a clip byte source; without them `playClip` is
+    // refused anyway and the session is an ordinary live one.
+    const deferLive =
+      hints.intent === 'clip' &&
+      this.locateRecordedSegment !== undefined &&
+      this.readRecordedSegmentBytes !== undefined &&
+      (this.readClipBytes !== undefined || this.dialClipStream !== undefined)
+    if (hints.intent === 'clip') {
+      sessionLogger.info(
+        deferLive
+          ? 'clip-intent session: live deferred until goLive — the camera is not dialled'
+          : 'clip-intent session: no clip source wired — opening as a live session',
+        { meta: { brokerId, deferLive, knownCodec: broker.getStats().codec ?? null } },
+      )
+    }
     let warmUpUnsubscribe: Unsubscribe | null = null
-    if (!broker.getStats().codec) {
+    if (!deferLive && !broker.getStats().codec) {
       warmUpUnsubscribe = broker.onEncodedData(
         () => {
           /* warm-up no-op */
@@ -1668,7 +1692,7 @@ export class BrokerWebrtcServer {
     // settled from the answer, so `needsTranscode` is final. Reading it at
     // subscription-wire time would be premature (negotiation hasn't happened).
     let session: AdaptiveSession | undefined
-    const unsubBroker = broker.onEncodedData((packet: EncodedPacket) => {
+    const onLiveEncoded = (packet: EncodedPacket): void => {
       if (packet.type === 'video') {
         // Recorded playback owns the track while gated — drop live frames so
         // the feeder's AUs are the only thing on the wire. Audio is not gated
@@ -1774,7 +1798,12 @@ export class BrokerWebrtcServer {
       } else if (packet.type === 'audio') {
         forwardBrokerAudio(packet, session, pushFrame)
       }
-    }, annexbAttribution)
+    }
+    // The AnnexB subscription is DEMAND: it is what dials the camera. A
+    // clip-intent session attaches it at `goLive` instead (see `deferLive`).
+    const subscribeLiveEncoded = (): Unsubscribe =>
+      broker.onEncodedData(onLiveEncoded, annexbAttribution)
+    const unsubBroker: Unsubscribe = deferLive ? () => {} : subscribeLiveEncoded()
     // Real consumer attached → release the warm-up ghost. The add-then-
     // remove ordering keeps `checkDemand` from ever seeing zero
     // subscribers, so the dial we just woke stays up.
@@ -1977,6 +2006,18 @@ export class BrokerWebrtcServer {
     }
     let unsubRtp: Unsubscribe | null = null
     let unsubSdpParams: Unsubscribe | null = null
+    const subscribeLiveRtp = (): Unsubscribe =>
+      broker.onVideoRtp(
+        makeSourceRtpForwarder({
+          session,
+          sessionLogger,
+          sessionId,
+          deviceId,
+          brokerId,
+          sessionCodec,
+        }),
+        rtpAttribution,
+      )
     if (useRtpRepacketizer) {
       const sdpPs = broker.getSdpParameterSets()
       if (sdpPs && sdpPs.length > 0) {
@@ -2012,17 +2053,7 @@ export class BrokerWebrtcServer {
           }
         })
       }
-      unsubRtp = broker.onVideoRtp(
-        makeSourceRtpForwarder({
-          session,
-          sessionLogger,
-          sessionId,
-          deviceId,
-          brokerId,
-          sessionCodec,
-        }),
-        rtpAttribution,
-      )
+      if (!deferLive) unsubRtp = subscribeLiveRtp()
     }
 
     // Recover in place when the broker re-dials this source. Subscribed for
@@ -2050,6 +2081,7 @@ export class BrokerWebrtcServer {
       unsubRtp,
       unsubSdpParams,
       unsubSourceRestart,
+      liveDemanded: !deferLive,
       closeSource,
       forEachQueuedFrame,
       ...(talkback !== undefined ? { closeTalkback: () => void talkback.close() } : {}),
@@ -2074,6 +2106,22 @@ export class BrokerWebrtcServer {
     )
 
     session.onClosed = () => this.cleanupSession(sessionId)
+
+    // A clip-intent session attaches live the first time the client leaves the
+    // clip for live (`goLive`). Everything a live session subscribed at setup
+    // is subscribed here instead; parameter sets and source restarts were
+    // never deferred (they put no demand on the broker).
+    const attachDeferredLive = (): void => {
+      if (entry.liveDemanded || this.sessions.get(sessionId) !== entry) return
+      entry.liveDemanded = true
+      entry.unsubBroker = subscribeLiveEncoded()
+      if (useRtpRepacketizer) entry.unsubRtp = subscribeLiveRtp()
+      this.brokerLinger.cancel(brokerId)
+      sessionLogger.info('clip-intent session: client went live — live attached', {
+        meta: { sessionId, brokerId, sessionCodec, useRtpRepacketizer },
+      })
+      if (isAdaptiveStream) this.armAdaptive(entry, deviceId, brokerId, sessionId, hints, intent)
+    }
 
     // Recorded playback over WebRTC: when the recording-cap accessors are wired,
     // give this session a TimelineSession + on-demand RecordedFeeder. The feeder
@@ -2433,6 +2481,7 @@ export class BrokerWebrtcServer {
       })
       session.onControlMessage((raw) => {
         const msg = parseControlMessage(raw)
+        if (msg?.t === 'goLive') attachDeferredLive()
         if (msg) {
           void timeline.handleControl(msg).catch((err) => {
             sessionLogger.warn('timeline.handleControl threw', {
@@ -2516,13 +2565,10 @@ export class BrokerWebrtcServer {
     // ladder controller that can switch the session to a different-tier broker
     // mid-stream. Non-adaptive sessions (pinned profile / cam-stream targets)
     // are left UNCHANGED — they keep the single broker they were created on.
-    if (streamId.endsWith('/adaptive')) {
-      const initialTier: Tier = this.profileTierResolver?.(brokerId) ?? 'high'
-      // `intent` was consumed at the top of this setup; its failure memory is
-      // the only record that survives the close-and-recreate re-offer.
-      // The offer's probe (if any) joins the device's probe memory; newest wins.
-      this.recordDeviceProbe(deviceId, probeFromHints(hints.downlinkMbps, Date.now()))
-      this.startAdaptive(entry, deviceId, initialTier, sessionId, intent)
+    // A clip-intent session arms it when it goes live: a ladder that probes
+    // tiers would dial the camera the clip was opened not to touch.
+    if (isAdaptiveStream && !deferLive) {
+      this.armAdaptive(entry, deviceId, brokerId, sessionId, hints, intent)
     }
 
     return {
@@ -2851,6 +2897,26 @@ export class BrokerWebrtcServer {
    * whichever produces the higher loss ratio across its window. The async
    * poll is guarded against overlapping ticks via `tickInFlight`.
    */
+  /**
+   * Arm the adaptive ladder on a session created via the `${deviceId}/adaptive`
+   * alias: at setup for a live session, at `goLive` for a clip-intent one.
+   * `intent` was consumed at the top of the setup; its failure memory is the
+   * only record that survives the close-and-recreate re-offer. The offer's
+   * probe (if any) joins the device's probe memory; newest wins.
+   */
+  private armAdaptive(
+    entry: SessionEntry,
+    deviceId: number,
+    brokerId: string,
+    sessionId: string,
+    hints: ClientHints,
+    intent: AdaptiveIntent | undefined,
+  ): void {
+    const initialTier: Tier = this.profileTierResolver?.(brokerId) ?? 'high'
+    this.recordDeviceProbe(deviceId, probeFromHints(hints.downlinkMbps, Date.now()))
+    this.startAdaptive(entry, deviceId, initialTier, sessionId, intent)
+  }
+
   private startAdaptive(
     entry: SessionEntry,
     deviceId: number,
@@ -3581,7 +3647,7 @@ export class BrokerWebrtcServer {
         break
       }
     }
-    if (!brokerStillServed && !this.stopped) {
+    if (!brokerStillServed && !this.stopped && entry.liveDemanded) {
       this.brokerLinger.hold(entry.brokerId)
     }
     // Clear any pending adaptive intent as a leak safety. On the close-and-

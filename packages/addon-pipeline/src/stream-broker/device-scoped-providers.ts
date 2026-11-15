@@ -443,6 +443,7 @@ export class WebrtcSessionProvider {
     deviceId: number,
     brokerId: string,
     camStreamId: string | undefined,
+    hints: WebrtcClientHints | undefined,
   ): Promise<void> {
     if (typeof this.manager.ensureBrokerForWebrtcSession !== 'function') return
     await this.manager.ensureBrokerForWebrtcSession(deviceId, brokerId, camStreamId)
@@ -456,7 +457,12 @@ export class WebrtcSessionProvider {
     // Guarded like its sibling above: a manager double without the method is
     // a no-op, so every existing test and the whole mains-camera path stay
     // byte-identical.
+    //
+    // A clip-intent offer never wakes (#566): the client opened the session to
+    // play a stored clip, and the camera has no part in that. A missing broker
+    // then fails the offer by name in `BrokerWebrtcServer` instead.
     if (typeof this.manager.wakeBatteryDeviceOnPlay !== 'function') return
+    if (hints?.intent === 'clip') return
     await this.manager.wakeBatteryDeviceOnPlay(deviceId, brokerId, camStreamId)
   }
 
@@ -581,7 +587,7 @@ export class WebrtcSessionProvider {
   }): Promise<{ sessionId: string; sdpOffer: string }> {
     const streamId = this.resolveTargetToStreamId(input.deviceId, input.target)
     const camStreamId = this.resolveCamStreamId(input.deviceId, input.target)
-    await this.ensureBrokerAvailable(input.deviceId, streamId, camStreamId)
+    await this.ensureBrokerAvailable(input.deviceId, streamId, camStreamId, input.hints)
     const streamingDebug = this.resolveSessionDebug(input.deviceId)
     const transcodeProfile = this.resolveTranscodeProfile(input.deviceId, camStreamId)
     try {
@@ -651,7 +657,7 @@ export class WebrtcSessionProvider {
     const target: WebrtcStreamTarget = input.target ?? { kind: 'adaptive' }
     const streamId = this.resolveTargetToStreamId(input.deviceId, target)
     const camStreamId = this.resolveCamStreamId(input.deviceId, target)
-    await this.ensureBrokerAvailable(input.deviceId, streamId, camStreamId)
+    await this.ensureBrokerAvailable(input.deviceId, streamId, camStreamId, input.hints)
     const streamingDebug = this.resolveSessionDebug(input.deviceId)
     const transcodeProfile = this.resolveTranscodeProfile(input.deviceId, camStreamId)
     try {

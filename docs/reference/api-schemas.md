@@ -7932,6 +7932,7 @@ Enum: `"cosine" \| "dot" \| "euclidean"`
 - `devicePixelRatio?`: `number`
 - `downlinkMbps?`: `number`
 - `prefersTier?`: `string`
+- `intent?`: `"live" \| "clip"`
 
 ### `WebrtcClimbHoldSchema`
 

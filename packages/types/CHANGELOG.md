@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A session-lost alert always opens the providing addon's integration page on the instance: addonId is required on SessionHealthTracker and IntegrationSessionReporter.bind
 
+### Changed
+
+- The WebRTC session hints accept an optional intent (live or clip).
+
 ## [1.2.579] - 2026-11-15
 
 ### Changed

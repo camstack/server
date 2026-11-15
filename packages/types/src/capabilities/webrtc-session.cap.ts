@@ -20,6 +20,14 @@ export const webrtcClientHintsSchema = z
     downlinkMbps: z.number().nonnegative().optional(),
     /** Hard tier override; takes precedence over scoring when registered. */
     prefersTier: z.string().optional(),
+    /**
+     * What the session is opened FOR. `clip` = the client opens it to play a
+     * stored clip (`playClip` on the control channel): the server negotiates
+     * without dialling the camera and attaches live only when the client
+     * sends `goLive` — a sleeping battery camera is never woken to watch our
+     * own footage (#566). Absent or `live` = today's live-first session.
+     */
+    intent: z.enum(['live', 'clip']).optional(),
   })
   .partial()
 

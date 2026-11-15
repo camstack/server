@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A clip opened from the viewer with the clip intent plays without dialling or waking the camera; live attaches only when you switch back to live.
+
 ## [1.2.654] - 2026-11-15
 
 ### Changed

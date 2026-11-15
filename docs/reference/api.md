@@ -5155,7 +5155,7 @@
 
 ### `webrtc-session` → `webrtcSession.*`
 
-- **Source:** `packages/types/src/capabilities/webrtc-session.cap.ts:276`
+- **Source:** `packages/types/src/capabilities/webrtc-session.cap.ts:284`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `server-provided` · preferredProvider: `stream-broker` · deviceTypes: `camera`
 - **Archetypes:** wrapper(defaultActive)
 - **Provider interface:** `IWebrtcSessionProvider`

@@ -694,6 +694,44 @@ describe('WebrtcSessionProvider', () => {
   })
 })
 
+describe('WebrtcSessionProvider — a clip-intent offer never wakes the camera (#566)', () => {
+  function makeWakeManager() {
+    return {
+      getProfileSlotsForDevice: vi.fn().mockReturnValue([]),
+      getCameraStreamsForDevice: vi.fn().mockReturnValue([]),
+      getCameraStreamProbedParams: vi.fn().mockReturnValue(undefined),
+      ensureBrokerForWebrtcSession: vi.fn().mockResolvedValue(undefined),
+      wakeBatteryDeviceOnPlay: vi.fn().mockResolvedValue(undefined),
+    }
+  }
+  function makeOfferServer() {
+    return {
+      handleOffer: vi.fn().mockResolvedValue({ sessionId: 's1', sdpAnswer: 'answer' }),
+    } as unknown as import('../webrtc/broker-webrtc-server.js').BrokerWebrtcServer
+  }
+
+  it('skips wake-on-play for a clip-intent offer', async () => {
+    const manager = makeWakeManager()
+    const facade = new WebrtcSessionProvider(
+      makeOfferServer(),
+      manager as unknown as import('../stream-broker/stream-broker-manager.js').StreamBrokerManager,
+    )
+    await facade.handleOffer({ deviceId: 3628, sdpOffer: 'v=0', hints: { intent: 'clip' } })
+    expect(manager.ensureBrokerForWebrtcSession).toHaveBeenCalled()
+    expect(manager.wakeBatteryDeviceOnPlay).not.toHaveBeenCalled()
+  })
+
+  it('still wakes on play for an offer without the hint (old viewers)', async () => {
+    const manager = makeWakeManager()
+    const facade = new WebrtcSessionProvider(
+      makeOfferServer(),
+      manager as unknown as import('../stream-broker/stream-broker-manager.js').StreamBrokerManager,
+    )
+    await facade.handleOffer({ deviceId: 3628, sdpOffer: 'v=0' })
+    expect(manager.wakeBatteryDeviceOnPlay).toHaveBeenCalledWith(3628, '3628/adaptive', undefined)
+  })
+})
+
 describe('WebrtcSessionProvider — cross-node ingest wiring (Slice 3 Task 3)', () => {
   /**
    * These tests exercise the REAL `StreamBrokerManager` (unlike the plain
