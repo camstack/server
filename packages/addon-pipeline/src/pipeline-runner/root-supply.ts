@@ -27,6 +27,7 @@ import {
   linkedStepOf,
   type ModelCatalogEntry,
   type ObjectDetection,
+  type PipelineEngineChoice,
   type PipelineStepInputOutput,
   resolveRootSupply,
   ROOT_SUPPLIABLE_STEP_IDS,
@@ -114,12 +115,17 @@ function findEnabledStep(
  * (`yolo26n`) on every accelerator, while an Intel GPU ran `yolov9m-320-int8`
  * and a Coral an SSD: `filledBy` named a model that was not running, and a
  * crop supply's input-size gate (D731) measured the wrong model. No elected
- * device (the runner's default pool) or an unknown backend ⇒ the flat default.
+ * device (the runner's default pool) runs the node's selected engine
+ * (`nodeEngine`); only when that is unknown too, or the backend is, the flat default.
  */
-function unpinnedRootModelId(deviceKey: string | undefined, flatDefault: string): string {
-  if (deviceKey === undefined) return flatDefault
+function unpinnedRootModelId(
+  deviceKey: string | undefined,
+  nodeEngine: PipelineEngineChoice | undefined,
+  flatDefault: string,
+): string {
   try {
-    const engine = resolveDeviceEngine(deviceKey)
+    const engine = deviceKey !== undefined ? resolveDeviceEngine(deviceKey) : nodeEngine
+    if (engine === undefined) return flatDefault
     return resolveDefaultDetectionModel(engine.backend, engine.device ?? null, engine.format)
   } catch {
     return flatDefault
@@ -143,12 +149,14 @@ export function planRootSupplies(
   steps: readonly PipelineStepInputOutput[] | undefined,
   resolveModel: RootModelResolver,
   deviceKey?: string,
+  nodeEngine?: PipelineEngineChoice,
 ): RootSupplyPlan {
   if (steps === undefined) return EMPTY_ROOT_SUPPLY_PLAN
   const root = steps.find((s) => s.addonId === ROOT_SUPPLY_ROOT_STEP_ID && s.enabled !== false)
   if (root === undefined) return EMPTY_ROOT_SUPPLY_PLAN
   const definition = getStepDefinition(ROOT_SUPPLY_ROOT_STEP_ID)
-  const rootModelId = root.modelId ?? unpinnedRootModelId(deviceKey, definition.defaultModelId)
+  const rootModelId =
+    root.modelId ?? unpinnedRootModelId(deviceKey, nodeEngine, definition.defaultModelId)
   const rootEntry = resolveModel(ROOT_SUPPLY_ROOT_STEP_ID, rootModelId)
   const supplies = rootSuppliesOf(rootEntry, {
     labels: definition.labels ?? [],

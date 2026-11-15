@@ -8,6 +8,7 @@ import {
   plusCatalogLabelFields,
   type ModelCatalogEntry,
   type ObjectDetection,
+  type PipelineEngineChoice,
   type PipelineStepInputOutput,
 } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
@@ -117,6 +118,27 @@ describe('planRootSupplies', () => {
     expect(planRootSupplies(tree(undefined, undefined), resolve, 'warp:9').rootModelId).toBe(
       getStepDefinition('object-detection').defaultModelId,
     )
+  })
+
+  it('no elected device on a CoreML runtime plans the supplies on yolov9m-320, not the flat default', () => {
+    // Live: an on-motion session dispatched to the runner's default pool has no
+    // deviceKey, yet the executor ran `coreml/all` + yolov9m-320. The plan named
+    // `yolo26n` and judged the classifier supplies on a model that was not running.
+    const coreml: PipelineEngineChoice = {
+      runtime: 'python',
+      backend: 'coreml',
+      format: 'coreml',
+      device: 'all',
+    }
+    const plan = planRootSupplies(tree(undefined, undefined), resolve, undefined, coreml)
+    expect(plan.rootModelId).toBe('yolov9m-320')
+    // A pin and an elected device both beat the node engine.
+    expect(planRootSupplies(tree(PLUS.id, undefined), resolve, undefined, coreml).rootModelId).toBe(
+      PLUS.id,
+    )
+    expect(
+      planRootSupplies(tree(undefined, undefined), resolve, 'openvino:gpu', coreml).rootModelId,
+    ).toBe('yolov9m-320-int8')
   })
 
   it('a step the camera does not run is not planned — the per-camera gate wins over the root', () => {

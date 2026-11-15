@@ -57,6 +57,7 @@ import type {
   IScopedLogger,
   KernelInferenceHardware,
   ModelFormat,
+  PipelineEngineChoice,
   ConfigUISchema,
   MotionAnalysisPayload,
   MotionRegion,
@@ -311,7 +312,11 @@ import { runStatelessStep as runStatelessStepImpl } from './stateless-step.js'
 import type { NodeBenchHost } from './node-bench/node-bench-host.js'
 import { createNodeBenchHost } from './node-bench/node-bench-wiring.js'
 import { planTileCuts } from './tile-cut-plan.js'
-import { readLocalResidentEngines } from './local-resident-engines.js'
+import {
+  readLocalResidentEngines,
+  readLocalSelectedEngine,
+  sameEngine,
+} from './local-resident-engines.js'
 import { buildRuntimeLabels, type ResidentEngine } from './runtime-labels.js'
 import {
   parkTrackFrame as parkTrackFrameImpl,
@@ -3911,6 +3916,12 @@ export default class PipelineRunnerAddon
     const engines: readonly ResidentEngine[] | null = read.kind === 'read' ? read.engines : null
     const failure: string | null = read.kind === 'failed' ? read.error : null
     this.noteRuntimeInfoFailure(failure)
+    // The engine an UNPINNED root runs when the camera has no elected device —
+    // the root-supply plan reads its default model off this (`root-supply.ts`).
+    // The previous object is kept when nothing changed, so the plan cache holds.
+    // biome-ignore lint/plugin: LOCAL on purpose — this process's executor, not the cluster-active singleton
+    const selected = await readLocalSelectedEngine(ctx.capabilities)
+    if (selected !== null && !sameEngine(selected, this.nodeEngine)) this.nodeEngine = selected
     sampler.runtimeInfo = { ...sampler.runtimeInfo, ...buildRuntimeLabels(engines) }
   }
 
@@ -4007,11 +4018,16 @@ export default class PipelineRunnerAddon
    * whose default an unpinned root runs. Recomputed when any changes — at
    * most once per catalog refresh.
    */
+  /** This node's selected engine, refreshed with the runtime labels; undefined until first read. */
+  private nodeEngine: PipelineEngineChoice | undefined = undefined
+  private readonly rootEngineUnknownLogged = new Set<number>()
+
   private readonly rootSupplyCache = new Map<
     number,
     {
       readonly steps: readonly PipelineStepInputOutput[]
       readonly deviceKey: string | undefined
+      readonly nodeEngine: PipelineEngineChoice | undefined
       readonly byStep: ReturnType<CustomModelCatalog['current']>
       readonly plan: RootSupplyPlan
       readonly announces: readonly DetailStepAnnounce[]
@@ -4035,6 +4051,7 @@ export default class PipelineRunnerAddon
       cached !== undefined &&
       cached.steps === steps &&
       cached.deviceKey === deviceKey &&
+      cached.nodeEngine === this.nodeEngine &&
       cached.byStep === byStep
     ) {
       return cached.plan
@@ -4044,9 +4061,28 @@ export default class PipelineRunnerAddon
       (stepId, modelId) =>
         this.customModels.stepDefinition(stepId)?.models.find((m) => m.id === modelId),
       deviceKey,
+      this.nodeEngine,
     )
+    if (
+      deviceKey === undefined &&
+      this.nodeEngine === undefined &&
+      !this.rootEngineUnknownLogged.has(deviceId)
+    ) {
+      this.rootEngineUnknownLogged.add(deviceId)
+      this.ctxIfReady?.logger.warn(
+        'root supply: no elected device and the node engine is unknown — an unpinned root is judged as the flat default',
+        { tags: { deviceId }, meta: { rootModelId: plan.rootModelId ?? null } },
+      )
+    }
     const announces = deriveDetailSteps(steps, plan)
-    this.rootSupplyCache.set(deviceId, { steps, deviceKey, byStep, plan, announces })
+    this.rootSupplyCache.set(deviceId, {
+      steps,
+      deviceKey,
+      nodeEngine: this.nodeEngine,
+      byStep,
+      plan,
+      announces,
+    })
     for (const stepId of newlySuppliedSteps(cached?.plan, plan)) {
       const state = plan.states.get(stepId)
       this.ctxIfReady?.logger.info(

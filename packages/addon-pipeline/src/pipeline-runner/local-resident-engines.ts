@@ -14,7 +14,7 @@
  * and `yolov9m-640-int8`. A label that can describe another machine is worse
  * than none: no local executor is a named failure, never a fallback to it.
  */
-import type { CapabilitiesAccess } from '@camstack/types'
+import type { CapabilitiesAccess, PipelineEngineChoice } from '@camstack/types'
 import { errMsg } from '@camstack/types'
 import type { ResidentEngine } from './runtime-labels.js'
 
@@ -48,6 +48,44 @@ function isLocalEngineLister(value: unknown): value is LocalEngineLister {
     'listLoadedEngines' in value &&
     typeof value.listLoadedEngines === 'function'
   )
+}
+
+/** Two engine choices name the same backend, device and format. */
+export function sameEngine(a: PipelineEngineChoice, b: PipelineEngineChoice | undefined): boolean {
+  return (
+    b !== undefined && a.backend === b.backend && a.device === b.device && a.format === b.format
+  )
+}
+
+/** The slice of the in-process `pipeline-executor` provider the node-engine read uses. */
+interface LocalEngineSelector {
+  getSelectedEngine(): Promise<PipelineEngineChoice>
+}
+
+function isLocalEngineSelector(value: unknown): value is LocalEngineSelector {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'getSelectedEngine' in value &&
+    typeof value.getSelectedEngine === 'function'
+  )
+}
+
+/**
+ * The engine THIS node's executor runs when a dispatch names no `deviceKey` —
+ * the co-tenant provider's own selection, never the cluster-active singleton's.
+ * `null` when there is no local executor or it cannot answer.
+ */
+export async function readLocalSelectedEngine(
+  capabilities: CapabilitiesAccess | undefined,
+): Promise<PipelineEngineChoice | null> {
+  const provider: unknown = capabilities?.get('pipeline-executor')
+  if (!isLocalEngineSelector(provider)) return null
+  try {
+    return await provider.getSelectedEngine()
+  } catch {
+    return null
+  }
 }
 
 export async function readLocalResidentEngines(
