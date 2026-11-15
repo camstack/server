@@ -258,3 +258,84 @@ describe('DeviceTemplateField', () => {
     expect(stored()).toBe('{{ stufa.mode }}')
   })
 })
+
+describe('DeviceTemplateField: argument values', () => {
+  it('offers the digits of round( by itself and inserts the picked one', () => {
+    renderUi(<Harness initial="" />)
+    const input = screen.getByTestId('device-template-field-input')
+    fireEvent.change(input, { target: { value: '{{ stufa.temperature | round(' } })
+    expect(screen.getByTestId('device-template-field-suggest')).toBeTruthy()
+    fireEvent.click(screen.getByTestId('device-template-field-suggest-arg:round.digits:2'))
+    expect(stored()).toBe('{{ stufa.temperature | round(2')
+  })
+
+  it('offers time patterns after the opening quote and writes the quoted literal', () => {
+    renderUi(<Harness initial="" />)
+    const input = screen.getByTestId('device-template-field-input')
+    fireEvent.change(input, { target: { value: "{{ now | time('" } })
+    fireEvent.click(screen.getByTestId('device-template-field-suggest-arg:time.pattern:HH:mm'))
+    expect(stored()).toBe("{{ now | time('HH:mm'")
+  })
+
+  it('narrows units to the dimension of the piped field (temperature-sensor reads °C)', () => {
+    renderUi(<Harness initial="" />)
+    const input = screen.getByTestId('device-template-field-input')
+    fireEvent.change(input, { target: { value: '{{ stufa.temperature | unit(' } })
+    expect(screen.queryByTestId('device-template-field-suggest-arg:unit.symbol:°F')).not.toBeNull()
+    expect(screen.queryByTestId('device-template-field-suggest-arg:unit.symbol:hPa')).toBeNull()
+  })
+
+  it('does not open a list for a parameter with no fixed values', () => {
+    renderUi(<Harness initial="" />)
+    const input = screen.getByTestId('device-template-field-input')
+    fireEvent.change(input, { target: { value: '{{ stufa.label | replace(' } })
+    expect(screen.queryByTestId('device-template-field-suggest')).toBeNull()
+  })
+})
+
+describe('DeviceTemplateField: "+ Function" arguments', () => {
+  it('shows a picker for round digits and a plain input for a free parameter', () => {
+    renderUi(<Harness initial="{{ stufa.temperature }}" />)
+    fireEvent.click(screen.getByTestId('device-template-field-function'))
+    fireEvent.click(screen.getByTestId('device-template-field-function-round'))
+    const digits = screen.getByTestId('device-template-field-arg-digits')
+    expect(digits.tagName).toBe('BUTTON')
+    fireEvent.click(screen.getByTestId('device-template-field-function-replace'))
+    expect(screen.getByTestId('device-template-field-arg-old').tagName).toBe('INPUT')
+  })
+})
+
+describe('DeviceTemplateField: help and layout', () => {
+  it('shows the help in a popover outside the field, with the docs link', () => {
+    renderUi(<Harness initial="hello" />)
+    fireEvent.click(screen.getByTestId('device-template-field-help'))
+    const link = screen.getByRole('link', { name: 'Template syntax' })
+    expect(screen.getByTestId('device-template-field').contains(link)).toBe(false)
+  })
+
+  it('gives the three actions the same variant and size', () => {
+    renderUi(<Harness initial="hello" />)
+    const cls = (id: string) => screen.getByTestId(`device-template-field-${id}`).className
+    const insert = cls('insert')
+    expect(cls('function')).toBe(insert)
+    expect(cls('help')).toContain('h-7')
+    expect(cls('help')).toContain('border-border')
+  })
+})
+
+describe('DeviceTemplateField: insert dialog columns', () => {
+  it('lays filters, devices and values out as resizable columns at 15 / 65 / 20', () => {
+    window.localStorage.clear()
+    renderUi(<Harness initial="hello" />)
+    fireEvent.click(screen.getByTestId('device-template-field-insert'))
+    const basis = (id: string) =>
+      screen.getByTestId(`device-value-field-columns-${id}`).style.flexBasis
+    expect([basis('filters'), basis('devices'), basis('values')]).toEqual(['15%', '65%', '20%'])
+    expect(screen.getAllByRole('separator')).toHaveLength(2)
+    fireEvent.keyDown(screen.getByTestId('device-value-field-columns-handle-0'), {
+      key: 'ArrowRight',
+    })
+    expect(basis('filters')).toBe('17%')
+    expect(window.localStorage.getItem('camstack.columns.device-template-insert.3')).toContain('17')
+  })
+})

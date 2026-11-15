@@ -1,6 +1,6 @@
 import type { DeviceSearchRequires } from '@camstack/types'
 import { Search } from 'lucide-react'
-import { type JSX, type UIEvent, useMemo, useState } from 'react'
+import { type JSX, type ReactNode, type UIEvent, useMemo, useState } from 'react'
 import { useUiText } from '../../contexts/ui-text'
 import { capabilityListLabel } from '../../lib/capability-label'
 import { Button } from '../../primitives/button'
@@ -49,6 +49,11 @@ export interface DeviceValuePanelProps {
   readonly autoFocus?: boolean
   /** Stretch to a flex parent and scroll the rows inside it (a full-height dialog). */
   readonly fill?: boolean
+  /**
+   * Lay the filter rail and the device list out yourself (a resizable split). The rail is
+   * null while the facets are not known. The panel keeps its own box and height cap.
+   */
+  readonly columns?: (parts: { readonly rail: ReactNode; readonly list: ReactNode }) => ReactNode
 }
 
 /**
@@ -118,6 +123,128 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
     }
   }
 
+  // Desktop: the filter rail is always there. Phone: it opens with "Browse all…".
+  const rail =
+    first === undefined ? null : (
+      <DeviceValueRailFrame open={railOpen}>
+        <DeviceValueRail
+          facets={first.facets}
+          selection={facets}
+          onToggle={(key, value) => setFacets((f) => toggleFacet(f, key, value))}
+          fluid={props.columns !== undefined}
+        />
+      </DeviceValueRailFrame>
+    )
+  const list = (
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+      <div className="flex flex-col gap-1.5 border-b border-border p-2">
+        <div className={INPUT_SHELL}>
+          <Search className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden="true" />
+          <input
+            type="search"
+            autoFocus={props.autoFocus !== false}
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value)
+              setDrilled(null)
+            }}
+            placeholder={t('uiLibrary.deviceValuePicker.search', 'Search name, room, type or id')}
+            aria-label={t('uiLibrary.deviceValuePicker.searchLabel', 'Search devices')}
+            className="min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-foreground-subtle"
+            onKeyDown={(e) => {
+              if (e.key !== 'ArrowDown') return
+              e.currentTarget
+                .closest('[data-dvp-panel]')
+                ?.querySelector<HTMLElement>('[data-dvp-row]')
+                ?.focus()
+            }}
+          />
+        </div>
+        {first === undefined ? (
+          <Skeleton className="h-4 w-40" />
+        ) : (
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-foreground-muted">
+            <span>
+              {hasRequire
+                ? t(
+                    'uiLibrary.deviceValuePicker.matchesOf',
+                    {
+                      one: '{{cap}} · {{count}} match of {{total}}',
+                      other: '{{cap}} · {{count}} matches of {{total}}',
+                    },
+                    { cap: capLabel, count: first.compatibleTotal, total: first.fleetTotal },
+                  )
+                : t(
+                    'uiLibrary.deviceValuePicker.devicesCount',
+                    { one: '{{count}} device', other: '{{count}} devices' },
+                    { count: first.total },
+                  )}
+            </span>
+            {first.hiddenIncompatible > 0 && (
+              <Button
+                variant="unstyled"
+                type="button"
+                className="text-primary hover:underline"
+                onClick={() => setShowIncompatible((v) => !v)}
+              >
+                {showIncompatible
+                  ? t('uiLibrary.deviceValuePicker.hideIncompatible', 'hide the ones that don’t')
+                  : t(
+                      'uiLibrary.deviceValuePicker.showIncompatible',
+                      'show the {{count}} that don’t',
+                      {
+                        count: first.hiddenIncompatible,
+                      },
+                    )}
+              </Button>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto" onScroll={onScroll} data-testid="dvp-scroll">
+        {state.kind !== 'ready' ? (
+          <ListState
+            state={state}
+            capLabel={capLabel}
+            hasCap={hasRequire}
+            query={debounced}
+            onRetry={search.refetch}
+          />
+        ) : drilledItem !== undefined && !inPlace ? (
+          <ValuesPage
+            item={drilledItem}
+            multiple={props.multiple}
+            picked={props.picked}
+            onSelect={props.onSelect}
+            onBack={() => setDrilled(null)}
+          />
+        ) : (
+          <>
+            <DeviceRows
+              sections={sections}
+              kind={props.kind}
+              multiple={props.multiple}
+              picked={props.picked}
+              onSelect={props.onSelect}
+              inPlace={inPlace}
+              expandedId={drilled}
+              onDrill={setDrilled}
+              capLabel={capLabel}
+            />
+            {search.isFetchingNextPage && <Skeleton className="m-3 h-8" />}
+          </>
+        )}
+      </div>
+      {!railOpen && (
+        <div className="border-t border-border p-1.5 sm:hidden">
+          <Button variant="ghost" size="sm" onClick={() => setRailOpen(true)}>
+            {t('uiLibrary.deviceValuePicker.browseAll', 'Browse all…')}
+          </Button>
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div
       data-dvp-panel=""
@@ -127,127 +254,14 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
           : 'flex max-h-[min(70vh,34rem)] min-h-0 flex-col sm:flex-row'
       }
     >
-      {first !== undefined && (
-        // Desktop: the filter rail is always there. Phone: it opens with "Browse all…".
-        <DeviceValueRailFrame open={railOpen}>
-          <DeviceValueRail
-            facets={first.facets}
-            selection={facets}
-            onToggle={(key, value) => setFacets((f) => toggleFacet(f, key, value))}
-          />
-        </DeviceValueRailFrame>
+      {props.columns === undefined ? (
+        <>
+          {rail}
+          {list}
+        </>
+      ) : (
+        props.columns({ rail, list })
       )}
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <div className="flex flex-col gap-1.5 border-b border-border p-2">
-          <div className={INPUT_SHELL}>
-            <Search className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden="true" />
-            <input
-              type="search"
-              autoFocus={props.autoFocus !== false}
-              value={text}
-              onChange={(e) => {
-                setText(e.target.value)
-                setDrilled(null)
-              }}
-              placeholder={t('uiLibrary.deviceValuePicker.search', 'Search name, room, type or id')}
-              aria-label={t('uiLibrary.deviceValuePicker.searchLabel', 'Search devices')}
-              className="min-w-0 flex-1 bg-transparent text-xs text-foreground outline-none placeholder:text-foreground-subtle"
-              onKeyDown={(e) => {
-                if (e.key !== 'ArrowDown') return
-                e.currentTarget
-                  .closest('[data-dvp-panel]')
-                  ?.querySelector<HTMLElement>('[data-dvp-row]')
-                  ?.focus()
-              }}
-            />
-          </div>
-          {first === undefined ? (
-            <Skeleton className="h-4 w-40" />
-          ) : (
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-foreground-muted">
-              <span>
-                {hasRequire
-                  ? t(
-                      'uiLibrary.deviceValuePicker.matchesOf',
-                      {
-                        one: '{{cap}} · {{count}} match of {{total}}',
-                        other: '{{cap}} · {{count}} matches of {{total}}',
-                      },
-                      { cap: capLabel, count: first.compatibleTotal, total: first.fleetTotal },
-                    )
-                  : t(
-                      'uiLibrary.deviceValuePicker.devicesCount',
-                      { one: '{{count}} device', other: '{{count}} devices' },
-                      { count: first.total },
-                    )}
-              </span>
-              {first.hiddenIncompatible > 0 && (
-                <Button
-                  variant="unstyled"
-                  type="button"
-                  className="text-primary hover:underline"
-                  onClick={() => setShowIncompatible((v) => !v)}
-                >
-                  {showIncompatible
-                    ? t('uiLibrary.deviceValuePicker.hideIncompatible', 'hide the ones that don’t')
-                    : t(
-                        'uiLibrary.deviceValuePicker.showIncompatible',
-                        'show the {{count}} that don’t',
-                        {
-                          count: first.hiddenIncompatible,
-                        },
-                      )}
-                </Button>
-              )}
-            </div>
-          )}
-        </div>
-        <div
-          className="min-h-0 flex-1 overflow-y-auto"
-          onScroll={onScroll}
-          data-testid="dvp-scroll"
-        >
-          {state.kind !== 'ready' ? (
-            <ListState
-              state={state}
-              capLabel={capLabel}
-              hasCap={hasRequire}
-              query={debounced}
-              onRetry={search.refetch}
-            />
-          ) : drilledItem !== undefined && !inPlace ? (
-            <ValuesPage
-              item={drilledItem}
-              multiple={props.multiple}
-              picked={props.picked}
-              onSelect={props.onSelect}
-              onBack={() => setDrilled(null)}
-            />
-          ) : (
-            <>
-              <DeviceRows
-                sections={sections}
-                kind={props.kind}
-                multiple={props.multiple}
-                picked={props.picked}
-                onSelect={props.onSelect}
-                inPlace={inPlace}
-                expandedId={drilled}
-                onDrill={setDrilled}
-                capLabel={capLabel}
-              />
-              {search.isFetchingNextPage && <Skeleton className="m-3 h-8" />}
-            </>
-          )}
-        </div>
-        {!railOpen && (
-          <div className="border-t border-border p-1.5 sm:hidden">
-            <Button variant="ghost" size="sm" onClick={() => setRailOpen(true)}>
-              {t('uiLibrary.deviceValuePicker.browseAll', 'Browse all…')}
-            </Button>
-          </div>
-        )}
-      </div>
     </div>
   )
 }

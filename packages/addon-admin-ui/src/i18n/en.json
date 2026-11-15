@@ -9898,7 +9898,9 @@
       "helpTitle": "Template help",
       "helpLine1": "Plain text is written as it is. {{ alias.field }} reads a device; camera means this camera.",
       "helpLine2": "Ctrl+Space completes a name. | unit('°C') prints the unit. {{ now | time('HH:mm') }} is the clock.",
-      "docsLink": "Template syntax"
+      "docsLink": "Template syntax",
+      "chooseValue": "Choose a value",
+      "customValue": "Custom…"
     },
     "deviceValuePicker": {
       "offline": "offline",
@@ -10742,7 +10744,21 @@
       "lastPlate": {
         "description": "The last plate recognised on this camera, empty until there is one.",
         "example": "{{ camera.lastPlate }}"
+      },
+      "choice": {
+        "time": {
+          "hm": "Hours and minutes (14:05)",
+          "hms": "Hours, minutes, seconds (14:05:09)",
+          "dm": "Day and month (31/12)",
+          "dmy": "Day, month, year (31/12/2026)",
+          "dmyhm": "Date and time (31/12/2026 14:05)",
+          "iso": "ISO date (2026-12-31)",
+          "isohms": "ISO date and time (2026-12-31 14:05:09)"
+        }
       }
+    },
+    "resizableColumns": {
+      "handle": "Resize columns"
     }
   },
   "helpers": {

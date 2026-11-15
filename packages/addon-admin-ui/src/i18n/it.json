@@ -9920,7 +9920,9 @@
       "helpTitle": "Aiuto sui modelli",
       "helpLine1": "Il testo semplice viene scritto così com’è. {{ alias.field }} legge un dispositivo; camera indica questa telecamera.",
       "helpLine2": "Ctrl+Spazio completa un nome. | unit('°C') stampa l’unità. {{ now | time('HH:mm') }} è l’orologio.",
-      "docsLink": "Sintassi dei modelli"
+      "docsLink": "Sintassi dei modelli",
+      "chooseValue": "Scegli un valore",
+      "customValue": "Personalizzato…"
     },
     "deviceValuePicker": {
       "offline": "offline",
@@ -10764,7 +10766,21 @@
       "lastPlate": {
         "description": "L’ultima targa riconosciuta su questa telecamera, vuota finché non ce n’è una.",
         "example": "{{ camera.lastPlate }}"
+      },
+      "choice": {
+        "time": {
+          "hm": "Ore e minuti (14:05)",
+          "hms": "Ore, minuti, secondi (14:05:09)",
+          "dm": "Giorno e mese (31/12)",
+          "dmy": "Giorno, mese, anno (31/12/2026)",
+          "dmyhm": "Data e ora (31/12/2026 14:05)",
+          "iso": "Data ISO (2026-12-31)",
+          "isohms": "Data e ora ISO (2026-12-31 14:05:09)"
+        }
       }
+    },
+    "resizableColumns": {
+      "handle": "Ridimensiona le colonne"
     }
   },
   "helpers": {

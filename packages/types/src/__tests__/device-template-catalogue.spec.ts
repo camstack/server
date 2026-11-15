@@ -9,6 +9,8 @@ import {
   deviceTemplateCatalogueEntrySchema,
   deviceTemplateFilterMaxParams,
   deviceTemplateFilterNames,
+  deviceTemplateParamChoices,
+  deviceTemplateParamValuesSchema,
 } from '../device-template-catalogue.js'
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
@@ -129,5 +131,67 @@ describe('device template catalogue', () => {
     }
     expect(deviceTemplateCallableBounds()).toEqual([{ name: 'range', min: 1, max: 3 }])
     expect(custom.has('range')).toBe(false)
+  })
+})
+
+describe('parameter value sources', () => {
+  const entryOf = (name: string) => DEVICE_TEMPLATE_CATALOGUE.find((item) => item.name === name)
+  const paramOf = (name: string, param: string) =>
+    entryOf(name)?.params.find((item) => item.name === param)
+
+  it('parses each kind and refuses an unknown or malformed one', () => {
+    const parse = (v: unknown): boolean => deviceTemplateParamValuesSchema.safeParse(v).success
+    expect(parse({ kind: 'units-of-field' })).toBe(true)
+    expect(parse({ kind: 'choices', options: [{ value: 'HH:mm', labelKey: 'k' }] })).toBe(true)
+    expect(parse({ kind: 'range', min: 0, max: 4, step: 1 })).toBe(true)
+    expect(parse({ kind: 'nope' })).toBe(false)
+    expect(parse({ kind: 'choices', options: [] })).toBe(false)
+    expect(parse({ kind: 'range', min: 0, max: 4, step: 0 })).toBe(false)
+  })
+
+  it('declares sources on unit, time, round and trunc, and every entry still parses', () => {
+    expect(paramOf('unit', 'symbol')?.values?.kind).toBe('units-of-field')
+    expect(paramOf('time', 'pattern')?.values?.kind).toBe('choices')
+    expect(paramOf('round', 'digits')?.values).toEqual({
+      kind: 'range',
+      min: 0,
+      max: 4,
+      step: 1,
+    })
+    expect(paramOf('trunc', 'digits')?.values?.kind).toBe('range')
+    for (const item of DEVICE_TEMPLATE_CATALOGUE) {
+      expect(deviceTemplateCatalogueEntrySchema.safeParse(item).success).toBe(true)
+    }
+  })
+
+  it('narrows units to the dimension of the field unit', () => {
+    const groups = deviceTemplateParamChoices({ kind: 'units-of-field' }, '°C')
+    expect(groups).toHaveLength(1)
+    expect(groups[0]?.group).toBe('temperature')
+    const values = groups[0]?.choices.map((c) => c.value) ?? []
+    expect(values).toEqual(expect.arrayContaining(['°C', '°F', 'K']))
+    expect(values).not.toContain('hPa')
+  })
+
+  it('lists every unit grouped by dimension when the field unit is unknown or absent', () => {
+    for (const unit of [undefined, 'furlongs']) {
+      const groups = deviceTemplateParamChoices({ kind: 'units-of-field' }, unit)
+      expect(groups.length).toBeGreaterThan(5)
+      expect(groups.map((g) => g.group)).toEqual(
+        expect.arrayContaining(['temperature', 'pressure']),
+      )
+    }
+  })
+
+  it('expands a range and carries a label for every time pattern', () => {
+    const digits = deviceTemplateParamChoices(paramOf('round', 'digits')?.values)
+    expect(digits[0]?.choices.map((c) => c.value)).toEqual(['0', '1', '2', '3', '4'])
+    const patterns = deviceTemplateParamChoices(paramOf('time', 'pattern')?.values)
+    const first = patterns[0]?.choices ?? []
+    expect(first.map((c) => c.value)).toContain('HH:mm')
+    for (const choice of first) {
+      expect(DEVICE_TEMPLATE_CATALOGUE_TEXT[choice.labelKey ?? '']?.en).toBeTruthy()
+      expect(DEVICE_TEMPLATE_CATALOGUE_TEXT[choice.labelKey ?? '']?.it).toBeTruthy()
+    }
   })
 })

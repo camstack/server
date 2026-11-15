@@ -9,6 +9,8 @@
  * (D453), and sends the derived caps to the worker. The worker does not import it.
  */
 import { z } from 'zod'
+import { unitDimension, unitsForDimension } from './units/convert.js'
+import { UNIT_TABLE, type UnitDimension } from './units/unit-table.js'
 
 export const DEVICE_TEMPLATE_CATALOGUE_KINDS = ['filter', 'global', 'variable'] as const
 export type DeviceTemplateCatalogueKind = (typeof DEVICE_TEMPLATE_CATALOGUE_KINDS)[number]
@@ -28,16 +30,41 @@ export type DeviceTemplateCatalogueCategory = (typeof DEVICE_TEMPLATE_CATALOGUE_
 export const DEVICE_TEMPLATE_PARAM_TYPES = ['string', 'number', 'boolean'] as const
 export type DeviceTemplateParamType = (typeof DEVICE_TEMPLATE_PARAM_TYPES)[number]
 
+/**
+ * Where the values a parameter takes come from, when a fixed set makes sense.
+ * `units-of-field` is the units in the dimension of the piped field's unit;
+ * `choices` is a named list (a time pattern); `range` is the numbers
+ * `min…max` by `step`. An absent source means free input.
+ */
+const deviceTemplateParamValuesSchemaValue = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('units-of-field') }),
+  z.object({
+    kind: z.literal('choices'),
+    options: z.array(z.object({ value: z.string(), labelKey: z.string().min(1) })).min(1),
+  }),
+  z.object({
+    kind: z.literal('range'),
+    min: z.number(),
+    max: z.number(),
+    step: z.number().positive(),
+  }),
+])
+export type DeviceTemplateParamValues = z.infer<typeof deviceTemplateParamValuesSchemaValue>
+export const deviceTemplateParamValuesSchema: z.ZodType<DeviceTemplateParamValues> =
+  deviceTemplateParamValuesSchemaValue
+
 const deviceTemplateParamSchemaValue: z.ZodType<{
   name: string
   type: DeviceTemplateParamType
   optional: boolean
   default?: string | number | boolean
+  values?: DeviceTemplateParamValues
 }> = z.object({
   name: z.string().min(1),
   type: z.enum(DEVICE_TEMPLATE_PARAM_TYPES),
   optional: z.boolean(),
   default: z.union([z.string(), z.number(), z.boolean()]).optional(),
+  values: deviceTemplateParamValuesSchemaValue.optional(),
 })
 export type DeviceTemplateParam = z.infer<typeof deviceTemplateParamSchemaValue>
 export const deviceTemplateParamSchema: z.ZodType<DeviceTemplateParam> =
@@ -77,10 +104,11 @@ function param(
   type: DeviceTemplateParamType,
   optional: boolean,
   fallback?: string | number | boolean,
+  values?: DeviceTemplateParamValues,
 ): DeviceTemplateParam {
-  return fallback === undefined
-    ? { name, type, optional }
-    : { name, type, optional, default: fallback }
+  const base: DeviceTemplateParam =
+    fallback === undefined ? { name, type, optional } : { name, type, optional, default: fallback }
+  return values === undefined ? base : { ...base, values }
 }
 
 function entry(
@@ -99,15 +127,51 @@ function entry(
   }
 }
 
-const DIGITS = param('digits', 'number', true, 0)
+const DIGITS = param('digits', 'number', true, 0, {
+  kind: 'range',
+  min: 0,
+  max: 4,
+  step: 1,
+})
+const UNITS_OF_FIELD: DeviceTemplateParamValues = { kind: 'units-of-field' }
+
+/** Named time patterns: the engine's tokens are `YYYY MM DD HH mm ss`. */
+const TIME_PATTERNS: readonly (readonly [id: string, pattern: string, en: string, it: string])[] = [
+  ['hm', 'HH:mm', 'Hours and minutes (14:05)', 'Ore e minuti (14:05)'],
+  ['hms', 'HH:mm:ss', 'Hours, minutes, seconds (14:05:09)', 'Ore, minuti, secondi (14:05:09)'],
+  ['dm', 'DD/MM', 'Day and month (31/12)', 'Giorno e mese (31/12)'],
+  ['dmy', 'DD/MM/YYYY', 'Day, month, year (31/12/2026)', 'Giorno, mese, anno (31/12/2026)'],
+  [
+    'dmyhm',
+    'DD/MM/YYYY HH:mm',
+    'Date and time (31/12/2026 14:05)',
+    'Data e ora (31/12/2026 14:05)',
+  ],
+  ['iso', 'YYYY-MM-DD', 'ISO date (2026-12-31)', 'Data ISO (2026-12-31)'],
+  [
+    'isohms',
+    'YYYY-MM-DD HH:mm:ss',
+    'ISO date and time (2026-12-31 14:05:09)',
+    'Data e ora ISO (2026-12-31 14:05:09)',
+  ],
+]
+const TIME_PATTERN_KEY = (id: string): string =>
+  `uiLibrary.deviceTemplateCatalogue.choice.time.${id}`
+const TIME_PATTERN_VALUES: DeviceTemplateParamValues = {
+  kind: 'choices',
+  options: TIME_PATTERNS.map(([id, pattern]) => ({
+    value: pattern,
+    labelKey: TIME_PATTERN_KEY(id),
+  })),
+}
 const FALLBACK_TEXT = param('fallback', 'string', false)
 const FALSY = param('falsy', 'boolean', true, false)
 
 /** Every name the engine allows, in the order operators meet them. */
 export const DEVICE_TEMPLATE_CATALOGUE: readonly DeviceTemplateCatalogueEntry[] = [
   entry('unit', 'filter', 'unit', [
-    param('symbol', 'string', false),
-    param('from', 'string', true),
+    param('symbol', 'string', false, undefined, UNITS_OF_FIELD),
+    param('from', 'string', true, undefined, UNITS_OF_FIELD),
   ]),
   entry('round', 'filter', 'number', [DIGITS]),
   entry('trunc', 'filter', 'number', [DIGITS]),
@@ -147,7 +211,9 @@ export const DEVICE_TEMPLATE_CATALOGUE: readonly DeviceTemplateCatalogueEntry[] 
     param('killwords', 'boolean', true, false),
     param('end', 'string', true, '…'),
   ]),
-  entry('time', 'filter', 'time', [param('pattern', 'string', false)]),
+  entry('time', 'filter', 'time', [
+    param('pattern', 'string', false, undefined, TIME_PATTERN_VALUES),
+  ]),
   entry('range', 'global', 'loop', [
     param('stop', 'number', false),
     param('start', 'number', true, 0),
@@ -371,9 +437,13 @@ function buildText(): Readonly<Record<string, DeviceTemplateCatalogueText>> {
   for (const item of DEVICE_TEMPLATE_CATALOGUE) {
     const row = COPY[item.name]
     if (row === undefined) continue
-    out[item.descriptionKey] = { en: row.description[0], it: row.description[1] }
+    out[item.descriptionKey] = {
+      en: row.description[0],
+      it: row.description[1],
+    }
     out[item.exampleKey] = { en: row.example[0], it: row.example[1] }
   }
+  for (const [id, , en, it] of TIME_PATTERNS) out[TIME_PATTERN_KEY(id)] = { en, it }
   return out
 }
 
@@ -457,4 +527,56 @@ export function deviceTemplateCatalogueMarkdown(): string {
 
 function escapeCell(text: string): string {
   return text.replaceAll('|', '\\|')
+}
+
+/** One selectable value of a parameter: the literal to write, and its label key when it has one. */
+export interface DeviceTemplateParamChoice {
+  readonly value: string
+  readonly labelKey?: string
+}
+
+/** Choices under one heading (a unit dimension); `group` is null when there is a single list. */
+export interface DeviceTemplateParamChoiceGroup {
+  readonly group: string | null
+  readonly choices: readonly DeviceTemplateParamChoice[]
+}
+
+function allUnitGroups(): readonly DeviceTemplateParamChoiceGroup[] {
+  const dimensions: UnitDimension[] = []
+  for (const spec of Object.values(UNIT_TABLE)) {
+    if (!dimensions.includes(spec.dimension)) dimensions.push(spec.dimension)
+  }
+  return dimensions.map((dimension) => ({
+    group: dimension,
+    choices: unitsForDimension(dimension).map((value) => ({ value })),
+  }))
+}
+
+/**
+ * The values a parameter offers. `fieldUnit` is the unit of the piped field:
+ * `units-of-field` narrows to its dimension, and lists every unit grouped by
+ * dimension when the unit is unknown. Empty when the parameter is free input.
+ */
+export function deviceTemplateParamChoices(
+  source: DeviceTemplateParamValues | undefined,
+  fieldUnit?: string,
+): readonly DeviceTemplateParamChoiceGroup[] {
+  if (source === undefined) return []
+  if (source.kind === 'choices') {
+    return [{ group: null, choices: source.options.map((o) => ({ ...o })) }]
+  }
+  if (source.kind === 'range') {
+    const out: DeviceTemplateParamChoice[] = []
+    const steps = Math.floor((source.max - source.min) / source.step + 1e-9)
+    for (let i = 0; i <= steps; i += 1) out.push({ value: String(source.min + i * source.step) })
+    return [{ group: null, choices: out }]
+  }
+  const dimension = fieldUnit === undefined ? undefined : unitDimension(fieldUnit)
+  if (dimension === undefined) return allUnitGroups()
+  return [
+    {
+      group: dimension,
+      choices: unitsForDimension(dimension).map((value) => ({ value })),
+    },
+  ]
 }

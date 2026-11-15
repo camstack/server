@@ -32,6 +32,14 @@ const iconButtonVariants = cva(
   },
 )
 
+/** The icon button's look, for a trigger that must be a different element (a popover trigger). */
+export function iconButtonClass(
+  variant: IconButtonProps['variant'],
+  size: IconButtonProps['size'],
+): string {
+  return iconButtonVariants({ variant, size })
+}
+
 export interface IconButtonProps extends Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'outline'
   size?: 'sm' | 'md' | 'lg'

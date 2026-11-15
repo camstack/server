@@ -88,16 +88,51 @@ export default defineFixtures({
       notes: [],
     },
     'deviceManager.search': {
-      items: [],
+      items: [SENSOR_ID, 202, 203].map((id, index) => ({
+        id,
+        name: ['Garage sensor', 'Garden sensor', 'Cellar sensor'][index],
+        type: 'sensor',
+        location: ['Garage', 'Garden', 'Cellar'][index],
+        integrationId: 'int-demo',
+        integrationLabel: 'Demo',
+        online: true,
+        disabled: false,
+        compatible: true,
+        values: [],
+      })),
       nextCursor: null,
-      total: 0,
-      compatibleTotal: 0,
-      fleetTotal: 0,
+      total: 3,
+      compatibleTotal: 3,
+      fleetTotal: 3,
       hiddenIncompatible: 0,
-      facets: { locations: [], integrations: [], types: [] },
+      facets: {
+        locations: [
+          { value: 'Garage', count: 1 },
+          { value: 'Garden', count: 1 },
+          { value: 'Cellar', count: 1 },
+        ],
+        integrations: [{ id: 'int-demo', label: 'Demo', count: 3 }],
+        types: [{ value: 'sensor', count: 3 }],
+      },
       suggested: [],
       missingIds: [],
     },
+    'deviceState.getSnapshot': (input: { deviceId?: number }) =>
+      input.deviceId === SENSOR_ID ? { temperature: { temperature: 21, humidity: 55 } } : {},
+    'deviceManager.getWireableFields': (input: { deviceId?: number }) =>
+      input.deviceId === SENSOR_ID
+        ? {
+            caps: [
+              {
+                cap: 'temperature',
+                fields: [
+                  { path: 'temperature', kind: 'number' },
+                  { path: 'humidity', kind: 'number' },
+                ],
+              },
+            ],
+          }
+        : { caps: [] },
     'deviceManager.checkDeviceTemplates': {
       results: [
         {

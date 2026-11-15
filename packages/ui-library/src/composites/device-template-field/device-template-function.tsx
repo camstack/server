@@ -22,8 +22,11 @@ import {
   type CatalogueCall,
   formatCatalogueArgs,
   insertCatalogueCall,
+  templateFieldSource,
 } from './device-template-model'
 import { DeviceTemplateFeedback } from './device-template-feedback'
+import { DeviceTemplateParamInput } from './device-template-param-input'
+import { useTemplateFieldUnit } from './use-template-field-unit'
 
 const CATEGORY_ORDER = [
   'number',
@@ -76,6 +79,10 @@ export function DeviceTemplateFunction(props: DeviceTemplateFunctionProps): Reac
   const [query, setQuery] = useState('')
   const [selected, setSelected] = useState<string | null>(null)
   const [raw, setRaw] = useState<Readonly<Record<string, string>>>({})
+  const fieldUnit = useTemplateFieldUnit(
+    templateFieldSource(props.value, props.caret),
+    props.thisDevice?.deviceId,
+  )
   const entry = DEVICE_TEMPLATE_CATALOGUE.find((item) => item.name === selected)
   const needle = query.trim().toLowerCase()
   const groups = useMemo(() => {
@@ -179,11 +186,13 @@ export function DeviceTemplateFunction(props: DeviceTemplateFunctionProps): Reac
                       ? t('uiLibrary.deviceTemplateField.optional', ' (optional)')
                       : ''}
                   </Label>
-                  <Input
+                  <DeviceTemplateParamInput
+                    param={item}
                     id={`${props.testId}-arg-${item.name}`}
+                    testId={`${props.testId}-arg-${item.name}`}
                     value={raw[item.name] ?? ''}
-                    data-testid={`${props.testId}-arg-${item.name}`}
-                    onChange={(e) => setRaw({ ...raw, [item.name]: e.target.value })}
+                    fieldUnit={fieldUnit}
+                    onChange={(next) => setRaw({ ...raw, [item.name]: next })}
                   />
                 </div>
               ))}

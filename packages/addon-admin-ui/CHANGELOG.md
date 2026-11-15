@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device History tab shows grouped charts and a per-chart unit switch
 
+- Template editor strings for parameter pickers and the resizable value dialog (en, it)
+
 ## [1.2.680] - 2026-11-15
 
 ### Changed

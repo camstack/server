@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Capability history declares which fields share a chart (group) and which series a device card trends (primary, priority)
+- Device template functions declare typed value sources (units of the piped field, choices, ranges) for their parameters
 
 ## [1.2.576] - 2026-11-15
 

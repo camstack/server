@@ -107,10 +107,13 @@ export function DeviceValueRail({
   facets,
   selection,
   onToggle,
+  fluid = false,
 }: {
   readonly facets: DeviceSearchFacets
   readonly selection: FacetSelection
   readonly onToggle: (key: FacetKey, value: string) => void
+  /** Take the width of the column the host gives it, with no border of its own (a resizable split draws the divider). */
+  readonly fluid?: boolean
 }): JSX.Element | null {
   const t = useUiText()
   const [open, setOpen] = useState<FacetKey | null>(null)
@@ -131,7 +134,10 @@ export function DeviceValueRail({
   return (
     <nav
       aria-label={t('uiLibrary.deviceValuePicker.filters', 'Filters')}
-      className="flex shrink-0 flex-col gap-0.5 border-b border-border p-2 text-xs sm:w-52 sm:border-b-0 sm:border-r"
+      className={cn(
+        'flex shrink-0 flex-col gap-0.5 border-b border-border p-2 text-xs sm:border-b-0',
+        fluid ? 'sm:w-full' : 'sm:w-52 sm:border-r',
+      )}
     >
       {views.map((view) => {
         const isOpen = open === view.key

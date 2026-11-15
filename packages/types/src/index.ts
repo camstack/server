@@ -1651,7 +1651,9 @@ export {
   deviceTemplateCatalogueSentence,
   deviceTemplateFilterMaxParams,
   deviceTemplateFilterNames,
+  deviceTemplateParamChoices,
   deviceTemplateParamSchema,
+  deviceTemplateParamValuesSchema,
   deviceTemplateRootVariables,
   deviceTemplateSignature,
 } from './device-template-catalogue.js'
@@ -1662,7 +1664,10 @@ export type {
   DeviceTemplateCatalogueKind,
   DeviceTemplateCatalogueText,
   DeviceTemplateParam,
+  DeviceTemplateParamChoice,
+  DeviceTemplateParamChoiceGroup,
   DeviceTemplateParamType,
+  DeviceTemplateParamValues,
 } from './device-template-catalogue.js'
 export type {
   DeviceTemplateFilter,

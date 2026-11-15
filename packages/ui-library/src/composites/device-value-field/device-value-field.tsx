@@ -5,8 +5,12 @@ import { useIsPhone } from '../../hooks/use-is-mobile'
 import { cn } from '../../lib/cn'
 import { Button } from '../../primitives/button'
 import { Radio } from '../../primitives/radio'
+import { ResizableColumns } from '../resizable-columns'
 import { DeviceValuePanel } from '../device-value-picker/device-value-panel'
 import { useRecentDevices } from '../device-value-picker/use-recent-devices'
+
+/** Filters / device list / values, in percent: the split before the viewer drags a handle. */
+const RESIZABLE_DEFAULTS: readonly number[] = [15, 65, 20]
 
 /** One value a device offers. Only values that FIT are ever passed in. */
 export interface DeviceValueRow {
@@ -88,6 +92,12 @@ export interface DeviceValueFieldProps {
    * columns, never the compact card with its Change button.
    */
   readonly pickerOnly?: boolean
+  /**
+   * From `sm` up, lay the filters, the device list and the values out as three columns the
+   * viewer resizes by dragging (15 / 65 / 20 to begin with); the split is remembered under
+   * this key. A phone keeps the stacked layout.
+   */
+  readonly resizableColumns?: string
 }
 
 /**
@@ -167,6 +177,65 @@ export function DeviceValueField(props: DeviceValueFieldProps): ReactNode {
       <ValuesBody {...props} onPick={pickValue} noDeviceText={props.noDeviceText} />
     </>
   )
+  if (props.resizableColumns !== undefined && !phone) {
+    return (
+      <div data-testid={testId} data-mode="picker" className="flex min-h-0 flex-col gap-2">
+        <h3 className="text-[11px] font-medium text-foreground-muted">{props.heading}</h3>
+        {props.suggestions}
+        <div
+          data-testid={props.deviceListTestId ?? `${testId}-device-picker`}
+          className={cn(
+            'overflow-hidden rounded-md border border-border',
+            props.fillHeight === true && 'flex min-h-0 flex-1 flex-col',
+          )}
+        >
+          <DeviceValuePanel
+            requires={props.requires}
+            contextDeviceId={props.contextDeviceId}
+            fixedTypes={props.fixedTypes}
+            excludeIds={[
+              ...(props.excludeIds ?? []),
+              ...(props.contextDeviceId === undefined ? [] : [props.contextDeviceId]),
+            ]}
+            excludeTypes={props.excludeTypes}
+            kind="device"
+            multiple={false}
+            picked={props.deviceId === null ? [] : [{ deviceId: props.deviceId }]}
+            onSelect={(picked) => pickDevice(picked.deviceId)}
+            railFirst={false}
+            recentIds={recents.ids}
+            autoFocus={false}
+            fill={props.fillHeight === true}
+            columns={({ rail, list }) => (
+              <ResizableColumns
+                storageKey={props.resizableColumns ?? ''}
+                defaultSizes={rail === null ? RESIZABLE_DEFAULTS.slice(1) : RESIZABLE_DEFAULTS}
+                className="flex-1"
+                testId={`${testId}-columns`}
+                columns={[
+                  ...(rail === null
+                    ? []
+                    : [{ id: 'filters', content: rail, className: 'overflow-y-auto' }]),
+                  { id: 'devices', content: list },
+                  {
+                    id: 'values',
+                    content: (
+                      <div
+                        data-testid={`${testId}-values`}
+                        className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
+                      >
+                        {values}
+                      </div>
+                    ),
+                  },
+                ]}
+              />
+            )}
+          />
+        </div>
+      </div>
+    )
+  }
   return (
     <div
       data-testid={testId}

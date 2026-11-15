@@ -1,7 +1,9 @@
 import { holdVarSlots, templateCapKey } from '@camstack/types'
-import type {
-  DeviceTemplateCatalogueEntry,
-  DeviceTemplateParam,
+import {
+  type DeviceTemplateCatalogueEntry,
+  DEVICE_TEMPLATE_CATALOGUE,
+  type DeviceTemplateParam,
+  deviceTemplateParamChoices,
 } from '@camstack/types/device-template-catalogue'
 
 /** What a field of the text may hold: the declared value kind of the place the template feeds. */
@@ -147,6 +149,27 @@ export type TemplateCaretContext =
   | { readonly kind: 'expression'; readonly prefix: string }
   | { readonly kind: 'field'; readonly alias: string; readonly prefix: string }
   | { readonly kind: 'filter'; readonly prefix: string }
+  | {
+      readonly kind: 'argument'
+      /** The filter being called: `unit` in `| unit(`. */
+      readonly filter: string
+      /** Zero-based position of the argument under the caret. */
+      readonly index: number
+      /** The argument as typed so far, opening quote included: what a pick replaces. */
+      readonly prefix: string
+      /** What was typed inside the quotes, for narrowing the list. */
+      readonly typed: string
+      /** The quote the operator opened, or null when none yet. */
+      readonly quote: "'" | '"' | null
+      /** The `alias.field` the pipe chain starts from, when it is one. */
+      readonly source: TemplateFieldSource | null
+    }
+
+/** The device field a pipe chain starts from: `garage.temperature`. */
+export interface TemplateFieldSource {
+  readonly alias: string
+  readonly path: string
+}
 
 function clampCaret(value: string, caret: number): number {
   return Math.min(Math.max(caret, 0), value.length)
@@ -184,6 +207,86 @@ function lastUnquotedPipe(text: string): number {
   return at
 }
 
+/** The first unquoted `|`: where the piped value ends. */
+function firstUnquotedPipe(text: string): number {
+  let quote: string | undefined
+  for (let i = 0; i < text.length; i += 1) {
+    const ch = text[i]
+    if (quote !== undefined) {
+      if (ch === '\\') i += 1
+      else if (ch === quote) quote = undefined
+      continue
+    }
+    if (ch === "'" || ch === '"') quote = ch
+    else if (ch === '|') return i
+  }
+  return -1
+}
+
+const FIELD_SOURCE = /^([a-z][a-z0-9_]*)\.([A-Za-z0-9_.]+)$/
+
+function fieldSourceOf(inner: string): TemplateFieldSource | null {
+  const pipe = firstUnquotedPipe(inner)
+  const head = (pipe < 0 ? inner : inner.slice(0, pipe)).trim()
+  const match = FIELD_SOURCE.exec(head)
+  return match?.[1] !== undefined && match[2] !== undefined
+    ? { alias: match[1], path: match[2] }
+    : null
+}
+
+/** The `alias.field` the expression around the caret pipes from, or null. */
+export function templateFieldSource(value: string, caret: number): TemplateFieldSource | null {
+  const at = clampCaret(value, caret)
+  const open = openExpression(value, at)
+  return open < 0 ? null : fieldSourceOf(value.slice(open + 2, at))
+}
+
+interface OpenCall {
+  readonly filter: string
+  readonly index: number
+  readonly arg: string
+}
+
+/** `name(a, b` -> the call still open at the end of `text`; null when it is closed or not a call. */
+function openCall(text: string): OpenCall | null {
+  const head = /^\s*([A-Za-z_][A-Za-z0-9_]*)\s*\(/.exec(text)
+  if (head?.[1] === undefined) return null
+  let quote: string | undefined
+  let index = 0
+  let argStart = head[0].length
+  for (let i = head[0].length; i < text.length; i += 1) {
+    const ch = text[i]
+    if (quote !== undefined) {
+      if (ch === '\\') i += 1
+      else if (ch === quote) quote = undefined
+      continue
+    }
+    if (ch === "'" || ch === '"') quote = ch
+    else if (ch === ')') return null
+    else if (ch === ',') {
+      index += 1
+      argStart = i + 1
+    }
+  }
+  return { filter: head[1], index, arg: text.slice(argStart).trimStart() }
+}
+
+function argumentContext(inner: string, call: OpenCall): TemplateCaretContext {
+  const first = call.arg[0]
+  const quote = first === "'" || first === '"' ? first : null
+  const typed = quote === null ? call.arg : call.arg.slice(1)
+  if (quote !== null && typed.includes(quote)) return { kind: 'none' }
+  return {
+    kind: 'argument',
+    filter: call.filter,
+    index: call.index,
+    prefix: call.arg,
+    typed,
+    quote,
+    source: fieldSourceOf(inner),
+  }
+}
+
 export function templateCaretContext(value: string, caret: number): TemplateCaretContext {
   const at = clampCaret(value, caret)
   const open = openExpression(value, at)
@@ -191,6 +294,8 @@ export function templateCaretContext(value: string, caret: number): TemplateCare
   const inner = value.slice(open + 2, at)
   const pipe = lastUnquotedPipe(inner)
   if (pipe >= 0) {
+    const call = openCall(inner.slice(pipe + 1))
+    if (call !== null) return argumentContext(inner, call)
     const name = /^[A-Za-z0-9_]*/.exec(inner.slice(pipe + 1).trimStart())?.[0] ?? ''
     return { kind: 'filter', prefix: name }
   }
@@ -199,15 +304,27 @@ export function templateCaretContext(value: string, caret: number): TemplateCare
   if (field?.[1] !== undefined && field[2] !== undefined) {
     return { kind: 'field', alias: field[1], prefix: field[2] }
   }
-  return { kind: 'expression', prefix: /[A-Za-z0-9_]*$/.exec(trimmed)?.[0] ?? '' }
+  return {
+    kind: 'expression',
+    prefix: /[A-Za-z0-9_]*$/.exec(trimmed)?.[0] ?? '',
+  }
+}
+
+function argumentOffersValues(filter: string, index: number): boolean {
+  const source = DEVICE_TEMPLATE_CATALOGUE.find((item) => item.name === filter)?.params[index]
+    ?.values
+  return source !== undefined
 }
 
 /** True when the caret just landed on `{{`, `|` or `alias.` — the popover opens itself. */
 export function templateSuggestTrigger(value: string, caret: number): boolean {
   const before = value.slice(0, clampCaret(value, caret))
   if (before.endsWith('{{') || before.endsWith('|')) return true
+  const ctx = templateCaretContext(value, caret)
+  if (ctx.kind === 'argument')
+    return ctx.typed === '' && argumentOffersValues(ctx.filter, ctx.index)
   if (!before.endsWith('.')) return false
-  return templateCaretContext(value, caret).kind === 'field'
+  return ctx.kind === 'field'
 }
 
 export interface CatalogueCall {
@@ -248,7 +365,11 @@ export function insertCatalogueCall(
   const open = openExpression(value, at)
   if (call.kind === 'filter' && open >= 0) return insertFilter(value, at, open, rendered)
   if (open >= 0) {
-    return { value: splice(value, at, at, rendered), cursor: at + rendered.length, select: null }
+    return {
+      value: splice(value, at, at, rendered),
+      cursor: at + rendered.length,
+      select: null,
+    }
   }
   const token = call.kind === 'filter' ? `{{ ${PLACEHOLDER} | ${rendered} }}` : `{{ ${rendered} }}`
   const next = splice(value, at, at, token)
@@ -275,11 +396,19 @@ function insertFilter(
     const pipeAt = open + 2 + pipe
     const from = pipeAt > 0 && value[pipeAt - 1] === ' ' ? pipeAt - 1 : pipeAt
     const text = ` | ${rendered}`
-    return { value: splice(value, from, at, text), cursor: from + text.length, select: null }
+    return {
+      value: splice(value, from, at, text),
+      cursor: from + text.length,
+      select: null,
+    }
   }
   if (inner.trim().length > 0) {
     const text = ` | ${rendered}`
-    return { value: splice(value, at, at, text), cursor: at + text.length, select: null }
+    return {
+      value: splice(value, at, at, text),
+      cursor: at + text.length,
+      select: null,
+    }
   }
   const inserted = ` ${PLACEHOLDER} | ${rendered}`
   const next = splice(value, open + 2, at, inserted)
@@ -346,6 +475,8 @@ export interface TemplateSuggestionInput {
   readonly entries: readonly DeviceTemplateCatalogueEntry[]
   readonly cameraValues: readonly string[]
   readonly rootVariables: readonly string[]
+  /** The unit of the piped field, when the editor knows it; narrows `units-of-field`. */
+  readonly fieldUnit?: string
 }
 
 function matchesPrefix(label: string, prefix: string): boolean {
@@ -360,6 +491,7 @@ export function templateSuggestions(
   if (ctx.kind === 'none') return []
   if (ctx.kind === 'expression') return expressionSuggestions(ctx.prefix, input)
   if (ctx.kind === 'field') return fieldSuggestions(ctx, input)
+  if (ctx.kind === 'argument') return argumentSuggestions(ctx, input)
   return input.entries
     .filter((item) => item.kind !== 'variable' && matchesPrefix(item.name, ctx.prefix))
     .map((item) => ({
@@ -368,6 +500,29 @@ export function templateSuggestions(
       detail: item.category,
       replacement: suggestionReplacement(item),
     }))
+}
+
+function argumentSuggestions(
+  ctx: Extract<TemplateCaretContext, { kind: 'argument' }>,
+  input: TemplateSuggestionInput,
+): readonly TemplateSuggestion[] {
+  const item = input.entries.find((e) => e.name === ctx.filter)
+  const param = item?.params[ctx.index]
+  if (param === undefined) return []
+  const needle = ctx.typed.trim().toLowerCase()
+  const rows: TemplateSuggestion[] = []
+  for (const group of deviceTemplateParamChoices(param.values, input.fieldUnit)) {
+    for (const choice of group.choices) {
+      if (needle !== '' && !choice.value.toLowerCase().startsWith(needle)) continue
+      rows.push({
+        id: `arg:${ctx.filter}.${param.name}:${choice.value}`,
+        label: choice.value,
+        detail: choice.labelKey === undefined ? (group.group ?? '') : choice.labelKey,
+        replacement: formatCatalogueArg(param.type, choice.value),
+      })
+    }
+  }
+  return rows
 }
 
 function suggestionReplacement(item: DeviceTemplateCatalogueEntry): string {
@@ -431,8 +586,10 @@ export function applyTemplateSuggestion(
   const at = clampCaret(value, caret)
   const prefix = ctx.kind === 'none' ? '' : ctx.prefix
   const from = Math.max(0, at - prefix.length)
+  // A quote the operator already closed after the caret (`unit('|')`) is part of the literal.
+  const to = ctx.kind === 'argument' && ctx.quote !== null && value[at] === ctx.quote ? at + 1 : at
   return {
-    value: splice(value, from, at, replacement),
+    value: splice(value, from, to, replacement),
     cursor: from + replacement.length,
     select: null,
   }

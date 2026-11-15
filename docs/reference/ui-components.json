@@ -6751,6 +6751,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "The host IS the picker (a dialog opened to choose): always the two columns, never the compact card with its Change button."
+        },
+        {
+          "name": "resizableColumns",
+          "type": "string",
+          "optional": true,
+          "doc": "From `sm` up, lay the filters, the device list and the values out as three columns the viewer resizes by dragging (15 / 65 / 20 to begin wit"
         }
       ]
     },
@@ -6877,6 +6883,12 @@
           "type": "boolean",
           "optional": true,
           "doc": "Stretch to a flex parent and scroll the rows inside it (a full-height dialog)."
+        },
+        {
+          "name": "columns",
+          "type": "(parts: { readonly rail: ReactNode; readonly list: ReactNode }) => ReactNode",
+          "optional": true,
+          "doc": "Lay the filter rail and the device list out yourself (a resizable split). The rail is null while the facets are not known. The panel keeps i"
         }
       ]
     },
@@ -10074,6 +10086,13 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "iconButtonClass",
+      "kind": "function",
+      "area": "primitives",
+      "file": "packages/ui-library/src/primitives/icon-button.tsx",
+      "summary": "The icon button's look, for a trigger that must be a different element (a popover trigger)."
     },
     {
       "name": "iconGlyphsFailed",
@@ -14759,6 +14778,45 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-picker/device-picker-model.ts",
       "summary": "Reset clears search, Type, Zone and Location — never \"Group by\"."
+    },
+    {
+      "name": "ResizableColumns",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/resizable-columns/ResizableColumns.tsx",
+      "summary": "A row of columns the viewer can resize by dragging the handle between two of them (or with the arrow keys on the focused handle). The split is remembered per viewer.",
+      "props": [
+        {
+          "name": "columns",
+          "type": "readonly ResizableColumn[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "defaultSizes",
+          "type": "readonly number[]",
+          "optional": false,
+          "doc": "Starting shares in percent, one per column; scaled to 100."
+        },
+        {
+          "name": "storageKey",
+          "type": "string",
+          "optional": false,
+          "doc": "Where this viewer's split is remembered (localStorage), per column count."
+        },
+        {
+          "name": "className",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "resizeButton",

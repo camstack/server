@@ -19,15 +19,16 @@ import {
   useDeviceManagerListAll,
 } from '../../generated/system-hooks'
 import { Button } from '../../primitives/button'
-import { IconButton } from '../../primitives/icon-button'
+import { iconButtonClass } from '../../primitives/icon-button'
 import { Input } from '../../primitives/input'
-import { Tooltip, TooltipContent, TooltipTrigger } from '../../primitives/tooltip'
+import { Popover, PopoverContent, PopoverTrigger } from '../../primitives/popover'
 import { Textarea } from '../../primitives/textarea'
 import { SelectedChip } from '../device-picker/SelectedChip'
 import { DeviceTemplateInsert } from './device-template-insert'
 import { DeviceTemplateFeedback } from './device-template-feedback'
 import { DeviceTemplateFunction } from './device-template-function'
 import { DeviceTemplateSuggest } from './device-template-suggest'
+import { useTemplateFieldUnit } from './use-template-field-unit'
 import {
   applyTemplateSuggestion,
   type DeviceTemplateHeldSlots,
@@ -128,7 +129,12 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
     { deviceId: fieldDeviceId ?? 0 },
     { enabled: fieldDeviceId !== null },
   )
+  const fieldUnit = useTemplateFieldUnit(
+    context.kind === 'argument' ? context.source : null,
+    props.thisDevice?.deviceId,
+  )
   const suggestions = templateSuggestions(context, {
+    fieldUnit,
     aliases: [...nameOf.entries()].map(([alias, label]) => ({ alias, label })),
     fields: (wireable.data?.caps ?? []).flatMap((cap) =>
       cap.fields
@@ -356,7 +362,7 @@ interface FieldActionsProps {
 function FieldActions(props: FieldActionsProps): ReactNode {
   const t = useUiText()
   return (
-    <div className="flex shrink-0 flex-wrap items-center gap-1">
+    <div className="flex shrink-0 flex-wrap items-start gap-1">
       <Button
         type="button"
         variant="outline"
@@ -389,18 +395,18 @@ function FieldActions(props: FieldActionsProps): ReactNode {
         <Parentheses className="h-3.5 w-3.5 shrink-0" />
         {t('uiLibrary.deviceTemplateField.function', '+ Function')}
       </Button>
-      <Tooltip>
-        <TooltipTrigger>
-          <IconButton
-            type="button"
-            variant="ghost"
-            size="sm"
-            icon={Info}
-            aria-label={t('uiLibrary.deviceTemplateField.helpTitle', 'Template help')}
-            data-testid={`${props.testId}-help`}
-          />
-        </TooltipTrigger>
-        <TooltipContent className="max-w-[16rem] whitespace-normal text-left">
+      <Popover>
+        <PopoverTrigger
+          aria-label={t('uiLibrary.deviceTemplateField.helpTitle', 'Template help')}
+          data-testid={`${props.testId}-help`}
+          className={iconButtonClass('outline', 'sm')}
+        >
+          <Info className="h-4 w-4" aria-hidden="true" />
+        </PopoverTrigger>
+        <PopoverContent
+          align="end"
+          className="w-72 max-w-[calc(100vw-1rem)] text-xs text-foreground"
+        >
           <span className="block">
             {t(
               'uiLibrary.deviceTemplateField.helpLine1',
@@ -421,8 +427,8 @@ function FieldActions(props: FieldActionsProps): ReactNode {
           >
             {t('uiLibrary.deviceTemplateField.docsLink', 'Template syntax')}
           </a>
-        </TooltipContent>
-      </Tooltip>
+        </PopoverContent>
+      </Popover>
     </div>
   )
 }

@@ -120,6 +120,7 @@ export function DeviceTemplateInsert(props: DeviceTemplateInsertProps): ReactNod
             deviceLabel={device?.name ?? ''}
             value={pick}
             onValueChange={setPick}
+            resizableColumns="device-template-insert"
             heading={t('uiLibrary.deviceValueField.pickDevice', 'Pick a device')}
             noDeviceText={t(
               'uiLibrary.deviceValueField.noDevice',
