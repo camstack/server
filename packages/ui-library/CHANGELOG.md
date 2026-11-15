@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.454] - 2026-11-15
+
 ### Fixed
 
 - Device history charts in one view now share the same left and right gutter, so the crosshair and selected point line up across charts
