@@ -2603,7 +2603,8 @@
         "power-source": "Power source",
         "lock-control": "Door contact",
         "fan-control": "Fan",
-        "climate-control": "Room sensor"
+        "climate-control": "Room sensor",
+        "weather-station": "Weather station"
       },
       "add": "+ Add",
       "change": "Change",

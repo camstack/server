@@ -2678,7 +2678,8 @@
         "power-source": "Fonte di alimentazione",
         "lock-control": "Contatto porta",
         "fan-control": "Ventilatore",
-        "climate-control": "Sensore stanza"
+        "climate-control": "Sensore stanza",
+        "weather-station": "Stazione meteo"
       },
       "add": "+ Aggiungi",
       "change": "Cambia",

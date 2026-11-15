@@ -302,6 +302,7 @@ describe('customize declaration guard', () => {
       'power-source',
       'remote',
       'running-state',
+      'weather-station',
     ])
     expect(CAP_CUSTOMIZE_CATALOG['temperature-sensor']).toBeUndefined()
     expect(CAP_CUSTOMIZE_CATALOG.battery?.targets.every((target) => target.apply === 'add')).toBe(
