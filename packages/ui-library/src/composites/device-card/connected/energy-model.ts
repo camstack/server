@@ -77,7 +77,8 @@ function totalConsumptionW(status: EnergySystemStatus): number | null {
   if (status.heatPump === null) return houseW
   const pumpW = status.heatPump.powerW
   if (pumpW === null) return null
-  return (houseW ?? 0) + pumpW
+  if (status.house === null) return pumpW
+  return houseW === null ? null : houseW + pumpW
 }
 
 /** Stored kWh ÷ current total load (kW). Hidden when the load is ≤ 0 or unknown. */
