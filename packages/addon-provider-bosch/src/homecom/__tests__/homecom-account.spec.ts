@@ -7,7 +7,11 @@ import { describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '@camstack/types'
 import { boschWorld } from '../../shared/__tests__/bosch-world.js'
 import type { HomeComConfig } from '../config.js'
-import { signOutHomeComInstance, storeHomeComSignIn } from '../homecom-account.js'
+import {
+  signOutHomeComInstance,
+  storedSignInResult,
+  storeHomeComSignIn,
+} from '../homecom-account.js'
 import { HomeComClientRegistry, type ManagerLike } from '../homecom-client-registry.js'
 import {
   buildHomeComInstances,
@@ -82,7 +86,14 @@ function fakeManagers() {
   return { made, makeManager }
 }
 
-async function setup() {
+interface SetupOptions {
+  /** The keychain cannot serve this instance's secrets. */
+  readonly locked?: boolean
+  /** Integration ids only devices still name. */
+  readonly deviceIds?: readonly string[]
+}
+
+async function setup(opts: SetupOptions = {}) {
   const w = await boschWorld({
     addonId: 'bosch-homecom',
     declare: (records) => records.declare(homeComRecordKinds),
@@ -115,7 +126,14 @@ async function setup() {
   const reconcile = (): Promise<void> =>
     reconcileHomeComIntegrations({
       listEnabled: async () => present,
-      connectionOf: (id) => homeComConnectionOf(built.instances, id),
+      knownIds: async () => [
+        ...(await built.instances.listResolved()).map((row) => row.id),
+        ...(opts.deviceIds ?? []),
+      ],
+      connectionOf: async (id) => {
+        if (opts.locked === true) throw new Error('the keychain is locked')
+        return homeComConnectionOf(built.instances, id)
+      },
       registry,
       onNamed: () => undefined,
       onSignedOut: (id) => signedOut.push(id),
@@ -211,5 +229,56 @@ describe('HomeCom sign in on an existing instance', () => {
       token: 'access-NEW',
       gatewayId: 'gw-77',
     })
+  })
+})
+
+describe('HomeCom reconcile — what counts as gone', () => {
+  it('signed out, then deleted: its devices and alert are dropped', async () => {
+    const s = await setup()
+    await signOutHomeComInstance(INTEGRATION.id, s.built.instances)
+    expect(s.vanished).toEqual([])
+    s.setPresent([])
+    await s.reconcile()
+    expect(s.vanished).toEqual([INTEGRATION.id])
+  })
+
+  it('unreadable at boot, then deleted: dropped, though no manager ever ran', async () => {
+    const s = await setup({ locked: true, deviceIds: ['int_0099'] })
+    expect(s.registry.has(INTEGRATION.id)).toBe(false)
+    // A device naming an integration that no longer exists is dropped on every pass.
+    expect(s.vanished).toEqual(['int_0099'])
+    s.vanished.length = 0
+    s.setPresent([])
+    await s.reconcile()
+    expect([...s.vanished].sort()).toEqual([INTEGRATION.id, 'int_0099'])
+  })
+
+  it('unreadable and still present: untouched', async () => {
+    const s = await setup({ locked: true })
+    await s.reconcile()
+    expect(s.vanished).toEqual([])
+    expect(s.signedOut).toEqual([])
+    expect(s.disconnected).toEqual([])
+  })
+})
+
+describe('HomeCom sign in on an existing instance — what the browser gets back', () => {
+  it('carries no secret in clear: the stored tokens come back as set views', async () => {
+    const s = await setup()
+    const finished: HomeComFinishedSignIn = {
+      token: 'access-SECRET-NEW',
+      refresh: 'refresh-SECRET-NEW',
+      username: 'user-SECRET@example.com',
+      accountLabel: 'Me',
+      gatewayCount: 1,
+      gatewayId: 'gw-77',
+      summary: 'Signed in.',
+    }
+    await storeHomeComSignIn(INTEGRATION.id, finished, s.built.instances)
+    const result = await storedSignInResult(INTEGRATION.id, finished, s.built.handle)
+    expect(JSON.stringify(result)).not.toMatch(/SECRET/)
+    expect(result.token).toMatchObject({ set: true })
+    expect(result.refresh).toMatchObject({ set: true })
+    expect(result).toMatchObject({ accountLabel: 'Me', gatewayCount: 1, gatewayId: 'gw-77' })
   })
 })

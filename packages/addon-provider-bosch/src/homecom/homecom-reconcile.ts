@@ -6,6 +6,10 @@
  *                      exists, so its devices and its session alert are KEPT;
  * - unreadable      -> left as it is (a locked keychain is not a sign out, nor a deletion);
  * - gone / disabled -> the manager stops and the caller drops what belonged to it.
+ *
+ * "Gone" is judged over EVERY id the addon still holds something for — a running manager, an
+ * instance record, a device — not only the running managers: an integration that was signed out
+ * or unreadable has no manager, and its devices and alert must still go when it is deleted.
  */
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { HomeComConfig } from './config.js'
@@ -18,6 +22,8 @@ export interface HomeComIntegrationRef {
 
 export interface HomeComReconcileDeps {
   readonly listEnabled: () => Promise<readonly HomeComIntegrationRef[]>
+  /** Every integration id the addon holds something for: instance records and devices. */
+  readonly knownIds: () => Promise<readonly string[]>
   /** Null when the instance holds no sign-in; throws when its secrets cannot be read. */
   readonly connectionOf: (integrationId: string) => Promise<HomeComConfig | null>
   readonly registry: Pick<HomeComClientRegistry, 'upsert' | 'remove' | 'retain' | 'list' | 'has'>
@@ -35,7 +41,8 @@ export async function reconcileHomeComIntegrations(deps: HomeComReconcileDeps): 
   for (const integration of enabled) {
     await reconcileOne(deps, integration)
   }
-  const vanished = deps.registry.list().filter((id) => !present.has(id))
+  const known = new Set([...deps.registry.list(), ...(await deps.knownIds())])
+  const vanished = [...known].filter((id) => !present.has(id))
   await deps.registry.retain(present)
   for (const integrationId of vanished) await deps.onVanished(integrationId)
 }

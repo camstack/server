@@ -10,6 +10,20 @@ import {
   isResourcePath,
 } from './homecom-resource-explorer.js'
 
+/** A stored secret as the form sees it (`SecretFieldView`): set or not, never the value. */
+const secretView = z.object({
+  $secret: z.string().nullable(),
+  v: z.literal(1),
+  set: z.literal(true),
+  inline: z.literal(true).optional(),
+})
+
+/**
+ * A sign-in secret in the result: in clear only for a form that has no record yet (the wizard
+ * stores it on create); for an existing instance it is already stored and comes back as a view.
+ */
+const signInSecret = z.union([z.string().min(1), secretView, z.null()]).meta({ secret: true })
+
 const gatewayChoice = z.object({
   value: z.string(),
   label: z.string(),
@@ -65,9 +79,9 @@ export const homeComActions = defineCustomActions({
       integrationId: z.string().min(1).optional(),
     }),
     z.object({
-      token: z.string().min(1).meta({ secret: true }),
-      refresh: z.string().min(1).meta({ secret: true }),
-      username: z.string().meta({ secret: true }),
+      token: signInSecret,
+      refresh: signInSecret,
+      username: z.union([z.string(), secretView, z.null()]).meta({ secret: true }),
       accountLabel: z.string(),
       gatewayCount: z.number(),
       summary: z.string(),

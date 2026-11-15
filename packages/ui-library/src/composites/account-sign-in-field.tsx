@@ -120,7 +120,14 @@ export function AccountSignInField({
     const patch: Record<string, unknown> = {}
     for (const [formKey, resultKey] of Object.entries(field.assignResult ?? {})) {
       const assigned = result[resultKey]
-      if (typeof assigned === 'string' || typeof assigned === 'number') patch[formKey] = assigned
+      // A secret already stored on the record comes back as its "set" view, never in clear.
+      if (
+        typeof assigned === 'string' ||
+        typeof assigned === 'number' ||
+        isSecretFieldView(assigned)
+      ) {
+        patch[formKey] = assigned
+      }
     }
     if (Object.keys(patch).length > 0) onChangeMany?.(patch)
     const nextChoices = choicesOf(result['choices'])

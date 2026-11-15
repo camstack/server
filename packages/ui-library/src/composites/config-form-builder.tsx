@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react'
+import { useRef, useState, type JSX } from 'react'
 import type { ConfigUISchema, ConfigSection, ConfigField, FieldProbeResult } from '@camstack/types'
 import { ConfigFormField, isFieldVisible } from './config-form-field'
 import { DisclosureChevron } from '../primitives/disclosure-chevron'
@@ -209,8 +209,12 @@ export function ConfigFormBuilder({
     onChange({ ...values, [key]: value })
     onClearProbe?.(key)
   }
+  // A field action resolves later (a sign-in round trip): its result merges into the values of
+  // THAT moment, so an edit made while it was in flight survives.
+  const latestValues = useRef(values)
+  latestValues.current = values
   const handleChangeMany: ChangeManyFn = (patch) => {
-    onChange({ ...values, ...patch })
+    onChange({ ...latestValues.current, ...patch })
     for (const key of Object.keys(patch)) onClearProbe?.(key)
   }
 

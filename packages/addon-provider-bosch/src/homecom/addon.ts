@@ -18,7 +18,11 @@ import {
 import { cascadeRemoveDevicesForIntegration } from '../shared/account-integration-cascade.js'
 import { setIntegrationDevicesOnline } from '../shared/account-integration-offline.js'
 import { homeComActions } from './custom-actions.js'
-import { signOutHomeComInstance, storeHomeComSignIn } from './homecom-account.js'
+import {
+  signOutHomeComInstance,
+  storedSignInResult,
+  storeHomeComSignIn,
+} from './homecom-account.js'
 import { reconcileHomeComIntegrations } from './homecom-reconcile.js'
 import { createHomeComSessionAlert, type HomeComSessionAlert } from './homecom-session-alert.js'
 import { createHomeComExploreAction, homeComExploreDeps } from './homecom-explore-action.js'
@@ -155,12 +159,11 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
             homeComSignInAttempts,
           )
           const integrationId = input.integrationId
-          if (integrationId !== undefined) {
-            await this.storeSignIn(integrationId, () =>
-              storeHomeComSignIn(integrationId, finished, built.instances),
-            )
-          }
-          return finished
+          if (integrationId === undefined) return finished
+          await this.storeSignIn(integrationId, () =>
+            storeHomeComSignIn(integrationId, finished, built.instances),
+          )
+          return storedSignInResult(integrationId, finished, built.handle)
         },
         signOut: async (input) => {
           const integrationId = input.integrationId
@@ -253,6 +256,7 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
           const all = await this.ctx.api.integrations.list.query()
           return all.filter((i) => i.addonId === this.ctx.id && i.enabled)
         },
+        knownIds: () => this.knownIntegrationIds(),
         connectionOf: (id) => homeComConnectionOf(this.requireInstances().instances, id),
         registry: reg,
         onNamed: (id, name) => this.integrationNames.set(id, name),
@@ -265,6 +269,23 @@ export class BoschHomeComProviderAddon extends BaseDeviceProvider {
         meta: { error: errMsg(err) },
       })
     }
+  }
+
+  /** Every integration this addon holds a record or a top-level device for. */
+  private async knownIntegrationIds(): Promise<readonly string[]> {
+    const ids = new Set<string>()
+    for (const row of await this.requireInstances().instances.listResolved()) ids.add(row.id)
+    const reg = this.ctx.kernel.deviceRegistry
+    const devices = this.ctx.kernel.devices
+    if (reg && devices) {
+      for (const d of reg.getAllForAddon(this.addonId)) {
+        if (d.parentDeviceId !== null) continue
+        const cfg = await devices.loadConfig(d.id).catch((): Record<string, unknown> => ({}))
+        const brokerId = cfg['brokerId']
+        if (cfg['system'] === 'homecom' && typeof brokerId === 'string') ids.add(brokerId)
+      }
+    }
+    return [...ids]
   }
 
   /** The integration is gone: its alert and its devices go with it. */

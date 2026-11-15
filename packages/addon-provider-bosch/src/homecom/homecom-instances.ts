@@ -166,8 +166,11 @@ export interface HomeComInstancesDeps {
 export interface HomeComInstances {
   readonly instances: RecordIntegrationInstances<HomeComConnectionBody>
   readonly provider: ReturnType<RecordIntegrationInstances<HomeComConnectionBody>['toProvider']>
-  /** The kind's handle: the addon patches a rotated token or a chosen gateway here. */
-  readonly handle: Pick<RecordKindHandle<HomeComConnectionBody>, 'patch'>
+  /**
+   * The kind's handle: the addon patches a rotated token or a chosen gateway here, and reads a
+   * row's secret markers (never their values) to hand the form a "set" view.
+   */
+  readonly handle: Pick<RecordKindHandle<HomeComConnectionBody>, 'patch' | 'get'>
 }
 
 export function buildHomeComInstances(
