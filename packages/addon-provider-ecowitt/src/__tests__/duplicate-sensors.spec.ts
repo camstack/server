@@ -19,7 +19,8 @@ const container = (
   id,
   type,
   parentDeviceId: null,
-  config: { system: 'ecowitt', gatewayId: GW, deviceGroup },
+  // As the hub stores it: a Container carries its gateway and group, never `system`.
+  config: { gatewayId: GW, deviceGroup },
 })
 const sensor = (id: number, parent: number, sensorId: string, mark = ''): DuplicateScanRow => ({
   id,

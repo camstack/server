@@ -324,7 +324,8 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       if (!isEcowittGroupType(d.type) && d.type !== DeviceType.Sensor) continue
       const config = await devices.loadConfig(d.id).catch((): null => null)
       if (config === null) return
-      if (config['system'] !== ECOWITT_SYSTEM || config['gatewayId'] !== gatewayKey) continue
+      // Rows are already this addon's; a Container carries no `system`, only its gateway.
+      if (config['gatewayId'] !== gatewayKey) continue
       rows.push({
         id: d.id,
         type: d.type,

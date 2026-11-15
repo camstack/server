@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- The duplicate and station-reading sensor devices are now actually retired: the scan no longer skips station containers, which carry no system field
+
 ## [0.2.167] - 2026-11-15
 
 ### Changed

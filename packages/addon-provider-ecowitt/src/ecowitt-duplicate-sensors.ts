@@ -1,5 +1,4 @@
 import { DeviceType } from '@camstack/types'
-import { ECOWITT_SYSTEM } from './config.js'
 import { isEcowittGroupType } from './ecowitt-mapping.js'
 import { isStationReadingSensorId } from './station-reading.js'
 import { configDeviceGroup, sensorKeyOf, sensorOwnerOf } from './ecowitt-sensor-groups.js'
@@ -33,7 +32,7 @@ export function findDuplicateGatewaySensors(rows: readonly DuplicateScanRow[]): 
 } {
   const containers = new Map<number, { gatewayId: string; gateway: boolean }>()
   for (const row of rows) {
-    if (!isEcowittGroupType(row.type) || row.config['system'] !== ECOWITT_SYSTEM) continue
+    if (!isEcowittGroupType(row.type)) continue
     const gatewayId = str(row.config, 'gatewayId')
     if (gatewayId === null) continue
     containers.set(row.id, {
@@ -71,7 +70,7 @@ export function findDuplicateGatewaySensors(rows: readonly DuplicateScanRow[]): 
 export function findStationReadingChildren(rows: readonly DuplicateScanRow[]): readonly number[] {
   const stations = new Set<number>()
   for (const row of rows) {
-    if (!isEcowittGroupType(row.type) || row.config['system'] !== ECOWITT_SYSTEM) continue
+    if (!isEcowittGroupType(row.type)) continue
     if (configDeviceGroup(row.config) === 'weather-station') stations.add(row.id)
   }
   const ids: number[] = []
