@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Energy card: the heat pump share is computed against house plus heat pump and stays within 0-100%
+
 ## [1.2.451] - 2026-11-15
 
 ### Changed
 
 - The device card's consumables chip now carries everything the removed Consumables section showed: a full bin or tank warns, an unknown reading never reads as ok, remaining time, Replaced date, the state in words, Reset, and the empty and loading lines.
-- Energy card: the heat pump share is computed against house plus heat pump and stays within 0-100%
 
 ## [1.2.450] - 2026-11-15
 
