@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.453] - 2026-11-15
+
 ### Changed
 
 - Generated hooks for the new tags capability (list, setStyle, rename, remove) and the device setTags method

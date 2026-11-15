@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.319] - 2026-11-15
+
 ### Changed
 
 - Each camera layer is its own section: None, a named template, or Customize with the shared template field.
