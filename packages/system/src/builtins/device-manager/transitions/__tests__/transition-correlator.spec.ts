@@ -100,6 +100,29 @@ describe('transition correlator (D1022)', () => {
     expect(w.out).toEqual([expect.objectContaining({ outcome: 'device', from: true, to: false })])
   })
 
+  it('a field absent from the prior slice and claimed by no command is the device being learned', () => {
+    const w = world({ '7|switch': {} })
+    w.write('switch', { on: true })
+    expect(w.out).toEqual([])
+    w.write('switch', { on: false })
+    expect(w.out).toEqual([expect.objectContaining({ outcome: 'device', from: true, to: false })])
+  })
+
+  it('a field present in the prior slice that changes stays a device row', () => {
+    const w = world({ '7|climate-control': { mode: 'cool' } })
+    w.write('climate-control', { mode: 'off' })
+    expect(w.out).toEqual([
+      expect.objectContaining({ outcome: 'device', field: 'mode', from: 'cool', to: 'off' }),
+    ])
+  })
+
+  it('a command still claims a field that appears for the first time', () => {
+    const w = world({ '7|switch': {} })
+    w.command('switch', 'setState', { on: true })
+    w.write('switch', { on: true })
+    expect(w.out).toEqual([expect.objectContaining({ outcome: 'confirmed', to: true })])
+  })
+
   it('a command whose target already holds is recorded as already, and waits for nothing', () => {
     const w = world({ '7|switch': { on: true } })
     w.command('switch', 'setState', { on: true })

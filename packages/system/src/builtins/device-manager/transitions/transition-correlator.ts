@@ -171,7 +171,7 @@ export class TransitionCorrelator {
         toTransitionValue(after),
         now,
         claimed,
-        prior === undefined,
+        !hadBefore,
       )
     }
   }
@@ -218,7 +218,7 @@ export class TransitionCorrelator {
     to: TransitionValue,
     now: number,
     claimedByThisWrite: Pending | undefined,
-    firstSlice: boolean,
+    neverHeld: boolean,
   ): Pending | undefined {
     const key = this.keyOf(deviceId, capName)
     const ring = this.pending.get(key)
@@ -229,9 +229,10 @@ export class TransitionCorrelator {
     const matched =
       byEffect ?? claimedByThisWrite ?? [...live].reverse().find((e) => e.effect === null)
     if (matched === undefined) {
-      // The first slice the mirror ever holds for a cap is the device being learned (a boot, a
-      // restore, a new device), not the device changing: with no command to claim it, no row.
-      if (firstSlice) return undefined
+      // A field the mirror never held (the first slice of a cap, or one that arrives in steps
+      // after a boot or restore) is the device being learned, not changing: with no command to
+      // claim it, no row.
+      if (neverHeld) return undefined
       this.emitDevice(deviceId, capName, field, from, to, now)
       return undefined
     }

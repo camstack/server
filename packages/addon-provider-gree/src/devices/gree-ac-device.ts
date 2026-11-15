@@ -307,7 +307,6 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
     }
     this.ctx.registerNativeCap(climateControlCapability, climateProvider)
     registerPowerSwitch(this, climateControlCapability, climateProvider)
-    this.runtimeState.setCapState(CLIMATE_CAP, this.applyClimateFilters(CLIMATE_COLD_START))
 
     const fanProvider: InferNativeProvider<typeof fanControlCapability> = {
       getStatus: async () =>
@@ -328,12 +327,15 @@ export class GreeAcDevice extends BaseDevice<typeof greeAcSchema> {
       },
     }
     this.ctx.registerNativeCap(fanControlCapability, fanProvider)
-    this.runtimeState.setCapState(FAN_CAP, FAN_COLD_START)
   }
 
   private recomputeSlices(): void {
     const ac = this.resolveAc()
     if (ac === null) return
+    // Until the unit answers a status read the handle's getters are defaults (power off,
+    // target 0, swing unknown): publishing them is a state the device never reported, and
+    // the real read then diffs against it as phantom device transitions (planning#561).
+    if (Object.keys(ac.state).length === 0) return
     const now = Date.now()
 
     const mode = ac.power ? libModeToCapMode(ac.mode) : 'off'
