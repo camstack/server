@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A gateway that stops answering is power-cycled after 2 minutes instead of about 11
+
 ## [0.2.169] - 2026-11-12
 
 ### Changed

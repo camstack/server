@@ -1,6 +1,7 @@
 import type { PowerSourceActionResult } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { VeluxDisconnect, VeluxGatewayClient } from '../velux-client-contract.js'
+import { VeluxLoginRefusedError } from '../velux-client-contract.js'
 import { VeluxIntegrationManager } from '../velux-integration-manager.js'
 import {
   GATEWAY_BOOT_MS,
@@ -296,8 +297,8 @@ describe('gateway recovery through the power-source link', () => {
     const source = new FakePowerSource()
     const { manager } = build(source, new MemoryStore())
     await manager.start()
-    // The restart fires at the failure at 810 s; the boot wait ends 90 s later.
-    await vi.advanceTimersByTimeAsync(815_000)
+    // The restart fires at the deadline (120 s); the boot wait ends 90 s later.
+    await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 5_000)
     expect(source.restarts).toHaveLength(1)
     // Inside the 90 s boot wait.
     await vi.advanceTimersByTimeAsync(10_000)
@@ -307,5 +308,96 @@ describe('gateway recovery through the power-source link', () => {
     await vi.advanceTimersByTimeAsync(RECOVERY_COOLDOWN_MS + RECOVERY_UNREACHABLE_MS + 5 * 60_000)
     expect(source.restarts).toHaveLength(2)
     await manager.stop()
+  })
+
+  describe('the deadline timer', () => {
+    it('is two minutes, and cycles at the deadline even though the next backoff attempt is later', async () => {
+      expect(RECOVERY_UNREACHABLE_MS).toBe(2 * 60_000)
+      const source = new FakePowerSource()
+      const { manager } = build(source, new MemoryStore())
+      await manager.start()
+      // Attempts land at 2, 6, 14, 30, 62 and 126 s: nothing is due at 119 s.
+      await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS - 1_000)
+      expect(source.restarts).toEqual([])
+      await vi.advanceTimersByTimeAsync(2_000)
+      expect(source.restarts).toEqual([GATEWAY_DEVICE])
+      await manager.stop()
+    })
+
+    it('does not cycle under a login in flight, and cycles when that login fails', async () => {
+      const source = new FakePowerSource()
+      let attempts = 0
+      const hanging: { fail: (() => void) | null } = { fail: null }
+      const logger = new RecordingLogger()
+      const manager = new VeluxIntegrationManager({
+        id: 'int-7f3a',
+        name: 'KLF',
+        connection: { host: '192.168.20.65', password: 'pw' },
+        logger,
+        onConnected: () => undefined,
+        onDisconnected: () => undefined,
+        onNodesChanged: () => undefined,
+        makeClient: () => {
+          attempts += 1
+          const client = new DeadClient()
+          if (attempts === 2) {
+            client.connect = () =>
+              new Promise<void>((_resolve, reject) => {
+                hanging.fail = () => reject(new Error('KLF-200 login failed: Timeout'))
+              })
+          } else {
+            client.connect = async () => {
+              throw new Error('KLF-200 login failed: Timeout')
+            }
+          }
+          return client
+        },
+        powerSource: source,
+        powerCycleStore: new MemoryStore(),
+      })
+      await manager.start()
+      // The second attempt (t = 2 s) hangs across the deadline.
+      await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 5_000)
+      expect(hanging.fail).not.toBeNull()
+      expect(source.restarts).toEqual([])
+      hanging.fail?.()
+      await vi.advanceTimersByTimeAsync(1_000)
+      expect(source.restarts).toEqual([GATEWAY_DEVICE])
+      await manager.stop()
+    })
+
+    it('does not cycle when a connect succeeds before the deadline', async () => {
+      const source = new FakePowerSource()
+      const { manager } = build(source, new MemoryStore())
+      await manager.start()
+      DeadClient.failWith = null
+      await vi.advanceTimersByTimeAsync(5_000)
+      expect(manager.status).toBe('connected')
+      await vi.advanceTimersByTimeAsync(10 * 60_000)
+      expect(source.restarts).toEqual([])
+      await manager.stop()
+    })
+
+    it('never cycles for a refused password', async () => {
+      const source = new FakePowerSource()
+      DeadClient.failWith = new VeluxLoginRefusedError()
+      const { manager } = build(source, new MemoryStore())
+      await manager.start()
+      await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS * 3)
+      expect(source.restarts).toEqual([])
+      await manager.stop()
+    })
+
+    it('respects the cooldown at the deadline', async () => {
+      const source = new FakePowerSource()
+      const store = new MemoryStore()
+      store.at = Date.now() - 60_000
+      const { manager, logger } = build(source, store)
+      await manager.start()
+      await vi.advanceTimersByTimeAsync(RECOVERY_UNREACHABLE_MS + 1_000)
+      expect(source.restarts).toEqual([])
+      expect(logger.lines.some((l) => l.message.includes('power restart skipped'))).toBe(true)
+      await manager.stop()
+    })
   })
 })

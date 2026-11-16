@@ -5,8 +5,14 @@ import {
   PowerSourceInfoSchema,
 } from '@camstack/types'
 
-/** The gateway has been unreachable this long before a power cycle is considered. */
-export const RECOVERY_UNREACHABLE_MS = 10 * 60 * 1000
+/**
+ * The gateway has been unreachable this long before a power cycle is considered.
+ * The manager arms a deadline timer at this mark, so the cycle does not wait for
+ * a backoff attempt. The clock starts at the first unreachable failure, so after
+ * an established session ends the worst case is about
+ * SESSION_ENDED_MIN_RETRY_MS (30 s) + this (2 min), before the boot wait.
+ */
+export const RECOVERY_UNREACHABLE_MS = 2 * 60 * 1000
 
 /** At most one power cycle per this window, kept across a respawn of the addon. */
 export const RECOVERY_COOLDOWN_MS = 30 * 60 * 1000
