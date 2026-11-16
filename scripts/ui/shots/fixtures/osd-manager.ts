@@ -25,6 +25,38 @@ const TEMPLATES = [
   },
 ]
 
+/** Camera 102: every writable layer is a static "Value" with a device reference. */
+const valueSlots = () => [
+  {
+    slotId: 'text-1',
+    kind: 'text',
+    readOnly: false,
+    cameraEnabled: true,
+    cameraText: '21 damp',
+    binding: {
+      enabled: true,
+      source: {
+        kind: 'static',
+        text: '{{ garage.temperature }} {{ garage.humidity }}',
+      },
+    },
+  },
+  {
+    slotId: 'text-2',
+    kind: 'text',
+    readOnly: false,
+    cameraEnabled: true,
+    binding: { enabled: true, source: { kind: 'static', text: 'Garden' } },
+  },
+  {
+    slotId: 'time-1',
+    kind: 'timestamp',
+    readOnly: true,
+    cameraEnabled: true,
+    binding: null,
+  },
+]
+
 const slots = (templateId: string) => [
   {
     slotId: 'text-1',
@@ -41,7 +73,13 @@ const slots = (templateId: string) => [
     cameraEnabled: true,
     binding: null,
   },
-  { slotId: 'time-1', kind: 'timestamp', readOnly: true, cameraEnabled: true, binding: null },
+  {
+    slotId: 'time-1',
+    kind: 'timestamp',
+    readOnly: true,
+    cameraEnabled: true,
+    binding: null,
+  },
 ]
 
 export default defineFixtures({
@@ -79,7 +117,7 @@ export default defineFixtures({
     'deviceManager.listSiteZones': [],
     'osdManager.getDeviceOsd': (input: { deviceId: number }) => ({
       supported: true,
-      slots: slots(input.deviceId === 101 ? 'tpl-temperature' : 'tpl-clock'),
+      slots: input.deviceId === 102 ? valueSlots() : slots('tpl-temperature'),
     }),
     'osdManager.listTemplates': { templates: TEMPLATES },
     'mut:osdManager.previewTemplate': {

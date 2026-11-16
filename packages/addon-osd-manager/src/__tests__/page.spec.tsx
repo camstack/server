@@ -379,6 +379,31 @@ describe('OsdManagerPage — slot editing inside the modal', () => {
     expect(call!.binding.source).toEqual({ kind: 'static', text: 'Hello operator' })
     await waitFor(() => expect(screen.queryByTestId('osd-layer-text-1')).toBeNull())
   })
+
+  it('editing the second layer saves only that layer, and a read-only layer is shown as read-only', async () => {
+    mockSetSlotBinding.mockClear()
+    render(<OsdManagerPage {...pageProps} />)
+    await openCameraEditor('Front Door')
+    await waitFor(() => expect(screen.getByTestId('osd-layer-text-2')).toBeTruthy())
+
+    const readOnly = within(screen.getByTestId('osd-layer-time-1'))
+    expect(readOnly.getByTestId('osd-slot-readonly')).toBeTruthy()
+    expect(readOnly.getByText('read-only')).toBeTruthy()
+
+    const layer = within(screen.getByTestId('osd-layer-text-2'))
+    fireEvent.click(layer.getByLabelText('Source'))
+    fireEvent.click(await screen.findByRole('option', { name: 'Customize' }))
+    fireEvent.change(layer.getByTestId('osd-value-text-2-input'), {
+      target: { value: 'Second layer' },
+    })
+    fireEvent.click(screen.getByTestId('osd-camera-save'))
+
+    await waitFor(() => expect(mockSetSlotBinding).toHaveBeenCalled())
+    expect(mockSetSlotBinding.mock.calls).toHaveLength(1)
+    const call = mockSetSlotBinding.mock.calls[0]?.[0]
+    expect(call!.slotId).toBe('text-2')
+    expect(call!.binding.source).toEqual({ kind: 'static', text: 'Second layer' })
+  })
 })
 
 describe('OsdManagerPage — Duplicate into… (table row)', () => {

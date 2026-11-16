@@ -250,7 +250,7 @@ export function CameraOsdDetail({
           return (
             <section
               key={slot.slotId}
-              className="space-y-2"
+              className="space-y-2 rounded-lg border border-border p-3"
               data-testid={`osd-layer-${slot.slotId}`}
             >
               <h3 className="text-sm font-medium text-foreground">{slot.slotId}</h3>
