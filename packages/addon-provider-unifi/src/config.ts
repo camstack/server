@@ -13,8 +13,8 @@ function nullToEmpty(value: unknown): unknown {
  * Operator-supplied connection to ONE UniFi Network controller on the local
  * network. The addon runs in `account` mode: the CONNECTION lives on the INTEGRATION's
  * settings, not on a device. The controller is POLLED — `pollIntervalMs` drives the infra + client
- * refresh cadence. Auth is either an API key (preferred, UniFi OS ≥ 4) OR a
- * username + password local admin.
+ * refresh cadence. The client signs in with the API key (the UniFi OS Integration API); the
+ * username + password are kept but not used yet (planning#581).
  */
 export const unifiConnectionSchema = z.object({
   host: z.string().min(1).describe('Controller host name or IP address'),
@@ -26,12 +26,14 @@ export const unifiConnectionSchema = z.object({
     .describe('Controller HTTPS port (443 on UniFi OS, 8443 on legacy)'),
   apiKey: z
     .preprocess(nullToEmpty, z.string().default(''))
-    .describe('UniFi OS API key (preferred). Leave blank to use username + password.')
+    .describe('UniFi OS API key — the credential the client signs in with')
     .meta({ secret: true }),
-  username: z.string().default('').describe('Local admin username (when no API key)'),
+  username: z
+    .preprocess(nullToEmpty, z.string().default(''))
+    .describe('Local account username (not used yet: the client signs in with the API key)'),
   password: z
     .preprocess(nullToEmpty, z.string().default(''))
-    .describe('Local admin password (when no API key)')
+    .describe('Local account password (not used yet: the client signs in with the API key)')
     .meta({ secret: true }),
   site: z.string().default('default').describe('Controller site name'),
   allowSelfSigned: z
@@ -181,7 +183,8 @@ export function sameConnection(a: UnifiConnectionConfig, b: UnifiConnectionConfi
 
 /**
  * The integration instance form (the `formSchema` of its instances); the integration carries the
- * name. The credentials are `password` fields, keychain secrets.
+ * name. The credentials are `password` fields, keychain secrets; the sign-in section says the
+ * API key is the one used.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
@@ -190,8 +193,7 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         id: 'connection',
         title: 'Connection',
         titleKey: 'provider-unifi:controller.s_connection.title',
-        description:
-          'Authenticate with a UniFi OS API key (preferred) or a local admin username and password.',
+        description: 'Where the UniFi Network controller answers.',
         descriptionKey: 'provider-unifi:controller.s_connection.description',
         columns: 2,
         fields: [
@@ -211,27 +213,6 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             min: 1,
             max: 65535,
             default: 443,
-          },
-          {
-            type: 'password',
-            key: 'apiKey',
-            label: 'API key',
-            labelKey: 'provider-unifi:controller.s_connection.apiKey.label',
-            showToggle: true,
-          },
-          {
-            type: 'text',
-            key: 'username',
-            label: 'Username',
-            labelKey: 'provider-unifi:controller.s_connection.username.label',
-            placeholder: 'admin',
-          },
-          {
-            type: 'password',
-            key: 'password',
-            label: 'Password',
-            labelKey: 'provider-unifi:controller.s_connection.password.label',
-            showToggle: true,
           },
           {
             type: 'text',
@@ -255,6 +236,38 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             min: 2000,
             max: 3_600_000,
             default: 30_000,
+          },
+        ],
+      },
+      {
+        id: 'signin',
+        title: 'Sign-in',
+        titleKey: 'provider-unifi:controller.s_signin.title',
+        description:
+          'The API key is used to sign in. Username and password are not used yet: the client signs in with the API key only.',
+        descriptionKey: 'provider-unifi:controller.s_signin.description',
+        columns: 2,
+        fields: [
+          {
+            type: 'password',
+            key: 'apiKey',
+            label: 'API key',
+            labelKey: 'provider-unifi:controller.s_signin.apiKey.label',
+            showToggle: true,
+          },
+          {
+            type: 'text',
+            key: 'username',
+            label: 'Username',
+            labelKey: 'provider-unifi:controller.s_signin.username.label',
+            placeholder: 'admin',
+          },
+          {
+            type: 'password',
+            key: 'password',
+            label: 'Password',
+            labelKey: 'provider-unifi:controller.s_signin.password.label',
+            showToggle: true,
           },
         ],
       },

@@ -1,12 +1,14 @@
 {
   "controller.s_connection.title": "Connection",
-  "controller.s_connection.description": "Authenticate with a UniFi OS API key (preferred) or a local admin username and password.",
+  "controller.s_connection.description": "Where the UniFi Network controller answers.",
   "controller.s_connection.host.label": "Controller host / IP",
   "controller.s_connection.port.label": "HTTPS port",
-  "controller.s_connection.apiKey.label": "API key",
-  "controller.s_connection.username.label": "Username",
-  "controller.s_connection.password.label": "Password",
   "controller.s_connection.site.label": "Site",
   "controller.s_connection.allowSelfSigned.label": "Accept self-signed certificate",
-  "controller.s_connection.pollIntervalMs.label": "Poll interval (ms)"
+  "controller.s_connection.pollIntervalMs.label": "Poll interval (ms)",
+  "controller.s_signin.title": "Sign-in",
+  "controller.s_signin.description": "The API key is used to sign in. Username and password are not used yet: the client signs in with the API key only.",
+  "controller.s_signin.apiKey.label": "API key",
+  "controller.s_signin.username.label": "Username",
+  "controller.s_signin.password.label": "Password"
 }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The UniFi connection can be tested from the form with the API key, a failure names its reason (refused key, untrusted self-signed certificate, unreachable, wrong site) instead of "fetch failed", an offline integration says why on its status, and the LED switch the API cannot control is no longer offered
+
 ## [0.2.164] - 2026-11-14
 
 ### Changed

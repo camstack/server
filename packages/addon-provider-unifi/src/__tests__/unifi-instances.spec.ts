@@ -68,7 +68,13 @@ async function world() {
     }),
   )
   if (migration === undefined) throw new Error('no migration')
-  const instances = buildUnifiInstances(mem.records, { onChanged: async () => undefined })
+  const instances = buildUnifiInstances(mem.records, {
+    onChanged: async () => undefined,
+    makeClient: () => {
+      throw new Error('no client in this spec')
+    },
+    statusOf: () => null,
+  })
   return { mem, rows, cleared, migration, instances }
 }
 
@@ -78,7 +84,10 @@ describe('unifi integration instances', () => {
 
     const result = await w.migration.execute()
 
-    expect(result).toMatchObject({ kind: 'procedure', result: { outcome: 'done' } })
+    expect(result).toMatchObject({
+      kind: 'procedure',
+      result: { outcome: 'done' },
+    })
     const read = await unifiConnectionOf(w.instances, 'int_0001')
     expect(read?.credentialsLocked).toBe(false)
     expect(read?.connection).toMatchObject({
@@ -96,7 +105,9 @@ describe('unifi integration instances', () => {
     expect(stored).not.toContain(PASSWORD)
     expect(w.cleared).toEqual(['int_0001'])
     expect(w.rows.get('int_0001')).toEqual({})
-    expect(await w.migration.execute()).toMatchObject({ result: { outcome: 'already-done' } })
+    expect(await w.migration.execute()).toMatchObject({
+      result: { outcome: 'already-done' },
+    })
   })
 
   it('reads no connection from a record without a host', async () => {

@@ -1,6 +1,7 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IntegrationInstanceStatus, type IScopedLogger } from '@camstack/types'
 import { sameConnection, type UnifiConnectionConfig } from './config.js'
 import type { UnifiControllerClientFactory } from './unifi-client-contract.js'
+import { classifyUnifiError } from './unifi-connection-test.js'
 import { UnifiIntegrationManager } from './unifi-integration-manager.js'
 import { unifiControllers } from './unifi-node-resolver.js'
 
@@ -11,7 +12,7 @@ export interface UnifiClientRegistryDeps {
   readonly onDisconnected: (integrationId: string) => void
   /** Fired after every poll cycle: fan the snapshot out and reconcile the infra features. */
   readonly onPolled: (integrationId: string) => void
-  readonly makeClient?: UnifiControllerClientFactory
+  readonly makeClient: UnifiControllerClientFactory
 }
 
 interface UnifiClientEntry {
@@ -73,10 +74,17 @@ export class UnifiClientRegistry {
         this.#deps.onPolled(integrationId)
       },
     })
-    this.#entries.set(integrationId, { manager, connection, credentialsLocked })
+    this.#entries.set(integrationId, {
+      manager,
+      connection,
+      credentialsLocked,
+    })
     unifiControllers.set(integrationId, manager)
     if (credentialsLocked) {
       // Locked is never empty: do not connect with a blank credential, run offline until it reads.
+      manager.markFailed(
+        'unifi: the stored credential cannot be read right now (keychain unavailable)',
+      )
       this.#logger.warn(
         'UniFi integration credentials are stored but unreadable — staying offline',
         {
@@ -89,8 +97,14 @@ export class UnifiClientRegistry {
     try {
       await manager.start()
     } catch (err) {
-      this.#logger.warn('UniFi integration connect failed — offline', {
-        meta: { integrationId, error: errMsg(err) },
+      const failure = classifyUnifiError(err)
+      this.#logger.warn('UniFi integration connect failed — offline: ' + failure.reason, {
+        meta: {
+          integrationId,
+          integrationName: name,
+          reason: failure.kind,
+          error: errMsg(err),
+        },
       })
       await manager.stop()
     }
@@ -113,6 +127,11 @@ export class UnifiClientRegistry {
 
   async shutdown(): Promise<void> {
     for (const id of [...this.#entries.keys()]) await this.remove(id)
+  }
+
+  /** The status word of an integration's connection, or null when it has no client here. */
+  statusOf(integrationId: string): IntegrationInstanceStatus | null {
+    return this.#entries.get(integrationId)?.manager.instanceStatus() ?? null
   }
 
   has(integrationId: string): boolean {

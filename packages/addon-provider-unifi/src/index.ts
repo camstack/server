@@ -42,13 +42,25 @@ export {
   UNIFI_GATEWAY_ID,
 } from './unifi-discovery.js'
 export type { ParsedNativeId } from './unifi-discovery.js'
-export { buildInfraFeatures, featuresEqual, capForMetric } from './unifi-mapping.js'
 export {
-  UnifiIntegrationManager,
-  defaultUnifiClientFactory,
-} from './unifi-integration-manager.js'
-export { UnifiControllerResolver, unifiControllers } from './unifi-node-resolver.js'
-export { UnifiGatewayDevice, unifiGatewaySchema } from './devices/unifi-gateway-device.js'
+  buildInfraFeatures,
+  featuresEqual,
+  capForMetric,
+} from './unifi-mapping.js'
+export { UnifiIntegrationManager } from './unifi-integration-manager.js'
+export { liveUnifiClientFactory } from './unifi-client-factory.js'
+export {
+  classifyUnifiError,
+  testUnifiConnection,
+} from './unifi-connection-test.js'
+export {
+  UnifiControllerResolver,
+  unifiControllers,
+} from './unifi-node-resolver.js'
+export {
+  UnifiGatewayDevice,
+  unifiGatewaySchema,
+} from './devices/unifi-gateway-device.js'
 export { UnifiClientRegistry } from './unifi-client-registry.js'
 export { buildUnifiAdoptionProvider } from './unifi-adoption-provider.js'
 export { buildUnifiDeviceAdopter } from './unifi-device-adopter.js'

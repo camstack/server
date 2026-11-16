@@ -1,5 +1,6 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IntegrationInstanceStatus, type IScopedLogger } from '@camstack/types'
 import type { UnifiConnectionConfig } from './config.js'
+import { classifyUnifiError } from './unifi-connection-test.js'
 import type {
   UnifiClientSnapshot,
   UnifiControllerClient,
@@ -9,21 +10,6 @@ import type {
 
 /** Status of a single UniFi controller connection. */
 export type UnifiControllerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
-
-/**
- * Default client factory — INTENTIONALLY unimplemented. No UniFi controller-API
- * client library is wired into this addon yet (see `plan-unifi.md`). Wiring one
- * is the single remaining step to make UniFi live: replace this factory with a
- * real {@link UnifiControllerClient} implementation. Until then the addon
- * installs and type-checks, but a created controller stays offline and logs this
- * error.
- */
-export const defaultUnifiClientFactory: UnifiControllerClientFactory = () => {
-  throw new Error(
-    'unifi: no UniFi controller-API client library is wired yet — implement ' +
-      'UnifiControllerClient (see plan-unifi.md) and pass a makeClient factory.',
-  )
-}
 
 /** Constructor options for {@link UnifiIntegrationManager}. */
 export interface UnifiIntegrationManagerOptions {
@@ -36,8 +22,8 @@ export interface UnifiIntegrationManagerOptions {
   /** Fired after every poll cycle so the controller device fans the fresh
    *  snapshot out to its infra + client children. */
   readonly onPolled: (integrationId: string) => void
-  /** Factory seam — defaults to the "not wired" factory above. */
-  readonly makeClient?: UnifiControllerClientFactory
+  /** Builds the API-key client for the connection (`liveUnifiClientFactory` in production). */
+  readonly makeClient: UnifiControllerClientFactory
 }
 
 /**
@@ -72,7 +58,7 @@ export class UnifiIntegrationManager {
     this.#onConnected = options.onConnected
     this.#onDisconnected = options.onDisconnected
     this.#onPolled = options.onPolled
-    this.#makeClient = options.makeClient ?? defaultUnifiClientFactory
+    this.#makeClient = options.makeClient
   }
 
   /** The controller id (= the integration id). */
@@ -93,6 +79,26 @@ export class UnifiIntegrationManager {
   /** Last error surfaced from the client, or null. */
   get error(): string | null {
     return this.#error
+  }
+
+  /** Hold the integration offline for a reason found before any client was built. */
+  markFailed(reason: string): void {
+    this.#status = 'error'
+    this.#error = reason
+  }
+
+  /** The integration's status word, from the live connection. */
+  instanceStatus(): IntegrationInstanceStatus {
+    if (this.#error !== null) return { state: 'error', label: 'Offline', detail: this.#error }
+    switch (this.#status) {
+      case 'connected':
+        return { state: 'ok', label: 'Connected', detail: 'Signed in with the API key' }
+      case 'connecting':
+        return { state: 'unknown', label: 'Connecting' }
+      case 'error':
+      case 'disconnected':
+        return { state: 'off', label: 'Disconnected' }
+    }
   }
 
   /** The connection settings the manager is currently configured with. */
@@ -139,21 +145,18 @@ export class UnifiIntegrationManager {
     }
     this.#status = 'connecting'
     this.#error = null
-
-    const client = this.#makeClient({
-      host: this.#connection.host,
-      port: this.#connection.port,
-      apiKey: this.#connection.apiKey,
-      username: this.#connection.username,
-      password: this.#connection.password,
-      site: this.#connection.site,
-      allowSelfSigned: this.#connection.allowSelfSigned,
-    })
-    this.#client = client
-
-    await client.connect()
-    this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
-    this.#clients = indexBy(await client.listClients(), (c) => c.mac)
+    try {
+      const client = this.#makeClient(this.#connection)
+      this.#client = client
+      await client.connect()
+      this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
+      this.#clients = indexBy(await client.listClients(), (c) => c.mac)
+    } catch (err) {
+      // The reason stays on the manager (the integration's status word) after the caller stops it.
+      this.#status = 'error'
+      this.#error = classifyUnifiError(err).reason
+      throw err
+    }
 
     this.#status = 'connected'
     this.#onConnected(this.#id)
@@ -161,7 +164,10 @@ export class UnifiIntegrationManager {
     this.#startPollLoop()
     this.#logger.info('UnifiIntegrationManager: started', {
       tags: { integrationId: this.#id },
-      meta: { infraCount: this.#infra.size, clientCount: this.#clients.size },
+      meta: {
+        infraCount: this.#infra.size,
+        clientCount: this.#clients.size,
+      },
     })
   }
 
@@ -175,7 +181,8 @@ export class UnifiIntegrationManager {
     this.#client = null
     this.#infra = new Map()
     this.#clients = new Map()
-    this.#status = 'disconnected'
+    // A failed start keeps its 'error' status and reason: that is what the operator must see.
+    if (this.#status !== 'error') this.#status = 'disconnected'
     if (client) {
       try {
         await client.disconnect()
@@ -205,7 +212,7 @@ export class UnifiIntegrationManager {
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
       this.#error = null
     } catch (err) {
-      this.#error = errMsg(err)
+      this.#error = classifyUnifiError(err).reason
       this.#logger.debug('UnifiIntegrationManager: poll failed', {
         tags: { integrationId: this.#id },
         meta: { error: this.#error },

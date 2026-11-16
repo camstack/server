@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   UnifiAuthError,
   UnifiLiveClient,
+  UnifiNoCredentialError,
   UnifiUnsupportedError,
   type UnifiFetch,
   type UnifiFetchInit,
@@ -13,7 +14,13 @@ interface Call {
 }
 
 function page(data: readonly unknown[]): unknown {
-  return { offset: 0, limit: 200, count: data.length, totalCount: data.length, data }
+  return {
+    offset: 0,
+    limit: 200,
+    count: data.length,
+    totalCount: data.length,
+    data,
+  }
 }
 
 function fakeFetch(
@@ -34,15 +41,30 @@ function fakeFetch(
 const ROUTES: Record<string, unknown> = {
   '/sites': page([{ id: 's1', name: 'Default', internalReference: 'default' }]),
   '/sites/s1/devices': page([
-    { id: 'd1', name: 'Switch', model: 'USW-Lite-8-PoE', state: 'ONLINE', features: ['switching'] },
-    { id: 'd2', name: 'AP', model: 'U6-Pro', state: 'OFFLINE', features: ['accessPoint'] },
+    {
+      id: 'd1',
+      name: 'Switch',
+      model: 'USW-Lite-8-PoE',
+      state: 'ONLINE',
+      features: ['switching'],
+    },
+    {
+      id: 'd2',
+      name: 'AP',
+      model: 'U6-Pro',
+      state: 'OFFLINE',
+      features: ['accessPoint'],
+    },
   ]),
   '/sites/s1/devices/d1': {
     interfaces: {
       ports: [{ idx: 1, poe: { state: 'UP' } }, { idx: 2, poe: { state: 'DOWN' } }, { idx: 3 }],
     },
   },
-  '/sites/s1/devices/d1/statistics/latest': { uptimeSec: 100, cpuUtilizationPct: 12.5 },
+  '/sites/s1/devices/d1/statistics/latest': {
+    uptimeSec: 100,
+    cpuUtilizationPct: 12.5,
+  },
   '/sites/s1/devices/d1/actions': {},
   '/sites/s1/devices/d1/interfaces/ports/2/actions': {},
   '/sites/s1/clients': page([
@@ -87,9 +109,18 @@ describe('UnifiLiveClient', () => {
     ])
     // statistics unavailable for the AP -> null, never 0
     const ap = infra.find((d) => d.id === 'd2')
-    expect(ap).toMatchObject({ cpuPercent: null, uptimeSec: null, online: false, state: 'offline' })
+    expect(ap).toMatchObject({
+      cpuPercent: null,
+      uptimeSec: null,
+      online: false,
+      state: 'offline',
+    })
     const clients = await client.listClients()
-    expect(clients[0]).toMatchObject({ mac: 'aa:bb:cc:dd:ee:ff', ip: '192.0.2.5', connected: true })
+    expect(clients[0]).toMatchObject({
+      mac: 'aa:bb:cc:dd:ee:ff',
+      ip: '192.0.2.5',
+      connected: true,
+    })
     expect(client.getClient('aa:bb:cc:dd:ee:ff')).not.toBeNull()
     expect(calls.every((c) => c.init.headers['X-API-KEY'] === 'KEY-123')).toBe(true)
     expect(
@@ -120,7 +151,7 @@ describe('UnifiLiveClient', () => {
     ])
   })
 
-  it('refuses to connect without an API key', async () => {
+  it('refuses to connect without an API key, naming the missing credential', async () => {
     const client = new UnifiLiveClient({
       host: 'h',
       port: 443,
@@ -128,6 +159,6 @@ describe('UnifiLiveClient', () => {
       site: 'default',
       fetchImpl: fakeFetch(ROUTES, []),
     })
-    await expect(client.connect()).rejects.toBeInstanceOf(UnifiAuthError)
+    await expect(client.connect()).rejects.toBeInstanceOf(UnifiNoCredentialError)
   })
 })

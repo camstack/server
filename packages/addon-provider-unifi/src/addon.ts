@@ -23,7 +23,7 @@ import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
 import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'
 import { buildUnifiAdoptionProvider } from './unifi-adoption-provider.js'
-import { liveUnifiClientFactory } from './unifi-client-live.js'
+import { liveUnifiClientFactory } from './unifi-client-factory.js'
 import { UnifiClientRegistry } from './unifi-client-registry.js'
 import { buildUnifiDeviceAdopter } from './unifi-device-adopter.js'
 import { unifiStableId } from './unifi-discovery.js'
@@ -45,17 +45,17 @@ const UNIFI_MIGRATIONS_DATE = '2026-11-05'
 
 /**
  * UniFi Network device-provider addon, `mode: account` and broker-less. An integration is one
- * controller: its host, port, credentials (an API key or a username + password, keychain
- * secrets), site and poll interval live on the integration's settings, and the addon polls it
- * with one client per `integrationId`. Discovery offers the controller itself
- * ({@link DeviceType.Gateway}, with a link to its UI), each infra device
- * ({@link DeviceType.Container}, fanning per-port PoE, restart, LED and sensors out as
- * accessory children) and each network client ({@link DeviceType.Presence}), all as siblings.
- * Cameras are not in scope.
+ * controller: its host, port, credential, site and poll interval live on the integration's
+ * settings, and the addon polls it with one client per `integrationId`. The client signs in with
+ * the console's API key (the UniFi OS Integration API, `unifi-client-factory.ts`); the username
+ * and password fields are kept but not used yet. Both secrets live in the keychain. The integration declares a
+ * connection test (`unifi-connection-test.ts`), and a connection that fails names its reason on
+ * the integration's status.
  *
- * NOTE: no UniFi controller-API client library is wired yet (see `plan-unifi.md`): the
- * integration manager's default factory throws, so an integration installs cleanly but stays
- * offline. Everything else (config, discovery flow, cap surfaces) is complete and type-checked.
+ * Discovery offers the controller itself ({@link DeviceType.Gateway}, with a link to its UI),
+ * each infra device ({@link DeviceType.Container}, fanning per-port PoE, restart and sensors
+ * out as accessory children) and each network client ({@link DeviceType.Presence}), all as
+ * siblings. Cameras are not in scope.
  *
  * `instanceMode: multiple` — many controllers may be added. Network auto-discovery is not
  * implemented; the controller is added by host.
@@ -99,10 +99,16 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
           fixtureMark: 'host',
         }),
       ],
-      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: unifiConnectionsEntryKind }),
+      (api) =>
+        integrationRowsPortsOver({
+          ...rowsDepsOver(api),
+          kind: unifiConnectionsEntryKind,
+        }),
     )
     this.instances = buildUnifiInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      makeClient: liveUnifiClientFactory,
+      statusOf: (id) => this.clients?.statusOf(id) ?? null,
     })
     this.clients = new UnifiClientRegistry(this.ctx.logger, {
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
@@ -131,7 +137,9 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('UniFi shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('UniFi shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.clients = null
     this.integrationReconciler?.dispose()
