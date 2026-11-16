@@ -19,22 +19,22 @@ import type {
   TerminalProfileInfo,
   TerminalSessionInfo,
 } from '@camstack/types'
+import { settingsSchemaForProfile } from './profile-settings.js'
 import { buildProfiles, findProfile, type TerminalProfile } from './profiles.js'
 import type { PtyEnvMode, PtyProcess, PtySpawner } from './pty.js'
 import {
   resolveServerShell,
   SERVER_SHELL_IDLE_DEFAULT_MINUTES,
   SERVER_SHELL_PROFILE_ID,
+  ServerShellRefusedError,
+  type ServerShellSpawn,
+  type ServerShellStatus,
   serverShellIdleMs,
   serverShellRefusal,
-  ServerShellRefusedError,
-  type ServerShellStatus,
   sessionIdleDue,
-  type ServerShellSpawn,
 } from './server-shell.js'
 import type { TerminalStyledRow } from './terminal-cell-runs.js'
 import { environmentEntriesToRecord, environmentRecordToEntries } from './terminal-instances.js'
-import { settingsSchemaForProfile } from './profile-settings.js'
 
 /** A headless vt screen holding authoritative state for reconnect repaint. */
 export interface ScreenBuffer {

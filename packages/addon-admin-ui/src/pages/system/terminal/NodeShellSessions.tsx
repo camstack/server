@@ -9,11 +9,14 @@
  */
 import {
   Badge,
-  Button,
   type DataColumn,
   DataTable,
   ErrorBox,
+  IconButton,
   Skeleton,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   useTerminalSessionClose,
   useTerminalSessionListSessions,
 } from '@camstack/ui-library'
@@ -157,16 +160,16 @@ export function NodeShellSessionsList({ nodeId, ownSessionId }: NodeShellSession
       key: 'started',
       header: t('terminalPage.colStarted', 'Started'),
       sortValue: (row) => row.startedAt,
+      // Started and last activity share one cell so the list fits a phone.
       render: (row) => (
-        <span className="text-foreground-subtle">{formatRelativeTime(row.startedAt)}</span>
-      ),
-    },
-    {
-      key: 'activity',
-      header: t('terminalPage.colLastActivity', 'Last input or output'),
-      sortValue: (row) => row.lastActivityAt ?? 0,
-      render: (row) => (
-        <span className="text-foreground-subtle">{formatRelativeTime(row.lastActivityAt)}</span>
+        <span className="inline-flex flex-col">
+          <span className="text-foreground">{formatRelativeTime(row.startedAt)}</span>
+          <span className="text-xs text-foreground-subtle">
+            {t('terminalPage.shellLastActivity', 'Last input or output {{when}}', {
+              when: formatRelativeTime(row.lastActivityAt),
+            })}
+          </span>
+        </span>
       ),
     },
     {
@@ -177,15 +180,19 @@ export function NodeShellSessionsList({ nodeId, ownSessionId }: NodeShellSession
         row.sessionId === ownSessionId ? (
           <Badge variant="info">{t('terminalPage.shellThisPage', 'This page')}</Badge>
         ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={closing === row.sessionId}
-            onClick={() => void close(row.sessionId)}
-          >
-            <X className="h-3 w-3" aria-hidden />
-            {t('terminalPage.shellCloseSession', 'Close')}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <IconButton
+                size="sm"
+                variant="outline"
+                icon={X}
+                aria-label={t('terminalPage.shellCloseSession', 'Close')}
+                disabled={closing === row.sessionId}
+                onClick={() => void close(row.sessionId)}
+              />
+            </TooltipTrigger>
+            <TooltipContent>{t('terminalPage.shellCloseSession', 'Close')}</TooltipContent>
+          </Tooltip>
         ),
     },
   ]
@@ -203,7 +210,7 @@ export function NodeShellSessionsList({ nodeId, ownSessionId }: NodeShellSession
           columns={columns}
           rows={answer.sessions}
           rowKey={(row) => row.sessionId}
-          minWidthPx={320}
+          minWidthPx={260}
           defaultSort={{ columnKey: 'started', dir: 'desc' }}
         />
       )}

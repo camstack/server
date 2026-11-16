@@ -19,9 +19,13 @@ import {
   DataTable,
   EmptyState,
   ErrorBox,
+  IconButton,
   SectionCard,
   Skeleton,
   TABLE_SCROLL_MAX_H,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
   useCapabilityNodePresence,
   useClusterNodes,
   useTerminalSessionServerShellStatus,
@@ -300,20 +304,18 @@ export function NodeShells() {
       key: 'node',
       header: t('terminalPage.colNode', 'Node'),
       sortValue: (row) => row.name.toLowerCase(),
+      // The node and its shell state share one cell so the row fits a phone.
       render: (row) => (
-        <span className="inline-flex flex-col">
-          <span className="font-medium text-foreground">{row.name}</span>
-          {row.name !== row.nodeId && (
-            <span className="font-mono text-xs text-foreground-subtle">{row.nodeId}</span>
-          )}
+        <span className="inline-flex flex-col gap-1">
+          <span className="inline-flex flex-wrap items-baseline gap-x-2">
+            <span className="font-medium text-foreground">{row.name}</span>
+            {row.name !== row.nodeId && (
+              <span className="font-mono text-xs text-foreground-subtle">{row.nodeId}</span>
+            )}
+          </span>
+          <NodeShellStatusCell nodeId={row.nodeId} />
         </span>
       ),
-    },
-    {
-      key: 'shell',
-      header: t('terminalPage.colShell', 'Shell'),
-      notSortableReason: t('terminalPage.shellNotSortable', 'Read per node'),
-      render: (row) => <NodeShellStatusCell nodeId={row.nodeId} />,
     },
     {
       key: 'actions',
@@ -323,10 +325,18 @@ export function NodeShells() {
         row.nodeId === openNodeId ? (
           <Badge variant="info">{t('terminalPage.shellOpen', 'Open')}</Badge>
         ) : (
-          <Button size="sm" variant="outline" onClick={() => setOpenNode(row.nodeId)}>
-            <TerminalIcon className="h-3 w-3" aria-hidden />
-            {t('terminalPage.shellOpenAction', 'Open shell')}
-          </Button>
+          <Tooltip>
+            <TooltipTrigger>
+              <IconButton
+                size="sm"
+                variant="outline"
+                icon={TerminalIcon}
+                aria-label={t('terminalPage.shellOpenAction', 'Open shell')}
+                onClick={() => setOpenNode(row.nodeId)}
+              />
+            </TooltipTrigger>
+            <TooltipContent>{t('terminalPage.shellOpenAction', 'Open shell')}</TooltipContent>
+          </Tooltip>
         ),
     },
   ]
@@ -339,7 +349,7 @@ export function NodeShells() {
         columns={columns}
         rows={rows}
         rowKey={(row) => row.nodeId}
-        minWidthPx={320}
+        minWidthPx={280}
         maxBodyHeight={TABLE_SCROLL_MAX_H}
         defaultSort={{ columnKey: 'node', dir: 'asc' }}
       />

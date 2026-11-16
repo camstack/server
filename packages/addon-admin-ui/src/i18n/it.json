@@ -7417,8 +7417,6 @@
     "shellEnded": "La shell è terminata.",
     "shellRestart": "Avvia una nuova shell",
     "shellNoNodes": "Nessun nodo esegue l'addon Terminal",
-    "colShell": "Shell",
-    "shellNotSortable": "Letto per nodo",
     "shellOpen": "Aperta",
     "shellOpenAction": "Apri shell",
     "shellRunning": "{{count}} attive",
@@ -7429,13 +7427,13 @@
     "shellSessionsNone": "Nessuna shell attiva su questo nodo.",
     "colOpenedBy": "Aperta da",
     "colStarted": "Avviata",
-    "colLastActivity": "Ultimo input o output",
     "shellThisPage": "Questa pagina",
     "shellCloseSession": "Chiudi",
     "shellNotInstalled": "Terminal non è installato su questo nodo",
     "shellLeaveFailed": "Una shell non è stata chiusa",
     "shellLeaveFailedOn": "{{node}}: {{message}}",
-    "dismiss": "Ignora"
+    "dismiss": "Ignora",
+    "shellLastActivity": "Ultimo input o output {{when}}"
   },
   "deviceQuickDetail": {
     "discard": "Annulla",

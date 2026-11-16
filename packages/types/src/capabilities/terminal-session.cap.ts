@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
+import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
 /** Profile-exported FormBuilder schema. Shape is ConfigUISchema at the UI. */
 const ProfileSettingsSchemaBridge = z.unknown().nullable()
@@ -249,12 +249,12 @@ export type ServerShellStatus = z.infer<typeof ServerShellStatusSchema>
 export type ServerShellRefusal = z.infer<typeof ServerShellRefusalSchema>
 
 export {
+  ServerShellRefusalSchema,
+  ServerShellStatusSchema,
   TerminalInstanceInfoSchema,
   TerminalLegacyCameraSchema,
   TerminalOutputBatchSchema,
   TerminalOutputEventSchema,
   TerminalProfileInfoSchema,
-  ServerShellRefusalSchema,
-  ServerShellStatusSchema,
   TerminalSessionInfoSchema,
 }

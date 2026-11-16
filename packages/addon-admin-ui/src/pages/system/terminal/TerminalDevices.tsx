@@ -25,8 +25,8 @@ import type { TerminalSessionInfo } from '@camstack/types'
 import {
   Badge,
   Button,
-  ErrorBox,
   type DataColumn,
+  ErrorBox,
   NodePicker,
   SectionCard,
   useAddonsCustom,
@@ -51,10 +51,10 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
-import { TERMINAL_ADDON_ID, TerminalNodeSettings } from './TerminalNodeSettings'
-import { TerminalPanel } from '../../../components/TerminalPanel'
 import { InstancesTable } from '../../../components/instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../../../components/instances/instances-model'
+import { TerminalPanel } from '../../../components/TerminalPanel'
+import { TERMINAL_ADDON_ID, TerminalNodeSettings } from './TerminalNodeSettings'
 import { TerminalProfileSettingsLead } from './TerminalProfileSettingsLead'
 
 /** The capability whose providers make a node a Terminal node. */
