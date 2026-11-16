@@ -148,11 +148,13 @@ export interface UnraidSnapshot {
   readonly array: UnraidArrayInfo
   readonly cpu: UnraidCpuInfo
   readonly disks: readonly UnraidArrayDiskInfo[]
-  readonly dockers: readonly UnraidContainerInfo[]
   /**
-   * VMs, or `null` when the list could not be read this poll (VM service off, API error).
-   * `null` is UNKNOWN, never "no VMs": nothing adopted is removed for it.
+   * Docker containers, or `null` when the list could not be read this poll (Docker service
+   * off, API error). `null` is UNKNOWN, never "no containers": nothing adopted is removed
+   * for it.
    */
+  readonly dockers: readonly UnraidContainerInfo[] | null
+  /** VMs, or `null` when the list could not be read this poll. Same rule as `dockers`. */
   readonly vms: readonly UnraidVmInfo[] | null
   readonly notifications: UnraidNotificationsInfo
   /** Hostname from `system.info()`, when the client reported one. */

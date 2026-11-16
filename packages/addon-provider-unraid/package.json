@@ -1,7 +1,7 @@
 {
   "name": "@camstack/addon-provider-unraid",
   "version": "0.2.167",
-  "description": "Unraid device-provider addon for CamStack — one Container per Unraid instance fanning out array, disk, docker and notification entities",
+  "description": "Unraid device-provider addon for CamStack — the server as a Gateway and an instance Container with array, disk and notification entities; each Docker container and VM adopted as its own device",
   "keywords": [
     "camstack",
     "addon",
@@ -40,7 +40,7 @@
         "category": "providers",
         "name": "Unraid",
         "version": "0.1.0",
-        "description": "Add an Unraid server as an integration over its local GraphQL API and adopt it as a Gateway, with its array, disks, docker containers and notifications as one instance Container",
+        "description": "Add an Unraid server as an integration over its local GraphQL API and adopt it as a Gateway, with its array, disks and notifications as one instance Container, and each Docker container and VM as its own device",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.svg",
         "color": "#f15a2c",

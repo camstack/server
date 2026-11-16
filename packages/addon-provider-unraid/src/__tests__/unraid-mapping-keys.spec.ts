@@ -1,25 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import type {
-  UnraidArrayDiskInfo,
-  UnraidContainerInfo,
-  UnraidSnapshot,
-} from '../unraid-client-contract.js'
+import type { UnraidArrayDiskInfo, UnraidSnapshot } from '../unraid-client-contract.js'
 import { buildEntityIdentities } from '../unraid-mapping.js'
 
 /**
- * Unraid API ids are PrefixedIDs `<64-hex server hash>:<local id>`: every disk and
- * container of one server shares the same prefix. A key cut from the front of the
+ * Unraid API ids are PrefixedIDs `<64-hex server hash>:<local id>`: every disk (and
+ * container, and VM) of one server shares the same prefix. A key cut from the front of the
  * full id collapsed them all onto the server hash, and the entity list kept one of each.
  */
 const SERVER = '4b0175070bd2bdbc14112e80333b73341203a1e3197cc6c8a1b2c3d4e5f60718'
-
-const container = (local: string, name: string): UnraidContainerInfo => ({
-  id: `${SERVER}:${local}`,
-  name,
-  running: true,
-  cpuPercent: 1,
-  memPercent: 2,
-})
 
 const disk = (local: string, name: string): UnraidArrayDiskInfo => ({
   id: `${SERVER}:${local}`,
@@ -31,13 +19,7 @@ const disk = (local: string, name: string): UnraidArrayDiskInfo => ({
   healthy: true,
 })
 
-/** Docker container ids are 64 hex chars themselves: long enough to need truncating. */
-const dockerId = (seed: string): string => seed.repeat(64).slice(0, 64)
-
-function snapshot(
-  disks: readonly UnraidArrayDiskInfo[],
-  dockers: readonly UnraidContainerInfo[],
-): UnraidSnapshot {
+function snapshot(disks: readonly UnraidArrayDiskInfo[]): UnraidSnapshot {
   return {
     array: {
       state: 'STARTED',
@@ -47,14 +29,14 @@ function snapshot(
     },
     cpu: { percent: 12, tempC: null, powerW: null },
     disks,
-    dockers,
+    dockers: [],
     vms: [],
     notifications: { activeCount: 0, latest: null },
   }
 }
 
 describe('Unraid entity keys', () => {
-  it('three disks and three containers sharing the server prefix yield 3 + 3 distinct entities', () => {
+  it('three disks sharing the server prefix yield three distinct entities', () => {
     const keys = buildEntityIdentities(
       snapshot(
         [
@@ -62,16 +44,10 @@ describe('Unraid entity keys', () => {
           disk('WDC_WD80EFAX-68KNBN0_VAGW2222', 'disk2'),
           disk('Samsung_SSD_870_EVO_1TB_S6PU3333', 'cache'),
         ],
-        [
-          container(dockerId('a1'), 'plex'),
-          container(dockerId('b2'), 'sonarr'),
-          container(dockerId('c3'), 'radarr'),
-        ],
       ),
     ).map((identity) => identity.key)
 
     expect(new Set(keys.filter((k) => /^disk_.*_usage$/.test(k))).size).toBe(3)
-    expect(new Set(keys.filter((k) => /^container_[^_]+$/.test(k))).size).toBe(3)
     // No key carries the shared server hash.
     expect(keys.some((k) => k.includes(SERVER.slice(0, 16)))).toBe(false)
   })
@@ -86,7 +62,6 @@ describe('Unraid entity keys', () => {
           disk(`${long}A`, 'a'),
           disk(`${long}B`, 'b'),
         ],
-        [container(`${long}1`, 'one'), container(`${long}2`, 'two')],
       ),
     )
     const keys = identities.map((identity) => identity.key)
@@ -95,10 +70,10 @@ describe('Unraid entity keys', () => {
   })
 
   it('a key is stable across polls and does not depend on the order of the list', () => {
-    const a = container(dockerId('a1'), 'plex')
-    const b = container(dockerId('b2'), 'sonarr')
-    const first = buildEntityIdentities(snapshot([], [a, b])).map((i) => i.key)
-    const second = buildEntityIdentities(snapshot([], [b, a])).map((i) => i.key)
+    const a = disk(`${'y'.repeat(60)}1`, 'disk1')
+    const b = disk(`${'y'.repeat(60)}2`, 'disk2')
+    const first = buildEntityIdentities(snapshot([a, b])).map((i) => i.key)
+    const second = buildEntityIdentities(snapshot([b, a])).map((i) => i.key)
     expect([...second].sort()).toEqual([...first].sort())
   })
 })

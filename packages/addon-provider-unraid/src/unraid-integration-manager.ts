@@ -133,7 +133,11 @@ export class UnraidIntegrationManager {
     this.#startPollLoop()
     this.#logger.info('UnraidIntegrationManager: started', {
       tags: { instanceId: this.#id },
-      meta: { dockerCount: this.#snapshot.dockers.length, diskCount: this.#snapshot.disks.length },
+      meta: {
+        dockerCount: this.#snapshot.dockers?.length ?? null,
+        vmCount: this.#snapshot.vms?.length ?? null,
+        diskCount: this.#snapshot.disks.length,
+      },
     })
   }
 
@@ -210,7 +214,7 @@ export class UnraidIntegrationManager {
 }
 
 /** A list section of the snapshot that may read as unknown on its own. */
-type UnraidSnapshotSection = 'vms'
+type UnraidSnapshotSection = 'dockers' | 'vms'
 
 /** Aggregate one snapshot from the client's domain namespaces. */
 async function fetchSnapshot(
@@ -220,7 +224,7 @@ async function fetchSnapshot(
   const [array, cpu, dockers, vms, notifications, hostname] = await Promise.all([
     client.array.get(),
     client.system.cpu(),
-    client.docker.list(),
+    readSection(() => client.docker.list(), onSectionFailed('dockers')),
     readSection(() => client.vms.list(), onSectionFailed('vms')),
     client.notifications.active(),
     readHostname(client),
@@ -238,8 +242,8 @@ async function fetchSnapshot(
 
 /**
  * Read one optional list section of the snapshot. A failure is `null` (unknown), never an
- * empty list, and it never fails the whole poll: a host with the VM service off still
- * reports its array and containers.
+ * empty list, and it never fails the whole poll: a host with the VM or Docker service off
+ * still reports its array.
  */
 async function readSection<T>(
   read: () => Promise<readonly T[]>,

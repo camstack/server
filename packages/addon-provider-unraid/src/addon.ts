@@ -22,6 +22,7 @@ import { UNRAID_SYSTEM } from './config.js'
 import { UnraidEntityDevice } from './devices/unraid-entity-device.js'
 import { UnraidGatewayDevice } from './devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
+import { UnraidWorkloadDevice } from './devices/unraid-workload-device.js'
 import { buildUnraidAdoptionProvider } from './unraid-adoption-provider.js'
 import { makeLiveUnraidClient } from './unraid-client-live.js'
 import { UnraidClientRegistry } from './unraid-client-registry.js'
@@ -48,8 +49,9 @@ const UNRAID_MIGRATIONS_DATE = '2026-11-05'
  * server: its host, port and ADMIN-role API key (a keychain secret) live on the
  * integration's settings, and the addon polls it with one client per `integrationId`.
  * Discovery offers the server itself ({@link DeviceType.Gateway}, with a link to its
- * WebGUI) and its single instance {@link DeviceType.Container}, as siblings; the
- * Container fans array / disk / docker / notification entities out as accessory children.
+ * WebGUI), its single instance {@link DeviceType.Container}, and each Docker container and
+ * VM ({@link DeviceType.Generic}), all as siblings; the Container fans array / disk / CPU /
+ * notification entities out as accessory children.
  *
  * The server is reached through `node-unraid` ({@link makeLiveUnraidClient}), polled on
  * the integration's `pollIntervalMs`; a failed connect keeps the devices offline.
@@ -64,6 +66,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Gateway]: UnraidGatewayDevice,
     [DeviceType.Container]: UnraidInstanceDevice,
+    [DeviceType.Generic]: UnraidWorkloadDevice,
     [DeviceType.Sensor]: UnraidEntityDevice,
     [DeviceType.Switch]: UnraidEntityDevice,
     [DeviceType.Button]: UnraidEntityDevice,
@@ -155,7 +158,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     return this.clients
   }
 
-  /** One Gateway and one Container per integration: `unraid:<integrationId>:<nativeId>`. */
+  /** Every Unraid device is `unraid:<integrationId>:<nativeId>` (gateway, instance, docker:…, vm:…). */
   protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
     const integrationId = config?.['integrationId']
     const nativeId = config?.['nativeId']
@@ -292,6 +295,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
       },
       adoptGateway: async (input) => adopter().adoptGateway(input),
       adoptInstance: async (input) => adopter().adoptInstance(input),
+      adoptWorkload: async (input) => adopter().adoptWorkload(input),
       childDeviceIds: async (deviceId) => {
         const children = (await this.ctx.kernel.devices?.getChildren(deviceId)) ?? []
         return children.map((c) => c.id)

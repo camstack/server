@@ -6,11 +6,7 @@ import {
   type ReadingQuantity,
   StoredDeviceTypeSchema,
 } from '@camstack/types'
-import type {
-  UnraidArrayDiskInfo,
-  UnraidContainerInfo,
-  UnraidSnapshot,
-} from './unraid-client-contract.js'
+import type { UnraidArrayDiskInfo, UnraidSnapshot } from './unraid-client-contract.js'
 
 /**
  * Pure snapshot → entity-descriptor mapping. NO I/O — unit-testable in
@@ -21,10 +17,9 @@ import type {
  * every snapshot and match their descriptor by `key`, so the persisted list and
  * the live values always line up on the same key space.
  *
- * Coverage (this scaffold): array metrics + array binaries + array buttons +
- * docker containers (switch + cpu% + mem% + restart) + notifications event.
- * Per-disk usage/health is emitted from the array member slots (partial — see
- * `plan-unraid.md`). The VM layer is intentionally omitted.
+ * Coverage: array metrics + array binaries + array buttons + per-disk usage/health
+ * (from the array member slots) + the notifications event. Docker containers and VMs are
+ * NOT entities of the server: each is its own adoptable device (`unraid-discovery.ts`).
  */
 
 /** The seven entity shapes a generic child device is keyed on. */
@@ -45,6 +40,10 @@ export const UnraidButtonActionSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('stop-array') }),
   z.object({ type: z.literal('start-parity') }),
   z.object({ type: z.literal('stop-parity') }),
+  /**
+   * Read-only: rows persisted before containers became their own devices carry it. The
+   * mapping no longer emits it; the instance's next entity reconcile prunes those rows.
+   */
   z.object({ type: z.literal('restart-container'), containerId: z.string().min(1) }),
 ])
 export type UnraidButtonAction = z.infer<typeof UnraidButtonActionSchema>
@@ -66,7 +65,7 @@ export const UnraidEntityIdentitySchema = z.object({
   name: z.string().min(1),
   /** Semantic role (icon hint), when one clarifies the entity. */
   role: z.enum(DeviceRole).optional(),
-  /** Docker container id — present on `switch` entities. */
+  /** Docker container id — read-only, on rows persisted before containers became devices. */
   containerId: z.string().optional(),
   /** Button dispatch action — present on `button` entities. */
   action: UnraidButtonActionSchema.optional(),
@@ -409,50 +408,6 @@ function diskDescriptors(disks: readonly UnraidArrayDiskInfo[]): UnraidEntityDes
   return out
 }
 
-/** Per-container switch + cpu% + mem% sensors + restart button. */
-function dockerDescriptors(containers: readonly UnraidContainerInfo[]): UnraidEntityDescriptor[] {
-  const out: UnraidEntityDescriptor[] = []
-  const slugs = sectionSlugs(containers)
-  for (const [index, container] of containers.entries()) {
-    const slug = slugs[index] ?? ''
-    if (slug.length === 0) continue
-    out.push({
-      key: `container_${slug}`,
-      kind: 'switch',
-      capName: 'switch',
-      deviceType: DeviceType.Switch,
-      name: container.name,
-      containerId: container.id,
-      switchOn: container.running,
-    })
-    out.push({
-      key: `container_${slug}_cpu`,
-      kind: 'numeric',
-      capName: 'numeric-sensor',
-      deviceType: DeviceType.Sensor,
-      name: `${container.name} CPU`,
-      role: DeviceRole.NumericSensor,
-      numeric: { value: pct(container.cpuPercent), quantity: 'percentage' },
-    })
-    out.push({
-      key: `container_${slug}_memory`,
-      kind: 'numeric',
-      capName: 'numeric-sensor',
-      deviceType: DeviceType.Sensor,
-      name: `${container.name} memory`,
-      role: DeviceRole.NumericSensor,
-      numeric: { value: pct(container.memPercent), quantity: 'percentage' },
-    })
-    out.push(
-      buttonDescriptor(`restart_container_${slug}`, `Restart ${container.name}`, {
-        type: 'restart-container',
-        containerId: container.id,
-      }),
-    )
-  }
-  return out
-}
-
 /** The single notifications event-emitter descriptor (`tower_notifications`). */
 function notificationEventDescriptor(): UnraidEntityDescriptor {
   return {
@@ -466,8 +421,9 @@ function notificationEventDescriptor(): UnraidEntityDescriptor {
 
 /**
  * Turn a full {@link UnraidSnapshot} into the flat entity-descriptor list. Order
- * is stable (array metrics → array binaries → array buttons → disks → dockers →
- * notifications) so a diff of persisted identities is deterministic.
+ * is stable (array metrics → array binaries → array buttons → disks → notifications)
+ * so a diff of persisted identities is deterministic. The docker and VM lists are not
+ * read here, so a poll whose list failed (`null`) changes no entity.
  */
 export function buildEntityDescriptors(
   snapshot: UnraidSnapshot,
@@ -477,7 +433,6 @@ export function buildEntityDescriptors(
     ...arrayBinaryDescriptors(snapshot),
     ...arrayButtonDescriptors(),
     ...diskDescriptors(snapshot.disks),
-    ...dockerDescriptors(snapshot.dockers),
     notificationEventDescriptor(),
   ]
 }
