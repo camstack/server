@@ -7984,7 +7984,16 @@
       "noRecordings": "No recordings for this window.",
       "density": "Events · density",
       "helpFramePush": "Click or drag the coverage bar to play from any point (frames play in the main player above), or click a density bar to browse that window’s events.",
-      "helpHls": "Click the coverage bar to play from any point, or a density bar to browse that window’s events."
+      "helpHls": "Click the coverage bar to play from any point, or a density bar to browse that window’s events.",
+      "noPlayableWithReason": "No playable footage for this selection — {{reason}}",
+      "noPlayable": "No playable footage for this selection.",
+      "loadFailed": "Could not load this recording.",
+      "loadFailedWithReason": "Could not load this recording — {{reason}}",
+      "eventClip": "Event",
+      "notRead": "This window could not be read.",
+      "noFootageLatest": "No footage here — latest: {{when}} ({{duration}})",
+      "goToLatest": "Go to latest footage",
+      "helpExportRange": "Shift + drag on the coverage bar to export that range."
     },
     "valveControl": {
       "open": "Open",

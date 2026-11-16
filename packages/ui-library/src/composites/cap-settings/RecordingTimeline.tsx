@@ -11,9 +11,11 @@ import {
   usePipelineAnalyticsGetMotionEvents,
   usePipelineAnalyticsGetObjectEvents,
   useRecordingGetAvailability,
+  useRecordingGetDaysWithRecordings,
 } from '../../generated/system-hooks'
 import type { RecordedPlaybackMode } from '../../lib/recorded-control-protocol'
 import { type PlaybackControlSink, useScrubController } from '../../lib/scrub-controller'
+import { Button } from '../../primitives/button'
 import { EmptyState } from '../empty-state'
 import { SendFrameToTrainingButton } from '../training/send-frame-to-training'
 import { ErrorBox } from '../error-box'
@@ -28,7 +30,11 @@ import {
   type DayWindow,
   dayWindow,
   densityRowsToBuckets,
+  formatFootageDuration,
+  latestPastDay,
   panWindow,
+  pickLatestFootage,
+  playbackFailureReason,
   seekTargetForSpans,
 } from './recording-timeline-model'
 import { TimelineControls } from './TimelineControls'
@@ -45,6 +51,9 @@ const PAN_MS_PER_PX = 18_000 / 100
 const EVENT_PRE_MS = 5_000
 const EVENT_POST_MS = 10_000
 const EMPTY_RANGES: readonly AvailabilityRange[] = []
+// How far back the "latest footage" lookup reads the recorder's calendar.
+const LATEST_LOOKBACK_MS = 90 * 24 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
 
 // Human labels for the frame-push playback mode chip.
 function modeLabel(t: UiTextFn, mode: RecordedPlaybackMode): string {
@@ -68,6 +77,15 @@ function modeLabel(t: UiTextFn, mode: RecordedPlaybackMode): string {
 
 interface RecordingTimelineProps {
   readonly deviceId: number
+  /**
+   * Ask the timeline to play from a moment (an event a neighbouring list was
+   * clicked on). A new `nonce` is a new request — the same instant twice is
+   * two requests. The timeline moves to that day, then plays like a click on
+   * an event clip.
+   */
+  readonly seekTo?: { readonly atMs: number; readonly nonce: number }
+  /** Shift + drag on the coverage bar selects a range and reports it here. */
+  readonly onExportRange?: (fromMs: number, toMs: number) => void
 }
 
 // Continuous navigable timeline: date picker, a click-to-seek coverage track,
@@ -85,7 +103,11 @@ interface RecordingTimelineProps {
 // - HLS VOD (fallback/option): resolve a playback manifest and drive the hero
 //   VOD context — used when no control channel exists (player stopped,
 //   server-offer mode, no provider) or when the operator forces it.
-export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Element {
+export function RecordingTimeline({
+  deviceId,
+  seekTo,
+  onExportRange,
+}: RecordingTimelineProps): JSX.Element {
   const t = useUiText()
   const system = useSystem()
   const vod = useVodPlayback()
@@ -192,6 +214,15 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
     setSelectedBucket(null)
   }, [])
 
+  const navigatedRef = useRef(false)
+  const handleUserDayChange = useCallback(
+    (d: Date): void => {
+      navigatedRef.current = true
+      handleDayChange(d)
+    },
+    [handleDayChange],
+  )
+
   const handleViewChange = useCallback((w: DayWindow): void => {
     setView(w)
     setSelectedBucket(null)
@@ -236,6 +267,42 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
   const ranges =
     availabilityQuery.data?.read === 'read' ? availabilityQuery.data.ranges : EMPTY_RANGES
   const spans = useMemo(() => mergeAvailabilitySpans(ranges), [ranges])
+
+  // The recorder's calendar over the last 90 days: where the newest footage is
+  // when the window the operator opened on is empty. A camera recording on
+  // motion only is empty most afternoons, and "No recordings" with no way to
+  // the footage that does exist reads as a broken player.
+  const [nowForCalendar] = useState(() => Date.now())
+  const daysQuery = useRecordingGetDaysWithRecordings({
+    deviceId,
+    provider: RECORDING_SOURCE_CAMSTACK_ADDON,
+    fromMs: nowForCalendar - LATEST_LOOKBACK_MS,
+    toMs: nowForCalendar,
+    tzOffsetMinutes: -new Date(nowForCalendar).getTimezoneOffset(),
+  })
+  const todayStartMs = dayWindow(new Date(nowForCalendar), nowForCalendar).fromMs
+  const latestDayMs =
+    daysQuery.data?.read === 'read' ? latestPastDay(daysQuery.data.days, todayStartMs) : null
+  const latestDayWindow = useMemo(
+    () => (latestDayMs === null ? null : dayWindow(new Date(latestDayMs), latestDayMs + DAY_MS)),
+    [latestDayMs],
+  )
+  const latestAvailability = useRecordingGetAvailability(
+    {
+      deviceId,
+      provider: RECORDING_SOURCE_CAMSTACK_ADDON,
+      fromMs: latestDayWindow?.fromMs ?? 0,
+      toMs: latestDayWindow?.toMs ?? 0,
+    },
+    { enabled: latestDayWindow !== null },
+  )
+  const latestFootage = useMemo(
+    () =>
+      latestAvailability.data?.read === 'read'
+        ? pickLatestFootage(mergeAvailabilitySpans(latestAvailability.data.ranges))
+        : null,
+    [latestAvailability.data],
+  )
 
   const buckets = useMemo(
     () => densityRowsToBuckets(eventDensityQuery.data ?? [], view.fromMs, bucketMs),
@@ -349,17 +416,35 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
         } else {
           setPlaybackError(
             playback.kind === 'none'
-              ? `No playable footage for this selection — ${playback.reason}`
-              : 'No playable footage for this selection.',
+              ? t(
+                  'uiLibrary.recordingTimeline.noPlayableWithReason',
+                  'No playable footage for this selection — {{reason}}',
+                  { reason: playback.reason },
+                )
+              : t(
+                  'uiLibrary.recordingTimeline.noPlayable',
+                  'No playable footage for this selection.',
+                ),
           )
         }
-      } catch {
-        setPlaybackError('Could not load this recording.')
+      } catch (error) {
+        // The recorder's own words (offline node, refused range, ...) are the
+        // operator's only lead; a bare "could not load" threw them away.
+        const reason = playbackFailureReason(error)
+        setPlaybackError(
+          reason === null
+            ? t('uiLibrary.recordingTimeline.loadFailed', 'Could not load this recording.')
+            : t(
+                'uiLibrary.recordingTimeline.loadFailedWithReason',
+                'Could not load this recording — {{reason}}',
+                { reason },
+              ),
+        )
       } finally {
         setBusyKey(null)
       }
     },
-    [system, deviceId, vod],
+    [system, deviceId, vod, t],
   )
 
   const handleSeek = useCallback(
@@ -425,6 +510,42 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
     setSelectedBucket((cur) => (cur === index ? null : index))
   }, [])
 
+  // Open on the latest footage, not on an empty "today": once, when today's
+  // own window has answered and holds nothing, move to the newest day that
+  // does. An operator who has already picked a day is never moved.
+  const autoJumpedRef = useRef(false)
+  useEffect(() => {
+    if (autoJumpedRef.current || navigatedRef.current) return
+    if (availabilityQuery.data?.read !== 'read' || spans.length > 0) return
+    if (latestDayMs === null || latestFootage === null) return
+    autoJumpedRef.current = true
+    handleDayChange(new Date(latestFootage.startMs))
+    setPlayheadMs(latestFootage.endMs)
+  }, [availabilityQuery.data?.read, spans.length, latestDayMs, latestFootage, handleDayChange])
+
+  const jumpToLatest = useCallback((): void => {
+    if (latestFootage === null) return
+    navigatedRef.current = true
+    handleDayChange(new Date(latestFootage.startMs))
+    setPlayheadMs(latestFootage.endMs)
+  }, [latestFootage, handleDayChange])
+
+  // A neighbouring list asked to play from a moment. Handled once per nonce.
+  const handledSeekRef = useRef<number | null>(null)
+  useEffect(() => {
+    if (seekTo === undefined || handledSeekRef.current === seekTo.nonce) return
+    handledSeekRef.current = seekTo.nonce
+    navigatedRef.current = true
+    handleDayChange(new Date(seekTo.atMs))
+    const clip: BucketClip = {
+      id: `seek-${String(seekTo.nonce)}`,
+      timestamp: seekTo.atMs,
+      kind: 'object',
+      label: t('uiLibrary.recordingTimeline.eventClip', 'Event'),
+    }
+    handlePlayClip(clip)
+  }, [seekTo, handleDayChange, handlePlayClip, t])
+
   const coverageLoading = availabilityQuery.isLoading
   const densityLoading = eventDensityQuery.isLoading
   const drillLoading =
@@ -468,7 +589,7 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
       {/* D2: Controls row (date selector) */}
       <TimelineControls
         day={day}
-        onDayChange={handleDayChange}
+        onDayChange={handleUserDayChange}
         view={view}
         dayBounds={computedDayBounds}
         onViewChange={handleViewChange}
@@ -573,10 +694,35 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
           ) : spans.length === 0 ? (
             <EmptyState
               icon={Film}
-              title={t(
-                'uiLibrary.recordingTimeline.noRecordings',
-                'No recordings for this window.',
-              )}
+              title={
+                availabilityUnreadable
+                  ? t('uiLibrary.recordingTimeline.notRead', 'This window could not be read.')
+                  : latestFootage !== null
+                    ? t(
+                        'uiLibrary.recordingTimeline.noFootageLatest',
+                        'No footage here — latest: {{when}} ({{duration}})',
+                        {
+                          when: new Date(latestFootage.endMs).toLocaleString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          }),
+                          duration: formatFootageDuration(latestFootage.durationMs),
+                        },
+                      )
+                    : t(
+                        'uiLibrary.recordingTimeline.noRecordings',
+                        'No recordings for this window.',
+                      )
+              }
+              action={
+                latestFootage !== null && !availabilityUnreadable ? (
+                  <Button variant="secondary" size="sm" onClick={jumpToLatest}>
+                    {t('uiLibrary.recordingTimeline.goToLatest', 'Go to latest footage')}
+                  </Button>
+                ) : undefined
+              }
             />
           ) : (
             <CoverageTrack
@@ -585,6 +731,7 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
               spans={spans}
               playheadMs={displayPlayheadMs}
               onSeek={handleSeek}
+              {...(onExportRange === undefined ? {} : { onRangeSelect: onExportRange })}
               {...(framePush
                 ? {
                     onScrubStart: handleScrubStart,
@@ -642,6 +789,9 @@ export function RecordingTimeline({ deviceId }: RecordingTimelineProps): JSX.Ele
         />
       ) : (
         <p className="text-[11px] text-foreground-subtle">
+          {onExportRange === undefined
+            ? null
+            : `${t('uiLibrary.recordingTimeline.helpExportRange', 'Shift + drag on the coverage bar to export that range.')} `}
           {framePush
             ? t(
                 'uiLibrary.recordingTimeline.helpFramePush',

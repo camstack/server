@@ -22,7 +22,16 @@ interface CoverageTrackProps {
   readonly onScrubStart?: () => void
   readonly onScrubMove?: (ms: number) => void
   readonly onScrubEnd?: (ms: number) => void
+  /**
+   * Shift + drag selects a time range instead of seeking or scrubbing. The
+   * range is reported once, on release, ordered `from < to`; a selection under
+   * one second is dropped as an accidental press. Omit to leave Shift unbound.
+   */
+  readonly onRangeSelect?: (fromMs: number, toMs: number) => void
 }
+
+/** A shift-drag shorter than this is a press, not a selection. */
+const MIN_RANGE_MS = 1000
 
 // Continuous recorded-coverage track over the selected time window. Recorded
 // spans are filled bars; the background shows as the gap. Clicking anywhere
@@ -38,6 +47,7 @@ export function CoverageTrack({
   onScrubStart,
   onScrubMove,
   onScrubEnd,
+  onRangeSelect,
 }: CoverageTrackProps): JSX.Element | null {
   const t = useUiText()
   // D4: hover tooltip state.
@@ -47,6 +57,11 @@ export function CoverageTrack({
   const [dragging, setDragging] = useState(false)
   /** Last epoch reported during the drag — commit target on cancel/release. */
   const lastDragMsRef = useRef<number | null>(null)
+  // Range selection (shift + drag): the anchor and the live end, in epoch ms.
+  const [range, setRange] = useState<{ readonly a: number; readonly b: number } | null>(null)
+  const rangeAnchorRef = useRef<number | null>(null)
+  /** The click that follows a range gesture must not also seek. */
+  const suppressClickRef = useRef(false)
 
   const msFromEvent = (e: MouseEvent<HTMLDivElement>): number | null => {
     const rect = e.currentTarget.getBoundingClientRect()
@@ -59,6 +74,10 @@ export function CoverageTrack({
   const handleClick = (e: MouseEvent<HTMLDivElement>): void => {
     // In scrub mode the pointer handlers own the gesture (a motionless
     // press+release already committed on pointer-up) — don't double-fire.
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false
+      return
+    }
     if (scrubEnabled) return
     const ms = msFromEvent(e)
     if (ms === null) return
@@ -66,6 +85,15 @@ export function CoverageTrack({
   }
 
   const handlePointerDown = (e: PointerEvent<HTMLDivElement>): void => {
+    suppressClickRef.current = false
+    if (e.shiftKey && onRangeSelect !== undefined) {
+      const anchor = msFromEvent(e)
+      if (anchor === null) return
+      e.currentTarget.setPointerCapture(e.pointerId)
+      rangeAnchorRef.current = anchor
+      setRange({ a: anchor, b: anchor })
+      return
+    }
     if (!scrubEnabled) return
     e.currentTarget.setPointerCapture(e.pointerId)
     setDragging(true)
@@ -78,6 +106,11 @@ export function CoverageTrack({
   }
 
   const handlePointerMove = (e: PointerEvent<HTMLDivElement>): void => {
+    if (rangeAnchorRef.current !== null) {
+      const ms = msFromEvent(e)
+      if (ms !== null) setRange({ a: rangeAnchorRef.current, b: ms })
+      return
+    }
     if (!scrubEnabled || !dragging) return
     const ms = msFromEvent(e)
     if (ms === null) return
@@ -86,6 +119,17 @@ export function CoverageTrack({
   }
 
   const handlePointerUp = (e: PointerEvent<HTMLDivElement>): void => {
+    if (rangeAnchorRef.current !== null) {
+      const anchor = rangeAnchorRef.current
+      rangeAnchorRef.current = null
+      suppressClickRef.current = true
+      setRange(null)
+      const end = msFromEvent(e)
+      if (end !== null && Math.abs(end - anchor) >= MIN_RANGE_MS) {
+        onRangeSelect?.(Math.min(anchor, end), Math.max(anchor, end))
+      }
+      return
+    }
     if (!scrubEnabled || !dragging) return
     setDragging(false)
     const ms = msFromEvent(e) ?? lastDragMsRef.current
@@ -94,6 +138,11 @@ export function CoverageTrack({
   }
 
   const handlePointerCancel = (): void => {
+    if (rangeAnchorRef.current !== null) {
+      rangeAnchorRef.current = null
+      setRange(null)
+      return
+    }
     if (!dragging) return
     setDragging(false)
     const ms = lastDragMsRef.current
@@ -153,6 +202,16 @@ export function CoverageTrack({
             />
           )
         })}
+        {range !== null ? (
+          <div
+            data-testid="coverage-range"
+            className="absolute inset-y-0 border-x border-primary bg-primary/30"
+            style={{
+              left: `${pctForMs(Math.min(range.a, range.b), windowFrom, windowTo)}%`,
+              width: `${Math.abs(pctForMs(range.b, windowFrom, windowTo) - pctForMs(range.a, windowFrom, windowTo))}%`,
+            }}
+          />
+        ) : null}
         {playheadMs !== null ? (
           <div
             data-testid="coverage-playhead"

@@ -9,6 +9,10 @@ import {
   bucketMsForSpan,
   axisTicks,
   ZOOM_LEVELS,
+  pickLatestFootage,
+  latestPastDay,
+  formatFootageDuration,
+  playbackFailureReason,
 } from '../recording-timeline-model'
 import type { EventDensityRow, DayWindow } from '../recording-timeline-model'
 
@@ -298,5 +302,59 @@ describe('axisTicks', () => {
     const ticks = axisTicks(fromMs, toMs, 1)
     expect(ticks).toHaveLength(1)
     expect(ticks[0]?.pct).toBe(0)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Latest footage
+// ---------------------------------------------------------------------------
+describe('pickLatestFootage', () => {
+  it('returns null for no spans', () => {
+    expect(pickLatestFootage([])).toBeNull()
+  })
+
+  it('picks the span that ends last, whatever the order', () => {
+    const latest = pickLatestFootage([
+      { startMs: 5_000, endMs: 9_000 },
+      { startMs: 1_000, endMs: 3_000 },
+    ])
+    expect(latest).toEqual({ startMs: 5_000, endMs: 9_000, durationMs: 4_000 })
+  })
+
+  it('ignores zero-length spans', () => {
+    expect(pickLatestFootage([{ startMs: 7_000, endMs: 7_000 }])).toBeNull()
+  })
+})
+
+describe('latestPastDay', () => {
+  const today = 1_000_000
+  it('excludes today and anything after it', () => {
+    expect(latestPastDay([today, today + 86_400_000], today)).toBeNull()
+  })
+
+  it('returns the newest day before today', () => {
+    expect(latestPastDay([100, 900_000, 500_000, today], today)).toBe(900_000)
+  })
+})
+
+describe('formatFootageDuration', () => {
+  it('reads seconds, minutes and hours', () => {
+    expect(formatFootageDuration(42_000)).toBe('42 s')
+    expect(formatFootageDuration(7 * 60_000)).toBe('7 min')
+    expect(formatFootageDuration(3 * 3_600_000 + 5 * 60_000)).toBe('3 h 05 min')
+    expect(formatFootageDuration(2 * 3_600_000)).toBe('2 h')
+  })
+})
+
+describe('playbackFailureReason', () => {
+  it('keeps the real reason of a thrown error', () => {
+    expect(playbackFailureReason(new Error('recorder offline on node b'))).toBe(
+      'recorder offline on node b',
+    )
+  })
+
+  it('has no reason for an empty throw', () => {
+    expect(playbackFailureReason(new Error('  '))).toBeNull()
+    expect(playbackFailureReason(undefined)).toBeNull()
   })
 })

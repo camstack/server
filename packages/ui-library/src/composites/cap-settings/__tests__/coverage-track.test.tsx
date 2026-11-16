@@ -52,4 +52,60 @@ describe('CoverageTrack', () => {
     expect(arg).toBeGreaterThanOrEqual(45)
     expect(arg).toBeLessThanOrEqual(55)
   })
+
+  describe('shift-drag range selection', () => {
+    const geometry = {
+      x: 0,
+      y: 0,
+      width: 100_000,
+      height: 20,
+      top: 0,
+      left: 0,
+      right: 100_000,
+      bottom: 20,
+      toJSON: () => ({}),
+    }
+
+    function setup() {
+      const onSeek = vi.fn<(clickMs: number) => void>()
+      const onRangeSelect = vi.fn<(fromMs: number, toMs: number) => void>()
+      render(
+        <CoverageTrack
+          windowFrom={0}
+          windowTo={100_000}
+          spans={[{ startMs: 0, endMs: 100_000 }]}
+          playheadMs={null}
+          onSeek={onSeek}
+          onRangeSelect={onRangeSelect}
+        />,
+      )
+      const track = screen.getByTestId('coverage-track')
+      vi.spyOn(track, 'getBoundingClientRect').mockReturnValue(geometry)
+      track.setPointerCapture = vi.fn()
+      return { track, onSeek, onRangeSelect }
+    }
+
+    it('reports the ordered range on release and does not seek', () => {
+      const { track, onSeek, onRangeSelect } = setup()
+      fireEvent.pointerDown(track, { clientX: 60_000, shiftKey: true, pointerId: 1 })
+      fireEvent.pointerMove(track, { clientX: 20_000, pointerId: 1 })
+      fireEvent.pointerUp(track, { clientX: 20_000, pointerId: 1 })
+      fireEvent.click(track, { clientX: 20_000 })
+      expect(onRangeSelect).toHaveBeenCalledWith(20_000, 60_000)
+      expect(onSeek).not.toHaveBeenCalled()
+    })
+
+    it('drops a selection shorter than a second', () => {
+      const { track, onRangeSelect } = setup()
+      fireEvent.pointerDown(track, { clientX: 50_000, shiftKey: true, pointerId: 1 })
+      fireEvent.pointerUp(track, { clientX: 50_400, pointerId: 1 })
+      expect(onRangeSelect).not.toHaveBeenCalled()
+    })
+
+    it('a plain click still seeks', () => {
+      const { track, onSeek } = setup()
+      fireEvent.click(track, { clientX: 30_000 })
+      expect(onSeek).toHaveBeenCalledTimes(1)
+    })
+  })
 })

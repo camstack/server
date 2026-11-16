@@ -8006,7 +8006,16 @@
       "noRecordings": "Nessuna registrazione in questo intervallo.",
       "density": "Eventi · densità",
       "helpFramePush": "Clicca o trascina la barra di copertura per riprodurre da qualsiasi punto (i fotogrammi vengono riprodotti nel player principale qui sopra), oppure clicca una barra di densità per sfogliare gli eventi di quell'intervallo.",
-      "helpHls": "Clicca la barra di copertura per riprodurre da qualsiasi punto, oppure una barra di densità per sfogliare gli eventi di quell'intervallo."
+      "helpHls": "Clicca la barra di copertura per riprodurre da qualsiasi punto, oppure una barra di densità per sfogliare gli eventi di quell'intervallo.",
+      "noPlayableWithReason": "Nessun filmato riproducibile per questa selezione — {{reason}}",
+      "noPlayable": "Nessun filmato riproducibile per questa selezione.",
+      "loadFailed": "Impossibile caricare questa registrazione.",
+      "loadFailedWithReason": "Impossibile caricare questa registrazione — {{reason}}",
+      "eventClip": "Evento",
+      "notRead": "Impossibile leggere questo intervallo.",
+      "noFootageLatest": "Nessun filmato qui — ultimo: {{when}} ({{duration}})",
+      "goToLatest": "Vai all'ultimo filmato",
+      "helpExportRange": "Maiusc + trascina sulla barra di copertura per esportare quell'intervallo."
     },
     "valveControl": {
       "open": "Apri",

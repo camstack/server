@@ -282,3 +282,64 @@ export function axisTicks(fromMs: number, toMs: number, count: number): AxisTick
   }
   return ticks
 }
+
+// ---------------------------------------------------------------------------
+// Latest footage — where an empty window sends the operator
+// ---------------------------------------------------------------------------
+
+/** The most recent recorded stretch, with its length. */
+export interface LatestFootage {
+  readonly startMs: number
+  readonly endMs: number
+  readonly durationMs: number
+}
+
+/**
+ * The newest span of a list of merged spans, or `null` when there is none.
+ * "Newest" is the one that ENDS last — spans from a merge are ascending, but
+ * the pick does not rely on the order it is handed.
+ */
+export function pickLatestFootage(spans: readonly PlaybackSpan[]): LatestFootage | null {
+  let best: PlaybackSpan | null = null
+  for (const span of spans) {
+    if (span.endMs <= span.startMs) continue
+    if (best === null || span.endMs > best.endMs) best = span
+  }
+  if (best === null) return null
+  return { startMs: best.startMs, endMs: best.endMs, durationMs: best.endMs - best.startMs }
+}
+
+/**
+ * The newest day (local-midnight epoch) of a `getDaysWithRecordings` answer
+ * that lies strictly before `todayStartMs`, or `null`. Today is excluded on
+ * purpose: the caller asks this only after today's own window answered empty.
+ */
+export function latestPastDay(days: readonly number[], todayStartMs: number): number | null {
+  let best: number | null = null
+  for (const day of days) {
+    if (day >= todayStartMs) continue
+    if (best === null || day > best) best = day
+  }
+  return best
+}
+
+/** "42 s", "7 min", "3 h 05 min" — a recorded stretch's length, for a sentence. */
+export function formatFootageDuration(durationMs: number): string {
+  const totalSec = Math.max(0, Math.round(durationMs / 1000))
+  if (totalSec < 60) return `${String(totalSec)} s`
+  const totalMin = Math.round(totalSec / 60)
+  if (totalMin < 60) return `${String(totalMin)} min`
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  return m === 0 ? `${String(h)} h` : `${String(h)} h ${String(m).padStart(2, '0')} min`
+}
+
+/**
+ * The reason to show for a playback that did not start. A thrown error keeps
+ * its own message; only a throw with none falls back to the generic line.
+ */
+export function playbackFailureReason(error: unknown): string | null {
+  if (error instanceof Error && error.message.trim().length > 0) return error.message
+  if (typeof error === 'string' && error.trim().length > 0) return error
+  return null
+}
