@@ -90,13 +90,21 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     await super.removeDevice()
   }
 
-  /** The `workload` slice from the live snapshot; a device absent from it keeps its slice. */
+  /**
+   * The `workload` slice from the live snapshot. A failed read (or a device the controller no
+   * longer lists) is unknown, never the last state a reachable controller reported.
+   */
   private recomputeWorkload(): void {
-    const infra = unifiControllers.getInfra(this.integrationId, this.infraNativeId)
-    if (infra === null) return
+    const previous =
+      this.runtimeState.getCapState<WorkloadStatus>(workloadCapability.name) ??
+      UNIFI_HOST_WORKLOAD_UNKNOWN
     this.runtimeState.setCapState(
       workloadCapability.name,
-      unifiHostWorkloadStatus(infra, Date.now()),
+      unifiHostWorkloadStatus(
+        unifiControllers.getLiveInfra(this.integrationId, this.infraNativeId),
+        Date.now(),
+        previous,
+      ),
     )
   }
 
