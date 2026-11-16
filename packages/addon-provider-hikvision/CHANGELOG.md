@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Siren: timed trigger with a countdown, and motion-triggered audio alarm (VMD beep linkage)
+- Siren: timed trigger with a countdown, and motion-triggered audio alarm (VMD beep linkage); a siren toggled outside CamStack is not tracked until the next trigger or stop
 
 ## [1.2.187] - 2026-11-14
 

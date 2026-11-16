@@ -27,7 +27,7 @@ interface Providers {
   }
 }
 
-function build(opts: { beep?: boolean; inputIds?: string[]; alarmInputActive?: boolean } = {}) {
+function build(opts: { beep?: boolean; inputIds?: string[] } = {}) {
   let runtime: IDeviceRuntimeState | null = null
   const providers: Providers = {}
   const client = {
@@ -42,7 +42,6 @@ function build(opts: { beep?: boolean; inputIds?: string[]; alarmInputActive?: b
       center: false,
     })),
     setMotionTriggerLinkage: vi.fn(async () => {}),
-    getAlarmInput: vi.fn(async () => ({ active: opts.alarmInputActive ?? false })),
   }
   const ctx = {
     id: 41,
@@ -118,19 +117,6 @@ describe('Hikvision siren accessory — timed siren cap', () => {
     await h.providers.siren!.stop({ deviceId: 41 })
     expect(h.client.setAlarmInput).toHaveBeenLastCalledWith(false, 1)
     expect(h.slice<SirenStatus>('siren')?.active).toBe(false)
-  })
-
-  it('the poll seeing an external release clears a running countdown', async () => {
-    const h = build({ alarmInputActive: false })
-    await h.providers.siren!.trigger({ deviceId: 41, durationSeconds: 120 })
-    await vi.advanceTimersByTimeAsync(30_000)
-    expect(h.slice<SirenStatus>('siren')?.active).toBe(false)
-  })
-
-  it('the poll seeing an external trigger shows the siren active, open-ended', async () => {
-    const h = build({ alarmInputActive: true })
-    await vi.advanceTimersByTimeAsync(30_000)
-    expect(h.slice<SirenStatus>('siren')).toMatchObject({ active: true, activeUntil: null })
   })
 })
 

@@ -21,11 +21,11 @@
  *   - `pulseDurationMs` — auto-release the input after N ms (0 =
  *                          manual release).
  *
- * Notes on the persisted-state model: Hikvision's `getAlarmInput` GET
- * reflects the *configured* state, not the *active* trigger. The
- * runtime-state slice is the authoritative source for operator-driven
- * flips; a 30s background poll re-reads firmware so external changes
- * (camera-side linkage, panel toggle) surface in the UI.
+ * Notes on the persisted-state model: the alarm input's ISAPI document is
+ * *configuration*, not activity, and nothing here reads the siren's real
+ * activity. The runtime-state slice is the only source and is written by
+ * CamStack's own triggers; a siren toggled outside CamStack is not tracked
+ * until the next trigger or stop.
  */
 
 import type {
@@ -88,7 +88,6 @@ export interface HikvisionSirenHost extends HikvisionAccessoryHost {
   alarmInputPorts(): readonly number[]
 }
 
-const POLL_INTERVAL_MS = 30_000
 const MOTION_TRIGGER_STALE_MS = 30_000
 
 export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
@@ -96,7 +95,6 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
 
   /** Pending auto-release timer fired after `pulseDurationMs`. */
   private pulseTimer: ReturnType<typeof setTimeout> | null = null
-  private pollTimer: ReturnType<typeof setInterval> | null = null
 
   constructor(
     ctx: DeviceContext,
@@ -114,7 +112,6 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
     this.registerSwitchCap()
     this.registerMotionTriggerCap()
     this.registerSirenCap()
-    this.startPolling()
   }
 
   private get port(): number {
@@ -129,30 +126,6 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
 
   private switchView(): SwitchStatus {
     return this.getCapSlice(switchCapability) ?? { on: false, lastChangedAt: 0 }
-  }
-
-  /** Refresh the alarm-input state from firmware. ISAPI's
-   *  `getAlarmInput` reflects configured state, not the active trigger,
-   *  so a poll is meaningful only to surface changes made by other
-   *  clients (panel toggle, ISAPI script). */
-  private async refreshFromFirmware(): Promise<void> {
-    const isapi = this.parent.ensureClient()
-    const reader = (
-      isapi as { getAlarmInput?: (port: number) => Promise<{ active?: boolean } | null> }
-    ).getAlarmInput
-    if (!reader) return
-    try {
-      const state = await reader.call(isapi, this.port)
-      const on = Boolean(state?.active)
-      const previous = this.switchView()
-      const lastChangedAt = previous.on === on ? previous.lastChangedAt : Date.now()
-      this.setCapSlice(switchCapability, { on, lastChangedAt })
-      this.alignSirenWithInput(on)
-    } catch (err) {
-      this.ctx.logger.debug('hikvision siren refresh failed', {
-        meta: { error: err instanceof Error ? err.message : String(err) },
-      })
-    }
   }
 
   private async pushAlarmInput(on: boolean): Promise<void> {
@@ -190,22 +163,6 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
   private publishSiren(status: SirenStatus): void {
     const previous = this.runtimeState.getCapState<{ lastFetchedAt?: number }>('siren')
     this.setCapSlice(sirenCapability, { ...status, lastFetchedAt: previous?.lastFetchedAt ?? 0 })
-  }
-
-  /**
-   * The poll saw the alarm input differ from what the switch last said (another
-   * client flipped it): the siren slice follows, so the countdown never outlives
-   * a release and an external trigger shows as active (open-ended: we do not
-   * know when its owner will release it).
-   */
-  private alignSirenWithInput(on: boolean): void {
-    const current = this.sirenView()
-    if (on && !current.active) {
-      this.publishSiren(this.openEndedStatus())
-    } else if (!on && current.active) {
-      this.cancelPulseTimer()
-      this.publishSiren(sirenIdleStatus(current))
-    }
   }
 
   /** Releases the input after `seconds` and publishes the countdown it implies. */
@@ -341,19 +298,10 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
     this.setCapSlice(motionTriggerCapability, seed)
   }
 
-  private startPolling(): void {
-    if (this.pollTimer) return
-    this.pollTimer = setInterval(() => {
-      void this.refreshFromFirmware()
-    }, POLL_INTERVAL_MS)
-  }
-
   private registerSwitchCap(): void {
     const provider: InferNativeProvider<typeof switchCapability> = {
-      // Read straight from the runtime-state slice — the 30s
-      // background poll + setState writes keep it fresh. CLAUDE.md
-      // anti-pattern: don't refresh-on-every-getStatus; the slice IS
-      // the cache.
+      // Read straight from the runtime-state slice that setState writes;
+      // the slice IS the cache (no refresh on every getStatus).
       getStatus: async (): Promise<SwitchStatus> => this.switchView(),
       setState: async ({ deviceId, on }) => {
         if (deviceId !== this.id) {
@@ -460,10 +408,6 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
 
   override async removeDevice(): Promise<void> {
     this.cancelPulseTimer()
-    if (this.pollTimer) {
-      clearInterval(this.pollTimer)
-      this.pollTimer = null
-    }
     if (this.switchView().on) {
       try {
         await this.pushAlarmInput(false)
