@@ -18,13 +18,19 @@ import {
   type IScopedLogger,
   type LogTags,
 } from '@camstack/types'
-import { ComposedPlaceholderDevice, composedDeviceClass } from './composed-device.js'
+import {
+  ComposedPlaceholderDevice,
+  composedDeviceClass,
+  EngineHostedComposedDevice,
+} from './composed-device.js'
 
 export interface ComposerDeclarationInput {
   readonly blockId: string
   readonly name: string
   readonly target: CompositionNewTarget
   readonly caps: readonly CapabilityDefinition[]
+  /** An engine serves this row's caps and status (a grid or terminal helper, planning#580). */
+  readonly hosted: boolean
 }
 
 export function declarationFor(input: ComposerDeclarationInput): DeviceDeclaration {
@@ -32,17 +38,20 @@ export function declarationFor(input: ComposerDeclarationInput): DeviceDeclarati
     stableId: composedDeviceStableId(input.blockId),
     name: input.name,
     type: input.target.type,
-    DeviceClass: composedDeviceClass(input.target.type, input.caps),
+    DeviceClass: input.hosted
+      ? EngineHostedComposedDevice
+      : composedDeviceClass(input.target.type, input.caps),
     ...(input.target.role === undefined ? {} : { role: input.target.role }),
   }
 }
 
-/** What forces a rebuild of the live device: type, role, cap set. Never the name. */
+/** What forces a rebuild of the live device: type, role, cap set, who hosts it. Never the name. */
 export function shapeOf(input: ComposerDeclarationInput): string {
   return JSON.stringify([
     input.target.type,
     input.target.role ?? null,
     input.caps.map((c) => c.name).toSorted(),
+    ...(input.hosted ? ['hosted'] : []),
   ])
 }
 

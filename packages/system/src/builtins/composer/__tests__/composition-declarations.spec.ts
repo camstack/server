@@ -8,6 +8,7 @@ const INPUT = {
   name: 'Living room',
   target: { kind: 'new', type: DeviceType.Sensor },
   caps: [temperatureSensorCapability, binaryCapability],
+  hosted: false,
 } as const
 
 /** The numeric ids the composer holds for its live composed devices. */

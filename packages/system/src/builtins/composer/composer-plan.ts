@@ -31,6 +31,7 @@ import {
   type DeviceDeclaration,
   type DeviceType,
   type IScopedLogger,
+  isEngineHostedHelper,
   type LogTags,
   planComposition,
   withDefaultRunning,
@@ -153,7 +154,8 @@ export function planNew(
     const def = lookupCap(f.cap)
     return def === null ? [] : [def]
   })
-  const declarationInput = { blockId: block.id, name: block.name, target, caps }
+  const hosted = composition.helper !== undefined && isEngineHostedHelper(composition.helper)
+  const declarationInput = { blockId: block.id, name: block.name, target, caps, hosted }
   return {
     block,
     fields: plan.fields,

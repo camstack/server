@@ -1166,6 +1166,7 @@ export type {
   AccessoryChildrenRead,
   AccessoryChildrenUnknown,
   AccessoryChildSpec,
+  DeviceStatusOwnership,
 } from './device/base-device.js'
 export {
   accessoryChildrenComplete,
