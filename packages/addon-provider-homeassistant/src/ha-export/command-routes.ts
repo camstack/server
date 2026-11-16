@@ -32,6 +32,7 @@ import {
   HvacModeSchema,
   MediaPlayerRepeatSchema,
   type AlarmArmMode,
+  type CommandOriginRequestOptions,
   type DeviceProxy,
   type FanDirection,
   type HvacMode,
@@ -1132,21 +1133,22 @@ export function commandNotAppliedBody(refusal: CommandRefusal): {
 export async function applyCapCommand(
   device: CapCommandDevice,
   command: CapExportCommand,
+  options?: CommandOriginRequestOptions,
 ): Promise<CapCommandOutcome> {
   switch (command.kind) {
     case 'cap-switch': {
       if (device.switch === undefined) {
         return { ok: false, reason: 'no-provider', capName: command.capName }
       }
-      await device.switch.setState({ on: command.on })
+      await device.switch.setState({ on: command.on }, options)
       return { ok: true }
     }
     case 'cap-lock': {
       if (device.lockControl === undefined) {
         return { ok: false, reason: 'no-provider', capName: 'lock-control' }
       }
-      if (command.locked) await device.lockControl.lock({})
-      else await device.lockControl.unlock({})
+      if (command.locked) await device.lockControl.lock({}, options)
+      else await device.lockControl.unlock({}, options)
       return { ok: true }
     }
     case 'cap-lock-open': {
@@ -1161,7 +1163,7 @@ export async function applyCapCommand(
        * Assistant showing a door that opened and did not.
        */
       try {
-        await device.lockControl.open({})
+        await device.lockControl.open({}, options)
       } catch (err) {
         return {
           ok: false,
@@ -1176,7 +1178,7 @@ export async function applyCapCommand(
       if (device.brightness === undefined) {
         return { ok: false, reason: 'no-provider', capName: 'brightness' }
       }
-      await device.brightness.setBrightness({ level: command.percentage })
+      await device.brightness.setBrightness({ level: command.percentage }, options)
       return { ok: true }
     }
     case 'cap-alarm': {
@@ -1195,13 +1197,13 @@ export async function applyCapCommand(
       try {
         switch (command.action.kind) {
           case 'arm':
-            await device.alarmPanel.arm({ mode: command.action.mode })
+            await device.alarmPanel.arm({ mode: command.action.mode }, options)
             break
           case 'disarm':
-            await device.alarmPanel.disarm({})
+            await device.alarmPanel.disarm({}, options)
             break
           case 'trigger':
-            await device.alarmPanel.trigger({})
+            await device.alarmPanel.trigger({}, options)
             break
         }
       } catch (err) {
@@ -1218,7 +1220,7 @@ export async function applyCapCommand(
       if (device.button === undefined) {
         return { ok: false, reason: 'no-provider', capName: command.capName }
       }
-      await device.button.press({})
+      await device.button.press({}, options)
       return { ok: true }
     }
     case 'cap-control':
@@ -1233,13 +1235,16 @@ export async function applyCapCommand(
           if (!Number.isFinite(numeric)) {
             throw new Error(`control value is not a number: ${command.value}`)
           }
-          await control.setValue({
-            control: { kind: 'numeric', value: numeric },
-          })
+          await control.setValue(
+            {
+              control: { kind: 'numeric', value: numeric },
+            },
+            options,
+          )
           return
         }
         if (kind === 'select' || kind === 'text' || kind === 'datetime') {
-          await control.setValue({ control: { kind, value: command.value } })
+          await control.setValue({ control: { kind, value: command.value } }, options)
           return
         }
         throw new Error(`unsupported control kind: ${String(kind)}`)
@@ -1248,38 +1253,38 @@ export async function applyCapCommand(
     // ── Tier A ──────────────────────────────────────────────────────────
     case 'cover-position':
       return call(device.cover, 'cover', (cover) =>
-        cover.setPosition({ position: command.position }),
+        cover.setPosition({ position: command.position }, options),
       )
     case 'cover-tilt':
       return call(device.cover, 'cover', (cover) =>
-        cover.setTiltPosition({ tiltPosition: command.tiltPosition }),
+        cover.setTiltPosition({ tiltPosition: command.tiltPosition }, options),
       )
     case 'cover-verb':
       return call(device.cover, 'cover', (cover) => {
         switch (command.verb) {
           case 'open':
-            return cover.open({})
+            return cover.open({}, options)
           case 'close':
-            return cover.close({})
+            return cover.close({}, options)
           case 'stop':
-            return cover.stop({})
+            return cover.stop({}, options)
         }
       })
     case 'climate-mode':
       return call(device.climateControl, 'climate-control', (climate) =>
-        climate.setMode({ mode: command.mode }),
+        climate.setMode({ mode: command.mode }, options),
       )
     case 'climate-target':
       return call(device.climateControl, 'climate-control', (climate) =>
-        climate.setTarget({ target: command.target }),
+        climate.setTarget({ target: command.target }, options),
       )
     case 'climate-fan-mode':
       return call(device.climateControl, 'climate-control', (climate) =>
-        climate.setFanMode({ fanMode: command.fanMode }),
+        climate.setFanMode({ fanMode: command.fanMode }, options),
       )
     case 'climate-preset':
       return call(device.climateControl, 'climate-control', (climate) =>
-        climate.setPreset({ preset: command.preset }),
+        climate.setPreset({ preset: command.preset }, options),
       )
     /**
      * The one read-then-write in this file, and the reason is the cap's
@@ -1303,191 +1308,194 @@ export async function applyCapCommand(
             `the device reports no ${command.edge === 'low' ? 'high' : 'low'} setpoint, so setTargetRange has nothing to preserve`,
           )
         }
-        await climate.setTargetRange({ targetLow: low, targetHigh: high })
+        await climate.setTargetRange({ targetLow: low, targetHigh: high }, options)
       })
     case 'climate-target-humidity':
       return call(device.climateControl, 'climate-control', (climate) =>
-        climate.setTargetHumidity({ targetHumidity: command.targetHumidity }),
+        climate.setTargetHumidity({ targetHumidity: command.targetHumidity }, options),
       )
     case 'climate-swing':
       return call(device.climateControl, 'climate-control', (climate) =>
         command.axis === 'vertical'
-          ? climate.setSwingVertical({ on: command.on })
-          : climate.setSwingHorizontal({ on: command.on }),
+          ? climate.setSwingVertical({ on: command.on }, options)
+          : climate.setSwingHorizontal({ on: command.on }, options),
       )
     case 'fan-percentage':
       return call(device.fanControl, 'fan-control', (fan) =>
-        fan.setPercentage({ speed: command.percentage }),
+        fan.setPercentage({ speed: command.percentage }, options),
       )
     case 'fan-preset':
       return call(device.fanControl, 'fan-control', (fan) =>
-        fan.setPreset({ preset: command.preset }),
+        fan.setPreset({ preset: command.preset }, options),
       )
     case 'fan-oscillating':
       return call(device.fanControl, 'fan-control', (fan) =>
-        fan.setOscillating({ oscillating: command.oscillating }),
+        fan.setOscillating({ oscillating: command.oscillating }, options),
       )
     case 'fan-direction':
       return call(device.fanControl, 'fan-control', (fan) =>
-        fan.setDirection({ direction: command.direction }),
+        fan.setDirection({ direction: command.direction }, options),
       )
     case 'humidifier-on':
       return call(device.humidifier, 'humidifier', (humidifier) =>
-        humidifier.setOn({ on: command.on }),
+        humidifier.setOn({ on: command.on }, options),
       )
     case 'humidifier-humidity':
       return call(device.humidifier, 'humidifier', (humidifier) =>
-        humidifier.setTargetHumidity({ humidity: command.humidity }),
+        humidifier.setTargetHumidity({ humidity: command.humidity }, options),
       )
     case 'humidifier-mode':
       return call(device.humidifier, 'humidifier', (humidifier) =>
-        humidifier.setMode({ mode: command.mode }),
+        humidifier.setMode({ mode: command.mode }, options),
       )
     case 'water-heater-temp':
       return call(device.waterHeater, 'water-heater', (heater) =>
-        heater.setTargetTemp({ temp: command.temp }),
+        heater.setTargetTemp({ temp: command.temp }, options),
       )
     case 'water-heater-away':
       return call(device.waterHeater, 'water-heater', (heater) =>
-        heater.setAway({ on: command.on }),
+        heater.setAway({ on: command.on }, options),
       )
     case 'water-heater-mode':
       return call(device.waterHeater, 'water-heater', (heater) =>
-        heater.setOperationMode({ mode: command.mode }),
+        heater.setOperationMode({ mode: command.mode }, options),
       )
     case 'valve-position':
       return call(device.valve, 'valve', (valve) =>
-        valve.setPosition({ position: command.position }),
+        valve.setPosition({ position: command.position }, options),
       )
     case 'valve-verb':
       return call(device.valve, 'valve', (valve) => {
         switch (command.verb) {
           case 'open':
-            return valve.open({})
+            return valve.open({}, options)
           case 'close':
-            return valve.close({})
+            return valve.close({}, options)
           case 'stop':
-            return valve.stop({})
+            return valve.stop({}, options)
         }
       })
     case 'vacuum-verb':
       return call(device.vacuumControl, 'vacuum-control', (vacuum) => {
         switch (command.verb) {
           case 'start':
-            return vacuum.start({})
+            return vacuum.start({}, options)
           case 'pause':
-            return vacuum.pause({})
+            return vacuum.pause({}, options)
           case 'stop':
-            return vacuum.stop({})
+            return vacuum.stop({}, options)
           case 'return-to-base':
-            return vacuum.returnToBase({})
+            return vacuum.returnToBase({}, options)
           case 'locate':
-            return vacuum.locate({})
+            return vacuum.locate({}, options)
         }
       })
     case 'vacuum-fan-speed':
       return call(device.vacuumControl, 'vacuum-control', (vacuum) =>
-        vacuum.setFanSpeed({ speed: command.speed }),
+        vacuum.setFanSpeed({ speed: command.speed }, options),
       )
     case 'mower-verb':
       return call(device.lawnMowerControl, 'lawn-mower-control', (mower) => {
         switch (command.verb) {
           case 'start':
-            return mower.startMowing({})
+            return mower.startMowing({}, options)
           case 'pause':
-            return mower.pause({})
+            return mower.pause({}, options)
           case 'dock':
-            return mower.dock({})
+            return mower.dock({}, options)
         }
       })
     case 'media-verb':
       return call(device.mediaPlayer, 'media-player', (media) => {
         switch (command.verb) {
           case 'play':
-            return media.play({})
+            return media.play({}, options)
           case 'pause':
-            return media.pause({})
+            return media.pause({}, options)
           case 'stop':
-            return media.stop({})
+            return media.stop({}, options)
           case 'next':
-            return media.next({})
+            return media.next({}, options)
           case 'previous':
-            return media.previous({})
+            return media.previous({}, options)
         }
       })
     case 'media-volume':
       return call(device.mediaPlayer, 'media-player', (media) =>
-        media.setVolume({ volumeLevel: command.volumeLevel }),
+        media.setVolume({ volumeLevel: command.volumeLevel }, options),
       )
     case 'media-mute':
       return call(device.mediaPlayer, 'media-player', (media) =>
-        media.setMute({ muted: command.muted }),
+        media.setMute({ muted: command.muted }, options),
       )
     case 'media-shuffle':
       return call(device.mediaPlayer, 'media-player', (media) =>
-        media.setShuffle({ shuffle: command.shuffle }),
+        media.setShuffle({ shuffle: command.shuffle }, options),
       )
     case 'media-repeat':
       return call(device.mediaPlayer, 'media-player', (media) =>
-        media.setRepeat({ repeat: command.repeat }),
+        media.setRepeat({ repeat: command.repeat }, options),
       )
     case 'media-source':
       return call(device.mediaPlayer, 'media-player', (media) =>
-        media.selectSource({ source: command.source }),
+        media.selectSource({ source: command.source }, options),
       )
     case 'color-mireds':
       return call(device.color, 'color', (color) =>
-        color.setColor({
-          color: { mode: 'mired', colorTemperature: command.mireds },
-        }),
+        color.setColor(
+          {
+            color: { mode: 'mired', colorTemperature: command.mireds },
+          },
+          options,
+        ),
       )
     case 'script-verb':
       return call(device.scriptRunner, 'script-runner', (script) =>
-        command.verb === 'run' ? script.run({}) : script.stop({}),
+        command.verb === 'run' ? script.run({}, options) : script.stop({}, options),
       )
     case 'automation-enabled':
       return call(device.automationControl, 'automation-control', (automation) =>
-        command.enabled ? automation.enable({}) : automation.disable({}),
+        command.enabled ? automation.enable({}, options) : automation.disable({}, options),
       )
     case 'automation-trigger':
       return call(device.automationControl, 'automation-control', (automation) =>
-        automation.trigger({}),
+        automation.trigger({}, options),
       )
     case 'dishwasher-verb':
       return call(device.dishwasher, 'dishwasher', (dishwasher) => {
         switch (command.verb) {
           case 'start':
-            return dishwasher.start({})
+            return dishwasher.start({}, options)
           case 'pause':
-            return dishwasher.pause({})
+            return dishwasher.pause({}, options)
           case 'resume':
-            return dishwasher.resume({})
+            return dishwasher.resume({}, options)
           case 'stop':
-            return dishwasher.stop({})
+            return dishwasher.stop({}, options)
         }
       })
     case 'dishwasher-switch':
       return call(device.dishwasher, 'dishwasher', (dishwasher) => {
         switch (command.control) {
           case 'power':
-            return dishwasher.setPower({ on: command.on })
+            return dishwasher.setPower({ on: command.on }, options)
           case 'child-lock':
-            return dishwasher.setChildLock({ on: command.on })
+            return dishwasher.setChildLock({ on: command.on }, options)
           case 'half-load':
-            return dishwasher.setHalfLoad({ on: command.on })
+            return dishwasher.setHalfLoad({ on: command.on }, options)
           case 'hygiene-plus':
-            return dishwasher.setHygienePlus({ on: command.on })
+            return dishwasher.setHygienePlus({ on: command.on }, options)
           case 'extra-dry':
-            return dishwasher.setExtraDry({ on: command.on })
+            return dishwasher.setExtraDry({ on: command.on }, options)
           case 'intensive-zone':
-            return dishwasher.setIntensiveZone({ on: command.on })
+            return dishwasher.setIntensiveZone({ on: command.on }, options)
           case 'vario-speed-plus':
-            return dishwasher.setVarioSpeedPlus({ on: command.on })
+            return dishwasher.setVarioSpeedPlus({ on: command.on }, options)
         }
       })
     case 'consumable-reset':
       return call(device.consumables, 'consumables', (consumables) =>
-        consumables.reset({ key: command.key }),
+        consumables.reset({ key: command.key }, options),
       )
   }
 }

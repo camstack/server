@@ -118,7 +118,7 @@ describe('HomeKit PTZ direction switches', () => {
     await press(serviceBySubtype(accessory, 'ptz-pan-left'))
 
     expect(ptz.move).toHaveBeenCalledTimes(1)
-    expect(ptz.move).toHaveBeenCalledWith({ pan: -1 })
+    expect(ptz.move).toHaveBeenCalledWith({ pan: -1 }, undefined)
     expect(ptz.continuousMove).not.toHaveBeenCalled()
     await new Promise((r) => setTimeout(r, 80))
     expect(ptz.stop).not.toHaveBeenCalled()

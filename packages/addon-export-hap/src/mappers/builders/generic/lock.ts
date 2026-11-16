@@ -30,6 +30,7 @@ import type { BuilderContext, BuilderHandle } from '../../types.js'
 import { hapServiceName } from '../service-names.js'
 import { applyServiceLabel } from '../service-label.js'
 import { applyUpdates, reader } from './characteristic-update.js'
+import { hapOrigin } from '../hap-origin.js'
 
 const SUBTYPE = 'lock-control'
 
@@ -82,23 +83,25 @@ export async function buildLockMechanism(bctx: BuilderContext): Promise<BuilderH
     })
   }
 
-  service.getCharacteristic(Characteristic.LockTargetState).onSet(async (value) => {
-    const secure = value === Characteristic.LockTargetState.SECURED
-    try {
-      // No optimistic write of LockCurrentState: the cap pushes the real
-      // transition through the slice, and claiming SECURED before the bolt
-      // moved is exactly the lie this builder refuses to tell.
-      if (secure) {
-        await proxy.lockControl?.lock({})
-      } else {
-        await proxy.lockControl?.unlock({})
+  service
+    .getCharacteristic(Characteristic.LockTargetState)
+    .onSet(async (value, _context, connection) => {
+      const secure = value === Characteristic.LockTargetState.SECURED
+      try {
+        // No optimistic write of LockCurrentState: the cap pushes the real
+        // transition through the slice, and claiming SECURED before the bolt
+        // moved is exactly the lie this builder refuses to tell.
+        if (secure) {
+          await proxy.lockControl?.lock({}, hapOrigin(connection))
+        } else {
+          await proxy.lockControl?.unlock({}, hapOrigin(connection))
+        }
+      } catch (err) {
+        log.warn('export-hap: lock command failed', {
+          meta: { secure, error: errMsg(err) },
+        })
       }
-    } catch (err) {
-      log.warn('export-hap: lock command failed', {
-        meta: { secure, error: errMsg(err) },
-      })
-    }
-  })
+    })
 
   const unsubscribe =
     proxy.state.lockControl?.subscribe((value) => {

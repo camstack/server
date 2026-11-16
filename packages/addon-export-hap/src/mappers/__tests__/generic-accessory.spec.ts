@@ -20,6 +20,7 @@
  */
 
 import type { AddonContext, DeviceProxy } from '@camstack/types'
+import type { HAPConnection } from '@homebridge/hap-nodejs'
 import { applianceExport, DeviceRole, DeviceType } from '@camstack/types'
 import type { CharacteristicWarning } from '@homebridge/hap-nodejs'
 import { Categories, Characteristic, Service } from '@homebridge/hap-nodejs'
@@ -315,6 +316,38 @@ describe('the generic accessory', () => {
     expect(service?.getCharacteristic(Characteristic.ContactSensorState).value).toBe(
       Characteristic.ContactSensorState.CONTACT_NOT_DETECTED,
     )
+    await mapper.dispose()
+  })
+
+  it('names the paired HomeKit controller on a lock write', async () => {
+    const origins: unknown[] = []
+    const proxy = makeProxy(['lock-control'], DeviceType.Lock, {
+      lockControl: {
+        getStatus: async () => ({ state: 'unlocked', lastChangedAt: 1 }),
+        lock: async (_input: unknown, options?: unknown) => {
+          origins.push(options)
+        },
+        unlock: async () => undefined,
+      },
+    })
+    const mapper = await build(proxy)
+    const service = serviceOfType(mapper.accessory, Service.LockMechanism)
+    // boundary: a HAPConnection is built by the hap server; the handler reads only `username`
+    const session = { username: 'AA:BB:CC:DD:EE:FF' } as unknown as HAPConnection
+    await service
+      ?.getCharacteristic(Characteristic.LockTargetState)
+      .handleSetRequest(Characteristic.LockTargetState.SECURED, session)
+    await service
+      ?.getCharacteristic(Characteristic.LockTargetState)
+      .handleSetRequest(Characteristic.LockTargetState.SECURED)
+    const claims = origins.map((o) =>
+      o === undefined ? undefined : Object.values(Reflect.get(o as object, 'context')),
+    )
+    // A write over a paired session names the controller; a local write claims nothing.
+    expect(claims).toEqual([
+      [{ kind: 'on-behalf', source: 'homekit', principalId: 'AA:BB:CC:DD:EE:FF' }],
+      undefined,
+    ])
     await mapper.dispose()
   })
 

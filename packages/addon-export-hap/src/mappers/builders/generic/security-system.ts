@@ -52,6 +52,7 @@ import { hapServiceName } from '../service-names.js'
 import { applyUpdates, type CharacteristicUpdate } from './characteristic-update.js'
 import { type ArmedMemo, armedMemoOf, securityStateFor } from './security-state.js'
 import { armModeForTarget, targetValidValuesFor } from './security-target.js'
+import { hapOrigin } from '../hap-origin.js'
 
 const SUBTYPE = 'alarm-panel'
 
@@ -189,7 +190,7 @@ export async function buildSecuritySystem(bctx: BuilderContext): Promise<Builder
 
   service
     .getCharacteristic(Characteristic.SecuritySystemTargetState)
-    .onSet(async (value: CharacteristicValue) => {
+    .onSet(async (value: CharacteristicValue, _context, connection) => {
       const target = typeof value === 'number' ? value : Number(value)
       const disarm = target === Characteristic.SecuritySystemTargetState.DISARM
       const mode = disarm ? null : armModeForTarget(target, availableModes)
@@ -224,9 +225,9 @@ export async function buildSecuritySystem(bctx: BuilderContext): Promise<Builder
         // unreachable after a refusal or a slow second tap. The slice
         // subscribe below resyncs Current/Target when the panel publishes.
         if (mode === null) {
-          await proxy.alarmPanel?.disarm({})
+          await proxy.alarmPanel?.disarm({}, hapOrigin(connection))
         } else {
-          await proxy.alarmPanel?.arm({ mode })
+          await proxy.alarmPanel?.arm({ mode }, hapOrigin(connection))
         }
       } catch (err) {
         log.warn('export-hap: alarm panel command failed', {

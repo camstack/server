@@ -36,6 +36,7 @@ import { Characteristic, Service } from '@homebridge/hap-nodejs'
 
 import type { BuilderContext, BuilderHandle } from '../types.js'
 import { applyServiceLabel } from './service-label.js'
+import { hapOrigin } from './hap-origin.js'
 
 /**
  * The HomeKit service an on/off device becomes. A switch's sub-role is read
@@ -151,10 +152,10 @@ export async function buildChildSwitch(
 
   // Wire setState
   if (hasSwitch) {
-    service.getCharacteristic(Characteristic.On).onSet(async (value) => {
+    service.getCharacteristic(Characteristic.On).onSet(async (value, _context, connection) => {
       const on = value === true
       try {
-        await proxy.switch?.setState({ on })
+        await proxy.switch?.setState({ on }, hapOrigin(connection))
       } catch (err) {
         log.warn('export-hap: child switch.setState failed', {
           meta: { on, error: errMsg(err) },
@@ -165,17 +166,19 @@ export async function buildChildSwitch(
 
   // Wire setBrightness
   if (dimmable) {
-    service.getCharacteristic(Characteristic.Brightness).onSet(async (value) => {
-      const percentage = typeof value === 'number' ? value : Number(value)
-      if (!Number.isFinite(percentage)) return
-      try {
-        await proxy.brightness?.setBrightness({ level: percentage })
-      } catch (err) {
-        log.warn('export-hap: child brightness.setBrightness failed', {
-          meta: { percentage, error: errMsg(err) },
-        })
-      }
-    })
+    service
+      .getCharacteristic(Characteristic.Brightness)
+      .onSet(async (value, _context, connection) => {
+        const percentage = typeof value === 'number' ? value : Number(value)
+        if (!Number.isFinite(percentage)) return
+        try {
+          await proxy.brightness?.setBrightness({ level: percentage }, hapOrigin(connection))
+        } catch (err) {
+          log.warn('export-hap: child brightness.setBrightness failed', {
+            meta: { percentage, error: errMsg(err) },
+          })
+        }
+      })
   }
 
   // Live state — subscribe to slice changes for push updates from

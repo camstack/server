@@ -61,6 +61,7 @@ import {
   oauthIntegrationCapability,
   type ProviderRegistration,
   isInstanceEnabled,
+  type CommandOriginRequestOptions,
 } from '@camstack/types'
 import { z } from 'zod'
 import { HA_PROVIDER_ADDON_ID, listHomeAssistantBrokers } from '../ha-broker-source.js'
@@ -2828,6 +2829,8 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
       reply.send({ error: `unroutable command (${resolution.reason})` })
       return
     }
+    // The component posts only `{topic, value}`: it names no Home Assistant user, so
+    // no origin is claimed here. `dispatch` takes one the day the body carries it.
     const outcome = await this.dispatch(resolution.command)
     if (outcome.ok) {
       reply.status(200)
@@ -2847,7 +2850,10 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
     reply.send(commandNotAppliedBody(outcome))
   }
 
-  private async dispatch(command: ExportCommand): Promise<CommandOutcome> {
+  private async dispatch(
+    command: ExportCommand,
+    origin?: CommandOriginRequestOptions,
+  ): Promise<CommandOutcome> {
     try {
       /**
        * The capability half goes through the route table that NAMED the
@@ -2859,7 +2865,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
        */
       if (isCapCommand(command)) {
         const device = await this.ctx.fetchDevice(command.deviceId)
-        const outcome = await applyCapCommand(device, command)
+        const outcome = await applyCapCommand(device, command, origin)
         if (outcome.ok) return APPLIED
         if (outcome.reason === 'no-provider') {
           return this.noProvider(command.deviceId, outcome.capName)

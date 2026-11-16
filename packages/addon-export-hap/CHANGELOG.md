@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Commands from HomeKit are recorded with the paired controller that sent them.
+
 ## [1.2.202] - 2026-11-13
 
 ### Changed

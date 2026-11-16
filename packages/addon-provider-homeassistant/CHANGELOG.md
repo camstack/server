@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant export commands can carry the calling principal to the device audit (not yet sent by the component).
+
 ## [1.2.689] - 2026-11-14
 
 ### Changed

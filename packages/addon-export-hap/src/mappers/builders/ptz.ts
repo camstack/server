@@ -36,6 +36,7 @@ import type { BuilderContext, BuilderHandle } from '../types.js'
 import { PTZ_AUTOTRACK_LABEL, PTZ_DIRECTIONS, ptzPresetLabel } from './ptz-labels.js'
 import { applyServiceLabel } from './service-label.js'
 import { ptzServiceName } from './service-names.js'
+import { hapOrigin } from './hap-origin.js'
 
 const MOMENTARY_RESET_MS = 1_000
 
@@ -68,10 +69,10 @@ export async function buildPtz(bctx: BuilderContext): Promise<BuilderHandle> {
     const subtype = `ptz-preset-${preset.id}`
     const service = accessory.addService(Service.Switch, label, subtype)
     applyServiceLabel(service, label)
-    service.getCharacteristic(Characteristic.On).onSet(async (value) => {
+    service.getCharacteristic(Characteristic.On).onSet(async (value, _context, connection) => {
       if (value !== true) return
       try {
-        await proxy.ptz?.goToPreset({ presetId: preset.id })
+        await proxy.ptz?.goToPreset({ presetId: preset.id }, hapOrigin(connection))
       } catch (err) {
         log.warn('export-hap: ptz.goToPreset failed', {
           meta: { presetId: preset.id, error: errMsg(err) },
@@ -97,11 +98,11 @@ export async function buildPtz(bctx: BuilderContext): Promise<BuilderHandle> {
       // issued inside the handler is overwritten by the `true` being written.
       const reset = (delayMs: number): void =>
         armReset(() => service.updateCharacteristic(Characteristic.On, false), delayMs)
-      service.getCharacteristic(Characteristic.On).onSet(async (value) => {
+      service.getCharacteristic(Characteristic.On).onSet(async (value, _context, connection) => {
         if (value !== true) return
         const startedAt = Date.now()
         try {
-          await proxy.ptz?.move({ ...dir.cmd })
+          await proxy.ptz?.move({ ...dir.cmd }, hapOrigin(connection))
         } catch (err) {
           log.warn('export-hap: ptz.move failed', {
             meta: { dir: dir.label, error: errMsg(err) },
@@ -181,10 +182,10 @@ async function tryBuildAutotrack(bctx: BuilderContext): Promise<BuilderHandle> {
     })
   }
 
-  service.getCharacteristic(Characteristic.On).onSet(async (value) => {
+  service.getCharacteristic(Characteristic.On).onSet(async (value, _context, connection) => {
     const enabled = value === true
     try {
-      await proxy.ptzAutotrack?.setEnabled({ enabled })
+      await proxy.ptzAutotrack?.setEnabled({ enabled }, hapOrigin(connection))
     } catch (err) {
       log.warn('export-hap: ptzAutotrack.setEnabled failed', {
         meta: { enabled, error: errMsg(err) },

@@ -18,6 +18,7 @@ import { Characteristic, Service } from '@homebridge/hap-nodejs'
 import type { BuilderContext, BuilderHandle } from '../types.js'
 import { applyServiceLabel } from './service-label.js'
 import { privacyServiceName } from './service-names.js'
+import { hapOrigin } from './hap-origin.js'
 
 interface PrivacyMaskStatusLike {
   readonly enabled?: boolean
@@ -50,10 +51,10 @@ export async function buildPrivacySwitch(bctx: BuilderContext): Promise<BuilderH
     })
   }
 
-  service.getCharacteristic(Characteristic.On).onSet(async (value) => {
+  service.getCharacteristic(Characteristic.On).onSet(async (value, _context, connection) => {
     const enabled = value === true
     try {
-      await proxy.privacyMask?.setMask({ patch: { enabled } })
+      await proxy.privacyMask?.setMask({ patch: { enabled } }, hapOrigin(connection))
     } catch (err) {
       log.warn('export-hap: privacy-mask setMask failed', {
         meta: { enabled, error: errMsg(err) },
