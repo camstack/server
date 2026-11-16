@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated hooks include the pipeline-orchestrator health digest query
+- Closing a nested dialog (Insert value, Function) returns to the dialog it was opened from instead of closing everything; the device-template field puts its Device value, Function and help buttons above the input on full-width rows.
 
 ## [1.2.458] - 2026-11-15
 

@@ -281,7 +281,12 @@ export const DialogContent: ForwardRefExoticComponent<
         ref={dialogRef}
         id={contentId}
         className={cn(contentVariants({ width, placement, scroll }), className)}
-        onClose={() => setOpen(false)}
+        // React re-dispatches a nested <dialog>'s non-bubbling `close` to every
+        // ancestor dialog's onClose through the React tree; only a dialog's own
+        // close event may close it, or dismissing a picker closes its host.
+        onClose={(event) => {
+          if (event.target === event.currentTarget) setOpen(false)
+        }}
         {...props}
       >
         <IconButton

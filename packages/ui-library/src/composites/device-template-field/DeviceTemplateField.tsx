@@ -18,6 +18,7 @@ import {
   useDeviceManagerGetWireableFields,
   useDeviceManagerListAll,
 } from '../../generated/system-hooks'
+import { cn } from '../../lib/cn'
 import { Button } from '../../primitives/button'
 import { iconButtonClass } from '../../primitives/icon-button'
 import { Input } from '../../primitives/input'
@@ -245,7 +246,14 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
 
   return (
     <div className={props.className ?? 'relative flex flex-col gap-1'} data-testid={testId}>
-      <div className="flex flex-col gap-1.5 sm:flex-row sm:items-start">
+      <div className="flex flex-col gap-1.5">
+        <FieldActions
+          testId={testId}
+          disabled={disabled}
+          onInsert={() => setDialogOpen(true)}
+          onFunction={() => setFunctionOpen(true)}
+          onMouseDown={() => remember()}
+        />
         <div className="relative min-w-0 flex-1">
           {chips ? (
             <div
@@ -308,13 +316,6 @@ export function DeviceTemplateField(props: DeviceTemplateFieldProps): ReactNode 
             onChoose={choose}
           />
         </div>
-        <FieldActions
-          testId={testId}
-          disabled={disabled}
-          onInsert={() => setDialogOpen(true)}
-          onFunction={() => setFunctionOpen(true)}
-          onMouseDown={() => remember()}
-        />
       </div>
       <DeviceTemplateFeedback
         value={value}
@@ -362,11 +363,12 @@ interface FieldActionsProps {
 function FieldActions(props: FieldActionsProps): ReactNode {
   const t = useUiText()
   return (
-    <div className="flex shrink-0 flex-wrap items-start gap-1">
+    <div className="grid grid-cols-2 gap-1.5">
       <Button
         type="button"
         variant="outline"
         size="sm"
+        className="w-full"
         disabled={props.disabled}
         data-testid={`${props.testId}-insert`}
         aria-label={t('uiLibrary.deviceTemplateField.deviceValue', '+ Device value')}
@@ -383,6 +385,7 @@ function FieldActions(props: FieldActionsProps): ReactNode {
         type="button"
         variant="outline"
         size="sm"
+        className="w-full"
         disabled={props.disabled}
         data-testid={`${props.testId}-function`}
         aria-label={t('uiLibrary.deviceTemplateField.function', '+ Function')}
@@ -395,13 +398,14 @@ function FieldActions(props: FieldActionsProps): ReactNode {
         <Parentheses className="h-3.5 w-3.5 shrink-0" />
         {t('uiLibrary.deviceTemplateField.function', '+ Function')}
       </Button>
-      <Popover>
+      <Popover className="relative col-span-2 block">
         <PopoverTrigger
           aria-label={t('uiLibrary.deviceTemplateField.helpTitle', 'Template help')}
           data-testid={`${props.testId}-help`}
-          className={iconButtonClass('outline', 'sm')}
+          className={cn(iconButtonClass('outline', 'sm'), 'w-full gap-1.5 text-xs font-medium')}
         >
           <Info className="h-4 w-4" aria-hidden="true" />
+          {t('uiLibrary.deviceTemplateField.helpTitle', 'Template help')}
         </PopoverTrigger>
         <PopoverContent
           align="end"

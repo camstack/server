@@ -321,6 +321,16 @@ describe('DeviceTemplateField: help and layout', () => {
     expect(cls('help')).toContain('h-7')
     expect(cls('help')).toContain('border-border')
   })
+
+  it('puts the three actions above the input, each stretching the full width of its row', () => {
+    renderUi(<Harness initial="hello" />)
+    const insert = screen.getByTestId('device-template-field-insert')
+    const input = screen.getByTestId('device-template-field-input')
+    expect(insert.compareDocumentPosition(input) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(insert.className).toContain('w-full')
+    expect(screen.getByTestId('device-template-field-function').className).toContain('w-full')
+    expect(screen.getByTestId('device-template-field-help').className).toContain('w-full')
+  })
 })
 
 describe('DeviceTemplateField: insert dialog columns', () => {
