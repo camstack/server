@@ -20,6 +20,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
   useActionsList: () => ({ ...listState, refetch: vi.fn() }),
   useActionsRun: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+  useActionsUpdate: () => ({ mutate: vi.fn(), isPending: false, error: null, reset: vi.fn() }),
 }))
 vi.mock('../ActionEditor', () => ({ ActionEditor: () => <div>editor</div> }))
 

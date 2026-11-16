@@ -56,5 +56,6 @@ export default defineFixtures({
     'actions.list': TAGGED_ACTIONS,
     'schedulers.list': schedulers.handlers['schedulers.list'],
     'schedulers.getStatus': schedulers.handlers['schedulers.getStatus'],
+    'schedulers.getTraces': { traces: [], lastError: null },
   },
 })

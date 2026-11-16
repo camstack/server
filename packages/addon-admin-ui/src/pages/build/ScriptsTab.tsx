@@ -35,8 +35,8 @@ import {
   Badge,
   Button,
   ErrorBox,
+  IconButton,
   formatLastSeen,
-  ItemFormDialog,
   LogStream,
   TABLE_SCROLL_MAX_H,
   TaggedDataTable,
@@ -48,9 +48,11 @@ import {
 } from '@camstack/ui-library'
 import { blockSearchText, blockTags } from './tag-accessors'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import { Code2, RotateCw, ScrollText, Trash2 } from 'lucide-react'
+import { Pencil, RotateCw, ScrollText, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BlockEditor, type BlockTypeLibs } from './BlockEditor'
+import { QuickEditDialog, type QuickEditValues } from './shared/QuickEditDialog'
+import { blockQuickEditInput, quickEditValuesOf } from './shared/quick-edit-inputs'
 import { isPlainScript } from './automation/recipe-from-code'
 import {
   badgeVariantForTone,
@@ -104,7 +106,7 @@ export function ScriptsTab({
   const uiText = useUiText()
   const { t } = useTranslation()
   const system = useSystem()
-  /** `?block=` for edit; `?new=1` for create — same contract as ItemFormDialog. */
+  /** `?block=` for edit; `?new=1` for create. */
   const {
     state: formState,
     openNew,
@@ -114,6 +116,8 @@ export function ScriptsTab({
   /** Local draft after create before the list poll catches up (null = new). */
   const [savedBlock, setSavedBlock] = useState<CoreBlock | null>(null)
   const confirm = useConfirm()
+  /** The script whose Quick edit modal is open (row action, or right after a create). */
+  const [quickEditId, setQuickEditId] = useState<string | null>(null)
   /** Which row has its logs open. One at a time: two live subscriptions in a
    *  list is a lot of socket for a pane nobody is reading. */
   const [logsFor, setLogsFor] = useState<string | null>(null)
@@ -172,6 +176,20 @@ export function ScriptsTab({
       setSavedBlock(result.block)
       openEdit(result.block.id)
       onBlockIdChange?.(result.block.id)
+      refresh()
+      // A new script is named and tagged straight away, in the shared modal.
+      setQuickEditId(result.block.id)
+    },
+  })
+  const quickUpdate = useMutation({
+    mutationFn: (input: { block: CoreBlock; values: QuickEditValues }) =>
+      system.trpcClient.coreBlocks.update.mutate({
+        blockId: input.block.id,
+        block: blockQuickEditInput(input.block, input.values),
+      }),
+    onSuccess: (result) => {
+      setSavedBlock(result.block)
+      setQuickEditId(null)
       refresh()
     },
   })
@@ -315,6 +333,16 @@ export function ScriptsTab({
               >
                 {t('common.edit', 'Edit')}
               </Button>
+              <IconButton
+                icon={Pencil}
+                variant="ghost"
+                aria-label={t('build.quickEdit.action', 'Quick edit')}
+                title={t('build.quickEdit.action', 'Quick edit')}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setQuickEditId(block.id)
+                }}
+              />
               <Button
                 variant="ghost"
                 onClick={(e) => {
@@ -400,6 +428,67 @@ export function ScriptsTab({
     ],
   )
 
+  const closeEditor = (): void => {
+    create.reset()
+    update.reset()
+    restart.reset()
+    setSavedBlock(null)
+    closeForm()
+    onBlockIdChange?.(null)
+  }
+
+  const quickEditing =
+    quickEditId === null
+      ? null
+      : (blocks.find((b) => b.id === quickEditId) ??
+        (savedBlock !== null && savedBlock.id === quickEditId ? savedBlock : null))
+  const quickEditDialog =
+    quickEditing === null ? null : (
+      <QuickEditDialog
+        subject={quickEditValuesOf(quickEditing)}
+        subjectKey={quickEditing.id}
+        saving={quickUpdate.isPending}
+        error={quickUpdate.error === null ? null : errorMessage(quickUpdate.error)}
+        onSave={(values) => quickUpdate.mutate({ block: quickEditing, values })}
+        onClose={() => {
+          quickUpdate.reset()
+          setQuickEditId(null)
+        }}
+      />
+    )
+
+  if (editingOpen) {
+    return (
+      <>
+        <div className="flex min-h-0 flex-1 flex-col" data-testid="script-editor-panel">
+          <BlockEditor
+            existing={editing}
+            typeDefs={typeDefsQuery.data}
+            typeDefsLoading={typeDefsQuery.isLoading}
+            saving={saving}
+            saveError={saveError}
+            restarting={restart.isPending}
+            restartError={restart.error !== null ? errorMessage(restart.error) : null}
+            onRestart={editing !== null ? () => restart.mutate(editing.id) : undefined}
+            onSave={(input) => {
+              const target = editing
+              if (target === null) create.mutate(input)
+              else update.mutate({ blockId: target.id, block: input })
+            }}
+            onCancel={closeEditor}
+            title={
+              editing !== null
+                ? t('build.scriptsTab.edit', 'Edit {{name}}', { name: editing.name })
+                : t('build.scriptsTab.newScript', 'New script')
+            }
+            onQuickEdit={editing === null ? undefined : () => setQuickEditId(editing.id)}
+          />
+        </div>
+        {quickEditDialog}
+      </>
+    )
+  }
+
   return (
     <div className="space-y-3">
       <p className="text-xs text-foreground-subtle">
@@ -441,51 +530,7 @@ export function ScriptsTab({
         }}
       />
 
-      <ItemFormDialog
-        open={editingOpen}
-        onClose={() => {
-          create.reset()
-          update.reset()
-          restart.reset()
-          setSavedBlock(null)
-          closeForm()
-          onBlockIdChange?.(null)
-        }}
-        title={
-          editing !== null
-            ? t('build.scriptsTab.edit', 'Edit {{name}}', {
-                name: editing.name,
-              })
-            : t('build.scriptsTab.newScript', 'New script')
-        }
-        icon={Code2}
-        width="xl"
-        testId="script-editor-panel"
-      >
-        <BlockEditor
-          existing={editing}
-          typeDefs={typeDefsQuery.data}
-          typeDefsLoading={typeDefsQuery.isLoading}
-          saving={saving}
-          saveError={saveError}
-          restarting={restart.isPending}
-          restartError={restart.error !== null ? errorMessage(restart.error) : null}
-          onRestart={editing !== null ? () => restart.mutate(editing.id) : undefined}
-          onSave={(input) => {
-            const target = editing
-            if (target === null) create.mutate(input)
-            else update.mutate({ blockId: target.id, block: input })
-          }}
-          onCancel={() => {
-            create.reset()
-            update.reset()
-            restart.reset()
-            setSavedBlock(null)
-            closeForm()
-            onBlockIdChange?.(null)
-          }}
-        />
-      </ItemFormDialog>
+      {quickEditDialog}
 
       {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
       {setEnabled.error != null && <ErrorBox message={errorMessage(setEnabled.error)} />}

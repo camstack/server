@@ -41,17 +41,17 @@ import {
   useSystem,
   useThemeMode,
   Select,
-  TagInput,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
-import { AlertTriangle, CheckCircle2, Loader2, RotateCw, ScrollText } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { AlertTriangle, CheckCircle2, Code2, Loader2, RotateCw, ScrollText } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   CodeEditor,
   type EditorDiagnostic,
   hasBlockingErrors,
   projectFileExtraLibs,
 } from '../../components/code/CodeEditor'
+import { BuildEditorFrame } from './shared/BuildEditorFrame'
 import { NEW_BLOCK_TEMPLATE } from './block-template'
 import { badgeVariantForTone, describeBlockStatus } from './core-block-status'
 import { nextScriptFilePath, SCRIPT_EXAMPLES, type ScriptExample } from './examples'
@@ -83,6 +83,10 @@ export interface BlockEditorProps {
   readonly onRestart?: () => void
   readonly onSave: (input: CoreBlockInput) => void
   readonly onCancel: () => void
+  /** The frame's heading: "New script" or "Edit <name>". */
+  readonly title: string
+  /** Opens the shared Quick edit modal (name + tags); offered once the script exists. */
+  readonly onQuickEdit?: () => void
 }
 
 /**
@@ -104,6 +108,8 @@ export function BlockEditor({
   onRestart,
   onSave,
   onCancel,
+  title,
+  onQuickEdit,
 }: BlockEditorProps) {
   const { t } = useTranslation()
   const system = useSystem()
@@ -115,7 +121,11 @@ export function BlockEditor({
     entry: existing?.entry,
   })
   const [name, setName] = useState(existing?.name ?? '')
-  const [tags, setTags] = useState<string[]>(() => [...(existing?.tags ?? [])])
+  // Quick edit owns the name: when it saves, an open editor follows it.
+  const storedName = existing?.name
+  useEffect(() => {
+    if (storedName !== undefined) setName(storedName)
+  }, [storedName])
   const [files, setFiles] = useState<Record<string, string>>(initialFiles.files)
   const [entry, setEntry] = useState(initialFiles.entry)
   const [activeFile, setActiveFile] = useState(initialFiles.entry)
@@ -164,7 +174,6 @@ export function BlockEditor({
     entry !== stored.entry ||
     name.trim() !== existing.name ||
     placement !== existing.placement ||
-    tags.join('\n') !== (existing.tags ?? []).join('\n') ||
     (integrationId.trim() === '' ? undefined : integrationId.trim()) !== existing.integrationId
 
   const save = (): void => {
@@ -175,7 +184,8 @@ export function BlockEditor({
       entry,
       enabled: existing?.enabled ?? true,
       placement,
-      tags,
+      // Tags are set in Quick edit; a save of the code carries them as stored.
+      ...(existing?.tags === undefined ? {} : { tags: existing.tags }),
       ...(integrationId.trim() !== '' ? { integrationId: integrationId.trim() } : {}),
     })
   }
@@ -251,14 +261,135 @@ export function BlockEditor({
     restarting,
   })
 
-  return (
-    <div className="space-y-4">
-      {status !== null && (
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>
-        </div>
-      )}
+  const footerActions = (
+    <>
+      <Button
+        variant="outline"
+        onClick={() => compile.mutate()}
+        disabled={compile.isPending || saving}
+        title={t('build.blockEditor.typeCheckOnTheNode', 'Type-check on the node without saving')}
+      >
+        {compile.isPending && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.compile')}
+      </Button>
+      <Button
+        variant="outline"
+        onClick={() => onRestart?.()}
+        disabled={restartTitle !== null || onRestart === undefined}
+        title={
+          restartTitle ??
+          t(
+            'build.blockEditor.stopTheProcessAndLet',
+            'Stop the process and let the supervisor bring it back',
+          )
+        }
+      >
+        {restarting ? (
+          <RotateCw className="h-4 w-4 animate-spin" />
+        ) : (
+          <RotateCw className="h-4 w-4" />
+        )}{' '}
+        {t('build.blockEditor.restart', 'Restart')}
+      </Button>
+      <Button
+        variant="ghost"
+        onClick={() => setShowLogs(!showLogs)}
+        title={t('build.blockEditor.showThisScriptSProcess', "Show this script's process logs")}
+        data-testid="script-logs-toggle"
+        aria-expanded={showLogs}
+      >
+        <ScrollText className="h-4 w-4" /> {t('common.logs')}{' '}
+        <DisclosureChevron expanded={showLogs} />
+      </Button>
+    </>
+  )
 
+  return (
+    <BuildEditorFrame
+      testId="block-editor"
+      icon={Code2}
+      title={title}
+      badges={
+        status === null ? null : (
+          <Badge variant={badgeVariantForTone(status.tone)}>{status.label}</Badge>
+        )
+      }
+      onClose={onCancel}
+      onQuickEdit={onQuickEdit}
+      onSave={save}
+      saveDisabled={blocked || nameMissing}
+      saving={saving}
+      footerActions={footerActions}
+      footerStatus={
+        <>
+          <span>
+            {t('build.blockEditor.errorsCount', { count: errors.length })}
+            {dirty && existing !== null ? ` · ${t('build.blockEditor.unsavedChanges')}` : ''}
+          </span>
+          {nameMissing && (
+            <Badge variant="warning">{t('build.blockEditor.nameRequired', 'Name required')}</Badge>
+          )}
+        </>
+      }
+      notices={
+        <>
+          {errors.length > 0 && (
+            <div className="space-y-1 rounded border border-danger/40 bg-danger/10 p-3 text-xs">
+              <p className="font-medium text-danger">
+                {t('build.blockEditor.errorsCannotSave', { count: errors.length })}
+              </p>
+              {errors.slice(0, 5).map((d) => (
+                <p
+                  key={`${String(d.line)}:${String(d.column)}:${d.message}`}
+                  className="text-danger"
+                >
+                  {t('build.blockEditor.diagnosticLine', { line: d.line, message: d.message })}
+                </p>
+              ))}
+              {errors.length > 5 && (
+                <p className="text-foreground-subtle">
+                  {t('build.blockEditor.moreErrors', { count: errors.length - 5 })}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* The server's own verdict, asked for without storing anything. */}
+          {compile.data !== undefined &&
+            (compile.data.ok ? (
+              <p className="flex items-center gap-2 text-xs text-success">
+                <CheckCircle2 className="h-3.5 w-3.5" /> {t('build.blockEditor.compiledOk')}
+              </p>
+            ) : (
+              <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
+                {compile.data.line !== undefined && (
+                  <span className="mr-1">
+                    {t('build.blockEditor.errorLine', { line: String(compile.data.line) })}
+                  </span>
+                )}
+                {compile.data.error ??
+                  t('build.blockEditor.theCodeDoesNotCompile', 'the code does not compile')}
+              </div>
+            ))}
+          {compile.error !== null && (
+            <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
+              {t('build.blockEditor.couldNotReachTheCompiler', 'Could not reach the compiler:')}{' '}
+              {errorText(compile.error)}
+            </div>
+          )}
+
+          {saveError !== null && (
+            <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
+              {saveError}
+            </div>
+          )}
+          {restartError !== null && (
+            <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
+              {restartError}
+            </div>
+          )}
+        </>
+      }
+    >
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="block text-sm">
           <span className="text-foreground-subtle">{t('build.blockEditor.name', 'Name')}</span>
@@ -283,15 +414,6 @@ export function BlockEditor({
             )}
           />
         </label>
-        <div className="text-sm sm:col-span-2">
-          <span className="text-foreground-subtle">{t('common.tags', 'Tags')}</span>
-          <TagInput
-            className="mt-1"
-            value={tags}
-            onChange={setTags}
-            label={t('common.tags', 'Tags')}
-          />
-        </div>
       </div>
 
       {existing === null && offerExamples && (
@@ -432,118 +554,12 @@ export function BlockEditor({
         </p>
       )}
 
-      {errors.length > 0 && (
-        <div className="space-y-1 rounded border border-danger/40 bg-danger/10 p-3 text-xs">
-          <p className="font-medium text-danger">
-            {t('build.blockEditor.errorsCannotSave', { count: errors.length })}
-          </p>
-          {errors.slice(0, 5).map((d) => (
-            <p key={`${String(d.line)}:${String(d.column)}:${d.message}`} className="text-danger">
-              {t('build.blockEditor.diagnosticLine', { line: d.line, message: d.message })}
-            </p>
-          ))}
-          {errors.length > 5 && (
-            <p className="text-foreground-subtle">
-              {t('build.blockEditor.moreErrors', { count: errors.length - 5 })}
-            </p>
-          )}
-        </div>
-      )}
-
-      {/* The server's own verdict, asked for without storing anything. */}
-      {compile.data !== undefined &&
-        (compile.data.ok ? (
-          <p className="flex items-center gap-2 text-xs text-success">
-            <CheckCircle2 className="h-3.5 w-3.5" /> {t('build.blockEditor.compiledOk')}
-          </p>
-        ) : (
-          <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
-            {compile.data.line !== undefined && (
-              <span className="mr-1">
-                {t('build.blockEditor.errorLine', { line: String(compile.data.line) })}
-              </span>
-            )}
-            {compile.data.error ??
-              t('build.blockEditor.theCodeDoesNotCompile', 'the code does not compile')}
-          </div>
-        ))}
-      {compile.error !== null && (
-        <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
-          {t('build.blockEditor.couldNotReachTheCompiler', 'Could not reach the compiler:')}{' '}
-          {errorText(compile.error)}
-        </div>
-      )}
-
-      {saveError !== null && (
-        <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
-          {saveError}
-        </div>
-      )}
-      {restartError !== null && (
-        <div className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger">
-          {restartError}
-        </div>
-      )}
-
       {existing !== null && (
         <div className="space-y-3">
           <ScriptSettingsPanel blockId={existing.id} />
           <ScriptDevicesPanel blockId={existing.id} />
         </div>
       )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          onClick={() => compile.mutate()}
-          disabled={compile.isPending || saving}
-          title={t('build.blockEditor.typeCheckOnTheNode', 'Type-check on the node without saving')}
-        >
-          {compile.isPending && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.compile')}
-        </Button>
-        <Button onClick={save} disabled={saving || blocked || nameMissing}>
-          {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save')}
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => onRestart?.()}
-          disabled={restartTitle !== null || onRestart === undefined}
-          title={
-            restartTitle ??
-            t(
-              'build.blockEditor.stopTheProcessAndLet',
-              'Stop the process and let the supervisor bring it back',
-            )
-          }
-        >
-          {restarting ? (
-            <RotateCw className="h-4 w-4 animate-spin" />
-          ) : (
-            <RotateCw className="h-4 w-4" />
-          )}{' '}
-          {t('build.blockEditor.restart', 'Restart')}
-        </Button>
-        <Button
-          variant="ghost"
-          onClick={() => setShowLogs(!showLogs)}
-          title={t('build.blockEditor.showThisScriptSProcess', "Show this script's process logs")}
-          data-testid="script-logs-toggle"
-          aria-expanded={showLogs}
-        >
-          <ScrollText className="h-4 w-4" /> {t('common.logs')}{' '}
-          <DisclosureChevron expanded={showLogs} />
-        </Button>
-        <Button variant="ghost" onClick={onCancel} disabled={saving}>
-          {t('common.close', 'Close')}
-        </Button>
-        <span className="ml-auto text-xs text-foreground-subtle">
-          {t('build.blockEditor.errorsCount', { count: errors.length })}
-          {dirty && existing !== null ? ` · ${t('build.blockEditor.unsavedChanges')}` : ''}
-        </span>
-        {nameMissing && (
-          <Badge variant="warning">{t('build.blockEditor.nameRequired', 'Name required')}</Badge>
-        )}
-      </div>
 
       {showLogs && (
         <div className="rounded border border-border" data-testid="script-logs-panel">
@@ -572,7 +588,7 @@ export function BlockEditor({
           )}
         </div>
       )}
-    </div>
+    </BuildEditorFrame>
   )
 }
 

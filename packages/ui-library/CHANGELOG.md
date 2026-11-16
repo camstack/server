@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Generated hooks include the pipeline-orchestrator health digest query
 - Closing a nested dialog (Insert value, Function) returns to the dialog it was opened from instead of closing everything; the device-template field puts its Device value, Function and help buttons above the input on full-width rows.
+- SectionCard gains a fill option so a section can take the full available height and scroll inside
 
 ## [1.2.458] - 2026-11-15
 

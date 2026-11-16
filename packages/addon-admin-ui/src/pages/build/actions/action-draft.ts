@@ -25,6 +25,8 @@ export interface ActionDraft {
   readonly variables: readonly ActionVariable[]
   /** Operator tags (D1054); absent on a draft that never had any. */
   readonly tags?: readonly string[]
+  /** No editor field sets it yet, but a save must carry what is stored. */
+  readonly minDelaySec?: number
 }
 
 export type DraftCheck =
@@ -66,6 +68,7 @@ export function draftOf(entry: ActionEntry | null): ActionDraft {
     steps: entry.steps ?? [],
     variables: entry.variables ?? [],
     ...(entry.tags === undefined ? {} : { tags: entry.tags }),
+    ...(entry.minDelaySec === undefined ? {} : { minDelaySec: entry.minDelaySec }),
   }
 }
 
@@ -110,6 +113,7 @@ export function checkDraft(draft: ActionDraft): DraftCheck {
     steps: draft.steps,
     ...(draft.variables.length === 0 ? {} : { variables: draft.variables }),
     ...(draft.tags === undefined ? {} : { tags: draft.tags }),
+    ...(draft.minDelaySec === undefined ? {} : { minDelaySec: draft.minDelaySec }),
   })
   if (!parsed.success) {
     const issue = parsed.error.issues[0]

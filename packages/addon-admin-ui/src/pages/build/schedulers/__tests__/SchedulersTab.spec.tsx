@@ -18,6 +18,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@camstack/ui-library')>()),
   useSchedulersList: () => ({ ...listState, refetch: vi.fn() }),
   useSchedulersGetStatus: () => ({ data: [], error: null }),
+  useSchedulersUpdate: () => ({ mutate: vi.fn(), isPending: false, error: null, reset: vi.fn() }),
   useSchedulersSetEnabled: () => ({
     mutate: vi.fn(),
     isPending: false,

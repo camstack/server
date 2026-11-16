@@ -36,6 +36,8 @@ export interface BuildEditorFrameProps {
   readonly notices?: ReactNode
   /** A second column on desktop (first on a phone): the runs panel. */
   readonly side?: ReactNode
+  /** Hides the footer, for a body that carries its own wizard buttons. */
+  readonly bare?: boolean
   readonly children: ReactNode
 }
 
@@ -55,6 +57,7 @@ export function BuildEditorFrame({
   footerStatus,
   notices,
   side,
+  bare = false,
   children,
 }: BuildEditorFrameProps): ReactNode {
   const { t } = useTranslation()
@@ -100,22 +103,24 @@ export function BuildEditorFrame({
         )}
       </div>
       {notices !== undefined && <div className="shrink-0 space-y-2">{notices}</div>}
-      <footer className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-2">
-        {onSave !== undefined && (
-          <Button onClick={onSave} disabled={saving || saveDisabled} data-testid={saveTestId}>
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save', 'Save')}
+      {!bare && (
+        <footer className="flex shrink-0 flex-wrap items-center gap-2 border-t border-border pt-2">
+          {onSave !== undefined && (
+            <Button onClick={onSave} disabled={saving || saveDisabled} data-testid={saveTestId}>
+              {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save', 'Save')}
+            </Button>
+          )}
+          {footerActions}
+          <Button variant="ghost" onClick={onClose} disabled={saving}>
+            {t('common.close', 'Close')}
           </Button>
-        )}
-        {footerActions}
-        <Button variant="ghost" onClick={onClose} disabled={saving}>
-          {t('common.close', 'Close')}
-        </Button>
-        {footerStatus !== undefined && (
-          <span className="ml-auto flex items-center gap-2 text-xs text-foreground-subtle">
-            {footerStatus}
-          </span>
-        )}
-      </footer>
+          {footerStatus !== undefined && (
+            <span className="ml-auto flex items-center gap-2 text-xs text-foreground-subtle">
+              {footerStatus}
+            </span>
+          )}
+        </footer>
+      )}
     </div>
   )
 }

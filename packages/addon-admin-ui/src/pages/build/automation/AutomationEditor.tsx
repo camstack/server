@@ -38,7 +38,7 @@ import {
   useSystemGetSiteLocation,
 } from '@camstack/ui-library'
 import { ScrollText, Workflow } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Trans, useTranslation } from 'react-i18next'
 import i18n from '../../../i18n/index'
 import { RunsPanel, TraceBlock } from '../flow/RunsPanel'
@@ -108,6 +108,11 @@ export function AutomationEditor({
 }: AutomationEditorProps) {
   const { t } = useTranslation()
   const [name, setName] = useState(existing?.name ?? '')
+  // Quick edit owns the name: when it saves, an open editor follows it.
+  const storedName = existing?.name
+  useEffect(() => {
+    if (storedName !== undefined) setName(storedName)
+  }, [storedName])
   const [recipe, setRecipeState] = useState<AutomationRecipe>(() => normalizeRecipe(initialRecipe))
   // A row that asks which trigger fired names trigger rows by id: every edit leaves them all named.
   const setRecipe = (next: AutomationRecipe): void => setRecipeState(ensureTriggerIds(next))

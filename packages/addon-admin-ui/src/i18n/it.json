@@ -6198,6 +6198,14 @@
       },
       "actionLabel": "Azione",
       "search": "Cerca modelli"
+    },
+    "quickEdit": {
+      "title": "Modifica rapida",
+      "name": "Nome",
+      "action": "Modifica rapida"
+    },
+    "editor": {
+      "back": "Torna all'elenco"
     }
   },
   "automation": {

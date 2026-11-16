@@ -114,6 +114,14 @@ export function ActionEditor({
   const devices = useAutomationDevices()
   const problemText = useProblemText()
   const [draft, setDraft] = useState<ActionDraft>(() => draftOf(entry))
+  // Quick edit owns the name and the tags: when it saves, an open editor follows
+  // them without touching the rest of the draft.
+  const storedTags = JSON.stringify(entry?.tags ?? [])
+  const storedName = entry?.name
+  useEffect(() => {
+    if (storedName === undefined) return
+    setDraft((d) => ({ ...d, name: storedName, tags: JSON.parse(storedTags) }))
+  }, [storedName, storedTags])
   const presetApplied = useRef(false)
   useEffect(() => {
     if (entry !== null || preset !== TRIGGER_ALARM_PRESET || presetApplied.current) return

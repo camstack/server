@@ -93,6 +93,14 @@ export function SchedulerEditor({ entry, onClose, onSaved, onQuickEdit }: Schedu
   const siteQuery = useSystemGetSiteLocation()
   const site: SiteView = siteQuery.data ?? DEFAULT_SITE
   const [draft, setDraft] = useState<SchedulerInput>(() => schedulerInputOf(entry))
+  // Quick edit owns the name and the tags: when it saves, an open editor follows
+  // them without touching the rest of the draft.
+  const storedTags = JSON.stringify(entry?.tags ?? [])
+  const storedName = entry?.name
+  useEffect(() => {
+    if (storedName === undefined) return
+    setDraft((d) => ({ ...d, name: storedName, tags: JSON.parse(storedTags) }))
+  }, [storedName, storedTags])
   const [profileId, setProfileId] = useState<string>(() => draft.profiles[0]?.id ?? '')
   const [pointId, setPointId] = useState<string | null>(null)
   const [runId, setRunId] = useState<string | null>(null)

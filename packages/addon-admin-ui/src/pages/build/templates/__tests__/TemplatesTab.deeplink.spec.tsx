@@ -34,9 +34,10 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-vi.mock('../../../../components/remote/TemplateEditorDialog', () => ({
-  TemplateEditorDialog: ({ draft }: { draft: { id: string | null; name: string } | null }) =>
-    draft === null ? null : <div data-testid="editor-open">{draft.name}</div>,
+vi.mock('../RemoteTemplateEditor', () => ({
+  RemoteTemplateEditor: ({ draft }: { draft: { id: string | null; name: string } }) => (
+    <div data-testid="editor-open">{draft.name}</div>
+  ),
 }))
 
 import { TemplatesTab } from '../TemplatesTab'

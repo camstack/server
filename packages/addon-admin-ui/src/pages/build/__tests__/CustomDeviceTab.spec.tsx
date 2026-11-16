@@ -78,6 +78,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   return {
     ...actual,
     useCoreBlocksListCompositions: () => compositionsQuery,
+    useDeviceManagerSetName: () => ({ mutateAsync: vi.fn(), isPending: false }),
+    useDeviceManagerSetTags: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useCoreBlocksDelete: () => ({
       mutate: deleteMutate,
       isPending: false,

@@ -64,12 +64,9 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
 
   /** The scheduler whose Quick edit modal is open (row action, or right after a create). */
   const [quickEditId, setQuickEditId] = useState<string | null>(null)
-  /** Bumped by a Quick edit save so an open editor remounts on the new name and tags. */
-  const [revision, setRevision] = useState(0)
   const quickUpdate = useSchedulersUpdate({
     onSuccess: () => {
       setQuickEditId(null)
-      setRevision((n) => n + 1)
       void queryClient.invalidateQueries({ queryKey: [['schedulers']] })
     },
   })
@@ -208,7 +205,7 @@ export function SchedulersTab({ createRequested = false, onCreateConsumed }: Sch
     return (
       <>
         <SchedulerEditor
-          key={`${editing?.id ?? 'new'}:${revision}`}
+          key={editing?.id ?? 'new'}
           entry={editing}
           onClose={close}
           onSaved={(id) => {

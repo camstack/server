@@ -6123,6 +6123,14 @@
       },
       "actionLabel": "Action",
       "search": "Search templates"
+    },
+    "quickEdit": {
+      "title": "Quick edit",
+      "name": "Name",
+      "action": "Quick edit"
+    },
+    "editor": {
+      "back": "Back to the list"
     }
   },
   "automation": {

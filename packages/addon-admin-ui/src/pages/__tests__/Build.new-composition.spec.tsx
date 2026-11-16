@@ -281,8 +281,9 @@ describe('Build New composition', () => {
     renderAt('/build?tab=custom-device', <BuildPage />)
     fireEvent.click(screen.getByRole('button', { name: 'Edit' }))
     const change = await screen.findByRole('button', { name: 'Change' })
-    expect(screen.getAllByRole('dialog')).toHaveLength(1)
+    // The editor is in-page now; only the field editor is a dialog.
+    expect(screen.queryAllByRole('dialog')).toHaveLength(0)
     fireEvent.click(change)
-    expect(screen.getAllByRole('dialog')).toHaveLength(2)
+    expect(screen.getAllByRole('dialog')).toHaveLength(1)
   })
 })
