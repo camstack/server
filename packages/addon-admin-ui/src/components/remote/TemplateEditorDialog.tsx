@@ -18,7 +18,7 @@ import {
   useHotkey,
 } from '@camstack/ui-library'
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react'
-import { type ReactNode, useReducer, useState } from 'react'
+import { type ReactNode, useEffect, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
   canRedo,
@@ -120,6 +120,8 @@ export interface TemplateEditorState {
  */
 export function useTemplateEditorState(draft: TemplateDraft, saving: boolean): TemplateEditorState {
   const [name, setName] = useState(draft.name)
+  // A rename made elsewhere (Quick edit) is followed, so a save never reverts it.
+  useEffect(() => setName(draft.name), [draft.name])
   // Kind, preset and payload move together, so one undo step never leaves a
   // payload under the wrong kind. The name is a text field and keeps its own undo.
   const [history, dispatch] = useReducer(

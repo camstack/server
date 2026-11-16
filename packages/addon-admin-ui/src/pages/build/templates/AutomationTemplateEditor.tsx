@@ -13,7 +13,7 @@ import {
 } from '@camstack/types'
 import { Badge, Button, FormField, Input, SectionCard, Textarea } from '@camstack/ui-library'
 import { Copy, Download, FileText } from 'lucide-react'
-import { type ReactNode, useMemo, useState } from 'react'
+import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TemplateDraft } from '../../../components/remote/TemplateEditorDialog'
 import { BuildEditorFrame } from '../shared/BuildEditorFrame'
@@ -78,6 +78,8 @@ export function AutomationTemplateEditor({
   const { t } = useTranslation()
   const readOnly = template.builtIn
   const [name, setName] = useState(template.name)
+  // A rename made in Quick edit is followed, so a save never reverts it.
+  useEffect(() => setName(template.name), [template.name])
   const [payload, setPayload] = useState<AutomationTemplatePayload>(template.payload)
   const devices = useAutomationDevices()
   const recipe = useMemo(() => recipeOfBody(payload.body), [payload.body])
