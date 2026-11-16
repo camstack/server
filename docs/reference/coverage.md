@@ -14,14 +14,14 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 8894 source files · 246 units claimed by at least one document (8863 files).**
+**253 units · 8897 source files · 246 units claimed by at least one document (8866 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
 | `packages/addon-admin-ui/src/components` | 665 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +84 more, 4 ADRs | 2026-11-11 |
 | `packages/ui-library/src/composites` | 662 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +56 more, 3 ADRs | 2026-11-11 |
-| `scripts` | 614 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +152 more, 14 ADRs | 2026-11-12 |
+| `scripts` | 616 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +152 more, 14 ADRs | 2026-11-12 |
 | `packages/system/src/builtins` | 510 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +198 more, 21 ADRs | 2026-11-08 |
 | `packages/addon-post-analysis/src/pipeline-analytics` | 477 | `post-analysis`, `recognition` | `architecture/post-analysis.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +171 more, 27 ADRs | 2026-11-12 |
 | `packages/types/src/capabilities` | 243 | `capabilities`, `cloud-training`, `secrets` | `architecture/capabilities.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0957-a-device-value-field-names-its-quantity-never-its-unit.md`, +230 more, 41 ADRs | 2026-11-16 |
@@ -38,7 +38,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline` | 71 | `detection-execution`, `tooling` | `architecture/detection-execution.md`, `decisions/adr-0742-a-coreml-package-is-loaded-once-in-a-child-before-the-pool-loads-it-and-a-yolo26-coreml-export-is-static.md`, `decisions/adr-0823-onnx-webgpu-holds-one-inference-session-per-os-process.md`, +21 more | 2026-10-24 |
 | `packages/cli/src/mcp` | 71 | `tooling` | `decisions/adr-0974-the-public-mcp-ships-inside-the-cli-as-toolsets-and-every-write-is-preview-then-confirm.md`, `architecture/assisted-setup-mcp.md`, `decisions/adr-0975-the-home-assistant-integration-stays-a-custom-repository-and-its-docs-change-only-after-the-core-marketplace-ships.md` _(covers)_, +3 more | 2026-11-04 |
 | `packages/types/src/composition` | 68 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +19 more | 2026-11-08 |
-| `packages/addon-admin-ui/src/lib` | 63 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
+| `packages/addon-admin-ui/src/lib` | 64 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
 | `packages/addon-provider-reolink` | 63 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +22 more, 2 ADRs | 2026-11-08 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
 | `packages/addon-pipeline/src/detection-pipeline` | 62 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `decisions/adr-1013-one-instance-model.md`, +52 more, 5 ADRs | 2026-10-24 |

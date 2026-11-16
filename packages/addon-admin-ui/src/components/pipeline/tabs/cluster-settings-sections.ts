@@ -26,13 +26,24 @@ import i18n from '../../../i18n/index'
 export const ORCHESTRATOR = 'pipeline-orchestrator'
 export const RUNNER = 'pipeline-runner'
 export const AUDIO_ANALYZER = 'audio-analyzer'
+export const STREAM_BROKER = 'stream-broker'
+export const SNAPSHOT = 'snapshot'
+export const RECORDER = 'recorder'
+export const EMBEDDING_ENCODER = 'embedding-encoder'
+/** Drawn on Roles & nodes ("Recording"), so the Recorder card leaves it out. */
+const RECORDING_NODE_KEY = 'recordingNodeId'
 
-/** One settings panel inside a card: one addon's schema, narrowed. */
+/**
+ * One settings panel inside a card: one addon's schema, narrowed. A panel that
+ * names `capability` draws that capability's settings, which
+ * `lib/cluster-settings-claims.ts` must claim for the `pipeline` surface.
+ */
 export interface ClusterSettingsPanel {
   readonly addonId: string
   readonly capability?: string
   readonly sectionIds?: readonly string[]
   readonly fieldKeys?: readonly string[]
+  readonly omitFieldKeys?: readonly string[]
   readonly fieldScope?: SettingsFieldScope
 }
 
@@ -59,6 +70,8 @@ function clusterKeysFor(stepId: string): readonly string[] {
 export const FACES_SECTION_ID = 'faces'
 export const SEMANTIC_SEARCH_SECTION_ID = 'semantic-search'
 export const LOAD_BALANCER_SECTION_ID = 'load-balancer'
+export const STREAMING_SECTION_ID = 'streaming'
+export const RECORDER_SECTION_ID = 'recorder'
 /** The orchestrator's own settings-section id for the four load-balancer knobs. */
 export const LOAD_SETTINGS_SECTION_ID = 'load'
 
@@ -84,7 +97,10 @@ export const CLUSTER_SETTINGS_SECTIONS: readonly ClusterSettingsSection[] = [
     get hint() {
       return i18n.t('helpers.clusterSettingsSections.semanticHint')
     },
-    panels: [{ addonId: ORCHESTRATOR, fieldKeys: clusterKeysFor('clip-embedding') }],
+    panels: [
+      { addonId: ORCHESTRATOR, fieldKeys: clusterKeysFor('clip-embedding') },
+      { addonId: EMBEDDING_ENCODER, capability: 'embedding-encoder', fieldScope: 'cluster' },
+    ],
   },
   {
     id: DETAIL_CROP_SECTION_ID,
@@ -105,6 +121,36 @@ export const CLUSTER_SETTINGS_SECTIONS: readonly ClusterSettingsSection[] = [
       return i18n.t('helpers.clusterSettingsSections.nativeHint')
     },
     panels: [{ addonId: ORCHESTRATOR, sectionIds: [NATIVE_LEASE_SECTION_ID] }],
+  },
+  {
+    id: STREAMING_SECTION_ID,
+    get title() {
+      return i18n.t('helpers.clusterSettingsSections.streamingTitle')
+    },
+    get hint() {
+      return i18n.t('helpers.clusterSettingsSections.streamingHint')
+    },
+    panels: [
+      { addonId: STREAM_BROKER, capability: 'stream-broker', fieldScope: 'cluster' },
+      { addonId: SNAPSHOT, capability: 'snapshot', fieldScope: 'cluster' },
+    ],
+  },
+  {
+    id: RECORDER_SECTION_ID,
+    get title() {
+      return i18n.t('helpers.clusterSettingsSections.recorderTitle')
+    },
+    get hint() {
+      return i18n.t('helpers.clusterSettingsSections.recorderHint')
+    },
+    panels: [
+      {
+        addonId: RECORDER,
+        capability: 'recording',
+        fieldScope: 'cluster',
+        omitFieldKeys: [RECORDING_NODE_KEY],
+      },
+    ],
   },
   {
     id: 'runner-defaults',

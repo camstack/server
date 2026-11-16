@@ -364,6 +364,7 @@ jobs:
             scripts/check-addon-calls-super.ts \
             scripts/check-event-emitter-vocabulary.ts \
             scripts/check-scoped-settings-declared.ts \
+            scripts/check-cluster-settings-claimed.ts \
             scripts/check-no-system-package.ts \
             scripts/check-host-externals-identical.ts \
             scripts/check-requires-declared.ts \

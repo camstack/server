@@ -12,6 +12,8 @@
 export interface SectionShape {
   /** Keep only these top-level field keys (a section left empty is dropped). */
   readonly fieldKeys?: readonly string[]
+  /** Drop these top-level field keys — drawn by another surface (a section left empty is dropped). */
+  readonly omitFieldKeys?: readonly string[]
   /** Strip each section's title and description. */
   readonly hideSectionChrome?: boolean
   /** `section.tab` → the tab it is shown on. */
@@ -41,15 +43,14 @@ export function shapeSections<F, S extends ShapeableSection<F>>(
   shape: SectionShape,
 ): S[] {
   const keep = shape.fieldKeys !== undefined ? new Set(shape.fieldKeys) : null
+  const drop = new Set(shape.omitFieldKeys ?? [])
   const out: S[] = []
   for (const section of sections) {
-    const fields =
-      keep === null
-        ? section.fields
-        : section.fields.filter((f) => {
-            const key = keyOf(f)
-            return key !== null && keep.has(key)
-          })
+    const fields = section.fields.filter((f) => {
+      const key = keyOf(f)
+      if (key !== null && drop.has(key)) return false
+      return keep === null || (key !== null && keep.has(key))
+    })
     if (fields.length === 0) continue
     out.push({
       ...section,

@@ -1,8 +1,8 @@
 /**
  * Cluster → Settings — the cluster-wide pipeline settings, one titled card per
  * subject (`cluster-settings-sections.ts`): faces & recognition, semantic
- * search, the enrichment crop, full-resolution crops, runner defaults and
- * failover. Full width, like the other cluster tabs.
+ * search, the enrichment crop, full-resolution crops, streaming, recording,
+ * runner defaults and failover. Full width, like the other cluster tabs.
  *
  * The orchestrator's `cluster` section (the role pickers) renders in Roles &
  * nodes; its `load` section (session placement, min fps, node stress handling,
@@ -11,7 +11,7 @@
  */
 import { useEffect } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Cpu, Crop, Layers, Scale, Scan, ShieldAlert, Sparkles } from 'lucide-react'
+import { Cpu, Crop, Film, Layers, Radio, Scale, Scan, ShieldAlert, Sparkles } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { SECTION_BODY, SectionCard, TEXT_HINT } from '@camstack/ui-library'
 import { NodeAddonsSettingsPanel } from '../../settings/NodeAddonsSettingsPanel'
@@ -36,6 +36,8 @@ const SECTION_ICONS: Readonly<Record<string, LucideIcon>> = {
   'semantic-search': Sparkles,
   'detail-crop': Crop,
   'native-lease': Layers,
+  streaming: Radio,
+  recorder: Film,
   'runner-defaults': Cpu,
   'load-balancer': Scale,
   failover: ShieldAlert,
@@ -104,6 +106,7 @@ function SettingsCard({ section }: { readonly section: ClusterSettingsSection })
               {...(panel.capability !== undefined ? { capability: panel.capability } : {})}
               {...(panel.sectionIds !== undefined ? { sectionIds: panel.sectionIds } : {})}
               {...(panel.fieldKeys !== undefined ? { fieldKeys: panel.fieldKeys } : {})}
+              {...(panel.omitFieldKeys !== undefined ? { omitFieldKeys: panel.omitFieldKeys } : {})}
               {...(panel.fieldScope !== undefined ? { fieldScope: panel.fieldScope } : {})}
             />
           ))}

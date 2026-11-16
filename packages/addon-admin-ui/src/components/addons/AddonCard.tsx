@@ -36,6 +36,11 @@ import {
 import { type ReactNode, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { hubPath } from '../../lib/mount'
+import {
+  CLUSTER_SETTINGS_SURFACE_ROUTES,
+  featureClaimsOf,
+  type ClusterSettingsSurface,
+} from '../../lib/cluster-settings-claims'
 import { NodeAddonsSettingsPanel } from '../settings/NodeAddonsSettingsPanel'
 import { AddonRowBadge } from './AddonRowBadge'
 import type { AddonTaskProgress } from './AddonsJobProgress'
@@ -1010,15 +1015,24 @@ export function AddonCard({
                   'Cluster-wide settings — one value for every node. Per-node settings live under Cluster → the node → Settings.',
                 )}
               </div>
+              <ClaimedElsewhereLinks addonId={manifest.id} onOpen={(href) => navigate(href)} />
               <NodeAddonsSettingsPanel
                 nodeId={null}
                 addonIds={[manifest.id]}
                 level="global"
                 fieldScope="cluster"
-                emptyMessage={t(
-                  'addons.addonCard.thisAddonExposesNoCluster',
-                  'This addon exposes no cluster-wide settings. Anything it can configure is per-node — open it from Cluster → the node → Settings.',
-                )}
+                omitCapabilities={featureClaimsOf(manifest.id).map((c) => c.cap)}
+                emptyMessage={
+                  featureClaimsOf(manifest.id).length > 0
+                    ? t(
+                        'addons.addonCard.allClusterSettingsElsewhere',
+                        'Its cluster-wide settings are on the page linked above.',
+                      )
+                    : t(
+                        'addons.addonCard.thisAddonExposesNoCluster',
+                        'This addon exposes no cluster-wide settings. Anything it can configure is per-node — open it from Cluster → the node → Settings.',
+                      )
+                }
               />
 
               {/* Generic device-export surface — rendered for any addon
@@ -1082,6 +1096,58 @@ export function AddonCard({
           </DialogContent>
         </Dialog>
       )}
+    </div>
+  )
+}
+
+interface ClaimedElsewhereLinksProps {
+  readonly addonId: string
+  readonly onOpen: (href: string) => void
+}
+
+/**
+ * The pages that draw some of this addon's cluster settings
+ * (`lib/cluster-settings-claims.ts`). The dialog leaves those out — one
+ * control per value — and links to where they are instead.
+ */
+function ClaimedElsewhereLinks({ addonId, onOpen }: ClaimedElsewhereLinksProps) {
+  const { t } = useTranslation()
+  const surfaces = [...new Set(featureClaimsOf(addonId).map((c) => c.surface))]
+  if (surfaces.length === 0) return null
+  const label = (surface: ClusterSettingsSurface): string => {
+    switch (surface) {
+      case 'pipeline':
+        return t('addons.addonCard.surface.pipeline', 'Pipeline → Settings')
+      case 'history':
+        return t('addons.addonCard.surface.history', 'History')
+      case 'notifications':
+        return t('addons.addonCard.surface.notifications', 'Notifications → Settings')
+      case 'nodes':
+        return t('addons.addonCard.surface.nodes', 'Nodes')
+      default:
+        return surface
+    }
+  }
+  return (
+    <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px] text-foreground-subtle">
+      <span>
+        {t('addons.addonCard.settingsElsewhere', "More of this addon's settings are on:")}
+      </span>
+      {surfaces.map((surface) => {
+        const href = CLUSTER_SETTINGS_SURFACE_ROUTES[surface]
+        if (href === undefined) return null
+        return (
+          <Button
+            key={surface}
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => onOpen(href)}
+          >
+            {label(surface)}
+          </Button>
+        )
+      })}
     </div>
   )
 }

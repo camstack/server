@@ -5196,7 +5196,11 @@
     },
     "noNodes": "No nodes in this cluster yet.",
     "subtitle": "One node at a time — topology and packages. Agents join by pairing (certificate, no shared secret).",
-    "memoryUnknown": "unknown"
+    "memoryUnknown": "unknown",
+    "metricsSettings": {
+      "title": "Metrics collection — all nodes",
+      "hint": "How often every node samples its CPU, memory and load, and how long the load history is kept."
+    }
   },
   "access": {
     "accessSection": {
@@ -5477,7 +5481,15 @@
       "inProcess": "in-process",
       "outdated": "outdated",
       "requiresServer": "requires server ≥ {{version}}",
-      "updateHeldTitle": "{{latest}} is held until the server is {{required}} or newer"
+      "updateHeldTitle": "{{latest}} is held until the server is {{required}} or newer",
+      "settingsElsewhere": "More of this addon's settings are on:",
+      "surface": {
+        "pipeline": "Pipeline → Settings",
+        "history": "History",
+        "notifications": "Notifications → Settings",
+        "nodes": "Nodes"
+      },
+      "allClusterSettingsElsewhere": "Its cluster-wide settings are on the page linked above."
     },
     "addonRow": {
       "systemPackage": "System package",
@@ -5783,8 +5795,7 @@
       "saveFailed": "Save failed:",
       "nothingToConfigureHereFor": "Nothing to configure here for this node.",
       "noAddonsIn": "No addons in {{scope}} expose {{level}}-level settings on this node.",
-      "addonUnavailable": "{{name}} not available.",
-      "providerPagesUnknown": "Could not check which settings already live on a connection page: {{reason}}"
+      "addonUnavailable": "{{name}} not available."
     },
     "siteLocationCard": {
       "siteLocation": "Site location",
@@ -6873,7 +6884,6 @@
         "loadingHubTopology": "Loading hub topology…",
         "noOnlineHubNodeFound": "No online hub node found.",
         "settingsWillAppearOnceThe": "Settings will appear once the hub is reachable.",
-        "noAddonsInstalledOnThe": "No addons installed on the hub yet.",
         "bootstrapUnavailable": "Not available — the addon that owns the server settings did not answer."
       },
       "users": {
@@ -11711,7 +11721,11 @@
       "loadTitle": "Load balancer",
       "loadHint": "How a new detection session picks its node and device, and what happens when a node falls behind.",
       "failoverTitle": "Failover",
-      "failoverHint": "What happens to cameras when a node disconnects and comes back."
+      "failoverHint": "What happens to cameras when a node disconnects and comes back.",
+      "streamingTitle": "Streaming",
+      "streamingHint": "How the restream buffers and hands out live video, and how long a cached snapshot may stand in for a fresh one.",
+      "recorderTitle": "Recording",
+      "recorderHint": "How recording nodes reach the hub. The recording node itself is picked in Roles & nodes."
     },
     "loadBalancingViewModel": {
       "stalePinDisabled": "{{deviceKey}} is not enabled on any node — sessions ignore this pin",
@@ -11943,6 +11957,10 @@
       "col5m": "5 min",
       "col1h": "1 h",
       "col1d": "1 day"
+    },
+    "retention": {
+      "title": "Retention",
+      "hint": "How long each resolution of the recorded history is kept."
     }
   },
   "releaseIdentity": {

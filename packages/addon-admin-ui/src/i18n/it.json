@@ -5271,7 +5271,11 @@
     },
     "noNodes": "Ancora nessun nodo in questo cluster.",
     "subtitle": "Un nodo alla volta — topologia e pacchetti. Gli agent entrano tramite associazione (certificato, nessun segreto condiviso).",
-    "memoryUnknown": "sconosciuta"
+    "memoryUnknown": "sconosciuta",
+    "metricsSettings": {
+      "title": "Raccolta metriche — tutti i nodi",
+      "hint": "Ogni quanto ogni nodo campiona CPU, memoria e carico, e per quanto si conserva lo storico del carico."
+    }
   },
   "access": {
     "accessSection": {
@@ -5552,7 +5556,15 @@
       "inProcess": "in-process",
       "outdated": "non aggiornato",
       "requiresServer": "richiede server ≥ {{version}}",
-      "updateHeldTitle": "{{latest}} è in attesa: serve un server {{required}} o più recente"
+      "updateHeldTitle": "{{latest}} è in attesa: serve un server {{required}} o più recente",
+      "settingsElsewhere": "Altre impostazioni di questo addon si trovano in:",
+      "surface": {
+        "pipeline": "Pipeline → Impostazioni",
+        "history": "Storico",
+        "notifications": "Notifiche → Impostazioni",
+        "nodes": "Nodi"
+      },
+      "allClusterSettingsElsewhere": "Le sue impostazioni per tutto il cluster sono nella pagina indicata sopra."
     },
     "addonRow": {
       "systemPackage": "Pacchetto di sistema",
@@ -5858,8 +5870,7 @@
       "saveFailed": "Salvataggio fallito:",
       "nothingToConfigureHereFor": "Nulla da configurare qui per questo nodo.",
       "noAddonsIn": "Nessun addon in {{scope}} espone impostazioni di livello {{level}} su questo nodo.",
-      "addonUnavailable": "{{name}} non disponibile.",
-      "providerPagesUnknown": "Non è stato possibile verificare quali impostazioni sono già su una pagina di connessione: {{reason}}"
+      "addonUnavailable": "{{name}} non disponibile."
     },
     "siteLocationCard": {
       "siteLocation": "Posizione del sito",
@@ -6948,7 +6959,6 @@
         "loadingHubTopology": "Caricamento topologia dell'hub…",
         "noOnlineHubNodeFound": "Nessun nodo hub online trovato.",
         "settingsWillAppearOnceThe": "Le impostazioni compariranno quando l'hub sarà raggiungibile.",
-        "noAddonsInstalledOnThe": "Ancora nessun addon installato sull'hub.",
         "bootstrapUnavailable": "Non disponibile — l'addon che gestisce le impostazioni del server non ha risposto."
       },
       "users": {
@@ -11733,7 +11743,11 @@
       "loadTitle": "Bilanciamento del carico",
       "loadHint": "Come una nuova sessione di detection sceglie nodo e dispositivo, e cosa succede quando un nodo resta indietro.",
       "failoverTitle": "Failover",
-      "failoverHint": "Cosa succede alle camere quando un nodo si disconnette e poi torna."
+      "failoverHint": "Cosa succede alle camere quando un nodo si disconnette e poi torna.",
+      "streamingTitle": "Streaming",
+      "streamingHint": "Come il restream bufferizza e distribuisce il video live, e per quanto uno snapshot in cache può sostituirne uno nuovo.",
+      "recorderTitle": "Registrazione",
+      "recorderHint": "Come i nodi di registrazione raggiungono l’hub. Il nodo di registrazione si sceglie in Ruoli e nodi."
     },
     "loadBalancingViewModel": {
       "stalePinDisabled": "{{deviceKey}} non è abilitato su nessun nodo: le sessioni ignorano questo fissaggio",
@@ -11965,6 +11979,10 @@
       "col5m": "5 min",
       "col1h": "1 h",
       "col1d": "1 giorno"
+    },
+    "retention": {
+      "title": "Conservazione",
+      "hint": "Per quanto tempo si conserva ogni risoluzione dello storico registrato."
     }
   },
   "releaseIdentity": {

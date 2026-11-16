@@ -4,7 +4,7 @@
  * The alert centre sends no notification of its own: a critical or error alert
  * reaches a phone only through a system-event rule (`alert-critical`,
  * `alert-error`, `alert-critical-resolved`). The form is the cluster form of the
- * `alerts` capability, so the Integrations / System surfaces stay in sync.
+ * `alerts` capability, and this page is its one home (`lib/cluster-settings-claims.ts`).
  */
 import { AddonScopedSettingsForm, TEXT_HINT, useSystem } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'

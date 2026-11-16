@@ -142,6 +142,17 @@ function declarationsIn(content: string): HookDeclaration[] {
   return out
 }
 
+/** The capabilities a source file declares a `cluster` schema for (its `clusterSettingsSchema` hooks). */
+export function clusterSchemaCapsIn(content: string): readonly string[] {
+  return [
+    ...new Set(
+      declarationsIn(content)
+        .filter((d) => d.scope === 'cluster' && !d.declaresNothing)
+        .flatMap((d) => d.caps),
+    ),
+  ]
+}
+
 /** The cap literals `scopedSettingsCapabilities()` returns, or `null` when the file has no such method. */
 function namedCapabilities(content: string): ReadonlySet<string> | null {
   const clean = withoutComments(content)
@@ -234,7 +245,7 @@ const SKIP_DIRS = new Set([
 const SOURCE_RE = /\.(?:ts|tsx|mts)$/
 const NON_RUNTIME_RE = /\.(?:spec|test|d)\.(?:ts|tsx|mts)$/
 
-function walk(dir: string, out: string[]): void {
+export function walk(dir: string, out: string[]): void {
   let entries: string[]
   try {
     entries = readdirSync(dir)
