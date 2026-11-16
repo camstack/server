@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Shared hub downloader and logs-export helpers for the MCP servers
+- The capability skill asks you to audit the device card, the device row and the viewer accessory row a device capability change reaches, and records it in the done-gate
 
 ## [0.1.53] - 2026-11-12
 

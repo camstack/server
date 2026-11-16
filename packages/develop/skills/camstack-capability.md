@@ -163,6 +163,25 @@ arrives `undefined` on the addon path. Prefer top-level defaults.
   `deviceConfig` (generic cap) or `exposesDeviceSettings` with the three
   injected methods (owned cap) — never a parallel tab system. Decision rule and
   traps: the `camstack-addon` skill, "A UI surface on a DEVICE page".
+- **A device cap changes what the device LOOKS like — audit every surface it
+  reaches, in the same piece of work.** A new or changed `deviceNative` /
+  device cap (a method, a state field, a new mode) is not done until each
+  surface that draws that device answers it or is consciously left as is:
+  - **device details** — the device card (`ui-library` `composites/device-card`:
+    `connected/cap-card-kinds.ts` maps a device type or role to a card kind,
+    `connected/Connected<Kind>Card.tsx` reads the slice, `scenes/<kind>/`
+    draws it; `device-controls/panel-controls.tsx` picks the panel) and the
+    device page's derived sections (`deviceConfig` / `exposesDeviceSettings`);
+  - **device rows** — the inline row in device lists (`device-controls`
+    `control-registry.tsx` / `*-inline.tsx`, `device-list/group.ts`) and the
+    viewer's accessory rows and panel controls (`camstack/src/accessories/`,
+    `camstack/src/components/camera/accessory-controls/`);
+  - shared cards render in the viewer too, so a card change is a viewer change.
+  List the surfaces in the plan with "changed" / "unchanged: why". A new state
+  field no surface reads (a countdown, a mode, `activeUntil`) is a feature the
+  operator cannot see; a field a card draws but the cap no longer sends is a
+  card that lies. Viewer layout is co-designed with the operator before it is
+  built (`camstack-ui-viewer`); the card/row are UI work (`camstack-ui`).
 - **"Absent" only from an answered query** (D315): ask
   `capabilities.getCapability` / `useCapabilityPresence`, never infer absence
   from `(data ?? [])`, and never throw the literal "provider not available"
@@ -212,6 +231,7 @@ hand-edits:  index.ts re-export + AnyCapability union — yes
 codegen:     npm run codegen — clean; method tiers / export coverage — <accepted diff | unchanged>
 manifest:    declared in <package>/package.json (+ agent main.ts array: <yes|n/a>)
 spec:        <spec file> — <result>
+surfaces:    device card <changed|unchanged: why>; device row <changed|unchanged: why>; viewer accessory row/panel <changed|unchanged: why>
 shipped:     <"not shipped" | published system+server X.Y.Z, applied on <nodes>, addon deployed>
 verified:    <the call and its answer, or "not deployed">
 docs:        camstack-docs gate — <files | none needed: reason>
