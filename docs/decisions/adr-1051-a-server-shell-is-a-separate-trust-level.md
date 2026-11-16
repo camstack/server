@@ -9,7 +9,7 @@ applies-to:
   - packages/addon-terminal/src/server-shell.ts
   - packages/addon-terminal/src/terminal-session-manager.ts
   - packages/addon-terminal/src/pty.ts
-  - packages/addon-admin-ui/src/pages/system/ServerShell.tsx
+  - packages/addon-admin-ui/src/pages/system/terminal/NodeShells.tsx
 ---
 
 ## Context
