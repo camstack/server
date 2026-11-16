@@ -2414,7 +2414,7 @@
 | getStatus | `deviceHistory.getStatus` | query | admin | `{}` | `DeviceHistoryStatusSchema` |
 | listOrphanSeries | `deviceHistory.listOrphanSeries` | query | admin | `{}` | `{ series: ({ seriesId: number; deviceId: number; key: string; scope: string; displayName: string \| null; reason: DeviceHistoryOrphanReasonSchema; missingSince: number \| null; firstTs: number; lastTs: number; rows: { raw: number; 5m: number; 1h: number; 1d: number } })[]; truncated: boolean }` |
 | deleteOrphanSeries | `deviceHistory.deleteOrphanSeries` | mutation | admin | `{ seriesIds: number[] }` | `{ results: ({ seriesId: number; ok: true; deleted: { raw: number; 5m: number; 1h: number; 1d: number } } \| { seriesId: number; ok: false; reason: DeviceHistoryOrphanDeleteRefusalSchema })[] }` |
-| deleteSeriesRange | `deviceHistory.deleteSeriesRange` | mutation | admin | `{ deviceId: number; key: string; scope: string; fromMs: number; toMs: number; dryRun: boolean }` | `{ ok: true; dryRun: boolean; seriesId: number; rows: { raw: number; 5m: number; 1h: number; 1d: number }; rewritten: { 5m: number; 1h: number; 1d: number } \| null } \| { ok: false; reason: "invalid-range" \| "range-too-large" \| "series-not-found" \| "not-a-point-series" }` |
+| deleteSeriesRange | `deviceHistory.deleteSeriesRange` | mutation | admin | `{ deviceId: number; key: string; scope: string; fromMs: number; toMs: number; dryRun: boolean }` | `{ ok: true; dryRun: boolean; seriesId: number; rows: { raw: number; 5m: number; 1h: number; 1d: number }; rewritten: { 5m: number; 1h: number; 1d: number } \| null } \| { ok: false; reason: DeviceHistoryRangeDeleteRefusalSchema }` |
 
 ### `device-manager` → `deviceManager.*`
 

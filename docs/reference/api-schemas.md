@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1088 shared schemas.**
+**1089 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1644,6 +1644,10 @@ Enum: `"device-gone" \| "undeclared"`
 ### `DeviceHistoryProducerKindSchema`
 
 Enum: `"gauge" \| "counter" \| "boolean"`
+
+### `DeviceHistoryRangeDeleteRefusalSchema`
+
+Enum: `"invalid-range" \| "range-too-large" \| "series-not-found" \| "not-a-point-series"`
 
 ### `DeviceHistoryRefusalReasonSchema`
 
