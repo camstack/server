@@ -14,14 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The integration form shows no Test button for an integration that has no connection test
 
-## [1.2.690] - 2026-11-16
-
 ### Changed
 
-- The global search now also finds automations, scripts, schedulers, actions, templates and custom devices by name or tag, and opens the one you pick in its own editor.
-- Device Interactions show who an exporter acted for.
-- Logs: the export moved into the shared log stream; the destinations table always shows an icon and a label in Kind and keeps the On toggle aligned
-- Recordings is now the Archive: one overview of footage, event storage, exports and per-camera health, and a page per camera with Review, Events, Exports, Health, Space and Settings; Library no longer has an Events tab.
 - Archive is now Overview + Cameras: pick a camera in the header and review it with the player beside the window's events, the timeline below with zone, face/plate and debug filters, one lane per clip source; exports moved to Library → Exports.
 - Archive Review: compact event rows with a size slider, class chips and every filter in one bar above the timeline.
 - Archive Review: event rows are selectable for bulk delete, sources loading or failing are said, a zone filter counts the events it could not check, and old camera links open the matching view; Library → Exports filters by camera.
@@ -30,6 +24,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System → Settings no longer lists addon settings tabs; each addon's cluster settings moved to its page (Pipeline streaming/recording/semantic search, History retention, Nodes metrics), the rest stay in the addon's settings dialog
 - Pipeline → Settings → Faces draws the face-suggestion refresh interval; an addon's settings dialog leaves out the role pickers drawn on Roles & nodes and links there
 - Every notification rule kind (summaries, timelapses, calendar events) has a Tags field; every Rules area filters and groups by tag, and All names a kind whose list failed instead of looking empty
+
+## [1.2.690] - 2026-11-16
+
+### Changed
+
+- The global search now also finds automations, scripts, schedulers, actions, templates and custom devices by name or tag, and opens the one you pick in its own editor.
+- Device Interactions show who an exporter acted for.
+- Logs: the export moved into the shared log stream; the destinations table always shows an icon and a label in Kind and keeps the On toggle aligned
+- Recordings is now the Archive: one overview of footage, event storage, exports and per-camera health, and a page per camera with Review, Events, Exports, Health, Space and Settings; Library no longer has an Events tab.
 
 ## [1.2.689] - 2026-11-16
 
@@ -98,14 +101,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device History tab shows grouped charts and a per-chart unit switch
 
-
 ## [1.2.680] - 2026-11-15
 
 ### Changed
 
 - Rebuilt against updated dependencies.
 ### Changed
-
 
 ## [1.2.679] - 2026-11-15
 

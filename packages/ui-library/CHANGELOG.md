@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- RecordingTimeline reports its window and takes caller density and extra lanes; new ClipSourceLanes draws one clip lane per source a camera lists.
+- RecordingTimeline takes a toolbar slot that joins the date and zoom controls in one bar; clip source lanes are compact rows with the label inline.
+- useCapabilityNodePresence also reports the nodes that run a provider (pending and unknown kept distinct from none).
+- The tag manager refreshes the notification rules list after a rename or remove
+- The archive timeline shows one lane per clip source and joins the date and zoom controls in one bar
+
 ## [1.2.462] - 2026-11-16
 
 ### Changed
@@ -16,10 +24,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every log stream now offers Export (pre-filled with its scope, with a choice of log source showing whether it is readable and how far back it reaches), shows the integration and device names with a column picker, and the device picker no longer jumps while it loads
 - Log stream name columns are off unless a page opts in through the columns prop; the export dialog shows an error when the log sources cannot be read
 - The recording timeline opens on the latest footage, says so when a window is empty, and a range dragged on it can start an export.
-- RecordingTimeline reports its window and takes caller density and extra lanes; new ClipSourceLanes draws one clip lane per source a camera lists.
-- RecordingTimeline takes a toolbar slot that joins the date and zoom controls in one bar; clip source lanes are compact rows with the label inline.
-- useCapabilityNodePresence also reports the nodes that run a provider (pending and unknown kept distinct from none).
-- The tag manager refreshes the notification rules list after a rename or remove
 
 ## [1.2.461] - 2026-11-16
 
@@ -68,7 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.454] - 2026-11-15
 ### Changed
-
 
 ### Fixed
 
@@ -201,7 +204,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
 ### Changed
-
 
 ## [1.2.438] - 2026-11-13
 
