@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Build-your-self offers Camera grid and Terminal camera blocks; the Camera grids page is gone, recreate old grids as blocks.
+
 ## [1.2.690] - 2026-11-16
 
 ### Changed

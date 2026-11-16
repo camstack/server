@@ -4,7 +4,7 @@
 
 # Decisions
 
-1021 architecture decision records. One file per decision, never
+1022 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1034,6 +1034,7 @@ that rots.
 | D1052 | [A mesh certificate does not expire, an expired one is recovered by the hub, and revocation is the only kill switch](adr-1052-a-mesh-certificate-does-not-expire-an-expired-one-is-recovered-by-the-hub-and-revocation-is-the-only-kill-switch.md) | ✅ accepted | 2026-11-15 |
 | D1053 | [The Apple ANE default detector is yolov9m-640](adr-1053-the-apple-ane-default-detector-is-yolov9m-640.md) | ✅ accepted | 2026-11-15 |
 | D1054 | [A tag lives on the record it labels; only its style is registered](adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md) | ✅ accepted | 2026-11-15 |
+| D1056 | [A hosted camera row is the composer's; engines serve caps on it](adr-1056-a-hosted-camera-row-is-the-composers-engines-serve-caps-on-it.md) | ✅ accepted | 2026-11-16 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

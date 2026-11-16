@@ -5,7 +5,8 @@ status: accepted
 date: 2026-09-18
 supersedes:
 applies-to:
-  - packages/system/src/builtins/camera-grid/grid-instances.ts
+  - packages/system/src/builtins/camera-grid/grid-blocks.ts
+  - packages/types/src/composition/helpers/spec.ts
   - packages/system/src/builtins/camera-grid/grid-profiles.ts
   - packages/ui-library/src/composites/cap-settings/CameraGridLayoutEditor.tsx
 ---
