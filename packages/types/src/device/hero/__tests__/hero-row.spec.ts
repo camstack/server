@@ -341,6 +341,19 @@ describe('row selection rules', () => {
     expect(first).toBeDefined()
     const gated = { ...model, gated: [first?.id ?? ''] }
     expect(projectDeviceRow(gated).primary).toBeNull()
+    expect(projectDeviceRow(gated).primaryGated).toBe(true)
+  })
+
+  it('a gated own-power primary is flagged; an uncovered type is not', () => {
+    const heater = build(PLUG_HEATER, ['switch'], { switch: SWITCH_ON })
+    const gated = projectDeviceRow({ ...heater, gated: ['own-power'] })
+    expect(gated.primary).toBeNull()
+    expect(gated.primaryGated).toBe(true)
+    const open = projectDeviceRow(heater)
+    expect(open.primaryGated).toBe(false)
+    const bare = projectDeviceRow(build(DeviceType.Climate, [], {}, { role: DeviceRole.ClimateAc }))
+    expect(bare.primary).toBeNull()
+    expect(bare.primaryGated).toBe(false)
   })
 
   it('distinct pictures for the look-alike types', () => {

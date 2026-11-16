@@ -72,6 +72,12 @@ export const HeroRowModelSchema = z.object({
   /** `null` = the type has no inline control, or the caller may not act on it. */
   primary: HeroControlSchema.nullable(),
   /**
+   * `true` when the primary exists but the model gates it (the caller may not act): the
+   * row is read-only and a client draws no control, not a fallback. `false` = nothing
+   * covers the type yet. Absent = an older server.
+   */
+  primaryGated: z.boolean().optional(),
+  /**
    * Beside `primary` when the device offers a timed run: Run while idle, Stop
    * while armed. `null` when there is no slot, or the caller may not act.
    */
@@ -130,30 +136,38 @@ export const ROW_PRIMARY_BY_TYPE: Readonly<Record<string, string>> = {
   [DeviceType.Climate]: 'climate.mode',
 }
 
-function primaryOf(model: HeroModel): HeroControl | null {
+interface RowPrimary {
+  readonly control: HeroControl | null
+  readonly gated: boolean
+}
+
+function primaryOf(model: HeroModel): RowPrimary {
   const named = ROW_PRIMARY_BY_TYPE[model.type]
   if (named !== undefined) {
     const found = extraOf(model, named)
-    if (found !== null) return found
+    if (found !== null) return { control: found, gated: false }
   }
   const power = model.ownPower
   if (power !== null) {
-    if (model.gated.includes('own-power')) return null
+    if (model.gated.includes('own-power')) return { control: null, gated: true }
     return {
-      kind: 'toggle',
-      id: 'own-power',
-      label: power.turnOn.label,
-      on: power.on,
-      turnOn: power.turnOn,
-      turnOff: power.turnOff,
+      control: {
+        kind: 'toggle',
+        id: 'own-power',
+        label: power.turnOn.label,
+        on: power.on,
+        turnOn: power.turnOn,
+        turnOff: power.turnOff,
+      },
+      gated: false,
     }
   }
   for (const row of model.rows) {
     const control = row.controls[0]
     if (control === undefined) continue
-    return model.gated.includes(row.id) ? null : control
+    return model.gated.includes(row.id) ? { control: null, gated: true } : { control, gated: false }
   }
-  return null
+  return { control: null, gated: false }
 }
 
 /** The most extra controls one row carries. */
@@ -230,7 +244,7 @@ function timedRunOf(model: HeroModel): HeroRowTimedRun | null {
 
 export function projectDeviceRow(model: HeroModel): HeroRowModel {
   const trailing = trailingOf(model)
-  const primary = primaryOf(model)
+  const { control: primary, gated: primaryGated } = primaryOf(model)
   return {
     deviceId: model.deviceId,
     name: model.name,
@@ -241,6 +255,7 @@ export function projectDeviceRow(model: HeroModel): HeroRowModel {
     scene: model.scene,
     statusLine: statusLineOf(model, trailing),
     primary,
+    primaryGated,
     timedRun: timedRunOf(model),
     extras: extrasOf(model, primary),
     trailing,
