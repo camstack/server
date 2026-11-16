@@ -522,6 +522,31 @@ export const workloadCapability = {
         ],
         icon: 'activity',
       },
+      // Resource thresholds: nested numbers, by dotted path (CapNestedNumericPath).
+      {
+        kind: 'numeric',
+        field: 'resources.cpuPercent',
+        quantity: t('the CPU use', "l'uso della CPU"),
+        label: t('CPU', 'CPU'),
+        unit: '%',
+        icon: 'cpu',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.memoryPercent',
+        quantity: t('the memory use', "l'uso della memoria"),
+        label: t('Memory', 'Memoria'),
+        unit: '%',
+        icon: 'memory-stick',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.temperature',
+        quantity: t('the temperature', 'la temperatura'),
+        label: t('Temperature', 'Temperatura'),
+        unit: '°C',
+        icon: 'thermometer',
+      },
     ],
     overrides: {
       byRole: {

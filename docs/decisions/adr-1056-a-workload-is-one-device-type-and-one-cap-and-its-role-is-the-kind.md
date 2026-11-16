@@ -44,9 +44,12 @@ mirror from the state transitions, so a provider only writes its state.
   `switch` through `registerPowerSwitch` (`check-power-hint`).
 - A host's load and temperature live in `resources` beside a VM's; its uptime is
   `since` while it runs. A field one role never fills stays `null` (D393).
-- A rule on CPU above a threshold needs a numeric state trigger on a nested
-  field, which the vocabulary cannot express yet (top-level fields only); the
-  history is recorded meanwhile.
+- A rule on CPU, memory or temperature above a threshold is a numeric state
+  trigger on the nested path (`resources.cpuPercent`, `resources.memoryPercent`,
+  `resources.temperature`). Any cap may name a number one object below the top
+  of its status this way (`CapNestedNumericPath`); the rule runtime and the unit
+  resolver already read dotted paths, and `check-cap-vocabulary` resolves them.
+  A container that reports memory as a share fills `memoryPercent`.
 - The first state the mirror sees for a device is a seed, so a hub restart never
   announces every container as started; a transition during a restart is lost
   (events are telemetry, D8).

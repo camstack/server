@@ -43,6 +43,7 @@ export type {
   BooleanOffer,
   CapEventName,
   CapMethodName,
+  CapNestedNumericPath,
   CapStatusField,
   CapVocabularyEntry,
   CapVocabularyMap,
