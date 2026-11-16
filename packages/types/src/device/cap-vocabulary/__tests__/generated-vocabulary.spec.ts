@@ -70,6 +70,7 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   'weather-station',
   'error',
   'tags',
+  'siren',
 ]
 
 function actionsOf(entry: unknown): readonly JsonRecord[] {
