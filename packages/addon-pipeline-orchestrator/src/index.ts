@@ -60,6 +60,7 @@ import type {
   NodeMeasuredCapacity,
   LoadBalancingSharesInput,
   PlacementStats,
+  HealthDigest,
   SessionPlacementPolicy,
   ShareSource,
   SuggestSharesResult,
@@ -235,6 +236,9 @@ import { ZoneRulesProvider } from './zone-rules-provider.js'
 import { ZonesProvider } from './zones-provider.js'
 import { AutoTuneService } from './auto-tune/auto-tune-service.js'
 import { SessionPlacementStats } from './session-placement-stats.js'
+import { HEALTH_DIGEST_INTERVAL_MS } from './health-digest.js'
+import { HealthDigestTick, type CameraMetricsMirror } from './health-digest-tick.js'
+import type { DetectionBlindMonitor } from './detection-blind-monitor.js'
 import { applyLoadBalancingShares } from './load-balancing-shares.js'
 import { EffectiveSharesService } from './load-balancing/effective-shares-service.js'
 import {
@@ -359,6 +363,11 @@ export default class PipelineOrchestratorAddon
   protected nodeBenchmark: NodeBenchmarkService | null = null
   private nodeBenchmarkStore: NodeBenchmarkStore | null = null
   private nodeBenchmarkTimer: ReturnType<typeof setInterval> | null = null
+  /** Health digest (planning#572): the 5-minute tick over in-memory state, and its timer. */
+  private healthDigest: HealthDigestTick | null = null
+  private healthDigestTimer: ReturnType<typeof setInterval> | null = null
+  private blindMonitor: DetectionBlindMonitor | null = null
+  private cameraMetrics: CameraMetricsMirror | null = null
   /** Measures an enabled device that has no result yet (GAP 2 of the balancing work). */
   private autoBenchmark: AutoBenchmarkScheduler | null = null
   /** How often the active run's runner is polled (a test seam). */
@@ -751,6 +760,9 @@ export default class PipelineOrchestratorAddon
     this.audio = controllers.audio
     this.settingsStore = controllers.settingsStore
     this.loadShed = controllers.loadShed
+    this.blindMonitor = controllers.blindMonitor
+    this.cameraMetrics = controllers.cameraMetrics
+    this.startHealthDigest()
     this.nodeStress = controllers.nodeStress
     this.placement = controllers.placement
     this.session = controllers.session
@@ -899,6 +911,13 @@ export default class PipelineOrchestratorAddon
       clearInterval(this.nodeBenchmarkTimer)
       this.nodeBenchmarkTimer = null
     }
+    if (this.healthDigestTimer !== null) {
+      clearInterval(this.healthDigestTimer)
+      this.healthDigestTimer = null
+    }
+    this.healthDigest = null
+    this.blindMonitor = null
+    this.cameraMetrics = null
     this.autoBenchmark?.stop()
     this.autoBenchmark = null
     this.nodeStressLts = null
@@ -2594,6 +2613,37 @@ export default class PipelineOrchestratorAddon
     return { success: true as const }
   }
 
+  /** Start the 5-minute health digest tick (planning#572): in-memory reads only. */
+  private startHealthDigest(): void {
+    const tick = new HealthDigestTick({
+      now: () => Date.now(),
+      readMotion: (now) => this.blindMonitor?.snapshot(now) ?? [],
+      readMetrics: () => {
+        if (this.cameraMetrics === null) throw new Error('metrics mirror not ready')
+        return this.cameraMetrics.view()
+      },
+      readPlacement: () => this.placementStats.snapshot(60 * 60_000).nodes,
+      readUnusableDevices: () => this.inferenceDeviceUsability.unusableDevices(),
+      logger: this.ctx.logger,
+    })
+    this.healthDigest = tick
+    this.healthDigestTimer = setInterval(() => {
+      try {
+        tick.run()
+      } catch (err) {
+        this.ctx.logger.warn('health digest: tick failed', { meta: { error: errMsg(err) } })
+      }
+    }, HEALTH_DIGEST_INTERVAL_MS)
+    this.healthDigestTimer.unref?.()
+  }
+
+  async getHealthDigest(input: {
+    readonly history: number
+  }): Promise<{ latest: HealthDigest | null; previous: readonly HealthDigest[] }> {
+    const digests = this.healthDigest?.recent(input.history) ?? []
+    return { latest: digests[0] ?? null, previous: digests.slice(1) }
+  }
+
   async getPlacementStats(input: { readonly windowMs: number }): Promise<PlacementStats> {
     const snap = this.placementStats.snapshot(input.windowMs)
     return {
@@ -3724,6 +3774,8 @@ export default class PipelineOrchestratorAddon
 
   /** Stop detection and purge all persisted config for a removed device — thin delegate (S11 Task 3, C14). */
   private async handleDeviceUnregistered(deviceId: number): Promise<void> {
+    this.blindMonitor?.forget(deviceId)
+    this.cameraMetrics?.forget(deviceId)
     return this.detectionWiring!.handleDeviceUnregistered(deviceId)
   }
 

@@ -89,6 +89,7 @@ const BY_CLASS: Readonly<Record<string, readonly string[]>> = {
     'keyframe_presence',
     'birth_decisions',
     'event_density',
+    'hub_health_digest',
     'benchmark_status',
     'release_status',
   ],

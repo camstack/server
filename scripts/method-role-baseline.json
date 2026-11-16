@@ -975,6 +975,7 @@
   "pipelineOrchestrator.getDeviceSettingsContribution": "admin",
   "pipelineOrchestrator.getEffectiveShares": "admin",
   "pipelineOrchestrator.getGlobalMetrics": "admin",
+  "pipelineOrchestrator.getHealthDigest": "admin",
   "pipelineOrchestrator.getIngestOwner": "admin",
   "pipelineOrchestrator.getNodeBenchmarkCandidates": "admin",
   "pipelineOrchestrator.getNodeBenchmarkPreflight": "admin",

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- pipeline-orchestrator gains getHealthDigest (the latest health digest findings)
+
 ## [1.2.581] - 2026-11-15
 
 ### Changed

@@ -11,7 +11,7 @@
  * Plain data, zero Zod: a forked runner must not import the schema barrel
  * (~144MB RSS per runner — D28).
  *
- * Coverage: 35 caps, 87 methods with defaults.
+ * Coverage: 35 caps, 88 methods with defaults.
  */
 export const CAP_INPUT_DEFAULTS: Readonly<
   Record<string, Readonly<Record<string, Readonly<Record<string, unknown>>>>>
@@ -102,6 +102,7 @@ export const CAP_INPUT_DEFAULTS: Readonly<
   },
   "pipeline-orchestrator": {
     "applyAutoTune": {"headroom":0.4,"minSessionsPerDevice":2},
+    "getHealthDigest": {"history":1},
     "getNodeBenchmarkPreflight": {"phases":["device","pipeline"],"steps":[],"fpsPerStream":10,"budgetMinutes":45,"keepDownloadedModels":false,"acceptInsufficientHeadroom":false},
     "getPlacementStats": {"windowMs":3600000},
     "planAutoTune": {"headroom":0.4,"minSessionsPerDevice":2},

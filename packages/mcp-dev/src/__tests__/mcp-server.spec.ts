@@ -196,6 +196,7 @@ describe('camstack-ops MCP server (stdio, --toolsets ops)', { timeout: TEST_CEIL
       'ops_status',
       'birth_decisions',
       'event_density',
+      'hub_health_digest',
       'release_status',
       'model_floors',
       'eval_model',

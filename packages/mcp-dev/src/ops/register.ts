@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { keyframePresence, modelPinCensus, retrainCensus } from './censuses.js'
 import { capProviders, opsStatus, recentTracks, topology, trackDetail } from './curated.js'
 import { birthDecisions, eventDensity } from './density.js'
+import { healthDigest } from './health.js'
 import type { OpsHub } from './hub.js'
 import { QueryRefusedError } from './hub.js'
 import { hubLogs, listLogProviders } from './logs.js'
@@ -122,6 +123,13 @@ export function registerOpsTools(
       bucketMinutes: z.number().int().positive().max(1440).optional(),
     },
     (args) => guarded(() => eventDensity(getHub(), args)),
+  )
+
+  tool(
+    'hub_health_digest',
+    "The pipeline orchestrator's latest health digest (planning#572): findings an operator can act on, built every 5 minutes from in-memory state — motion that never becomes a detection, candidates all under the class floor, inference slower than the fps it must allow, shed frames, unusable inference devices. Read-only; also lists the signals not covered yet.",
+    { history: z.number().int().min(1).max(24).optional() },
+    (args) => guarded(() => healthDigest(getHub(), args)),
   )
 
   tool(

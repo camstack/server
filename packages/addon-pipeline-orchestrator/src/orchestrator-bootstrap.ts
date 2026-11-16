@@ -115,6 +115,7 @@ import type { CameraIdsRead } from './camera-sensors/controller.js'
 import { CameraStatusService } from './camera-status-service.js'
 import { CameraSwitchService } from './camera-switch-service.js'
 import { DetectionBlindMonitor } from './detection-blind-monitor.js'
+import { CameraMetricsMirror } from './health-digest-tick.js'
 import { DetectionWiringController } from './detection-wiring-controller.js'
 import { RoundRobinInferenceDeviceRotation } from './device-balancer.js'
 import { ShareElectionHistory } from './share-election-history.js'
@@ -242,6 +243,8 @@ export interface OrchestratorBootstrapDeps {
 
 /** The full controller set `buildOrchestratorControllers` constructs, in build order. */
 export interface OrchestratorControllers {
+  readonly blindMonitor: DetectionBlindMonitor
+  readonly cameraMetrics: CameraMetricsMirror
   readonly ledger: PlacementLedger
   readonly topology: NodeTopologyService
   readonly loadService: AgentLoadService
@@ -668,6 +671,8 @@ export async function buildOrchestratorControllers(
   // and it is swept on the pending-retry tick below, so it costs no timer.
   // Declared before the session controller that feeds it.
   const blindMonitor = new DetectionBlindMonitor()
+  // Latest metrics per camera, for the health digest tick (planning#572).
+  const cameraMetrics = new CameraMetricsMirror()
 
   const session: SessionDispatchController = new SessionDispatchController({
     onSessionEdge: (edge) =>
@@ -1455,6 +1460,7 @@ export async function buildOrchestratorControllers(
     },
     noteMetrics: (deviceId, nodeId, metrics) => {
       loadShed.noteMetrics(deviceId, nodeId, metrics)
+      cameraMetrics.note(deviceId, metrics, Date.now())
       nodeStress.noteMetrics(deviceId, nodeId, metrics)
     },
     handleLazyAudioMotion: (deviceId, detected, config) =>
@@ -1555,6 +1561,8 @@ export async function buildOrchestratorControllers(
     audio,
     settingsStore,
     loadShed,
+    blindMonitor,
+    cameraMetrics,
     nodeStress,
     placement,
     session,

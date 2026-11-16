@@ -150,6 +150,24 @@ interface DeviceState {
   readonly spans: readonly SessionSpan[]
 }
 
+/** One camera's motion/detection facts, read without changing any state (health digest). */
+export interface BlindCameraSnapshot {
+  readonly deviceId: number
+  /** Whether a session edge was ever heard — otherwise the motion fields are unknown. */
+  readonly motionKnown: boolean
+  /** Sessions opened inside the noisy window. */
+  readonly sessionsInWindow: number
+  /** Share of the noisy window spent in a session (0-1); `null` when the motion source is unknown. */
+  readonly dutyInWindow: number | null
+  readonly lastDetectionAt: number | null
+  readonly lastFrameAt: number | null
+  /** Frames with only below-floor candidates since the last detection. */
+  readonly belowFloorFrames: number
+  /** Fully empty frames since the last raw output. */
+  readonly framesSinceOutput: number
+  readonly trackedSince: number
+}
+
 export class DetectionBlindMonitor {
   private readonly config: DetectionBlindConfig
   private readonly state = new Map<number, DeviceState>()
@@ -315,6 +333,37 @@ export class DetectionBlindMonitor {
   }
 
   /** Drop a device (detach / unbind), so a re-attach starts a fresh clock. */
+  /**
+   * A read-only view of every tracked camera: no transition fires, no state
+   * changes. Costs one pass over the map; used by the health digest tick.
+   */
+  snapshot(now: number): readonly BlindCameraSnapshot[] {
+    const window = this.config.noisyWindowMs
+    const from = now - window
+    const out: BlindCameraSnapshot[] = []
+    for (const [deviceId, s] of this.state) {
+      let motionMs = 0
+      let opened = 0
+      for (const span of s.spans) {
+        if ((span.end ?? now) <= from) continue
+        motionMs += Math.min(span.end ?? now, now) - Math.max(span.start, from)
+        if (span.start >= from) opened += 1
+      }
+      out.push({
+        deviceId,
+        motionKnown: s.motionKnown,
+        sessionsInWindow: opened,
+        dutyInWindow: s.motionKnown ? motionMs / window : null,
+        lastDetectionAt: s.lastDetectionAt,
+        lastFrameAt: s.lastFrameAt,
+        belowFloorFrames: s.belowFloor,
+        framesSinceOutput: s.frames,
+        trackedSince: s.trackedSince,
+      })
+    }
+    return out
+  }
+
   forget(deviceId: number): void {
     this.state.delete(deviceId)
   }

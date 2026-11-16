@@ -17,6 +17,10 @@ import {
   SuggestSharesInputSchema,
   SuggestSharesResultSchema,
 } from '../pipeline/load-balancing/schemas.js'
+import {
+  HealthDigestAnswerSchema,
+  HealthDigestInputSchema,
+} from '../pipeline/health-digest/schemas.js'
 import { CameraSensorsConfigSchema, CameraSensorsStatusSchema } from '../pipeline/camera-sensors.js'
 import {
   ListNodeBenchmarkResultsInputSchema,
@@ -1233,6 +1237,18 @@ export const pipelineOrchestratorCapability = {
      * honour. In memory on the hub — a restart starts a new window.
      */
     getPlacementStats: method(PlacementStatsInputSchema, PlacementStatsSchema, {
+      auth: 'admin',
+    }),
+    /**
+     * Health digest (planning#572) — findings an operator can act on, built
+     * every 5 minutes from state the orchestrator already holds in memory
+     * (no log scan, no database read): motion that never becomes a detection,
+     * candidates all under the class floor, inference slower than the fps it
+     * must allow, shed frames, unusable inference devices. `latest` is null
+     * until the first tick; `previous` holds older digests when `history` > 1.
+     * In memory on the hub — a restart starts empty.
+     */
+    getHealthDigest: method(HealthDigestInputSchema, HealthDigestAnswerSchema, {
       auth: 'admin',
     }),
     /**

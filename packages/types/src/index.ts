@@ -2488,6 +2488,7 @@ export {
 export * from './pipeline/auto-tune/index.js'
 // Load balancing (D748): share placement of detection sessions.
 export * from './pipeline/load-balancing/index.js'
+export * from './pipeline/health-digest/schemas.js'
 // Node benchmark (D791): one node at a time, owned by the orchestrator.
 export * from './pipeline/node-benchmark/index.js'
 export * from './pipeline/second-pass/index.js'

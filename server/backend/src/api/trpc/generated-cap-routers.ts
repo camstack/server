@@ -14801,6 +14801,14 @@ export function createCapRouter_pipelineOrchestrator(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getPlacementStats(input as any)
       }),
+    getHealthDigest: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.getHealthDigest.input.loose())
+      .output(pipelineOrchestratorCapability.methods.getHealthDigest.output)
+      .query(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getHealthDigest(input as any)
+      }),
     suggestShares: adminProcedure
       .input(pipelineOrchestratorCapability.methods.suggestShares.input.loose())
       .output(pipelineOrchestratorCapability.methods.suggestShares.output)

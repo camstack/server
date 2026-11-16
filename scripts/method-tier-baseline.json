@@ -895,6 +895,7 @@
   "pipelineOrchestrator.getClusterModelChoice": "protected",
   "pipelineOrchestrator.getEffectiveShares": "admin",
   "pipelineOrchestrator.getGlobalMetrics": "protected",
+  "pipelineOrchestrator.getHealthDigest": "admin",
   "pipelineOrchestrator.getIngestOwner": "protected",
   "pipelineOrchestrator.getNodeBenchmarkCandidates": "admin",
   "pipelineOrchestrator.getNodeBenchmarkPreflight": "admin",

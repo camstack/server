@@ -2702,6 +2702,9 @@ export const usePipelineOrchestratorSetLoadBalancingShares: typeof trpc.pipeline
 /** Generated alias around `trpc.pipelineOrchestrator.getPlacementStats.useQuery`. */
 export const usePipelineOrchestratorGetPlacementStats: typeof trpc.pipelineOrchestrator.getPlacementStats.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.getPlacementStats.useQuery)
 
+/** Generated alias around `trpc.pipelineOrchestrator.getHealthDigest.useQuery`. */
+export const usePipelineOrchestratorGetHealthDigest: typeof trpc.pipelineOrchestrator.getHealthDigest.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.getHealthDigest.useQuery)
+
 /** Generated alias around `trpc.pipelineOrchestrator.suggestShares.useQuery`. */
 export const usePipelineOrchestratorSuggestShares: typeof trpc.pipelineOrchestrator.suggestShares.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.suggestShares.useQuery)
 

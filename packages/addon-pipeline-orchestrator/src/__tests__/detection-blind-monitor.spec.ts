@@ -211,3 +211,40 @@ describe('DetectionBlindMonitor — motion-noisy', () => {
     expect(m.sweepMotion(63 * MIN).map((e) => e.phase)).toEqual(['calm'])
   })
 })
+
+describe('DetectionBlindMonitor.snapshot — the read the health digest takes', () => {
+  it('reports a moving camera that never detected, without changing any state', () => {
+    const m = new DetectionBlindMonitor()
+    for (let i = 0; i < 6; i++) session(m, i * 5 * MIN, 30 * SEC, FLOOR_FILTERED)
+    const now = 40 * MIN
+    const before = m.snapshot(now)
+    const again = m.snapshot(now)
+    expect(again).toEqual(before)
+    expect(before).toHaveLength(1)
+    const cam = before[0]!
+    expect(cam.deviceId).toBe(DEV)
+    expect(cam.motionKnown).toBe(true)
+    expect(cam.sessionsInWindow).toBe(6)
+    expect(cam.belowFloorFrames).toBeGreaterThan(0)
+    expect(cam.lastDetectionAt).toBeNull()
+    // a snapshot is not a sweep: the blind episode is still unreported
+    expect(m.sweep(now).length + m.sweep(now + 1).length).toBeLessThanOrEqual(1)
+  })
+
+  it('a camera with no session edge has a null duty, not zero', () => {
+    const m = new DetectionBlindMonitor()
+    m.noteFrame(DEV, EMPTY, 1000)
+    const cam = m.snapshot(2000)[0]!
+    expect(cam.motionKnown).toBe(false)
+    expect(cam.dutyInWindow).toBeNull()
+  })
+
+  it('a detection resets the under-floor count and stamps lastDetectionAt', () => {
+    const m = new DetectionBlindMonitor()
+    session(m, 0, 30 * SEC, FLOOR_FILTERED)
+    m.noteFrame(DEV, SEEN, 40 * SEC)
+    const cam = m.snapshot(60 * SEC)[0]!
+    expect(cam.belowFloorFrames).toBe(0)
+    expect(cam.lastDetectionAt).toBe(40 * SEC)
+  })
+})
