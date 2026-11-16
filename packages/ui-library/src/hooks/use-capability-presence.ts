@@ -109,9 +109,38 @@ export function capabilityPresenceOnNode(
     : 'absent'
 }
 
+/**
+ * The nodes that run a provider, as the registry answered them. `pending` and
+ * `unknown` carry no list: a surface that lists nodes must render them, never
+ * fall into an empty list (not-yet-known is not "no node").
+ */
+export type CapabilityProviderNodes =
+  | { readonly state: 'pending' }
+  | { readonly state: 'unknown' }
+  | { readonly state: 'answered'; readonly nodeIds: readonly string[] }
+
+/**
+ * Every node hosting at least one provider, in the registry's order. A row with
+ * providers but no `perNode` cannot name its nodes, so it is `unknown`.
+ */
+export function capabilityProviderNodes(answer: CapabilityRegistryAnswer): CapabilityProviderNodes {
+  if (answer.status === 'pending') return { state: 'pending' }
+  if (answer.status === 'error') return { state: 'unknown' }
+  const row = answer.data ?? null
+  if (row === null || classifyCapability(row) === 'absent')
+    return { state: 'answered', nodeIds: [] }
+  if (row.perNode === undefined) return { state: 'unknown' }
+  const nodeIds = row.perNode
+    .filter((entry) => entry.providers.length > 0)
+    .map((entry) => entry.nodeId)
+  return { state: 'answered', nodeIds: [...new Set(nodeIds)] }
+}
+
 /** Per-node presence of one capability, from one registry read. */
 export interface CapabilityNodePresence {
   readonly onNode: (nodeId: string) => CapabilityPresence
+  /** The nodes that run a provider — one entry per node, for a per-node list. */
+  readonly providerNodes: CapabilityProviderNodes
 }
 
 /** Ask the registry once which nodes run a provider of `capabilityName`. */
@@ -123,5 +152,8 @@ export function useCapabilityNodePresence(capabilityName: string): CapabilityNod
     status: query.status,
     data: query.data,
   }
-  return { onNode: (nodeId) => capabilityPresenceOnNode(answer, nodeId) }
+  return {
+    onNode: (nodeId) => capabilityPresenceOnNode(answer, nodeId),
+    providerNodes: capabilityProviderNodes(answer),
+  }
 }

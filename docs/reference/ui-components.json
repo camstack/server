@@ -2503,6 +2503,13 @@
       "summary": "Classify ONE node from the registry's answer — the per-node form of `useCapabilityPresence`, for a picker that offers only the nodes running a provider."
     },
     {
+      "name": "capabilityProviderNodes",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-capability-presence.ts",
+      "summary": "Every node hosting at least one provider, in the registry's order. A row with providers but no `perNode` cannot name its nodes, so it is `unknown`."
+    },
+    {
       "name": "capCardKindOf",
       "kind": "function",
       "area": "composites",
