@@ -10090,7 +10090,8 @@
           "toggle": "Dettagli"
         },
         "today": "Oggi",
-        "yesterday": "Ieri"
+        "yesterday": "Ieri",
+        "actorOnBehalf": "{{addon}} · {{principal}}"
       },
       "plug": {
         "on": "Accesa",

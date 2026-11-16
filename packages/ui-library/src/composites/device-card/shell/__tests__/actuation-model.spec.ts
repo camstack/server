@@ -26,6 +26,7 @@ const PHRASES: ActuationPhrases = {
   user: 'User',
   automation: 'Automation',
   addon: 'Add-on',
+  onBehalf: '{{addon}} · {{principal}}',
   scheduler: 'Schedule',
   composition: 'Composition',
   node: 'This node',
@@ -39,6 +40,7 @@ const PHRASES: ActuationPhrases = {
 const NO_NAMES: ActuationNameBook = {
   actionName: () => undefined,
   automationName: () => undefined,
+  addonName: () => undefined,
 }
 
 const user: TransitionActor = {
@@ -136,11 +138,40 @@ describe('actuation field labels and values', () => {
 })
 
 describe('actuation actors and outcomes', () => {
+  it('shows an addon by its display name, falling back to the id', () => {
+    const book: ActuationNameBook = {
+      ...NO_NAMES,
+      addonName: (id) => (id === 'addon-export-alexa' ? 'Alexa export' : undefined),
+    }
+    const alexa: TransitionActor = { kind: 'addon', addonId: 'addon-export-alexa' }
+    expect(actuationActorLabel(alexa, book, PHRASES)).toBe('Alexa export')
+    expect(actuationActorLabel({ kind: 'addon', addonId: 'x-unknown' }, book, PHRASES)).toBe(
+      'x-unknown',
+    )
+  })
+
+  it('appends who an exporter acted for, the name when it has one', () => {
+    const book: ActuationNameBook = { ...NO_NAMES, addonName: () => 'Alexa export' }
+    const named: TransitionActor = {
+      kind: 'addon',
+      addonId: 'addon-export-alexa',
+      onBehalf: { source: 'alexa', principalId: 'amzn1.X', principalName: 'Ada' },
+    }
+    expect(actuationActorLabel(named, book, PHRASES)).toBe('Alexa export · Ada')
+    const anonymous: TransitionActor = {
+      kind: 'addon',
+      addonId: 'addon-export-alexa',
+      onBehalf: { source: 'alexa', principalId: 'amzn1.X' },
+    }
+    expect(actuationActorLabel(anonymous, book, PHRASES)).toBe('Alexa export · amzn1.X')
+  })
+
   it('names a user, an automation when the name is known, and the device itself', () => {
     expect(actuationActorLabel(user, NO_NAMES, PHRASES)).toBe('Ada')
     const named: ActuationNameBook = {
       actionName: (id) => (id === 'act-night' ? 'Good night' : undefined),
       automationName: () => undefined,
+      addonName: () => undefined,
     }
     expect(
       actuationActorLabel(

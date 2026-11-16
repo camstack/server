@@ -6,7 +6,7 @@
 import { useMemo, useState, type ReactElement } from 'react'
 import { Info } from 'lucide-react'
 import { useUiText, type UiTextFn } from '../../../contexts/ui-text'
-import { useActionsList } from '../../../generated/system-hooks'
+import { useActionsList, useAddonsList } from '../../../generated/system-hooks'
 import { useCapabilityPresence } from '../../../hooks/use-capability-presence'
 import { Button } from '../../../primitives/button'
 import { IconButton } from '../../../primitives/icon-button'
@@ -16,6 +16,7 @@ import { ErrorBox } from '../../error-box'
 import {
   ACTUATION_PAGE_SIZE,
   actionNamesFromList,
+  addonNamesFromList,
   actuationRow,
   actuationSection,
   mergeActuationPages,
@@ -46,6 +47,7 @@ function phrasesOf(t: UiTextFn): ActuationPhrases {
     user: t('uiLibrary.deviceCard.history.actorUser', 'User'),
     automation: t('uiLibrary.deviceCard.history.actorAutomation', 'Automation'),
     addon: t('uiLibrary.deviceCard.history.actorAddon', 'Add-on'),
+    onBehalf: t('uiLibrary.deviceCard.history.actorOnBehalf', '{{addon}} · {{principal}}'),
     scheduler: t('uiLibrary.deviceCard.history.actorScheduler', 'Schedule'),
     composition: t('uiLibrary.deviceCard.history.actorComposition', 'Composition'),
     node: t('uiLibrary.deviceCard.history.actorNode', 'This node'),
@@ -221,6 +223,12 @@ export function ActuationHistory({ deviceId }: ActuationHistoryProps): ReactElem
     [query.data],
   )
   const hasAction = transitions.some((entry) => entry.actor.kind === 'action')
+  const hasAddon = transitions.some((entry) => entry.actor.kind === 'addon')
+  const addonsQuery = useAddonsList(undefined, {
+    enabled: presence === 'present' && hasAddon,
+    retry: false,
+    staleTime: 60_000,
+  })
   const namesQuery = useActionsList(
     {},
     {
@@ -231,11 +239,13 @@ export function ActuationHistory({ deviceId }: ActuationHistoryProps): ReactElem
   )
   const book = useMemo<ActuationNameBook>(() => {
     const names = actionNamesFromList(namesQuery.data)
+    const addons = addonNamesFromList(addonsQuery.data)
     return {
+      addonName: (id) => addons.get(id),
       actionName: (id) => names.get(id),
       automationName: (id) => names.get(id),
     }
-  }, [namesQuery.data])
+  }, [namesQuery.data, addonsQuery.data])
   const phrases = phrasesOf(t)
   const locale = uiLocale()
   const rows = transitions.map((entry) => actuationRow(entry, Date.now(), locale, phrases, book))

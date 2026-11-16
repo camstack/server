@@ -27,6 +27,8 @@ export interface ActuationPhrases {
   readonly user: string
   readonly automation: string
   readonly addon: string
+  /** Template with `{{addon}}` and `{{principal}}`: the addon, then who it acted for. */
+  readonly onBehalf: string
   readonly scheduler: string
   readonly composition: string
   readonly node: string
@@ -41,6 +43,7 @@ export interface ActuationPhrases {
 export interface ActuationNameBook {
   readonly actionName: (actionId: string) => string | undefined
   readonly automationName: (automationId: string) => string | undefined
+  readonly addonName: (addonId: string) => string | undefined
 }
 
 export interface ActuationRowView {
@@ -159,8 +162,19 @@ export function actuationActorLabel(
       }
       return phrases.automation
     }
-    case 'addon':
-      return actor.addonId.length > 0 ? actor.addonId : phrases.addon
+    case 'addon': {
+      const named = names.addonName(actor.addonId)
+      const addon =
+        named !== undefined && named.length > 0
+          ? named
+          : actor.addonId.length > 0
+            ? actor.addonId
+            : phrases.addon
+      const behalf = actor.onBehalf
+      if (behalf === undefined) return addon
+      const principal = behalf.principalName ?? behalf.principalId
+      return phrases.onBehalf.replace('{{addon}}', addon).replace('{{principal}}', principal)
+    }
     case 'scheduler':
       return actor.schedulerId.length > 0 ? actor.schedulerId : phrases.scheduler
     case 'composition':
@@ -351,6 +365,18 @@ export function actionNamesFromList(data: unknown): ReadonlyMap<string, string> 
   const names = new Map<string, string>()
   for (const entry of data) {
     const named = namedEntry(entry)
+    if (named !== null) names.set(named.id, named.name)
+  }
+  return names
+}
+
+/** `addons.list` as a name book (manifest id to display name). Anything else is empty. */
+export function addonNamesFromList(data: unknown): ReadonlyMap<string, string> {
+  if (!Array.isArray(data)) return new Map()
+  const names = new Map<string, string>()
+  for (const entry of data) {
+    if (typeof entry !== 'object' || entry === null || !('manifest' in entry)) continue
+    const named = namedEntry(entry.manifest)
     if (named !== null) names.set(named.id, named.name)
   }
   return names
