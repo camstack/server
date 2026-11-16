@@ -13,8 +13,9 @@ function nullToEmpty(value: unknown): unknown {
  * Operator-supplied connection to ONE UniFi Network controller on the local
  * network. The addon runs in `account` mode: the CONNECTION lives on the INTEGRATION's
  * settings, not on a device. The controller is POLLED — `pollIntervalMs` drives the infra + client
- * refresh cadence. The client signs in with the API key (the UniFi OS Integration API); the
- * username + password are kept but not used yet (planning#581).
+ * refresh cadence. The credential is an API key (the UniFi OS Integration API), the username +
+ * password of a local account (the classic Network API, which can switch PoE on and off), or both
+ * (`unifiCredentialOf`).
  */
 export const unifiConnectionSchema = z.object({
   host: z.string().min(1).describe('Controller host name or IP address'),
@@ -26,14 +27,14 @@ export const unifiConnectionSchema = z.object({
     .describe('Controller HTTPS port (443 on UniFi OS, 8443 on legacy)'),
   apiKey: z
     .preprocess(nullToEmpty, z.string().default(''))
-    .describe('UniFi OS API key — the credential the client signs in with')
+    .describe('UniFi OS API key (the Integration API)')
     .meta({ secret: true }),
   username: z
     .preprocess(nullToEmpty, z.string().default(''))
-    .describe('Local account username (not used yet: the client signs in with the API key)'),
+    .describe('Local account username (the classic API: PoE on/off)'),
   password: z
     .preprocess(nullToEmpty, z.string().default(''))
-    .describe('Local account password (not used yet: the client signs in with the API key)')
+    .describe('Local account password (the classic API: PoE on/off)')
     .meta({ secret: true }),
   site: z.string().default('default').describe('Controller site name'),
   allowSelfSigned: z
@@ -51,8 +52,8 @@ export type UnifiConnectionConfig = z.infer<typeof unifiConnectionSchema>
 
 // ── Feature discriminants (shared by descriptor + child config) ───────────────
 
-/** The four child device kinds a controller fans out into. */
-export const UnifiFeatureKindSchema = z.enum(['switch', 'button', 'sensor', 'presence'])
+/** The child device kinds a controller fans out into. `port` is one PoE port of a switch. */
+export const UnifiFeatureKindSchema = z.enum(['switch', 'button', 'sensor', 'presence', 'port'])
 export type UnifiFeatureKind = z.infer<typeof UnifiFeatureKindSchema>
 
 /** A switch child is either a per-port PoE toggle or the device LED. */
@@ -80,15 +81,17 @@ export type UnifiSensorMetric = z.infer<typeof UnifiSensorMetricSchema>
  * `sensors[]` entry.
  */
 export const unifiFeatureDescriptorSchema = z.object({
-  kind: z.enum(['switch', 'button', 'sensor']),
+  kind: z.enum(['switch', 'button', 'sensor', 'port']),
   /** Present for `kind: 'switch'`. */
   switchFeature: UnifiSwitchFeatureSchema.optional(),
   /** Present for `kind: 'button'`. */
   buttonAction: UnifiButtonActionSchema.optional(),
-  /** Present for per-port switch/button children (`poe` / `power-cycle`). */
+  /** Present for `kind: 'port'` (and the retired per-port `poe` switch / `power-cycle` button). */
   portIdx: z.number().int().nonnegative().optional(),
   /** Present for `kind: 'sensor'`. */
   metric: UnifiSensorMetricSchema.optional(),
+  /** `kind: 'port'`: whether the port's PoE can be switched (a local account is set). */
+  switchable: z.boolean().optional(),
 })
 
 export type UnifiFeatureDescriptor = z.infer<typeof unifiFeatureDescriptorSchema>
@@ -119,6 +122,8 @@ export type UnifiInfraConfig = z.infer<typeof unifiInfraSchema>
  *   - `button`   → `button` cap (device restart OR per-port power-cycle)
  *   - `sensor`   → a typed sensor cap chosen from `metric`
  *   - `presence` → `presence` cap (a network client tracker)
+ *   - `port`     → one PoE port: `power-meter`, `network-link`, and `switch` (PoE on/off)
+ *                  when `switchable`
  *
  * `integrationId` resolves the live client. `infraNativeId` selects the owning
  * infra device (switch/button/sensor); `mac` selects the client (presence).
@@ -138,6 +143,11 @@ export const unifiFeatureSchema = z.object({
   metric: UnifiSensorMetricSchema.optional(),
   /** Client MAC — set for `kind: 'presence'`. */
   mac: z.string().optional(),
+  /** `kind: 'port'`: whether the `switch` cap (PoE on/off) is offered. */
+  switchable: z.boolean().optional(),
+  /** `kind: 'port'`: MAC of the last client seen on the port — kept for cross-integration
+   *  linking (a camera restarted through its PoE port, planning#583). */
+  clientMac: z.string().optional(),
   system: z.literal('unifi').optional(),
 })
 
@@ -183,8 +193,8 @@ export function sameConnection(a: UnifiConnectionConfig, b: UnifiConnectionConfi
 
 /**
  * The integration instance form (the `formSchema` of its instances); the integration carries the
- * name. The credentials are `password` fields, keychain secrets; the sign-in section says the
- * API key is the one used.
+ * name. The credentials are `password` fields, keychain secrets; the sign-in section says what
+ * each one does.
  */
 export function buildConnectionFormSchema(): ConfigUISchema {
   return {
@@ -244,7 +254,7 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         title: 'Sign-in',
         titleKey: 'provider-unifi:controller.s_signin.title',
         description:
-          'The API key is used to sign in. Username and password are not used yet: the client signs in with the API key only.',
+          'Either credential is enough. The API key reads the controller; the username and password of a LOCAL account of the console (not a UI.com account, without two-factor sign-in) are needed to switch PoE ports on and off. With both, the API key does everything else.',
         descriptionKey: 'provider-unifi:controller.s_signin.description',
         columns: 2,
         fields: [

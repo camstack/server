@@ -48,6 +48,8 @@ export class UnifiIntegrationManager {
   #clients: Map<string, UnifiClientSnapshot> = new Map()
   #status: UnifiControllerStatus = 'disconnected'
   #pollTimer: ReturnType<typeof setInterval> | null = null
+  /** The last failure of the client's secondary half (the local account), logged on change. */
+  #degraded: string | null = null
   #error: string | null = null
 
   constructor(options: UnifiIntegrationManagerOptions) {
@@ -92,7 +94,11 @@ export class UnifiIntegrationManager {
     if (this.#error !== null) return { state: 'error', label: 'Offline', detail: this.#error }
     switch (this.#status) {
       case 'connected':
-        return { state: 'ok', label: 'Connected', detail: 'Signed in with the API key' }
+        return {
+          state: 'ok',
+          label: 'Connected',
+          detail: 'Signed in with the API key',
+        }
       case 'connecting':
         return { state: 'unknown', label: 'Connecting' }
       case 'error':
@@ -151,6 +157,7 @@ export class UnifiIntegrationManager {
       await client.connect()
       this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
+      this.#noteDegraded(client)
     } catch (err) {
       // The reason stays on the manager (the integration's status word) after the caller stops it.
       this.#status = 'error'
@@ -211,6 +218,7 @@ export class UnifiIntegrationManager {
       this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
       this.#error = null
+      this.#noteDegraded(client)
     } catch (err) {
       this.#error = classifyUnifiError(err).reason
       this.#logger.debug('UnifiIntegrationManager: poll failed', {
@@ -219,6 +227,29 @@ export class UnifiIntegrationManager {
       })
     }
     this.#onPolled(this.#id)
+  }
+
+  /**
+   * Log when the local account of a two-credential client stops (or starts again) answering: the
+   * API key keeps the integration online, so without this line PoE on/off would fail silently.
+   */
+  #noteDegraded(client: UnifiControllerClient): void {
+    const err = client.degradedError()
+    const reason = err === null ? null : classifyUnifiError(err).reason
+    if (reason === this.#degraded) return
+    this.#degraded = reason
+    if (reason === null) {
+      this.#logger.info('UniFi: the local account answers again — PoE on/off available', {
+        tags: { integrationId: this.#id },
+      })
+      return
+    }
+    this.#logger.warn(
+      'UniFi: the local account does not answer — PoE on/off unavailable: ' + reason,
+      {
+        tags: { integrationId: this.#id },
+      },
+    )
   }
 
   #startPollLoop(): void {

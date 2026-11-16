@@ -4,12 +4,11 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   DeviceFeature,
-  DeviceType,
   type IDevice,
 } from '@camstack/types'
 import { unifiInfraSchema } from '../config.js'
 import {
-  capForDescriptor,
+  capsForDescriptor,
   deviceTypeForDescriptor,
   featureLabel,
   featureSuffix,
@@ -20,7 +19,7 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
 
 /**
  * One UniFi infra device (UDM/USX-Max gateway, U6-Pro AP, USW Lite-8-PoE /
- * Flex-Mini switch, …) as a CamStack {@link DeviceType.Container} (USER
+ * Flex-Mini switch, …) as the device type its adoption stamped — a Container until #585 (USER
  * DIRECTIVE: each infra device is a Container that EXPOSES its features). A
  * top-level SIBLING of the controller's Gateway; its integration owns the connection. Owns no
  * caps itself — it declares `getAccessoryChildren()` so the kernel auto-spawns
@@ -29,8 +28,8 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
  * `applyDerivedSpec`. Mirrors `EcowittContainerDevice`.
  *
  * The fan-out per infra device:
- *   - per-PoE-port PoE Switch children + power-cycle Button children,
- *   - a device LED Switch child + a restart Button child,
+ *   - one PoE port device per PoE-capable port (switch / power-meter / reboot / network-link),
+ *   - a restart Button child (no LED switch),
  *   - cpu_utilization / cpu_temperature / clients / state / uptime Sensor children.
  */
 export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
@@ -41,7 +40,8 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
 
   constructor(ctx: DeviceContext) {
     const cfg = unifiInfraSchema.parse(ctx.persistedConfig ?? {})
-    super(ctx, unifiInfraSchema, { type: DeviceType.Container })
+    // The type the adoption stamped (`unifiDeviceTarget`), never a second decision here.
+    super(ctx, unifiInfraSchema, { type: ctx.deviceMeta.type })
     this.integrationId = cfg.integrationId
     this.infraNativeId = cfg.infraNativeId
     registerUnifiAdminLink(ctx, this.id, { integrationId: this.integrationId })
@@ -52,6 +52,13 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     })
   }
 
+  /** The client on one of this device's ports in the live snapshot, or null. */
+  private portClientName(portIdx: number | undefined): string | null {
+    if (portIdx === undefined) return null
+    const infra = unifiControllers.getInfra(this.integrationId, this.infraNativeId)
+    return infra?.ports.find((p) => p.idx === portIdx)?.clientName ?? null
+  }
+
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     // Read the LIVE config so an additive reconcile (re-persisted `features[]`
     // via applyDerivedSpec) spawns new children + removes orphaned ones.
@@ -59,7 +66,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
       const role = roleForDescriptor(descriptor)
       const meta: AccessoryChildSpec['meta'] = {
         type: deviceTypeForDescriptor(descriptor),
-        name: featureLabel(descriptor),
+        name: featureLabel(descriptor, this.portClientName(descriptor.portIdx)),
         linkDeviceId: this.id,
         integrationId: this.integrationId,
         ...(role !== undefined ? { role } : {}),
@@ -68,7 +75,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
         kind: descriptor.kind,
         integrationId: this.integrationId,
         infraNativeId: this.infraNativeId,
-        capabilities: [capForDescriptor(descriptor)],
+        capabilities: [...capsForDescriptor(descriptor)],
         system: 'unifi',
         ...(descriptor.switchFeature !== undefined
           ? { switchFeature: descriptor.switchFeature }
@@ -76,6 +83,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
         ...(descriptor.buttonAction !== undefined ? { buttonAction: descriptor.buttonAction } : {}),
         ...(descriptor.portIdx !== undefined ? { portIdx: descriptor.portIdx } : {}),
         ...(descriptor.metric !== undefined ? { metric: descriptor.metric } : {}),
+        ...(descriptor.switchable !== undefined ? { switchable: descriptor.switchable } : {}),
       }
       return {
         stableIdSuffix: featureSuffix(descriptor),

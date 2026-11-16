@@ -40,6 +40,7 @@ import { UNIFI_GATEWAY_ID } from '../unifi-discovery.js'
 import { reconcileInfraFeatures } from '../unifi-feature-reconcile.js'
 import { setIntegrationDevicesOnline } from '../unifi-integration-offline.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
+import { infraSnapshot, port } from './unifi-fixtures.js'
 
 const INT = 'int-1'
 
@@ -52,19 +53,18 @@ const quiet: IScopedLogger = {
   withTags: () => quiet,
 }
 
-const SWITCH: UnifiInfraSnapshot = {
+const SWITCH: UnifiInfraSnapshot = infraSnapshot({
   id: 'sw1',
   name: 'marker-switch',
   model: 'USW-Lite-8-PoE',
+  kind: 'switch',
   cpuPercent: 5,
   cpuTempC: 40,
   clients: 3,
-  state: 'online',
   uptimeSec: 100,
-  ports: [{ idx: 1, poeOn: true, poeCapable: true }],
+  ports: [port({ idx: 1 })],
   ledOn: true,
-  online: true,
-}
+})
 const PHONE: UnifiClientSnapshot = {
   mac: 'aa:bb:cc:dd:ee:ff',
   hostname: 'marker-phone',
@@ -85,10 +85,18 @@ function fakeClient(infra: readonly UnifiInfraSnapshot[]): UnifiControllerClient
     restartDevice: async () => undefined,
     powerCyclePort: async () => undefined,
     setLed: async () => undefined,
+    degradedError: () => null,
   }
 }
 
 afterEach(() => unifiControllers.clear())
+
+interface SwitchProvider {
+  setState(input: { deviceId: number; on: boolean }): Promise<void>
+}
+function isSwitchProvider(value: unknown): value is SwitchProvider {
+  return typeof value === 'object' && value !== null && 'setState' in value
+}
 
 /** Exposes the protected surface a spec needs; adds nothing. */
 class InspectableAddon extends UnifiProviderAddon {
@@ -105,9 +113,9 @@ interface Created {
   readonly meta: InitialDeviceMeta | undefined
 }
 
-async function harness() {
+async function harness(infra: readonly UnifiInfraSnapshot[] = [SWITCH]) {
   const registry = new UnifiClientRegistry(quiet, {
-    makeClient: () => fakeClient([SWITCH]),
+    makeClient: () => fakeClient(infra),
     onConnected: () => undefined,
     onDisconnected: () => undefined,
     onPolled: () => undefined,
@@ -235,7 +243,7 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     expect(h.created.every((c) => c.config['integrationId'] === INT)).toBe(true)
     expect(out.adopted).toHaveLength(3)
     // The marked switch reaches its Container with features derived from the live snapshot.
-    expect(JSON.stringify(h.created[1]?.config['features'])).toContain('poe')
+    expect(JSON.stringify(h.created[1]?.config['features'])).toContain('"kind":"port"')
     expect(h.created[1]?.config['name']).toBe('marker-switch')
     expect(h.created[2]?.config['name']).toBe('marker-phone')
   })
@@ -253,7 +261,7 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     expect(h.created).toHaveLength(2)
   })
 
-  it('lists the Gateway first, then the infra and clients, all flat', async () => {
+  it('lists the Gateway first, then the infra and clients, all top-level', async () => {
     const h = await harness()
     const page = await h.provider.listCandidates({
       integrationId: INT,
@@ -265,7 +273,12 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
       ['infra:sw1', DeviceType.Container],
       [`client:${PHONE.mac}`, DeviceType.Presence],
     ])
-    expect(page.candidates.every((c) => c.children === undefined)).toBe(true)
+    // Only the switch nests something: its PoE port, proposed as a port device under it.
+    expect(page.candidates.map((c) => c.children?.map((p) => p.childNativeId))).toEqual([
+      undefined,
+      ['infra:sw1:port-1'],
+      undefined,
+    ])
   })
 })
 
@@ -360,11 +373,69 @@ describe('UniFi integration: devices follow the integration', () => {
       logger: quiet,
     }
     expect(await reconcileInfraFeatures(input)).toBe(1)
-    expect(JSON.stringify(apply.mock.calls[0])).toContain('poe')
+    expect(JSON.stringify(apply.mock.calls[0])).toContain('"kind":"port"')
     // A different integration is untouched.
     apply.mockClear()
     expect(await reconcileInfraFeatures({ ...input, integrationId: 'int-2' })).toBe(0)
     expect(apply).not.toHaveBeenCalled()
+  })
+
+  it('a port table that did not answer never prunes the adopted PoE port children', async () => {
+    // The device detail read failed: the snapshot carries no ports (planning#587).
+    await harness([{ ...SWITCH, ports: [] }])
+    const apply = vi.fn(async () => undefined)
+    const persisted = [
+      { kind: 'button', buttonAction: 'restart' },
+      { kind: 'port', portIdx: 1, switchable: false },
+      { kind: 'sensor', metric: 'cpu_utilization' },
+      { kind: 'sensor', metric: 'cpu_temperature' },
+      { kind: 'sensor', metric: 'clients' },
+      { kind: 'sensor', metric: 'state' },
+      { kind: 'sensor', metric: 'uptime' },
+    ]
+    const devices = {
+      loadConfig: async () => ({
+        system: UNIFI_SYSTEM,
+        integrationId: INT,
+        infraNativeId: 'sw1',
+        features: persisted,
+      }),
+      applyDerivedSpec: apply,
+    }
+    const reg = { getAllForAddon: () => [{ id: 5, parentDeviceId: null }] }
+    const input = {
+      reg,
+      devices,
+      addonId: 'provider-unifi',
+      integrationId: INT,
+      logger: quiet,
+    }
+    expect(await reconcileInfraFeatures(input)).toBe(0)
+    expect(apply).not.toHaveBeenCalled()
+  })
+
+  it('still retires the LED switch the client can never serve', async () => {
+    await harness()
+    const apply = vi.fn(async (_id: number, _spec: { config: { features: unknown } }) => undefined)
+    const devices = {
+      loadConfig: async () => ({
+        system: UNIFI_SYSTEM,
+        integrationId: INT,
+        infraNativeId: 'sw1',
+        features: [{ kind: 'switch', switchFeature: 'led' }],
+      }),
+      applyDerivedSpec: apply,
+    }
+    const reg = { getAllForAddon: () => [{ id: 5, parentDeviceId: null }] }
+    const input = {
+      reg,
+      devices,
+      addonId: 'provider-unifi',
+      integrationId: INT,
+      logger: quiet,
+    }
+    expect(await reconcileInfraFeatures(input)).toBe(1)
+    expect(JSON.stringify(apply.mock.calls[0]?.[1])).not.toContain('led')
   })
 })
 
@@ -445,5 +516,48 @@ describe('UniFi devices on a stub device context', () => {
     expect(specs[0]?.meta.linkDeviceId).toBe(infra.id)
     expect(specs[0]?.meta.integrationId).toBe(INT)
     expect(specs[0]?.config['integrationId']).toBe(INT)
+  })
+
+  function portRig(switchable: boolean) {
+    return rig(
+      {
+        kind: 'port',
+        integrationId: INT,
+        infraNativeId: 'sw1',
+        portIdx: 1,
+        switchable,
+        system: UNIFI_SYSTEM,
+      },
+      DeviceType.Switch,
+    )
+  }
+
+  it('a PoE port without a local account offers no switch — only its power and link', async () => {
+    await harness()
+    const { ctx, providers } = portRig(false)
+    await new UnifiFeatureDevice(ctx).onActivate()
+    const caps = [...providers.keys()]
+    expect(caps).toEqual(expect.arrayContaining(['power-meter', 'network-link']))
+    expect(caps).not.toContain('switch')
+    expect(caps).not.toContain('reboot')
+    expect(caps).not.toContain('button')
+  })
+
+  it('a switchable PoE port switches PoE through the client, and offers no power-cycle', async () => {
+    await harness([{ ...SWITCH, poeSwitchable: true }])
+    const client = unifiControllers.getManager(INT)?.client
+    if (client === null || client === undefined) throw new Error('client should run')
+    const setPortPoe = vi.spyOn(client, 'setPortPoe')
+    const { ctx, providers } = portRig(true)
+    await new UnifiFeatureDevice(ctx).onActivate()
+    const toggle = providers.get('switch')
+    if (!isSwitchProvider(toggle)) throw new Error('switch cap missing')
+    expect(providers.has('reboot')).toBe(false)
+    await toggle.setState({ deviceId: 7, on: false })
+    await toggle.setState({ deviceId: 7, on: true })
+    expect(setPortPoe.mock.calls).toEqual([
+      ['sw1', 1, false],
+      ['sw1', 1, true],
+    ])
   })
 })

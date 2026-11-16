@@ -3,7 +3,7 @@
  * `classifyUnifiError` (unifi-connection-test.ts) turns them into a test verdict and a reason.
  */
 
-/** The console refused the API key (HTTP 401 / 403). */
+/** The console refused the credential: the API key, or the username + password (HTTP 401 / 403). */
 export class UnifiAuthError extends Error {
   constructor(message: string) {
     super(message)
@@ -11,13 +11,23 @@ export class UnifiAuthError extends Error {
   }
 }
 
-/** No API key to sign in with. A username + password alone is not used yet (planning#581). */
+/** No credential to sign in with: neither an API key nor a username + password. */
 export class UnifiNoCredentialError extends Error {
   constructor() {
     super(
-      'unifi: no API key — enter the API key of the UniFi console (username and password sign-in is not supported yet)',
+      'unifi: no credential — enter an API key, or the username and password of a local account',
     )
     this.name = 'UnifiNoCredentialError'
+  }
+}
+
+/** The account asks for a second factor (or is a UI.com cloud account); CamStack cannot answer one. */
+export class UnifiMfaRequiredError extends Error {
+  constructor() {
+    super(
+      'unifi: this account requires two-factor sign-in — use a LOCAL account of the console (not a UI.com account) without two-factor sign-in',
+    )
+    this.name = 'UnifiMfaRequiredError'
   }
 }
 

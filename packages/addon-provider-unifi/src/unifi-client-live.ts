@@ -7,6 +7,7 @@ import type {
   UnifiInfraSnapshot,
   UnifiInfraState,
 } from './unifi-client-contract.js'
+import { classifyUnifiInfra } from './unifi-device-kind.js'
 import {
   UnifiApiError,
   UnifiAuthError,
@@ -56,6 +57,7 @@ const siteSchema = z.object({
 const deviceSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
+  macAddress: z.string().optional(),
   model: z.string().optional(),
   state: z.string().optional(),
   features: z.array(z.string()).optional(),
@@ -63,6 +65,8 @@ const deviceSchema = z.object({
 
 const portSchema = z.object({
   idx: z.number(),
+  state: z.string().optional(),
+  speedMbps: z.number().nullish(),
   poe: z.object({ state: z.string().optional() }).nullish(),
 })
 
@@ -200,8 +204,12 @@ export class UnifiLiveClient implements UnifiControllerClient {
   async setPortPoe(): Promise<void> {
     throw new UnifiUnsupportedError(
       'poe-toggle',
-      'unifi: the Integration API cannot switch PoE on or off; use the port power-cycle button',
+      'unifi: the API key cannot switch PoE on or off — add the username and password of a local account',
     )
+  }
+
+  degradedError(): Error | null {
+    return null
   }
 
   async setLed(): Promise<void> {
@@ -247,15 +255,31 @@ export class UnifiLiveClient implements UnifiControllerClient {
           deviceDetailSchema.parse(v),
         )
       : null
-    const ports: UnifiInfraPort[] = (detail?.interfaces?.ports ?? []).map((p) => ({
-      idx: p.idx,
-      poeCapable: p.poe !== null && p.poe !== undefined,
-      poeOn: p.poe?.state === 'UP',
-    }))
+    const ports: UnifiInfraPort[] = (detail?.interfaces?.ports ?? []).map((p) => {
+      const linkUp = p.state === undefined ? null : p.state === 'UP'
+      return {
+        idx: p.idx,
+        poeCapable: p.poe !== null && p.poe !== undefined,
+        poeOn: p.poe?.state === 'UP',
+        linkUp,
+        speedMbps: linkUp === true && (p.speedMbps ?? 0) > 0 ? (p.speedMbps ?? null) : null,
+        // The Integration API reports neither PoE power nor the client on a port.
+        poePowerW: null,
+        poeVoltageV: null,
+        poeCurrentA: null,
+        clientMac: null,
+        clientName: null,
+      }
+    })
     return {
       id: device.id,
       name: device.name ?? device.id,
+      mac: device.macAddress === undefined ? null : device.macAddress.toLowerCase(),
       model: device.model ?? '',
+      kind: classifyUnifiInfra({
+        model: device.model ?? '',
+        features: device.features ?? [],
+      }),
       cpuPercent: stats?.cpuUtilizationPct ?? null,
       // The Integration API reports no temperature.
       cpuTempC: null,
@@ -266,6 +290,8 @@ export class UnifiLiveClient implements UnifiControllerClient {
       // The Integration API reports no LED state (and cannot set it).
       ledOn: false,
       online: state === 'online',
+      // The Integration API cannot switch PoE; a local account can (UnifiDualClient).
+      poeSwitchable: false,
     }
   }
 
