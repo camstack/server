@@ -41,7 +41,7 @@ import {
 } from './server-shell.js'
 import { silenceAnalysisFor } from './silence-analysis.js'
 import { installTerminalCameraRelay } from './terminal-camera-device.js'
-import { TerminalCameraHost } from './terminal-camera-host.js'
+import { gatedTerminalCameraPass, TerminalCameraHost } from './terminal-camera-host.js'
 import { TerminalCameraRelay } from './terminal-camera-relay.js'
 import { createTerminalDataPlaneHandler } from './terminal-data-plane.js'
 import {
@@ -445,13 +445,19 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
 
   private async applyTerminalCameraReconciliation(): Promise<void> {
     if (!this.cameraRelay) return
-    await this.refreshInstanceRows()
-    if (!this.instancesTrusted) {
-      this.ctx.logger.warn(
-        'terminal: the instance records are not readable or their migration has not landed - the hosted cameras are left as they are',
-      )
-      return
-    }
+    await gatedTerminalCameraPass({
+      logger: this.ctx.logger,
+      refreshInstances: async () => {
+        await this.refreshInstanceRows()
+        return this.instancesTrusted
+      },
+      run: () => this.runTrustedCameraPass(),
+    })
+  }
+
+  /** One camera pass over a trusted instance list (`gatedTerminalCameraPass`). */
+  private async runTrustedCameraPass(): Promise<void> {
+    if (!this.cameraRelay) return
     const topology = await this.ctx.api.nodes.topology.query()
     if (topology.length === 0) {
       throw new Error('cluster topology returned no nodes; refusing to withdraw declared cameras')

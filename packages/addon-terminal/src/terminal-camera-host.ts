@@ -85,6 +85,33 @@ function sameConfig(a: TerminalCameraConfig, b: TerminalCameraConfig): boolean {
   )
 }
 
+/** The steps of one camera pass: re-read the instances, then run the pass on a trusted list. */
+export interface TerminalCameraPassSteps {
+  readonly logger: IScopedLogger
+  /** Re-read the Terminal instances; `true` when the list can be trusted. */
+  readonly refreshInstances: () => Promise<boolean>
+  readonly run: () => Promise<void>
+}
+
+export type TerminalCameraPassOutcome = 'ran' | 'untrusted'
+
+/**
+ * A pass runs only on an instance list that answered (D49): an unreadable list,
+ * or one whose migration has not landed, leaves the hosted cameras as they are.
+ */
+export async function gatedTerminalCameraPass(
+  steps: TerminalCameraPassSteps,
+): Promise<TerminalCameraPassOutcome> {
+  if (!(await steps.refreshInstances())) {
+    steps.logger.warn(
+      'terminal: the instance records are not readable or their migration has not landed - the hosted cameras are left as they are',
+    )
+    return 'untrusted'
+  }
+  await steps.run()
+  return 'ran'
+}
+
 export class TerminalCameraHost {
   private hosted: ReadonlyMap<string, HostedTerminalCamera> = new Map()
   private readonly gate = new HostedWithdrawalGate()

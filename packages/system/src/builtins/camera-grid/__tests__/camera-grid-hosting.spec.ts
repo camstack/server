@@ -136,14 +136,22 @@ function world(opts: {
   readonly legacyIntegration?: boolean
   /** The per-device store read throws on its first call only. */
   readonly storeReadFailsOnce?: boolean
+  /** From this call on (0-based), the blocks read throws. */
+  readonly compositionsThrowFrom?: number
+  /** From this call on (0-based), the composer rows read throws. */
+  readonly composerRowsThrowFrom?: number
 }): World {
   const providers: World['providers'] = new Map()
   const unregistered: string[] = []
   let call = 0
   let storeReads = 0
+  let composerReads = 0
   const listCompositions = vi.fn(async () => {
     const read = opts.reads[Math.min(call, opts.reads.length - 1)]
     call += 1
+    if (opts.compositionsThrowFrom !== undefined && call > opts.compositionsThrowFrom) {
+      throw new Error('core-blocks unreachable')
+    }
     return read
   })
   const updateComposition = vi.fn(async (input: { blockId: string }) => ({
@@ -197,6 +205,11 @@ function world(opts: {
                 addonId: 'provider-rtsp',
                 stableId: `cam-${id}`,
               }))
+            }
+            if (input.addonId === 'composer') {
+              composerReads += 1
+              const from = opts.composerRowsThrowFrom
+              if (from !== undefined && composerReads > from) throw new Error('device-manager down')
             }
             return rowsByAddon[input.addonId ?? ''] ?? []
           }),
@@ -285,6 +298,38 @@ describe('CameraGridAddon — grids are core blocks it hosts (planning#580)', ()
     await pass()
     expect(w.listCompositions.mock.calls.length).toBeGreaterThanOrEqual(4)
     expect(w.unregistered).toEqual([])
+  })
+
+  it('a blocks read that throws withdraws nothing, however many passes', async () => {
+    const w = world({ reads: [loaded(gridBlock('g1', SPEC))], compositionsThrowFrom: 1 })
+    await boot(w)
+    await pass()
+    await pass()
+    await pass()
+    expect(w.listCompositions.mock.calls.length).toBeGreaterThanOrEqual(4)
+    expect(w.loadContext).toHaveBeenCalledTimes(1)
+    expect(w.unregistered).toEqual([])
+  })
+
+  it('a composer rows read that throws withdraws nothing, however many passes', async () => {
+    const w = world({ reads: [loaded(gridBlock('g1', SPEC))], composerRowsThrowFrom: 1 })
+    await boot(w)
+    await pass()
+    await pass()
+    await pass()
+    expect(w.loadContext).toHaveBeenCalledTimes(1)
+    expect(w.unregistered).toEqual([])
+  })
+
+  it('a block switched off is kept one pass, withdrawn on the second', async () => {
+    const off = { ...gridBlock('g1', SPEC), enabled: false }
+    const w = world({ reads: [loaded(gridBlock('g1', SPEC)), loaded(off)] })
+    await boot(w)
+    await pass()
+    expect(w.unregistered).toEqual([])
+    await pass()
+    expect(w.unregistered).toContain('stream-catalog')
+    expect(w.unregistered).toContain('camera-grid-layout')
   })
 
   it('one trusted read without the block keeps it; a second withdraws it', async () => {

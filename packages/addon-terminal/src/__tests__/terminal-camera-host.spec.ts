@@ -9,6 +9,7 @@
  * - a block whose terminal is gone hosts nothing; a disabled terminal's camera
  *   is offline.
  * - deleting a terminal deletes its camera block.
+ * - an instance list that is not trusted runs no pass: nothing is withdrawn.
  */
 import {
   type CapabilityDefinition,
@@ -23,7 +24,7 @@ import {
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { TerminalCameraDevice } from '../terminal-camera-device.js'
-import { TerminalCameraHost } from '../terminal-camera-host.js'
+import { gatedTerminalCameraPass, TerminalCameraHost } from '../terminal-camera-host.js'
 import type { TerminalInstance } from '../terminal-instances.js'
 
 const TERMINAL_ID = '3f1c2a4e-6b7d-4e8f-9a0b-1c2d3e4f5a6b'
@@ -94,6 +95,8 @@ interface World {
 function world(opts: {
   readonly reads: readonly CompositionListRead[]
   readonly silenced?: boolean
+  /** From this call on (0-based), the blocks read throws. */
+  readonly readsThrowFrom?: number
 }): World {
   let call = 0
   const unregistered: string[] = []
@@ -143,6 +146,9 @@ function world(opts: {
     readBlocks: async () => {
       const read = opts.reads[Math.min(call, opts.reads.length - 1)]
       call += 1
+      if (opts.readsThrowFrom !== undefined && call > opts.readsThrowFrom) {
+        throw new Error('core-blocks unreachable')
+      }
       if (read === undefined) throw new Error('no read')
       return read
     },
@@ -191,6 +197,15 @@ describe('TerminalCameraHost — Terminal cameras are core blocks it hosts (plan
     expect(w.host.deviceIdFor(TERMINAL_ID)).toBe(4590)
   })
 
+  it('a blocks read that throws withdraws nothing, however many passes', async () => {
+    const w = world({ reads: [loaded(terminalBlock('t1'))], readsThrowFrom: 1 })
+    for (let pass = 0; pass < 4; pass += 1) {
+      await w.host.reconcile({ terminals: [terminal()], isLive: () => true })
+    }
+    expect(w.unregistered).toEqual([])
+    expect(w.host.deviceIdFor(TERMINAL_ID)).toBe(4590)
+  })
+
   it('one trusted read without the block keeps it; a second withdraws it', async () => {
     const w = world({ reads: [loaded(terminalBlock('t1')), loaded()] })
     await w.host.reconcile({ terminals: [terminal()], isLive: () => true })
@@ -228,5 +243,32 @@ describe('TerminalCameraHost — Terminal cameras are core blocks it hosts (plan
     await w.host.deleteCamerasOf(TERMINAL_ID)
     expect(w.deleteBlock).toHaveBeenCalledTimes(1)
     expect(w.deleteBlock).toHaveBeenCalledWith('t1')
+  })
+
+  it('an instance list that is not trusted runs no pass: the hosted camera stays', async () => {
+    const w = world({ reads: [loaded(terminalBlock('t1'))] })
+    await w.host.reconcile({ terminals: [terminal()], isLive: () => true })
+    // The list a failed read leaves behind: nothing the host could still serve.
+    for (let pass = 0; pass < 3; pass += 1) {
+      const outcome = await gatedTerminalCameraPass({
+        logger: logger(),
+        refreshInstances: async () => false,
+        run: () => w.host.reconcile({ terminals: [], isLive: () => true }),
+      })
+      expect(outcome).toBe('untrusted')
+    }
+    expect(w.unregistered).toEqual([])
+    expect(w.host.deviceIdFor(TERMINAL_ID)).toBe(4590)
+  })
+
+  it('a trusted instance list runs the pass', async () => {
+    const run = vi.fn(async () => undefined)
+    const outcome = await gatedTerminalCameraPass({
+      logger: logger(),
+      refreshInstances: async () => true,
+      run,
+    })
+    expect(outcome).toBe('ran')
+    expect(run).toHaveBeenCalledTimes(1)
   })
 })
