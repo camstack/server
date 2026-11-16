@@ -14,7 +14,7 @@ export const unraidGatewaySchema = z.object({
 /**
  * The Unraid server itself, as a {@link DeviceType.Gateway}. Its connection lives on the
  * INTEGRATION; this device is the server's presence in the device list, and carries the one
- * action the addon offers on it: `device-admin-link`, the WebGUI. The instance Container
+ * action the addon offers on it: `device-admin-link`, the WebGUI. The server device
  * is NOT a child of it: both are top-level siblings. Online follows the integration's
  * snapshot.
  */

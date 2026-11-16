@@ -1,5 +1,5 @@
 /**
- * A new Unraid integration produces the server's Gateway and its instance Container as
+ * A new Unraid integration produces the server's Gateway and the server workload host as
  * SIBLINGS, with the connection (and the API key, a keychain secret) on the integration.
  * The device context is the one boundary a spec fakes; everything else is the real code.
  */

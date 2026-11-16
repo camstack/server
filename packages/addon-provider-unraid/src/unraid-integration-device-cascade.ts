@@ -2,7 +2,7 @@ import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/typ
 import { UNRAID_SYSTEM } from './config.js'
 
 /**
- * Remove every top-level device (Gateway and instance Container) of an integration that
+ * Remove every top-level device (Gateway, server device, containers and VMs) of an integration that
  * was deleted or disabled; the kernel takes the entity children with it. Best-effort per
  * device; returns the count removed.
  */
