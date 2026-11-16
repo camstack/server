@@ -47,7 +47,9 @@ describe('the Addons card dialog does not claim a node it does not have', () => 
   })
 
   it('renders the cluster population, which is the only one it can address', () => {
-    const usage = panelUsage(code(source))
+    // The dialog's settings panel lives in AddonClusterSettings since #578.
+    expect(code(source)).toContain('<AddonClusterSettings')
+    const usage = panelUsage(code(read('components/addons/AddonClusterSettings.tsx')))
     expect(usage).toContain('nodeId={null}')
     expect(usage).toContain('fieldScope="cluster"')
   })
