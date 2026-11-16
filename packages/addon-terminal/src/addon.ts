@@ -23,6 +23,7 @@ import {
   nodePin,
   type InstanceChange,
   RecordIntegrationInstances,
+  legacySweepDone,
   sweepLegacyEngineRows,
   terminalSessionCapability,
 } from '@camstack/types'
@@ -608,7 +609,7 @@ export class TerminalAddon extends BaseAddon<TerminalAddonConfig> {
           },
         )
       }
-      if (sweep.kind === 'none' || sweep.drained) this.legacySwept = true
+      if (legacySweepDone(sweep)) this.legacySwept = true
     } catch (error: unknown) {
       this.ctx.logger.warn('terminal: the legacy Terminal cameras could not be swept - retried', {
         meta: { error: errMsg(error) },

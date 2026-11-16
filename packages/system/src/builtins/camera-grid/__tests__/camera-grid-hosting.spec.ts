@@ -84,6 +84,7 @@ interface World {
   readonly getBindings: ReturnType<typeof vi.fn>
   readonly writeDeviceStore: ReturnType<typeof vi.fn>
   readonly remove: ReturnType<typeof vi.fn>
+  readonly getByAddonId: ReturnType<typeof vi.fn>
 }
 
 /** The members `BaseDevice` reaches at construction; a structural double narrowed at this boundary. */
@@ -155,6 +156,9 @@ function world(opts: {
   const getBindings = vi.fn(async () => ({ entries: [] }))
   const writeDeviceStore = vi.fn(async () => undefined)
   const remove = vi.fn(async () => undefined)
+  const getByAddonId = vi.fn(async () =>
+    opts.legacyIntegration === true ? { id: 'int_grid', info: { fixed: true } } : null,
+  )
   const rowsByAddon: Record<string, unknown[]> = {
     composer: [{ id: 4581, stableId: 'composed-g1', name: 'Bimbi camera' }],
     'provider-rtsp': [{ id: 611, stableId: 'cam-a', addonId: 'provider-rtsp' }],
@@ -206,11 +210,7 @@ function world(opts: {
         setWrapperActive: { mutate: vi.fn(async () => undefined) },
       },
       integrations: {
-        getByAddonId: {
-          query: vi.fn(async () =>
-            opts.legacyIntegration === true ? { id: 'int_grid', info: { fixed: true } } : null,
-          ),
-        },
+        getByAddonId: { query: getByAddonId },
         update: { mutate: vi.fn(async () => undefined) },
       },
       integrationInstances: { createInstance: { mutate: vi.fn() } },
@@ -227,6 +227,7 @@ function world(opts: {
     getBindings,
     writeDeviceStore,
     remove,
+    getByAddonId,
   }
 }
 
@@ -326,6 +327,14 @@ describe('CameraGridAddon — grids are core blocks it hosts (planning#580)', ()
         { source: { addonId: 'provider-rtsp', stableId: 'cam-612' }, region: RECT, cell: RECT },
       ],
     })
+  })
+
+  it('an integration lookup that answers null does not end the sweep: the next pass asks again', async () => {
+    const w = world({ reads: [loaded()] })
+    await boot(w)
+    const asked = w.getByAddonId.mock.calls.length
+    await pass()
+    expect(w.getByAddonId.mock.calls.length).toBeGreaterThan(asked)
   })
 
   it('removes a legacy camera-grid row through the declared sweep, unconditionally', async () => {

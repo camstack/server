@@ -58,6 +58,7 @@ import {
   errMsg,
   memoizePinnedFfmpeg,
   selectEngineHostedBlocks,
+  legacySweepDone,
   sweepLegacyEngineRows,
   type DetectionResultPayload,
   type MotionOnMotionChangedPayload,
@@ -550,7 +551,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
           meta: { removed: [...sweep.removed] },
         })
       }
-      if (sweep.kind === 'none' || sweep.drained) this.legacySwept = true
+      if (legacySweepDone(sweep)) this.legacySwept = true
     } catch (error: unknown) {
       this.ctx.logger.warn('camera grid: the legacy grid cameras could not be swept - retried', {
         meta: { error: errMsg(error) },

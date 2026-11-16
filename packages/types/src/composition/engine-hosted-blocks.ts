@@ -209,6 +209,15 @@ export type LegacyEngineSweep =
   | { readonly kind: 'swept'; readonly removed: readonly number[]; readonly drained: boolean }
 
 /**
+ * Whether an engine may stop sweeping: only once a pass found no old row left.
+ * `none` is not done — a registry that has not answered the integration yet
+ * reads as null too, and the sweep is one indexed read per pass.
+ */
+export function legacySweepDone(sweep: LegacyEngineSweep): boolean {
+  return sweep.kind === 'swept' && sweep.drained
+}
+
+/**
  * The legacy rows, one bounded batch at a time: only the rows under the old
  * integration, ordered by id, at most `DECLARED_DEVICE_SWEEP_LIMIT` — a large
  * leftover set drains over passes instead of being refused whole by the

@@ -12,6 +12,7 @@ import type { Composition } from '../composition.js'
 import {
   HostedWithdrawalGate,
   hostEngineDevice,
+  legacySweepDone,
   selectEngineHostedBlocks,
   sweepLegacyEngineRows,
 } from '../engine-hosted-blocks.js'
@@ -173,5 +174,11 @@ describe('sweepLegacyEngineRows', () => {
     )
     expect(remove.mock.calls.map(([id]) => id)).toEqual([11, 12])
     expect(result).toEqual({ kind: 'swept', removed: [11, 12], drained: false })
+  })
+
+  it('is done only once a pass found no old row left; no integration is not done', () => {
+    expect(legacySweepDone({ kind: 'none' })).toBe(false)
+    expect(legacySweepDone({ kind: 'swept', removed: [11], drained: false })).toBe(false)
+    expect(legacySweepDone({ kind: 'swept', removed: [], drained: true })).toBe(true)
   })
 })
