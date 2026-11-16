@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 46 caps with series (124 series), 39 caps answered `'none'`.
+ * 47 caps with series (129 series), 39 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -231,6 +231,13 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'rainMonthly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
     'rainYearly': { kind: 'gauge', unit: 'mm', deadband: 0.1 },
   },
+  'workload': {
+    'state': { kind: 'enum', values: ['running', 'paused', 'stopped', 'starting', 'stopping', 'crashed'] },
+    'resources.cpuPercent': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'CPU' },
+    'resources.memoryUsedBytes': { kind: 'gauge', unit: 'bytes', displayName: 'Memory used' },
+    'resources.netRxKbps': { group: 'network', kind: 'gauge', unit: 'kbps', displayName: 'Network received' },
+    'resources.netTxKbps': { group: 'network', kind: 'gauge', unit: 'kbps', displayName: 'Network sent' },
+  },
 }
 
 /**
@@ -263,7 +270,7 @@ export const HISTORY_ITEM_CATALOG: Readonly<Record<string, CapabilityHistoryItem
 
 /**
  * The series a device card trends, per cap (`history.primary` + `history.priority`):
- * 6 caps. The card shows the primary of the enabled cap with the highest priority.
+ * 7 caps. The card shows the primary of the enabled cap with the highest priority.
  */
 export const HISTORY_PRIMARY: Readonly<Record<string, CapabilityHistoryPrimary>> = {
   'climate-control': { field: 'currentTemp', priority: 70 },
@@ -272,6 +279,7 @@ export const HISTORY_PRIMARY: Readonly<Record<string, CapabilityHistoryPrimary>>
   'power-meter': { field: 'power', priority: 80 },
   'temperature-sensor': { field: 'temperature', priority: 100 },
   'weather-station': { field: 'temperature', priority: 60 },
+  'workload': { field: 'resources.cpuPercent', priority: 40 },
 }
 
 /** Caps that declared `history: 'none'`, sorted. */

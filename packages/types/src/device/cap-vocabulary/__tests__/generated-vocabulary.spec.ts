@@ -71,6 +71,7 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   'error',
   'tags',
   'siren',
+  'workload',
 ]
 
 function actionsOf(entry: unknown): readonly JsonRecord[] {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Workload devices get their type and role names and icons
+
 ### Changed
 
 - RecordingTimeline reports its window and takes caller density and extra lanes; new ClipSourceLanes draws one clip lane per source a camera lists.

@@ -125,6 +125,9 @@ export const HERO_CAP_COVERAGE: Readonly<Record<string, HeroCapCoverage>> = {
   weather: 'contributes',
   'weather-station': 'contributes',
   'webrtc-session': { none: NOT_A_HERO_FACT },
+  workload: {
+    none: 'drawn by the workload device card (#585, a UI follow-up); its on / off is the switch its power hint registers',
+  },
   'zone-analytics': { none: NOT_A_HERO_FACT },
   'zone-rules': { none: NOT_A_HERO_FACT },
   zones: { none: NOT_A_HERO_FACT },

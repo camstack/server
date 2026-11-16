@@ -26,6 +26,7 @@ export const DEVICE_TYPE_ICON = {
   [DeviceType.Climate]: 'thermometer',
   [DeviceType.HeatPump]: 'flame',
   [DeviceType.EnergySystem]: 'solar-panel',
+  [DeviceType.Workload]: 'server',
   [DeviceType.Button]: 'circle-dot',
   [DeviceType.EventEmitter]: 'zap',
   [DeviceType.Update]: 'refresh-cw',
@@ -126,6 +127,11 @@ export const DEVICE_ROLE_ICON = {
   [DeviceRole.EmailNotifier]: 'mail',
   [DeviceRole.GenericNotifier]: 'bell',
   [DeviceRole.IrTransmitter]: 'radio-tower',
+  [DeviceRole.Vm]: 'monitor',
+  [DeviceRole.AppContainer]: 'container',
+  [DeviceRole.Lxc]: 'box',
+  [DeviceRole.App]: 'app-window',
+  [DeviceRole.Host]: 'server',
 } as const satisfies Record<DeviceRole, IconKey>
 
 /** Every icon a device can be drawn with — a subset of the catalog the glyph tables must cover. */

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Notification rules have an optional tags field and a setRuleTags method; tag counts include notification rules
+- New workload device type (roles vm, app-container, lxc, app, host) with one workload capability: state, start/stop/restart/pause/resume/force stop, resources with history, and started/stopped/crashed/recovered events
 
 ### Changed
 

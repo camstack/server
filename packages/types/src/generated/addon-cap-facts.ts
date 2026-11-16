@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 87 caps with 448 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 88 caps with 466 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -230,6 +230,7 @@ export const CAP_NAMES: readonly string[] = Object.freeze([
   "weather",
   "weather-station",
   "webrtc-session",
+  "workload",
   "zone-analytics",
   "zone-rules",
   "zones",
@@ -323,6 +324,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "water-heater": [{"path":"currentTemp","valueType":"number"}, {"path":"targetTemp","valueType":"number"}, {"path":"operationMode","valueType":"string"}, {"path":"away","valueType":"boolean"}, {"path":"minTemp","valueType":"number"}, {"path":"maxTemp","valueType":"number"}, {"path":"lastActiveMode","valueType":"string"}],
   "weather": [{"path":"condition","valueType":"string"}, {"path":"temperature","valueType":"number"}, {"path":"humidity","valueType":"number"}, {"path":"pressure","valueType":"number"}, {"path":"windSpeed","valueType":"number"}, {"path":"windBearing","valueType":"number"}],
   "weather-station": [{"path":"temperature","valueType":"number"}, {"path":"humidity","valueType":"number"}, {"path":"pressure","valueType":"number"}, {"path":"windSpeed","valueType":"number"}, {"path":"windGust","valueType":"number"}, {"path":"windBearing","valueType":"number"}, {"path":"rainRate","valueType":"number"}, {"path":"rainDaily","valueType":"number"}, {"path":"rainEvent","valueType":"number"}, {"path":"uv","valueType":"number"}, {"path":"solarRadiation","valueType":"number"}, {"path":"dewPoint","valueType":"number"}, {"path":"feelsLike","valueType":"number"}, {"path":"vpd","valueType":"number"}, {"path":"windGustMax","valueType":"number"}, {"path":"windBearingAvg","valueType":"number"}, {"path":"rain24h","valueType":"number"}, {"path":"rainWeekly","valueType":"number"}, {"path":"rainMonthly","valueType":"number"}, {"path":"rainYearly","valueType":"number"}],
+  "workload": [{"path":"state","valueType":"enum","enumValues":["running","paused","stopped","starting","stopping","crashed"]}, {"path":"since","valueType":"number"}, {"path":"hostDeviceId","valueType":"number"}, {"path":"image","valueType":"string"}, {"path":"os","valueType":"string"}, {"path":"version","valueType":"string"}, {"path":"autostart","valueType":"boolean"}, {"path":"resources.cpuPercent","valueType":"number"}, {"path":"resources.memoryUsedBytes","valueType":"number"}, {"path":"resources.memoryLimitBytes","valueType":"number"}, {"path":"resources.vcpus","valueType":"number"}, {"path":"resources.diskUsedBytes","valueType":"number"}, {"path":"resources.diskTotalBytes","valueType":"number"}, {"path":"resources.netRxKbps","valueType":"number"}, {"path":"resources.netTxKbps","valueType":"number"}, {"path":"resources.load1","valueType":"number"}, {"path":"resources.temperature","valueType":"number"}, {"path":"updateAvailable","valueType":"boolean"}],
   "zone-analytics": [{"path":"ts","valueType":"number"}, {"path":"frameWidth","valueType":"number"}, {"path":"frameHeight","valueType":"number"}, {"path":"frame.totalObjects","valueType":"number"}, {"path":"frame.standingObjects","valueType":"number"}, {"path":"frame.transientObjects","valueType":"number"}, {"path":"unzoned.totalObjects","valueType":"number"}, {"path":"unzoned.standingObjects","valueType":"number"}, {"path":"unzoned.transientObjects","valueType":"number"}],
 })
 

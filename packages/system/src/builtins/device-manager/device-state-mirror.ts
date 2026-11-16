@@ -35,9 +35,12 @@ import {
   deviceStatusCapability,
   EventCategory,
   runtimeStatePolicyFor,
+  WORKLOAD_TRANSITION_CATEGORY,
+  workloadCapability,
 } from '@camstack/types'
 import type { DeviceManagerSettings } from './device-meta-store.js'
 import { RunningFlipDetector } from './running-flip.js'
+import { WorkloadTransitionDetector } from './workload-transition.js'
 import { shallowEqual } from './device-projection.js'
 import { carryLastActiveMode } from './last-active-mode.js'
 import {
@@ -147,6 +150,7 @@ export class DeviceStateMirror {
 
   /** Edge detector for `running-state` flip events (D933). */
   private readonly runningFlip = new RunningFlipDetector()
+  private readonly workloadTransitions = new WorkloadTransitionDetector()
 
   constructor(
     private readonly ctx: AddonContext,
@@ -451,6 +455,7 @@ export class DeviceStateMirror {
     await this.seeding.get(deviceId)?.catch(() => undefined)
     await this.writer.forget(deviceId)
     this.stateMirror.delete(deviceId)
+    this.workloadTransitions.forget(deviceId)
     this.claims.clearDevice(deviceId)
     this.seeded.delete(deviceId)
     this.rowRead.delete(deviceId)
@@ -827,6 +832,28 @@ export class DeviceStateMirror {
     return out
   }
 
+  /**
+   * The `workload` cap's events (#585): judged from the PUBLIC slice like the
+   * running flip, so a provider only writes its state. The first state seen is
+   * a seed and raises nothing.
+   */
+  private emitWorkloadTransition(deviceId: number, slice: Record<string, unknown>): void {
+    const transition = this.workloadTransitions.note(deviceId, slice)
+    if (transition === null) return
+    this.ctx.eventBus.emit({
+      id: randomUUID(),
+      timestamp: new Date(),
+      source: { type: 'device', id: deviceId },
+      category: WORKLOAD_TRANSITION_CATEGORY[transition.kind],
+      data: {
+        deviceId,
+        state: transition.state,
+        previous: transition.previous,
+        since: transition.since,
+      },
+    })
+  }
+
   /** Remember a restored running bit so the first public merge does not emit a flip. */
   private seedRunningFlip(deviceId: number): void {
     const slice = this.capSlice(deviceId, RUNNING_STATE_CAP)
@@ -858,6 +885,7 @@ export class DeviceStateMirror {
         })
       }
     }
+    if (capName === workloadCapability.name) this.emitWorkloadTransition(deviceId, slice)
     this.ctx.eventBus.emit({
       id: randomUUID(),
       timestamp: new Date(),

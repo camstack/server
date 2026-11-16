@@ -121,6 +121,10 @@ export enum DeviceType {
    *  and the storage as branches of one bus. One read-only `energy-system` cap carries
    *  every value; the storage is a field of it, never the `battery` cap (#513, #522). */
   EnergySystem = 'energy-system',
+  /** Something that RUNS on a machine, or the machine itself (#585): a VM, an app
+   *  container, an LXC, an app, or a host. The kind is the ROLE (D1033, D1056), never
+   *  a field; one `workload` cap carries the state, the controls and the resources. */
+  Workload = 'workload',
 }
 
 export enum DeviceFeature {
@@ -489,4 +493,17 @@ export enum DeviceRole {
   /** Emits a pulse train (infrared or RF) on request — the `ir-transmitter`
    *  cap. A `DeviceType.Generic` device. */
   IrTransmitter = 'ir-transmitter',
+
+  // ── Workload sub-roles (the KIND of a `workload` device, #585) ─
+  /** A virtual machine on a hypervisor. */
+  Vm = 'vm',
+  /** An application container (Docker, Podman). */
+  AppContainer = 'app-container',
+  /** A system container (LXC). */
+  Lxc = 'lxc',
+  /** An application or service running on a host. */
+  App = 'app',
+  /** A machine that runs workloads or is an appliance with its own OS: a
+   *  server, a hypervisor, a gateway console, a CCU. */
+  Host = 'host',
 }

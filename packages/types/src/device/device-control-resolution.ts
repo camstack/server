@@ -85,6 +85,8 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.WaterHeater]: 'water-heater',
   [DeviceType.HeatPump]: 'dummy',
   [DeviceType.EnergySystem]: 'energy-system',
+  // No inline control yet: the workload card (#585) is UI follow-up work.
+  [DeviceType.Workload]: 'dummy',
   [DeviceType.Camera]: 'dummy',
   [DeviceType.Switch]: 'switch',
   [DeviceType.Siren]: 'switch',

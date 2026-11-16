@@ -58,7 +58,7 @@ export function isCollectionArrayMethodName(capName: string, method: string): bo
  * Per capability, the methods declared `optionalMethod` — the ones whose
  * ABSENCE on a provider is a fact about that provider, not a bug.
  *
- * Coverage: 12 caps, 49 methods.
+ * Coverage: 13 caps, 55 methods.
  */
 export const PROVIDER_OPTIONAL_METHODS: Readonly<Record<string, readonly string[]>> =
   Object.freeze({
@@ -74,6 +74,7 @@ export const PROVIDER_OPTIONAL_METHODS: Readonly<Record<string, readonly string[
   "switch": ["toggle"],
   "valve": ["setPosition"],
   "videoclips": ["dialClipStream", "getPlaybackOptions", "offerClipBytes", "readClipBytes"],
+  "workload": ["forceStop", "pause", "restart", "resume", "start", "stop"],
 } as const)
 
 /**

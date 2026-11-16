@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1509 method paths across 210 capabilities.
+ * Coverage: 1517 method paths across 211 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1520,6 +1520,14 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'webrtcSession.handleOffer': { capName: "webrtc-session", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'webrtcSession.hasAdaptiveBitrate': { capName: "webrtc-session", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'webrtcSession.listStreams': { capName: "webrtc-session", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'workload.forceStop': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'workload.getOptions': { capName: "workload", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'workload.getStatus': { capName: "workload", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'workload.pause': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'workload.restart': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'workload.resume': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'workload.start': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'workload.stop': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'zoneAnalytics.getCameraHistory': { capName: "zone-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'zoneAnalytics.getCurrentSnapshot': { capName: "zone-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'zoneAnalytics.getCurrentSnapshotBatch': { capName: "zone-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1742,6 +1750,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "weather",
   "weather-station",
   "webrtc-session",
+  "workload",
   "zone-analytics",
   "zone-rules",
   "zones",
@@ -1854,6 +1863,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "weather",
   "weather-station",
   "webrtc-session",
+  "workload",
   "zone-analytics",
   "zone-rules",
   "zones",
