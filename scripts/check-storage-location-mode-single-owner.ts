@@ -33,10 +33,8 @@
  * Each rule has an allowlist with a reason per file. A file leaves the list the
  * day it stops being the migration, the persistence layer, or the policy.
  *
- * `packages/addon-admin-ui` is deliberately NOT scanned yet: the storage screen
- * is being rewritten onto `mode` in the same release train, and a guard that
- * fails on the half that has not landed teaches people to disable guards. It
- * joins {@link SOURCE_ROOTS} when that lands.
+ * `packages/addon-admin-ui/src` is scanned too (Archive, planning#569): its
+ * storage screens read `mode` through the policy module like everyone else.
  *
  * Usage: npx tsx scripts/check-storage-location-mode-single-owner.ts
  */
@@ -58,6 +56,7 @@ const SOURCE_ROOTS: readonly string[] = [
   'packages/system/src/builtins/backup-orchestrator',
   'packages/addon-pipeline/src/recorder',
   'packages/addon-post-analysis/src/pipeline-analytics',
+  'packages/addon-admin-ui/src',
 ]
 
 /** The retired untyped drain key, read off a location's config blob. */

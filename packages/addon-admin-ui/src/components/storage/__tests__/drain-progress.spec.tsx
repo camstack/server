@@ -172,11 +172,8 @@ describe('which locations count as draining', () => {
     expect(isLocationDraining({ mode: 'disabled', config: {} })).toBe(false)
   })
 
-  it('and the older `config.readOnly`, which persisted rows still carry', () => {
-    // A card that understood only one spelling would show nothing for half the
-    // fleet — which is the failure this card exists to avoid.
-    expect(isLocationDraining({ config: { readOnly: true } })).toBe(true)
-    expect(isLocationDraining({ config: { readOnly: false } })).toBe(false)
+  it('folds the older `config.readOnly` through the policy: read-only, not a drain', () => {
+    expect(isLocationDraining({ config: { readOnly: true } })).toBe(false)
     expect(isLocationDraining({ config: {} })).toBe(false)
   })
 })

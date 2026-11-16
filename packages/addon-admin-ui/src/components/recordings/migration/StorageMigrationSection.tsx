@@ -71,6 +71,7 @@ import {
   Button,
   Select,
 } from '@camstack/ui-library'
+import { mayWriteToLocation } from '@camstack/types'
 import { AlertTriangle, ArrowRightLeft, Loader2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useCapabilityPresence } from '../../../lib/capability-presence'
@@ -215,7 +216,7 @@ function StorageMigrationPanel() {
   const soleWriteTargetByType = useMemo<ReadonlyMap<string, string>>(() => {
     const enabledByType = new Map<string, string[]>()
     for (const loc of locations ?? []) {
-      if (loc.enabled === false) continue
+      if (!mayWriteToLocation(loc)) continue
       const ids = enabledByType.get(loc.type)
       if (ids) ids.push(loc.id)
       else enabledByType.set(loc.type, [loc.id])
@@ -360,7 +361,7 @@ function StorageMigrationPanel() {
                     {options.map((loc) => (
                       <option key={loc.id} value={loc.id}>
                         {loc.displayName}
-                        {loc.enabled === false
+                        {!mayWriteToLocation(loc)
                           ? ` (${t('recordings.storageMigrationSection.readOnly')})`
                           : ''}
                       </option>

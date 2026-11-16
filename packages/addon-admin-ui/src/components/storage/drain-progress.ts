@@ -38,7 +38,8 @@
  *  - draining, estimated → bytes remaining AND a date;
  *  - draining, no estimate yet → bytes remaining, and the absence stated.
  */
-import type { StorageLocation } from '@camstack/types'
+import type { StorageLocation, StorageLocationStateSource } from '@camstack/types'
+import { resolveLocationMode } from '@camstack/types'
 
 /** One row of `storage.listDrainProgress`, after narrowing. */
 export interface DrainProgressRow {
@@ -175,17 +176,10 @@ export function describeDrain(draining: boolean, row: DrainProgressRow | undefin
 }
 
 /**
- * Is this location draining?
- *
- * Deliberately tolerant of BOTH spellings the fleet has: the four-state `mode`
- * the hub reports today (`active | readonly | drain | disabled`) and the older
- * `config.readOnly === true` a location persisted before it existed still reads
- * back with. A card that understood only one of them would show nothing for
- * half the fleet, which is the failure mode this whole card exists to avoid.
+ * Is this location draining? Asks the policy module (D385) — a row that predates
+ * `mode` is folded there, once. The retired `config.readOnly` folds to `readonly`
+ * (stop writing, keep the footage), which is not a drain.
  */
-export function isLocationDraining(
-  location: Pick<StorageLocation, 'config'> & { readonly mode?: unknown },
-): boolean {
-  if (location.mode === 'drain') return true
-  return location.config['readOnly'] === true
+export function isLocationDraining(location: StorageLocationStateSource): boolean {
+  return resolveLocationMode(location) === 'drain'
 }

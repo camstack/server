@@ -1,6 +1,6 @@
 /**
  * The ledger walk refuses a location that is still a write target
- * (`enabled !== false` and not `config.readOnly`). The picker must use the
+ * (`mode: active`, folded from the legacy pair by the policy module). The picker must use the
  * SAME predicate, or the UI offers a Report that comes back `source-writable`.
  */
 
@@ -28,6 +28,15 @@ describe('footageLocationFrozen', () => {
 
   it('disabled is frozen — the drain flag that recordingsLow:default already has', () => {
     expect(footageLocationFrozen(loc({ id: 'recordingsLow:default', enabled: false }))).toBe(true)
+  })
+
+  it('mode readonly / drain / disabled are frozen; mode active is live even with the old flags', () => {
+    for (const mode of ['readonly', 'drain', 'disabled'] as const) {
+      expect(footageLocationFrozen(loc({ id: 'recordings:m', mode }))).toBe(true)
+    }
+    expect(footageLocationFrozen(loc({ id: 'recordings:m', mode: 'active', enabled: false }))).toBe(
+      false,
+    )
   })
 
   it('config.readOnly is frozen — the other drain flag', () => {
