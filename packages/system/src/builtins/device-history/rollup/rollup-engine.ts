@@ -140,6 +140,30 @@ export class RollupEngine {
     return run
   }
 
+  /**
+   * Run `work` while no tick runs and none starts: a tick that read rows before
+   * a range delete must not upsert them back after it. A tick requested
+   * meanwhile joins `work` (the dirty sets keep its job for the next one).
+   */
+  async exclusive<T>(work: () => Promise<T>): Promise<T> {
+    while (this.ticking !== null) await this.ticking
+    const run = work()
+    const guard = run
+      .then(
+        () => undefined,
+        () => undefined,
+      )
+      .finally(() => {
+        this.ticking = null
+      })
+    this.ticking = guard
+    try {
+      return await run
+    } finally {
+      await guard
+    }
+  }
+
   private async doTick(): Promise<void> {
     const now = this.deps.clock()
     await this.guarded('5m', () => this.tickFiveMinute(now))

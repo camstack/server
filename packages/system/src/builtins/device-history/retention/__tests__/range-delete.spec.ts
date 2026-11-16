@@ -191,6 +191,70 @@ describe('deleteSeriesRange', () => {
   })
 })
 
+describe('deleteSeriesRange against the rollup tick', () => {
+  it('a tick in flight on a dirty bucket of the range cannot write the deleted points back', async () => {
+    h = await makeHarness({ devices: { 7: DeviceType.Sensor } })
+    const t0 = h.now()
+    const from = t0
+    const to = t0 + 4 * MINUTE
+    for (let minute = 0; minute <= 4; minute += 1) {
+      h.runtime.writer.enqueue({
+        key: KEY,
+        subject: { kind: 'device', deviceId: 7 },
+        scope: '',
+        ts: t0 + minute * MINUTE,
+        value: SPIKE,
+      })
+    }
+    // Raw written, the 5m bucket closed — but NOT rolled up yet: it is dirty.
+    h.advance(6 * MINUTE)
+    await h.runtime.flushNow()
+    const harness = h
+    // Hold the tick's first rollup write back, as a slow history thread would: a delete
+    // that does not wait for the tick finishes first, and the tick then writes its stale rows.
+    const store = harness.runtime.store
+    const realUpsert = store.upsertRollups.bind(store)
+    let held = false
+    store.upsertRollups = async (tier, rows) => {
+      if (!held) {
+        held = true
+        await new Promise((resolve) => setTimeout(resolve, 150))
+      }
+      return realUpsert(tier, rows)
+    }
+    const tick = harness.runtime.rollup.tick()
+    const del = harness.runtime.deleteSeriesRange({
+      deviceId: 7,
+      key: KEY,
+      scope: '',
+      fromMs: from,
+      toMs: to,
+      dryRun: false,
+    })
+    await Promise.all([tick, del])
+    await harness.runtime.rollup.tick()
+    expect(await rawOf(harness, KEY, 7)).toEqual([])
+    for (const tier of ['5m', '1h', '1d'] as const) {
+      expect(await rollupOf(harness, tier, KEY, 7), tier).toEqual([])
+    }
+  })
+
+  it('refuses a range wider than 31 days', async () => {
+    h = await makeHarness({ devices: { 7: DeviceType.Sensor } })
+    const { from } = await seed(h, 7)
+    const result = await h.runtime.deleteSeriesRange({
+      deviceId: 7,
+      key: KEY,
+      scope: '',
+      fromMs: from,
+      toMs: from + 32 * DAY_MS,
+      dryRun: false,
+    })
+    expect(result).toEqual({ ok: false, reason: 'range-too-large' })
+    expect(await rawOf(h, KEY, 7)).toHaveLength(182)
+  })
+})
+
 // An hour below the range the test seeds must not be touched at all.
 describe('deleteSeriesRange untouched buckets', () => {
   it('leaves the rollup rows outside the covering buckets byte-for-byte', async () => {

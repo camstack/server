@@ -246,6 +246,7 @@ export type DeviceHistoryOrphanList = z.infer<typeof OrphanListSchema>
 
 export const DeviceHistoryRangeDeleteRefusalSchema = z.enum([
   'invalid-range',
+  'range-too-large',
   'series-not-found',
   'not-a-point-series',
 ])

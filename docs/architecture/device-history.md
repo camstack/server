@@ -219,8 +219,13 @@ and returns the counts per tier (`raw`, `5m`, `1h`, `1d`) a real run removes; th
 real run returns the same counts plus how many rollup rows it rewrote. Every
 count and delete is a primary-key range (`countRange` / `deleteRange`, asserted in
 `history-query-plans.spec.ts`). A real run logs one line tagged `deviceId`
-(`retention/range-delete.ts`). The series' `firstTs` / `lastTs` span is not
-narrowed by it.
+(`retention/range-delete.ts`). A range wider than 31 days is refused
+`range-too-large`. The delete-and-rebuild runs exclusively with the rollup tick
+(`RollupEngine.exclusive`), so a tick that read rows before the delete cannot
+write them back. It is not one transaction: a crash between tiers leaves stale
+rollups, and the same call run again repairs them (idempotent). The capture
+buffer is flushed first; a point captured inside the range after that survives.
+The series' `firstTs` / `lastTs` span is not narrowed by it.
 
 ## Query
 

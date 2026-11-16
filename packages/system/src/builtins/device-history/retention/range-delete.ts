@@ -9,6 +9,13 @@
  * so the covered 5-minute span runs up to and including that bucket. The 1h
  * and 1d spans follow from it. A dry run counts exactly those ranges with
  * primary-key range counts (D447) and changes nothing.
+ *
+ * The whole delete-and-rebuild runs EXCLUSIVELY with the rollup tick (a tick
+ * that read rows before the delete would otherwise write them back). It is not
+ * one transaction: a crash between tiers leaves rollups stale, and running the
+ * SAME call again repairs it (every step is a range delete or a recompute from
+ * what remains, so a repeat is idempotent). A point captured inside the range
+ * AFTER the initial flush survives: only what was stored then is judged.
  */
 import type {
   DeviceHistoryRangeDeleteResult,
@@ -25,6 +32,9 @@ import {
   bucketStartOf,
   floorTo,
 } from '../time/bucket-time.js'
+
+/** The widest range one call takes: 31 days. A longer one is deleted in several calls. */
+export const RANGE_DELETE_MAX_MS: number = 31 * 24 * HOUR_MS
 
 export interface RangeDeleteInput {
   readonly deviceId: number
@@ -56,13 +66,24 @@ export class RangeDelete {
   constructor(private readonly deps: RangeDeleteDeps) {}
 
   async run(input: RangeDeleteInput): Promise<DeviceHistoryRangeDeleteResult> {
-    const { registry, store, logger } = this.deps
+    const { registry } = this.deps
     if (!(input.fromMs < input.toMs)) return { ok: false, reason: 'invalid-range' }
+    if (input.toMs - input.fromMs > RANGE_DELETE_MAX_MS) {
+      return { ok: false, reason: 'range-too-large' }
+    }
     const series = registry.find(input.key, `d:${input.deviceId}`, input.scope)
     if (series === undefined) return { ok: false, reason: 'series-not-found' }
     if (registry.metric(series.key)?.ingest !== 'points') {
       return { ok: false, reason: 'not-a-point-series' }
     }
+    return this.deps.rollup.exclusive(() => this.apply(series, input))
+  }
+
+  private async apply(
+    series: SeriesRecord,
+    input: RangeDeleteInput,
+  ): Promise<DeviceHistoryRangeDeleteResult> {
+    const { store, logger } = this.deps
     await this.deps.flush()
     const span = await this.coveredSpan(series, input)
     if (input.dryRun) {
