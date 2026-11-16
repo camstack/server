@@ -19,10 +19,18 @@ export function portPowerStatus(port: UnifiInfraPort, now: number): PowerMeterSt
   }
 }
 
+const KBPS_PER_MBPS = 1000
+
 /**
- * `network-link`: an Ethernet link. The cap has no link-up or speed field yet; both are on the
- * port snapshot (`linkUp`, `speedMbps`) for the cap fields being added (planning#583).
+ * `network-link`: an Ethernet link — whether it is up, and the negotiated speed in the
+ * `bitrate` base unit (kbps; the controller reports Mbps). Not reported is `null`.
  */
-export function portNetworkLinkStatus(_port: UnifiInfraPort, now: number): NetworkLinkStatus {
-  return { type: 'ethernet', signal: null, lastUpdated: now }
+export function portNetworkLinkStatus(port: UnifiInfraPort, now: number): NetworkLinkStatus {
+  return {
+    type: 'ethernet',
+    signal: null,
+    linkUp: port.linkUp,
+    speedKbps: port.speedMbps === null ? null : port.speedMbps * KBPS_PER_MBPS,
+    lastUpdated: now,
+  }
 }

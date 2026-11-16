@@ -4,7 +4,12 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   DeviceFeature,
+  DeviceType,
   type IDevice,
+  type InferNativeProvider,
+  registerPowerSwitch,
+  type WorkloadStatus,
+  workloadCapability,
 } from '@camstack/types'
 import { unifiInfraSchema } from '../config.js'
 import {
@@ -14,15 +19,21 @@ import {
   featureSuffix,
   roleForDescriptor,
 } from '../unifi-mapping.js'
+import {
+  UNIFI_HOST_WORKLOAD_OPTIONS,
+  UNIFI_HOST_WORKLOAD_UNKNOWN,
+  unifiHostWorkloadStatus,
+} from '../unifi-host-workload.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 import { UnifiFeatureDevice } from './unifi-feature-device.js'
 
 /**
  * One UniFi infra device (UDM/USX-Max gateway, U6-Pro AP, USW Lite-8-PoE /
- * Flex-Mini switch, …) as the device type its adoption stamped — a Container until #585 (USER
- * DIRECTIVE: each infra device is a Container that EXPOSES its features). A
- * top-level SIBLING of the controller's Gateway; its integration owns the connection. Owns no
- * caps itself — it declares `getAccessoryChildren()` so the kernel auto-spawns
+ * Flex-Mini switch, …) as the device type its adoption stamped: a `workload` host (D1056)
+ * that serves the `workload` cap from the live snapshot and EXPOSES its features; one adopted
+ * as a Container before that stays a Container without the cap. A
+ * top-level SIBLING of the controller's Gateway; its integration owns the connection. It
+ * declares `getAccessoryChildren()` so the kernel auto-spawns
  * one {@link UnifiFeatureDevice} per descriptor in the LIVE `features[]` config
  * and reconciles additions/removals when the addon re-persists the list via
  * `applyDerivedSpec`. Mirrors `EcowittContainerDevice`.
@@ -37,6 +48,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
 
   private readonly integrationId: string
   private readonly infraNativeId: string
+  private snapshotUnsub: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = unifiInfraSchema.parse(ctx.persistedConfig ?? {})
@@ -50,6 +62,42 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
       id: `${this.integrationId}:${this.infraNativeId}`,
       system: 'unifi',
     })
+  }
+
+  override async onActivate(): Promise<void> {
+    await super.onActivate()
+    // The cap is gated to `workload` devices; a legacy Container keeps none.
+    if (this.type !== DeviceType.Workload) return
+    const provider: InferNativeProvider<typeof workloadCapability> = {
+      getOptions: async () => UNIFI_HOST_WORKLOAD_OPTIONS,
+      getStatus: async () =>
+        this.runtimeState.getCapState<WorkloadStatus>(workloadCapability.name) ??
+        UNIFI_HOST_WORKLOAD_UNKNOWN,
+    }
+    this.ctx.registerNativeCap(workloadCapability, provider)
+    // No start / stop is served, so the helper registers no switch (no fake control).
+    registerPowerSwitch(this, workloadCapability, provider)
+    this.runtimeState.setCapState(workloadCapability.name, UNIFI_HOST_WORKLOAD_UNKNOWN)
+    this.snapshotUnsub = unifiControllers.onSnapshot(this.integrationId, () =>
+      this.recomputeWorkload(),
+    )
+    this.recomputeWorkload()
+  }
+
+  override async removeDevice(): Promise<void> {
+    this.snapshotUnsub?.()
+    this.snapshotUnsub = null
+    await super.removeDevice()
+  }
+
+  /** The `workload` slice from the live snapshot; a device absent from it keeps its slice. */
+  private recomputeWorkload(): void {
+    const infra = unifiControllers.getInfra(this.integrationId, this.infraNativeId)
+    if (infra === null) return
+    this.runtimeState.setCapState(
+      workloadCapability.name,
+      unifiHostWorkloadStatus(infra, Date.now()),
+    )
   }
 
   /** The client on one of this device's ports in the live snapshot, or null. */

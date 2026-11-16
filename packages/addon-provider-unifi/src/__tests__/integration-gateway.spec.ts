@@ -7,11 +7,14 @@
 import {
   type DeviceConstructor,
   type DeviceContext,
+  DeviceRole,
   DeviceType,
   type IDevice,
   type IDeviceRuntimeState,
   type IScopedLogger,
   type InitialDeviceMeta,
+  type WorkloadOptions,
+  type WorkloadStatus,
   makeInMemoryRecords,
   secretTreeFromSchema,
 } from '@camstack/types'
@@ -94,6 +97,15 @@ afterEach(() => unifiControllers.clear())
 interface SwitchProvider {
   setState(input: { deviceId: number; on: boolean }): Promise<void>
 }
+
+interface WorkloadOptionsReader {
+  getOptions(input: { deviceId: number }): Promise<WorkloadOptions>
+}
+
+function isWorkloadProvider(value: unknown): value is WorkloadOptionsReader {
+  return typeof value === 'object' && value !== null && 'getOptions' in value
+}
+
 function isSwitchProvider(value: unknown): value is SwitchProvider {
   return typeof value === 'object' && value !== null && 'setState' in value
 }
@@ -201,6 +213,7 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     expect(keys).not.toContain('hub')
     expect(classes[DeviceType.Gateway]).toBe(UnifiGatewayDevice)
     expect(classes[DeviceType.Container]).toBe(UnifiInfraDevice)
+    expect(classes[DeviceType.Workload]).toBe(UnifiInfraDevice)
   })
 
   it('serves the connection form from the instance, both credentials keychain secrets', async () => {
@@ -223,7 +236,7 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     expect(keys).not.toContain('name')
   })
 
-  it('adopting everything creates the Gateway, the infra Container and the client as top-level siblings', async () => {
+  it('adopting everything creates the Gateway, the infra host and the client as top-level siblings', async () => {
     const h = await harness()
     const out = await h.provider.adopt({
       integrationId: INT,
@@ -236,9 +249,10 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     ])
     expect(h.created.map((c) => c.meta?.type)).toEqual([
       DeviceType.Gateway,
-      DeviceType.Container,
+      DeviceType.Workload,
       DeviceType.Presence,
     ])
+    expect(h.created[1]?.meta?.role).toBe(DeviceRole.Host)
     expect(h.created.every((c) => c.meta?.integrationId === INT)).toBe(true)
     expect(h.created.every((c) => c.config['integrationId'] === INT)).toBe(true)
     expect(out.adopted).toHaveLength(3)
@@ -270,7 +284,7 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     })
     expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
       [UNIFI_GATEWAY_ID, DeviceType.Gateway],
-      ['infra:sw1', DeviceType.Container],
+      ['infra:sw1', DeviceType.Workload],
       [`client:${PHONE.mac}`, DeviceType.Presence],
     ])
     // Only the switch nests something: its PoE port, proposed as a port device under it.
@@ -516,6 +530,36 @@ describe('UniFi devices on a stub device context', () => {
     expect(specs[0]?.meta.linkDeviceId).toBe(infra.id)
     expect(specs[0]?.meta.integrationId).toBe(INT)
     expect(specs[0]?.config['integrationId']).toBe(INT)
+  })
+
+  function hostRig(type: DeviceType) {
+    return rig(
+      { integrationId: INT, infraNativeId: 'sw1', system: UNIFI_SYSTEM, features: [] },
+      type,
+    )
+  }
+
+  it('a workload host serves the workload cap from the live snapshot, with no power switch', async () => {
+    await harness()
+    const { ctx, providers } = hostRig(DeviceType.Workload)
+    const host = new UnifiInfraDevice(ctx)
+    await host.onActivate()
+    const workload = providers.get('workload')
+    if (!isWorkloadProvider(workload)) throw new Error('workload cap missing')
+    expect(providers.has('switch')).toBe(false)
+    const options = await workload.getOptions({ deviceId: 7 })
+    expect(options.supportsStart || options.supportsStop || options.supportsRestart).toBe(false)
+    const slice = host.runtimeState.getCapState<WorkloadStatus>('workload')
+    expect(slice?.state).toBe('running')
+    expect(slice?.resources.cpuPercent).toBe(5)
+    expect(slice?.resources.temperature).toBe(40)
+  })
+
+  it('an infra device adopted as a Container before the flip serves no workload cap', async () => {
+    await harness()
+    const { ctx, providers } = hostRig(DeviceType.Container)
+    await new UnifiInfraDevice(ctx).onActivate()
+    expect(providers.has('workload')).toBe(false)
   })
 
   function portRig(switchable: boolean) {

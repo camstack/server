@@ -39,9 +39,9 @@ describe('buildDiscoveryCandidates', () => {
     const out = buildDiscoveryCandidates(BASE)
     expect(out.map((c) => [c.childNativeId, c.type])).toEqual([
       ['gateway', DeviceType.Gateway],
-      ['infra:udm', DeviceType.Container],
-      ['infra:sw1', DeviceType.Container],
-      ['infra:ap1', DeviceType.Container],
+      ['infra:udm', DeviceType.Workload],
+      ['infra:sw1', DeviceType.Workload],
+      ['infra:ap1', DeviceType.Workload],
     ])
     expect(out[0]?.metadata.model).toBe('UDM-Pro')
   })

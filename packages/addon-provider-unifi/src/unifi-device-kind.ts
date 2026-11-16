@@ -1,4 +1,4 @@
-import { DeviceType, type DeviceRole } from '@camstack/types'
+import { DeviceRole, DeviceType } from '@camstack/types'
 
 /**
  * What a UniFi infra device IS, read from its model and the Integration API's `features` list.
@@ -37,12 +37,14 @@ export function classifyUnifiInfra(input: UnifiInfraClassifyInput): UnifiInfraKi
 }
 
 /**
- * The target of every device the Integration API reports cpu / memory / uptime / firmware and a
- * restart for (console, switch, access point). planning#585 adds `DeviceType.Workload` and
- * `DeviceRole.Host`; until then these keep today's Container. THE line that flips:
- *   `{ type: DeviceType.Workload, role: DeviceRole.Host }`
+ * The target of every device the Integration API reports cpu / memory / uptime / firmware for
+ * (console, switch, access point): a `workload` host (D1056). Its PoE ports and features stay
+ * its accessory children.
  */
-export const UNIFI_HOST_TARGET: UnifiDeviceTarget = { type: DeviceType.Container, role: null }
+export const UNIFI_HOST_TARGET: UnifiDeviceTarget = {
+  type: DeviceType.Workload,
+  role: DeviceRole.Host,
+}
 
 const CONTROLLER_TARGET: UnifiDeviceTarget = { type: DeviceType.Gateway, role: null }
 const OTHER_TARGET: UnifiDeviceTarget = { type: DeviceType.Container, role: null }

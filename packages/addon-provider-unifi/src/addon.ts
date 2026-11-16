@@ -53,7 +53,7 @@ const UNIFI_MIGRATIONS_DATE = '2026-11-05'
  * the integration's status.
  *
  * Discovery offers the controller itself ({@link DeviceType.Gateway}, with a link to its UI),
- * each infra device ({@link DeviceType.Container}, fanning per-port PoE, restart and sensors
+ * each infra device (a {@link DeviceType.Workload} host, fanning per-port PoE, restart and sensors
  * out as accessory children) and each network client ({@link DeviceType.Presence}), all as
  * siblings. Cameras are not in scope.
  *
@@ -66,6 +66,7 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Gateway]: UnifiGatewayDevice,
     [DeviceType.Container]: UnifiInfraDevice,
+    [DeviceType.Workload]: UnifiInfraDevice,
     [DeviceType.Switch]: UnifiFeatureDevice,
     [DeviceType.Button]: UnifiFeatureDevice,
     [DeviceType.Sensor]: UnifiFeatureDevice,

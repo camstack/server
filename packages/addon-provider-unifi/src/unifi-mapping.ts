@@ -80,12 +80,8 @@ export function portClientNamerOf(infra: readonly UnifiInfraSnapshot[]): UnifiPo
     infra.find((d) => d.id === infraId)?.ports.find((p) => p.idx === portIdx)?.clientName ?? null
 }
 
-/**
- * The semantic role of a PoE port device. THE line that flips once `DeviceRole.PoePort`
- * (`'poe-port'`) is in `@camstack/types`: `= DeviceRole.PoePort`. Until then a port is a plain
- * `switch` device.
- */
-export const UNIFI_POE_PORT_ROLE: DeviceRole | null = null
+/** The semantic role of a PoE port device: a `switch` device with the `poe-port` role. */
+export const UNIFI_POE_PORT_ROLE: DeviceRole = DeviceRole.PoePort
 
 /** A PoE port's name: "<client> (port N)" when its client is known, else "Port N". */
 export function portLabel(portIdx: number | undefined, clientName: string | null): string {
@@ -188,7 +184,7 @@ export function roleForDescriptor(descriptor: UnifiFeatureDescriptor): DeviceRol
   if (descriptor.kind === 'sensor' && descriptor.metric !== undefined) {
     return roleForMetric(descriptor.metric)
   }
-  if (descriptor.kind === 'port') return UNIFI_POE_PORT_ROLE ?? undefined
+  if (descriptor.kind === 'port') return UNIFI_POE_PORT_ROLE
   return undefined
 }
 
