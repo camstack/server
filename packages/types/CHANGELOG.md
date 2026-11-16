@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.583] - 2026-11-16
+
 ### Changed
 
 - Camera metrics carry an optional nativeCropMisses counter and the health digest an optional per-camera runner signals list
