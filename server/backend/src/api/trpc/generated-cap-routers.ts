@@ -17939,6 +17939,15 @@ export function createCapRouter_siren(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getOptions(methodInput as any)
       }),
+    getPlayChoices: protectedProcedure
+      .input(sirenCapability.methods.getPlayChoices.input.loose())
+      .output(sirenCapability.methods.getPlayChoices.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('siren', nodeId, () => getProvider(ctx), createRemoteProxy)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.getPlayChoices(methodInput as any)
+      }),
     trigger: protectedProcedure
       .input(sirenCapability.methods.trigger.input.loose())
       .output(sirenCapability.methods.trigger.output)

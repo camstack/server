@@ -2863,7 +2863,19 @@ export {
   MotionStatusSchema,
   motionCapability,
 } from './motion.cap.js'
-export { resolveSirenSeconds, sirenIdleStatus, sirenTriggeredStatus } from './siren-duration.js'
+export {
+  planSirenTrigger,
+  resolveSirenPlays,
+  resolveSirenSeconds,
+  sirenIdleStatus,
+  sirenPlayChoices,
+  sirenTriggeredStatus,
+} from './siren-duration.js'
+export type {
+  SirenPlaysActivation,
+  SirenTriggerPlan,
+  SirenTriggerRequest,
+} from './siren-duration.js'
 export {
   type ISirenProvider,
   type SirenDurationRange,
@@ -2878,6 +2890,8 @@ export {
   SirenRuntimeStateSchema,
   type SirenStatus,
   SirenStatusSchema,
+  type SirenTriggerInput,
+  SirenTriggerInputSchema,
   sirenCapability,
 } from './siren.cap.js'
 export {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The siren can be sounded a chosen number of times; the count goes to the camera as asked
+
 ## [1.2.242] - 2026-11-16
 
 ### Changed

@@ -1721,6 +1721,25 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         args: {  },
       },
       {
+        id: 'siren.triggerPlays',
+        method: 'trigger',
+        label: { en: 'Sound the siren N times', it: 'Fai suonare la sirena N volte' },
+        phrase: { en: 'Sound {device} {plays} times', it: 'Fai suonare {device} {plays} volte' },
+        icon: 'siren',
+        openArgs: [
+          {
+            key: 'plays',
+            label: { en: 'Plays', it: 'Riproduzioni' },
+            offer: {
+              kind: 'dynamic',
+              from: 'method',
+              method: 'getPlayChoices',
+              valueKind: 'number',
+            },
+          },
+        ],
+      },
+      {
         id: 'siren.stop',
         method: 'stop',
         label: { en: 'Silence the siren', it: 'Zittisci la sirena' },

@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1102 shared schemas.**
+**1103 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -6814,6 +6814,9 @@ Enum: `"idle" \| "checking" \| "staging" \| "pending-restart" \| "awaiting-confi
 - `allowedSeconds`: `number[] \| null`
 - `rangeSeconds`: `SirenDurationRangeSchema \| null`
 - `defaultSeconds`: `number`
+- `allowedPlays?`: `number[] \| null = null`
+- `rangePlays?`: `SirenDurationRangeSchema \| null = null`
+- `defaultPlays?`: `number \| null = null`
 - `unit`: `"seconds" \| "plays"`
 - `secondsPerPlay`: `number \| null`
 - `source`: `"camera" \| "fallback"`
@@ -6824,6 +6827,8 @@ Enum: `"idle" \| "checking" \| "staging" \| "pending-restart" \| "awaiting-confi
 - `active`: `boolean`
 - `activeUntil`: `number \| null`
 - `durationSeconds`: `number \| null`
+- `plays?`: `number \| null = null`
+- `activeUntilEstimated?`: `boolean = false`
 - `lastTriggeredAt`: `number`
 - `lastFetchedAt`: `number`
 
@@ -6832,7 +6837,15 @@ Enum: `"idle" \| "checking" \| "staging" \| "pending-restart" \| "awaiting-confi
 - `active`: `boolean`
 - `activeUntil`: `number \| null`
 - `durationSeconds`: `number \| null`
+- `plays?`: `number \| null = null`
+- `activeUntilEstimated?`: `boolean = false`
 - `lastTriggeredAt`: `number`
+
+### `SirenTriggerInputSchema`
+
+- `deviceId`: `number`
+- `durationSeconds?`: `number`
+- `plays?`: `number`
 
 ### `SiteLocationSchema`
 

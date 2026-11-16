@@ -43,11 +43,12 @@ import {
   type MotionTriggerRuntimeState,
   type MotionTriggerStatus,
   motionTriggerCapability,
-  resolveSirenSeconds,
+  planSirenTrigger,
   type SirenOptions,
   type SirenStatus,
   sirenCapability,
   sirenIdleStatus,
+  sirenPlayChoices,
   sirenTriggeredStatus,
   type SwitchStatus,
   switchCapability,
@@ -157,7 +158,14 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
   }
 
   private openEndedStatus(): SirenStatus {
-    return { active: true, activeUntil: null, durationSeconds: null, lastTriggeredAt: Date.now() }
+    return {
+      active: true,
+      activeUntil: null,
+      durationSeconds: null,
+      plays: null,
+      activeUntilEstimated: false,
+      lastTriggeredAt: Date.now(),
+    }
   }
 
   private publishSiren(status: SirenStatus): void {
@@ -220,9 +228,20 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
     const provider: InferNativeProvider<typeof sirenCapability> = {
       getStatus: async (): Promise<SirenStatus> => this.sirenView(),
       getOptions: async (): Promise<SirenOptions> => this.sirenOptions(),
-      trigger: async ({ deviceId, durationSeconds }): Promise<SirenStatus> => {
+      getPlayChoices: async (): Promise<number[]> => sirenPlayChoices(await this.sirenOptions()),
+      trigger: async ({ deviceId, durationSeconds, plays }): Promise<SirenStatus> => {
         if (deviceId !== this.id) return this.sirenView()
-        const seconds = resolveSirenSeconds(await this.sirenOptions(), durationSeconds)
+        // The siren is an alarm input held for real seconds: a play count is refused, never guessed.
+        const plan = planSirenTrigger(await this.sirenOptions(), { durationSeconds, plays })
+        if (plan.asked !== 'seconds') {
+          const reason = plan.asked === 'refused' ? plan.reason : 'unexpected plays plan'
+          this.ctx.logger.warn('hikvision siren: trigger refused', {
+            tags: { deviceId: this.id },
+            meta: { reason, plays },
+          })
+          throw new Error(`siren trigger refused: ${reason}`)
+        }
+        const seconds = plan.seconds
         this.cancelPulseTimer()
         await this.pushAlarmInput(true)
         this.armRelease(seconds)

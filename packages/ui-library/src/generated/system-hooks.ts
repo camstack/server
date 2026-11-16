@@ -3359,6 +3359,9 @@ export const useSettingsStoreDeclareCollection: typeof trpc.settingsStore.declar
 /** Generated alias around `trpc.siren.getOptions.useQuery`. */
 export const useSirenGetOptions: typeof trpc.siren.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.siren.getOptions.useQuery)
 
+/** Generated alias around `trpc.siren.getPlayChoices.useQuery`. */
+export const useSirenGetPlayChoices: typeof trpc.siren.getPlayChoices.useQuery = /*#__PURE__*/ alias(() => trpc.siren.getPlayChoices.useQuery)
+
 /** Generated alias around `trpc.siren.trigger.useMutation`. */
 export const useSirenTrigger: typeof trpc.siren.trigger.useMutation = /*#__PURE__*/ alias(() => trpc.siren.trigger.useMutation)
 

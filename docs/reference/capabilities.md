@@ -109,7 +109,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `running-state` | 1 | ✓ | ✓ | 1 series | — | `bosch-home-connect` `provider-dreame` `provider-homeassistant` |
 | `scene-monitor` | 10 | ✓ | ✓ | none | — | `pipeline-analytics` |
 | `script-runner` | 3 | ✓ | ✓ | none | — | — |
-| `siren` | 4 | ✓ | ✓ | none | — | — |
+| `siren` | 5 | ✓ | ✓ | none | — | — |
 | `smoke` | 1 | ✓ | ✓ | 1 series | — | — |
 | `snapshot` | 9 | ✓ | — | — | — | `snapshot` |
 | `stream-catalog` | 1 | — | ✓ | none | — | — |

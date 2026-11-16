@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 88 caps with 468 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 88 caps with 470 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -309,7 +309,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "recording-signal": [{"path":"active","valueType":"boolean"}, {"path":"reason","valueType":"string"}],
   "running-state": [{"path":"running","valueType":"boolean"}, {"path":"since","valueType":"number"}, {"path":"source","valueType":"enum","enumValues":["native","assigned"]}, {"path":"phase","valueType":"string"}],
   "script-runner": [{"path":"isRunning","valueType":"boolean"}, {"path":"lastRunAt","valueType":"number"}, {"path":"lastRunSuccess","valueType":"boolean"}, {"path":"lastError","valueType":"string"}],
-  "siren": [{"path":"active","valueType":"boolean"}, {"path":"activeUntil","valueType":"number"}, {"path":"durationSeconds","valueType":"number"}, {"path":"lastTriggeredAt","valueType":"number"}],
+  "siren": [{"path":"active","valueType":"boolean"}, {"path":"activeUntil","valueType":"number"}, {"path":"durationSeconds","valueType":"number"}, {"path":"plays","valueType":"number"}, {"path":"activeUntilEstimated","valueType":"boolean"}, {"path":"lastTriggeredAt","valueType":"number"}],
   "smoke": [{"path":"detected","valueType":"boolean"}],
   "snapshot": [{"path":"lastCapturedAt","valueType":"number"}, {"path":"cacheAgeMs","valueType":"number"}, {"path":"lastBytes","valueType":"number"}, {"path":"lastStreamId","valueType":"string"}],
   "stream-params": [{"path":"main.width","valueType":"number"}, {"path":"main.height","valueType":"number"}, {"path":"main.codec","valueType":"enum","enumValues":["h264","h265"]}, {"path":"main.framerate","valueType":"number"}, {"path":"main.bitrate","valueType":"number"}, {"path":"main.bitrateMode","valueType":"enum","enumValues":["vbr","cbr"]}, {"path":"main.encoderProfile","valueType":"enum","enumValues":["high","main","baseline"]}, {"path":"main.gop","valueType":"number"}, {"path":"main.audio","valueType":"boolean"}, {"path":"sub.width","valueType":"number"}, {"path":"sub.height","valueType":"number"}, {"path":"sub.codec","valueType":"enum","enumValues":["h264","h265"]}, {"path":"sub.framerate","valueType":"number"}, {"path":"sub.bitrate","valueType":"number"}, {"path":"sub.bitrateMode","valueType":"enum","enumValues":["vbr","cbr"]}, {"path":"sub.encoderProfile","valueType":"enum","enumValues":["high","main","baseline"]}, {"path":"sub.gop","valueType":"number"}, {"path":"sub.audio","valueType":"boolean"}, {"path":"ext.width","valueType":"number"}, {"path":"ext.height","valueType":"number"}, {"path":"ext.codec","valueType":"enum","enumValues":["h264","h265"]}, {"path":"ext.framerate","valueType":"number"}, {"path":"ext.bitrate","valueType":"number"}, {"path":"ext.bitrateMode","valueType":"enum","enumValues":["vbr","cbr"]}, {"path":"ext.encoderProfile","valueType":"enum","enumValues":["high","main","baseline"]}, {"path":"ext.gop","valueType":"number"}, {"path":"ext.audio","valueType":"boolean"}],

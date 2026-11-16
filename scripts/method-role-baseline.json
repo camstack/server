@@ -1225,6 +1225,7 @@
   "settingsStore.upsert": "admin",
   "settingsStore.upsertMany": "admin",
   "siren.getOptions": "viewer",
+  "siren.getPlayChoices": "viewer",
   "siren.getStatus": "viewer",
   "siren.stop": "viewer",
   "siren.trigger": "viewer",

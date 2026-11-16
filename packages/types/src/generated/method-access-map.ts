@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1517 method paths across 211 capabilities.
+ * Coverage: 1518 method paths across 211 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1248,6 +1248,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'settingsStore.upsert': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'settingsStore.upsertMany': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'siren.getOptions': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'siren.getPlayChoices': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'siren.getStatus': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'siren.stop': { capName: "siren", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'siren.trigger': { capName: "siren", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,

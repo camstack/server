@@ -1107,6 +1107,7 @@ export function createDeviceProxy(
 
   const sirenInterface = {
     getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getOptions', 'query', input, undefined, options),
+    getPlayChoices: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getPlayChoices', 'query', input, undefined, options),
     trigger: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'trigger', 'mutation', input, undefined, options),
     stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'stop', 'mutation', input, undefined, options),
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getStatus', 'query', input, undefined, options),

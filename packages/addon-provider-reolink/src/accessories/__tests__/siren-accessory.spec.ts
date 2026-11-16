@@ -19,7 +19,12 @@ const NOW = 1_700_000_000_000
 interface Providers {
   siren?: {
     getOptions(input: { deviceId: number }): Promise<SirenOptions>
-    trigger(input: { deviceId: number; durationSeconds?: number }): Promise<SirenStatus>
+    getPlayChoices(input: { deviceId: number }): Promise<number[]>
+    trigger(input: {
+      deviceId: number
+      durationSeconds?: number
+      plays?: number
+    }): Promise<SirenStatus>
     stop(input: { deviceId: number }): Promise<SirenStatus>
   }
   switch?: { setState(input: { deviceId: number; on: boolean }): Promise<void> }
@@ -89,6 +94,37 @@ describe('Reolink siren accessory — timed siren cap', () => {
     expect(status).toMatchObject({ active: true, activeUntil: NOW + 12_000, durationSeconds: 12 })
     expect(h.slice<SirenStatus>('siren')).toMatchObject({ active: true, activeUntil: NOW + 12_000 })
     expect(h.slice<SwitchStatus>('switch')?.on).toBe(true)
+  })
+
+  it('declares its plays natively and offers them to a rule (#589)', async () => {
+    const h = build({ sirenSecondsPerPlay: 4, sirenDurationS: 3 })
+    expect(await h.providers.siren!.getOptions({ deviceId: 31 })).toMatchObject({
+      allowedPlays: null,
+      rangePlays: { min: 1, max: 60, step: 1 },
+      defaultPlays: 3,
+    })
+    const choices = await h.providers.siren!.getPlayChoices({ deviceId: 31 })
+    expect(choices[0]).toBe(1)
+    expect(choices).toHaveLength(60)
+  })
+
+  it('a trigger in plays sends that count and reports it, with an estimated end', async () => {
+    const h = build({ sirenSecondsPerPlay: 4 })
+    const status = await h.providers.siren!.trigger({ deviceId: 31, plays: 4 })
+    expect(h.setSiren).toHaveBeenCalledWith(2, true, 4)
+    expect(status).toMatchObject({
+      active: true,
+      plays: 4,
+      durationSeconds: 16,
+      activeUntil: NOW + 16_000,
+      activeUntilEstimated: true,
+    })
+  })
+
+  it('a trigger in seconds reports no count; its end is still an estimate', async () => {
+    const h = build({ sirenSecondsPerPlay: 4 })
+    const status = await h.providers.siren!.trigger({ deviceId: 31, durationSeconds: 8 })
+    expect(status).toMatchObject({ plays: null, activeUntilEstimated: true })
   })
 
   it('the countdown clears the siren slice and the switch when the plays are over', async () => {

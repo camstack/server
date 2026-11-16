@@ -1131,6 +1131,7 @@
   "settingsStore.upsert": "admin",
   "settingsStore.upsertMany": "admin",
   "siren.getOptions": "protected",
+  "siren.getPlayChoices": "protected",
   "siren.stop": "protected",
   "siren.trigger": "protected",
   "smtpProvider.getStatus": "admin",

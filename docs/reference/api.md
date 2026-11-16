@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**211 capabilities · 1517 methods.**
+**211 capabilities · 1518 methods.**
 
 ## Method index
 
@@ -1240,6 +1240,7 @@
 | `settingsStore.declareCollection` | mutation | admin | settings-store |
 | `siren.getStatus` | query | protected | siren (auto) |
 | `siren.getOptions` | query | protected | siren |
+| `siren.getPlayChoices` | query | protected | siren |
 | `siren.trigger` | mutation | protected | siren |
 | `siren.stop` | mutation | protected | siren |
 | `smoke.getStatus` | query | protected | smoke (auto) |
@@ -4523,7 +4524,7 @@
 
 ### `siren` → `siren.*`
 
-- **Source:** `packages/types/src/capabilities/siren.cap.ts:80`
+- **Source:** `packages/types/src/capabilities/siren.cap.ts:113`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `siren`
 - **Archetypes:** status(command-driven) · runtimeState
 - **Provider interface:** `ISirenProvider`
@@ -4534,7 +4535,8 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `siren.getStatus` | query | protected | `{ deviceId: number }` | `SirenStatusSchema` |
 | getOptions | `siren.getOptions` | query | protected | `{ deviceId: number }` | `SirenOptionsSchema` |
-| trigger | `siren.trigger` | mutation | protected | `{ deviceId: number; durationSeconds?: number }` | `SirenStatusSchema` |
+| getPlayChoices | `siren.getPlayChoices` | query | protected | `{ deviceId: number }` | `number[]` |
+| trigger | `siren.trigger` | mutation | protected | `SirenTriggerInputSchema` | `SirenStatusSchema` |
 | stop | `siren.stop` | mutation | protected | `{ deviceId: number }` | `SirenStatusSchema` |
 
 ### `smoke` → `smoke.*`
