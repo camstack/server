@@ -13,6 +13,7 @@ import { QueryRefusedError } from './hub.js'
 import { hubLogs, listLogProviders } from './logs.js'
 import { hubLogsExport, LogsExportArgsSchema } from './logs-export.js'
 import { lokiQuery } from './loki.js'
+import { TrainingCandidatesArgsSchema, trainingFrameCandidates } from './training-candidates.js'
 import { timelineAudit, TimelineAuditArgsSchema } from './timeline-audit.js'
 import { auditTracksTool } from './track-audit.js'
 
@@ -160,6 +161,14 @@ export function registerOpsTools(
     'Audit the Timeline events of chosen cameras over the last N days: per event, do its images exist (thumbnail/firstFrame/lastFrame, kinds configurable) with the reason when missing, and is its time span on a recording. Returns a per-camera summary (events, % complete media, % covered, recording gaps with events) and a paginated list of failing events (offset/limit). Read-only; events capped per camera, media index sampled, no bytes fetched.',
     TimelineAuditArgsSchema.shape,
     (args) => guarded(() => timelineAudit(getHub(), TimelineAuditArgsSchema.parse(args))),
+  )
+
+  tool(
+    'training_frame_candidates',
+    'Instants of one camera worth putting in the retrain corpus for a class (default package) over a window: existing tracks of the class, the moment after any other actor (person, doorbell, contact) ends, and a sweep of the quiet stretch after it — so a still object that never became a track is found. Candidates are checked against the recording. Read-only; marking them is training_frame_mark.',
+    TrainingCandidatesArgsSchema.shape,
+    (args) =>
+      guarded(() => trainingFrameCandidates(getHub(), TrainingCandidatesArgsSchema.parse(args))),
   )
 
   tool(

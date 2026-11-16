@@ -11,6 +11,7 @@ import { evalModel, EvalArgsSchema, type ProcessRunner } from './eval.js'
 import { fetchRetrainExport, FetchExportArgsSchema } from './export.js'
 import { modelFloors } from './floors.js'
 import { modelStudioImport, StudioImportArgsSchema } from './studio-import.js'
+import { TrainingMarkArgsSchema, trainingFrameMark } from './training-mark.js'
 import { objectShape } from '../zod-shape.js'
 
 export interface ModelToolDeps {
@@ -130,6 +131,20 @@ export function registerModelTools(tool: RegisterTool, deps: ModelToolDeps): voi
         modelStudioImport(
           { gate: deps.gate, hub: deps.getHub, mutator: deps.getMutator },
           StudioImportArgsSchema.parse(args),
+          confirm_token,
+        ),
+      ),
+  )
+
+  tool(
+    'training_frame_mark',
+    'MUTATES THE CLUSTER: put recording stills (epochMs, from training_frame_candidates) into an EXISTING retrain collection via addRetrainFrameFromRecording, and with a NORMALISED [0,1] zone run the package assist on each for a verdict (detector-proposes / below-threshold / model-miss). Drafts only; the operator confirms boxes in Training (Frames). First call = dry run + one-shot confirm_token; second call with the SAME arguments plus the token executes. Requires --allow-mutations.',
+    { ...objectShape(TrainingMarkArgsSchema), ...ConfirmShape },
+    ({ confirm_token, ...args }) =>
+      guardedGated(() =>
+        trainingFrameMark(
+          { gate: deps.gate, hub: deps.getHub, mutator: deps.getMutator },
+          TrainingMarkArgsSchema.parse(args),
           confirm_token,
         ),
       ),

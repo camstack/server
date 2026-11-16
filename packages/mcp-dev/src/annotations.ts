@@ -88,6 +88,7 @@ const BY_CLASS: Readonly<Record<string, readonly string[]>> = {
     'retrain_census',
     'keyframe_presence',
     'timeline_audit',
+    'training_frame_candidates',
     'birth_decisions',
     'event_density',
     'hub_health_digest',
@@ -96,7 +97,12 @@ const BY_CLASS: Readonly<Record<string, readonly string[]>> = {
   ],
   WRITE_LOCAL: ['scaffold_capability', 'scaffold_addon', 'scaffold_ui_component', 'run_checks'],
   WRITE_LOCAL_OPEN: ['eval_model', 'fetch_retrain_export', 'hub_logs_export'],
-  MUTATES_CLUSTER: ['benchmark_run', 'benchmark_image_run', 'model_studio_import'],
+  MUTATES_CLUSTER: [
+    'benchmark_run',
+    'benchmark_image_run',
+    'model_studio_import',
+    'training_frame_mark',
+  ],
   WRITE_LOCAL_DESTRUCTIVE: ['run_codegen', 'method_tiers_diff', 'extend_addon'],
 }
 

@@ -91,7 +91,15 @@ function checkCustomAction(input: unknown): string | null {
   return null
 }
 
+/** `training_frame_mark`: add a recording still to a collection, and run the package assist on it. */
+function checkTrainingFrame(input: unknown): string | null {
+  if (input === null || typeof input !== 'object') return 'input must be an object'
+  return typeof Reflect.get(input, 'deviceId') === 'number' ? null : 'deviceId must be a number'
+}
+
 export const MUTATION_ALLOWLIST: ReadonlyMap<string, MutationInputCheck> = new Map([
+  ['pipelineAnalytics.addRetrainFrameFromRecording', checkTrainingFrame],
+  ['pipelineAnalytics.proposeRetrainAnnotations', checkTrainingFrame],
   ['pipelineOrchestrator.startNodeBenchmark', () => null],
   ['addons.custom', checkCustomAction],
 ])

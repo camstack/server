@@ -244,7 +244,7 @@ async function readMedia(hub: OpsHub, track: Track): Promise<MediaReading> {
   }
 }
 
-type RecordingRead =
+export type RecordingRead =
   | {
       readonly ok: true
       readonly ranges: Interval[]
@@ -252,7 +252,7 @@ type RecordingRead =
     }
   | { readonly ok: false; readonly reason: string }
 
-async function readRecording(
+export async function readRecording(
   hub: OpsHub,
   deviceId: number,
   since: number,
