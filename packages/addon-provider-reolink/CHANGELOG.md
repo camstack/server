@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Siren: timed trigger with a countdown; plays are converted to seconds using a per-camera seconds-per-play setting
+- Siren default is now labelled as a number of plays (it always was); the stored setting is unchanged
 
 ## [1.2.241] - 2026-11-14
 

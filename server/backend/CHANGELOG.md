@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Timed siren capability (trigger with a duration, activeUntil countdown) and method baselines for it
+
 ## [1.2.889] - 2026-11-16
 
 ### Changed

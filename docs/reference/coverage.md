@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 8863 source files · 246 units claimed by at least one document (8832 files).**
+**253 units · 8864 source files · 246 units claimed by at least one document (8833 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -45,8 +45,8 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-pipeline/src/pipeline-runner` | 59 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +43 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +3 more, 1 ADR | 2026-10-14 |
 | `packages/addon-ai` | 55 | `ai` | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 |
+| `packages/addon-provider-hikvision` | 54 | `device-providers` | `addons/addon-provider-hikvision.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +13 more, 2 ADRs | 2026-11-08 |
 | `packages/addon-provider-dreame` | 53 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, +5 more, 2 ADRs | 2026-11-08 |
-| `packages/addon-provider-hikvision` | 53 | `device-providers` | `addons/addon-provider-hikvision.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +13 more, 2 ADRs | 2026-11-08 |
 | `packages/addon-pipeline/src/session-decode` | 49 | `decode-and-data-planes` | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +14 more, 4 ADRs | 2026-08-29 |
 | `packages/desktop` | 46 | `secrets`, `tooling` | `decisions/adr-0943-the-product-release-is-not-the-npm-version.md`, `decisions/adr-0402-a-certificate-bypass-is-scoped-to-the-role-that-needs-it.md`, `decisions/adr-0846-the-windows-agent-service-is-a-pinned-winsw-around-a-supervisor-and-never-runs-user-writable-code.md`, +8 more | 2026-10-27 |
 | `server/backend/src/agent` | 45 | `update-and-release` | `decisions/adr-0857-an-agents-identity-is-its-mesh-certificate-there-is-no-cluster-secret-and-a-pairing-is-confirmed-on-both-screens.md`, `architecture/transport.md`, `decisions/adr-1031-a-paired-agent-adopts-an-announced-hub-address-only-after-the-pinned-ca-answers.md`, +16 more, 3 ADRs | 2026-10-16 |

@@ -147,6 +147,7 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
       const previous = this.switchView()
       const lastChangedAt = previous.on === on ? previous.lastChangedAt : Date.now()
       this.setCapSlice(switchCapability, { on, lastChangedAt })
+      this.alignSirenWithInput(on)
     } catch (err) {
       this.ctx.logger.debug('hikvision siren refresh failed', {
         meta: { error: err instanceof Error ? err.message : String(err) },
@@ -191,6 +192,22 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
     this.setCapSlice(sirenCapability, { ...status, lastFetchedAt: previous?.lastFetchedAt ?? 0 })
   }
 
+  /**
+   * The poll saw the alarm input differ from what the switch last said (another
+   * client flipped it): the siren slice follows, so the countdown never outlives
+   * a release and an external trigger shows as active (open-ended: we do not
+   * know when its owner will release it).
+   */
+  private alignSirenWithInput(on: boolean): void {
+    const current = this.sirenView()
+    if (on && !current.active) {
+      this.publishSiren(this.openEndedStatus())
+    } else if (!on && current.active) {
+      this.cancelPulseTimer()
+      this.publishSiren(sirenIdleStatus(current))
+    }
+  }
+
   /** Releases the input after `seconds` and publishes the countdown it implies. */
   private armRelease(seconds: number): void {
     this.cancelPulseTimer()
@@ -209,6 +226,9 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
       },
       Math.round(seconds * 1000),
     )
+    // unref: a pending release must not keep the process alive at shutdown. The
+    // release itself is not lost: removeDevice drops the input on a clean stop,
+    // and the camera's own linkage ends on a crash.
     this.pulseTimer.unref()
   }
 

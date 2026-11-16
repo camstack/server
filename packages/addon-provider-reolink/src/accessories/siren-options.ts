@@ -1,4 +1,4 @@
-import type { SirenOptions } from '@camstack/types'
+import { SirenDurationUnit, type SirenOptions, SirenOptionsSource } from '@camstack/types'
 
 /**
  * Reolink counts PLAYS, not seconds: `setSiren(channel, true, n)` plays the
@@ -42,9 +42,9 @@ export function buildReolinkSirenOptions(input: {
       step: secondsPerPlay,
     },
     defaultSeconds: secondsForPlays(defaultPlays, secondsPerPlay),
-    unit: 'plays',
+    unit: SirenDurationUnit.Plays,
     secondsPerPlay,
-    source: 'fallback',
+    source: SirenOptionsSource.Fallback,
     fetchedAt: input.nowMs,
   }
 }

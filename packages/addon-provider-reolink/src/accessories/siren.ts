@@ -6,8 +6,11 @@
  *   - `motion-trigger` — toggle "siren on motion" via cmd_id 231 (SetSirenOnMotion)
  *
  * Settings:
- *   - `sirenDurationS` — passed to `setSiren(on=true, duration)` on
- *                         the next switch flip (0 = play indefinitely)
+ *   - `sirenDurationS` — a PLAY COUNT (the key keeps its old name so no
+ *                         migration is needed): passed to
+ *                         `setSiren(on=true, plays)` on the next switch flip
+ *                         (0 = play until switched off). The timed `siren`
+ *                         cap's default is plays × `sirenSecondsPerPlay`.
  *
  * State model: every cap's last-known state lives in the runtime-state
  * slice. A 30s background poll keeps switch + motion-trigger aligned
@@ -77,10 +80,11 @@ export const SIREN_DETECT_TYPE_CHOICES = [
 export const sirenAccessorySchema = reolinkAccessoryBaseSchema.extend({
   kind: z.literal(AccessoryKind.Siren),
   /**
-   * Default duration (seconds) passed to `setSiren(on=true, duration)`
-   * when the operator flips the switch via the cap. `0` = play
-   * indefinitely until turned off; positive value = one-shot pulse
-   * for that many seconds.
+   * Default number of PLAYS of the alarm tone passed to
+   * `setSiren(on=true, plays)` when the operator flips the switch. The key
+   * keeps its historical name; it was never seconds. `0` = play until
+   * turned off; a positive value = that many plays (about
+   * plays × `sirenSecondsPerPlay` seconds).
    */
   sirenDurationS: z.number().int().min(0).max(300).default(0),
   /**
@@ -373,9 +377,15 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
       () => {
         this.sirenTimer = null
         this.writeSirenStatus(sirenIdleStatus(this.sirenView()))
+        // The counted plays are over and the camera is silent: the switch must not
+        // keep claiming the siren is on (getSiren is never polled — the slice is the truth).
+        if (this.switchView().on) {
+          this.setCapSlice(switchCapability, { on: false, lastChangedAt: Date.now() })
+        }
       },
       Math.round(seconds * 1000),
     )
+    // unref: a pending countdown must not hold the process open on shutdown.
     this.sirenTimer.unref()
   }
 
@@ -493,14 +503,14 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
           id: 'siren',
           title: 'Siren',
           titleKey: 'provider-reolink:schema.s_siren.title',
-          description: '0 = play until turned off.',
+          description: 'Number of plays of the alarm tone; 0 = play until turned off.',
           descriptionKey: 'provider-reolink:schema.s_siren.description',
           columns: 1,
           fields: [
             {
               type: 'number',
               key: 'sirenDurationS',
-              label: 'Default duration (seconds)',
+              label: 'Default plays',
               labelKey: 'provider-reolink:schema.s_siren.sirenDurationS.label',
               default: 0,
               min: 0,

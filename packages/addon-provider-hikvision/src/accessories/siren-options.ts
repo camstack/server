@@ -1,4 +1,4 @@
-import type { SirenOptions } from '@camstack/types'
+import { SirenDurationUnit, type SirenOptions, SirenOptionsSource } from '@camstack/types'
 
 /**
  * The Hikvision siren is driven by holding an alarm input: the camera's
@@ -32,9 +32,9 @@ export function buildHikvisionSirenOptions(input: {
       step: HIKVISION_SIREN_STEP_SECONDS,
     },
     defaultSeconds,
-    unit: 'seconds',
+    unit: SirenDurationUnit.Seconds,
     secondsPerPlay: null,
-    source: input.portConfirmedByCamera ? 'camera' : 'fallback',
+    source: input.portConfirmedByCamera ? SirenOptionsSource.Camera : SirenOptionsSource.Fallback,
     fetchedAt: input.nowMs,
   }
 }

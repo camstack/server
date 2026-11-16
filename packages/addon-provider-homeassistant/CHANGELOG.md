@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Home Assistant export commands can carry the calling principal to the device audit (not yet sent by the component).
+- The timed siren capability is recorded as not exported (the siren stays a switch)
 
 ## [1.2.689] - 2026-11-14
 

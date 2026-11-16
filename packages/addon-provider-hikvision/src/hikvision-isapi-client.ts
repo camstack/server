@@ -7,6 +7,7 @@ import {
 import { Agent as HttpsAgent, request as httpsRequest } from 'node:https'
 import type { IScopedLogger, LogExtras } from '@camstack/types'
 import { buildAuthHeader, type DigestState, parseChallenge } from './digest-auth.js'
+import { patchMotionTriggerLinkageXml } from './hikvision-motion-linkage.js'
 import { hikvisionIgnoredAlarmReason } from './hikvision-alarm-ignore.js'
 import { createAlarmTypeTally } from './hikvision-alarm-tally.js'
 import {
@@ -1896,62 +1897,7 @@ export class HikvisionIsapiClient {
     patch: { beep?: boolean; whiteLight?: boolean; ioOutput?: boolean; center?: boolean },
   ): Promise<void> {
     const url = `/ISAPI/Event/triggers/VMD-${cameraNumber}`
-    let xml = await this.getText(url)
-
-    const methodMap: ReadonlyArray<{ key: keyof typeof patch; method: string }> = [
-      { key: 'beep', method: 'beep' },
-      { key: 'whiteLight', method: 'whiteLight' },
-      { key: 'ioOutput', method: 'IO' },
-      { key: 'center', method: 'center' },
-    ]
-
-    // Strip every method we manage from the list before re-inserting
-    // the wanted ones. Keep methods we don't manage (`record`,
-    // `email`, …) verbatim so the operator's other linkages survive.
-    const managed = methodMap.map((m) => m.method)
-    for (const method of managed) {
-      const re = new RegExp(
-        `<EventTriggerNotification[^>]*>[\\s\\S]*?<notificationMethod>${method}<\\/notificationMethod>[\\s\\S]*?<\\/EventTriggerNotification>`,
-        'gi',
-      )
-      xml = xml.replace(re, '')
-    }
-
-    // Read the current state to know which methods stay enabled when
-    // not in the patch (caller patches partial — undefined = leave as
-    // is). The current state was already in the original XML before we
-    // stripped; refetch via a fresh GET would be cleaner, but we can
-    // recover from the unstripped copy.
-    const original = await this.getText(url)
-    const current = parseMotionTriggerLinkage(original)
-    const desired: Record<string, boolean> = {
-      beep: patch.beep ?? current.beep,
-      whiteLight: patch.whiteLight ?? current.whiteLight,
-      IO: patch.ioOutput ?? current.ioOutput,
-      center: patch.center ?? current.center,
-    }
-
-    const additions: string[] = []
-    for (const m of methodMap) {
-      if (desired[m.method] === true) {
-        additions.push(
-          `<EventTriggerNotification><id>${m.method}</id><notificationMethod>${m.method}</notificationMethod></EventTriggerNotification>`,
-        )
-      }
-    }
-
-    // Inject the new entries inside the existing
-    // `<EventTriggerNotificationList>...</EventTriggerNotificationList>`
-    // block. If the list doesn't exist yet (rare on barebones firmware),
-    // append a fresh one before `</EventTrigger>`.
-    if (/<EventTriggerNotificationList\b/i.test(xml)) {
-      xml = xml.replace(/(<\/EventTriggerNotificationList>)/i, `${additions.join('')}$1`)
-    } else {
-      xml = xml.replace(
-        /(<\/EventTrigger>)/i,
-        `<EventTriggerNotificationList>${additions.join('')}</EventTriggerNotificationList>$1`,
-      )
-    }
+    const xml = patchMotionTriggerLinkageXml(await this.getText(url), patch)
     await this.putXml(url, xml)
   }
 }

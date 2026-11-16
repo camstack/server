@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Device Interactions show the add-on by name and, for an exporter, who it acted for.
+- Regenerated system hooks for the new timed siren capability
 
 ## [1.2.461] - 2026-11-16
 
