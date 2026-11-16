@@ -35,6 +35,8 @@ function functionLabel(draft: HelperDraft, t: Translate): string {
     case 'integral':
     case 'threshold':
     case 'derivative':
+    case 'grid':
+    case 'terminal':
       return t(`helper.template.${draft.kind}`)
     case 'arithmetic':
       return t(`helper.template.${draft.op}`)

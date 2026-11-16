@@ -73,6 +73,7 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
 const mocks = vi.hoisted(() => ({
   openSession: vi.fn(async () => ({ sessionId: 's-1' })),
   profileCalls: [] as string[],
+  compositions: undefined as unknown,
   registry: {
     status: 'success' as 'pending' | 'success' | 'error',
     data: {
@@ -92,7 +93,6 @@ const INSTANCES = [
       nodeId: 'hub',
       profileId: 'monitor',
       profileLabel: 'BTM',
-      cameraStableId: 'cam-1',
       executable: '/bin/btm',
       args: ['-b'],
       cwd: '',
@@ -115,10 +115,9 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
       render: (row: unknown) => unknown
     }[]
     rowActions: (row: unknown) => unknown
-    pageActions?: (rows: readonly unknown[]) => unknown
+    deleteNote?: (row: unknown) => string | null
   }) => (
     <table>
-      <caption>{props.pageActions?.([]) as never}</caption>
       <tbody>
         {INSTANCES.map((instance) => {
           const row = {
@@ -136,6 +135,7 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
                 <td key={column.key}>{column.render(row) as never}</td>
               ))}
               <td>{props.rowActions(row) as never}</td>
+              <td data-testid={`delete-note-${instance.id}`}>{props.deleteNote?.(row) ?? ''}</td>
             </tr>
           )
         })}
@@ -168,7 +168,11 @@ vi.mock('@camstack/ui-library', async () => {
         { id: 'edge', name: 'edge-proxmox' },
       ],
     }),
-    useDeviceManagerListAll: () => query([{ id: 4101, stableId: 'cam-1' }]),
+    useCoreBlocksListCompositions: () => ({
+      data: mocks.compositions,
+      isError: false,
+      isLoading: mocks.compositions === undefined,
+    }),
     useInstancesOfCap: () => query(INSTANCES),
     useTerminalSessionListProfiles: (input: { nodeId: string }) => {
       mocks.profileCalls.push(input.nodeId)
@@ -193,8 +197,51 @@ function renderPage() {
   )
 }
 
+// The camera of a Terminal is the block that names it (planning#580).
+const HUB_MONITOR_BLOCK = {
+  id: 'b-1',
+  name: 'Hub monitor',
+  code: '',
+  enabled: true,
+  placement: 'hub',
+  createdAt: 1,
+  updatedAt: 2,
+  createdBy: 'test',
+  status: 'running',
+  lastChangedAt: 1,
+  source: {
+    kind: 'composition',
+    composition: {
+      target: { kind: 'new', type: 'camera' },
+      features: [],
+      helper: { kind: 'terminal', terminalId: 'i-1' },
+    },
+  },
+}
+
+function loadedCompositions(): unknown {
+  return {
+    state: 'loaded',
+    views: [
+      {
+        block: HUB_MONITOR_BLOCK,
+        state: {
+          kind: 'answered',
+          state: {
+            blockId: 'b-1',
+            deviceId: 4101,
+            status: 'running',
+            fields: [],
+          },
+        },
+      },
+    ],
+  }
+}
+
 describe('TerminalPage', () => {
   beforeEach(() => {
+    mocks.compositions = loadedCompositions()
     mocks.openSession.mockClear()
     mocks.profileCalls.length = 0
     mocks.registry.status = 'success'
@@ -205,13 +252,26 @@ describe('TerminalPage', () => {
     }
   })
 
-  it('shows each terminal with its node, profile and camera link', () => {
+  it('shows each terminal with its node, profile and the camera block that shows it', () => {
     renderPage()
     const table = screen.getByRole('table')
     expect(within(table).getByText('BTM Hub')).toBeInTheDocument()
     expect(within(table).getByText('Hub')).toBeInTheDocument()
-    expect(within(table).getByRole('link', { name: /camera 4101/i })).toBeInTheDocument()
+    const link = within(table).getByRole('link', { name: /hub monitor/i })
+    expect(link).toHaveAttribute('href', '/devices/4101')
     expect(within(table).getAllByText('None')).toHaveLength(1)
+  })
+
+  it('a camera read that has not answered is never "None"', () => {
+    mocks.compositions = undefined
+    renderPage()
+    expect(screen.queryByText('None')).not.toBeInTheDocument()
+  })
+
+  it('the delete confirmation names the camera block that goes with the terminal', () => {
+    renderPage()
+    expect(screen.getByTestId('delete-note-i-1').textContent).toMatch(/Hub monitor/)
+    expect(screen.getByTestId('delete-note-i-2').textContent).toBe('')
   })
 
   it('attaches with the spawn values read from the record', async () => {

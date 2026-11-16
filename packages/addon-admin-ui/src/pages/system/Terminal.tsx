@@ -2,9 +2,10 @@
  * System → Terminal — operator UI for the `terminal-session` capability.
  *
  * ONE table of every Terminal instance across the cluster (name, node,
- * profile, enabled, camera, actions) and a "New terminal" dialog. An instance
- * and its camera are created in the same provider call, so a camera can never
- * exist before its terminal. A node without a terminal provider is listed
+ * profile, enabled, camera, actions) and a "New terminal" dialog. A Terminal's
+ * camera is the Build-your-self block that names it (planning#580): the camera
+ * column and the delete confirmation read the stored blocks, and deleting a
+ * Terminal deletes its camera block. A node without a terminal provider is listed
  * disabled, with the reason, in that dialog's node picker (the form's
  * `requiresCapability`), and is never queried here: a per-node
  * `terminal-session` call against it fails.
@@ -27,7 +28,7 @@ import {
   SectionCard,
   useCapabilityNodePresence,
   useClusterNodes,
-  useDeviceManagerListAll,
+  useCoreBlocksListCompositions,
   useInstancesOfCap,
   useTerminalSessionClose,
   useTerminalSessionListProfiles,
@@ -46,8 +47,12 @@ import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router-dom'
 import { AdminPage } from '../../components/AdminPage'
-import { TERMINAL_ADDON_ID, TerminalNodeSettings } from './terminal/TerminalNodeSettings'
+import { TerminalNodeSettings } from './terminal/TerminalNodeSettings'
 import { TerminalPanel } from '../../components/TerminalPanel'
+import {
+  type TerminalCameraBlock,
+  terminalCameraIndex,
+} from '../../components/composition-editor/camera-block-model'
 import { InstancesTable } from '../../components/instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../../components/instances/instances-model'
 import { TerminalProfileSettingsLead } from './terminal/TerminalProfileSettingsLead'
@@ -112,11 +117,8 @@ export function TerminalPage() {
   const presence = useCapabilityNodePresence(TERMINAL_CAPABILITY)
 
   const instancesQuery = useInstancesOfCap({ functionCap: 'terminal-session' })
-  // Only id + stableId are read, so the cheap projection is enough.
-  const devicesQuery = useDeviceManagerListAll({
-    addonId: TERMINAL_ADDON_ID,
-    projection: 'slim',
-  })
+  const compositionsQuery = useCoreBlocksListCompositions({}, { refetchInterval: 10_000 })
+  const cameras = terminalCameraIndex(compositionsQuery.data, compositionsQuery.isError)
   const openSession = useTerminalSessionOpenSession()
   const closeSession = useTerminalSessionClose()
 
@@ -179,10 +181,6 @@ export function TerminalPage() {
   }, [listedSessions])
 
   const instances = instancesQuery.data
-  const deviceIdByStableId = useMemo(
-    () => new Map((devicesQuery.data ?? []).map((device) => [device.stableId, device.id] as const)),
-    [devicesQuery.data],
-  )
   const nodeNameOf = (nodeId: string): string | undefined =>
     clusterNodes.find((node) => node.id === nodeId)?.name
 
@@ -224,12 +222,9 @@ export function TerminalPage() {
     }
   }
 
-  /** The camera a Terminal declares: the adopted monitor's id, else the one derived from the record id. */
-  const cameraStableIdOf = (row: PanelRow): string => {
-    if (row.kind !== 'instance') return ''
-    const adopted = valueOf(row, 'cameraStableId')
-    return adopted !== '' ? adopted : `terminal-camera-instance-${row.id}`
-  }
+  /** The camera block that shows a Terminal, once the blocks answered. */
+  const cameraOf = (row: PanelRow): TerminalCameraBlock | undefined =>
+    cameras.kind === 'ready' && row.kind === 'instance' ? cameras.byTerminal.get(row.id) : undefined
   const targetById = useMemo(
     () =>
       new Map(
@@ -266,21 +261,30 @@ export function TerminalPage() {
     {
       key: 'camera',
       header: t('terminalPage.colCamera', 'Camera'),
-      sortValue: (row) => (deviceIdByStableId.has(cameraStableIdOf(row)) ? 1 : 0),
+      sortValue: (row) => cameraOf(row)?.name.toLowerCase() ?? '',
       render: (row) => {
-        const deviceId = deviceIdByStableId.get(cameraStableIdOf(row))
-        if (deviceId === undefined) {
+        if (cameras.kind === 'pending') return <span className="text-foreground-subtle">…</span>
+        if (cameras.kind === 'unknown') {
+          return (
+            <span className="text-foreground-subtle">
+              {t('terminalPage.cameraUnknown', 'Unknown')}
+            </span>
+          )
+        }
+        const camera = cameraOf(row)
+        if (camera === undefined) {
           return (
             <span className="text-foreground-subtle">{t('terminalPage.noCamera', 'None')}</span>
           )
         }
+        if (camera.deviceId === null) return <span>{camera.name}</span>
         return (
           <Link
-            to={`/devices/${String(deviceId)}`}
+            to={`/devices/${String(camera.deviceId)}`}
             className="inline-flex items-center gap-1 text-primary hover:underline"
           >
             <Cable className="h-3 w-3" aria-hidden />
-            {t('terminalPage.cameraLink', 'Camera {{id}}', { id: deviceId })}
+            {camera.name}
           </Link>
         )
       },
@@ -340,6 +344,14 @@ export function TerminalPage() {
         extraColumns={extraColumns}
         lead={(row) => <TerminalProfileSettingsLead row={row} />}
         rowActions={rowActions}
+        deleteNote={(row) => {
+          const camera = cameraOf(row)
+          return camera === undefined
+            ? null
+            : t('terminalPage.deleteCamera', 'Its camera {{name}} is deleted with it.', {
+                name: camera.name,
+              })
+        }}
       />
 
       {attachedSessionInfo && attached && (

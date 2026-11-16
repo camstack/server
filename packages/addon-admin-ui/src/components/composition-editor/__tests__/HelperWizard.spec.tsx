@@ -41,6 +41,15 @@ vi.mock('../../device/customize/source-selector/SourceSelector', () => ({
   ),
 }))
 
+// The picker reads the Terminals and the blocks; its behaviour is its own spec's.
+vi.mock('../TerminalCameraPicker', () => ({
+  TerminalCameraPicker: ({ onChange }: { readonly onChange: (terminalId: string) => void }) => (
+    <button type="button" data-testid="terminal-camera-picker" onClick={() => onChange('term-1')}>
+      pick terminal
+    </button>
+  ),
+}))
+
 function renderWizard(
   onSave: (draft: HelperDraft, intent: 'open' | 'again') => Promise<HelperSaveResult>,
 ): void {
@@ -193,5 +202,53 @@ describe('HelperWizard', () => {
     await vi.waitFor(() =>
       expect((screen.getByTestId('helper-save-open') as HTMLButtonElement).disabled).toBe(false),
     )
+  })
+
+  it('a camera grid saves with only a name: no members step', async () => {
+    const onSave = vi.fn(
+      async (_draft: HelperDraft, _intent: 'open' | 'again'): Promise<HelperSaveResult> => ({
+        kind: 'saved',
+        deviceId: 1,
+      }),
+    )
+    renderWizard(onSave)
+    pick('grid')
+    expect(screen.queryByTestId('helper-to-members')).toBeNull()
+    const save = screen.getByTestId('helper-save-open') as HTMLButtonElement
+    expect(save.disabled).toBe(true)
+    fireEvent.change(screen.getByTestId('helper-name'), {
+      target: { value: 'Driveway wall' },
+    })
+    fireEvent.click(save)
+    await vi.waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+    expect(onSave.mock.calls[0]?.[0]).toEqual({
+      kind: 'grid',
+      name: 'Driveway wall',
+      room: '',
+    })
+  })
+
+  it('a Terminal camera saves once a Terminal is picked', async () => {
+    const onSave = vi.fn(
+      async (_draft: HelperDraft, _intent: 'open' | 'again'): Promise<HelperSaveResult> => ({
+        kind: 'saved',
+        deviceId: 1,
+      }),
+    )
+    renderWizard(onSave)
+    pick('terminal')
+    fireEvent.change(screen.getByTestId('helper-name'), {
+      target: { value: 'Hub monitor' },
+    })
+    const save = screen.getByTestId('helper-save-open') as HTMLButtonElement
+    expect(save.disabled).toBe(true)
+    fireEvent.click(screen.getByTestId('terminal-camera-picker'))
+    expect(save.disabled).toBe(false)
+    fireEvent.click(save)
+    await vi.waitFor(() => expect(onSave).toHaveBeenCalledTimes(1))
+    expect(onSave.mock.calls[0]?.[0]).toMatchObject({
+      kind: 'terminal',
+      terminalId: 'term-1',
+    })
   })
 })

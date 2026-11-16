@@ -270,6 +270,19 @@ const gridHelperObject = z.object({
 
 export const GridHelperSpecSchema: z.ZodType<GridHelperSpec> = gridHelperObject
 
+/** A new grid: no cells yet, 10 fps, publishing the mid and low profiles. */
+export const DEFAULT_GRID_FPS: number = 10
+export const DEFAULT_GRID_PROFILES: readonly GridProfile[] = ['mid', 'low']
+
+export function newGridHelperSpec(): GridHelperSpec {
+  return {
+    kind: 'grid',
+    fps: DEFAULT_GRID_FPS,
+    publishedProfiles: [...DEFAULT_GRID_PROFILES],
+    cells: [],
+  }
+}
+
 /**
  * A Terminal camera (planning#580): the camera of one Terminal, created on the
  * Terminal page. The composer declares the camera; addon-terminal serves it.

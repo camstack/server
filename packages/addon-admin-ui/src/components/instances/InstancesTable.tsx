@@ -110,6 +110,11 @@ export interface InstancesTableProps {
   /** An instance row whose delete the page knows the hub would refuse shows no Delete. Absent keeps it. */
   readonly canDelete?: (row: InstanceRow) => boolean
   /**
+   * One sentence the page adds to a record's delete confirmation: what else goes with it
+   * (a Terminal's camera). Null adds nothing.
+   */
+  readonly deleteNote?: (row: InstanceRow) => string | null
+  /**
    * A page that can answer a refused delete (a forced delete behind a second confirmation) gets the
    * error first: `true` means it handled it, `false` leaves the generic failure toast.
    */
@@ -249,6 +254,7 @@ export function InstancesTable({
   rowActions,
   fixedRowActions,
   canDelete,
+  deleteNote,
   onDeleteRefused,
   pageActions,
   typedId,
@@ -331,6 +337,7 @@ export function InstancesTable({
               { names: pinning.join(', ') },
             )}`
           : ''
+      const note = deleteNote?.(row) ?? null
       const ok = await confirm({
         title: t('providerInstances.deleteTitle', 'Delete {{name}}?', {
           name: row.name,
@@ -338,7 +345,7 @@ export function InstancesTable({
         message: `${t(
           'providerInstances.deleteMessage',
           'The record and its stored credentials are removed.',
-        )}${pinned}`,
+        )}${pinned}${note === null ? '' : ` ${note}`}`,
         confirmLabel: t('common.delete', 'Delete'),
         variant: 'danger',
       })
@@ -358,7 +365,7 @@ export function InstancesTable({
         })
       }
     },
-    [confirm, onDeleteRefused, queryClient, system, t, targets.data],
+    [confirm, deleteNote, onDeleteRefused, queryClient, system, t, targets.data],
   )
 
   const showKind = useMemo(

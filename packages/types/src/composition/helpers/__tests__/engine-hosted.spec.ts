@@ -14,6 +14,7 @@ import {
   helperMembers,
   isEngineHostedHelper,
   MAX_GRID_CELLS,
+  newGridHelperSpec,
   type TerminalHelperSpec,
 } from '../spec.js'
 
@@ -66,5 +67,18 @@ describe('engine-hosted helper specs', () => {
       expect(result.composition.helper).toEqual(spec)
       expect(CompositionSchema.safeParse(result.composition).success).toBe(true)
     }
+  })
+})
+
+describe('a new camera grid', () => {
+  it('starts empty, at 10 fps, publishing the mid and low profiles, and compiles', () => {
+    const spec = newGridHelperSpec()
+    expect(spec).toEqual({
+      kind: 'grid',
+      fps: 10,
+      publishedProfiles: ['mid', 'low'],
+      cells: [],
+    })
+    expect(compileHelper(spec).ok).toBe(true)
   })
 })

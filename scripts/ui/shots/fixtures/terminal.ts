@@ -131,26 +131,46 @@ export default defineFixtures({
       ],
     }),
     'pipelineOrchestrator.listAgentSettings': [],
-    'deviceManager.listAll': [
-      {
-        id: 4101,
-        stableId: 'terminal-camera-instance-3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0001',
-        addonId: 'terminal',
-        type: 'camera',
-        name: 'BTM Hub',
-        location: null,
-        disabled: false,
-        parentDeviceId: null,
-        role: 'terminal-camera',
-        online: true,
-        probed: true,
-        features: [],
-        isCamera: true,
-        config: {},
-        secretConfigPaths: [],
-        metadata: {},
-      },
-    ],
+    // A Terminal's camera is the block that names it (planning#580): BTM Hub has one.
+    'coreBlocks.listCompositions': {
+      state: 'loaded',
+      views: [
+        {
+          block: {
+            id: 'blk-hub-monitor',
+            name: 'Hub monitor',
+            code: '',
+            enabled: true,
+            placement: 'hub',
+            createdAt: NOW - 86_400_000,
+            updatedAt: NOW - 3_600_000,
+            createdBy: 'admin',
+            status: 'running',
+            lastChangedAt: NOW - 3_600_000,
+            source: {
+              kind: 'composition',
+              composition: {
+                target: { kind: 'new', type: 'camera' },
+                features: [],
+                helper: {
+                  kind: 'terminal',
+                  terminalId: '3f6c1c1e-0a51-4d0e-9a52-1d1b6f2a0001',
+                },
+              },
+            },
+          },
+          state: {
+            kind: 'answered',
+            state: {
+              blockId: 'blk-hub-monitor',
+              deviceId: 4101,
+              status: 'running',
+              fields: [],
+            },
+          },
+        },
+      ],
+    },
     'terminalSession.listProfiles': PROFILES,
     'terminalSession.serverShellStatus': (i: { nodeId?: string }) => ({
       nodeId: i.nodeId ?? 'hub',
@@ -163,16 +183,6 @@ export default defineFixtures({
       },
     }),
     'terminalSession.listSessions': [],
-    'terminalSession.listLegacyCameras': [
-      {
-        stableId: 'terminal-camera-garage-nuc',
-        nodeId: 'garage-nuc',
-        profileId: 'monitor',
-        profileLabel: 'BTM',
-        name: 'Garage NUC monitor',
-        adoptable: true,
-      },
-    ],
     'integrationInstances.describe': (i: { addonId: string }) =>
       i.addonId === 'terminal'
         ? {

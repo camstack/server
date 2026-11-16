@@ -2,6 +2,8 @@
  * New or edit a group helper as its template (D944). Three steps: template,
  * reducer / name, members via the common source selector. Back keeps the
  * draft and never returns to the type list: the type is fixed once chosen.
+ * A camera block (a grid, a Terminal camera) has no members and saves from
+ * its second step (planning#580).
  */
 import {
   ACTIVE_CRITERIA,
@@ -22,6 +24,7 @@ import { SourceSelector } from '../device/customize/source-selector/SourceSelect
 import { devicePath } from '../../lib/customization-routes'
 import { RefusalList } from './RefusalList'
 import { HelperTemplatePicker } from './HelperTemplatePicker'
+import { TerminalCameraPicker } from './TerminalCameraPicker'
 import {
   canSaveDraft,
   type DerivativeFormDraft,
@@ -34,6 +37,7 @@ import {
   type HelperSaveResult,
   type HelperTemplatePick,
   type IntegralFormDraft,
+  isCameraDraft,
   memberRequest,
   type RefusalLine,
   type StatisticFormDraft,
@@ -140,6 +144,8 @@ export function HelperWizard({
   const request = draft === null ? null : memberRequest(draft)
   const template = draft !== null && draft.kind === 'group' ? groupTemplate(draft.templateId) : null
   const members = draft === null ? [] : draftMembers(draft)
+  // A camera block has no members: it saves from its parameters step.
+  const saveStep: WizardStep = draft !== null && isCameraDraft(draft) ? 'parameters' : 'members'
 
   return (
     <div
@@ -230,6 +236,21 @@ export function HelperWizard({
           <NameField name={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
         </div>
       )}
+      {step === 'parameters' && draft !== null && isCameraDraft(draft) && (
+        <div
+          className="grid grid-cols-1 gap-2 sm:grid-cols-2"
+          data-testid="helper-camera-parameters"
+        >
+          <NameField name={draft.name} onChange={(name) => setDraft({ ...draft, name })} />
+          {draft.kind === 'terminal' && (
+            <TerminalCameraPicker
+              value={draft.terminalId}
+              ownBlockId={null}
+              onChange={(terminalId) => setDraft({ ...draft, terminalId })}
+            />
+          )}
+        </div>
+      )}
       {step === 'parameters' && draft?.kind === 'expression' && (
         <ExpressionParameters draft={draft} onChange={setDraft} />
       )}
@@ -273,7 +294,7 @@ export function HelperWizard({
             {t('helper.back')}
           </Button>
         )}
-        {step === 'parameters' && draft !== null && (
+        {step === 'parameters' && draft !== null && saveStep === 'members' && (
           <Button
             data-testid="helper-to-members"
             disabled={draft.name.trim() === ''}
@@ -285,7 +306,7 @@ export function HelperWizard({
             {t('helper.next')}
           </Button>
         )}
-        {step === 'members' && draft !== null && purpose === 'edit' && (
+        {step === saveStep && draft !== null && purpose === 'edit' && (
           <Button
             data-testid="helper-save"
             disabled={!canSaveDraft(draft) || busy}
@@ -294,7 +315,7 @@ export function HelperWizard({
             {pressed === 'open' ? t('helper.saving') : t('helper.save')}
           </Button>
         )}
-        {step === 'members' && draft !== null && purpose === 'create' && (
+        {step === saveStep && draft !== null && purpose === 'create' && (
           <>
             <Button
               data-testid="helper-save-open"
@@ -776,6 +797,9 @@ function mathMembersHint(draft: HelperDraft): string {
 }
 
 function stepCopy(step: WizardStep, draft: HelperDraft | null): string {
+  if (draft !== null && isCameraDraft(draft) && step === 'parameters') {
+    return `helper.step.camera.${draft.kind}`
+  }
   if (
     draft?.kind === 'threshold' ||
     draft?.kind === 'arithmetic' ||

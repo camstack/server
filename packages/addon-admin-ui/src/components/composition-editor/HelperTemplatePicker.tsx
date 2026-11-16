@@ -10,7 +10,19 @@ import {
 } from '@camstack/types'
 import { deviceIconGlyph, GroupedTilePicker } from '@camstack/ui-library'
 import type { TFunction } from 'i18next'
-import { BarChart3, Blocks, Divide, Gauge, Minus, Plus, Sigma, TrendingUp, Zap } from 'lucide-react'
+import {
+  BarChart3,
+  Blocks,
+  Divide,
+  Gauge,
+  LayoutGrid,
+  Minus,
+  MonitorPlay,
+  Plus,
+  Sigma,
+  TrendingUp,
+  Zap,
+} from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { COMPOSITION_PRESETS, type CompositionPreset } from './composition-presets'
@@ -54,7 +66,7 @@ export function HelperTemplatePicker({
             onPreset?.(preset.id)
             return
           }
-          if (key === 'statistic' || key === 'integral') {
+          if (key === 'statistic' || key === 'integral' || key === 'grid' || key === 'terminal') {
             onPick({ kind: key })
             return
           }
@@ -87,6 +99,11 @@ export function HelperTemplatePicker({
               historyTile('statistic', BarChart3, t),
               historyTile('integral', Zap, t),
             ],
+          },
+          {
+            id: 'cameras',
+            label: t('helper.section.cameras'),
+            tiles: [cameraTile('grid', LayoutGrid, t), cameraTile('terminal', MonitorPlay, t)],
           },
           {
             id: 'advanced',
@@ -151,6 +168,23 @@ function historyTile(
     icon: <Icon className="h-5 w-5 text-foreground-muted" aria-hidden />,
     detailLabel: t('helper.detailsOf', { name: label }),
     detail: <HistoryDetail id={id} />,
+  }
+}
+
+/** A camera block an engine hosts: a grid of cameras, or a Terminal's screen (planning#580). */
+function cameraTile(id: 'grid' | 'terminal', Icon: typeof LayoutGrid, t: TFunction): PickerTile {
+  const label = t(`helper.template.${id}`)
+  return {
+    key: id,
+    label,
+    testId: `helper-template-${id}`,
+    icon: <Icon className="h-5 w-5 text-foreground-muted" aria-hidden />,
+    detailLabel: t('helper.detailsOf', { name: label }),
+    detail: (
+      <div className="max-w-xs text-xs">
+        <p className="text-foreground-muted">{t(`helper.detail.${id}`)}</p>
+      </div>
+    ),
   }
 }
 
