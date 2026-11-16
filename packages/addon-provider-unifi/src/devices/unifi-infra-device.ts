@@ -39,7 +39,8 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
  * `applyDerivedSpec`. Mirrors `EcowittContainerDevice`.
  *
  * The fan-out per infra device:
- *   - one PoE port device per PoE-capable port (switch / power-meter / reboot / network-link),
+ *   - one PoE port device per PoE-capable port: power-meter and network-link, plus a PoE
+ *     switch when a local account can set it (never a reboot or power-cycle control),
  *   - a restart Button child (no LED switch),
  *   - cpu_utilization / cpu_temperature / clients / state / uptime Sensor children.
  */
