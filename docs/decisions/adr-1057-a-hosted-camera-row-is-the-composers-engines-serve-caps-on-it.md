@@ -1,5 +1,5 @@
 ---
-id: D1056
+id: D1057
 title: A hosted camera row is the composer's; engines serve caps on it
 status: accepted
 date: 2026-11-16

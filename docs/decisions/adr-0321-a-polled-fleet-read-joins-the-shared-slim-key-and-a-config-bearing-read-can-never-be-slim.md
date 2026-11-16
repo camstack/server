@@ -186,7 +186,7 @@ Tests, each confirmed RED by reverting the line it guards:
   no-field-lost proof rather than a restatement — plus a counter-test that the
   row parse actually drops a row missing an identity field, so "the slim row
   renders" is a fact about slim and not about a parse that accepts anything.
-- `packages/addon-terminal/src/__tests__/legacy-camera-read-shape.spec.ts` (removed with the legacy cameras, D1056) <!-- drift-ok --> —
+- `packages/addon-terminal/src/__tests__/legacy-camera-read-shape.spec.ts` (removed with the legacy cameras, D1057) <!-- drift-ok --> —
   pins that a slim answer is shape-identical to "no legacy cameras", and that
   every candidate row dropped for want of `nodeId` is reported with its numeric
   device id while a non-candidate row stays silent (a 1 017-device fleet must
