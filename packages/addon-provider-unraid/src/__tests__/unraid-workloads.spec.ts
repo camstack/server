@@ -5,13 +5,20 @@
  */
 import {
   type DeviceConstructor,
+  type DeviceContext,
+  DeviceRole,
   DeviceType,
+  type IDeviceRuntimeState,
+  type WorkloadOptions,
+  type WorkloadStatus,
   type IDevice,
   type InitialDeviceMeta,
   type IScopedLogger,
 } from '@camstack/types'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { settingsToConnection, UNRAID_SYSTEM } from '../config.js'
+import { UnraidProviderAddon } from '../addon.js'
+import { UnraidInstanceDevice } from '../devices/unraid-instance-device.js'
 import { UnraidWorkloadDevice } from '../devices/unraid-workload-device.js'
 import { buildUnraidAdoptionProvider } from '../unraid-adoption-provider.js'
 import type {
@@ -27,6 +34,7 @@ import {
 } from '../unraid-discovery.js'
 import { reconcileInstanceEntities } from '../unraid-entity-reconcile.js'
 import { UnraidIntegrationManager } from '../unraid-integration-manager.js'
+import { unraidInstances } from '../unraid-node-resolver.js'
 import { buildEntityIdentities } from '../unraid-mapping.js'
 
 const INT = 'int-1'
@@ -44,7 +52,10 @@ const quiet: IScopedLogger = {
 const container = (local: string, name: string): UnraidContainerInfo => ({
   id: `${SERVER}:${local}`,
   name,
-  running: true,
+  state: 'running',
+  image: `${name}:latest`,
+  autostart: true,
+  updateAvailable: null,
   cpuPercent: 1,
   memPercent: 2,
 })
@@ -77,10 +88,10 @@ describe('Unraid discovery: the server, each container and each VM', () => {
     })
     expect(candidates.map((c) => [c.childNativeId, c.name, c.type])).toEqual([
       [UNRAID_GATEWAY_ID, expect.any(String), DeviceType.Gateway],
-      [UNRAID_INSTANCE_ID, 'Tower', DeviceType.Container],
-      ['docker:plex', 'plex', DeviceType.Generic],
-      ['docker:sonarr', 'sonarr', DeviceType.Generic],
-      ['vm:uuid-ccu', 'CCU3', DeviceType.Generic],
+      [UNRAID_INSTANCE_ID, 'Tower', DeviceType.Workload],
+      ['docker:plex', 'plex', DeviceType.Workload],
+      ['docker:sonarr', 'sonarr', DeviceType.Workload],
+      ['vm:uuid-ccu', 'CCU3', DeviceType.Workload],
     ])
     expect(candidates.find((c) => c.childNativeId === 'docker:plex')?.adoptedDeviceId).toBe(42)
     expect(candidates.find((c) => c.childNativeId === 'vm:uuid-ccu')?.alreadyAdopted).toBe(false)
@@ -164,7 +175,8 @@ describe('Unraid adoption: a container or a VM is its own device', () => {
     expect(device?.cls).toBe(UnraidWorkloadDevice)
     expect(device?.parentDeviceId).toBeNull()
     expect(device?.meta).toMatchObject({
-      type: DeviceType.Generic,
+      type: DeviceType.Workload,
+      role: DeviceRole.AppContainer,
       name: 'sonarr',
       integrationId: INT,
     })
@@ -179,10 +191,17 @@ describe('Unraid adoption: a container or a VM is its own device', () => {
   it('adopting a VM creates that VM, keyed on its domain id, not the server prefix', async () => {
     const { provider, created } = adoptionHarness(snapshot())
     await provider.adopt({ integrationId: INT, childNativeIds: ['vm:uuid-ccu'] })
-    expect(created.map((c) => [c.stableId, c.meta?.name])).toEqual([
-      [`unraid:${INT}:vm:uuid-ccu`, 'CCU3'],
+    expect(created.map((c) => [c.stableId, c.meta?.name, c.meta?.type, c.meta?.role])).toEqual([
+      [`unraid:${INT}:vm:uuid-ccu`, 'CCU3', DeviceType.Workload, DeviceRole.Vm],
     ])
     expect(created[0]?.config['workload']).toEqual({ kind: 'vm', localId: 'uuid-ccu' })
+  })
+
+  it('adopting the server creates it as the workload host', async () => {
+    const { provider, created } = adoptionHarness(snapshot())
+    await provider.adopt({ integrationId: INT, childNativeIds: [UNRAID_INSTANCE_ID] })
+    expect(created[0]?.cls).toBe(UnraidInstanceDevice)
+    expect(created[0]?.meta).toMatchObject({ type: DeviceType.Workload, role: DeviceRole.Host })
   })
 
   it('a retried adopt is a no-op, and a name not on the server is refused', async () => {
@@ -207,7 +226,7 @@ describe('Unraid: a failed docker read keeps the devices', () => {
         setState: done,
         parity: { start: done, cancel: done },
       },
-      docker: { list: dockerList, start: done, stop: done },
+      docker: { list: dockerList, start: done, stop: done, pause: done, unpause: done },
       vms: {
         list: async () => [],
         start: done,
@@ -269,5 +288,193 @@ describe('Unraid: a failed docker read keeps the devices', () => {
     expect(apply).not.toHaveBeenCalled()
     expect(removed).toEqual([])
     expect([...adopted.values()].map((c) => c['nativeId'])).toEqual(['docker:plex'])
+  })
+})
+
+interface WorkloadProviderView {
+  getOptions(input: { deviceId: number }): Promise<WorkloadOptions>
+  readonly start?: (input: { deviceId: number }) => Promise<void>
+  readonly stop?: (input: { deviceId: number }) => Promise<void>
+  readonly restart?: (input: { deviceId: number }) => Promise<void>
+  readonly pause?: (input: { deviceId: number }) => Promise<void>
+  readonly resume?: (input: { deviceId: number }) => Promise<void>
+  readonly forceStop?: (input: { deviceId: number }) => Promise<void>
+}
+
+function isWorkloadProvider(value: unknown): value is WorkloadProviderView {
+  return typeof value === 'object' && value !== null && 'getOptions' in value
+}
+
+/** A stub device context: only what the device reads. */
+function rig(config: Record<string, unknown>, id: number) {
+  const providers = new Map<string, unknown>()
+  let runtime: IDeviceRuntimeState | null = null
+  // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
+  const ctx = {
+    id,
+    stableId: `unraid:${INT}:x`,
+    parentDeviceId: null,
+    deviceMeta: {
+      type: DeviceType.Workload,
+      name: 'w',
+      location: null,
+      disabled: false,
+      addonId: 'provider-unraid',
+      metadata: {},
+    },
+    persistedConfig: config,
+    initialRuntimeState: {},
+    eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
+    persistConfig: vi.fn(async () => {}),
+    bindRuntimeState: (rs: IDeviceRuntimeState) => {
+      runtime = rs
+    },
+    registerNativeCap: vi.fn((cap: { name: string; runtimeState?: unknown }, provider: unknown) => {
+      providers.set(cap.name, provider)
+      if (cap.runtimeState && runtime) {
+        runtime.installCapSchema(
+          cap.name,
+          cap.runtimeState as Parameters<IDeviceRuntimeState['installCapSchema']>[1],
+        )
+      }
+    }),
+    api: {},
+    logger: quiet,
+  } as unknown as DeviceContext
+  return { ctx, providers }
+}
+
+describe('Unraid workload devices serve the workload cap', () => {
+  afterEach(() => unraidInstances.clear())
+
+  async function live() {
+    const done = async (): Promise<void> => undefined
+    const calls: string[] = []
+    const rec =
+      (what: string) =>
+      async (id: string): Promise<void> => {
+        calls.push(`${what} ${id}`)
+      }
+    const client: UnraidClientLike = {
+      connect: done,
+      disconnect: done,
+      array: {
+        get: async () => snapshot().array,
+        setState: done,
+        parity: { start: done, cancel: done },
+      },
+      docker: {
+        list: async () => snapshot().dockers ?? [],
+        start: rec('docker.start'),
+        stop: rec('docker.stop'),
+        pause: rec('docker.pause'),
+        unpause: rec('docker.unpause'),
+      },
+      vms: {
+        list: async () => snapshot().vms ?? [],
+        start: rec('vm.start'),
+        stop: rec('vm.stop'),
+        pause: rec('vm.pause'),
+        resume: rec('vm.resume'),
+        forceStop: rec('vm.forceStop'),
+        reboot: rec('vm.reboot'),
+      },
+      system: { cpu: async () => snapshot().cpu },
+      notifications: { active: async () => snapshot().notifications },
+    }
+    const manager = new UnraidIntegrationManager({
+      id: INT,
+      name: 'Tower',
+      connection: settingsToConnection({ host: 'tower.example.com', apiKey: 'k' }),
+      logger: quiet,
+      onConnected: () => undefined,
+      onDisconnected: () => undefined,
+      onPolled: () => undefined,
+      makeClient: () => client,
+    })
+    await manager.start()
+    unraidInstances.set(INT, manager)
+    return { calls, manager }
+  }
+
+  const SERVER_CONFIG = {
+    instanceId: INT,
+    integrationId: INT,
+    nativeId: UNRAID_INSTANCE_ID,
+    entities: [],
+  }
+
+  it('a container: state from the snapshot, the server as host, docker controls by live id, a power switch', async () => {
+    const { calls, manager } = await live()
+    await new UnraidInstanceDevice(rig(SERVER_CONFIG, 42).ctx).onActivate()
+    const { ctx, providers } = rig(
+      { nativeId: 'docker:plex', integrationId: INT, workload: { kind: 'docker', name: 'plex' } },
+      50,
+    )
+    const device = new UnraidWorkloadDevice(ctx)
+    await device.onActivate()
+    const workload = providers.get('workload')
+    if (!isWorkloadProvider(workload)) throw new Error('workload cap missing')
+    expect(providers.has('switch')).toBe(true)
+    const slice = device.runtimeState.getCapState<WorkloadStatus>('workload')
+    expect(slice?.state).toBe('running')
+    expect(slice?.hostDeviceId).toBe(42)
+    expect(slice?.image).toBe('plex:latest')
+    expect(workload.restart).toBeUndefined()
+    expect(workload.forceStop).toBeUndefined()
+    await workload.stop?.({ deviceId: 50 })
+    await workload.pause?.({ deviceId: 50 })
+    await workload.resume?.({ deviceId: 50 })
+    expect(calls).toEqual([
+      `docker.stop ${SERVER}:aaa`,
+      `docker.pause ${SERVER}:aaa`,
+      `docker.unpause ${SERVER}:aaa`,
+    ])
+    await manager.stop()
+  })
+
+  it('a VM: reboot is its restart, force stop is served', async () => {
+    const { calls, manager } = await live()
+    const { ctx, providers } = rig(
+      {
+        nativeId: 'vm:uuid-ccu',
+        integrationId: INT,
+        workload: { kind: 'vm', localId: 'uuid-ccu' },
+      },
+      51,
+    )
+    await new UnraidWorkloadDevice(ctx).onActivate()
+    const workload = providers.get('workload')
+    if (!isWorkloadProvider(workload)) throw new Error('workload cap missing')
+    expect((await workload.getOptions({ deviceId: 51 })).supportsRestart).toBe(true)
+    await workload.restart?.({ deviceId: 51 })
+    await workload.forceStop?.({ deviceId: 51 })
+    expect(calls).toEqual([`vm.reboot ${SERVER}:uuid-ccu`, `vm.forceStop ${SERVER}:uuid-ccu`])
+    await manager.stop()
+  })
+
+  it('the server serves the workload cap as a host with no controls and no switch', async () => {
+    const { manager } = await live()
+    const { ctx, providers } = rig(SERVER_CONFIG, 42)
+    const server = new UnraidInstanceDevice(ctx)
+    await server.onActivate()
+    expect(providers.has('workload')).toBe(true)
+    expect(providers.has('switch')).toBe(false)
+    const slice = server.runtimeState.getCapState<WorkloadStatus>('workload')
+    expect(slice?.state).toBe('running')
+    expect(slice?.resources.cpuPercent).toBe(12)
+    await manager.stop()
+  })
+
+  it('a persisted workload row is rebuilt with the right class: the server vs a container', () => {
+    class Inspectable extends UnraidProviderAddon {
+      classFor(stableId: string) {
+        return this.deviceClassForRow({ type: DeviceType.Workload, stableId })
+      }
+    }
+    const addon = new Inspectable()
+    expect(addon.classFor(`unraid:${INT}:${UNRAID_INSTANCE_ID}`)).toBe(UnraidInstanceDevice)
+    expect(addon.classFor(`unraid:${INT}:docker:plex`)).toBe(UnraidWorkloadDevice)
+    expect(addon.classFor(`unraid:${INT}:vm:uuid-ccu`)).toBe(UnraidWorkloadDevice)
   })
 })

@@ -1,4 +1,4 @@
-import { type DeviceManagerApi, DeviceType } from '@camstack/types'
+import { type DeviceManagerApi, DeviceRole, DeviceType } from '@camstack/types'
 import { UNRAID_SYSTEM } from './config.js'
 import { UnraidGatewayDevice } from './devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
@@ -12,6 +12,7 @@ import {
   unraidStableId,
 } from './unraid-discovery.js'
 import { identitiesOf } from './unraid-entity-reconcile.js'
+import { unraidWorkloadRole } from './unraid-workload-state.js'
 
 /** Inputs of one container / VM adoption: its `childNativeId` (`docker:…` / `vm:…`). */
 export interface UnraidWorkloadAdoptInput {
@@ -67,7 +68,7 @@ export function buildUnraidDeviceAdopter(input: {
         UnraidInstanceDevice,
         config,
         null,
-        { type: DeviceType.Container, name, integrationId },
+        { type: DeviceType.Workload, role: DeviceRole.Host, name, integrationId },
       )
       const children = await devices.getChildren(device.id)
       return { deviceId: device.id, accessoryDeviceIds: children.map((c) => c.id) }
@@ -93,7 +94,12 @@ export function buildUnraidDeviceAdopter(input: {
         UnraidWorkloadDevice,
         config,
         null,
-        { type: DeviceType.Generic, name, integrationId },
+        {
+          type: DeviceType.Workload,
+          role: unraidWorkloadRole(parsed.ref.kind),
+          name,
+          integrationId,
+        },
       )
       return { deviceId: device.id }
     },

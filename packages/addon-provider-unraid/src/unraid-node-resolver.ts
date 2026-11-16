@@ -19,6 +19,8 @@ export class UnraidNodeResolver {
    * A plain `Set` of callbacks has no listener limit.
    */
   readonly #snapshotSubs: Map<string, Set<() => void>> = new Map()
+  /** The server device per instance: the `hostDeviceId` of its containers and VMs. */
+  readonly #hostDevices: Map<string, number> = new Map()
 
   /** Publish or remove the manager for an instance id. `null` removes the entry. */
   set(instanceId: string, manager: UnraidIntegrationManager | null): void {
@@ -37,6 +39,17 @@ export class UnraidNodeResolver {
   /** The most-recent snapshot for an instance id, or null. */
   getSnapshot(instanceId: string): UnraidSnapshot | null {
     return this.#managers.get(instanceId)?.getSnapshot() ?? null
+  }
+
+  /** Record (or, with null, forget) the server device of an instance. */
+  setHostDevice(instanceId: string, deviceId: number | null): void {
+    if (deviceId === null) this.#hostDevices.delete(instanceId)
+    else this.#hostDevices.set(instanceId, deviceId)
+  }
+
+  /** The server device of an instance, or null while it is not adopted / not running. */
+  getHostDevice(instanceId: string): number | null {
+    return this.#hostDevices.get(instanceId) ?? null
   }
 
   /** Subscribe a child to per-instance poll ticks. Returns an unsubscribe fn. */
@@ -71,6 +84,7 @@ export class UnraidNodeResolver {
   clear(): void {
     this.#managers.clear()
     this.#snapshotSubs.clear()
+    this.#hostDevices.clear()
   }
 }
 

@@ -75,7 +75,10 @@ const SNAPSHOT: UnraidSnapshot = {
     {
       id: 'c1',
       name: 'marker-plex',
-      running: true,
+      state: 'running',
+      image: null,
+      autostart: null,
+      updateAvailable: null,
       cpuPercent: 1,
       memPercent: 2,
     },
@@ -176,6 +179,7 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     const keys: readonly string[] = Object.keys(classes)
     expect(keys).not.toContain('hub')
     expect(classes[DeviceType.Gateway]).toBe(UnraidGatewayDevice)
+    // A server row adopted before the workload host keeps its class.
     expect(classes[DeviceType.Container]).toBe(UnraidInstanceDevice)
   })
 
@@ -209,7 +213,7 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
       [`unraid:${INT}:gateway`, UnraidGatewayDevice, null],
       [`unraid:${INT}:instance`, UnraidInstanceDevice, null],
     ])
-    expect(h.created.map((c) => c.meta?.type)).toEqual([DeviceType.Gateway, DeviceType.Container])
+    expect(h.created.map((c) => c.meta?.type)).toEqual([DeviceType.Gateway, DeviceType.Workload])
     expect(h.created.every((c) => c.meta?.integrationId === INT)).toBe(true)
     expect(out.adopted.map((a) => a.childNativeId)).toEqual([UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID])
     // The marked disk reaches the instance's entity list.
@@ -232,7 +236,7 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     expect(h.created).toHaveLength(1)
   })
 
-  it('lists the Gateway, the Container and each container as siblings: none nests another', async () => {
+  it('lists the Gateway, the server and each container as siblings: none nests another', async () => {
     const h = adoptionHarness()
     const page = await h.provider.listCandidates({
       integrationId: INT,
@@ -241,8 +245,8 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     })
     expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
       [UNRAID_GATEWAY_ID, DeviceType.Gateway],
-      [UNRAID_INSTANCE_ID, DeviceType.Container],
-      ['docker:marker-plex', DeviceType.Generic],
+      [UNRAID_INSTANCE_ID, DeviceType.Workload],
+      ['docker:marker-plex', DeviceType.Workload],
     ])
     expect(page.candidates.every((c) => c.children === undefined)).toBe(true)
   })
@@ -290,6 +294,8 @@ describe('Unraid integration: the API key', () => {
         list: async () => SNAPSHOT.dockers ?? [],
         start: async () => undefined,
         stop: async () => undefined,
+        pause: async () => undefined,
+        unpause: async () => undefined,
       },
       vms: {
         list: async () => [],

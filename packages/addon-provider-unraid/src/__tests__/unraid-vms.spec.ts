@@ -41,7 +41,14 @@ function apiWith(vms: VmsSource): UnraidApiSource {
   async function* none(): AsyncGenerator<never> {}
   return {
     array: { get: unused, setState: unused, parity: { start: unused, cancel: unused } },
-    docker: { list: unused, start: unused, stop: unused, stats$: none },
+    docker: {
+      list: unused,
+      start: unused,
+      stop: unused,
+      pause: unused,
+      unpause: unused,
+      stats$: none,
+    },
     vms,
     system: { versions: unused, cpu$: none },
     notifications: { warningsAndAlerts: unused },
@@ -120,7 +127,7 @@ function fakeClient(vmsList: () => Promise<readonly UnraidVmInfo[]>): UnraidClie
       setState: done,
       parity: { start: done, cancel: done },
     },
-    docker: { list: async () => [], start: done, stop: done },
+    docker: { list: async () => [], start: done, stop: done, pause: done, unpause: done },
     vms: {
       list: vmsList,
       start: done,

@@ -80,13 +80,22 @@ export interface UnraidArrayInfo {
 }
 
 /** One docker container read model — subset of `DockerContainer` + live stats. */
+/** A container's run state, from the API's `RUNNING` / `PAUSED` / `EXITED`; a state a newer
+ *  API adds is `unknown`. */
+export type UnraidContainerState = 'running' | 'paused' | 'exited' | 'unknown'
+
 export interface UnraidContainerInfo {
   /** Stable container id. */
   readonly id: string
   /** Human name (first of the real `names[]`, leading slash stripped). */
   readonly name: string
-  /** `true` when the container state is `RUNNING`. */
-  readonly running: boolean
+  readonly state: UnraidContainerState
+  /** The image it runs; null when the API reports none. */
+  readonly image: string | null
+  /** Starts with the array; null when not reported. */
+  readonly autostart: boolean | null
+  /** A newer image exists; null when the server has not checked. */
+  readonly updateAvailable: boolean | null
   /** Live CPU usage percent (from the `dockerContainerStats` subscription); null when the sample failed. */
   readonly cpuPercent: number | null
   /** Live memory usage percent; null when the sample failed. */
@@ -182,6 +191,10 @@ export interface UnraidDockerDomainLike {
   start(id: string): Promise<void>
   /** Stop a container. */
   stop(id: string): Promise<void>
+  /** Pause a container. */
+  pause(id: string): Promise<void>
+  /** Unpause a paused container. */
+  unpause(id: string): Promise<void>
 }
 
 /** VM read + control domain — mirrors the real `VmsDomain` subset. */

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Every disk and Docker container of a server gets its own entity: they no longer collapse onto one because their ids share the server prefix
 - VMs are read from the server with their run state; a VM list that cannot be read (VM service off) no longer affects the rest of the server
 - Docker containers and VMs are proposed one by one in Add devices and adopted as their own devices, no longer created as switches under the server; a container or VM list that cannot be read removes nothing
+- The server, each Docker container and each VM are adopted as workload devices: a container starts, stops, pauses and resumes (no restart, which the API lacks), a VM also reboots and force-stops, each container and VM gets a power switch and shows its state, image, autostart and update status, and names the server as its host
 
 ## [0.2.167] - 2026-11-14
 

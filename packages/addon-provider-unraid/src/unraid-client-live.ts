@@ -22,6 +22,7 @@ import type {
   UnraidClientFactoryInput,
   UnraidClientLike,
   UnraidContainerInfo,
+  UnraidContainerState,
   UnraidCpuInfo,
   UnraidNotificationsInfo,
   UnraidVmInfo,
@@ -55,9 +56,16 @@ export interface UnraidApiSource {
     }
   }
   readonly docker: {
-    list(): Promise<readonly Pick<DockerContainer, 'id' | 'names' | 'state'>[]>
+    list(): Promise<
+      readonly Pick<
+        DockerContainer,
+        'id' | 'names' | 'state' | 'image' | 'autoStart' | 'isUpdateAvailable'
+      >[]
+    >
     start(id: string): Promise<unknown>
     stop(id: string): Promise<unknown>
+    pause(id: string): Promise<unknown>
+    unpause(id: string): Promise<unknown>
     stats$(): AsyncIterable<DockerContainerStats>
   }
   readonly vms: {
@@ -184,6 +192,13 @@ async function sampleContainerStats(
   return stats
 }
 
+/** Docker container state → the contract's run state. */
+const CONTAINER_STATES: Readonly<Record<DockerContainer['state'], UnraidContainerState>> = {
+  RUNNING: 'running',
+  PAUSED: 'paused',
+  EXITED: 'exited',
+}
+
 /** libvirt domain state → the contract's run state. */
 const VM_STATES: Readonly<Record<VmState, UnraidVmState>> = {
   RUNNING: 'running',
@@ -253,13 +268,19 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
           return containers.map((c) => ({
             id: c.id,
             name: (c.names[0] ?? c.id).replace(/^\//, ''),
-            running: c.state === 'RUNNING',
+            // A state a newer API adds is unknown, never a guess.
+            state: CONTAINER_STATES[c.state] ?? 'unknown',
+            image: c.image.length > 0 ? c.image : null,
+            autostart: c.autoStart,
+            updateAvailable: c.isUpdateAvailable,
             cpuPercent: stats.get(c.id)?.cpuPercent ?? null,
             memPercent: stats.get(c.id)?.memPercent ?? null,
           }))
         }),
       start: (id) => guard(async () => void (await api.docker.start(id))),
       stop: (id) => guard(async () => void (await api.docker.stop(id))),
+      pause: (id) => guard(async () => void (await api.docker.pause(id))),
+      unpause: (id) => guard(async () => void (await api.docker.unpause(id))),
     },
     vms: {
       list: () =>

@@ -3,6 +3,7 @@ import {
   BaseDeviceProvider,
   type ConfigUISchema,
   type CreateDeviceSpec,
+  type DeviceClassRow,
   type DeviceConstructor,
   DeviceType,
   deviceAdoptionCapability,
@@ -27,7 +28,7 @@ import { buildUnraidAdoptionProvider } from './unraid-adoption-provider.js'
 import { makeLiveUnraidClient } from './unraid-client-live.js'
 import { UnraidClientRegistry } from './unraid-client-registry.js'
 import { buildUnraidDeviceAdopter } from './unraid-device-adopter.js'
-import { unraidStableId } from './unraid-discovery.js'
+import { UNRAID_INSTANCE_ID, unraidStableId } from './unraid-discovery.js'
 import { reconcileInstanceEntities } from './unraid-entity-reconcile.js'
 import { UnraidReconciler, type IntegrationLifecycleKind } from './unraid-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './unraid-integration-device-cascade.js'
@@ -48,10 +49,12 @@ const UNRAID_MIGRATIONS_DATE = '2026-11-05'
  * Unraid device-provider addon, `mode: account` and broker-less. An integration is one
  * server: its host, port and ADMIN-role API key (a keychain secret) live on the
  * integration's settings, and the addon polls it with one client per `integrationId`.
- * Discovery offers the server itself ({@link DeviceType.Gateway}, with a link to its
- * WebGUI), its single instance {@link DeviceType.Container}, and each Docker container and
- * VM ({@link DeviceType.Generic}), all as siblings; the Container fans array / disk / CPU /
- * notification entities out as accessory children.
+ * Discovery offers the server's Gateway ({@link DeviceType.Gateway}, with a link to its
+ * WebGUI), the server itself as a {@link DeviceType.Workload} host, and each Docker container
+ * (role `app-container`) and VM (role `vm`) as a workload, all as siblings (D1056); the
+ * server device fans array / disk / CPU / notification entities out as accessory children.
+ * Rows adopted before the workload type (a Container server, Generic workloads) are rebuilt
+ * with their classes and serve no `workload` cap.
  *
  * The server is reached through `node-unraid` ({@link makeLiveUnraidClient}), polled on
  * the integration's `pollIntervalMs`; a failed connect keeps the devices offline.
@@ -67,10 +70,22 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     [DeviceType.Gateway]: UnraidGatewayDevice,
     [DeviceType.Container]: UnraidInstanceDevice,
     [DeviceType.Generic]: UnraidWorkloadDevice,
+    // A container or VM; the server shares the type and is told apart in deviceClassForRow.
+    [DeviceType.Workload]: UnraidWorkloadDevice,
     [DeviceType.Sensor]: UnraidEntityDevice,
     [DeviceType.Switch]: UnraidEntityDevice,
     [DeviceType.Button]: UnraidEntityDevice,
     [DeviceType.EventEmitter]: UnraidEntityDevice,
+  }
+
+  /** D1056 — the server and its containers / VMs are all `workload`: rebuild each with its class. */
+  protected override deviceClassForRow(
+    row: DeviceClassRow,
+  ): DeviceConstructor<IDevice> | undefined {
+    if (row.type !== DeviceType.Workload) return super.deviceClassForRow(row)
+    return row.stableId.endsWith(`:${UNRAID_INSTANCE_ID}`)
+      ? UnraidInstanceDevice
+      : UnraidWorkloadDevice
   }
 
   private integrationReconciler: UnraidReconciler | null = null

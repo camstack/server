@@ -116,9 +116,9 @@ export interface BuildUnraidCandidatesInput {
 const METADATA = { manufacturer: 'Unraid', integration: 'unraid' } as const
 
 /**
- * The server ({@link DeviceType.Gateway}, with a link to its WebGUI), the SINGLE
- * {@link DeviceType.Container} of its instance, and one candidate per Docker container and
- * per VM — all top-level SIBLINGS, none nests another (the UniFi model: a controller's
+ * The server's Gateway ({@link DeviceType.Gateway}, with a link to its WebGUI), the server
+ * itself as the SINGLE {@link DeviceType.Workload} host, and one workload candidate per
+ * Docker container and per VM — all top-level SIBLINGS, none nests another (the UniFi model: a controller's
  * Gateway beside one candidate per infra device and per client). The array / disk / CPU /
  * notification entities materialise as the instance's accessory children. Pure.
  */
@@ -134,7 +134,7 @@ export function buildUnraidCandidates(
     return {
       childNativeId,
       name,
-      type: DeviceType.Generic,
+      type: DeviceType.Workload,
       status,
       metadata: { ...METADATA, model },
       alreadyAdopted: adoptedDeviceId !== null,
@@ -159,7 +159,7 @@ export function buildUnraidCandidates(
     {
       childNativeId: UNRAID_INSTANCE_ID,
       name: input.server.name,
-      type: DeviceType.Container,
+      type: DeviceType.Workload,
       status,
       metadata: METADATA,
       alreadyAdopted: instanceAdopted !== null,
