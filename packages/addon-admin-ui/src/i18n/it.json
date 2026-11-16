@@ -12929,7 +12929,8 @@
       "status": "Adesso",
       "statusNotSortable": "Derivato dal mantenimento in corso",
       "updated": "Aggiornato",
-      "search": "Cerca pianificazioni"
+      "search": "Cerca pianificazioni",
+      "actionNotSortable": "Un controllo"
     },
     "point": {
       "addEdge": "Evento",

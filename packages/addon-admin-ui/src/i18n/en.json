@@ -12907,7 +12907,8 @@
       "status": "Now",
       "statusNotSortable": "Derived from the live hold",
       "updated": "Updated",
-      "search": "Search schedulers"
+      "search": "Search schedulers",
+      "actionNotSortable": "A control"
     },
     "point": {
       "addEdge": "Edge",
