@@ -78,12 +78,14 @@ function StationaryCard({
   )
 }
 
-export function StationarySection({
-  deviceId: fixedDeviceId,
-}: {
+export interface StationarySectionProps {
   /** Camera page: only this camera's parked objects. */
   readonly deviceId?: number
-} = {}): JSX.Element | null {
+}
+
+export function StationarySection({
+  deviceId: fixedDeviceId,
+}: StationarySectionProps = {}): JSX.Element | null {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const nowMs = Date.now()
