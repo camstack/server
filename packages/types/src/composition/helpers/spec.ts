@@ -12,7 +12,7 @@ import {
   type StatisticWindow,
   StatisticWindowSchema,
 } from './history-window.js'
-import { CompositionSourceRefSchema } from '../source-ref.js'
+import { type CompositionSourceRef, CompositionSourceRefSchema } from '../source-ref.js'
 
 /** A group may name more members than an expression call (the 16-arg cap). */
 export const MAX_HELPER_MEMBERS: number = 64
@@ -213,6 +213,79 @@ const derivativeHelperObject = z.object({
 
 export const DerivativeHelperSpecSchema: z.ZodType<DerivativeHelperSpec> = derivativeHelperObject
 
+/** The stream profiles a camera grid can publish. */
+export const GRID_PROFILES = ['high', 'mid', 'low'] as const
+export type GridProfile = (typeof GRID_PROFILES)[number]
+export const MAX_GRID_CELLS: number = 16
+
+export type GridRect = {
+  readonly x: number
+  readonly y: number
+  readonly width: number
+  readonly height: number
+}
+
+/** A rectangle in normalized [0,1] coordinates of whatever contains it. */
+export const GridRectSchema: z.ZodType<GridRect> = z.object({
+  x: z.number().min(0).max(1),
+  y: z.number().min(0).max(1),
+  width: z.number().gt(0).max(1),
+  height: z.number().gt(0).max(1),
+})
+
+/**
+ * One grid cell: a source camera (by its addon-facing identity, never a
+ * numeric id), the part of its picture taken, and where it lands on the canvas.
+ */
+export type GridCellSpec = {
+  readonly source: CompositionSourceRef
+  readonly region: GridRect
+  readonly cell: GridRect
+}
+
+export const GridCellSpecSchema: z.ZodType<GridCellSpec> = z.object({
+  source: CompositionSourceRefSchema,
+  region: GridRectSchema,
+  cell: GridRectSchema,
+})
+
+/**
+ * A camera grid (planning#580). The composer declares its camera
+ * (`composed-<blockId>`); the camera-grid engine serves the camera caps on it.
+ * No canvas size: it is derived from the cells and the sources.
+ */
+export type GridHelperSpec = {
+  readonly kind: 'grid'
+  readonly fps: number
+  readonly publishedProfiles: readonly GridProfile[]
+  readonly cells: readonly GridCellSpec[]
+}
+
+const gridHelperObject = z.object({
+  kind: z.literal('grid'),
+  fps: z.number().int().min(1).max(60),
+  publishedProfiles: z.array(z.enum(GRID_PROFILES)).max(3),
+  cells: z.array(GridCellSpecSchema).max(MAX_GRID_CELLS),
+})
+
+export const GridHelperSpecSchema: z.ZodType<GridHelperSpec> = gridHelperObject
+
+/**
+ * A Terminal camera (planning#580): the camera of one Terminal, created on the
+ * Terminal page. The composer declares the camera; addon-terminal serves it.
+ */
+export type TerminalHelperSpec = {
+  readonly kind: 'terminal'
+  readonly terminalId: string
+}
+
+const terminalHelperObject = z.object({
+  kind: z.literal('terminal'),
+  terminalId: z.string().uuid(),
+})
+
+export const TerminalHelperSpecSchema: z.ZodType<TerminalHelperSpec> = terminalHelperObject
+
 export type HelperSpec =
   | GroupHelperSpec
   | StatisticHelperSpec
@@ -221,8 +294,12 @@ export type HelperSpec =
   | ArithmeticHelperSpec
   | ExpressionHelperSpec
   | DerivativeHelperSpec
+  | GridHelperSpec
+  | TerminalHelperSpec
 
 export const HelperSpecSchema: z.ZodType<HelperSpec> = z.discriminatedUnion('kind', [
+  gridHelperObject,
+  terminalHelperObject,
   GroupHelperSpecSchema,
   statisticHelperObject,
   integralHelperObject,
@@ -253,5 +330,22 @@ export function helperMembers(spec: HelperSpec): readonly HelperMember[] {
       return spec.inputs
     case 'expression':
       return spec.inputs.map((input) => input.member)
+    case 'grid':
+    case 'terminal':
+      return []
   }
+}
+
+/** The kinds whose camera an engine serves on the composer's row (planning#580). */
+export const ENGINE_HOSTED_HELPER_KINDS = ['grid', 'terminal'] as const
+export type EngineHostedHelperKind = (typeof ENGINE_HOSTED_HELPER_KINDS)[number]
+export type EngineHostedHelperSpec = GridHelperSpec | TerminalHelperSpec
+
+export function isEngineHostedHelper(spec: HelperSpec): spec is EngineHostedHelperSpec {
+  return spec.kind === 'grid' || spec.kind === 'terminal'
+}
+
+/** The devices a helper depends on without reading a field of them: a grid's cell sources. */
+export function helperDeviceRefs(spec: HelperSpec): readonly CompositionSourceRef[] {
+  return spec.kind === 'grid' ? spec.cells.map((cell) => cell.source) : []
 }
