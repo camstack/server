@@ -47,6 +47,7 @@ import {
   NcRuleSchema,
   NcSystemEventDeliverySchema,
   normalizeNcMediaPolicy,
+  normalizeTags,
   withSystemEventClasses,
   withSystemEventModes,
 } from '@camstack/types'
@@ -133,7 +134,19 @@ function parseStoredRule(
  * {@link parseStoredRule}, which also says once that it widened a rule.
  */
 function normalizeStoredRule(rule: NcRule): NcRule {
-  return withSystemEventModes(withSystemEventClasses(withNormalizedMedia(rule)))
+  return withNormalizedTags(withSystemEventModes(withSystemEventClasses(withNormalizedMedia(rule))))
+}
+
+/**
+ * D1054: a rule's tags as stored — trimmed and deduplicated case-insensitively,
+ * and an empty list dropped, so "no tags" has one spelling (the key absent).
+ * A rule that never carried tags is returned by identity: nothing is added.
+ */
+function withNormalizedTags(rule: NcRule): NcRule {
+  if (rule.tags === undefined) return rule
+  const { tags, ...rest } = rule
+  const normalized = normalizeTags(tags)
+  return normalized.length === 0 ? rest : { ...rest, tags: normalized }
 }
 
 /** A stored row the load could not parse: which rule, and the first reason. */
@@ -644,6 +657,14 @@ export class NcRuleStore {
 
   async setEnabled(ruleId: string, enabled: boolean): Promise<NcRule> {
     return this.update(ruleId, { enabled })
+  }
+
+  /**
+   * Replace a rule's tags (D1054) — a patch naming ONLY `tags`, so every other
+   * field keeps its stored value. `[]` clears them.
+   */
+  async setTags(ruleId: string, tags: readonly string[]): Promise<NcRule> {
+    return this.update(ruleId, { tags: [...tags] })
   }
 
   /**

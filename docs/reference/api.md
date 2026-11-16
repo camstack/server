@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**210 capabilities · 1507 methods.**
+**210 capabilities · 1508 methods.**
 
 ## Method index
 
@@ -794,6 +794,7 @@
 | `notificationRules.updateRule` | mutation | admin | notification-rules |
 | `notificationRules.deleteRule` | mutation | admin | notification-rules |
 | `notificationRules.setRuleEnabled` | mutation | admin | notification-rules |
+| `notificationRules.setRuleTags` | mutation | admin | notification-rules |
 | `notificationRules.getClipRetentionAsks` | query | admin | notification-rules |
 | `notificationRules.listDeviceMutes` | query | admin | notification-rules |
 | `notificationRules.setDeviceMuted` | mutation | admin | notification-rules |
@@ -3662,7 +3663,7 @@
 
 ### `notification-rules` → `notificationRules.*`
 
-- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3369`
+- **Source:** `packages/types/src/capabilities/notification-rules.cap.ts:3379`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `INotificationRulesProvider`
@@ -3675,6 +3676,7 @@
 | updateRule | `notificationRules.updateRule` | mutation | admin | `NcRuleUpdateInputSchema` | `{ rule: NcRuleSchema }` |
 | deleteRule | `notificationRules.deleteRule` | mutation | admin | `{ ruleId: string }` | `{ success: true }` |
 | setRuleEnabled | `notificationRules.setRuleEnabled` | mutation | admin | `{ ruleId: string; enabled: boolean }` | `{ success: true }` |
+| setRuleTags | `notificationRules.setRuleTags` | mutation | admin | `{ ruleId: string; tags: string[] }` | `{ success: true }` |
 | getClipRetentionAsks | `notificationRules.getClipRetentionAsks` | query | admin | `{}` | `NcClipRetentionPlanSchema` |
 | listDeviceMutes | `notificationRules.listDeviceMutes` | query | admin | `{}` | `{ mutedDeviceIds: number[] }` |
 | setDeviceMuted | `notificationRules.setDeviceMuted` | mutation | admin | `{ deviceId: number; muted: boolean }` | `{ success: true }` |
@@ -4824,7 +4826,7 @@
 
 ### `tags` → `tags.*`
 
-- **Source:** `packages/types/src/capabilities/tags.cap.ts:38`
+- **Source:** `packages/types/src/capabilities/tags.cap.ts:40`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ITagsProvider`

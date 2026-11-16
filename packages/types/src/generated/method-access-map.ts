@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1507 method paths across 210 capabilities.
+ * Coverage: 1508 method paths across 210 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -822,6 +822,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'notificationRules.setAlarmConfig': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.setDeviceMuted': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.setRuleEnabled': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'notificationRules.setRuleTags': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.testRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.updateRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notifier.cancel': { capName: "notifier", capScope: "device", addonId: null, access: "create", role: "admin" } as const,

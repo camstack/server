@@ -321,6 +321,13 @@ export function buildProvider(host: RulesProviderHost): INotificationRulesProvid
       }
       return { success: true }
     },
+    setRuleTags: async ({ ruleId, tags }) => {
+      const updated = await host.rules.setTags(ruleId, tags)
+      host.logger.info('notification rule tags set', {
+        meta: { ruleId, tags: updated.tags ?? [] },
+      })
+      return { success: true }
+    },
     testRule: async ({ rule, lookbackMinutes }) => ({
       results: [...(await host.dryRun(rule, lookbackMinutes))],
     }),

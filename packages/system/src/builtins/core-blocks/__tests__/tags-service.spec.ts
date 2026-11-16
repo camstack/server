@@ -39,6 +39,24 @@ function fakeDevices(devices: FakeDevice[], failOn?: number): TagOwnerPort {
   }
 }
 
+interface FakeRule {
+  readonly id: string
+  tags: string[]
+  readonly mark: string
+}
+
+/** The notification rules as the `tags` cap reaches them: `listRules` + `setRuleTags`. */
+function fakeRules(rules: FakeRule[]): TagOwnerPort {
+  return {
+    list: async () => rules.map((r) => ({ id: r.id, tags: r.tags })),
+    setTags: async (id, tags) => {
+      const rule = rules.find((r) => r.id === id)
+      if (rule === undefined) throw new Error('unknown rule')
+      rule.tags = tags
+    },
+  }
+}
+
 interface World {
   readonly tags: ReturnType<typeof buildTagsService>
   readonly blocks: CoreBlockStore
@@ -46,6 +64,7 @@ interface World {
   readonly actions: ActionsStore
   readonly templates: RecordKindHandle<TemplateRowBody>
   readonly devices: FakeDevice[]
+  readonly rules: FakeRule[]
   readonly styles: {
     get(id: string): Promise<{ data: { name: string; color: string; icon: string } } | null>
   }
@@ -59,12 +78,17 @@ async function world(failDevice?: number): Promise<World> {
     { id: 42, tags: ['garden', 'Night'], mark: 'device-mark-2' },
     { id: 43, tags: [], mark: 'untagged' },
   ]
+  const rules: FakeRule[] = [
+    { id: 'rule-1', tags: ['GARDEN', 'Night'], mark: 'rule-mark' },
+    { id: 'rule-2', tags: [], mark: 'rule-untagged' },
+  ]
   const tags = buildTagsService({
     records,
     blocks: () => store,
     api: () => undefined,
     logger,
     devices: fakeDevices(devices, failDevice),
+    notificationRules: fakeRules(rules),
   })
   const schedulers = new SchedulersStore({
     schedulers: records.kind(coreBlocksRecordKinds.schedulers),
@@ -119,6 +143,7 @@ async function world(failDevice?: number): Promise<World> {
     actions,
     templates,
     devices,
+    rules,
     styles: records.kind(coreBlocksRecordKinds['tag-styles']),
   }
 }
@@ -169,6 +194,7 @@ describe('list', () => {
       templates: 1,
       actions: 1,
       devices: 2,
+      notificationRules: 1,
     })
     expect(garden).toMatchObject({
       styled: false,
@@ -185,13 +211,20 @@ describe('list', () => {
       styled: true,
       color: 'tag-c',
       icon: STAR,
-      counts: { coreBlocks: 0, schedulers: 0, templates: 0, actions: 0, devices: 0 },
+      counts: {
+        coreBlocks: 0,
+        schedulers: 0,
+        templates: 0,
+        actions: 0,
+        devices: 0,
+        notificationRules: 0,
+      },
     })
   })
 })
 
 describe('rename', () => {
-  it('moves the tag on all five owner kinds and keeps every marked field', async () => {
+  it('moves the tag on all six owner kinds and keeps every marked field', async () => {
     const result = await w.tags.rename({ from: ' garden ', to: 'Yard' })
     expect(result.updated).toEqual({
       coreBlocks: 1,
@@ -199,6 +232,7 @@ describe('rename', () => {
       templates: 1,
       actions: 1,
       devices: 2,
+      notificationRules: 1,
     })
     const block = w.blocks.get('blk-1')
     expect(block).toMatchObject({ name: 'Marked block', tags: ['Yard', 'Solo'] })
@@ -212,6 +246,10 @@ describe('rename', () => {
       [41, ['Yard'], 'device-mark'],
       [42, ['Yard', 'Night'], 'device-mark-2'],
       [43, [], 'untagged'],
+    ])
+    expect(w.rules.map((r) => [r.id, r.tags, r.mark])).toEqual([
+      ['rule-1', ['Yard', 'Night'], 'rule-mark'],
+      ['rule-2', [], 'rule-untagged'],
     ])
   })
 
@@ -292,6 +330,7 @@ describe('remove', () => {
       templates: 1,
       actions: 1,
       devices: 2,
+      notificationRules: 1,
     })
     expect(w.blocks.get('blk-1')?.tags).toEqual(['Solo'])
     expect((await w.schedulers.get('sch-1'))?.tags).toBeUndefined()
@@ -299,6 +338,10 @@ describe('remove', () => {
     expect((await w.actions.get('internal:act-1'))?.tags).toBeUndefined()
     expect((await w.templates.get('tpl-1'))?.data.tags).toBeUndefined()
     expect(w.devices.map((d) => d.tags)).toEqual([[], ['Night'], []])
+    expect(w.rules.map((r) => [r.tags, r.mark])).toEqual([
+      [['Night'], 'rule-mark'],
+      [[], 'rule-untagged'],
+    ])
     expect(await w.styles.get('garden')).toBeNull()
     expect(normalizeTags(w.devices.flatMap((d) => d.tags))).toEqual(['Night'])
   })

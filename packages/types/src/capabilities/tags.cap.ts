@@ -6,10 +6,11 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
 /**
  * tags — the registry of tag STYLES and the one place that renames or removes a
  * tag everywhere (D1054). A tag itself lives in the `tags` array of the record it
- * labels (a core block, a scheduler, a template, an action, a device); only its
+ * labels (a core block, a scheduler, a template, an action, a device, a
+ * notification rule); only its
  * colour token and icon are registered here. Provided by the core-blocks builtin,
- * the one place that knows every owner kind; devices are reached through
- * `deviceManager` over `ctx.api`.
+ * the one place that knows every owner kind; devices and notification rules
+ * are reached through `deviceManager` / `notificationRules` over `ctx.api`.
  *
  * Tags compare trimmed and case-insensitively. `list` is the union of styled tags
  * and tags in use; a tag with no style answers a colour derived from its name and
@@ -22,6 +23,7 @@ export const TagUsageCountsSchema = z.object({
   templates: z.number().int().nonnegative(),
   actions: z.number().int().nonnegative(),
   devices: z.number().int().nonnegative(),
+  notificationRules: z.number().int().nonnegative(),
 })
 export type TagUsageCounts = z.infer<typeof TagUsageCountsSchema>
 

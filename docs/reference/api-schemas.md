@@ -4600,6 +4600,7 @@ Enum: `"template" \| "schedule" \| "targetUsers" \| "snoozeOptions" \| "snoozeAl
 - `groupingSec?`: `number`
 - `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
+- `tags?`: `string[]`
 
 ### `NcRuleKindSchema`
 
@@ -4648,6 +4649,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `groupingSec?`: `number`
 - `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
+- `tags?`: `string[]`
 - `disabledTargetIds?`: `string[]`
 
 ### `NcRuleSchema`
@@ -4673,6 +4675,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `groupingSec?`: `number`
 - `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
+- `tags?`: `string[]`
 - `id`: `string`
 - `createdBy`: `string`
 - `createdAt`: `number`
@@ -7154,6 +7157,7 @@ Enum: `"jwt-signing-key"`
 - `templates`: `number`
 - `actions`: `number`
 - `devices`: `number`
+- `notificationRules`: `number`
 
 ### `TamperStatusSchema`
 

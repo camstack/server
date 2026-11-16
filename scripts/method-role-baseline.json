@@ -799,6 +799,7 @@
   "notificationRules.setAlarmConfig": "admin",
   "notificationRules.setDeviceMuted": "admin",
   "notificationRules.setRuleEnabled": "admin",
+  "notificationRules.setRuleTags": "admin",
   "notificationRules.testRule": "admin",
   "notificationRules.updateRule": "admin",
   "notifier.cancel": "admin",

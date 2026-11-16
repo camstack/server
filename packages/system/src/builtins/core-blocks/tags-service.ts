@@ -1,13 +1,13 @@
 /**
  * The `tags` cap (D1054). A tag lives on the record it labels — a core block, a
- * scheduler, a template, an action, a device — and only its STYLE (colour token,
+ * scheduler, a template, an action, a device, a notification rule — and only its STYLE (colour token,
  * icon) is registered here. This service is the one place that knows every owner
  * kind, so `rename` and `remove` are ONE server operation that rewrites all of
  * them; the browser never drives that sequence (a closed tab would split the
  * fleet across two spellings).
  *
  * Owners are reached through {@link TagOwnerPort}s: the local stores directly,
- * the devices through the device manager over `ctx.api` — never a second copy.
+ * the devices and notification rules through their caps over `ctx.api` — never a second copy.
  * Tags compare trimmed and case-insensitively (`sameTag`).
  */
 import {
@@ -49,6 +49,7 @@ const OWNER_KINDS: readonly TagOwnerKind[] = [
   'templates',
   'actions',
   'devices',
+  'notificationRules',
 ]
 
 export interface TagsServiceDeps {
@@ -64,6 +65,7 @@ const NO_UPDATES: TagUsageCounts = {
   templates: 0,
   actions: 0,
   devices: 0,
+  notificationRules: 0,
 }
 
 function requireName(value: string, what: string): string {

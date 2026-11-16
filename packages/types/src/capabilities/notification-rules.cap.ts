@@ -5,6 +5,7 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
 import { MaskPolygonShapeSchema } from './mask-shape.js'
 import { NotificationActionIconSchema } from './notification-output.cap.js'
 import { CamProfileSchema } from './schemas/streaming-shared.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 
 /**
  * notification-rules — the Notification Center rule surface (P1 core).
@@ -1659,6 +1660,15 @@ export const NcRuleInputSchema = z.object({
    * `false`, so it needs no `clear` key.
    */
   askVerdict: z.boolean().optional(),
+  /**
+   * Operator tags (D1054), kept on the rule like a core block's. Absent = no
+   * tags. `.optional()`, never `.default()`: a partial `updateRule` patch that
+   * does not name `tags` keeps the stored ones (the store merges), and an
+   * editor empties them by sending `[]` (the store drops an empty list).
+   * Renamed or removed fleet-wide only through the `tags` cap, which writes
+   * here with `setRuleTags`.
+   */
+  tags: TagsFieldSchema.optional(),
 })
 export type NcRuleInput = z.infer<typeof NcRuleInputSchema>
 
@@ -3396,6 +3406,16 @@ export const notificationRulesCapability = {
     }),
     setRuleEnabled: method(
       z.object({ ruleId: z.string(), enabled: z.boolean() }),
+      z.object({ success: z.literal(true) }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Replace ONE rule's tags (D1054) and nothing else — the `tags` cap's rename
+     * and remove write through this. Normalised on write (trimmed, deduplicated
+     * case-insensitively); `[]` clears them.
+     */
+    setRuleTags: method(
+      z.object({ ruleId: z.string(), tags: TagsFieldSchema }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),

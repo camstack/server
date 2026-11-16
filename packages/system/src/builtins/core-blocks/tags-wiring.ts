@@ -1,6 +1,7 @@
 /**
  * Builds the `tags` cap provider (D1054) over the stores core-blocks owns and the
- * device manager (over `ctx.api`, never a copy of its data).
+ * device manager and the notification rules (over `ctx.api`, never a copy of
+ * their data).
  */
 import {
   type AddonApi,
@@ -22,6 +23,8 @@ export interface TagsRuntimeDeps {
   readonly logger: IScopedLogger
   /** A spec swaps the device owner; production reads the device manager over `api`. */
   readonly devices?: TagOwnerPort
+  /** A spec swaps the rule owner; production reads the notification rules over `api`. */
+  readonly notificationRules?: TagOwnerPort
 }
 
 function coreBlocksPort(blocks: () => CoreBlockStore): TagOwnerPort {
@@ -92,6 +95,25 @@ function devicesPort(api: () => AddonApi | undefined): TagOwnerPort {
   }
 }
 
+function needApi(api: () => AddonApi | undefined): AddonApi {
+  const current = api()
+  if (current === undefined) throw new Error('[tags] the cluster API is not available yet')
+  return current
+}
+
+function notificationRulesPort(api: () => AddonApi | undefined): TagOwnerPort {
+  return {
+    list: async () => {
+      const { rules } = await needApi(api).notificationRules.listRules.query({})
+      return rules.map((r) => ({ id: r.id, tags: r.tags ?? [] }))
+    },
+    // Only the tags: never a whole-rule `updateRule`, which a stale copy would clobber.
+    setTags: async (id, tags) => {
+      await needApi(api).notificationRules.setRuleTags.mutate({ ruleId: id, tags })
+    },
+  }
+}
+
 export function buildTagsService(deps: TagsRuntimeDeps): TagsService {
   const { records } = deps
   return new TagsService({
@@ -111,6 +133,7 @@ export function buildTagsService(deps: TagsRuntimeDeps): TagsService {
         }),
       ),
       devices: deps.devices ?? devicesPort(deps.api),
+      notificationRules: deps.notificationRules ?? notificationRulesPort(deps.api),
     },
     styles: records.kind(coreBlocksRecordKinds['tag-styles']),
     logger: deps.logger,
