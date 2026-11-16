@@ -5739,9 +5739,16 @@
       "devices": "Devices",
       "pages": "Pages",
       "integrations": "Integrations",
-      "noResults": "No results for “{{query}}”"
+      "noResults": "No results for “{{query}}”",
+      "automations": "Automations",
+      "scripts": "Scripts",
+      "schedulers": "Schedulers",
+      "actions": "Actions",
+      "templates": "Templates",
+      "customDevices": "Custom devices",
+      "searching": "Searching…"
     },
-    "placeholder": "Search devices, pages, integrations…",
+    "placeholder": "Search devices, pages, automations, scripts…",
     "truncatedResults": "Showing first {{shown}} of {{total}} — refine your search."
   },
   "settings": {

@@ -5814,9 +5814,16 @@
       "devices": "Dispositivi",
       "pages": "Pagine",
       "integrations": "Integrazioni",
-      "noResults": "Nessun risultato per “{{query}}”"
+      "noResults": "Nessun risultato per “{{query}}”",
+      "automations": "Automazioni",
+      "scripts": "Script",
+      "schedulers": "Scheduler",
+      "actions": "Azioni",
+      "templates": "Template",
+      "customDevices": "Dispositivi personalizzati",
+      "searching": "Ricerca in corso…"
     },
-    "placeholder": "Cerca dispositivi, pagine, integrazioni…",
+    "placeholder": "Cerca dispositivi, pagine, automazioni, script…",
     "truncatedResults": "Mostrati i primi {{shown}} di {{total}} — affina la ricerca."
   },
   "settings": {

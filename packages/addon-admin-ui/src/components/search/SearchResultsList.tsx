@@ -5,7 +5,18 @@
  * closed) lives in GlobalSearch.tsx so this component is trivial to reason
  * about and test visually in isolation.
  */
-import { Camera, Compass, Plug, type LucideIcon } from 'lucide-react'
+import {
+  Boxes,
+  CalendarClock,
+  Camera,
+  Code2,
+  Compass,
+  LayoutTemplate,
+  ListChecks,
+  Plug,
+  Workflow,
+  type LucideIcon,
+} from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { SearchDomain, SearchItem, SearchResultGroup } from '../../lib/global-search'
@@ -16,6 +27,12 @@ const DOMAIN_META: Record<SearchDomain, { readonly labelKey: string; readonly ic
     device: { labelKey: 'search.resultsList.devices', icon: Camera },
     page: { labelKey: 'search.resultsList.pages', icon: Compass },
     integration: { labelKey: 'search.resultsList.integrations', icon: Plug },
+    automation: { labelKey: 'search.resultsList.automations', icon: Workflow },
+    script: { labelKey: 'search.resultsList.scripts', icon: Code2 },
+    scheduler: { labelKey: 'search.resultsList.schedulers', icon: CalendarClock },
+    action: { labelKey: 'search.resultsList.actions', icon: ListChecks },
+    template: { labelKey: 'search.resultsList.templates', icon: LayoutTemplate },
+    customDevice: { labelKey: 'search.resultsList.customDevices', icon: Boxes },
   }
 
 interface SearchResultsListProps {
@@ -28,6 +45,9 @@ interface SearchResultsListProps {
   /** True when `groups` holds fewer items than `totalMatched` because the
    *  cap engaged. Must be surfaced, never dropped silently. */
   readonly truncated: boolean
+  /** A source the search draws on has not answered yet — an empty result is
+   *  then "still looking", never "no results" (not known is not none). */
+  readonly pending?: boolean
   readonly onSelect: (item: SearchItem) => void
   readonly onHover: (item: SearchItem) => void
 }
@@ -38,6 +58,7 @@ export function SearchResultsList({
   query,
   totalMatched,
   truncated,
+  pending = false,
   onSelect,
   onHover,
 }: SearchResultsListProps) {
@@ -54,6 +75,18 @@ export function SearchResultsList({
   }, [activeKey])
 
   if (query.trim().length === 0) return null
+
+  if (groups.length === 0 && pending) {
+    return (
+      <div
+        role="status"
+        className="px-3 py-4 text-center text-[12px] text-foreground-subtle"
+        data-testid="search-pending"
+      >
+        {t('search.resultsList.searching', 'Searching…')}
+      </div>
+    )
+  }
 
   if (groups.length === 0) {
     return (

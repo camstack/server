@@ -4,7 +4,8 @@
  *
  * Domains: device (cameras/other devices), page (admin-ui sections — both
  * built-in and addon-contributed), integration (installed provider
- * addons). Callers build a flat `SearchItem[]` from whatever data they
+ * addons), and the Build elements (automation, script, scheduler, action,
+ * template, customDevice) — found by name and by tag. Callers build a flat `SearchItem[]` from whatever data they
  * already have loaded (see `search-items.ts`) and pass it here; this module
  * knows nothing about tRPC, React Query, or React. Ranking is `searchRank`
  * in `@camstack/types` — the same function `deviceManager.search` uses.
@@ -12,7 +13,16 @@
 import type { LucideIcon } from 'lucide-react'
 import { normalizeSearchText, searchRank } from '@camstack/types'
 
-export type SearchDomain = 'device' | 'page' | 'integration'
+export type SearchDomain =
+  | 'device'
+  | 'page'
+  | 'integration'
+  | 'automation'
+  | 'script'
+  | 'scheduler'
+  | 'action'
+  | 'template'
+  | 'customDevice'
 
 export interface SearchItem {
   /** Globally unique across all domains (used as the React key and for
@@ -46,8 +56,19 @@ export interface SearchResultGroup {
 }
 
 /** Fixed render order — devices first (the everyday "find my camera" case),
- *  then pages (the case the operator asked for by name), then integrations. */
-const DOMAIN_ORDER: readonly SearchDomain[] = ['device', 'page', 'integration']
+ *  then pages (the case the operator asked for by name), then the Build
+ *  elements, then integrations. */
+const DOMAIN_ORDER: readonly SearchDomain[] = [
+  'device',
+  'page',
+  'automation',
+  'script',
+  'scheduler',
+  'action',
+  'template',
+  'customDevice',
+  'integration',
+]
 
 /** Safety cap on the TOTAL result count across every domain — not a
  *  per-domain cap (there is none; every exact/fuzzy match is returned and

@@ -1,6 +1,7 @@
 /**
  * GlobalSearch — the sidebar's always-visible search entry point across
- * three domains: device, page (built-in + addon-contributed), integration.
+ * domains: device, page (built-in + addon-contributed), integration, and the
+ * Build elements (found by name and by tag).
  *
  * Data sources are all already-loaded query caches, never a new fetch per
  * keystroke:
@@ -22,8 +23,13 @@
  */
 import {
   FALLBACK_SCOPE,
+  useActionsList,
+  useCoreBlocksList,
+  useCoreBlocksListCompositions,
   useDeviceManagerListAll,
   useIntegrationsList,
+  useSchedulersList,
+  useTemplateList,
   useSearchFieldHotkey,
   Button,
   Input,
@@ -41,6 +47,7 @@ import {
   buildIntegrationSearchItems,
   buildPageSearchItems,
 } from '../../lib/search-items'
+import { buildBuildSearchItems } from '../../lib/search-items-build'
 import { SearchResultsList } from './SearchResultsList'
 
 interface GlobalSearchProps {
@@ -91,6 +98,21 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
   const { data: rawDevices } = useDeviceManagerListAll({ projection: 'slim' })
   const { data: rawIntegrations } = useIntegrationsList(undefined)
 
+  // The Build elements (automations, scripts, schedulers, actions, templates,
+  // custom devices) are fetched only once the operator types: the sidebar is
+  // on every admin page and most never search. Same hooks the Build page
+  // calls, so its cache answers when it has been open.
+  const buildEnabled = panelOpen && query.trim().length > 0
+  const buildOpts = { enabled: buildEnabled }
+  const blocksQ = useCoreBlocksList({}, buildOpts)
+  const actionsQ = useActionsList({}, buildOpts)
+  const schedulersQ = useSchedulersList({}, buildOpts)
+  const templatesQ = useTemplateList({}, buildOpts)
+  const compositionsQ = useCoreBlocksListCompositions({}, buildOpts)
+  const buildPending =
+    buildEnabled &&
+    [blocksQ, actionsQ, schedulersQ, templatesQ, compositionsQ].some((q) => q.isLoading)
+
   const items = useMemo<readonly SearchItem[]>(() => {
     const pageLabels = {
       detection: t('nav.detectionSection', 'Detection'),
@@ -102,8 +124,26 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
       ...buildDeviceSearchItems(rawDevices ?? [], rawIntegrations ?? null),
       ...buildPageSearchItems(navSections, addonPages, pageLabels),
       ...buildIntegrationSearchItems(rawIntegrations ?? []),
+      ...buildBuildSearchItems({
+        blocks: blocksQ.data?.blocks,
+        actions: actionsQ.data,
+        schedulers: schedulersQ.data,
+        templates: templatesQ.data,
+        compositions: compositionsQ.data?.state === 'loaded' ? compositionsQ.data.views : undefined,
+      }),
     ]
-  }, [rawDevices, rawIntegrations, navSections, addonPages, t])
+  }, [
+    rawDevices,
+    rawIntegrations,
+    navSections,
+    addonPages,
+    t,
+    blocksQ.data,
+    actionsQ.data,
+    schedulersQ.data,
+    templatesQ.data,
+    compositionsQ.data,
+  ])
 
   const { groups, totalMatched, truncated } = useMemo(
     () => filterSearchItems(items, query),
@@ -187,7 +227,7 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
   }, [panelVisible])
 
   const activeKey = flatResults[activeIndex]?.key ?? null
-  const placeholder = t('search.placeholder', 'Search devices, pages, integrations…')
+  const placeholder = t('search.placeholder', 'Search devices, pages, automations, scripts…')
 
   const inputBlock = (
     <div className="relative">
@@ -273,6 +313,7 @@ export function GlobalSearch({ navSections, addonPages, compact, onNavigated }: 
               query={query}
               totalMatched={totalMatched}
               truncated={truncated}
+              pending={buildPending}
               onSelect={selectItem}
               onHover={(item) => {
                 const idx = flatResults.findIndex((r) => r.key === item.key)
