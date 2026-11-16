@@ -96,6 +96,7 @@ export const HERO_SCENE_BY_TYPE = {
   [DeviceType.WaterHeater]: 'heater',
   [DeviceType.HeatPump]: 'heat-pump',
   [DeviceType.EnergySystem]: 'generic',
+  [DeviceType.Workload]: 'generic',
   [DeviceType.Fan]: 'fan',
   [DeviceType.MediaPlayer]: 'tv',
   [DeviceType.AlarmPanel]: 'alarm',
@@ -139,6 +140,7 @@ export const HERO_SCENE_BY_ROLE = {
   [DeviceRole.SwitchHeater]: 'heater',
   [DeviceRole.SwitchFan]: 'fan',
   [DeviceRole.SwitchLight]: 'light',
+  [DeviceRole.PoePort]: 'plug',
   [DeviceRole.ClimateAc]: 'ac',
   [DeviceRole.ClimateThermostat]: 'inherit',
   [DeviceRole.ClimateFloor]: 'inherit',
@@ -184,6 +186,11 @@ export const HERO_SCENE_BY_ROLE = {
   [DeviceRole.EmailNotifier]: 'inherit',
   [DeviceRole.GenericNotifier]: 'inherit',
   [DeviceRole.IrTransmitter]: 'inherit',
+  [DeviceRole.Vm]: 'inherit',
+  [DeviceRole.AppContainer]: 'inherit',
+  [DeviceRole.Lxc]: 'inherit',
+  [DeviceRole.App]: 'inherit',
+  [DeviceRole.Host]: 'inherit',
 } as const satisfies Record<DeviceRole, HeroSceneId | 'inherit'>
 
 function isDeviceType(type: string): type is DeviceType {

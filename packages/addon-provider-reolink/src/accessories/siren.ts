@@ -35,11 +35,13 @@ import {
   type MotionTriggerRuntimeState,
   type MotionTriggerStatus,
   motionTriggerCapability,
-  resolveSirenSeconds,
+  planSirenTrigger,
   type SirenOptions,
+  type SirenPlaysActivation,
   type SirenStatus,
   sirenCapability,
   sirenIdleStatus,
+  sirenPlayChoices,
   sirenTriggeredStatus,
   type SwitchStatus,
   sleep,
@@ -370,9 +372,9 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
   }
 
   /** Arms the countdown for a timed activation and clears the slice when it elapses. */
-  private armSirenCountdown(seconds: number): void {
+  private armSirenCountdown(seconds: number, activation: SirenPlaysActivation): void {
     this.clearSirenTimer()
-    this.writeSirenStatus(sirenTriggeredStatus(Date.now(), seconds))
+    this.writeSirenStatus(sirenTriggeredStatus(Date.now(), seconds, activation))
     this.sirenTimer = setTimeout(
       () => {
         this.sirenTimer = null
@@ -397,7 +399,12 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
       return
     }
     if (plays !== undefined) {
-      this.armSirenCountdown(secondsForPlays(plays, this.secondsPerPlay))
+      // The switch's configured count is a count the camera plays: reported in
+      // plays, its end timed through the (uncalibrated unless set) factor.
+      this.armSirenCountdown(secondsForPlays(plays, this.secondsPerPlay), {
+        plays,
+        estimated: true,
+      })
       return
     }
     this.clearSirenTimer()
@@ -405,6 +412,8 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
       active: true,
       activeUntil: null,
       durationSeconds: null,
+      plays: null,
+      activeUntilEstimated: false,
       lastTriggeredAt: Date.now(),
     })
   }
@@ -413,10 +422,21 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
     const provider: InferNativeProvider<typeof sirenCapability> = {
       getStatus: async (): Promise<SirenStatus> => this.sirenView(),
       getOptions: async (): Promise<SirenOptions> => this.sirenOptions(),
-      trigger: async ({ deviceId, durationSeconds }): Promise<SirenStatus> => {
+      getPlayChoices: async (): Promise<number[]> => sirenPlayChoices(this.sirenOptions()),
+      trigger: async ({ deviceId, durationSeconds, plays: askedPlays }): Promise<SirenStatus> => {
         if (deviceId !== this.id) return this.sirenView()
-        const seconds = resolveSirenSeconds(this.sirenOptions(), durationSeconds)
-        const plays = playsForSeconds(seconds, this.secondsPerPlay)
+        const plan = planSirenTrigger(this.sirenOptions(), { durationSeconds, plays: askedPlays })
+        if (plan.asked === 'refused') {
+          this.ctx.logger.warn('siren trigger refused', {
+            tags: { deviceId: this.id, channel: this.channel },
+            meta: { reason: plan.reason, plays: askedPlays },
+          })
+          throw new Error(`siren trigger refused: ${plan.reason}`)
+        }
+        // Reolink counts plays natively: a count goes to the camera as asked,
+        // seconds become the whole number of plays nearest to them.
+        const plays =
+          plan.asked === 'plays' ? plan.plays : playsForSeconds(plan.seconds, this.secondsPerPlay)
         const api = await this.api
         try {
           await api.setSiren(this.channel, true, plays)
@@ -430,10 +450,18 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
         const actualSeconds = secondsForPlays(plays, this.secondsPerPlay)
         this.ctx.logger.info('siren trigger', {
           tags: { deviceId: this.id, channel: this.channel },
-          meta: { requested: durationSeconds ?? 'default', plays, seconds: actualSeconds },
+          meta: {
+            requested: askedPlays ?? durationSeconds ?? 'default',
+            unit: plan.asked,
+            plays,
+            seconds: actualSeconds,
+          },
         })
         this.setCapSlice(switchCapability, { on: true, lastChangedAt: Date.now() })
-        this.armSirenCountdown(actualSeconds)
+        this.armSirenCountdown(actualSeconds, {
+          plays: plan.asked === 'plays' ? plays : null,
+          estimated: plan.estimated,
+        })
         return this.sirenView()
       },
       stop: async ({ deviceId }): Promise<SirenStatus> => {

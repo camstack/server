@@ -64,6 +64,11 @@ import {
   Waves,
   RadioTower,
   SolarPanel,
+  Server,
+  Monitor,
+  Container,
+  AppWindow,
+  EthernetPort,
   Wifi,
   Wind,
   Workflow,
@@ -201,6 +206,11 @@ export const FAST_ICON_GLYPHS: Readonly<
   heater: Heater,
   'radio-tower': RadioTower,
   'solar-panel': SolarPanel,
+  server: Server,
+  monitor: Monitor,
+  container: Container,
+  'app-window': AppWindow,
+  'ethernet-port': EthernetPort,
 }
 
 /** The glyph of a device: its role's icon when the role is known, else its type's (`deviceIconKey`). */
@@ -240,6 +250,10 @@ const DEVICE_TYPE_LABELS: Record<DeviceType, DeviceMetaLabel> = {
   [DeviceType.EnergySystem]: {
     labelKey: 'uiLibrary.deviceMeta.type.energySystem',
     labelFallback: 'Energy system',
+  },
+  [DeviceType.Workload]: {
+    labelKey: 'uiLibrary.deviceMeta.type.workload',
+    labelFallback: 'Workload',
   },
   [DeviceType.Button]: {
     labelKey: 'uiLibrary.deviceMeta.type.button',
@@ -445,6 +459,10 @@ const DEVICE_ROLE_LABELS: Record<DeviceRole, DeviceMetaLabel> = {
     labelKey: 'uiLibrary.deviceMeta.role.switchLight',
     labelFallback: 'On/off light',
   },
+  [DeviceRole.PoePort]: {
+    labelKey: 'uiLibrary.deviceMeta.role.poePort',
+    labelFallback: 'PoE port',
+  },
   [DeviceRole.ClimateAc]: {
     labelKey: 'uiLibrary.deviceMeta.role.climateAc',
     labelFallback: 'Air conditioner',
@@ -624,6 +642,26 @@ const DEVICE_ROLE_LABELS: Record<DeviceRole, DeviceMetaLabel> = {
   [DeviceRole.IrTransmitter]: {
     labelKey: 'uiLibrary.deviceMeta.role.irTransmitter',
     labelFallback: 'IR/RF transmitter',
+  },
+  [DeviceRole.Vm]: {
+    labelKey: 'uiLibrary.deviceMeta.role.vm',
+    labelFallback: 'Virtual machine',
+  },
+  [DeviceRole.AppContainer]: {
+    labelKey: 'uiLibrary.deviceMeta.role.appContainer',
+    labelFallback: 'Container',
+  },
+  [DeviceRole.Lxc]: {
+    labelKey: 'uiLibrary.deviceMeta.role.lxc',
+    labelFallback: 'LXC container',
+  },
+  [DeviceRole.App]: {
+    labelKey: 'uiLibrary.deviceMeta.role.app',
+    labelFallback: 'App',
+  },
+  [DeviceRole.Host]: {
+    labelKey: 'uiLibrary.deviceMeta.role.host',
+    labelFallback: 'Host',
   },
 }
 

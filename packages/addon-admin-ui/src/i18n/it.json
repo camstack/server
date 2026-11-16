@@ -9509,7 +9509,8 @@
         "heater": "Stufa",
         "heatPump": "Pompa di calore",
         "energySystem": "Sistema energetico",
-        "weatherStation": "Stazione meteo"
+        "weatherStation": "Stazione meteo",
+        "workload": "Carico di lavoro"
       },
       "role": {
         "siren": "Sirena",
@@ -9578,7 +9579,13 @@
         "climateRadiator": "Termosifone",
         "climateHeater": "Stufa",
         "climateHeatPumpCircuit": "Circuito pompa di calore",
-        "switchLight": "Luce on/off"
+        "switchLight": "Luce on/off",
+        "vm": "Macchina virtuale",
+        "appContainer": "Container",
+        "lxc": "Container LXC",
+        "app": "App",
+        "host": "Host",
+        "poePort": "Porta PoE"
       },
       "noun": {
         "role": {

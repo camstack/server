@@ -10,12 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Notification rules carry tags: set them in the rule editor, then filter and group the rules list by tag like Build-your-self
+- A workload device's role (VM, container, LXC, app, host) can be picked in Customize
+
 ### Changed
 
 - The integration form shows no Test button for an integration that has no connection test
-
-### Changed
-
 - Archive is now Overview + Cameras: pick a camera in the header and review it with the player beside the window's events, the timeline below with zone, face/plate and debug filters, one lane per clip source; exports moved to Library → Exports.
 - Archive Review: compact event rows with a size slider, class chips and every filter in one bar above the timeline.
 - Archive Review: event rows are selectable for bulk delete, sources loading or failing are said, a zone filter counts the events it could not check, and old camera links open the matching view; Library → Exports filters by camera.

@@ -547,6 +547,14 @@ export enum EventCategory {
   RunningStarted = 'running.started',
   /** Mirrors `runningStateCapability.events.onFinished`. */
   RunningFinished = 'running.finished',
+  /** Mirrors `workloadCapability.events.onStarted` — a workload reached running (#585). */
+  WorkloadStarted = 'workload.started',
+  /** Mirrors `workloadCapability.events.onStopped` — a running workload stopped cleanly. */
+  WorkloadStopped = 'workload.stopped',
+  /** Mirrors `workloadCapability.events.onCrashed` — a workload stopped without a request. */
+  WorkloadCrashed = 'workload.crashed',
+  /** Mirrors `workloadCapability.events.onRecovered` — a crashed workload runs again. */
+  WorkloadRecovered = 'workload.recovered',
   /** Mirrors `deviceRunsCapability.events.onRunOpened` - a durable run record opened. */
   DeviceRunOpened = 'device-run.opened',
   /** Mirrors `deviceRunsCapability.events.onRunClosed` - a durable run record closed. */

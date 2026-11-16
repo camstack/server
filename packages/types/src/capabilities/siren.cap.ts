@@ -48,6 +48,16 @@ export const SirenOptionsSchema = z.object({
   rangeSeconds: SirenDurationRangeSchema.nullable(),
   /** The camera's default duration, seconds. */
   defaultSeconds: z.number().positive(),
+  /**
+   * Discrete play counts the operator may pick; `null` when the camera gives a
+   * range or does not count plays. Defaults to `null` so a provider that
+   * predates plays (#589) reads as declaring none.
+   */
+  allowedPlays: z.array(z.number().int().positive()).nullable().default(null),
+  /** Continuous range of play counts; `null` when listed or not counted. */
+  rangePlays: SirenDurationRangeSchema.nullable().default(null),
+  /** The camera's default play count; `null` when the camera does not count plays. */
+  defaultPlays: z.number().int().positive().nullable().default(null),
   /** What the camera counts natively. */
   unit: z.enum([SirenDurationUnit.Seconds, SirenDurationUnit.Plays]),
   /** Seconds one play lasts, when `unit` is `plays`; `null` for a seconds camera. */
@@ -66,10 +76,33 @@ export const SirenStatusSchema = z.object({
   activeUntil: z.number().nullable(),
   /** Duration of the current / last activation, seconds; `null` when none yet. */
   durationSeconds: z.number().nullable(),
+  /**
+   * The play count of the current / last activation when it was asked in plays;
+   * `null` when it was asked in seconds (or none yet). The unit that was asked.
+   */
+  plays: z.number().int().positive().nullable().default(null),
+  /**
+   * True when `activeUntil` comes from a seconds-per-play factor the camera did
+   * not report — the siren may fall silent somewhat earlier or later.
+   */
+  activeUntilEstimated: z.boolean().default(false),
   /** Ms epoch of the last trigger (0 = never). */
   lastTriggeredAt: z.number(),
 })
 export type SirenStatus = z.infer<typeof SirenStatusSchema>
+
+/** A trigger asks seconds OR plays (#589); neither means the camera default. */
+export const SirenTriggerInputSchema = z
+  .object({
+    deviceId: z.number().int().nonnegative(),
+    durationSeconds: z.number().positive().optional(),
+    plays: z.number().int().positive().optional(),
+  })
+  .refine((input) => input.durationSeconds === undefined || input.plays === undefined, {
+    message: 'a siren trigger takes durationSeconds or plays, not both',
+    path: ['plays'],
+  })
+export type SirenTriggerInput = z.infer<typeof SirenTriggerInputSchema>
 
 export const SirenRuntimeStateSchema = SirenStatusSchema.extend({
   /** Ms epoch of the last successful camera read of the options (0 = never). */
@@ -90,29 +123,51 @@ export const sirenCapability = {
       auth: 'protected',
     }),
     /**
-     * Sound the siren. Without `durationSeconds` the camera default applies.
-     * Answers the state at the moment of the trigger (`activeUntil` included).
+     * The play counts a rule may pick: what `getOptions` declares as a list, or
+     * its range spelled out. Empty for a siren that counts seconds.
      */
-    trigger: method(
-      z.object({
-        deviceId: z.number().int().nonnegative(),
-        durationSeconds: z.number().positive().optional(),
-      }),
-      SirenStatusSchema,
-      {
-        kind: 'mutation',
-        auth: 'protected',
-        actions: [
-          {
-            id: 'siren.trigger',
-            label: t('Sound the siren', 'Fai suonare la sirena'),
-            phrase: t('Sound {device}', 'Fai suonare {device}'),
-            icon: 'siren',
-            args: {},
-          },
-        ],
-      },
+    getPlayChoices: method(
+      z.object({ deviceId: z.number().int().nonnegative() }),
+      z.array(z.number().int().positive()),
+      { kind: 'query', auth: 'protected' },
     ),
+    /**
+     * Sound the siren for `durationSeconds` OR `plays` — never both. With
+     * neither the camera default applies. A count on a siren that declares no
+     * plays is refused. Answers the state at the moment of the trigger
+     * (`activeUntil` included).
+     */
+    trigger: method(SirenTriggerInputSchema, SirenStatusSchema, {
+      kind: 'mutation',
+      auth: 'protected',
+      actions: [
+        {
+          id: 'siren.trigger',
+          label: t('Sound the siren', 'Fai suonare la sirena'),
+          phrase: t('Sound {device}', 'Fai suonare {device}'),
+          icon: 'siren',
+          args: {},
+        },
+        {
+          id: 'siren.triggerPlays',
+          label: t('Sound the siren N times', 'Fai suonare la sirena N volte'),
+          phrase: t('Sound {device} {plays} times', 'Fai suonare {device} {plays} volte'),
+          icon: 'siren',
+          openArgs: [
+            {
+              key: 'plays',
+              label: t('Plays', 'Riproduzioni'),
+              offer: {
+                kind: 'dynamic',
+                from: 'method',
+                method: 'getPlayChoices',
+                valueKind: 'number',
+              },
+            },
+          ],
+        },
+      ],
+    }),
     /** Silence the siren now. */
     stop: method(z.object({ deviceId: z.number().int().nonnegative() }), SirenStatusSchema, {
       kind: 'mutation',

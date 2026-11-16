@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 629 methods carry a device reference, of which
+ * Coverage: 638 methods carry a device reference, of which
  * 198 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -563,6 +563,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'scriptRunner.run': [{ name: "deviceId", form: "single", optional: false }] as const,
   'scriptRunner.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.getOptions': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'siren.getPlayChoices': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.trigger': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -648,6 +649,14 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'webrtcSession.handleOffer': [{ name: "deviceId", form: "single", optional: false }] as const,
   'webrtcSession.hasAdaptiveBitrate': [{ name: "deviceId", form: "single", optional: false }] as const,
   'webrtcSession.listStreams': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.forceStop': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.getOptions': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.pause': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.restart': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.resume': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.start': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'workload.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
   'zoneAnalytics.getCameraHistory': [{ name: "deviceId", form: "single", optional: false }] as const,
   'zoneAnalytics.getCurrentSnapshot': [{ name: "deviceId", form: "single", optional: false }] as const,
   'zoneAnalytics.getCurrentSnapshotBatch': [{ name: "deviceIds", form: "array", optional: false }] as const,

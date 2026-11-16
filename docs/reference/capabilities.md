@@ -4,7 +4,7 @@
 
 # Capabilities
 
-210 capability definitions in `packages/types/src/capabilities/`.
+211 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -17,7 +17,7 @@ has no `runtimeState`.
 installed addon declares it — either it is server-provided, or the cap is
 registered at runtime only (`registerNativeCap` from a `BaseDevice`).
 
-## Device-scoped (108)
+## Device-scoped (109)
 
 Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`.
 
@@ -109,7 +109,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `running-state` | 1 | ✓ | ✓ | 1 series | — | `bosch-home-connect` `provider-dreame` `provider-homeassistant` |
 | `scene-monitor` | 10 | ✓ | ✓ | none | — | `pipeline-analytics` |
 | `script-runner` | 3 | ✓ | ✓ | none | — | — |
-| `siren` | 4 | ✓ | ✓ | none | — | — |
+| `siren` | 5 | ✓ | ✓ | none | — | — |
 | `smoke` | 1 | ✓ | ✓ | 1 series | — | — |
 | `snapshot` | 9 | ✓ | — | — | — | `snapshot` |
 | `stream-catalog` | 1 | — | ✓ | none | — | — |
@@ -128,6 +128,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `weather` | 1 | ✓ | ✓ | 4 series | — | `provider-homeassistant` |
 | `weather-station` | 1 | ✓ | ✓ | 20 series | — | `provider-ecowitt` |
 | `webrtc-session` | 11 | — | — | — | — | `stream-broker` |
+| `workload` | 8 | ✓ | ✓ | 5 series | — | — |
 | `zone-analytics` | 5 | — | ✓ | none | — | `pipeline-analytics` |
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |

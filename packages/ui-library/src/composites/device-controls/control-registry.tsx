@@ -343,6 +343,8 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.HeatPump]: false,
   // Energy system inline = solar kW · storage % readout (natural width).
   [DeviceType.EnergySystem]: false,
+  // Workload inline = no inline control yet; the workload card is a follow-up (#585).
+  [DeviceType.Workload]: false,
   [DeviceType.Sensor]: false,
   [DeviceType.Presence]: false,
   // ── natural width: readout (event stream, no interactive control) ──────

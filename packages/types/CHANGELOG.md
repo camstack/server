@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Notification rules have an optional tags field and a setRuleTags method; tag counts include notification rules
+- New workload device type (roles vm, app-container, lxc, app, host) with one workload capability: state, start/stop/restart/pause/resume/force stop, resources with history, and started/stopped/crashed/recovered events
+- PoE ports: a switch device can carry the poe-port role (worded Power on / Power off), and network-link reports a port's link speed and whether the link is up
+- Siren plays mode: a siren trigger takes a duration in seconds or a number of plays (never both), getOptions declares the plays a siren supports, the status reports a plays activation with an estimated end, and a rule can sound a siren N times
 
 ### Changed
 

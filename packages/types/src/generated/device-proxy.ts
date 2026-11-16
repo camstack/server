@@ -114,6 +114,7 @@ import type { waterHeaterCapability } from '../capabilities/water-heater.cap.js'
 import type { weatherCapability } from '../capabilities/weather.cap.js'
 import type { weatherStationCapability } from '../capabilities/weather-station.cap.js'
 import type { webrtcSessionCapability } from '../capabilities/webrtc-session.cap.js'
+import type { workloadCapability } from '../capabilities/workload.cap.js'
 import type { zoneAnalyticsCapability } from '../capabilities/zone-analytics.cap.js'
 import type { zoneRulesCapability } from '../capabilities/zone-rules.cap.js'
 import type { zonesCapability } from '../capabilities/zones.cap.js'
@@ -227,6 +228,7 @@ export interface DeviceProxyState {
   readonly waterHeater: SliceHandle<InferRuntimeState<typeof waterHeaterCapability>>
   readonly weather: SliceHandle<InferRuntimeState<typeof weatherCapability>>
   readonly weatherStation: SliceHandle<InferRuntimeState<typeof weatherStationCapability>>
+  readonly workload: SliceHandle<InferRuntimeState<typeof workloadCapability>>
   readonly zoneAnalytics: SliceHandle<InferRuntimeState<typeof zoneAnalyticsCapability>>
   readonly zoneRules: SliceHandle<InferRuntimeState<typeof zoneRulesCapability>>
   readonly zones: SliceHandle<InferRuntimeState<typeof zonesCapability>>
@@ -355,6 +357,7 @@ export interface DeviceProxy {
   readonly weather?: InferDeviceProxyCap<typeof weatherCapability>
   readonly weatherStation?: InferDeviceProxyCap<typeof weatherStationCapability>
   readonly webrtcSession?: InferDeviceProxyCap<typeof webrtcSessionCapability>
+  readonly workload?: InferDeviceProxyCap<typeof workloadCapability>
   readonly zoneAnalytics?: InferDeviceProxyCap<typeof zoneAnalyticsCapability>
   readonly zoneRules?: InferDeviceProxyCap<typeof zoneRulesCapability>
   readonly zones?: InferDeviceProxyCap<typeof zonesCapability>
@@ -1104,6 +1107,7 @@ export function createDeviceProxy(
 
   const sirenInterface = {
     getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getOptions', 'query', input, undefined, options),
+    getPlayChoices: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getPlayChoices', 'query', input, undefined, options),
     trigger: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'trigger', 'mutation', input, undefined, options),
     stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'stop', 'mutation', input, undefined, options),
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getStatus', 'query', input, undefined, options),
@@ -1226,6 +1230,17 @@ export function createDeviceProxy(
     getSessionState: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'getSessionState', 'query', input, undefined, options),
     applyDownlinkProbe: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'applyDownlinkProbe', 'mutation', input, undefined, options),
     getSessionDebug: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'getSessionDebug', 'query', input, undefined, options),
+  }
+
+  const workloadInterface = {
+    start: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'start', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'stop', 'mutation', input, undefined, options),
+    restart: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'restart', 'mutation', input, undefined, options),
+    pause: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'pause', 'mutation', input, undefined, options),
+    resume: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'resume', 'mutation', input, undefined, options),
+    forceStop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'forceStop', 'mutation', input, undefined, options),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'getOptions', 'query', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('workload', 'workload', 'getStatus', 'query', input, undefined, options),
   }
 
   const zoneAnalyticsInterface = {
@@ -1535,6 +1550,7 @@ export function createDeviceProxy(
       waterHeater: createSliceHandle<InferRuntimeState<typeof waterHeaterCapability>>(stateSource, binding.deviceId, 'water-heater'),
       weather: createSliceHandle<InferRuntimeState<typeof weatherCapability>>(stateSource, binding.deviceId, 'weather'),
       weatherStation: createSliceHandle<InferRuntimeState<typeof weatherStationCapability>>(stateSource, binding.deviceId, 'weather-station'),
+      workload: createSliceHandle<InferRuntimeState<typeof workloadCapability>>(stateSource, binding.deviceId, 'workload'),
       zoneAnalytics: createSliceHandle<InferRuntimeState<typeof zoneAnalyticsCapability>>(stateSource, binding.deviceId, 'zone-analytics'),
       zoneRules: createSliceHandle<InferRuntimeState<typeof zoneRulesCapability>>(stateSource, binding.deviceId, 'zone-rules'),
       zones: createSliceHandle<InferRuntimeState<typeof zonesCapability>>(stateSource, binding.deviceId, 'zones'),
@@ -1644,6 +1660,7 @@ export function createDeviceProxy(
     ...(bound('weather') ? { weather: weatherInterface } : {}),
     ...(bound('weather-station') ? { weatherStation: weatherStationInterface } : {}),
     ...(bound('webrtc-session') ? { webrtcSession: webrtcSessionInterface } : {}),
+    ...(bound('workload') ? { workload: workloadInterface } : {}),
     ...(bound('zone-analytics') ? { zoneAnalytics: zoneAnalyticsInterface } : {}),
     ...(bound('zone-rules') ? { zoneRules: zoneRulesInterface } : {}),
     ...(bound('zones') ? { zones: zonesInterface } : {}),

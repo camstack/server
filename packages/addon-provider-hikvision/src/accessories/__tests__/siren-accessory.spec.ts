@@ -18,7 +18,12 @@ const NOW = 1_700_000_000_000
 interface Providers {
   siren?: {
     getOptions(input: { deviceId: number }): Promise<SirenOptions>
-    trigger(input: { deviceId: number; durationSeconds?: number }): Promise<SirenStatus>
+    getPlayChoices(input: { deviceId: number }): Promise<number[]>
+    trigger(input: {
+      deviceId: number
+      durationSeconds?: number
+      plays?: number
+    }): Promise<SirenStatus>
     stop(input: { deviceId: number }): Promise<SirenStatus>
   }
   'motion-trigger'?: {
@@ -110,6 +115,18 @@ describe('Hikvision siren accessory — timed siren cap', () => {
     await vi.advanceTimersByTimeAsync(20_000)
     expect(h.client.setAlarmInput).toHaveBeenLastCalledWith(false, 1)
     expect(h.slice<SirenStatus>('siren')).toMatchObject({ active: false, activeUntil: null })
+  })
+
+  it('counts seconds, so it declares no plays and refuses a trigger in plays (#589)', async () => {
+    const h = build()
+    expect(await h.providers.siren!.getOptions({ deviceId: 41 })).toMatchObject({
+      allowedPlays: null,
+      rangePlays: null,
+      defaultPlays: null,
+    })
+    expect(await h.providers.siren!.getPlayChoices({ deviceId: 41 })).toEqual([])
+    await expect(h.providers.siren!.trigger({ deviceId: 41, plays: 3 })).rejects.toThrow(/plays/)
+    expect(h.client.setAlarmInput).not.toHaveBeenCalled()
   })
 
   it('stop releases the input and clears the slice', async () => {
