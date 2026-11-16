@@ -107,6 +107,11 @@ interface RecordingTimelineProps {
   readonly densityPoints?: readonly DensityPoint[]
   /** Extra lanes drawn under the coverage bar, over the same window. */
   readonly lanes?: ReactNode
+  /**
+   * The surface's own filters, drawn at the start of the controls row so the
+   * page has ONE bar: its filters, then the date and window controls.
+   */
+  readonly toolbar?: ReactNode
 }
 
 // Continuous navigable timeline: date picker, a click-to-seek coverage track,
@@ -131,6 +136,7 @@ export function RecordingTimeline({
   onViewChange,
   densityPoints,
   lanes,
+  toolbar,
 }: RecordingTimelineProps): JSX.Element {
   const t = useUiText()
   const system = useSystem()
@@ -197,7 +203,10 @@ export function RecordingTimeline({
   }, [sendControl, resetScrub])
 
   const handleRateToggle = useCallback((): void => {
-    sendControl({ t: 'setRate', rate: recordedModeRef.current === 'paused' ? 1 : 0 })
+    sendControl({
+      t: 'setRate',
+      rate: recordedModeRef.current === 'paused' ? 1 : 0,
+    })
   }, [sendControl])
 
   // D5: type filter — which event kinds to display and query.
@@ -358,15 +367,33 @@ export function RecordingTimeline({
   const drillSince = selected?.startMs ?? 0
   const drillUntil = selected ? Math.min(selected.endMs, view.toMs) : 0
   const objectDrill = usePipelineAnalyticsGetObjectEvents(
-    { deviceId, since: drillSince, until: drillUntil, limit: pageLimit, projection: 'slim' },
+    {
+      deviceId,
+      since: drillSince,
+      until: drillUntil,
+      limit: pageLimit,
+      projection: 'slim',
+    },
     { enabled: drillEnabled && enabledKinds.has('object') },
   )
   const motionDrill = usePipelineAnalyticsGetMotionEvents(
-    { deviceId, since: drillSince, until: drillUntil, limit: pageLimit, projection: 'slim' },
+    {
+      deviceId,
+      since: drillSince,
+      until: drillUntil,
+      limit: pageLimit,
+      projection: 'slim',
+    },
     { enabled: drillEnabled && enabledKinds.has('motion') },
   )
   const audioDrill = usePipelineAnalyticsGetAudioEvents(
-    { deviceId, since: drillSince, until: drillUntil, limit: pageLimit, projection: 'slim' },
+    {
+      deviceId,
+      since: drillSince,
+      until: drillUntil,
+      limit: pageLimit,
+      projection: 'slim',
+    },
     { enabled: drillEnabled && enabledKinds.has('audio') },
   )
 
@@ -624,19 +651,23 @@ export function RecordingTimeline({
       ) : null}
       {playbackError ? <ErrorBox variant="warning" message={playbackError} /> : null}
 
-      {/* D2: Controls row (date selector) */}
-      <TimelineControls
-        day={day}
-        onDayChange={handleUserDayChange}
-        view={view}
-        dayBounds={computedDayBounds}
-        onViewChange={handleViewChange}
-      />
-
-      {/* The frame at the playhead, into a training collection — including a
-          moment where the model saw nothing. Draws nothing without the admin
-          collection list. */}
-      <div className="flex justify-end">
+      {/* D2: one controls row — the surface's filters, the date and window
+          controls, and the frame at the playhead into a training collection
+          (including a moment where the model saw nothing; it draws nothing
+          without the admin collection list). */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5" data-testid="timeline-bar">
+        {toolbar !== undefined ? (
+          <div className="flex flex-wrap items-center gap-1.5">{toolbar}</div>
+        ) : null}
+        <div className="min-w-[16rem] flex-1">
+          <TimelineControls
+            day={day}
+            onDayChange={handleUserDayChange}
+            view={view}
+            dayBounds={computedDayBounds}
+            onViewChange={handleViewChange}
+          />
+        </div>
         <SendFrameToTrainingButton deviceId={deviceId} epochMs={displayPlayheadMs} />
       </div>
 

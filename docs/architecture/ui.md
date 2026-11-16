@@ -1732,10 +1732,14 @@ which owns the exports list (the Archive only creates exports).
   `[]`; a switched-off camera is "off", not broken (D62, D315, D393).
 - **Cameras** (`components/archive/ArchiveCameraSection.tsx`, `&camera=<id>&view=…`): the camera is
   picked in the header (no list); pill tabs Review (default), Health & space, Settings.
-  - **Review** (`ArchiveReviewSection.tsx`): the 16:9 player (at most 42% of the viewport tall)
-    beside the events of the timeline window (`EventsSection` with `window` + `rowFilter`), and the
-    `RecordingTimeline` below. Zone, face/plate (joined from slim `listTracks` by `trackId`) and
-    debug filters narrow the list and, through `densityPoints`, the density bar. Every
+  - **Review** (`ArchiveReviewSection.tsx`): the 16:9 player (at most 40% of the viewport tall)
+    beside the events of the timeline window (`EventsSection` with `window` + `rowFilter`,
+    `layout="rows"`: compact `EventRow`s whose click seeks, a size slider remembered per viewer),
+    and the `RecordingTimeline` below. ONE filter bar, the timeline's `toolbar` slot: source, kinds,
+    class chips (`EventClassChips`, the classes present in the window), min score, sort (portalled
+    from `EventsSection` via `toolbarTarget`), zone, face/plate (joined from slim `listTracks` by
+    `trackId`) and debug. Every filter narrows the list and, through `densityPoints`, the density
+    bar. Lanes are compact rows with the label inline, so every lane sits above the fold at 1440×900. Every
     `videoclips.listSources` provider is a `ClipSourceLanes` lane; the Source picker chooses what the
     player plays (the recorder by default). A click on an event or a lane seeks or plays; shift-drag
     opens `NewExportModal` on that range.

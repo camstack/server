@@ -23,7 +23,7 @@ function isIdentity(value: string): value is IdentityFilter {
 export function ReviewFilterBar({ filters, zones, onChange }: ReviewFilterBarProps): ReactElement {
   const { t } = useTranslation()
   return (
-    <div className="flex flex-wrap items-center gap-2" data-testid="archive-review-filters">
+    <div className="contents" data-testid="archive-review-filters">
       {/* One zone is still a choice (that zone vs every zone); none is not. */}
       {zones.length > 0 && (
         <Select
@@ -31,7 +31,10 @@ export function ReviewFilterBar({ filters, zones, onChange }: ReviewFilterBarPro
           aria-label={t('archive.review.zone', 'Zone')}
           value={filters.zone ?? ALL_ZONES}
           onChange={(e) =>
-            onChange({ ...filters, zone: e.target.value === ALL_ZONES ? null : e.target.value })
+            onChange({
+              ...filters,
+              zone: e.target.value === ALL_ZONES ? null : e.target.value,
+            })
           }
         >
           <option value={ALL_ZONES}>{t('archive.review.allZones', 'All zones')}</option>

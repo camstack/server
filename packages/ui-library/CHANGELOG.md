@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Log stream name columns are off unless a page opts in through the columns prop; the export dialog shows an error when the log sources cannot be read
 - The recording timeline opens on the latest footage, says so when a window is empty, and a range dragged on it can start an export.
 - RecordingTimeline reports its window and takes caller density and extra lanes; new ClipSourceLanes draws one clip lane per source a camera lists.
+- RecordingTimeline takes a toolbar slot that joins the date and zoom controls in one bar; clip source lanes are compact rows with the label inline.
 
 ## [1.2.461] - 2026-11-16
 

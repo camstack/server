@@ -14836,6 +14836,12 @@
           "type": "ReactNode",
           "optional": true,
           "doc": "Extra lanes drawn under the coverage bar, over the same window."
+        },
+        {
+          "name": "toolbar",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The surface's own filters, drawn at the start of the controls row so the page has ONE bar: its filters, then the date and window controls."
         }
       ]
     },

@@ -85,16 +85,56 @@ function ClipSourceLane({
     .filter((notice) => !notice.answered)
   const spans = clipLaneSpans(lane.clips, view.fromMs, view.toMs)
 
+  const notice =
+    lane.status === 'error'
+      ? t('uiLibrary.clipSourceLanes.failed', 'Could not be read — {{reason}}', {
+          reason: lane.error ?? '',
+        })
+      : silent.length > 0 && lane.clips.length === 0
+        ? silent.map((n) => n.headline).join(' · ')
+        : lane.status === 'refused'
+          ? t('uiLibrary.clipSourceLanes.refused', 'This window is too wide to list clips.')
+          : null
+
+  // One compact row: the bar spans the full window width so its marks line up
+  // with the coverage bar above; the label sits inline at its left edge.
   return (
-    <div className="space-y-1" data-testid={`clip-source-lane-${option.value}`}>
-      <div
-        className={`flex flex-wrap items-baseline gap-x-2 text-[10px] font-semibold uppercase tracking-wider ${
+    <div
+      className={`relative h-4 overflow-hidden rounded bg-background/40 ${
+        lane.status === 'pending' ? 'animate-pulse' : ''
+      }`}
+      data-testid={`clip-source-lane-${option.value}`}
+    >
+      {notice === null &&
+        spans.map((span) => (
+          <button // ui-check-ok: a positioned span on the lane bar, not a control row
+            key={`${span.clip.source}:${span.clip.id}`}
+            type="button"
+            onClick={() => onPickClip(option.value, span.clip)}
+            title={new Date(span.clip.timeRange.startMs).toLocaleTimeString()}
+            aria-label={t('uiLibrary.clipSourceLanes.playClip', 'Play clip at {{time}}', {
+              time: new Date(span.clip.timeRange.startMs).toLocaleTimeString(),
+            })}
+            className={`absolute top-0.5 h-3 rounded-sm ${
+              selected
+                ? 'bg-primary/70 hover:bg-primary'
+                : 'bg-foreground-subtle/50 hover:bg-foreground-subtle/80'
+            }`}
+            // ui-check-ok: computed geometry — the clip's place on the window
+            style={{
+              left: `${String(span.leftPct)}%`,
+              width: `${String(span.widthPct)}%`,
+            }}
+          />
+        ))}
+      <span
+        className={`pointer-events-none absolute inset-y-0 left-0 flex max-w-full items-center gap-1.5 rounded-r bg-surface/80 px-1.5 text-[10px] leading-none ${
           selected ? 'text-primary' : 'text-foreground-subtle'
         }`}
       >
-        <span>{option.label}</span>
-        {lane.status === 'success' ? (
-          <span className="font-normal normal-case tracking-normal">
+        <span className="truncate font-semibold uppercase tracking-wider">{option.label}</span>
+        {lane.status === 'success' && notice === null ? (
+          <span className="shrink-0 tabular-nums">
             {t(
               'uiLibrary.clipSourceLanes.count',
               { one: '{{count}} clip', other: '{{count}} clips' },
@@ -102,45 +142,15 @@ function ClipSourceLane({
             )}
           </span>
         ) : null}
-      </div>
-      {lane.status === 'pending' ? (
-        <div className="h-3 animate-pulse rounded bg-background/40" />
-      ) : lane.status === 'error' ? (
-        <p className="text-[11px] text-warning">
-          {t('uiLibrary.clipSourceLanes.failed', 'Could not be read — {{reason}}', {
-            reason: lane.error ?? '',
-          })}
-        </p>
-      ) : silent.length > 0 && lane.clips.length === 0 ? (
-        <p className="text-[11px] text-warning">
-          {silent.map((notice) => notice.headline).join(' · ')}
-        </p>
-      ) : lane.status === 'refused' ? (
-        <p className="text-[11px] text-foreground-subtle">
-          {t('uiLibrary.clipSourceLanes.refused', 'This window is too wide to list clips.')}
-        </p>
-      ) : (
-        <div className="relative h-3 overflow-hidden rounded bg-background/40">
-          {spans.map((span) => (
-            <button // ui-check-ok: a positioned span on the lane bar, not a control row
-              key={`${span.clip.source}:${span.clip.id}`}
-              type="button"
-              onClick={() => onPickClip(option.value, span.clip)}
-              title={new Date(span.clip.timeRange.startMs).toLocaleTimeString()}
-              aria-label={t('uiLibrary.clipSourceLanes.playClip', 'Play clip at {{time}}', {
-                time: new Date(span.clip.timeRange.startMs).toLocaleTimeString(),
-              })}
-              className={`absolute inset-y-0 rounded-sm ${
-                selected
-                  ? 'bg-primary/70 hover:bg-primary'
-                  : 'bg-foreground-subtle/40 hover:bg-foreground-subtle/70'
-              }`}
-              // ui-check-ok: computed geometry — the clip's place on the window
-              style={{ left: `${String(span.leftPct)}%`, width: `${String(span.widthPct)}%` }}
-            />
-          ))}
-        </div>
-      )}
+        {notice !== null ? (
+          <span
+            className={`truncate ${lane.status === 'refused' ? '' : 'text-warning'}`}
+            title={notice}
+          >
+            {notice}
+          </span>
+        ) : null}
+      </span>
     </div>
   )
 }
@@ -164,7 +174,7 @@ export function ClipSourceLanes({
 }: ClipSourceLanesProps): JSX.Element | null {
   if (options.length === 0) return null
   return (
-    <div className="space-y-1.5" data-testid="clip-source-lanes">
+    <div className="space-y-1" data-testid="clip-source-lanes">
       {options.map((option) => (
         <ClipSourceLane
           key={option.value}

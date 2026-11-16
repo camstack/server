@@ -14,8 +14,11 @@
  *   that source holding the instant plays.
  * - Shift-drag on the coverage bar opens the export dialog on that range.
  *
- * The player is 16:9 and at most 42% of the viewport tall, so the timeline
- * stays on screen at 1440×900. Phone: one column — player, timeline, events.
+ * The player is 16:9 and at most 40% of the viewport tall, so the timeline and
+ * every source lane stay on screen at 1440×900. All filters (source, kinds,
+ * score, sort, zone, subject, debug) share ONE bar, the timeline's controls
+ * row, so the list and the density bar follow the same controls.
+ * Phone: one column — player, timeline, events.
  */
 import {
   clipAtInstant,
@@ -105,6 +108,8 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
   const [activeClip, setActiveClip] = useState<Clip | null>(null)
   const [profile, setProfile] = useState<CamProfile>('high')
   const [clipMiss, setClipMiss] = useState<number | null>(null)
+  // The single filter bar's slot where the event list's own filters render.
+  const [eventsBar, setEventsBar] = useState<HTMLElement | null>(null)
 
   // Clip sources — one option per provider, in the camera's own order.
   const sources = useVideoclipsListSources({ deviceId })
@@ -158,40 +163,40 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
     setClipMiss(null)
     if (laneProvider === RECORDING_SOURCE_CAMSTACK_ADDON) {
       setActiveClip(null)
-      setSeek((prev) => ({ atMs: clip.timeRange.startMs, nonce: (prev?.nonce ?? 0) + 1 }))
+      setSeek((prev) => ({
+        atMs: clip.timeRange.startMs,
+        nonce: (prev?.nonce ?? 0) + 1,
+      }))
       return
     }
     setActiveClip(clip)
   }, [])
 
+  const sourcePicker =
+    options.length > 1 ? (
+      <Select
+        wrapperClassName="inline-block w-auto"
+        aria-label={t('archive.review.source', 'Source')}
+        value={provider ?? ''}
+        onChange={(e) => {
+          setPicked(e.target.value)
+          setActiveClip(null)
+          setClipMiss(null)
+        }}
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </Select>
+    ) : null
+
   return (
-    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,calc(42vh*16/9))_minmax(20rem,1fr)]">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,calc(40vh*16/9))_minmax(20rem,1fr)]">
       <div className="order-1 flex min-w-0 flex-col gap-2 lg:order-none lg:col-start-1 lg:row-start-1">
-        {options.length > 1 && (
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[10px] uppercase tracking-wide text-foreground-subtle">
-              {t('archive.review.source', 'Source')}
-            </span>
-            <Select
-              wrapperClassName="inline-block w-auto"
-              aria-label={t('archive.review.source', 'Source')}
-              value={provider ?? ''}
-              onChange={(e) => {
-                setPicked(e.target.value)
-                setActiveClip(null)
-                setClipMiss(null)
-              }}
-            >
-              {options.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </Select>
-          </div>
-        )}
         <div
-          className="mx-auto aspect-video w-full max-w-[calc(42vh*16/9)] overflow-hidden rounded-lg border border-border bg-black"
+          className="mx-auto aspect-video w-full max-w-[calc(40vh*16/9)] overflow-hidden rounded-lg border border-border bg-black"
           data-testid="archive-review-player"
         >
           <StreamPanelContent deviceId={deviceId} />
@@ -217,7 +222,7 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
       </div>
 
       <div
-        className="order-3 flex min-w-0 flex-col gap-2 lg:order-none lg:col-start-2 lg:row-start-1 lg:max-h-[calc(42vh+3rem)] lg:overflow-y-auto"
+        className="order-3 flex min-w-0 flex-col gap-2 lg:order-none lg:col-start-2 lg:row-start-1 lg:max-h-[40vh] lg:overflow-y-auto"
         data-testid="archive-review-events"
       >
         <EventsSection
@@ -226,17 +231,25 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
           rowFilter={rowFilter}
           onListChange={setReport}
           onSeek={playAt}
+          layout="rows"
+          toolbarTarget={eventsBar}
         />
       </div>
 
       <div className="order-2 flex min-w-0 flex-col gap-2 lg:order-none lg:col-span-2 lg:row-start-2">
-        <ReviewFilterBar filters={filters} zones={zones} onChange={setFilters} />
         <RecordingTimeline
           deviceId={deviceId}
           seekTo={seek}
           onExportRange={(fromMs, toMs) => setDraft({ fromMs, toMs })}
           onViewChange={onViewChange}
           densityPoints={densityPoints}
+          toolbar={
+            <div className="contents" data-testid="archive-review-bar">
+              {sourcePicker}
+              <span ref={setEventsBar} className="contents" />
+              <ReviewFilterBar filters={filters} zones={zones} onChange={setFilters} />
+            </div>
+          }
           lanes={
             <ClipSourceLanes
               deviceId={deviceId}

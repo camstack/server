@@ -4124,7 +4124,9 @@
       "eventCount_other": "{{count}} eventi",
       "showInReview": "Mostra in Revisione",
       "clusterHeading_one": "1 evento · {{time}}",
-      "clusterHeading_other": "{{count}} eventi · ultimo {{time}}"
+      "clusterHeading_other": "{{count}} eventi · ultimo {{time}}",
+      "rowSize": "Dimensione",
+      "rowSizeLabel": "Dimensione delle righe evento"
     },
     "faceDetailPanel": {
       "face": "Volto",
@@ -4342,7 +4344,15 @@
       "detach": "Scollega"
     },
     "assignCount": "Assegna {{count}}",
-    "cameraFallback": "Telecamera #{{id}}"
+    "cameraFallback": "Telecamera #{{id}}",
+    "eventRow": {
+      "openDetail": "Apri i dettagli dell'evento",
+      "seek": "Riproduci {{className}} alle {{time}}"
+    },
+    "eventClassChips": {
+      "all": "Tutte le classi",
+      "label": "Classi"
+    }
   },
   "recordings": {
     "activitySection": {

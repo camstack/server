@@ -15,8 +15,18 @@
  * with an "arrives with the next update" tooltip until the cap router lands.
  */
 import { useEffect, useMemo, useState, type JSX } from 'react'
+import { createPortal } from 'react-dom'
 import { useQueryClient } from '@tanstack/react-query'
-import { Activity, ArrowDownWideNarrow, Clock, Loader2, PlayCircle, Trash2, X } from 'lucide-react'
+import {
+  Activity,
+  ArrowDownWideNarrow,
+  Clock,
+  ImageIcon,
+  Loader2,
+  PlayCircle,
+  Trash2,
+  X,
+} from 'lucide-react'
 import {
   Button,
   EmptyState,
@@ -26,6 +36,7 @@ import {
   useDeviceManagerListAll,
   usePipelineAnalyticsListEventKindsBatch,
   Slider,
+  usePersistedPageSize,
 } from '@camstack/ui-library'
 import {
   filterKeyEvents,
@@ -44,11 +55,19 @@ import {
 import { useKeyEventsFeed } from './use-key-events-feed.js'
 import { useEventsLiveRefresh } from './use-events-live-refresh.js'
 import { CameraMultiSelect } from './CameraMultiSelect.js'
+import { EventClassChips } from './EventClassChips.js'
+import {
+  EVENT_ROW_SIZE_DEFAULT,
+  EVENT_ROW_SIZE_STORAGE_KEY,
+  EVENT_ROW_SIZES,
+  toEventRowSize,
+} from './event-row-size.js'
 import { EventKindFilter } from './EventKindFilter.js'
 import { buildKindGroups } from './event-kind-vocabulary.js'
 import { DateRangeFilter } from './DateRangeFilter.js'
 import { EventDetailPanel } from './EventDetailPanel.js'
 import { EventCard } from './EventCard.js'
+import { EventRow } from './EventRow.js'
 import { clusterEvents } from '../archive/event-clusters'
 import { GalleryPager } from '../GalleryPager.js'
 import { usePagedList } from '../../lib/use-paged-list.js'
@@ -78,7 +97,11 @@ const SORTS: readonly {
     labelKey: 'detectionIntelligence.eventsSection.sortImportance',
     icon: ArrowDownWideNarrow,
   },
-  { value: 'time', labelKey: 'detectionIntelligence.eventsSection.sortRecent', icon: Clock },
+  {
+    value: 'time',
+    labelKey: 'detectionIntelligence.eventsSection.sortRecent',
+    icon: Clock,
+  },
 ]
 
 export interface EventsSectionProps {
@@ -95,7 +118,20 @@ export interface EventsSectionProps {
   readonly rowFilter?: (row: KeyEventRow) => boolean
   /** Told the filtered list, so a neighbour (the density bar) draws the same rows. */
   readonly onListChange?: (report: EventsListReport) => void
+  /**
+   * `rows`: compact one-line rows whose click seeks (needs `onSeek`), for a list
+   * beside a player. Default `cards`.
+   */
+  readonly layout?: EventsLayout
+  /**
+   * Where the filter controls render. Absent: above the list. An element: they
+   * join that bar (the page's single filter bar). `null`: that bar is not
+   * mounted yet, so they wait.
+   */
+  readonly toolbarTarget?: HTMLElement | null
 }
+
+export type EventsLayout = 'cards' | 'rows'
 
 /** The list on screen, and whether this section's own filters narrowed it. */
 export interface EventsListReport {
@@ -116,6 +152,8 @@ export function EventsSection({
   window: fixedWindow,
   rowFilter,
   onListChange,
+  layout = 'cards',
+  toolbarTarget,
 }: EventsSectionProps = {}): JSX.Element {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -125,6 +163,14 @@ export function EventsSection({
   const [dateRange, setDateRange] = useState<DateRange>(EMPTY_DATE_RANGE)
   const [selectedCameras, setSelectedCameras] = useState<Set<number>>(new Set())
   const [classFilter, setClassFilter] = useState<Set<string>>(new Set())
+  // Rows layout: classes present in the window switched OFF by the class chips.
+  const [hiddenClasses, setHiddenClasses] = useState<ReadonlySet<string>>(new Set())
+  const [rowSizeStep, setRowSizeStep] = usePersistedPageSize({
+    storageKey: EVENT_ROW_SIZE_STORAGE_KEY,
+    options: EVENT_ROW_SIZES,
+    defaultSize: EVENT_ROW_SIZE_DEFAULT,
+  })
+  const rowSize = toEventRowSize(rowSizeStep)
   const [minImportance, setMinImportance] = useState(0)
   const [sortMode, setSortMode] = useState<SortMode>('time')
   const [selected, setSelected] = useState<Set<string>>(new Set())
@@ -233,12 +279,15 @@ export function EventsSection({
           cameras: selectedCameras,
           classes: classFilter,
           minImportance,
-        }).filter((row) => rowFilter === undefined || rowFilter(row)),
+        }).filter(
+          (row) => !hiddenClasses.has(row.className) && (rowFilter === undefined || rowFilter(row)),
+        ),
         sortMode,
       ),
-    [rows, selectedCameras, classFilter, minImportance, sortMode, rowFilter],
+    [rows, selectedCameras, classFilter, hiddenClasses, minImportance, sortMode, rowFilter],
   )
-  const ownNarrowing = classFilter.size > 0 || minImportance > 0
+  const windowClasses = useMemo(() => rows.map((row) => row.className), [rows])
+  const ownNarrowing = classFilter.size > 0 || hiddenClasses.size > 0 || minImportance > 0
   useEffect(() => {
     onListChange?.({ rows: list, narrowed: ownNarrowing })
   }, [list, ownNarrowing, onListChange])
@@ -250,12 +299,13 @@ export function EventsSection({
       JSON.stringify([
         [...selectedCameras].sort((a, b) => a - b),
         [...classFilter].sort(),
+        [...hiddenClasses].sort(),
         minImportance,
         sortMode,
         since,
         until,
       ]),
-    [selectedCameras, classFilter, minImportance, sortMode, since, until],
+    [selectedCameras, classFilter, hiddenClasses, minImportance, sortMode, since, until],
   )
   const paged = usePagedList(list, EVENTS_PAGE_SIZE, pageResetKey)
 
@@ -280,8 +330,12 @@ export function EventsSection({
     if (total === 0) return
     void (async () => {
       const ok = await confirm({
-        title: t('detectionIntelligence.eventsSection.deleteTitle', { count: total }),
-        message: t('detectionIntelligence.eventsSection.deleteMessage', { count: total }),
+        title: t('detectionIntelligence.eventsSection.deleteTitle', {
+          count: total,
+        }),
+        message: t('detectionIntelligence.eventsSection.deleteMessage', {
+          count: total,
+        }),
         confirmLabel: t('common.delete', 'Delete'),
         variant: 'danger',
       })
@@ -361,80 +415,117 @@ export function EventsSection({
     />
   )
 
+  const rowsLayout = layout === 'rows' && onSeek !== undefined
+  const renderItem = (row: (typeof paged.pageItems)[number]): JSX.Element =>
+    rowsLayout ? (
+      <EventRow
+        key={trackSelectionKey(row.deviceId, row.trackId)}
+        row={row}
+        onSeek={onSeek}
+        onOpenDetail={setDetailRow}
+        size={rowSize}
+      />
+    ) : (
+      renderCard(row)
+    )
+  const renderItems = (items: readonly (typeof paged.pageItems)[number][]): JSX.Element =>
+    rowsLayout ? (
+      <div className="flex flex-col gap-1" data-testid="events-grid">
+        {items.map(renderItem)}
+      </div>
+    ) : (
+      <MediaGrid status="ready" testId="events-grid">
+        {items.map(renderItem)}
+      </MediaGrid>
+    )
+
+  const filterBar = (
+    <div
+      className={toolbarTarget === undefined ? 'flex flex-wrap items-center gap-1.5' : 'contents'}
+    >
+      {fixedWindow === undefined && <DateRangeFilter onChange={setDateRange} />}
+      {fixedDeviceId === undefined && (
+        <CameraMultiSelect
+          cameras={cameraOptions}
+          selected={selectedCameras}
+          onChange={setSelectedCameras}
+        />
+      )}
+
+      {/* Hierarchical event-kind filter (macro → sub, taxonomy-driven) */}
+      <EventKindFilter
+        groups={kindGroups}
+        selected={classFilter}
+        onChange={setClassFilter}
+        loading={kindsLoading}
+      />
+      {rowsLayout && (
+        <EventClassChips
+          classes={windowClasses}
+          hidden={hiddenClasses}
+          onChange={setHiddenClasses}
+        />
+      )}
+
+      {/* Min-importance slider */}
+      <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
+        <span>{t('detectionIntelligence.eventsSection.minScore', 'Min score')}</span>
+        <Slider
+          min={0}
+          max={1}
+          step={0.05}
+          value={minImportance}
+          onChange={(e) => setMinImportance(Number(e.target.value))}
+          className="h-1 w-24 cursor-pointer accent-primary"
+          aria-label={t(
+            'detectionIntelligence.eventsSection.minimumImportance',
+            'Minimum importance',
+          )}
+        />
+        <span className="w-6 tabular-nums text-foreground">{Math.round(minImportance * 100)}</span>
+      </label>
+
+      {/* Sort toggle */}
+      <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
+        {SORTS.map((s) => {
+          const Icon = s.icon
+          return (
+            <button // ui-check-ok: CHIP_* sort segment; Button chrome breaks the bar
+              key={s.value}
+              type="button"
+              onClick={() => setSortMode(s.value)}
+              className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] transition-colors ${
+                sortMode === s.value
+                  ? 'bg-primary/12 text-primary font-medium'
+                  : 'text-foreground-subtle hover:bg-surface-hover hover:text-foreground'
+              }`}
+            >
+              <Icon className="h-3.5 w-3.5" /> {t(s.labelKey)}
+            </button>
+          )
+        })}
+      </div>
+
+      {!isLoading && (
+        <span className="ml-auto text-[10px] text-foreground-subtle">
+          {isFiltered
+            ? t('detectionIntelligence.eventsSection.ofEvents', '{{value1}} of {{value2}} events', {
+                value1: String(list.length),
+                value2: String(rows.length),
+              })
+            : t('detectionIntelligence.eventsSection.eventCount', {
+                count: list.length,
+              })}
+        </span>
+      )}
+    </div>
+  )
+
   return (
     <div className="relative space-y-3">
-      {/* Filter bar */}
-      <div className="flex flex-wrap items-center gap-1.5">
-        {fixedWindow === undefined && <DateRangeFilter onChange={setDateRange} />}
-        {fixedDeviceId === undefined && (
-          <CameraMultiSelect
-            cameras={cameraOptions}
-            selected={selectedCameras}
-            onChange={setSelectedCameras}
-          />
-        )}
-
-        {/* Hierarchical event-kind filter (macro → sub, taxonomy-driven) */}
-        <EventKindFilter
-          groups={kindGroups}
-          selected={classFilter}
-          onChange={setClassFilter}
-          loading={kindsLoading}
-        />
-
-        {/* Min-importance slider */}
-        <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
-          <span>{t('detectionIntelligence.eventsSection.minScore', 'Min score')}</span>
-          <Slider
-            min={0}
-            max={1}
-            step={0.05}
-            value={minImportance}
-            onChange={(e) => setMinImportance(Number(e.target.value))}
-            className="h-1 w-24 cursor-pointer accent-primary"
-            aria-label={t(
-              'detectionIntelligence.eventsSection.minimumImportance',
-              'Minimum importance',
-            )}
-          />
-          <span className="w-6 tabular-nums text-foreground">
-            {Math.round(minImportance * 100)}
-          </span>
-        </label>
-
-        {/* Sort toggle */}
-        <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
-          {SORTS.map((s) => {
-            const Icon = s.icon
-            return (
-              <button // ui-check-ok: CHIP_* sort segment; Button chrome breaks the bar
-                key={s.value}
-                type="button"
-                onClick={() => setSortMode(s.value)}
-                className={`flex items-center gap-1 rounded px-2 py-1 text-[11px] transition-colors ${
-                  sortMode === s.value
-                    ? 'bg-primary/12 text-primary font-medium'
-                    : 'text-foreground-subtle hover:bg-surface-hover hover:text-foreground'
-                }`}
-              >
-                <Icon className="h-3.5 w-3.5" /> {t(s.labelKey)}
-              </button>
-            )
-          })}
-        </div>
-
-        {!isLoading && (
-          <span className="ml-auto text-[10px] text-foreground-subtle">
-            {isFiltered
-              ? t(
-                  'detectionIntelligence.eventsSection.ofEvents',
-                  '{{value1}} of {{value2}} events',
-                  { value1: String(list.length), value2: String(rows.length) },
-                )
-              : t('detectionIntelligence.eventsSection.eventCount', { count: list.length })}
-          </span>
-        )}
-      </div>
+      {toolbarTarget === undefined
+        ? filterBar
+        : toolbarTarget !== null && createPortal(filterBar, toolbarTarget)}
 
       {/* Selection action bar */}
       {selected.size > 0 && (
@@ -512,25 +603,36 @@ export function EventsSection({
           {/* Zero-height sentinel: while it is on screen the operator is at the
               top of the grid and live refreshes apply immediately. */}
           <div ref={feedTop.ref} aria-hidden className="h-0" />
-          {fixedDeviceId !== undefined && sortMode === 'time' ? (
-            clusters.map((cluster) => (
-              <div key={cluster.toMs} className="space-y-1.5">
-                <div className="text-[11px] font-medium text-foreground-subtle">
-                  {t('detectionIntelligence.eventsSection.clusterHeading', {
-                    count: cluster.events.length,
-                    time: new Date(cluster.toMs).toLocaleString(),
-                  })}
-                </div>
-                <MediaGrid status="ready" testId="events-grid">
-                  {cluster.events.map(renderCard)}
-                </MediaGrid>
-              </div>
-            ))
-          ) : (
-            <MediaGrid status="ready" testId="events-grid">
-              {paged.pageItems.map(renderCard)}
-            </MediaGrid>
+          {rowsLayout && (
+            <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
+              <ImageIcon className="h-3.5 w-3.5" />
+              <span>{t('detectionIntelligence.eventsSection.rowSize', 'Size')}</span>
+              <Slider
+                min={0}
+                max={EVENT_ROW_SIZES.length - 1}
+                step={1}
+                value={rowSize}
+                onChange={(e) => setRowSizeStep(Number(e.target.value))}
+                className="h-1 w-24 cursor-pointer accent-primary"
+                data-testid="event-row-size"
+                aria-label={t('detectionIntelligence.eventsSection.rowSizeLabel', 'Event row size')}
+              />
+            </label>
           )}
+          {/* Rows carry their own time, so they are not grouped under headings. */}
+          {!rowsLayout && fixedDeviceId !== undefined && sortMode === 'time'
+            ? clusters.map((cluster) => (
+                <div key={cluster.toMs} className="space-y-1.5">
+                  <div className="text-[11px] font-medium text-foreground-subtle">
+                    {t('detectionIntelligence.eventsSection.clusterHeading', {
+                      count: cluster.events.length,
+                      time: new Date(cluster.toMs).toLocaleString(),
+                    })}
+                  </div>
+                  {renderItems(cluster.events)}
+                </div>
+              ))
+            : renderItems(paged.pageItems)}
           <GalleryPager
             currentPage={paged.page}
             totalItems={paged.totalItems}

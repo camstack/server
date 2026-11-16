@@ -38,6 +38,7 @@ interface SeekProp {
 interface TimelineMockProps {
   readonly seekTo?: SeekProp
   readonly lanes?: ReactNode
+  readonly toolbar?: ReactNode
 }
 interface LanesMockProps {
   readonly options: readonly { readonly value: string }[]
@@ -64,8 +65,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
       clips: provider === 'provider-onboard' ? [ONBOARD_CLIP] : [],
       error: null,
     }),
-    RecordingTimeline: ({ seekTo, lanes }: TimelineMockProps) => (
+    RecordingTimeline: ({ seekTo, lanes, toolbar }: TimelineMockProps) => (
       <div data-testid="timeline">
+        {toolbar}
         <span data-testid="timeline-seek">{seekTo === undefined ? '' : String(seekTo.atMs)}</span>
         {lanes}
       </div>

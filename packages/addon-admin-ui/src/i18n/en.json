@@ -4049,7 +4049,9 @@
       "eventCount_other": "{{count}} events",
       "showInReview": "Show in Review",
       "clusterHeading_one": "1 event · {{time}}",
-      "clusterHeading_other": "{{count}} events · latest {{time}}"
+      "clusterHeading_other": "{{count}} events · latest {{time}}",
+      "rowSize": "Size",
+      "rowSizeLabel": "Event row size"
     },
     "faceDetailPanel": {
       "face": "Face",
@@ -4267,7 +4269,15 @@
       "detach": "Detach"
     },
     "assignCount": "Assign {{count}}",
-    "cameraFallback": "Camera #{{id}}"
+    "cameraFallback": "Camera #{{id}}",
+    "eventRow": {
+      "openDetail": "Open event details",
+      "seek": "Play {{className}} at {{time}}"
+    },
+    "eventClassChips": {
+      "all": "All classes",
+      "label": "Classes"
+    }
   },
   "recordings": {
     "activitySection": {
