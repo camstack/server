@@ -1,6 +1,7 @@
 /**
- * System → Terminal (`/system/terminal`): instances across three nodes in ONE
- * table. `old-mac.localdomain` left the cluster (its instance is kept and
+ * System → Terminal (`/system/terminal`). Terminal devices: instances across
+ * three nodes in ONE table. Node shells (`?tab=shells`): the hub has opted in
+ * to its shell, garage-nuc has not. `old-mac.localdomain` left the cluster (its instance is kept and
  * flagged); `edge-proxmox` runs no terminal provider (the registry lists
  * providers on the hub and `garage-nuc` only), so it reads "Terminal not
  * installed on this node" and is not offered when creating a terminal.
@@ -151,18 +152,91 @@ export default defineFixtures({
         metadata: {},
       },
     ],
+    // A node's Terminal settings (the `node` scope): the server-shell opt-in lives here.
+    'addonSettings.getScopedSettings': (i: { addonId?: string }) =>
+      i.addonId === 'terminal'
+        ? {
+            tabs: null,
+            sections: [
+              {
+                id: 'terminal-server-shell',
+                title: 'Server shell',
+                description:
+                  'A login shell in this node’s data directory, for admins. Off until this node opts in. Sessions close after they sit idle.',
+                columns: 2,
+                fields: [
+                  {
+                    type: 'boolean',
+                    key: 'serverShellEnabled',
+                    label: 'Allow server shell',
+                    description:
+                      'Lets an admin open a login shell on this node from the Terminal page. Off by default.',
+                    value: false,
+                  },
+                  {
+                    type: 'number',
+                    key: 'serverShellIdleMinutes',
+                    label: 'Idle timeout',
+                    description:
+                      'Close a server shell after this many minutes with no input and no output.',
+                    value: 30,
+                    min: 1,
+                    max: 1440,
+                    unit: 'minutes',
+                  },
+                ],
+              },
+            ],
+          }
+        : null,
     'terminalSession.listProfiles': PROFILES,
-    'terminalSession.serverShellStatus': (i: { nodeId?: string }) => ({
-      nodeId: i.nodeId ?? 'hub',
-      enabled: false,
-      idleMinutes: 30,
-      refusal: {
-        code: 'server-shell-disabled',
-        nodeId: i.nodeId ?? 'hub',
-        message: `Server shell is off on node ${i.nodeId ?? 'hub'}. Turn it on in that node's Terminal settings.`,
-      },
+    // The hub opted in to its node shell; garage-nuc has not.
+    'terminalSession.serverShellStatus': (i: { nodeId?: string }) => {
+      const nodeId = i.nodeId ?? 'hub'
+      return nodeId === 'hub'
+        ? { nodeId, enabled: true, idleMinutes: 30, refusal: null }
+        : {
+            nodeId,
+            enabled: false,
+            idleMinutes: 30,
+            refusal: {
+              code: 'server-shell-disabled',
+              nodeId,
+              message: `Server shell is off on node ${nodeId}. Turn it on in that node's Terminal settings.`,
+            },
+          }
+    },
+    // One instance pty and one node shell: only the first is a "Live session" of Terminal devices.
+    'terminalSession.listSessions': (i: { nodeId?: string }) =>
+      (i.nodeId ?? 'hub') === 'hub'
+        ? [
+            {
+              sessionId: 'tty-7c1e',
+              profileId: 'monitor',
+              label: 'BTM',
+              cols: 120,
+              rows: 32,
+              startedAt: NOW - 600_000,
+            },
+            {
+              sessionId: 'sh-91ad',
+              profileId: 'server-shell',
+              label: 'Server shell',
+              cols: 120,
+              rows: 32,
+              startedAt: NOW - 120_000,
+            },
+          ]
+        : [],
+    'mut:terminalSession.openSession': (i: { nodeId: string; profileId: string }) => ({
+      sessionId: `${i.profileId}-${i.nodeId}`,
+      profileId: i.profileId,
+      label: 'Server shell',
+      cols: 120,
+      rows: 32,
+      startedAt: NOW,
     }),
-    'terminalSession.listSessions': [],
+    'mut:terminalSession.close': { ok: true },
     'terminalSession.listLegacyCameras': [
       {
         stableId: 'terminal-camera-garage-nuc',

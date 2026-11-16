@@ -10,9 +10,11 @@ export const TERMINAL_SESSION_CAP = 'terminal-session'
 
 interface TerminalNodeSettingsProps {
   readonly nodeId: string
+  /** Called after a save, besides dropping every cached addon-settings read. */
+  readonly onAfterChange?: () => void
 }
 
-export function TerminalNodeSettings({ nodeId }: TerminalNodeSettingsProps) {
+export function TerminalNodeSettings({ nodeId, onAfterChange }: TerminalNodeSettingsProps) {
   const system = useSystem()
   const invalidate = useInvalidateAddonSettings()
   return (
@@ -22,7 +24,10 @@ export function TerminalNodeSettings({ nodeId }: TerminalNodeSettingsProps) {
       cap={TERMINAL_SESSION_CAP}
       scope="node"
       nodeId={nodeId}
-      onAfterChange={invalidate}
+      onAfterChange={() => {
+        invalidate()
+        onAfterChange?.()
+      }}
     />
   )
 }

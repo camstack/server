@@ -18,7 +18,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement, ReactNode } from 'react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { archiveRedirectFor } from './components/archive/archive-redirects'
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { InstancePicker } from './components/instances/InstancePicker'
 import { DeviceQuickDetailHost } from './components/device/DeviceQuickDetail'
 import { ModelSelector } from './components/form-builder/ModelSelector'
@@ -65,6 +65,12 @@ function LegacyAdminRedirect() {
 function ArchiveRedirect(): ReactElement {
   const { pathname, search } = useLocation()
   return <Navigate to={archiveRedirectFor(pathname, search) ?? '/archive'} replace />
+}
+
+/** The old full-page server shell (`/system/terminal/:nodeId[/:sessionId]`) is the Node shells tab. */
+function NodeShellRedirect(): ReactElement {
+  const { nodeId = '' } = useParams()
+  return <Navigate to={`/system/terminal?tab=shells&node=${encodeURIComponent(nodeId)}`} replace />
 }
 
 function LibraryRoute(): ReactElement {
@@ -163,9 +169,6 @@ const CameraGridsPage = lazy(() =>
 )
 const TerminalPage = lazy(() =>
   import('./pages/system/Terminal').then((m) => ({ default: m.TerminalPage })),
-)
-const ServerShellPage = lazy(() =>
-  import('./pages/system/ServerShell').then((m) => ({ default: m.ServerShellPage })),
 )
 const NotificationsPage = lazy(() =>
   import('./pages/system/Notifications').then((m) => ({
@@ -604,20 +607,8 @@ export function App() {
                                   }
                                 />
                                 <Route
-                                  path="/system/terminal/:nodeId/:sessionId"
-                                  element={
-                                    <ProtectedRoute requireAdmin>
-                                      <ServerShellPage />
-                                    </ProtectedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/system/terminal/:nodeId"
-                                  element={
-                                    <ProtectedRoute requireAdmin>
-                                      <ServerShellPage />
-                                    </ProtectedRoute>
-                                  }
+                                  path="/system/terminal/:nodeId/*"
+                                  element={<NodeShellRedirect />}
                                 />
                                 <Route
                                   path="/system/terminal"

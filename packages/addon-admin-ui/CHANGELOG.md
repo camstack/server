@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Archive is now Overview + Cameras: pick a camera in the header and review it with the player beside the window's events, the timeline below with zone, face/plate and debug filters, one lane per clip source; exports moved to Library → Exports.
 - Archive Review: compact event rows with a size slider, class chips and every filter in one bar above the timeline.
 - Archive Review: event rows are selectable for bulk delete, sources loading or failing are said, a zone filter counts the events it could not check, and old camera links open the matching view; Library → Exports filters by camera.
+- Terminal page: Terminal devices and Node shells are separate tabs; a node's shell opens only when you open that node and closes when you leave it.
 
 ## [1.2.689] - 2026-11-16
 
