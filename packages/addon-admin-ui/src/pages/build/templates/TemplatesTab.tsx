@@ -35,18 +35,18 @@ import {
 } from '@camstack/ui-library'
 import { templateSearchText, templateTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
-import { Copy, LayoutTemplate, Pencil, Plus, Trash2, Workflow } from 'lucide-react'
+import { Copy, LayoutTemplate, Pencil, Plus, Tag, Trash2, Workflow } from 'lucide-react'
 import { type ReactNode, useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { TEMPLATE_EDIT_PARAM } from '../../../components/remote/EditTemplateButton'
-import {
-  TemplateEditorDialog,
-  type TemplateDraft,
-} from '../../../components/remote/TemplateEditorDialog'
+import type { TemplateDraft } from '../../../components/remote/TemplateEditorDialog'
 import { templateKindView } from '../../../components/remote/template-kinds'
 import { useTemplateSave } from '../../../components/remote/useTemplateSave'
+import { QuickEditDialog, type QuickEditValues } from '../shared/QuickEditDialog'
+import { quickEditValuesOf, templateQuickEditDraft } from '../shared/quick-edit-inputs'
 import { FROM_TEMPLATE_PARAM } from './template-params'
+import { RemoteTemplateEditor } from './RemoteTemplateEditor'
 import { AutomationTemplateEditor, type AutomationTemplateTarget } from './AutomationTemplateEditor'
 
 export interface TemplatesTabProps {
@@ -100,7 +100,9 @@ export function TemplatesTab({
   const navigate = useNavigate()
   const list = useTemplateList({})
   const create = useTemplateCreate()
-  const saver = useTemplateSave()
+  /** The template whose Quick edit modal is open (row action, or right after a create). */
+  const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  const saver = useTemplateSave({ onCreated: setQuickEditId })
   const remove = useTemplateDelete()
   const confirm = useConfirm()
   const alert = useAlert()
@@ -151,6 +153,14 @@ export function TemplatesTab({
     // `open` closes over mutation objects that change identity each render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editId, list.data, setParams])
+
+  const quickSave = async (row: TemplateRecord, values: QuickEditValues): Promise<void> => {
+    if (!(await saver.save(templateQuickEditDraft(row, values)))) return
+    setQuickEditId(null)
+    // An editor left open on this template follows the new name and tags.
+    setAutomation((a) => (a?.id === row.id ? { ...a, name: values.name, tags: values.tags } : a))
+    setDraft((d) => (d?.id === row.id ? { ...d, name: values.name, tags: values.tags } : d))
+  }
 
   const refresh = (): void => void queryClient.invalidateQueries({ queryKey: [['template']] })
 
@@ -292,6 +302,19 @@ export function TemplatesTab({
                 icon: Pencil,
                 onClick: () => open(r),
               },
+              ...(r.builtIn === true
+                ? []
+                : [
+                    {
+                      id: 'quick-edit',
+                      label: t('build.quickEdit.action', 'Quick edit'),
+                      icon: Tag,
+                      onClick: () => {
+                        saver.clearError()
+                        setQuickEditId(r.id)
+                      },
+                    },
+                  ]),
               {
                 id: 'duplicate',
                 label: t('remote.templates.duplicate'),
@@ -321,17 +344,57 @@ export function TemplatesTab({
 
   const rows = list.data ?? []
 
-  if (automation !== null) {
-    return (
-      <AutomationTemplateEditor
-        key={automation.id ?? 'new'}
-        template={automation}
+  const quickEditing =
+    quickEditId === null ? null : (rows.find((r) => r.id === quickEditId) ?? null)
+  const quickEditDialog =
+    quickEditing === null ? null : (
+      <QuickEditDialog
+        subject={quickEditValuesOf(quickEditing)}
+        subjectKey={quickEditing.id}
         saving={saver.saving}
         error={saver.error}
-        onSave={(next) => void save(next)}
-        onDuplicate={(next) => void duplicateBuiltIn(next)}
-        onClose={() => setAutomation(null)}
+        onSave={(values) => void quickSave(quickEditing, values)}
+        onClose={() => {
+          saver.clearError()
+          setQuickEditId(null)
+        }}
       />
+    )
+  const openQuickEdit = (id: string | null): (() => void) | undefined =>
+    id === null ? undefined : () => setQuickEditId(id)
+
+  if (draft !== null) {
+    return (
+      <>
+        <RemoteTemplateEditor
+          key={draft.id ?? 'new'}
+          draft={draft}
+          saving={saver.saving}
+          error={saver.error}
+          onSave={(next) => void save(next)}
+          onClose={() => setDraft(null)}
+          onQuickEdit={openQuickEdit(draft.id)}
+        />
+        {quickEditDialog}
+      </>
+    )
+  }
+
+  if (automation !== null) {
+    return (
+      <>
+        <AutomationTemplateEditor
+          key={automation.id ?? 'new'}
+          template={automation}
+          saving={saver.saving}
+          error={saver.error}
+          onSave={(next) => void save(next)}
+          onDuplicate={(next) => void duplicateBuiltIn(next)}
+          onClose={() => setAutomation(null)}
+          onQuickEdit={openQuickEdit(automation.id)}
+        />
+        {quickEditDialog}
+      </>
     )
   }
 
@@ -392,13 +455,7 @@ export function TemplatesTab({
           onRowClick={open}
         />
       )}
-      <TemplateEditorDialog
-        draft={draft}
-        saving={saver.saving}
-        error={saver.error}
-        onSave={(next) => void save(next)}
-        onClose={() => setDraft(null)}
-      />
+      {quickEditDialog}
       <Dialog open={choosing} onOpenChange={(next) => !next && setChoosing(false)}>
         <DialogContent width="md" placement="sheet-on-mobile">
           <DialogHeader>

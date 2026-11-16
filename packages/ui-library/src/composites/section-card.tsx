@@ -18,6 +18,12 @@ export interface SectionCardProps {
   /** Controls at the right of the header (a switch, "+ Add"). */
   readonly actions?: ReactNode
   readonly testId?: string
+  /**
+   * On desktop the card takes the height its parent column gives it and the
+   * caller's `min-h-0 flex-1 overflow-y-auto` child scrolls inside it (a runs
+   * list beside an editor). On a phone it keeps its natural height.
+   */
+  readonly fill?: boolean
   readonly children: ReactNode
 }
 
@@ -27,10 +33,15 @@ export function SectionCard({
   icon: Icon,
   actions,
   testId,
+  fill = false,
   children,
 }: SectionCardProps): ReactNode {
   return (
-    <section aria-labelledby={headingId} className={SECTION_CARD} data-testid={testId}>
+    <section
+      aria-labelledby={headingId}
+      className={fill ? `${SECTION_CARD} lg:flex lg:min-h-0 lg:flex-1 lg:flex-col` : SECTION_CARD}
+      data-testid={testId}
+    >
       <header className={`${SECTION_HEADER} flex min-h-9 flex-wrap items-center gap-2`}>
         {Icon !== undefined && (
           <Icon className="h-3.5 w-3.5 shrink-0 text-foreground-subtle" aria-hidden />

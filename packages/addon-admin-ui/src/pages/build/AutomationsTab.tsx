@@ -51,6 +51,8 @@ import { useTranslation } from 'react-i18next'
 import { pushToast } from '../../components/ui/toast-bus'
 import { templateEditPath } from '../../components/remote/EditTemplateButton'
 import { NewAutomationChooser } from './templates/NewAutomationChooser'
+import { QuickEditDialog, type QuickEditValues } from './shared/QuickEditDialog'
+import { automationQuickEditInput, quickEditValuesOf } from './shared/quick-edit-inputs'
 import { TemplateInstancePanel } from './templates/TemplateInstancePanel'
 import { FROM_TEMPLATE_PARAM } from './templates/template-params'
 
@@ -86,6 +88,8 @@ export function AutomationsTab({
   } = useItemFormUrl({ editKey: 'block', newKey: 'new' })
   const confirm = useConfirm()
   const [logsFor, setLogsFor] = useState<string | null>(null)
+  /** The automation whose Quick edit modal is open (row action, or right after a create). */
+  const [quickEditId, setQuickEditId] = useState<string | null>(null)
   const [chooserOpen, setChooserOpen] = useState(false)
   const [fromTemplate, setFromTemplate] = useState<string | null>(null)
   const [templateError, setTemplateError] = useState<string | null>(null)
@@ -147,7 +151,22 @@ export function AutomationsTab({
 
   const create = useMutation({
     mutationFn: (block: CoreBlockInput) => system.trpcClient.coreBlocks.create.mutate({ block }),
-    onSuccess: (result) => saved(result.block),
+    onSuccess: (result) => {
+      saved(result.block)
+      // A new automation is named and tagged straight away, in the shared modal.
+      setQuickEditId(result.block.id)
+    },
+  })
+  const quickUpdate = useMutation({
+    mutationFn: (input: { block: CoreBlock; values: QuickEditValues }) =>
+      system.trpcClient.coreBlocks.update.mutate({
+        blockId: input.block.id,
+        block: automationQuickEditInput(input.block, input.values),
+      }),
+    onSuccess: () => {
+      setQuickEditId(null)
+      refresh()
+    },
   })
   const update = useMutation({
     mutationFn: (input: { blockId: string; block: CoreBlockInput }) =>
@@ -169,6 +188,7 @@ export function AutomationsTab({
         blockId: block.id,
         block: {
           name: block.name,
+          ...(block.tags === undefined ? {} : { tags: block.tags }),
           code: ejectRecipeFromCode(block.code),
           enabled: block.enabled,
           placement: block.placement,
@@ -287,6 +307,7 @@ export function AutomationsTab({
             <AutomationActions
               unreadable={recipe.ok ? null : recipe.reason}
               onEdit={() => openEdit(block.id)}
+              onQuickEdit={() => setQuickEditId(block.id)}
               onToggleLogs={() => setLogsFor(logsFor === block.id ? null : block.id)}
               onDelete={() => {
                 void confirm({
@@ -320,9 +341,26 @@ export function AutomationsTab({
     closeForm()
   }
 
+  const quickEditing =
+    quickEditId === null ? null : ((all ?? []).find((b) => b.id === quickEditId) ?? null)
+  const quickEditDialog =
+    quickEditing === null ? null : (
+      <QuickEditDialog
+        subject={quickEditValuesOf(quickEditing)}
+        subjectKey={quickEditing.id}
+        saving={quickUpdate.isPending}
+        error={quickUpdate.error === null ? null : errorMessage(quickUpdate.error)}
+        onSave={(values) => quickUpdate.mutate({ block: quickEditing, values })}
+        onClose={() => {
+          quickUpdate.reset()
+          setQuickEditId(null)
+        }}
+      />
+    )
+
   if (fromTemplate !== null && !editingOpen) {
     return (
-      <div className="space-y-3" data-testid="automation-editor-panel">
+      <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="automation-editor-panel">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
           <Workflow className="h-4 w-4 text-foreground-muted" />
           {t('build.automationsTab.newAutomation', 'New automation')}
@@ -344,10 +382,12 @@ export function AutomationsTab({
     if (formState.mode === 'edit' && editing === null) return <Skeleton className="h-24 w-full" />
     if (editing !== null && instanceLink !== undefined && parsed !== null && parsed.ok) {
       return (
-        <div className="space-y-3" data-testid="automation-editor-panel">
+        <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="automation-editor-panel">
           <h3 className="flex items-center gap-2 text-sm font-semibold">
             <Workflow className="h-4 w-4 text-foreground-muted" />
-            {t('build.automationsTab.edit', 'Edit {{name}}', { name: editing.name })}
+            {t('build.automationsTab.edit', 'Edit {{name}}', {
+              name: editing.name,
+            })}
           </h3>
           <TemplateInstancePanel
             templateId={instanceLink.templateId}
@@ -355,22 +395,19 @@ export function AutomationsTab({
             recipe={parsed.recipe}
             saving={update.isPending}
             saveError={saveError}
-            onSave={(input) => update.mutate({ blockId: editing.id, block: input })}
+            onSave={(input) =>
+              update.mutate({
+                blockId: editing.id,
+                block: { ...input, tags: input.tags ?? editing.tags },
+              })
+            }
             onCancel={cancelInstance}
           />
         </div>
       )
     }
     return (
-      <div className="space-y-3" data-testid="automation-editor-panel">
-        <h3 className="flex items-center gap-2 text-sm font-semibold">
-          <Workflow className="h-4 w-4 text-foreground-muted" />
-          {editing !== null
-            ? t('build.automationsTab.edit', 'Edit {{name}}', {
-                name: editing.name,
-              })
-            : t('build.automationsTab.newAutomation', 'New automation')}
-        </h3>
+      <div className="flex min-h-0 flex-1 flex-col gap-3" data-testid="automation-editor-panel">
         <AutomationEditor
           key={editing?.id ?? 'new'}
           existing={editing}
@@ -378,6 +415,14 @@ export function AutomationsTab({
           saving={create.isPending || update.isPending}
           saveError={saveError}
           ejecting={eject.isPending}
+          title={
+            editing !== null
+              ? t('build.automationsTab.edit', 'Edit {{name}}', {
+                  name: editing.name,
+                })
+              : t('build.automationsTab.newAutomation', 'New automation')
+          }
+          onQuickEdit={editing === null ? undefined : () => setQuickEditId(editing.id)}
           onSave={(input) => {
             if (editing === null) create.mutate(input)
             else update.mutate({ blockId: editing.id, block: input })
@@ -396,6 +441,7 @@ export function AutomationsTab({
         />
         {remove.error != null && <ErrorBox message={errorMessage(remove.error)} />}
         {templateError !== null && <ErrorBox message={templateError} />}
+        {quickEditDialog}
       </div>
     )
   }
@@ -450,6 +496,7 @@ export function AutomationsTab({
         }}
         onClose={() => setChooserOpen(false)}
       />
+      {quickEditDialog}
     </div>
   )
 }

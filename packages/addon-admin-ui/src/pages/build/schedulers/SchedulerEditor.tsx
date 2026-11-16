@@ -26,14 +26,14 @@ import {
   useSchedulersGetTraces,
   useSchedulersUpdate,
   useSystemGetSiteLocation,
-  TagInput,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import { CalendarClock, Loader2, Plus, Trash2 } from 'lucide-react'
+import { CalendarClock, Plus, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAutomationDevices } from '../automation/automation-data'
 import { DraftNumberInput } from '../flow/DraftNumberInput'
+import { BuildEditorFrame } from '../shared/BuildEditorFrame'
 import { RunsPanel } from '../flow/RunsPanel'
 import { ActiveWhenField } from './ActiveWhenField'
 import { PointEditor } from './PointEditor'
@@ -42,12 +42,12 @@ import {
   checkSchedulerDraft,
   clockText,
   emptyProfile,
-  emptySchedulerDraft,
   holdBands,
   minuteText,
   newPoint,
   nextId,
   pointMinute,
+  schedulerInputOf,
   type SiteView,
   sunBaseMinute,
   timeSpecAfterDrag,
@@ -64,16 +64,12 @@ export interface SchedulerEditorProps {
   readonly entry: Scheduler | null
   readonly onClose: () => void
   readonly onSaved: (schedulerId: string) => void
+  /** Opens the shared Quick edit modal (name + tags) for this scheduler. */
+  readonly onQuickEdit?: () => void
 }
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error)
-}
-
-function inputOf(entry: Scheduler | null): SchedulerInput {
-  if (entry === null) return emptySchedulerDraft()
-  const { id: _id, createdAt: _c, updatedAt: _u, ...input } = entry
-  return input
 }
 
 function useDebounced<T>(value: T, ms: number): T {
@@ -89,14 +85,14 @@ function dayLabel(day: WeekdayKey, t: (key: string, fallback: string) => string)
   return t(`schedulers.day.${day}`, day)
 }
 
-export function SchedulerEditor({ entry, onClose, onSaved }: SchedulerEditorProps) {
+export function SchedulerEditor({ entry, onClose, onSaved, onQuickEdit }: SchedulerEditorProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
   const devices = useAutomationDevices()
   const siteQuery = useSystemGetSiteLocation()
   const site: SiteView = siteQuery.data ?? DEFAULT_SITE
-  const [draft, setDraft] = useState<SchedulerInput>(() => inputOf(entry))
+  const [draft, setDraft] = useState<SchedulerInput>(() => schedulerInputOf(entry))
   const [profileId, setProfileId] = useState<string>(() => draft.profiles[0]?.id ?? '')
   const [pointId, setPointId] = useState<string | null>(null)
   const [runId, setRunId] = useState<string | null>(null)
@@ -230,318 +226,304 @@ export function SchedulerEditor({ entry, onClose, onSaved }: SchedulerEditorProp
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-testid="scheduler-editor">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-foreground-muted" />
-          <Input
-            aria-label={t('schedulers.editor.name', 'Name')}
-            className="max-w-xs flex-1"
-            value={draft.name}
-            placeholder={t('schedulers.editor.namePlaceholder', 'What this scheduler does')}
-            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-          />
-        </div>
-        <TagInput
-          className="max-w-md"
-          value={draft.tags ?? []}
-          onChange={(tags) => setDraft({ ...draft, tags })}
-          label={t('common.tags', 'Tags')}
-        />
-
-        <SectionCard
-          headingId="scheduler-settings"
-          title={t('schedulers.editor.settings', 'Settings')}
-        >
-          <div className="divide-y divide-border px-3">
-            <SettingRow label={t('schedulers.editor.enabled', 'Enabled')}>
-              <Switch
-                checked={draft.enabled}
-                aria-label={t('schedulers.editor.enabled', 'Enabled')}
-                onCheckedChange={(enabled) => setDraft({ ...draft, enabled })}
-              />
-            </SettingRow>
-            <SettingRow
-              label={t('schedulers.editor.priority', 'Priority (higher wins a conflict)')}
-            >
-              <DraftNumberInput
-                aria-label={t('schedulers.editor.priority', 'Priority (higher wins a conflict)')}
-                className="w-24"
-                value={draft.priority}
-                onValue={(value) => {
-                  if (value !== null) setDraft({ ...draft, priority: Math.round(value) })
-                }}
-              />
-            </SettingRow>
-            <SettingRow
-              label={t('schedulers.editor.maxLate', 'Run a missed point up to (minutes late)')}
-            >
-              <DraftNumberInput
-                aria-label={t(
-                  'schedulers.editor.maxLate',
-                  'Run a missed point up to (minutes late)',
-                )}
-                className="w-24"
-                value={draft.maxLateMs / MINUTE_MS}
-                onValue={(value) => {
-                  if (value !== null)
-                    setDraft({
-                      ...draft,
-                      maxLateMs: Math.round(value * MINUTE_MS),
-                    })
-                }}
-              />
-            </SettingRow>
-          </div>
-          <div className="p-3">
-            <ActiveWhenField
-              value={draft.activeWhen}
-              devices={devices}
-              label={t('schedulers.editor.activeWhen', 'Only when a condition holds')}
-              onChange={(activeWhen) => {
-                const { activeWhen: _drop, ...rest } = draft
-                setDraft(activeWhen === undefined ? rest : { ...rest, activeWhen })
-              }}
-            />
-            {issuesAt('activeWhen').map((issue) => (
-              <p key={issue.message} className="mt-1 text-xs text-warning">
-                {issue.message}
-              </p>
-            ))}
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          headingId="scheduler-profiles"
-          title={t('schedulers.editor.profiles', 'Profiles')}
-          actions={
-            <Button variant="outline" size="sm" onClick={addProfile}>
-              <Plus className="h-4 w-4" /> {t('schedulers.profile.add', 'Add profile')}
-            </Button>
-          }
-        >
-          <div className="space-y-3 p-3">
-            <p className="text-xs text-foreground-subtle">
-              {t(
-                'schedulers.profile.hint',
-                'Each day, the first profile in this order whose days and condition hold is the one that runs.',
-              )}
-            </p>
-            {profile !== undefined && (
-              <Tabs
-                value={profile.id}
-                onValueChange={(id) => {
-                  setProfileId(id)
-                  setPointId(null)
-                }}
-                appearance="pills"
-              >
-                <TabsList>
-                  {draft.profiles.map((p) => (
-                    <TabsTrigger key={p.id} value={p.id}>
-                      {p.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-                <TabsContent value={profile.id} className="space-y-3 pt-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Input
-                      aria-label={t('schedulers.profile.name', 'Profile name')}
-                      className="max-w-xs"
-                      value={profile.name}
-                      onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                    />
-                    <Switch
-                      checked={profile.enabled}
-                      label={t('schedulers.profile.enabled', 'Enabled')}
-                      onCheckedChange={(enabled) => setProfile({ ...profile, enabled })}
-                    />
-                    {draft.profiles.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setDraft({
-                            ...draft,
-                            profiles: draft.profiles.filter((p) => p.id !== profile.id),
-                          })
-                          setProfileId('')
-                          setPointId(null)
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />{' '}
-                        {t('schedulers.profile.remove', 'Remove profile')}
-                      </Button>
-                    )}
-                  </div>
-                  <div
-                    className="flex flex-wrap gap-1"
-                    role="group"
-                    aria-label={t('schedulers.profile.days', 'Days')}
-                  >
-                    {ALL_WEEKDAYS.map((day) => {
-                      const on = profile.days.includes(day)
-                      return (
-                        <Button
-                          key={day}
-                          size="sm"
-                          variant={on ? 'primary' : 'outline'}
-                          aria-pressed={on}
-                          onClick={() =>
-                            setProfile({
-                              ...profile,
-                              days: on
-                                ? profile.days.filter((d) => d !== day)
-                                : ALL_WEEKDAYS.filter((d) => d === day || profile.days.includes(d)),
-                            })
-                          }
-                        >
-                          {dayLabel(day, t)}
-                        </Button>
-                      )
-                    })}
-                  </div>
-                  {issuesAt(`profiles.${String(profileIndex)}.days`).map((issue) => (
-                    <p key={issue.message} className="text-xs text-warning">
-                      {t('schedulers.profile.daysNeeded', 'Pick at least one day.')}
-                    </p>
-                  ))}
-                  <ActiveWhenField
-                    value={profile.activeWhen}
-                    devices={devices}
-                    label={t(
-                      'schedulers.profile.activeWhen',
-                      'This profile only when a condition holds',
-                    )}
-                    onChange={(activeWhen) => {
-                      const { activeWhen: _drop, ...rest } = profile
-                      setProfile(activeWhen === undefined ? rest : { ...rest, activeWhen })
-                    }}
-                  />
-                  <TimelineSlider
-                    ariaLabel={t('schedulers.timeline.label', 'Day timeline')}
-                    markers={markers}
-                    bands={bands}
-                    selectedId={pointId}
-                    onSelect={setPointId}
-                    onMove={onMove}
-                  />
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => addPoint('edge')}>
-                      <Plus className="h-4 w-4" /> {t('schedulers.point.addEdge', 'Edge')}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => addPoint('hold')}>
-                      <Plus className="h-4 w-4" /> {t('schedulers.point.addHold', 'Hold')}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => addPoint('release')}>
-                      <Plus className="h-4 w-4" /> {t('schedulers.point.addRelease', 'Release')}
-                    </Button>
-                    <Badge variant="neutral">{site.timeZone}</Badge>
-                  </div>
-                  {profile.points.length === 0 && (
-                    <p className="text-xs text-foreground-subtle">
-                      {t('schedulers.timeline.empty', 'Add a point to place something on the day.')}
-                    </p>
-                  )}
-                  {point !== null && (
-                    <PointEditor
-                      key={point.id}
-                      point={point}
-                      devices={devices}
-                      site={site}
-                      localDate={localDate}
-                      issues={issuesAt(
-                        `profiles.${String(profileIndex)}.points.${String(pointIndex)}`,
-                      )}
-                      onChange={setPoint}
-                      onRemove={() => {
-                        setProfile({
-                          ...profile,
-                          points: profile.points.filter((p) => p.id !== point.id),
-                        })
-                        setPointId(null)
-                      }}
-                    />
-                  )}
-                </TabsContent>
-              </Tabs>
-            )}
-          </div>
-        </SectionCard>
-
-        {conflicts.data !== undefined && conflicts.data.conflicts.length > 0 && (
-          <ul className="space-y-1 rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
-            {conflicts.data.conflicts.map((c) => (
-              <li
-                key={`${c.other.schedulerId}:${c.other.pointId}:${c.mine.pointId}:${String(c.deviceId)}`}
-              >
-                {t(
-                  'schedulers.conflict.message',
-                  '{{other}} wants device {{device}} in another state from {{from}} to {{to}} ({{winner}}).',
-                  {
-                    other: c.other.schedulerName,
-                    device: c.deviceId,
-                    from: minuteText(c.fromMinute),
-                    to: minuteText(c.toMinute),
-                    winner:
-                      c.winner === 'mine'
-                        ? t('schedulers.conflict.mine', 'this one wins')
-                        : c.winner === 'other'
-                          ? t('schedulers.conflict.other', 'the other one wins')
-                          : t('schedulers.conflict.tie', 'the one that started first wins'),
-                  },
-                )}
-              </li>
-            ))}
-          </ul>
-        )}
-        {!check.ok && draft.name !== '' && issues.length > 0 && point === null && (
-          <ul className="space-y-1 rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
-            {issues.map((issue) => (
-              <li key={`${issue.path}:${issue.message}`}>{issue.message}</li>
-            ))}
-          </ul>
-        )}
-        {saveError !== null && <ErrorBox message={errorMessage(saveError)} />}
-
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={save} disabled={saving || !check.ok || siteQuery.data === undefined}>
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save', 'Save')}
+    <BuildEditorFrame
+      testId="scheduler-editor"
+      icon={CalendarClock}
+      title={entry === null ? t('schedulers.list.new', 'New scheduler') : entry.name}
+      onClose={onClose}
+      onQuickEdit={onQuickEdit}
+      onSave={save}
+      saveDisabled={!check.ok || siteQuery.data === undefined}
+      saving={saving}
+      notices={saveError === null ? null : <ErrorBox message={errorMessage(saveError)} />}
+      footerActions={
+        entry === null ? null : (
+          <Button
+            variant="ghost"
+            disabled={remove.isPending}
+            onClick={() => {
+              void confirm({
+                title: t('schedulers.editor.deleteTitle', 'Delete this scheduler?'),
+                message: t(
+                  'schedulers.editor.deleteMessage',
+                  '{{name}} will be deleted and any hold it keeps will stop.',
+                  { name: entry.name },
+                ),
+                confirmLabel: t('common.delete', 'Delete'),
+                variant: 'danger',
+              }).then((accepted) => {
+                if (accepted) remove.mutate({ schedulerId: entry.id })
+              })
+            }}
+          >
+            <Trash2 className="h-4 w-4" /> {t('common.delete', 'Delete')}
           </Button>
-          {entry !== null && (
-            <Button
-              variant="ghost"
-              disabled={remove.isPending}
-              onClick={() => {
-                void confirm({
-                  title: t('schedulers.editor.deleteTitle', 'Delete this scheduler?'),
-                  message: t(
-                    'schedulers.editor.deleteMessage',
-                    '{{name}} will be deleted and any hold it keeps will stop.',
-                    { name: entry.name },
-                  ),
-                  confirmLabel: t('common.delete', 'Delete'),
-                  variant: 'danger',
-                }).then((accepted) => {
-                  if (accepted) remove.mutate({ schedulerId: entry.id })
-                })
-              }}
-            >
-              <Trash2 className="h-4 w-4" /> {t('common.delete', 'Delete')}
-            </Button>
-          )}
-          <Button variant="ghost" onClick={onClose}>
-            {t('common.close', 'Close')}
-          </Button>
-        </div>
-      </div>
-      <div className="order-first lg:order-last">
+        )
+      }
+      side={
         <RunsPanel
           traces={entry === null ? [] : traces.data?.traces}
           selectedId={runId}
           onSelect={setRunId}
         />
-      </div>
-    </div>
+      }
+    >
+      <Input
+        aria-label={t('schedulers.editor.name', 'Name')}
+        className="max-w-xs"
+        value={draft.name}
+        placeholder={t('schedulers.editor.namePlaceholder', 'What this scheduler does')}
+        onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+      />
+
+      <SectionCard
+        headingId="scheduler-settings"
+        title={t('schedulers.editor.settings', 'Settings')}
+      >
+        <div className="divide-y divide-border px-3">
+          <SettingRow label={t('schedulers.editor.enabled', 'Enabled')}>
+            <Switch
+              checked={draft.enabled}
+              aria-label={t('schedulers.editor.enabled', 'Enabled')}
+              onCheckedChange={(enabled) => setDraft({ ...draft, enabled })}
+            />
+          </SettingRow>
+          <SettingRow label={t('schedulers.editor.priority', 'Priority (higher wins a conflict)')}>
+            <DraftNumberInput
+              aria-label={t('schedulers.editor.priority', 'Priority (higher wins a conflict)')}
+              className="w-24"
+              value={draft.priority}
+              onValue={(value) => {
+                if (value !== null) setDraft({ ...draft, priority: Math.round(value) })
+              }}
+            />
+          </SettingRow>
+          <SettingRow
+            label={t('schedulers.editor.maxLate', 'Run a missed point up to (minutes late)')}
+          >
+            <DraftNumberInput
+              aria-label={t('schedulers.editor.maxLate', 'Run a missed point up to (minutes late)')}
+              className="w-24"
+              value={draft.maxLateMs / MINUTE_MS}
+              onValue={(value) => {
+                if (value !== null)
+                  setDraft({
+                    ...draft,
+                    maxLateMs: Math.round(value * MINUTE_MS),
+                  })
+              }}
+            />
+          </SettingRow>
+        </div>
+        <div className="p-3">
+          <ActiveWhenField
+            value={draft.activeWhen}
+            devices={devices}
+            label={t('schedulers.editor.activeWhen', 'Only when a condition holds')}
+            onChange={(activeWhen) => {
+              const { activeWhen: _drop, ...rest } = draft
+              setDraft(activeWhen === undefined ? rest : { ...rest, activeWhen })
+            }}
+          />
+          {issuesAt('activeWhen').map((issue) => (
+            <p key={issue.message} className="mt-1 text-xs text-warning">
+              {issue.message}
+            </p>
+          ))}
+        </div>
+      </SectionCard>
+
+      <SectionCard
+        headingId="scheduler-profiles"
+        title={t('schedulers.editor.profiles', 'Profiles')}
+        actions={
+          <Button variant="outline" size="sm" onClick={addProfile}>
+            <Plus className="h-4 w-4" /> {t('schedulers.profile.add', 'Add profile')}
+          </Button>
+        }
+      >
+        <div className="space-y-3 p-3">
+          <p className="text-xs text-foreground-subtle">
+            {t(
+              'schedulers.profile.hint',
+              'Each day, the first profile in this order whose days and condition hold is the one that runs.',
+            )}
+          </p>
+          {profile !== undefined && (
+            <Tabs
+              value={profile.id}
+              onValueChange={(id) => {
+                setProfileId(id)
+                setPointId(null)
+              }}
+              appearance="pills"
+            >
+              <TabsList>
+                {draft.profiles.map((p) => (
+                  <TabsTrigger key={p.id} value={p.id}>
+                    {p.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <TabsContent value={profile.id} className="space-y-3 pt-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Input
+                    aria-label={t('schedulers.profile.name', 'Profile name')}
+                    className="max-w-xs"
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                  />
+                  <Switch
+                    checked={profile.enabled}
+                    label={t('schedulers.profile.enabled', 'Enabled')}
+                    onCheckedChange={(enabled) => setProfile({ ...profile, enabled })}
+                  />
+                  {draft.profiles.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setDraft({
+                          ...draft,
+                          profiles: draft.profiles.filter((p) => p.id !== profile.id),
+                        })
+                        setProfileId('')
+                        setPointId(null)
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />{' '}
+                      {t('schedulers.profile.remove', 'Remove profile')}
+                    </Button>
+                  )}
+                </div>
+                <div
+                  className="flex flex-wrap gap-1"
+                  role="group"
+                  aria-label={t('schedulers.profile.days', 'Days')}
+                >
+                  {ALL_WEEKDAYS.map((day) => {
+                    const on = profile.days.includes(day)
+                    return (
+                      <Button
+                        key={day}
+                        size="sm"
+                        variant={on ? 'primary' : 'outline'}
+                        aria-pressed={on}
+                        onClick={() =>
+                          setProfile({
+                            ...profile,
+                            days: on
+                              ? profile.days.filter((d) => d !== day)
+                              : ALL_WEEKDAYS.filter((d) => d === day || profile.days.includes(d)),
+                          })
+                        }
+                      >
+                        {dayLabel(day, t)}
+                      </Button>
+                    )
+                  })}
+                </div>
+                {issuesAt(`profiles.${String(profileIndex)}.days`).map((issue) => (
+                  <p key={issue.message} className="text-xs text-warning">
+                    {t('schedulers.profile.daysNeeded', 'Pick at least one day.')}
+                  </p>
+                ))}
+                <ActiveWhenField
+                  value={profile.activeWhen}
+                  devices={devices}
+                  label={t(
+                    'schedulers.profile.activeWhen',
+                    'This profile only when a condition holds',
+                  )}
+                  onChange={(activeWhen) => {
+                    const { activeWhen: _drop, ...rest } = profile
+                    setProfile(activeWhen === undefined ? rest : { ...rest, activeWhen })
+                  }}
+                />
+                <TimelineSlider
+                  ariaLabel={t('schedulers.timeline.label', 'Day timeline')}
+                  markers={markers}
+                  bands={bands}
+                  selectedId={pointId}
+                  onSelect={setPointId}
+                  onMove={onMove}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => addPoint('edge')}>
+                    <Plus className="h-4 w-4" /> {t('schedulers.point.addEdge', 'Edge')}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addPoint('hold')}>
+                    <Plus className="h-4 w-4" /> {t('schedulers.point.addHold', 'Hold')}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => addPoint('release')}>
+                    <Plus className="h-4 w-4" /> {t('schedulers.point.addRelease', 'Release')}
+                  </Button>
+                  <Badge variant="neutral">{site.timeZone}</Badge>
+                </div>
+                {profile.points.length === 0 && (
+                  <p className="text-xs text-foreground-subtle">
+                    {t('schedulers.timeline.empty', 'Add a point to place something on the day.')}
+                  </p>
+                )}
+                {point !== null && (
+                  <PointEditor
+                    key={point.id}
+                    point={point}
+                    devices={devices}
+                    site={site}
+                    localDate={localDate}
+                    issues={issuesAt(
+                      `profiles.${String(profileIndex)}.points.${String(pointIndex)}`,
+                    )}
+                    onChange={setPoint}
+                    onRemove={() => {
+                      setProfile({
+                        ...profile,
+                        points: profile.points.filter((p) => p.id !== point.id),
+                      })
+                      setPointId(null)
+                    }}
+                  />
+                )}
+              </TabsContent>
+            </Tabs>
+          )}
+        </div>
+      </SectionCard>
+
+      {conflicts.data !== undefined && conflicts.data.conflicts.length > 0 && (
+        <ul className="space-y-1 rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+          {conflicts.data.conflicts.map((c) => (
+            <li
+              key={`${c.other.schedulerId}:${c.other.pointId}:${c.mine.pointId}:${String(c.deviceId)}`}
+            >
+              {t(
+                'schedulers.conflict.message',
+                '{{other}} wants device {{device}} in another state from {{from}} to {{to}} ({{winner}}).',
+                {
+                  other: c.other.schedulerName,
+                  device: c.deviceId,
+                  from: minuteText(c.fromMinute),
+                  to: minuteText(c.toMinute),
+                  winner:
+                    c.winner === 'mine'
+                      ? t('schedulers.conflict.mine', 'this one wins')
+                      : c.winner === 'other'
+                        ? t('schedulers.conflict.other', 'the other one wins')
+                        : t('schedulers.conflict.tie', 'the one that started first wins'),
+                },
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+      {!check.ok && draft.name !== '' && issues.length > 0 && point === null && (
+        <ul className="space-y-1 rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+          {issues.map((issue) => (
+            <li key={`${issue.path}:${issue.message}`}>{issue.message}</li>
+          ))}
+        </ul>
+      )}
+    </BuildEditorFrame>
   )
 }

@@ -11,19 +11,12 @@ import {
   type AutomationTemplatePayload,
   exportAutomationTemplate,
 } from '@camstack/types'
-import {
-  Badge,
-  Button,
-  FormField,
-  Input,
-  SectionCard,
-  TagInput,
-  Textarea,
-} from '@camstack/ui-library'
-import { Copy, Download, Loader2 } from 'lucide-react'
+import { Badge, Button, FormField, Input, SectionCard, Textarea } from '@camstack/ui-library'
+import { Copy, Download, FileText } from 'lucide-react'
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TemplateDraft } from '../../../components/remote/TemplateEditorDialog'
+import { BuildEditorFrame } from '../shared/BuildEditorFrame'
 import { ActionList } from '../automation/ActionList'
 import { useAutomationDevices } from '../automation/automation-data'
 import { withActions } from '../automation/recipe-parts'
@@ -51,6 +44,8 @@ export interface AutomationTemplateEditorProps {
   readonly onSave: (draft: TemplateDraft) => void
   readonly onDuplicate: (draft: TemplateDraft) => void
   readonly onClose: () => void
+  /** Opens the shared Quick edit modal (name + tags) for this template. */
+  readonly onQuickEdit?: () => void
 }
 
 /** Downloads `text` as a file — the browser's own save, no library for it. */
@@ -78,11 +73,11 @@ export function AutomationTemplateEditor({
   onSave,
   onDuplicate,
   onClose,
+  onQuickEdit,
 }: AutomationTemplateEditorProps): ReactNode {
   const { t } = useTranslation()
   const readOnly = template.builtIn
   const [name, setName] = useState(template.name)
-  const [tags, setTags] = useState<readonly string[]>(template.tags ?? [])
   const [payload, setPayload] = useState<AutomationTemplatePayload>(template.payload)
   const devices = useAutomationDevices()
   const recipe = useMemo(() => recipeOfBody(payload.body), [payload.body])
@@ -96,23 +91,84 @@ export function AutomationTemplateEditor({
     kind: 'automation',
     name: name.trim(),
     payload,
-    tags,
+    // Tags are set in Quick edit; a save carries them as stored.
+    ...(template.tags === undefined ? {} : { tags: template.tags }),
   })
 
+  const notices = (
+    <>
+      {!readOnly && !checked.success && (
+        <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+          {checked.error.issues[0]?.message ?? ''}
+        </p>
+      )}
+      {error !== null && (
+        <p
+          role="alert"
+          className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger"
+        >
+          {error}
+        </p>
+      )}
+    </>
+  )
+
   return (
-    <div className="space-y-4" data-testid="automation-template-editor">
-      <div className="flex flex-wrap items-center gap-2">
-        <h3 className="min-w-0 flex-1 truncate text-sm font-semibold">
-          {template.id === null
-            ? t('build.templates.newAutomationTemplate', 'New automation template')
-            : name}
-        </h3>
-        {readOnly && (
+    <BuildEditorFrame
+      testId="automation-template-editor"
+      icon={FileText}
+      title={
+        template.id === null
+          ? t('build.templates.newAutomationTemplate', 'New automation template')
+          : name
+      }
+      badges={
+        readOnly ? (
           <Badge variant="neutral" data-testid="template-builtin-badge">
             {t('build.templates.builtIn', 'Built-in')}
           </Badge>
-        )}
-      </div>
+        ) : null
+      }
+      onClose={onClose}
+      onQuickEdit={readOnly ? undefined : onQuickEdit}
+      onSave={readOnly ? undefined : () => onSave(draft())}
+      saveDisabled={!canSave}
+      saving={saving}
+      saveTestId="template-save"
+      notices={notices}
+      footerActions={
+        <>
+          {readOnly && (
+            <Button onClick={() => onDuplicate(draft())} data-testid="template-duplicate">
+              <Copy className="h-4 w-4" aria-hidden />
+              {t('remote.templates.duplicate', 'Duplicate')}
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            disabled={!checked.success}
+            onClick={() => {
+              if (!checked.success) return
+              download(
+                fileNameOf(name),
+                JSON.stringify(exportAutomationTemplate(name.trim(), checked.data), null, 2),
+              )
+            }}
+            data-testid="template-export"
+          >
+            <Download className="h-4 w-4" aria-hidden />
+            {t('build.templates.exportJson', 'Export JSON')}
+          </Button>
+        </>
+      }
+      side={
+        <SectionCard headingId="template-inputs" title={t('build.templates.inputs', 'Inputs')}>
+          <div className="p-3">
+            <InputsPanel payload={payload} readOnly={readOnly} onChange={setPayload} />
+          </div>
+        </SectionCard>
+      }
+    >
       {readOnly && (
         <p className="text-xs text-foreground-muted">
           {t(
@@ -132,17 +188,6 @@ export function AutomationTemplateEditor({
             data-testid="template-name"
           />
         </FormField>
-        {!readOnly && (
-          <div className="text-sm sm:col-span-2">
-            <span className="text-foreground-subtle">{t('common.tags', 'Tags')}</span>
-            <TagInput
-              className="mt-1"
-              value={tags}
-              onChange={setTags}
-              label={t('common.tags', 'Tags')}
-            />
-          </div>
-        )}
         <FormField label={t('build.templates.description', 'Description')}>
           <Textarea
             rows={2}
@@ -158,100 +203,47 @@ export function AutomationTemplateEditor({
         </FormField>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_24rem]">
-        <SectionCard headingId="template-body" title={t('build.templates.body', 'Automation')}>
-          <div className="space-y-4 p-3" data-testid="template-body-editor">
-            {recipe === null ? (
-              <pre className="max-h-96 overflow-auto rounded bg-surface-hover p-3 text-xs">
-                {JSON.stringify(payload.body, null, 2)}
-              </pre>
-            ) : (
-              // `inert` makes a shipped template a read-only view of the same editors.
-              <div className="space-y-4" inert={readOnly}>
-                <TriggerRowsProvider when={recipe.when}>
-                  <div>
-                    <p className="mb-1 text-xs font-medium uppercase text-foreground-subtle">
-                      {t('automation.automationEditor.when', 'When')}
-                    </p>
-                    <WhenTree recipe={recipe} devices={devices} onChange={setRecipe} />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-xs font-medium uppercase text-foreground-subtle">
-                      {t('automation.automationEditor.then', 'Then')}
-                    </p>
-                    <ActionList
-                      flowControl
-                      actions={recipe.actions}
-                      devices={devices}
-                      onChange={(actions) => setRecipe(withActions(recipe, actions))}
-                    />
-                  </div>
-                  <div>
-                    <p className="mb-1 text-xs font-medium uppercase text-foreground-subtle">
-                      {t('flow.runMode.title', 'Overlap')}
-                    </p>
-                    <RunModeSelector
-                      value={runModeOf(recipe)}
-                      onChange={(mode) => setRecipe(withRunMode(recipe, mode))}
-                    />
-                  </div>
-                </TriggerRowsProvider>
-              </div>
-            )}
-          </div>
-        </SectionCard>
-        <SectionCard headingId="template-inputs" title={t('build.templates.inputs', 'Inputs')}>
-          <div className="p-3">
-            <InputsPanel payload={payload} readOnly={readOnly} onChange={setPayload} />
-          </div>
-        </SectionCard>
-      </div>
-
-      {!readOnly && !checked.success && (
-        <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
-          {checked.error.issues[0]?.message ?? ''}
-        </p>
-      )}
-      {error !== null && (
-        <p
-          role="alert"
-          className="rounded border border-danger/40 bg-danger/10 p-3 text-xs text-danger"
-        >
-          {error}
-        </p>
-      )}
-
-      <div className="flex flex-wrap items-center gap-2">
-        {!readOnly && (
-          <Button disabled={!canSave} onClick={() => onSave(draft())} data-testid="template-save">
-            {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save', 'Save')}
-          </Button>
-        )}
-        {readOnly && (
-          <Button onClick={() => onDuplicate(draft())} data-testid="template-duplicate">
-            <Copy className="h-4 w-4" aria-hidden />
-            {t('remote.templates.duplicate', 'Duplicate')}
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          disabled={!checked.success}
-          onClick={() => {
-            if (!checked.success) return
-            download(
-              fileNameOf(name),
-              JSON.stringify(exportAutomationTemplate(name.trim(), checked.data), null, 2),
-            )
-          }}
-          data-testid="template-export"
-        >
-          <Download className="h-4 w-4" aria-hidden />
-          {t('build.templates.exportJson', 'Export JSON')}
-        </Button>
-        <Button variant="ghost" onClick={onClose} disabled={saving}>
-          {t('common.close', 'Close')}
-        </Button>
-      </div>
-    </div>
+      <SectionCard headingId="template-body" title={t('build.templates.body', 'Automation')}>
+        <div className="space-y-4 p-3" data-testid="template-body-editor">
+          {recipe === null ? (
+            <pre className="max-h-96 overflow-auto rounded bg-surface-hover p-3 text-xs">
+              {JSON.stringify(payload.body, null, 2)}
+            </pre>
+          ) : (
+            // `inert` makes a shipped template a read-only view of the same editors.
+            <div className="space-y-4" inert={readOnly}>
+              <TriggerRowsProvider when={recipe.when}>
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase text-foreground-subtle">
+                    {t('automation.automationEditor.when', 'When')}
+                  </p>
+                  <WhenTree recipe={recipe} devices={devices} onChange={setRecipe} />
+                </div>
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase text-foreground-subtle">
+                    {t('automation.automationEditor.then', 'Then')}
+                  </p>
+                  <ActionList
+                    flowControl
+                    actions={recipe.actions}
+                    devices={devices}
+                    onChange={(actions) => setRecipe(withActions(recipe, actions))}
+                  />
+                </div>
+                <div>
+                  <p className="mb-1 text-xs font-medium uppercase text-foreground-subtle">
+                    {t('flow.runMode.title', 'Overlap')}
+                  </p>
+                  <RunModeSelector
+                    value={runModeOf(recipe)}
+                    onChange={(mode) => setRecipe(withRunMode(recipe, mode))}
+                  />
+                </div>
+              </TriggerRowsProvider>
+            </div>
+          )}
+        </div>
+      </SectionCard>
+    </BuildEditorFrame>
   )
 }

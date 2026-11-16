@@ -113,7 +113,9 @@ export interface RunsPanelProps {
 }
 
 /** The list scrolls inside itself; the editor beside it never grows with it. */
+/** Natural height: a capped list. Filling: the list takes what the column gives it. */
 const LIST_MAX_H = 'max-h-64'
+const LIST_FILL = 'lg:max-h-none lg:min-h-0 lg:flex-1'
 
 /**
  * Below the two-column layout (`lg`) the panel stacks above the editor, so it
@@ -185,7 +187,7 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
   const newestFirst = traces === undefined ? [] : traces.toReversed()
   const selectedRun = newestFirst.find((run) => run.runId === selectedId) ?? null
   return (
-    <SectionCard headingId="runs-heading" title={t('flow.runs.title', 'Runs')} icon={History}>
+    <SectionCard headingId="runs-heading" title={t('flow.runs.title', 'Runs')} icon={History} fill>
       <RunsToggle expanded={expanded} onToggle={() => setChosen(!expanded)} />
       {!expanded ? (
         selectedRun !== null && <SelectedSummary run={selectedRun} />
@@ -202,7 +204,7 @@ export function RunsPanel({ traces, selectedId, onSelect }: RunsPanelProps) {
       ) : (
         <>
           <ul
-            className={`${LIST_MAX_H} divide-y divide-border-subtle overflow-y-auto`}
+            className={`${LIST_MAX_H} ${LIST_FILL} divide-y divide-border-subtle overflow-y-auto`}
             data-testid="runs-panel"
           >
             {newestFirst.map((run) => {

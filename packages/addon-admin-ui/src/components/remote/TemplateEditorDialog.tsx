@@ -15,13 +15,18 @@ import {
   Input,
   IconButton,
   Select,
-  TagInput,
   useHotkey,
 } from '@camstack/ui-library'
 import { ArrowLeft, Redo2, Undo2 } from 'lucide-react'
 import { type ReactNode, useReducer, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { canRedo, canUndo, editHistoryReducer, startHistory } from './edit-history'
+import {
+  canRedo,
+  canUndo,
+  type EditHistoryAction,
+  editHistoryReducer,
+  startHistory,
+} from './edit-history'
 import { CREATABLE_TEMPLATE_KINDS, savablePayload, templateKindView } from './template-kinds'
 
 export interface TemplateDraft {
@@ -68,7 +73,7 @@ export function TemplateEditorDialog({
 }
 
 /** What one undo step restores. */
-interface EditorSnapshot {
+export interface EditorSnapshot {
   readonly kind: TemplateKind
   readonly presetId: string
   readonly payload: unknown
@@ -91,21 +96,30 @@ interface BodyProps {
   readonly back?: TemplateEditorBack
 }
 
+/** The state of one template being edited: name, kind, preset and payload, with undo. */
+export interface TemplateEditorState {
+  readonly name: string
+  readonly setName: (name: string) => void
+  readonly kind: TemplateKind
+  readonly presetId: string
+  readonly payload: unknown
+  readonly setPayload: (payload: unknown) => void
+  readonly undo: () => void
+  readonly redo: () => void
+  readonly canUndo: boolean
+  readonly canRedo: boolean
+  readonly canSave: boolean
+  readonly dispatch: (action: EditHistoryAction<EditorSnapshot>) => void
+  /** The draft to hand to the save, or `null` while the payload is not savable. */
+  readonly toDraft: () => TemplateDraft | null
+}
+
 /**
- * The editor of one template, without a dialog around it: the Templates page puts
- * it in its own dialog, the remote modal swaps it in for its binding view.
+ * Tags are not edited here (Quick edit owns them); a save carries the stored
+ * ones through `draft.tags`.
  */
-export function TemplateEditorBody({
-  draft,
-  saving,
-  error,
-  onSave,
-  onClose,
-  back,
-}: BodyProps): ReactNode {
-  const { t } = useTranslation()
+export function useTemplateEditorState(draft: TemplateDraft, saving: boolean): TemplateEditorState {
   const [name, setName] = useState(draft.name)
-  const [tags, setTags] = useState<readonly string[] | undefined>(draft.tags)
   // Kind, preset and payload move together, so one undo step never leaves a
   // payload under the wrong kind. The name is a text field and keeps its own undo.
   const [history, dispatch] = useReducer(
@@ -122,9 +136,160 @@ export function TemplateEditorBody({
   useHotkey('mod+z', undo, { allowInInput: false, label: 'Undo' })
   useHotkey('mod+shift+z', redo, { allowInInput: false, label: 'Redo' })
   const view = templateKindView(kind)
-  const presets = view.presets(t)
   const clean = savablePayload(kind, payload)
   const canSave = name.trim() !== '' && clean !== null && view.isSavable(payload) && !saving
+  return {
+    name,
+    setName,
+    kind,
+    presetId,
+    payload,
+    setPayload,
+    undo,
+    redo,
+    canUndo: canUndo(history),
+    canRedo: canRedo(history),
+    canSave,
+    dispatch,
+    toDraft: () =>
+      clean === null
+        ? null
+        : {
+            id: draft.id,
+            kind,
+            name: name.trim(),
+            payload: clean,
+            ...(draft.tags === undefined ? {} : { tags: draft.tags }),
+          },
+  }
+}
+
+/** The undo / redo pair, for whichever chrome hosts the editor. */
+export function TemplateUndoRedo({ editor }: { readonly editor: TemplateEditorState }): ReactNode {
+  const { t } = useTranslation()
+  return (
+    <>
+      <IconButton
+        icon={Undo2}
+        size="sm"
+        variant="ghost"
+        aria-label={t('remote.history.undo')}
+        title={t('remote.history.undo')}
+        disabled={!editor.canUndo}
+        onClick={editor.undo}
+        data-testid="template-undo"
+      />
+      <IconButton
+        icon={Redo2}
+        size="sm"
+        variant="ghost"
+        aria-label={t('remote.history.redo')}
+        title={t('remote.history.redo')}
+        disabled={!editor.canRedo}
+        onClick={editor.redo}
+        data-testid="template-redo"
+      />
+    </>
+  )
+}
+
+/** Name, kind, preset and the payload editor; the chrome around it is the host's. */
+export function TemplateEditorFields({
+  editor,
+  draftId,
+  error,
+}: {
+  readonly editor: TemplateEditorState
+  readonly draftId: string | null
+  readonly error: string | null
+}): ReactNode {
+  const { t } = useTranslation()
+  const { kind, presetId, payload, name, dispatch } = editor
+  const view = templateKindView(kind)
+  const presets = view.presets(t)
+  return (
+    <>
+      <div className="grid gap-3 sm:grid-cols-2">
+        <FormField label={t('remote.templates.name')}>
+          <Input
+            value={name}
+            maxLength={120}
+            onChange={(e) => editor.setName(e.target.value)}
+            data-testid="template-name"
+          />
+        </FormField>
+        {draftId === null && CREATABLE_TEMPLATE_KINDS.length > 1 && (
+          <FormField label={t('remote.templates.kind.label')}>
+            <Select
+              value={kind}
+              options={CREATABLE_TEMPLATE_KINDS.map((k) => ({
+                value: k,
+                label: templateKindView(k).label(t),
+              }))}
+              onChange={(e) => {
+                const next = CREATABLE_TEMPLATE_KINDS.find((k) => k === e.target.value)
+                if (next === undefined) return
+                dispatch({
+                  type: 'edit',
+                  value: {
+                    kind: next,
+                    presetId: '',
+                    payload: templateKindView(next).emptyPayload(),
+                  },
+                })
+              }}
+            />
+          </FormField>
+        )}
+        {draftId === null && presets.length > 0 && (
+          <FormField label={t('remote.templates.startFrom')}>
+            <Select
+              value={presetId}
+              options={[
+                { value: '', label: t('remote.templates.startBlank') },
+                ...presets.map((p) => ({ value: p.id, label: p.label })),
+              ]}
+              onChange={(e) => {
+                const chosen = presets.find((p) => p.id === e.target.value)
+                dispatch({
+                  type: 'edit',
+                  value: {
+                    kind,
+                    presetId: chosen?.id ?? '',
+                    payload: chosen === undefined ? view.emptyPayload() : chosen.payload(),
+                  },
+                })
+                if (chosen !== undefined && name.trim() === '') editor.setName(chosen.label)
+              }}
+              data-testid="template-preset"
+            />
+          </FormField>
+        )}
+      </div>
+      {view.renderEditor(payload, editor.setPayload)}
+      {error !== null && (
+        <p role="alert" className="text-xs text-danger">
+          {error}
+        </p>
+      )}
+    </>
+  )
+}
+
+/**
+ * The editor of one template inside a dialog: the remote modal swaps it in for
+ * its binding view. The Templates page edits in its own page section instead.
+ */
+export function TemplateEditorBody({
+  draft,
+  saving,
+  error,
+  onSave,
+  onClose,
+  back,
+}: BodyProps): ReactNode {
+  const { t } = useTranslation()
+  const editor = useTemplateEditorState(draft, saving)
   return (
     <>
       <DialogHeader className="flex-row items-center justify-between gap-2">
@@ -144,117 +309,22 @@ export function TemplateEditorBody({
           </DialogTitle>
         </div>
         <div className="flex shrink-0 items-center gap-1">
-          <IconButton
-            icon={Undo2}
-            size="sm"
-            variant="ghost"
-            aria-label={t('remote.history.undo')}
-            title={t('remote.history.undo')}
-            disabled={!canUndo(history)}
-            onClick={undo}
-            data-testid="template-undo"
-          />
-          <IconButton
-            icon={Redo2}
-            size="sm"
-            variant="ghost"
-            aria-label={t('remote.history.redo')}
-            title={t('remote.history.redo')}
-            disabled={!canRedo(history)}
-            onClick={redo}
-            data-testid="template-redo"
-          />
+          <TemplateUndoRedo editor={editor} />
         </div>
       </DialogHeader>
       <DialogBody className="space-y-4">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <FormField label={t('remote.templates.name')}>
-            <Input
-              value={name}
-              maxLength={120}
-              onChange={(e) => setName(e.target.value)}
-              data-testid="template-name"
-            />
-          </FormField>
-          <div className="text-sm sm:col-span-2">
-            <span className="text-foreground-subtle">{t('common.tags', 'Tags')}</span>
-            <TagInput
-              className="mt-1"
-              value={tags ?? []}
-              onChange={setTags}
-              label={t('common.tags', 'Tags')}
-            />
-          </div>
-          {draft.id === null && CREATABLE_TEMPLATE_KINDS.length > 1 && (
-            <FormField label={t('remote.templates.kind.label')}>
-              <Select
-                value={kind}
-                options={CREATABLE_TEMPLATE_KINDS.map((k) => ({
-                  value: k,
-                  label: templateKindView(k).label(t),
-                }))}
-                onChange={(e) => {
-                  const next = CREATABLE_TEMPLATE_KINDS.find((k) => k === e.target.value)
-                  if (next === undefined) return
-                  dispatch({
-                    type: 'edit',
-                    value: {
-                      kind: next,
-                      presetId: '',
-                      payload: templateKindView(next).emptyPayload(),
-                    },
-                  })
-                }}
-              />
-            </FormField>
-          )}
-          {draft.id === null && presets.length > 0 && (
-            <FormField label={t('remote.templates.startFrom')}>
-              <Select
-                value={presetId}
-                options={[
-                  { value: '', label: t('remote.templates.startBlank') },
-                  ...presets.map((p) => ({ value: p.id, label: p.label })),
-                ]}
-                onChange={(e) => {
-                  const chosen = presets.find((p) => p.id === e.target.value)
-                  dispatch({
-                    type: 'edit',
-                    value: {
-                      kind,
-                      presetId: chosen?.id ?? '',
-                      payload: chosen === undefined ? view.emptyPayload() : chosen.payload(),
-                    },
-                  })
-                  if (chosen !== undefined && name.trim() === '') setName(chosen.label)
-                }}
-                data-testid="template-preset"
-              />
-            </FormField>
-          )}
-        </div>
-        {view.renderEditor(payload, setPayload)}
-        {error !== null && (
-          <p role="alert" className="text-xs text-danger">
-            {error}
-          </p>
-        )}
+        <TemplateEditorFields editor={editor} draftId={draft.id} error={error} />
       </DialogBody>
       <DialogFooter>
         <Button variant="ghost" onClick={onClose}>
           {t('common.cancel')}
         </Button>
         <Button
-          disabled={!canSave}
-          onClick={() =>
-            onSave({
-              id: draft.id,
-              kind,
-              name: name.trim(),
-              payload: clean,
-              ...(tags === undefined ? {} : { tags }),
-            })
-          }
+          disabled={!editor.canSave}
+          onClick={() => {
+            const next = editor.toDraft()
+            if (next !== null) onSave(next)
+          }}
           data-testid="template-save"
         >
           {t('common.save')}

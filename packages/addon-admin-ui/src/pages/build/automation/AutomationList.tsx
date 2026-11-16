@@ -35,7 +35,7 @@ import {
   useCoreBlocksGetTraces,
   useUiText,
 } from '@camstack/ui-library'
-import { Pencil, Play, Plus, ScrollText, Trash2, Workflow } from 'lucide-react'
+import { Pencil, Play, Plus, ScrollText, Tag, Trash2, Workflow } from 'lucide-react'
 import { Trans, useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
 import i18n from '../../../i18n/index'
@@ -227,6 +227,7 @@ export function AutomationEnabledSwitch({
 export interface AutomationActionsProps {
   readonly unreadable: string | null
   readonly onEdit: () => void
+  readonly onQuickEdit: () => void
   readonly onToggleLogs: () => void
   readonly onDelete: () => void
 }
@@ -235,6 +236,7 @@ export interface AutomationActionsProps {
 export function AutomationActions({
   unreadable,
   onEdit,
+  onQuickEdit,
   onToggleLogs,
   onDelete,
 }: AutomationActionsProps) {
@@ -260,6 +262,12 @@ export function AutomationActions({
                     'This block cannot be opened visually',
                   ),
             onClick: onEdit,
+          },
+          {
+            id: 'quick-edit',
+            label: t('build.quickEdit.action', 'Quick edit'),
+            icon: Tag,
+            onClick: onQuickEdit,
           },
           {
             id: 'run',

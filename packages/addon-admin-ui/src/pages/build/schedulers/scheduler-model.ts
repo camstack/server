@@ -13,6 +13,7 @@ import {
   DEFAULT_MAX_LATE_MS,
   localDateOf,
   occurrenceOn,
+  type Scheduler,
   type SchedulerInput,
   SchedulerInputSchema,
   type SchedulerIssue,
@@ -43,6 +44,13 @@ export type PointTime = SchedulerPoint['at']
 export type DraftCheck =
   | { readonly ok: true; readonly input: SchedulerInput }
   | { readonly ok: false; readonly issues: readonly SchedulerIssue[] }
+
+/** The stored scheduler as the input the hub saves: everything but the server's stamps. */
+export function schedulerInputOf(entry: Scheduler | null): SchedulerInput {
+  if (entry === null) return emptySchedulerDraft()
+  const { id: _id, createdAt: _c, updatedAt: _u, ...input } = entry
+  return input
+}
 
 export function emptySchedulerDraft(): SchedulerInput {
   return {

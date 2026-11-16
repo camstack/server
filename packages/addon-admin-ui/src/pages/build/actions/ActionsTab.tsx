@@ -13,22 +13,26 @@ import {
   type BadgeVariant,
   Button,
   type DataColumn,
+  IconButton,
   EmptyState,
   ErrorBox,
   Skeleton,
   TABLE_SCROLL_MAX_H,
   useActionsList,
   useActionsRun,
+  useActionsUpdate,
   useItemFormUrl,
   TaggedDataTable,
 } from '@camstack/ui-library'
 import { actionSearchText, actionTags } from '../tag-accessors'
 import { useQueryClient } from '@tanstack/react-query'
-import { ListChecks, Play, Plus } from 'lucide-react'
-import { useEffect, useMemo } from 'react'
+import { ListChecks, Pencil, Play, Plus } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { formatRelativeTime } from '../../../components/device/hero/format'
+import { QuickEditDialog } from '../shared/QuickEditDialog'
+import { actionQuickEditInput, quickEditValuesOf } from '../shared/quick-edit-inputs'
 import { ActionEditor } from './ActionEditor'
 
 const POLL_MS = 5_000
@@ -58,7 +62,10 @@ function useStatusView(): (entry: ActionEntry) => StatusView {
       return { variant: 'danger', label: t('actions.status.failed', 'Failed') }
     }
     if (entry.status.lastRunAt === null) {
-      return { variant: 'neutral', label: t('actions.status.neverRan', 'Never ran') }
+      return {
+        variant: 'neutral',
+        label: t('actions.status.neverRan', 'Never ran'),
+      }
     }
     return { variant: 'success', label: t('actions.status.ok', 'OK') }
   }
@@ -69,10 +76,25 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
   const [params] = useSearchParams()
   const queryClient = useQueryClient()
   const statusView = useStatusView()
-  const { state, openNew, openEdit, close } = useItemFormUrl({ editKey: 'action', newKey: 'new' })
+  const { state, openNew, openEdit, close } = useItemFormUrl({
+    editKey: 'action',
+    newKey: 'new',
+  })
   const list = useActionsList({}, { refetchInterval: POLL_MS })
   const run = useActionsRun({
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: [['actions']] }),
+  })
+
+  /** The action whose Quick edit modal is open (row action, or right after a create). */
+  const [quickEditId, setQuickEditId] = useState<string | null>(null)
+  /** Bumped by a Quick edit save so an open editor remounts on the new name and tags. */
+  const [revision, setRevision] = useState(0)
+  const quickUpdate = useActionsUpdate({
+    onSuccess: () => {
+      setQuickEditId(null)
+      setRevision((n) => n + 1)
+      void queryClient.invalidateQueries({ queryKey: [['actions']] })
+    },
   })
 
   useEffect(() => {
@@ -132,18 +154,35 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
         key: 'run',
         align: 'right',
         render: (entry) => (
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={run.isPending || entry.status.isRunning}
-            aria-label={t('actions.list.runAria', 'Run {{name}}', { name: entry.name })}
-            onClick={(e) => {
-              e.stopPropagation()
-              run.mutate({ actionId: entry.id })
-            }}
-          >
-            <Play className="h-4 w-4" /> {t('actions.list.run', 'Run')}
-          </Button>
+          <span className="inline-flex items-center justify-end gap-1">
+            {!entry.readOnly && (
+              <IconButton
+                icon={Pencil}
+                size="sm"
+                variant="ghost"
+                aria-label={t('build.quickEdit.action', 'Quick edit')}
+                data-testid={`action-quick-edit-${entry.id}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setQuickEditId(entry.id)
+                }}
+              />
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={run.isPending || entry.status.isRunning}
+              aria-label={t('actions.list.runAria', 'Run {{name}}', {
+                name: entry.name,
+              })}
+              onClick={(e) => {
+                e.stopPropagation()
+                run.mutate({ actionId: entry.id })
+              }}
+            >
+              <Play className="h-4 w-4" /> {t('actions.list.run', 'Run')}
+            </Button>
+          </span>
         ),
         notSortableReason: t('actions.list.runNotSortable', 'A control'),
       },
@@ -151,15 +190,47 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
     [run, statusView, t],
   )
 
+  const quickEditing =
+    quickEditId === null ? null : (entries.find((entry) => entry.id === quickEditId) ?? null)
+  const quickEditDialog =
+    quickEditing === null ? null : (
+      <QuickEditDialog
+        subject={quickEditValuesOf(quickEditing)}
+        subjectKey={quickEditing.id}
+        saving={quickUpdate.isPending}
+        error={quickUpdate.error === null ? null : errorMessage(quickUpdate.error)}
+        onSave={(values) => {
+          const check = actionQuickEditInput(quickEditing, values)
+          if (check.ok)
+            quickUpdate.mutate({
+              actionId: quickEditing.id,
+              action: check.input,
+            })
+        }}
+        onClose={() => {
+          quickUpdate.reset()
+          setQuickEditId(null)
+        }}
+      />
+    )
+
   if (state.mode !== 'closed') {
     return (
-      <ActionEditor
-        key={editing?.id ?? 'new'}
-        entry={editing}
-        onClose={close}
-        onSaved={openEdit}
-        preset={state.mode === 'new' ? params.get('preset') : null}
-      />
+      <>
+        <ActionEditor
+          key={`${editing?.id ?? 'new'}:${revision}`}
+          entry={editing}
+          onClose={close}
+          onSaved={(id) => {
+            openEdit(id)
+            // A new action is named and tagged straight away, in the shared modal.
+            setQuickEditId(id)
+          }}
+          onQuickEdit={editing === null ? undefined : () => setQuickEditId(editing.id)}
+          preset={state.mode === 'new' ? params.get('preset') : null}
+        />
+        {quickEditDialog}
+      </>
     )
   }
 
@@ -220,6 +291,7 @@ export function ActionsTab({ createRequested = false, onCreateConsumed }: Action
           />
         </>
       )}
+      {quickEditDialog}
     </div>
   )
 }

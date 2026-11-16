@@ -15994,6 +15994,12 @@
           "doc": ""
         },
         {
+          "name": "fill",
+          "type": "boolean",
+          "optional": true,
+          "doc": "On desktop the card takes the height its parent column gives it and the caller's `min-h-0 flex-1 overflow-y-auto` child scrolls inside it (a"
+        },
+        {
           "name": "children",
           "type": "ReactNode",
           "optional": false,

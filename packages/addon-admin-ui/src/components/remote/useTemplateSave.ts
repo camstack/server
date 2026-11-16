@@ -15,7 +15,12 @@ export interface TemplateSave {
   readonly clearError: () => void
 }
 
-export function useTemplateSave(): TemplateSave {
+export interface TemplateSaveOptions {
+  /** Called with the id of a template that was just created (not on an update). */
+  readonly onCreated?: (templateId: string) => void
+}
+
+export function useTemplateSave(options: TemplateSaveOptions = {}): TemplateSave {
   const queryClient = useQueryClient()
   const create = useTemplateCreate()
   const update = useTemplateUpdate()
@@ -43,6 +48,7 @@ export function useTemplateSave(): TemplateSave {
         return false
       }
       await queryClient.invalidateQueries({ queryKey: [['template']] })
+      if (next.id === null) options.onCreated?.(result.template.id)
       return true
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : String(err))

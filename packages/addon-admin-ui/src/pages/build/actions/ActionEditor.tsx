@@ -25,12 +25,12 @@ import {
   useActionsRun,
   useActionsUpdate,
   useConfirm,
-  TagInput,
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
-import { ListChecks, Loader2, Play, Trash2 } from 'lucide-react'
+import { ListChecks, Play, Trash2 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { BuildEditorFrame } from '../shared/BuildEditorFrame'
 import { ActionList } from '../automation/ActionList'
 import { useAutomationDevices } from '../automation/automation-data'
 import { RunsPanel, TraceBlock } from '../flow/RunsPanel'
@@ -57,6 +57,8 @@ export interface ActionEditorProps {
   readonly onClose: () => void
   /** Called with the id after a create, so the URL follows the saved action. */
   readonly onSaved: (actionId: string) => void
+  /** Opens the shared Quick edit modal (name + tags) for this action. */
+  readonly onQuickEdit?: () => void
   /** `trigger-alarm` prefills one `alarm-panel.trigger` step once a panel is known. */
   readonly preset?: string | null
 }
@@ -99,7 +101,13 @@ function useProblemText(): (problem: DraftProblem) => string {
   }
 }
 
-export function ActionEditor({ entry, onClose, onSaved, preset = null }: ActionEditorProps) {
+export function ActionEditor({
+  entry,
+  onClose,
+  onSaved,
+  onQuickEdit,
+  preset = null,
+}: ActionEditorProps) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const confirm = useConfirm()
@@ -159,31 +167,87 @@ export function ActionEditor({ entry, onClose, onSaved, preset = null }: ActionE
     else update.mutate({ actionId: entry.id, action: check.input })
   }
 
+  const notices = (
+    <>
+      {!check.ok && !readOnly && draft.name !== '' && (
+        <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
+          {problemText(check.reason)}
+        </p>
+      )}
+      {saveError !== null && <ErrorBox message={errorMessage(saveError)} />}
+    </>
+  )
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]" data-testid="action-editor">
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <ListChecks className="h-4 w-4 text-foreground-muted" />
-          <Input
-            aria-label={t('actions.editor.name', 'Name')}
-            className="max-w-xs flex-1"
-            value={draft.name}
-            disabled={readOnly}
-            placeholder={t('actions.editor.namePlaceholder', 'What this action does')}
-            onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-          />
+    <>
+      <BuildEditorFrame
+        testId="action-editor"
+        icon={ListChecks}
+        title={entry === null ? t('actions.list.new', 'New action') : entry.name}
+        badges={
           <Badge variant={readOnly ? 'info' : 'primary'}>
             {readOnly ? (entry?.addonId ?? '') : t('actions.source.internal', 'Internal')}
           </Badge>
-        </div>
-        {!readOnly && (
-          <TagInput
-            className="max-w-md"
-            value={draft.tags ?? []}
-            onChange={(tags) => setDraft({ ...draft, tags })}
-            label={t('common.tags', 'Tags')}
+        }
+        onClose={onClose}
+        onQuickEdit={readOnly ? undefined : onQuickEdit}
+        onSave={readOnly ? undefined : save}
+        saveDisabled={!check.ok}
+        saving={saving}
+        notices={notices}
+        footerActions={
+          <>
+            {entry !== null && (
+              <Button
+                variant="outline"
+                disabled={run.isPending}
+                onClick={() =>
+                  needsInput ? setAskVariables(true) : run.mutate({ actionId: entry.id })
+                }
+              >
+                <Play className="h-4 w-4" /> {t('actions.editor.runNow', 'Run now')}
+              </Button>
+            )}
+            {entry !== null && !readOnly && (
+              <Button
+                variant="ghost"
+                disabled={remove.isPending}
+                onClick={() => {
+                  void confirm({
+                    title: t('actions.editor.deleteTitle', 'Delete this action?'),
+                    message: t(
+                      'actions.editor.deleteMessage',
+                      '{{name}} will be deleted, and removed from every camera that links it.',
+                      { name: entry.name },
+                    ),
+                    confirmLabel: t('common.delete', 'Delete'),
+                    variant: 'danger',
+                  }).then((accepted) => {
+                    if (accepted) remove.mutate({ actionId: entry.id })
+                  })
+                }}
+              >
+                <Trash2 className="h-4 w-4" /> {t('common.delete', 'Delete')}
+              </Button>
+            )}
+          </>
+        }
+        side={
+          <RunsPanel
+            traces={entry === null ? [] : traces.data?.traces}
+            selectedId={runId}
+            onSelect={setRunId}
           />
-        )}
+        }
+      >
+        <Input
+          aria-label={t('actions.editor.name', 'Name')}
+          className="max-w-xs"
+          value={draft.name}
+          disabled={readOnly}
+          placeholder={t('actions.editor.namePlaceholder', 'What this action does')}
+          onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+        />
 
         {readOnly ? (
           <p className="rounded-md border border-border bg-surface p-3 text-sm text-foreground-muted">
@@ -225,65 +289,7 @@ export function ActionEditor({ entry, onClose, onSaved, preset = null }: ActionE
             </TraceBlock>
           </>
         )}
-
-        {!check.ok && !readOnly && draft.name !== '' && (
-          <p className="rounded border border-warning/40 bg-warning/10 p-3 text-xs text-warning">
-            {problemText(check.reason)}
-          </p>
-        )}
-        {saveError !== null && <ErrorBox message={errorMessage(saveError)} />}
-
-        <div className="flex flex-wrap gap-2">
-          {!readOnly && (
-            <Button onClick={save} disabled={saving || !check.ok}>
-              {saving && <Loader2 className="h-4 w-4 animate-spin" />} {t('common.save', 'Save')}
-            </Button>
-          )}
-          {entry !== null && (
-            <Button
-              variant="outline"
-              disabled={run.isPending}
-              onClick={() =>
-                needsInput ? setAskVariables(true) : run.mutate({ actionId: entry.id })
-              }
-            >
-              <Play className="h-4 w-4" /> {t('actions.editor.runNow', 'Run now')}
-            </Button>
-          )}
-          {entry !== null && !readOnly && (
-            <Button
-              variant="ghost"
-              disabled={remove.isPending}
-              onClick={() => {
-                void confirm({
-                  title: t('actions.editor.deleteTitle', 'Delete this action?'),
-                  message: t(
-                    'actions.editor.deleteMessage',
-                    '{{name}} will be deleted, and removed from every camera that links it.',
-                    { name: entry.name },
-                  ),
-                  confirmLabel: t('common.delete', 'Delete'),
-                  variant: 'danger',
-                }).then((accepted) => {
-                  if (accepted) remove.mutate({ actionId: entry.id })
-                })
-              }}
-            >
-              <Trash2 className="h-4 w-4" /> {t('common.delete', 'Delete')}
-            </Button>
-          )}
-          <Button variant="ghost" onClick={onClose}>
-            {t('common.close', 'Close')}
-          </Button>
-        </div>
-      </div>
-      <div className="order-first lg:order-last">
-        <RunsPanel
-          traces={entry === null ? [] : traces.data?.traces}
-          selectedId={runId}
-          onSelect={setRunId}
-        />
-      </div>
+      </BuildEditorFrame>
       {askVariables && entry !== null && (
         <RunVariablesDialog
           actionName={entry.name}
@@ -296,6 +302,6 @@ export function ActionEditor({ entry, onClose, onSaved, preset = null }: ActionE
           }}
         />
       )}
-    </div>
+    </>
   )
 }
