@@ -10,6 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Notification rules carry tags: set them in the rule editor, then filter and group the rules list by tag like Build-your-self
+### Changed
+
+- The integration form shows no Test button for an integration that has no connection test
 
 ## [1.2.690] - 2026-11-16
 

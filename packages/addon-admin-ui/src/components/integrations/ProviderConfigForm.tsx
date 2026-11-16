@@ -15,9 +15,9 @@ import { TestVerdictBanner, toTestVerdict, type TestVerdict } from './connection
 interface ProviderConfigFormProps {
   addonId: string
   configSchema: ConfigUISchema | null
-  /** True when the integration DECLARES a pre-creation test. When false the
-   *  Test button is disabled and says why — a button that can only ever answer
-   *  "cannot be tested" is worse than no button. */
+  /** True when the integration DECLARES a pre-creation test. When false there is
+   *  NO Test button (planning#581): a button that can only ever answer "cannot be
+   *  tested" is worse than none, and Next is not gated on a test that cannot run. */
   canTest?: boolean
   /** The instance kind the draft is tested as, for a provider with several kinds. */
   instanceKind?: string
@@ -166,28 +166,25 @@ export function ProviderConfigForm({
               {t('integrations.scanFromForm', 'Scan the network')}
             </Button>
           )}
-          <Button
-            variant="unstyled"
-            onClick={() =>
-              testMutation.mutate({
-                addonId,
-                id: null,
-                values: omitTransientConfig(configSchema, config),
-                ...(instanceKind !== undefined ? { kind: instanceKind } : {}),
-              })
-            }
-            disabled={testMutation.isPending || !canTest}
-            title={
-              canTest
-                ? undefined
-                : t('integrations.connectionUntestable', {
-                    defaultValue: 'This integration cannot be tested before it is created.',
-                  })
-            }
-            className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {testMutation.isPending ? t('integrations.testing') : t('integrations.testConnection')}
-          </Button>
+          {canTest && (
+            <Button
+              variant="unstyled"
+              onClick={() =>
+                testMutation.mutate({
+                  addonId,
+                  id: null,
+                  values: omitTransientConfig(configSchema, config),
+                  ...(instanceKind !== undefined ? { kind: instanceKind } : {}),
+                })
+              }
+              disabled={testMutation.isPending}
+              className="rounded-lg border border-border px-3 py-1.5 text-xs text-foreground hover:bg-surface-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {testMutation.isPending
+                ? t('integrations.testing')
+                : t('integrations.testConnection')}
+            </Button>
+          )}
           {/* Next requires a validated connection test when the addon declares
               one. The server still re-runs the test inside `integrationInstances.createInstance`. */}
           <div className="flex flex-col items-end gap-1">
