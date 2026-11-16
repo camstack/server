@@ -46,7 +46,10 @@ import type { CustomActionSpec } from '../capabilities/custom-actions.js'
 // Using it on the type parameter keeps the typed inference path
 // (`z.infer<T>`, `T['shape']['host']`) intact while admitting concrete
 // schemas from subclasses.
-/** Who writes a device's `device-status` slice: the device itself, or another process (planning#580). */
+/**
+ * Who writes a device's base slices (`device-status`, `feature-probe`): the
+ * device itself, or another process (planning#580).
+ */
 export type DeviceStatusOwnership = 'own' | 'external'
 
 export abstract class BaseDevice<
@@ -56,7 +59,7 @@ export abstract class BaseDevice<
   readonly id: number
   readonly stableId: string
   readonly type: DeviceType
-  /** True when another process owns `device-status` (`options.deviceStatus: 'external'`). */
+  /** True when another process owns the base slices (`options.deviceStatus: 'external'`). */
   private readonly statusIsExternal: boolean
   readonly name: string
   readonly parentDeviceId: number | null
@@ -177,10 +180,11 @@ export abstract class BaseDevice<
       /** Optional semantic role within parent — see `DeviceRole`. */
       role?: DeviceRole
       /**
-       * `external`: another process serves this row's `device-status` (an
-       * engine hosting caps on a row it does not own, planning#580). This
-       * device then registers no `device-status` native, seeds nothing and
-       * `markOnline` is a no-op — one writer per slice.
+       * `external`: another process serves this row's base slices,
+       * `device-status` and `feature-probe` (an engine hosting caps on a row
+       * it does not own, planning#580). This device then registers neither
+       * native, seeds nothing, and `markOnline` / the default `onProbe` are
+       * no-ops — one writer per slice.
        */
       deviceStatus?: DeviceStatusOwnership
     },
@@ -317,16 +321,19 @@ export abstract class BaseDevice<
     // for `getAccessoryChildren()` decisions and the public `features`
     // array — it replaces the older driver-local `deviceCache.has*`
     // duplication.
-    ctx.registerNativeCap?.(featureProbeCapability, {})
-    const probeSeed: FeatureProbeStatus = {
-      flags: {},
-      deviceType: null,
-      model: null,
-      channelCount: null,
-      lastProbedAt: 0,
-      lastFetchedAt: 0,
+    // An engine-hosted row: the engine serving the caps owns this slice too.
+    if (!this.statusIsExternal) {
+      ctx.registerNativeCap?.(featureProbeCapability, {})
+      const probeSeed: FeatureProbeStatus = {
+        flags: {},
+        deviceType: null,
+        model: null,
+        channelCount: null,
+        lastProbedAt: 0,
+        lastFetchedAt: 0,
+      }
+      this.runtimeState.setCapState('feature-probe', probeSeed)
     }
-    this.runtimeState.setCapState('feature-probe', probeSeed)
   }
 
   private readonly deviceActions = new Map<
@@ -692,6 +699,7 @@ export abstract class BaseDevice<
    * `lastProbedAt`) once their probe actually succeeds.
    */
   async onProbe(): Promise<void> {
+    if (this.statusIsExternal) return
     const current = this.runtimeState.getCapState<FeatureProbeStatus>('feature-probe')
     const base: FeatureProbeStatus = current ?? {
       flags: {},

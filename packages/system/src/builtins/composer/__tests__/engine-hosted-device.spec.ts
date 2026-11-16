@@ -1,8 +1,8 @@
 /**
  * planning#580: a Camera grid / Terminal camera block is DECLARED by the
  * composer (`composed-<blockId>`) and SERVED by an engine. The composer's
- * device on that row registers nothing and never writes `device-status`:
- * the engine is that slice's only writer.
+ * device on that row registers nothing and never writes `device-status` or
+ * `feature-probe`: the engine is those slices' only writer.
  */
 import {
   type CapabilityDefinition,
@@ -100,13 +100,29 @@ describe('an engine-hosted block (grid, terminal)', () => {
     expect(f.writes).not.toContain('device-status')
   })
 
-  it('a non-hosted block still writes its own device-status (the double above is live)', async () => {
+  it('its device registers no feature-probe and never writes it, not even on probe', async () => {
+    const f = fakeContext(4581, 'composed-g1')
+    const device = new (declarationFor(HOSTED).DeviceClass)(f.ctx)
+    expect(isComposedDevice(device)).toBe(true)
+    if (!isComposedDevice(device)) return
+    await device.onProbe()
+    await new Promise((resolve) => setTimeout(resolve, 0))
+    expect(f.registered).not.toContain('feature-probe')
+    expect(f.writes).not.toContain('feature-probe')
+  })
+
+  it('a non-hosted block still writes its own device-status and feature-probe (the double above is live)', async () => {
     const f = fakeContext(901, 'composed-b1')
     const device = new (declarationFor({ ...HOSTED, hosted: false }).DeviceClass)(f.ctx)
-    if (isComposedDevice(device)) device.setAvailable(true)
+    expect(isComposedDevice(device)).toBe(true)
+    if (!isComposedDevice(device)) return
+    device.setAvailable(true)
+    await device.onProbe()
     await new Promise((resolve) => setTimeout(resolve, 0))
     expect(f.registered).toContain('device-status')
     expect(f.writes).toContain('device-status')
+    expect(f.registered).toContain('feature-probe')
+    expect(f.writes).toContain('feature-probe')
   })
 
   it('hosted is part of the shape: flipping it rebuilds the device', () => {
