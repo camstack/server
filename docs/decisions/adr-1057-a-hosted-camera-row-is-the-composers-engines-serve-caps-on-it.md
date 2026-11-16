@@ -5,6 +5,7 @@ status: accepted
 date: 2026-11-16
 supersedes:
 applies-to:
+  - scripts/check-engine-hosted-no-own-rows.ts
   - packages/types/src/composition/engine-hosted-blocks.ts
   - packages/types/src/composition/helpers/spec.ts
   - packages/system/src/builtins/composer/**
@@ -38,7 +39,8 @@ pass it reads the blocks and the composer's rows, builds its device ON that row
 through `loadContext`, and serves the camera caps there as a cross-addon
 native. A read that did not answer changes nothing, and a hosted camera is
 withdrawn only after two consecutive trusted reads agree its block is gone. An
-engine never declares a camera row of its own; engine-owned rows are rejected.
+engine never declares a camera row of its own (guard
+`check-engine-hosted-no-own-rows`).
 
 The admin UI follows: the helper picker offers Camera grid and Terminal camera,
 a grid block mounts the grid layout editor on its camera, a Terminal camera
@@ -68,5 +70,8 @@ them over is tracked in camstack/planning#584.
 Specs: the engine hosts and withdraws through the shared gate
 (`engine-hosted-blocks.spec.ts`, `engine-hosted-device.spec.ts`, `terminal-camera-host.spec.ts`), the
 picker disables a taken Terminal (`TerminalCameraPicker.spec.tsx`), and the
-Terminal page reads its camera from the blocks (`Terminal.spec.tsx`). No guard
-forbids an engine from declaring its own camera row: review only.
+Terminal page reads its camera from the blocks (`Terminal.spec.tsx`).
+`scripts/check-engine-hosted-no-own-rows.ts` refuses a row-creating call
+(`new DeclaredDevices(`, `devices.create(`, `allocateDeviceId(`) in the
+runtime source of the camera-grid builtin and the Terminal addon; it is
+textual, so a row declared through another helper is still review only.
