@@ -3579,7 +3579,7 @@
 
 ### `network-link` → `networkLink.*`
 
-- **Source:** `packages/types/src/capabilities/network-link.cap.ts:97`
+- **Source:** `packages/types/src/capabilities/network-link.cap.ts:92`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, button, switch, light, lock, siren`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `INetworkLinkProvider`

@@ -38,11 +38,11 @@ describe('network-link — a wired port speed and link state', () => {
     const parsed = NetworkLinkStatusSchema.parse({
       type: 'ethernet',
       signal: null,
-      speedMbps: 1000,
+      speedKbps: 1_000_000,
       linkUp: true,
       lastUpdated: 1,
     })
-    expect(parsed.speedMbps).toBe(1000)
+    expect(parsed.speedKbps).toBe(1_000_000)
     expect(parsed.linkUp).toBe(true)
   })
 
@@ -50,17 +50,17 @@ describe('network-link — a wired port speed and link state', () => {
     const down = NetworkLinkStatusSchema.parse({
       type: 'ethernet',
       signal: null,
-      speedMbps: null,
+      speedKbps: null,
       linkUp: false,
       lastUpdated: 1,
     })
     expect(down.linkUp).toBe(false)
-    expect(down.speedMbps).toBeNull()
+    expect(down.speedKbps).toBeNull()
     expect(() =>
       NetworkLinkStatusSchema.parse({
         type: 'ethernet',
         signal: null,
-        speedMbps: -10,
+        speedKbps: -10,
         lastUpdated: 1,
       }),
     ).toThrow()
@@ -68,8 +68,14 @@ describe('network-link — a wired port speed and link state', () => {
 
   it('a provider that never reported either field stays valid', () => {
     const wifi = NetworkLinkStatusSchema.parse({ type: 'wifi', signal: 60, lastUpdated: 1 })
-    expect(wifi.speedMbps).toBeUndefined()
+    expect(wifi.speedKbps).toBeUndefined()
     expect(wifi.linkUp).toBeUndefined()
+  })
+
+  it('the speed is the bitrate quantity, stored in its base unit (kbps), with no hand-written unit label', () => {
+    const meta = NetworkLinkStatusSchema.shape.speedKbps.meta()
+    expect(meta?.['quantity']).toBe('bitrate')
+    expect(meta?.['label']).toBeUndefined()
   })
 })
 

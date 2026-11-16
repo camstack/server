@@ -4941,7 +4941,7 @@ Enum: `"shared" \| "per-class"`
 - `signal`: `number \| null`
 - `rssi?`: `number`
 - `ssid?`: `string`
-- `speedMbps?`: `number \| null`
+- `speedKbps?`: `number \| null`
 - `linkUp?`: `boolean \| null`
 - `lastUpdated`: `number`
 

@@ -43,17 +43,12 @@ export const NetworkLinkStatusSchema = z.object({
   /** Network name of a wireless link, when the firmware reports it. */
   ssid: z.string().optional(),
   /**
-   * Negotiated link speed in megabits per second (a wired port: 10, 100, 1000 …).
+   * Negotiated link speed of a wired port, the `bitrate` quantity in its base
+   * unit, kbit/s (a gigabit port is 1 000 000); the display picks the unit.
    * `null` = the port is down or the speed is not known; absent = the provider
-   * never reports one. Stored in Mbps, NOT the `bitrate` quantity's base (kbps),
-   * so the unit travels in the label.
+   * never reports one.
    */
-  speedMbps: z
-    .number()
-    .nonnegative()
-    .nullable()
-    .optional()
-    .meta(readingMeta('none', { label: 'Link speed (Mbps)' })),
+  speedKbps: z.number().nonnegative().nullable().optional().meta(readingMeta('bitrate')),
   /**
    * Whether the link is up. `type` names the medium, not its state, so a wired
    * port that lost its link is `ethernet` + `linkUp: false`. `null` = not known;
