@@ -142,6 +142,19 @@ function declarationsIn(content: string): HookDeclaration[] {
   return out
 }
 
+/** A `clusterSettingsSchema` hook that declares something: the caps it compares against and the field keys it reaches. */
+export interface ClusterHook {
+  readonly caps: readonly string[]
+  readonly keys: readonly string[]
+}
+
+/** Every non-null `clusterSettingsSchema` hook of a source file. `caps` is empty when none could be read. */
+export function clusterHooksIn(content: string): readonly ClusterHook[] {
+  return declarationsIn(content)
+    .filter((d) => d.scope === 'cluster' && !d.declaresNothing)
+    .map((d) => ({ caps: d.caps, keys: d.keys }))
+}
+
 /** The capabilities a source file declares a `cluster` schema for (its `clusterSettingsSchema` hooks). */
 export function clusterSchemaCapsIn(content: string): readonly string[] {
   return [

@@ -53,7 +53,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-clip-reason-header-is-folded.ts` | Clip refusal-header guard — **a reason that travels in an HTTP header goes through `clipReasonHeaderValue` first.** ## The failure this catches An HTTP header value is Latin-1. Node throws `Invalid character in header content` on anythin… |
 | `scripts/check-closure-shipped-deps.ts` | A package the server closure ships must not be silently re-copied into an addon — and a runtime-dependency declaration that installs nothing is rot. |
 | `scripts/check-cluster-model-scope.ts` | Model-scope guard — the catalog and the cluster registry name the SAME steps. |
-| `scripts/check-cluster-settings-claimed.ts` | Every capability that declares CLUSTER settings is drawn by exactly one admin surface (#578). |
+| `scripts/check-cluster-settings-claimed.ts` | Every SECTION of every capability's cluster settings has exactly one admin surface (#578). |
 | `scripts/check-collection-cap-pin.ts` | Collection-cap pin guard — a call that NAMES a resource must say whose. |
 | `scripts/check-collection-crud-is-instances.ts` | One CRUD for a collection of configured things (planning#440 step 6, D1013). |
 | `scripts/check-collection-database-placement.ts` | D851 / LTS P5 — `declareCollection.database` must agree with `@durable database=`, and operator `config` tables must stay on `settings`. |

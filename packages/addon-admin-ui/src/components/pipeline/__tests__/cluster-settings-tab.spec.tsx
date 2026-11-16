@@ -87,6 +87,7 @@ describe('Cluster → Settings', () => {
     expect(panels.map((p) => p.dataset.addon)).toEqual([
       'pipeline-orchestrator',
       'pipeline-analytics',
+      'pipeline-orchestrator',
     ])
     expect(panels[0]?.dataset.keys).toBe(
       [
@@ -95,6 +96,8 @@ describe('Cluster → Settings', () => {
       ].join(','),
     )
     expect(panels[1]?.dataset.cap).toBe('face-gallery')
+    // The suggestion refresh interval (D866) — a section no other card draws.
+    expect(panels[2]?.dataset.sections).toBe('face-rescore')
   })
 
   it('draws every cluster-scoped encoder and knob exactly once', () => {

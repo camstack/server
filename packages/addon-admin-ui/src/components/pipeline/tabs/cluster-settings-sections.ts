@@ -17,6 +17,7 @@ import {
   clusterModelSettingKey,
   clusterStepSettingKey,
   DETAIL_CROP_SECTION_ID,
+  FACE_RESCORE_SECTION_ID,
   NATIVE_LEASE_SECTION_ID,
 } from '@camstack/types'
 import type { SettingsFieldScope } from '../../../lib/settings-field-scope'
@@ -87,6 +88,8 @@ export const CLUSTER_SETTINGS_SECTIONS: readonly ClusterSettingsSection[] = [
     panels: [
       { addonId: ORCHESTRATOR, fieldKeys: clusterKeysFor('face-embedding') },
       { addonId: PIPELINE_CLUSTER_FACE_ADDON, capability: PIPELINE_CLUSTER_FACE_CAP },
+      // How often the people suggestions on unassigned faces are refreshed (D866).
+      { addonId: ORCHESTRATOR, sectionIds: [FACE_RESCORE_SECTION_ID] },
     ],
   },
   {

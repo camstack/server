@@ -251,6 +251,22 @@ const ADDONS: Readonly<Record<string, AddonForms>> = {
   },
 }
 
+/** The orchestrator's face-suggestion refresh section (D866), drawn on the Faces card. */
+const FACE_RESCORE: Section = {
+  id: 'face-rescore',
+  title: 'Face suggestions',
+  fields: [num('faceRescoreIntervalMinutes', 'Suggestion refresh interval', 60, 'min')],
+}
+
+function isSchema(value: unknown): value is { readonly sections: readonly unknown[] } {
+  return (
+    typeof value === 'object' &&
+    value !== null &&
+    'sections' in value &&
+    Array.isArray(value.sections)
+  )
+}
+
 /** Installed on the hub but not running there: the listing answers `null`. */
 const NOT_RUNNING = ['sftp-storage', 's3-storage', 'webdav-storage', 'smb-storage']
 
@@ -289,10 +305,15 @@ export default defineFixtures({
   handlers: {
     'nodes.topology': hubTopology(),
     'addonSettings.listScopedSettings': (input: ScopedInput) => {
-      // The orchestrator's own form is the pipeline-cluster fixture's (load + failover).
+      // The orchestrator's own form is the pipeline-cluster fixture's (load + failover) plus the
+      // face-suggestion refresh drawn on the Faces card.
       if (input.addonId === 'pipeline-orchestrator')
         return [
-          { cap: 'pipeline-orchestrator', scope: 'cluster', sectionIds: ['load', 'failover'] },
+          {
+            cap: 'pipeline-orchestrator',
+            scope: 'cluster',
+            sectionIds: ['load', 'failover', FACE_RESCORE.id],
+          },
         ]
       const addon = input.addonId === undefined ? undefined : ADDONS[input.addonId]
       if (addon === undefined) return null
@@ -303,7 +324,9 @@ export default defineFixtures({
       const form = addon?.forms.find((f) => f.cap === input.cap && f.scope === input.scope)
       if (form !== undefined) return { tabs: null, sections: form.sections }
       const fallback = pipelineCluster.handlers['addonSettings.getScopedSettings']
-      return typeof fallback === 'function' ? fallback(input) : null
+      const answer: unknown = typeof fallback === 'function' ? fallback(input) : null
+      if (input.addonId !== 'pipeline-orchestrator' || !isSchema(answer)) return answer
+      return { ...answer, sections: [...answer.sections, FACE_RESCORE] }
     },
   },
 })

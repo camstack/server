@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Terminal page: Terminal devices and Node shells are separate tabs; a node's shell opens only when you open that node and closes when you leave it.
 - Node shells counts each node's running shells and lists them, whoever opened them, with a Close; a failed close is shown, a node without Terminal says so, and a page restored from the back/forward cache returns to Open shell.
 - System → Settings no longer lists addon settings tabs; each addon's cluster settings moved to its page (Pipeline streaming/recording/semantic search, History retention, Nodes metrics), the rest stay in the addon's settings dialog
+- Pipeline → Settings → Faces draws the face-suggestion refresh interval; an addon's settings dialog leaves out the role pickers drawn on Roles & nodes and links there
 
 ## [1.2.689] - 2026-11-16
 

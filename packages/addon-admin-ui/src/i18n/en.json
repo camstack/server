@@ -5487,7 +5487,8 @@
         "pipeline": "Pipeline → Settings",
         "history": "History",
         "notifications": "Notifications → Settings",
-        "nodes": "Nodes"
+        "nodes": "Nodes",
+        "pipelineRoles": "Pipeline → Roles & nodes"
       },
       "allClusterSettingsElsewhere": "Its cluster-wide settings are on the page linked above."
     },

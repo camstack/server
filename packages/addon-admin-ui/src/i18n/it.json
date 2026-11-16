@@ -5562,7 +5562,8 @@
         "pipeline": "Pipeline → Impostazioni",
         "history": "Storico",
         "notifications": "Notifiche → Impostazioni",
-        "nodes": "Nodi"
+        "nodes": "Nodi",
+        "pipelineRoles": "Pipeline → Ruoli e nodi"
       },
       "allClusterSettingsElsewhere": "Le sue impostazioni per tutto il cluster sono nella pagina indicata sopra."
     },

@@ -91,7 +91,7 @@ function SettingsCard({ section }: { readonly section: ClusterSettingsSection })
           <p className={TEXT_HINT}>{section.hint}</p>
           {section.panels.map((panel) => (
             <NodeAddonsSettingsPanel
-              key={`${panel.addonId}:${panel.capability ?? ''}`}
+              key={`${panel.addonId}:${panel.capability ?? ''}:${(panel.sectionIds ?? panel.fieldKeys ?? []).join(',')}`}
               nodeId="hub"
               addonIds={[panel.addonId]}
               level="global"
