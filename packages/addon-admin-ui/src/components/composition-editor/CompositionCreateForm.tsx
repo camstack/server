@@ -17,6 +17,7 @@ import { presetById } from './composition-presets'
 import { HelperWizard } from './HelperWizard'
 import { PresetWizard } from './PresetWizard'
 import {
+  draftFromCreateLink,
   type HelperDraft,
   type HelperSaveIntent,
   type HelperSaveResult,
@@ -49,9 +50,11 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
   const create = useCreateComposition()
   const setName = useDeviceManagerSetName()
   const fleet = useDeviceManagerListPersistedByAddon({ addonId: 'composer' })
-  const [draft, setDraft] = useState<HelperDraft | null>(null)
-  const [free, setFree] = useState(false)
   const [params, setParams] = useSearchParams()
+  // A create link (the Terminal page's "Add a camera") starts past the picker, read once.
+  const [linked] = useState<HelperDraft | null>(() => draftFromCreateLink(params))
+  const [draft, setDraft] = useState<HelperDraft | null>(linked)
+  const [free, setFree] = useState(false)
   const preset = presetById(params.get(PRESET_PARAM))
   const title = preset === null ? titleForDraft(draft, t) : t(preset.labelKey)
 
@@ -153,8 +156,8 @@ function HelperCreate({ onTitle }: TitleSink): ReactNode {
         onDevice={() => setFree(true)}
         onPreset={choosePreset}
         purpose="create"
-        initial={null}
-        start="template"
+        initial={linked}
+        start={linked === null ? 'template' : 'parameters'}
         saving={create.isPending}
         onDraftChange={setDraft}
         onSave={save}

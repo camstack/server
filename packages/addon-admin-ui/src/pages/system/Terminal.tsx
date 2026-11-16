@@ -39,6 +39,7 @@ import {
   Cable,
   ChevronDown,
   ChevronRight,
+  Plus,
   SlidersHorizontal,
   Terminal as TerminalIcon,
   X,
@@ -56,6 +57,7 @@ import {
 import { InstancesTable } from '../../components/instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../../components/instances/instances-model'
 import { TerminalProfileSettingsLead } from './terminal/TerminalProfileSettingsLead'
+import { terminalCameraCreatePath } from '../../lib/customization-routes'
 
 /** The capability whose providers make a node a Terminal node. */
 const TERMINAL_CAPABILITY = 'terminal-session'
@@ -274,7 +276,18 @@ export function TerminalPage() {
         const camera = cameraOf(row)
         if (camera === undefined) {
           return (
-            <span className="text-foreground-subtle">{t('terminalPage.noCamera', 'None')}</span>
+            <span className="inline-flex items-center gap-2">
+              <span className="text-foreground-subtle">{t('terminalPage.noCamera', 'None')}</span>
+              {row.kind === 'instance' && (
+                <Link
+                  to={terminalCameraCreatePath(row.id)}
+                  className="inline-flex items-center gap-1 text-primary hover:underline"
+                >
+                  <Plus className="h-3 w-3" aria-hidden />
+                  {t('terminalPage.addCamera', 'Add a camera')}
+                </Link>
+              )}
+            </span>
           )
         }
         if (camera.deviceId === null) return <span>{camera.name}</span>

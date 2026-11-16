@@ -7316,7 +7316,8 @@
     "serverShellOff": "Server shell is off",
     "serverShellSettings": "Turn it on in Terminal settings",
     "cameraUnknown": "Unknown",
-    "deleteCamera": "Its camera {{name}} is deleted with it."
+    "deleteCamera": "Its camera {{name}} is deleted with it.",
+    "addCamera": "Add a camera"
   },
   "deviceQuickDetail": {
     "discard": "Discard",

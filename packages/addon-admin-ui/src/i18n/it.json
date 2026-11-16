@@ -7391,7 +7391,8 @@
     "serverShellOff": "La shell del server è disattivata",
     "serverShellSettings": "Attivala nelle impostazioni del Terminale",
     "cameraUnknown": "Sconosciuta",
-    "deleteCamera": "Anche la sua telecamera {{name}} viene eliminata."
+    "deleteCamera": "Anche la sua telecamera {{name}} viene eliminata.",
+    "addCamera": "Aggiungi una telecamera"
   },
   "deviceQuickDetail": {
     "discard": "Annulla",

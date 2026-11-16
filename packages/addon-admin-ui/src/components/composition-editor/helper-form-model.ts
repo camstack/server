@@ -44,6 +44,7 @@ import {
   type StatisticStat,
   type StatisticWindow,
 } from '@camstack/types'
+import { CREATE_TEMPLATE_PARAM, CREATE_TERMINAL_PARAM } from '../../lib/customization-routes'
 
 export type HelperPickerId = GroupTemplateId
 
@@ -331,6 +332,16 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
     room: '',
     members: [],
   }
+}
+
+/**
+ * The draft a create link asks for (`?template=terminal&terminalId=…`), or
+ * null to start on the picker. Only the Terminal camera is linked today.
+ */
+export function draftFromCreateLink(params: URLSearchParams): HelperDraft | null {
+  if (params.get(CREATE_TEMPLATE_PARAM) !== 'terminal') return null
+  const terminalId = params.get(CREATE_TERMINAL_PARAM)
+  return { kind: 'terminal', name: '', room: '', terminalId: terminalId === '' ? null : terminalId }
 }
 
 export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {

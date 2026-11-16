@@ -21,3 +21,18 @@ export function customizePath(deviceId: number): string {
 export function compositionEditorPath(blockId: string): string {
   return `/build/compositions/${encodeURIComponent(blockId)}` // hub-path-ok: react-router path
 }
+
+/** Query keys a create link sets on the Build-your-self dialog. */
+export const CREATE_TEMPLATE_PARAM = 'template'
+export const CREATE_TERMINAL_PARAM = 'terminalId'
+
+/** Build-your-self, opened on the Terminal camera template with this terminal picked. */
+export function terminalCameraCreatePath(terminalId: string): string {
+  const params = new URLSearchParams({
+    tab: 'custom-device',
+    new: 'helper',
+    [CREATE_TEMPLATE_PARAM]: 'terminal',
+    [CREATE_TERMINAL_PARAM]: terminalId,
+  })
+  return `/build?${params.toString()}` // hub-path-ok: react-router path
+}

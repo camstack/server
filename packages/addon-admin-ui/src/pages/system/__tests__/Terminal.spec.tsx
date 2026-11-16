@@ -262,6 +262,15 @@ describe('TerminalPage', () => {
     expect(within(table).getAllByText('None')).toHaveLength(1)
   })
 
+  it('a terminal with no camera links to Build-your-self on the Terminal camera template', () => {
+    renderPage()
+    const link = screen.getByRole('link', { name: /add a camera/i })
+    expect(link).toHaveAttribute(
+      'href',
+      '/build?tab=custom-device&new=helper&template=terminal&terminalId=i-2',
+    )
+  })
+
   it('a camera read that has not answered is never "None"', () => {
     mocks.compositions = undefined
     renderPage()

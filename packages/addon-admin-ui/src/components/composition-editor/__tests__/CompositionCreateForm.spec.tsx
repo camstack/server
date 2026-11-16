@@ -58,9 +58,25 @@ vi.mock('../../device/customize/source-selector/SourceSelector', () => ({
   ),
 }))
 
+vi.mock('../TerminalCameraPicker', () => ({
+  TerminalCameraPicker: (props: { readonly value: string | null }) => (
+    <div data-testid="terminal-picker">{props.value ?? 'unpicked'}</div>
+  ),
+}))
+
 const { CompositionCreateForm, awaitDeviceIdForBlock } = await import('../CompositionCreateForm')
 
 describe('CompositionCreateForm', () => {
+  it('a Terminal camera link starts on the parameters with that terminal picked', () => {
+    render(
+      <MemoryRouter initialEntries={['/build?new=helper&template=terminal&terminalId=i-2']}>
+        <CompositionCreateForm mode="helper" onTitle={() => undefined} />
+      </MemoryRouter>,
+    )
+    expect(screen.getByTestId('helper-camera-parameters')).toBeInTheDocument()
+    expect(screen.getByTestId('terminal-picker').textContent).toBe('i-2')
+  })
+
   it('has no Incomplete badge, and a blank save opens the new device', async () => {
     render(<CompositionCreateForm mode="blank" onTitle={() => undefined} />)
     expect(screen.queryByText('Incomplete')).toBeNull()
