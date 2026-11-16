@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Siren: timed trigger with a countdown; plays are converted to seconds using a per-camera seconds-per-play setting
+
 ## [1.2.241] - 2026-11-14
 
 ### Changed

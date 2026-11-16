@@ -8,6 +8,11 @@
  *                 camera-side "Linkage Method" — this cap only flips
  *                 the input state and the camera fires the linkage.
  *
+ *   - `motion-trigger` — the camera's VMD event linkage `beep` (audio alarm),
+ *                 `/ISAPI/Event/triggers/VMD-{cam}` notificationMethod `beep`
+ *   - `siren` — timed trigger: holds the alarm input for N seconds, publishes
+ *                 `activeUntil`; options are camera-probed (see siren-options.ts)
+ *
  * Settings:
  *   - `port`            — alarm input port id (`/ISAPI/System/IO/inputs/{N}`).
  *                          Default 1 (the most common GPIO slot for the
@@ -31,13 +36,25 @@ import type {
 } from '@camstack/types'
 import {
   BaseDevice,
+  createRuntimeStateBridge,
+  DeviceFeature,
   DeviceType,
   hydrateSchema,
+  type MotionTriggerRuntimeState,
+  type MotionTriggerStatus,
+  motionTriggerCapability,
+  resolveSirenSeconds,
+  type SirenOptions,
+  type SirenStatus,
+  sirenCapability,
+  sirenIdleStatus,
+  sirenTriggeredStatus,
   type SwitchStatus,
   switchCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import { AccessoryKind, type HikvisionAccessoryHost, hikvisionAccessoryBaseSchema } from './base.js'
+import { buildHikvisionSirenOptions } from './siren-options.js'
 
 export const sirenAccessorySchema = hikvisionAccessoryBaseSchema.extend({
   kind: z.literal(AccessoryKind.Siren),
@@ -72,9 +89,10 @@ export interface HikvisionSirenHost extends HikvisionAccessoryHost {
 }
 
 const POLL_INTERVAL_MS = 30_000
+const MOTION_TRIGGER_STALE_MS = 30_000
 
 export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
-  readonly features = []
+  readonly features = [DeviceFeature.MotionTrigger]
 
   /** Pending auto-release timer fired after `pulseDurationMs`. */
   private pulseTimer: ReturnType<typeof setTimeout> | null = null
@@ -94,6 +112,8 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
       void this.config.set('pulseDurationMs', 5_000)
     }
     this.registerSwitchCap()
+    this.registerMotionTriggerCap()
+    this.registerSirenCap()
     this.startPolling()
   }
 
@@ -158,6 +178,149 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
     this.setCapSlice(switchCapability, { on, lastChangedAt: Date.now() })
   }
 
+  private sirenView(): SirenStatus {
+    return this.getCapSlice(sirenCapability) ?? sirenIdleStatus(undefined)
+  }
+
+  private openEndedStatus(): SirenStatus {
+    return { active: true, activeUntil: null, durationSeconds: null, lastTriggeredAt: Date.now() }
+  }
+
+  private publishSiren(status: SirenStatus): void {
+    const previous = this.runtimeState.getCapState<{ lastFetchedAt?: number }>('siren')
+    this.setCapSlice(sirenCapability, { ...status, lastFetchedAt: previous?.lastFetchedAt ?? 0 })
+  }
+
+  /** Releases the input after `seconds` and publishes the countdown it implies. */
+  private armRelease(seconds: number): void {
+    this.cancelPulseTimer()
+    this.publishSiren(sirenTriggeredStatus(Date.now(), seconds))
+    this.pulseTimer = setTimeout(
+      () => {
+        this.pulseTimer = null
+        this.pushAlarmInput(false)
+          .then(() => this.publishSiren(sirenIdleStatus(this.sirenView())))
+          .catch((err: unknown) => {
+            this.ctx.logger.warn('hikvision siren: pulse auto-release failed', {
+              tags: { deviceId: this.id },
+              meta: { port: this.port, error: err instanceof Error ? err.message : String(err) },
+            })
+          })
+      },
+      Math.round(seconds * 1000),
+    )
+    this.pulseTimer.unref()
+  }
+
+  /** Asks the camera whether the configured alarm input exists; failure means "not confirmed". */
+  private async sirenOptions(): Promise<SirenOptions> {
+    let confirmed = false
+    try {
+      const inputs = await this.parent.ensureClient().getAlarmInputs()
+      confirmed = (inputs ?? []).some((input) => input.id === String(this.port))
+    } catch (err) {
+      this.ctx.logger.debug('hikvision siren: alarm input probe failed', {
+        tags: { deviceId: this.id },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+    }
+    const options = buildHikvisionSirenOptions({
+      pulseDurationMs: this.config.get('pulseDurationMs') ?? 0,
+      portConfirmedByCamera: confirmed,
+      nowMs: Date.now(),
+    })
+    if (confirmed) {
+      const previous = this.runtimeState.getCapState<SirenStatus>('siren')
+      this.setCapSlice(sirenCapability, {
+        ...(previous ?? sirenIdleStatus(undefined)),
+        lastFetchedAt: options.fetchedAt,
+      })
+    }
+    return options
+  }
+
+  private registerSirenCap(): void {
+    const provider: InferNativeProvider<typeof sirenCapability> = {
+      getStatus: async (): Promise<SirenStatus> => this.sirenView(),
+      getOptions: async (): Promise<SirenOptions> => this.sirenOptions(),
+      trigger: async ({ deviceId, durationSeconds }): Promise<SirenStatus> => {
+        if (deviceId !== this.id) return this.sirenView()
+        const seconds = resolveSirenSeconds(await this.sirenOptions(), durationSeconds)
+        this.cancelPulseTimer()
+        await this.pushAlarmInput(true)
+        this.armRelease(seconds)
+        this.ctx.logger.info('hikvision siren: timed trigger', {
+          tags: { deviceId: this.id },
+          meta: { requested: durationSeconds ?? 'default', seconds, port: this.port },
+        })
+        return this.sirenView()
+      },
+      stop: async ({ deviceId }): Promise<SirenStatus> => {
+        if (deviceId !== this.id) return this.sirenView()
+        this.cancelPulseTimer()
+        await this.pushAlarmInput(false)
+        this.publishSiren(sirenIdleStatus(this.sirenView()))
+        return this.sirenView()
+      },
+    }
+    this.ctx.registerNativeCap(sirenCapability, provider)
+    this.publishSiren(sirenIdleStatus(undefined))
+  }
+
+  private get cameraNumber(): number {
+    return this.config.get('cameraNumber') ?? 1
+  }
+
+  /** Reads the VMD linkage; the audio alarm is the `beep` notification method. Failure leaves the slice as it was. */
+  private async refreshMotionTriggerFromFirmware(): Promise<void> {
+    const linkage = await this.parent.ensureClient().getMotionTriggerLinkage(this.cameraNumber)
+    if (linkage === null) {
+      this.ctx.logger.warn('hikvision siren: motion linkage read failed', {
+        tags: { deviceId: this.id },
+      })
+      return
+    }
+    const enabled = linkage.beep
+    const previous = this.getCapSlice(motionTriggerCapability)
+    this.setCapSlice(motionTriggerCapability, {
+      enabled,
+      lastChangedAt: previous && previous.enabled === enabled ? previous.lastChangedAt : Date.now(),
+      lastFetchedAt: Date.now(),
+    })
+  }
+
+  private registerMotionTriggerCap(): void {
+    const bridge = createRuntimeStateBridge({
+      runtimeState: this.runtimeState,
+      cap: motionTriggerCapability,
+      ownDeviceId: this.id,
+      refresh: () => this.refreshMotionTriggerFromFirmware(),
+      staleMs: MOTION_TRIGGER_STALE_MS,
+      empty: (): MotionTriggerStatus => ({ enabled: false, lastChangedAt: 0 }),
+    })
+    const provider: InferNativeProvider<typeof motionTriggerCapability> = {
+      getStatus: bridge.getStatus,
+      setMotionTrigger: async ({ deviceId, enabled }) => {
+        if (deviceId !== this.id) return
+        this.ctx.logger.info('hikvision siren: setMotionTrigger (VMD beep linkage)', {
+          tags: { deviceId: this.id },
+          meta: { enabled, cameraNumber: this.cameraNumber },
+        })
+        await this.parent
+          .ensureClient()
+          .setMotionTriggerLinkage(this.cameraNumber, { beep: enabled })
+        this.setCapSlice(motionTriggerCapability, {
+          enabled,
+          lastChangedAt: Date.now(),
+          lastFetchedAt: Date.now(),
+        })
+      },
+    }
+    this.ctx.registerNativeCap(motionTriggerCapability, provider)
+    const seed: MotionTriggerRuntimeState = { enabled: false, lastChangedAt: 0, lastFetchedAt: 0 }
+    this.setCapSlice(motionTriggerCapability, seed)
+  }
+
   private startPolling(): void {
     if (this.pollTimer) return
     this.pollTimer = setInterval(() => {
@@ -191,17 +354,9 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
 
         const pulseMs = this.config.get('pulseDurationMs') ?? 0
         if (on && pulseMs > 0) {
-          this.pulseTimer = setTimeout(() => {
-            this.pulseTimer = null
-            this.pushAlarmInput(false).catch((err: unknown) => {
-              this.ctx.logger.warn('hikvision siren: pulse auto-release failed', {
-                meta: {
-                  port: this.port,
-                  error: err instanceof Error ? err.message : String(err),
-                },
-              })
-            })
-          }, pulseMs)
+          this.armRelease(pulseMs / 1000)
+        } else {
+          this.publishSiren(on ? this.openEndedStatus() : sirenIdleStatus(this.sirenView()))
         }
       },
     }
@@ -279,6 +434,7 @@ export class HikvisionSirenAccessory extends BaseDevice<typeof sirenAccessorySch
       }
       this.setCapSlice(switchCapability, { on: false, lastChangedAt: Date.now() })
       this.cancelPulseTimer()
+      this.publishSiren(sirenIdleStatus(this.sirenView()))
     }
   }
 

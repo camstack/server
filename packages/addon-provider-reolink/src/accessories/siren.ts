@@ -32,6 +32,12 @@ import {
   type MotionTriggerRuntimeState,
   type MotionTriggerStatus,
   motionTriggerCapability,
+  resolveSirenSeconds,
+  type SirenOptions,
+  type SirenStatus,
+  sirenCapability,
+  sirenIdleStatus,
+  sirenTriggeredStatus,
   type SwitchStatus,
   sleep,
   switchCapability,
@@ -40,6 +46,12 @@ import { z } from 'zod'
 import { buildRawState } from '../raw-state.js'
 import { AccessoryKind, type ReolinkAccessoryHost, reolinkAccessoryBaseSchema } from './base.js'
 import { sirenPlayDuration } from './siren-play-duration.js'
+import {
+  buildReolinkSirenOptions,
+  DEFAULT_SECONDS_PER_PLAY,
+  playsForSeconds,
+  secondsForPlays,
+} from './siren-options.js'
 
 /** Detection-class combinations the Reolink firmware accepts for the
  *  siren-on-motion `typeScheduleList`. Mirrors `motion-floodlight`
@@ -72,6 +84,12 @@ export const sirenAccessorySchema = reolinkAccessoryBaseSchema.extend({
    */
   sirenDurationS: z.number().int().min(0).max(300).default(0),
   /**
+   * Seconds one play of the alarm tone lasts. The camera does not report it, so
+   * it is calibrated here; it converts the timed `siren` cap's seconds into the
+   * play count the camera takes.
+   */
+  sirenSecondsPerPlay: z.number().positive().max(60).default(DEFAULT_SECONDS_PER_PLAY),
+  /**
    * Detection classes that fire the siren when "Trigger on motion" is
    * armed. Forwarded as a `typeScheduleList` to `setSirenOnMotion`
    * (cmd_id 231). Maps to the motion-siren `typeScheduleList` field
@@ -94,6 +112,8 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
   readonly features = [DeviceFeature.MotionTrigger]
 
   private lastSetAtMs = 0
+  /** Clears the `siren` slice when a timed activation runs out. */
+  private sirenTimer: ReturnType<typeof setTimeout> | null = null
   /** Becomes `true` after the first successful
    *  `refreshMotionTriggerFromFirmware` round-trip. Used by `onProbe`
    *  to decide whether the boot-time sleep-gate should force a wake
@@ -111,6 +131,7 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
     })
     this.registerSwitchCap()
     this.registerMotionTriggerCap()
+    this.registerSirenCap()
     // Siren switch direct control is fire-and-forget — `getSiren`
     // returns OFF immediately after triggering, so polling would clobber
     // the UI back to OFF. We only align motion-trigger; switch state is
@@ -306,6 +327,7 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
           meta: { on, duration: duration ?? 'manual' },
         })
         this.setCapSlice(switchCapability, { on, lastChangedAt: Date.now() })
+        this.publishSwitchActivation(on, duration)
         // No-op for the cooldown — siren switch is never aligned, so
         // there's nothing to skip. Marking `lastSetAtMs` here would
         // also pointlessly delay the motion-trigger align.
@@ -313,6 +335,108 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
     }
     this.ctx.registerNativeCap(switchCapability, provider)
     this.setCapSlice(switchCapability, { on: false, lastChangedAt: 0 })
+  }
+
+  private get secondsPerPlay(): number {
+    return this.config.get('sirenSecondsPerPlay') ?? DEFAULT_SECONDS_PER_PLAY
+  }
+
+  private sirenView(): SirenStatus {
+    return this.getCapSlice(sirenCapability) ?? sirenIdleStatus(undefined)
+  }
+
+  /** The options the timed cap offers. The camera reports no allowed counts, so they are a marked fallback. */
+  private sirenOptions(): SirenOptions {
+    return buildReolinkSirenOptions({
+      configuredPlays: this.config.get('sirenDurationS'),
+      secondsPerPlay: this.secondsPerPlay,
+      nowMs: Date.now(),
+    })
+  }
+
+  private clearSirenTimer(): void {
+    if (!this.sirenTimer) return
+    clearTimeout(this.sirenTimer)
+    this.sirenTimer = null
+  }
+
+  private writeSirenStatus(status: SirenStatus): void {
+    const previous = this.runtimeState.getCapState<{ lastFetchedAt?: number }>('siren')
+    this.setCapSlice(sirenCapability, { ...status, lastFetchedAt: previous?.lastFetchedAt ?? 0 })
+  }
+
+  /** Arms the countdown for a timed activation and clears the slice when it elapses. */
+  private armSirenCountdown(seconds: number): void {
+    this.clearSirenTimer()
+    this.writeSirenStatus(sirenTriggeredStatus(Date.now(), seconds))
+    this.sirenTimer = setTimeout(
+      () => {
+        this.sirenTimer = null
+        this.writeSirenStatus(sirenIdleStatus(this.sirenView()))
+      },
+      Math.round(seconds * 1000),
+    )
+    this.sirenTimer.unref()
+  }
+
+  /** A plain switch flip keeps the siren slice honest too: counted plays are timed, manual is open-ended. */
+  private publishSwitchActivation(on: boolean, plays: number | undefined): void {
+    if (!on) {
+      this.clearSirenTimer()
+      this.writeSirenStatus(sirenIdleStatus(this.sirenView()))
+      return
+    }
+    if (plays !== undefined) {
+      this.armSirenCountdown(secondsForPlays(plays, this.secondsPerPlay))
+      return
+    }
+    this.clearSirenTimer()
+    this.writeSirenStatus({
+      active: true,
+      activeUntil: null,
+      durationSeconds: null,
+      lastTriggeredAt: Date.now(),
+    })
+  }
+
+  private registerSirenCap(): void {
+    const provider: InferNativeProvider<typeof sirenCapability> = {
+      getStatus: async (): Promise<SirenStatus> => this.sirenView(),
+      getOptions: async (): Promise<SirenOptions> => this.sirenOptions(),
+      trigger: async ({ deviceId, durationSeconds }): Promise<SirenStatus> => {
+        if (deviceId !== this.id) return this.sirenView()
+        const seconds = resolveSirenSeconds(this.sirenOptions(), durationSeconds)
+        const plays = playsForSeconds(seconds, this.secondsPerPlay)
+        const api = await this.api
+        try {
+          await api.setSiren(this.channel, true, plays)
+        } catch (err) {
+          this.ctx.logger.warn('siren trigger failed', {
+            tags: { deviceId: this.id, channel: this.channel },
+            meta: { plays, error: err instanceof Error ? err.message : String(err) },
+          })
+          throw err
+        }
+        const actualSeconds = secondsForPlays(plays, this.secondsPerPlay)
+        this.ctx.logger.info('siren trigger', {
+          tags: { deviceId: this.id, channel: this.channel },
+          meta: { requested: durationSeconds ?? 'default', plays, seconds: actualSeconds },
+        })
+        this.setCapSlice(switchCapability, { on: true, lastChangedAt: Date.now() })
+        this.armSirenCountdown(actualSeconds)
+        return this.sirenView()
+      },
+      stop: async ({ deviceId }): Promise<SirenStatus> => {
+        if (deviceId !== this.id) return this.sirenView()
+        const api = await this.api
+        await api.setSiren(this.channel, false, undefined)
+        this.setCapSlice(switchCapability, { on: false, lastChangedAt: Date.now() })
+        this.publishSwitchActivation(false, undefined)
+        return this.sirenView()
+      },
+    }
+    this.ctx.registerNativeCap(sirenCapability, provider)
+    this.writeSirenStatus(sirenIdleStatus(undefined))
   }
 
   private registerMotionTriggerCap(): void {
@@ -383,6 +507,17 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
               max: 300,
               step: 1,
             },
+            {
+              type: 'number',
+              key: 'sirenSecondsPerPlay',
+              label: 'Seconds per play',
+              description:
+                'How long one play of the alarm tone lasts on this camera; converts the siren duration into plays.',
+              default: DEFAULT_SECONDS_PER_PLAY,
+              min: 0.5,
+              max: 60,
+              step: 0.5,
+            },
           ],
         },
         {
@@ -408,6 +543,7 @@ export class SirenAccessory extends BaseDevice<typeof sirenAccessorySchema> {
     }
     return hydrateSchema(schema, {
       sirenDurationS: this.config.get('sirenDurationS') ?? 0,
+      sirenSecondsPerPlay: this.secondsPerPlay,
       motionSirenDetectType:
         this.config.get('motionSirenDetectType') ?? 'MD,people,vehicle,dog_cat',
     })
