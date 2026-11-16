@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.693] - 2026-11-16
+
 ### Changed
 
 - A 5-minute health digest turns motion that never detects, sub-floor candidates, slow or shedding inference and unusable inference devices into findings, readable through the orchestrator and the ops MCP

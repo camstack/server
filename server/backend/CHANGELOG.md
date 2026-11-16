@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.886] - 2026-11-16
+
 ### Changed
 
 - The pipeline-orchestrator health digest is reachable through the hub API (getHealthDigest, admin)

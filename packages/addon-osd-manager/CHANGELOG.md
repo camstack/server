@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.320] - 2026-11-16
+
 ### Changed
 
 - Each OSD layer of a camera is its own bordered section with its own source choice; a layer's edit saves only that layer.
