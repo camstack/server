@@ -4,6 +4,7 @@
  * The fake hub only answers what the real read path asks for.
  */
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import type { OpsHub } from '../ops/hub.js'
 import {
   gapsWithEvents,
@@ -15,6 +16,40 @@ import {
 
 const NOW = 1_800_000_000_000
 const MIN = 60_000
+
+const CursorInput = z.object({ cursor: z.string().optional() })
+const TrackInput = z.object({ trackId: z.string() })
+
+const ProblemSchema = z.object({
+  kind: z.string(),
+  missing: z.array(z.string()).optional(),
+  reason: z.string(),
+})
+const AuditOutSchema = z.object({
+  cameras: z.array(
+    z.object({
+      events: z.number(),
+      open: z.number().optional(),
+      eventsTruncated: z.boolean().optional(),
+      media: z.record(z.string(), z.unknown()).optional(),
+      recording: z.record(z.string(), z.unknown()),
+      failingEvents: z.number().optional(),
+    }),
+  ),
+  failing: z.object({
+    total: z.number(),
+    returned: z.number().optional(),
+    nextOffset: z.number().nullable(),
+    events: z.array(z.object({ fullTrackId: z.string(), problems: z.array(ProblemSchema) })),
+  }),
+})
+
+async function audit(
+  hub: OpsHub,
+  args: Parameters<typeof timelineAudit>[1],
+): Promise<z.infer<typeof AuditOutSchema>> {
+  return AuditOutSchema.parse(await timelineAudit(hub, args, NOW))
+}
 
 interface Track {
   trackId: string
@@ -70,13 +105,13 @@ function fakeHub(opts: { recordingRead?: 'read' | 'unreadable' } = {}): OpsHub &
       calls.push({ path, input })
       if (path === 'pipelineAnalytics.listRecentTracks') {
         // two pages of three, to prove the cursor is followed
-        const cursor = (input as { cursor?: string }).cursor
+        const cursor = CursorInput.parse(input).cursor
         return cursor === undefined
           ? { tracks: tracks.slice(0, 3), nextCursor: 'c1' }
           : { tracks: tracks.slice(3), nextCursor: null }
       }
       if (path === 'pipelineAnalytics.listTrackMedia') {
-        const id = (input as { trackId: string }).trackId
+        const id = TrackInput.parse(input).trackId
         const kinds = MEDIA[id]
         if (kinds instanceof Error) throw kinds
         return (kinds ?? []).map((kind, i) => ({
@@ -184,22 +219,7 @@ describe('pure coverage and media rules', () => {
 describe('timelineAudit', () => {
   it('summarises a camera and lists the failing events with kind and reason', async () => {
     const hub = fakeHub()
-    const out = (await timelineAudit(hub, { deviceIds: [7], days: 1 }, NOW)) as {
-      cameras: {
-        events: number
-        open: number
-        media: Record<string, unknown>
-        recording: Record<string, unknown>
-        failingEvents: number
-      }[]
-      failing: {
-        total: number
-        events: {
-          fullTrackId: string
-          problems: { kind: string; missing?: string[]; reason: string }[]
-        }[]
-      }
-    }
+    const out = await audit(hub, { deviceIds: [7], days: 1 })
     const cam = out.cameras[0]!
     // synthetic excluded, both cursor pages followed
     expect(cam.events).toBe(5)
@@ -231,30 +251,15 @@ describe('timelineAudit', () => {
 
   it('pages the failing list', async () => {
     const hub = fakeHub()
-    const first = (await timelineAudit(hub, { deviceIds: [7], limit: 1 }, NOW)) as {
-      failing: { total: number; returned: number; nextOffset: number | null }
-    }
+    const first = await audit(hub, { deviceIds: [7], limit: 1 })
     expect(first.failing.returned).toBe(1)
     expect(first.failing.nextOffset).toBe(1)
-    const last = (await timelineAudit(
-      hub,
-      { deviceIds: [7], limit: 1, offset: first.failing.total - 1 },
-      NOW,
-    )) as {
-      failing: { nextOffset: number | null }
-    }
+    const last = await audit(hub, { deviceIds: [7], limit: 1, offset: first.failing.total - 1 })
     expect(last.failing.nextOffset).toBeNull()
   })
 
   it('says coverage is unknown, not zero, when the recorder is unreadable', async () => {
-    const out = (await timelineAudit(
-      fakeHub({ recordingRead: 'unreadable' }),
-      { deviceIds: [7] },
-      NOW,
-    )) as {
-      cameras: { recording: Record<string, unknown> }[]
-      failing: { events: { problems: { kind: string }[] }[] }
-    }
+    const out = await audit(fakeHub({ recordingRead: 'unreadable' }), { deviceIds: [7] })
     expect(out.cameras[0]?.recording).toMatchObject({ read: false })
     expect(out.failing.events.flatMap((e) => e.problems).some((p) => p.kind === 'recording')).toBe(
       false,
@@ -263,9 +268,30 @@ describe('timelineAudit', () => {
 
   it('bounds the events read per camera', async () => {
     const hub = fakeHub()
-    const out = (await timelineAudit(hub, { deviceIds: [7], maxEventsPerCamera: 3 }, NOW)) as {
-      cameras: { events: number; eventsTruncated: boolean }[]
-    }
+    const out = await audit(hub, { deviceIds: [7], maxEventsPerCamera: 3 })
     expect(out.cameras[0]).toMatchObject({ events: 3, eventsTruncated: true })
+  })
+
+  it('reads the media index with a small concurrency limit, not one by one or all at once', async () => {
+    const base = fakeHub()
+    let inFlight = 0
+    let peak = 0
+    const hub: OpsHub = {
+      ...base,
+      async query(path, input) {
+        if (path !== 'pipelineAnalytics.listTrackMedia') return base.query(path, input)
+        inFlight += 1
+        peak = Math.max(peak, inFlight)
+        await new Promise((resolve) => setTimeout(resolve, 5))
+        try {
+          return await base.query(path, input)
+        } finally {
+          inFlight -= 1
+        }
+      },
+    }
+    await audit(hub, { deviceIds: [7], days: 1 })
+    expect(peak).toBeGreaterThan(1)
+    expect(peak).toBeLessThanOrEqual(4)
   })
 })

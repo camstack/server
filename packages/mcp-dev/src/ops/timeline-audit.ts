@@ -30,12 +30,12 @@ export const TIMELINE_MEDIA_KINDS = ['thumbnail', 'keyFrame', 'firstFrame', 'las
 export type TimelineMediaKind = (typeof TIMELINE_MEDIA_KINDS)[number]
 
 export const TimelineAuditArgsSchema = z.object({
-  deviceIds: z.array(z.number().int()).min(1).max(20),
+  deviceIds: z.array(z.number().int()).min(1).max(8),
   days: z.number().positive().max(14).optional(),
   /** Tracks read per camera (newest first). */
   maxEventsPerCamera: z.number().int().positive().max(1000).optional(),
   /** Closed tracks whose media index is read per camera (evenly sampled). */
-  mediaSamplePerCamera: z.number().int().positive().max(300).optional(),
+  mediaSamplePerCamera: z.number().int().positive().max(200).optional(),
   /** Kinds a closed track must have to count as complete. */
   requiredKinds: z.array(z.enum(TIMELINE_MEDIA_KINDS)).min(1).optional(),
   /** Recording gaps shorter than this are not reported (seconds). */
@@ -244,6 +244,18 @@ async function readMedia(hub: OpsHub, track: Track): Promise<MediaReading> {
   }
 }
 
+/** At most `MEDIA_READ_CONCURRENCY` index reads in flight; result order follows the input. */
+const MEDIA_READ_CONCURRENCY = 4
+
+async function readInBatches(hub: OpsHub, tracks: readonly Track[]): Promise<MediaReading[]> {
+  const out: MediaReading[] = []
+  for (let i = 0; i < tracks.length; i += MEDIA_READ_CONCURRENCY) {
+    const batch = tracks.slice(i, i + MEDIA_READ_CONCURRENCY)
+    out.push(...(await Promise.all(batch.map((t) => readMedia(hub, t)))))
+  }
+  return out
+}
+
 export type RecordingRead =
   | {
       readonly ok: true
@@ -363,8 +375,9 @@ async function auditCamera(
   )
   let complete = 0
   let unreadable = 0
-  for (const track of sampled) {
-    const reading = await readMedia(hub, track)
+  const readings = await readInBatches(hub, sampled)
+  for (const [index, track] of sampled.entries()) {
+    const reading = readings[index] ?? { kinds: null, empty: new Set<string>() }
     for (const k of TIMELINE_MEDIA_KINDS) {
       if (reading.kinds?.has(k) && !reading.empty.has(k)) kindCount[k] = (kindCount[k] ?? 0) + 1
     }
