@@ -137,6 +137,18 @@ export function addonCommandActor(
   if (origin.kind === 'scheduler') {
     return { kind: 'scheduler', addonId, schedulerId: origin.schedulerId }
   }
+  if (origin.kind === 'on-behalf') {
+    return {
+      kind: 'addon',
+      addonId,
+      ...(nodeId !== undefined ? { nodeId } : {}),
+      onBehalf: {
+        source: origin.source,
+        principalId: origin.principalId,
+        ...(origin.principalName !== undefined ? { principalName: origin.principalName } : {}),
+      },
+    }
+  }
   // A rule fire names WHY `actions.run` was asked; the device commands of that run
   // are claimed as the action. A rule claim that reaches a device command stays the addon.
   return { kind: 'addon', addonId, ...(nodeId !== undefined ? { nodeId } : {}) }

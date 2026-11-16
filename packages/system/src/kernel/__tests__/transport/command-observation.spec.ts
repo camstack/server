@@ -68,7 +68,12 @@ describe('the UDS parent reports a forked addon’s device commands', () => {
 
   async function api(): Promise<MutateApi> {
     const declaration: AddonDeclaration = { id: CALLER_ID, entry: './index.js' }
-    const ctx = await createUdsAddonContext(client, `${PARENT_NODE}/${CALLER_ID}`, declaration, tmpDir)
+    const ctx = await createUdsAddonContext(
+      client,
+      `${PARENT_NODE}/${CALLER_ID}`,
+      declaration,
+      tmpDir,
+    )
     return ctx.api as unknown as MutateApi
   }
 
@@ -98,12 +103,34 @@ describe('the UDS parent reports a forked addon’s device commands', () => {
     })
   })
 
+  it('carries an exporter’s on-behalf claim to the actor, the addon id staying the socket stamp', async () => {
+    await (await api()).switch.setState.mutate(
+      { deviceId: 7, on: true },
+      commandOrigin({
+        kind: 'on-behalf',
+        source: 'alexa',
+        principalId: 'amzn1.account.X',
+        principalName: 'Ada',
+      }),
+    )
+    expect(observed[0]?.actor).toEqual({
+      kind: 'addon',
+      addonId: CALLER_ID,
+      nodeId: PARENT_NODE,
+      onBehalf: { source: 'alexa', principalId: 'amzn1.account.X', principalName: 'Ada' },
+    })
+  })
+
   it('keeps the node pin and the origin claim together in one call', async () => {
     await (await api()).switch.setState.mutate(
       { deviceId: 7, on: true },
       commandOrigin({ kind: 'scheduler', schedulerId: 's-1' }, nodePin(PARENT_NODE)),
     )
-    expect(observed[0]?.actor).toEqual({ kind: 'scheduler', addonId: CALLER_ID, schedulerId: 's-1' })
+    expect(observed[0]?.actor).toEqual({
+      kind: 'scheduler',
+      addonId: CALLER_ID,
+      schedulerId: 's-1',
+    })
     expect(unowned[0]).toMatchObject({ nodeId: PARENT_NODE })
   })
 

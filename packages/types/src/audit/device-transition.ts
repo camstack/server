@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { OnBehalfSchema } from './command-origin-claim.js'
 
 /**
  * One recorded device transition (D1022): a status field of a device went from
@@ -31,7 +32,13 @@ export const TransitionActorSchema = z.discriminatedUnion('kind', [
     credentialId: z.string().optional(),
   }),
   /** A bridge or any addon; the id is the transport stamp, never a claim. */
-  z.object({ kind: z.literal('addon'), addonId: z.string(), nodeId: z.string().optional() }),
+  z.object({
+    kind: z.literal('addon'),
+    addonId: z.string(),
+    nodeId: z.string().optional(),
+    /** The ecosystem principal an exporter relayed, when it reported one. */
+    onBehalf: OnBehalfSchema.optional(),
+  }),
   z.object({
     kind: z.literal('action'),
     addonId: z.string(),
@@ -113,10 +120,17 @@ export type DeviceCommandSettledEvent = z.infer<typeof DeviceCommandSettledEvent
 // Its own module so the runner closure can parse a claim without the transition schemas (D28).
 export {
   CommandOriginClaimSchema,
+  OnBehalfSchema,
+  OnBehalfSourceSchema,
   RuleFireOriginSchema,
   ruleFireOfClaim,
 } from './command-origin-claim.js'
-export type { CommandOriginClaim, RuleFireOrigin } from './command-origin-claim.js'
+export type {
+  CommandOriginClaim,
+  OnBehalf,
+  OnBehalfSource,
+  RuleFireOrigin,
+} from './command-origin-claim.js'
 
 /** The actor of a command: every kind but `device`, which is what nobody asked for. */
 export type CommandActor = Exclude<TransitionActor, { readonly kind: 'device' }>

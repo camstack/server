@@ -23,6 +23,24 @@ export const RuleFireOriginSchema = z.object({
 })
 export type RuleFireOrigin = z.infer<typeof RuleFireOriginSchema>
 
+/** The ecosystems an exporter speaks for. */
+export const OnBehalfSourceSchema = z.enum([
+  'homeassistant',
+  'homekit',
+  'alexa',
+  'google',
+  'matter',
+])
+export type OnBehalfSource = z.infer<typeof OnBehalfSourceSchema>
+
+/** WHO an exporter acts for: the ecosystem and the principal it reported, never invented. */
+export const OnBehalfSchema = z.object({
+  source: OnBehalfSourceSchema,
+  principalId: z.string(),
+  principalName: z.string().optional(),
+})
+export type OnBehalf = z.infer<typeof OnBehalfSchema>
+
 /** Where a command's origin claim comes from: an addon states WHY it called, never WHO it is. */
 export const CommandOriginClaimSchema = z.discriminatedUnion('kind', [
   z.object({
@@ -36,6 +54,8 @@ export const CommandOriginClaimSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('scheduler'), schedulerId: z.string() }),
   /** `actions.run` was started by a notification-rule match. Not a device-command actor. */
   z.object({ kind: z.literal('rule'), fire: RuleFireOriginSchema }),
+  /** An exporter relays a command that an ecosystem principal (HA user, HomeKit controller, linked account) asked for. */
+  OnBehalfSchema.extend({ kind: z.literal('on-behalf') }),
 ])
 export type CommandOriginClaim = z.infer<typeof CommandOriginClaimSchema>
 

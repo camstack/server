@@ -29,10 +29,17 @@ export type { ErrorI18nPayload } from './i18n/camstack-error.js'
 export { commandOrigin, nodePin, readCommandOrigin, readNodePin } from './cap-call-context.js'
 export {
   CommandOriginClaimSchema,
+  OnBehalfSchema,
+  OnBehalfSourceSchema,
   RuleFireOriginSchema,
   ruleFireOfClaim,
 } from './audit/command-origin-claim.js'
-export type { CommandOriginClaim, RuleFireOrigin } from './audit/command-origin-claim.js'
+export type {
+  CommandOriginClaim,
+  OnBehalf,
+  OnBehalfSource,
+  RuleFireOrigin,
+} from './audit/command-origin-claim.js'
 // The command catalogue (D1022) — vocabulary-derived, zod-free; the kernel's
 // command observation runs inside the runner closure.
 export { isCommand } from './device/cap-vocabulary/command-catalog.js'

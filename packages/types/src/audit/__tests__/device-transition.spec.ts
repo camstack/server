@@ -58,6 +58,22 @@ describe('DeviceTransitionSchema', () => {
     expect(TransitionActorSchema.safeParse({ kind: 'robot' }).success).toBe(false)
   })
 
+  it('keeps the principal an exporter relayed on an addon actor', () => {
+    const actor = {
+      kind: 'addon',
+      addonId: 'addon-export-alexa',
+      onBehalf: { source: 'alexa', principalId: 'amzn1.account.X', principalName: 'Ada' },
+    }
+    expect(TransitionActorSchema.parse(actor)).toEqual(actor)
+    expect(
+      TransitionActorSchema.safeParse({
+        kind: 'addon',
+        addonId: 'a',
+        onBehalf: { source: 'telegram', principalId: 'x' },
+      }).success,
+    ).toBe(false)
+  })
+
   it('refuses an outcome outside the table', () => {
     expect(DeviceTransitionSchema.safeParse({ ...base, outcome: 'maybe' }).success).toBe(false)
   })
