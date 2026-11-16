@@ -139,6 +139,37 @@ export interface DayWindow {
   readonly toMs: number
 }
 
+/** One event placed on the density bar by the CALLER (a filtered list). */
+export interface DensityPoint {
+  readonly atMs: number
+  readonly kind: TimelineKind
+}
+
+/**
+ * Bucket caller-supplied events into the rows `densityRowsToBuckets` reads.
+ *
+ * The server density has no class, zone or identity filter; a surface that
+ * filters its event list draws the bar from that same filtered list, so the
+ * list and the bar never disagree. Points outside the window are dropped.
+ */
+export function densityPointsToRows(
+  points: readonly DensityPoint[],
+  windowFrom: number,
+  windowTo: number,
+  bucketMs: number,
+): EventDensityRow[] {
+  const byBucket = new Map<number, { motion: number; object: number; audio: number }>()
+  for (const point of points) {
+    if (point.atMs < windowFrom || point.atMs >= windowTo) continue
+    const start = windowFrom + Math.floor((point.atMs - windowFrom) / bucketMs) * bucketMs
+    const counts = byBucket.get(start) ?? { motion: 0, object: 0, audio: 0 }
+    byBucket.set(start, { ...counts, [point.kind]: counts[point.kind] + 1 })
+  }
+  return [...byBucket]
+    .sort(([a], [b]) => a - b)
+    .map(([bucketStart, counts]) => ({ bucketStart, ...counts }))
+}
+
 /**
  * Build a DayWindow for the given calendar `date` using local time.
  * For any day strictly in the past: `fromMs` = local midnight, `toMs` =

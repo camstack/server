@@ -189,6 +189,20 @@ export { NavigationPanel } from './cap-settings/NavigationPanel'
 export { PtzPanel } from './cap-settings/PtzPanel'
 export { RecordingPanel } from './cap-settings/RecordingPanel'
 export { RecordingTimeline } from './cap-settings/RecordingTimeline'
+export type { DayWindow, DensityPoint } from './cap-settings/recording-timeline-model'
+export {
+  ClipSourceLanes,
+  useClipLaneClips,
+  type ClipLaneClips,
+  type ClipSourceLanesProps,
+} from './clips/ClipSourceLanes'
+export {
+  clipAtInstant,
+  clipProviderOptions,
+  defaultClipProvider,
+  type ClipProviderOption,
+} from './clips/clip-source-options'
+export { ClipPanel, type ClipPanelProps } from './clips/ClipPanel'
 export {
   SendFrameToTrainingButton,
   type SendFrameToTrainingButtonProps,

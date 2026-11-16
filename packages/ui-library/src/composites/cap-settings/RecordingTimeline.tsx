@@ -1,7 +1,16 @@
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { RECORDING_SOURCE_CAMSTACK_ADDON } from '@camstack/types'
 import { Film, Pause, Play, Radio } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState, type WheelEvent, type JSX } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type WheelEvent,
+  type JSX,
+} from 'react'
 import { useRecordedPlayback } from '../../contexts/recorded-playback'
 import { useSystem } from '../../contexts/system-context'
 import { useVodPlayback } from '../../contexts/vod-playback'
@@ -29,6 +38,8 @@ import {
   bucketMsForSpan,
   type DayWindow,
   dayWindow,
+  type DensityPoint,
+  densityPointsToRows,
   densityRowsToBuckets,
   formatFootageDuration,
   latestPastDay,
@@ -86,6 +97,16 @@ interface RecordingTimelineProps {
   readonly seekTo?: { readonly atMs: number; readonly nonce: number }
   /** Shift + drag on the coverage bar selects a range and reports it here. */
   readonly onExportRange?: (fromMs: number, toMs: number) => void
+  /** Told the visible window whenever it moves (day, zoom, pan, seek). */
+  readonly onViewChange?: (view: DayWindow) => void
+  /**
+   * Draw the density bar from these events instead of the server histogram —
+   * a surface that filters its event list passes that filtered list, so the
+   * list and the bar never disagree. Absent: the server's unfiltered density.
+   */
+  readonly densityPoints?: readonly DensityPoint[]
+  /** Extra lanes drawn under the coverage bar, over the same window. */
+  readonly lanes?: ReactNode
 }
 
 // Continuous navigable timeline: date picker, a click-to-seek coverage track,
@@ -107,6 +128,9 @@ export function RecordingTimeline({
   deviceId,
   seekTo,
   onExportRange,
+  onViewChange,
+  densityPoints,
+  lanes,
 }: RecordingTimelineProps): JSX.Element {
   const t = useUiText()
   const system = useSystem()
@@ -254,12 +278,19 @@ export function RecordingTimeline({
     toMs: view.toMs,
   })
 
-  const eventDensityQuery = usePipelineAnalyticsGetEventDensity({
-    deviceId,
-    since: view.fromMs,
-    until: view.toMs,
-    bucketMs,
-  })
+  const eventDensityQuery = usePipelineAnalyticsGetEventDensity(
+    {
+      deviceId,
+      since: view.fromMs,
+      until: view.toMs,
+      bucketMs,
+    },
+    { enabled: densityPoints === undefined },
+  )
+
+  useEffect(() => {
+    onViewChange?.(view)
+  }, [view, onViewChange])
 
   // An `unreadable` answer is NOT an empty bar. Drawing it as one is the
   // failure D393 names: "no footage" where the truth is "nobody looked".
@@ -305,8 +336,15 @@ export function RecordingTimeline({
   )
 
   const buckets = useMemo(
-    () => densityRowsToBuckets(eventDensityQuery.data ?? [], view.fromMs, bucketMs),
-    [eventDensityQuery.data, view.fromMs, bucketMs],
+    () =>
+      densityRowsToBuckets(
+        densityPoints === undefined
+          ? (eventDensityQuery.data ?? [])
+          : densityPointsToRows(densityPoints, view.fromMs, view.toMs, bucketMs),
+        view.fromMs,
+        bucketMs,
+      ),
+    [densityPoints, eventDensityQuery.data, view.fromMs, view.toMs, bucketMs],
   )
 
   // Selection uses logical bucket index (stable across background refetches)
@@ -547,7 +585,7 @@ export function RecordingTimeline({
   }, [seekTo, handleDayChange, handlePlayClip, t])
 
   const coverageLoading = availabilityQuery.isLoading
-  const densityLoading = eventDensityQuery.isLoading
+  const densityLoading = densityPoints === undefined && eventDensityQuery.isLoading
   const drillLoading =
     (objectDrill.isLoading || motionDrill.isLoading || audioDrill.isLoading) && drillEnabled
 
@@ -742,6 +780,8 @@ export function RecordingTimeline({
             />
           )}
         </div>
+
+        {lanes}
 
         {/* Event-density heatmap */}
         <div className="space-y-1">

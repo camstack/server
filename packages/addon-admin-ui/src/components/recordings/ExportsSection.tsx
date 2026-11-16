@@ -116,15 +116,7 @@ function useNow(intervalMs: number): number {
   return now
 }
 
-export interface ExportsSectionProps {
-  /** Camera page: only this camera's exports, with the full record per row. */
-  readonly deviceId?: number
-  /** A range handed over from the Review timeline: opens the new-export dialog on it. */
-  readonly draft?: { readonly fromMs: number; readonly toMs: number } | null
-  readonly onDraftClose?: () => void
-}
-
-export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSectionProps = {}) {
+export function ExportsSection() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [creating, setCreating] = useState(false)
@@ -135,11 +127,7 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
   const trpcClient = useSystem().trpcClient
   const now = useNow(60_000)
 
-  const { rows: allRows, isLoading } = useLiveExports()
-  const rows = useMemo(
-    () => (deviceId === undefined ? allRows : allRows.filter((r) => r.deviceId === deviceId)),
-    [allRows, deviceId],
-  )
+  const { rows, isLoading } = useLiveExports()
   // Every export row is keyed by camera — cameras only, slim, and the query client's fleet window (D274) so the recordings-page sections share one fetch.
   const { data: devices } = useDeviceManagerListAll({ isCamera: true, projection: 'slim' })
 
@@ -222,19 +210,15 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
 
   const columns = useMemo<readonly DataColumn<ExportRecord>[]>(
     () => [
-      ...(deviceId === undefined
-        ? [
-            {
-              key: 'camera',
-              header: t('recordings.exportsSection.camera', 'Camera'),
-              render: (r: ExportRecord) => (
-                <span className="text-foreground">
-                  {cameraName.get(r.deviceId) ?? `#${String(r.deviceId)}`}
-                </span>
-              ),
-            },
-          ]
-        : []),
+      {
+        key: 'camera',
+        header: t('recordings.exportsSection.camera', 'Camera'),
+        render: (r: ExportRecord) => (
+          <span className="text-foreground">
+            {cameraName.get(r.deviceId) ?? `#${String(r.deviceId)}`}
+          </span>
+        ),
+      },
       {
         key: 'created',
         header: t('recordings.exportsSection.created', 'Created'),
@@ -381,7 +365,6 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
       },
     ],
     [
-      deviceId,
       cameraName,
       now,
       downloadingId,
@@ -427,17 +410,7 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
       ) : (
         <DataTable columns={columns} rows={rows} rowKey={(r) => r.id} minWidthPx={720} />
       )}
-      {(creating || (draft ?? null) !== null) && (
-        <NewExportModal
-          onClose={() => {
-            setCreating(false)
-            onDraftClose?.()
-          }}
-          onCreated={refetchExports}
-          initialDeviceId={deviceId}
-          initialRange={draft ?? undefined}
-        />
-      )}
+      {creating && <NewExportModal onClose={() => setCreating(false)} onCreated={refetchExports} />}
     </div>
   )
 }

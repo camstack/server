@@ -17,6 +17,7 @@ import { Camera } from 'lucide-react'
 import { useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
+import { archiveCameraPath } from './archive-redirects'
 import { formatBytes } from '../../lib/format-size'
 import type { CameraRow, CameraRowState } from './camera-rows'
 
@@ -128,7 +129,7 @@ export function ArchiveCameraTable({
       columns={columns}
       rows={rows}
       rowKey={(r) => r.deviceId}
-      onRowClick={(r) => navigate(`/archive/${String(r.deviceId)}`)}
+      onRowClick={(r) => navigate(archiveCameraPath(r.deviceId))}
       minWidthPx={720}
       maxBodyHeight={TABLE_SCROLL_MAX_H}
       defaultSort={{ columnKey: 'camera', dir: 'asc' }}

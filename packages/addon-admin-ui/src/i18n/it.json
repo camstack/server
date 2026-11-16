@@ -6839,11 +6839,12 @@
     "switchUnknown": "Sconosciuto"
   },
   "library": {
-    "peopleVehiclesCapturedEventsAnd": "Persone, veicoli e scene: ciò che il rilevamento ha riconosciuto.",
     "people": "Persone",
     "vehicles": "Veicoli",
     "events": "Eventi",
-    "scenes": "Scene"
+    "scenes": "Scene",
+    "exports": "Esportazioni",
+    "subtitleWithExports": "Persone, veicoli, scene ed esportazioni — ciò che il rilevamento ha riconosciuto e le clip che hai generato."
   },
   "plates": {
     "vehicles": "Veicoli",
@@ -10902,6 +10903,13 @@
       "reachDays_other": "Indietro di {{count}} giorni",
       "sourcesFailed": "Impossibile leggere le sorgenti dei log",
       "sourcesFailedHint": "L'esportazione usa la sorgente log predefinita."
+    },
+    "clipSourceLanes": {
+      "count_one": "{{count}} clip",
+      "count_other": "{{count}} clip",
+      "failed": "Non leggibile — {{reason}}",
+      "refused": "Questa finestra è troppo ampia per elencare le clip.",
+      "playClip": "Riproduci la clip delle {{time}}"
     }
   },
   "helpers": {
@@ -13445,12 +13453,10 @@
     },
     "tools": {
       "title": "Strumenti",
-      "subtitle": "Migrazione dello storage, eliminazione eventi, pulizia, tutte le esportazioni, riconciliazione dal disco",
+      "subtitle": "Migrazione dello storage, eliminazione eventi, pulizia, riconciliazione dal disco",
       "migration": "Sposta lo storage",
       "migrationHint": "Copia filmati, filmati a bassa risoluzione o media degli eventi in una nuova posizione, verifica, poi sposta il default. Vale per tutte le camere.",
-      "pruneEvents": "Elimina eventi vecchi",
-      "allExports": "Tutte le esportazioni",
-      "allExportsHint": "Tutte le esportazioni di tutte le camere, comprese quelle rimosse."
+      "pruneEvents": "Elimina eventi vecchi"
     },
     "activity": {
       "footageLog": "filmati",
@@ -13475,21 +13481,20 @@
     "section": {
       "storage": "Storage",
       "cameras": "Camere",
-      "activity": "Attività e salute"
+      "activity": "Attività e salute",
+      "overview": "Panoramica"
     },
     "camera": {
       "unknown": "Camera non trovata",
       "unknownHint": "Questa camera non è nell'Archivio. Sceglila dalla panoramica.",
-      "loading": "Camera",
       "picker": "Camera",
       "sections": "Sezioni della camera",
       "review": "Rivedi",
-      "events": "Eventi",
       "debugFilter": "Solo tracce marcate debug",
-      "exports": "Esportazioni",
-      "health": "Salute",
-      "space": "Spazio",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "none": "Ancora nessuna camera",
+      "noneHint": "Le camere compaiono qui appena ne aggiungi una.",
+      "healthSpace": "Salute e spazio"
     },
     "function": {
       "recording": "Registrazione",
@@ -13521,6 +13526,18 @@
       "info": "Info",
       "warning": "Avviso",
       "critical": "Critico"
+    },
+    "sections": "Sezioni dell'archivio",
+    "review": {
+      "source": "Sorgente",
+      "zone": "Zona",
+      "allZones": "Tutte le zone",
+      "identity": "Volto o targa",
+      "identityAny": "Qualsiasi soggetto",
+      "identityFace": "Con un volto",
+      "identityPlate": "Con una targa",
+      "noClipAt": "Questa sorgente non ha clip alle {{time}}. Scegli un'altra sorgente o un altro momento.",
+      "tools": "Ricerca, oggetti fermi e debug"
     }
   }
 }

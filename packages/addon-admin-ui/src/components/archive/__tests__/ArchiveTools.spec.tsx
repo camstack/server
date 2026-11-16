@@ -40,9 +40,10 @@ beforeEach(() => {
 })
 
 describe('ArchiveTools', () => {
-  it('lists every export without a camera filter', () => {
+  it('no longer lists exports — they live in Library', () => {
     renderTools()
-    expect(screen.getByTestId('all-exports-list')).toBeInTheDocument()
+    expect(screen.getByTestId('archive-tools')).toBeInTheDocument()
+    expect(screen.queryByTestId('all-exports-list')).not.toBeInTheDocument()
   })
 
   it('prune by age calls nothing when the confirm is declined', async () => {

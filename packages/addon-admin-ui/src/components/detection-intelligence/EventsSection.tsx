@@ -86,11 +86,36 @@ export interface EventsSectionProps {
   readonly deviceId?: number
   /** Camera page: "show in Review" on a card — receives the event start (epoch ms). */
   readonly onSeek?: (atMs: number) => void
+  /**
+   * Archive Review: the list follows this window (the timeline's) instead of
+   * its own date-range picker, which is then not rendered.
+   */
+  readonly window?: EventsWindow
+  /** Archive Review: an extra narrowing the page owns (zone, face/plate). */
+  readonly rowFilter?: (row: KeyEventRow) => boolean
+  /** Told the filtered list, so a neighbour (the density bar) draws the same rows. */
+  readonly onListChange?: (report: EventsListReport) => void
+}
+
+/** The list on screen, and whether this section's own filters narrowed it. */
+export interface EventsListReport {
+  readonly rows: readonly KeyEventRow[]
+  /** The kind menu or the min score is set. */
+  readonly narrowed: boolean
+}
+
+/** A fixed time window, epoch ms. */
+export interface EventsWindow {
+  readonly since: number
+  readonly until: number
 }
 
 export function EventsSection({
   deviceId: fixedDeviceId,
   onSeek,
+  window: fixedWindow,
+  rowFilter,
+  onListChange,
 }: EventsSectionProps = {}): JSX.Element {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
@@ -114,10 +139,12 @@ export function EventsSection({
     return () => clearInterval(id)
   }, [])
 
-  const { since, until } = useMemo(
+  const resolved = useMemo(
     () => resolveWindow({ fromMs: dateRange.fromMs, toMs: dateRange.toMs }, nowMs),
     [dateRange.fromMs, dateRange.toMs, nowMs],
   )
+  const since = fixedWindow?.since ?? resolved.since
+  const until = fixedWindow?.until ?? resolved.until
 
   // Live refresh, held back while the operator is using the list. The feed is
   // time-sorted, so an invalidation that lands mid-read reorders the grid: new
@@ -206,11 +233,15 @@ export function EventsSection({
           cameras: selectedCameras,
           classes: classFilter,
           minImportance,
-        }),
+        }).filter((row) => rowFilter === undefined || rowFilter(row)),
         sortMode,
       ),
-    [rows, selectedCameras, classFilter, minImportance, sortMode],
+    [rows, selectedCameras, classFilter, minImportance, sortMode, rowFilter],
   )
+  const ownNarrowing = classFilter.size > 0 || minImportance > 0
+  useEffect(() => {
+    onListChange?.({ rows: list, narrowed: ownNarrowing })
+  }, [list, ownNarrowing, onListChange])
 
   // Client-side pagination over the filtered+sorted list. Reset to page 1
   // whenever the narrowing/sort signature changes.
@@ -334,7 +365,7 @@ export function EventsSection({
     <div className="relative space-y-3">
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-1.5">
-        <DateRangeFilter onChange={setDateRange} />
+        {fixedWindow === undefined && <DateRangeFilter onChange={setDateRange} />}
         {fixedDeviceId === undefined && (
           <CameraMultiSelect
             cameras={cameraOptions}

@@ -1717,21 +1717,31 @@ Rules that hold when you touch it:
 
 The renderers (admin and viewer) are not built yet; nothing draws this model today.
 
-## Archive (`/archive`, `/archive/:deviceId`)
+## Archive (`/archive?section=overview|cameras`)
 
-The Archive replaced the Recordings page and took over Library → Events. `/recordings` and
-`/library?tab=events` redirect through `archiveRedirectFor` (`components/archive/archive-redirects.ts`).
+The Archive replaced the Recordings page and took over Library → Events. `/recordings`,
+`/library?tab=events` and the old `/archive/:deviceId` redirect through `archiveRedirectFor`
+(`components/archive/archive-redirects.ts`); the recordings exports tab leads to Library → Exports,
+which owns the exports list (the Archive only creates exports).
 
-- **Overview** (`pages/Archive.tsx`): key numbers, one card per storage location, ONE camera table,
-  activity and health, a collapsed Tools card (migration, cleanup, reconcile from disk). Every
-  section reads from `useArchiveData()`, one fetch of the roster, footage, event footprint, camera
-  statuses and health digest. A source that has not answered is `null` and renders as unknown, never
-  as `0` or `[]`; a switched-off camera is "off", not broken (D62, D315, D393).
-- **Camera page** (`pages/ArchiveCamera.tsx`): Review (player + `RecordingTimeline`, opens on the latest
-  footage, a dragged range starts an export), Events (clustered by time, "Show in Review" seeks the
-  player; the debug view is a filter), Exports, Health (`buildCameraHealth` + the camera's own log,
-  `/system/logs?deviceId=`), Space (where it writes, prune and delete behind confirms) and Settings
-  (the device aggregate with `tab: 'recording'`, derived from the capabilities).
+- **Overview** (`components/archive/ArchiveOverview.tsx`, section `overview`): key numbers, one card
+  per storage location, ONE camera table (a row opens the Cameras section on that camera), activity
+  and health, a collapsed Tools card (migration, cleanup, reconcile from disk). Every section reads
+  from `useArchiveData()`, one fetch of the roster, footage, event footprint, camera statuses and
+  health digest. A source that has not answered is `null` and renders as unknown, never as `0` or
+  `[]`; a switched-off camera is "off", not broken (D62, D315, D393).
+- **Cameras** (`components/archive/ArchiveCameraSection.tsx`, `&camera=<id>&view=…`): the camera is
+  picked in the header (no list); pill tabs Review (default), Health & space, Settings.
+  - **Review** (`ArchiveReviewSection.tsx`): the 16:9 player (at most 42% of the viewport tall)
+    beside the events of the timeline window (`EventsSection` with `window` + `rowFilter`), and the
+    `RecordingTimeline` below. Zone, face/plate (joined from slim `listTracks` by `trackId`) and
+    debug filters narrow the list and, through `densityPoints`, the density bar. Every
+    `videoclips.listSources` provider is a `ClipSourceLanes` lane; the Source picker chooses what the
+    player plays (the recorder by default). A click on an event or a lane seeks or plays; shift-drag
+    opens `NewExportModal` on that range.
+  - **Health & space**: `buildCameraHealth` + the camera's own log, activity, where it writes, prune
+    and delete behind confirms. **Settings**: retention plus the device aggregate with
+    `tab: 'recording'`, derived from the capabilities.
 - The pure logic (row merge, camera state, health rows, event clusters, growth, redirects) lives in
   `components/archive/*.ts` beside `__tests__/archive-pure.spec.ts`.
 - Location mode is read only through `@camstack/types` (`mayWriteToLocation`, `resolveLocationMode`);

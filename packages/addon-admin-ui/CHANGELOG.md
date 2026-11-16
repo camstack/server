@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device Interactions show who an exporter acted for.
 - Logs: the export moved into the shared log stream; the destinations table always shows an icon and a label in Kind and keeps the On toggle aligned
 - Recordings is now the Archive: one overview of footage, event storage, exports and per-camera health, and a page per camera with Review, Events, Exports, Health, Space and Settings; Library no longer has an Events tab.
+- Archive is now Overview + Cameras: pick a camera in the header and review it with the player beside the window's events, the timeline below with zone, face/plate and debug filters, one lane per clip source; exports moved to Library → Exports.
 
 ## [1.2.689] - 2026-11-16
 

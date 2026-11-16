@@ -61,7 +61,7 @@ function LegacyAdminRedirect() {
   return <Navigate to={`${stripLegacyAdminPrefix(pathname)}${search}${hash}`} replace />
 }
 
-/** `/recordings` and the old Library → Events tab now live in the Archive. */
+/** `/recordings`, the old Library → Events tab and `/archive/:deviceId` now lead into the Archive. */
 function ArchiveRedirect(): ReactElement {
   const { pathname, search } = useLocation()
   return <Navigate to={archiveRedirectFor(pathname, search) ?? '/archive'} replace />
@@ -110,9 +110,6 @@ const EmbedDevicePage = lazy(() =>
 )
 const LibraryPage = lazy(() => import('./pages/Library').then((m) => ({ default: m.LibraryPage })))
 const ArchivePage = lazy(() => import('./pages/Archive').then((m) => ({ default: m.ArchivePage })))
-const ArchiveCameraPage = lazy(() =>
-  import('./pages/ArchiveCamera').then((m) => ({ default: m.ArchiveCameraPage })),
-)
 const ViewerPage = lazy(() => import('./pages/Viewer').then((m) => ({ default: m.ViewerPage })))
 // Build-your-self: automations + scripts (core blocks) + composed devices. A
 // ROOT page, not a /system one: this is what the operator authors, not how the
@@ -703,14 +700,7 @@ export function App() {
                                     </ProtectedRoute>
                                   }
                                 />
-                                <Route
-                                  path="/archive/:deviceId"
-                                  element={
-                                    <ProtectedRoute requireAdmin>
-                                      <ArchiveCameraPage />
-                                    </ProtectedRoute>
-                                  }
-                                />
+                                <Route path="/archive/:deviceId" element={<ArchiveRedirect />} />
                                 <Route path="/recordings" element={<ArchiveRedirect />} />
                                 <Route
                                   path="/build"

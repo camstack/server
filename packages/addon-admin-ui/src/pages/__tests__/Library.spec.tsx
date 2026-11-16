@@ -21,6 +21,9 @@ vi.mock('../Plates', () => ({
 vi.mock('../Scenes', () => ({
   ScenesPage: () => <div data-testid="scenes-body">scenes</div>,
 }))
+vi.mock('../../components/recordings/ExportsSection', () => ({
+  ExportsSection: () => <div data-testid="exports-body">exports</div>,
+}))
 
 import { LibraryPage } from '../Library'
 
@@ -70,6 +73,12 @@ describe('LibraryPage', () => {
     expect(screen.getByTestId('vehicles-body')).toBeTruthy()
     expect(screen.queryByTestId('people-body')).toBeNull()
     expect(screen.getByTestId('section-vehicles').getAttribute('aria-selected')).toBe('true')
+  })
+
+  it('lists every export at /library?tab=exports', () => {
+    renderLibrary('/library?tab=exports')
+    expect(screen.getByTestId('exports-body')).toBeTruthy()
+    expect(screen.getByTestId('section-exports').getAttribute('aria-selected')).toBe('true')
   })
 
   it('leaves /plates unmatched (hard cut, no redirect)', () => {

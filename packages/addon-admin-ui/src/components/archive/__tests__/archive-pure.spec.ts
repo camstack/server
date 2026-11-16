@@ -37,7 +37,7 @@ describe('archiveRedirectFor', () => {
   it('sends every old recordings tab to its Archive place', () => {
     expect(archiveRedirectFor('/recordings', '')).toBe('/archive')
     expect(archiveRedirectFor('/recordings', '?tab=storage')).toBe('/archive')
-    expect(archiveRedirectFor('/recordings', '?tab=exports')).toBe('/archive')
+    expect(archiveRedirectFor('/recordings', '?tab=exports')).toBe('/library?tab=exports')
     expect(archiveRedirectFor('/recordings', '?tab=activity')).toBe('/archive#activity')
     expect(archiveRedirectFor('/recordings', '?tab=management')).toBe('/archive#tools')
     expect(archiveRedirectFor('/recordings', '?tab=unknown')).toBe('/archive')
@@ -49,6 +49,14 @@ describe('archiveRedirectFor', () => {
     expect(archiveRedirectFor('/library', '?tab=people')).toBeNull()
     expect(archiveRedirectFor('/library', '')).toBeNull()
     expect(archiveRedirectFor('/live', '')).toBeNull()
+  })
+  it('sends a retired camera page to the Cameras section on that camera', () => {
+    expect(archiveRedirectFor('/archive/101', '')).toBe('/archive?section=cameras&camera=101')
+    expect(archiveRedirectFor('/archive/101/', '?section=space')).toBe(
+      '/archive?section=cameras&camera=101',
+    )
+    expect(archiveRedirectFor('/archive', '?section=cameras')).toBeNull()
+    expect(archiveRedirectFor('/archive/abc', '')).toBeNull()
   })
 })
 

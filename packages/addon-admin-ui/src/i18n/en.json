@@ -6764,11 +6764,12 @@
     "switchUnknown": "Unknown"
   },
   "library": {
-    "peopleVehiclesCapturedEventsAnd": "People, vehicles and scenes — what detection has recognised.",
     "people": "People",
     "vehicles": "Vehicles",
     "events": "Events",
-    "scenes": "Scenes"
+    "scenes": "Scenes",
+    "exports": "Exports",
+    "subtitleWithExports": "People, vehicles, scenes and exports — what detection has recognised, and the clips you rendered."
   },
   "plates": {
     "vehicles": "Vehicles",
@@ -10880,6 +10881,13 @@
       "reachDays_other": "Back {{count}} days",
       "sourcesFailed": "The log sources could not be read",
       "sourcesFailedHint": "The export falls back to the default log source."
+    },
+    "clipSourceLanes": {
+      "count_one": "{{count}} clip",
+      "count_other": "{{count}} clips",
+      "failed": "Could not be read — {{reason}}",
+      "refused": "This window is too wide to list clips.",
+      "playClip": "Play clip at {{time}}"
     }
   },
   "helpers": {
@@ -13423,12 +13431,10 @@
     },
     "tools": {
       "title": "Tools",
-      "subtitle": "Storage migration, prune events, cleanup, all exports, reconcile from disk",
+      "subtitle": "Storage migration, prune events, cleanup, reconcile from disk",
       "migration": "Move storage",
       "migrationHint": "Copy footage, low-res footage or event media to a new location, verify, then repoint the default. Applies to every camera.",
-      "pruneEvents": "Prune old events",
-      "allExports": "All exports",
-      "allExportsHint": "Every export across all cameras, including cameras that were removed."
+      "pruneEvents": "Prune old events"
     },
     "activity": {
       "footageLog": "footage",
@@ -13453,21 +13459,20 @@
     "section": {
       "storage": "Storage",
       "cameras": "Cameras",
-      "activity": "Activity & health"
+      "activity": "Activity & health",
+      "overview": "Overview"
     },
     "camera": {
       "unknown": "Camera not found",
       "unknownHint": "This camera is not in the Archive. Pick one from the overview.",
-      "loading": "Camera",
       "picker": "Camera",
       "sections": "Camera sections",
       "review": "Review",
-      "events": "Events",
       "debugFilter": "Debug-marked tracks only",
-      "exports": "Exports",
-      "health": "Health",
-      "space": "Space",
-      "settings": "Settings"
+      "settings": "Settings",
+      "none": "No cameras yet",
+      "noneHint": "Cameras appear here once one is added.",
+      "healthSpace": "Health & space"
     },
     "function": {
       "recording": "Recording",
@@ -13499,6 +13504,18 @@
       "info": "Info",
       "warning": "Warning",
       "critical": "Critical"
+    },
+    "sections": "Archive sections",
+    "review": {
+      "source": "Source",
+      "zone": "Zone",
+      "allZones": "All zones",
+      "identity": "Face or plate",
+      "identityAny": "Any subject",
+      "identityFace": "With a face",
+      "identityPlate": "With a plate",
+      "noClipAt": "This source holds no clip at {{time}}. Pick another source or another moment.",
+      "tools": "Search, parked objects and debug"
     }
   }
 }

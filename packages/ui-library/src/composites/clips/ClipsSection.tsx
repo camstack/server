@@ -127,6 +127,7 @@ import { ErrorBox } from '../error-box.js'
 import { ClipBandBar } from './ClipBandBar.js'
 import { ClipPanel } from './ClipPanel.js'
 import { ClipTile } from './ClipTile.js'
+import { clipProviderOptions, defaultClipProvider } from './clip-source-options.js'
 import { bandForSelection, formatBandLabel, planClipBand } from './clip-band.js'
 import type { ClipSourceNotice } from './clip-source-state.js'
 import { resolveClipsView } from './clip-view-state.js'
@@ -239,7 +240,7 @@ export function ClipsSection({ deviceId }: ClipsSectionProps): JSX.Element | nul
    */
   const askedProvider = useMemo<string>(() => {
     if (provider !== '') return provider
-    return sourceRows.find((row) => row.addonId !== undefined)?.addonId ?? ''
+    return defaultClipProvider(clipProviderOptions(sourceRows)) ?? ''
   }, [provider, sourceRows])
 
   const clips = useVideoclipsListClips(
@@ -276,21 +277,14 @@ export function ClipsSection({ deviceId }: ClipsSectionProps): JSX.Element | nul
   // One option per PROVIDER, labelled by the sources it serves — an addon may
   // serve several of a camera's sources and the argument names the addon, so
   // collapsing here is what keeps the control honest about what it sends.
-  const options = useMemo<SelectOption[]>(() => {
-    const byAddon = new Map<string, string[]>()
-    for (const row of sourceRows) {
-      const addonId = row.addonId
-      if (addonId === undefined) continue
-      const labels = byAddon.get(addonId)
-      if (labels === undefined) byAddon.set(addonId, [row.label])
-      else labels.push(row.label)
-    }
-    // One option per provider and nothing else. There is no "default" entry:
-    // it used to carry the FIRST provider's label while sending no argument at
-    // all, so on a two-provider camera the control said "CamStack recordings"
-    // and the query asked both.
-    return [...byAddon].map(([value, labels]) => ({ value, label: labels.join(' · ') }))
-  }, [sourceRows])
+  // One option per PROVIDER, labelled by the sources it serves (`clipProviderOptions`).
+  // There is no "default" entry: it used to carry the FIRST provider's label
+  // while sending no argument at all, so on a two-provider camera the control
+  // said "CamStack recordings" and the query asked both.
+  const options = useMemo<SelectOption[]>(
+    () => clipProviderOptions(sourceRows).map(({ value, label }) => ({ value, label })),
+    [sourceRows],
+  )
   // A new band is a new list: page 1, always. Keyed on the band's own bounds
   // so every path that moves it (day, zoom, pan, bucket) resets once.
   useEffect(() => {

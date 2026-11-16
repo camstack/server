@@ -2,12 +2,14 @@
  * Library — People / Vehicles / Scenes (Detection).
  *
  * Shell is library `SectionedPage` (OSD template): sidebar title/icon + section
- * Tabs. Events moved to the Archive camera page.
+ * Tabs. Events moved to the Archive; exports are listed here (the Archive only
+ * creates them, from the Review timeline).
  */
 import { Library as LibraryIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { AdminSectionedPage } from '../components/AdminSectionedPage'
 
+import { ExportsSection } from '../components/recordings/ExportsSection'
 import { navChromeForPath } from '../lib/nav-items'
 import { DetectionIntelligencePage } from './DetectionIntelligence'
 import { PlatesPage } from './Plates'
@@ -25,8 +27,8 @@ export function LibraryPage() {
       icon={chrome.icon}
       title={chrome.title}
       subtitle={t(
-        'library.peopleVehiclesCapturedEventsAnd',
-        'People, vehicles and scenes — what detection has recognised.',
+        'library.subtitleWithExports',
+        'People, vehicles, scenes and exports — what detection has recognised, and the clips you rendered.',
       )}
       defaultSection="people"
       sectionsLabel={`${chrome.title} sections`}
@@ -38,6 +40,7 @@ export function LibraryPage() {
         },
         { id: 'vehicles', label: t('library.vehicles', 'Vehicles'), content: <PlatesPage /> },
         { id: 'scenes', label: t('library.scenes', 'Scenes'), content: <ScenesPage /> },
+        { id: 'exports', label: t('library.exports', 'Exports'), content: <ExportsSection /> },
       ]}
     />
   )
