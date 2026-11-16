@@ -6,6 +6,7 @@ import type { InferDeviceProxyCap, InferRuntimeState } from '../capabilities/cap
 import type { DeviceBinding } from '../device/device-binding.js'
 import { createSliceHandle, createLazyTrpcSource, type SliceHandle, type SliceHandleSource } from '../device/device-state-handle.js'
 import { addonSliceHandleApi } from '../helpers/addon-slice-handle.js'
+import type { CommandOriginRequestOptions } from '../cap-call-context.js'
 import { invokeTrpcLeaf, type TrpcDispatchKind } from '../helpers/trpc-leaf.js'
 import type { AddonApi } from './addon-api.js'
 import type { accessoriesCapability } from '../capabilities/accessories.cap.js'
@@ -418,8 +419,8 @@ export function createDeviceProxy(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function callLeaf(capProp: string, method: string, kind: Kind, merged: unknown, push: unknown): any {
-    return invokeTrpcLeaf(api, capProp, method, kind, merged, push)
+  function callLeaf(capProp: string, method: string, kind: Kind, merged: unknown, push: unknown, options?: CommandOriginRequestOptions): any {
+    return invokeTrpcLeaf(api, capProp, method, kind, merged, push, options)
   }
 
   /**
@@ -432,9 +433,9 @@ export function createDeviceProxy(
    * the actual singleton lives in a worker.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function dispatch(capName: string, capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown): any {
+  function dispatch(capName: string, capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown, options?: CommandOriginRequestOptions): any {
     const entry = binding.entries.find((e) => e.capName === capName)
-    return callLeaf(capProp, method, kind, mergeInput(input, entry?.providerNodeId), push)
+    return callLeaf(capProp, method, kind, mergeInput(input, entry?.providerNodeId), push, options)
   }
 
   /**
@@ -443,8 +444,8 @@ export function createDeviceProxy(
    * `pipeline-runner`) can resolve their own target node.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function dispatchSystem(capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown): any {
-    return callLeaf(capProp, method, kind, mergeInput(input, undefined), push)
+  function dispatchSystem(capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown, options?: CommandOriginRequestOptions): any {
+    return callLeaf(capProp, method, kind, mergeInput(input, undefined), push, options)
   }
 
   /** True when this device's binding lists the cap — gates device-scoped handles. */
@@ -453,988 +454,988 @@ export function createDeviceProxy(
   }
 
   const accessoriesInterface = {
-    setChildHidden: (input?: unknown) => dispatch('accessories', 'accessories', 'setChildHidden', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('accessories', 'accessories', 'getStatus', 'query', input),
+    setChildHidden: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('accessories', 'accessories', 'setChildHidden', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('accessories', 'accessories', 'getStatus', 'query', input, undefined, options),
   }
 
   const airQualitySensorInterface = {
-    getStatus: (input?: unknown) => dispatch('air-quality-sensor', 'airQualitySensor', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('air-quality-sensor', 'airQualitySensor', 'getStatus', 'query', input, undefined, options),
   }
 
   const alarmPanelInterface = {
-    trigger: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'trigger', 'mutation', input),
-    disarm: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'disarm', 'mutation', input),
-    arm: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'arm', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('alarm-panel', 'alarmPanel', 'getStatus', 'query', input),
+    trigger: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('alarm-panel', 'alarmPanel', 'trigger', 'mutation', input, undefined, options),
+    disarm: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('alarm-panel', 'alarmPanel', 'disarm', 'mutation', input, undefined, options),
+    arm: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('alarm-panel', 'alarmPanel', 'arm', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('alarm-panel', 'alarmPanel', 'getStatus', 'query', input, undefined, options),
   }
 
   const ambientLightSensorInterface = {
-    getStatus: (input?: unknown) => dispatch('ambient-light-sensor', 'ambientLightSensor', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ambient-light-sensor', 'ambientLightSensor', 'getStatus', 'query', input, undefined, options),
   }
 
   const audioAnalysisInterface = {
-    resolveDeviceSettings: (input?: unknown) => dispatch('audio-analysis', 'audioAnalysis', 'resolveDeviceSettings', 'query', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatch('audio-analysis', 'audioAnalysis', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatch('audio-analysis', 'audioAnalysis', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatch('audio-analysis', 'audioAnalysis', 'applyDeviceSettingsPatch', 'mutation', input),
+    resolveDeviceSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('audio-analysis', 'audioAnalysis', 'resolveDeviceSettings', 'query', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('audio-analysis', 'audioAnalysis', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('audio-analysis', 'audioAnalysis', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('audio-analysis', 'audioAnalysis', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const audioMetricsInterface = {
-    getCurrentSnapshot: (input?: unknown) => dispatch('audio-metrics', 'audioMetrics', 'getCurrentSnapshot', 'query', input),
-    getHistory: (input?: unknown) => dispatch('audio-metrics', 'audioMetrics', 'getHistory', 'query', input),
+    getCurrentSnapshot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('audio-metrics', 'audioMetrics', 'getCurrentSnapshot', 'query', input, undefined, options),
+    getHistory: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('audio-metrics', 'audioMetrics', 'getHistory', 'query', input, undefined, options),
   }
 
   const automationControlInterface = {
-    enable: (input?: unknown) => dispatch('automation-control', 'automationControl', 'enable', 'mutation', input),
-    disable: (input?: unknown) => dispatch('automation-control', 'automationControl', 'disable', 'mutation', input),
-    trigger: (input?: unknown) => dispatch('automation-control', 'automationControl', 'trigger', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('automation-control', 'automationControl', 'getStatus', 'query', input),
+    enable: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('automation-control', 'automationControl', 'enable', 'mutation', input, undefined, options),
+    disable: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('automation-control', 'automationControl', 'disable', 'mutation', input, undefined, options),
+    trigger: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('automation-control', 'automationControl', 'trigger', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('automation-control', 'automationControl', 'getStatus', 'query', input, undefined, options),
   }
 
   const batteryInterface = {
-    wakeForStream: (input?: unknown) => dispatch('battery', 'battery', 'wakeForStream', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('battery', 'battery', 'getStatus', 'query', input),
+    wakeForStream: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('battery', 'battery', 'wakeForStream', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('battery', 'battery', 'getStatus', 'query', input, undefined, options),
   }
 
   const binaryInterface = {
-    getStatus: (input?: unknown) => dispatch('binary', 'binary', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('binary', 'binary', 'getStatus', 'query', input, undefined, options),
   }
 
   const brightnessInterface = {
-    setBrightness: (input?: unknown) => dispatch('brightness', 'brightness', 'setBrightness', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('brightness', 'brightness', 'getStatus', 'query', input),
+    setBrightness: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('brightness', 'brightness', 'setBrightness', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('brightness', 'brightness', 'getStatus', 'query', input, undefined, options),
   }
 
   const buttonInterface = {
-    press: (input?: unknown) => dispatch('button', 'button', 'press', 'mutation', input),
+    press: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('button', 'button', 'press', 'mutation', input, undefined, options),
   }
 
   const cameraCredentialsInterface = {
-    getCredentials: (input?: unknown) => dispatch('camera-credentials', 'cameraCredentials', 'getCredentials', 'query', input),
-    getStatus: (input?: unknown) => dispatch('camera-credentials', 'cameraCredentials', 'getStatus', 'query', input),
+    getCredentials: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-credentials', 'cameraCredentials', 'getCredentials', 'query', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-credentials', 'cameraCredentials', 'getStatus', 'query', input, undefined, options),
   }
 
   const cameraGridLayoutInterface = {
-    getLayout: (input?: unknown) => dispatch('camera-grid-layout', 'cameraGridLayout', 'getLayout', 'query', input),
-    saveLayout: (input?: unknown) => dispatch('camera-grid-layout', 'cameraGridLayout', 'saveLayout', 'mutation', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatch('camera-grid-layout', 'cameraGridLayout', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatch('camera-grid-layout', 'cameraGridLayout', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatch('camera-grid-layout', 'cameraGridLayout', 'applyDeviceSettingsPatch', 'mutation', input),
+    getLayout: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-grid-layout', 'cameraGridLayout', 'getLayout', 'query', input, undefined, options),
+    saveLayout: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-grid-layout', 'cameraGridLayout', 'saveLayout', 'mutation', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-grid-layout', 'cameraGridLayout', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-grid-layout', 'cameraGridLayout', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-grid-layout', 'cameraGridLayout', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const cameraPipelineConfigInterface = {
-    getDeviceSettingsContribution: (input?: unknown) => dispatch('camera-pipeline-config', 'cameraPipelineConfig', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatch('camera-pipeline-config', 'cameraPipelineConfig', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatch('camera-pipeline-config', 'cameraPipelineConfig', 'applyDeviceSettingsPatch', 'mutation', input),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-pipeline-config', 'cameraPipelineConfig', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-pipeline-config', 'cameraPipelineConfig', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-pipeline-config', 'cameraPipelineConfig', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const cameraStreamsInterface = {
-    getCameraStreams: (input?: unknown) => dispatch('camera-streams', 'cameraStreams', 'getCameraStreams', 'query', input),
-    getBrokerStreams: (input?: unknown) => dispatch('camera-streams', 'cameraStreams', 'getBrokerStreams', 'query', input),
-    getRtspEntries: (input?: unknown) => dispatch('camera-streams', 'cameraStreams', 'getRtspEntries', 'query', input),
-    getProfileRtspEntries: (input?: unknown) => dispatch('camera-streams', 'cameraStreams', 'getProfileRtspEntries', 'query', input),
-    pickStream: (input?: unknown) => dispatch('camera-streams', 'cameraStreams', 'pickStream', 'query', input),
+    getCameraStreams: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-streams', 'cameraStreams', 'getCameraStreams', 'query', input, undefined, options),
+    getBrokerStreams: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-streams', 'cameraStreams', 'getBrokerStreams', 'query', input, undefined, options),
+    getRtspEntries: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-streams', 'cameraStreams', 'getRtspEntries', 'query', input, undefined, options),
+    getProfileRtspEntries: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-streams', 'cameraStreams', 'getProfileRtspEntries', 'query', input, undefined, options),
+    pickStream: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('camera-streams', 'cameraStreams', 'pickStream', 'query', input, undefined, options),
   }
 
   const carbonMonoxideInterface = {
-    getStatus: (input?: unknown) => dispatch('carbon-monoxide', 'carbonMonoxide', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('carbon-monoxide', 'carbonMonoxide', 'getStatus', 'query', input, undefined, options),
   }
 
   const climateControlInterface = {
-    setMode: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setMode', 'mutation', input),
-    setTarget: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setTarget', 'mutation', input),
-    setTargetRange: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setTargetRange', 'mutation', input),
-    setTargetHumidity: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setTargetHumidity', 'mutation', input),
-    setFanMode: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setFanMode', 'mutation', input),
-    setPreset: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setPreset', 'mutation', input),
-    setSwingVertical: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setSwingVertical', 'mutation', input),
-    setSwingHorizontal: (input?: unknown) => dispatch('climate-control', 'climateControl', 'setSwingHorizontal', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('climate-control', 'climateControl', 'getStatus', 'query', input),
+    setMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setMode', 'mutation', input, undefined, options),
+    setTarget: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setTarget', 'mutation', input, undefined, options),
+    setTargetRange: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setTargetRange', 'mutation', input, undefined, options),
+    setTargetHumidity: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setTargetHumidity', 'mutation', input, undefined, options),
+    setFanMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setFanMode', 'mutation', input, undefined, options),
+    setPreset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setPreset', 'mutation', input, undefined, options),
+    setSwingVertical: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setSwingVertical', 'mutation', input, undefined, options),
+    setSwingHorizontal: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'setSwingHorizontal', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('climate-control', 'climateControl', 'getStatus', 'query', input, undefined, options),
   }
 
   const colorInterface = {
-    setColor: (input?: unknown) => dispatch('color', 'color', 'setColor', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('color', 'color', 'getStatus', 'query', input),
+    setColor: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('color', 'color', 'setColor', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('color', 'color', 'getStatus', 'query', input, undefined, options),
   }
 
   const connectivityInterface = {
-    getStatus: (input?: unknown) => dispatch('connectivity', 'connectivity', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('connectivity', 'connectivity', 'getStatus', 'query', input, undefined, options),
   }
 
   const consumablesInterface = {
-    reset: (input?: unknown) => dispatch('consumables', 'consumables', 'reset', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('consumables', 'consumables', 'getStatus', 'query', input),
+    reset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('consumables', 'consumables', 'reset', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('consumables', 'consumables', 'getStatus', 'query', input, undefined, options),
   }
 
   const contactInterface = {
-    getStatus: (input?: unknown) => dispatch('contact', 'contact', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('contact', 'contact', 'getStatus', 'query', input, undefined, options),
   }
 
   const controlInterface = {
-    setValue: (input?: unknown) => dispatch('control', 'control', 'setValue', 'mutation', input),
-    next: (input?: unknown) => dispatch('control', 'control', 'next', 'mutation', input),
-    previous: (input?: unknown) => dispatch('control', 'control', 'previous', 'mutation', input),
-    first: (input?: unknown) => dispatch('control', 'control', 'first', 'mutation', input),
-    last: (input?: unknown) => dispatch('control', 'control', 'last', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('control', 'control', 'getStatus', 'query', input),
+    setValue: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('control', 'control', 'setValue', 'mutation', input, undefined, options),
+    next: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('control', 'control', 'next', 'mutation', input, undefined, options),
+    previous: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('control', 'control', 'previous', 'mutation', input, undefined, options),
+    first: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('control', 'control', 'first', 'mutation', input, undefined, options),
+    last: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('control', 'control', 'last', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('control', 'control', 'getStatus', 'query', input, undefined, options),
   }
 
   const coverInterface = {
-    open: (input?: unknown) => dispatch('cover', 'cover', 'open', 'mutation', input),
-    close: (input?: unknown) => dispatch('cover', 'cover', 'close', 'mutation', input),
-    stop: (input?: unknown) => dispatch('cover', 'cover', 'stop', 'mutation', input),
-    setPosition: (input?: unknown) => dispatch('cover', 'cover', 'setPosition', 'mutation', input),
-    setTiltPosition: (input?: unknown) => dispatch('cover', 'cover', 'setTiltPosition', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('cover', 'cover', 'getStatus', 'query', input),
+    open: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('cover', 'cover', 'open', 'mutation', input, undefined, options),
+    close: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('cover', 'cover', 'close', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('cover', 'cover', 'stop', 'mutation', input, undefined, options),
+    setPosition: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('cover', 'cover', 'setPosition', 'mutation', input, undefined, options),
+    setTiltPosition: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('cover', 'cover', 'setTiltPosition', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('cover', 'cover', 'getStatus', 'query', input, undefined, options),
   }
 
   const dayNightInterface = {
-    getOptions: (input?: unknown) => dispatch('day-night', 'dayNight', 'getOptions', 'query', input),
-    setSettings: (input?: unknown) => dispatch('day-night', 'dayNight', 'setSettings', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('day-night', 'dayNight', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('day-night', 'dayNight', 'getOptions', 'query', input, undefined, options),
+    setSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('day-night', 'dayNight', 'setSettings', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('day-night', 'dayNight', 'getStatus', 'query', input, undefined, options),
   }
 
   const detectionPipelineInterface = {
-    getDeviceSettingsContribution: (input?: unknown) => dispatch('detection-pipeline', 'detectionPipeline', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatch('detection-pipeline', 'detectionPipeline', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatch('detection-pipeline', 'detectionPipeline', 'applyDeviceSettingsPatch', 'mutation', input),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('detection-pipeline', 'detectionPipeline', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('detection-pipeline', 'detectionPipeline', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('detection-pipeline', 'detectionPipeline', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const deviceAdminLinkInterface = {
-    getAdminLink: (input?: unknown) => dispatch('device-admin-link', 'deviceAdminLink', 'getAdminLink', 'query', input),
+    getAdminLink: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-admin-link', 'deviceAdminLink', 'getAdminLink', 'query', input, undefined, options),
   }
 
   const deviceExtensionInterface = {
-    listSources: (input?: unknown) => dispatch('device-extension', 'deviceExtension', 'listSources', 'query', input),
-    listSlots: (input?: unknown) => dispatch('device-extension', 'deviceExtension', 'listSlots', 'query', input),
-    listCandidates: (input?: unknown) => dispatch('device-extension', 'deviceExtension', 'listCandidates', 'query', input),
-    setSlot: (input?: unknown) => dispatch('device-extension', 'deviceExtension', 'setSlot', 'mutation', input),
+    listSources: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-extension', 'deviceExtension', 'listSources', 'query', input, undefined, options),
+    listSlots: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-extension', 'deviceExtension', 'listSlots', 'query', input, undefined, options),
+    listCandidates: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-extension', 'deviceExtension', 'listCandidates', 'query', input, undefined, options),
+    setSlot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-extension', 'deviceExtension', 'setSlot', 'mutation', input, undefined, options),
   }
 
   const deviceOpsInterface = {
-    getStreamSources: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'getStreamSources', 'query', input),
-    getConfigEntries: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'getConfigEntries', 'query', input),
-    setConfig: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'setConfig', 'mutation', input),
-    runAction: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'runAction', 'mutation', input),
-    removeDevice: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'removeDevice', 'mutation', input),
-    getSettingsSchema: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'getSettingsSchema', 'query', input),
-    getRawState: (input?: unknown) => dispatch('device-ops', 'deviceOps', 'getRawState', 'query', input),
+    getStreamSources: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-ops', 'deviceOps', 'getStreamSources', 'query', input, undefined, options),
+    getConfigEntries: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-ops', 'deviceOps', 'getConfigEntries', 'query', input, undefined, options),
+    setConfig: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-ops', 'deviceOps', 'setConfig', 'mutation', input, undefined, options),
+    runAction: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-ops', 'deviceOps', 'runAction', 'mutation', input, undefined, options),
+    removeDevice: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-ops', 'deviceOps', 'removeDevice', 'mutation', input, undefined, options),
+    getSettingsSchema: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-ops', 'deviceOps', 'getSettingsSchema', 'query', input, undefined, options),
+    getRawState: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-ops', 'deviceOps', 'getRawState', 'query', input, undefined, options),
   }
 
   const deviceRunsInterface = {
-    listRuns: (input?: unknown) => dispatch('device-runs', 'deviceRuns', 'listRuns', 'query', input),
-    getRun: (input?: unknown) => dispatch('device-runs', 'deviceRuns', 'getRun', 'query', input),
-    getCurrentRun: (input?: unknown) => dispatch('device-runs', 'deviceRuns', 'getCurrentRun', 'query', input),
+    listRuns: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-runs', 'deviceRuns', 'listRuns', 'query', input, undefined, options),
+    getRun: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-runs', 'deviceRuns', 'getRun', 'query', input, undefined, options),
+    getCurrentRun: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-runs', 'deviceRuns', 'getCurrentRun', 'query', input, undefined, options),
   }
 
   const deviceStatusInterface = {
-    getStatus: (input?: unknown) => dispatch('device-status', 'deviceStatus', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-status', 'deviceStatus', 'getStatus', 'query', input, undefined, options),
   }
 
   const deviceTransitionsInterface = {
-    listTransitions: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'listTransitions', 'query', input),
-    getTransition: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'getTransition', 'query', input),
-    listRecentTransitions: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'listRecentTransitions', 'query', input),
-    record: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'record', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('device-transitions', 'deviceTransitions', 'getStatus', 'query', input),
+    listTransitions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-transitions', 'deviceTransitions', 'listTransitions', 'query', input, undefined, options),
+    getTransition: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-transitions', 'deviceTransitions', 'getTransition', 'query', input, undefined, options),
+    listRecentTransitions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-transitions', 'deviceTransitions', 'listRecentTransitions', 'query', input, undefined, options),
+    record: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-transitions', 'deviceTransitions', 'record', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-transitions', 'deviceTransitions', 'getStatus', 'query', input, undefined, options),
   }
 
   const dishwasherInterface = {
-    start: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'start', 'mutation', input),
-    pause: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'pause', 'mutation', input),
-    resume: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'resume', 'mutation', input),
-    stop: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'stop', 'mutation', input),
-    setProgram: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setProgram', 'mutation', input),
-    setPower: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setPower', 'mutation', input),
-    setHalfLoad: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setHalfLoad', 'mutation', input),
-    setHygienePlus: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setHygienePlus', 'mutation', input),
-    setExtraDry: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setExtraDry', 'mutation', input),
-    setIntensiveZone: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setIntensiveZone', 'mutation', input),
-    setVarioSpeedPlus: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setVarioSpeedPlus', 'mutation', input),
-    setChildLock: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setChildLock', 'mutation', input),
-    setOption: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'setOption', 'mutation', input),
-    getOptions: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'getOptions', 'query', input),
-    getStatus: (input?: unknown) => dispatch('dishwasher', 'dishwasher', 'getStatus', 'query', input),
+    start: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'start', 'mutation', input, undefined, options),
+    pause: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'pause', 'mutation', input, undefined, options),
+    resume: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'resume', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'stop', 'mutation', input, undefined, options),
+    setProgram: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setProgram', 'mutation', input, undefined, options),
+    setPower: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setPower', 'mutation', input, undefined, options),
+    setHalfLoad: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setHalfLoad', 'mutation', input, undefined, options),
+    setHygienePlus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setHygienePlus', 'mutation', input, undefined, options),
+    setExtraDry: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setExtraDry', 'mutation', input, undefined, options),
+    setIntensiveZone: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setIntensiveZone', 'mutation', input, undefined, options),
+    setVarioSpeedPlus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setVarioSpeedPlus', 'mutation', input, undefined, options),
+    setChildLock: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setChildLock', 'mutation', input, undefined, options),
+    setOption: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'setOption', 'mutation', input, undefined, options),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'getOptions', 'query', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('dishwasher', 'dishwasher', 'getStatus', 'query', input, undefined, options),
   }
 
   const doNotDisturbInterface = {
-    setEnabled: (input?: unknown) => dispatch('do-not-disturb', 'doNotDisturb', 'setEnabled', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('do-not-disturb', 'doNotDisturb', 'getStatus', 'query', input),
+    setEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('do-not-disturb', 'doNotDisturb', 'setEnabled', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('do-not-disturb', 'doNotDisturb', 'getStatus', 'query', input, undefined, options),
   }
 
   const doorbellInterface = {
-    getStatus: (input?: unknown) => dispatch('doorbell', 'doorbell', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('doorbell', 'doorbell', 'getStatus', 'query', input, undefined, options),
   }
 
   const energySystemInterface = {
-    getStatus: (input?: unknown) => dispatch('energy-system', 'energySystem', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('energy-system', 'energySystem', 'getStatus', 'query', input, undefined, options),
   }
 
   const enumSensorInterface = {
-    getStatus: (input?: unknown) => dispatch('enum-sensor', 'enumSensor', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('enum-sensor', 'enumSensor', 'getStatus', 'query', input, undefined, options),
   }
 
   const errorInterface = {
-    getStatus: (input?: unknown) => dispatch('error', 'error', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('error', 'error', 'getStatus', 'query', input, undefined, options),
   }
 
   const eventEmitterInterface = {
-    getStatus: (input?: unknown) => dispatch('event-emitter', 'eventEmitter', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('event-emitter', 'eventEmitter', 'getStatus', 'query', input, undefined, options),
   }
 
   const fanControlInterface = {
-    setPercentage: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setPercentage', 'mutation', input),
-    setPreset: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setPreset', 'mutation', input),
-    setDirection: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setDirection', 'mutation', input),
-    setOscillating: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setOscillating', 'mutation', input),
-    setOscillationAxis: (input?: unknown) => dispatch('fan-control', 'fanControl', 'setOscillationAxis', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('fan-control', 'fanControl', 'getStatus', 'query', input),
+    setPercentage: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('fan-control', 'fanControl', 'setPercentage', 'mutation', input, undefined, options),
+    setPreset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('fan-control', 'fanControl', 'setPreset', 'mutation', input, undefined, options),
+    setDirection: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('fan-control', 'fanControl', 'setDirection', 'mutation', input, undefined, options),
+    setOscillating: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('fan-control', 'fanControl', 'setOscillating', 'mutation', input, undefined, options),
+    setOscillationAxis: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('fan-control', 'fanControl', 'setOscillationAxis', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('fan-control', 'fanControl', 'getStatus', 'query', input, undefined, options),
   }
 
   const featureProbeInterface = {
-    getStatus: (input?: unknown) => dispatch('feature-probe', 'featureProbe', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('feature-probe', 'featureProbe', 'getStatus', 'query', input, undefined, options),
   }
 
   const floodInterface = {
-    getStatus: (input?: unknown) => dispatch('flood', 'flood', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('flood', 'flood', 'getStatus', 'query', input, undefined, options),
   }
 
   const gasInterface = {
-    getStatus: (input?: unknown) => dispatch('gas', 'gas', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('gas', 'gas', 'getStatus', 'query', input, undefined, options),
   }
 
   const groupActiveInterface = {
-    getStatus: (input?: unknown) => dispatch('group-active', 'groupActive', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('group-active', 'groupActive', 'getStatus', 'query', input, undefined, options),
   }
 
   const groupCommandsInterface = {
-    getStatus: (input?: unknown) => dispatch('group-commands', 'groupCommands', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('group-commands', 'groupCommands', 'getStatus', 'query', input, undefined, options),
   }
 
   const groupStatusInterface = {
-    getStatus: (input?: unknown) => dispatch('group-status', 'groupStatus', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('group-status', 'groupStatus', 'getStatus', 'query', input, undefined, options),
   }
 
   const heatingValveInterface = {
-    getStatus: (input?: unknown) => dispatch('heating-valve', 'heatingValve', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heating-valve', 'heatingValve', 'getStatus', 'query', input, undefined, options),
   }
 
   const heatPumpControlInterface = {
-    setSilentMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setSilentMode', 'mutation', input),
-    setAwayMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setAwayMode', 'mutation', input),
-    setAdditionalHeaterMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setAdditionalHeaterMode', 'mutation', input),
-    setHolidayMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setHolidayMode', 'mutation', input),
-    setCircuitOperationMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitOperationMode', 'mutation', input),
-    setCircuitHeatCoolMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitHeatCoolMode', 'mutation', input),
-    setCircuitSummerWinter: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitSummerWinter', 'mutation', input),
-    setCircuitComfortSetpoint: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitComfortSetpoint', 'mutation', input),
-    setCircuitEcoSetpoint: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitEcoSetpoint', 'mutation', input),
-    setCircuitMaxFlowTemp: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitMaxFlowTemp', 'mutation', input),
-    setDhwOperationMode: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwOperationMode', 'mutation', input),
-    setDhwTemperatureLevel: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwTemperatureLevel', 'mutation', input),
-    setDhwChargeDuration: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwChargeDuration', 'mutation', input),
-    startExtraHotWater: (input?: unknown) => dispatch('heat-pump-control', 'heatPumpControl', 'startExtraHotWater', 'mutation', input),
+    setSilentMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setSilentMode', 'mutation', input, undefined, options),
+    setAwayMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setAwayMode', 'mutation', input, undefined, options),
+    setAdditionalHeaterMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setAdditionalHeaterMode', 'mutation', input, undefined, options),
+    setHolidayMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setHolidayMode', 'mutation', input, undefined, options),
+    setCircuitOperationMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitOperationMode', 'mutation', input, undefined, options),
+    setCircuitHeatCoolMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitHeatCoolMode', 'mutation', input, undefined, options),
+    setCircuitSummerWinter: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitSummerWinter', 'mutation', input, undefined, options),
+    setCircuitComfortSetpoint: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitComfortSetpoint', 'mutation', input, undefined, options),
+    setCircuitEcoSetpoint: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitEcoSetpoint', 'mutation', input, undefined, options),
+    setCircuitMaxFlowTemp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setCircuitMaxFlowTemp', 'mutation', input, undefined, options),
+    setDhwOperationMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwOperationMode', 'mutation', input, undefined, options),
+    setDhwTemperatureLevel: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwTemperatureLevel', 'mutation', input, undefined, options),
+    setDhwChargeDuration: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'setDhwChargeDuration', 'mutation', input, undefined, options),
+    startExtraHotWater: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-control', 'heatPumpControl', 'startExtraHotWater', 'mutation', input, undefined, options),
   }
 
   const heatPumpStatusInterface = {
-    getStatus: (input?: unknown) => dispatch('heat-pump-status', 'heatPumpStatus', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('heat-pump-status', 'heatPumpStatus', 'getStatus', 'query', input, undefined, options),
   }
 
   const humidifierInterface = {
-    setOn: (input?: unknown) => dispatch('humidifier', 'humidifier', 'setOn', 'mutation', input),
-    setTargetHumidity: (input?: unknown) => dispatch('humidifier', 'humidifier', 'setTargetHumidity', 'mutation', input),
-    setMode: (input?: unknown) => dispatch('humidifier', 'humidifier', 'setMode', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('humidifier', 'humidifier', 'getStatus', 'query', input),
+    setOn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('humidifier', 'humidifier', 'setOn', 'mutation', input, undefined, options),
+    setTargetHumidity: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('humidifier', 'humidifier', 'setTargetHumidity', 'mutation', input, undefined, options),
+    setMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('humidifier', 'humidifier', 'setMode', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('humidifier', 'humidifier', 'getStatus', 'query', input, undefined, options),
   }
 
   const humiditySensorInterface = {
-    getStatus: (input?: unknown) => dispatch('humidity-sensor', 'humiditySensor', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('humidity-sensor', 'humiditySensor', 'getStatus', 'query', input, undefined, options),
   }
 
   const imageInterface = {
-    getStatus: (input?: unknown) => dispatch('image', 'image', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('image', 'image', 'getStatus', 'query', input, undefined, options),
   }
 
   const imageSettingsInterface = {
-    getOptions: (input?: unknown) => dispatch('image-settings', 'imageSettings', 'getOptions', 'query', input),
-    setSettings: (input?: unknown) => dispatch('image-settings', 'imageSettings', 'setSettings', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('image-settings', 'imageSettings', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('image-settings', 'imageSettings', 'getOptions', 'query', input, undefined, options),
+    setSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('image-settings', 'imageSettings', 'setSettings', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('image-settings', 'imageSettings', 'getStatus', 'query', input, undefined, options),
   }
 
   const intercomInterface = {
-    startSession: (input?: unknown) => dispatch('intercom', 'intercom', 'startSession', 'mutation', input),
-    handleAnswer: (input?: unknown) => dispatch('intercom', 'intercom', 'handleAnswer', 'mutation', input),
-    stopSession: (input?: unknown) => dispatch('intercom', 'intercom', 'stopSession', 'mutation', input),
-    startTalkSession: (input?: unknown) => dispatch('intercom', 'intercom', 'startTalkSession', 'mutation', input),
-    pushTalkAudio: (input?: unknown) => dispatch('intercom', 'intercom', 'pushTalkAudio', 'mutation', input),
-    endTalkSession: (input?: unknown) => dispatch('intercom', 'intercom', 'endTalkSession', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('intercom', 'intercom', 'getStatus', 'query', input),
+    startSession: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('intercom', 'intercom', 'startSession', 'mutation', input, undefined, options),
+    handleAnswer: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('intercom', 'intercom', 'handleAnswer', 'mutation', input, undefined, options),
+    stopSession: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('intercom', 'intercom', 'stopSession', 'mutation', input, undefined, options),
+    startTalkSession: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('intercom', 'intercom', 'startTalkSession', 'mutation', input, undefined, options),
+    pushTalkAudio: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('intercom', 'intercom', 'pushTalkAudio', 'mutation', input, undefined, options),
+    endTalkSession: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('intercom', 'intercom', 'endTalkSession', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('intercom', 'intercom', 'getStatus', 'query', input, undefined, options),
   }
 
   const irTransmitterInterface = {
-    send: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'send', 'mutation', input),
-    learn: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'learn', 'mutation', input),
-    getInfo: (input?: unknown) => dispatch('ir-transmitter', 'irTransmitter', 'getInfo', 'query', input),
+    send: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ir-transmitter', 'irTransmitter', 'send', 'mutation', input, undefined, options),
+    learn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ir-transmitter', 'irTransmitter', 'learn', 'mutation', input, undefined, options),
+    getInfo: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ir-transmitter', 'irTransmitter', 'getInfo', 'query', input, undefined, options),
   }
 
   const lawnMowerControlInterface = {
-    startMowing: (input?: unknown) => dispatch('lawn-mower-control', 'lawnMowerControl', 'startMowing', 'mutation', input),
-    pause: (input?: unknown) => dispatch('lawn-mower-control', 'lawnMowerControl', 'pause', 'mutation', input),
-    dock: (input?: unknown) => dispatch('lawn-mower-control', 'lawnMowerControl', 'dock', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('lawn-mower-control', 'lawnMowerControl', 'getStatus', 'query', input),
+    startMowing: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lawn-mower-control', 'lawnMowerControl', 'startMowing', 'mutation', input, undefined, options),
+    pause: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lawn-mower-control', 'lawnMowerControl', 'pause', 'mutation', input, undefined, options),
+    dock: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lawn-mower-control', 'lawnMowerControl', 'dock', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lawn-mower-control', 'lawnMowerControl', 'getStatus', 'query', input, undefined, options),
   }
 
   const lockControlInterface = {
-    lock: (input?: unknown) => dispatch('lock-control', 'lockControl', 'lock', 'mutation', input),
-    unlock: (input?: unknown) => dispatch('lock-control', 'lockControl', 'unlock', 'mutation', input),
-    open: (input?: unknown) => dispatch('lock-control', 'lockControl', 'open', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('lock-control', 'lockControl', 'getStatus', 'query', input),
+    lock: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lock-control', 'lockControl', 'lock', 'mutation', input, undefined, options),
+    unlock: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lock-control', 'lockControl', 'unlock', 'mutation', input, undefined, options),
+    open: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lock-control', 'lockControl', 'open', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lock-control', 'lockControl', 'getStatus', 'query', input, undefined, options),
   }
 
   const mediaPlayerInterface = {
-    turnOn: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'turnOn', 'mutation', input),
-    turnOff: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'turnOff', 'mutation', input),
-    volumeUp: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'volumeUp', 'mutation', input),
-    volumeDown: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'volumeDown', 'mutation', input),
-    channelUp: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'channelUp', 'mutation', input),
-    channelDown: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'channelDown', 'mutation', input),
-    play: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'play', 'mutation', input),
-    pause: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'pause', 'mutation', input),
-    stop: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'stop', 'mutation', input),
-    next: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'next', 'mutation', input),
-    previous: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'previous', 'mutation', input),
-    setVolume: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setVolume', 'mutation', input),
-    setMute: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setMute', 'mutation', input),
-    setShuffle: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setShuffle', 'mutation', input),
-    setRepeat: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'setRepeat', 'mutation', input),
-    selectSource: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'selectSource', 'mutation', input),
-    seek: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'seek', 'mutation', input),
-    playMedia: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'playMedia', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('media-player', 'mediaPlayer', 'getStatus', 'query', input),
+    turnOn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'turnOn', 'mutation', input, undefined, options),
+    turnOff: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'turnOff', 'mutation', input, undefined, options),
+    volumeUp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'volumeUp', 'mutation', input, undefined, options),
+    volumeDown: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'volumeDown', 'mutation', input, undefined, options),
+    channelUp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'channelUp', 'mutation', input, undefined, options),
+    channelDown: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'channelDown', 'mutation', input, undefined, options),
+    play: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'play', 'mutation', input, undefined, options),
+    pause: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'pause', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'stop', 'mutation', input, undefined, options),
+    next: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'next', 'mutation', input, undefined, options),
+    previous: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'previous', 'mutation', input, undefined, options),
+    setVolume: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'setVolume', 'mutation', input, undefined, options),
+    setMute: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'setMute', 'mutation', input, undefined, options),
+    setShuffle: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'setShuffle', 'mutation', input, undefined, options),
+    setRepeat: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'setRepeat', 'mutation', input, undefined, options),
+    selectSource: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'selectSource', 'mutation', input, undefined, options),
+    seek: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'seek', 'mutation', input, undefined, options),
+    playMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'playMedia', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'getStatus', 'query', input, undefined, options),
   }
 
   const meterInterface = {
-    getStatus: (input?: unknown) => dispatch('meter', 'meter', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('meter', 'meter', 'getStatus', 'query', input, undefined, options),
   }
 
   const motionInterface = {
-    isDetected: (input?: unknown) => dispatch('motion', 'motion', 'isDetected', 'query', input),
-    getStatus: (input?: unknown) => dispatch('motion', 'motion', 'getStatus', 'query', input),
+    isDetected: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion', 'motion', 'isDetected', 'query', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion', 'motion', 'getStatus', 'query', input, undefined, options),
   }
 
   const motionDetectionInterface = {
-    analyze: (input?: unknown) => dispatch('motion-detection', 'motionDetection', 'analyze', 'mutation', input),
-    removeCamera: (input?: unknown) => dispatch('motion-detection', 'motionDetection', 'removeCamera', 'mutation', input),
-    reset: (input?: unknown) => dispatch('motion-detection', 'motionDetection', 'reset', 'mutation', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatch('motion-detection', 'motionDetection', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatch('motion-detection', 'motionDetection', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatch('motion-detection', 'motionDetection', 'applyDeviceSettingsPatch', 'mutation', input),
+    analyze: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-detection', 'motionDetection', 'analyze', 'mutation', input, undefined, options),
+    removeCamera: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-detection', 'motionDetection', 'removeCamera', 'mutation', input, undefined, options),
+    reset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-detection', 'motionDetection', 'reset', 'mutation', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-detection', 'motionDetection', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-detection', 'motionDetection', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-detection', 'motionDetection', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const motionTriggerInterface = {
-    setMotionTrigger: (input?: unknown) => dispatch('motion-trigger', 'motionTrigger', 'setMotionTrigger', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('motion-trigger', 'motionTrigger', 'getStatus', 'query', input),
+    setMotionTrigger: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-trigger', 'motionTrigger', 'setMotionTrigger', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-trigger', 'motionTrigger', 'getStatus', 'query', input, undefined, options),
   }
 
   const motionZonesInterface = {
-    getOptions: (input?: unknown) => dispatch('motion-zones', 'motionZones', 'getOptions', 'query', input),
-    setZone: (input?: unknown) => dispatch('motion-zones', 'motionZones', 'setZone', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('motion-zones', 'motionZones', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-zones', 'motionZones', 'getOptions', 'query', input, undefined, options),
+    setZone: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-zones', 'motionZones', 'setZone', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('motion-zones', 'motionZones', 'getStatus', 'query', input, undefined, options),
   }
 
   const nativeObjectDetectionInterface = {
-    getOptions: (input?: unknown) => dispatch('native-object-detection', 'nativeObjectDetection', 'getOptions', 'query', input),
-    setSettings: (input?: unknown) => dispatch('native-object-detection', 'nativeObjectDetection', 'setSettings', 'mutation', input),
-    setEnabled: (input?: unknown) => dispatch('native-object-detection', 'nativeObjectDetection', 'setEnabled', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('native-object-detection', 'nativeObjectDetection', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('native-object-detection', 'nativeObjectDetection', 'getOptions', 'query', input, undefined, options),
+    setSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('native-object-detection', 'nativeObjectDetection', 'setSettings', 'mutation', input, undefined, options),
+    setEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('native-object-detection', 'nativeObjectDetection', 'setEnabled', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('native-object-detection', 'nativeObjectDetection', 'getStatus', 'query', input, undefined, options),
   }
 
   const navigationInterface = {
-    move: (input?: unknown) => dispatch('navigation', 'navigation', 'move', 'mutation', input),
-    stop: (input?: unknown) => dispatch('navigation', 'navigation', 'stop', 'mutation', input),
-    goToPoint: (input?: unknown) => dispatch('navigation', 'navigation', 'goToPoint', 'mutation', input),
-    listActions: (input?: unknown) => dispatch('navigation', 'navigation', 'listActions', 'query', input),
-    runAction: (input?: unknown) => dispatch('navigation', 'navigation', 'runAction', 'mutation', input),
-    playSound: (input?: unknown) => dispatch('navigation', 'navigation', 'playSound', 'mutation', input),
-    setLightOn: (input?: unknown) => dispatch('navigation', 'navigation', 'setLightOn', 'mutation', input),
-    setLightMode: (input?: unknown) => dispatch('navigation', 'navigation', 'setLightMode', 'mutation', input),
-    setLightLevel: (input?: unknown) => dispatch('navigation', 'navigation', 'setLightLevel', 'mutation', input),
-    getFeatures: (input?: unknown) => dispatch('navigation', 'navigation', 'getFeatures', 'query', input),
-    getStatus: (input?: unknown) => dispatch('navigation', 'navigation', 'getStatus', 'query', input),
+    move: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'move', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'stop', 'mutation', input, undefined, options),
+    goToPoint: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'goToPoint', 'mutation', input, undefined, options),
+    listActions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'listActions', 'query', input, undefined, options),
+    runAction: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'runAction', 'mutation', input, undefined, options),
+    playSound: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'playSound', 'mutation', input, undefined, options),
+    setLightOn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'setLightOn', 'mutation', input, undefined, options),
+    setLightMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'setLightMode', 'mutation', input, undefined, options),
+    setLightLevel: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'setLightLevel', 'mutation', input, undefined, options),
+    getFeatures: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'getFeatures', 'query', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('navigation', 'navigation', 'getStatus', 'query', input, undefined, options),
   }
 
   const networkLinkInterface = {
-    getStatus: (input?: unknown) => dispatch('network-link', 'networkLink', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('network-link', 'networkLink', 'getStatus', 'query', input, undefined, options),
   }
 
   const notifierInterface = {
-    send: (input?: unknown) => dispatch('notifier', 'notifier', 'send', 'mutation', input),
-    cancel: (input?: unknown) => dispatch('notifier', 'notifier', 'cancel', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('notifier', 'notifier', 'getStatus', 'query', input),
+    send: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('notifier', 'notifier', 'send', 'mutation', input, undefined, options),
+    cancel: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('notifier', 'notifier', 'cancel', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('notifier', 'notifier', 'getStatus', 'query', input, undefined, options),
   }
 
   const numericSensorInterface = {
-    getStatus: (input?: unknown) => dispatch('numeric-sensor', 'numericSensor', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('numeric-sensor', 'numericSensor', 'getStatus', 'query', input, undefined, options),
   }
 
   const osdInterface = {
-    setOverlay: (input?: unknown) => dispatch('osd', 'osd', 'setOverlay', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('osd', 'osd', 'getStatus', 'query', input),
+    setOverlay: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('osd', 'osd', 'setOverlay', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('osd', 'osd', 'getStatus', 'query', input, undefined, options),
   }
 
   const petFeederInterface = {
-    feed: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'feed', 'mutation', input),
-    cancelFeed: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'cancelFeed', 'mutation', input),
-    callPet: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'callPet', 'mutation', input),
-    playSound: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'playSound', 'mutation', input),
-    resetDesiccant: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'resetDesiccant', 'mutation', input),
-    markFoodReplenished: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'markFoodReplenished', 'mutation', input),
-    setChildLock: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setChildLock', 'mutation', input),
-    setIndicatorLight: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setIndicatorLight', 'mutation', input),
-    setFeedSound: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setFeedSound', 'mutation', input),
-    setVolume: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'setVolume', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('pet-feeder', 'petFeeder', 'getStatus', 'query', input),
+    feed: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'feed', 'mutation', input, undefined, options),
+    cancelFeed: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'cancelFeed', 'mutation', input, undefined, options),
+    callPet: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'callPet', 'mutation', input, undefined, options),
+    playSound: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'playSound', 'mutation', input, undefined, options),
+    resetDesiccant: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'resetDesiccant', 'mutation', input, undefined, options),
+    markFoodReplenished: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'markFoodReplenished', 'mutation', input, undefined, options),
+    setChildLock: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'setChildLock', 'mutation', input, undefined, options),
+    setIndicatorLight: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'setIndicatorLight', 'mutation', input, undefined, options),
+    setFeedSound: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'setFeedSound', 'mutation', input, undefined, options),
+    setVolume: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'setVolume', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-feeder', 'petFeeder', 'getStatus', 'query', input, undefined, options),
   }
 
   const petFountainInterface = {
-    setPump: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'setPump', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('pet-fountain', 'petFountain', 'getStatus', 'query', input),
+    setPump: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-fountain', 'petFountain', 'setPump', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pet-fountain', 'petFountain', 'getStatus', 'query', input, undefined, options),
   }
 
   const pipelineAnalyticsInterface = {
-    getActiveTracks: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getActiveTracks', 'query', input),
-    getTrack: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrack', 'query', input),
-    listTracks: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listTracks', 'query', input),
-    listRecentTracks: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRecentTracks', 'query', input),
-    clearTracks: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'clearTracks', 'mutation', input),
-    getMotionEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getMotionEvents', 'query', input),
-    getObjectEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getObjectEvents', 'query', input),
-    getAudioEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getAudioEvents', 'query', input),
-    listEventKinds: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listEventKinds', 'query', input),
-    listEventKindsBatch: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listEventKindsBatch', 'query', input),
-    getSensorEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getSensorEvents', 'query', input),
-    getKeyEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getKeyEvents', 'query', input),
-    getKeyEventsBatch: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getKeyEventsBatch', 'query', input),
-    readLongTermSeries: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'readLongTermSeries', 'query', input),
-    getEventDensity: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventDensity', 'query', input),
-    getEventDensityBatch: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventDensityBatch', 'query', input),
-    pruneEventsBefore: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pruneEventsBefore', 'mutation', input),
-    pruneTracksBefore: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pruneTracksBefore', 'mutation', input),
-    wipeAllAnalytics: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'wipeAllAnalytics', 'mutation', input),
-    reconcileFromDisk: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'reconcileFromDisk', 'mutation', input),
-    deleteTracks: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deleteTracks', 'mutation', input),
-    setTrackFlags: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setTrackFlags', 'mutation', input),
-    listArchivedDebugNotes: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listArchivedDebugNotes', 'query', input),
-    setTrackRelation: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setTrackRelation', 'mutation', input),
-    clearTrackRelation: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'clearTrackRelation', 'mutation', input),
-    setTrackPurity: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setTrackPurity', 'mutation', input),
-    listTrackRelations: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listTrackRelations', 'query', input),
-    listBirthDecisions: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listBirthDecisions', 'query', input),
-    getEventStoreFootprint: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventStoreFootprint', 'query', input),
-    getEventMediaFootprintByKind: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventMediaFootprintByKind', 'query', input),
-    pruneEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pruneEvents', 'mutation', input),
-    deleteDeviceEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deleteDeviceEvents', 'mutation', input),
-    pauseForStorageMigration: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pauseForStorageMigration', 'mutation', input),
-    resumeForStorageMigration: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'resumeForStorageMigration', 'mutation', input),
-    refreshStorageLocationsForMigration: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'refreshStorageLocationsForMigration', 'mutation', input),
-    startStorageMigrationMove: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'startStorageMigrationMove', 'mutation', input),
-    getStorageMigrationMoveStatus: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getStorageMigrationMoveStatus', 'query', input),
-    cancelStorageMigrationMove: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'cancelStorageMigrationMove', 'mutation', input),
-    relocateMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'relocateMedia', 'mutation', input),
-    countUnstampedEventMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'countUnstampedEventMedia', 'query', input),
-    getMediaLocationCensus: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getMediaLocationCensus', 'query', input),
-    countRelocatableMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'countRelocatableMedia', 'query', input),
-    listRelocateMediaJobs: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRelocateMediaJobs', 'query', input),
-    cancelRelocateMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'cancelRelocateMedia', 'mutation', input),
-    listOpsLog: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listOpsLog', 'query', input),
-    reclaimDebugMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'reclaimDebugMedia', 'mutation', input),
-    getMediaReclaimStatus: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getMediaReclaimStatus', 'query', input),
-    getTrainingExportSummary: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrainingExportSummary', 'query', input),
-    getTrainingExportUrl: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrainingExportUrl', 'query', input),
-    listRetrainStaging: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainStaging', 'query', input),
-    listRetrainCorpusPage: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainCorpusPage', 'query', input),
-    getRetrainCorpusKpi: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getRetrainCorpusKpi', 'query', input),
-    listRetrainFrames: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainFrames', 'query', input),
-    selectRetrainFrames: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'selectRetrainFrames', 'mutation', input),
-    deselectRetrainFrame: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deselectRetrainFrame', 'mutation', input),
-    getRetrainFrameImage: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getRetrainFrameImage', 'query', input),
-    proposeRetrainAnnotations: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'proposeRetrainAnnotations', 'mutation', input),
-    listRetrainAnnotations: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainAnnotations', 'query', input),
-    saveRetrainAnnotations: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'saveRetrainAnnotations', 'mutation', input),
-    backfillRetrainOrigins: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'backfillRetrainOrigins', 'mutation', input),
-    completeRetrainTrack: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'completeRetrainTrack', 'mutation', input),
-    restageRetrainTrack: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'restageRetrainTrack', 'mutation', input),
-    getRetrainExportUrl: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getRetrainExportUrl', 'query', input),
-    setRetrainFrameComplete: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setRetrainFrameComplete', 'mutation', input),
-    writeRetrainArchive: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'writeRetrainArchive', 'mutation', input),
-    offerRetrainArchive: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'offerRetrainArchive', 'mutation', input),
-    listRetrainAssistProfiles: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainAssistProfiles', 'query', input),
-    proposeRetrainAnnotationsWithLlm: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'proposeRetrainAnnotationsWithLlm', 'mutation', input),
-    createRetrainCollection: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'createRetrainCollection', 'mutation', input),
-    listRetrainCollections: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainCollections', 'query', input),
-    resolveRetrainTrainingCorpus: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'resolveRetrainTrainingCorpus', 'query', input),
-    renameRetrainCollection: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'renameRetrainCollection', 'mutation', input),
-    deleteRetrainCollection: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deleteRetrainCollection', 'mutation', input),
-    addRetrainFrameFromRecording: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'addRetrainFrameFromRecording', 'mutation', input),
-    addRetrainFramesToCollection: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'addRetrainFramesToCollection', 'mutation', input),
-    removeRetrainFrameFromCollection: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'removeRetrainFrameFromCollection', 'mutation', input),
-    listRetrainCollectionFrames: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainCollectionFrames', 'query', input),
-    getEventMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventMedia', 'query', input),
-    getTrackMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrackMedia', 'query', input),
-    listTrackMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listTrackMedia', 'query', input),
-    listEventMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listEventMedia', 'query', input),
-    ownersWithMedia: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'ownersWithMedia', 'query', input),
-    searchObjectEvents: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'searchObjectEvents', 'query', input),
-    wipeObjectEmbeddings: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'wipeObjectEmbeddings', 'mutation', input),
-    rebuildObjectEmbeddings: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'rebuildObjectEmbeddings', 'mutation', input),
-    getObjectEmbeddingRebuildStatus: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getObjectEmbeddingRebuildStatus', 'query', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'applyDeviceSettingsPatch', 'mutation', input),
+    getActiveTracks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getActiveTracks', 'query', input, undefined, options),
+    getTrack: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrack', 'query', input, undefined, options),
+    listTracks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listTracks', 'query', input, undefined, options),
+    listRecentTracks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRecentTracks', 'query', input, undefined, options),
+    clearTracks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'clearTracks', 'mutation', input, undefined, options),
+    getMotionEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getMotionEvents', 'query', input, undefined, options),
+    getObjectEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getObjectEvents', 'query', input, undefined, options),
+    getAudioEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getAudioEvents', 'query', input, undefined, options),
+    listEventKinds: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listEventKinds', 'query', input, undefined, options),
+    listEventKindsBatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listEventKindsBatch', 'query', input, undefined, options),
+    getSensorEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getSensorEvents', 'query', input, undefined, options),
+    getKeyEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getKeyEvents', 'query', input, undefined, options),
+    getKeyEventsBatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getKeyEventsBatch', 'query', input, undefined, options),
+    readLongTermSeries: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'readLongTermSeries', 'query', input, undefined, options),
+    getEventDensity: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventDensity', 'query', input, undefined, options),
+    getEventDensityBatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventDensityBatch', 'query', input, undefined, options),
+    pruneEventsBefore: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pruneEventsBefore', 'mutation', input, undefined, options),
+    pruneTracksBefore: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pruneTracksBefore', 'mutation', input, undefined, options),
+    wipeAllAnalytics: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'wipeAllAnalytics', 'mutation', input, undefined, options),
+    reconcileFromDisk: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'reconcileFromDisk', 'mutation', input, undefined, options),
+    deleteTracks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deleteTracks', 'mutation', input, undefined, options),
+    setTrackFlags: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setTrackFlags', 'mutation', input, undefined, options),
+    listArchivedDebugNotes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listArchivedDebugNotes', 'query', input, undefined, options),
+    setTrackRelation: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setTrackRelation', 'mutation', input, undefined, options),
+    clearTrackRelation: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'clearTrackRelation', 'mutation', input, undefined, options),
+    setTrackPurity: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setTrackPurity', 'mutation', input, undefined, options),
+    listTrackRelations: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listTrackRelations', 'query', input, undefined, options),
+    listBirthDecisions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listBirthDecisions', 'query', input, undefined, options),
+    getEventStoreFootprint: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventStoreFootprint', 'query', input, undefined, options),
+    getEventMediaFootprintByKind: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventMediaFootprintByKind', 'query', input, undefined, options),
+    pruneEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pruneEvents', 'mutation', input, undefined, options),
+    deleteDeviceEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deleteDeviceEvents', 'mutation', input, undefined, options),
+    pauseForStorageMigration: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'pauseForStorageMigration', 'mutation', input, undefined, options),
+    resumeForStorageMigration: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'resumeForStorageMigration', 'mutation', input, undefined, options),
+    refreshStorageLocationsForMigration: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'refreshStorageLocationsForMigration', 'mutation', input, undefined, options),
+    startStorageMigrationMove: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'startStorageMigrationMove', 'mutation', input, undefined, options),
+    getStorageMigrationMoveStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getStorageMigrationMoveStatus', 'query', input, undefined, options),
+    cancelStorageMigrationMove: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'cancelStorageMigrationMove', 'mutation', input, undefined, options),
+    relocateMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'relocateMedia', 'mutation', input, undefined, options),
+    countUnstampedEventMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'countUnstampedEventMedia', 'query', input, undefined, options),
+    getMediaLocationCensus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getMediaLocationCensus', 'query', input, undefined, options),
+    countRelocatableMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'countRelocatableMedia', 'query', input, undefined, options),
+    listRelocateMediaJobs: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRelocateMediaJobs', 'query', input, undefined, options),
+    cancelRelocateMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'cancelRelocateMedia', 'mutation', input, undefined, options),
+    listOpsLog: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listOpsLog', 'query', input, undefined, options),
+    reclaimDebugMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'reclaimDebugMedia', 'mutation', input, undefined, options),
+    getMediaReclaimStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getMediaReclaimStatus', 'query', input, undefined, options),
+    getTrainingExportSummary: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrainingExportSummary', 'query', input, undefined, options),
+    getTrainingExportUrl: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrainingExportUrl', 'query', input, undefined, options),
+    listRetrainStaging: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainStaging', 'query', input, undefined, options),
+    listRetrainCorpusPage: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainCorpusPage', 'query', input, undefined, options),
+    getRetrainCorpusKpi: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getRetrainCorpusKpi', 'query', input, undefined, options),
+    listRetrainFrames: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainFrames', 'query', input, undefined, options),
+    selectRetrainFrames: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'selectRetrainFrames', 'mutation', input, undefined, options),
+    deselectRetrainFrame: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deselectRetrainFrame', 'mutation', input, undefined, options),
+    getRetrainFrameImage: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getRetrainFrameImage', 'query', input, undefined, options),
+    proposeRetrainAnnotations: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'proposeRetrainAnnotations', 'mutation', input, undefined, options),
+    listRetrainAnnotations: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainAnnotations', 'query', input, undefined, options),
+    saveRetrainAnnotations: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'saveRetrainAnnotations', 'mutation', input, undefined, options),
+    backfillRetrainOrigins: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'backfillRetrainOrigins', 'mutation', input, undefined, options),
+    completeRetrainTrack: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'completeRetrainTrack', 'mutation', input, undefined, options),
+    restageRetrainTrack: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'restageRetrainTrack', 'mutation', input, undefined, options),
+    getRetrainExportUrl: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getRetrainExportUrl', 'query', input, undefined, options),
+    setRetrainFrameComplete: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'setRetrainFrameComplete', 'mutation', input, undefined, options),
+    writeRetrainArchive: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'writeRetrainArchive', 'mutation', input, undefined, options),
+    offerRetrainArchive: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'offerRetrainArchive', 'mutation', input, undefined, options),
+    listRetrainAssistProfiles: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainAssistProfiles', 'query', input, undefined, options),
+    proposeRetrainAnnotationsWithLlm: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'proposeRetrainAnnotationsWithLlm', 'mutation', input, undefined, options),
+    createRetrainCollection: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'createRetrainCollection', 'mutation', input, undefined, options),
+    listRetrainCollections: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainCollections', 'query', input, undefined, options),
+    resolveRetrainTrainingCorpus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'resolveRetrainTrainingCorpus', 'query', input, undefined, options),
+    renameRetrainCollection: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'renameRetrainCollection', 'mutation', input, undefined, options),
+    deleteRetrainCollection: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'deleteRetrainCollection', 'mutation', input, undefined, options),
+    addRetrainFrameFromRecording: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'addRetrainFrameFromRecording', 'mutation', input, undefined, options),
+    addRetrainFramesToCollection: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'addRetrainFramesToCollection', 'mutation', input, undefined, options),
+    removeRetrainFrameFromCollection: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'removeRetrainFrameFromCollection', 'mutation', input, undefined, options),
+    listRetrainCollectionFrames: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listRetrainCollectionFrames', 'query', input, undefined, options),
+    getEventMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getEventMedia', 'query', input, undefined, options),
+    getTrackMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getTrackMedia', 'query', input, undefined, options),
+    listTrackMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listTrackMedia', 'query', input, undefined, options),
+    listEventMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'listEventMedia', 'query', input, undefined, options),
+    ownersWithMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'ownersWithMedia', 'query', input, undefined, options),
+    searchObjectEvents: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'searchObjectEvents', 'query', input, undefined, options),
+    wipeObjectEmbeddings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'wipeObjectEmbeddings', 'mutation', input, undefined, options),
+    rebuildObjectEmbeddings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'rebuildObjectEmbeddings', 'mutation', input, undefined, options),
+    getObjectEmbeddingRebuildStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getObjectEmbeddingRebuildStatus', 'query', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pipeline-analytics', 'pipelineAnalytics', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const powerMeterInterface = {
-    getStatus: (input?: unknown) => dispatch('power-meter', 'powerMeter', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('power-meter', 'powerMeter', 'getStatus', 'query', input, undefined, options),
   }
 
   const powerSourceInterface = {
-    getStatus: (input?: unknown) => dispatch('power-source', 'powerSource', 'getStatus', 'query', input),
-    powerOn: (input?: unknown) => dispatch('power-source', 'powerSource', 'powerOn', 'mutation', input),
-    powerOff: (input?: unknown) => dispatch('power-source', 'powerSource', 'powerOff', 'mutation', input),
-    forceRestart: (input?: unknown) => dispatch('power-source', 'powerSource', 'forceRestart', 'mutation', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('power-source', 'powerSource', 'getStatus', 'query', input, undefined, options),
+    powerOn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('power-source', 'powerSource', 'powerOn', 'mutation', input, undefined, options),
+    powerOff: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('power-source', 'powerSource', 'powerOff', 'mutation', input, undefined, options),
+    forceRestart: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('power-source', 'powerSource', 'forceRestart', 'mutation', input, undefined, options),
   }
 
   const presenceInterface = {
-    getStatus: (input?: unknown) => dispatch('presence', 'presence', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('presence', 'presence', 'getStatus', 'query', input, undefined, options),
   }
 
   const pressureSensorInterface = {
-    getStatus: (input?: unknown) => dispatch('pressure-sensor', 'pressureSensor', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pressure-sensor', 'pressureSensor', 'getStatus', 'query', input, undefined, options),
   }
 
   const privacyMaskInterface = {
-    getOptions: (input?: unknown) => dispatch('privacy-mask', 'privacyMask', 'getOptions', 'query', input),
-    setMask: (input?: unknown) => dispatch('privacy-mask', 'privacyMask', 'setMask', 'mutation', input),
-    setAudioEnabled: (input?: unknown) => dispatch('privacy-mask', 'privacyMask', 'setAudioEnabled', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('privacy-mask', 'privacyMask', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('privacy-mask', 'privacyMask', 'getOptions', 'query', input, undefined, options),
+    setMask: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('privacy-mask', 'privacyMask', 'setMask', 'mutation', input, undefined, options),
+    setAudioEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('privacy-mask', 'privacyMask', 'setAudioEnabled', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('privacy-mask', 'privacyMask', 'getStatus', 'query', input, undefined, options),
   }
 
   const ptzInterface = {
-    move: (input?: unknown) => dispatch('ptz', 'ptz', 'move', 'mutation', input),
-    continuousMove: (input?: unknown) => dispatch('ptz', 'ptz', 'continuousMove', 'mutation', input),
-    goHome: (input?: unknown) => dispatch('ptz', 'ptz', 'goHome', 'mutation', input),
-    getPresets: (input?: unknown) => dispatch('ptz', 'ptz', 'getPresets', 'query', input),
-    goToPreset: (input?: unknown) => dispatch('ptz', 'ptz', 'goToPreset', 'mutation', input),
-    savePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'savePreset', 'mutation', input),
-    deletePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'deletePreset', 'mutation', input),
-    getOptions: (input?: unknown) => dispatch('ptz', 'ptz', 'getOptions', 'query', input),
-    stop: (input?: unknown) => dispatch('ptz', 'ptz', 'stop', 'mutation', input),
-    getHomePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'getHomePreset', 'query', input),
-    setHomePreset: (input?: unknown) => dispatch('ptz', 'ptz', 'setHomePreset', 'mutation', input),
-    captureHomeHere: (input?: unknown) => dispatch('ptz', 'ptz', 'captureHomeHere', 'mutation', input),
-    getHomeReturn: (input?: unknown) => dispatch('ptz', 'ptz', 'getHomeReturn', 'query', input),
-    setHomeReturn: (input?: unknown) => dispatch('ptz', 'ptz', 'setHomeReturn', 'mutation', input),
-    getPosition: (input?: unknown) => dispatch('ptz', 'ptz', 'getPosition', 'query', input),
-    setAutofocus: (input?: unknown) => dispatch('ptz', 'ptz', 'setAutofocus', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('ptz', 'ptz', 'getStatus', 'query', input),
+    move: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'move', 'mutation', input, undefined, options),
+    continuousMove: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'continuousMove', 'mutation', input, undefined, options),
+    goHome: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'goHome', 'mutation', input, undefined, options),
+    getPresets: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'getPresets', 'query', input, undefined, options),
+    goToPreset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'goToPreset', 'mutation', input, undefined, options),
+    savePreset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'savePreset', 'mutation', input, undefined, options),
+    deletePreset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'deletePreset', 'mutation', input, undefined, options),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'getOptions', 'query', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'stop', 'mutation', input, undefined, options),
+    getHomePreset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'getHomePreset', 'query', input, undefined, options),
+    setHomePreset: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'setHomePreset', 'mutation', input, undefined, options),
+    captureHomeHere: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'captureHomeHere', 'mutation', input, undefined, options),
+    getHomeReturn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'getHomeReturn', 'query', input, undefined, options),
+    setHomeReturn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'setHomeReturn', 'mutation', input, undefined, options),
+    getPosition: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'getPosition', 'query', input, undefined, options),
+    setAutofocus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'setAutofocus', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz', 'ptz', 'getStatus', 'query', input, undefined, options),
   }
 
   const ptzAutotrackInterface = {
-    getStatus: (input?: unknown) => dispatch('ptz-autotrack', 'ptzAutotrack', 'getStatus', 'query', input),
-    setEnabled: (input?: unknown) => dispatch('ptz-autotrack', 'ptzAutotrack', 'setEnabled', 'mutation', input),
-    getSettings: (input?: unknown) => dispatch('ptz-autotrack', 'ptzAutotrack', 'getSettings', 'query', input),
-    setSettings: (input?: unknown) => dispatch('ptz-autotrack', 'ptzAutotrack', 'setSettings', 'mutation', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz-autotrack', 'ptzAutotrack', 'getStatus', 'query', input, undefined, options),
+    setEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz-autotrack', 'ptzAutotrack', 'setEnabled', 'mutation', input, undefined, options),
+    getSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz-autotrack', 'ptzAutotrack', 'getSettings', 'query', input, undefined, options),
+    setSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('ptz-autotrack', 'ptzAutotrack', 'setSettings', 'mutation', input, undefined, options),
   }
 
   const pumpCycleInterface = {
-    setEnabled: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'setEnabled', 'mutation', input),
-    setOnMinutes: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'setOnMinutes', 'mutation', input),
-    setOffMinutes: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'setOffMinutes', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('pump-cycle', 'pumpCycle', 'getStatus', 'query', input),
+    setEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pump-cycle', 'pumpCycle', 'setEnabled', 'mutation', input, undefined, options),
+    setOnMinutes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pump-cycle', 'pumpCycle', 'setOnMinutes', 'mutation', input, undefined, options),
+    setOffMinutes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pump-cycle', 'pumpCycle', 'setOffMinutes', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('pump-cycle', 'pumpCycle', 'getStatus', 'query', input, undefined, options),
   }
 
   const rebootInterface = {
-    reboot: (input?: unknown) => dispatch('reboot', 'reboot', 'reboot', 'mutation', input),
+    reboot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('reboot', 'reboot', 'reboot', 'mutation', input, undefined, options),
   }
 
   const recordingInterface = {
-    listSources: (input?: unknown) => dispatch('recording', 'recording', 'listSources', 'query', input),
-    getAvailability: (input?: unknown) => dispatch('recording', 'recording', 'getAvailability', 'query', input),
-    getDaysWithRecordings: (input?: unknown) => dispatch('recording', 'recording', 'getDaysWithRecordings', 'query', input),
-    getPlayback: (input?: unknown) => dispatch('recording', 'recording', 'getPlayback', 'query', input),
-    getPlaybackOptions: (input?: unknown) => dispatch('recording', 'recording', 'getPlaybackOptions', 'query', input),
+    listSources: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording', 'recording', 'listSources', 'query', input, undefined, options),
+    getAvailability: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording', 'recording', 'getAvailability', 'query', input, undefined, options),
+    getDaysWithRecordings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording', 'recording', 'getDaysWithRecordings', 'query', input, undefined, options),
+    getPlayback: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording', 'recording', 'getPlayback', 'query', input, undefined, options),
+    getPlaybackOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording', 'recording', 'getPlaybackOptions', 'query', input, undefined, options),
   }
 
   const recordingOnboardInterface = {
-    getOptions: (input?: unknown) => dispatch('recording-onboard', 'recordingOnboard', 'getOptions', 'query', input),
-    setSettings: (input?: unknown) => dispatch('recording-onboard', 'recordingOnboard', 'setSettings', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('recording-onboard', 'recordingOnboard', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording-onboard', 'recordingOnboard', 'getOptions', 'query', input, undefined, options),
+    setSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording-onboard', 'recordingOnboard', 'setSettings', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording-onboard', 'recordingOnboard', 'getStatus', 'query', input, undefined, options),
   }
 
   const recordingSignalInterface = {
-    getStatus: (input?: unknown) => dispatch('recording-signal', 'recordingSignal', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording-signal', 'recordingSignal', 'getStatus', 'query', input, undefined, options),
   }
 
   const runningStateInterface = {
-    getStatus: (input?: unknown) => dispatch('running-state', 'runningState', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('running-state', 'runningState', 'getStatus', 'query', input, undefined, options),
   }
 
   const sceneMonitorInterface = {
-    listScenes: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'listScenes', 'query', input),
-    listScenesBatch: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'listScenesBatch', 'query', input),
-    createScene: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'createScene', 'mutation', input),
-    updateScene: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'updateScene', 'mutation', input),
-    deleteScene: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'deleteScene', 'mutation', input),
-    captureReference: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'captureReference', 'mutation', input),
-    deleteReference: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'deleteReference', 'mutation', input),
-    recheckNow: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'recheckNow', 'mutation', input),
-    resetScene: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'resetScene', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('scene-monitor', 'sceneMonitor', 'getStatus', 'query', input),
+    listScenes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'listScenes', 'query', input, undefined, options),
+    listScenesBatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'listScenesBatch', 'query', input, undefined, options),
+    createScene: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'createScene', 'mutation', input, undefined, options),
+    updateScene: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'updateScene', 'mutation', input, undefined, options),
+    deleteScene: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'deleteScene', 'mutation', input, undefined, options),
+    captureReference: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'captureReference', 'mutation', input, undefined, options),
+    deleteReference: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'deleteReference', 'mutation', input, undefined, options),
+    recheckNow: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'recheckNow', 'mutation', input, undefined, options),
+    resetScene: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'resetScene', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('scene-monitor', 'sceneMonitor', 'getStatus', 'query', input, undefined, options),
   }
 
   const scriptRunnerInterface = {
-    run: (input?: unknown) => dispatch('script-runner', 'scriptRunner', 'run', 'mutation', input),
-    stop: (input?: unknown) => dispatch('script-runner', 'scriptRunner', 'stop', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('script-runner', 'scriptRunner', 'getStatus', 'query', input),
+    run: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('script-runner', 'scriptRunner', 'run', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('script-runner', 'scriptRunner', 'stop', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('script-runner', 'scriptRunner', 'getStatus', 'query', input, undefined, options),
   }
 
   const smokeInterface = {
-    getStatus: (input?: unknown) => dispatch('smoke', 'smoke', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('smoke', 'smoke', 'getStatus', 'query', input, undefined, options),
   }
 
   const snapshotInterface = {
-    getSnapshot: (input?: unknown) => dispatch('snapshot', 'snapshot', 'getSnapshot', 'query', input),
-    invalidateCache: (input?: unknown) => dispatch('snapshot', 'snapshot', 'invalidateCache', 'mutation', input),
-    getSnapshotOverview: (input?: unknown) => dispatch('snapshot', 'snapshot', 'getSnapshotOverview', 'query', input),
-    getDebugState: (input?: unknown) => dispatch('snapshot', 'snapshot', 'getDebugState', 'query', input),
-    getSnapshotLinks: (input?: unknown) => dispatch('snapshot', 'snapshot', 'getSnapshotLinks', 'query', input),
-    getStatus: (input?: unknown) => dispatch('snapshot', 'snapshot', 'getStatus', 'query', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatch('snapshot', 'snapshot', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatch('snapshot', 'snapshot', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatch('snapshot', 'snapshot', 'applyDeviceSettingsPatch', 'mutation', input),
+    getSnapshot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'getSnapshot', 'query', input, undefined, options),
+    invalidateCache: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'invalidateCache', 'mutation', input, undefined, options),
+    getSnapshotOverview: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'getSnapshotOverview', 'query', input, undefined, options),
+    getDebugState: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'getDebugState', 'query', input, undefined, options),
+    getSnapshotLinks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'getSnapshotLinks', 'query', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'getStatus', 'query', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('snapshot', 'snapshot', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const streamCatalogInterface = {
-    getCatalog: (input?: unknown) => dispatch('stream-catalog', 'streamCatalog', 'getCatalog', 'query', input),
+    getCatalog: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('stream-catalog', 'streamCatalog', 'getCatalog', 'query', input, undefined, options),
   }
 
   const streamParamsInterface = {
-    getOptions: (input?: unknown) => dispatch('stream-params', 'streamParams', 'getOptions', 'query', input),
-    setProfile: (input?: unknown) => dispatch('stream-params', 'streamParams', 'setProfile', 'mutation', input),
-    getConfigSchema: (input?: unknown) => dispatch('stream-params', 'streamParams', 'getConfigSchema', 'query', input),
-    getStatus: (input?: unknown) => dispatch('stream-params', 'streamParams', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('stream-params', 'streamParams', 'getOptions', 'query', input, undefined, options),
+    setProfile: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('stream-params', 'streamParams', 'setProfile', 'mutation', input, undefined, options),
+    getConfigSchema: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('stream-params', 'streamParams', 'getConfigSchema', 'query', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('stream-params', 'streamParams', 'getStatus', 'query', input, undefined, options),
   }
 
   const streamSignalsInterface = {
-    listSignals: (input?: unknown) => dispatch('stream-signals', 'streamSignals', 'listSignals', 'query', input),
+    listSignals: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('stream-signals', 'streamSignals', 'listSignals', 'query', input, undefined, options),
   }
 
   const switchInterface = {
-    setState: (input?: unknown) => dispatch('switch', 'switch', 'setState', 'mutation', input),
-    toggle: (input?: unknown) => dispatch('switch', 'switch', 'toggle', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('switch', 'switch', 'getStatus', 'query', input),
+    setState: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'setState', 'mutation', input, undefined, options),
+    toggle: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'toggle', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'getStatus', 'query', input, undefined, options),
   }
 
   const tamperInterface = {
-    getStatus: (input?: unknown) => dispatch('tamper', 'tamper', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('tamper', 'tamper', 'getStatus', 'query', input, undefined, options),
   }
 
   const temperatureSensorInterface = {
-    getStatus: (input?: unknown) => dispatch('temperature-sensor', 'temperatureSensor', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('temperature-sensor', 'temperatureSensor', 'getStatus', 'query', input, undefined, options),
   }
 
   const timedRunInterface = {
-    getOptions: (input?: unknown) => dispatch('timed-run', 'timedRun', 'getOptions', 'query', input),
-    setSettings: (input?: unknown) => dispatch('timed-run', 'timedRun', 'setSettings', 'mutation', input),
-    runFor: (input?: unknown) => dispatch('timed-run', 'timedRun', 'runFor', 'mutation', input),
-    cancel: (input?: unknown) => dispatch('timed-run', 'timedRun', 'cancel', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('timed-run', 'timedRun', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('timed-run', 'timedRun', 'getOptions', 'query', input, undefined, options),
+    setSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('timed-run', 'timedRun', 'setSettings', 'mutation', input, undefined, options),
+    runFor: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('timed-run', 'timedRun', 'runFor', 'mutation', input, undefined, options),
+    cancel: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('timed-run', 'timedRun', 'cancel', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('timed-run', 'timedRun', 'getStatus', 'query', input, undefined, options),
   }
 
   const updateInterface = {
-    installUpdate: (input?: unknown) => dispatch('update', 'update', 'installUpdate', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('update', 'update', 'getStatus', 'query', input),
+    installUpdate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('update', 'update', 'installUpdate', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('update', 'update', 'getStatus', 'query', input, undefined, options),
   }
 
   const vacuumControlInterface = {
-    start: (input?: unknown) => dispatch('vacuum-control', 'vacuumControl', 'start', 'mutation', input),
-    pause: (input?: unknown) => dispatch('vacuum-control', 'vacuumControl', 'pause', 'mutation', input),
-    stop: (input?: unknown) => dispatch('vacuum-control', 'vacuumControl', 'stop', 'mutation', input),
-    returnToBase: (input?: unknown) => dispatch('vacuum-control', 'vacuumControl', 'returnToBase', 'mutation', input),
-    locate: (input?: unknown) => dispatch('vacuum-control', 'vacuumControl', 'locate', 'mutation', input),
-    setFanSpeed: (input?: unknown) => dispatch('vacuum-control', 'vacuumControl', 'setFanSpeed', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('vacuum-control', 'vacuumControl', 'getStatus', 'query', input),
+    start: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vacuum-control', 'vacuumControl', 'start', 'mutation', input, undefined, options),
+    pause: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vacuum-control', 'vacuumControl', 'pause', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vacuum-control', 'vacuumControl', 'stop', 'mutation', input, undefined, options),
+    returnToBase: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vacuum-control', 'vacuumControl', 'returnToBase', 'mutation', input, undefined, options),
+    locate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vacuum-control', 'vacuumControl', 'locate', 'mutation', input, undefined, options),
+    setFanSpeed: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vacuum-control', 'vacuumControl', 'setFanSpeed', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vacuum-control', 'vacuumControl', 'getStatus', 'query', input, undefined, options),
   }
 
   const valveInterface = {
-    open: (input?: unknown) => dispatch('valve', 'valve', 'open', 'mutation', input),
-    close: (input?: unknown) => dispatch('valve', 'valve', 'close', 'mutation', input),
-    stop: (input?: unknown) => dispatch('valve', 'valve', 'stop', 'mutation', input),
-    setPosition: (input?: unknown) => dispatch('valve', 'valve', 'setPosition', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('valve', 'valve', 'getStatus', 'query', input),
+    open: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('valve', 'valve', 'open', 'mutation', input, undefined, options),
+    close: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('valve', 'valve', 'close', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('valve', 'valve', 'stop', 'mutation', input, undefined, options),
+    setPosition: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('valve', 'valve', 'setPosition', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('valve', 'valve', 'getStatus', 'query', input, undefined, options),
   }
 
   const vibrationInterface = {
-    getStatus: (input?: unknown) => dispatch('vibration', 'vibration', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('vibration', 'vibration', 'getStatus', 'query', input, undefined, options),
   }
 
   const videoclipsInterface = {
-    listClips: (input?: unknown) => dispatch('videoclips', 'videoclips', 'listClips', 'query', input),
-    listSources: (input?: unknown) => dispatch('videoclips', 'videoclips', 'listSources', 'query', input),
-    getClipPlayback: (input?: unknown) => dispatch('videoclips', 'videoclips', 'getClipPlayback', 'query', input),
-    readClipBytes: (input?: unknown) => dispatch('videoclips', 'videoclips', 'readClipBytes', 'query', input),
-    offerClipBytes: (input?: unknown) => dispatch('videoclips', 'videoclips', 'offerClipBytes', 'query', input),
-    dialClipStream: (input?: unknown) => dispatch('videoclips', 'videoclips', 'dialClipStream', 'query', input),
-    getPlaybackOptions: (input?: unknown) => dispatch('videoclips', 'videoclips', 'getPlaybackOptions', 'query', input),
+    listClips: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('videoclips', 'videoclips', 'listClips', 'query', input, undefined, options),
+    listSources: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('videoclips', 'videoclips', 'listSources', 'query', input, undefined, options),
+    getClipPlayback: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('videoclips', 'videoclips', 'getClipPlayback', 'query', input, undefined, options),
+    readClipBytes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('videoclips', 'videoclips', 'readClipBytes', 'query', input, undefined, options),
+    offerClipBytes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('videoclips', 'videoclips', 'offerClipBytes', 'query', input, undefined, options),
+    dialClipStream: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('videoclips', 'videoclips', 'dialClipStream', 'query', input, undefined, options),
+    getPlaybackOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('videoclips', 'videoclips', 'getPlaybackOptions', 'query', input, undefined, options),
   }
 
   const waterHeaterInterface = {
-    setOperationMode: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'setOperationMode', 'mutation', input),
-    setAway: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'setAway', 'mutation', input),
-    setTargetTemp: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'setTargetTemp', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('water-heater', 'waterHeater', 'getStatus', 'query', input),
+    setOperationMode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('water-heater', 'waterHeater', 'setOperationMode', 'mutation', input, undefined, options),
+    setAway: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('water-heater', 'waterHeater', 'setAway', 'mutation', input, undefined, options),
+    setTargetTemp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('water-heater', 'waterHeater', 'setTargetTemp', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('water-heater', 'waterHeater', 'getStatus', 'query', input, undefined, options),
   }
 
   const weatherInterface = {
-    getStatus: (input?: unknown) => dispatch('weather', 'weather', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('weather', 'weather', 'getStatus', 'query', input, undefined, options),
   }
 
   const weatherStationInterface = {
-    getStatus: (input?: unknown) => dispatch('weather-station', 'weatherStation', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('weather-station', 'weatherStation', 'getStatus', 'query', input, undefined, options),
   }
 
   const webrtcSessionInterface = {
-    listStreams: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'listStreams', 'query', input),
-    createSession: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'createSession', 'mutation', input),
-    handleOffer: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'handleOffer', 'mutation', input),
-    handleAnswer: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'handleAnswer', 'mutation', input),
-    addIceCandidate: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'addIceCandidate', 'mutation', input),
-    getIceCandidates: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'getIceCandidates', 'query', input),
-    closeSession: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'closeSession', 'mutation', input),
-    hasAdaptiveBitrate: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'hasAdaptiveBitrate', 'query', input),
-    getSessionState: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'getSessionState', 'query', input),
-    applyDownlinkProbe: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'applyDownlinkProbe', 'mutation', input),
-    getSessionDebug: (input?: unknown) => dispatch('webrtc-session', 'webrtcSession', 'getSessionDebug', 'query', input),
+    listStreams: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'listStreams', 'query', input, undefined, options),
+    createSession: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'createSession', 'mutation', input, undefined, options),
+    handleOffer: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'handleOffer', 'mutation', input, undefined, options),
+    handleAnswer: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'handleAnswer', 'mutation', input, undefined, options),
+    addIceCandidate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'addIceCandidate', 'mutation', input, undefined, options),
+    getIceCandidates: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'getIceCandidates', 'query', input, undefined, options),
+    closeSession: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'closeSession', 'mutation', input, undefined, options),
+    hasAdaptiveBitrate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'hasAdaptiveBitrate', 'query', input, undefined, options),
+    getSessionState: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'getSessionState', 'query', input, undefined, options),
+    applyDownlinkProbe: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'applyDownlinkProbe', 'mutation', input, undefined, options),
+    getSessionDebug: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('webrtc-session', 'webrtcSession', 'getSessionDebug', 'query', input, undefined, options),
   }
 
   const zoneAnalyticsInterface = {
-    getCurrentSnapshot: (input?: unknown) => dispatch('zone-analytics', 'zoneAnalytics', 'getCurrentSnapshot', 'query', input),
-    getCurrentSnapshotBatch: (input?: unknown) => dispatch('zone-analytics', 'zoneAnalytics', 'getCurrentSnapshotBatch', 'query', input),
-    getZoneHistory: (input?: unknown) => dispatch('zone-analytics', 'zoneAnalytics', 'getZoneHistory', 'query', input),
-    getCameraHistory: (input?: unknown) => dispatch('zone-analytics', 'zoneAnalytics', 'getCameraHistory', 'query', input),
-    getUnzonedHistory: (input?: unknown) => dispatch('zone-analytics', 'zoneAnalytics', 'getUnzonedHistory', 'query', input),
+    getCurrentSnapshot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zone-analytics', 'zoneAnalytics', 'getCurrentSnapshot', 'query', input, undefined, options),
+    getCurrentSnapshotBatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zone-analytics', 'zoneAnalytics', 'getCurrentSnapshotBatch', 'query', input, undefined, options),
+    getZoneHistory: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zone-analytics', 'zoneAnalytics', 'getZoneHistory', 'query', input, undefined, options),
+    getCameraHistory: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zone-analytics', 'zoneAnalytics', 'getCameraHistory', 'query', input, undefined, options),
+    getUnzonedHistory: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zone-analytics', 'zoneAnalytics', 'getUnzonedHistory', 'query', input, undefined, options),
   }
 
   const zoneRulesInterface = {
-    listRules: (input?: unknown) => dispatch('zone-rules', 'zoneRules', 'listRules', 'query', input),
-    setRules: (input?: unknown) => dispatch('zone-rules', 'zoneRules', 'setRules', 'mutation', input),
+    listRules: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zone-rules', 'zoneRules', 'listRules', 'query', input, undefined, options),
+    setRules: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zone-rules', 'zoneRules', 'setRules', 'mutation', input, undefined, options),
   }
 
   const zonesInterface = {
-    listZones: (input?: unknown) => dispatch('zones', 'zones', 'listZones', 'query', input),
-    addZone: (input?: unknown) => dispatch('zones', 'zones', 'addZone', 'mutation', input),
-    removeZone: (input?: unknown) => dispatch('zones', 'zones', 'removeZone', 'mutation', input),
-    updateZone: (input?: unknown) => dispatch('zones', 'zones', 'updateZone', 'mutation', input),
+    listZones: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zones', 'zones', 'listZones', 'query', input, undefined, options),
+    addZone: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zones', 'zones', 'addZone', 'mutation', input, undefined, options),
+    removeZone: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zones', 'zones', 'removeZone', 'mutation', input, undefined, options),
+    updateZone: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('zones', 'zones', 'updateZone', 'mutation', input, undefined, options),
   }
 
   const actionsInterface = {
-    get: (input?: unknown) => dispatchSystem('actions', 'get', 'query', input),
-    run: (input?: unknown) => dispatchSystem('actions', 'run', 'mutation', input),
-    listForCamera: (input?: unknown) => dispatchSystem('actions', 'listForCamera', 'query', input),
-    getLinks: (input?: unknown) => dispatchSystem('actions', 'getLinks', 'query', input),
+    get: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('actions', 'get', 'query', input, undefined, options),
+    run: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('actions', 'run', 'mutation', input, undefined, options),
+    listForCamera: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('actions', 'listForCamera', 'query', input, undefined, options),
+    getLinks: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('actions', 'getLinks', 'query', input, undefined, options),
   }
 
   const addonSettingsInterface = {
-    getDeviceSettings: (input?: unknown) => dispatchSystem('addonSettings', 'getDeviceSettings', 'query', input),
-    updateDeviceSettings: (input?: unknown) => dispatchSystem('addonSettings', 'updateDeviceSettings', 'mutation', input),
+    getDeviceSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('addonSettings', 'getDeviceSettings', 'query', input, undefined, options),
+    updateDeviceSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('addonSettings', 'updateDeviceSettings', 'mutation', input, undefined, options),
   }
 
   const audioAnalyzerInterface = {
-    detachDevice: (input?: unknown) => dispatchSystem('audioAnalyzer', 'detachDevice', 'mutation', input),
+    detachDevice: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('audioAnalyzer', 'detachDevice', 'mutation', input, undefined, options),
   }
 
   const coreBlocksInterface = {
-    proposeRunningThreshold: (input?: unknown) => dispatchSystem('coreBlocks', 'proposeRunningThreshold', 'query', input),
+    proposeRunningThreshold: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('coreBlocks', 'proposeRunningThreshold', 'query', input, undefined, options),
   }
 
   const deviceAdoptionInterface = {
-    getStatus: (input?: unknown) => dispatchSystem('deviceAdoption', 'getStatus', 'query', input),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceAdoption', 'getStatus', 'query', input, undefined, options),
   }
 
   const deviceExportInterface = {
-    getDeviceSettingsContribution: (input?: unknown) => dispatchSystem('deviceExport', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatchSystem('deviceExport', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatchSystem('deviceExport', 'applyDeviceSettingsPatch', 'mutation', input),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceExport', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceExport', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceExport', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const deviceHistoryInterface = {
-    listSeries: (input?: unknown) => dispatchSystem('deviceHistory', 'listSeries', 'query', input),
-    query: (input?: unknown) => dispatchSystem('deviceHistory', 'query', 'query', input),
-    getDeviceEnabled: (input?: unknown) => dispatchSystem('deviceHistory', 'getDeviceEnabled', 'query', input),
-    setDeviceEnabled: (input?: unknown) => dispatchSystem('deviceHistory', 'setDeviceEnabled', 'mutation', input),
-    deleteSeriesRange: (input?: unknown) => dispatchSystem('deviceHistory', 'deleteSeriesRange', 'mutation', input),
+    listSeries: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceHistory', 'listSeries', 'query', input, undefined, options),
+    query: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceHistory', 'query', 'query', input, undefined, options),
+    getDeviceEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceHistory', 'getDeviceEnabled', 'query', input, undefined, options),
+    setDeviceEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceHistory', 'setDeviceEnabled', 'mutation', input, undefined, options),
+    deleteSeriesRange: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceHistory', 'deleteSeriesRange', 'mutation', input, undefined, options),
   }
 
   const deviceManagerInterface = {
-    loadConfig: (input?: unknown) => dispatchSystem('deviceManager', 'loadConfig', 'query', input),
-    loadRuntimeState: (input?: unknown) => dispatchSystem('deviceManager', 'loadRuntimeState', 'query', input),
-    loadMeta: (input?: unknown) => dispatchSystem('deviceManager', 'loadMeta', 'query', input),
-    setName: (input?: unknown) => dispatchSystem('deviceManager', 'setName', 'mutation', input),
-    setAlias: (input?: unknown) => dispatchSystem('deviceManager', 'setAlias', 'mutation', input),
-    setLocation: (input?: unknown) => dispatchSystem('deviceManager', 'setLocation', 'mutation', input),
-    setTags: (input?: unknown) => dispatchSystem('deviceManager', 'setTags', 'mutation', input),
-    setType: (input?: unknown) => dispatchSystem('deviceManager', 'setType', 'mutation', input),
-    setIntegrationId: (input?: unknown) => dispatchSystem('deviceManager', 'setIntegrationId', 'mutation', input),
-    setLinkDeviceId: (input?: unknown) => dispatchSystem('deviceManager', 'setLinkDeviceId', 'mutation', input),
-    setPrimaryChildEntityId: (input?: unknown) => dispatchSystem('deviceManager', 'setPrimaryChildEntityId', 'mutation', input),
-    setChildLayout: (input?: unknown) => dispatchSystem('deviceManager', 'setChildLayout', 'mutation', input),
-    setPrimaryChildPreference: (input?: unknown) => dispatchSystem('deviceManager', 'setPrimaryChildPreference', 'mutation', input),
-    setDisplay: (input?: unknown) => dispatchSystem('deviceManager', 'setDisplay', 'mutation', input),
-    getWireableFields: (input?: unknown) => dispatchSystem('deviceManager', 'getWireableFields', 'query', input),
-    setRole: (input?: unknown) => dispatchSystem('deviceManager', 'setRole', 'mutation', input),
-    applyInitialMeta: (input?: unknown) => dispatchSystem('deviceManager', 'applyInitialMeta', 'mutation', input),
-    setMetadata: (input?: unknown) => dispatchSystem('deviceManager', 'setMetadata', 'mutation', input),
-    setDisabled: (input?: unknown) => dispatchSystem('deviceManager', 'setDisabled', 'mutation', input),
-    getDevice: (input?: unknown) => dispatchSystem('deviceManager', 'getDevice', 'query', input),
-    getLinkedDevices: (input?: unknown) => dispatchSystem('deviceManager', 'getLinkedDevices', 'query', input),
-    getStreamSources: (input?: unknown) => dispatchSystem('deviceManager', 'getStreamSources', 'query', input),
-    getConfigSchema: (input?: unknown) => dispatchSystem('deviceManager', 'getConfigSchema', 'query', input),
-    getSettingsSchema: (input?: unknown) => dispatchSystem('deviceManager', 'getSettingsSchema', 'query', input),
-    updateConfig: (input?: unknown) => dispatchSystem('deviceManager', 'updateConfig', 'mutation', input),
-    enable: (input?: unknown) => dispatchSystem('deviceManager', 'enable', 'mutation', input),
-    disable: (input?: unknown) => dispatchSystem('deviceManager', 'disable', 'mutation', input),
-    remove: (input?: unknown) => dispatchSystem('deviceManager', 'remove', 'mutation', input),
-    getStreamProfileMap: (input?: unknown) => dispatchSystem('deviceManager', 'getStreamProfileMap', 'query', input),
-    setStreamProfileMap: (input?: unknown) => dispatchSystem('deviceManager', 'setStreamProfileMap', 'mutation', input),
-    probeStreams: (input?: unknown) => dispatchSystem('deviceManager', 'probeStreams', 'mutation', input),
-    getBindings: (input?: unknown) => dispatchSystem('deviceManager', 'getBindings', 'query', input),
-    setWrapperActive: (input?: unknown) => dispatchSystem('deviceManager', 'setWrapperActive', 'mutation', input),
-    getWrapperActivation: (input?: unknown) => dispatchSystem('deviceManager', 'getWrapperActivation', 'query', input),
-    getDeviceSettingsAggregate: (input?: unknown) => dispatchSystem('deviceManager', 'getDeviceSettingsAggregate', 'query', input),
-    getDeviceLiveInfoAggregate: (input?: unknown) => dispatchSystem('deviceManager', 'getDeviceLiveInfoAggregate', 'query', input),
-    getDeviceAggregate: (input?: unknown) => dispatchSystem('deviceManager', 'getDeviceAggregate', 'query', input),
-    runDeviceAction: (input?: unknown) => dispatchSystem('deviceManager', 'runDeviceAction', 'mutation', input),
-    updateDeviceField: (input?: unknown) => dispatchSystem('deviceManager', 'updateDeviceField', 'mutation', input),
-    updateDeviceFieldsBatch: (input?: unknown) => dispatchSystem('deviceManager', 'updateDeviceFieldsBatch', 'mutation', input),
-    testField: (input?: unknown) => dispatchSystem('deviceManager', 'testField', 'mutation', input),
-    getDeviceStatusAggregate: (input?: unknown) => dispatchSystem('deviceManager', 'getDeviceStatusAggregate', 'query', input),
+    loadConfig: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'loadConfig', 'query', input, undefined, options),
+    loadRuntimeState: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'loadRuntimeState', 'query', input, undefined, options),
+    loadMeta: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'loadMeta', 'query', input, undefined, options),
+    setName: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setName', 'mutation', input, undefined, options),
+    setAlias: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setAlias', 'mutation', input, undefined, options),
+    setLocation: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setLocation', 'mutation', input, undefined, options),
+    setTags: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setTags', 'mutation', input, undefined, options),
+    setType: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setType', 'mutation', input, undefined, options),
+    setIntegrationId: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setIntegrationId', 'mutation', input, undefined, options),
+    setLinkDeviceId: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setLinkDeviceId', 'mutation', input, undefined, options),
+    setPrimaryChildEntityId: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setPrimaryChildEntityId', 'mutation', input, undefined, options),
+    setChildLayout: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setChildLayout', 'mutation', input, undefined, options),
+    setPrimaryChildPreference: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setPrimaryChildPreference', 'mutation', input, undefined, options),
+    setDisplay: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setDisplay', 'mutation', input, undefined, options),
+    getWireableFields: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getWireableFields', 'query', input, undefined, options),
+    setRole: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setRole', 'mutation', input, undefined, options),
+    applyInitialMeta: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'applyInitialMeta', 'mutation', input, undefined, options),
+    setMetadata: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setMetadata', 'mutation', input, undefined, options),
+    setDisabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setDisabled', 'mutation', input, undefined, options),
+    getDevice: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getDevice', 'query', input, undefined, options),
+    getLinkedDevices: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getLinkedDevices', 'query', input, undefined, options),
+    getStreamSources: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getStreamSources', 'query', input, undefined, options),
+    getConfigSchema: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getConfigSchema', 'query', input, undefined, options),
+    getSettingsSchema: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getSettingsSchema', 'query', input, undefined, options),
+    updateConfig: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'updateConfig', 'mutation', input, undefined, options),
+    enable: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'enable', 'mutation', input, undefined, options),
+    disable: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'disable', 'mutation', input, undefined, options),
+    remove: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'remove', 'mutation', input, undefined, options),
+    getStreamProfileMap: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getStreamProfileMap', 'query', input, undefined, options),
+    setStreamProfileMap: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setStreamProfileMap', 'mutation', input, undefined, options),
+    probeStreams: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'probeStreams', 'mutation', input, undefined, options),
+    getBindings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getBindings', 'query', input, undefined, options),
+    setWrapperActive: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'setWrapperActive', 'mutation', input, undefined, options),
+    getWrapperActivation: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getWrapperActivation', 'query', input, undefined, options),
+    getDeviceSettingsAggregate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getDeviceSettingsAggregate', 'query', input, undefined, options),
+    getDeviceLiveInfoAggregate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getDeviceLiveInfoAggregate', 'query', input, undefined, options),
+    getDeviceAggregate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getDeviceAggregate', 'query', input, undefined, options),
+    runDeviceAction: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'runDeviceAction', 'mutation', input, undefined, options),
+    updateDeviceField: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'updateDeviceField', 'mutation', input, undefined, options),
+    updateDeviceFieldsBatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'updateDeviceFieldsBatch', 'mutation', input, undefined, options),
+    testField: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'testField', 'mutation', input, undefined, options),
+    getDeviceStatusAggregate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceManager', 'getDeviceStatusAggregate', 'query', input, undefined, options),
   }
 
   const deviceStateInterface = {
-    getSnapshot: (input?: unknown) => dispatchSystem('deviceState', 'getSnapshot', 'query', input),
-    getCapSlice: (input?: unknown) => dispatchSystem('deviceState', 'getCapSlice', 'query', input),
-    setCapSlice: (input?: unknown) => dispatchSystem('deviceState', 'setCapSlice', 'mutation', input),
-    claimFields: (input?: unknown) => dispatchSystem('deviceState', 'claimFields', 'mutation', input),
-    patchOwnedFields: (input?: unknown) => dispatchSystem('deviceState', 'patchOwnedFields', 'mutation', input),
-    releaseClaim: (input?: unknown) => dispatchSystem('deviceState', 'releaseClaim', 'mutation', input),
-    getNativeCapSlice: (input?: unknown) => dispatchSystem('deviceState', 'getNativeCapSlice', 'query', input),
+    getSnapshot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceState', 'getSnapshot', 'query', input, undefined, options),
+    getCapSlice: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceState', 'getCapSlice', 'query', input, undefined, options),
+    setCapSlice: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceState', 'setCapSlice', 'mutation', input, undefined, options),
+    claimFields: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceState', 'claimFields', 'mutation', input, undefined, options),
+    patchOwnedFields: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceState', 'patchOwnedFields', 'mutation', input, undefined, options),
+    releaseClaim: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceState', 'releaseClaim', 'mutation', input, undefined, options),
+    getNativeCapSlice: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('deviceState', 'getNativeCapSlice', 'query', input, undefined, options),
   }
 
   const faceGalleryInterface = {
-    listRecentFaces: (input?: unknown) => dispatchSystem('faceGallery', 'listRecentFaces', 'query', input),
-    getFaceByTrack: (input?: unknown) => dispatchSystem('faceGallery', 'getFaceByTrack', 'query', input),
+    listRecentFaces: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('faceGallery', 'listRecentFaces', 'query', input, undefined, options),
+    getFaceByTrack: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('faceGallery', 'getFaceByTrack', 'query', input, undefined, options),
   }
 
   const networkQualityInterface = {
-    getDeviceStats: (input?: unknown) => dispatchSystem('networkQuality', 'getDeviceStats', 'query', input),
-    reportClientStats: (input?: unknown) => dispatchSystem('networkQuality', 'reportClientStats', 'mutation', input),
+    getDeviceStats: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('networkQuality', 'getDeviceStats', 'query', input, undefined, options),
+    reportClientStats: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('networkQuality', 'reportClientStats', 'mutation', input, undefined, options),
   }
 
   const notificationRulesInterface = {
-    setDeviceMuted: (input?: unknown) => dispatchSystem('notificationRules', 'setDeviceMuted', 'mutation', input),
+    setDeviceMuted: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('notificationRules', 'setDeviceMuted', 'mutation', input, undefined, options),
   }
 
   const osdManagerInterface = {
-    getDeviceOsd: (input?: unknown) => dispatchSystem('osdManager', 'getDeviceOsd', 'query', input),
-    setSlotBinding: (input?: unknown) => dispatchSystem('osdManager', 'setSlotBinding', 'mutation', input),
-    clearSlotBinding: (input?: unknown) => dispatchSystem('osdManager', 'clearSlotBinding', 'mutation', input),
-    setSlotCameraEnabled: (input?: unknown) => dispatchSystem('osdManager', 'setSlotCameraEnabled', 'mutation', input),
-    previewSlot: (input?: unknown) => dispatchSystem('osdManager', 'previewSlot', 'mutation', input),
-    previewTemplate: (input?: unknown) => dispatchSystem('osdManager', 'previewTemplate', 'mutation', input),
-    renderDevice: (input?: unknown) => dispatchSystem('osdManager', 'renderDevice', 'mutation', input),
+    getDeviceOsd: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('osdManager', 'getDeviceOsd', 'query', input, undefined, options),
+    setSlotBinding: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('osdManager', 'setSlotBinding', 'mutation', input, undefined, options),
+    clearSlotBinding: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('osdManager', 'clearSlotBinding', 'mutation', input, undefined, options),
+    setSlotCameraEnabled: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('osdManager', 'setSlotCameraEnabled', 'mutation', input, undefined, options),
+    previewSlot: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('osdManager', 'previewSlot', 'mutation', input, undefined, options),
+    previewTemplate: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('osdManager', 'previewTemplate', 'mutation', input, undefined, options),
+    renderDevice: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('osdManager', 'renderDevice', 'mutation', input, undefined, options),
   }
 
   const pipelineExecutorInterface = {
-    runPipeline: (input?: unknown) => dispatchSystem('pipelineExecutor', 'runPipeline', 'mutation', input),
-    runPipelineBatch: (input?: unknown) => dispatchSystem('pipelineExecutor', 'runPipelineBatch', 'mutation', input),
+    runPipeline: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineExecutor', 'runPipeline', 'mutation', input, undefined, options),
+    runPipelineBatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineExecutor', 'runPipelineBatch', 'mutation', input, undefined, options),
   }
 
   const pipelineOrchestratorInterface = {
-    assignPipeline: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'assignPipeline', 'mutation', input),
-    unassignPipeline: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'unassignPipeline', 'mutation', input),
-    setPipelineDevicePin: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'setPipelineDevicePin', 'mutation', input),
-    getPipelineDevicePin: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getPipelineDevicePin', 'query', input),
-    getPipelineAssignment: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getPipelineAssignment', 'query', input),
-    getCameraMetrics: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getCameraMetrics', 'query', input),
-    assignAudio: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'assignAudio', 'mutation', input),
-    unassignAudio: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'unassignAudio', 'mutation', input),
-    getAudioAssignment: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getAudioAssignment', 'query', input),
-    getCameraSettings: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getCameraSettings', 'query', input),
-    setCameraStepToggle: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'setCameraStepToggle', 'mutation', input),
-    getCameraDetectionSource: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getCameraDetectionSource', 'query', input),
-    setCameraDetectionSource: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'setCameraDetectionSource', 'mutation', input),
-    setCameraStepSettings: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'setCameraStepSettings', 'mutation', input),
-    resolvePipeline: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'resolvePipeline', 'query', input),
-    getCameraSwitches: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getCameraSwitches', 'query', input),
-    setCameraSwitch: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'setCameraSwitch', 'mutation', input),
-    getCameraStatus: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getCameraStatus', 'query', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatchSystem('pipelineOrchestrator', 'applyDeviceSettingsPatch', 'mutation', input),
+    assignPipeline: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'assignPipeline', 'mutation', input, undefined, options),
+    unassignPipeline: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'unassignPipeline', 'mutation', input, undefined, options),
+    setPipelineDevicePin: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'setPipelineDevicePin', 'mutation', input, undefined, options),
+    getPipelineDevicePin: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getPipelineDevicePin', 'query', input, undefined, options),
+    getPipelineAssignment: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getPipelineAssignment', 'query', input, undefined, options),
+    getCameraMetrics: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getCameraMetrics', 'query', input, undefined, options),
+    assignAudio: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'assignAudio', 'mutation', input, undefined, options),
+    unassignAudio: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'unassignAudio', 'mutation', input, undefined, options),
+    getAudioAssignment: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getAudioAssignment', 'query', input, undefined, options),
+    getCameraSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getCameraSettings', 'query', input, undefined, options),
+    setCameraStepToggle: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'setCameraStepToggle', 'mutation', input, undefined, options),
+    getCameraDetectionSource: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getCameraDetectionSource', 'query', input, undefined, options),
+    setCameraDetectionSource: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'setCameraDetectionSource', 'mutation', input, undefined, options),
+    setCameraStepSettings: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'setCameraStepSettings', 'mutation', input, undefined, options),
+    resolvePipeline: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'resolvePipeline', 'query', input, undefined, options),
+    getCameraSwitches: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getCameraSwitches', 'query', input, undefined, options),
+    setCameraSwitch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'setCameraSwitch', 'mutation', input, undefined, options),
+    getCameraStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getCameraStatus', 'query', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineOrchestrator', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const pipelineRunnerInterface = {
-    detachCamera: (input?: unknown) => dispatchSystem('pipelineRunner', 'detachCamera', 'mutation', input),
-    getCameraMetrics: (input?: unknown) => dispatchSystem('pipelineRunner', 'getCameraMetrics', 'query', input),
-    requestOccupancyBurst: (input?: unknown) => dispatchSystem('pipelineRunner', 'requestOccupancyBurst', 'mutation', input),
-    runDetailSubtree: (input?: unknown) => dispatchSystem('pipelineRunner', 'runDetailSubtree', 'mutation', input),
-    parkTrackFrame: (input?: unknown) => dispatchSystem('pipelineRunner', 'parkTrackFrame', 'mutation', input),
-    getParkedTrackFrame: (input?: unknown) => dispatchSystem('pipelineRunner', 'getParkedTrackFrame', 'query', input),
-    releaseParkedTrackFrames: (input?: unknown) => dispatchSystem('pipelineRunner', 'releaseParkedTrackFrames', 'mutation', input),
+    detachCamera: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineRunner', 'detachCamera', 'mutation', input, undefined, options),
+    getCameraMetrics: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineRunner', 'getCameraMetrics', 'query', input, undefined, options),
+    requestOccupancyBurst: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineRunner', 'requestOccupancyBurst', 'mutation', input, undefined, options),
+    runDetailSubtree: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineRunner', 'runDetailSubtree', 'mutation', input, undefined, options),
+    parkTrackFrame: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineRunner', 'parkTrackFrame', 'mutation', input, undefined, options),
+    getParkedTrackFrame: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineRunner', 'getParkedTrackFrame', 'query', input, undefined, options),
+    releaseParkedTrackFrames: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('pipelineRunner', 'releaseParkedTrackFrames', 'mutation', input, undefined, options),
   }
 
   const plateGalleryInterface = {
-    listPlates: (input?: unknown) => dispatchSystem('plateGallery', 'listPlates', 'query', input),
-    getPlateByTrack: (input?: unknown) => dispatchSystem('plateGallery', 'getPlateByTrack', 'query', input),
+    listPlates: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('plateGallery', 'listPlates', 'query', input, undefined, options),
+    getPlateByTrack: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('plateGallery', 'getPlateByTrack', 'query', input, undefined, options),
   }
 
   const recordingArchiveInterface = {
-    getDeviceConfig: (input?: unknown) => dispatchSystem('recordingArchive', 'getDeviceConfig', 'query', input),
-    locateSegment: (input?: unknown) => dispatchSystem('recordingArchive', 'locateSegment', 'query', input),
-    readSegmentBytes: (input?: unknown) => dispatchSystem('recordingArchive', 'readSegmentBytes', 'query', input),
-    readGopBytes: (input?: unknown) => dispatchSystem('recordingArchive', 'readGopBytes', 'query', input),
-    readWindowBytes: (input?: unknown) => dispatchSystem('recordingArchive', 'readWindowBytes', 'query', input),
-    setDeviceConfig: (input?: unknown) => dispatchSystem('recordingArchive', 'setDeviceConfig', 'mutation', input),
-    rescanStorage: (input?: unknown) => dispatchSystem('recordingArchive', 'rescanStorage', 'mutation', input),
-    pruneFootage: (input?: unknown) => dispatchSystem('recordingArchive', 'pruneFootage', 'mutation', input),
-    deleteFootprint: (input?: unknown) => dispatchSystem('recordingArchive', 'deleteFootprint', 'mutation', input),
-    renderGif: (input?: unknown) => dispatchSystem('recordingArchive', 'renderGif', 'mutation', input),
-    renderClip: (input?: unknown) => dispatchSystem('recordingArchive', 'renderClip', 'mutation', input),
-    getStatus: (input?: unknown) => dispatchSystem('recordingArchive', 'getStatus', 'query', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatchSystem('recordingArchive', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatchSystem('recordingArchive', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatchSystem('recordingArchive', 'applyDeviceSettingsPatch', 'mutation', input),
+    getDeviceConfig: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'getDeviceConfig', 'query', input, undefined, options),
+    locateSegment: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'locateSegment', 'query', input, undefined, options),
+    readSegmentBytes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'readSegmentBytes', 'query', input, undefined, options),
+    readGopBytes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'readGopBytes', 'query', input, undefined, options),
+    readWindowBytes: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'readWindowBytes', 'query', input, undefined, options),
+    setDeviceConfig: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'setDeviceConfig', 'mutation', input, undefined, options),
+    rescanStorage: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'rescanStorage', 'mutation', input, undefined, options),
+    pruneFootage: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'pruneFootage', 'mutation', input, undefined, options),
+    deleteFootprint: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'deleteFootprint', 'mutation', input, undefined, options),
+    renderGif: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'renderGif', 'mutation', input, undefined, options),
+    renderClip: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'renderClip', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'getStatus', 'query', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingArchive', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   const recordingExportInterface = {
-    listExports: (input?: unknown) => dispatchSystem('recordingExport', 'listExports', 'query', input),
+    listExports: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('recordingExport', 'listExports', 'query', input, undefined, options),
   }
 
   const streamBrokerInterface = {
-    reportStreamSignal: (input?: unknown) => dispatchSystem('streamBroker', 'reportStreamSignal', 'mutation', input),
-    publishCameraStream: (input?: unknown) => dispatchSystem('streamBroker', 'publishCameraStream', 'mutation', input),
-    retractCameraStream: (input?: unknown) => dispatchSystem('streamBroker', 'retractCameraStream', 'mutation', input),
-    assignProfile: (input?: unknown) => dispatchSystem('streamBroker', 'assignProfile', 'mutation', input),
-    unassignProfile: (input?: unknown) => dispatchSystem('streamBroker', 'unassignProfile', 'mutation', input),
-    forgetDeviceHardware: (input?: unknown) => dispatchSystem('streamBroker', 'forgetDeviceHardware', 'mutation', input),
-    renderPreBufferClip: (input?: unknown) => dispatchSystem('streamBroker', 'renderPreBufferClip', 'mutation', input),
-    produceEventMedia: (input?: unknown) => dispatchSystem('streamBroker', 'produceEventMedia', 'mutation', input),
-    restartProfile: (input?: unknown) => dispatchSystem('streamBroker', 'restartProfile', 'mutation', input),
-    getDeviceAudioMute: (input?: unknown) => dispatchSystem('streamBroker', 'getDeviceAudioMute', 'query', input),
-    setDeviceAudioMute: (input?: unknown) => dispatchSystem('streamBroker', 'setDeviceAudioMute', 'mutation', input),
-    getDeviceSettingsContribution: (input?: unknown) => dispatchSystem('streamBroker', 'getDeviceSettingsContribution', 'query', input),
-    getDeviceLiveContribution: (input?: unknown) => dispatchSystem('streamBroker', 'getDeviceLiveContribution', 'query', input),
-    applyDeviceSettingsPatch: (input?: unknown) => dispatchSystem('streamBroker', 'applyDeviceSettingsPatch', 'mutation', input),
+    reportStreamSignal: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'reportStreamSignal', 'mutation', input, undefined, options),
+    publishCameraStream: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'publishCameraStream', 'mutation', input, undefined, options),
+    retractCameraStream: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'retractCameraStream', 'mutation', input, undefined, options),
+    assignProfile: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'assignProfile', 'mutation', input, undefined, options),
+    unassignProfile: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'unassignProfile', 'mutation', input, undefined, options),
+    forgetDeviceHardware: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'forgetDeviceHardware', 'mutation', input, undefined, options),
+    renderPreBufferClip: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'renderPreBufferClip', 'mutation', input, undefined, options),
+    produceEventMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'produceEventMedia', 'mutation', input, undefined, options),
+    restartProfile: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'restartProfile', 'mutation', input, undefined, options),
+    getDeviceAudioMute: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'getDeviceAudioMute', 'query', input, undefined, options),
+    setDeviceAudioMute: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'setDeviceAudioMute', 'mutation', input, undefined, options),
+    getDeviceSettingsContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'getDeviceSettingsContribution', 'query', input, undefined, options),
+    getDeviceLiveContribution: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'getDeviceLiveContribution', 'query', input, undefined, options),
+    applyDeviceSettingsPatch: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'applyDeviceSettingsPatch', 'mutation', input, undefined, options),
   }
 
   return {

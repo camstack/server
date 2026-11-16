@@ -14,6 +14,7 @@
 
 import { z } from 'zod'
 import { type DeviceRole, DeviceType } from '../device/device-type.js'
+import type { CommandOriginRequestOptions } from '../cap-call-context.js'
 import type { ConfigUISchemaWithValues } from '../interfaces/config-ui.js'
 import type { ExtensionSlotDescriptor } from '../device-extension/slot-descriptor.js'
 import type { MethodRoleDecl } from '../auth/viewer-access.js'
@@ -1476,7 +1477,10 @@ export type InferDeviceProxyCap<T extends CapabilityDefinition> = {
           input: Omit<z.infer<TIn>, 'deviceId'>,
           push: (value: z.infer<TOut>) => void,
         ) => (() => void) | void
-      : (input: Omit<z.infer<TIn>, 'deviceId'>) => Promise<z.infer<TOut>>
+      : (
+          input: Omit<z.infer<TIn>, 'deviceId'>,
+          options?: CommandOriginRequestOptions,
+        ) => Promise<z.infer<TOut>>
     : never
 } & (T['status'] extends { schema: infer S }
   ? // Auto-injected `getStatus` mirrors the runtime emitted by the proxy

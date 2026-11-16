@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A kind that does not say whether it can be tested now follows its own provider, so Calendar, Alexa, Matter and Home Assistant integration rows no longer offer a Test that answered 'no connection test'
 - Device Interactions can record which ecosystem principal an exporter acted for.
+- A device proxy command accepts an optional call origin, so an exporter can state who it acted for.
 
 ## [1.2.584] - 2026-11-16
 

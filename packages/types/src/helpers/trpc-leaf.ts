@@ -1,9 +1,10 @@
+import type { CommandOriginRequestOptions } from '../cap-call-context.js'
 import type { AddonApi } from '../generated/addon-api.js'
 
 /** tRPC client procedure bundle (`query` / `mutate` / `subscribe`). */
 export interface TrpcProcedureLeaf {
-  readonly query?: (input?: unknown) => unknown
-  readonly mutate?: (input?: unknown) => unknown
+  readonly query?: (input?: unknown, options?: CommandOriginRequestOptions) => unknown
+  readonly mutate?: (input?: unknown, options?: CommandOriginRequestOptions) => unknown
   readonly subscribe?: (input?: unknown, push?: unknown) => unknown
 }
 
@@ -56,13 +57,14 @@ export function invokeTrpcLeaf<Result>(
   kind: TrpcDispatchKind,
   input?: unknown,
   push?: unknown,
+  options?: CommandOriginRequestOptions,
 ): Result {
   const fn = readTrpcLeaf(api, capProp, method)
   if (kind === 'mutation') {
     if (typeof fn.mutate !== 'function') {
       throw new Error(`tRPC '${capProp}.${method}' has no mutate()`)
     }
-    return fn.mutate(input) as Result
+    return fn.mutate(input, options) as Result
   }
   if (kind === 'subscription') {
     if (typeof fn.subscribe !== 'function') {
@@ -73,5 +75,5 @@ export function invokeTrpcLeaf<Result>(
   if (typeof fn.query !== 'function') {
     throw new Error(`tRPC '${capProp}.${method}' has no query()`)
   }
-  return fn.query(input) as Result
+  return fn.query(input, options) as Result
 }

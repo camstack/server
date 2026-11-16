@@ -113,7 +113,7 @@ async function main(): Promise<void> {
           if (m.kind === 'subscription') {
             return `    ${m.name}: (input?: unknown, push?: unknown) => ${helper}(${args}, input, push),`
           }
-          return `    ${m.name}: (input?: unknown) => ${helper}(${args}, input),`
+          return `    ${m.name}: (input?: unknown, options?: CommandOriginRequestOptions) => ${helper}(${args}, input, undefined, options),`
         })
         .join('\n')
 
@@ -149,6 +149,7 @@ import type { InferDeviceProxyCap, InferRuntimeState } from '../capabilities/cap
 import type { DeviceBinding } from '../device/device-binding.js'
 import { createSliceHandle, createLazyTrpcSource, type SliceHandle, type SliceHandleSource } from '../device/device-state-handle.js'
 import { addonSliceHandleApi } from '../helpers/addon-slice-handle.js'
+import type { CommandOriginRequestOptions } from '../cap-call-context.js'
 import { invokeTrpcLeaf, type TrpcDispatchKind } from '../helpers/trpc-leaf.js'
 import type { AddonApi } from './addon-api.js'
 ${imports}
@@ -225,8 +226,8 @@ export function createDeviceProxy(
   }
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function callLeaf(capProp: string, method: string, kind: Kind, merged: unknown, push: unknown): any {
-    return invokeTrpcLeaf(api, capProp, method, kind, merged, push)
+  function callLeaf(capProp: string, method: string, kind: Kind, merged: unknown, push: unknown, options?: CommandOriginRequestOptions): any {
+    return invokeTrpcLeaf(api, capProp, method, kind, merged, push, options)
   }
 
   /**
@@ -239,9 +240,9 @@ export function createDeviceProxy(
    * the actual singleton lives in a worker.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function dispatch(capName: string, capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown): any {
+  function dispatch(capName: string, capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown, options?: CommandOriginRequestOptions): any {
     const entry = binding.entries.find((e) => e.capName === capName)
-    return callLeaf(capProp, method, kind, mergeInput(input, entry?.providerNodeId), push)
+    return callLeaf(capProp, method, kind, mergeInput(input, entry?.providerNodeId), push, options)
   }
 
   /**
@@ -250,8 +251,8 @@ export function createDeviceProxy(
    * \`pipeline-runner\`) can resolve their own target node.
    */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function dispatchSystem(capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown): any {
-    return callLeaf(capProp, method, kind, mergeInput(input, undefined), push)
+  function dispatchSystem(capProp: string, method: string, kind: Kind, input?: unknown, push?: unknown, options?: CommandOriginRequestOptions): any {
+    return callLeaf(capProp, method, kind, mergeInput(input, undefined), push, options)
   }
 
   /** True when this device's binding lists the cap — gates device-scoped handles. */
