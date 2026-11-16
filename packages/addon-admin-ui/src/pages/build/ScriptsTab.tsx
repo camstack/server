@@ -337,7 +337,6 @@ export function ScriptsTab({
                 icon={Pencil}
                 variant="ghost"
                 aria-label={t('build.quickEdit.action', 'Quick edit')}
-                title={t('build.quickEdit.action', 'Quick edit')}
                 onClick={(e) => {
                   e.stopPropagation()
                   setQuickEditId(block.id)

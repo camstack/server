@@ -475,7 +475,6 @@ function columnsFor(
                 icon={Pencil}
                 variant="ghost"
                 aria-label={t('build.quickEdit.action', 'Quick edit')}
-                title={t('build.quickEdit.action', 'Quick edit')}
                 data-testid={`composed-quick-edit-${row.blockId}`}
                 onClick={(e) => {
                   e.stopPropagation()
