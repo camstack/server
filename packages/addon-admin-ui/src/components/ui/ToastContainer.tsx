@@ -15,8 +15,16 @@ interface ToastItem {
 
 const SEVERITY_STYLES: Record<string, { bg: string; border: string; icon: typeof Info }> = {
   info: { bg: 'bg-info/10', border: 'border-info/30', icon: Info },
-  warning: { bg: 'bg-warning/10', border: 'border-warning/30', icon: AlertTriangle },
-  critical: { bg: 'bg-danger/10', border: 'border-danger/30', icon: AlertCircle },
+  warning: {
+    bg: 'bg-warning/10',
+    border: 'border-warning/30',
+    icon: AlertTriangle,
+  },
+  critical: {
+    bg: 'bg-danger/10',
+    border: 'border-danger/30',
+    icon: AlertCircle,
+  },
 }
 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: string) => void }) {
@@ -31,22 +39,26 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: str
   }, [toast.id, toast.duration, onDismiss])
 
   return (
-    <div
-      className={`flex items-start gap-3 px-4 py-3 rounded-lg border ${style.border} ${style.bg} shadow-lg animate-in slide-in-from-right-5 fade-in duration-200`}
-    >
-      <Icon className="h-4 w-4 shrink-0 mt-0.5 text-foreground-subtle" />
-      <div className="flex-1 min-w-0">
-        <div className="text-xs font-semibold text-foreground">{toast.title}</div>
-        <div className="text-[11px] text-foreground-subtle mt-0.5">{toast.message}</div>
-      </div>
-      <Button
-        variant="unstyled"
-        type="button"
-        onClick={() => onDismiss(toast.id)}
-        className="shrink-0 p-0.5 rounded hover:bg-surface-hover transition-colors"
+    // Opaque `bg-surface` underneath, severity tint layered on top: the tints
+    // are translucent, so on their own the page shows through the text.
+    <div className="rounded-lg bg-surface shadow-lg animate-in slide-in-from-right-5 fade-in duration-200">
+      <div
+        className={`flex items-start gap-3 px-4 py-3 rounded-lg border ${style.border} ${style.bg}`}
       >
-        <X className="h-3.5 w-3.5 text-foreground-subtle" />
-      </Button>
+        <Icon className="h-4 w-4 shrink-0 mt-0.5 text-foreground-subtle" />
+        <div className="flex-1 min-w-0">
+          <div className="text-xs font-semibold text-foreground">{toast.title}</div>
+          <div className="text-[11px] text-foreground-subtle mt-0.5">{toast.message}</div>
+        </div>
+        <Button
+          variant="unstyled"
+          type="button"
+          onClick={() => onDismiss(toast.id)}
+          className="shrink-0 p-0.5 rounded hover:bg-surface-hover transition-colors"
+        >
+          <X className="h-3.5 w-3.5 text-foreground-subtle" />
+        </Button>
+      </div>
     </div>
   )
 }
