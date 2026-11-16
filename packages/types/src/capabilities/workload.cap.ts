@@ -564,6 +564,14 @@ export const workloadCapability = {
               ),
               icon: 'server-crash',
             },
+            onRecovered: {
+              label: t('Came online', 'Tornato in linea'),
+              phrase: t(
+                'When {device} comes back online after going down',
+                'Quando {device} torna in linea dopo essere caduto',
+              ),
+              icon: 'server',
+            },
           },
         },
       },

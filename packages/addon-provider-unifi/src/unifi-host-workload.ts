@@ -60,16 +60,17 @@ function emptyResources(): WorkloadResources {
 }
 
 /**
- * The controller's device state as a workload state. Offline is stopped (the controller
- * cannot reach it); an upgrade restarts it; pending / adopting / unknown say nothing about
- * whether it runs, so they are unknown (`null`).
+ * The controller's device state as a workload state. Offline is `crashed`: the device went
+ * down without anyone asking it to stop (no stop is served), so it raises "went down" and its
+ * return "came online" — never "shut down". An upgrade restarts it; pending / adopting /
+ * unknown say nothing about whether it runs, so they are unknown (`null`).
  */
 function hostState(state: UnifiInfraState): WorkloadState | null {
   switch (state) {
     case 'online':
       return 'running'
     case 'offline':
-      return 'stopped'
+      return 'crashed'
     case 'upgrading':
       return 'starting'
     case 'pending':

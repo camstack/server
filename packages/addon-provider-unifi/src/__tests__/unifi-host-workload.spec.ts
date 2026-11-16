@@ -1,4 +1,11 @@
-import { type IScopedLogger, WorkloadStatusSchema, deriveWorkloadControls } from '@camstack/types'
+import {
+  DeviceRole,
+  type IScopedLogger,
+  WorkloadStatusSchema,
+  deriveWorkloadControls,
+  workloadCapability,
+  workloadTransition,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import { settingsToConnection } from '../config.js'
 import type { UnifiControllerClient } from '../unifi-client-contract.js'
@@ -35,12 +42,12 @@ describe('unifiHostWorkloadStatus — a console, switch or AP as a workload host
     expect(status.hostDeviceId).toBeNull()
   })
 
-  it('an offline device is stopped with no uptime; a device mid-adoption is unknown', () => {
+  it('an offline device went down (nobody asked it to stop); mid-adoption is unknown', () => {
     const offline = unifiHostWorkloadStatus(
       infraSnapshot({ id: 'sw1', online: false, state: 'offline', uptimeSec: 100 }),
       NOW,
     )
-    expect(offline.state).toBe('stopped')
+    expect(offline.state).toBe('crashed')
     expect(offline.since).toBeNull()
     expect(
       unifiHostWorkloadStatus(infraSnapshot({ id: 'sw1', state: 'adopting' }), NOW).state,
@@ -139,5 +146,25 @@ describe('since does not drift between polls', () => {
 
   it('the unknown seed is the starting point', () => {
     expect(UNIFI_HOST_WORKLOAD_UNKNOWN.state).toBeNull()
+  })
+})
+
+describe('an access point that goes offline and comes back', () => {
+  const hostEvents = workloadCapability.vocabulary.overrides.byRole[DeviceRole.Host].events
+
+  it('offline raises "went down", back online raises "came online" — never "shut down"', () => {
+    const online = unifiHostWorkloadStatus(
+      infraSnapshot({ id: 'ap1', kind: 'access-point' }),
+      NOW,
+    ).state
+    const offline = unifiHostWorkloadStatus(
+      infraSnapshot({ id: 'ap1', kind: 'access-point', state: 'offline', online: false }),
+      NOW,
+    ).state
+    expect(offline).toBe('crashed')
+    expect(workloadTransition('running', offline)).toBe('crashed')
+    expect(hostEvents.onCrashed.label.en).toBe('Went down')
+    expect(workloadTransition('crashed', online)).toBe('recovered')
+    expect(hostEvents.onRecovered.label.en).toBe('Came online')
   })
 })

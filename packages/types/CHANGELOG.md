@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - terminalSession.listSessions names who opened each session (openedBy) and when it last saw input or output (lastActivityAt).
 - Summaries, timelapses and calendar-events rules carry tags too; the tags list shows an unreachable owner's count as unknown
 - network-link's link speed is speedKbps, the bitrate quantity in kbit/s, shown in the system's bitrate unit
+- A host that comes back after going down raises a "Came online" event (the workload recovered event, host wording).
 
 ## [1.2.585] - 2026-11-16
 

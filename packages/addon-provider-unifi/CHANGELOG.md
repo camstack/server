@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Consoles, switches and access points are adopted as workload hosts showing whether they run, their uptime, CPU and temperature; PoE ports carry the PoE port role and report link up and link speed
 - A local account now signs in through aiounifi (the library Home Assistant uses) in a Python worker: PoE on/off keeps every other port's setting, and the controller's live event stream updates port link, PoE and clients between polls.
 - An unreachable controller now shows its consoles, switches and access points as unknown instead of still running, and their running-since time no longer moves on every poll.
+- A UniFi console, switch or access point that drops off the controller now raises "Went down" (not "Shut down"), and "Came online" when it returns.
 
 ## [0.2.164] - 2026-11-14
 
