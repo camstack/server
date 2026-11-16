@@ -70,6 +70,8 @@ const EXEMPT_MEASUREMENT_CAPS: ReadonlySet<string> = new Set([
   'temperature-sensor',
   'reboot',
   'motion-trigger',
+  // Timed siren trigger: the on/off event kind stays on the siren's switch.
+  'siren',
 ])
 
 interface CapInfo {

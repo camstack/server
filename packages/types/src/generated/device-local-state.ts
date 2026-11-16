@@ -70,6 +70,7 @@ import { recordingSignalCapability } from '../capabilities/recording-signal.cap.
 import { runningStateCapability } from '../capabilities/running-state.cap.js'
 import { sceneMonitorCapability } from '../capabilities/scene-monitor.cap.js'
 import { scriptRunnerCapability } from '../capabilities/script-runner.cap.js'
+import { sirenCapability } from '../capabilities/siren.cap.js'
 import { smokeCapability } from '../capabilities/smoke.cap.js'
 import { streamCatalogCapability } from '../capabilities/stream-catalog.cap.js'
 import { streamParamsCapability } from '../capabilities/stream-params.cap.js'
@@ -168,6 +169,7 @@ export interface DeviceLocalState {
   runningState: InferRuntimeState<typeof runningStateCapability>
   sceneMonitor: InferRuntimeState<typeof sceneMonitorCapability>
   scriptRunner: InferRuntimeState<typeof scriptRunnerCapability>
+  siren: InferRuntimeState<typeof sirenCapability>
   smoke: InferRuntimeState<typeof smokeCapability>
   streamCatalog: InferRuntimeState<typeof streamCatalogCapability>
   streamParams: InferRuntimeState<typeof streamParamsCapability>
@@ -262,6 +264,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   runningState: runningStateCapability,
   sceneMonitor: sceneMonitorCapability,
   scriptRunner: scriptRunnerCapability,
+  siren: sirenCapability,
   smoke: smokeCapability,
   streamCatalog: streamCatalogCapability,
   streamParams: streamParamsCapability,
@@ -363,6 +366,7 @@ export interface CapNameToRuntimeStateMap {
   'running-state': InferRuntimeState<typeof runningStateCapability>
   'scene-monitor': InferRuntimeState<typeof sceneMonitorCapability>
   'script-runner': InferRuntimeState<typeof scriptRunnerCapability>
+  'siren': InferRuntimeState<typeof sirenCapability>
   'smoke': InferRuntimeState<typeof smokeCapability>
   'stream-catalog': InferRuntimeState<typeof streamCatalogCapability>
   'stream-params': InferRuntimeState<typeof streamParamsCapability>

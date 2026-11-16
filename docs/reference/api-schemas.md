@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1089 shared schemas.**
+**1093 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -6787,6 +6787,37 @@ Enum: `"idle" \| "checking" \| "staging" \| "pending-restart" \| "awaiting-confi
 ### `SettingsUpdateResultSchema`
 
 - `success`: `true`
+
+### `SirenDurationRangeSchema`
+
+- `min`: `number`
+- `max`: `number`
+- `step`: `number`
+
+### `SirenOptionsSchema`
+
+- `allowedSeconds`: `number[] \| null`
+- `rangeSeconds`: `SirenDurationRangeSchema \| null`
+- `defaultSeconds`: `number`
+- `unit`: `"seconds" \| "plays"`
+- `secondsPerPlay`: `number \| null`
+- `source`: `"camera" \| "fallback"`
+- `fetchedAt`: `number`
+
+### `SirenRuntimeStateSchema`
+
+- `active`: `boolean`
+- `activeUntil`: `number \| null`
+- `durationSeconds`: `number \| null`
+- `lastTriggeredAt`: `number`
+- `lastFetchedAt`: `number`
+
+### `SirenStatusSchema`
+
+- `active`: `boolean`
+- `activeUntil`: `number \| null`
+- `durationSeconds`: `number \| null`
+- `lastTriggeredAt`: `number`
 
 ### `SiteLocationSchema`
 

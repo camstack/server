@@ -3350,6 +3350,18 @@ export const useSettingsStoreIsEmpty: typeof trpc.settingsStore.isEmpty.useQuery
 /** Generated alias around `trpc.settingsStore.declareCollection.useMutation`. */
 export const useSettingsStoreDeclareCollection: typeof trpc.settingsStore.declareCollection.useMutation = /*#__PURE__*/ alias(() => trpc.settingsStore.declareCollection.useMutation)
 
+/** Generated alias around `trpc.siren.getOptions.useQuery`. */
+export const useSirenGetOptions: typeof trpc.siren.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.siren.getOptions.useQuery)
+
+/** Generated alias around `trpc.siren.trigger.useMutation`. */
+export const useSirenTrigger: typeof trpc.siren.trigger.useMutation = /*#__PURE__*/ alias(() => trpc.siren.trigger.useMutation)
+
+/** Generated alias around `trpc.siren.stop.useMutation`. */
+export const useSirenStop: typeof trpc.siren.stop.useMutation = /*#__PURE__*/ alias(() => trpc.siren.stop.useMutation)
+
+/** Generated alias around `trpc.siren.getStatus.useQuery`. */
+export const useSirenGetStatus: typeof trpc.siren.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.siren.getStatus.useQuery)
+
 /** Generated alias around `trpc.smoke.getStatus.useQuery`. */
 export const useSmokeGetStatus: typeof trpc.smoke.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.smoke.getStatus.useQuery)
 

@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**209 capabilities · 1503 methods.**
+**210 capabilities · 1507 methods.**
 
 ## Method index
 
@@ -1236,6 +1236,10 @@
 | `settingsStore.histogram` | query | admin | settings-store |
 | `settingsStore.isEmpty` | query | admin | settings-store |
 | `settingsStore.declareCollection` | mutation | admin | settings-store |
+| `siren.getStatus` | query | protected | siren (auto) |
+| `siren.getOptions` | query | protected | siren |
+| `siren.trigger` | mutation | protected | siren |
+| `siren.stop` | mutation | protected | siren |
 | `smoke.getStatus` | query | protected | smoke (auto) |
 | `smtpProvider.sendEmail` | mutation | admin | smtp-provider |
 | `smtpProvider.getStatus` | query | admin | smtp-provider |
@@ -4504,6 +4508,22 @@
 | histogram | `settingsStore.histogram` | query | admin | `{ namespace?: string; collection: string; field: string; bucketSize: number; origin: number; filter?: QueryFilterSchema }` | `({ bucket: number; count: number })[]` |
 | isEmpty | `settingsStore.isEmpty` | query | admin | `{ namespace?: string; collection: string }` | `boolean` |
 | declareCollection | `settingsStore.declareCollection` | mutation | admin | `DeclareCollectionInputSchema` | `void` |
+
+### `siren` → `siren.*`
+
+- **Source:** `packages/types/src/capabilities/siren.cap.ts:80`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `siren`
+- **Archetypes:** status(command-driven) · runtimeState
+- **Provider interface:** `ISirenProvider`
+- **runtimeState:** `SirenRuntimeStateSchema`
+- **Events:** `onSirenChanged` → `{ deviceId: number; active: boolean; activeUntil: number \| null }`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus _(auto)_ | `siren.getStatus` | query | protected | `{ deviceId: number }` | `SirenStatusSchema` |
+| getOptions | `siren.getOptions` | query | protected | `{ deviceId: number }` | `SirenOptionsSchema` |
+| trigger | `siren.trigger` | mutation | protected | `{ deviceId: number; durationSeconds?: number }` | `SirenStatusSchema` |
+| stop | `siren.stop` | mutation | protected | `{ deviceId: number }` | `SirenStatusSchema` |
 
 ### `smoke` → `smoke.*`
 

@@ -22,7 +22,7 @@ export interface RuntimeStatePolicy {
 
 /**
  * Per-cap runtime-state policy, projected from every `*.cap.ts` that declares
- * `runtimeState`. 85 caps: 43 `restored`, 42 `session`.
+ * `runtimeState`. 86 caps: 43 `restored`, 43 `session`.
  *
  * A cap absent from this map has no runtime-state slice at all. A cap PRESENT
  * with `durability: 'session'` has one and has decided not to keep it.
@@ -95,6 +95,7 @@ export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> 
   'running-state': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
   'scene-monitor': { durability: 'session', volatileFields: [] },
   'script-runner': { durability: 'session', volatileFields: [] },
+  'siren': { durability: 'session', volatileFields: [] },
   'smoke': { durability: 'restored', volatileFields: ['lastChangedAt'] },
   'stream-catalog': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
   'stream-params': { durability: 'restored', volatileFields: ['lastFetchedAt'] },

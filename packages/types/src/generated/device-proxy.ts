@@ -95,6 +95,7 @@ import type { recordingSignalCapability } from '../capabilities/recording-signal
 import type { runningStateCapability } from '../capabilities/running-state.cap.js'
 import type { sceneMonitorCapability } from '../capabilities/scene-monitor.cap.js'
 import type { scriptRunnerCapability } from '../capabilities/script-runner.cap.js'
+import type { sirenCapability } from '../capabilities/siren.cap.js'
 import type { smokeCapability } from '../capabilities/smoke.cap.js'
 import type { snapshotCapability } from '../capabilities/snapshot.cap.js'
 import type { streamCatalogCapability } from '../capabilities/stream-catalog.cap.js'
@@ -210,6 +211,7 @@ export interface DeviceProxyState {
   readonly runningState: SliceHandle<InferRuntimeState<typeof runningStateCapability>>
   readonly sceneMonitor: SliceHandle<InferRuntimeState<typeof sceneMonitorCapability>>
   readonly scriptRunner: SliceHandle<InferRuntimeState<typeof scriptRunnerCapability>>
+  readonly siren: SliceHandle<InferRuntimeState<typeof sirenCapability>>
   readonly smoke: SliceHandle<InferRuntimeState<typeof smokeCapability>>
   readonly streamCatalog: SliceHandle<InferRuntimeState<typeof streamCatalogCapability>>
   readonly streamParams: SliceHandle<InferRuntimeState<typeof streamParamsCapability>>
@@ -334,6 +336,7 @@ export interface DeviceProxy {
   readonly runningState?: InferDeviceProxyCap<typeof runningStateCapability>
   readonly sceneMonitor?: InferDeviceProxyCap<typeof sceneMonitorCapability>
   readonly scriptRunner?: InferDeviceProxyCap<typeof scriptRunnerCapability>
+  readonly siren?: InferDeviceProxyCap<typeof sirenCapability>
   readonly smoke?: InferDeviceProxyCap<typeof smokeCapability>
   readonly snapshot?: InferDeviceProxyCap<typeof snapshotCapability>
   readonly streamCatalog?: InferDeviceProxyCap<typeof streamCatalogCapability>
@@ -1099,6 +1102,13 @@ export function createDeviceProxy(
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('script-runner', 'scriptRunner', 'getStatus', 'query', input, undefined, options),
   }
 
+  const sirenInterface = {
+    getOptions: (input?: unknown) => dispatch('siren', 'siren', 'getOptions', 'query', input),
+    trigger: (input?: unknown) => dispatch('siren', 'siren', 'trigger', 'mutation', input),
+    stop: (input?: unknown) => dispatch('siren', 'siren', 'stop', 'mutation', input),
+    getStatus: (input?: unknown) => dispatch('siren', 'siren', 'getStatus', 'query', input),
+  }
+
   const smokeInterface = {
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('smoke', 'smoke', 'getStatus', 'query', input, undefined, options),
   }
@@ -1509,6 +1519,7 @@ export function createDeviceProxy(
       runningState: createSliceHandle<InferRuntimeState<typeof runningStateCapability>>(stateSource, binding.deviceId, 'running-state'),
       sceneMonitor: createSliceHandle<InferRuntimeState<typeof sceneMonitorCapability>>(stateSource, binding.deviceId, 'scene-monitor'),
       scriptRunner: createSliceHandle<InferRuntimeState<typeof scriptRunnerCapability>>(stateSource, binding.deviceId, 'script-runner'),
+      siren: createSliceHandle<InferRuntimeState<typeof sirenCapability>>(stateSource, binding.deviceId, 'siren'),
       smoke: createSliceHandle<InferRuntimeState<typeof smokeCapability>>(stateSource, binding.deviceId, 'smoke'),
       streamCatalog: createSliceHandle<InferRuntimeState<typeof streamCatalogCapability>>(stateSource, binding.deviceId, 'stream-catalog'),
       streamParams: createSliceHandle<InferRuntimeState<typeof streamParamsCapability>>(stateSource, binding.deviceId, 'stream-params'),
@@ -1614,6 +1625,7 @@ export function createDeviceProxy(
     ...(bound('running-state') ? { runningState: runningStateInterface } : {}),
     ...(bound('scene-monitor') ? { sceneMonitor: sceneMonitorInterface } : {}),
     ...(bound('script-runner') ? { scriptRunner: scriptRunnerInterface } : {}),
+    ...(bound('siren') ? { siren: sirenInterface } : {}),
     ...(bound('smoke') ? { smoke: smokeInterface } : {}),
     ...(bound('snapshot') ? { snapshot: snapshotInterface } : {}),
     ...(bound('stream-catalog') ? { streamCatalog: streamCatalogInterface } : {}),

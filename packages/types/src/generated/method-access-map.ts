@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1503 method paths across 209 capabilities.
+ * Coverage: 1507 method paths across 210 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1245,6 +1245,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'settingsStore.updateWhere': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'settingsStore.upsert': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'settingsStore.upsertMany': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'siren.getOptions': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'siren.getStatus': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'siren.stop': { capName: "siren", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'siren.trigger': { capName: "siren", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'smoke.getStatus': { capName: "smoke", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'smtpProvider.getStatus': { capName: "smtp-provider", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'smtpProvider.sendEmail': { capName: "smtp-provider", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1696,6 +1700,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "script-runner",
   "server-management",
   "settings-store",
+  "siren",
   "smoke",
   "smtp-provider",
   "snapshot",
@@ -1828,6 +1833,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "running-state",
   "scene-monitor",
   "script-runner",
+  "siren",
   "smoke",
   "snapshot",
   "stream-catalog",

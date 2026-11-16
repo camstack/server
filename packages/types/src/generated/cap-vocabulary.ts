@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 209 caps (107 device, 102 system).
+ * `*.cap.ts` (D1050): 210 caps (108 device, 102 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -1680,6 +1680,44 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
     events: {
       onMotionTriggerChanged: {
         notOperatorFacing: 'the `enabled` state trigger phrases both edges of this change',
+      },
+    },
+  },
+  'siren': {
+    scope: 'device',
+    noun: { en: 'Siren', it: 'Sirena' },
+    actions: [
+      {
+        id: 'siren.trigger',
+        method: 'trigger',
+        label: { en: 'Sound the siren', it: 'Fai suonare la sirena' },
+        phrase: { en: 'Sound {device}', it: 'Fai suonare {device}' },
+        icon: 'siren',
+        args: {  },
+      },
+      {
+        id: 'siren.stop',
+        method: 'stop',
+        label: { en: 'Silence the siren', it: 'Zittisci la sirena' },
+        phrase: { en: 'Silence {device}', it: 'Zittisci {device}' },
+        icon: 'siren',
+        args: {  },
+        effect: { field: 'active', value: false },
+      },
+    ],
+    state: [
+      {
+        kind: 'boolean',
+        field: 'active',
+        label: { en: 'Siren sounding', it: 'Sirena in funzione' },
+        whenTrue: { en: 'When {device} starts sounding', it: 'Quando {device} inizia a suonare' },
+        whenFalse: { en: 'When {device} falls silent', it: 'Quando {device} smette di suonare' },
+        icon: 'siren',
+      },
+    ],
+    events: {
+      onSirenChanged: {
+        notOperatorFacing: 'the `active` state trigger phrases both edges of this change',
       },
     },
   },

@@ -2827,6 +2827,23 @@ export {
   MotionStatusSchema,
   motionCapability,
 } from './motion.cap.js'
+export { resolveSirenSeconds, sirenIdleStatus, sirenTriggeredStatus } from './siren-duration.js'
+export {
+  type ISirenProvider,
+  type SirenDurationRange,
+  SirenDurationRangeSchema,
+  SirenDurationUnit,
+  type SirenDurationUnitValue,
+  type SirenOptions,
+  SirenOptionsSchema,
+  SirenOptionsSource,
+  type SirenOptionsSourceValue,
+  type SirenRuntimeState,
+  SirenRuntimeStateSchema,
+  type SirenStatus,
+  SirenStatusSchema,
+  sirenCapability,
+} from './siren.cap.js'
 export {
   type IMotionTriggerProvider,
   type MotionTriggerRuntimeState,
@@ -3697,6 +3714,7 @@ import type { modelDistributorCapability } from './model-distributor.cap.js'
 import type { motionCapability } from './motion.cap.js'
 import type { motionDetectionCapability } from './motion-detection.cap.js'
 import type { motionTriggerCapability } from './motion-trigger.cap.js'
+import type { sirenCapability } from './siren.cap.js'
 import type { motionZonesCapability } from './motion-zones.cap.js'
 import type { mqttBrokerCapability } from './mqtt-broker.cap.js'
 import type { nativeObjectDetectionCapability } from './native-object-detection.cap.js'
@@ -3902,6 +3920,7 @@ type AnyCapability =
   | typeof schedulersCapability
   | typeof automationControlCapability
   | typeof motionTriggerCapability
+  | typeof sirenCapability
   | typeof zonesCapability
   | typeof zoneRulesCapability
   | typeof trainingCapability

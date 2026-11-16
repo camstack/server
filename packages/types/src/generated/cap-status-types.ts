@@ -75,6 +75,7 @@ import type { RecordingSignalStatusSchema } from '../capabilities/recording-sign
 import type { RunningStateStatusSchema } from '../capabilities/running-state.cap.js'
 import type { SceneMonitorStatusSchema } from '../capabilities/scene-monitor.cap.js'
 import type { ScriptRunnerStatusSchema } from '../capabilities/script-runner.cap.js'
+import type { SirenStatusSchema } from '../capabilities/siren.cap.js'
 import type { SmokeStatusSchema } from '../capabilities/smoke.cap.js'
 import type { SnapshotStatusSchema } from '../capabilities/snapshot.cap.js'
 import type { StreamParamsStatusSchema } from '../capabilities/stream-params.cap.js'
@@ -168,6 +169,7 @@ export type CapStatusTypeMap = {
   readonly 'running-state': z.infer<typeof RunningStateStatusSchema>
   readonly 'scene-monitor': z.infer<typeof SceneMonitorStatusSchema>
   readonly 'script-runner': z.infer<typeof ScriptRunnerStatusSchema>
+  readonly 'siren': z.infer<typeof SirenStatusSchema>
   readonly 'smoke': z.infer<typeof SmokeStatusSchema>
   readonly 'snapshot': z.infer<typeof SnapshotStatusSchema>
   readonly 'stream-params': z.infer<typeof StreamParamsStatusSchema>
@@ -265,6 +267,7 @@ export const CAP_NAMES_WITH_STATUS = [
   'running-state',
   'scene-monitor',
   'script-runner',
+  'siren',
   'smoke',
   'snapshot',
   'stream-params',

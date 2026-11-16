@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 46 caps with series (124 series), 38 caps answered `'none'`.
+ * 46 caps with series (124 series), 39 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -307,6 +307,7 @@ export const HISTORY_NONE_CAPS: readonly string[] = [
   'recording-signal',
   'scene-monitor',
   'script-runner',
+  'siren',
   'stream-catalog',
   'stream-signals',
   'timed-run',

@@ -2344,6 +2344,12 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'siren',
+    reason:
+      'A timed trigger with a countdown: the siren is already exported as its on/off ' +
+      'switch, and a duration argument has no entity shape yet (#576).',
+  },
+  {
     cap: 'heat-pump-status',
     reason:
       'A keyed list of circuits plus system readings: one entity per circuit and per ' +
