@@ -36,6 +36,8 @@ import {
 import type { AdapterDirectiveContext, GenericProperty } from '../endpoints/adapters/types.js'
 import { errorEnvelope } from './error-envelope.js'
 import type { DirectiveHeader } from './types.js'
+import type { VerifiedDirectiveIdentity } from '../directive-router.js'
+import { alexaOrigin } from './on-behalf.js'
 
 export interface ClimateControllerContext {
   readonly ctx: AddonContext
@@ -159,14 +161,19 @@ interface Commands {
   readonly setTargetRange: (low: number, high: number) => Promise<void>
 }
 
-function commandsFor(api: AddonApi, deviceId: number): Commands {
+function commandsFor(
+  api: AddonApi,
+  deviceId: number,
+  identity: VerifiedDirectiveIdentity,
+): Commands {
+  const origin = alexaOrigin(identity)
   return {
-    setMode: (mode) => api.climateControl.setMode.mutate({ deviceId, mode }),
-    setPreset: (preset) => api.climateControl.setPreset.mutate({ deviceId, preset }),
-    setFanMode: (fanMode) => api.climateControl.setFanMode.mutate({ deviceId, fanMode }),
-    setTarget: (target) => api.climateControl.setTarget.mutate({ deviceId, target }),
+    setMode: (mode) => api.climateControl.setMode.mutate({ deviceId, mode }, origin),
+    setPreset: (preset) => api.climateControl.setPreset.mutate({ deviceId, preset }, origin),
+    setFanMode: (fanMode) => api.climateControl.setFanMode.mutate({ deviceId, fanMode }, origin),
+    setTarget: (target) => api.climateControl.setTarget.mutate({ deviceId, target }, origin),
     setTargetRange: (targetLow, targetHigh) =>
-      api.climateControl.setTargetRange.mutate({ deviceId, targetLow, targetHigh }),
+      api.climateControl.setTargetRange.mutate({ deviceId, targetLow, targetHigh }, origin),
   }
 }
 
@@ -448,7 +455,7 @@ export async function handleClimateDirective(c: AdapterDirectiveContext): Promis
   if (slice === null) {
     return errorEnvelope(c.header, 'ENDPOINT_UNREACHABLE', 'the climate state could not be read')
   }
-  const outcome = plan(c, slice, commandsFor(deps.ctx.api, c.deviceId))
+  const outcome = plan(c, slice, commandsFor(deps.ctx.api, c.deviceId, c.identity))
   if (isRefusal(outcome)) return outcome.refusal
   try {
     for (const command of outcome.commands) await command()

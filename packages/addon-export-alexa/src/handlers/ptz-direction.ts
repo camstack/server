@@ -22,6 +22,7 @@ import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'
 import { runPtzTravel } from './ptz-travel.js'
 import { type DirectiveHeader, EndpointRefSchema } from './types.js'
+import { alexaOrigin } from './on-behalf.js'
 
 const ToggleDirectiveSchema = z.object({
   header: z.object({
@@ -48,7 +49,7 @@ export async function handlePtzDirection(
   header: DirectiveHeader & { instance?: string },
   endpointRaw: unknown,
   deps: PtzDirectionContext,
-  _callerIdentity: VerifiedDirectiveIdentity,
+  callerIdentity: VerifiedDirectiveIdentity,
 ): Promise<unknown> {
   const parsed = ToggleDirectiveSchema.safeParse({
     header: { namespace: header.namespace, name: header.name, instance: header.instance },
@@ -95,7 +96,13 @@ export async function handlePtzDirection(
   const api: AddonApi = deps.ctx.api
   const deviceId = parsedId.deviceId
   try {
-    const travel = await runPtzTravel(api.ptz, deviceId, move)
+    const travel = await runPtzTravel(
+      api.ptz,
+      deviceId,
+      move,
+      undefined,
+      alexaOrigin(callerIdentity),
+    )
     if (travel.error) {
       deps.logger.warn('alexa ptz-direction: ptz.move failed mid-travel', {
         meta: {

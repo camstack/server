@@ -18,6 +18,7 @@ import {
 } from '../endpoints/adapters/media-player-model.js'
 import type { AdapterDirectiveContext, GenericProperty } from '../endpoints/adapters/types.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 
 export interface MediaPlayerControllerContext {
   readonly ctx: AddonContext
@@ -185,8 +186,8 @@ async function volume(c: AdapterDirectiveContext): Promise<unknown> {
     `volume ${up ? 'up' : 'down'} ${steps}`,
     () =>
       up
-        ? api.volumeUp.mutate({ deviceId: c.deviceId, steps })
-        : api.volumeDown.mutate({ deviceId: c.deviceId, steps }),
+        ? api.volumeUp.mutate({ deviceId: c.deviceId, steps }, alexaOrigin(c.identity))
+        : api.volumeDown.mutate({ deviceId: c.deviceId, steps }, alexaOrigin(c.identity)),
     { slow: true },
   )
 }
@@ -204,8 +205,8 @@ async function channel(c: AdapterDirectiveContext): Promise<unknown> {
     `channel ${up ? 'up' : 'down'} ${steps}`,
     () =>
       up
-        ? api.channelUp.mutate({ deviceId: c.deviceId, steps })
-        : api.channelDown.mutate({ deviceId: c.deviceId, steps }),
+        ? api.channelUp.mutate({ deviceId: c.deviceId, steps }, alexaOrigin(c.identity))
+        : api.channelDown.mutate({ deviceId: c.deviceId, steps }, alexaOrigin(c.identity)),
     { slow: true },
   )
 }
@@ -256,11 +257,14 @@ async function changeChannel(c: AdapterDirectiveContext): Promise<unknown> {
     c,
     `change channel ${declared.name}`,
     () =>
-      deps.ctx.api.mediaPlayer.playMedia.mutate({
-        deviceId: c.deviceId,
-        mediaType: 'channel',
-        mediaId,
-      }),
+      deps.ctx.api.mediaPlayer.playMedia.mutate(
+        {
+          deviceId: c.deviceId,
+          mediaType: 'channel',
+          mediaId,
+        },
+        alexaOrigin(c.identity),
+      ),
     { slow: true },
   )
 }
@@ -273,7 +277,7 @@ async function mute(c: AdapterDirectiveContext): Promise<unknown> {
   return attempt(
     c,
     `mute ${String(muted)}`,
-    () => api.setMute.mutate({ deviceId: c.deviceId, muted }),
+    () => api.setMute.mutate({ deviceId: c.deviceId, muted }, alexaOrigin(c.identity)),
     { namespace: 'Alexa.Speaker' },
   )
 }
@@ -286,8 +290,8 @@ async function power(c: AdapterDirectiveContext): Promise<unknown> {
     on ? 'turn on' : 'turn off',
     () =>
       on
-        ? api.turnOn.mutate({ deviceId: c.deviceId })
-        : api.turnOff.mutate({ deviceId: c.deviceId }),
+        ? api.turnOn.mutate({ deviceId: c.deviceId }, alexaOrigin(c.identity))
+        : api.turnOff.mutate({ deviceId: c.deviceId }, alexaOrigin(c.identity)),
     { namespace: 'Alexa.PowerController' },
   )
 }
@@ -297,15 +301,15 @@ async function playback(c: AdapterDirectiveContext): Promise<unknown> {
   const input = { deviceId: c.deviceId }
   switch (c.header.name) {
     case 'Play':
-      return attempt(c, 'play', () => api.play.mutate(input))
+      return attempt(c, 'play', () => api.play.mutate(input, alexaOrigin(c.identity)))
     case 'Pause':
-      return attempt(c, 'pause', () => api.pause.mutate(input))
+      return attempt(c, 'pause', () => api.pause.mutate(input, alexaOrigin(c.identity)))
     case 'Stop':
-      return attempt(c, 'stop', () => api.stop.mutate(input))
+      return attempt(c, 'stop', () => api.stop.mutate(input, alexaOrigin(c.identity)))
     case 'Next':
-      return attempt(c, 'next', () => api.next.mutate(input))
+      return attempt(c, 'next', () => api.next.mutate(input, alexaOrigin(c.identity)))
     case 'Previous':
-      return attempt(c, 'previous', () => api.previous.mutate(input))
+      return attempt(c, 'previous', () => api.previous.mutate(input, alexaOrigin(c.identity)))
     default:
       return errorEnvelope(c.header, 'INVALID_DIRECTIVE', `unsupported ${c.header.name}`)
   }
@@ -341,10 +345,13 @@ async function selectInput(c: AdapterDirectiveContext): Promise<unknown> {
     c,
     `select input ${chosen}`,
     () =>
-      deps.ctx.api.mediaPlayer.selectSource.mutate({
-        deviceId: c.deviceId,
-        source: chosen,
-      }),
+      deps.ctx.api.mediaPlayer.selectSource.mutate(
+        {
+          deviceId: c.deviceId,
+          source: chosen,
+        },
+        alexaOrigin(c.identity),
+      ),
     { namespace: 'Alexa.InputController' },
   )
 }

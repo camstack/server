@@ -268,10 +268,13 @@ async function applyCustom(
     })
     const preset = presets.find((p) => p.name === name)
     if (preset === undefined) return errorEnvelope(c.header, 'INVALID_VALUE', `no preset ${name}`)
-    const result = await deps.ctx.api.fanPresets.applyPreset.mutate({
-      deviceId: c.deviceId,
-      presetId: preset.id,
-    })
+    const result = await deps.ctx.api.fanPresets.applyPreset.mutate(
+      {
+        deviceId: c.deviceId,
+        presetId: preset.id,
+      },
+      alexaOrigin(c.identity),
+    )
     if (result.status === 'applied') {
       deps.logger.info('alexa fan-controller: custom preset applied', {
         tags: { deviceId: c.deviceId },

@@ -457,7 +457,19 @@ const SET_MODE = 'Alexa.ThermostatController/SetThermostatMode'
 describe('climate directives: setpoints', () => {
   it('SetTargetTemperature -> setTarget, snapped to the step, answered with the new state', async () => {
     const { api, answer } = await run(SET, { targetSetpoint: C(21.3) }, HEAT_ONLY)
-    expect(api.climateControl.setTarget.mutate).toHaveBeenCalledWith({ deviceId: 7, target: 21.5 })
+    expect(api.climateControl.setTarget.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, target: 21.5 },
+      {
+        context: expect.objectContaining({
+          __camstackCommandOrigin: {
+            kind: 'on-behalf',
+            source: 'alexa',
+            principalId: 'u',
+            principalName: 'u',
+          },
+        }),
+      },
+    )
     expect(answer.event.header.name).toBe('Response')
     expect(answer.context?.properties.find((p) => p.name === 'targetSetpoint')?.value).toEqual(
       C(21.5),
@@ -466,9 +478,15 @@ describe('climate directives: setpoints', () => {
 
   it('Fahrenheit and Kelvin are converted to Celsius', async () => {
     const f = await run(SET, { targetSetpoint: { value: 68, scale: 'FAHRENHEIT' } }, HEAT_ONLY)
-    expect(f.api.climateControl.setTarget.mutate).toHaveBeenCalledWith({ deviceId: 7, target: 20 })
+    expect(f.api.climateControl.setTarget.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, target: 20 },
+      expect.anything(),
+    )
     const k = await run(SET, { targetSetpoint: { value: 293.15, scale: 'KELVIN' } }, HEAT_ONLY)
-    expect(k.api.climateControl.setTarget.mutate).toHaveBeenCalledWith({ deviceId: 7, target: 20 })
+    expect(k.api.climateControl.setTarget.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, target: 20 },
+      expect.anything(),
+    )
   })
 
   it('a setpoint outside the device range is TEMPERATURE_VALUE_OUT_OF_RANGE with the valid range', async () => {
@@ -487,7 +505,10 @@ describe('climate directives: setpoints', () => {
     const low = await run(SET, { targetSetpoint: C(15) }, GREE)
     expect(low.answer.event.payload.type).toBe('TEMPERATURE_VALUE_OUT_OF_RANGE')
     const ok = await run(SET, { targetSetpoint: C(22.4) }, GREE)
-    expect(ok.api.climateControl.setTarget.mutate).toHaveBeenCalledWith({ deviceId: 7, target: 22 })
+    expect(ok.api.climateControl.setTarget.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, target: 22 },
+      expect.anything(),
+    )
   })
 
   it('a lower / upper pair -> setTargetRange (and heat_cool first when it was not)', async () => {
@@ -496,15 +517,21 @@ describe('climate directives: setpoints', () => {
       { lowerSetpoint: C(18), upperSetpoint: C(23) },
       { ...HEAT_COOL, mode: 'heat' },
     )
-    expect(api.climateControl.setMode.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      mode: 'heat_cool',
-    })
-    expect(api.climateControl.setTargetRange.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      targetLow: 18,
-      targetHigh: 23,
-    })
+    expect(api.climateControl.setMode.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        mode: 'heat_cool',
+      },
+      expect.anything(),
+    )
+    expect(api.climateControl.setTargetRange.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        targetLow: 18,
+        targetHigh: 23,
+      },
+      expect.anything(),
+    )
     expect(answer.event.header.name).toBe('Response')
   })
 
@@ -532,25 +559,34 @@ describe('climate directives: setpoints', () => {
 
   it('AdjustTargetTemperature reads the setpoint and adds the delta (Fahrenheit delta scaled)', async () => {
     const up = await run(ADJUST, { targetSetpointDelta: C(1.5) }, HEAT_ONLY)
-    expect(up.api.climateControl.setTarget.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      target: 21.5,
-    })
+    expect(up.api.climateControl.setTarget.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        target: 21.5,
+      },
+      expect.anything(),
+    )
     const f = await run(
       ADJUST,
       { targetSetpointDelta: { value: -2, scale: 'FAHRENHEIT' } },
       HEAT_ONLY,
     )
-    expect(f.api.climateControl.setTarget.mutate).toHaveBeenCalledWith({ deviceId: 7, target: 19 })
+    expect(f.api.climateControl.setTarget.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, target: 19 },
+      expect.anything(),
+    )
   })
 
   it('AdjustTargetTemperature shifts a range, and refuses past the limit', async () => {
     const shift = await run(ADJUST, { targetSetpointDelta: C(1) }, HEAT_COOL)
-    expect(shift.api.climateControl.setTargetRange.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      targetLow: 20,
-      targetHigh: 25,
-    })
+    expect(shift.api.climateControl.setTargetRange.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        targetLow: 20,
+        targetHigh: 25,
+      },
+      expect.anything(),
+    )
     const past = await run(ADJUST, { targetSetpointDelta: C(20) }, HEAT_ONLY)
     expect(past.answer.event.payload.type).toBe('TEMPERATURE_VALUE_OUT_OF_RANGE')
   })
@@ -577,10 +613,13 @@ describe('climate directives: modes, power, fan', () => {
     ]
     for (const [requested, state, expected] of cases) {
       const { api, answer } = await run(SET_MODE, { thermostatMode: { value: requested } }, state)
-      expect(api.climateControl.setMode.mutate).toHaveBeenCalledWith({
-        deviceId: 7,
-        mode: expected,
-      })
+      expect(api.climateControl.setMode.mutate).toHaveBeenCalledWith(
+        {
+          deviceId: 7,
+          mode: expected,
+        },
+        expect.anything(),
+      )
       expect(answer.event.header.name).toBe('Response')
     }
   })
@@ -595,23 +634,32 @@ describe('climate directives: modes, power, fan', () => {
 
   it('ECO sets the eco preset; leaving ECO clears it', async () => {
     const eco = await run(SET_MODE, { thermostatMode: { value: 'ECO' } }, HEAT_COOL)
-    expect(eco.api.climateControl.setPreset.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      preset: 'eco',
-    })
+    expect(eco.api.climateControl.setPreset.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        preset: 'eco',
+      },
+      expect.anything(),
+    )
     const leave = await run(
       SET_MODE,
       { thermostatMode: { value: 'HEAT' } },
       { ...HEAT_COOL, mode: 'heat', preset: 'eco' },
     )
-    expect(leave.api.climateControl.setPreset.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      preset: 'none',
-    })
-    expect(leave.api.climateControl.setMode.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      mode: 'heat',
-    })
+    expect(leave.api.climateControl.setPreset.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        preset: 'none',
+      },
+      expect.anything(),
+    )
+    expect(leave.api.climateControl.setMode.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        mode: 'heat',
+      },
+      expect.anything(),
+    )
   })
 
   it('ECO on a device without the preset is unsupported', async () => {
@@ -621,10 +669,16 @@ describe('climate directives: modes, power, fan', () => {
 
   it('TurnOff -> off; TurnOn from off -> the preferred on mode; TurnOn while on changes nothing', async () => {
     const off = await run('Alexa.PowerController/TurnOff', {}, GREE)
-    expect(off.api.climateControl.setMode.mutate).toHaveBeenCalledWith({ deviceId: 7, mode: 'off' })
+    expect(off.api.climateControl.setMode.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, mode: 'off' },
+      expect.anything(),
+    )
     expect(off.answer.context?.properties[0]).toMatchObject({ name: 'powerState', value: 'OFF' })
     const on = await run('Alexa.PowerController/TurnOn', {}, { ...GREE, mode: 'off' })
-    expect(on.api.climateControl.setMode.mutate).toHaveBeenCalledWith({ deviceId: 7, mode: 'auto' })
+    expect(on.api.climateControl.setMode.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, mode: 'auto' },
+      expect.anything(),
+    )
     const already = await run('Alexa.PowerController/TurnOn', {}, GREE)
     expect(already.api.climateControl.setMode.mutate).not.toHaveBeenCalled()
     expect(already.answer.event.header.name).toBe('Response')
@@ -645,7 +699,10 @@ describe('climate directives: modes, power, fan', () => {
       GREE,
       'Climate.Mode',
     )
-    expect(dry.api.climateControl.setMode.mutate).toHaveBeenCalledWith({ deviceId: 7, mode: 'dry' })
+    expect(dry.api.climateControl.setMode.mutate).toHaveBeenCalledWith(
+      { deviceId: 7, mode: 'dry' },
+      expect.anything(),
+    )
     expect(dry.answer.context?.properties[0]).toMatchObject({
       instance: 'Climate.Mode',
       value: 'Mode.Dry',
@@ -656,10 +713,13 @@ describe('climate directives: modes, power, fan', () => {
       GREE,
       'Climate.Mode',
     )
-    expect(fan.api.climateControl.setMode.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      mode: 'fan_only',
-    })
+    expect(fan.api.climateControl.setMode.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        mode: 'fan_only',
+      },
+      expect.anything(),
+    )
   })
 
   it("Climate.FanSpeed SetMode -> setFanMode with the device's own name", async () => {
@@ -669,10 +729,13 @@ describe('climate directives: modes, power, fan', () => {
       GREE,
       'Climate.FanSpeed',
     )
-    expect(api.climateControl.setFanMode.mutate).toHaveBeenCalledWith({
-      deviceId: 7,
-      fanMode: 'medium_high',
-    })
+    expect(api.climateControl.setFanMode.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 7,
+        fanMode: 'medium_high',
+      },
+      expect.anything(),
+    )
     expect(answer.context?.properties[0]).toMatchObject({ value: 'Fan.MediumHigh' })
   })
 

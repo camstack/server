@@ -204,43 +204,58 @@ describe('media-player directives', () => {
     const fake = api()
     const answer = await run('Alexa.StepSpeaker/AdjustVolume', { volumeSteps: 5 }, fake)
     expect(answer.event.header.name).toBe('Response')
-    expect(fake.mediaPlayer.volumeUp.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      steps: 5,
-    })
+    expect(fake.mediaPlayer.volumeUp.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        steps: 5,
+      },
+      expect.anything(),
+    )
     expect(fake.mediaPlayer.volumeDown.mutate).not.toHaveBeenCalled()
   })
 
   it('a negative step count is volumeDown, capped at the bound', async () => {
     const fake = api()
     await run('Alexa.StepSpeaker/AdjustVolume', { volumeSteps: -80 }, fake)
-    expect(fake.mediaPlayer.volumeDown.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      steps: 50,
-    })
+    expect(fake.mediaPlayer.volumeDown.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        steps: 50,
+      },
+      expect.anything(),
+    )
   })
 
   it('skips channels up and down', async () => {
     const fake = api()
     await run('Alexa.ChannelController/SkipChannels', { channelCount: -2 }, fake)
     await run('Alexa.ChannelController/SkipChannels', { channelCount: 3 }, fake)
-    expect(fake.mediaPlayer.channelDown.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      steps: 2,
-    })
-    expect(fake.mediaPlayer.channelUp.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      steps: 3,
-    })
+    expect(fake.mediaPlayer.channelDown.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        steps: 2,
+      },
+      expect.anything(),
+    )
+    expect(fake.mediaPlayer.channelUp.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        steps: 3,
+      },
+      expect.anything(),
+    )
   })
 
   it('mutes through either speaker interface', async () => {
     const fake = api()
     await run('Alexa.Speaker/SetMute', { mute: true }, fake)
-    expect(fake.mediaPlayer.setMute.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      muted: true,
-    })
+    expect(fake.mediaPlayer.setMute.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        muted: true,
+      },
+      expect.anything(),
+    )
   })
 
   it('answers an error, not a success, when the player refuses', async () => {
@@ -261,10 +276,13 @@ describe('media-player directives', () => {
       slice({ availableSources: ['hdmi1'], source: '' }),
     )
     await run('Alexa.InputController/SelectInput', { input: 'HDMI 1' }, fake)
-    expect(fake.mediaPlayer.selectSource.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      source: 'hdmi1',
-    })
+    expect(fake.mediaPlayer.selectSource.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        source: 'hdmi1',
+      },
+      expect.anything(),
+    )
   })
 
   it('routes power through the registry to the player, not the switch handler', async () => {
@@ -273,9 +291,12 @@ describe('media-player directives', () => {
     const found = await resolveGenericDirective(context)
     expect(found?.handle).toBeDefined()
     await found?.handle(context)
-    expect(fake.mediaPlayer.turnOn.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-    })
+    expect(fake.mediaPlayer.turnOn.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+      },
+      expect.anything(),
+    )
   })
 })
 
@@ -382,11 +403,14 @@ describe('declared sources of a remote (planning#460)', () => {
     const fake = api()
     fake.deviceState.getCapSlice.query.mockResolvedValue(declaredSlice())
     await run('Alexa.ChannelController/ChangeChannel', { channel: { number: '25' } }, fake)
-    expect(fake.mediaPlayer.playMedia.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      mediaType: 'channel',
-      mediaId: '25',
-    })
+    expect(fake.mediaPlayer.playMedia.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        mediaType: 'channel',
+        mediaId: '25',
+      },
+      expect.anything(),
+    )
   })
 
   it('ChangeChannel by name reaches the same declared channel', async () => {
@@ -397,11 +421,14 @@ describe('declared sources of a remote (planning#460)', () => {
       { channel: {}, channelMetadata: { name: 'canale 24' } },
       fake,
     )
-    expect(fake.mediaPlayer.playMedia.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      mediaType: 'channel',
-      mediaId: '25',
-    })
+    expect(fake.mediaPlayer.playMedia.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        mediaType: 'channel',
+        mediaId: '25',
+      },
+      expect.anything(),
+    )
   })
 
   it('ChangeChannel to a channel nobody declared is refused and presses nothing', async () => {
@@ -421,10 +448,13 @@ describe('declared sources of a remote (planning#460)', () => {
     const fake = api()
     fake.deviceState.getCapSlice.query.mockResolvedValue(declaredSlice())
     await run('Alexa.InputController/SelectInput', { input: 'HDMI 1' }, fake)
-    expect(fake.mediaPlayer.selectSource.mutate).toHaveBeenCalledWith({
-      deviceId: 5478,
-      source: 'HDMI 1',
-    })
+    expect(fake.mediaPlayer.selectSource.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 5478,
+        source: 'HDMI 1',
+      },
+      expect.anything(),
+    )
   })
 
   it('names the sequence sources it cannot offer ONCE per device, with the device tag', () => {

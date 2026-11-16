@@ -283,3 +283,17 @@ describe('ModeController ptz.pan / ptz.tilt — pulses of ptz.move', () => {
     expect(h.warn).toHaveBeenCalled()
   })
 })
+
+describe('runPtzTravel carries the origin', () => {
+  it('hands the same options to every move', async () => {
+    const move = vi.fn(async (_input: unknown, _options?: unknown) => undefined)
+    const ptz = {
+      getOptions: { query: async () => ({ moveImpulseMs: 500 }) },
+      move: { mutate: move },
+    }
+    const origin = { context: { marker: 'claim' } }
+    await runPtzTravel(ptz, 3, { pan: 1 }, { now: () => 0, sleep: async () => undefined }, origin)
+    expect(move).toHaveBeenCalledTimes(2)
+    for (const call of move.mock.calls) expect(call[1]).toBe(origin)
+  })
+})

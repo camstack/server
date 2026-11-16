@@ -112,7 +112,13 @@ export async function handleSetMode(
     if (Object.keys(move).length > 0) {
       const deviceId = parsedId.deviceId
       try {
-        const travel = await runPtzTravel(api.ptz, deviceId, move)
+        const travel = await runPtzTravel(
+          api.ptz,
+          deviceId,
+          move,
+          undefined,
+          alexaOrigin(callerIdentity),
+        )
         if (travel.error) {
           deps.logger.warn('alexa ptz-mode: ptz.move failed mid-travel', {
             meta: {

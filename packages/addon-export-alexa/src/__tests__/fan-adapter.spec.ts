@@ -264,10 +264,13 @@ describe('fan directives', () => {
       api,
     )
     expect(answer.event.header.name).toBe('Response')
-    expect(api.fanPresets.applyPreset.mutate).toHaveBeenCalledWith({
-      deviceId: 9,
-      presetId: 'n',
-    })
+    expect(api.fanPresets.applyPreset.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 9,
+        presetId: 'n',
+      },
+      expect.anything(),
+    )
     expect(api.fanControl.setPreset.mutate).not.toHaveBeenCalled()
   })
 

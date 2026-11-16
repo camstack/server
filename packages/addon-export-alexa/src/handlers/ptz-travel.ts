@@ -17,6 +17,8 @@
  * collapse into one). An unknown impulse is a single `move`.
  */
 
+import type { CommandOriginRequestOptions } from '@camstack/types/addon'
+
 /** How far a voice command moves the head, in driver-pulse milliseconds. */
 export const TARGET_TRAVEL_MS = 1_000
 
@@ -31,7 +33,10 @@ export interface PtzTravelApi {
     query(input: { deviceId: number }): Promise<{ readonly moveImpulseMs: number | null }>
   }
   readonly move: {
-    mutate(input: { deviceId: number; pan?: number; tilt?: number }): Promise<void>
+    mutate(
+      input: { deviceId: number; pan?: number; tilt?: number },
+      options?: CommandOriginRequestOptions,
+    ): Promise<void>
   }
 }
 
@@ -81,13 +86,14 @@ export async function runPtzTravel(
   deviceId: number,
   direction: PtzTravelMove,
   clock: PtzTravelClock = realClock,
+  origin?: CommandOriginRequestOptions,
 ): Promise<PtzTravelResult> {
   const impulse = await readImpulse(ptz, deviceId)
   const pulses = ptzTravelPulses(impulse)
   for (let i = 0; i < pulses; i++) {
     const startedAt = clock.now()
     try {
-      await ptz.move.mutate({ deviceId, ...direction })
+      await ptz.move.mutate({ deviceId, ...direction }, origin)
     } catch (err: unknown) {
       if (i === 0) throw err
       return { pulses, issued: i, error: err instanceof Error ? err : new Error(String(err)) }
