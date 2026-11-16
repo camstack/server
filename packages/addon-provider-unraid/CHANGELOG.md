@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The Unraid connection can be tested from the form: a refused API key is named before the integration is created
+- Every disk and Docker container of a server gets its own entity: they no longer collapse onto one because their ids share the server prefix
 
 ## [0.2.167] - 2026-11-14
 

@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import {
   DeviceRole,
@@ -111,13 +112,61 @@ export function entityIdentity(descriptor: UnraidEntityDescriptor): UnraidEntity
   }
 }
 
-/** Filesystem/stableId-safe slug for a raw docker/disk id (which may hold `/`, `:`). */
+/** Longest slug a key carries before it is cut and given a hash of the full id. */
+const MAX_SLUG_LENGTH = 48
+/** Length of the stable hash suffix that keeps a cut or colliding slug unique. */
+const HASH_SUFFIX_LENGTH = 8
+
+/** Filesystem/stableId-safe slug for a raw value (which may hold `/`, `:`). Not cut. */
 export function slugifyKey(value: string): string {
   return value
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '')
-    .slice(0, 48)
+}
+
+/** Short, stable hash of a raw id. */
+function shortHash(value: string): string {
+  return createHash('sha256').update(value).digest('hex').slice(0, HASH_SUFFIX_LENGTH)
+}
+
+/**
+ * The local part of an Unraid PrefixedID (`<server hash>:<local id>`). Every id of one
+ * server shares the prefix, so a key built from the front of the full id collapses
+ * every disk and container of the server onto one key.
+ */
+export function localIdOf(id: string): string {
+  const cut = id.lastIndexOf(':')
+  return cut < 0 ? id : id.slice(cut + 1)
+}
+
+/** One item a per-item key is built for: its raw id, or its name when the id is empty. */
+export interface UnraidKeyedItem {
+  readonly id: string
+  readonly name: string
+}
+
+/**
+ * Collision-free key slugs for one section (disks, containers, VMs), aligned with
+ * `items`. The slug is the local part of the id; a slug longer than
+ * {@link MAX_SLUG_LENGTH} is cut and suffixed with a hash of the FULL id, and so is
+ * every slug two items share (ids that differ only in case or punctuation), so no two
+ * items ever map to one key. An item with neither id nor name gets `''` (skipped).
+ */
+export function sectionSlugs(items: readonly UnraidKeyedItem[]): readonly string[] {
+  const raw = items.map((item) => {
+    const source = item.id.length > 0 ? item.id : item.name
+    return { source, slug: slugifyKey(item.id.length > 0 ? localIdOf(item.id) : item.name) }
+  })
+  const counts = new Map<string, number>()
+  for (const { slug } of raw) counts.set(slug, (counts.get(slug) ?? 0) + 1)
+  return raw.map(({ source, slug }) => {
+    if (slug.length === 0) return ''
+    const shared = (counts.get(slug) ?? 0) > 1
+    if (!shared && slug.length <= MAX_SLUG_LENGTH) return slug
+    const head = slug.slice(0, MAX_SLUG_LENGTH - HASH_SUFFIX_LENGTH - 1).replace(/-+$/, '')
+    return `${head}-${shortHash(source)}`
+  })
 }
 
 /** Clamp a raw percentage into 0..100 (defensive — a hung feed can overshoot). */
@@ -330,8 +379,9 @@ function buttonDescriptor(
 /** Per-disk usage (numeric %) + health (binary problem). Partial by design. */
 function diskDescriptors(disks: readonly UnraidArrayDiskInfo[]): UnraidEntityDescriptor[] {
   const out: UnraidEntityDescriptor[] = []
-  for (const disk of disks) {
-    const slug = slugifyKey(disk.id.length > 0 ? disk.id : disk.name)
+  const slugs = sectionSlugs(disks)
+  for (const [index, disk] of disks.entries()) {
+    const slug = slugs[index] ?? ''
     if (slug.length === 0) continue
     const size = disk.fsSizeBytes ?? 0
     const used = disk.fsUsedBytes ?? 0
@@ -362,8 +412,9 @@ function diskDescriptors(disks: readonly UnraidArrayDiskInfo[]): UnraidEntityDes
 /** Per-container switch + cpu% + mem% sensors + restart button. */
 function dockerDescriptors(containers: readonly UnraidContainerInfo[]): UnraidEntityDescriptor[] {
   const out: UnraidEntityDescriptor[] = []
-  for (const container of containers) {
-    const slug = slugifyKey(container.id.length > 0 ? container.id : container.name)
+  const slugs = sectionSlugs(containers)
+  for (const [index, container] of containers.entries()) {
+    const slug = slugs[index] ?? ''
     if (slug.length === 0) continue
     out.push({
       key: `container_${slug}`,
