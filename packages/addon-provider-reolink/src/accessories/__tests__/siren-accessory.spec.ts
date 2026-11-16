@@ -63,7 +63,8 @@ function build(persisted: Record<string, unknown>) {
   } as unknown as DeviceContext
   const parent = { name: 'cam', ensureApi: async () => ({ setSiren }) }
   const device = new SirenAccessory(ctx, parent)
-  const slice = <T>(cap: string): T | undefined => runtime?.getCapState<T>(cap)
+  const slice = <T extends Record<string, unknown>>(cap: string): Readonly<T> | undefined =>
+    runtime?.getCapState<T>(cap)
   return { device, providers, setSiren, slice }
 }
 

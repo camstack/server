@@ -78,7 +78,8 @@ function build(opts: { beep?: boolean; inputIds?: string[] } = {}) {
   const parent = { name: 'cam', ensureClient: () => client, alarmInputPorts: () => [1] }
   // The accessory's parent host is the camera; the spec supplies the slice of it the siren reads.
   const device = new HikvisionSirenAccessory(ctx, parent as never)
-  const slice = <T>(cap: string): T | undefined => runtime?.getCapState<T>(cap)
+  const slice = <T extends Record<string, unknown>>(cap: string): Readonly<T> | undefined =>
+    runtime?.getCapState<T>(cap)
   return { device, providers, client, slice }
 }
 
