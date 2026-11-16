@@ -198,7 +198,8 @@
       "noLogDestinationsRegistered": "No log destinations registered",
       "thisShouldNotHappenThe": "This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting.",
       "addDestination": "Add destination",
-      "installDestination": "Install a destination"
+      "installDestination": "Install a destination",
+      "kindDestination": "Log destination"
     },
     "meshNetworks": {
       "meshNetworks": "Mesh networks",
@@ -6833,20 +6834,7 @@
         "destinations": "Destinations",
         "levels": "Levels",
         "diagnostics": "Diagnostics",
-        "watch": "Watch",
-        "export": {
-          "open": "Export",
-          "title": "Export logs",
-          "hint": "Downloads one NDJSON file, one line per entry with its tags. Leave a filter empty to include everything.",
-          "components": "Components",
-          "allComponents": "All components",
-          "devices": "Devices",
-          "range": "Time range",
-          "lastHours": "Last {{hours}} h",
-          "failed": "The export failed",
-          "downloading": "Downloading…",
-          "download": "Download"
-        }
+        "watch": "Watch"
       },
       "secrets": {
         "revealRefused": "Reveal refused",
@@ -9095,7 +9083,11 @@
       "loadOlder": "Load older",
       "origin": "Origin",
       "originAll": "All origins",
-      "originViewer": "Viewer app"
+      "originViewer": "Viewer app",
+      "export": "Export",
+      "columns": "Columns",
+      "colIntegration": "Integration",
+      "colDevice": "Device"
     },
     "modelBoundSlider": {
       "resetToDefault": "Reset to model default",
@@ -10847,6 +10839,28 @@
       "columnNotSortable": "A row can carry several tags",
       "noMatches": "Nothing matches this filter.",
       "untagged": "No tag"
+    },
+    "logExport": {
+      "title": "Export logs",
+      "hint": "Downloads one NDJSON file, one line per entry with its tags. Leave a filter empty to include everything.",
+      "source": "Log source",
+      "sourcesLoading": "Reading the log sources…",
+      "unreadableNoReason": "This destination only ships lines.",
+      "notReadable": "Not readable",
+      "reachUnknown": "Reach unknown",
+      "components": "Components",
+      "allComponents": "All components",
+      "devices": "Devices",
+      "range": "Time range",
+      "lastHours": "Last {{hours}} h",
+      "rangeClamped": "This source keeps {{days}} days: the range was shortened to fit.",
+      "reachUnknownHint": "How far back this source reaches is unknown: an older range may return fewer lines.",
+      "failed": "The export failed",
+      "cancel": "Cancel",
+      "downloading": "Downloading…",
+      "download": "Download",
+      "reachDays_one": "Back {{count}} day",
+      "reachDays_other": "Back {{count}} days"
     }
   },
   "helpers": {

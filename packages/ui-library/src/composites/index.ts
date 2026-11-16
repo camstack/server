@@ -448,6 +448,9 @@ export { KebabMenu } from './kebab-menu'
 export * from './key-value-list'
 export type { FloatingLogStreamProps, LogStreamProps } from './log-stream'
 export { FloatingLogStream, LogStream } from './log-stream'
+export type { LogColumnConfig, LogColumnId } from './log-stream-columns'
+export type { LogExportDialogProps, LogExportFetch } from './log-export-dialog'
+export { LogExportDialog } from './log-export-dialog'
 export type { LoginFormProps } from './login-form'
 
 // --- Auth / Dev ---

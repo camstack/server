@@ -60,6 +60,8 @@ interface DeviceValuePickerCommon {
   readonly testId?: string
   /** What the field picks, for the empty and widening sentences (default `device`). */
   readonly noun?: PickerNoun
+  /** The popover is its final height from the first paint (it never repositions while loading). */
+  readonly stableHeight?: boolean
 }
 
 export interface DeviceValuePickerSingleProps extends DeviceValuePickerCommon {
@@ -179,6 +181,7 @@ export function DeviceValuePicker(props: DeviceValuePickerProps): JSX.Element {
         onSelect={onSelect}
         railFirst={props.variant === 'popover'}
         recentIds={recents.ids}
+        stableHeight={props.stableHeight}
       />
     </PopoverContent>
   )

@@ -6964,6 +6964,12 @@
           "doc": "Stretch to a flex parent and scroll the rows inside it (a full-height dialog)."
         },
         {
+          "name": "stableHeight",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Take the final height (the cap) from the first paint instead of growing as the list and the filter rail arrive, so a popover anchored to the"
+        },
+        {
           "name": "columns",
           "type": "(parts: { readonly rail: ReactNode; readonly list: ReactNode }) => ReactNode",
           "optional": true,
@@ -11491,6 +11497,33 @@
       "summary": ""
     },
     {
+      "name": "LogExportDialog",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/log-export-dialog.tsx",
+      "summary": "Export the logs (#570): components and/or devices over a time range, from a chosen log source, downloaded as one NDJSON file from `GET /api/logs/export` — the route the ops MCP tool calls too.",
+      "props": [
+        {
+          "name": "initial",
+          "type": "LogExportScope",
+          "optional": false,
+          "doc": "The stream's scope: the starting point of the components, devices and source."
+        },
+        {
+          "name": "onClose",
+          "type": "() => void",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "fetchBlob",
+          "type": "LogExportFetch",
+          "optional": true,
+          "doc": "Replaces the authenticated download (a host with another session mechanism, tests)."
+        }
+      ]
+    },
+    {
       "name": "LoginForm",
       "kind": "component",
       "area": "composites",
@@ -11601,6 +11634,24 @@
           "type": "boolean",
           "optional": true,
           "doc": "Render an inline per-row device chip (`name #id` / `#id`) when the entry carries a `deviceId` tag. Meant for addon- or agent-scoped streams "
+        },
+        {
+          "name": "columns",
+          "type": "LogColumnConfig",
+          "optional": true,
+          "doc": "The optional integration-name and device-name columns: which the toolbar offers and which start visible. By default a stream locked to an ad"
+        },
+        {
+          "name": "showExport",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Offer the Export button, pre-filled with this stream's scope (default true)."
+        },
+        {
+          "name": "fetchExport",
+          "type": "LogExportFetch",
+          "optional": true,
+          "doc": "Replaces the authenticated download of the export (a host with another session mechanism)."
         },
         {
           "name": "showFilters",

@@ -48,7 +48,7 @@ export function InstanceSwitchCell({
           addon: row.providerName,
         })
   return (
-    <span className="flex flex-col items-end gap-1" title={notRunning ?? undefined}>
+    <span className="flex flex-col items-start gap-1" title={notRunning ?? undefined}>
       <Switch
         checked={row.enabled}
         disabled={setEnabled.isPending || notRunning !== null}

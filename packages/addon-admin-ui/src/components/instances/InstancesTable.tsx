@@ -126,6 +126,12 @@ export interface InstancesTableProps {
    * pills and Add stay those of the whole function.
    */
   readonly rowFilter?: (row: PanelRow) => boolean
+  /**
+   * The Kind cell's label for a row whose provider declares no kind of its own (a fixed row, or a
+   * record of a provider without kinds): the cell then still shows the provider's icon and this
+   * label, so the column never holds a blank. Absent keeps the column hidden when no row has a kind.
+   */
+  readonly defaultKindLabel?: string
   /** The words of the editor's test button, already translated (a notifier's "Send test"). */
   readonly testLabel?: string
   /** What that test does, one sentence under the form, already translated. */
@@ -188,6 +194,17 @@ function StateCell({ row }: { readonly row: InstanceRow }): ReactElement {
   )
 }
 
+/** The Kind cell's text: the record's own kind, else the table's default, else nothing. */
+export function kindLabelOf(
+  row: { readonly kind: 'fixed' } | { readonly kind: 'instance'; readonly kindLabel?: string },
+  defaultKindLabel: string | undefined,
+): string {
+  if (row.kind === 'instance' && row.kindLabel !== undefined && row.kindLabel.length > 0) {
+    return row.kindLabel
+  }
+  return defaultKindLabel ?? ''
+}
+
 function EnableCell({
   row,
   functionCap,
@@ -238,6 +255,7 @@ export function InstancesTable({
   rowFilter,
   testLabel,
   testHint,
+  defaultKindLabel,
 }: InstancesTableProps): ReactElement {
   const { t } = useTranslation()
   const system = useSystem()
@@ -344,8 +362,10 @@ export function InstancesTable({
   )
 
   const showKind = useMemo(
-    () => data.rows.some((row) => row.kind === 'instance' && row.kindLabel !== undefined),
-    [data.rows],
+    () =>
+      defaultKindLabel !== undefined ||
+      data.rows.some((row) => row.kind === 'instance' && row.kindLabel !== undefined),
+    [data.rows, defaultKindLabel],
   )
   // An interactive link or unlink opens the provider's own route; the list refreshes when it ends.
   const runLink = useCallback(
@@ -399,21 +419,24 @@ export function InstancesTable({
             {
               key: 'kind',
               header: t('providerInstances.colKind', 'Kind'),
-              sortValue: (row: PanelRow) => (row.kind === 'instance' ? (row.kindLabel ?? '') : ''),
-              render: (row: PanelRow) =>
-                row.kind === 'instance' &&
-                row.kindLabel !== undefined &&
-                row.kindLabel.length > 0 ? (
+              sortValue: (row: PanelRow) => kindLabelOf(row, defaultKindLabel),
+              render: (row: PanelRow) => {
+                const label = kindLabelOf(row, defaultKindLabel)
+                if (label === '') return <span className="text-foreground-muted" />
+                return (
                   <KindCell
                     addonId={row.addonId}
                     providerName={row.providerName}
-                    label={row.kindLabel}
-                    {...(row.kindIconUrl !== undefined ? { iconUrl: row.kindIconUrl } : {})}
-                    {...(row.links !== undefined ? { links: row.links } : {})}
+                    label={label}
+                    {...(row.kind === 'instance' && row.kindIconUrl !== undefined
+                      ? { iconUrl: row.kindIconUrl }
+                      : {})}
+                    {...(row.kind === 'instance' && row.links !== undefined
+                      ? { links: row.links }
+                      : {})}
                   />
-                ) : (
-                  <span className="text-foreground-muted" />
-                ),
+                )
+              },
             },
           ]
         : []),
@@ -537,6 +560,7 @@ export function InstancesTable({
       runLink,
       runTest,
       showKind,
+      defaultKindLabel,
       t,
       testing,
     ],

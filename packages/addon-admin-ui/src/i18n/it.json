@@ -198,7 +198,8 @@
       "noLogDestinationsRegistered": "Nessuna destinazione di log registrata",
       "thisShouldNotHappenThe": "Non dovrebbe succedere — le destinazioni console e file a rotazione sono integrate. Se l'elenco è vuoto, il nodo è ancora in avvio.",
       "addDestination": "Aggiungi destinazione",
-      "installDestination": "Installa una destinazione"
+      "installDestination": "Installa una destinazione",
+      "kindDestination": "Destinazione log"
     },
     "meshNetworks": {
       "meshNetworks": "Reti mesh",
@@ -6908,20 +6909,7 @@
         "destinations": "Destinazioni",
         "levels": "Livelli",
         "diagnostics": "Diagnostica",
-        "watch": "Osserva",
-        "export": {
-          "open": "Esporta",
-          "title": "Esporta i log",
-          "hint": "Scarica un file NDJSON, una riga per voce con i suoi tag. Lascia vuoto un filtro per includere tutto.",
-          "components": "Componenti",
-          "allComponents": "Tutti i componenti",
-          "devices": "Dispositivi",
-          "range": "Intervallo di tempo",
-          "lastHours": "Ultime {{hours}} h",
-          "failed": "L'esportazione non è riuscita",
-          "downloading": "Download in corso…",
-          "download": "Scarica"
-        }
+        "watch": "Osserva"
       },
       "secrets": {
         "revealRefused": "Rivelazione rifiutata",
@@ -9117,7 +9105,11 @@
       "loadOlder": "Carica più vecchi",
       "origin": "Origine",
       "originAll": "Tutte le origini",
-      "originViewer": "App viewer"
+      "originViewer": "App viewer",
+      "export": "Esporta",
+      "columns": "Colonne",
+      "colIntegration": "Integrazione",
+      "colDevice": "Dispositivo"
     },
     "modelBoundSlider": {
       "resetToDefault": "Ripristina il valore predefinito del modello",
@@ -10869,6 +10861,28 @@
       "columnNotSortable": "Una riga può avere più tag",
       "noMatches": "Nulla corrisponde a questo filtro.",
       "untagged": "Senza tag"
+    },
+    "logExport": {
+      "title": "Esporta i log",
+      "hint": "Scarica un file NDJSON, una riga per voce con i suoi tag. Lascia vuoto un filtro per includere tutto.",
+      "source": "Sorgente log",
+      "sourcesLoading": "Lettura delle sorgenti log…",
+      "unreadableNoReason": "Questa destinazione invia soltanto le righe.",
+      "notReadable": "Non leggibile",
+      "reachUnknown": "Profondità sconosciuta",
+      "components": "Componenti",
+      "allComponents": "Tutti i componenti",
+      "devices": "Dispositivi",
+      "range": "Intervallo di tempo",
+      "lastHours": "Ultime {{hours}} h",
+      "rangeClamped": "Questa sorgente conserva {{days}} giorni: l'intervallo è stato ridotto di conseguenza.",
+      "reachUnknownHint": "Non si sa quanto indietro arrivi questa sorgente: un intervallo più lungo potrebbe restituire meno righe.",
+      "failed": "Esportazione non riuscita",
+      "cancel": "Annulla",
+      "downloading": "Download in corso…",
+      "download": "Scarica",
+      "reachDays_one": "Indietro di {{count}} giorno",
+      "reachDays_other": "Indietro di {{count}} giorni"
     }
   },
   "helpers": {

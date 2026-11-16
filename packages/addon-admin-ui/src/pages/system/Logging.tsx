@@ -58,6 +58,7 @@ export function LoggingPage(): ReactElement {
         'system.logging.thisShouldNotHappenThe',
         'This should not happen — the console and rotated-file destinations are builtins. If the list is empty, the node is still booting.',
       )}
+      defaultKindLabel={t('system.logging.kindDestination', 'Log destination')}
       addLabel={t('system.logging.addDestination', 'Add destination')}
       install={{
         capability: 'log-destination',

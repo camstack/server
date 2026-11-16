@@ -25,6 +25,8 @@ import {
   ChevronRight,
   ChevronsDownUp,
   ChevronsUpDown,
+  Columns3,
+  Download,
 } from 'lucide-react'
 import { trpc } from '../trpc-react'
 import { cn } from '../lib/cn'
@@ -33,7 +35,15 @@ import { useLiveBuffer, type LiveBuffer } from '../hooks/use-live-buffer'
 import { useDebouncedString } from '../hooks/use-debounced-string'
 import { useLogHistory, type LogHistoryLevel } from '../hooks/use-log-history'
 import { Button } from '../primitives/button'
+import { Checkbox } from '../primitives/checkbox'
+import { Popover, PopoverContent, PopoverTrigger } from '../primitives/popover'
 import { Select } from '../primitives/select'
+import { useLogNames } from '../hooks/use-log-names'
+import { useLogStreamColumns } from '../hooks/use-log-stream-columns'
+import { LogExportDialog, type LogExportFetch } from './log-export-dialog'
+import { logExportScopeOf } from './log-export'
+import type { LogColumnConfig, LogColumnId } from './log-stream-columns'
+import { entryAddonId, entryDeviceId, nameOrId } from './log-stream-names'
 import { isPinnedToBottom, PIN_THRESHOLD_PX } from './log-stream-scroll'
 import { logEntryKey, mergeLogEntries, type LogWireEntry } from './log-history-paging'
 
@@ -112,6 +122,16 @@ export interface LogStreamProps {
    * imply the device.
    */
   readonly showDeviceChip?: boolean
+  /**
+   * The optional integration-name and device-name columns: which the toolbar offers and which
+   * start visible. By default a stream locked to an addon has no integration column and one
+   * locked to a device has no device column; the viewer's own toggles are remembered per browser.
+   */
+  readonly columns?: LogColumnConfig
+  /** Offer the Export button, pre-filled with this stream's scope (default true). */
+  readonly showExport?: boolean
+  /** Replaces the authenticated download of the export (a host with another session mechanism). */
+  readonly fetchExport?: LogExportFetch
   /** Show the filter bar with selectors. Set false for compact inline use. */
   readonly showFilters?: boolean
   /** Show the history source selector (default: follows `showFilters`). */
@@ -171,6 +191,9 @@ export function LogStream({
   maxHeight = 'max-h-96',
   showScope = false,
   showDeviceChip = false,
+  columns: columnConfig,
+  showExport = true,
+  fetchExport,
   showFilters = true,
   showSourceSelect,
   limit = 100,
@@ -290,6 +313,14 @@ export function LogStream({
     () => (sourcesQuery.data ?? []).filter((source) => source.readable),
     [sourcesQuery.data],
   )
+  const columnState = useLogStreamColumns(
+    { addonId: propsAddonId, deviceId: propsDeviceId },
+    columnConfig,
+  )
+  const showIntegration = columnState.visible.includes('integration')
+  const showDevice = columnState.visible.includes('device')
+  const logNames = useLogNames({ integration: showIntegration, device: showDevice })
+  const [exporting, setExporting] = useState(false)
   const historyQuery = useMemo(
     () => ({
       ...(sourceChoice ? { source: sourceChoice } : {}),
@@ -626,6 +657,21 @@ export function LogStream({
             label={t('uiLibrary.logStream.clear', 'Clear')}
             onClick={handleClear}
           />
+          {showExport && (
+            <ToolbarButton
+              icon={Download}
+              label={t('uiLibrary.logStream.export', 'Export')}
+              onClick={() => setExporting(true)}
+              testId="log-export-open"
+            />
+          )}
+          {columnState.available.length > 1 && (
+            <ColumnsMenu
+              available={columnState.available}
+              visible={columnState.visible}
+              onChange={columnState.setVisible}
+            />
+          )}
 
           {/* Free-text search — substring match across message, scope, tags, meta. */}
           <div className="relative">
@@ -667,6 +713,19 @@ export function LogStream({
           </button>
         )}
       </div>
+
+      {exporting && (
+        <LogExportDialog
+          initial={logExportScopeOf({
+            addonId,
+            deviceId,
+            containerDeviceId: propsContainerDeviceId,
+            source: history.source ?? sourceChoice,
+          })}
+          onClose={() => setExporting(false)}
+          {...(fetchExport !== undefined ? { fetchBlob: fetchExport } : {})}
+        />
+      )}
 
       {/* Inline scope selectors (only for unlocked levels) */}
       {showFilters && (!propsAddonId || !propsDeviceId) && (
@@ -790,6 +849,22 @@ export function LogStream({
                           title={log.scope}
                         >
                           {log.scope?.replace(/^addon:/, '') ?? ''}
+                        </td>
+                      )}
+                      {showIntegration && (
+                        <td
+                          className="px-2 py-1 text-foreground-muted align-top truncate max-w-[120px] sm:max-w-[160px]"
+                          data-testid="log-cell-integration"
+                        >
+                          <IntegrationCell entry={log} names={logNames.addons} />
+                        </td>
+                      )}
+                      {showDevice && (
+                        <td
+                          className="px-2 py-1 text-foreground-muted align-top truncate max-w-[120px] sm:max-w-[160px]"
+                          data-testid="log-cell-device"
+                        >
+                          <DeviceCell entry={log} names={logNames.devices} />
                         </td>
                       )}
                       <td className="px-2 py-1 text-foreground break-all">
@@ -1021,13 +1096,92 @@ function RowCopyButton({
   )
 }
 
+function IntegrationCell({
+  entry,
+  names,
+}: {
+  readonly entry: LogEntry
+  readonly names: ReturnType<typeof useLogNames>['addons']
+}) {
+  const id = entryAddonId(entry)
+  // A line from the hub itself has no addon: its scope names the emitter.
+  if (id === null) return entry.scope ? <span title={entry.scope}>{entry.scope}</span> : null
+  const name = nameOrId(names, id)
+  return <span title={name === id ? id : `${name} (${id})`}>{name}</span>
+}
+
+function DeviceCell({
+  entry,
+  names,
+}: {
+  readonly entry: LogEntry
+  readonly names: ReturnType<typeof useLogNames>['devices']
+}) {
+  const id = entryDeviceId(entry)
+  if (id === null) return null
+  const name = nameOrId(names, id)
+  return <span title={`${name} #${id}`}>{name}</span>
+}
+
+const COLUMN_LABELS: Record<LogColumnId, readonly [string, string]> = {
+  integration: ['uiLibrary.logStream.colIntegration', 'Integration'],
+  device: ['uiLibrary.logStream.colDevice', 'Device'],
+}
+
+/** The columns multi-select of the toolbar. */
+function ColumnsMenu({
+  available,
+  visible,
+  onChange,
+}: {
+  readonly available: readonly LogColumnId[]
+  readonly visible: readonly LogColumnId[]
+  readonly onChange: (id: LogColumnId, shown: boolean) => void
+}) {
+  const t = useUiText()
+  return (
+    <Popover>
+      <PopoverTrigger
+        className="inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border border-border text-foreground-subtle hover:text-foreground transition-colors"
+        data-testid="log-columns-open"
+      >
+        <Columns3 className="h-2.5 w-2.5" />
+        {t('uiLibrary.logStream.columns', 'Columns')}
+      </PopoverTrigger>
+      <PopoverContent className="w-44 p-2">
+        <div
+          className="space-y-1.5"
+          role="group"
+          aria-label={t('uiLibrary.logStream.columns', 'Columns')}
+        >
+          {available.map((id) => {
+            const [key, fallback] = COLUMN_LABELS[id]
+            return (
+              <label key={id} className="flex items-center gap-2 text-xs text-foreground">
+                <Checkbox
+                  checked={visible.includes(id)}
+                  onChange={(e) => onChange(id, e.target.checked)}
+                  data-testid={`log-column-${id}`}
+                />
+                {t(key, fallback)}
+              </label>
+            )
+          })}
+        </div>
+      </PopoverContent>
+    </Popover>
+  )
+}
+
 function ToolbarButton({
   icon: Icon,
   label,
   onClick,
   disabled,
   active,
+  testId,
 }: {
+  readonly testId?: string
   readonly icon: typeof Info
   readonly label: string
   readonly onClick: () => void
@@ -1039,6 +1193,7 @@ function ToolbarButton({
       type="button"
       onClick={onClick}
       disabled={disabled}
+      data-testid={testId}
       className={cn(
         'inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded border transition-colors',
         active

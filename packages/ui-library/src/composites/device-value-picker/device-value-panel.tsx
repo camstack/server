@@ -50,6 +50,12 @@ export interface DeviceValuePanelProps {
   /** Stretch to a flex parent and scroll the rows inside it (a full-height dialog). */
   readonly fill?: boolean
   /**
+   * Take the final height (the cap) from the first paint instead of growing as
+   * the list and the filter rail arrive, so a popover anchored to the field
+   * computes its position once and never moves when the answer lands.
+   */
+  readonly stableHeight?: boolean
+  /**
    * Lay the filter rail and the device list out yourself (a resizable split). The rail is
    * null while the facets are not known. The panel keeps its own box and height cap.
    */
@@ -251,7 +257,9 @@ export function DeviceValuePanel(props: DeviceValuePanelProps): JSX.Element {
       className={
         props.fill === true
           ? 'flex min-h-0 flex-1 flex-col sm:flex-row'
-          : 'flex max-h-[min(70vh,34rem)] min-h-0 flex-col sm:flex-row'
+          : props.stableHeight === true
+            ? 'flex h-[min(70vh,34rem)] min-h-0 flex-col sm:flex-row'
+            : 'flex max-h-[min(70vh,34rem)] min-h-0 flex-col sm:flex-row'
       }
     >
       {props.columns === undefined ? (

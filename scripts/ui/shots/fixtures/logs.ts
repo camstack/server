@@ -100,6 +100,16 @@ function page(): unknown {
   }
 }
 
+const FILTERS = {
+  deviceId: true,
+  addonId: true,
+  nodeId: true,
+  tags: true,
+  level: true,
+  text: true,
+  timeRange: true,
+}
+
 const END = {
   entries: [],
   nextBefore: null,
@@ -115,6 +125,27 @@ export default defineFixtures({
   handlers: {
     'logs.query': (input: unknown) =>
       typeof input === 'object' && input !== null && 'before' in input ? END : page(),
+    // A slim device list: the log table's device column names a line's deviceId from it.
+    'deviceManager.listAll': [
+      {
+        id: 101,
+        stableId: 'cam-101',
+        addonId: 'provider-onvif',
+        type: 'camera',
+        name: 'Driveway',
+        location: null,
+        disabled: false,
+        parentDeviceId: null,
+        role: null,
+        online: true,
+        probed: true,
+        features: [],
+        isCamera: true,
+        config: {},
+        secretConfigPaths: [],
+        metadata: {},
+      },
+    ],
     'logs.sources': [
       {
         addonId: 'winston-logging',
@@ -122,15 +153,23 @@ export default defineFixtures({
         reason: null,
         isDefault: true,
         retentionDays: 14,
-        filters: {
-          deviceId: true,
-          addonId: true,
-          nodeId: true,
-          tags: true,
-          level: true,
-          text: true,
-          timeRange: true,
-        },
+        filters: FILTERS,
+      },
+      {
+        addonId: 'loki-logging',
+        readable: true,
+        reason: null,
+        isDefault: false,
+        retentionDays: null,
+        filters: FILTERS,
+      },
+      {
+        addonId: 'console-logging',
+        readable: false,
+        reason: 'This destination only ships lines.',
+        isDefault: false,
+        retentionDays: null,
+        filters: FILTERS,
       },
     ],
   },
