@@ -40,6 +40,7 @@ import {
   TabsContent,
   TabsList,
   TabsTrigger,
+  TagInput,
   useSystem,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
@@ -257,6 +258,15 @@ export function NotificationTimelapseEditor({
                       testId="timelapse-enabled"
                     />
                   </div>
+                </div>
+                {/* Tags (D1054) — the same input as every rule kind and every Build section. */}
+                <div>
+                  <span className={DIGEST_LABEL_CLASS}>{t('common.tags', 'Tags')}</span>
+                  <TagInput
+                    value={form.tags}
+                    onChange={(next) => patch({ tags: next })}
+                    label={t('common.tags', 'Tags')}
+                  />
                 </div>
               </DigestSection>
 

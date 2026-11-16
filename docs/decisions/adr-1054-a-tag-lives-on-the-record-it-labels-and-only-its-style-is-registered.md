@@ -9,6 +9,8 @@ applies-to:
   - packages/types/src/capabilities/device-manager.cap.ts
   - packages/system/src/builtins/core-blocks/**
   - packages/system/src/builtins/device-manager/**
+  - packages/types/src/capabilities/notification-rules.cap.ts
+  - packages/addon-post-analysis/src/notification-center/**
 ---
 
 ## Context
@@ -33,8 +35,10 @@ split the fleet across two rooms).
 ## Decision
 
 A tag is a trimmed string stored on the record it labels, in a `tags` array
-the record's owner persists — `CoreBlock`, `Scheduler`, `TemplateRecord`, the
-action record, and the device meta beside `location`. The only registry is the
+the record's owner persists. There are six owners: `CoreBlock`, `Scheduler`,
+`TemplateRecord`, the action record, the device meta beside `location`, and
+the notification rule. A notification rule is tagged on its base, so every
+kind carries tags: event, summary, timelapse and calendar-events. The only registry is the
 tag STYLE: name → colour (an enum of tag-colour tokens, never a hex) and icon
 (`IconKey`), kept by the `core-blocks` builtin. Listing tags returns the union
 of styled tags and tags in use, with their counts. Renaming or removing a tag
@@ -48,8 +52,17 @@ browser drives. Tags compare trimmed and case-insensitively, like rooms.
   section filters its own list without a join.
 - A tag with no style shows a colour derived from its name and the default
   icon; the style is a choice, never a prerequisite.
-- Rename and remove fan out to the device manager through `ctx.api`, so the
-  `core-blocks` builtin is the one place that knows every owner kind.
+- Rename and remove fan out to the device manager and to the notification
+  rules through `ctx.api` (`notificationRules.listRuleTags` /
+  `setRuleTags`, owner ids `<kind>:<ruleId>` across all four rule kinds), so
+  the `core-blocks` builtin is the one place that knows every owner kind.
+- An owner that cannot be read does not blank the list: `tags.list` logs a
+  warning, reports that owner's count as `null` (unknown, D393) and returns
+  the other owners' tags. A rename or remove reads every owner before it
+  writes, and refuses with `TagOwnerUnreachableError` naming the owner when
+  one cannot be read, so nothing is half rewritten.
+- A tags field never carries a default: a partial patch that does not name
+  `tags` keeps them, and only an admin may set them.
 
 ## Enforcement
 

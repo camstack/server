@@ -57,6 +57,7 @@ import {
 } from './notification-digest.helpers'
 import i18n from '../../i18n/index'
 import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
+import { parseRuleTags, type TagsWire, tagsForCreate, tagsForPatch } from './rule-tags-wire'
 
 // ── The bridge ───────────────────────────────────────────────────────
 
@@ -222,6 +223,8 @@ export interface SummaryRuleView {
   readonly readOnly: boolean
   /** The joint-analysis section (#35 P2). Absent = the rule has none. */
   readonly ai?: SummaryAiView
+  /** Operator labels (D1054); absent = none. */
+  readonly tags?: readonly string[]
 }
 
 /** A rule this build can open in the editor. */
@@ -459,6 +462,7 @@ function parseRule(raw: unknown): SummaryRuleView | null {
   if (ai === null) return null
   const targetOverrides = parseTargetOverrides(raw['targetOverrides'])
   if (targetOverrides === null) return null
+  const tags = parseRuleTags(raw['tags'])
   return {
     id,
     name,
@@ -481,6 +485,7 @@ function parseRule(raw: unknown): SummaryRuleView | null {
     ...(updatedAt !== undefined ? { updatedAt } : {}),
     readOnly: raw['readOnly'] === true,
     ...(ai !== undefined ? { ai } : {}),
+    ...(tags !== undefined ? { tags } : {}),
   }
 }
 
@@ -621,6 +626,8 @@ export interface SummaryFormState {
   /** SECONDS in the UI, milliseconds on the wire — nobody types 180000. */
   readonly aiTimeoutSeconds: number | undefined
   readonly aiOnFailure: SummaryAiOnFailure
+  /** Operator labels (D1054); `[]` = none. */
+  readonly tags: readonly string[]
 }
 
 /** The defaults a NEW digest opens on — the addon's own, verbatim. */
@@ -661,6 +668,7 @@ export function emptySummaryForm(): SummaryFormState {
     aiTimeoutSeconds: undefined,
     // The default is the one that cannot cost a digest.
     aiOnFailure: 'deliver-without-text',
+    tags: [],
   }
 }
 
@@ -686,6 +694,7 @@ export function summaryRuleToForm(rule: SummaryEditableRule): SummaryFormState {
     rank: rule.rank,
     barrierSeconds: rule.barrierSeconds,
     targetIds: rule.targets.map((t) => t.targetId),
+    tags: [...(rule.tags ?? [])],
     templateTitle: rule.template?.title ?? '',
     templateBody: rule.template?.body ?? '',
     mosaicCaptions: rule.captions,
@@ -708,7 +717,7 @@ export function summaryRuleToForm(rule: SummaryEditableRule): SummaryFormState {
 
 export type SummaryWindowWire = SummaryScheduleWindowView | SummaryMotionWindowView
 
-export interface SummaryRuleInputWire {
+export interface SummaryRuleInputWire extends TagsWire {
   readonly name: string
   readonly enabled: boolean
   readonly deviceIds: readonly number[]
@@ -733,7 +742,7 @@ export interface SummaryRuleInputWire {
  * fields — `null` removes them, an object replaces them, an absent key leaves
  * them alone.
  */
-export interface SummaryRulePatchWire {
+export interface SummaryRulePatchWire extends TagsWire {
   readonly name?: string
   readonly enabled?: boolean
   readonly deviceIds?: readonly number[]
@@ -855,6 +864,7 @@ export function buildSummaryCreateInput(
     priority: form.priority,
     ...(Object.keys(targetOverrides).length > 0 ? { targetOverrides } : {}),
     ...(ai !== undefined ? { ai } : {}),
+    ...tagsForCreate(form.tags),
   }
 }
 
@@ -925,7 +935,7 @@ export function buildSummaryPatch(
     // no-op — the same treatment `filters` and `template` already get.
     patch.ai = next.ai ?? null
   }
-  return patch
+  return { ...patch, ...tagsForPatch(form.tags, existing.tags) }
 }
 
 // ── Validation ───────────────────────────────────────────────────────
@@ -1099,7 +1109,7 @@ export const NC_SUMMARY_TABS: readonly SummaryTab[] = [
     get label() {
       return i18n.t('helpers.notificationSummaries.tab_rule')
     },
-    fields: ['name', 'enabled', 'deviceIds'],
+    fields: ['name', 'enabled', 'tags', 'deviceIds'],
   },
   {
     key: 'window',

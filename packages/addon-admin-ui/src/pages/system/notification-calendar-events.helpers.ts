@@ -16,6 +16,7 @@ import { scheduleLabel } from './notification-digest.helpers'
 import { NC_ADDON_ID } from './notification-texts.helpers'
 import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 import i18n from '../../i18n/index'
+import { tagsForCreate, tagsForPatch } from './rule-tags-wire'
 
 export { NC_ADDON_ID }
 
@@ -77,6 +78,8 @@ const CalendarEventsRuleViewSchema = z.object({
   targetOverrides: NcTargetOverridesSchema.optional(),
   generatedAt: z.number().optional(),
   readOnly: z.boolean().optional(),
+  /** Operator labels (D1054). */
+  tags: z.array(z.string()).optional(),
 })
 
 export type CalendarEventsRuleView = z.infer<typeof CalendarEventsRuleViewSchema>
@@ -151,6 +154,8 @@ export interface CalendarEventsFormState {
   readonly templateTitle: string
   readonly templateBody: string
   readonly targetOverrides: NcTargetOverrides
+  /** Operator labels (D1054); `[]` = none. */
+  readonly tags: readonly string[]
 }
 
 function defaultSchedule(): NcSchedule {
@@ -186,6 +191,7 @@ export function emptyCalendarEventsForm(): CalendarEventsFormState {
     templateTitle: '',
     templateBody: '',
     targetOverrides: {},
+    tags: [],
   }
 }
 
@@ -203,6 +209,7 @@ export function calendarEventsRuleToForm(rule: CalendarEventsRuleView): Calendar
     templateTitle: rule.template?.title ?? '',
     templateBody: rule.template?.body ?? '',
     targetOverrides: rule.targetOverrides ?? {},
+    tags: [...(rule.tags ?? [])],
   }
 }
 
@@ -235,6 +242,7 @@ export function buildCalendarEventsCreateInput(
       : {}),
     targets,
     ...(Object.keys(targetOverrides).length > 0 ? { targetOverrides } : {}),
+    ...tagsForCreate(form.tags),
     ...(form.templateTitle.trim().length > 0 || form.templateBody.trim().length > 0
       ? {
           template: {
@@ -251,9 +259,11 @@ export function buildCalendarEventsPatch(
   existing: CalendarEventsRuleView,
   fieldsOf?: TargetFieldsOf,
 ): Record<string, unknown> {
-  const create = buildCalendarEventsCreateInput(form, fieldsOf)
+  // Tags go only when they changed (see `rule-tags-wire`), never as an echo.
+  const { tags: _createdTags, ...create } = buildCalendarEventsCreateInput(form, fieldsOf)
   return {
     ...create,
+    ...tagsForPatch(form.tags, existing.tags),
     // The map replaces the stored one whole: every target, untouched ones
     // included. `{}` clears it, and only on a rule that had one.
     ...(create['targetOverrides'] === undefined &&

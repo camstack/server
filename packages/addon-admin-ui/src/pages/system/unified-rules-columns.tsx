@@ -40,9 +40,12 @@ export interface UnifiedColumnsDeps {
   readonly calendar: CalendarEventsColumnsDeps
 }
 
-/** Minimum table width the area's columns need (px) — fed to `NcListTable`. */
+/**
+ * Minimum table width the area's columns need (px) — fed to `TaggedDataTable`.
+ * Every area carries the Tags column (D1054), so each needs room for it.
+ */
 export function minWidthForArea(area: RulesAreaKey): number {
-  return area === 'all' ? 900 : 860
+  return area === 'all' ? 1020 : 980
 }
 
 function eventOf(row: UnifiedRuleRow): NcRule | null {

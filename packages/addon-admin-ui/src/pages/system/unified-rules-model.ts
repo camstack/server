@@ -57,8 +57,7 @@ export type UnifiedRuleRow =
  * Module-level so the references are stable — the table keys its memos on them.
  * Only an event rule carries tags; a scheduled producer has none.
  */
-export const unifiedRuleTags = (row: UnifiedRuleRow): readonly string[] | undefined =>
-  row.family === 'event' ? row.rule.tags : undefined
+export const unifiedRuleTags = (row: UnifiedRuleRow): readonly string[] | undefined => row.rule.tags
 export const unifiedRuleSearchText = (row: UnifiedRuleRow): readonly string[] => [row.name]
 
 export interface UnifiedRuleBags {

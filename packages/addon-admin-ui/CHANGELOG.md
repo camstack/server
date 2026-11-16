@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Node shells counts each node's running shells and lists them, whoever opened them, with a Close; a failed close is shown, a node without Terminal says so, and a page restored from the back/forward cache returns to Open shell.
 - System → Settings no longer lists addon settings tabs; each addon's cluster settings moved to its page (Pipeline streaming/recording/semantic search, History retention, Nodes metrics), the rest stay in the addon's settings dialog
 - Pipeline → Settings → Faces draws the face-suggestion refresh interval; an addon's settings dialog leaves out the role pickers drawn on Roles & nodes and links there
+- Every notification rule kind (summaries, timelapses, calendar events) has a Tags field; every Rules area filters and groups by tag, and All names a kind whose list failed instead of looking empty
 
 ## [1.2.689] - 2026-11-16
 

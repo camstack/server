@@ -52,6 +52,7 @@ import {
 import {
   Badge,
   Button,
+  Card,
   ErrorBox,
   Input,
   ItemFormDialog,
@@ -703,18 +704,24 @@ export function NotificationRulesPage({
 
         {areaRows.length > 0 && (
           // Tags filter and group the rules exactly like every Build section (D1054).
-          <TaggedDataTable<UnifiedRuleRow>
-            section="notification-rules"
-            getTags={unifiedRuleTags}
-            searchText={unifiedRuleSearchText}
-            searchLabel={t('system.notificationRules.searchRules', 'Search rules')}
-            columns={columns}
-            rows={areaRows}
-            rowKey={(r) => `${r.family}:${r.id}`}
-            onRowClick={openRow}
-            minWidthPx={minWidthForArea(activeArea.key)}
-            maxBodyHeight={TABLE_SCROLL_MAX_H}
-          />
+          // Keyed per area: a tag filter set on one area must not strand another
+          // area on "Nothing matches".
+          <Card variant="bordered">
+            <TaggedDataTable<UnifiedRuleRow>
+              key={activeArea.key}
+              section="notification-rules"
+              bordered={false}
+              getTags={unifiedRuleTags}
+              searchText={unifiedRuleSearchText}
+              searchLabel={t('system.notificationRules.searchRules', 'Search rules')}
+              columns={columns}
+              rows={areaRows}
+              rowKey={(r) => `${r.family}:${r.id}`}
+              onRowClick={openRow}
+              minWidthPx={minWidthForArea(activeArea.key)}
+              maxBodyHeight={TABLE_SCROLL_MAX_H}
+            />
+          </Card>
         )}
 
         {editor.mode === 'form' && (
