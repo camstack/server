@@ -259,6 +259,7 @@ import { FirstDetectionFrameTimer } from './first-detection-frame.js'
 import { FrameCutterBinding } from './frame-cutter-binding.js'
 import { OccupancyBurstLedger, type OccupancyBurstSummary } from './occupancy-burst-ledger.js'
 import { FrameLazyTelemetry } from './frame-lazy-metrics.js'
+import { NativeCropMissCounter } from './native-crop-miss-counter.js'
 import { selectExecutorFrameSource } from './frame-ref-transport.js'
 import { summarizeRunnerHardware } from './hardware-capabilities.js'
 import {
@@ -1078,6 +1079,8 @@ export default class PipelineRunnerAddon
     { cut: number; failed: number; skippedNoPixels: number; bytes: number; encodeMs: number }
   >()
   private readonly birthEvidenceReportedAt = new Map<number, number>()
+  /** Native crops that produced nothing, per camera, shipped on the metrics snapshot. */
+  private readonly nativeCropMisses = new NativeCropMissCounter()
   /** Per-camera descriptor cost since the last report (D683). */
   private readonly appearanceCost = new Map<number, AppearanceCostTally>()
   private readonly appearanceReportedAt = new Map<number, number>()
@@ -3706,8 +3709,11 @@ export default class PipelineRunnerAddon
         // the round-trip) has always been a warn. Leaving this half at debug is
         // why the designed diagnostic pair was never once visible together in
         // production — a `null` was attributable to nothing.
-        if (tierOnMiss === 'miss') this.ctx.logger.warn(message, withBound)
-        else this.ctx.logger.debug(message, withBound)
+        if (tierOnMiss === 'miss') {
+          // `-1` is the log tag for a handle no camera claims: not a camera, not counted.
+          if (fields.tags.deviceId >= 0) this.nativeCropMisses.note(fields.tags.deviceId)
+          this.ctx.logger.warn(message, withBound)
+        } else this.ctx.logger.debug(message, withBound)
       }
     }
     // Tag the served result with the resolved tier so a quality-sensitive
@@ -4667,6 +4673,7 @@ export default class PipelineRunnerAddon
     this.birthNovelty.clearDevice(deviceId)
     this.birthEvidenceCost.delete(deviceId)
     this.birthEvidenceReportedAt.delete(deviceId)
+    this.nativeCropMisses.forget(deviceId)
     this.appearanceCost.delete(deviceId)
     this.appearanceReportedAt.delete(deviceId)
 
@@ -6995,8 +7002,9 @@ export default class PipelineRunnerAddon
     // Per-camera metrics snapshot — same defer pattern.
     if (this.attached.size === 0) return
     for (const deviceId of this.attached.keys()) {
-      const metrics = runner.getCameraMetrics(deviceId)
-      if (!metrics) continue
+      const base = runner.getCameraMetrics(deviceId)
+      if (!base) continue
+      const metrics = { ...base, nativeCropMisses: this.nativeCropMisses.total(deviceId) }
       const json = JSON.stringify(metrics)
       const prev = this.lastEmittedCameraMetrics.get(deviceId)
       const heartbeatDue = !prev || timestamp - prev.emittedAt >= METRICS_HEARTBEAT_MS

@@ -36,6 +36,7 @@ export class CameraMetricsMirror {
       avgInferenceTimeMs: metrics.avgInferenceTimeMs,
       queueDepth: metrics.queueDepth,
       droppedFrames: metrics.droppedFrames,
+      nativeCropMisses: metrics.nativeCropMisses ?? null,
       lastSeen: at,
     })
   }
@@ -53,7 +54,10 @@ export class CameraMetricsMirror {
   }
 }
 
-export type RawMetricsSample = Omit<CameraMetricsSample, 'droppedSincePreviousTick'>
+export type RawMetricsSample = Omit<
+  CameraMetricsSample,
+  'droppedSincePreviousTick' | 'nativeCropMissesSincePreviousTick'
+>
 
 export interface HealthTickDeps {
   readonly now: () => number
@@ -85,6 +89,8 @@ export class HealthDigestTick {
   private previousIds = new Map<string, number | null>()
   /** Last `droppedFrames` counter per camera (a monotonic counter since attach). */
   private readonly previousDropped = new Map<number, number>()
+  /** Last `nativeCropMisses` counter per camera (cumulative since the runner attached it). */
+  private readonly previousNativeCropMisses = new Map<number, number>()
 
   constructor(
     private readonly deps: HealthTickDeps,
@@ -136,6 +142,7 @@ export class HealthDigestTick {
   /** Forget a camera's drop baseline (it was unregistered). */
   forget(deviceId: number): void {
     this.previousDropped.delete(deviceId)
+    this.previousNativeCropMisses.delete(deviceId)
   }
 
   /** Turn the cumulative `droppedFrames` counters into per-tick deltas; prune departed cameras. */
@@ -150,12 +157,26 @@ export class HealthDigestTick {
         ...m,
         droppedSincePreviousTick:
           prev === undefined || m.droppedFrames < prev ? null : m.droppedFrames - prev,
+        nativeCropMissesSincePreviousTick: this.nativeCropDelta(deviceId, m.nativeCropMisses),
       })
       this.previousDropped.set(deviceId, m.droppedFrames)
     }
     for (const id of [...this.previousDropped.keys()])
       if (!metrics.has(id)) this.previousDropped.delete(id)
+    for (const id of [...this.previousNativeCropMisses.keys()])
+      if (!metrics.has(id)) this.previousNativeCropMisses.delete(id)
     return out
+  }
+
+  /** Growth of a cumulative counter; `null` for an unreported counter, a first sample or a reset. */
+  private nativeCropDelta(deviceId: number, total: number | null): number | null {
+    if (total === null) {
+      this.previousNativeCropMisses.delete(deviceId)
+      return null
+    }
+    const prev = this.previousNativeCropMisses.get(deviceId)
+    this.previousNativeCropMisses.set(deviceId, total)
+    return prev === undefined || total < prev ? null : total - prev
   }
 
   /** A finding is logged when it appears and when it clears, not on every tick. */

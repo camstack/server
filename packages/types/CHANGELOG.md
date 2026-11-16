@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - pipeline-orchestrator gains getHealthDigest (the latest health digest findings)
+- Camera metrics carry an optional nativeCropMisses counter and the health digest an optional per-camera runner signals list
 
 ## [1.2.581] - 2026-11-15
 

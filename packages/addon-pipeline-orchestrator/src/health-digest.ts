@@ -10,6 +10,7 @@
  */
 import type {
   CameraPhase,
+  HealthCameraRunnerSignals,
   HealthDigest,
   HealthFinding,
   HealthNodeSummary,
@@ -46,6 +47,13 @@ export interface CameraMetricsSample {
    * a signal. `null` = first sample or a counter reset: unknown, not zero.
    */
   readonly droppedSincePreviousTick: number | null
+  /**
+   * Native crops the runner failed to produce, cumulative since attach.
+   * `null` = the runner did not report it (older runner): unknown, not zero.
+   */
+  readonly nativeCropMisses: number | null
+  /** Growth of {@link nativeCropMisses} since the previous tick; `null` = first sample, a counter reset, or unreported. */
+  readonly nativeCropMissesSincePreviousTick: number | null
 }
 
 export interface CameraHealthState {
@@ -69,9 +77,9 @@ export interface HealthDigestState {
 }
 
 const NOT_COVERED: readonly string[] = [
-  'decode hwaccel fallback on every session start: the counter lives in the stream-broker/decoder process, no orchestrator-side source',
-  'births tossed before a track and crop misses (worker-lease-gone): runner-side counters, not mirrored in the orchestrator',
-  'stationary registry absorbing most detections: runner-side registry, not mirrored in the orchestrator',
+  'decode hwaccel fallback to software: counted in the decode worker child process; it would need a new worker reply forwarded into the runner metrics snapshot',
+  'births tossed (birth decisions refused): the birth ledger lives in the post-analysis addon, which does not push to the orchestrator',
+  'stationary (parked-object) registry size per camera: lives in the post-analysis addon, which does not push to the orchestrator',
   'which model runs on which inference device: only a cross-node cap call answers it, not allowed on a light tick',
 ]
 
@@ -185,6 +193,31 @@ function nodeSummaries(
   }))
 }
 
+function cameraSignals(
+  cameras: readonly CameraHealthState[],
+): readonly HealthCameraRunnerSignals[] {
+  const out: HealthCameraRunnerSignals[] = []
+  for (const c of cameras) {
+    const misses = c.metrics?.nativeCropMissesSincePreviousTick ?? null
+    if (misses !== null && misses > 0)
+      out.push({ deviceId: c.deviceId, nativeCropMissesSincePreviousTick: misses })
+  }
+  return out
+}
+
+/**
+ * Cameras whose runner reported the native-crop counter. `null` = the counter
+ * is unavailable: metrics were unreadable, or cameras reported metrics and none
+ * carried it (an older runner). No metrics at all is 0 — nothing failed.
+ */
+function nativeCropSourceEntries(state: HealthDigestState): number | null {
+  if (state.metricsEntries === null) return null
+  const sampled = state.cameras.filter((c) => c.metrics !== null)
+  if (sampled.length === 0) return 0
+  const reporting = sampled.filter((c) => c.metrics?.nativeCropMisses != null).length
+  return reporting === 0 ? null : reporting
+}
+
 const SEVERITY_ORDER = { critical: 0, warning: 1, info: 2 } as const
 
 export function buildHealthDigest(state: HealthDigestState, tickMs: number): HealthDigest {
@@ -198,6 +231,7 @@ export function buildHealthDigest(state: HealthDigestState, tickMs: number): Hea
     { source: 'motion', entries: state.motionEntries },
     { source: 'metrics', entries: state.metricsEntries },
     { source: 'placement', entries: state.placement === null ? null : state.placement.length },
+    { source: 'runner-native-crop-misses', entries: nativeCropSourceEntries(state) },
     {
       source: 'inference-device-usability',
       entries: state.unusableDevices === null ? null : state.unusableDevices.length,
@@ -209,6 +243,7 @@ export function buildHealthDigest(state: HealthDigestState, tickMs: number): Hea
     camerasSeen:
       state.motionEntries === null || state.metricsEntries === null ? null : state.cameras.length,
     findings,
+    cameraSignals: cameraSignals(state.cameras),
     nodes: state.placement === null ? [] : nodeSummaries(state.placement, state.unusableDevices),
     sources,
     notCovered: NOT_COVERED,

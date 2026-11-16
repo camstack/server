@@ -58,6 +58,18 @@ export const HealthNodeSummarySchema = z.object({
 })
 export type HealthNodeSummary = z.infer<typeof HealthNodeSummarySchema>
 
+/**
+ * Per-camera runner-side signals, as per-tick deltas of the runner's cumulative
+ * counters. A camera is listed only when at least one signal is known and
+ * non-zero; `null` = the runner did not report it (unknown, never zero).
+ */
+export const HealthCameraRunnerSignalsSchema = z.object({
+  deviceId: z.number(),
+  /** Native crops the runner failed to produce since the previous tick. */
+  nativeCropMissesSincePreviousTick: z.number().nullable(),
+})
+export type HealthCameraRunnerSignals = z.infer<typeof HealthCameraRunnerSignalsSchema>
+
 export const HealthDigestSchema = z.object({
   generatedAt: z.number(),
   /** Wall time the tick took to build this digest. */
@@ -65,6 +77,8 @@ export const HealthDigestSchema = z.object({
   /** Cameras known to the digest; `null` when a camera source failed to read (the union would be incomplete). */
   camerasSeen: z.number().nullable(),
   findings: z.array(HealthFindingSchema).readonly(),
+  /** Runner-side per-camera deltas worth a look; see {@link HealthCameraRunnerSignalsSchema}. */
+  cameraSignals: z.array(HealthCameraRunnerSignalsSchema).readonly(),
   nodes: z.array(HealthNodeSummarySchema).readonly(),
   sources: z.array(HealthSourceStatusSchema).readonly(),
   /** Signals the digest does not cover yet, and why — never computed by scanning. */

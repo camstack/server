@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The pipeline runner now reports, per camera, how many native crops it failed to produce, so the health digest can show the change per interval
+
 ## [1.2.655] - 2026-11-15
 
 ### Changed

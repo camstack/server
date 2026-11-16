@@ -103,7 +103,8 @@ describe('HealthDigestTick', () => {
     expect(digest.sources.find((s) => s.source === 'motion')?.entries).toBeNull()
     expect(digest.camerasSeen).toBeNull()
     const summary = lines.find((l) => l.msg === 'health digest: tick')
-    expect(summary?.meta).toMatchObject({ unreadableSources: 1 })
+    // motion (failed read) + runner-native-crop-misses (the fixture's runner reports no counter)
+    expect(summary?.meta).toMatchObject({ unreadableSources: 2 })
   })
 
   it('droppedFrames is cumulative: only growth since the previous tick is shedding', () => {
@@ -133,5 +134,39 @@ describe('HealthDigestTick', () => {
     expect(
       lines.some((l) => l.level === 'warn' && l.msg === 'health digest: source unreadable'),
     ).toBe(true)
+  })
+
+  it('nativeCropMisses is cumulative: the digest carries only the per-tick delta, and an unreported counter is null, not zero', () => {
+    const mirror = new CameraMetricsMirror()
+    const { d } = deps({ readMetrics: () => mirror.view() })
+    const tick = new HealthDigestTick(d)
+    mirror.note(5, { ...METRICS, nativeCropMisses: 40 }, 1000)
+    const first = tick.run()
+    expect(first.cameraSignals).toEqual([]) // baseline: unknown, not 40
+    mirror.note(5, { ...METRICS, nativeCropMisses: 40 }, 1100)
+    expect(tick.run().cameraSignals).toEqual([]) // no new misses: nothing to say
+    mirror.note(5, { ...METRICS, nativeCropMisses: 47 }, 1200)
+    const grown = tick.run()
+    expect(grown.cameraSignals).toEqual([{ deviceId: 5, nativeCropMissesSincePreviousTick: 7 }])
+    expect(grown.sources.find((s) => s.source === 'runner-native-crop-misses')?.entries).toBe(1)
+    mirror.note(5, { ...METRICS, nativeCropMisses: 3 }, 1300) // runner restarted: counter reset
+    expect(tick.run().cameraSignals).toEqual([])
+  })
+
+  it('a runner that does not report the counter, or an unreadable metrics source, is a null source, never a zero', () => {
+    const mirror = new CameraMetricsMirror()
+    const { d } = deps({ readMetrics: () => mirror.view() })
+    mirror.note(5, METRICS, 1000) // older runner: no nativeCropMisses field
+    const digest = new HealthDigestTick(d).run()
+    expect(digest.cameraSignals).toEqual([])
+    expect(digest.sources.find((s) => s.source === 'runner-native-crop-misses')?.entries).toBeNull()
+
+    const broken = deps({
+      readMetrics: () => {
+        throw new Error('boom')
+      },
+    })
+    const down = new HealthDigestTick(broken.d).run()
+    expect(down.sources.find((s) => s.source === 'runner-native-crop-misses')?.entries).toBeNull()
   })
 })

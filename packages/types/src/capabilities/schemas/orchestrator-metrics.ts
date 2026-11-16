@@ -16,6 +16,12 @@ export const CameraMetricsSchema = z.object({
   queueDepth: z.number(),
   avgInferenceTimeMs: z.number(),
   droppedFrames: z.number(),
+  /**
+   * Native crops this runner could not produce for the camera (the caller was
+   * handed nothing), cumulative since attach. Additive: a runner that predates
+   * it omits the field, which a reader treats as unknown, never zero.
+   */
+  nativeCropMisses: z.number().optional(),
   phase: z.enum(['idle', 'watching', 'active']),
 })
 

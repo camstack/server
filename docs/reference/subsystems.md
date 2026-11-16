@@ -30,7 +30,7 @@ commits. A generated page may not.
 | Device providers (per vendor) | 885 | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `addons/addon-provider-homeassistant.md` _(covers)_, +91 more, 14 ADRs | 2026-11-08 | ✅ |
 | Decode and the data planes | 81 | `decisions/adr-1013-one-instance-model.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, `design/2026-08-28-faces-plates-frame-locality.md` _(covers)_, +29 more, 7 ADRs | 2026-10-13 | ⚠️ |
 | Detection execution and inference | 143 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md`, `architecture/data-planes.md` _(covers)_, +64 more, 5 ADRs | 2026-10-24 | ✅ |
-| Pipeline orchestration and placement | 205 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +106 more, 27 ADRs | 2026-11-02 | ✅ |
+| Pipeline orchestration and placement | 206 | `decisions/adr-1013-one-instance-model.md`, `architecture/detection-execution.md` _(covers)_, `architecture/data-planes.md`, +106 more, 27 ADRs | 2026-11-02 | ✅ |
 | Post-analysis — tracking, the confirmation gate and media | 508 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +176 more, 29 ADRs | 2026-11-12 | ✅ |
 | Face, plate and embedding recognition | 50 | `decisions/adr-1013-one-instance-model.md`, `architecture/post-analysis.md`, `design/2026-08-13-native-lease-two-tier-redesign.md` _(covers)_, +27 more, 4 ADRs | 2026-11-12 | ⚠️ |
 | Notification Center — rules, outbox, occupancy, timelapse | 305 | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0701-an-alarm-rule-gated-on-armed-auto-triggers-the-panel-and-post-siren-policy-lives-per-mode.md`, +101 more, 27 ADRs | 2026-11-12 | ✅ |
@@ -126,7 +126,7 @@ Decides which node runs which camera's pipeline, and keeps sessions, balancing a
 
 - **Owner doc**: `docs/architecture/detection-execution.md`
 - **Code**: `packages/addon-pipeline-orchestrator/src/*.ts`, `packages/addon-pipeline-orchestrator/src/durable/**`, `packages/addon-pipeline-orchestrator/src/camera-status/**`, `packages/addon-pipeline-orchestrator/src/camera-sensors/**`, `packages/addon-pipeline/src/pipeline-runner/**`, `packages/addon-pipeline-orchestrator/src/widgets/**`, `packages/addon-pipeline-orchestrator/src/auto-tune/**`, `packages/system/src/pipeline/**`, `packages/types/src/pipeline/**`
-- **Files**: 205 (205 claimed by some document)
+- **Files**: 206 (206 claimed by some document)
 - **Uncovered**: —
 
 ### ✅ Post-analysis — tracking, the confirmation gate and media

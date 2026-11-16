@@ -812,6 +812,7 @@ Enum: `"pipeline" \| "onboard" \| "none"`
 - `queueDepth`: `number`
 - `avgInferenceTimeMs`: `number`
 - `droppedFrames`: `number`
+- `nativeCropMisses?`: `number`
 - `phase`: `"idle" \| "watching" \| "active"`
 
 ### `CameraMetricsWithDeviceIdSchema`
@@ -822,6 +823,7 @@ Enum: `"pipeline" \| "onboard" \| "none"`
 - `queueDepth`: `number`
 - `avgInferenceTimeMs`: `number`
 - `droppedFrames`: `number`
+- `nativeCropMisses?`: `number`
 - `phase`: `"idle" \| "watching" \| "active"`
 - `deviceId`: `number`
 

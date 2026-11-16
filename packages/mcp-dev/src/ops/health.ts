@@ -27,6 +27,8 @@ const DigestSchema = z.looseObject({
   tickMs: z.number(),
   camerasSeen: z.number().nullable(),
   findings: z.array(FindingSchema),
+  /** Absent on a hub that predates the runner signals. */
+  cameraSignals: z.array(z.looseObject({ deviceId: z.number() })).optional(),
   nodes: z.array(z.looseObject({ nodeId: z.string() })),
   sources: z.array(z.looseObject({ source: z.string(), entries: z.number().nullable() })),
   notCovered: z.array(z.string()),
@@ -65,6 +67,7 @@ export async function healthDigest(hub: OpsHub, args: HealthDigestArgs): Promise
     camerasSeen: answer.latest.camerasSeen,
     severity: bySeverity(answer.latest.findings),
     findings: answer.latest.findings,
+    cameraSignals: answer.latest.cameraSignals ?? null,
     nodes: answer.latest.nodes,
     sources: answer.latest.sources,
     notCovered: answer.latest.notCovered,

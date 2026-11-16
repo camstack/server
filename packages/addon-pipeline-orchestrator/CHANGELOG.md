@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A 5-minute health digest turns motion that never detects, sub-floor candidates, slow or shedding inference and unusable inference devices into findings, readable through the orchestrator and the ops MCP
+- The health digest lists cameras whose runner failed native crops since the last tick and names the runner signals it cannot read yet
 
 ## [1.2.692] - 2026-11-15
 
