@@ -58,6 +58,15 @@ export const WorkloadResourcesSchema = z.object({
     .nullable()
     .meta(readingMeta('percentage', { precision: 1 })),
   memoryUsedBytes: z.number().nullable().meta(readingMeta('information')),
+  /**
+   * Memory use, percent of `memoryLimitBytes`, for a source that reports a share
+   * and not bytes (a Docker container's stats). Absent or `null` = not reported.
+   */
+  memoryPercent: z
+    .number()
+    .nullable()
+    .optional()
+    .meta(readingMeta('percentage', { precision: 1 })),
   /** The memory it may use: the limit of a container, the RAM of a VM or host. */
   memoryLimitBytes: z.number().nullable().meta(readingMeta('information')),
   vcpus: z.number().nullable().meta(readingMeta('count')),
@@ -461,6 +470,12 @@ export const workloadCapability = {
         kind: 'gauge',
         unit: 'bytes',
         displayName: 'Memory used',
+      },
+      'resources.memoryPercent': {
+        kind: 'gauge',
+        unit: '%',
+        deadband: 2,
+        displayName: 'Memory',
       },
       'resources.netRxKbps': {
         group: 'network',

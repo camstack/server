@@ -75,6 +75,7 @@ function emptyResources(): WorkloadResources {
   return {
     cpuPercent: null,
     memoryUsedBytes: null,
+    memoryPercent: null,
     memoryLimitBytes: null,
     vcpus: null,
     diskUsedBytes: null,
@@ -153,7 +154,11 @@ export function unraidWorkloadStatus(
     image: container.image,
     autostart: container.autostart,
     updateAvailable: container.updateAvailable,
-    resources: { ...emptyResources(), cpuPercent: container.cpuPercent },
+    resources: {
+      ...emptyResources(),
+      cpuPercent: container.cpuPercent,
+      memoryPercent: container.memPercent,
+    },
   }
 }
 

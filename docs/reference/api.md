@@ -5214,7 +5214,7 @@
 
 ### `workload` → `workload.*`
 
-- **Source:** `packages/types/src/capabilities/workload.cap.ts:287`
+- **Source:** `packages/types/src/capabilities/workload.cap.ts:296`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `workload`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IWorkloadProvider`

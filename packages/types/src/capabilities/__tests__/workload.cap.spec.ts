@@ -107,6 +107,16 @@ describe('workload cap — schema', () => {
     expect(parsed.autostart).toBeNull()
   })
 
+  it('carries memory as a percentage of the limit when bytes are not reported', () => {
+    const meta = WorkloadStatusSchema.shape.resources.shape.memoryPercent.meta()
+    expect(meta?.['quantity']).toBe('percentage')
+    const parsed = WorkloadStatusSchema.parse(
+      status({ resources: { ...status({}).resources, memoryPercent: 7 } }),
+    )
+    expect(parsed.resources.memoryPercent).toBe(7)
+    expect(workloadCapability.history?.fields['resources.memoryPercent']?.kind).toBe('gauge')
+  })
+
   it('refuses a state outside the lifecycle', () => {
     expect(WorkloadStatusSchema.safeParse({ ...status({}), state: 'exited' }).success).toBe(false)
   })

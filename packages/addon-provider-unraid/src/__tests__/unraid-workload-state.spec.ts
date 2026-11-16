@@ -45,6 +45,8 @@ describe('unraidWorkloadStatus — a container', () => {
       lastFetchedAt: NOW,
     })
     expect(status.resources.cpuPercent).toBe(12)
+    // The API reports memory as a share of the limit, not in bytes.
+    expect(status.resources.memoryPercent).toBe(7)
     expect(status.resources.memoryUsedBytes).toBeNull()
     expect(WorkloadStatusSchema.parse(status)).toEqual(status)
   })

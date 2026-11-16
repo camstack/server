@@ -128,7 +128,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `weather` | 1 | ✓ | ✓ | 4 series | — | `provider-homeassistant` |
 | `weather-station` | 1 | ✓ | ✓ | 20 series | — | `provider-ecowitt` |
 | `webrtc-session` | 11 | — | — | — | — | `stream-broker` |
-| `workload` | 8 | ✓ | ✓ | 5 series | — | — |
+| `workload` | 8 | ✓ | ✓ | 6 series | — | — |
 | `zone-analytics` | 5 | — | ✓ | none | — | `pipeline-analytics` |
 | `zone-rules` | 2 | — | ✓ | none | — | `pipeline-orchestrator` |
 | `zones` | 4 | — | ✓ | none | — | `pipeline-orchestrator` |

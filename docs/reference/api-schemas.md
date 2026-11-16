@@ -8172,6 +8172,7 @@ Enum: `"tcp" \| "udp"`
 
 - `cpuPercent`: `number \| null`
 - `memoryUsedBytes`: `number \| null`
+- `memoryPercent?`: `number \| null`
 - `memoryLimitBytes`: `number \| null`
 - `vcpus`: `number \| null`
 - `diskUsedBytes`: `number \| null`

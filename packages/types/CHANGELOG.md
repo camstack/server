@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - terminalSession.listSessions names who opened each session (openedBy) and when it last saw input or output (lastActivityAt).
 - Summaries, timelapses and calendar-events rules carry tags too; the tags list shows an unreachable owner's count as unknown
 - network-link's link speed is speedKbps, the bitrate quantity in kbit/s, shown in the system's bitrate unit
+- The workload capability reports memory as a percentage (memoryPercent) for a source that has no byte count, recorded in its history
 
 ## [1.2.585] - 2026-11-16
 
