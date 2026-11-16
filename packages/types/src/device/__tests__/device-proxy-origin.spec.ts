@@ -38,6 +38,6 @@ describe('a DeviceProxy command carries the origin claim it is given', () => {
 
   it('sends no second argument value when none is given', async () => {
     await proxy.switch?.setState({ on: false })
-    expect(mutate).toHaveBeenLastCalledWith({ on: false, deviceId: 7, nodeId: 'n1' }, undefined)
+    expect(mutate.mock.lastCall).toEqual([{ on: false, deviceId: 7, nodeId: 'n1' }])
   })
 })

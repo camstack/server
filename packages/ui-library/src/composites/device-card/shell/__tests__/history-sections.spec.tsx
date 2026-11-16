@@ -24,6 +24,7 @@ vi.mock('../../../../hooks/use-capability-presence', () => ({
 
 vi.mock('../../../../generated/system-hooks', () => ({
   useActionsList: () => ({ data: undefined }),
+  useAddonsList: () => ({ data: undefined }),
 }))
 
 vi.mock('../../../../trpc-react', () => ({

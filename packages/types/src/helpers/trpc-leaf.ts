@@ -64,7 +64,8 @@ export function invokeTrpcLeaf<Result>(
     if (typeof fn.mutate !== 'function') {
       throw new Error(`tRPC '${capProp}.${method}' has no mutate()`)
     }
-    return fn.mutate(input, options) as Result
+    // An origin-less call stays a one-argument call, exactly as before #575.
+    return (options === undefined ? fn.mutate(input) : fn.mutate(input, options)) as Result
   }
   if (kind === 'subscription') {
     if (typeof fn.subscribe !== 'function') {
@@ -75,5 +76,5 @@ export function invokeTrpcLeaf<Result>(
   if (typeof fn.query !== 'function') {
     throw new Error(`tRPC '${capProp}.${method}' has no query()`)
   }
-  return fn.query(input, options) as Result
+  return (options === undefined ? fn.query(input) : fn.query(input, options)) as Result
 }
