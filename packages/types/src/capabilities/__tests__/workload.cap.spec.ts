@@ -11,6 +11,8 @@ import {
   type WorkloadStatus,
 } from '../workload.cap.js'
 import { switchCapability } from '../switch.cap.js'
+import { resolveMethodAuth } from '../cap-router-predicates.js'
+import type { CapabilityMethodAuth } from '../capability-definition.js'
 import { CAP_VOCABULARY } from '../../generated/cap-vocabulary.js'
 import { capUnitResolver } from '../../automation/normalize-units.js'
 import type { CapNestedNumericPath } from '../../device/cap-vocabulary/types.js'
@@ -310,5 +312,23 @@ describe('workload cap — resource thresholds are rule triggers (D1056)', () =>
     const units = capUnitResolver([workloadCapability])
     expect(units.fieldQuantity('workload', 'resources.cpuPercent')).toBe('percentage')
     expect(units.fieldQuantity('workload', 'resources.temperature')).toBe('temperature')
+  })
+})
+
+describe('workload cap — one tier per kind of act', () => {
+  it('starting, stopping, restarting, pausing and resuming are protected, like the derived switch', () => {
+    const { methods } = workloadCapability
+    const tierOf = (m: { readonly auth?: CapabilityMethodAuth }) =>
+      resolveMethodAuth(workloadCapability, m)
+    expect(
+      [methods.start, methods.stop, methods.restart, methods.pause, methods.resume].map(tierOf),
+    ).toEqual(['protected', 'protected', 'protected', 'protected', 'protected'])
+    expect(resolveMethodAuth(switchCapability, switchCapability.methods.setState)).toBe('protected')
+  })
+
+  it('a force stop, which can lose data, is admin', () => {
+    expect(resolveMethodAuth(workloadCapability, workloadCapability.methods.forceStop)).toBe(
+      'admin',
+    )
   })
 })

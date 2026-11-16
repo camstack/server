@@ -50,6 +50,10 @@ mirror from the state transitions, so a provider only writes its state.
   of its status this way (`CapNestedNumericPath`); the rule runtime and the unit
   resolver already read dotted paths, and `check-cap-vocabulary` resolves them.
   A container that reports memory as a share fills `memoryPercent`.
+- Tiers follow the act, not the method: start, stop, restart, pause and resume
+  are `protected` (viewer role), the tier of the `switch.setState` they derive,
+  since a restart is a stop and a start; `forceStop`, which skips the orderly
+  shutdown and can lose data, is `admin`.
 - The first state the mirror sees for a device is a seed, so a hub restart never
   announces every container as started; a transition during a restart is lost
   (events are telemetry, D8).

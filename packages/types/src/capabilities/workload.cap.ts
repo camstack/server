@@ -340,9 +340,10 @@ export const workloadCapability = {
         },
       ],
     }),
+    // Same tier as start / stop and the switch they derive: a restart is a stop and a start.
     restart: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
-      auth: 'admin',
+      auth: 'protected',
       actions: [
         {
           id: 'workload.restart',
@@ -378,6 +379,7 @@ export const workloadCapability = {
         },
       ],
     }),
+    // Admin: a force stop skips the orderly shutdown and can lose data.
     forceStop: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',

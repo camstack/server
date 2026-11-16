@@ -1525,7 +1525,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'workload.getOptions': { capName: "workload", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'workload.getStatus': { capName: "workload", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'workload.pause': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'workload.restart': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'workload.restart': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'workload.resume': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'workload.start': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'workload.stop': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
