@@ -7,17 +7,18 @@
  * (`LogStreamProps.columns`); the viewer's own toggles are a per-viewer
  * convenience on top, kept in `localStorage`.
  *
- * A stream already locked to an addon needs no integration column (every row
- * would say the same), and one locked to a device needs no device column — so
- * the defaults follow the lock, and a page that wants something else says so.
+ * Both columns are OFF unless a page opts in through `columns`. A stream
+ * locked to an addon never offers the integration column (every row would say
+ * the same), and one locked to a device never offers the device column, even
+ * when the page lists them.
  */
 export const LOG_COLUMN_IDS = ['integration', 'device'] as const
 export type LogColumnId = (typeof LOG_COLUMN_IDS)[number]
 
 export interface LogColumnConfig {
-  /** Columns the toolbar may offer. Absent: every column the stream's scope leaves open. */
+  /** Columns the toolbar may offer. Absent: none — a page opts in. */
   readonly available?: readonly LogColumnId[]
-  /** Columns shown until the viewer chooses otherwise. Absent: all the available ones. */
+  /** Columns shown until the viewer chooses otherwise. Absent: none. */
   readonly defaultVisible?: readonly LogColumnId[]
 }
 
@@ -34,8 +35,7 @@ export function availableLogColumns(
   scope: LogColumnScope,
   config: LogColumnConfig | undefined,
 ): readonly LogColumnId[] {
-  if (config?.available !== undefined) return config.available
-  return LOG_COLUMN_IDS.filter((id) => {
+  return (config?.available ?? []).filter((id) => {
     if (id === 'integration') return scope.addonId === undefined
     return scope.deviceId === undefined
   })
@@ -66,6 +66,6 @@ export function visibleLogColumns(input: {
   readonly config: LogColumnConfig | undefined
   readonly stored: StoredLogColumns
 }): readonly LogColumnId[] {
-  const defaults = input.config?.defaultVisible ?? input.available
+  const defaults = input.config?.defaultVisible ?? []
   return input.available.filter((id) => input.stored[id] ?? defaults.includes(id))
 }

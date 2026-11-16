@@ -10882,7 +10882,9 @@
       "downloading": "Download in corso…",
       "download": "Scarica",
       "reachDays_one": "Indietro di {{count}} giorno",
-      "reachDays_other": "Indietro di {{count}} giorni"
+      "reachDays_other": "Indietro di {{count}} giorni",
+      "sourcesFailed": "Impossibile leggere le sorgenti dei log",
+      "sourcesFailedHint": "L'esportazione usa la sorgente log predefinita."
     }
   },
   "helpers": {

@@ -10,29 +10,30 @@ import {
 } from '../log-stream-columns'
 
 describe('availableLogColumns', () => {
-  it('an open stream offers both', () => {
-    expect(availableLogColumns({}, undefined)).toEqual(['integration', 'device'])
+  it('offers nothing unless the page opts in', () => {
+    expect(availableLogColumns({}, undefined)).toEqual([])
+    expect(availableLogColumns({}, {})).toEqual([])
   })
 
-  it('a device page never offers the device column, an addon page never the integration one', () => {
-    expect(availableLogColumns({ deviceId: 5 }, undefined)).toEqual(['integration'])
-    expect(availableLogColumns({ addonId: 'recorder' }, undefined)).toEqual(['device'])
+  it('offers what the page lists', () => {
+    expect(availableLogColumns({}, { available: ['integration', 'device'] })).toEqual([
+      'integration',
+      'device',
+    ])
   })
 
-  it('the prop wins over the lock', () => {
-    expect(availableLogColumns({ deviceId: 5 }, { available: ['device'] })).toEqual(['device'])
-    expect(availableLogColumns({}, { available: [] })).toEqual([])
+  it('a device lock never offers the device column, an addon lock never the integration one', () => {
+    const both = { available: ['integration', 'device'] } as const
+    expect(availableLogColumns({ deviceId: 5 }, both)).toEqual(['integration'])
+    expect(availableLogColumns({ addonId: 'recorder' }, both)).toEqual(['device'])
   })
 })
 
 describe('visibleLogColumns', () => {
   const available = ['integration', 'device'] as const
 
-  it('shows everything available by default, only the default set when the code names one', () => {
-    expect(visibleLogColumns({ available, config: undefined, stored: {} })).toEqual([
-      'integration',
-      'device',
-    ])
+  it('shows nothing by default, only the default set when the code names one', () => {
+    expect(visibleLogColumns({ available, config: undefined, stored: {} })).toEqual([])
     expect(
       visibleLogColumns({ available, config: { defaultVisible: ['integration'] }, stored: {} }),
     ).toEqual(['integration'])
@@ -52,7 +53,7 @@ describe('visibleLogColumns', () => {
         config: undefined,
         stored: { device: true },
       }),
-    ).toEqual(['integration'])
+    ).toEqual([])
   })
 })
 

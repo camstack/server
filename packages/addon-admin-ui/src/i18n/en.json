@@ -10860,7 +10860,9 @@
       "downloading": "Downloading…",
       "download": "Download",
       "reachDays_one": "Back {{count}} day",
-      "reachDays_other": "Back {{count}} days"
+      "reachDays_other": "Back {{count}} days",
+      "sourcesFailed": "The log sources could not be read",
+      "sourcesFailedHint": "The export falls back to the default log source."
     }
   },
   "helpers": {

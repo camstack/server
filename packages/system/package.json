@@ -108,7 +108,7 @@
         "id": "loki-logging",
         "category": "system",
         "name": "Loki Logging",
-        "icon": "assets/loki-logging/icon.svg",
+        "icon": "assets/loki-logging/icon.png",
         "color": "#64748b",
         "description": "Opt-in log destination — batches this node's log entries and pushes them to a Grafana Loki instance via /loki/api/v1/push. Registered always, inert until enabled with a URL.",
         "entry": "./dist/builtins/loki-logging/index.js",

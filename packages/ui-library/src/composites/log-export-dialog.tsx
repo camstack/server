@@ -152,7 +152,16 @@ export function LogExportDialog({
             <legend className="mb-1 text-[11px] font-medium text-foreground">
               {t('uiLibrary.logExport.source', 'Log source')}
             </legend>
-            {sources === undefined ? (
+            {sourcesQuery.isError ? (
+              <ErrorBox
+                variant="warning"
+                title={t('uiLibrary.logExport.sourcesFailed', 'The log sources could not be read')}
+                message={t(
+                  'uiLibrary.logExport.sourcesFailedHint',
+                  'The export falls back to the default log source.',
+                )}
+              />
+            ) : sources === undefined ? (
               <p className="text-xs text-foreground-subtle">
                 {t('uiLibrary.logExport.sourcesLoading', 'Reading the log sources…')}
               </p>
