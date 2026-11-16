@@ -56,7 +56,15 @@ const SNAPSHOT: UnraidSnapshot = {
   },
   cpu: { percent: 12, tempC: null, powerW: null },
   disks: [],
-  dockers: [{ id: 'c1', name: 'marker-plex', running: true, cpuPercent: 1, memPercent: 2 }],
+  dockers: [
+    {
+      id: 'c1',
+      name: 'marker-plex',
+      running: true,
+      cpuPercent: 1,
+      memPercent: 2,
+    },
+  ],
   notifications: { activeCount: 0, latest: null },
 }
 
@@ -137,7 +145,9 @@ function adoptionHarness() {
 describe('Unraid integration: the server is a Gateway, a sibling of its instance', () => {
   it('is an account-mode integration with the adoption cap, not a standalone hub', () => {
     const pkg: {
-      camstack: { addons: Array<{ mode: string; capabilities: Array<{ name: string }> }> }
+      camstack: {
+        addons: Array<{ mode: string; capabilities: Array<{ name: string }> }>
+      }
     } = JSON.parse(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8'))
     const addon = pkg.camstack.addons[0]
     expect(addon?.mode).toBe('account')
@@ -155,10 +165,17 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
   it('serves the connection form from the instance, with the apiKey a keychain secret', async () => {
     const mem = makeInMemoryRecords('provider-unraid')
     await mem.records.declare(unraidRecordKinds)
-    const instances = buildUnraidInstances(mem.records, { onChanged: async () => undefined })
+    const instances = buildUnraidInstances(mem.records, {
+      onChanged: async () => undefined,
+      makeClient: () => {
+        throw new Error('no client in this spec')
+      },
+    })
     const schema = await instances.instanceFormSchema({ id: null })
     expect(schema).toEqual(buildConnectionFormSchema())
-    expect(secretTreeFromSchema(schema).get('apiKey')).toEqual({ kind: 'leaf' })
+    expect(secretTreeFromSchema(schema).get('apiKey')).toEqual({
+      kind: 'leaf',
+    })
     expect(unraidConnectionsEntryKind.declaration.secretPaths).toEqual(['apiKey'])
     // The server name is the integration's, not a form field.
     const keys = schema.sections.flatMap((s) => s.fields.map((f) => ('key' in f ? f.key : '')))
@@ -187,14 +204,24 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
 
   it('a retried adopt neither duplicates the Gateway nor the instance', async () => {
     const h = adoptionHarness()
-    await h.provider.adopt({ integrationId: INT, childNativeIds: [UNRAID_GATEWAY_ID] })
-    await h.provider.adopt({ integrationId: INT, childNativeIds: [UNRAID_GATEWAY_ID] })
+    await h.provider.adopt({
+      integrationId: INT,
+      childNativeIds: [UNRAID_GATEWAY_ID],
+    })
+    await h.provider.adopt({
+      integrationId: INT,
+      childNativeIds: [UNRAID_GATEWAY_ID],
+    })
     expect(h.created).toHaveLength(1)
   })
 
   it('lists the Gateway and the Container as siblings: neither nests the other', async () => {
     const h = adoptionHarness()
-    const page = await h.provider.listCandidates({ integrationId: INT, page: 1, pageSize: 50 })
+    const page = await h.provider.listCandidates({
+      integrationId: INT,
+      page: 1,
+      pageSize: 50,
+    })
     expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
       [UNRAID_GATEWAY_ID, DeviceType.Gateway],
       [UNRAID_INSTANCE_ID, DeviceType.Container],
@@ -303,7 +330,13 @@ describe('Unraid integration: devices follow the integration', () => {
       applyDerivedSpec: apply,
     }
     const reg = { getAllForAddon: () => [{ id: 5, parentDeviceId: null }] }
-    const base = { reg, devices, addonId: 'provider-unraid', integrationId: INT, logger: quiet }
+    const base = {
+      reg,
+      devices,
+      addonId: 'provider-unraid',
+      integrationId: INT,
+      logger: quiet,
+    }
     expect(await reconcileInstanceEntities({ ...base, snapshot: null })).toBe(0)
     expect(apply).not.toHaveBeenCalled()
     expect(await reconcileInstanceEntities({ ...base, snapshot: SNAPSHOT })).toBe(1)
@@ -337,7 +370,11 @@ describe('Unraid devices: the Gateway and the instance on a stub device context'
       },
       persistedConfig: config,
       initialRuntimeState: {},
-      eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
+      eventBus: {
+        emit: vi.fn(),
+        subscribe: vi.fn(() => () => {}),
+        getRecent: vi.fn(() => []),
+      },
       persistConfig: vi.fn(async () => {}),
       bindRuntimeState: (rs: IDeviceRuntimeState) => {
         runtime = rs
@@ -361,7 +398,11 @@ describe('Unraid devices: the Gateway and the instance on a stub device context'
 
   it('the Gateway is a Gateway carrying the WebGUI link', async () => {
     const { ctx, providers } = rig(
-      { nativeId: UNRAID_GATEWAY_ID, integrationId: INT, system: UNRAID_SYSTEM },
+      {
+        nativeId: UNRAID_GATEWAY_ID,
+        integrationId: INT,
+        system: UNRAID_SYSTEM,
+      },
       DeviceType.Gateway,
     )
     const device = new UnraidGatewayDevice(ctx)

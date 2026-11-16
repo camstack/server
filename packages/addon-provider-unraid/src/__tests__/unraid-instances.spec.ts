@@ -65,7 +65,12 @@ async function world() {
     }),
   )
   if (migration === undefined) throw new Error('no migration')
-  const instances = buildUnraidInstances(mem.records, { onChanged: async () => undefined })
+  const instances = buildUnraidInstances(mem.records, {
+    onChanged: async () => undefined,
+    makeClient: () => {
+      throw new Error('no client in this spec')
+    },
+  })
   return { mem, rows, cleared, migration, instances }
 }
 
@@ -75,7 +80,10 @@ describe('unraid integration instances', () => {
 
     const result = await w.migration.execute()
 
-    expect(result).toMatchObject({ kind: 'procedure', result: { outcome: 'done' } })
+    expect(result).toMatchObject({
+      kind: 'procedure',
+      result: { outcome: 'done' },
+    })
     const read = await unraidConnectionOf(w.instances, 'int_0001')
     expect(read?.apiKeyLocked).toBe(false)
     expect(read?.connection).toMatchObject({
@@ -91,7 +99,9 @@ describe('unraid integration instances', () => {
     )
     expect(w.cleared).toEqual(['int_0001'])
     expect(w.rows.get('int_0001')).toEqual({})
-    expect(await w.migration.execute()).toMatchObject({ result: { outcome: 'already-done' } })
+    expect(await w.migration.execute()).toMatchObject({
+      result: { outcome: 'already-done' },
+    })
   })
 
   it('reads no connection from a record without a host', async () => {

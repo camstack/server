@@ -97,10 +97,15 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
           fixtureMark: 'host',
         }),
       ],
-      (api) => integrationRowsPortsOver({ ...rowsDepsOver(api), kind: unraidConnectionsEntryKind }),
+      (api) =>
+        integrationRowsPortsOver({
+          ...rowsDepsOver(api),
+          kind: unraidConnectionsEntryKind,
+        }),
     )
     this.instances = buildUnraidInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      makeClient: makeLiveUnraidClient,
     })
     this.clients = new UnraidClientRegistry(this.ctx.logger, {
       makeClient: makeLiveUnraidClient,
@@ -129,7 +134,9 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     try {
       await this.clients?.shutdown()
     } catch (err) {
-      this.ctx.logger.warn('Unraid shutdown error', { meta: { error: errMsg(err) } })
+      this.ctx.logger.warn('Unraid shutdown error', {
+        meta: { error: errMsg(err) },
+      })
     }
     this.clients = null
     this.integrationReconciler?.dispose()
