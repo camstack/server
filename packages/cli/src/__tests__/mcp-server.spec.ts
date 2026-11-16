@@ -109,6 +109,7 @@ const OPS_TOOLS = [
   'ops_device',
   'ops_events',
   'ops_logs',
+  'ops_logs_export',
   'ops_status',
   'ops_track',
   'ops_unhealthy_devices',
