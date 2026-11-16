@@ -14,34 +14,60 @@
  * names its concrete path.
  */
 import type { AddonApi } from '@camstack/types'
+import { commandOrigin } from '@camstack/types/addon'
 
 import type { CapCall, CapStatusRead } from './trait-catalog.js'
 
-export async function dispatchCapCall(api: AddonApi, call: CapCall): Promise<void> {
+/** The linked Google account a command was asked for. */
+export interface GooglePrincipal {
+  readonly principalId: string
+  readonly principalName?: string
+}
+
+export async function dispatchCapCall(
+  api: AddonApi,
+  call: CapCall,
+  principal?: GooglePrincipal,
+): Promise<void> {
+  const origin =
+    principal === undefined || principal.principalId === ''
+      ? undefined
+      : commandOrigin({
+          kind: 'on-behalf',
+          source: 'google',
+          principalId: principal.principalId,
+          ...(principal.principalName ? { principalName: principal.principalName } : {}),
+        })
   switch (call.kind) {
     case 'switch.setState':
-      await api.switch.setState.mutate({ deviceId: call.deviceId, on: call.on })
+      await api.switch.setState.mutate({ deviceId: call.deviceId, on: call.on }, origin)
       return
     case 'brightness.setBrightness':
-      await api.brightness.setBrightness.mutate({
-        deviceId: call.deviceId,
-        level: call.percentage,
-      })
+      await api.brightness.setBrightness.mutate(
+        {
+          deviceId: call.deviceId,
+          level: call.percentage,
+        },
+        origin,
+      )
       return
     case 'lockControl.lock':
-      await api.lockControl.lock.mutate({ deviceId: call.deviceId })
+      await api.lockControl.lock.mutate({ deviceId: call.deviceId }, origin)
       return
     case 'lockControl.unlock':
-      await api.lockControl.unlock.mutate({ deviceId: call.deviceId })
+      await api.lockControl.unlock.mutate({ deviceId: call.deviceId }, origin)
       return
     case 'cover.open':
-      await api.cover.open.mutate({ deviceId: call.deviceId })
+      await api.cover.open.mutate({ deviceId: call.deviceId }, origin)
       return
     case 'cover.close':
-      await api.cover.close.mutate({ deviceId: call.deviceId })
+      await api.cover.close.mutate({ deviceId: call.deviceId }, origin)
       return
     case 'cover.setPosition':
-      await api.cover.setPosition.mutate({ deviceId: call.deviceId, position: call.position })
+      await api.cover.setPosition.mutate(
+        { deviceId: call.deviceId, position: call.position },
+        origin,
+      )
       return
     default: {
       const unreachable: never = call

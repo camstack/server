@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Commands from Alexa are recorded with the linked account that asked.
+
 ## [1.2.197] - 2026-11-13
 
 ### Changed

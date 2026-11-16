@@ -21,6 +21,7 @@ import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 import { isAlexaRecallablePreset } from './ptz-preset-recallable.js'
 import { runPtzTravel } from './ptz-travel.js'
 import { type DirectiveHeader, EndpointRefSchema, SetModePayloadSchema } from './types.js'
@@ -58,7 +59,7 @@ export async function handleSetMode(
   endpointRaw: unknown,
   payloadRaw: unknown,
   deps: PtzPresetContext,
-  _callerIdentity: VerifiedDirectiveIdentity,
+  callerIdentity: VerifiedDirectiveIdentity,
 ): Promise<unknown> {
   const parsed = SetModeDirectiveSchema.safeParse({
     header: { namespace: header.namespace, name: header.name, instance: header.instance },
@@ -162,7 +163,10 @@ export async function handleSetMode(
     )
   }
 
-  await api.ptz.goToPreset.mutate({ deviceId: parsedId.deviceId, presetId: preset.id })
+  await api.ptz.goToPreset.mutate(
+    { deviceId: parsedId.deviceId, presetId: preset.id },
+    alexaOrigin(callerIdentity),
+  )
 
   return modeSuccessResponse(header, endpointId, 'ptz.preset', mode)
 }

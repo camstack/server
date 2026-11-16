@@ -8,9 +8,9 @@
  * `DeferredResponse` now and the real `Response` when the cover reports the
  * target (or an `ErrorResponse` at the timeout).
  */
-import type { IScopedLogger } from '@camstack/types'
-import type { AddonApi, AddonContext } from '@camstack/types'
+import type { AddonApi, AddonContext, IScopedLogger } from '@camstack/types'
 import { z } from 'zod'
+import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import {
   ADJUST_STEP,
   ARRIVAL_TOLERANCE,
@@ -32,6 +32,7 @@ import {
   runWithDeferral,
 } from './deferred-response.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 import type { DirectiveHeader } from './types.js'
 
 export interface CoverControllerContext {
@@ -104,16 +105,22 @@ function outOfRange(header: DirectiveHeader): unknown {
   }
 }
 
-async function command(api: AddonApi, deviceId: number, target: Target): Promise<void> {
+async function command(
+  api: AddonApi,
+  deviceId: number,
+  target: Target,
+  identity: VerifiedDirectiveIdentity,
+): Promise<void> {
+  const origin = alexaOrigin(identity)
   if (target.kind === 'mode') {
-    if (target.mode === MODE_OPEN) await api.cover.open.mutate({ deviceId })
-    else await api.cover.close.mutate({ deviceId })
+    if (target.mode === MODE_OPEN) await api.cover.open.mutate({ deviceId }, origin)
+    else await api.cover.close.mutate({ deviceId }, origin)
     return
   }
   if (target.axis === 'position') {
-    await api.cover.setPosition.mutate({ deviceId, position: target.value })
+    await api.cover.setPosition.mutate({ deviceId, position: target.value }, origin)
   } else {
-    await api.cover.setTiltPosition.mutate({ deviceId, tiltPosition: target.value })
+    await api.cover.setTiltPosition.mutate({ deviceId, tiltPosition: target.value }, origin)
   }
 }
 
@@ -197,7 +204,7 @@ export async function handleCoverDirective(c: AdapterDirectiveContext): Promise<
     endpointId: c.endpoint.endpointId,
     userId: c.identity.userId,
     deviceId: c.deviceId,
-    command: () => command(api, c.deviceId, target),
+    command: () => command(api, c.deviceId, target, c.identity),
     read: async () => readingFor(await readSlice(api, c.deviceId), instance, target),
     commandErrorType: 'ENDPOINT_UNREACHABLE',
   }

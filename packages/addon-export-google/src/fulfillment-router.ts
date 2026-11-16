@@ -97,7 +97,7 @@ export async function handleFulfillment(
       // `create`, not `view` — actuating is a write, and a read-only link must
       // not be able to unlock a door.
       if (!allows(caller, 'create')) return authFailure(requestId, 'EXECUTE', deps, caller)
-      return ok(requestId, await handleExecute(input, deps.execute, caller.userId))
+      return ok(requestId, await handleExecute(input, deps.execute, caller.userId, caller.username))
     }
     case 'action.devices.DISCONNECT': {
       deps.logger.info('google fulfillment: account unlinked by Google', {

@@ -308,7 +308,10 @@ describe('cover directives', () => {
       event: { header: { name: string } }
       context: { properties: Array<{ instance: string; value: number }> }
     }
-    expect(api.cover.setPosition.mutate).toHaveBeenCalledWith({ deviceId: 9, position: 30 })
+    expect(api.cover.setPosition.mutate).toHaveBeenCalledWith(
+      { deviceId: 9, position: 30 },
+      expect.anything(),
+    )
     expect(res.event.header.name).toBe('Response')
     expect(res.context.properties[0]).toMatchObject({ instance: 'Blind.Position', value: 30 })
   })
@@ -361,7 +364,10 @@ describe('cover directives', () => {
         api,
       ),
     )
-    expect(api.cover.setPosition.mutate).toHaveBeenCalledWith({ deviceId: 9, position: 100 })
+    expect(api.cover.setPosition.mutate).toHaveBeenCalledWith(
+      { deviceId: 9, position: 100 },
+      expect.anything(),
+    )
   })
 
   it('AdjustRangeValue on a cover whose position is unknown refuses instead of guessing', async () => {
@@ -390,7 +396,10 @@ describe('cover directives', () => {
         api,
       ),
     )
-    expect(api.cover.setTiltPosition.mutate).toHaveBeenCalledWith({ deviceId: 9, tiltPosition: 40 })
+    expect(api.cover.setTiltPosition.mutate).toHaveBeenCalledWith(
+      { deviceId: 9, tiltPosition: 40 },
+      expect.anything(),
+    )
     const res = (await handleCoverDirective(
       directiveContext(
         'SetRangeValue',
@@ -415,7 +424,7 @@ describe('cover directives', () => {
         api,
       ),
     )
-    expect(api.cover.close.mutate).toHaveBeenCalledWith({ deviceId: 9 })
+    expect(api.cover.close.mutate).toHaveBeenCalledWith({ deviceId: 9 }, expect.anything())
     await handleCoverDirective(
       directiveContext(
         'SetMode',
@@ -425,7 +434,7 @@ describe('cover directives', () => {
         api,
       ),
     )
-    expect(api.cover.open.mutate).toHaveBeenCalledWith({ deviceId: 9 })
+    expect(api.cover.open.mutate).toHaveBeenCalledWith({ deviceId: 9 }, expect.anything())
   })
 
   it('a command the cap refuses is answered ENDPOINT_UNREACHABLE and nothing is deferred', async () => {

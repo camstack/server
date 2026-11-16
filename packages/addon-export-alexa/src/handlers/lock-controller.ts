@@ -11,8 +11,10 @@
  */
 import type { AddonApi, AddonContext, IScopedLogger, LockState } from '@camstack/types'
 import { LockControlStatusSchema } from '@camstack/types'
+import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 import type { DirectiveHeader } from './types.js'
 
 export interface LockControllerContext {
@@ -50,6 +52,7 @@ export async function handleLock(
   header: DirectiveHeader,
   endpoint: { readonly endpointId: string } | undefined,
   deps: LockControllerContext,
+  callerIdentity: VerifiedDirectiveIdentity,
 ): Promise<unknown> {
   if (endpoint === undefined) return errorEnvelope(header, 'INVALID_DIRECTIVE', 'missing endpoint')
   const parsed = parseCameraEndpointId(endpoint.endpointId)
@@ -59,8 +62,13 @@ export async function handleLock(
   const lock = header.name === 'Lock'
   const api = deps.ctx.api
   try {
-    if (lock) await api.lockControl.lock.mutate({ deviceId: parsed.deviceId })
-    else await api.lockControl.unlock.mutate({ deviceId: parsed.deviceId })
+    if (lock)
+      await api.lockControl.lock.mutate({ deviceId: parsed.deviceId }, alexaOrigin(callerIdentity))
+    else
+      await api.lockControl.unlock.mutate(
+        { deviceId: parsed.deviceId },
+        alexaOrigin(callerIdentity),
+      )
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err)
     deps.logger.warn(`alexa lock-controller: ${header.name} failed`, {

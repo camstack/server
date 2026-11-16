@@ -9,6 +9,7 @@
 import type { IScopedLogger, LogExtras } from '@camstack/types'
 
 import type { DeviceGateway } from '../device-gateway.js'
+import type { GooglePrincipal } from '../google-home/cap-dispatch.js'
 import type { ExportableDeviceFacts } from '../google-home/device-model.js'
 import type { CapCall, CapStatusRead } from '../google-home/trait-catalog.js'
 
@@ -57,6 +58,7 @@ export interface FakeGatewayOptions {
 
 export interface FakeGateway extends DeviceGateway {
   readonly dispatched: CapCall[]
+  readonly principals: (GooglePrincipal | undefined)[]
 }
 
 /** Key for the `statuses` map: one status per (cap, device). */
@@ -70,15 +72,18 @@ export function createFakeGateway(options: FakeGatewayOptions = {}): FakeGateway
   const failingFacts = options.failingFacts ?? []
   const failingCalls = options.failingCalls ?? []
   const dispatched: CapCall[] = []
+  const principals: (GooglePrincipal | undefined)[] = []
 
   return {
     dispatched,
+    principals,
     loadFacts: async (deviceId) => {
       if (failingFacts.includes(deviceId)) throw new Error(`registry down for ${deviceId}`)
       return devices[deviceId] ?? null
     },
     readStatus: async (read, deviceId) => statuses[statusKey(read, deviceId)] ?? null,
-    dispatch: async (call) => {
+    dispatch: async (call, principal) => {
+      principals.push(principal)
       if (failingCalls.includes(call.kind)) throw new Error(`provider refused ${call.kind}`)
       dispatched.push(call)
     },

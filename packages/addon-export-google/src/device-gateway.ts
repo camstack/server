@@ -9,7 +9,7 @@
  * device, which are the ones that matter.
  */
 import type { AddonApi, IScopedLogger } from '@camstack/types'
-import { dispatchCapCall, readCapStatus } from './google-home/cap-dispatch.js'
+import { dispatchCapCall, readCapStatus, type GooglePrincipal } from './google-home/cap-dispatch.js'
 import type { ExportableDeviceFacts } from './google-home/device-model.js'
 import type { CapCall, CapStatusRead } from './google-home/trait-catalog.js'
 
@@ -19,7 +19,7 @@ export interface DeviceGateway {
   /** Raw cap `getStatus` payload. Callers parse it with the cap's own schema. */
   readonly readStatus: (read: CapStatusRead, deviceId: number) => Promise<unknown>
   /** Perform a resolved capability call. Rejects on provider failure. */
-  readonly dispatch: (call: CapCall) => Promise<void>
+  readonly dispatch: (call: CapCall, principal?: GooglePrincipal) => Promise<void>
 }
 
 /** The shape `deviceManager.getBindings` returns, narrowed to what we read. */
@@ -58,6 +58,6 @@ export function createApiDeviceGateway(deps: ApiDeviceGatewayDeps): DeviceGatewa
       }
     },
     readStatus: (read, deviceId) => readCapStatus(deps.api, read, deviceId),
-    dispatch: (call) => dispatchCapCall(deps.api, call),
+    dispatch: (call, principal) => dispatchCapCall(deps.api, call, principal),
   }
 }

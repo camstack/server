@@ -19,6 +19,7 @@ import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 import { type DirectiveHeader, EndpointRefSchema } from './types.js'
 
 const PowerDirectiveSchema = z.object({
@@ -38,7 +39,7 @@ export async function handlePower(
   header: DirectiveHeader,
   endpointRaw: unknown,
   deps: PowerControllerContext,
-  _callerIdentity: VerifiedDirectiveIdentity,
+  callerIdentity: VerifiedDirectiveIdentity,
 ): Promise<unknown> {
   const parsed = PowerDirectiveSchema.safeParse({
     header: { namespace: header.namespace, name: header.name },
@@ -61,17 +62,26 @@ export async function handlePower(
   const api: AddonApi = deps.ctx.api
 
   if (parsedId.kind === 'autotrack') {
-    await api.ptzAutotrack.setEnabled.mutate({
-      deviceId: parsedId.parentDeviceId,
-      enabled: on,
-    })
+    await api.ptzAutotrack.setEnabled.mutate(
+      {
+        deviceId: parsedId.parentDeviceId,
+        enabled: on,
+      },
+      alexaOrigin(callerIdentity),
+    )
   } else if (parsedId.kind === 'privacy') {
-    await api.privacyMask.setMask.mutate({
-      deviceId: parsedId.parentDeviceId,
-      patch: { enabled: on },
-    })
+    await api.privacyMask.setMask.mutate(
+      {
+        deviceId: parsedId.parentDeviceId,
+        patch: { enabled: on },
+      },
+      alexaOrigin(callerIdentity),
+    )
   } else if (parsedId.kind === 'child') {
-    await api.switch.setState.mutate({ deviceId: parsedId.childDeviceId, on })
+    await api.switch.setState.mutate(
+      { deviceId: parsedId.childDeviceId, on },
+      alexaOrigin(callerIdentity),
+    )
   } else if (parsedId.kind === 'camera') {
     return errorEnvelope(
       header,
@@ -88,7 +98,10 @@ export async function handlePower(
     )
   } else if (parsedId.kind === 'generic') {
     // A switch, light or siren exported as its own device (R5).
-    await api.switch.setState.mutate({ deviceId: parsedId.deviceId, on })
+    await api.switch.setState.mutate(
+      { deviceId: parsedId.deviceId, on },
+      alexaOrigin(callerIdentity),
+    )
   } else if (parsedId.kind === 'detection') {
     return errorEnvelope(
       header,

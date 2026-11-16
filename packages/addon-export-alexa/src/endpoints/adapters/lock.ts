@@ -28,7 +28,7 @@ export const lockAdapter: GenericAdapter = {
   directives: ['Alexa.LockController/Lock', 'Alexa.LockController/Unlock'].map((key) => ({
     key,
     needsReachableDevice: true,
-    handle: (c) => handleLock(c.header, c.endpoint, c.deps.lockController),
+    handle: (c) => handleLock(c.header, c.endpoint, c.deps.lockController, c.identity),
   })),
   shaping: unshaped,
 }

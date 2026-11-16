@@ -21,6 +21,7 @@ import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 import { type DirectiveHeader, EndpointRefSchema } from './types.js'
 
 const SetBrightnessDirectiveSchema = z.object({
@@ -44,7 +45,7 @@ export async function handleSetBrightness(
   endpointRaw: unknown,
   payloadRaw: unknown,
   deps: BrightnessControllerContext,
-  _callerIdentity: VerifiedDirectiveIdentity,
+  callerIdentity: VerifiedDirectiveIdentity,
 ): Promise<unknown> {
   const parsed = SetBrightnessDirectiveSchema.safeParse({
     header: { namespace: header.namespace, name: header.name },
@@ -92,10 +93,13 @@ export async function handleSetBrightness(
   // An accessory child, or a light exported as its own device (R5).
   const targetDeviceId = parsedId.kind === 'child' ? parsedId.childDeviceId : parsedId.deviceId
   try {
-    await api.brightness.setBrightness.mutate({
-      deviceId: targetDeviceId,
-      level: percentage,
-    })
+    await api.brightness.setBrightness.mutate(
+      {
+        deviceId: targetDeviceId,
+        level: percentage,
+      },
+      alexaOrigin(callerIdentity),
+    )
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
     deps.logger.warn('alexa brightness-controller: setBrightness failed', {

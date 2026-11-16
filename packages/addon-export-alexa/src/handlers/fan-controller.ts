@@ -12,20 +12,20 @@
  * the state the command set, projected from the slice read before it. A custom
  * preset that did not fully apply is an ErrorResponse naming the step.
  */
-import type { IScopedLogger } from '@camstack/types'
-import type { AddonContext } from '@camstack/types'
+import type { AddonContext, IScopedLogger } from '@camstack/types'
 import { z } from 'zod'
 import {
+  type FanSlice,
   fanProperties,
   INSTANCE_OSCILLATING,
   INSTANCE_PRESET,
   INSTANCE_SPEED,
   presetModesOf,
   readFanSlice,
-  type FanSlice,
 } from '../endpoints/adapters/fan-model.js'
 import type { AdapterDirectiveContext, GenericProperty } from '../endpoints/adapters/types.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 
 export interface FanControllerContext {
   readonly ctx: AddonContext
@@ -112,10 +112,13 @@ async function setSpeed(
   speed: number,
 ): Promise<unknown> {
   try {
-    await deps.ctx.api.fanControl.setPercentage.mutate({
-      deviceId: c.deviceId,
-      speed,
-    })
+    await deps.ctx.api.fanControl.setPercentage.mutate(
+      {
+        deviceId: c.deviceId,
+        speed,
+      },
+      alexaOrigin(c.identity),
+    )
   } catch (err: unknown) {
     deps.logger.warn('alexa fan-controller: setPercentage failed', {
       tags: { deviceId: c.deviceId },
@@ -167,10 +170,13 @@ async function handleToggle(
   if (slice === null) return unreachable(c, 'the fan state could not be read')
   const oscillating = c.header.name === 'TurnOn'
   try {
-    await deps.ctx.api.fanControl.setOscillating.mutate({
-      deviceId: c.deviceId,
-      oscillating,
-    })
+    await deps.ctx.api.fanControl.setOscillating.mutate(
+      {
+        deviceId: c.deviceId,
+        oscillating,
+      },
+      alexaOrigin(c.identity),
+    )
   } catch (err: unknown) {
     deps.logger.warn('alexa fan-controller: setOscillating failed', {
       tags: { deviceId: c.deviceId },
@@ -221,10 +227,13 @@ async function handleMode(
   }
   if (mode.source === 'native') {
     try {
-      await deps.ctx.api.fanControl.setPreset.mutate({
-        deviceId: c.deviceId,
-        preset: mode.name,
-      })
+      await deps.ctx.api.fanControl.setPreset.mutate(
+        {
+          deviceId: c.deviceId,
+          preset: mode.name,
+        },
+        alexaOrigin(c.identity),
+      )
     } catch (err: unknown) {
       deps.logger.warn('alexa fan-controller: setPreset failed', {
         tags: { deviceId: c.deviceId },
@@ -271,8 +280,7 @@ async function applyCustom(
       return successResponse(c, [])
     }
     const bad = result.fields.find((f) => f.outcome === 'failed' || f.outcome === 'refused')
-    const detail =
-      bad === undefined ? result.status : `${bad.field}: ${bad.message ?? bad.outcome}`
+    const detail = bad === undefined ? result.status : `${bad.field}: ${bad.message ?? bad.outcome}`
     deps.logger.warn('alexa fan-controller: custom preset did not fully apply', {
       tags: { deviceId: c.deviceId },
       meta: { preset: preset.name, status: result.status, detail },

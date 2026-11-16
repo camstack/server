@@ -579,7 +579,7 @@ async function dispatchParsedDirective(
       return { status: 200, body }
     }
     if (key === 'Alexa.LockController/Lock' || key === 'Alexa.LockController/Unlock') {
-      const body = await handleLock(header, endpoint, deps.lockController)
+      const body = await handleLock(header, endpoint, deps.lockController, callerIdentity)
       return { status: 200, body }
     }
     if (key === 'Alexa.SmartVision.SnapshotProvider/GetSnapshot') {

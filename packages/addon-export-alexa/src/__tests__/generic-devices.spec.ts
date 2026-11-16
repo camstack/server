@@ -130,11 +130,17 @@ describe('LockController directive', () => {
       },
       { endpointId: '5__dev' },
       { ctx, logger: quietLogger },
+      { userId: 'amzn1.account.X', username: 'Ada', scopes: [] },
     )) as {
       event: { header: { name: string } }
       context: { properties: Array<{ value: unknown }> }
     }
-    expect(lock).toHaveBeenCalledWith({ deviceId: 5 })
+    expect(lock).toHaveBeenCalledWith({ deviceId: 5 }, expect.anything())
+    // The linked Alexa account rides on the command as an on-behalf claim.
+    const options = Reflect.get(lock.mock.calls[0] ?? [], 1)
+    expect(Object.values(Reflect.get(options, 'context'))).toEqual([
+      { kind: 'on-behalf', source: 'alexa', principalId: 'amzn1.account.X', principalName: 'Ada' },
+    ])
     expect(res.event.header.name).toBe('Response')
     expect(res.context.properties[0]?.value).toBe('LOCKED')
   })

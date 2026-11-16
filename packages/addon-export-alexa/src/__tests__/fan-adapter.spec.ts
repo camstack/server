@@ -191,10 +191,13 @@ describe('fan directives', () => {
       api,
     )
     expect(ok.event.header.name).toBe('Response')
-    expect(api.fanControl.setPercentage.mutate).toHaveBeenCalledWith({
-      deviceId: 9,
-      speed: 70,
-    })
+    expect(api.fanControl.setPercentage.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 9,
+        speed: 70,
+      },
+      expect.anything(),
+    )
     const bad = await run(
       'Alexa.RangeController/SetRangeValue',
       { rangeValue: 130 },
@@ -212,19 +215,25 @@ describe('fan directives', () => {
       'Fan.Speed',
       api,
     )
-    expect(api.fanControl.setPercentage.mutate).toHaveBeenCalledWith({
-      deviceId: 9,
-      speed: 65,
-    })
+    expect(api.fanControl.setPercentage.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 9,
+        speed: 65,
+      },
+      expect.anything(),
+    )
   })
 
   it('toggles the oscillation', async () => {
     const api = fanApi(fanSlice())
     await run('Alexa.ToggleController/TurnOn', {}, 'Fan.Oscillating', api)
-    expect(api.fanControl.setOscillating.mutate).toHaveBeenCalledWith({
-      deviceId: 9,
-      oscillating: true,
-    })
+    expect(api.fanControl.setOscillating.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 9,
+        oscillating: true,
+      },
+      expect.anything(),
+    )
   })
 
   it('sends a NATIVE preset to fan-control and never to fan-presets', async () => {
@@ -236,10 +245,13 @@ describe('fan directives', () => {
       api,
     )
     expect(answer.event.header.name).toBe('Response')
-    expect(api.fanControl.setPreset.mutate).toHaveBeenCalledWith({
-      deviceId: 9,
-      preset: 'Sleep',
-    })
+    expect(api.fanControl.setPreset.mutate).toHaveBeenCalledWith(
+      {
+        deviceId: 9,
+        preset: 'Sleep',
+      },
+      expect.anything(),
+    )
     expect(api.fanPresets.applyPreset.mutate).not.toHaveBeenCalled()
   })
 

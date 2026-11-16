@@ -26,6 +26,7 @@ interface Harness {
   readonly linked: string[]
   readonly unlinked: string[]
   readonly dispatched: () => readonly string[]
+  readonly principals: () => readonly unknown[]
 }
 
 function harness(): Harness {
@@ -48,7 +49,14 @@ function harness(): Harness {
       unlinked.push(userId)
     },
   }
-  return { deps, logger, linked, unlinked, dispatched: () => gateway.dispatched.map((c) => c.kind) }
+  return {
+    deps,
+    logger,
+    linked,
+    unlinked,
+    dispatched: () => gateway.dispatched.map((c) => c.kind),
+    principals: () => gateway.principals,
+  }
 }
 
 describe('handleFulfillment', () => {
@@ -130,6 +138,8 @@ describe('handleFulfillment', () => {
     )
     expect(result.status).toBe(200)
     expect(h.dispatched()).toEqual(['switch.setState'])
+    // The linked account that asked travels with the command.
+    expect(h.principals()).toEqual([{ principalId: 'user-1', principalName: 'operator' }])
   })
 
   it('drops the linked account on DISCONNECT', async () => {

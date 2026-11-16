@@ -14,6 +14,7 @@ import type { IScopedLogger } from '@camstack/types'
 import type { ActionSceneExports } from '../action-scenes.js'
 import { parseActionSceneId } from '../action-scenes.js'
 import type { DeviceGateway } from '../device-gateway.js'
+import type { GooglePrincipal } from '../google-home/cap-dispatch.js'
 import type {
   ExecuteCommandResult,
   ExecuteInput,
@@ -40,6 +41,7 @@ export async function handleExecute(
   input: ExecuteInput,
   deps: ExecuteDeps,
   userId = '',
+  userName = '',
 ): Promise<ExecuteResponsePayload> {
   const requests: ExecutionRequest[] = []
   for (const group of input.payload.commands) {
@@ -57,12 +59,16 @@ export async function handleExecute(
   // Sequential on purpose. Two EXECUTEs against the same device (Google splits
   // "turn the lamp on and dim it" into two executions in one request) must
   // reach the provider in order; a lane pool would race them.
+  const principal: GooglePrincipal = {
+    principalId: userId,
+    ...(userName !== '' ? { principalName: userName } : {}),
+  }
   const commands: ExecuteCommandResult[] = []
   for (const request of requests) {
     commands.push(
       parseActionSceneId(request.rawId) !== null
         ? await executeScene(request, deps, userId)
-        : await executeOne(request, deps),
+        : await executeOne(request, deps, principal),
     )
   }
   return { commands }
@@ -89,6 +95,7 @@ async function executeScene(
 async function executeOne(
   request: ExecutionRequest,
   deps: ExecuteDeps,
+  principal: GooglePrincipal,
 ): Promise<ExecuteCommandResult> {
   const deviceId = Number.parseInt(request.rawId, 10)
   if (!Number.isFinite(deviceId)) {
@@ -146,7 +153,7 @@ async function executeOne(
   }
 
   try {
-    await deps.gateway.dispatch(resolution.call)
+    await deps.gateway.dispatch(resolution.call, principal)
   } catch (err: unknown) {
     deps.logger.warn('google execute: capability call failed', {
       tags: { deviceId },

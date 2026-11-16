@@ -50,6 +50,7 @@ import { z } from 'zod'
 import type { VerifiedDirectiveIdentity } from '../directive-router.js'
 import { parseCameraEndpointId } from './endpoint-id.js'
 import { errorEnvelope } from './error-envelope.js'
+import { alexaOrigin } from './on-behalf.js'
 import {
   type AlexaArmState,
   alarmArmModeForAlexa,
@@ -186,7 +187,7 @@ export async function handleArm(
   endpointRaw: unknown,
   payloadRaw: unknown,
   deps: SecurityPanelContext,
-  _callerIdentity: VerifiedDirectiveIdentity,
+  callerIdentity: VerifiedDirectiveIdentity,
 ): Promise<unknown> {
   const target = resolveDeviceId(endpointRaw)
   if (!('deviceId' in target)) {
@@ -233,7 +234,7 @@ export async function handleArm(
   }
 
   try {
-    await api.alarmPanel.arm.mutate({ deviceId, mode })
+    await api.alarmPanel.arm.mutate({ deviceId, mode }, alexaOrigin(callerIdentity))
   } catch (err: unknown) {
     deps.logger.warn('alexa security-panel: arm command failed', {
       tags: { deviceId },
@@ -283,7 +284,7 @@ export async function handleDisarm(
   endpointRaw: unknown,
   payloadRaw: unknown,
   deps: SecurityPanelContext,
-  _callerIdentity: VerifiedDirectiveIdentity,
+  callerIdentity: VerifiedDirectiveIdentity,
 ): Promise<unknown> {
   const target = resolveDeviceId(endpointRaw)
   if (!('deviceId' in target)) {
@@ -320,7 +321,10 @@ export async function handleDisarm(
     // The PIN travels as the cap's `code` and is never persisted or logged —
     // the cap's own contract says so, and this is the only place it passes
     // through this addon.
-    await api.alarmPanel.disarm.mutate(code === undefined ? { deviceId } : { deviceId, code })
+    await api.alarmPanel.disarm.mutate(
+      code === undefined ? { deviceId } : { deviceId, code },
+      alexaOrigin(callerIdentity),
+    )
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err)
     deps.logger.warn('alexa security-panel: disarm command failed', {
