@@ -5,10 +5,11 @@
  * The rows variant of the events feed, for a surface where the list sits
  * beside a player (Archive → Review): ~7 rows fit where two cards did. The
  * thumbnail still opens the detail panel; the rest of the row plays the
- * moment.
+ * moment. Two explicit icon buttons, Details and Play, say the same at every
+ * size step.
  */
-import { Button } from '@camstack/ui-library'
-import { ImageOff } from 'lucide-react'
+import { Button, IconButton, Tooltip, TooltipContent, TooltipTrigger } from '@camstack/ui-library'
+import { ImageOff, Info, Play, type LucideIcon } from 'lucide-react'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { mediaIdPath, mediaOwnerPath, useAuthedImage } from '../../lib/authed-media.js'
@@ -81,6 +82,36 @@ export function EventRow<T extends TrackSubject>({
           </span>
         )}
       </Button>
+      <div className="flex shrink-0 items-center gap-0.5 pr-1">
+        <RowAction
+          icon={Info}
+          label={t('detectionIntelligence.eventRow.details', 'Details')}
+          onClick={() => onOpenDetail(row)}
+        />
+        <RowAction
+          icon={Play}
+          label={t('detectionIntelligence.eventRow.play', 'Play')}
+          onClick={() => onSeek(row.timestamp)}
+        />
+      </div>
     </div>
+  )
+}
+
+interface RowActionProps {
+  readonly icon: LucideIcon
+  readonly label: string
+  readonly onClick: () => void
+}
+
+/** One icon action on the row, its label as both tooltip and accessible name. */
+function RowAction({ icon, label, onClick }: RowActionProps): JSX.Element {
+  return (
+    <Tooltip>
+      <TooltipTrigger>
+        <IconButton variant="ghost" size="sm" icon={icon} aria-label={label} onClick={onClick} />
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   )
 }

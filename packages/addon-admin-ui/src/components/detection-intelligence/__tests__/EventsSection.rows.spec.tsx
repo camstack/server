@@ -59,7 +59,12 @@ vi.mock('../use-delete-tracks', () => ({
   DELETE_UNAVAILABLE_TITLE: '',
   useDeleteTracksMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
 }))
-vi.mock('../EventDetailPanel', () => ({ EventDetailPanel: () => null }))
+interface DetailMockProps {
+  readonly row: KeyEventRow
+}
+vi.mock('../EventDetailPanel', () => ({
+  EventDetailPanel: ({ row }: DetailMockProps) => <div data-testid="detail">{row.trackId}</div>,
+}))
 
 const { EventsSection } = await import('../EventsSection')
 
@@ -95,6 +100,16 @@ describe('EventsSection rows layout', () => {
     expect(screen.getAllByTestId('event-row')).toHaveLength(3)
     fireEvent.click(screen.getAllByRole('button', { name: /^Play vehicle at/ })[0])
     expect(onSeek).toHaveBeenCalledWith(AT + 60_000)
+  })
+
+  it('every row has a Details button that opens the panel and a Play button that seeks', () => {
+    const { onSeek } = renderRows()
+    const second = within(screen.getAllByTestId('event-row')[1])
+    fireEvent.click(second.getByRole('button', { name: 'Play' }))
+    expect(onSeek).toHaveBeenCalledWith(AT + 60_000)
+    expect(screen.queryByTestId('detail')).not.toBeInTheDocument()
+    fireEvent.click(second.getByRole('button', { name: 'Details' }))
+    expect(screen.getByTestId('detail')).toHaveTextContent('t2')
   })
 
   it('a class chip switched off narrows the list and the list the density bar draws', () => {

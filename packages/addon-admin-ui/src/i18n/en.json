@@ -4272,7 +4272,9 @@
     "cameraFallback": "Camera #{{id}}",
     "eventRow": {
       "openDetail": "Open event details",
-      "seek": "Play {{className}} at {{time}}"
+      "seek": "Play {{className}} at {{time}}",
+      "details": "Details",
+      "play": "Play"
     },
     "eventClassChips": {
       "all": "All classes",
