@@ -25,7 +25,7 @@ const FindingSchema = z.looseObject({
 const DigestSchema = z.looseObject({
   generatedAt: z.number(),
   tickMs: z.number(),
-  camerasSeen: z.number(),
+  camerasSeen: z.number().nullable(),
   findings: z.array(FindingSchema),
   nodes: z.array(z.looseObject({ nodeId: z.string() })),
   sources: z.array(z.looseObject({ source: z.string(), entries: z.number().nullable() })),

@@ -18,7 +18,15 @@ function cam(overrides: Partial<CameraHealthState> & { deviceId: number }): Came
 }
 
 function state(overrides: Partial<HealthDigestState> = {}): HealthDigestState {
-  return { now: NOW, cameras: [], placement: [], unusableDevices: [], ...overrides }
+  return {
+    now: NOW,
+    cameras: [],
+    motionEntries: 0,
+    metricsEntries: 0,
+    placement: [],
+    unusableDevices: [],
+    ...overrides,
+  }
 }
 
 const QUIET_MOTION = {
@@ -117,6 +125,7 @@ describe('buildHealthDigest', () => {
               queueDepth: 0,
               droppedFrames: 0,
               lastSeen: NOW - 1000,
+              droppedSincePreviousTick: 0,
             },
           }),
         ],
@@ -136,6 +145,7 @@ describe('buildHealthDigest', () => {
       avgInferenceTimeMs: 900,
       queueDepth: 5,
       droppedFrames: 9,
+      droppedSincePreviousTick: 9,
     }
     const idle = state({
       cameras: [cam({ deviceId: 1, metrics: { ...base, phase: 'idle', lastSeen: NOW - 1000 } })],
@@ -162,6 +172,7 @@ describe('buildHealthDigest', () => {
               avgInferenceTimeMs: 20,
               queueDepth: 6,
               droppedFrames: 120,
+              droppedSincePreviousTick: 30,
               lastSeen: NOW,
             },
           }),
@@ -170,7 +181,7 @@ describe('buildHealthDigest', () => {
       1,
     )
     const f = d.findings.find((x) => x.kind === 'frames-shed')
-    expect(f?.evidence).toMatchObject({ droppedFrames: 120, queueDepth: 6 })
+    expect(f?.evidence).toMatchObject({ droppedSincePreviousTick: 30, queueDepth: 6 })
   })
 
   it('an unusable inference device is a critical finding on that node and device', () => {
@@ -212,6 +223,36 @@ describe('buildHealthDigest', () => {
       'placement',
       'inference-device-usability',
     ])
+  })
+
+  it('a stale old drop with a current backlog is not shedding now', () => {
+    const d = buildHealthDigest(
+      state({
+        cameras: [
+          cam({
+            deviceId: 4,
+            metrics: {
+              phase: 'active',
+              configuredFps: 5,
+              actualFps: 5,
+              avgInferenceTimeMs: 20,
+              queueDepth: 6,
+              droppedFrames: 5000,
+              droppedSincePreviousTick: 0,
+              lastSeen: NOW,
+            },
+          }),
+        ],
+      }),
+      1,
+    )
+    expect(d.findings.some((f) => f.kind === 'frames-shed')).toBe(false)
+  })
+
+  it('failed camera reads are null and the camera count is not reported as zero', () => {
+    const d = buildHealthDigest(state({ motionEntries: null, metricsEntries: 3 }), 1)
+    expect(d.camerasSeen).toBeNull()
+    expect(d.sources.find((s) => s.source === 'motion')?.entries).toBeNull()
   })
 
   it('names the signals it does not cover', () => {

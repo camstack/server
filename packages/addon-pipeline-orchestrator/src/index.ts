@@ -2627,6 +2627,7 @@ export default class PipelineOrchestratorAddon
       logger: this.ctx.logger,
     })
     this.healthDigest = tick
+    if (this.healthDigestTimer !== null) clearInterval(this.healthDigestTimer)
     this.healthDigestTimer = setInterval(() => {
       try {
         tick.run()
@@ -3776,6 +3777,7 @@ export default class PipelineOrchestratorAddon
   private async handleDeviceUnregistered(deviceId: number): Promise<void> {
     this.blindMonitor?.forget(deviceId)
     this.cameraMetrics?.forget(deviceId)
+    this.healthDigest?.forget(deviceId)
     return this.detectionWiring!.handleDeviceUnregistered(deviceId)
   }
 

@@ -93,6 +93,35 @@ describe('HealthDigestTick', () => {
     expect(cleared[0]?.tags).toEqual({ deviceId: 5 })
   })
 
+  it('a throwing motion or metrics reader yields null sources, a null camera count and is counted unreadable', () => {
+    const { d, lines } = deps({
+      readMotion: () => {
+        throw new Error('boom')
+      },
+    })
+    const digest = new HealthDigestTick(d).run()
+    expect(digest.sources.find((s) => s.source === 'motion')?.entries).toBeNull()
+    expect(digest.camerasSeen).toBeNull()
+    const summary = lines.find((l) => l.msg === 'health digest: tick')
+    expect(summary?.meta).toMatchObject({ unreadableSources: 1 })
+  })
+
+  it('droppedFrames is cumulative: only growth since the previous tick is shedding', () => {
+    const mirror = new CameraMetricsMirror()
+    const { d } = deps({ readMetrics: () => mirror.view() })
+    const busy = { ...METRICS, avgInferenceTimeMs: 20, queueDepth: 4 }
+    const tick = new HealthDigestTick(d)
+    mirror.note(5, { ...busy, droppedFrames: 900 }, 1000)
+    expect(tick.run().findings).toEqual([]) // first sample: baseline, unknown
+    mirror.note(5, { ...busy, droppedFrames: 900 }, 1100)
+    expect(tick.run().findings).toEqual([]) // stale old drops
+    mirror.note(5, { ...busy, droppedFrames: 950 }, 1200)
+    expect(tick.run().findings.map((f) => f.kind)).toEqual(['frames-shed'])
+    tick.forget(5)
+    mirror.note(5, { ...busy, droppedFrames: 990 }, 1300)
+    expect(tick.run().findings).toEqual([]) // baseline forgotten
+  })
+
   it('a source that throws becomes a null read, never a zero, and the tick still completes', () => {
     const { d, lines } = deps({
       readPlacement: () => {

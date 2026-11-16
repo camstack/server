@@ -26,7 +26,7 @@ import type { UnusableInferenceDevice } from './inference-device-usability-mirro
 
 /** Latest metrics per camera, stamped on arrival. One entry per camera: bounded. */
 export class CameraMetricsMirror {
-  private readonly samples = new Map<number, CameraMetricsSample>()
+  private readonly samples = new Map<number, RawMetricsSample>()
 
   note(deviceId: number, metrics: CameraMetrics, at: number): void {
     this.samples.set(deviceId, {
@@ -40,7 +40,7 @@ export class CameraMetricsMirror {
     })
   }
 
-  view(): ReadonlyMap<number, CameraMetricsSample> {
+  view(): ReadonlyMap<number, RawMetricsSample> {
     return this.samples
   }
 
@@ -53,10 +53,12 @@ export class CameraMetricsMirror {
   }
 }
 
+export type RawMetricsSample = Omit<CameraMetricsSample, 'droppedSincePreviousTick'>
+
 export interface HealthTickDeps {
   readonly now: () => number
   readonly readMotion: (now: number) => readonly BlindCameraSnapshot[]
-  readonly readMetrics: () => ReadonlyMap<number, CameraMetricsSample>
+  readonly readMetrics: () => ReadonlyMap<number, RawMetricsSample>
   readonly readPlacement: () => readonly PlacementNodeStats[]
   readonly readUnusableDevices: () => readonly UnusableInferenceDevice[]
   readonly logger: Pick<IScopedLogger, 'info' | 'warn' | 'debug'>
@@ -81,6 +83,8 @@ function attempt<T>(
 export class HealthDigestTick {
   private readonly keeper: HealthDigestKeeper
   private previousIds = new Map<string, number | null>()
+  /** Last `droppedFrames` counter per camera (a monotonic counter since attach). */
+  private readonly previousDropped = new Map<number, number>()
 
   constructor(
     private readonly deps: HealthTickDeps,
@@ -105,9 +109,12 @@ export class HealthDigestTick {
     const unusable = attempt(this.deps, 'inference-device-usability', () =>
       this.deps.readUnusableDevices(),
     )
+    const withDelta = this.withDropDeltas(metrics.value)
     const state: HealthDigestState = {
       now: started,
-      cameras: joinCameras(motion.value ?? [], metrics.value ?? new Map()),
+      cameras: joinCameras(motion.value ?? [], withDelta),
+      motionEntries: motion.value === null ? null : motion.value.length,
+      metricsEntries: metrics.value === null ? null : metrics.value.size,
       placement: placement.value,
       unusableDevices: unusable.value,
     }
@@ -124,6 +131,31 @@ export class HealthDigestTick {
       },
     })
     return digest
+  }
+
+  /** Forget a camera's drop baseline (it was unregistered). */
+  forget(deviceId: number): void {
+    this.previousDropped.delete(deviceId)
+  }
+
+  /** Turn the cumulative `droppedFrames` counters into per-tick deltas; prune departed cameras. */
+  private withDropDeltas(
+    metrics: ReadonlyMap<number, RawMetricsSample> | null,
+  ): ReadonlyMap<number, CameraMetricsSample> {
+    const out = new Map<number, CameraMetricsSample>()
+    if (metrics === null) return out
+    for (const [deviceId, m] of metrics) {
+      const prev = this.previousDropped.get(deviceId)
+      out.set(deviceId, {
+        ...m,
+        droppedSincePreviousTick:
+          prev === undefined || m.droppedFrames < prev ? null : m.droppedFrames - prev,
+      })
+      this.previousDropped.set(deviceId, m.droppedFrames)
+    }
+    for (const id of [...this.previousDropped.keys()])
+      if (!metrics.has(id)) this.previousDropped.delete(id)
+    return out
   }
 
   /** A finding is logged when it appears and when it clears, not on every tick. */

@@ -62,7 +62,8 @@ export const HealthDigestSchema = z.object({
   generatedAt: z.number(),
   /** Wall time the tick took to build this digest. */
   tickMs: z.number(),
-  camerasSeen: z.number(),
+  /** Cameras known to the digest; `null` when a camera source failed to read (the union would be incomplete). */
+  camerasSeen: z.number().nullable(),
   findings: z.array(HealthFindingSchema).readonly(),
   nodes: z.array(HealthNodeSummarySchema).readonly(),
   sources: z.array(HealthSourceStatusSchema).readonly(),

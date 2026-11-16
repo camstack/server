@@ -40,6 +40,12 @@ export interface CameraMetricsSample {
   readonly queueDepth: number
   readonly droppedFrames: number
   readonly lastSeen: number
+  /**
+   * Frames dropped since the previous tick. `droppedFrames` on the wire is a
+   * monotonic counter since attach (runner frame queues), so only the delta is
+   * a signal. `null` = first sample or a counter reset: unknown, not zero.
+   */
+  readonly droppedSincePreviousTick: number | null
 }
 
 export interface CameraHealthState {
@@ -53,6 +59,9 @@ export interface CameraHealthState {
 export interface HealthDigestState {
   readonly now: number
   readonly cameras: readonly CameraHealthState[]
+  /** Entries the motion / metrics reads returned; `null` = the read failed (D393). */
+  readonly motionEntries: number | null
+  readonly metricsEntries: number | null
   /** `null` = the read failed. */
   readonly placement: readonly PlacementNodeStats[] | null
   /** `null` = the read failed. */
@@ -128,7 +137,7 @@ function metricsFindings(c: CameraHealthState, now: number): readonly HealthFind
       })
     }
   }
-  if (m.droppedFrames > 0 && m.queueDepth > 0) {
+  if (m.droppedSincePreviousTick !== null && m.droppedSincePreviousTick > 0 && m.queueDepth > 0) {
     out.push({
       id: `frames-shed:${c.deviceId}`,
       kind: 'frames-shed',
@@ -136,7 +145,8 @@ function metricsFindings(c: CameraHealthState, now: number): readonly HealthFind
       subject,
       what: 'The worker is saturated: frames are being shed while a backlog waits.',
       evidence: {
-        droppedFrames: m.droppedFrames,
+        droppedSincePreviousTick: m.droppedSincePreviousTick,
+        droppedFramesTotal: m.droppedFrames,
         queueDepth: m.queueDepth,
         actualFps: m.actualFps,
       },
@@ -185,7 +195,8 @@ export function buildHealthDigest(state: HealthDigestState, tickMs: number): Hea
   if (state.unusableDevices !== null) findings.push(...deviceFindings(state.unusableDevices))
   findings.sort((a, b) => SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity])
   const sources: HealthSourceStatus[] = [
-    { source: 'cameras', entries: state.cameras.length },
+    { source: 'motion', entries: state.motionEntries },
+    { source: 'metrics', entries: state.metricsEntries },
     { source: 'placement', entries: state.placement === null ? null : state.placement.length },
     {
       source: 'inference-device-usability',
@@ -195,7 +206,8 @@ export function buildHealthDigest(state: HealthDigestState, tickMs: number): Hea
   return {
     generatedAt: state.now,
     tickMs,
-    camerasSeen: state.cameras.length,
+    camerasSeen:
+      state.motionEntries === null || state.metricsEntries === null ? null : state.cameras.length,
     findings,
     nodes: state.placement === null ? [] : nodeSummaries(state.placement, state.unusableDevices),
     sources,

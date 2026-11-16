@@ -332,7 +332,6 @@ export class DetectionBlindMonitor {
     return out
   }
 
-  /** Drop a device (detach / unbind), so a re-attach starts a fresh clock. */
   /**
    * A read-only view of every tracked camera: no transition fires, no state
    * changes. Costs one pass over the map; used by the health digest tick.
@@ -364,6 +363,7 @@ export class DetectionBlindMonitor {
     return out
   }
 
+  /** Drop a device (detach / unbind), so a re-attach starts a fresh clock. */
   forget(deviceId: number): void {
     this.state.delete(deviceId)
   }
