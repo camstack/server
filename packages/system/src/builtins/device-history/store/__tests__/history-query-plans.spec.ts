@@ -143,6 +143,18 @@ describe('every history statement is a primary-key range', () => {
     })
   }
 
+  // The range delete (`deleteSeriesRange`) counts a range per tier for its dry run:
+  // the same primary-key range as the delete itself.
+  for (const tier of ['raw', '5m', '1h', '1d'] as const) {
+    it(`range count on ${tier} (dry run of a range delete)`, async () => {
+      const table = tier === 'raw' ? 'device-history:raw' : `device-history:rollup-${tier}`
+      const sql = await statementOf(() => store.countRange(tier, 1, 1_000, 5_000), table, 'SELECT')
+      expect(sql).toMatch(/COUNT/i)
+      const plan = planOf(sql)
+      expectPrimaryKeyRange(plan, 'series_id=?', tier === 'raw' ? 'ts>?' : 'bucket_start>?')
+    })
+  }
+
   it('series identity lookup uses the unique identity index', async () => {
     const sql = await statementOf(
       () => store.findSeries('cap:battery.level', 'd:1', ''),

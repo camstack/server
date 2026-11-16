@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The pipeline-orchestrator health digest is reachable through the hub API (getHealthDigest, admin)
+- Admins can delete a time range of one device series' history points (dry run first); the rollups covering it are rebuilt
 
 ## [1.2.885] - 2026-11-15
 

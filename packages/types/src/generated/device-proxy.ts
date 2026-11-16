@@ -360,7 +360,7 @@ export interface DeviceProxy {
   readonly coreBlocks: Pick<InferDeviceProxyCap<typeof coreBlocksCapability>, 'proposeRunningThreshold'>
   readonly deviceAdoption: Pick<InferDeviceProxyCap<typeof deviceAdoptionCapability>, 'getStatus'>
   readonly deviceExport: Pick<InferDeviceProxyCap<typeof deviceExportCapability>, 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
-  readonly deviceHistory: Pick<InferDeviceProxyCap<typeof deviceHistoryCapability>, 'listSeries' | 'query' | 'getDeviceEnabled' | 'setDeviceEnabled'>
+  readonly deviceHistory: Pick<InferDeviceProxyCap<typeof deviceHistoryCapability>, 'listSeries' | 'query' | 'getDeviceEnabled' | 'setDeviceEnabled' | 'deleteSeriesRange'>
   readonly deviceManager: Pick<InferDeviceProxyCap<typeof deviceManagerCapability>, 'loadConfig' | 'loadRuntimeState' | 'loadMeta' | 'setName' | 'setAlias' | 'setLocation' | 'setTags' | 'setType' | 'setIntegrationId' | 'setLinkDeviceId' | 'setPrimaryChildEntityId' | 'setChildLayout' | 'setPrimaryChildPreference' | 'setDisplay' | 'getWireableFields' | 'setRole' | 'applyInitialMeta' | 'setMetadata' | 'setDisabled' | 'getDevice' | 'getLinkedDevices' | 'getStreamSources' | 'getConfigSchema' | 'getSettingsSchema' | 'updateConfig' | 'enable' | 'disable' | 'remove' | 'getStreamProfileMap' | 'setStreamProfileMap' | 'probeStreams' | 'getBindings' | 'setWrapperActive' | 'getWrapperActivation' | 'getDeviceSettingsAggregate' | 'getDeviceLiveInfoAggregate' | 'getDeviceAggregate' | 'runDeviceAction' | 'updateDeviceField' | 'updateDeviceFieldsBatch' | 'testField' | 'getDeviceStatusAggregate'>
   readonly deviceState: Pick<InferDeviceProxyCap<typeof deviceStateCapability>, 'getSnapshot' | 'getCapSlice' | 'setCapSlice' | 'claimFields' | 'patchOwnedFields' | 'releaseClaim' | 'getNativeCapSlice'>
   readonly faceGallery: Pick<InferDeviceProxyCap<typeof faceGalleryCapability>, 'listRecentFaces' | 'getFaceByTrack'>
@@ -1272,6 +1272,7 @@ export function createDeviceProxy(
     query: (input?: unknown) => dispatchSystem('deviceHistory', 'query', 'query', input),
     getDeviceEnabled: (input?: unknown) => dispatchSystem('deviceHistory', 'getDeviceEnabled', 'query', input),
     setDeviceEnabled: (input?: unknown) => dispatchSystem('deviceHistory', 'setDeviceEnabled', 'mutation', input),
+    deleteSeriesRange: (input?: unknown) => dispatchSystem('deviceHistory', 'deleteSeriesRange', 'mutation', input),
   }
 
   const deviceManagerInterface = {

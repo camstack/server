@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 624 methods carry a device reference, of which
- * 197 are on SYSTEM-scope caps.
+ * Coverage: 625 methods carry a device reference, of which
+ * 198 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -125,6 +125,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceExtension.listSlots': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceExtension.listSources': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceExtension.setSlot': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceHistory.deleteSeriesRange': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceHistory.getDeviceEnabled': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceHistory.listSeries': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceHistory.query': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -676,6 +677,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "deviceExport.applyDeviceSettingsPatch",
   "deviceExport.getDeviceLiveContribution",
   "deviceExport.getDeviceSettingsContribution",
+  "deviceHistory.deleteSeriesRange",
   "deviceHistory.getDeviceEnabled",
   "deviceHistory.listSeries",
   "deviceHistory.query",

@@ -244,6 +244,38 @@ const OrphanListSchema = z.object({
 })
 export type DeviceHistoryOrphanList = z.infer<typeof OrphanListSchema>
 
+export const DeviceHistoryRangeDeleteRefusalSchema = z.enum([
+  'invalid-range',
+  'series-not-found',
+  'not-a-point-series',
+])
+export type DeviceHistoryRangeDeleteRefusal = z.infer<typeof DeviceHistoryRangeDeleteRefusalSchema>
+
+const RollupRowsSchema = z.object({
+  '5m': z.number().int(),
+  '1h': z.number().int(),
+  '1d': z.number().int(),
+})
+
+/**
+ * What a time-range delete did, or WOULD do (`dryRun`). `rows` is what was
+ * removed: raw points inside the range, and the rollup rows covering it (those
+ * are removed and rebuilt from what remains, so a gap leaves no stale value).
+ * `rewritten` is how many rollup rows were rebuilt from the remaining points;
+ * `null` on a dry run, which cannot know before it has deleted.
+ */
+const RangeDeleteResultSchema = z.discriminatedUnion('ok', [
+  z.object({
+    ok: z.literal(true),
+    dryRun: z.boolean(),
+    seriesId: z.number().int(),
+    rows: TierRowsSchema,
+    rewritten: RollupRowsSchema.nullable(),
+  }),
+  z.object({ ok: z.literal(false), reason: DeviceHistoryRangeDeleteRefusalSchema }),
+])
+export type DeviceHistoryRangeDeleteResult = z.infer<typeof RangeDeleteResultSchema>
+
 export const DeviceHistoryStatusSchema = z.object({
   startedAt: z.number(),
   /** The store is declared, series loaded and the first reconcile has answered. */
@@ -442,6 +474,29 @@ export const deviceHistoryCapability = {
         seriesIds: z.array(z.number().int()).min(1).max(DEVICE_HISTORY_ORPHAN_DELETE_MAX),
       }),
       z.object({ results: z.array(OrphanDeleteEntrySchema).readonly() }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /**
+     * Delete the points of ONE device series with a timestamp in
+     * `[fromMs, toMs]` (both inclusive, `fromMs < toMs`) — for a spurious
+     * reading an operator has judged wrong. The rollup rows covering the
+     * range (and the bucket that held the deleted value forward) are removed
+     * and rebuilt from the points that remain. `dryRun: true` deletes nothing
+     * and returns the counts a real run would remove. Only a series fed by
+     * points has a range to delete; a bucket-fed series is refused
+     * `not-a-point-series`. `scope` is the series' scope ('' for most).
+     */
+    deleteSeriesRange: method(
+      z.object({
+        deviceId: z.number().int(),
+        key: z.string().min(1),
+        scope: z.string(),
+        fromMs: z.number().int().nonnegative(),
+        toMs: z.number().int().nonnegative(),
+        dryRun: z.boolean(),
+      }),
+      RangeDeleteResultSchema,
       { kind: 'mutation', auth: 'admin' },
     ),
   },

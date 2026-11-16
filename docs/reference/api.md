@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**209 capabilities · 1502 methods.**
+**209 capabilities · 1503 methods.**
 
 ## Method index
 
@@ -312,6 +312,7 @@
 | `deviceHistory.getStatus` | query | admin | device-history |
 | `deviceHistory.listOrphanSeries` | query | admin | device-history |
 | `deviceHistory.deleteOrphanSeries` | mutation | admin | device-history |
+| `deviceHistory.deleteSeriesRange` | mutation | admin | device-history |
 | `deviceManager.allocateDeviceId` | mutation | protected | device-manager |
 | `deviceManager.migrateDevice` | mutation | admin | device-manager |
 | `deviceManager.registerDevice` | mutation | protected | device-manager |
@@ -2393,7 +2394,7 @@
 
 ### `device-history` → `deviceHistory.*`
 
-- **Source:** `packages/types/src/capabilities/device-history.cap.ts:295`
+- **Source:** `packages/types/src/capabilities/device-history.cap.ts:327`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceHistoryProvider`
@@ -2413,6 +2414,7 @@
 | getStatus | `deviceHistory.getStatus` | query | admin | `{}` | `DeviceHistoryStatusSchema` |
 | listOrphanSeries | `deviceHistory.listOrphanSeries` | query | admin | `{}` | `{ series: ({ seriesId: number; deviceId: number; key: string; scope: string; displayName: string \| null; reason: DeviceHistoryOrphanReasonSchema; missingSince: number \| null; firstTs: number; lastTs: number; rows: { raw: number; 5m: number; 1h: number; 1d: number } })[]; truncated: boolean }` |
 | deleteOrphanSeries | `deviceHistory.deleteOrphanSeries` | mutation | admin | `{ seriesIds: number[] }` | `{ results: ({ seriesId: number; ok: true; deleted: { raw: number; 5m: number; 1h: number; 1d: number } } \| { seriesId: number; ok: false; reason: DeviceHistoryOrphanDeleteRefusalSchema })[] }` |
+| deleteSeriesRange | `deviceHistory.deleteSeriesRange` | mutation | admin | `{ deviceId: number; key: string; scope: string; fromMs: number; toMs: number; dryRun: boolean }` | `{ ok: true; dryRun: boolean; seriesId: number; rows: { raw: number; 5m: number; 1h: number; 1d: number }; rewritten: { 5m: number; 1h: number; 1d: number } \| null } \| { ok: false; reason: "invalid-range" \| "series-not-found" \| "not-a-point-series" }` |
 
 ### `device-manager` → `deviceManager.*`
 

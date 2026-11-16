@@ -4783,6 +4783,24 @@ export function createCapRouter_deviceHistory(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.deleteOrphanSeries(methodInput as any)
       }),
+    deleteSeriesRange: adminProcedure
+      .input(deviceHistoryCapability.methods.deleteSeriesRange.input.loose())
+      .output(deviceHistoryCapability.methods.deleteSeriesRange.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-history',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.deleteSeriesRange(methodInput as any)
+      }),
   })
 }
 

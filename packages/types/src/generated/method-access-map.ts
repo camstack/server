@@ -310,6 +310,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceExtension.setSlot': { capName: "device-extension", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'deviceHistory.declareSeries': { capName: "device-history", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceHistory.deleteOrphanSeries': { capName: "device-history", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
+  'deviceHistory.deleteSeriesRange': { capName: "device-history", capScope: "system", addonId: null, access: "delete", role: "admin" } as const,
   'deviceHistory.getDeviceEnabled': { capName: "device-history", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceHistory.getStatus': { capName: "device-history", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'deviceHistory.listNodeSeries': { capName: "device-history", capScope: "system", addonId: null, access: "view", role: "admin" } as const,

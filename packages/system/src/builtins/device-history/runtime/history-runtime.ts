@@ -14,6 +14,7 @@
 import type {
   DeviceHistoryOrphanDeleteEntry,
   DeviceHistoryOrphanList,
+  DeviceHistoryRangeDeleteResult,
   DeviceHistoryStatus,
   IScopedLogger,
   ReadingQuantity,
@@ -31,6 +32,7 @@ import { ProducerIngest } from '../ingest/producer-ingest.js'
 import { HistoryQuery } from '../query/history-query.js'
 import { DepartureTracker } from '../retention/departure-tracker.js'
 import { OrphanSeries } from '../retention/orphans.js'
+import { RangeDelete, type RangeDeleteInput } from '../retention/range-delete.js'
 import { RetentionJob, type RetentionPolicy } from '../retention/retention.js'
 import { RollupEngine } from '../rollup/rollup-engine.js'
 import { HistoryCounters } from '../status/counters.js'
@@ -107,6 +109,7 @@ export class HistoryRuntime {
   readonly retentionJob: RetentionJob
   readonly departures: DepartureTracker
   readonly orphans: OrphanSeries
+  private readonly rangeDelete: RangeDelete
 
   private optedOutDevices: ReadonlySet<number> = new Set()
   private readonly tierCounts = new Map<StoredTier, TierCount>()
@@ -189,6 +192,14 @@ export class HistoryRuntime {
       departures: this.departures,
       counters: this.counters,
       logger,
+    })
+    this.rangeDelete = new RangeDelete({
+      store: this.store,
+      registry: this.registry,
+      rollup: this.rollup,
+      logger,
+      clock,
+      flush: () => this.flushNow(),
     })
     this.orphans = new OrphanSeries({
       store: this.store,
@@ -423,6 +434,11 @@ export class HistoryRuntime {
   /** Delete orphan series by id; a series that is not orphan NOW is refused. */
   deleteOrphans(seriesIds: readonly number[]): Promise<readonly DeviceHistoryOrphanDeleteEntry[]> {
     return this.orphans.delete(seriesIds)
+  }
+
+  /** Delete (or count, on a dry run) one series' points in a time range; rollups rebuilt. */
+  deleteSeriesRange(input: RangeDeleteInput): Promise<DeviceHistoryRangeDeleteResult> {
+    return this.rangeDelete.run(input)
   }
 
   /** Series held per device, for the admin clean-up listing. */

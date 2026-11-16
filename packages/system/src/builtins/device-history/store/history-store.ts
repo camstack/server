@@ -467,6 +467,26 @@ export class HistoryStore {
     })
   }
 
+  /**
+   * One series' rows of a tier with the order column in `[lo, hiInclusive]`: a
+   * range of the primary key (D447, asserted in `history-query-plans.spec.ts`).
+   */
+  async countRange(
+    tier: StoredTier,
+    seriesId: number,
+    lo: number,
+    hiInclusive: number,
+  ): Promise<number> {
+    return this.door.count.query({
+      namespace: HISTORY_NAMESPACE,
+      collection: collectionOf(tier),
+      filter: {
+        where: { series_id: seriesId },
+        whereBetween: { [orderColumnOf(tier)]: [lo, hiInclusive] },
+      },
+    })
+  }
+
   async countRows(tier: StoredTier): Promise<number> {
     return this.door.count.query({ namespace: HISTORY_NAMESPACE, collection: collectionOf(tier) })
   }

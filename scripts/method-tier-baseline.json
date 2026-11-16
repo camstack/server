@@ -253,6 +253,7 @@
   "deviceExtension.setSlot": "admin",
   "deviceHistory.declareSeries": "admin",
   "deviceHistory.deleteOrphanSeries": "admin",
+  "deviceHistory.deleteSeriesRange": "admin",
   "deviceHistory.getDeviceEnabled": "protected",
   "deviceHistory.getStatus": "admin",
   "deviceHistory.listNodeSeries": "admin",

@@ -206,6 +206,22 @@ a notice drawn only from an answered, non-empty listing opens a review dialog
 that deletes the selection in batches of 50 and shows each row's outcome
 (`packages/addon-admin-ui/src/components/history/OrphanSeriesNotice.tsx`).
 
+**Deleting a range of points.** `deleteSeriesRange` (admin) removes one device
+series' points with a timestamp in `[fromMs, toMs]` (both inclusive,
+`fromMs < toMs`, series named by `deviceId` + `key` + `scope`) when an operator
+has judged them wrong (a spurious 0, a counter spike). Only a point-fed series has
+a range to delete; a bucket-fed one is refused `not-a-point-series`. The rollup
+rows covering the range are REMOVED and rebuilt from the points that remain,
+now and not at the bucket's close: the 5m span runs from the bucket of `fromMs`
+to the bucket of the first point after `toMs` (that bucket held the deleted value
+forward), and the 1h and 1d spans follow from it. `dryRun: true` deletes nothing
+and returns the counts per tier (`raw`, `5m`, `1h`, `1d`) a real run removes; the
+real run returns the same counts plus how many rollup rows it rewrote. Every
+count and delete is a primary-key range (`countRange` / `deleteRange`, asserted in
+`history-query-plans.spec.ts`). A real run logs one line tagged `deviceId`
+(`retention/range-delete.ts`). The series' `firstTs` / `lastTs` span is not
+narrowed by it.
+
 ## Query
 
 A device read takes a FLAT top-level `deviceId` (`listSeries`, `query`,

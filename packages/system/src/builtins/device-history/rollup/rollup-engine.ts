@@ -301,6 +301,20 @@ export class RollupEngine {
     if (parent === '1h') mark(this.dirty1d, seriesId, bucketStartOf('1d', windowStart))
   }
 
+  /**
+   * Rebuild one 1h or 1d row NOW, from the tier below (a range delete does not
+   * wait for the bucket to close). Writes nothing when the tier below has no row.
+   */
+  async recomputeBucket(
+    tier: '1h' | '1d',
+    seriesId: number,
+    windowStart: number,
+    now: number,
+  ): Promise<void> {
+    if (tier === '1h') await this.recomputeHour(seriesId, windowStart, now)
+    else await this.recomputeDay(seriesId, windowStart, now)
+  }
+
   // ── boot ───────────────────────────────────────────────────────────
 
   /**

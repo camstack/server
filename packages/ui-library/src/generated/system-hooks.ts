@@ -812,6 +812,9 @@ export const useDeviceHistoryListOrphanSeries: typeof trpc.deviceHistory.listOrp
 /** Generated alias around `trpc.deviceHistory.deleteOrphanSeries.useMutation`. */
 export const useDeviceHistoryDeleteOrphanSeries: typeof trpc.deviceHistory.deleteOrphanSeries.useMutation = /*#__PURE__*/ alias(() => trpc.deviceHistory.deleteOrphanSeries.useMutation)
 
+/** Generated alias around `trpc.deviceHistory.deleteSeriesRange.useMutation`. */
+export const useDeviceHistoryDeleteSeriesRange: typeof trpc.deviceHistory.deleteSeriesRange.useMutation = /*#__PURE__*/ alias(() => trpc.deviceHistory.deleteSeriesRange.useMutation)
+
 /** Generated alias around `trpc.deviceManager.allocateDeviceId.useMutation`. */
 export const useDeviceManagerAllocateDeviceId: typeof trpc.deviceManager.allocateDeviceId.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.allocateDeviceId.useMutation)
 

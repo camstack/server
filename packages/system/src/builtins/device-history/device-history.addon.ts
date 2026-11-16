@@ -202,6 +202,7 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
       }),
       getStatus: async () => this.requireRuntime().status(),
       listOrphanSeries: async () => this.requireRuntime().listOrphans(),
+      deleteSeriesRange: async (input) => this.requireRuntime().deleteSeriesRange(input),
       deleteOrphanSeries: async (input) => ({
         results: await this.requireRuntime().deleteOrphans(input.seriesIds),
       }),
