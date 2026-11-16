@@ -874,6 +874,17 @@ D1042), never a per-capability setter.
   as its title; a scene does not gate on its own. Reachability that has not
   been reported is shown as unknown, never as online, and a command that fails
   puts its reason on the reason line (`CardCommon.notice`).
+- **Overlays swap in one box** (`shell/Overlays.tsx` `OverlayShell`, `shell/overlay-box.tsx`).
+  History and Remote have a pinned top (back + state, then the section switch)
+  and ONE `overflow-y-auto` region below; nothing else in the card scrolls. The
+  box keeps the height of the scene it replaced (`DeviceCard` measures it as the
+  view opens), or, under `DeviceCardFrameProvider fill` (the viewer's embed,
+  where the page is `h-dvh overflow-hidden` and every wrapper is `h-full`),
+  fills the host. Interactions rows are one line (`hh:mm:ss` · field and change
+  · actor, then ⓘ) under a day header; the outcome lives only in the ⓘ details.
+  The History pane opens on `HistoryLanes` (one line lane per unit, on/off
+  series as bands, one synced cursor, `PointsSelect` beside the window picker)
+  and keeps the per-point charts closed under "Single charts (n)".
 - **The scene's proportions belong to `SceneGrid`** (`shell/scene-layout.ts`):
   two side columns of exactly the same width (15% each, both orientations) and a
   drawing that keeps at least 70% of the card. A scene on these proportions

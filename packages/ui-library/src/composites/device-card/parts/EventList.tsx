@@ -4,7 +4,7 @@ export interface CardEvent {
   readonly id: string
   /** Day heading the event is grouped under ("Today"). */
   readonly day: string
-  /** Who or what did it: the initial shown in the avatar. */
+  /** Who or what did it. */
   readonly actor: string
   readonly text: string
   readonly detail?: string
@@ -32,17 +32,22 @@ export function EventList({ events, emptyLabel }: EventListProps): ReactElement 
           {events
             .filter((e) => e.day === day)
             .map((e) => (
-              <div key={e.id} className="flex items-center gap-2 text-sm">
-                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-surface-hover text-xs font-semibold text-foreground-muted">
-                  {e.actor.slice(0, 1).toUpperCase()}
+              <div
+                key={e.id}
+                className="flex items-center gap-2 text-sm"
+                data-testid="dc-event-row"
+              >
+                <span className="shrink-0 text-xs tabular-nums text-foreground-muted">
+                  {e.time}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-foreground">
                   {e.text}
                   {e.detail === undefined ? null : (
                     <small className="ml-1 text-foreground-muted">{e.detail}</small>
                   )}
+                  <span className="text-foreground-subtle"> · </span>
+                  <span className="text-xs text-foreground-muted">{e.actor}</span>
                 </span>
-                <span className="text-xs tabular-nums text-foreground-muted">{e.time}</span>
               </div>
             ))}
         </section>

@@ -10,6 +10,7 @@ import { ActuationHistory } from './ActuationHistory'
 import { historyPanes, shownHistoryPane, type HistoryPane } from './history-sections'
 import type { CardHistory, CardRemoteKey, CardRemotePanel, CardState } from './model'
 import { cardToneClass } from './Corner'
+import { useOverlayBox } from './overlay-box'
 import { remoteKeyIconOnly, remotePadRows } from './remote-keys'
 
 interface BarProps {
@@ -30,6 +31,49 @@ function OverlayBar({ onBack, children }: BarProps): ReactElement {
         className="min-h-8 min-w-8 px-2 py-1"
       />
       <span className="text-xs font-semibold uppercase tracking-wide">{children}</span>
+    </div>
+  )
+}
+
+interface ShellProps {
+  readonly testId: string
+  readonly onBack: () => void
+  /** The bar's title: what the overlay is, or the state it replaced. */
+  readonly title: ReactNode
+  /** Pinned under the bar (the section switch). */
+  readonly pinned?: ReactNode
+  readonly children: ReactNode
+}
+
+/**
+ * The frame every overlay shares: a pinned top (back + title, then the
+ * switch) and ONE scrolling region below. The box keeps the height of the
+ * detail it replaced, or fills the host's height, so swapping views never
+ * moves the page.
+ */
+function OverlayShell({ testId, onBack, title, pinned, children }: ShellProps): ReactElement {
+  const box = useOverlayBox()
+  const locked = !box.fill && box.height !== null && box.height > 0
+  return (
+    <div
+      data-testid={testId}
+      data-locked={locked ? 'true' : undefined}
+      className={cn(
+        'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-background-elevated',
+        box.fill && 'flex-1',
+      )}
+      {...(locked ? { style: { height: box.height ?? undefined } } : {})}
+    >
+      <div className="flex shrink-0 flex-col gap-3 p-3 pb-2" data-testid="dc-overlay-top">
+        <OverlayBar onBack={onBack}>{title}</OverlayBar>
+        {pinned}
+      </div>
+      <div
+        className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto overscroll-contain p-3 pt-1"
+        data-testid="dc-overlay-scroll"
+      >
+        {children}
+      </div>
     </div>
   )
 }
@@ -76,25 +120,29 @@ function HistoryPanes({
   const [chosen, setChosen] = useState<HistoryPane>('values')
   const pane = shownHistoryPane(panes, chosen)
   return (
-    <div
-      data-testid="dc-history"
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
+    <OverlayShell
+      testId="dc-history"
+      onBack={onBack}
+      title={
+        <>
+          <span className={cardToneClass(state.tone)}>{state.label}</span>
+          {state.since === null ? null : (
+            <small className="ml-1 font-normal normal-case text-foreground-muted">
+              · {state.since}
+            </small>
+          )}
+        </>
+      }
+      pinned={
+        <ViewSwitch
+          options={paneOptions(panes, t)}
+          value={pane}
+          onChange={setChosen}
+          ariaLabel={t('uiLibrary.deviceCard.history.sectionSwitch', 'History sections')}
+          testId="dc-history-sections"
+        />
+      }
     >
-      <OverlayBar onBack={onBack}>
-        <span className={cardToneClass(state.tone)}>{state.label}</span>
-        {state.since === null ? null : (
-          <small className="ml-1 font-normal normal-case text-foreground-muted">
-            · {state.since}
-          </small>
-        )}
-      </OverlayBar>
-      <ViewSwitch
-        options={paneOptions(panes, t)}
-        value={pane}
-        onChange={setChosen}
-        ariaLabel={t('uiLibrary.deviceCard.history.sectionSwitch', 'History sections')}
-        testId="dc-history-sections"
-      />
       {pane === 'values' ? history.charts : null}
       {pane === 'interactions' && !actuationsOffered && history.events !== null ? (
         <EventList
@@ -105,7 +153,7 @@ function HistoryPanes({
       {pane === 'interactions' && actuationsOffered && deviceId !== undefined ? (
         <ActuationHistory deviceId={deviceId} />
       ) : null}
-    </div>
+    </OverlayShell>
   )
 }
 
@@ -185,11 +233,7 @@ export function RemoteView({
   if (panel !== null) {
     const bound = new Set(panel.boundRoles)
     return (
-      <div
-        data-testid="dc-remote-view"
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
-      >
-        <OverlayBar onBack={onBack}>{title}</OverlayBar>
+      <OverlayShell testId="dc-remote-view" onBack={onBack} title={title}>
         <div className="mx-auto w-full max-w-xs">
           <RemoteGrid
             grid={panel.layout}
@@ -216,18 +260,14 @@ export function RemoteView({
           />
         </div>
         {extra}
-      </div>
+      </OverlayShell>
     )
   }
   if (layoutPending) {
     return (
-      <div
-        data-testid="dc-remote-view"
-        className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
-      >
-        <OverlayBar onBack={onBack}>{title}</OverlayBar>
+      <OverlayShell testId="dc-remote-view" onBack={onBack} title={title}>
         {extra}
-      </div>
+      </OverlayShell>
     )
   }
   const button = (k: CardRemoteKey, pos?: string): ReactElement => (
@@ -244,11 +284,7 @@ export function RemoteView({
     />
   )
   return (
-    <div
-      data-testid="dc-remote-view"
-      className="flex flex-col gap-3 rounded-2xl border border-border bg-background-elevated p-3"
-    >
-      <OverlayBar onBack={onBack}>{t('uiLibrary.deviceCard.remote', 'Remote')}</OverlayBar>
+    <OverlayShell testId="dc-remote-view" onBack={onBack} title={title}>
       {keys.length === 0 ? null : rows === null ? (
         <div className="flex flex-wrap justify-center gap-2">{keys.map((k) => button(k))}</div>
       ) : (
@@ -276,6 +312,6 @@ export function RemoteView({
           {t('uiLibrary.deviceCard.remoteNote', 'The keys are the ones the device declares.')}
         </p>
       )}
-    </div>
+    </OverlayShell>
   )
 }

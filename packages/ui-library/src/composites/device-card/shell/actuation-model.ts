@@ -11,23 +11,15 @@ import {
   type TransitionValue,
 } from '@camstack/types'
 
-const MINUTE_MS = 60_000
-const HOUR_MS = 60 * MINUTE_MS
-const DAY_MS = 24 * HOUR_MS
-
 /** How many transitions one page of the card asks for. */
 export const ACTUATION_PAGE_SIZE = 30
-
-export type ActuationOutcomeTone = 'danger' | 'warning' | 'neutral' | 'success' | 'default'
 
 export type ActuationPresence = 'pending' | 'present' | 'absent' | 'unknown'
 
 /** Words the host translates. Counts are already numbers. */
 export interface ActuationPhrases {
-  readonly justNow: string
-  readonly minutesAgo: (n: number) => string
-  readonly hoursAgo: (n: number) => string
-  readonly daysAgo: (n: number) => string
+  readonly today: string
+  readonly yesterday: string
   readonly on: string
   readonly off: string
   readonly unknown: string
@@ -53,18 +45,19 @@ export interface ActuationNameBook {
 
 export interface ActuationRowView {
   readonly id: string
-  readonly relative: string
   readonly absolute: string
+  /** Local calendar day, `YYYY-MM-DD`: the key rows are grouped under. */
+  readonly dayKey: string
+  /** The day header: Today, Yesterday, or the localized date. */
+  readonly dayLabel: string
   readonly field: string
   readonly change: string
   readonly actor: string
-  /** HH:MM:SS, with the day in front when it is not today. Always shown on the row. */
-  readonly clock: string
+  /** HH:MM:SS: the row's exact time (the day is its header). */
+  readonly time: string
   /** The detail block (ⓘ): everything the ledger knows about this change. */
   readonly details: ActuationDetails
   readonly outcome: TransitionOutcome
-  readonly tone: ActuationOutcomeTone
-  readonly outcomeLabel: string
 }
 
 export interface ActuationDetails {
@@ -179,21 +172,6 @@ export function actuationActorLabel(
   }
 }
 
-export function actuationOutcomeTone(outcome: TransitionOutcome): ActuationOutcomeTone {
-  switch (outcome) {
-    case 'failed':
-      return 'danger'
-    case 'unconfirmed':
-      return 'warning'
-    case 'already':
-      return 'neutral'
-    case 'confirmed':
-      return 'success'
-    case 'device':
-      return 'default'
-  }
-}
-
 function outcomeLabel(outcome: TransitionOutcome, phrases: ActuationPhrases): string {
   switch (outcome) {
     case 'confirmed':
@@ -207,15 +185,6 @@ function outcomeLabel(outcome: TransitionOutcome, phrases: ActuationPhrases): st
     case 'failed':
       return phrases.failed
   }
-}
-
-/** How long ago `at` was. A future stamp reads as just now. */
-export function actuationRelativeTime(at: number, now: number, phrases: ActuationPhrases): string {
-  const diff = now - at
-  if (diff < MINUTE_MS) return phrases.justNow
-  if (diff < HOUR_MS) return phrases.minutesAgo(Math.max(1, Math.floor(diff / MINUTE_MS)))
-  if (diff < DAY_MS) return phrases.hoursAgo(Math.floor(diff / HOUR_MS))
-  return phrases.daysAgo(Math.floor(diff / DAY_MS))
 }
 
 export function actuationAbsoluteTime(at: number, locale: string): string {
@@ -234,15 +203,35 @@ function clockParts(at: number): {
   }
 }
 
-/** HH:MM:SS; a transition from another day carries its day (locale order) in front. */
-export function actuationClock(at: number, now: number, locale: string): string {
-  const { time } = clockParts(at)
-  if (new Date(at).toDateString() === new Date(now).toDateString()) return time
-  const day = new Date(at).toLocaleDateString(locale, {
-    day: '2-digit',
-    month: '2-digit',
+/** HH:MM:SS of the local time. */
+export function actuationTime(at: number): string {
+  return clockParts(at).time
+}
+
+function dayKeyOf(at: number): string {
+  const d = new Date(at)
+  const two = (n: number): string => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())}`
+}
+
+/** The header a day's rows sit under: Today, Yesterday, else the localized date. */
+export function actuationDayLabel(
+  at: number,
+  now: number,
+  locale: string,
+  phrases: ActuationPhrases,
+): string {
+  const key = dayKeyOf(at)
+  if (key === dayKeyOf(now)) return phrases.today
+  const before = new Date(now)
+  before.setDate(before.getDate() - 1)
+  if (key === dayKeyOf(before.getTime())) return phrases.yesterday
+  const sameYear = new Date(at).getFullYear() === new Date(now).getFullYear()
+  return new Date(at).toLocaleDateString(locale, {
+    day: 'numeric',
+    month: 'short',
+    ...(sameYear ? {} : { year: 'numeric' }),
   })
-  return `${day} ${time}`
 }
 
 /** Full local date and time with milliseconds. */
@@ -293,7 +282,9 @@ export function actuationRow(
   const actor = actuationActorLabel(transition.actor, names, phrases)
   return {
     id: transition.id,
-    clock: actuationClock(transition.at, now, locale),
+    time: actuationTime(transition.at),
+    dayKey: dayKeyOf(transition.at),
+    dayLabel: actuationDayLabel(transition.at, now, locale, phrases),
     details: {
       exact: actuationExactTime(transition.at, locale),
       capability: transition.capName,
@@ -306,14 +297,11 @@ export function actuationRow(
       outcome: outcomeLabel(transition.outcome, phrases),
       rowId: transition.id,
     },
-    relative: actuationRelativeTime(transition.at, now, phrases),
     absolute: actuationAbsoluteTime(transition.at, locale),
     field,
     change: `${from} → ${to}`,
     actor,
     outcome: transition.outcome,
-    tone: actuationOutcomeTone(transition.outcome),
-    outcomeLabel: outcomeLabel(transition.outcome, phrases),
   }
 }
 

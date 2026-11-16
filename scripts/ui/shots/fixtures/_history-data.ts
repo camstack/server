@@ -135,6 +135,41 @@ const ENERGY_SYSTEM_SERIES: readonly SeriesSpec[] = [
 ]
 
 export const DEVICE_SERIES: Readonly<Record<number, readonly SeriesSpec[]>> = {
+  // The washer plug of the `hero-plug` fixture: power, room climate, on/off.
+  971: [
+    spec({
+      key: 'cap:power-meter.powerW',
+      scope: '',
+      kind: 'gauge',
+      unit: 'W',
+      displayName: 'Power',
+      at: (t) => Math.max(0, 38 + 30 * wave(t, 3 * H) + 8 * wave(t, 17 * MINUTE)),
+    }),
+    spec({
+      key: 'cap:temperature-sensor.temperature',
+      scope: '',
+      kind: 'gauge',
+      unit: '°C',
+      displayName: 'Temperature',
+      at: (t) => 21 + 1.5 * Math.sin(DAY_PHASE(t)),
+    }),
+    spec({
+      key: 'cap:humidity-sensor.humidity',
+      scope: '',
+      kind: 'gauge',
+      unit: '%',
+      displayName: 'Humidity',
+      at: (t) => 52 + 6 * Math.sin(DAY_PHASE(t) + 1),
+    }),
+    spec({
+      key: 'cap:switch.on',
+      scope: '',
+      kind: 'boolean',
+      unit: null,
+      displayName: 'On',
+      at: (t) => (hourOf(t) >= 6 && hourOf(t) < 22 ? 1 : 0),
+    }),
+  ],
   101: [
     spec({
       key: 'cap:device-status.online',

@@ -5550,6 +5550,12 @@
           "doc": ""
         },
         {
+          "name": "fill",
+          "type": "boolean",
+          "optional": true,
+          "doc": "The host gave the card a definite height (the viewer's sheet): the card takes all of it and the History / Remote overlays fill it, so the vi"
+        },
+        {
           "name": "children",
           "type": "ReactNode",
           "optional": false,
@@ -22987,6 +22993,12 @@
           "type": "string",
           "optional": true,
           "doc": ""
+        },
+        {
+          "name": "bare",
+          "type": "boolean",
+          "optional": true,
+          "doc": "Draw no card: the children fill the section as they are, with no surface, border or radius. For a host that hands the section's space to a b"
         },
         {
           "name": "children",

@@ -4,6 +4,7 @@ import {
   type ReactNode,
   useContext,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 import { cn } from '../../../lib/cn'
@@ -15,6 +16,7 @@ import { BatteryCorner, PowerCorner, RemoteCorner, StateCorner } from './Corner'
 import { type CardGating, CardGatingProvider } from './gating'
 import type { CardCommon, CardCommonActions, CardOrientation, CardState } from './model'
 import { HistoryView, RemoteView } from './Overlays'
+import { OverlayBoxProvider } from './overlay-box'
 import { SceneGrid, type SceneZones } from './SceneGrid'
 
 export interface DeviceCardProps {
@@ -50,18 +52,30 @@ export type DeviceCardView = 'scene' | 'history' | 'remote'
 export type DeviceCardFrame = 'card' | 'bare'
 
 const DeviceCardFrameContext = createContext<DeviceCardFrame>('card')
+const DeviceCardFillContext = createContext<boolean>(false)
 
 export interface DeviceCardFrameProviderProps {
   readonly frame: DeviceCardFrame
+  /**
+   * The host gave the card a definite height (the viewer's sheet): the card
+   * takes all of it and the History / Remote overlays fill it, so the views
+   * swap in one box. The host's own chain must be `h-full` down to the card.
+   */
+  readonly fill?: boolean
   readonly children: ReactNode
 }
 
 /** Frames every device card below it — a host page that draws the frame itself. */
 export function DeviceCardFrameProvider({
   frame,
+  fill = false,
   children,
 }: DeviceCardFrameProviderProps): ReactElement {
-  return <DeviceCardFrameContext.Provider value={frame}>{children}</DeviceCardFrameContext.Provider>
+  return (
+    <DeviceCardFrameContext.Provider value={frame}>
+      <DeviceCardFillContext.Provider value={fill}>{children}</DeviceCardFillContext.Provider>
+    </DeviceCardFrameContext.Provider>
+  )
 }
 
 /**
@@ -143,7 +157,17 @@ export function DeviceCard({
   const hostFrame = useContext(DeviceCardFrameContext)
   const bare = (frame ?? hostFrame) === 'bare'
   const gating = useGating(common)
+  const fill = useContext(DeviceCardFillContext)
   const [view, setView] = useState<DeviceCardView>(initialView)
+  // An overlay keeps the height of the detail it replaces (admin); measured
+  // as the scene closes, because the scene is gone once the overlay draws.
+  const sceneRef = useRef<HTMLDivElement>(null)
+  const [sceneHeight, setSceneHeight] = useState<number | null>(null)
+  const openView = (next: DeviceCardView): void => {
+    const measured = sceneRef.current?.getBoundingClientRect().height ?? 0
+    if (measured > 0) setSceneHeight(measured)
+    setView(next)
+  }
   const history = common.history
   const hasHistory =
     history !== null &&
@@ -169,6 +193,7 @@ export function DeviceCard({
         data-frame={bare ? 'bare' : 'card'}
         className={cn(
           'dc-card flex w-full flex-col gap-2.5 text-foreground',
+          fill && 'h-full min-h-0',
           !bare && 'rounded-3xl border border-border bg-surface p-3.5',
           !bare && (orientation === 'vertical' ? 'max-w-85' : 'max-w-180'),
           gating.blocked && 'dc-blocked',
@@ -182,45 +207,51 @@ export function DeviceCard({
             {common.name}
           </h3>
         ) : null}
-        {view === 'history' && history !== null ? (
-          <HistoryView
-            state={state}
-            history={history}
-            onBack={() => setView('scene')}
-            {...(common.deviceId === undefined ? {} : { deviceId: common.deviceId })}
-          />
-        ) : view === 'remote' && hasRemote ? (
-          <RemoteView
-            keys={remoteKeys}
-            panel={remotePanel}
-            layoutPending={remotePending}
-            extra={remoteExtra}
-            onKey={(id) => actions?.onRemoteKey?.(id)}
-            onBack={() => setView('scene')}
-          />
-        ) : (
-          <SceneGrid
-            {...scene}
-            activity={activity}
-            bottomCorners={common.battery !== null || hasRemote}
-            corners={
-              <>
-                <StateCorner
-                  state={state}
-                  {...(hasHistory ? { onOpenHistory: () => setView('history') } : {})}
-                />
-                {common.power === null ? null : <PowerCorner power={common.power} />}
-                {common.battery === null ? null : (
-                  <BatteryCorner
-                    level={common.battery.level}
-                    {...(common.battery.label === undefined ? {} : { label: common.battery.label })}
-                  />
-                )}
-                {hasRemote ? <RemoteCorner onOpen={() => setView('remote')} /> : null}
-              </>
-            }
-          />
-        )}
+        <OverlayBoxProvider value={{ fill, height: sceneHeight }}>
+          {view === 'history' && history !== null ? (
+            <HistoryView
+              state={state}
+              history={history}
+              onBack={() => setView('scene')}
+              {...(common.deviceId === undefined ? {} : { deviceId: common.deviceId })}
+            />
+          ) : view === 'remote' && hasRemote ? (
+            <RemoteView
+              keys={remoteKeys}
+              panel={remotePanel}
+              layoutPending={remotePending}
+              extra={remoteExtra}
+              onKey={(id) => actions?.onRemoteKey?.(id)}
+              onBack={() => setView('scene')}
+            />
+          ) : (
+            <div ref={sceneRef} data-testid="dc-scene-box">
+              <SceneGrid
+                {...scene}
+                activity={activity}
+                bottomCorners={common.battery !== null || hasRemote}
+                corners={
+                  <>
+                    <StateCorner
+                      state={state}
+                      {...(hasHistory ? { onOpenHistory: () => openView('history') } : {})}
+                    />
+                    {common.power === null ? null : <PowerCorner power={common.power} />}
+                    {common.battery === null ? null : (
+                      <BatteryCorner
+                        level={common.battery.level}
+                        {...(common.battery.label === undefined
+                          ? {}
+                          : { label: common.battery.label })}
+                      />
+                    )}
+                    {hasRemote ? <RemoteCorner onOpen={() => openView('remote')} /> : null}
+                  </>
+                }
+              />
+            </div>
+          )}
+        </OverlayBoxProvider>
         {hasBottomLine ? (
           <div className="flex flex-wrap items-center gap-2" data-testid="dc-bottom-line">
             <ReasonLine notice={common.notice} />

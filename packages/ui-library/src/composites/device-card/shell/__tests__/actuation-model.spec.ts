@@ -4,10 +4,9 @@ import {
   actionNamesFromList,
   actuationActorLabel,
   actuationFieldLabel,
-  actuationOutcomeTone,
-  actuationRelativeTime,
+  actuationDayLabel,
   actuationRow,
-  actuationClock,
+  actuationTime,
   actuationExactTime,
   actuationSection,
   mergeActuationPages,
@@ -18,10 +17,8 @@ import {
 const NOW = Date.UTC(2026, 9, 9, 9, 31)
 
 const PHRASES: ActuationPhrases = {
-  justNow: 'just now',
-  minutesAgo: (n) => `${n} min ago`,
-  hoursAgo: (n) => `${n} h ago`,
-  daysAgo: (n) => `${n} d ago`,
+  today: 'Today',
+  yesterday: 'Yesterday',
   on: 'On',
   off: 'Off',
   unknown: '—',
@@ -173,22 +170,31 @@ describe('actuation actors and outcomes', () => {
     expect(actuationActorLabel({ kind: 'device' }, NO_NAMES, PHRASES)).toBe('The device')
   })
 
-  it('keeps failed and unconfirmed distinct and mutes already', () => {
-    expect(actuationOutcomeTone('failed')).toBe('danger')
-    expect(actuationOutcomeTone('unconfirmed')).toBe('warning')
-    expect(actuationOutcomeTone('already')).toBe('neutral')
-    expect(actuationOutcomeTone('confirmed')).toBe('success')
-    expect(actuationOutcomeTone('device')).toBe('default')
+  it('names the day a row sits under, and keeps the absolute instant for the hover', () => {
+    expect(actuationDayLabel(NOW - 30_000, NOW, 'en', PHRASES)).toBe('Today')
+    expect(actuationDayLabel(NOW - 86_400_000, NOW, 'en', PHRASES)).toBe('Yesterday')
+    const older = actuationDayLabel(NOW - 5 * 86_400_000, NOW, 'en', PHRASES)
+    expect(older).not.toBe('Today')
+    expect(older).not.toBe('Yesterday')
+    const view = actuationRow(row({ id: 't', at: NOW - 5 * 60_000 }), NOW, 'en', PHRASES, NO_NAMES)
+    expect(view.dayLabel).toBe('Today')
+    expect(view.dayKey).toBe(
+      actuationRow(row({ id: 'u', at: NOW }), NOW, 'en', PHRASES, NO_NAMES).dayKey,
+    )
+    expect(view.absolute).toBe(new Date(NOW - 5 * 60_000).toLocaleString('en'))
   })
 
-  it('says how long ago, and keeps the absolute instant for the hover', () => {
-    expect(actuationRelativeTime(NOW - 30_000, NOW, PHRASES)).toBe('just now')
-    expect(actuationRelativeTime(NOW - 5 * 60_000, NOW, PHRASES)).toBe('5 min ago')
-    expect(actuationRelativeTime(NOW - 2 * 3_600_000, NOW, PHRASES)).toBe('2 h ago')
-    expect(actuationRelativeTime(NOW - 3 * 86_400_000, NOW, PHRASES)).toBe('3 d ago')
-    const view = actuationRow(row({ id: 't', at: NOW - 5 * 60_000 }), NOW, 'en', PHRASES, NO_NAMES)
-    expect(view.relative).toBe('5 min ago')
-    expect(view.absolute).toBe(new Date(NOW - 5 * 60_000).toLocaleString('en'))
+  it('keeps the outcome only inside the details', () => {
+    const view = actuationRow(
+      row({ id: 'f', at: NOW, outcome: 'failed' }),
+      NOW,
+      'en',
+      PHRASES,
+      NO_NAMES,
+    )
+    expect(view.details.outcome).toBe('Failed')
+    expect(Object.keys(view)).not.toContain('outcomeLabel')
+    expect(Object.keys(view)).not.toContain('relative')
   })
 })
 
@@ -236,9 +242,8 @@ describe('actuation clock and details', () => {
   const at = new Date(2026, 9, 9, 8, 5, 3, 42).getTime()
   const noon = new Date(2026, 9, 9, 12, 0, 0, 0).getTime()
 
-  it('shows HH:MM:SS today and prefixes the day on another day', () => {
-    expect(actuationClock(at, noon, 'en')).toBe('08:05:03')
-    expect(actuationClock(at, noon + 86_400_000, 'en')).toBe('10/09 08:05:03')
+  it('shows HH:MM:SS only: the day is the header above the row', () => {
+    expect(actuationTime(at)).toBe('08:05:03')
   })
 
   it('keeps the milliseconds in the exact time', () => {
@@ -263,7 +268,7 @@ describe('actuation clock and details', () => {
       PHRASES,
       NO_NAMES,
     )
-    expect(view.clock).toBe('08:05:03')
+    expect(view.time).toBe('08:05:03')
     expect(view.details).toMatchObject({
       capability: 'climate-control',
       actorKind: 'User',

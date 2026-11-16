@@ -12,7 +12,7 @@
  * Absent and pending are different screens (D315): device-history not
  * installed, the list not answered yet, and "nothing recorded" each say so.
  */
-import { useCallback, useMemo, useState, type JSX } from 'react'
+import { useCallback, useMemo, useState, type JSX, type ReactNode } from 'react'
 import { EyeOff, History as HistoryIcon, LineChart } from 'lucide-react'
 import type { DeviceHistoryQueryManyEntry, DeviceHistoryQueryManyItem } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
@@ -25,9 +25,10 @@ import { Skeleton } from '../../primitives/skeleton'
 import { EmptyState } from '../empty-state'
 import { ErrorBox } from '../error-box'
 import { KebabMenu } from '../kebab-menu'
-import { ToggleChipRow } from '../toggle-chip-row'
 import { DeviceRunsPanel } from '../DeviceRunsPanel'
 import { HistoryChart } from './HistoryChart'
+import { HistoryLanes } from './HistoryLanes'
+import { PointsSelect } from './PointsSelect'
 import {
   chartKeys,
   groupDeviceSeries,
@@ -95,6 +96,8 @@ export function DeviceHistoryView({
     [panels.value.hidden, deviceId],
   )
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
+  // The per-point charts sit under the lanes, closed until asked for.
+  const [singlesOpen, setSinglesOpen] = useState(false)
 
   const sections = useMemo<readonly HistorySection[]>(
     () => (list.status === 'ok' ? groupDeviceSeries(list.data, humanizeName) : []),
@@ -225,14 +228,24 @@ export function DeviceHistoryView({
     <div className={STACK_GAP}>
       {fixedWindow === undefined && (
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <HistoryWindowBar
-            value={windowId}
-            onChange={(id) => setWindowParam(id === '24h' ? null : id)}
-            custom={custom}
-            onCustomChange={(w) => setCustomParam(encodeCustomWindow(w))}
-            compare={compare}
-            onCompareChange={(on) => setCompareParam(on ? '1' : null)}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <HistoryWindowBar
+              value={windowId}
+              onChange={(id) => setWindowParam(id === '24h' ? null : id)}
+              custom={custom}
+              onCustomChange={(w) => setCustomParam(encodeCustomWindow(w))}
+              compare={compare}
+              onCompareChange={(on) => setCompareParam(on ? '1' : null)}
+            />
+            {chips.length > 1 && (
+              <PointsSelect
+                points={chips}
+                off={pointsOff}
+                onChange={setPointsOff}
+                testId="dc-history-points"
+              />
+            )}
+          </div>
           {hiddenCount > 0 && (
             <Button variant="ghost" size="sm" onClick={showAllHidden} disabled={!panels.writable}>
               <EyeOff className="h-3.5 w-3.5" aria-hidden="true" />
@@ -248,89 +261,130 @@ export function DeviceHistoryView({
           )}
         </div>
       )}
-      {fixedWindow === undefined && chips.length > 1 && (
-        <ToggleChipRow
-          chips={chips}
-          off={pointsOff}
-          onChange={setPointsOff}
-          allLabel={t('uiLibrary.history.allPoints', 'All')}
-          ariaLabel={t('uiLibrary.history.pointsFilter', 'Points shown')}
-          testId="dc-history-points"
-        />
-      )}
       {fixedWindow === undefined && runs !== undefined && (
         <DeviceRunsPanel runs={runs} now={now} onSelectWindow={showWindow} />
       )}
-      {visible.map((section) => {
-        const open = !collapsed.has(section.id)
-        return (
-          <CollapsibleCard
-            key={section.id}
-            expanded={open}
-            onExpandedChange={(next) =>
-              setCollapsed((prev) => {
-                const s = new Set(prev)
-                if (next) s.delete(section.id)
-                else s.add(section.id)
-                return s
-              })
-            }
-            header={
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-xs font-semibold text-foreground truncate">
-                  {humanizeName(section.name)}
-                </span>
-                <span className="text-[10px] text-foreground-subtle shrink-0">
-                  {t(
-                    'uiLibrary.history.chartCount',
-                    { one: '{{count}} chart', other: '{{count}} charts' },
-                    { count: section.charts.length },
-                  )}
-                </span>
+      {fixedWindow === undefined && (
+        <HistoryLanes
+          charts={visible.flatMap((s) => s.charts)}
+          entryFor={entryFor}
+          reads={readsData}
+          window={range}
+          compare={compare}
+          syncKey={syncKey}
+        />
+      )}
+      <SinglesGroup
+        wrap={fixedWindow === undefined}
+        count={visible.reduce((n, s) => n + s.charts.length, 0)}
+        open={singlesOpen}
+        onOpenChange={setSinglesOpen}
+      >
+        {visible.map((section) => {
+          const open = !collapsed.has(section.id)
+          return (
+            <CollapsibleCard
+              key={section.id}
+              expanded={open}
+              onExpandedChange={(next) =>
+                setCollapsed((prev) => {
+                  const s = new Set(prev)
+                  if (next) s.delete(section.id)
+                  else s.add(section.id)
+                  return s
+                })
+              }
+              header={
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-xs font-semibold text-foreground truncate">
+                    {humanizeName(section.name)}
+                  </span>
+                  <span className="text-[10px] text-foreground-subtle shrink-0">
+                    {t(
+                      'uiLibrary.history.chartCount',
+                      { one: '{{count}} chart', other: '{{count}} charts' },
+                      { count: section.charts.length },
+                    )}
+                  </span>
+                </div>
+              }
+            >
+              <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
+                {section.charts.map((spec) => (
+                  <HistoryChart
+                    key={spec.id}
+                    spec={spec}
+                    entryFor={entryFor}
+                    reads={readsData}
+                    window={range}
+                    compare={compare}
+                    syncKey={syncKey}
+                    runs={runs}
+                    now={now}
+                    actions={
+                      <KebabMenu
+                        title={t('uiLibrary.history.chartMenu', 'Chart actions')}
+                        items={[
+                          {
+                            id: 'open',
+                            label: t('uiLibrary.history.openInHistory', 'Open in History'),
+                            icon: LineChart,
+                            onClick: () =>
+                              navigate(historyPageHref(refsOf(deviceId, spec), windowId)),
+                          },
+                          {
+                            id: 'hide',
+                            label: t('uiLibrary.history.hide', 'Hide'),
+                            icon: EyeOff,
+                            hidden: fixedWindow !== undefined,
+                            disabled: !panels.writable,
+                            onClick: () => setHidden(spec.id, true),
+                          },
+                        ]}
+                      />
+                    }
+                  />
+                ))}
               </div>
-            }
-          >
-            <div className="grid grid-cols-1 gap-4 2xl:grid-cols-2">
-              {section.charts.map((spec) => (
-                <HistoryChart
-                  key={spec.id}
-                  spec={spec}
-                  entryFor={entryFor}
-                  reads={readsData}
-                  window={range}
-                  compare={compare}
-                  syncKey={syncKey}
-                  runs={runs}
-                  now={now}
-                  actions={
-                    <KebabMenu
-                      title={t('uiLibrary.history.chartMenu', 'Chart actions')}
-                      items={[
-                        {
-                          id: 'open',
-                          label: t('uiLibrary.history.openInHistory', 'Open in History'),
-                          icon: LineChart,
-                          onClick: () =>
-                            navigate(historyPageHref(refsOf(deviceId, spec), windowId)),
-                        },
-                        {
-                          id: 'hide',
-                          label: t('uiLibrary.history.hide', 'Hide'),
-                          icon: EyeOff,
-                          hidden: fixedWindow !== undefined,
-                          disabled: !panels.writable,
-                          onClick: () => setHidden(spec.id, true),
-                        },
-                      ]}
-                    />
-                  }
-                />
-              ))}
-            </div>
-          </CollapsibleCard>
-        )
-      })}
+            </CollapsibleCard>
+          )
+        })}
+      </SinglesGroup>
     </div>
+  )
+}
+
+interface SinglesGroupProps {
+  /** False (a fixed window): the charts are the view, no group around them. */
+  readonly wrap: boolean
+  readonly count: number
+  readonly open: boolean
+  readonly onOpenChange: (next: boolean) => void
+  readonly children: ReactNode
+}
+
+/** The per-point charts, collapsed by default under "Single charts (n)". */
+function SinglesGroup({
+  wrap,
+  count,
+  open,
+  onOpenChange,
+  children,
+}: SinglesGroupProps): JSX.Element {
+  const t = useUiText()
+  if (!wrap) return <>{children}</>
+  return (
+    <CollapsibleCard
+      expanded={open}
+      onExpandedChange={onOpenChange}
+      header={
+        <span className="text-xs font-semibold text-foreground" data-testid="dc-history-singles">
+          {t('uiLibrary.history.singleCharts', 'Single charts ({{count}})', { count })}
+        </span>
+      }
+    >
+      <div className={STACK_GAP}>{children}</div>
+    </CollapsibleCard>
   )
 }
 

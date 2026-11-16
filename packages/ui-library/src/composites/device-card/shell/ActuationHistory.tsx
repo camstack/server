@@ -8,7 +8,6 @@ import { Info } from 'lucide-react'
 import { useUiText, type UiTextFn } from '../../../contexts/ui-text'
 import { useActionsList } from '../../../generated/system-hooks'
 import { useCapabilityPresence } from '../../../hooks/use-capability-presence'
-import { Badge } from '../../../primitives/badge'
 import { Button } from '../../../primitives/button'
 import { IconButton } from '../../../primitives/icon-button'
 import { Skeleton } from '../../../primitives/skeleton'
@@ -38,10 +37,8 @@ function uiLocale(): string {
 
 function phrasesOf(t: UiTextFn): ActuationPhrases {
   return {
-    justNow: t('uiLibrary.deviceCard.history.justNow', 'just now'),
-    minutesAgo: (n) => t('uiLibrary.deviceCard.history.minutesAgo', '{{n}} min ago', { n }),
-    hoursAgo: (n) => t('uiLibrary.deviceCard.history.hoursAgo', '{{n}} h ago', { n }),
-    daysAgo: (n) => t('uiLibrary.deviceCard.history.daysAgo', '{{n}} d ago', { n }),
+    today: t('uiLibrary.deviceCard.history.today', 'Today'),
+    yesterday: t('uiLibrary.deviceCard.history.yesterday', 'Yesterday'),
     on: t('uiLibrary.deviceCard.history.on', 'On'),
     off: t('uiLibrary.deviceCard.history.off', 'Off'),
     unknown: '—',
@@ -126,44 +123,41 @@ function ActuationRow({ row }: { readonly row: ActuationRowView }): ReactElement
     <li
       data-testid="dc-actuation-row"
       data-outcome={row.outcome}
-      className="flex flex-col gap-0.5 border-b border-border-subtle py-1.5 last:border-b-0"
+      className="flex flex-col gap-1 border-b border-border-subtle py-1 last:border-b-0"
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
         <time
-          className="min-w-0 truncate text-xs tabular-nums text-foreground-muted"
+          className="shrink-0 text-xs tabular-nums text-foreground-muted"
           title={row.details.exact}
+          data-testid="dc-actuation-clock"
         >
-          {row.relative}
+          {row.time}
         </time>
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Badge size="sm" variant={row.tone}>
-            {row.outcomeLabel}
-          </Badge>
-          <span className="text-xs tabular-nums text-foreground" data-testid="dc-actuation-clock">
-            {row.clock}
-          </span>
-          <IconButton
-            icon={Info}
-            size="sm"
-            variant="ghost"
-            aria-label={t('uiLibrary.deviceCard.history.detail.toggle', 'Details')}
-            aria-expanded={open}
-            aria-controls={detailsId}
-            data-testid="dc-actuation-info"
-            onClick={() => setOpen((v) => !v)}
-          />
-        </div>
+        <p
+          className="min-w-0 flex-1 truncate text-sm text-foreground"
+          data-testid="dc-actuation-line"
+        >
+          <span className="font-medium">{row.field}</span>{' '}
+          <span className="text-foreground-muted">{row.change}</span>
+          <span className="text-foreground-subtle"> · </span>
+          <span className="text-xs text-foreground-muted">{row.actor}</span>
+        </p>
+        <IconButton
+          icon={Info}
+          size="sm"
+          variant="ghost"
+          aria-label={t('uiLibrary.deviceCard.history.detail.toggle', 'Details')}
+          aria-expanded={open}
+          aria-controls={detailsId}
+          data-testid="dc-actuation-info"
+          onClick={() => setOpen((v) => !v)}
+        />
       </div>
-      <p className="min-w-0 text-sm text-foreground">
-        <span className="font-medium">{row.field}</span>{' '}
-        <span className="text-foreground-muted">{row.change}</span>
-      </p>
-      <p className="truncate text-xs text-foreground-muted">{row.actor}</p>
       {open ? (
         <dl
           id={detailsId}
           data-testid="dc-actuation-details"
-          className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 rounded-md bg-surface p-2 text-xs"
+          className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 rounded-md bg-surface p-2 text-xs"
         >
           {detailLines(row, t).map((line) => (
             <div key={line.label} className="contents">
@@ -177,13 +171,36 @@ function ActuationRow({ row }: { readonly row: ActuationRowView }): ReactElement
   )
 }
 
+interface ActuationDay {
+  readonly key: string
+  readonly label: string
+  readonly rows: readonly ActuationRowView[]
+}
+
+/** Rows under their day header (the list arrives newest first). */
 function ActuationRows({ rows }: ActuationRowsProps): ReactElement {
+  const days = rows.reduce<readonly ActuationDay[]>((acc, row) => {
+    const last = acc.at(-1)
+    if (last !== undefined && last.key === row.dayKey) {
+      return [...acc.slice(0, -1), { ...last, rows: [...last.rows, row] }]
+    }
+    return [...acc, { key: row.dayKey, label: row.dayLabel, rows: [row] }]
+  }, [])
   return (
-    <ul className="flex flex-col" data-testid="dc-actuation-rows">
-      {rows.map((row) => (
-        <ActuationRow key={row.id} row={row} />
+    <div className="flex flex-col gap-2" data-testid="dc-actuation-rows">
+      {days.map((day) => (
+        <section key={day.key} data-testid="dc-actuation-day" className="flex flex-col">
+          <h4 className="text-xs font-semibold uppercase tracking-wide text-foreground-muted">
+            {day.label}
+          </h4>
+          <ul className="flex flex-col">
+            {day.rows.map((row) => (
+              <ActuationRow key={row.id} row={row} />
+            ))}
+          </ul>
+        </section>
       ))}
-    </ul>
+    </div>
   )
 }
 

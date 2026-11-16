@@ -141,4 +141,51 @@ describe('history sections', () => {
     expect(screen.queryByTestId('dc-value-history')).toBeNull()
     expect(screen.queryByTestId('dc-actuations')).toBeNull()
   })
+
+  it('groups the interactions by day and draws each row as one line with no badge', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    const noon = new Date(2026, 9, 9, 12, 0, 0).getTime()
+    vi.setSystemTime(noon)
+    const base = actuationFixturePage(undefined).transitions[0]
+    if (base === undefined) throw new Error('fixture is empty')
+    const at = (id: string, when: Date): DeviceTransition => ({ ...base, id, at: when.getTime() })
+    gate.transitions = [
+      at('a', new Date(2026, 9, 9, 11, 30, 5)),
+      at('b', new Date(2026, 9, 9, 8, 0, 0)),
+      at('c', new Date(2026, 9, 8, 23, 10, 9)),
+      at('d', new Date(2026, 9, 4, 10, 0, 0)),
+    ]
+    try {
+      renderHistory(201)
+      chooseInteractions()
+      const days = screen.getAllByTestId('dc-actuation-day')
+      expect(days.map((d) => d.querySelector('h4')?.textContent)).toEqual([
+        'Today',
+        'Yesterday',
+        new Date(2026, 9, 4).toLocaleDateString('en', { day: 'numeric', month: 'short' }),
+      ])
+      expect(days.map((d) => d.querySelectorAll('[data-testid=dc-actuation-row]').length)).toEqual([
+        2, 1, 1,
+      ])
+      const rows = screen.getAllByTestId('dc-actuation-row')
+      expect(screen.getAllByTestId('dc-actuation-clock').map((c) => c.textContent)).toEqual([
+        '11:30:05',
+        '08:00:00',
+        '23:10:09',
+        '10:00:00',
+      ])
+      for (const row of rows) {
+        // one line: the time, the change and who, then the details button
+        expect(row.querySelectorAll('[data-testid=dc-actuation-line]')).toHaveLength(1)
+        expect(row.querySelector('[data-testid=dc-actuation-info]')).not.toBeNull()
+        // no outcome badge and no relative time on the row
+        expect(row.textContent).not.toMatch(/Confirmed|Failed|Unconfirmed|ago|just now/)
+      }
+      // the outcome stays in the details
+      fireEvent.click(screen.getAllByTestId('dc-actuation-info')[0] as HTMLElement)
+      expect(screen.getByTestId('dc-actuation-details').textContent).toContain('Outcome')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
 })
