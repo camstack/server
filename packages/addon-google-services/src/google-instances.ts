@@ -47,12 +47,15 @@ export interface GoogleInstancesDeps {
   }>
 }
 
-function asTestResult(r: {
+/** What a Google probe answers: ok, or why not. */
+export interface GoogleProbeAnswer {
   readonly ok: boolean
   readonly error?: string
   readonly latencyMs?: number
   readonly detail?: string
-}): IntegrationTestConnectionResult {
+}
+
+export function asTestResult(r: GoogleProbeAnswer): IntegrationTestConnectionResult {
   return r.ok
     ? {
         success: true,

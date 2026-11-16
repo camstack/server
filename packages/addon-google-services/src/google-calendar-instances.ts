@@ -6,6 +6,8 @@
 import {
   buildLinkedInstances,
   type ConfigUISchema,
+  type IntegrationTestConnectionResult,
+  linkedId,
   type RecordIntegrationInstances,
   type RecordsAccess,
   type ResolvedInstance,
@@ -13,6 +15,7 @@ import {
 import { randomBytes } from 'node:crypto'
 import { type GoogleCalendarBody, googleCalendarsEntryKind } from './broker-record-kinds.js'
 import { stampCalendarId } from './google-broker-registry.js'
+import { asTestResult, type GoogleProbeAnswer } from './google-instances.js'
 
 export const GOOGLE_CALENDAR_INSTANCE_KIND = 'calendar'
 
@@ -25,6 +28,11 @@ export interface GoogleCalendarOption {
 export interface GoogleCalendarInstancesDeps {
   /** The calendars one signed-in account lists; empty while it is not signed in. */
   readonly catalog: (accountId: string) => Promise<readonly GoogleCalendarOption[]>
+  /**
+   * The Test of a calendar is the probe of the account it links to: a Calendar read and the Gmail
+   * send scope, on the stored OAuth session (no token leaves the addon).
+   */
+  readonly testAccount: (accountId: string) => Promise<GoogleProbeAnswer>
   /** Re-read the selection after any change. */
   readonly onChanged: () => Promise<void>
 }
@@ -48,20 +56,21 @@ export function buildGoogleCalendarInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
   deps: GoogleCalendarInstancesDeps,
 ): RecordIntegrationInstances<GoogleCalendarBody> {
-  return buildLinkedInstances(records, {
+  const instances: RecordIntegrationInstances<GoogleCalendarBody> = buildLinkedInstances(records, {
     kind: googleCalendarsEntryKind,
     instanceKind: GOOGLE_CALENDAR_INSTANCE_KIND,
     description: {
       role: 'services',
       instanceMode: 'multiple',
       kind: GOOGLE_CALENDAR_INSTANCE_KIND,
-      canTest: false,
+      canTest: true,
       kinds: [
         {
           id: GOOGLE_CALENDAR_INSTANCE_KIND,
           label: 'Google calendar',
           functionCap: 'calendar-source',
           role: 'services',
+          canTest: true,
         },
       ],
     },
@@ -88,7 +97,21 @@ export function buildGoogleCalendarInstances(
         ],
       },
     ],
+    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+      const typed = linkedId(values, 'accountId')
+      const stored = typed === undefined && id !== null ? await instances.getResolved(id) : null
+      const accountId = typed ?? (stored === null ? undefined : linkedId(stored, 'accountId'))
+      if (accountId === undefined) {
+        return {
+          success: false,
+          status: 'inconclusive',
+          error: 'Pick the Google account this calendar belongs to first',
+        }
+      }
+      return asTestResult(await deps.testAccount(accountId))
+    },
     mintId: () => `cal_${randomBytes(6).toString('hex')}`,
     onChanged: deps.onChanged,
   })
+  return instances
 }

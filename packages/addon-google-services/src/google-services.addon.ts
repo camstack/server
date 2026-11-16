@@ -137,6 +137,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
     this.calendarInstances = buildGoogleCalendarInstances(records, {
       catalog: (accountId) => this.loadCalendarCatalog(accountId),
       onChanged: () => this.refreshCalendarSelection(),
+      testAccount: (accountId) => this.probeSavedAccount(accountId),
     })
     await this.migrateAccounts(records)
     await this.reloadAccounts()
@@ -319,6 +320,7 @@ export class GoogleServicesAddon extends BaseAddon<GoogleServicesConfig> {
             label: 'Google calendar',
             functionCap: 'calendar-source',
             role: 'services',
+            canTest: true,
           },
           provider: calendars.toProvider(),
         },

@@ -22,6 +22,7 @@ const silent: IScopedLogger = {
 }
 
 async function setup() {
+  const tested: string[] = []
   const world = makeInMemoryRecords('google-services')
   await world.records.declare({
     brokers: googleBrokersEntryKind,
@@ -30,9 +31,39 @@ async function setup() {
   const instances = buildGoogleCalendarInstances(world.records, {
     catalog: async (accountId) => [{ value: 'work@g', label: `Work (${accountId})` }],
     onChanged: async () => undefined,
+    testAccount: async (accountId) => {
+      tested.push(accountId)
+      return { ok: true, detail: 'Calendar reachable · Gmail send scope granted' }
+    },
   })
-  return { world, instances }
+  return { world, instances, tested }
 }
+
+describe('Google calendar Test (planning#543)', () => {
+  it('is offered, and runs the linked account probe (calendar read + Gmail scope)', async () => {
+    const { instances, tested } = await setup()
+    expect((await instances.describe()).canTest).toBe(true)
+    const draft = await instances.testInstance({
+      id: null,
+      values: { accountId: 'google_001' },
+    })
+    expect(draft).toMatchObject({
+      success: true,
+      status: 'validated',
+      detail: 'Calendar reachable · Gmail send scope granted',
+    })
+    await instances.createInstance({ id: 'cal_a', name: 'A', values: { accountId: 'google_002' } })
+    await instances.testInstance({ id: 'cal_a', values: {} })
+    expect(tested).toEqual(['google_001', 'google_002'])
+  })
+
+  it('without a linked account it asks for one instead of claiming there is no test', async () => {
+    const { instances } = await setup()
+    const result = await instances.testInstance({ id: null, values: {} })
+    expect(result).toMatchObject({ success: false, status: 'inconclusive' })
+    expect(result.error).toContain('account')
+  })
+})
 
 describe('Google calendars as integration instances', () => {
   it('a calendar record links to its account and is configured only with a calendar', async () => {
