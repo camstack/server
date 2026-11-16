@@ -6,7 +6,14 @@ import type {
   UnifiControllerClient,
   UnifiControllerClientFactory,
   UnifiInfraSnapshot,
+  UnifiLiveChange,
 } from './unifi-client-contract.js'
+
+/**
+ * While the client's event stream is up, the poll only reconciles what a lost frame could have
+ * missed: at most every this many ms (never faster than the configured interval).
+ */
+export const UNIFI_RECONCILE_POLL_MS = 300_000
 
 /** Status of a single UniFi controller connection. */
 export type UnifiControllerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
@@ -22,15 +29,17 @@ export interface UnifiIntegrationManagerOptions {
   /** Fired after every poll cycle so the controller device fans the fresh
    *  snapshot out to its infra + client children. */
   readonly onPolled: (integrationId: string) => void
-  /** Builds the API-key client for the connection (`liveUnifiClientFactory` in production). */
+  /** Builds the client for the connection (`makeUnifiClientFactory` in production). */
   readonly makeClient: UnifiControllerClientFactory
 }
 
 /**
  * Wraps exactly one {@link UnifiControllerClient} (= one UniFi Network
- * controller). The controller is POLLED (no push channel targeted): on `start()`
- * it connects, lists infra + clients once, and then periodically re-lists them,
- * firing `onPolled` after every cycle. Mirrors the Velux / Rademacher
+ * controller). On `start()` it connects, lists infra + clients once, and then
+ * periodically re-lists them, firing `onPolled` after every cycle. A client with
+ * an event stream (a local account: the aiounifi websocket) pushes its tables
+ * between polls — `onPolled` fires for those too — and while that stream is up
+ * the poll slows to a reconcile ({@link UNIFI_RECONCILE_POLL_MS}). Mirrors the Velux / Rademacher
  * integration manager, with the same fresh-client-on-reconnect discipline.
  */
 export class UnifiIntegrationManager {
@@ -47,7 +56,9 @@ export class UnifiIntegrationManager {
   #infra: Map<string, UnifiInfraSnapshot> = new Map()
   #clients: Map<string, UnifiClientSnapshot> = new Map()
   #status: UnifiControllerStatus = 'disconnected'
-  #pollTimer: ReturnType<typeof setInterval> | null = null
+  #pollTimer: ReturnType<typeof setTimeout> | null = null
+  #streamUp = false
+  #unsubscribeLive: (() => void) | null = null
   /** The last failure of the client's secondary half (the local account), logged on change. */
   #degraded: string | null = null
   #error: string | null = null
@@ -154,6 +165,7 @@ export class UnifiIntegrationManager {
     try {
       const client = this.#makeClient(this.#connection)
       this.#client = client
+      this.#unsubscribeLive = client.onLiveChange((change) => this.#onLiveChange(client, change))
       await client.connect()
       this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
@@ -181,9 +193,12 @@ export class UnifiIntegrationManager {
   /** Stop the poll loop and drop the client + snapshots. */
   async stop(): Promise<void> {
     if (this.#pollTimer !== null) {
-      clearInterval(this.#pollTimer)
+      clearTimeout(this.#pollTimer)
       this.#pollTimer = null
     }
+    this.#unsubscribeLive?.()
+    this.#unsubscribeLive = null
+    this.#streamUp = false
     const client = this.#client
     this.#client = null
     this.#infra = new Map()
@@ -252,16 +267,52 @@ export class UnifiIntegrationManager {
     )
   }
 
+  /** The interval to the next poll: a reconcile while the event stream is up. */
+  pollDelayMs(): number {
+    const configured = this.#connection.pollIntervalMs
+    return this.#streamUp ? Math.max(configured, UNIFI_RECONCILE_POLL_MS) : configured
+  }
+
+  #onLiveChange(client: UnifiControllerClient, change: UnifiLiveChange): void {
+    if (this.#client !== client) return
+    if (change.kind === 'stream') {
+      if (change.up === this.#streamUp) return
+      this.#streamUp = change.up
+      this.#logger.info(
+        change.up
+          ? 'UniFi: the event stream is up — live changes, reconcile poll'
+          : 'UniFi: the event stream is down — polling at the configured interval',
+        { tags: { integrationId: this.#id }, meta: { reason: change.reason } },
+      )
+      // Re-arm so a stream that went down is not left on the slow reconcile delay.
+      if (this.#pollTimer !== null) this.#armPoll()
+      return
+    }
+    this.#infra = indexBy(change.infra, (d) => d.id)
+    this.#clients = indexBy(change.clients, (c) => c.mac)
+    this.#error = null
+    this.#onPolled(this.#id)
+  }
+
   #startPollLoop(): void {
     if (this.#pollTimer !== null) return
-    this.#pollTimer = setInterval(() => {
-      void this.poll().catch((err) => {
-        this.#logger.warn('UnifiIntegrationManager: poll cycle failed', {
-          tags: { integrationId: this.#id },
-          meta: { error: errMsg(err) },
+    this.#armPoll()
+  }
+
+  #armPoll(): void {
+    if (this.#pollTimer !== null) clearTimeout(this.#pollTimer)
+    this.#pollTimer = setTimeout(() => {
+      void this.poll()
+        .catch((err) => {
+          this.#logger.warn('UnifiIntegrationManager: poll cycle failed', {
+            tags: { integrationId: this.#id },
+            meta: { error: errMsg(err) },
+          })
         })
-      })
-    }, this.#connection.pollIntervalMs)
+        .finally(() => {
+          if (this.#client !== null) this.#armPoll()
+        })
+    }, this.pollDelayMs())
     // Do not keep the event loop alive solely for polling.
     this.#pollTimer.unref?.()
   }

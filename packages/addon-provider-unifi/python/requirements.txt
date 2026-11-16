@@ -1,0 +1,4 @@
+# The classic UniFi Network API with a local account (MIT, the library Home Assistant's UniFi
+# integration uses). Pinned exactly: the worker reads its request builders and item shapes.
+# 85 is the last release that runs on the embedded Python 3.12 (86+ need 3.13).
+aiounifi==85

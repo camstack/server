@@ -54,6 +54,17 @@ export class UnifiUnsupportedError extends Error {
   }
 }
 
+/** Nobody answered: the console is off or unreachable, or its certificate is not trusted. */
+export class UnifiUnreachableError extends Error {
+  /** The TLS handshake refused the console's certificate (a self-signed console). */
+  readonly tls: boolean
+  constructor(message: string, tls: boolean) {
+    super(message)
+    this.name = 'UnifiUnreachableError'
+    this.tls = tls
+  }
+}
+
 /** The console answered with an unexpected status or body. */
 export class UnifiApiError extends Error {
   readonly status: number

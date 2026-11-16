@@ -212,6 +212,11 @@ export class UnifiLiveClient implements UnifiControllerClient {
     return null
   }
 
+  /** The Integration API has no event stream: polled only. */
+  onLiveChange(): () => void {
+    return () => undefined
+  }
+
   async setLed(): Promise<void> {
     throw new UnifiUnsupportedError(
       'led',

@@ -1,8 +1,9 @@
 /**
  * The contract every UniFi Network controller client satisfies — the seam the integration manager
  * builds against. Built per connection by `unifi-client-factory.ts`: `UnifiLiveClient` (API key,
- * the UniFi OS Integration API), `UnifiClassicClient` (a local account, the classic Network API)
- * or `UnifiDualClient` (both: the API key for everything, the local account for PoE on/off).
+ * the UniFi OS Integration API), `UnifiAiounifiClient` (a local account: the classic Network API
+ * through aiounifi in a Python worker, with the websocket event stream) or `UnifiDualClient`
+ * (both: the API key for everything, the local account for PoE on/off and the port readings).
  *
  * Scope is the **local controller API only** (UDM / UDM-Pro / Cloud Key / a
  * self-hosted Network controller): infra devices (switches / APs / gateways)
@@ -101,6 +102,23 @@ export interface UnifiClientSnapshot {
   readonly online: boolean
 }
 
+/**
+ * What a client pushes between polls: the tables after a live (websocket) change, or the state
+ * of its event stream — the integration polls slowly while it is up and at the configured
+ * interval while it is not.
+ */
+export type UnifiLiveChange =
+  | {
+      readonly kind: 'tables'
+      readonly infra: readonly UnifiInfraSnapshot[]
+      readonly clients: readonly UnifiClientSnapshot[]
+    }
+  | {
+      readonly kind: 'stream'
+      readonly up: boolean
+      readonly reason: string | null
+    }
+
 /** The live client the addon drives ONE UniFi Network controller with. */
 export interface UnifiControllerClient {
   /** Open the session and authenticate. */
@@ -128,6 +146,8 @@ export interface UnifiControllerClient {
    * account of a {@link UnifiControllerClient} that signs in with an API key too), or null.
    */
   degradedError(): Error | null
+  /** Live changes between polls; a client without an event stream never calls `listener`. */
+  onLiveChange(listener: (change: UnifiLiveChange) => void): () => void
 }
 
 /** Factory seam: build a live {@link UnifiControllerClient} for a connection. */

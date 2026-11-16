@@ -58,6 +58,7 @@ function fakeFactory(failure: unknown, seen: ClientInput[] = []): UnifiControlle
       powerCyclePort: async () => undefined,
       setLed: async () => undefined,
       degradedError: () => null,
+      onLiveChange: () => () => undefined,
     }
     return client
   }
@@ -127,7 +128,8 @@ describe('testUnifiConnection', () => {
       settingsToConnection({ host: 'console.example', username: 'u' }),
       makeUnifiClientFactory({
         fetchFor: () => mustNotCall,
-        httpFor: () => mustNotCall,
+        openWorker: mustNotCall,
+        secretFiles: mustNotCall,
       }),
     )
     expect(result).toMatchObject({ success: false, status: 'rejected' })

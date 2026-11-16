@@ -12,6 +12,8 @@ import {
   UnifiMfaRequiredError,
   UnifiNoCredentialError,
   UnifiSiteNotFoundError,
+  UnifiUnreachableError,
+  UnifiUnsupportedError,
 } from './unifi-errors.js'
 
 /** Why a connection failed, as the test reports it. */
@@ -69,6 +71,10 @@ export function classifyUnifiError(err: unknown): UnifiFailure {
   if (err instanceof UnifiAuthError) return { kind: 'bad-credentials', reason: err.message }
   if (err instanceof UnifiSiteNotFoundError) return { kind: 'wrong-site', reason: err.message }
   if (err instanceof UnifiApiError) return { kind: 'controller-error', reason: err.message }
+  if (err instanceof UnifiUnsupportedError) return { kind: 'controller-error', reason: err.message }
+  if (err instanceof UnifiUnreachableError) {
+    return { kind: err.tls ? 'tls' : 'unreachable', reason: err.message }
+  }
   const codes = errorCodes(err)
   const tls = codes.find((c) => TLS_CODES.has(c))
   if (tls !== undefined) {

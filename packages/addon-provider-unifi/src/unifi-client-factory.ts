@@ -1,20 +1,21 @@
 /**
  * Which credential a UniFi connection signs in with, and the client that speaks it:
  *  - an API key alone → the UniFi OS Integration API (`UnifiLiveClient`): no PoE on/off;
- *  - a local account alone → the classic Network API (`UnifiClassicClient`), on a UniFi OS
- *    console or a legacy controller;
+ *  - a local account alone → the classic Network API through aiounifi in a Python worker
+ *    (`UnifiAiounifiClient`), on a UniFi OS console or a legacy controller;
  *  - both → `UnifiDualClient`: the API key for everything it did before, the local account for
- *    PoE on/off and the per-port readings.
+ *    PoE on/off, the per-port readings and the websocket's live changes.
  */
 import type {
   UnifiControllerClient,
   UnifiControllerClientFactory,
 } from './unifi-client-contract.js'
-import { UnifiClassicClient } from './unifi-client-classic.js'
+import { UnifiAiounifiClient } from './unifi-client-aiounifi.js'
 import { UnifiDualClient } from './unifi-client-dual.js'
-import { makeUndiciFetch, type UnifiFetch, UnifiLiveClient } from './unifi-client-live.js'
+import { type UnifiFetch, UnifiLiveClient } from './unifi-client-live.js'
 import { UnifiNoCredentialError } from './unifi-errors.js'
-import { makeUndiciHttp, type UnifiHttp, UnifiSession } from './unifi-session.js'
+import type { UnifiWorkerChannel } from './unifi-worker-channel.js'
+import type { UnifiSecretFiles } from './unifi-worker-files.js'
 
 export type UnifiCredentialKind = 'api-key' | 'local-account' | 'both'
 
@@ -32,19 +33,16 @@ export function unifiCredentialOf(fields: UnifiCredentialFields): UnifiCredentia
   return account ? 'local-account' : null
 }
 
-/** The transports a client is built over; production uses undici. */
-export interface UnifiTransports {
+/** What the clients are built over: undici for the API key, the aiounifi worker for the account. */
+export interface UnifiClientDeps {
   readonly fetchFor: (allowSelfSigned: boolean) => UnifiFetch
-  readonly httpFor: (allowSelfSigned: boolean) => UnifiHttp
+  /** Starts one aiounifi worker process (one per connection). */
+  readonly openWorker: () => Promise<UnifiWorkerChannel>
+  readonly secretFiles: UnifiSecretFiles
 }
 
-const undiciTransports: UnifiTransports = {
-  fetchFor: makeUndiciFetch,
-  httpFor: makeUndiciHttp,
-}
-
-/** Build the client factory over the given transports. Throws {@link UnifiNoCredentialError}. */
-export function makeUnifiClientFactory(transports: UnifiTransports): UnifiControllerClientFactory {
+/** Build the client factory. The returned factory throws {@link UnifiNoCredentialError}. */
+export function makeUnifiClientFactory(deps: UnifiClientDeps): UnifiControllerClientFactory {
   return (input): UnifiControllerClient => {
     const integration = (): UnifiLiveClient =>
       new UnifiLiveClient({
@@ -52,35 +50,31 @@ export function makeUnifiClientFactory(transports: UnifiTransports): UnifiContro
         port: input.port,
         apiKey: input.apiKey,
         site: input.site,
-        fetchImpl: transports.fetchFor(input.allowSelfSigned),
+        fetchImpl: deps.fetchFor(input.allowSelfSigned),
       })
-    const classic = (): UnifiClassicClient =>
-      new UnifiClassicClient({
+    const account = (): UnifiAiounifiClient =>
+      new UnifiAiounifiClient({
+        host: input.host,
+        port: input.port,
+        username: input.username,
+        password: input.password,
         site: input.site,
-        session: new UnifiSession({
-          host: input.host,
-          port: input.port,
-          username: input.username,
-          password: input.password,
-          http: transports.httpFor(input.allowSelfSigned),
-        }),
+        allowSelfSigned: input.allowSelfSigned,
+        openChannel: deps.openWorker,
+        secretFiles: deps.secretFiles,
       })
     switch (unifiCredentialOf(input)) {
       case 'api-key':
         return integration()
       case 'local-account':
-        return classic()
+        return account()
       case 'both':
         return new UnifiDualClient({
           integration: integration(),
-          classic: classic(),
+          classic: account(),
         })
       case null:
         throw new UnifiNoCredentialError()
     }
   }
 }
-
-/** The factory the addon wires: one live client per connection, over undici. */
-export const liveUnifiClientFactory: UnifiControllerClientFactory =
-  makeUnifiClientFactory(undiciTransports)

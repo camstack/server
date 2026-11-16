@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Discovery shows each switch's PoE ports under it, and a poll whose port or sensor read failed no longer removes the adopted port and sensor children
 - Each PoE port of a UniFi switch is now its own device under the switch, showing its PoE power, link and the client on it (named after that client); with a local account (username and password) added beside the API key, the port's PoE can be switched on and off — and a camera can use that port as its power source for restarts
 - Consoles, switches and access points are adopted as workload hosts showing whether they run, their uptime, CPU and temperature; PoE ports carry the PoE port role and report link up and link speed
+- A local account now signs in through aiounifi (the library Home Assistant uses) in a Python worker: PoE on/off keeps every other port's setting, and the controller's live event stream updates port link, PoE and clients between polls.
 
 ## [0.2.164] - 2026-11-14
 

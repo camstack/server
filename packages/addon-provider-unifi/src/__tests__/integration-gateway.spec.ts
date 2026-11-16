@@ -89,6 +89,7 @@ function fakeClient(infra: readonly UnifiInfraSnapshot[]): UnifiControllerClient
     powerCyclePort: async () => undefined,
     setLed: async () => undefined,
     degradedError: () => null,
+    onLiveChange: () => () => undefined,
   }
 }
 
@@ -534,7 +535,12 @@ describe('UniFi devices on a stub device context', () => {
 
   function hostRig(type: DeviceType) {
     return rig(
-      { integrationId: INT, infraNativeId: 'sw1', system: UNIFI_SYSTEM, features: [] },
+      {
+        integrationId: INT,
+        infraNativeId: 'sw1',
+        system: UNIFI_SYSTEM,
+        features: [],
+      },
       type,
     )
   }
