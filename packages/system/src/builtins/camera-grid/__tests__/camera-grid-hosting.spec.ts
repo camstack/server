@@ -133,10 +133,13 @@ function world(opts: {
   readonly reads: readonly CompositionListRead[]
   readonly silenced?: boolean
   readonly legacyIntegration?: boolean
+  /** The per-device store read throws on its first call only. */
+  readonly storeReadFailsOnce?: boolean
 }): World {
   const providers: World['providers'] = new Map()
   const unregistered: string[] = []
   let call = 0
+  let storeReads = 0
   const listCompositions = vi.fn(async () => {
     const read = opts.reads[Math.min(call, opts.reads.length - 1)]
     call += 1
@@ -164,7 +167,11 @@ function world(opts: {
     settings: {
       readAddonStore: vi.fn(async () => ({})),
       writeAddonStore: vi.fn(async () => undefined),
-      readDeviceStore: vi.fn(async () => (opts.silenced ? { analysisSilenced: true } : {})),
+      readDeviceStore: vi.fn(async () => {
+        storeReads += 1
+        if (opts.storeReadFailsOnce === true && storeReads === 1) throw new Error('store down')
+        return opts.silenced ? { analysisSilenced: true } : {}
+      }),
       writeDeviceStore,
       getSection: vi.fn(async () => ({})),
       setSection: vi.fn(async () => undefined),
@@ -257,6 +264,15 @@ describe('CameraGridAddon — grids are core blocks it hosts (planning#580)', ()
     await boot(w)
     expect(w.loadContext).toHaveBeenCalledTimes(1)
     expect(w.getBindings).not.toHaveBeenCalled()
+  })
+
+  it('a device store that fails to read keeps the hosted device: no orphan, no second device', async () => {
+    const w = world({ reads: [loaded(gridBlock('g1', SPEC))], storeReadFailsOnce: true })
+    await boot(w)
+    await pass()
+    expect(w.loadContext).toHaveBeenCalledTimes(1)
+    expect(w.unregistered).toEqual([])
+    expect(w.writeDeviceStore).not.toHaveBeenCalled()
   })
 
   it('not-loaded withdraws nothing, however many passes', async () => {

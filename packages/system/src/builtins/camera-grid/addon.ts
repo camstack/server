@@ -386,19 +386,14 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       }
       await this.unhost(block.blockId, 'its row changed')
     }
+    let hosted: HostedEngineDevice<GridCameraDevice>
     try {
-      const hosted = await hostEngineDevice(
+      hosted = await hostEngineDevice(
         this.ctx.kernel.devices,
         { id: block.deviceId, stableId: block.stableId },
         { blockId: block.blockId },
         GridCameraDevice,
       )
-      this.ctx.logger.info('camera grid: hosting a grid block on its camera row', {
-        tags: { deviceId: block.deviceId },
-        meta: { blockId: block.blockId, cells: layout.cells.length },
-      })
-      await this.silenceOnce(block.deviceId)
-      return { block, layout, hosted }
     } catch (error: unknown) {
       this.ctx.logger.error('camera grid: a grid block could not be hosted', {
         tags: { deviceId: block.deviceId },
@@ -406,6 +401,14 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       })
       return null
     }
+    this.ctx.logger.info('camera grid: hosting a grid block on its camera row', {
+      tags: { deviceId: block.deviceId },
+      meta: { blockId: block.blockId, cells: layout.cells.length },
+    })
+    // Never throws: once its natives are registered the device is kept, so a
+    // later pass withdraws it rather than building a second one.
+    await this.silenceOnce(block.deviceId)
+    return { block, layout, hosted }
   }
 
   /**
@@ -500,16 +503,17 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       })
       return
     }
-    const store = await settings.readDeviceStore(deviceId)
-    if (store[ANALYSIS_SILENCED_KEY] === true) return
     try {
+      const store = await settings.readDeviceStore(deviceId)
+      if (store[ANALYSIS_SILENCED_KEY] === true) return
       await silenceAnalysisFor({ api: this.ctx.api, logger: this.ctx.logger }, deviceId)
       await settings.writeDeviceStore(deviceId, { [ANALYSIS_SILENCED_KEY]: true })
     } catch (error) {
       // Thrown by design when a BOUND analyzer refused the write — the grid
       // would then run a full detection pipeline over a picture whose subjects
-      // are already counted on the cameras it was composed from. Not marked,
-      // so the next hosting asks again.
+      // are already counted on the cameras it was composed from. A store that
+      // could not be read lands here too. Not marked, so the next hosting
+      // asks again.
       this.ctx.logger.error('camera grid: a new grid could not be silenced', {
         tags: { deviceId },
         meta: { error: errMsg(error) },
