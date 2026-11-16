@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.460] - 2026-11-16
+
 ### Changed
 
 - SectionCard gains a fill option so a section can take the full available height and scroll inside
