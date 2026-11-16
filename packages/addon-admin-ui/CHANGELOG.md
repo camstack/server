@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Build your system: tags are now edited in one shared Quick edit dialog (row action, and right after a new item is saved) instead of inside each editor, and every editor is an in-page section with a pinned header and footer
+
 ## [1.2.686] - 2026-11-16
 
 ### Changed
