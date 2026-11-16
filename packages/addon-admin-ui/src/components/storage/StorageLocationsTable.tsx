@@ -4,7 +4,8 @@
  * declared kind (`recordings`, `backups`, ...), so the list, the Add / Edit form with its provider
  * select, the on-switch, the connection test and the delete are the ones every instance list
  * shares. This adds only what a location has of its own: capacity and state columns, the state /
- * drain / discard block at the top of the edit dialog, and the forced delete.
+ * drain / discard block at the top of the edit dialog, and the delete's forced variant
+ * (offered by the delete dialog when the hub refuses on occupancy).
  */
 import { useStorageListLocationDeclarations } from '@camstack/ui-library'
 import { HardDrive } from 'lucide-react'
@@ -12,10 +13,10 @@ import { useMemo, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { InstancesTable } from '../instances/InstancesTable'
 import type { InstanceRow, PanelRow } from '../instances/instances-model'
-import { ForceDeleteLocationButton } from './ForceDeleteLocationButton'
 import { StorageLocationLead } from './StorageLocationLead'
 import { storageColumns } from './StorageLocationCells'
 import { locationDeletable } from './location-deletable'
+import { useLocationDeleteRefusal } from './use-location-delete-refusal'
 import { useStorageLocationFacts } from './use-storage-location-facts'
 
 export const STORAGE_FUNCTION_CAP = 'storage'
@@ -29,8 +30,9 @@ export function StorageLocationsTable({ kinds }: StorageLocationsTableProps): Re
   const { t } = useTranslation()
   const { locations } = useStorageLocationFacts()
   const declarations = useStorageListLocationDeclarations({}).data
+  const onDeleteRefused = useLocationDeleteRefusal()
   // The hub refuses the delete of the last location of a type, the last one taking writes, and
-  // any of a single kind: the row shows neither Delete nor the forced one for those. Until both
+  // any of a single kind: the row shows no Delete for those. Until both
   // reads answered the row shows none, which the hub would not have allowed either.
   const canDelete = (row: InstanceRow): boolean => {
     const location = locations.find((l) => l.id === row.id)
@@ -76,9 +78,7 @@ export function StorageLocationsTable({ kinds }: StorageLocationsTableProps): Re
       extraColumns={columns}
       lead={(row: InstanceRow) => <StorageLocationLead row={row} />}
       canDelete={canDelete}
-      rowActions={(row: InstanceRow) =>
-        canDelete(row) ? <ForceDeleteLocationButton row={row} /> : null
-      }
+      onDeleteRefused={onDeleteRefused}
       {...(rowFilter !== undefined ? { rowFilter } : {})}
     />
   )

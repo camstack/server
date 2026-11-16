@@ -1004,7 +1004,12 @@
       "modeFailed": "Could not change the state",
       "forceDeleteTitle": "Force delete \"{{name}}\"?",
       "forceDeleteNote": "Removes the record only, without checking what is on the location. Anything still stored there becomes unreachable — index rows naming it stop resolving, and playback of those segments goes silently black rather than erroring.",
-      "forceDeleteRow": "Force delete {{name}}"
+      "forceDeleteRow": "Force delete {{name}}",
+      "deleteBlockedTitle": "Cannot delete {{name}}",
+      "deleteBlockedHoldsData": "This location still holds data. Drain it first (storage migration or relocate), or force the delete.",
+      "deleteBlockedUnverifiable": "What is stored on this location could not be checked (unreachable provider, another node or an unmounted root). Force the delete only if you are sure it is empty or no longer needed.",
+      "forceDeleteStrands": "Recordings and media stored on this location will be stranded: the record is deleted, the files stay on disk, and playback of the segments on it stops working.",
+      "forceDeleteConfirm": "Delete and strand data"
     },
     "system": {
       "settings": "Settings",

@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Notification toasts have an opaque background
 
+### Changed
+
+- Force delete of a storage location moved into the delete dialog, behind a second confirmation
+
 ## [1.2.688] - 2026-11-16
 
 ### Changed

@@ -110,6 +110,11 @@ export interface InstancesTableProps {
   /** An instance row whose delete the page knows the hub would refuse shows no Delete. Absent keeps it. */
   readonly canDelete?: (row: InstanceRow) => boolean
   /**
+   * A page that can answer a refused delete (a forced delete behind a second confirmation) gets the
+   * error first: `true` means it handled it, `false` leaves the generic failure toast.
+   */
+  readonly onDeleteRefused?: (row: InstanceRow, err: unknown) => Promise<boolean>
+  /**
    * Controls a page adds to the page header beside Add (refresh every source at once). Called
    * with the instance rows the table lists; it returns nothing when the kind has no such action.
    */
@@ -227,6 +232,7 @@ export function InstancesTable({
   rowActions,
   fixedRowActions,
   canDelete,
+  onDeleteRefused,
   pageActions,
   typedId,
   rowFilter,
@@ -326,6 +332,7 @@ export function InstancesTable({
         })
         await queryClient.invalidateQueries({ queryKey: [HOLDER_QUERY_KEY] })
       } catch (err: unknown) {
+        if (onDeleteRefused !== undefined && (await onDeleteRefused(row, err))) return
         pushToast({
           title: t('providerInstances.deleteFailed', 'Could not delete'),
           message: `${row.name}: ${err instanceof Error ? err.message : String(err)}`,
@@ -333,7 +340,7 @@ export function InstancesTable({
         })
       }
     },
-    [confirm, queryClient, system, t, targets.data],
+    [confirm, onDeleteRefused, queryClient, system, t, targets.data],
   )
 
   const showKind = useMemo(

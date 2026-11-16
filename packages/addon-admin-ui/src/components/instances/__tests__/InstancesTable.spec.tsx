@@ -171,6 +171,7 @@ function renderPanel(
       | 'fixedRowActions'
       | 'pageActions'
       | 'rowFilter'
+      | 'onDeleteRefused'
       | 'typedId'
       | 'testLabel'
       | 'testHint'
@@ -667,6 +668,17 @@ describe('InstancesTable', () => {
         addonId: 'smtp-nodemailer',
         id: 'relay-default',
       })
+    })
+
+    it('a failed delete is offered to onDeleteRefused first, and a handled one shows no failure toast', async () => {
+      h.targets = []
+      h.remove.mockRejectedValueOnce(new Error('still holds data'))
+      const onDeleteRefused = vi.fn(async () => true)
+      renderPanel('', { onDeleteRefused })
+      fireEvent.click(await screen.findByRole('button', { name: 'Delete Default relay' }))
+      fireEvent.click(await screen.findByRole('button', { name: 'Delete' }))
+      await waitFor(() => expect(onDeleteRefused).toHaveBeenCalledTimes(1))
+      expect(screen.queryByText('Could not delete')).toBeNull()
     })
   })
 

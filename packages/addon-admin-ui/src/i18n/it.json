@@ -1004,7 +1004,12 @@
       "modeFailed": "Impossibile cambiare lo stato",
       "forceDeleteTitle": "Forzare l’eliminazione di \"{{name}}\"?",
       "forceDeleteNote": "Rimuove solo il record, senza controllare cosa c’è sulla posizione. Tutto ciò che vi resta diventa irraggiungibile: le righe dell’indice che la nominano non si risolvono più e la riproduzione di quei segmenti diventa nera senza errori.",
-      "forceDeleteRow": "Forza eliminazione di {{name}}"
+      "forceDeleteRow": "Forza eliminazione di {{name}}",
+      "deleteBlockedTitle": "Impossibile eliminare {{name}}",
+      "deleteBlockedHoldsData": "Questa posizione contiene ancora dati. Svuotala prima (migrazione o spostamento dello storage), oppure forza l’eliminazione.",
+      "deleteBlockedUnverifiable": "Non è stato possibile controllare cosa c’è su questa posizione (provider irraggiungibile, altro nodo o radice non montata). Forza l’eliminazione solo se sei sicuro che sia vuota o non più necessaria.",
+      "forceDeleteStrands": "Le registrazioni e i media su questa posizione resteranno orfani: il record viene eliminato, i file restano sul disco e la riproduzione dei segmenti su di essa smette di funzionare.",
+      "forceDeleteConfirm": "Elimina e lascia i dati orfani"
     },
     "system": {
       "settings": "Impostazioni",
