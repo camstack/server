@@ -4,8 +4,8 @@
  * snapshot. Pure.
  *
  * Only what the API reports is filled; everything else is `null` (D393). The controls are
- * the ones node-unraid serves: a container starts, stops, pauses and unpauses (no restart,
- * no force stop); a VM starts, stops, reboots, pauses, resumes and force-stops; the server
+ * the ones node-unraid serves: a container starts, stops, pauses and unpauses, and restarts
+ * as stop then start (the API has no atomic restart; no force stop); a VM starts, stops, reboots, pauses, resumes and force-stops; the server
  * itself has none.
  */
 import {
@@ -47,6 +47,7 @@ const DOCKER_OPTIONS: WorkloadOptions = {
   ...NO_OPTIONS,
   supportsStart: true,
   supportsStop: true,
+  supportsRestart: true,
   supportsPause: true,
   hasResources: true,
   hasAutostart: true,

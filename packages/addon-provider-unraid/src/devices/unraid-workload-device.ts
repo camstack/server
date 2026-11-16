@@ -110,8 +110,18 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
       pause: async () => this.run('pause', (c, id) => this.lifecycle(c).pause(id)),
       resume: async () => this.run('resume', (c, id) => this.lifecycle(c).resume(id)),
     }
-    if (this.ref.kind === 'docker') return base
-    // A VM also reboots (its restart) and force-stops; a container has neither in the API.
+    if (this.ref.kind === 'docker') {
+      // The API has no atomic container restart: stop then start, by the same live id.
+      return {
+        ...base,
+        restart: async () =>
+          this.run('restart', async (c, id) => {
+            await c.docker.stop(id)
+            await c.docker.start(id)
+          }),
+      }
+    }
+    // A VM reboots (its restart) and force-stops; a container has no force stop in the API.
     return {
       ...base,
       restart: async () => this.run('restart', (c, id) => c.vms.reboot(id)),

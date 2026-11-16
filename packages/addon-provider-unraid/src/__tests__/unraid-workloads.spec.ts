@@ -420,12 +420,15 @@ describe('Unraid workload devices serve the workload cap', () => {
     expect(slice?.state).toBe('running')
     expect(slice?.hostDeviceId).toBe(42)
     expect(slice?.image).toBe('plex:latest')
-    expect(workload.restart).toBeUndefined()
     expect(workload.forceStop).toBeUndefined()
+    // The API has no atomic container restart: stop then start, as the old switch did.
+    await workload.restart?.({ deviceId: 50 })
     await workload.stop?.({ deviceId: 50 })
     await workload.pause?.({ deviceId: 50 })
     await workload.resume?.({ deviceId: 50 })
     expect(calls).toEqual([
+      `docker.stop ${SERVER}:aaa`,
+      `docker.start ${SERVER}:aaa`,
       `docker.stop ${SERVER}:aaa`,
       `docker.pause ${SERVER}:aaa`,
       `docker.unpause ${SERVER}:aaa`,

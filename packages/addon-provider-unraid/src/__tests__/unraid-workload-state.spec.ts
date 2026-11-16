@@ -86,12 +86,12 @@ describe('unraidWorkloadStatus — a VM', () => {
 })
 
 describe('unraidWorkloadOptions — honest per kind', () => {
-  it('a container starts, stops and pauses; node-unraid has no restart or force stop for it', () => {
+  it('a container starts, stops, restarts (stop then start) and pauses; no force stop', () => {
     expect(unraidWorkloadOptions('docker')).toMatchObject({
       supportsStart: true,
       supportsStop: true,
       supportsPause: true,
-      supportsRestart: false,
+      supportsRestart: true,
       supportsForceStop: false,
       hasResources: true,
       hasAutostart: true,
