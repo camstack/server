@@ -1103,10 +1103,10 @@ export function createDeviceProxy(
   }
 
   const sirenInterface = {
-    getOptions: (input?: unknown) => dispatch('siren', 'siren', 'getOptions', 'query', input),
-    trigger: (input?: unknown) => dispatch('siren', 'siren', 'trigger', 'mutation', input),
-    stop: (input?: unknown) => dispatch('siren', 'siren', 'stop', 'mutation', input),
-    getStatus: (input?: unknown) => dispatch('siren', 'siren', 'getStatus', 'query', input),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getOptions', 'query', input, undefined, options),
+    trigger: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'trigger', 'mutation', input, undefined, options),
+    stop: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'stop', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('siren', 'siren', 'getStatus', 'query', input, undefined, options),
   }
 
   const smokeInterface = {
