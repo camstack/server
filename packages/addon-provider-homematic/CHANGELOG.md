@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Uses nodehomematic 0.9.1: a refused CCU login backs off instead of locking out, the session heals after a CCU reboot, and a 5xx from a booting CCU is retried.
+
 ## [1.2.203] - 2026-11-15
 
 ### Changed
