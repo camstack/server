@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Camera grids and Terminal cameras are now Build-your-self blocks; existing grid and Terminal cameras are removed on upgrade and must be recreated as blocks.
+- The empty "Camera Grids" integration left behind by the move to blocks is removed at the hub's next restart once none of its old cameras remain.
 
 ## [1.2.890] - 2026-11-16
 
