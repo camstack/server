@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - RecordingTimeline reports its window and takes caller density and extra lanes; new ClipSourceLanes draws one clip lane per source a camera lists.
 - RecordingTimeline takes a toolbar slot that joins the date and zoom controls in one bar; clip source lanes are compact rows with the label inline.
 - useCapabilityNodePresence also reports the nodes that run a provider (pending and unknown kept distinct from none).
+- The tag manager refreshes the notification rules list after a rename or remove
 
 ## [1.2.461] - 2026-11-16
 

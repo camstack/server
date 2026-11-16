@@ -52,6 +52,15 @@ export type UnifiedRuleRow =
       readonly rule: CalendarEventsRuleView
     }
 
+/**
+ * Where a row keeps its tags and searchable text for `TaggedDataTable` (D1054).
+ * Module-level so the references are stable — the table keys its memos on them.
+ * Only an event rule carries tags; a scheduled producer has none.
+ */
+export const unifiedRuleTags = (row: UnifiedRuleRow): readonly string[] | undefined =>
+  row.family === 'event' ? row.rule.tags : undefined
+export const unifiedRuleSearchText = (row: UnifiedRuleRow): readonly string[] => [row.name]
+
 export interface UnifiedRuleBags {
   readonly events: readonly NcRule[]
   readonly summaries: readonly SummaryRuleView[]

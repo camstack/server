@@ -31,7 +31,8 @@ export interface TagRegistry {
 /**
  * The routers whose queries return records that carry tags — the owners the
  * `tags` cap rewrites (automations and scripts are `coreBlocks`; devices and a
- * device's Customize page are `deviceManager`) — plus the tag list itself.
+ * device's Customize page are `deviceManager`; notification rules are
+ * `notificationRules`) — plus the tag list itself.
  */
 const TAG_OWNER_ROUTERS: ReadonlySet<string> = new Set([
   'tags',
@@ -40,6 +41,7 @@ const TAG_OWNER_ROUTERS: ReadonlySet<string> = new Set([
   'template',
   'actions',
   'deviceManager',
+  'notificationRules',
 ])
 
 /** The router a query belongs to: tRPC keys are `[[router, proc], …]`, hand-written ones `[router, …]`. */

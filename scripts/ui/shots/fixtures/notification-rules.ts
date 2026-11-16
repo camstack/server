@@ -3,10 +3,12 @@
  * detection rule and a doorbell (sensor) rule, so the rule editor's media
  * section (`&rule=<id>&editTab=notification`) renders for both kinds — the
  * picture selector, the trigger-zone flag, GIF / clip, and a sensor's linked
- * cameras.
+ * cameras. Two rules carry tags (D1054), one does not, so the tag filter and
+ * the by-tag grouping render.
  */
 import { defineFixtures } from './_define'
 import { notificationInstanceHandlers } from './_notification-instances'
+import { tagHandlers } from './_tags'
 import { NOW } from './_time'
 
 const TARGET = 'ntfy-family'
@@ -35,6 +37,7 @@ export default defineFixtures({
       rules: [
         rule('rule-door', 'Person at the door', {
           delivery: 'immediate',
+          tags: ['Garden', 'Night'],
           actions: {
             onTrigger: ['internal:siren'],
             buttons: [
@@ -53,6 +56,7 @@ export default defineFixtures({
         }),
         rule('rule-bell', 'Doorbell pressed', {
           delivery: 'device-event',
+          tags: ['Garden'],
           conditions: { sensorKinds: ['doorbell'] },
           media: { image: 'clean' },
         }),
@@ -117,6 +121,7 @@ export default defineFixtures({
     ],
     'notificationRules.listSnoozes': { snoozes: [] },
     'auth.listLoginMethods': [],
+    ...tagHandlers,
     ...notificationInstanceHandlers([
       {
         id: TARGET,

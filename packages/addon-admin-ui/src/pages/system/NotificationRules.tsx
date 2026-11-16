@@ -59,6 +59,9 @@ import {
   OptionSelect,
   Select,
   Switch,
+  TABLE_SCROLL_MAX_H,
+  TaggedDataTable,
+  TagInput,
   Tabs,
   TabsContent,
   TabsList,
@@ -114,6 +117,8 @@ import {
   rowsForArea,
   type UnifiedRuleBags,
   type UnifiedRuleRow,
+  unifiedRuleSearchText,
+  unifiedRuleTags,
 } from './unified-rules-model'
 import type { RuleColumnsDeps } from './NotificationRuleColumns'
 import type { GateableDevice, GateableScene } from './notification-condition-widgets'
@@ -180,7 +185,7 @@ import { type DeviceFleetView, fleetViewOf } from './device-fleet-view'
 import { ruleScopeList } from './rule-scope-model'
 import { useNotificationTargets } from './use-notification-targets'
 import { zoneCameraIds } from './zone-scope-items'
-import { NcListEmpty, NcListLoading, NcListTable } from './notification-list-chrome'
+import { NcListEmpty, NcListLoading } from './notification-list-chrome'
 
 /**
  * Query keys shared with the SIMULATE tab.
@@ -697,12 +702,18 @@ export function NotificationRulesPage({
           )}
 
         {areaRows.length > 0 && (
-          <NcListTable<UnifiedRuleRow>
+          // Tags filter and group the rules exactly like every Build section (D1054).
+          <TaggedDataTable<UnifiedRuleRow>
+            section="notification-rules"
+            getTags={unifiedRuleTags}
+            searchText={unifiedRuleSearchText}
+            searchLabel={t('system.notificationRules.searchRules', 'Search rules')}
             columns={columns}
             rows={areaRows}
             rowKey={(r) => `${r.family}:${r.id}`}
             onRowClick={openRow}
             minWidthPx={minWidthForArea(activeArea.key)}
+            maxBodyHeight={TABLE_SCROLL_MAX_H}
           />
         )}
 
@@ -1208,6 +1219,18 @@ function RuleFormDialog({
               />
               {t('system.notificationRules.enabled', 'Enabled')}
             </label>
+          </div>
+
+          {/* Tags (D1054) — the same free entry, autocomplete and style modal as Build. */}
+          <div>
+            <span className="block text-[11px] font-medium text-foreground mb-1">
+              {t('common.tags', 'Tags')}
+            </span>
+            <TagInput
+              value={form.tags}
+              onChange={(next) => patch({ tags: next })}
+              label={t('common.tags', 'Tags')}
+            />
           </div>
 
           {/* Trigger */}

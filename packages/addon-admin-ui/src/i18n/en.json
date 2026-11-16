@@ -558,7 +558,8 @@
           "clip": "Clip",
           "gif": "GIF"
         }
-      }
+      },
+      "searchRules": "Search rules"
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simulate an event",
