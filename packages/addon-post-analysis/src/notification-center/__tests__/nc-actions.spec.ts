@@ -408,6 +408,30 @@ describe('nc rule actions — admin-only rule fields', () => {
     ).rejects.toThrow("forbidden: 'actions' requires admin")
   })
 
+  it('nc.createRule refuses tags from a non-admin', async () => {
+    await expect(
+      ctx.handlers['nc.createRule']({ rule: input({ tags: ['Garden'] }) }, U1),
+    ).rejects.toThrow("forbidden: 'tags' requires admin")
+    expect(ctx.store.list()).toEqual([])
+  })
+
+  it('nc.updateRule refuses changing tags from a non-admin; a save without tags keeps them', async () => {
+    await ctx.store.create(input({ ownerUserId: 'u1', tags: ['Garden'] }), 'admin1')
+    await expect(
+      ctx.handlers['nc.updateRule']({ ruleId: 'r1', patch: { tags: ['Yard'] } }, U1),
+    ).rejects.toThrow("forbidden: 'tags' requires admin")
+    const kept = await ctx.handlers['nc.updateRule'](
+      { ruleId: 'r1', patch: { name: 'renamed by owner' } },
+      U1,
+    )
+    expect(kept.rule).toMatchObject({ name: 'renamed by owner', tags: ['Garden'] })
+    const echoed = await ctx.handlers['nc.updateRule'](
+      { ruleId: 'r1', patch: { tags: ['Garden'] } },
+      U1,
+    )
+    expect(echoed.rule.tags).toEqual(['Garden'])
+  })
+
   it('nc.updateRule refuses CLEARING an admin-only field from a non-admin', async () => {
     await ctx.store.create(input({ ownerUserId: 'u1', actions: ACTIONS }), 'admin1')
     await expect(

@@ -12138,6 +12138,20 @@ export function createCapRouter_notificationRules(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setRuleEnabled(methodInput as any)
       }),
+    listRuleTags: adminProcedure
+      .input(notificationRulesCapability.methods.listRuleTags.input.loose())
+      .output(notificationRulesCapability.methods.listRuleTags.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'notification-rules',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listRuleTags(methodInput as any)
+      }),
     setRuleTags: adminProcedure
       .input(notificationRulesCapability.methods.setRuleTags.input.loose())
       .output(notificationRulesCapability.methods.setRuleTags.output)

@@ -722,6 +722,7 @@
   "notificationRules.getTemplateCatalog": "protected",
   "notificationRules.listDeviceMutes": "admin",
   "notificationRules.listRules": "admin",
+  "notificationRules.listRuleTags": "admin",
   "notificationRules.listSnoozes": "protected",
   "notificationRules.previewStateSummary": "admin",
   "notificationRules.previewTemplate": "protected",

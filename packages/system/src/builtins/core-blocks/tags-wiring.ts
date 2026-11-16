@@ -6,6 +6,8 @@
 import {
   type AddonApi,
   type IScopedLogger,
+  type NcTaggedRuleKind,
+  NcTaggedRuleKindSchema,
   normalizeTags,
   type RecordKindHandle,
   type RecordsAccess,
@@ -101,15 +103,33 @@ function needApi(api: () => AddonApi | undefined): AddonApi {
   return current
 }
 
+/**
+ * A notification rule's owner-port id is `<kind>:<ruleId>`: event rules,
+ * summaries, timelapses and calendar-events rules live in separate stores, so
+ * the write must name which one.
+ */
+export function ruleTagOwnerId(kind: NcTaggedRuleKind, ruleId: string): string {
+  return `${kind}:${ruleId}`
+}
+
+export function parseRuleTagOwnerId(id: string): { kind: NcTaggedRuleKind; ruleId: string } {
+  const sep = id.indexOf(':')
+  const kind = NcTaggedRuleKindSchema.safeParse(sep < 0 ? '' : id.slice(0, sep))
+  if (!kind.success) throw new Error(`[tags] not a notification-rule owner id: ${id}`)
+  return { kind: kind.data, ruleId: id.slice(sep + 1) }
+}
+
 function notificationRulesPort(api: () => AddonApi | undefined): TagOwnerPort {
   return {
+    // Every rule KIND carries tags (D1054): one read covers all four stores.
     list: async () => {
-      const { rules } = await needApi(api).notificationRules.listRules.query({})
-      return rules.map((r) => ({ id: r.id, tags: r.tags ?? [] }))
+      const { rules } = await needApi(api).notificationRules.listRuleTags.query({})
+      return rules.map((r) => ({ id: ruleTagOwnerId(r.kind, r.ruleId), tags: r.tags }))
     },
-    // Only the tags: never a whole-rule `updateRule`, which a stale copy would clobber.
+    // Only the tags: never a whole-rule update, which a stale copy would clobber.
     setTags: async (id, tags) => {
-      await needApi(api).notificationRules.setRuleTags.mutate({ ruleId: id, tags })
+      const { kind, ruleId } = parseRuleTagOwnerId(id)
+      await needApi(api).notificationRules.setRuleTags.mutate({ kind, ruleId, tags })
     },
   }
 }

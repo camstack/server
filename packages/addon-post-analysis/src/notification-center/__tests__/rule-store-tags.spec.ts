@@ -6,7 +6,7 @@
  * (`setTags`) must change nothing but the tags.
  */
 import type { InMemoryRecords, NcRuleInput } from '@camstack/types'
-import { NcRuleInputSchema } from '@camstack/types'
+import { NcRuleInputSchema, NcRulePatchSchema } from '@camstack/types'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import { ncRecordKinds } from '../record-kinds.js'
@@ -36,6 +36,18 @@ function newStore(world: InMemoryRecords): NcRuleStore {
     newId: () => `rule-${(seq += 1)}`,
   })
 }
+
+describe('rule schemas never materialise tags', () => {
+  // A `.default()` here would make every partial patch overwrite the stored tags
+  // (the store merges `{ ...existing, ...patch }`) — the conditions trap again.
+  it('a patch that does not name tags parses without the key', () => {
+    expect(NcRulePatchSchema.parse({ enabled: false })).not.toHaveProperty('tags')
+  })
+
+  it('a create input that does not name tags parses without the key', () => {
+    expect(makeInput()).not.toHaveProperty('tags')
+  })
+})
 
 describe('NcRuleStore — tags (D1054)', () => {
   let world: InMemoryRecords

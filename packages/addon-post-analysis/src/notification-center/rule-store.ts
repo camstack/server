@@ -47,7 +47,6 @@ import {
   NcRuleSchema,
   NcSystemEventDeliverySchema,
   normalizeNcMediaPolicy,
-  normalizeTags,
   withSystemEventClasses,
   withSystemEventModes,
 } from '@camstack/types'
@@ -59,6 +58,7 @@ import {
   projectRawStoredRule,
   stripStoredKeys,
 } from './rule-retired-fields.js'
+import { storedTags } from './rule-tags.js'
 import { ncRecordKinds, type RuleBody } from './record-kinds.js'
 import { withoutLegacyActions } from './rule-legacy-actions.js'
 
@@ -145,8 +145,7 @@ function normalizeStoredRule(rule: NcRule): NcRule {
 function withNormalizedTags(rule: NcRule): NcRule {
   if (rule.tags === undefined) return rule
   const { tags, ...rest } = rule
-  const normalized = normalizeTags(tags)
-  return normalized.length === 0 ? rest : { ...rest, tags: normalized }
+  return { ...rest, ...storedTags(tags) }
 }
 
 /** A stored row the load could not parse: which rule, and the first reason. */

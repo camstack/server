@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Notification rules keep operator tags; renaming or removing a tag in the tag manager updates the rules too
 
+### Changed
+
+- Summary, timelapse and calendar-events rules keep operator tags; only an admin can set them
+
 ## [1.2.709] - 2026-11-15
 
 ### Changed

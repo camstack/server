@@ -1673,6 +1673,21 @@ export const NcRuleInputSchema = z.object({
 export type NcRuleInput = z.infer<typeof NcRuleInputSchema>
 
 /**
+ * The rule kinds that carry tags (D1054) — each one its own store. Every kind
+ * labels its rules the same way; this names which store a tag write goes to.
+ */
+export const NcTaggedRuleKindSchema = z.enum(['event', 'summary', 'timelapse', 'calendar-events'])
+export type NcTaggedRuleKind = z.infer<typeof NcTaggedRuleKindSchema>
+
+/** One rule's tags, as the `tags` cap reads them across every kind. */
+export const NcRuleTagsEntrySchema = z.object({
+  kind: NcTaggedRuleKindSchema,
+  ruleId: z.string(),
+  tags: z.array(z.string()),
+})
+export type NcRuleTagsEntry = z.infer<typeof NcRuleTagsEntrySchema>
+
+/**
  * Partial patch for `updateRule` — any subset of the input fields, plus the
  * persisted-only {@link NcRuleSchema} `disabledTargetIds` set. The latter is
  * NOT a client-authored input field (it lives on the persisted rule, not the
@@ -3410,12 +3425,22 @@ export const notificationRulesCapability = {
       { kind: 'mutation', auth: 'admin' },
     ),
     /**
+     * Every rule of every kind with its tags (D1054) — event rules, summaries,
+     * timelapses and calendar-events rules. The `tags` cap counts and rewrites
+     * from this one read; a rule without tags is listed with `[]`.
+     */
+    listRuleTags: method(z.object({}), z.object({ rules: z.array(NcRuleTagsEntrySchema) }), {
+      kind: 'query',
+      auth: 'admin',
+    }),
+    /**
      * Replace ONE rule's tags (D1054) and nothing else — the `tags` cap's rename
-     * and remove write through this. Normalised on write (trimmed, deduplicated
-     * case-insensitively); `[]` clears them.
+     * and remove write through this. `kind` names the store the rule lives in.
+     * Normalised on write (trimmed, deduplicated case-insensitively); `[]`
+     * clears them.
      */
     setRuleTags: method(
-      z.object({ ruleId: z.string(), tags: TagsFieldSchema }),
+      z.object({ kind: NcTaggedRuleKindSchema, ruleId: z.string(), tags: TagsFieldSchema }),
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),

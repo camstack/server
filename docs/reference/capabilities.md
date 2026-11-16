@@ -202,7 +202,7 @@ Singleton or collection providers, addressed without a device.
 | `node-removal-hook` | 1 | — | — | — | ✓ | `ai` `model-studio` `pipeline-orchestrator` |
 | `nodes` | 14 | — | — | — | — | — |
 | `notification-output` | 5 | — | — | — | — | `import-alexa` `notifiers` `provider-homeassistant` |
-| `notification-rules` | 28 | — | — | — | — | `pipeline-analytics` |
+| `notification-rules` | 29 | — | — | — | — | `pipeline-analytics` |
 | `oauth-integration` | 1 | — | — | — | ✓ | `export-alexa` `export-google` `homeassistant-export` |
 | `osd-manager` | 12 | — | — | — | — | `osd-manager` |
 | `pipeline-executor` | 30 | — | — | — | — | `detection-pipeline` |

@@ -1,13 +1,15 @@
 /**
  * The `tags` cap (D1054). A tag lives on the record it labels — a core block, a
- * scheduler, a template, an action, a device, a notification rule — and only its STYLE (colour token,
- * icon) is registered here. This service is the one place that knows every owner
+ * scheduler, a template, an action, a device, a notification rule — and only
+ * its STYLE (colour token, icon) is registered here. This service is the one place that knows every owner
  * kind, so `rename` and `remove` are ONE server operation that rewrites all of
  * them; the browser never drives that sequence (a closed tab would split the
  * fleet across two spellings).
  *
  * Owners are reached through {@link TagOwnerPort}s: the local stores directly,
- * the devices and notification rules through their caps over `ctx.api` — never a second copy.
+ * the devices and notification rules through their caps over `ctx.api` — never
+ * a second copy. An owner that cannot be read degrades `list` (its count is
+ * `null`) and refuses `rename` / `remove` before any write.
  * Tags compare trimmed and case-insensitively (`sameTag`).
  */
 import {
@@ -17,6 +19,7 @@ import {
   type ITagsProvider,
   type RecordKindHandle,
   type TagEntry,
+  type TagListCounts,
   type TagUsageCounts,
   removeFromTags,
   renameInTags,
@@ -51,6 +54,38 @@ const OWNER_KINDS: readonly TagOwnerKind[] = [
   'devices',
   'notificationRules',
 ]
+
+type MutableCounts = { -readonly [K in TagOwnerKind]: number }
+
+/** The list counts: an owner that could not be read is `null`, never `0` (D393). */
+function withUnknown(counts: MutableCounts, unreachable: ReadonlySet<TagOwnerKind>): TagListCounts {
+  return {
+    coreBlocks: unreachable.has('coreBlocks') ? null : counts.coreBlocks,
+    schedulers: unreachable.has('schedulers') ? null : counts.schedulers,
+    templates: unreachable.has('templates') ? null : counts.templates,
+    actions: unreachable.has('actions') ? null : counts.actions,
+    devices: unreachable.has('devices') ? null : counts.devices,
+    notificationRules: unreachable.has('notificationRules') ? null : counts.notificationRules,
+  }
+}
+
+/**
+ * A rename or remove refused because one owner kind could not be read. Nothing
+ * was written; `owner` names which one, so the operator knows what to bring back.
+ */
+export class TagOwnerUnreachableError extends Error {
+  override readonly name = 'TagOwnerUnreachableError'
+  constructor(
+    readonly owner: TagOwnerKind,
+    tag: string,
+    cause: unknown,
+  ) {
+    super(
+      `[tags] "${tag}" was not changed anywhere: the ${owner} owner could not be read (${cause instanceof Error ? cause.message : String(cause)}); nothing was written — retry once it is back`,
+      { cause },
+    )
+  }
+}
 
 export interface TagsServiceDeps {
   readonly owners: TagOwnerPorts
@@ -94,25 +129,34 @@ export class TagsService implements ITagsProvider {
 
   readonly list: ITagsProvider['list'] = async () => {
     const styles = new Map((await this.readStyles()).map((s) => [tagKey(s.name), s]))
-    const entries = new Map<
-      string,
-      { name: string; counts: { -readonly [K in TagOwnerKind]: number } }
-    >()
-    for (const style of styles.values()) {
-      entries.set(tagKey(style.name), {
-        name: style.name,
-        counts: { ...NO_UPDATES },
-      })
-    }
+    // Read every owner first; one that cannot be read degrades to `null` (D393)
+    // instead of taking the whole list — and every tag picker — down with it.
+    const unreachable = new Set<TagOwnerKind>()
+    const read: { kind: TagOwnerKind; records: readonly TagOwnerRecord[] }[] = []
     for (const kind of OWNER_KINDS) {
-      for (const record of await this.deps.owners[kind].list()) {
+      try {
+        read.push({ kind, records: await this.deps.owners[kind].list() })
+      } catch (err) {
+        unreachable.add(kind)
+        this.deps.logger.warn('tag owner could not be read — its count is unknown on this list', {
+          meta: { owner: kind, error: err instanceof Error ? err.message : String(err) },
+        })
+      }
+    }
+    const zero = (): MutableCounts => ({ ...NO_UPDATES })
+    const entries = new Map<string, { name: string; counts: MutableCounts }>()
+    for (const style of styles.values()) {
+      entries.set(tagKey(style.name), { name: style.name, counts: zero() })
+    }
+    for (const { kind, records } of read) {
+      for (const record of records) {
         // A record counts once per tag, whatever spellings it carries.
         const seen = new Set<string>()
         for (const tag of record.tags) {
           const key = tagKey(tag)
           if (key.length === 0 || seen.has(key)) continue
           seen.add(key)
-          const entry = entries.get(key) ?? { name: tag.trim(), counts: { ...NO_UPDATES } }
+          const entry = entries.get(key) ?? { name: tag.trim(), counts: zero() }
           entry.counts[kind] += 1
           entries.set(key, entry)
         }
@@ -126,7 +170,7 @@ export class TagsService implements ITagsProvider {
         color: style?.color ?? defaultTagColorId(entry.name),
         icon: style?.icon ?? DEFAULT_TAG_ICON,
         styled: style !== undefined,
-        counts: entry.counts,
+        counts: withUnknown(entry.counts, unreachable),
       })
     }
     return out.toSorted((a, b) => a.name.localeCompare(b.name))
@@ -170,7 +214,7 @@ export class TagsService implements ITagsProvider {
     // before anything is written, so the fleet never ends up half renamed.
     const plan: { kind: TagOwnerKind; id: string; next: string[] }[] = []
     for (const kind of OWNER_KINDS) {
-      for (const record of await this.deps.owners[kind].list()) {
+      for (const record of await this.readOwnerOrRefuse(kind, tag)) {
         const next = change(record.tags)
         if (next === null) continue
         if (next.length > TAGS_PER_RECORD_MAX) {
@@ -208,6 +252,22 @@ export class TagsService implements ITagsProvider {
       )
     }
     return updated
+  }
+
+  /**
+   * An owner's records for a rewrite. One that cannot be read refuses the whole
+   * call BEFORE anything is written: a rename applied to only some owners would
+   * leave the fleet split across two spellings.
+   */
+  private async readOwnerOrRefuse(
+    kind: TagOwnerKind,
+    tag: string,
+  ): Promise<readonly TagOwnerRecord[]> {
+    try {
+      return await this.deps.owners[kind].list()
+    } catch (err) {
+      throw new TagOwnerUnreachableError(kind, tag, err)
+    }
   }
 
   /** The style follows the tag; a merge onto a styled target keeps the TARGET's style. */

@@ -13,8 +13,8 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { ActionsStore } from '../actions-store.js'
 import { coreBlocksRecordKinds, type TemplateRowBody } from '../record-kinds.js'
 import { SchedulersStore } from '../scheduler/scheduler-store.js'
-import type { TagOwnerPort } from '../tags-service.js'
-import { buildTagsService } from '../tags-wiring.js'
+import { type TagOwnerPort, TagOwnerUnreachableError } from '../tags-service.js'
+import { buildTagsService, parseRuleTagOwnerId, ruleTagOwnerId } from '../tags-wiring.js'
 import { coreBlockRecordsHarness, recordingLogger } from './fixtures.js'
 import type { CoreBlockStore } from '../core-block-store.js'
 
@@ -45,10 +45,17 @@ interface FakeRule {
   readonly mark: string
 }
 
-/** The notification rules as the `tags` cap reaches them: `listRules` + `setRuleTags`. */
-function fakeRules(rules: FakeRule[]): TagOwnerPort {
+/**
+ * The notification rules as the `tags` cap reaches them: `listRuleTags` +
+ * `setRuleTags`, every kind behind one port, ids `<kind>:<ruleId>`.
+ * `unreachable` is the post-analysis owner being down: its read throws.
+ */
+function fakeRules(rules: FakeRule[], unreachable = false): TagOwnerPort {
   return {
-    list: async () => rules.map((r) => ({ id: r.id, tags: r.tags })),
+    list: async () => {
+      if (unreachable) throw new Error('provider not available: notificationRules')
+      return rules.map((r) => ({ id: r.id, tags: r.tags }))
+    },
     setTags: async (id, tags) => {
       const rule = rules.find((r) => r.id === id)
       if (rule === undefined) throw new Error('unknown rule')
@@ -70,7 +77,7 @@ interface World {
   }
 }
 
-async function world(failDevice?: number): Promise<World> {
+async function world(failDevice?: number, rulesUnreachable = false): Promise<World> {
   const { store, records } = await coreBlockRecordsHarness(logger, { newId: () => 'blk-1' })
   await store.load()
   const devices: FakeDevice[] = [
@@ -79,8 +86,10 @@ async function world(failDevice?: number): Promise<World> {
     { id: 43, tags: [], mark: 'untagged' },
   ]
   const rules: FakeRule[] = [
-    { id: 'rule-1', tags: ['GARDEN', 'Night'], mark: 'rule-mark' },
-    { id: 'rule-2', tags: [], mark: 'rule-untagged' },
+    { id: 'event:rule-1', tags: ['GARDEN', 'Night'], mark: 'rule-mark' },
+    { id: 'event:rule-2', tags: [], mark: 'rule-untagged' },
+    // A non-event kind: tags live on the base of every rule kind.
+    { id: 'summary:sum-1', tags: ['Garden'], mark: 'summary-mark' },
   ]
   const tags = buildTagsService({
     records,
@@ -88,7 +97,7 @@ async function world(failDevice?: number): Promise<World> {
     api: () => undefined,
     logger,
     devices: fakeDevices(devices, failDevice),
-    notificationRules: fakeRules(rules),
+    notificationRules: fakeRules(rules, rulesUnreachable),
   })
   const schedulers = new SchedulersStore({
     schedulers: records.kind(coreBlocksRecordKinds.schedulers),
@@ -194,7 +203,7 @@ describe('list', () => {
       templates: 1,
       actions: 1,
       devices: 2,
-      notificationRules: 1,
+      notificationRules: 2,
     })
     expect(garden).toMatchObject({
       styled: false,
@@ -232,7 +241,7 @@ describe('rename', () => {
       templates: 1,
       actions: 1,
       devices: 2,
-      notificationRules: 1,
+      notificationRules: 2,
     })
     const block = w.blocks.get('blk-1')
     expect(block).toMatchObject({ name: 'Marked block', tags: ['Yard', 'Solo'] })
@@ -248,8 +257,9 @@ describe('rename', () => {
       [43, [], 'untagged'],
     ])
     expect(w.rules.map((r) => [r.id, r.tags, r.mark])).toEqual([
-      ['rule-1', ['Yard', 'Night'], 'rule-mark'],
-      ['rule-2', [], 'rule-untagged'],
+      ['event:rule-1', ['Yard', 'Night'], 'rule-mark'],
+      ['event:rule-2', [], 'rule-untagged'],
+      ['summary:sum-1', ['Yard'], 'summary-mark'],
     ])
   })
 
@@ -330,7 +340,7 @@ describe('remove', () => {
       templates: 1,
       actions: 1,
       devices: 2,
-      notificationRules: 1,
+      notificationRules: 2,
     })
     expect(w.blocks.get('blk-1')?.tags).toEqual(['Solo'])
     expect((await w.schedulers.get('sch-1'))?.tags).toBeUndefined()
@@ -341,8 +351,46 @@ describe('remove', () => {
     expect(w.rules.map((r) => [r.tags, r.mark])).toEqual([
       [['Night'], 'rule-mark'],
       [[], 'rule-untagged'],
+      [[], 'summary-mark'],
     ])
     expect(await w.styles.get('garden')).toBeNull()
     expect(normalizeTags(w.devices.flatMap((d) => d.tags))).toEqual(['Night'])
+  })
+})
+
+describe('an unreachable owner (notification rules down)', () => {
+  it('list still answers: that owner counts null (unknown, never 0), the others stand', async () => {
+    const down = await world(undefined, true)
+    const garden = (await down.tags.list({})).find((t) => t.name.toLowerCase() === 'garden')
+    expect(garden?.counts).toEqual({
+      coreBlocks: 1,
+      schedulers: 1,
+      templates: 1,
+      actions: 1,
+      devices: 2,
+      notificationRules: null,
+    })
+  })
+
+  it('rename and remove refuse with a typed reason naming the owner, and write nothing', async () => {
+    const down = await world(undefined, true)
+    const rename = down.tags.rename({ from: 'Garden', to: 'Yard' })
+    await expect(rename).rejects.toBeInstanceOf(TagOwnerUnreachableError)
+    await expect(rename).rejects.toMatchObject({ owner: 'notificationRules' })
+    await expect(down.tags.remove({ name: 'Garden' })).rejects.toThrow(
+      /notificationRules owner could not be read/,
+    )
+    expect(down.blocks.get('blk-1')?.tags).toEqual(['Garden', 'Solo'])
+    expect(down.devices.map((d) => d.tags)).toEqual([['Garden'], ['garden', 'Night'], []])
+    expect(down.rules.map((r) => r.tags)).toEqual([['GARDEN', 'Night'], [], ['Garden']])
+  })
+})
+
+describe('notification-rule owner ids', () => {
+  it('round-trip every rule kind, and a bare id is refused', () => {
+    for (const kind of ['event', 'summary', 'timelapse', 'calendar-events'] as const) {
+      expect(parseRuleTagOwnerId(ruleTagOwnerId(kind, 'a:b'))).toEqual({ kind, ruleId: 'a:b' })
+    }
+    expect(() => parseRuleTagOwnerId('rule-1')).toThrow(/not a notification-rule owner id/)
   })
 })

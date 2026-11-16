@@ -1096,9 +1096,13 @@ function requireCaller(caller: CustomActionCaller | undefined): CustomActionCall
  * `actions` runs cap methods on devices when the rule fires (a lock, a siren),
  * and `targetUsers` delivers to OTHER people's phones. A personal rule owned by
  * a non-admin must not be able to do either, and the phone's mirror stripping
- * them was the only thing stopping it.
+ * them was the only thing stopping it. `tags` (D1054) feeds the fleet-wide tag
+ * registry, which only an admin curates (`setRuleTags` is admin too); a
+ * non-admin save that sends no `tags` keeps the stored ones through the merge.
+ * The summary, timelapse and calendar-events upserts check their `tags` through
+ * the same `assertAdminOnlyFields`.
  */
-const NC_ADMIN_ONLY_RULE_FIELDS = ['actions', 'targetUsers'] as const
+const NC_ADMIN_ONLY_RULE_FIELDS = ['actions', 'targetUsers', 'tags'] as const
 type NcAdminOnlyRuleField = (typeof NC_ADMIN_ONLY_RULE_FIELDS)[number]
 type NcAdminOnlyRuleInput = Partial<Record<NcAdminOnlyRuleField, unknown>>
 
@@ -1845,6 +1849,7 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
           throw new Error('upsertTimelapseRule: clear applies to an edit (ruleId) only')
         }
         const parsed = TimelapseRuleInputSchema.parse(input.rule)
+        assertAdminOnlyFields({ tags: parsed.tags }, [], c)
         assertTimelapseCadences(parsed)
         await assertTargetsOwned(
           parsed.targets.map((t) => t.targetId),
@@ -1866,6 +1871,7 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
       const existing = assertTimelapseEditable(input.ruleId, c, tl)
       if (input.patch === undefined) throw new Error('upsertTimelapseRule: patch required')
       const patch = TimelapseRulePatchSchema.parse(input.patch)
+      assertAdminOnlyFields({ tags: patch.tags }, [], c, { tags: existing.tags })
       const clear = input.clear ?? []
       // On the MERGED pair, never the patch alone: lowering `cadenceSec` by
       // itself can invalidate a `denseCadenceSec` set months earlier, and
@@ -1981,6 +1987,7 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
           throw new Error('upsertSummaryRule: clear applies to an edit (ruleId) only')
         }
         const parsed = NcSummaryRuleInputSchema.parse(input.rule)
+        assertAdminOnlyFields({ tags: parsed.tags }, [], c)
         assertSummaryBudget(parsed)
         await assertTargetsOwned(
           parsed.targets.map((t) => t.targetId),
@@ -2001,6 +2008,7 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
       const existing = assertSummaryEditable(input.ruleId, c, sum)
       if (input.patch === undefined) throw new Error('upsertSummaryRule: patch required')
       const patch = NcSummaryRulePatchSchema.parse(input.patch)
+      assertAdminOnlyFields({ tags: patch.tags }, [], c, { tags: existing.tags })
       // On the MERGED pair, never the patch alone: lowering `maxTiles` by itself
       // can invalidate a `maxAiImages` set weeks earlier, and checking the patch
       // in isolation persists that broken pair.
@@ -2103,6 +2111,7 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
           throw new Error('upsertCalendarEventsRule: rule or ruleId required')
         }
         const parsed = NcCalendarEventsRuleInputSchema.parse(input.rule)
+        assertAdminOnlyFields({ tags: parsed.tags }, [], c)
         await assertTargetsOwned(
           parsed.targets.map((t) => t.targetId),
           c,
@@ -2113,9 +2122,10 @@ export function makeNcActionHandlers(deps: NcActionDeps): NcActionHandlers {
         })
         return { rule }
       }
-      assertCalendarEventsEditable(input.ruleId, c, ce)
+      const existing = assertCalendarEventsEditable(input.ruleId, c, ce)
       if (input.patch === undefined) throw new Error('upsertCalendarEventsRule: patch required')
       const patch = NcCalendarEventsRulePatchSchema.parse(input.patch)
+      assertAdminOnlyFields({ tags: patch.tags }, [], c, { tags: existing.tags })
       if (patch.targets !== undefined) {
         await assertTargetsOwned(
           patch.targets.map((t) => t.targetId),

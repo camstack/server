@@ -154,6 +154,28 @@ describe('nc.upsertSummaryRule — a personal digest rule, authored from the pho
     expect(patched.rule.ownerUserId).toBe('u1')
   })
 
+  it('tags are admin-only (D1054): a non-admin cannot author them, and a save without them keeps them', async () => {
+    await expect(
+      ctx.handlers['nc.upsertSummaryRule']({ rule: input({ tags: ['Garden'] }) }, USER),
+    ).rejects.toThrow(/'tags' requires admin/)
+    const created = await ctx.handlers['nc.upsertSummaryRule']({ rule: input() }, USER)
+    await ctx.handlers['nc.upsertSummaryRule'](
+      { ruleId: created.rule.id, patch: { tags: ['Garden'] } },
+      ADMIN,
+    )
+    await expect(
+      ctx.handlers['nc.upsertSummaryRule'](
+        { ruleId: created.rule.id, patch: { tags: ['Yard'] } },
+        USER,
+      ),
+    ).rejects.toThrow(/'tags' requires admin/)
+    const renamed = await ctx.handlers['nc.upsertSummaryRule'](
+      { ruleId: created.rule.id, patch: { name: 'Notte 3' } },
+      USER,
+    )
+    expect(renamed.rule).toMatchObject({ name: 'Notte 3', tags: ['Garden'] })
+  })
+
   it('refuses to patch ANOTHER user’s personal rule', async () => {
     const created = await ctx.handlers['nc.upsertSummaryRule']({ rule: input() }, USER)
     await expect(
