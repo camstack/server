@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 8906 source files · 246 units claimed by at least one document (8875 files).**
+**253 units · 8910 source files · 246 units claimed by at least one document (8879 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -71,6 +71,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-bosch/src/shc` | 30 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0932-a-bosch-sign-in-is-one-field-and-homecom-is-not-a-home-connect-login.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-provider-homeassistant/src/devices` | 30 | `device-providers` | `addons/addon-provider-homeassistant.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1012-a-broker-is-referenced-by-id-and-owns-nothing-of-its-users.md`, +3 more | 2026-11-08 |
 | `packages/addon-notifiers` | 29 | `notification-center` | `architecture/notifications.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0981-a-notification-target-picks-a-broker-and-fetches-its-own-options-inside-its-form-there-is-no-mass-discovery.md`, +1 more, 1 ADR | 2026-11-12 |
+| `packages/addon-provider-unifi` | 29 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/notification` | 29 | `notification-center` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-19-viewer-notification-rule-parity.md` _(covers)_, `architecture/notifications.md`, +27 more, 3 ADRs | 2026-11-12 |
 | `packages/addon-export-alexa/src/handlers` | 28 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +12 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-homematic/src/ui` | 27 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
@@ -79,7 +80,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-velux` | 26 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0976-a-physical-bridge-box-is-a-gateway-device-type-not-a-hub-container-or-parent-of-its-products.md`, `decisions/adr-1013-one-instance-model.md`, +1 more | 2026-11-08 |
 | `packages/addon-export-alexa/src/endpoints` | 25 | `ecosystem-exports` | `addons/addon-export-alexa.md` _(covers)_, `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, +14 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-provider-homematic` | 25 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0626-a-parameter-carried-by-two-channels-is-read-from-the-status-one.md`, +1 more | 2026-11-08 |
-| `packages/addon-provider-unifi` | 25 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/addon` | 25 | `kernel`, `secrets` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-1013-one-instance-model.md`, `architecture/secrets-keychain.md`, +17 more, 1 ADR | 2026-10-18 |
 | `packages/addon-provider-mqtt-ha` | 24 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-0831-mqtt-ha-discovery-import-is-its-own-provider.md`, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/types` | 24 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0496-occupancy-history-is-durable-and-the-census-is-a-layer.md`, `decisions/adr-0649-a-clip-model-carries-its-feature-space-contract-and-gets-its-own-index.md`, +7 more, 1 ADR | 2026-10-01 |

@@ -7,7 +7,7 @@
   "controller.s_connection.allowSelfSigned.label": "Accetta il certificato autofirmato",
   "controller.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)",
   "controller.s_signin.title": "Accesso",
-  "controller.s_signin.description": "Per accedere si usa la API key. Nome utente e password non sono ancora usati: il client accede solo con la API key.",
+  "controller.s_signin.description": "Basta una delle due credenziali. La API key legge il controller; nome utente e password di un account LOCALE della console (non un account UI.com, senza accesso a due fattori) servono per accendere e spegnere le porte PoE. Con entrambe, la API key fa tutto il resto.",
   "controller.s_signin.apiKey.label": "API key",
   "controller.s_signin.username.label": "Nome utente",
   "controller.s_signin.password.label": "Password"

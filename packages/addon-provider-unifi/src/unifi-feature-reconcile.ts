@@ -1,34 +1,18 @@
 import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/types'
-import { UNIFI_SYSTEM } from './config.js'
+import {
+  UNIFI_SYSTEM,
+  type UnifiFeatureDescriptor,
+  unifiFeatureDescriptorSchema,
+} from './config.js'
 import { buildInfraFeatures, featuresEqual, mergeInfraFeatures } from './unifi-mapping.js'
 import { unifiControllers } from './unifi-node-resolver.js'
 
-/** Narrow a persisted `features[]` blob to descriptors for the equality check. */
-function readDescriptors(raw: readonly unknown[]): Parameters<typeof featuresEqual>[0] {
-  const out: Array<Parameters<typeof featuresEqual>[0][number]> = []
+/** Narrow a persisted `features[]` blob to descriptors; an entry that does not parse is skipped. */
+function readDescriptors(raw: readonly unknown[]): UnifiFeatureDescriptor[] {
+  const out: UnifiFeatureDescriptor[] = []
   for (const entry of raw) {
-    if (typeof entry !== 'object' || entry === null) continue
-    const rec: Record<string, unknown> = Object.fromEntries(Object.entries(entry))
-    const kind = rec['kind']
-    if (kind !== 'switch' && kind !== 'button' && kind !== 'sensor') continue
-    const metric = rec['metric']
-    out.push({
-      kind,
-      ...(rec['switchFeature'] === 'poe' || rec['switchFeature'] === 'led'
-        ? { switchFeature: rec['switchFeature'] }
-        : {}),
-      ...(rec['buttonAction'] === 'restart' || rec['buttonAction'] === 'power-cycle'
-        ? { buttonAction: rec['buttonAction'] }
-        : {}),
-      ...(typeof rec['portIdx'] === 'number' ? { portIdx: rec['portIdx'] } : {}),
-      ...(metric === 'cpu_utilization' ||
-      metric === 'cpu_temperature' ||
-      metric === 'clients' ||
-      metric === 'state' ||
-      metric === 'uptime'
-        ? { metric }
-        : {}),
-    })
+    const parsed = unifiFeatureDescriptorSchema.safeParse(entry)
+    if (parsed.success) out.push(parsed.data)
   }
   return out
 }

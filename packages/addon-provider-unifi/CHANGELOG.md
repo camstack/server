@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The UniFi connection can be tested from the form with the API key, a failure names its reason (refused key, untrusted self-signed certificate, unreachable, wrong site) instead of "fetch failed", an offline integration says why on its status, and the LED switch the API cannot control is no longer offered
 - Discovery shows each switch's PoE ports under it, and a poll whose port or sensor read failed no longer removes the adopted port and sensor children
+- Each PoE port of a UniFi switch is now its own device under the switch, showing its PoE power, link and the client on it (named after that client); with a local account (username and password) added beside the API key, the port's PoE can be switched on and off — and a camera can use that port as its power source for restarts
 
 ## [0.2.164] - 2026-11-14
 

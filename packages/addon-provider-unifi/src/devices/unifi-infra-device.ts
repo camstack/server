@@ -8,7 +8,7 @@ import {
 } from '@camstack/types'
 import { unifiInfraSchema } from '../config.js'
 import {
-  capForDescriptor,
+  capsForDescriptor,
   deviceTypeForDescriptor,
   featureLabel,
   featureSuffix,
@@ -28,8 +28,8 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
  * `applyDerivedSpec`. Mirrors `EcowittContainerDevice`.
  *
  * The fan-out per infra device:
- *   - per-PoE-port PoE Switch children + power-cycle Button children,
- *   - a restart Button child (no LED switch: the Integration API cannot serve it),
+ *   - one PoE port device per PoE-capable port (switch / power-meter / reboot / network-link),
+ *   - a restart Button child (no LED switch),
  *   - cpu_utilization / cpu_temperature / clients / state / uptime Sensor children.
  */
 export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
@@ -52,6 +52,13 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     })
   }
 
+  /** The client on one of this device's ports in the live snapshot, or null. */
+  private portClientName(portIdx: number | undefined): string | null {
+    if (portIdx === undefined) return null
+    const infra = unifiControllers.getInfra(this.integrationId, this.infraNativeId)
+    return infra?.ports.find((p) => p.idx === portIdx)?.clientName ?? null
+  }
+
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {
     // Read the LIVE config so an additive reconcile (re-persisted `features[]`
     // via applyDerivedSpec) spawns new children + removes orphaned ones.
@@ -59,7 +66,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
       const role = roleForDescriptor(descriptor)
       const meta: AccessoryChildSpec['meta'] = {
         type: deviceTypeForDescriptor(descriptor),
-        name: featureLabel(descriptor),
+        name: featureLabel(descriptor, this.portClientName(descriptor.portIdx)),
         linkDeviceId: this.id,
         integrationId: this.integrationId,
         ...(role !== undefined ? { role } : {}),
@@ -68,7 +75,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
         kind: descriptor.kind,
         integrationId: this.integrationId,
         infraNativeId: this.infraNativeId,
-        capabilities: [capForDescriptor(descriptor)],
+        capabilities: [...capsForDescriptor(descriptor)],
         system: 'unifi',
         ...(descriptor.switchFeature !== undefined
           ? { switchFeature: descriptor.switchFeature }
@@ -76,6 +83,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
         ...(descriptor.buttonAction !== undefined ? { buttonAction: descriptor.buttonAction } : {}),
         ...(descriptor.portIdx !== undefined ? { portIdx: descriptor.portIdx } : {}),
         ...(descriptor.metric !== undefined ? { metric: descriptor.metric } : {}),
+        ...(descriptor.switchable !== undefined ? { switchable: descriptor.switchable } : {}),
       }
       return {
         stableIdSuffix: featureSuffix(descriptor),

@@ -65,20 +65,71 @@ export interface UnifiPortRef {
 }
 
 /**
- * The hook that names a PoE port after the client plugged into it (planning#583). The
- * Integration API does not say which port a wired client sits on, so the default knows none.
+ * The hook that names a PoE port after the client plugged into it (planning#583). Only the
+ * classic API (a local account) says which port a wired client sits on (`stat/sta` `sw_mac` +
+ * `sw_port`); {@link portClientNamerOf} reads it off the snapshots.
  */
 export type UnifiPortClientNamer = (port: UnifiPortRef) => string | null
 
 /** The default {@link UnifiPortClientNamer}: no port has a known client. */
 export const NO_PORT_CLIENT_NAMES: UnifiPortClientNamer = () => null
 
-/** A PoE port's label: its client when one is known, else its number. */
-export function poePortLabel(portIdx: number | undefined, clientName: string | null): string {
+/** The namer that reads each port's client off the infra snapshots. */
+export function portClientNamerOf(infra: readonly UnifiInfraSnapshot[]): UnifiPortClientNamer {
+  return ({ infraId, portIdx }) =>
+    infra.find((d) => d.id === infraId)?.ports.find((p) => p.idx === portIdx)?.clientName ?? null
+}
+
+/**
+ * The semantic role of a PoE port device. THE line that flips once `DeviceRole.PoePort`
+ * (`'poe-port'`) is in `@camstack/types`: `= DeviceRole.PoePort`. Until then a port is a plain
+ * `switch` device.
+ */
+export const UNIFI_POE_PORT_ROLE: DeviceRole | null = null
+
+/** A PoE port's name: "<client> (port N)" when its client is known, else "Port N". */
+export function portLabel(portIdx: number | undefined, clientName: string | null): string {
   const port = portIdx ?? '?'
   return clientName !== null && clientName.length > 0
     ? `${clientName} (port ${port})`
-    : `Port ${port} PoE`
+    : `Port ${port}`
+}
+
+/** What to do with an adopted port's name when its client name changed. */
+export type UnifiPortNameWrite =
+  | { readonly kind: 'keep' }
+  | {
+      readonly kind: 'rename'
+      readonly name: string
+      readonly stampUserNamed: boolean
+    }
+
+/**
+ * Whether an adopted port device may take its new automatic name. A name this addon generated
+ * ("Port N", the old "Port N PoE", "<anything> (port N)", the stable-id placeholder) follows the
+ * client; anything else is an operator rename and is kept. `stampUserNamed` mirrors the row's
+ * flag (the device manager refuses a system rename of a flagged row otherwise). Pure.
+ */
+export function portNameWrite(input: {
+  readonly currentName: string
+  readonly userNamed: boolean | undefined
+  readonly desiredName: string
+  readonly portIdx: number
+  readonly stableId: string
+}): UnifiPortNameWrite {
+  const { currentName, portIdx } = input
+  if (currentName === input.desiredName) return { kind: 'keep' }
+  const auto =
+    currentName === `Port ${portIdx}` ||
+    currentName === `Port ${portIdx} PoE` ||
+    currentName.endsWith(` (port ${portIdx})`) ||
+    currentName === input.stableId
+  if (!auto && input.userNamed !== false) return { kind: 'keep' }
+  return {
+    kind: 'rename',
+    name: input.desiredName,
+    stampUserNamed: input.userNamed === true,
+  }
 }
 
 /** A human-facing label for a spawned switch/button/sensor child. */
@@ -89,7 +140,9 @@ export function featureLabel(
   switch (descriptor.kind) {
     case 'switch':
       if (descriptor.switchFeature === 'led') return 'LED'
-      return poePortLabel(descriptor.portIdx, clientName)
+      return portLabel(descriptor.portIdx, clientName)
+    case 'port':
+      return portLabel(descriptor.portIdx, clientName)
     case 'button':
       if (descriptor.buttonAction === 'restart') return 'Restart'
       return `Port ${descriptor.portIdx ?? '?'} power cycle`
@@ -102,6 +155,7 @@ export function featureLabel(
 export function deviceTypeForDescriptor(descriptor: UnifiFeatureDescriptor): DeviceType {
   switch (descriptor.kind) {
     case 'switch':
+    case 'port':
       return DeviceType.Switch
     case 'button':
       return DeviceType.Button
@@ -110,15 +164,22 @@ export function deviceTypeForDescriptor(descriptor: UnifiFeatureDescriptor): Dev
   }
 }
 
-/** The cap name a feature descriptor's child registers. */
-export function capForDescriptor(descriptor: UnifiFeatureDescriptor): string {
+/** The caps a PoE port device registers: `switch` only when its PoE can be switched. */
+export function capsForPort(switchable: boolean): readonly string[] {
+  return switchable ? ['switch', 'power-meter', 'network-link'] : ['power-meter', 'network-link']
+}
+
+/** The cap names a feature descriptor's child registers. */
+export function capsForDescriptor(descriptor: UnifiFeatureDescriptor): readonly string[] {
   switch (descriptor.kind) {
     case 'switch':
-      return 'switch'
+      return ['switch']
     case 'button':
-      return 'button'
+      return ['button']
     case 'sensor':
-      return descriptor.metric !== undefined ? capForMetric(descriptor.metric) : 'numeric-sensor'
+      return [descriptor.metric !== undefined ? capForMetric(descriptor.metric) : 'numeric-sensor']
+    case 'port':
+      return capsForPort(descriptor.switchable === true)
   }
 }
 
@@ -127,6 +188,7 @@ export function roleForDescriptor(descriptor: UnifiFeatureDescriptor): DeviceRol
   if (descriptor.kind === 'sensor' && descriptor.metric !== undefined) {
     return roleForMetric(descriptor.metric)
   }
+  if (descriptor.kind === 'port') return UNIFI_POE_PORT_ROLE ?? undefined
   return undefined
 }
 
@@ -141,14 +203,24 @@ export function featureSuffix(descriptor: UnifiFeatureDescriptor): string {
         : `power-cycle-${descriptor.portIdx ?? 0}`
     case 'sensor':
       return `sensor-${descriptor.metric ?? 'unknown'}`
+    case 'port':
+      return `port-${descriptor.portIdx ?? 0}`
   }
+}
+
+/** The identity of a descriptor for the equality check: a port also differs by `switchable`. */
+function featureKey(descriptor: UnifiFeatureDescriptor): string {
+  const suffix = featureSuffix(descriptor)
+  return descriptor.kind === 'port' ? `${suffix}:${descriptor.switchable === true}` : suffix
 }
 
 /**
  * Derive the full feature-descriptor list an infra device fans out into:
- *   - per-PoE-port PoE switch + power-cycle button,
- *   - a device-level restart button (no LED switch: the Integration API can neither read nor
- *     set the LED, so it is not offered),
+ *   - one `port` device per PoE-capable port (a non-PoE port is not a device), `switchable` when
+ *     the client can switch PoE (a local account is set) — without it the port offers no switch,
+ *     only the power reading and the link. A restart through PoE is the POWERED device's
+ *     `power-source` cap pointed at this port's switch, never a button on the port,
+ *   - a device-level restart button (no LED switch: not offered),
  *   - cpu / temp / clients / state / uptime sensors.
  * Pure — no I/O. Unit-testable in isolation.
  */
@@ -158,11 +230,14 @@ export function buildInfraFeatures(snapshot: UnifiInfraSnapshot): UnifiFeatureDe
   // Whole-device controls.
   features.push({ kind: 'button', buttonAction: 'restart' })
 
-  // Per-PoE-port controls.
+  // One device per PoE-capable port.
   for (const port of snapshot.ports) {
     if (!port.poeCapable) continue
-    features.push({ kind: 'switch', switchFeature: 'poe', portIdx: port.idx })
-    features.push({ kind: 'button', buttonAction: 'power-cycle', portIdx: port.idx })
+    features.push({
+      kind: 'port',
+      portIdx: port.idx,
+      switchable: snapshot.poeSwitchable,
+    })
   }
 
   // Telemetry sensors (only surface metrics the model reports).
@@ -175,16 +250,21 @@ export function buildInfraFeatures(snapshot: UnifiInfraSnapshot): UnifiFeatureDe
   return features
 }
 
-/** A feature no client can serve any more: dropped by the reconcile, never re-offered. */
+/**
+ * A feature no longer offered: dropped by the reconcile, never re-offered. The LED switch, and the
+ * per-port PoE switch + power-cycle button the `port` device replaced (planning#583).
+ */
 function isRetiredFeature(descriptor: UnifiFeatureDescriptor): boolean {
-  return descriptor.kind === 'switch' && descriptor.switchFeature === 'led'
+  if (descriptor.kind === 'switch') return true
+  return descriptor.kind === 'button' && descriptor.buttonAction === 'power-cycle'
 }
 
 /**
  * The features an adopted infra device keeps after a poll: everything the snapshot derives, plus
  * every feature it already had. A read that did not answer (a device detail without ports,
  * statistics without cpu or uptime) looks like a feature that vanished, so the reconcile only
- * ADDS; only a retired feature (the LED switch) is removed. Pure.
+ * ADDS; only a retired feature is removed. A port's `switchable` follows the snapshot, which
+ * takes it from the configuration (a local account), never from a read. Pure.
  */
 export function mergeInfraFeatures(
   current: readonly UnifiFeatureDescriptor[],
@@ -201,9 +281,9 @@ export function featuresEqual(
   b: readonly UnifiFeatureDescriptor[],
 ): boolean {
   if (a.length !== b.length) return false
-  const aKeys = new Set(a.map(featureSuffix))
+  const aKeys = new Set(a.map(featureKey))
   for (const descriptor of b) {
-    if (!aKeys.has(featureSuffix(descriptor))) return false
+    if (!aKeys.has(featureKey(descriptor))) return false
   }
   return true
 }

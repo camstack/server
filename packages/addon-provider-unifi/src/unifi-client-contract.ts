@@ -1,7 +1,8 @@
 /**
  * The contract every UniFi Network controller client satisfies — the seam the integration manager
- * builds against. Implemented by `UnifiLiveClient` (API key, the UniFi OS Integration API), built
- * per connection by `unifi-client-factory.ts`.
+ * builds against. Built per connection by `unifi-client-factory.ts`: `UnifiLiveClient` (API key,
+ * the UniFi OS Integration API), `UnifiClassicClient` (a local account, the classic Network API)
+ * or `UnifiDualClient` (both: the API key for everything, the local account for PoE on/off).
  *
  * Scope is the **local controller API only** (UDM / UDM-Pro / Cloud Key / a
  * self-hosted Network controller): infra devices (switches / APs / gateways)
@@ -15,11 +16,25 @@ import type { UnifiInfraKind } from './unifi-device-kind.js'
 export interface UnifiInfraPort {
   /** 1-based port index as reported by the controller. */
   readonly idx: number
-  /** Whether PoE is currently delivering power on this port. */
+  /** Whether PoE is on: the port's PoE mode is not `off` (classic API), or PoE is delivering
+   *  power (Integration API, which has no mode). */
   readonly poeOn: boolean
-  /** Whether the port is PoE-capable at all (drives whether a PoE switch /
-   *  power-cycle button child is spawned for it). */
+  /** Whether the port is PoE-capable at all — only such a port becomes a device. */
   readonly poeCapable: boolean
+  /** Whether the Ethernet link is up, or null when the controller did not say. */
+  readonly linkUp: boolean | null
+  /** Negotiated link speed in Mbps, or null when unknown / down. */
+  readonly speedMbps: number | null
+  /** PoE power drawn, in W, or null when not reported. */
+  readonly poePowerW: number | null
+  /** PoE voltage, in V, or null when not reported. */
+  readonly poeVoltageV: number | null
+  /** PoE current, in A, or null when not reported. */
+  readonly poeCurrentA: number | null
+  /** MAC of the wired client on this port (classic `stat/sta` `sw_mac` + `sw_port`), or null. */
+  readonly clientMac: string | null
+  /** Name of that client, or null when unknown. */
+  readonly clientName: string | null
 }
 
 /** Controller-reported operational state of an infra device. */
@@ -41,6 +56,8 @@ export interface UnifiInfraSnapshot {
   readonly id: string
   /** Operator-assigned device name from the controller. */
   readonly name: string
+  /** The device MAC (lower-case), or null when the controller did not report it. */
+  readonly mac: string | null
   /** Hardware model string (e.g. `USW-Lite-8-PoE`, `U6-Pro`, `UDM-SE`). */
   readonly model: string
   /** What the device is (console, switch, access point, other) — `classifyUnifiInfra`. */
@@ -61,6 +78,10 @@ export interface UnifiInfraSnapshot {
   readonly ledOn: boolean
   /** Whether the device is currently reachable through the controller. */
   readonly online: boolean
+  /** Whether the client can switch this device's PoE ports on and off. A CONFIGURATION fact
+   *  (a local account is set), never the outcome of a read — so a failed read never retires a
+   *  switch. */
+  readonly poeSwitchable: boolean
 }
 
 /**
@@ -82,7 +103,7 @@ export interface UnifiClientSnapshot {
 
 /** The live client the addon drives ONE UniFi Network controller with. */
 export interface UnifiControllerClient {
-  /** Open the session and authenticate (the API key). */
+  /** Open the session and authenticate. */
   connect(): Promise<void>
   /** Close the session. */
   disconnect(): Promise<void>
@@ -102,6 +123,11 @@ export interface UnifiControllerClient {
   powerCyclePort(deviceId: string, portIdx: number): Promise<void>
   /** Turn the device status LED on / off. */
   setLed(deviceId: string, on: boolean): Promise<void>
+  /**
+   * The failure of the part of the client that did not answer while the rest did (the local
+   * account of a {@link UnifiControllerClient} that signs in with an API key too), or null.
+   */
+  degradedError(): Error | null
 }
 
 /** Factory seam: build a live {@link UnifiControllerClient} for a connection. */

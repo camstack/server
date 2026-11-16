@@ -1,29 +1,16 @@
 /**
  * Discovery proposes each UniFi device with the type the one mapping gives it, and a switch
- * with its PoE ports as switches under it, named by port number unless a client namer (#583)
- * knows what is plugged in (planning#587).
+ * with its PoE ports as port devices under it (#583), named after the client on the port when
+ * one is known, else by number (planning#587).
  */
 import { DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { UnifiInfraSnapshot } from '../unifi-client-contract.js'
 import { buildDiscoveryCandidates } from '../unifi-discovery.js'
+import { infraSnapshot, port } from './unifi-fixtures.js'
 
 function infra(over: Partial<UnifiInfraSnapshot> & Pick<UnifiInfraSnapshot, 'id' | 'model'>) {
-  const base: UnifiInfraSnapshot = {
-    id: over.id,
-    name: over.id,
-    model: over.model,
-    kind: 'other',
-    cpuPercent: null,
-    cpuTempC: null,
-    clients: 0,
-    state: 'online',
-    uptimeSec: null,
-    ports: [],
-    ledOn: false,
-    online: true,
-  }
-  return { ...base, ...over }
+  return infraSnapshot(over)
 }
 
 const CONSOLE = infra({ id: 'udm', model: 'UDM-Pro', kind: 'console' })
@@ -32,9 +19,9 @@ const SWITCH = infra({
   model: 'USW-Lite-8-PoE',
   kind: 'switch',
   ports: [
-    { idx: 1, poeOn: true, poeCapable: true },
-    { idx: 2, poeOn: false, poeCapable: false },
-    { idx: 3, poeOn: false, poeCapable: true },
+    port({ idx: 1 }),
+    port({ idx: 2, poeOn: false, poeCapable: false }),
+    port({ idx: 3, poeOn: false, clientName: 'snapshot-client' }),
   ],
 })
 const AP = infra({ id: 'ap1', model: 'U6-Pro', kind: 'access-point' })
@@ -59,12 +46,13 @@ describe('buildDiscoveryCandidates', () => {
     expect(out[0]?.metadata.model).toBe('UDM-Pro')
   })
 
-  it('proposes every PoE port as a switch under its switch, named by port number', () => {
+  it('proposes every PoE port as a device under its switch, named after its client', () => {
     const sw = buildDiscoveryCandidates(BASE).find((c) => c.childNativeId === 'infra:sw1')
     expect(sw?.children?.map((c) => [c.childNativeId, c.type, c.name])).toEqual([
-      ['infra:sw1:poe-1', DeviceType.Switch, 'Port 1 PoE'],
-      ['infra:sw1:poe-3', DeviceType.Switch, 'Port 3 PoE'],
+      ['infra:sw1:port-1', DeviceType.Switch, 'Port 1'],
+      ['infra:sw1:port-3', DeviceType.Switch, 'snapshot-client (port 3)'],
     ])
+    expect(sw?.children?.[0]?.capabilities).toEqual(['power-meter', 'network-link'])
   })
 
   it('a device without PoE ports proposes no children', () => {
@@ -78,6 +66,6 @@ describe('buildDiscoveryCandidates', () => {
       portClientName: ({ infraId, portIdx }) =>
         infraId === 'sw1' && portIdx === 3 ? 'marker-camera' : null,
     }).find((c) => c.childNativeId === 'infra:sw1')
-    expect(sw?.children?.map((c) => c.name)).toEqual(['Port 1 PoE', 'marker-camera (port 3)'])
+    expect(sw?.children?.map((c) => c.name)).toEqual(['Port 1', 'marker-camera (port 3)'])
   })
 })

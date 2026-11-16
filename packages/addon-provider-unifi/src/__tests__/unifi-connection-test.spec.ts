@@ -19,6 +19,7 @@ import {
   unifiConnectionsEntryKind,
   unifiRecordKinds,
 } from '../unifi-instances.js'
+import { infraSnapshot } from './unifi-fixtures.js'
 
 const quiet: IScopedLogger = {
   debug: () => undefined,
@@ -41,20 +42,13 @@ function fakeFactory(failure: unknown, seen: ClientInput[] = []): UnifiControlle
       },
       disconnect: async () => undefined,
       listInfraDevices: async () => [
-        {
+        infraSnapshot({
           id: 'd1',
           name: 'Switch',
           model: 'USW',
           kind: 'switch',
-          cpuPercent: null,
-          cpuTempC: null,
-          clients: 0,
-          state: 'online',
-          uptimeSec: null,
-          ports: [],
           ledOn: true,
-          online: true,
-        },
+        }),
       ],
       listClients: async () => [],
       getInfraDevice: () => null,
@@ -63,6 +57,7 @@ function fakeFactory(failure: unknown, seen: ClientInput[] = []): UnifiControlle
       restartDevice: async () => undefined,
       powerCyclePort: async () => undefined,
       setLed: async () => undefined,
+      degradedError: () => null,
     }
     return client
   }
@@ -124,15 +119,19 @@ describe('testUnifiConnection', () => {
     expect(result.error).not.toContain('fetch failed')
   })
 
-  it('a username and password alone is offline: they are not used yet', async () => {
+  it('a username without a password is no credential: refused before any request', async () => {
+    const mustNotCall = async (): Promise<never> => {
+      throw new Error('must not be called')
+    }
     const result = await testUnifiConnection(
-      settingsToConnection({ host: 'console.example', username: 'u', password: 'p' }),
-      makeUnifiClientFactory(() => async () => {
-        throw new Error('must not be called')
+      settingsToConnection({ host: 'console.example', username: 'u' }),
+      makeUnifiClientFactory({
+        fetchFor: () => mustNotCall,
+        httpFor: () => mustNotCall,
       }),
     )
     expect(result).toMatchObject({ success: false, status: 'rejected' })
-    expect(result.error).toContain('no API key')
+    expect(result.error).toContain('no credential')
   })
 
   it('an unreachable controller is inconclusive, not a refusal', async () => {
@@ -197,7 +196,7 @@ describe('the UniFi integration declares and runs its test', () => {
 })
 
 describe('the integration status names why it is offline', () => {
-  it('an integration with no API key is offline with the reason, not silently empty', async () => {
+  it('an integration with no credential is offline with the reason, not silently empty', async () => {
     const registry = new UnifiClientRegistry(quiet, {
       makeClient: fakeFactory(new UnifiNoCredentialError()),
       onConnected: () => undefined,
@@ -209,7 +208,7 @@ describe('the integration status names why it is offline', () => {
       state: 'error',
       label: 'Offline',
     })
-    expect(registry.statusOf('int_1')?.detail).toContain('no API key')
+    expect(registry.statusOf('int_1')?.detail).toContain('no credential')
     await registry.shutdown()
   })
 
