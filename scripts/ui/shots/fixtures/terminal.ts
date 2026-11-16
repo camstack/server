@@ -206,7 +206,7 @@ export default defineFixtures({
             },
           }
     },
-    // One instance pty and one node shell: only the first is a "Live session" of Terminal devices.
+    // One instance pty and two node shells: only the first is a "Live session" of Terminal devices.
     'terminalSession.listSessions': (i: { nodeId?: string }) =>
       (i.nodeId ?? 'hub') === 'hub'
         ? [
@@ -225,9 +225,27 @@ export default defineFixtures({
               cols: 120,
               rows: 32,
               startedAt: NOW - 120_000,
+              openedBy: 'u-admin',
+              lastActivityAt: NOW - 30_000,
+            },
+            // A shell another admin's closed tab left behind, still printing.
+            {
+              sessionId: 'sh-4e02',
+              profileId: 'server-shell',
+              label: 'Server shell',
+              cols: 120,
+              rows: 32,
+              startedAt: NOW - 3 * 3_600_000,
+              openedBy: 'u-ops',
+              lastActivityAt: NOW - 60_000,
             },
           ]
         : [],
+    // Who opened each node shell.
+    'userManagement.listUsers': [
+      { id: 'u-admin', username: 'admin', isAdmin: true },
+      { id: 'u-ops', username: 'ops', isAdmin: true },
+    ],
     'mut:terminalSession.openSession': (i: { nodeId: string; profileId: string }) => ({
       sessionId: `${i.profileId}-${i.nodeId}`,
       profileId: i.profileId,

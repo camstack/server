@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Archive Review: compact event rows with a size slider, class chips and every filter in one bar above the timeline.
 - Archive Review: event rows are selectable for bulk delete, sources loading or failing are said, a zone filter counts the events it could not check, and old camera links open the matching view; Library → Exports filters by camera.
 - Terminal page: Terminal devices and Node shells are separate tabs; a node's shell opens only when you open that node and closes when you leave it.
+- Node shells counts each node's running shells and lists them, whoever opened them, with a Close; a failed close is shown, a node without Terminal says so, and a page restored from the back/forward cache returns to Open shell.
 
 ## [1.2.689] - 2026-11-16
 

@@ -1,13 +1,17 @@
 /**
  * The lifetime of ONE node shell, bound to the section that shows it: the
  * `server-shell` session is opened when the section mounts and closed when it
- * unmounts (another node picked, the section closed, the tab or page left) or
- * the page is hidden. A tab killed outright closes nothing — the provider's
- * idle timeout reaps that shell.
+ * unmounts (another node picked, the section closed, the tab left, or the page
+ * restored from the back/forward cache — `NodeShells` resets the section on
+ * `pageshow`). A page that is closed or navigated away closes nothing: such a
+ * shell keeps running until the idle timeout (only while it prints nothing) or
+ * until an admin closes it from the node's running-shells list.
  *
- * Nothing is reattached: a shell left behind by another tab belongs to that
- * tab (or to the idle timeout), so opening a node's section always starts a
- * fresh, audited session.
+ * A close that fails is reported through `onCloseFailed`, to the page that
+ * outlives this section — never swallowed.
+ *
+ * Nothing is reattached: opening a node's section always starts a fresh,
+ * audited session.
  */
 import { useTerminalSessionClose, useTerminalSessionOpenSession } from '@camstack/ui-library'
 import { useEffect, useRef, useState } from 'react'
@@ -24,25 +28,34 @@ export interface NodeShellSessionState {
   readonly error: string | null
 }
 
-export function useNodeShellSession(nodeId: string): NodeShellSessionState {
+export type NodeShellCloseFailed = (message: string) => void
+
+export function useNodeShellSession(
+  nodeId: string,
+  onCloseFailed: NodeShellCloseFailed,
+): NodeShellSessionState {
   const openSession = useTerminalSessionOpenSession()
   const closeSession = useTerminalSessionClose()
   const openRef = useRef(openSession.mutateAsync)
   const closeRef = useRef(closeSession.mutateAsync)
   openRef.current = openSession.mutateAsync
   closeRef.current = closeSession.mutateAsync
+  const failedRef = useRef(onCloseFailed)
+  failedRef.current = onCloseFailed
   const [state, setState] = useState<NodeShellSessionState>({ sessionId: null, error: null })
 
   useEffect(() => {
     let left = false
     let openedId: string | null = null
-    // A close on the way out has nowhere to report a failure: the section is
-    // gone. The provider's idle timeout is the backstop for a close that fails.
+    // The section is gone by the time a close on the way out answers, so a
+    // failure goes to the page; the shell stays in the node's running list.
     const closeOpened = () => {
       if (openedId === null) return
       const sessionId = openedId
       openedId = null
-      void closeRef.current({ nodeId, sessionId }).catch(() => undefined)
+      closeRef.current({ nodeId, sessionId }).catch((error: unknown) => {
+        failedRef.current(error instanceof Error ? error.message : String(error))
+      })
     }
     // Deferred one tick so a mount that is immediately undone (React's
     // StrictMode double-mount) never spawns a shell.
@@ -70,11 +83,9 @@ export function useNodeShellSession(nodeId: string): NodeShellSessionState {
           })
         })
     }, 0)
-    window.addEventListener('pagehide', closeOpened)
     return () => {
       left = true
       clearTimeout(timer)
-      window.removeEventListener('pagehide', closeOpened)
       closeOpened()
     }
   }, [nodeId])

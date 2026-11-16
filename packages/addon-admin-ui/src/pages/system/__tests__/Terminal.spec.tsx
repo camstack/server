@@ -24,6 +24,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // `components/pipeline/__tests__/` already use.
 expect.extend(jestDomMatchers)
 
+import type { CapabilityRegistryAnswer } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { parseSseBuffer } from '../../../lib/terminal-io'
 
@@ -74,28 +75,37 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
   ),
 }))
 
-const mocks = vi.hoisted(() => ({
-  openSession: vi.fn(async () => ({ sessionId: 's-1' })),
-  profileCalls: [] as string[],
-  legacy: undefined as readonly { stableId: string }[] | undefined,
-  custom: vi.fn(async () => ({ adopted: 1, cameras: [] })),
-  sessions: [] as readonly {
-    sessionId: string
-    profileId: string
-    label: string
-    cols: number
-    rows: number
-    startedAt: number
-  }[],
-  registry: {
-    status: 'success' as 'pending' | 'success' | 'error',
+const mocks = vi.hoisted(() => {
+  const hubRegistry = (): CapabilityRegistryAnswer => ({
+    status: 'success',
     data: {
       name: 'terminal-session',
+      mode: 'singleton',
       providers: ['terminal'],
-      perNode: [{ nodeId: 'hub', providers: ['terminal'] }],
-    } as unknown,
-  },
-}))
+      activeProvider: 'terminal',
+      disabledProviders: [],
+      perNode: [
+        { nodeId: 'hub', providers: ['terminal'], resolvedActive: 'terminal', hasOverride: false },
+      ],
+    },
+  })
+  return {
+    hubRegistry,
+    openSession: vi.fn(async () => ({ sessionId: 's-1' })),
+    profileCalls: [] as string[],
+    legacy: undefined as readonly { stableId: string }[] | undefined,
+    custom: vi.fn(async () => ({ adopted: 1, cameras: [] })),
+    sessions: [] as readonly {
+      sessionId: string
+      profileId: string
+      label: string
+      cols: number
+      rows: number
+      startedAt: number
+    }[],
+    registry: hubRegistry(),
+  }
+})
 
 const INSTANCES = [
   {
@@ -159,21 +169,17 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
 }))
 
 vi.mock('@camstack/ui-library', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@camstack/ui-library')
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   const query = <T,>(data: T) => ({ data, isLoading: false, isError: false, refetch: vi.fn() })
   return {
     ...actual,
     hubPath: (p: string) => p,
     useCapabilityNodePresence: () => {
-      const onNodeOf = actual['capabilityPresenceOnNode'] as (
-        answer: unknown,
-        nodeId: string,
-      ) => string
-      const nodesOf = actual['capabilityProviderNodes'] as (answer: unknown) => unknown
-      const answer = { status: mocks.registry.status, data: mocks.registry.data }
+      const answer = mocks.registry
       return {
-        onNode: (nodeId: string) => onNodeOf(answer, nodeId),
-        providerNodes: nodesOf(answer),
+        onNode: (nodeId: string) => actual.capabilityPresenceOnNode(answer, nodeId),
+        providerNodes: actual.capabilityProviderNodes(answer),
       }
     },
     useAddonsCustom: () => ({ mutateAsync: mocks.custom, isPending: false }),
@@ -219,12 +225,7 @@ describe('TerminalPage', () => {
     mocks.legacy = []
     mocks.custom.mockClear()
     mocks.sessions = []
-    mocks.registry.status = 'success'
-    mocks.registry.data = {
-      name: 'terminal-session',
-      providers: ['terminal'],
-      perNode: [{ nodeId: 'hub', providers: ['terminal'] }],
-    }
+    mocks.registry = mocks.hubRegistry()
   })
 
   it('shows each terminal with its node, profile and camera link', () => {

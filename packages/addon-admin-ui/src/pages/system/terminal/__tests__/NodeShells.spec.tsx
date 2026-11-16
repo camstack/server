@@ -5,20 +5,23 @@
  *   loading state, never "no node" (D315);
  * - no shell is opened by the list — only by opening a node's section;
  * - a node that has not opted in shows the provider's refusal and opens nothing;
- * - leaving the section (Close, another node, unmount) closes the session.
+ * - leaving the section (Close, another node, unmount, a back/forward-cache
+ *   restore) closes the session, and a close that fails is shown, not swallowed;
+ * - every server shell a node runs — opened here or not — is counted in the row
+ *   and listed in the open section with a Close;
+ * - a node the registry answered without names that Terminal is not installed.
  */
 /// <reference types="@testing-library/jest-dom" />
 
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 expect.extend(jestDomMatchers)
 
+import type { CapabilityRegistryAnswer } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
-
-type Registry = { status: 'pending' | 'success' | 'error'; data: unknown }
 
 interface ShellStatus {
   readonly nodeId: string
@@ -27,19 +30,36 @@ interface ShellStatus {
   readonly refusal: { code: 'server-shell-disabled'; nodeId: string; message: string } | null
 }
 
-const mocks = vi.hoisted(() => ({
-  registry: { status: 'success', data: null } as Registry,
-  statusByNode: {} as Record<string, ShellStatus>,
-  openSession: vi.fn(async (input: { nodeId: string }) => ({
-    sessionId: `sh-${input.nodeId}`,
-    profileId: 'server-shell',
-    label: 'Server shell',
-    cols: 120,
-    rows: 32,
-    startedAt: 0,
-  })),
-  closeSession: vi.fn(async () => ({ ok: true })),
-}))
+interface ListedSession {
+  readonly sessionId: string
+  readonly profileId: string
+  readonly label: string
+  readonly cols: number
+  readonly rows: number
+  readonly startedAt: number
+  readonly openedBy?: string
+  readonly lastActivityAt?: number
+}
+
+const mocks = vi.hoisted(() => {
+  const registry: CapabilityRegistryAnswer = { status: 'success', data: null }
+  const statusByNode: Record<string, ShellStatus> = {}
+  const sessionsByNode: Record<string, readonly ListedSession[]> = {}
+  return {
+    registry,
+    statusByNode,
+    sessionsByNode,
+    openSession: vi.fn(async (input: { nodeId: string }) => ({
+      sessionId: `sh-${input.nodeId}`,
+      profileId: 'server-shell',
+      label: 'Server shell',
+      cols: 120,
+      rows: 32,
+      startedAt: 0,
+    })),
+    closeSession: vi.fn(async (_input: { nodeId: string; sessionId: string }) => ({ ok: true })),
+  }
+})
 
 vi.mock('../../../../components/TerminalPanel', () => ({
   TerminalPanel: ({ sessionId }: { sessionId: string }) => (
@@ -55,14 +75,20 @@ vi.mock('../TerminalNodeSettings', () => ({
 }))
 
 vi.mock('@camstack/ui-library', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@camstack/ui-library')
-  const nodesOf = actual['capabilityProviderNodes'] as (answer: unknown) => unknown
-  const onNodeOf = actual['capabilityPresenceOnNode'] as (answer: unknown, id: string) => string
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   return {
     ...actual,
     useCapabilityNodePresence: () => ({
-      onNode: (nodeId: string) => onNodeOf(mocks.registry, nodeId),
-      providerNodes: nodesOf(mocks.registry),
+      onNode: (nodeId: string) => actual.capabilityPresenceOnNode(mocks.registry, nodeId),
+      providerNodes: actual.capabilityProviderNodes(mocks.registry),
+    }),
+    useUserManagementListUsers: () => ({ data: [{ id: 'admin-7', username: 'carla' }] }),
+    useTerminalSessionListSessions: (input: { nodeId: string }) => ({
+      data: mocks.sessionsByNode[input.nodeId] ?? [],
+      isPending: false,
+      isError: false,
+      refetch: vi.fn(async () => undefined),
     }),
     useClusterNodes: () => ({
       nodes: [
@@ -83,7 +109,7 @@ vi.mock('@camstack/ui-library', async () => {
 
 import { NodeShells } from '../NodeShells'
 
-const registryWith = (nodeIds: readonly string[]): Registry => ({
+const registryWith = (nodeIds: readonly string[]): CapabilityRegistryAnswer => ({
   status: 'success',
   data: {
     name: 'terminal-session',
@@ -146,19 +172,20 @@ describe('NodeShells', () => {
   beforeEach(() => {
     mocks.registry = registryWith(['hub', 'garage-nuc'])
     mocks.statusByNode = { hub: on('hub'), 'garage-nuc': off('garage-nuc') }
+    mocks.sessionsByNode = {}
     mocks.openSession.mockClear()
     mocks.closeSession.mockClear()
   })
 
   it('shows a loading state, never "no node", while the registry has not answered', () => {
-    mocks.registry = { status: 'pending', data: undefined }
+    mocks.registry = { status: 'pending' }
     renderAt()
     expect(screen.getByLabelText(/checking which nodes run a terminal/i)).toBeInTheDocument()
     expect(screen.queryByText(/no node runs/i)).not.toBeInTheDocument()
   })
 
   it('says the registry did not answer when its read failed', () => {
-    mocks.registry = { status: 'error', data: undefined }
+    mocks.registry = { status: 'error' }
     renderAt()
     expect(screen.getByText(/registry did not answer/i)).toBeInTheDocument()
     expect(screen.queryByText(/no node runs/i)).not.toBeInTheDocument()
@@ -246,5 +273,107 @@ describe('NodeShells', () => {
     await waitFor(() => {
       expect(mocks.closeSession).toHaveBeenCalledWith({ nodeId: 'hub', sessionId: 'late' })
     })
+  })
+
+  it('counts and lists a server shell the page did not open, and Close closes it', async () => {
+    mocks.sessionsByNode = {
+      hub: [
+        {
+          sessionId: 'sh-left-behind',
+          profileId: 'server-shell',
+          label: 'Server shell',
+          cols: 120,
+          rows: 32,
+          startedAt: Date.now() - 2 * 60 * 60_000,
+          openedBy: 'admin-7',
+          lastActivityAt: Date.now(),
+        },
+        {
+          sessionId: 'tty-monitor',
+          profileId: 'monitor',
+          label: 'System monitor',
+          cols: 80,
+          rows: 24,
+          startedAt: Date.now(),
+        },
+      ],
+    }
+    renderAt()
+    const hubRow = screen.getByText('Hub').closest('tr')!
+    expect(within(hubRow).getByText('1 running')).toBeInTheDocument()
+
+    fireEvent.click(within(hubRow).getByRole('button', { name: /open shell/i }))
+    const list = (await screen.findByText('carla')).closest('table')!
+    expect(within(list).getAllByRole('row')).toHaveLength(2) // header + the server shell only
+    fireEvent.click(within(list).getByRole('button', { name: /^close$/i }))
+    await waitFor(() => {
+      expect(mocks.closeSession).toHaveBeenCalledWith({
+        nodeId: 'hub',
+        sessionId: 'sh-left-behind',
+      })
+    })
+  })
+
+  it('shows a Close from the list that failed, instead of reporting success', async () => {
+    mocks.sessionsByNode = {
+      hub: [
+        {
+          sessionId: 'sh-other',
+          profileId: 'server-shell',
+          label: 'Server shell',
+          cols: 120,
+          rows: 32,
+          startedAt: Date.now(),
+          openedBy: 'admin-7',
+        },
+      ],
+    }
+    mocks.closeSession.mockRejectedValueOnce(new Error('node unreachable'))
+    renderAt('/system/terminal?tab=shells&node=hub')
+    const list = (await screen.findByText('carla')).closest('table')!
+    fireEvent.click(within(list).getByRole('button', { name: /^close$/i }))
+    expect(await screen.findByText(/shell was not closed: node unreachable/i)).toBeInTheDocument()
+  })
+
+  it('shows a close on leaving the section that failed', async () => {
+    renderAt('/system/terminal?tab=shells&node=hub')
+    await screen.findByTestId('terminal-panel')
+    mocks.closeSession.mockRejectedValueOnce(new Error('node unreachable'))
+    fireEvent.click(screen.getByRole('button', { name: /close shell/i }))
+    expect(await screen.findByText(/a shell was not closed/i)).toBeInTheDocument()
+    expect(screen.getByText('Hub: node unreachable')).toBeInTheDocument()
+  })
+
+  it('puts the node back to "Open shell" when the page is restored from the back/forward cache', async () => {
+    renderAt('/system/terminal?tab=shells&node=hub')
+    await screen.findByTestId('terminal-panel')
+    act(() => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: false }))
+    })
+    expect(screen.getByTestId('search')).toHaveTextContent('node=hub')
+    act(() => {
+      window.dispatchEvent(new PageTransitionEvent('pageshow', { persisted: true }))
+    })
+    await waitFor(() => {
+      expect(screen.getByTestId('search')).not.toHaveTextContent('node=')
+    })
+    expect(screen.queryByTestId('terminal-panel')).not.toBeInTheDocument()
+    expect(mocks.closeSession).toHaveBeenCalledWith({ nodeId: 'hub', sessionId: 'sh-hub' })
+  })
+
+  it('says Terminal is not installed on a node the registry answered without', async () => {
+    renderAt('/system/terminal?tab=shells&node=edge-pi')
+    expect(screen.getByText(/terminal is not installed on this node/i)).toBeInTheDocument()
+    await act(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 5))
+    })
+    expect(mocks.openSession).not.toHaveBeenCalled()
+  })
+
+  it('keeps a node it has not heard about pending while the registry has not answered', () => {
+    mocks.registry = { status: 'pending' }
+    renderAt('/system/terminal?tab=shells&node=edge-pi')
+    expect(screen.getByLabelText(/checking which nodes run a terminal/i)).toBeInTheDocument()
+    expect(screen.queryByText(/not installed/i)).not.toBeInTheDocument()
   })
 })
