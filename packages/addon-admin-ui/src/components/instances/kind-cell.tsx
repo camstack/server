@@ -166,7 +166,11 @@ export function KindIcon({ addonId, iconUrl, small }: KindIconProps): ReactEleme
     <img
       src={hubPath(src)}
       alt=""
-      className={small === true ? 'h-3 w-3 shrink-0 rounded-sm' : 'h-4 w-4 shrink-0 rounded'}
+      className={
+        small === true
+          ? 'h-3 w-3 max-w-none shrink-0 rounded-sm'
+          : 'h-4 w-4 max-w-none shrink-0 rounded'
+      }
       onError={() => setBroken((prev) => new Set([...prev, src]))}
     />
   )
