@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.585] - 2026-11-16
+
 ### Changed
 
 - A kind that does not say whether it can be tested now follows its own provider, so Calendar, Alexa, Matter and Home Assistant integration rows no longer offer a Test that answered 'no connection test'

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.690] - 2026-11-16
+
 ### Changed
 
 - The global search now also finds automations, scripts, schedulers, actions, templates and custom devices by name or tag, and opens the one you pick in its own editor.

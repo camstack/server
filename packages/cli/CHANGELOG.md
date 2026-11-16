@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.233] - 2026-11-16
+
 ### Changed
 
 - ops_logs_export on camstack mcp: export the logs of chosen components and devices over a time range as an NDJSON file

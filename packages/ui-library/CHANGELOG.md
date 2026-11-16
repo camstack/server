@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.462] - 2026-11-16
+
 ### Changed
 
 - Device Interactions show the add-on by name and, for an exporter, who it acted for.

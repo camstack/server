@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.52] - 2026-11-16
+
 ### Changed
 
 - Test on a Google calendar now runs the linked account's Calendar read and Gmail send-scope check
