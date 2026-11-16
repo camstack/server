@@ -3,9 +3,10 @@
  * danger zone — apply retention now, delete this camera's footage, delete its
  * events. Moved here from the overview tables; each action keeps its confirmation.
  */
-import type { OpsLogReason } from '@camstack/types'
+import { resolveLocationMode, type OpsLogReason } from '@camstack/types'
 import {
   Button,
+  Select,
   useConfirm,
   usePipelineAnalyticsDeleteDeviceEvents,
   useRecordingArchiveDeleteFootprint,
@@ -15,14 +16,19 @@ import {
 } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import { HardDrive, Scissors, Trash2 } from 'lucide-react'
-import { useCallback, useMemo, type ReactElement } from 'react'
+import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
 import { formatBytes } from '../../lib/format-size'
 import { resolveCameraDisk } from '../recordings/camera-disk'
 import type { CameraRow } from './camera-rows'
 import type { ArchiveData } from './use-archive-data'
 
-const RETENTION_REASON: OpsLogReason = 'retention'
+/** Prune-reason options the operator can pick before pruning. */
+const PRUNE_REASONS: readonly { value: OpsLogReason; labelKey: string }[] = [
+  { value: 'retention', labelKey: 'recordings.storageSection.pruneRetention' },
+  { value: 'quota', labelKey: 'recordings.storageSection.pruneQuota' },
+  { value: 'operator', labelKey: 'recordings.storageSection.pruneOperator' },
+]
 const DASH = '—'
 
 export function ArchiveSpaceSection({
@@ -35,6 +41,7 @@ export function ArchiveSpaceSection({
   const { t } = useTranslation()
   const confirm = useConfirm()
   const queryClient = useQueryClient()
+  const [reason, setReason] = useState<OpsLogReason>('retention')
   const locations = useStorageListLocations({}).data
   const invalidate = useCallback((): void => {
     void queryClient.invalidateQueries({ queryKey: [['recording']] })
@@ -47,7 +54,10 @@ export function ArchiveSpaceSection({
 
   const disk = useMemo(() => {
     const names = new Map((locations ?? []).map((l) => [l.id, l.displayName]))
-    const defaultId = (locations ?? []).find((l) => l.type === 'recordings')?.id ?? null
+    const recordingLocations = (locations ?? []).filter((l) => l.type === 'recordings')
+    const defaultId =
+      (recordingLocations.find((l) => resolveLocationMode(l) === 'active') ?? recordingLocations[0])
+        ?.id ?? null
     return resolveCameraDisk(data.usage?.locations ?? [], names, defaultId)
   }, [locations, data.usage?.locations])
 
@@ -66,7 +76,7 @@ export function ArchiveSpaceSection({
       ),
       t('archive.space.pruneNow', 'Prune now'),
     )
-    if (ok) prune.mutate({ deviceId: row.deviceId, reason: RETENTION_REASON })
+    if (ok) prune.mutate({ deviceId: row.deviceId, reason })
   }
   const onDeleteFootage = async (): Promise<void> => {
     const ok = await confirmDanger(
@@ -128,6 +138,26 @@ export function ArchiveSpaceSection({
         <h3 className="text-sm font-semibold text-danger">
           {t('archive.space.danger', 'Danger zone')}
         </h3>
+        <div className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-foreground-subtle">
+            {t('recordings.storageSection.pruneReason', 'Prune reason')}
+          </span>
+          <Select
+            wrapperClassName="inline-block w-auto"
+            value={reason}
+            aria-label={t('recordings.storageSection.pruneReason', 'Prune reason')}
+            onChange={(e) => {
+              const next = PRUNE_REASONS.find((r) => r.value === e.target.value)
+              if (next) setReason(next.value)
+            }}
+          >
+            {PRUNE_REASONS.map((r) => (
+              <option key={r.value} value={r.value}>
+                {t(r.labelKey)}
+              </option>
+            ))}
+          </Select>
+        </div>
         <div className="flex flex-wrap gap-2">
           <Button variant="secondary" onClick={() => void onPrune()} disabled={prune.isPending}>
             <Scissors className="h-3.5 w-3.5" />

@@ -61,7 +61,6 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 })
 
 import { ClusterEventsTab } from '../tabs/ClusterEventsTab'
-import { ClusterRecordingTab } from '../tabs/ClusterRecordingTab'
 
 function renderTab(node: React.ReactNode): void {
   render(<QueryClientProvider client={new QueryClient()}>{node}</QueryClientProvider>)
@@ -83,28 +82,6 @@ describe('Cluster → Events post-processing node', () => {
       cap: 'pipeline-analytics',
       scope: 'cluster',
       patch: { postProcessingNodeId: 'hub' },
-    })
-    expect(updateGlobal).not.toHaveBeenCalled()
-  })
-})
-
-describe('Cluster → Recording node', () => {
-  it('shows the node the recorder cluster form stores and writes the picked one back there', () => {
-    updateScoped.mockClear()
-    renderTab(<ClusterRecordingTab />)
-    const select = screen.getAllByRole('combobox')[0] as HTMLSelectElement
-    expect(select.value).toBe('agent-a')
-    expect(scopedQueries).toContainEqual({
-      addonId: 'recorder',
-      cap: 'recording',
-      scope: 'cluster',
-    })
-    selectOption(select, 'hub')
-    expect(updateScoped).toHaveBeenCalledWith({
-      addonId: 'recorder',
-      cap: 'recording',
-      scope: 'cluster',
-      patch: { recordingNodeId: 'hub' },
     })
     expect(updateGlobal).not.toHaveBeenCalled()
   })

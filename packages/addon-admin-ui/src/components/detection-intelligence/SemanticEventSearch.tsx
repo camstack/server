@@ -127,16 +127,22 @@ function scoredEventToRow(event: ScoredObjectEvent): SemanticEventRow {
 interface SemanticEventSearchProps {
   /** Reports whether a non-empty search is active, so the page can hide the feed. */
   readonly onActiveChange: (active: boolean) => void
+  /** Camera page: search only this camera and hide the camera filter. */
+  readonly deviceId?: number
 }
 
-export function SemanticEventSearch({ onActiveChange }: SemanticEventSearchProps): JSX.Element {
+export function SemanticEventSearch({
+  onActiveChange,
+  deviceId: fixedDeviceId,
+}: SemanticEventSearchProps): JSX.Element {
   const searchFieldRef = useRef<HTMLInputElement>(null)
   useSearchFieldHotkey(searchFieldRef)
   const { t } = useTranslation()
   const [text, setText] = useState('')
   const [strictness, setStrictness] = useState<ClipSearchStrictness>('loose')
   const [classFilter, setClassFilter] = useState<string | null>(null)
-  const [deviceId, setDeviceId] = useState<number | null>(null)
+  const [pickedDeviceId, setDeviceId] = useState<number | null>(null)
+  const deviceId = fixedDeviceId ?? pickedDeviceId
   const [detailRow, setDetailRow] = useState<SemanticEventRow | null>(null)
 
   const debounced = useDebouncedString(text, SEARCH_DEBOUNCE_MS).trim()
@@ -283,23 +289,25 @@ export function SemanticEventSearch({ onActiveChange }: SemanticEventSearchProps
             })}
           </div>
 
-          {/* Device filter (single) */}
-          <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
-            <span>{t('detectionIntelligence.semanticEventSearch.camera', 'Camera')}</span>
-            <Select
-              value={deviceId === null ? '' : String(deviceId)}
-              onChange={(e) => setDeviceId(e.target.value === '' ? null : Number(e.target.value))}
-              className="h-7 text-xs"
-              aria-label={t(
-                'detectionIntelligence.semanticEventSearch.filterByCamera',
-                'Filter by camera',
-              )}
-              options={[
-                { value: '', label: t('detectionIntelligence.semanticEventSearch.all', 'All') },
-                ...devices.map((d) => ({ value: String(d.id), label: d.name })),
-              ]}
-            />
-          </label>
+          {/* Device filter (single); fixed on a camera page */}
+          {fixedDeviceId === undefined && (
+            <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
+              <span>{t('detectionIntelligence.semanticEventSearch.camera', 'Camera')}</span>
+              <Select
+                value={deviceId === null ? '' : String(deviceId)}
+                onChange={(e) => setDeviceId(e.target.value === '' ? null : Number(e.target.value))}
+                className="h-7 text-xs"
+                aria-label={t(
+                  'detectionIntelligence.semanticEventSearch.filterByCamera',
+                  'Filter by camera',
+                )}
+                options={[
+                  { value: '', label: t('detectionIntelligence.semanticEventSearch.all', 'All') },
+                  ...devices.map((d) => ({ value: String(d.id), label: d.name })),
+                ]}
+              />
+            </label>
+          )}
 
           {/* strictness presets — model-relative floors */}
           <div className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">

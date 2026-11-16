@@ -45,6 +45,7 @@ describe('archiveRedirectFor', () => {
   it('redirects only the Library events tab', () => {
     expect(archiveRedirectFor('/library', '?tab=events')).toBe('/archive')
     expect(archiveRedirectFor('/library', '?tab=events&section=debug')).toBe('/archive')
+    expect(archiveRedirectFor('/library', '?tab=events&section=retrain')).toBe('/addon/training')
     expect(archiveRedirectFor('/library', '?tab=people')).toBeNull()
     expect(archiveRedirectFor('/library', '')).toBeNull()
     expect(archiveRedirectFor('/live', '')).toBeNull()

@@ -6,6 +6,7 @@
  */
 
 export const ARCHIVE_PATH = '/archive'
+export const TRAINING_PATH = '/addon/training'
 
 /** Old `/recordings?tab=` ids and the Archive place that took each over. */
 const RECORDINGS_TAB_TARGET: Readonly<Record<string, string>> = {
@@ -29,6 +30,10 @@ export function archiveRedirectFor(pathname: string, search: string): string | n
     if (tab === null) return ARCHIVE_PATH
     return RECORDINGS_TAB_TARGET[tab] ?? ARCHIVE_PATH
   }
-  if (pathname === '/library' && params.get('tab') === 'events') return ARCHIVE_PATH
+  if (pathname === '/library' && params.get('tab') === 'events') {
+    // Retrain lives in the Training addon page, not in the Archive.
+    if (params.get('section') === 'retrain') return TRAINING_PATH
+    return ARCHIVE_PATH
+  }
   return null
 }

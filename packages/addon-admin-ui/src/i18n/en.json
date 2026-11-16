@@ -13423,9 +13423,12 @@
     },
     "tools": {
       "title": "Tools",
-      "subtitle": "Storage migration, cleanup, reconcile from disk",
+      "subtitle": "Storage migration, prune events, cleanup, all exports, reconcile from disk",
       "migration": "Move storage",
-      "migrationHint": "Copy footage, low-res footage or event media to a new location, verify, then repoint the default. Applies to every camera."
+      "migrationHint": "Copy footage, low-res footage or event media to a new location, verify, then repoint the default. Applies to every camera.",
+      "pruneEvents": "Prune old events",
+      "allExports": "All exports",
+      "allExportsHint": "Every export across all cameras, including cameras that were removed."
     },
     "activity": {
       "footageLog": "footage",

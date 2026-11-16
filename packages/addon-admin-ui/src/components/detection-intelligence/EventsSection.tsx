@@ -310,6 +310,26 @@ export function EventsSection({
 
   const isFiltered = list.length !== rows.length
 
+  const renderCard = (row: (typeof paged.pageItems)[number]): JSX.Element => (
+    <EventCard
+      key={trackSelectionKey(row.deviceId, row.trackId)}
+      row={row}
+      cameraName={cameraName(row.deviceId)}
+      nowMs={nowMs}
+      selected={selected.has(trackSelectionKey(row.deviceId, row.trackId))}
+      onToggleSelect={toggleSelect}
+      onOpenDetail={setDetailRow}
+      footer={
+        onSeek === undefined ? undefined : (
+          <Button variant="ghost" onClick={() => onSeek(row.timestamp)}>
+            <PlayCircle className="h-3.5 w-3.5" />
+            {t('detectionIntelligence.eventsSection.showInReview', 'Show in Review')}
+          </Button>
+        )
+      }
+    />
+  )
+
   return (
     <div className="relative space-y-3">
       {/* Filter bar */}
@@ -471,52 +491,13 @@ export function EventsSection({
                   })}
                 </div>
                 <MediaGrid status="ready" testId="events-grid">
-                  {cluster.events.map((row) => (
-                    <EventCard
-                      key={trackSelectionKey(row.deviceId, row.trackId)}
-                      row={row}
-                      cameraName={cameraName(row.deviceId)}
-                      nowMs={nowMs}
-                      selected={selected.has(trackSelectionKey(row.deviceId, row.trackId))}
-                      onToggleSelect={toggleSelect}
-                      onOpenDetail={setDetailRow}
-                      footer={
-                        onSeek === undefined ? undefined : (
-                          <Button variant="ghost" onClick={() => onSeek(row.timestamp)}>
-                            <PlayCircle className="h-3.5 w-3.5" />
-                            {t(
-                              'detectionIntelligence.eventsSection.showInReview',
-                              'Show in Review',
-                            )}
-                          </Button>
-                        )
-                      }
-                    />
-                  ))}
+                  {cluster.events.map(renderCard)}
                 </MediaGrid>
               </div>
             ))
           ) : (
             <MediaGrid status="ready" testId="events-grid">
-              {paged.pageItems.map((row) => (
-                <EventCard
-                  key={trackSelectionKey(row.deviceId, row.trackId)}
-                  row={row}
-                  cameraName={cameraName(row.deviceId)}
-                  nowMs={nowMs}
-                  selected={selected.has(trackSelectionKey(row.deviceId, row.trackId))}
-                  onToggleSelect={toggleSelect}
-                  onOpenDetail={setDetailRow}
-                  footer={
-                    onSeek === undefined ? undefined : (
-                      <Button variant="ghost" onClick={() => onSeek(row.timestamp)}>
-                        <PlayCircle className="h-3.5 w-3.5" />
-                        {t('detectionIntelligence.eventsSection.showInReview', 'Show in Review')}
-                      </Button>
-                    )
-                  }
-                />
-              ))}
+              {paged.pageItems.map(renderCard)}
             </MediaGrid>
           )}
           <GalleryPager

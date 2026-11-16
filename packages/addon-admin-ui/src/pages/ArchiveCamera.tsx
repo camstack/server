@@ -26,6 +26,9 @@ import { ArchiveSettingsSection } from '../components/archive/ArchiveSettingsSec
 import { ArchiveSpaceSection } from '../components/archive/ArchiveSpaceSection'
 import { useArchiveData } from '../components/archive/use-archive-data'
 import { EventsSection } from '../components/detection-intelligence/EventsSection'
+import { RetrainTabCallout } from '../components/detection-intelligence/RetrainTabCallout'
+import { SemanticEventSearch } from '../components/detection-intelligence/SemanticEventSearch'
+import { StationarySection } from '../components/detection-intelligence/StationarySection'
 import { ExportsSection } from '../components/recordings/ExportsSection'
 import { EventsDebugPage } from './EventsDebug'
 
@@ -40,6 +43,7 @@ export function ArchiveCameraPage(): ReactElement {
   const [seek, setSeek] = useState<ReviewSeek | undefined>(undefined)
   const [draft, setDraft] = useState<{ fromMs: number; toMs: number } | null>(null)
   const [debug, setDebug] = useState(false)
+  const [semanticActive, setSemanticActive] = useState(false)
 
   const deviceId = rawId === undefined ? Number.NaN : Number(rawId)
   const goTo = useCallback(
@@ -126,20 +130,27 @@ export function ArchiveCameraPage(): ReactElement {
           label: t('archive.camera.events', 'Events'),
           content: (
             <div className="flex flex-col gap-3">
-              <label className="flex w-fit items-center gap-2 text-xs text-foreground-subtle">
-                <Checkbox checked={debug} onChange={(e) => setDebug(e.target.checked)} />
-                {t('archive.camera.debugFilter', 'Debug-marked tracks only')}
-              </label>
-              {debug ? (
-                <EventsDebugPage deviceId={deviceId} />
-              ) : (
-                <EventsSection
-                  deviceId={deviceId}
-                  onSeek={(atMs) => {
-                    setSeek((prev) => ({ atMs, nonce: (prev?.nonce ?? 0) + 1 }))
-                    goTo('review')
-                  }}
-                />
+              <RetrainTabCallout />
+              <SemanticEventSearch deviceId={deviceId} onActiveChange={setSemanticActive} />
+              {!semanticActive && (
+                <>
+                  <StationarySection deviceId={deviceId} />
+                  <label className="flex w-fit items-center gap-2 text-xs text-foreground-subtle">
+                    <Checkbox checked={debug} onChange={(e) => setDebug(e.target.checked)} />
+                    {t('archive.camera.debugFilter', 'Debug-marked tracks only')}
+                  </label>
+                  {debug ? (
+                    <EventsDebugPage deviceId={deviceId} />
+                  ) : (
+                    <EventsSection
+                      deviceId={deviceId}
+                      onSeek={(atMs) => {
+                        setSeek((prev) => ({ atMs, nonce: (prev?.nonce ?? 0) + 1 }))
+                        goTo('review')
+                      }}
+                    />
+                  )}
+                </>
               )}
             </div>
           ),

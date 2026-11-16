@@ -189,14 +189,22 @@ const OPS = [
 const EXPORT = {
   id: 'x1',
   deviceId: 101,
+  profile: 'high',
   state: 'ready',
   createdAt: NOW - 3 * H,
   createdBy: 'admin',
   fromMs: NOW - 5 * H,
   toMs: NOW - 4 * H,
-  title: 'Parcel at the door',
-  sizeBytes: 182 * MB,
+  options: {
+    title: 'Parcel at the door',
+    includeAudio: true,
+    maxLifeMs: 7 * D,
+    deleteAfterDownload: false,
+  },
+  progressPct: null,
+  fileBytes: 182 * MB,
   expiresAt: NOW + 6 * D,
+  deleteAfterDownload: false,
   downloadedAt: null,
   error: null,
 }
@@ -207,6 +215,9 @@ export default defineFixtures({
     'Archive overview and camera page: footage, event storage, health, activity, exports.',
   handlers: {
     'deviceManager.listAll': CAMERAS,
+    // No urgent-alert toast over the page being shot.
+    'alerts.getUnreadCount': 0,
+    'alerts.list': [],
     'recordingArchive.getStorageUsage': {
       nodeId: 'hub',
       totalUsedBytes: FOOTAGE_GB.reduce((a, b) => a + b, 0) * GB,

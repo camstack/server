@@ -78,7 +78,12 @@ function StationaryCard({
   )
 }
 
-export function StationarySection(): JSX.Element | null {
+export function StationarySection({
+  deviceId: fixedDeviceId,
+}: {
+  /** Camera page: only this camera's parked objects. */
+  readonly deviceId?: number
+} = {}): JSX.Element | null {
   const { t } = useTranslation()
   const [open, setOpen] = useState(false)
   const nowMs = Date.now()
@@ -91,7 +96,10 @@ export function StationarySection(): JSX.Element | null {
   // sections on this page share a fetch rather than each re-triggering their
   // own (D274).
   const { data: cameras = [] } = useDeviceManagerListAll({ isCamera: true, projection: 'slim' })
-  const deviceIds = useMemo(() => cameras.map((d) => d.id), [cameras])
+  const deviceIds = useMemo(
+    () => (fixedDeviceId === undefined ? cameras.map((d) => d.id) : [fixedDeviceId]),
+    [cameras, fixedDeviceId],
+  )
   const nameById = useMemo(() => {
     const m = new Map<number, string>()
     for (const d of cameras) m.set(d.id, d.name)

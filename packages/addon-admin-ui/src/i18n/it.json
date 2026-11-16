@@ -13445,9 +13445,12 @@
     },
     "tools": {
       "title": "Strumenti",
-      "subtitle": "Migrazione dello storage, pulizia, riconciliazione dal disco",
+      "subtitle": "Migrazione dello storage, eliminazione eventi, pulizia, tutte le esportazioni, riconciliazione dal disco",
       "migration": "Sposta lo storage",
-      "migrationHint": "Copia filmati, filmati a bassa risoluzione o media degli eventi in una nuova posizione, verifica, poi sposta il default. Vale per tutte le camere."
+      "migrationHint": "Copia filmati, filmati a bassa risoluzione o media degli eventi in una nuova posizione, verifica, poi sposta il default. Vale per tutte le camere.",
+      "pruneEvents": "Elimina eventi vecchi",
+      "allExports": "Tutte le esportazioni",
+      "allExportsHint": "Tutte le esportazioni di tutte le camere, comprese quelle rimosse."
     },
     "activity": {
       "footageLog": "filmati",

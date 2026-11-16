@@ -176,9 +176,10 @@ export function describeDrain(draining: boolean, row: DrainProgressRow | undefin
 }
 
 /**
- * Is this location draining? Asks the policy module (D385) — a row that predates
- * `mode` is folded there, once. The retired `config.readOnly` folds to `readonly`
- * (stop writing, keep the footage), which is not a drain.
+ * True when the location's mode is `drain` (shrinking on purpose). The mode is
+ * resolved by the policy module (D385), which folds a row that predates `mode` once.
+ * The retired `config.readOnly` folds to `readonly` (stop writing, keep the
+ * footage), which is a different mode from `drain`.
  */
 export function isLocationDraining(location: StorageLocationStateSource): boolean {
   return resolveLocationMode(location) === 'drain'
