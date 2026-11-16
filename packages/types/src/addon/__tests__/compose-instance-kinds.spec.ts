@@ -38,7 +38,7 @@ function part(
       role: 'services',
       instanceMode: 'multiple',
       kind: prefix,
-      canTest: false,
+      canTest: true,
       kinds: [{ id: 'k', label: 'K', functionCap: 'device-provider' }],
     },
     formSchema: async () => ({ sections: [] }),
@@ -166,6 +166,63 @@ describe('composeInstanceKinds', () => {
       ],
       { role: 'devices', instanceMode: 'multiple', kind: 'account', canTest: true },
     )
+    expect(await composed.testInstance?.({ id: null, values: {} })).toMatchObject({
+      success: true,
+      status: 'validated',
+    })
+  })
+})
+
+describe('composeInstanceKinds canTest (planning#543)', () => {
+  /** A part with NO test hook: what a linked service (a calendar, an integration) is. */
+  function untestable(
+    world: ReturnType<typeof makeInMemoryRecords>,
+  ): RecordIntegrationInstances<Body> {
+    return new RecordIntegrationInstances<Body>(world.records, connections, {
+      description: {
+        role: 'services',
+        instanceMode: 'multiple',
+        kind: 'con',
+        canTest: false,
+        kinds: [{ id: 'k', label: 'K', functionCap: 'calendar-source' }],
+      },
+      formSchema: async () => ({ sections: [] }),
+      initialBody: (name) => ({ name }),
+      mintId: () => 'con-1',
+      configured: () => true,
+    })
+  }
+
+  async function build() {
+    const world = makeInMemoryRecords('spec-addon')
+    await world.records.declare({ accounts, connections })
+    // Neither kind states `canTest`: the base says true for the whole provider.
+    return composeInstanceKinds(
+      [
+        {
+          kind: { id: 'account', label: 'Account', functionCap: 'broker' },
+          provider: part(world, accounts, 'acc').toProvider(),
+        },
+        {
+          kind: { id: 'calendar', label: 'Calendar', functionCap: 'calendar-source' },
+          provider: untestable(world).toProvider(),
+        },
+      ],
+      { role: 'services', instanceMode: 'multiple', kind: 'account', canTest: true },
+    )
+  }
+
+  it('a kind that states no canTest takes its own provider declaration, not the base', async () => {
+    const composed = await build()
+    const kinds = (await composed.describe()).kinds ?? []
+    expect(kinds.map((k) => [k.id, k.canTest])).toEqual([
+      ['account', true],
+      ['calendar', false],
+    ])
+  })
+
+  it('a draft test with no kind runs on the only kind whose provider can test', async () => {
+    const composed = await build()
     expect(await composed.testInstance?.({ id: null, values: {} })).toMatchObject({
       success: true,
       status: 'validated',

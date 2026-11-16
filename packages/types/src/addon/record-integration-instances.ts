@@ -235,7 +235,7 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       const id = this.hooks.kindOf(body)
       if (!this.hooks.description.kinds.some((declared) => declared.id === id)) {
         throw new Error(
-          `record kind '${this.kind.name}': kindOf returned '${id}', which describe().kinds does not declare (D1013)`,
+          `record kind '${this.kind.name}': kindOf returned '${id}', which describe().kinds does not declare`,
         )
       }
       return id
@@ -280,8 +280,20 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
               to: link.to,
             })),
           }
+    // A Test is offered only where one is wired (planning#543): `canTest: true` with no `test` hook
+    // used to offer a button that answered "declares no connection test".
+    const wired = this.hooks.test !== undefined
+    const stated = this.hooks.description
     return {
-      ...this.hooks.description,
+      ...stated,
+      ...(stated.canTest && !wired ? { canTest: false } : {}),
+      ...(stated.kinds === undefined
+        ? {}
+        : {
+            kinds: stated.kinds.map((kind) =>
+              kind.canTest === true && !wired ? { ...kind, canTest: false } : kind,
+            ),
+          }),
       ...links,
       ...(this.hooks.mintId === undefined ? {} : { mintsId: true }),
     }

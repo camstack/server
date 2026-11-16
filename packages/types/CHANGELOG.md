@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A device row says when its primary control is gated (read-only)
+- A kind that does not say whether it can be tested now follows its own provider, so Calendar, Alexa, Matter and Home Assistant integration rows no longer offer a Test that answered 'no connection test'
 
 ## [1.2.583] - 2026-11-16
 

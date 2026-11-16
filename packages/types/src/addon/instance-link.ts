@@ -23,6 +23,7 @@ import {
   type InstanceBody,
   type InstanceChange,
   RecordIntegrationInstances,
+  type RecordIntegrationInstancesHooks,
 } from './record-integration-instances.js'
 
 export { linkField, linksOfKind, optionalLinkField }
@@ -155,6 +156,8 @@ export interface LinkedInstancesSpec<TBody extends InstanceBody> {
    * a field of the kind's own that has no sensible empty value.
    */
   readonly alsoConfigured?: (body: TBody) => boolean
+  /** The kind's Test (draft values in, one verdict out); absent: the kind is not testable. */
+  readonly test?: RecordIntegrationInstancesHooks<TBody>['test']
   /** The id of a new instance when the caller sent none; absent refuses such a create. */
   readonly mintId?: (input: { readonly name: string; readonly kind?: string }) => string
   /** Runs after a create / update / delete, in the process that serves the instance. */
@@ -218,6 +221,7 @@ export function buildLinkedInstances<TBody extends InstanceBody>(
         links.every((link) => linkedId(body, link.field) !== undefined) &&
         (spec.alsoConfigured?.(body) ?? true),
       ...(spec.mintId !== undefined ? { mintId: spec.mintId } : {}),
+      ...(spec.test !== undefined ? { test: spec.test } : {}),
       ...(spec.onChanged !== undefined ? { onChanged: spec.onChanged } : {}),
     },
   )
