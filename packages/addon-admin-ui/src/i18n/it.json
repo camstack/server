@@ -9853,7 +9853,15 @@
       },
       "allPoints": "Tutti",
       "pointsFilter": "Punti mostrati",
-      "unitSwitch": "Unità"
+      "unitSwitch": "Unità",
+      "pointsCount": "Punti {{on}}/{{total}}",
+      "noPoints": "Nessuno",
+      "lanes": {
+        "noUnit": "Valori",
+        "title": "Tutti i punti su un unico asse temporale",
+        "bands": "Acceso / spento"
+      },
+      "singleCharts": "Grafici singoli ({{count}})"
     },
     "consumableLevel": {
       "ok": "OK",
@@ -10073,7 +10081,9 @@
           "outcome": "Esito",
           "id": "Id riga",
           "toggle": "Dettagli"
-        }
+        },
+        "today": "Oggi",
+        "yesterday": "Ieri"
       },
       "plug": {
         "on": "Accesa",

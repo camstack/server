@@ -70,8 +70,10 @@ export const EMBED_TRANSPARENT_CLASS = 'embed-transparent'
 
 /** The page's own classes: the viewer host gets no background and no gutter of its own. */
 export function embedMainClass(theme: EmbedTheme, inViewer: boolean): string {
+  // In the viewer the page IS the sheet's height: the card fills it and its own
+  // overlay is the only thing that scrolls (no outer + inner scroll).
   return inViewer
-    ? `${theme} min-h-screen bg-transparent text-foreground`
+    ? `${theme} h-dvh overflow-hidden bg-transparent text-foreground`
     : `${theme} min-h-screen bg-background text-foreground`
 }
 
@@ -181,8 +183,8 @@ export function EmbedDevicePage(): ReactNode {
   )
   return (
     <main className={embedMainClass(theme, inViewer)}>
-      <div className={inViewer ? 'w-full' : 'mx-auto w-full max-w-2xl'}>
-        <DeviceCardFrameProvider frame={inViewer ? 'bare' : 'card'}>
+      <div className={inViewer ? 'h-full w-full' : 'mx-auto w-full max-w-2xl'}>
+        <DeviceCardFrameProvider frame={inViewer ? 'bare' : 'card'} fill={inViewer}>
           <DeviceDetailModule
             deviceId={deviceId}
             trpcClient={system.trpcClient}

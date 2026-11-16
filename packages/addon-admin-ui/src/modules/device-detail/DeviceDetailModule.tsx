@@ -58,7 +58,7 @@ function CardBody({
     onDrawn?.(true)
   }, [onDrawn])
   return (
-    <div className="flex justify-center">
+    <div className="flex h-full justify-center">
       <ConnectedDeviceCard
         kind={kind}
         deviceId={deviceId}
@@ -108,7 +108,7 @@ function SensorBody(
 ): ReactNode {
   const phone = useIsPhone()
   return (
-    <div className="flex justify-center">
+    <div className="flex h-full justify-center">
       <ConnectedSensorCard
         deviceId={props.deviceId}
         canActuate={props.canActuate}
@@ -207,7 +207,7 @@ export function DeviceDetailModule({
     [onOpenDevice, onOpenCamera, onClose, onNavigate],
   )
   return (
-    <div className={theme} data-theme={theme} data-testid="device-detail-module">
+    <div className={`${theme} h-full`} data-theme={theme} data-testid="device-detail-module">
       <I18nextProvider i18n={moduleI18n}>
         <UiTextProvider t={uiText}>
           <TrpcClientProvider client={trpcClient}>

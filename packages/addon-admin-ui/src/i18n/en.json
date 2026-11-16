@@ -9831,7 +9831,15 @@
       },
       "allPoints": "All",
       "pointsFilter": "Points shown",
-      "unitSwitch": "Unit"
+      "unitSwitch": "Unit",
+      "pointsCount": "Points {{on}}/{{total}}",
+      "noPoints": "None",
+      "lanes": {
+        "noUnit": "Values",
+        "title": "All points on one time axis",
+        "bands": "On / off"
+      },
+      "singleCharts": "Single charts ({{count}})"
     },
     "consumableLevel": {
       "ok": "OK",
@@ -10051,7 +10059,9 @@
           "outcome": "Outcome",
           "id": "Row id",
           "toggle": "Details"
-        }
+        },
+        "today": "Today",
+        "yesterday": "Yesterday"
       },
       "plug": {
         "on": "On",
