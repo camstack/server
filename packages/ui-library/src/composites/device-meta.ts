@@ -68,6 +68,7 @@ import {
   Monitor,
   Container,
   AppWindow,
+  EthernetPort,
   Wifi,
   Wind,
   Workflow,
@@ -209,6 +210,7 @@ export const FAST_ICON_GLYPHS: Readonly<
   monitor: Monitor,
   container: Container,
   'app-window': AppWindow,
+  'ethernet-port': EthernetPort,
 }
 
 /** The glyph of a device: its role's icon when the role is known, else its type's (`deviceIconKey`). */
@@ -456,6 +458,10 @@ const DEVICE_ROLE_LABELS: Record<DeviceRole, DeviceMetaLabel> = {
   [DeviceRole.SwitchLight]: {
     labelKey: 'uiLibrary.deviceMeta.role.switchLight',
     labelFallback: 'On/off light',
+  },
+  [DeviceRole.PoePort]: {
+    labelKey: 'uiLibrary.deviceMeta.role.poePort',
+    labelFallback: 'PoE port',
   },
   [DeviceRole.ClimateAc]: {
     labelKey: 'uiLibrary.deviceMeta.role.climateAc',

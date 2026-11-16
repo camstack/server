@@ -501,6 +501,7 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.SwitchHeater]: HEATER_LOOK,
   [DeviceRole.SwitchFan]: FAN_LOOK,
   [DeviceRole.SwitchLight]: LIGHT_LOOK,
+  [DeviceRole.PoePort]: 'inherit',
   // An air conditioner draws its MODE when on, so its look is picked after the
   // mode (`resolveHeroLook`), not here where a role beats the mode.
   [DeviceRole.ClimateAc]: 'inherit',

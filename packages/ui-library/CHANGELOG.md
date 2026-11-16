@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Workload devices get their type and role names and icons
+- PoE port devices get their role name and an ethernet-port icon
 
 ### Changed
 

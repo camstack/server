@@ -9584,7 +9584,8 @@
         "appContainer": "Container",
         "lxc": "Container LXC",
         "app": "App",
-        "host": "Host"
+        "host": "Host",
+        "poePort": "Porta PoE"
       },
       "noun": {
         "role": {

@@ -222,6 +222,31 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           actions: { 'switch.on': { icon: 'plug-zap' }, 'switch.off': { icon: 'plug' } },
           state: { on: { icon: 'plug-zap' } },
         },
+        [DeviceRole.PoePort]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Power on', it: 'Alimenta' },
+              phrase: { en: 'Power on {device}', it: 'Alimenta {device}' },
+              icon: 'plug-zap',
+            },
+            'switch.off': {
+              label: { en: 'Power off', it: 'Togli alimentazione' },
+              phrase: { en: 'Power off {device}', it: 'Togli alimentazione a {device}' },
+              icon: 'unplug',
+            },
+          },
+          state: {
+            on: {
+              label: { en: 'Powered', it: 'Alimentata' },
+              whenTrue: { en: 'When {device} is powered', it: 'Quando {device} viene alimentata' },
+              whenFalse: {
+                en: 'When {device} loses power',
+                it: 'Quando {device} perde l’alimentazione',
+              },
+              icon: 'plug-zap',
+            },
+          },
+        },
       },
     },
   },

@@ -297,6 +297,28 @@ export const switchCapability = {
           },
           state: { on: { icon: 'plug-zap' } },
         },
+        [DeviceRole.PoePort]: {
+          actions: {
+            'switch.on': {
+              label: t('Power on', 'Alimenta'),
+              phrase: t('Power on {device}', 'Alimenta {device}'),
+              icon: 'plug-zap',
+            },
+            'switch.off': {
+              label: t('Power off', 'Togli alimentazione'),
+              phrase: t('Power off {device}', 'Togli alimentazione a {device}'),
+              icon: 'unplug',
+            },
+          },
+          state: {
+            on: {
+              label: t('Powered', 'Alimentata'),
+              whenTrue: t('When {device} is powered', 'Quando {device} viene alimentata'),
+              whenFalse: t('When {device} loses power', 'Quando {device} perde l’alimentazione'),
+              icon: 'plug-zap',
+            },
+          },
+        },
       },
     },
   },

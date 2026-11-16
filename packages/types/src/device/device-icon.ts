@@ -82,6 +82,7 @@ export const DEVICE_ROLE_ICON = {
   [DeviceRole.SwitchHeater]: 'flame',
   [DeviceRole.SwitchFan]: 'fan',
   [DeviceRole.SwitchLight]: 'lightbulb',
+  [DeviceRole.PoePort]: 'ethernet-port',
   [DeviceRole.ClimateAc]: 'air-vent',
   [DeviceRole.ClimateThermostat]: 'thermometer',
   [DeviceRole.ClimateFloor]: 'waves',

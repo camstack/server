@@ -5,7 +5,7 @@
  * `ALL_CAPABILITY_DEFINITIONS` (the whole Zod schema graph, ~+100 MB heap per
  * runner). See docs/decisions/adr-0028.md.
  *
- * Coverage: 1 advance-derived caps, 88 caps with 466 state leaves, 15 caps with a declared method timeout.
+ * Coverage: 1 advance-derived caps, 88 caps with 468 state leaves, 15 caps with a declared method timeout.
  */
 
 /** A bindable scalar in a capability's runtime state. */
@@ -291,7 +291,7 @@ export const CAP_STATE_LEAVES: Readonly<Record<string, readonly CapStateLeaf[]>>
   "mqtt-broker": [{"path":"brokerCount","valueType":"number"}, {"path":"embeddedRunning","valueType":"boolean"}],
   "native-object-detection": [{"path":"enabled","valueType":"boolean"}],
   "navigation": [{"path":"mode","valueType":"enum","enumValues":["idle","cleaning","spot","following","goto","returning","paused","unknown"]}, {"path":"following","valueType":"boolean"}, {"path":"flash","valueType":"boolean"}, {"path":"lightMode","valueType":"enum","enumValues":["auto","manual"]}, {"path":"lightLevel","valueType":"number"}],
-  "network-link": [{"path":"type","valueType":"enum","enumValues":["wifi","ethernet","cellular","unknown"]}, {"path":"signal","valueType":"number"}, {"path":"rssi","valueType":"number"}, {"path":"ssid","valueType":"string"}, {"path":"lastUpdated","valueType":"number"}],
+  "network-link": [{"path":"type","valueType":"enum","enumValues":["wifi","ethernet","cellular","unknown"]}, {"path":"signal","valueType":"number"}, {"path":"rssi","valueType":"number"}, {"path":"ssid","valueType":"string"}, {"path":"speedMbps","valueType":"number"}, {"path":"linkUp","valueType":"boolean"}, {"path":"lastUpdated","valueType":"number"}],
   "notifier": [{"path":"lastSentAt","valueType":"number"}, {"path":"lastError","valueType":"string"}, {"path":"queueDepth","valueType":"number"}, {"path":"supports.image","valueType":"boolean"}, {"path":"supports.priority","valueType":"boolean"}, {"path":"supports.data","valueType":"boolean"}, {"path":"supports.actions","valueType":"boolean"}, {"path":"supports.recipients","valueType":"boolean"}],
   "numeric-sensor": [{"path":"value","valueType":"number"}],
   "pet-feeder": [{"path":"foodLevel","valueType":"number"}, {"path":"bowlFood","valueType":"number"}, {"path":"eating","valueType":"boolean"}, {"path":"supportsMarkRefilled","valueType":"boolean"}, {"path":"food1","valueType":"number"}, {"path":"food2","valueType":"number"}, {"path":"lowFood","valueType":"boolean"}, {"path":"batteryPower","valueType":"number"}, {"path":"powerSource","valueType":"enum","enumValues":["mains","battery"]}, {"path":"desiccantLeftDays","valueType":"number"}, {"path":"feeding","valueType":"boolean"}, {"path":"status","valueType":"enum","enumValues":["normal","offline","on_batteries"]}, {"path":"error","valueType":"string"}, {"path":"errorCode","valueType":"number"}, {"path":"isDualHopper","valueType":"boolean"}, {"path":"childLock","valueType":"boolean"}, {"path":"indicatorLight","valueType":"boolean"}, {"path":"feedSound","valueType":"boolean"}, {"path":"volume","valueType":"number"}, {"path":"lastFeedGrams","valueType":"number"}, {"path":"lastFeedHopper1","valueType":"number"}, {"path":"lastFeedHopper2","valueType":"number"}],

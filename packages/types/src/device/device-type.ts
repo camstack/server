@@ -401,6 +401,11 @@ export enum DeviceRole {
    *  `light` type: the provider owns the type, and a light implies brightness
    *  or colour this relay lacks. */
   SwitchLight = 'switch-light',
+  /** One port of a network switch that powers the device behind it (PoE): on /
+   *  off feeds or cuts that power. Its link is `network-link`, its draw
+   *  `power-meter`. Restarting the powered device through the port is that
+   *  device's `power-source` cap, never a reboot of the port. */
+  PoePort = 'poe-port',
 
   // ── Climate sub-roles (the KIND of a `climate` device) ───
   /** Air conditioner / split unit: cooling, fan speed, louvres. */

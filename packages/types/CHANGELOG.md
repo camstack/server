@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Notification rules have an optional tags field and a setRuleTags method; tag counts include notification rules
 - New workload device type (roles vm, app-container, lxc, app, host) with one workload capability: state, start/stop/restart/pause/resume/force stop, resources with history, and started/stopped/crashed/recovered events
+- PoE ports: a switch device can carry the poe-port role (worded Power on / Power off), and network-link reports a port's link speed and whether the link is up
 
 ### Changed
 
