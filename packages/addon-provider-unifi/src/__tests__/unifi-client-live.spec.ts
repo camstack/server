@@ -101,6 +101,7 @@ describe('UnifiLiveClient', () => {
       online: true,
       clients: 1,
       cpuTempC: null,
+      kind: 'switch',
     })
     expect(sw?.ports).toEqual([
       { idx: 1, poeCapable: true, poeOn: true },
@@ -114,6 +115,7 @@ describe('UnifiLiveClient', () => {
       uptimeSec: null,
       online: false,
       state: 'offline',
+      kind: 'access-point',
     })
     const clients = await client.listClients()
     expect(clients[0]).toMatchObject({

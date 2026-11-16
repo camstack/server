@@ -9,6 +9,8 @@
  * explicitly out of scope — this addon never touches a camera surface.
  */
 
+import type { UnifiInfraKind } from './unifi-device-kind.js'
+
 /** One physical port on an infra device (switch / gateway PoE port). */
 export interface UnifiInfraPort {
   /** 1-based port index as reported by the controller. */
@@ -41,6 +43,8 @@ export interface UnifiInfraSnapshot {
   readonly name: string
   /** Hardware model string (e.g. `USW-Lite-8-PoE`, `U6-Pro`, `UDM-SE`). */
   readonly model: string
+  /** What the device is (console, switch, access point, other) — `classifyUnifiInfra`. */
+  readonly kind: UnifiInfraKind
   /** CPU utilisation percent (0..100), or null when the model does not report it. */
   readonly cpuPercent: number | null
   /** CPU / system temperature in Celsius, or null when not reported. */

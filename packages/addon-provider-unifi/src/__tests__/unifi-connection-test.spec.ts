@@ -45,6 +45,7 @@ function fakeFactory(failure: unknown, seen: ClientInput[] = []): UnifiControlle
           id: 'd1',
           name: 'Switch',
           model: 'USW',
+          kind: 'switch',
           cpuPercent: null,
           cpuTempC: null,
           clients: 0,

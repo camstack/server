@@ -7,6 +7,7 @@ import type {
   UnifiInfraSnapshot,
   UnifiInfraState,
 } from './unifi-client-contract.js'
+import { classifyUnifiInfra } from './unifi-device-kind.js'
 import {
   UnifiApiError,
   UnifiAuthError,
@@ -256,6 +257,7 @@ export class UnifiLiveClient implements UnifiControllerClient {
       id: device.id,
       name: device.name ?? device.id,
       model: device.model ?? '',
+      kind: classifyUnifiInfra({ model: device.model ?? '', features: device.features ?? [] }),
       cpuPercent: stats?.cpuUtilizationPct ?? null,
       // The Integration API reports no temperature.
       cpuTempC: null,

@@ -4,7 +4,6 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   DeviceFeature,
-  DeviceType,
   type IDevice,
 } from '@camstack/types'
 import { unifiInfraSchema } from '../config.js'
@@ -20,7 +19,7 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
 
 /**
  * One UniFi infra device (UDM/USX-Max gateway, U6-Pro AP, USW Lite-8-PoE /
- * Flex-Mini switch, …) as a CamStack {@link DeviceType.Container} (USER
+ * Flex-Mini switch, …) as the device type its adoption stamped — a Container until #585 (USER
  * DIRECTIVE: each infra device is a Container that EXPOSES its features). A
  * top-level SIBLING of the controller's Gateway; its integration owns the connection. Owns no
  * caps itself — it declares `getAccessoryChildren()` so the kernel auto-spawns
@@ -30,7 +29,7 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
  *
  * The fan-out per infra device:
  *   - per-PoE-port PoE Switch children + power-cycle Button children,
- *   - a device LED Switch child + a restart Button child,
+ *   - a restart Button child (no LED switch: the Integration API cannot serve it),
  *   - cpu_utilization / cpu_temperature / clients / state / uptime Sensor children.
  */
 export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
@@ -41,7 +40,8 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
 
   constructor(ctx: DeviceContext) {
     const cfg = unifiInfraSchema.parse(ctx.persistedConfig ?? {})
-    super(ctx, unifiInfraSchema, { type: DeviceType.Container })
+    // The type the adoption stamped (`unifiDeviceTarget`), never a second decision here.
+    super(ctx, unifiInfraSchema, { type: ctx.deviceMeta.type })
     this.integrationId = cfg.integrationId
     this.infraNativeId = cfg.infraNativeId
     registerUnifiAdminLink(ctx, this.id, { integrationId: this.integrationId })

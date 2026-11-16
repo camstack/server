@@ -58,12 +58,38 @@ export function sensorLabelForMetric(metric: UnifiSensorMetric): string {
   }
 }
 
+/** One port of one infra device. */
+export interface UnifiPortRef {
+  readonly infraId: string
+  readonly portIdx: number
+}
+
+/**
+ * The hook that names a PoE port after the client plugged into it (planning#583). The
+ * Integration API does not say which port a wired client sits on, so the default knows none.
+ */
+export type UnifiPortClientNamer = (port: UnifiPortRef) => string | null
+
+/** The default {@link UnifiPortClientNamer}: no port has a known client. */
+export const NO_PORT_CLIENT_NAMES: UnifiPortClientNamer = () => null
+
+/** A PoE port's label: its client when one is known, else its number. */
+export function poePortLabel(portIdx: number | undefined, clientName: string | null): string {
+  const port = portIdx ?? '?'
+  return clientName !== null && clientName.length > 0
+    ? `${clientName} (port ${port})`
+    : `Port ${port} PoE`
+}
+
 /** A human-facing label for a spawned switch/button/sensor child. */
-export function featureLabel(descriptor: UnifiFeatureDescriptor): string {
+export function featureLabel(
+  descriptor: UnifiFeatureDescriptor,
+  clientName: string | null = null,
+): string {
   switch (descriptor.kind) {
     case 'switch':
       if (descriptor.switchFeature === 'led') return 'LED'
-      return `Port ${descriptor.portIdx ?? '?'} PoE`
+      return poePortLabel(descriptor.portIdx, clientName)
     case 'button':
       if (descriptor.buttonAction === 'restart') return 'Restart'
       return `Port ${descriptor.portIdx ?? '?'} power cycle`
@@ -147,6 +173,26 @@ export function buildInfraFeatures(snapshot: UnifiInfraSnapshot): UnifiFeatureDe
   if (snapshot.uptimeSec !== null) features.push({ kind: 'sensor', metric: 'uptime' })
 
   return features
+}
+
+/** A feature no client can serve any more: dropped by the reconcile, never re-offered. */
+function isRetiredFeature(descriptor: UnifiFeatureDescriptor): boolean {
+  return descriptor.kind === 'switch' && descriptor.switchFeature === 'led'
+}
+
+/**
+ * The features an adopted infra device keeps after a poll: everything the snapshot derives, plus
+ * every feature it already had. A read that did not answer (a device detail without ports,
+ * statistics without cpu or uptime) looks like a feature that vanished, so the reconcile only
+ * ADDS; only a retired feature (the LED switch) is removed. Pure.
+ */
+export function mergeInfraFeatures(
+  current: readonly UnifiFeatureDescriptor[],
+  derived: readonly UnifiFeatureDescriptor[],
+): UnifiFeatureDescriptor[] {
+  const derivedKeys = new Set(derived.map(featureSuffix))
+  const kept = current.filter((d) => !isRetiredFeature(d) && !derivedKeys.has(featureSuffix(d)))
+  return [...derived, ...kept]
 }
 
 /** Structural equality of two persisted feature lists (order-independent by suffix). */

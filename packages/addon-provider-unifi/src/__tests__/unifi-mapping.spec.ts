@@ -11,6 +11,7 @@ const SWITCH: UnifiInfraSnapshot = {
   id: 'sw1',
   name: 'marker-switch',
   model: 'USW-Lite-8-PoE',
+  kind: 'switch',
   cpuPercent: 5,
   cpuTempC: 40,
   clients: 3,

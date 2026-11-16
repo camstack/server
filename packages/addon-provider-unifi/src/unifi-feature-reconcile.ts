@@ -1,6 +1,6 @@
 import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/types'
 import { UNIFI_SYSTEM } from './config.js'
-import { buildInfraFeatures, featuresEqual } from './unifi-mapping.js'
+import { buildInfraFeatures, featuresEqual, mergeInfraFeatures } from './unifi-mapping.js'
 import { unifiControllers } from './unifi-node-resolver.js'
 
 /** Narrow a persisted `features[]` blob to descriptors for the equality check. */
@@ -36,8 +36,9 @@ function readDescriptors(raw: readonly unknown[]): Parameters<typeof featuresEqu
 /**
  * Re-derive every adopted infra Container's `features[]` of this integration from the live
  * snapshot and re-persist via `applyDerivedSpec` when it changed, so new ports and sensors
- * appear without re-adoption. Best-effort per device; returns how many changed. A device
- * the controller no longer lists is left alone (never pruned on a failed read).
+ * appear without re-adoption. Best-effort per device; returns how many changed. Additive
+ * (`mergeInfraFeatures`): a port or sensor missing from one poll is a read that did not answer,
+ * never a child to prune; a device the controller no longer lists is left alone.
  */
 export async function reconcileInfraFeatures(input: {
   readonly reg: {
@@ -61,9 +62,9 @@ export async function reconcileInfraFeatures(input: {
     if (typeof infraId !== 'string') continue
     const infra = unifiControllers.getInfra(integrationId, infraId)
     if (infra === null) continue
-    const next = buildInfraFeatures(infra)
-    const current = Array.isArray(cfg['features']) ? cfg['features'] : []
-    if (featuresEqual(readDescriptors(current), next)) continue
+    const current = readDescriptors(Array.isArray(cfg['features']) ? cfg['features'] : [])
+    const next = mergeInfraFeatures(current, buildInfraFeatures(infra))
+    if (featuresEqual(current, next)) continue
     try {
       await devices.applyDerivedSpec(d.id, { config: { features: next } })
       changed += 1
