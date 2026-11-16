@@ -7,9 +7,10 @@
  * drained `eventMedia:default` still looks full because high footage is
  * writing next to it (observed 2026-09-01).
  *
- * The walk is shallow: one `readdir` of the root (one dirent per camera)
- * plus `opendir`+first-entry of each named subtree. No recursive find of
- * segments — that is the walk that saturates a USB disk.
+ * A subtree is occupied iff a FILE exists anywhere beneath it: a drain
+ * leaves empty date folders behind, and those must not block a delete. The
+ * walk is depth-first and stops at the first file, so an occupied disk is
+ * answered fast; only a drained tree is walked in full (directories only).
  */
 import { opendir, readdir } from 'node:fs/promises'
 import path from 'node:path'
@@ -32,10 +33,13 @@ function isDotEntry(name: string): boolean {
 }
 
 /**
- * True when `dir` exists and contains at least one dirent. Missing → false.
- * Any other errno throws so the caller can answer `unknown` (D49).
+ * True when `dir` exists and holds at least one non-directory entry (a file,
+ * symlink, …) anywhere beneath it. Empty folders (the date directories a
+ * drain leaves behind) do not count. Depth-first, stops at the first file.
+ * Missing → false. Any other errno throws so the caller can answer
+ * `unknown` (D49).
  */
-async function dirHasAnyEntry(dir: string): Promise<boolean> {
+async function dirHasAnyFile(dir: string): Promise<boolean> {
   let handle: Awaited<ReturnType<typeof opendir>>
   try {
     handle = await opendir(dir)
@@ -43,19 +47,26 @@ async function dirHasAnyEntry(dir: string): Promise<boolean> {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return false
     throw err
   }
+  const subdirs: string[] = []
   try {
-    const first = await handle.read()
-    return first !== null
+    for await (const entry of handle) {
+      if (!entry.isDirectory()) return true
+      subdirs.push(path.join(dir, entry.name))
+    }
   } finally {
-    await handle.close()
+    await handle.close().catch(() => undefined)
   }
+  for (const sub of subdirs) {
+    if (await dirHasAnyFile(sub)) return true
+  }
+  return false
 }
 
 /**
  * Occupancy of `basePath` for a location of `type`.
  *
  *  - missing root → `empty` (nothing this delete can strand)
- *  - class-mapped type → occupied iff any `<camera>/<subtree>` has an entry
+ *  - class-mapped type → occupied iff any `<camera>/<subtree>` holds a file (empty folders do not count)
  *  - other types → occupied iff the root has a non-dot entry
  */
 export async function probeLocalDirectoryOccupancy(input: {
@@ -79,7 +90,7 @@ export async function probeLocalDirectoryOccupancy(input: {
   try {
     for (const camera of visible) {
       for (const subtree of subtrees) {
-        if (await dirHasAnyEntry(path.join(input.basePath, camera, subtree))) {
+        if (await dirHasAnyFile(path.join(input.basePath, camera, subtree))) {
           return 'occupied'
         }
       }

@@ -134,6 +134,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device manager stores a container's declared primary-child preference (setPrimaryChildPreference) and applies it when a room suggests a camera's linked devices
 - A device's bindings no longer list system-wide capabilities (broker, adoption, auth…) as if the device had them
 - Adopting a device that was just removed is no longer refused for the next five minutes
+- A drained storage location that holds only empty folders can be deleted
 
 ## [1.2.537] - 2026-11-01
 

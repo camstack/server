@@ -98,4 +98,36 @@ describe('probeLocalDirectoryOccupancy', () => {
     await writeFile(path.join(root, 'nightly.tar'), 'x')
     expect(await probeLocalDirectoryOccupancy({ type: 'backups', basePath: root })).toBe('occupied')
   })
+
+  it('treats a drained recordings root with only empty date folders as empty', async () => {
+    const root = await scratch()
+    await mkdir(path.join(root, '3836', 'high', '2026', '10'), { recursive: true })
+    await writeFile(path.join(root, '.camstack-location'), '{}')
+    await mkdir(path.join(root, '.rec-tmp'))
+    expect(await probeLocalDirectoryOccupancy({ type: 'recordings', basePath: root })).toBe('empty')
+  })
+
+  it('treats recordings as occupied when a file sits deep under an empty-looking tree', async () => {
+    const root = await scratch()
+    await mkdir(path.join(root, '3836', 'high', '2026', '10'), { recursive: true })
+    await put(root, '3836/high/2026/10/seg.mp4')
+    expect(await probeLocalDirectoryOccupancy({ type: 'recordings', basePath: root })).toBe(
+      'occupied',
+    )
+  })
+
+  it('ignores a file under another class subtree for recordings', async () => {
+    const root = await scratch()
+    await mkdir(path.join(root, '3836', 'high', '2026', '10'), { recursive: true })
+    await put(root, '3836/low/2026/10/seg.mp4')
+    expect(await probeLocalDirectoryOccupancy({ type: 'recordings', basePath: root })).toBe('empty')
+  })
+
+  it('treats eventMedia events/ with a nested file as occupied', async () => {
+    const root = await scratch()
+    await put(root, '3836/events/2026/10/crop.jpg')
+    expect(await probeLocalDirectoryOccupancy({ type: 'eventMedia', basePath: root })).toBe(
+      'occupied',
+    )
+  })
 })
