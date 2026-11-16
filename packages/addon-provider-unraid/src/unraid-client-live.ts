@@ -11,6 +11,8 @@ import {
   type DockerContainerStats,
   type CpuMetrics,
   type Notification,
+  type VmDomain,
+  type VmState,
   type WebSocketImpl,
 } from 'node-unraid'
 import type {
@@ -22,6 +24,8 @@ import type {
   UnraidContainerInfo,
   UnraidCpuInfo,
   UnraidNotificationsInfo,
+  UnraidVmInfo,
+  UnraidVmState,
 } from './unraid-client-contract.js'
 
 /** How long a live-metric subscription is sampled for one value, in ms. */
@@ -55,6 +59,15 @@ export interface UnraidApiSource {
     start(id: string): Promise<unknown>
     stop(id: string): Promise<unknown>
     stats$(): AsyncIterable<DockerContainerStats>
+  }
+  readonly vms: {
+    list(): Promise<readonly Pick<VmDomain, 'id' | 'name' | 'state'>[]>
+    start(id: string): Promise<unknown>
+    stop(id: string): Promise<unknown>
+    pause(id: string): Promise<unknown>
+    resume(id: string): Promise<unknown>
+    forceStop(id: string): Promise<unknown>
+    reboot(id: string): Promise<unknown>
   }
   readonly system: {
     versions(): Promise<unknown>
@@ -171,6 +184,28 @@ async function sampleContainerStats(
   return stats
 }
 
+/** libvirt domain state → the contract's run state. */
+const VM_STATES: Readonly<Record<VmState, UnraidVmState>> = {
+  RUNNING: 'running',
+  IDLE: 'running',
+  PAUSED: 'paused',
+  PMSUSPENDED: 'paused',
+  SHUTDOWN: 'stopping',
+  SHUTOFF: 'shut off',
+  CRASHED: 'crashed',
+  NOSTATE: 'unknown',
+}
+
+function mapVm(vm: Pick<VmDomain, 'id' | 'name' | 'state'>): UnraidVmInfo {
+  const name = vm.name?.trim() ?? ''
+  return {
+    id: vm.id,
+    name: name.length > 0 ? name : vm.id,
+    // A state a newer API adds is unknown, never a guess.
+    state: VM_STATES[vm.state] ?? 'unknown',
+  }
+}
+
 function mapNotifications(items: readonly Notification[]): UnraidNotificationsInfo {
   const sorted = [...items].sort(
     (a, b) => (Date.parse(b.timestamp ?? '') || 0) - (Date.parse(a.timestamp ?? '') || 0),
@@ -225,6 +260,16 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
         }),
       start: (id) => guard(async () => void (await api.docker.start(id))),
       stop: (id) => guard(async () => void (await api.docker.stop(id))),
+    },
+    vms: {
+      list: () =>
+        guard(async (): Promise<readonly UnraidVmInfo[]> => (await api.vms.list()).map(mapVm)),
+      start: (id) => guard(async () => void (await api.vms.start(id))),
+      stop: (id) => guard(async () => void (await api.vms.stop(id))),
+      pause: (id) => guard(async () => void (await api.vms.pause(id))),
+      resume: (id) => guard(async () => void (await api.vms.resume(id))),
+      forceStop: (id) => guard(async () => void (await api.vms.forceStop(id))),
+      reboot: (id) => guard(async () => void (await api.vms.reboot(id))),
     },
     system: {
       cpu: () =>

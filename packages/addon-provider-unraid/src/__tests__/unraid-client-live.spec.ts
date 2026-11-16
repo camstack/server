@@ -91,6 +91,15 @@ function fakeApi(over: Partial<UnraidApiSource> = {}): UnraidApiSource {
       stats$: () =>
         once({ id: 'c1', cpuPercent: 12, memUsage: '1', memPercent: 7, netIO: '', blockIO: '' }),
     },
+    vms: {
+      list: async () => [],
+      start: vi.fn(async () => true),
+      stop: vi.fn(async () => true),
+      pause: vi.fn(async () => true),
+      resume: vi.fn(async () => true),
+      forceStop: vi.fn(async () => true),
+      reboot: vi.fn(async () => true),
+    },
     system: {
       versions: async () => ({}),
       cpu$: () => once({ id: 'cpu', percentTotal: 33 }),
@@ -228,13 +237,15 @@ describe('createLiveUnraidClient', () => {
       cpu: await client.system.cpu(),
       disks: array.disks,
       dockers: await client.docker.list(),
+      vms: await client.vms.list(),
       notifications: await client.notifications.active(),
     })
-    const values = descriptors
-      .filter((d) => d.key === 'cpu_usage' || d.key.endsWith('_cpu') || d.key.endsWith('_memory'))
-      .map((d) => d.numeric?.value)
-    expect(values.length).toBe(5)
-    expect(values.every((v) => v === null)).toBe(true)
+    const values = descriptors.filter((d) => d.key === 'cpu_usage').map((d) => d.numeric?.value)
+    expect(values).toEqual([null])
+    // A container whose stats sample failed reads as unknown, never 0.
+    const containers = await client.docker.list()
+    expect(containers.length).toBe(2)
+    expect(containers.every((c) => c.cpuPercent === null && c.memPercent === null)).toBe(true)
   })
 })
 
