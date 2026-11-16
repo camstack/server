@@ -13,7 +13,9 @@ import {
   HostedWithdrawalGate,
   hostEngineDevice,
   selectEngineHostedBlocks,
+  sweepLegacyEngineRows,
 } from '../engine-hosted-blocks.js'
+import type { IScopedLogger } from '../../interfaces/logging.js'
 import type { HelperSpec } from '../helpers/spec.js'
 
 function block(id: string, helper: HelperSpec, enabled = true): CoreBlock {
@@ -119,5 +121,57 @@ describe('hostEngineDevice', () => {
     await expect(
       hostEngineDevice(devices, { id: 9, stableId: 'composed-x' }, {}, class {} as never),
     ).rejects.toThrow(/loadContext/)
+  })
+})
+
+function quietLogger(): IScopedLogger {
+  const logger = {
+    error: vi.fn(),
+    warn: vi.fn(),
+    info: vi.fn(),
+    debug: vi.fn(),
+    child: () => logger,
+    withTags: () => logger,
+  }
+  return logger as unknown as IScopedLogger
+}
+
+describe('sweepLegacyEngineRows', () => {
+  it('without an integration removes nothing and mints nothing', async () => {
+    const remove = vi.fn(async (_id: number) => {})
+    const listAddonRows = vi.fn(async () => [{ id: 1, stableId: 'old', integrationId: 'int' }])
+    const result = await sweepLegacyEngineRows(
+      {
+        logger: quietLogger(),
+        addonId: 'camera-grid',
+        devices: { remove } as unknown as DeviceManagerApi,
+        getIntegration: async () => null,
+        listAddonRows,
+      },
+      'Camera Grids',
+    )
+    expect(result).toEqual({ kind: 'none' })
+    expect(remove).not.toHaveBeenCalled()
+    expect(listAddonRows).not.toHaveBeenCalled()
+  })
+
+  it('removes every row under the old integration, and only those', async () => {
+    const remove = vi.fn(async (_id: number) => {})
+    const result = await sweepLegacyEngineRows(
+      {
+        logger: quietLogger(),
+        addonId: 'terminal',
+        devices: { remove } as unknown as DeviceManagerApi,
+        getIntegration: async () => ({ id: 'int_t' }),
+        listAddonRows: async () => [
+          { id: 12, stableId: 'terminal-camera-instance-a', integrationId: 'int_t' },
+          { id: 11, stableId: 'terminal-camera-agent-1', integrationId: 'int_t' },
+          { id: 13, stableId: 'something-else', integrationId: 'int_other' },
+        ],
+      },
+      'Terminal',
+    )
+    expect(remove.mock.calls.map(([id]) => id)).toEqual([11, 12])
+    expect(result).toEqual({ kind: 'swept', removed: [11, 12], drained: false })
   })
 })

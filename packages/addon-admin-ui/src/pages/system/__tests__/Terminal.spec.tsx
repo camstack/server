@@ -5,9 +5,7 @@
  *     decodes `data:` frames, skips `: keepalive` comments, and keeps a partial
  *     tail for the next chunk.
  *  2. `TerminalPage` — ONE table of every instance across nodes and nothing
- *     beside it: no per-node card, no legacy-camera list. Legacy cameras are
- *     one header action, shown only when the hub answered that some exist
- *     (with `<TerminalPanel>` stubbed). The node picker's "not installed"
+ *     beside it: no per-node card (with `<TerminalPanel>` stubbed). The node picker's "not installed"
  *     reason is the library field's (`node-select-field-capability.spec`).
  */
 /// <reference types="@testing-library/jest-dom" />
@@ -75,8 +73,6 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
 const mocks = vi.hoisted(() => ({
   openSession: vi.fn(async () => ({ sessionId: 's-1' })),
   profileCalls: [] as string[],
-  legacy: undefined as readonly { stableId: string }[] | undefined,
-  custom: vi.fn(async () => ({ adopted: 1, cameras: [] })),
   registry: {
     status: 'success' as 'pending' | 'success' | 'error',
     data: {
@@ -164,7 +160,6 @@ vi.mock('@camstack/ui-library', async () => {
           onNodeOf({ status: mocks.registry.status, data: mocks.registry.data }, nodeId),
       }
     },
-    useAddonsCustom: () => ({ mutateAsync: mocks.custom, isPending: false }),
     // The library picker asks the registry itself; its behaviour is its own spec's.
     NodePicker: () => null,
     useClusterNodes: () => ({
@@ -175,7 +170,6 @@ vi.mock('@camstack/ui-library', async () => {
     }),
     useDeviceManagerListAll: () => query([{ id: 4101, stableId: 'cam-1' }]),
     useInstancesOfCap: () => query(INSTANCES),
-    useTerminalSessionListLegacyCameras: () => query(mocks.legacy),
     useTerminalSessionListProfiles: (input: { nodeId: string }) => {
       mocks.profileCalls.push(input.nodeId)
       return query([{ profileId: 'monitor', label: 'BTM', description: 'btm' }])
@@ -203,8 +197,6 @@ describe('TerminalPage', () => {
   beforeEach(() => {
     mocks.openSession.mockClear()
     mocks.profileCalls.length = 0
-    mocks.legacy = []
-    mocks.custom.mockClear()
     mocks.registry.status = 'success'
     mocks.registry.data = {
       name: 'terminal-session',
@@ -244,29 +236,5 @@ describe('TerminalPage', () => {
     expect(screen.queryByText('Nodes')).not.toBeInTheDocument()
     expect(screen.queryByText(/not installed/i)).not.toBeInTheDocument()
     expect(mocks.profileCalls).not.toContain('edge')
-  })
-
-  it('shows no legacy action while the legacy read has not answered, or answered none', () => {
-    mocks.legacy = undefined
-    const { unmount } = renderPage()
-    expect(screen.queryByRole('button', { name: /legacy/i })).not.toBeInTheDocument()
-    unmount()
-    mocks.legacy = []
-    renderPage()
-    expect(screen.queryByRole('button', { name: /legacy/i })).not.toBeInTheDocument()
-  })
-
-  it('offers ONE action that adopts every legacy camera, with no list of them', async () => {
-    mocks.legacy = [{ stableId: 'terminal-camera-hub' }, { stableId: 'terminal-camera-edge-top' }]
-    renderPage()
-    expect(screen.queryByText('terminal-camera-hub')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Adopt legacy cameras (2)' }))
-    await waitFor(() => {
-      expect(mocks.custom).toHaveBeenCalledWith({
-        addonId: 'terminal',
-        action: 'adoptLegacyCameras',
-        input: {},
-      })
-    })
   })
 })

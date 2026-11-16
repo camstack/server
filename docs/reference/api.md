@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**210 capabilities · 1507 methods.**
+**210 capabilities · 1505 methods.**
 
 ## Method index
 
@@ -1384,8 +1384,6 @@
 | `template.update` | mutation | admin | template |
 | `template.delete` | mutation | admin | template |
 | `terminalSession.listProfiles` | query | admin | terminal-session |
-| `terminalSession.listLegacyCameras` | query | admin | terminal-session |
-| `terminalSession.adoptLegacyMonitor` | mutation | admin | terminal-session |
 | `terminalSession.listSessions` | query | admin | terminal-session |
 | `terminalSession.serverShellStatus` | query | admin | terminal-session |
 | `terminalSession.openSession` | mutation | admin | terminal-session |
@@ -4877,7 +4875,7 @@
 
 ### `terminal-session` → `terminalSession.*`
 
-- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:139`
+- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:102`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ITerminalSessionProvider`
@@ -4885,8 +4883,6 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | listProfiles | `terminalSession.listProfiles` | query | admin | `void` | `TerminalProfileInfoSchema[]` |
-| listLegacyCameras | `terminalSession.listLegacyCameras` | query | admin | `void` | `TerminalLegacyCameraSchema[]` |
-| adoptLegacyMonitor | `terminalSession.adoptLegacyMonitor` | mutation | admin | `{ stableId: string; name?: string }` | `TerminalInstanceInfoSchema` |
 | listSessions | `terminalSession.listSessions` | query | admin | `void` | `TerminalSessionInfoSchema[]` |
 | serverShellStatus | `terminalSession.serverShellStatus` | query | admin | `void` | `{ nodeId: string; enabled: boolean; idleMinutes: number; refusal: { code: "server-shell-disabled"; nodeId: string; message: string } \| null }` |
 | openSession | `terminalSession.openSession` | mutation | admin | `{ profileId: string; cols: number; rows: number; executable?: string; args?: string[]; cwd?: string; environment?: string[] }` | `TerminalSessionInfoSchema` |

@@ -49,7 +49,6 @@ import {
   bareAddonId,
   cameraGridLayoutCapability,
   COMPOSER_ADDON_ID,
-  DeclaredDevices,
   EventCategory,
   HostedWithdrawalGate,
   hostEngineDevice,
@@ -59,6 +58,7 @@ import {
   errMsg,
   memoizePinnedFfmpeg,
   selectEngineHostedBlocks,
+  sweepLegacyEngineRows,
   type DetectionResultPayload,
   type MotionOnMotionChangedPayload,
   type PipelineAudioInferenceResultPayload,
@@ -74,7 +74,6 @@ import {
 } from './grid-blocks.js'
 import { buildGridLayoutNativeProvider } from './grid-layout-native-provider.js'
 import { gridPlanFor } from './grid-plan.js'
-import { legacyGridCameraIndex } from './legacy-grid-cameras.js'
 import { GridActivityForwarder, type GridActivityTarget } from './grid-activity.js'
 import { GridFrameSampler } from './grid-frame-sample.js'
 import { GridLastFrameFileStore } from './grid-last-frame-store.js'
@@ -529,42 +528,25 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
     if (this.legacySwept) return
     const addonId = bareAddonId(this.ctx.id)
     try {
-      const integration = await this.ctx.api.integrations.getByAddonId.query({ addonId })
-      if (integration === null) {
-        this.legacySwept = true
-        return
-      }
-      let found = 0
-      const declared = new DeclaredDevices({
-        logger: this.ctx.logger.child('legacy-sweep'),
-        addonId,
-        devices: this.ctx.kernel.devices,
-        localNodeId: this.ctx.kernel.localNodeId,
-        getIntegration: async () => integration,
-        createIntegration: async () => {
-          throw new Error('camera grid: the legacy sweep never mints an integration')
-        },
-        updateIntegration: async () => undefined,
-        listOwnDevices: async () => {
+      const sweep = await sweepLegacyEngineRows(
+        {
+          logger: this.ctx.logger.child('legacy-sweep'),
+          addonId,
+          devices: this.ctx.kernel.devices,
+          localNodeId: this.ctx.kernel.localNodeId,
+          getIntegration: (owner) =>
+            this.ctx.api.integrations.getByAddonId.query({ addonId: owner }),
           // `{ addonId }` takes device-manager's INDEXED branch.
-          const rows = await this.ctx.api.deviceManager.listAll.query({ addonId })
-          const index = legacyGridCameraIndex(rows, integration.id)
-          found = index.length
-          return index
+          listAddonRows: (owner) => this.ctx.api.deviceManager.listAll.query({ addonId: owner }),
         },
-      })
-      const result = await declared.reconcile({
-        integrationName: LEGACY_INTEGRATION_NAME,
-        integrationId: integration.id,
-        placement: 'hub',
-        devices: [],
-      })
-      if (result.removed.length > 0) {
+        LEGACY_INTEGRATION_NAME,
+      )
+      if (sweep.kind === 'swept' && sweep.removed.length > 0) {
         this.ctx.logger.info('camera grid: legacy grid cameras removed - recreate them as blocks', {
-          meta: { removed: [...result.removed] },
+          meta: { removed: [...sweep.removed] },
         })
       }
-      if (found === 0) this.legacySwept = true
+      if (sweep.kind === 'none' || sweep.drained) this.legacySwept = true
     } catch (error: unknown) {
       this.ctx.logger.warn('camera grid: the legacy grid cameras could not be swept - retried', {
         meta: { error: errMsg(error) },

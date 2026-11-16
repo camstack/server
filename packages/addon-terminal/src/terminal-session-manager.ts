@@ -13,8 +13,6 @@ import type {
   IScopedLogger,
   ITerminalSessionProvider,
   TerminalOutputEvent as RoutedTerminalOutputEvent,
-  TerminalInstanceInfo,
-  TerminalLegacyCamera,
   TerminalOutputBatch,
   TerminalProfileInfo,
   TerminalSessionInfo,
@@ -65,14 +63,6 @@ export type TerminalOutputSink = (event: TerminalOutputEvent) => void
 /** Who the data plane says is attaching. Null when the hub did not name a user. */
 export interface TerminalAttachAttribution {
   readonly userId: string | null
-}
-
-export interface TerminalInstanceControl {
-  listLegacyCameras(): Promise<readonly TerminalLegacyCamera[]>
-  adoptLegacyMonitor(input: {
-    readonly stableId: string
-    readonly name?: string
-  }): Promise<TerminalInstanceInfo>
 }
 
 export interface TerminalSessionManagerOptions {
@@ -190,7 +180,6 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
   private readonly now: () => number
   private readonly resolveBinary: (file: string) => string | null
   private maxSessions: number
-  private instanceControl: TerminalInstanceControl | null = null
   private serverShell: ServerShellSpawn
   private serverShellEnabled: boolean
   private idleTimeoutMs: number
@@ -294,21 +283,6 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
       environment: environmentRecordToEntries(p.env),
       settingsSchema: settingsSchemaForProfile(p.profileId),
     }))
-  }
-
-  setInstanceControl(control: TerminalInstanceControl | null): void {
-    this.instanceControl = control
-  }
-
-  async listLegacyCameras(): Promise<readonly TerminalLegacyCamera[]> {
-    return this.instanceControl?.listLegacyCameras() ?? []
-  }
-
-  async adoptLegacyMonitor(input: {
-    readonly stableId: string
-    readonly name?: string
-  }): Promise<TerminalInstanceInfo> {
-    return this.requireInstanceControl().adoptLegacyMonitor(input)
   }
 
   async listSessions(): Promise<readonly TerminalSessionInfo[]> {
@@ -780,12 +754,5 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
     if (session.disposed) return
     session.disposed = true
     session.screen.dispose()
-  }
-
-  private requireInstanceControl(): TerminalInstanceControl {
-    if (!this.instanceControl) {
-      throw new Error('Terminal instances are managed on the hub')
-    }
-    return this.instanceControl
   }
 }

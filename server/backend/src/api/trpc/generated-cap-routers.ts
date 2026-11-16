@@ -20034,32 +20034,6 @@ export function createCapRouter_terminalSession(
         )
         return p.listProfiles()
       }),
-    listLegacyCameras: adminProcedure
-      .input(z.object({ nodeId: z.string().optional() }).optional())
-      .output(terminalSessionCapability.methods.listLegacyCameras.output)
-      .query(async ({ input, ctx }) => {
-        const p = resolveProvider(
-          'terminal-session',
-          input?.nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
-        return p.listLegacyCameras()
-      }),
-    adoptLegacyMonitor: adminProcedure
-      .input(terminalSessionCapability.methods.adoptLegacyMonitor.input.loose())
-      .output(terminalSessionCapability.methods.adoptLegacyMonitor.output)
-      .mutation(async ({ input, ctx }) => {
-        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
-        const p = resolveProvider(
-          'terminal-session',
-          nodeId,
-          () => getProvider(ctx),
-          createRemoteProxy,
-        )
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.adoptLegacyMonitor(methodInput as any)
-      }),
     listSessions: adminProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(terminalSessionCapability.methods.listSessions.output)

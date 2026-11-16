@@ -14,8 +14,18 @@
  *   consecutive trusted reads agree it is gone (D49).
  * - `hostEngineDevice` — build the engine's device on the foreign row through
  *   `loadContext` (D677) and withdraw exactly the natives it registered.
+ * - `sweepLegacyEngineRows` — remove the camera rows the engine declared
+ *   itself before its cameras were blocks (no migration: the operator
+ *   recreates them as blocks).
  */
 import type { CompositionListRead } from '../capabilities/core-blocks.cap.js'
+import {
+  DECLARED_DEVICE_SWEEP_LIMIT,
+  type DeclaredDeviceRow,
+  type DeclaredIntegrationRow,
+  DeclaredDevices,
+} from '../device/declared-device.js'
+import type { IScopedLogger } from '../interfaces/logging.js'
 import type {
   DeviceConstructor,
   DeviceContext,
@@ -178,4 +188,76 @@ export async function hostEngineDevice<D extends IDevice>(
       for (const capName of registered) base.unregisterNativeCap?.(capName)
     },
   }
+}
+
+/** What the legacy sweep reads and removes through. */
+export interface LegacyEngineRowsPorts {
+  readonly logger: IScopedLogger
+  /** The engine's BARE addon id: the owner of its old rows. */
+  readonly addonId: string
+  readonly devices: DeviceManagerApi
+  readonly localNodeId?: string | undefined
+  /** The integration the old rows were declared under; `null` when there is none. */
+  readonly getIntegration: (addonId: string) => Promise<DeclaredIntegrationRow | null>
+  /** Every row the addon owns (`deviceManager.listAll({ addonId })`). Fallible. */
+  readonly listAddonRows: (addonId: string) => Promise<readonly DeclaredDeviceRow[]>
+}
+
+/** `none`: the addon never declared an integration. `drained`: no old row was left to remove. */
+export type LegacyEngineSweep =
+  | { readonly kind: 'none' }
+  | { readonly kind: 'swept'; readonly removed: readonly number[]; readonly drained: boolean }
+
+/**
+ * The legacy rows, one bounded batch at a time: only the rows under the old
+ * integration, ordered by id, at most `DECLARED_DEVICE_SWEEP_LIMIT` — a large
+ * leftover set drains over passes instead of being refused whole by the
+ * sweep's own bound.
+ */
+export function legacyEngineRowsIndex(
+  rows: readonly DeclaredDeviceRow[],
+  integrationId: string,
+): readonly DeclaredDeviceRow[] {
+  return rows
+    .filter((row) => row.integrationId === integrationId)
+    .toSorted((left, right) => left.id - right.id)
+    .slice(0, DECLARED_DEVICE_SWEEP_LIMIT)
+}
+
+/**
+ * Remove every camera row an engine declared itself before its cameras were
+ * blocks, unconditionally, through the declared sweep (`removeDevice` →
+ * tombstone, D865). No integration means nothing was ever declared, and
+ * nothing is minted to find out. A failed read throws: the caller retries.
+ */
+export async function sweepLegacyEngineRows(
+  ports: LegacyEngineRowsPorts,
+  integrationName: string,
+): Promise<LegacyEngineSweep> {
+  const integration = await ports.getIntegration(ports.addonId)
+  if (integration === null) return { kind: 'none' }
+  let found = 0
+  const declared = new DeclaredDevices({
+    logger: ports.logger,
+    addonId: ports.addonId,
+    devices: ports.devices,
+    localNodeId: ports.localNodeId,
+    getIntegration: async () => integration,
+    createIntegration: async () => {
+      throw new Error(`${ports.addonId}: the legacy sweep never mints an integration`)
+    },
+    updateIntegration: async () => undefined,
+    listOwnDevices: async () => {
+      const index = legacyEngineRowsIndex(await ports.listAddonRows(ports.addonId), integration.id)
+      found = index.length
+      return index
+    },
+  })
+  const result = await declared.reconcile({
+    integrationName,
+    integrationId: integration.id,
+    placement: 'hub',
+    devices: [],
+  })
+  return { kind: 'swept', removed: result.removed, drained: found === 0 }
 }

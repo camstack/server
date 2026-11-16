@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1093 shared schemas.**
+**1091 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -7237,31 +7237,6 @@ Enum: `"jwt-signing-key"`
 
 - `{ status: "saved"; template: TemplateRecordSchema }`
 - `{ status: "refused"; reason: "invalid-payload" \| "not-found" \| "read-only"; detail: string }`
-
-### `TerminalInstanceInfoSchema`
-
-- `instanceId`: `string`
-- `cameraStableId`: `string`
-- `nodeId`: `string`
-- `nodeInCluster`: `boolean`
-- `profileId`: `string`
-- `profileLabel`: `string`
-- `name`: `string`
-- `enabled`: `boolean`
-- `executable`: `string`
-- `args`: `string[]`
-- `cwd`: `string`
-- `environment`: `string[]`
-- `profileSettings`: `Record<string, unknown>`
-
-### `TerminalLegacyCameraSchema`
-
-- `stableId`: `string`
-- `nodeId`: `string`
-- `profileId`: `string`
-- `profileLabel`: `string`
-- `name`: `string`
-- `adoptable`: `boolean`
 
 ### `TerminalOutputBatchSchema`
 

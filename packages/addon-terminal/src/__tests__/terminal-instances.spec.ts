@@ -1,7 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import {
   instancesOnAbsentNodes,
-  listLegacyTerminalCameraCandidates,
   readTerminalInstances,
   TerminalInstanceMutationQueue,
   TerminalInstanceReconcileCoordinator,
@@ -14,7 +13,6 @@ describe('readTerminalInstances', () => {
       [
         {
           id: '018f5846-3ae2-7cb7-9a13-0800200c9a66',
-          cameraStableId: 'terminal-camera-instance-018f5846-3ae2-7cb7-9a13-0800200c9a66',
           nodeId: 'agent-a',
           profileId: 'monitor',
           profileLabel: 'BTM',
@@ -23,7 +21,6 @@ describe('readTerminalInstances', () => {
         },
         {
           id: '018f5846-3ae2-7cb7-9a13-0800200c9a67',
-          cameraStableId: 'terminal-camera-instance-018f5846-3ae2-7cb7-9a13-0800200c9a67',
           nodeId: 'agent-a',
           profileId: 'monitor',
           profileLabel: 'BTM',
@@ -32,7 +29,6 @@ describe('readTerminalInstances', () => {
         },
         {
           id: '018f5846-3ae2-7cb7-9a13-0800200c9a67',
-          cameraStableId: 'terminal-camera-instance-duplicate',
           nodeId: 'agent-a',
           profileId: 'top',
           profileLabel: 'Top',
@@ -52,7 +48,6 @@ describe('readTerminalInstances', () => {
     const instances = readTerminalInstances([
       {
         id: '018f5846-3ae2-7cb7-9a13-0800200c9a66',
-        cameraStableId: 'terminal-camera-instance-018f5846-3ae2-7cb7-9a13-0800200c9a66',
         nodeId: 'hub',
         profileId: 'glances',
         profileLabel: 'Glances',
@@ -62,7 +57,6 @@ describe('readTerminalInstances', () => {
       },
       {
         id: '018f5846-3ae2-7cb7-9a13-0800200c9a67',
-        cameraStableId: 'terminal-camera-instance-018f5846-3ae2-7cb7-9a13-0800200c9a67',
         nodeId: 'hub',
         profileId: 'monitor',
         profileLabel: 'BTM',
@@ -134,29 +128,11 @@ describe('readTerminalInstances', () => {
     await reconciler.request(applyDeclarations)
     expect(declaredCameras).toEqual([])
   })
-
-  it('does not surface a tombstoned legacy camera when its device row lingers', () => {
-    const candidates = listLegacyTerminalCameraCandidates(
-      [
-        {
-          id: 811,
-          stableId: 'terminal-camera-agent-a',
-          name: 'Old BTM',
-          config: { nodeId: 'agent-a' },
-        },
-      ],
-      new Set(),
-      new Set(['terminal-camera-agent-a']),
-    )
-
-    expect(candidates).toEqual([])
-  })
 })
 
 describe('instancesOnAbsentNodes', () => {
   const on = (id: string, nodeId: string) => ({
     id,
-    cameraStableId: `terminal-camera-instance-${id}`,
     nodeId,
     profileId: 'monitor',
     profileLabel: 'BTM',

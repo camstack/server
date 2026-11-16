@@ -16,7 +16,6 @@ export type {
   GridLayout,
   NormalizedRect,
 } from './grid-filter-graph.js'
-export { legacyGridCameraIndex } from './legacy-grid-cameras.js'
 export { GridCameraDevice, installGridCameraRuntime } from './grid-camera-device.js'
 export type { GridCameraRuntime } from './grid-camera-device.js'
 export {

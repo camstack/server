@@ -9,10 +9,6 @@
  * `requiresCapability`), and is never queried here: a per-node
  * `terminal-session` call against it fails.
  *
- * Legacy automatic cameras have no list of their own: while the hub answers
- * that some exist, the table header carries one action that adopts them all
- * (`adoptLegacyCameras`, the one-off migration).
- *
  * Attach opens a live pty (xterm.js via `<TerminalPanel>`) for an instance's
  * profile on its node; "Live sessions" lists the ptys of one node so a session
  * opened elsewhere can be reattached (the pty outlives the browser tab).
@@ -29,13 +25,11 @@ import {
   type DataColumn,
   NodePicker,
   SectionCard,
-  useAddonsCustom,
   useCapabilityNodePresence,
   useClusterNodes,
   useDeviceManagerListAll,
   useInstancesOfCap,
   useTerminalSessionClose,
-  useTerminalSessionListLegacyCameras,
   useTerminalSessionListProfiles,
   useTerminalSessionListSessions,
   useTerminalSessionOpenSession,
@@ -61,21 +55,11 @@ import { TerminalProfileSettingsLead } from './terminal/TerminalProfileSettingsL
 /** The capability whose providers make a node a Terminal node. */
 const TERMINAL_CAPABILITY = 'terminal-session'
 
-/** The one-off migration of legacy automatic cameras (`addons.custom`). */
-const ADOPT_LEGACY_CAMERAS_ACTION = 'adoptLegacyCameras'
-
 // The terminal reflows to its actual pane size the moment `<TerminalPanel>`
 // mounts (its FitAddon issues a `resize`), so these are only the initial grid
 // the pty spawns with.
 const DEFAULT_COLS = 120
 const DEFAULT_ROWS = 32
-
-/**
- * The legacy automatic-camera read resolves to a `deviceManager.listAll` for
- * the addon, so it is polled slower than the in-memory session / instance
- * reads: it only changes when the legacy cameras are adopted or deleted.
- */
-const LEGACY_CAMERA_POLL_INTERVAL_MS = 60_000
 
 /** What Attach needs of a Terminal: its record's body, read from the instance list. */
 interface AttachTarget {
@@ -133,11 +117,6 @@ export function TerminalPage() {
     addonId: TERMINAL_ADDON_ID,
     projection: 'slim',
   })
-  const legacyCamerasQuery = useTerminalSessionListLegacyCameras(
-    { nodeId: 'hub' },
-    { refetchInterval: LEGACY_CAMERA_POLL_INTERVAL_MS },
-  )
-  const custom = useAddonsCustom()
   const openSession = useTerminalSessionOpenSession()
   const closeSession = useTerminalSessionClose()
 
@@ -200,17 +179,12 @@ export function TerminalPage() {
   }, [listedSessions])
 
   const instances = instancesQuery.data
-  const legacyCameras = legacyCamerasQuery.data
   const deviceIdByStableId = useMemo(
     () => new Map((devicesQuery.data ?? []).map((device) => [device.stableId, device.id] as const)),
     [devicesQuery.data],
   )
   const nodeNameOf = (nodeId: string): string | undefined =>
     clusterNodes.find((node) => node.id === nodeId)?.name
-
-  const refreshInstances = async () => {
-    await Promise.all([legacyCamerasQuery.refetch(), devicesQuery.refetch()])
-  }
 
   const attachInstance = async (instance: AttachTarget) => {
     setActionError(null)
@@ -232,36 +206,6 @@ export function TerminalPage() {
       setActionError(t('terminalPage.attachFailed', 'Failed to open the session.'))
     }
   }
-
-  const handleAdoptLegacyCameras = async () => {
-    setActionError(null)
-    try {
-      await custom.mutateAsync({
-        addonId: TERMINAL_ADDON_ID,
-        action: ADOPT_LEGACY_CAMERAS_ACTION,
-        input: {},
-      })
-      await refreshInstances()
-    } catch {
-      setActionError(t('terminalPage.adoptLegacyFailed', 'Failed to adopt the legacy cameras.'))
-    }
-  }
-  /** Shown only when the hub ANSWERED that legacy cameras exist. */
-  const legacyCount = legacyCameras?.length ?? 0
-  const adoptLegacyAction = () =>
-    legacyCount > 0 ? (
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={custom.isPending}
-        onClick={() => void handleAdoptLegacyCameras()}
-      >
-        <Cable className="h-3 w-3" aria-hidden />
-        {t('terminalPage.adoptLegacy', 'Adopt legacy cameras ({{count}})', {
-          count: legacyCount,
-        })}
-      </Button>
-    ) : null
 
   const handleCloseSession = async (nodeId: string, sessionId: string) => {
     setActionError(null)
@@ -396,7 +340,6 @@ export function TerminalPage() {
         extraColumns={extraColumns}
         lead={(row) => <TerminalProfileSettingsLead row={row} />}
         rowActions={rowActions}
-        pageActions={adoptLegacyAction}
       />
 
       {attachedSessionInfo && attached && (

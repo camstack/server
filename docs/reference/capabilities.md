@@ -231,7 +231,7 @@ Singleton or collection providers, addressed without a device.
 | `system` | 16 | — | — | — | — | — |
 | `tags` | 4 | — | — | — | — | `core-blocks` |
 | `template` | 5 | — | — | — | — | `core-blocks` |
-| `terminal-session` | 10 | — | — | — | — | `terminal` |
+| `terminal-session` | 8 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |
 | `training` | 13 | — | — | — | — | `training` |
 | `training-provider` | 13 | — | — | — | ✓ | `training-modal` |
