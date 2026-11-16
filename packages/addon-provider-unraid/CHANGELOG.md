@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.168] - 2026-11-16
+
 ### Changed
 
 - The Unraid connection can be tested from the form: a refused API key is named before the integration is created

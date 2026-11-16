@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.586] - 2026-11-16
+
 ### Added
 
 - Notification rules have an optional tags field and a setRuleTags method; tag counts include notification rules
