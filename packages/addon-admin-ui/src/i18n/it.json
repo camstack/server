@@ -17,7 +17,8 @@
     "recordings": "Registrazioni",
     "viewer": "Viewer",
     "history": "Cronologia",
-    "notInstalled": "{{page}} — non installato"
+    "notInstalled": "{{page}} — non installato",
+    "archive": "Archivio"
   },
   "system": {
     "title": "Amministrazione",
@@ -4120,7 +4121,10 @@
       "deleteMessage_one": "Eliminare {{count}} traccia e ogni immagine e clip acquisita per essa? L'operazione non può essere annullata.",
       "deleteMessage_other": "Eliminare {{count}} tracce e ogni immagine e clip acquisita per esse? L'operazione non può essere annullata.",
       "eventCount_one": "{{count}} evento",
-      "eventCount_other": "{{count}} eventi"
+      "eventCount_other": "{{count}} eventi",
+      "showInReview": "Mostra in Revisione",
+      "clusterHeading_one": "1 evento · {{time}}",
+      "clusterHeading_other": "{{count}} eventi · ultimo {{time}}"
     },
     "faceDetailPanel": {
       "face": "Volto",
@@ -4449,7 +4453,11 @@
       "ready": "pronto",
       "failed": "fallito",
       "expired": "scaduto",
-      "deleted": "eliminato"
+      "deleted": "eliminato",
+      "created": "Creato",
+      "by": "da {{who}}",
+      "title": "Titolo",
+      "downloaded": "Scaricato"
     },
     "maintenanceAuditSection": {
       "reclaimOrphanedAnalyticsRows": "Recuperare le righe di analisi orfane?",
@@ -6831,7 +6839,7 @@
     "switchUnknown": "Sconosciuto"
   },
   "library": {
-    "peopleVehiclesCapturedEventsAnd": "Persone, veicoli, eventi acquisiti e scene — ciò che la detection ha riconosciuto.",
+    "peopleVehiclesCapturedEventsAnd": "Persone, veicoli e scene: ciò che il rilevamento ha riconosciuto.",
     "people": "Persone",
     "vehicles": "Veicoli",
     "events": "Eventi",
@@ -13372,5 +13380,144 @@
   },
   "embedDevice": {
     "invalidId": "Questo link non indica un dispositivo."
+  },
+  "archive": {
+    "storage": {
+      "none": "Nessuna posizione di archiviazione",
+      "noneHint": "Aggiungi una posizione per iniziare a salvare filmati ed eventi.",
+      "writing": "Riceve nuove scritture",
+      "notWriting": "Non riceve nuove scritture",
+      "manage": "Gestisci"
+    },
+    "health": {
+      "noDigest": "Il riepilogo di salute non è ancora stato eseguito: i rilievi non sono disponibili.",
+      "logs": "Log della camera",
+      "openLogs": "Apri nei Log"
+    },
+    "space": {
+      "pruneTitle": "Applicare la retention a {{name}}?",
+      "pruneMessage": "I filmati oltre la politica di retention vengono eliminati definitivamente.",
+      "pruneNow": "Elimina ora",
+      "deleteFootageTitle": "Eliminare tutti i filmati di {{name}}?",
+      "deleteFootageMessage": "Elimina definitivamente {{size}} di filmati registrati. Non si può annullare.",
+      "deleteFootage": "Elimina filmati",
+      "deleteEventsTitle": "Eliminare tutti gli eventi di {{name}}?",
+      "deleteEventsMessage": "Elimina definitivamente gli eventi e i loro media. Non si può annullare.",
+      "deleteEvents": "Elimina eventi",
+      "footage": "Filmati",
+      "diskUnknown": "Disco non indicato",
+      "diskDefault": "{{label}} (predefinito)",
+      "events": "Archivio eventi",
+      "oldest": "Filmato più vecchio",
+      "danger": "Zona pericolosa",
+      "applyRetention": "Applica la retention ora",
+      "eventRows_one": "{{count}} evento",
+      "eventRows_other": "{{count}} eventi"
+    },
+    "keyNumbers": {
+      "footage": "Filmati",
+      "footageUnread": "Il registratore non ha risposto",
+      "eventStorage": "Archivio eventi",
+      "eventsUnread": "L'archivio eventi non ha risposto",
+      "growth": "Crescita al giorno",
+      "growthUnknown": "Servono un giorno di filmati",
+      "daysUnknown": "Spazio libero sconosciuto",
+      "daysLeft": "Spazio per {{days}} giorni",
+      "cameras": "Camere",
+      "cameraStates": "{{degraded}} con problemi · {{off}} spente",
+      "recordingOf": "{{recording}} su {{total}} in registrazione",
+      "warnings": "Avvisi aperti",
+      "digestPending": "Nessun riepilogo di salute ancora",
+      "eventRows_one": "{{count}} evento",
+      "eventRows_other": "{{count}} eventi"
+    },
+    "table": {
+      "camera": "Camera",
+      "mode": "Registrazione",
+      "status": "Stato",
+      "footage": "Filmati",
+      "events": "Eventi",
+      "oldest": "Filmato più vecchio",
+      "noCameras": "Nessuna camera",
+      "addACamera": "Aggiungi prima una camera.",
+      "warnings_one": "{{count}} avviso",
+      "warnings_other": "{{count}} avvisi"
+    },
+    "tools": {
+      "title": "Strumenti",
+      "subtitle": "Migrazione dello storage, pulizia, riconciliazione dal disco",
+      "migration": "Sposta lo storage",
+      "migrationHint": "Copia filmati, filmati a bassa risoluzione o media degli eventi in una nuova posizione, verifica, poi sposta il default. Vale per tutte le camere."
+    },
+    "activity": {
+      "footageLog": "filmati",
+      "eventLog": "eventi",
+      "when": "Quando",
+      "severity": "Gravità",
+      "camera": "Camera",
+      "cluster": "Cluster",
+      "what": "Cosa",
+      "filterCamera": "Camera",
+      "allCameras": "Tutte le camere",
+      "filterFunction": "Funzione",
+      "allFunctions": "Tutte le funzioni",
+      "filterSeverity": "Gravità",
+      "allSeverities": "Qualsiasi gravità",
+      "atLeast": "Almeno {{severity}}",
+      "logUnread": "Il log {{names}} non ha risposto. Non significa che non sia successo nulla.",
+      "none": "Nessuna attività",
+      "noneHint": "Pulizie, eliminazioni e rilievi di salute compaiono qui."
+    },
+    "subtitle": "Filmati registrati ed eventi catturati: quanto occupano, dove vengono scritti e come sta ogni camera.",
+    "section": {
+      "storage": "Storage",
+      "cameras": "Camere",
+      "activity": "Attività e salute"
+    },
+    "camera": {
+      "unknown": "Camera non trovata",
+      "unknownHint": "Questa camera non è nell'Archivio. Sceglila dalla panoramica.",
+      "loading": "Camera",
+      "picker": "Camera",
+      "sections": "Sezioni della camera",
+      "review": "Rivedi",
+      "events": "Eventi",
+      "debugFilter": "Solo tracce marcate debug",
+      "exports": "Esportazioni",
+      "health": "Salute",
+      "space": "Spazio",
+      "settings": "Impostazioni"
+    },
+    "function": {
+      "recording": "Registrazione",
+      "motion": "Movimento",
+      "detection": "Rilevamento",
+      "event-media": "Media eventi",
+      "events": "Eventi",
+      "other": "Altro"
+    },
+    "functionState": {
+      "ok": "OK",
+      "off": "Spento",
+      "warning": "Avviso",
+      "critical": "Critico",
+      "unknown": "Sconosciuto"
+    },
+    "mode": {
+      "off": "Spenta",
+      "events": "Su evento",
+      "continuous": "Continua"
+    },
+    "state": {
+      "recording": "In registrazione",
+      "off": "Spenta",
+      "degraded": "Con problemi",
+      "unknown": "Sconosciuto"
+    },
+    "severity": {
+      "info": "Info",
+      "warning": "Avviso",
+      "critical": "Critico"
+    }
   }
 }

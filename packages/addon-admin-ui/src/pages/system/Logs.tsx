@@ -6,6 +6,7 @@
 
 import { LogStream } from '@camstack/ui-library'
 import { ScrollText } from 'lucide-react'
+import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AdminPage } from '../../components/AdminPage'
 import { AdminSectionedPage } from '../../components/AdminSectionedPage'
@@ -17,10 +18,15 @@ import { LogLevelsPage } from './LogLevels'
 import { LogWatchPage } from './LogWatch'
 
 function LogViewerTab() {
+  // `/system/logs?deviceId=<id>` — the Archive camera page's Health link.
+  const [searchParams] = useSearchParams()
+  const rawDeviceId = searchParams.get('deviceId')
+  const deviceId = rawDeviceId === null ? undefined : Number(rawDeviceId)
   return (
     <AdminPage embedded>
       <div className="rounded-lg border border-border bg-surface overflow-hidden">
         <LogStream
+          deviceId={deviceId !== undefined && Number.isFinite(deviceId) ? deviceId : undefined}
           limit={500}
           maxHeight="max-h-[calc(100vh-310px)]"
           showFilters

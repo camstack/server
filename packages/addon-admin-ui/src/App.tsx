@@ -15,8 +15,9 @@ import {
   WidgetRegistryProvider,
 } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import type { ReactElement, ReactNode } from 'react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { archiveRedirectFor } from './components/archive/archive-redirects'
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { InstancePicker } from './components/instances/InstancePicker'
 import { DeviceQuickDetailHost } from './components/device/DeviceQuickDetail'
@@ -60,6 +61,18 @@ function LegacyAdminRedirect() {
   return <Navigate to={`${stripLegacyAdminPrefix(pathname)}${search}${hash}`} replace />
 }
 
+/** `/recordings` and the old Library → Events tab now live in the Archive. */
+function ArchiveRedirect(): ReactElement {
+  const { pathname, search } = useLocation()
+  return <Navigate to={archiveRedirectFor(pathname, search) ?? '/archive'} replace />
+}
+
+function LibraryRoute(): ReactElement {
+  const { pathname, search } = useLocation()
+  const target = archiveRedirectFor(pathname, search)
+  return target === null ? <LibraryPage /> : <Navigate to={target} replace />
+}
+
 /**
  * Index-route element: reopen the app on the last page the operator
  * visited (persisted by AppLayout) instead of always the devices page.
@@ -96,8 +109,9 @@ const EmbedDevicePage = lazy(() =>
   import('./pages/EmbedDevicePage').then((m) => ({ default: m.EmbedDevicePage })),
 )
 const LibraryPage = lazy(() => import('./pages/Library').then((m) => ({ default: m.LibraryPage })))
-const RecordingsPage = lazy(() =>
-  import('./pages/Recordings').then((m) => ({ default: m.RecordingsPage })),
+const ArchivePage = lazy(() => import('./pages/Archive').then((m) => ({ default: m.ArchivePage })))
+const ArchiveCameraPage = lazy(() =>
+  import('./pages/ArchiveCamera').then((m) => ({ default: m.ArchiveCameraPage })),
 )
 const ViewerPage = lazy(() => import('./pages/Viewer').then((m) => ({ default: m.ViewerPage })))
 // Build-your-self: automations + scripts (core blocks) + composed devices. A
@@ -672,7 +686,7 @@ export function App() {
                                   path="/library"
                                   element={
                                     <ProtectedRoute requireAdmin>
-                                      <LibraryPage />
+                                      <LibraryRoute />
                                     </ProtectedRoute>
                                   }
                                 />
@@ -682,13 +696,22 @@ export function App() {
                                   element={<Navigate to="/addon/training" replace />} // hub-path-ok: react-router redirect, not a URL
                                 />
                                 <Route
-                                  path="/recordings"
+                                  path="/archive"
                                   element={
                                     <ProtectedRoute requireAdmin>
-                                      <RecordingsPage />
+                                      <ArchivePage />
                                     </ProtectedRoute>
                                   }
                                 />
+                                <Route
+                                  path="/archive/:deviceId"
+                                  element={
+                                    <ProtectedRoute requireAdmin>
+                                      <ArchiveCameraPage />
+                                    </ProtectedRoute>
+                                  }
+                                />
+                                <Route path="/recordings" element={<ArchiveRedirect />} />
                                 <Route
                                   path="/build"
                                   element={

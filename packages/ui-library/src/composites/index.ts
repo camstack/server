@@ -188,6 +188,7 @@ export type {
 export { NavigationPanel } from './cap-settings/NavigationPanel'
 export { PtzPanel } from './cap-settings/PtzPanel'
 export { RecordingPanel } from './cap-settings/RecordingPanel'
+export { RecordingTimeline } from './cap-settings/RecordingTimeline'
 export {
   SendFrameToTrainingButton,
   type SendFrameToTrainingButtonProps,

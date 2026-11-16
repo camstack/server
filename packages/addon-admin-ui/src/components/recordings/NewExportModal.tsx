@@ -30,6 +30,10 @@ import { useTranslation } from 'react-i18next'
 export interface NewExportModalProps {
   readonly onClose: () => void
   readonly onCreated: () => void
+  /** Opens on this camera instead of the first one. */
+  readonly initialDeviceId?: number
+  /** Opens on this range (epoch ms) instead of the last hour. */
+  readonly initialRange?: { readonly fromMs: number; readonly toMs: number }
 }
 
 const PROFILES = ['high', 'mid', 'low'] as const
@@ -45,12 +49,22 @@ const EXPORT_LIFE_MS = 7 * 24 * 60 * 60 * 1000
 
 /** `datetime-local` value for "now minus `minsAgo` minutes", in local time. */
 function localInputValue(minsAgo: number): string {
-  const d = new Date(Date.now() - minsAgo * 60_000)
+  return localInputOf(Date.now() - minsAgo * 60_000)
+}
+
+/** `datetime-local` value for an epoch-ms instant. */
+function localInputOf(ms: number): string {
+  const d = new Date(ms)
   const p2 = (n: number): string => String(n).padStart(2, '0')
   return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}T${p2(d.getHours())}:${p2(d.getMinutes())}`
 }
 
-export function NewExportModal({ onClose, onCreated }: NewExportModalProps) {
+export function NewExportModal({
+  onClose,
+  onCreated,
+  initialDeviceId,
+  initialRange,
+}: NewExportModalProps) {
   const { t } = useTranslation()
   // Cameras only, filtered server-side, slim, and the query client's fleet window (D274) so
   // this shares one fetch with the other recordings-page sections.
@@ -59,10 +73,14 @@ export function NewExportModal({ onClose, onCreated }: NewExportModalProps) {
     () => (devicesQuery.data ?? []).toSorted((a, b) => a.name.localeCompare(b.name)),
     [devicesQuery.data],
   )
-  const [deviceId, setDeviceId] = useState<number | ''>('')
+  const [deviceId, setDeviceId] = useState<number | ''>(initialDeviceId ?? '')
   const [profile, setProfile] = useState<string>('high')
-  const [from, setFrom] = useState<string>(localInputValue(60))
-  const [to, setTo] = useState<string>(localInputValue(0))
+  const [from, setFrom] = useState<string>(
+    initialRange === undefined ? localInputValue(60) : localInputOf(initialRange.fromMs),
+  )
+  const [to, setTo] = useState<string>(
+    initialRange === undefined ? localInputValue(0) : localInputOf(initialRange.toMs),
+  )
   const [speed, setSpeed] = useState<number>(1)
   const [includeAudio, setIncludeAudio] = useState(true)
   const [title, setTitle] = useState('')

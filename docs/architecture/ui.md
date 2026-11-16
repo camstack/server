@@ -1716,3 +1716,23 @@ Rules that hold when you touch it:
   (`scripts/check-hero-look-exhaustive.ts`).
 
 The renderers (admin and viewer) are not built yet; nothing draws this model today.
+
+## Archive (`/archive`, `/archive/:deviceId`)
+
+The Archive replaced the Recordings page and took over Library → Events. `/recordings` and
+`/library?tab=events` redirect through `archiveRedirectFor` (`components/archive/archive-redirects.ts`).
+
+- **Overview** (`pages/Archive.tsx`): key numbers, one card per storage location, ONE camera table,
+  activity and health, a collapsed Tools card (migration, cleanup, reconcile from disk). Every
+  section reads from `useArchiveData()`, one fetch of the roster, footage, event footprint, camera
+  statuses and health digest. A source that has not answered is `null` and renders as unknown, never
+  as `0` or `[]`; a switched-off camera is "off", not broken (D62, D315, D393).
+- **Camera page** (`pages/ArchiveCamera.tsx`): Review (player + `RecordingTimeline`, opens on the latest
+  footage, a dragged range starts an export), Events (clustered by time, "Show in Review" seeks the
+  player; the debug view is a filter), Exports, Health (`buildCameraHealth` + the camera's own log,
+  `/system/logs?deviceId=`), Space (where it writes, prune and delete behind confirms) and Settings
+  (the device aggregate with `tab: 'recording'`, derived from the capabilities).
+- The pure logic (row merge, camera state, health rows, event clusters, growth, redirects) lives in
+  `components/archive/*.ts` beside `__tests__/archive-pure.spec.ts`.
+- Location mode is read only through `@camstack/types` (`mayWriteToLocation`, `resolveLocationMode`);
+  `scripts/check-storage-location-mode-single-owner.ts` scans admin-ui too.

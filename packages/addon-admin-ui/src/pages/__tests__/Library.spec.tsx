@@ -18,9 +18,6 @@ vi.mock('../DetectionIntelligence', () => ({
 vi.mock('../Plates', () => ({
   PlatesPage: () => <div data-testid="vehicles-body">vehicles</div>,
 }))
-vi.mock('../Events', () => ({
-  EventsPage: () => <div data-testid="events-body">events</div>,
-}))
 vi.mock('../Scenes', () => ({
   ScenesPage: () => <div data-testid="scenes-body">scenes</div>,
 }))
@@ -51,10 +48,10 @@ function renderLibrary(initialEntry: string): void {
 }
 
 describe('Detection nav — Library hard cut', () => {
-  it('exposes one Library path under Detection, plus Recordings', () => {
+  it('exposes one Library path under Detection, plus Archive', () => {
     const detection = buildNavSections(navParams).find((s) => s.key === 'detection')
-    expect(detection?.items.map((i) => i.path)).toEqual(['/library', '/recordings'])
-    expect(detection?.items.map((i) => i.label)).toEqual(['Library', 'Recordings'])
+    expect(detection?.items.map((i) => i.path)).toEqual(['/library', '/archive'])
+    expect(detection?.items.map((i) => i.label)).toEqual(['Library', 'Archive'])
   })
 })
 

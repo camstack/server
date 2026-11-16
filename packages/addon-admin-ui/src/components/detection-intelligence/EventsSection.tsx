@@ -16,7 +16,7 @@
  */
 import { useEffect, useMemo, useState, type JSX } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { Activity, ArrowDownWideNarrow, Clock, Loader2, Trash2, X } from 'lucide-react'
+import { Activity, ArrowDownWideNarrow, Clock, Loader2, PlayCircle, Trash2, X } from 'lucide-react'
 import {
   Button,
   EmptyState,
@@ -49,6 +49,7 @@ import { buildKindGroups } from './event-kind-vocabulary.js'
 import { DateRangeFilter } from './DateRangeFilter.js'
 import { EventDetailPanel } from './EventDetailPanel.js'
 import { EventCard } from './EventCard.js'
+import { clusterEvents } from '../archive/event-clusters'
 import { GalleryPager } from '../GalleryPager.js'
 import { usePagedList } from '../../lib/use-paged-list.js'
 import { useScrolledPast } from '../../lib/use-scrolled-past.js'
@@ -80,7 +81,17 @@ const SORTS: readonly {
   { value: 'time', labelKey: 'detectionIntelligence.eventsSection.sortRecent', icon: Clock },
 ]
 
-export function EventsSection(): JSX.Element {
+export interface EventsSectionProps {
+  /** Camera page: only this camera's events, no camera filter, grouped by time cluster. */
+  readonly deviceId?: number
+  /** Camera page: "show in Review" on a card — receives the event start (epoch ms). */
+  readonly onSeek?: (atMs: number) => void
+}
+
+export function EventsSection({
+  deviceId: fixedDeviceId,
+  onSeek,
+}: EventsSectionProps = {}): JSX.Element {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const showAlert = useAlert()
@@ -132,10 +143,15 @@ export function EventsSection(): JSX.Element {
   // hundreds of non-camera devices and the camera dropdown lists everything.
   // `slim` + the query client's fleet window (D274): same camera-roster shape the other
   // detection-intelligence sections read, so they share one fetch.
-  const { data: devices = [] } = useDeviceManagerListAll({
+  const { data: allDevices = [] } = useDeviceManagerListAll({
     isCamera: true,
     projection: 'slim',
   })
+  const devices = useMemo(
+    () =>
+      fixedDeviceId === undefined ? allDevices : allDevices.filter((d) => d.id === fixedDeviceId),
+    [allDevices, fixedDeviceId],
+  )
   const deviceIds = useMemo(() => devices.map((d) => d.id), [devices])
 
   // The kinds menu is DERIVED from what the cameras actually advertise, not
@@ -287,6 +303,11 @@ export function EventsSection(): JSX.Element {
     })
   }
 
+  const clusters = useMemo(
+    () => clusterEvents(paged.pageItems, (row) => row.timestamp),
+    [paged.pageItems],
+  )
+
   const isFiltered = list.length !== rows.length
 
   return (
@@ -294,11 +315,13 @@ export function EventsSection(): JSX.Element {
       {/* Filter bar */}
       <div className="flex flex-wrap items-center gap-1.5">
         <DateRangeFilter onChange={setDateRange} />
-        <CameraMultiSelect
-          cameras={cameraOptions}
-          selected={selectedCameras}
-          onChange={setSelectedCameras}
-        />
+        {fixedDeviceId === undefined && (
+          <CameraMultiSelect
+            cameras={cameraOptions}
+            selected={selectedCameras}
+            onChange={setSelectedCameras}
+          />
+        )}
 
         {/* Hierarchical event-kind filter (macro → sub, taxonomy-driven) */}
         <EventKindFilter
@@ -438,19 +461,64 @@ export function EventsSection(): JSX.Element {
           {/* Zero-height sentinel: while it is on screen the operator is at the
               top of the grid and live refreshes apply immediately. */}
           <div ref={feedTop.ref} aria-hidden className="h-0" />
-          <MediaGrid status="ready" testId="events-grid">
-            {paged.pageItems.map((row) => (
-              <EventCard
-                key={trackSelectionKey(row.deviceId, row.trackId)}
-                row={row}
-                cameraName={cameraName(row.deviceId)}
-                nowMs={nowMs}
-                selected={selected.has(trackSelectionKey(row.deviceId, row.trackId))}
-                onToggleSelect={toggleSelect}
-                onOpenDetail={setDetailRow}
-              />
-            ))}
-          </MediaGrid>
+          {fixedDeviceId !== undefined && sortMode === 'time' ? (
+            clusters.map((cluster) => (
+              <div key={cluster.toMs} className="space-y-1.5">
+                <div className="text-[11px] font-medium text-foreground-subtle">
+                  {t('detectionIntelligence.eventsSection.clusterHeading', {
+                    count: cluster.events.length,
+                    time: new Date(cluster.toMs).toLocaleString(),
+                  })}
+                </div>
+                <MediaGrid status="ready" testId="events-grid">
+                  {cluster.events.map((row) => (
+                    <EventCard
+                      key={trackSelectionKey(row.deviceId, row.trackId)}
+                      row={row}
+                      cameraName={cameraName(row.deviceId)}
+                      nowMs={nowMs}
+                      selected={selected.has(trackSelectionKey(row.deviceId, row.trackId))}
+                      onToggleSelect={toggleSelect}
+                      onOpenDetail={setDetailRow}
+                      footer={
+                        onSeek === undefined ? undefined : (
+                          <Button variant="ghost" onClick={() => onSeek(row.timestamp)}>
+                            <PlayCircle className="h-3.5 w-3.5" />
+                            {t(
+                              'detectionIntelligence.eventsSection.showInReview',
+                              'Show in Review',
+                            )}
+                          </Button>
+                        )
+                      }
+                    />
+                  ))}
+                </MediaGrid>
+              </div>
+            ))
+          ) : (
+            <MediaGrid status="ready" testId="events-grid">
+              {paged.pageItems.map((row) => (
+                <EventCard
+                  key={trackSelectionKey(row.deviceId, row.trackId)}
+                  row={row}
+                  cameraName={cameraName(row.deviceId)}
+                  nowMs={nowMs}
+                  selected={selected.has(trackSelectionKey(row.deviceId, row.trackId))}
+                  onToggleSelect={toggleSelect}
+                  onOpenDetail={setDetailRow}
+                  footer={
+                    onSeek === undefined ? undefined : (
+                      <Button variant="ghost" onClick={() => onSeek(row.timestamp)}>
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        {t('detectionIntelligence.eventsSection.showInReview', 'Show in Review')}
+                      </Button>
+                    )
+                  }
+                />
+              ))}
+            </MediaGrid>
+          )}
           <GalleryPager
             currentPage={paged.page}
             totalItems={paged.totalItems}

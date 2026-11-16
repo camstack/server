@@ -1,6 +1,5 @@
 /**
- * Library section chrome — SectionCard bodies for People / Vehicles, no nested
- * AdminPage under Events Feed/Debug.
+ * Library section chrome — SectionCard bodies for People / Vehicles.
  */
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen } from '@testing-library/react'
@@ -26,9 +25,6 @@ vi.mock('../../components/detection-intelligence/use-face-gallery-live-refresh',
 vi.mock('../../components/detection-intelligence/use-plate-gallery-live-refresh', () => ({
   usePlateGalleryLiveRefresh: () => undefined,
 }))
-vi.mock('../../components/detection-intelligence/EventsSection', () => ({
-  EventsSection: () => <div data-testid="events-section">events-section</div>,
-}))
 vi.mock('../../components/detection-intelligence/SemanticEventSearch', () => ({
   SemanticEventSearch: () => <div>semantic-search</div>,
 }))
@@ -40,7 +36,6 @@ vi.mock('../../components/detection-intelligence/RetrainTabCallout', () => ({
 }))
 
 import { DetectionIntelligencePage } from '../DetectionIntelligence'
-import { EventsFeedPage } from '../EventsFeed'
 import { PlatesPage } from '../Plates'
 
 function wrap(ui: ReactElement): void {
@@ -71,13 +66,5 @@ describe('Library People / Vehicles section chrome', () => {
     expect(screen.getByTestId('library-section-recent-plates')).toBeTruthy()
     expect(screen.getByTestId('vehicles-list')).toBeTruthy()
     expect(screen.getByTestId('plates-list')).toBeTruthy()
-  })
-})
-
-describe('Events Feed under Library', () => {
-  it('renders the feed body without a nested page title (no double AdminPage chrome)', () => {
-    wrap(<EventsFeedPage />)
-    expect(screen.getByTestId('events-section')).toBeTruthy()
-    expect(screen.queryByRole('heading', { level: 1 })).toBeNull()
   })
 })

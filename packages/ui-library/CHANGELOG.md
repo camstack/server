@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Regenerated system hooks for the new timed siren capability
 - Every log stream now offers Export (pre-filled with its scope, with a choice of log source showing whether it is readable and how far back it reaches), shows the integration and device names with a column picker, and the device picker no longer jumps while it loads
 - Log stream name columns are off unless a page opts in through the columns prop; the export dialog shows an error when the log sources cannot be read
+- The recording timeline opens on the latest footage, says so when a window is empty, and a range dragged on it can start an export.
 
 ## [1.2.461] - 2026-11-16
 

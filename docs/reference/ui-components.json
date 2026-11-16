@@ -14702,6 +14702,33 @@
       "summary": ""
     },
     {
+      "name": "RecordingTimeline",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/cap-settings/RecordingTimeline.tsx",
+      "summary": "",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "seekTo",
+          "type": "{ readonly atMs: number; readonly nonce: number }",
+          "optional": true,
+          "doc": "Ask the timeline to play from a moment (an event a neighbouring list was clicked on). A new `nonce` is a new request — the same instant twic"
+        },
+        {
+          "name": "onExportRange",
+          "type": "(fromMs: number, toMs: number) => void",
+          "optional": true,
+          "doc": "Shift + drag on the coverage bar selects a range and reports it here."
+        }
+      ]
+    },
+    {
       "name": "reduceSessionRun",
       "kind": "function",
       "area": "composites",

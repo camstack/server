@@ -208,10 +208,18 @@ interface BulkOutcome {
   readonly refused: readonly string[]
 }
 
-export function EventsDebugPage(): JSX.Element {
+export interface EventsDebugPageProps {
+  /** Camera page: the list is fixed to this camera and the picker is hidden. */
+  readonly deviceId?: number
+}
+
+export function EventsDebugPage({
+  deviceId: fixedDeviceId,
+}: EventsDebugPageProps = {}): JSX.Element {
   const { t } = useTranslation()
   const system = useSystem()
-  const [camera, setCamera] = useState<string>(ALL_CAMERAS)
+  const [pickedCamera, setCamera] = useState<string>(ALL_CAMERAS)
+  const camera = fixedDeviceId === undefined ? pickedCamera : String(fixedDeviceId)
   const [downloading, setDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState<string | null>(null)
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set())
@@ -422,13 +430,15 @@ export function EventsDebugPage(): JSX.Element {
   return (
     <section className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
-        <div className="w-44">
-          <Select
-            value={camera}
-            options={cameraOptions}
-            onChange={(e) => setCamera(e.target.value)}
-          />
-        </div>
+        {fixedDeviceId === undefined && (
+          <div className="w-44">
+            <Select
+              value={camera}
+              options={cameraOptions}
+              onChange={(e) => setCamera(e.target.value)}
+            />
+          </div>
+        )}
         <Button variant="secondary" onClick={refresh} disabled={listQuery.isFetching}>
           {listQuery.isFetching ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />

@@ -116,7 +116,15 @@ function useNow(intervalMs: number): number {
   return now
 }
 
-export function ExportsSection() {
+export interface ExportsSectionProps {
+  /** Camera page: only this camera's exports, with the full record per row. */
+  readonly deviceId?: number
+  /** A range handed over from the Review timeline: opens the new-export dialog on it. */
+  readonly draft?: { readonly fromMs: number; readonly toMs: number } | null
+  readonly onDraftClose?: () => void
+}
+
+export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSectionProps = {}) {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [creating, setCreating] = useState(false)
@@ -127,7 +135,11 @@ export function ExportsSection() {
   const trpcClient = useSystem().trpcClient
   const now = useNow(60_000)
 
-  const { rows, isLoading } = useLiveExports()
+  const { rows: allRows, isLoading } = useLiveExports()
+  const rows = useMemo(
+    () => (deviceId === undefined ? allRows : allRows.filter((r) => r.deviceId === deviceId)),
+    [allRows, deviceId],
+  )
   // Every export row is keyed by camera — cameras only, slim, and the query client's fleet window (D274) so the recordings-page sections share one fetch.
   const { data: devices } = useDeviceManagerListAll({ isCamera: true, projection: 'slim' })
 
@@ -210,14 +222,37 @@ export function ExportsSection() {
 
   const columns = useMemo<readonly DataColumn<ExportRecord>[]>(
     () => [
+      ...(deviceId === undefined
+        ? [
+            {
+              key: 'camera',
+              header: t('recordings.exportsSection.camera', 'Camera'),
+              render: (r: ExportRecord) => (
+                <span className="text-foreground">
+                  {cameraName.get(r.deviceId) ?? `#${String(r.deviceId)}`}
+                </span>
+              ),
+            },
+          ]
+        : []),
       {
-        key: 'camera',
-        header: t('recordings.exportsSection.camera', 'Camera'),
+        key: 'created',
+        header: t('recordings.exportsSection.created', 'Created'),
+        nowrap: true,
+        sortValue: (r) => r.createdAt,
         render: (r) => (
-          <span className="text-foreground">
-            {cameraName.get(r.deviceId) ?? `#${String(r.deviceId)}`}
+          <span className="text-foreground-subtle tabular-nums">
+            {new Date(r.createdAt).toLocaleString()}
+            <span className="ml-1">
+              {t('recordings.exportsSection.by', 'by {{who}}', { who: r.createdBy })}
+            </span>
           </span>
         ),
+      },
+      {
+        key: 'title',
+        header: t('recordings.exportsSection.title', 'Title'),
+        render: (r) => <span className="text-foreground">{r.options.title ?? '—'}</span>,
       },
       {
         key: 'range',
@@ -236,15 +271,18 @@ export function ExportsSection() {
         render: (r) => {
           const style = STATE_STYLES[r.state]
           return (
-            <span
-              className={`inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ${style.cls}`}
-            >
-              {style.spin && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
-              {t(style.labelKey)}
-              {r.state === 'rendering' && r.progressPct !== null && (
-                <span className="tabular-nums">{r.progressPct}%</span>
-              )}
-            </span>
+            <div className="flex flex-col gap-0.5">
+              <span
+                className={`inline-flex w-fit items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium ${style.cls}`}
+              >
+                {style.spin && <Loader2 className="h-2.5 w-2.5 animate-spin" />}
+                {t(style.labelKey)}
+                {r.state === 'rendering' && r.progressPct !== null && (
+                  <span className="tabular-nums">{r.progressPct}%</span>
+                )}
+              </span>
+              {r.error !== null && <span className="text-[10px] text-danger">{r.error}</span>}
+            </div>
           )
         },
       },
@@ -260,6 +298,16 @@ export function ExportsSection() {
               {formatExpiry(r.expiresAt, now)}
             </span>
           ),
+      },
+      {
+        key: 'downloaded',
+        header: t('recordings.exportsSection.downloaded', 'Downloaded'),
+        nowrap: true,
+        render: (r) => (
+          <span className="text-foreground-subtle tabular-nums">
+            {r.downloadedAt === null ? '—' : new Date(r.downloadedAt).toLocaleString()}
+          </span>
+        ),
       },
       {
         key: 'size',
@@ -333,6 +381,7 @@ export function ExportsSection() {
       },
     ],
     [
+      deviceId,
       cameraName,
       now,
       downloadingId,
@@ -378,7 +427,17 @@ export function ExportsSection() {
       ) : (
         <DataTable columns={columns} rows={rows} rowKey={(r) => r.id} minWidthPx={720} />
       )}
-      {creating && <NewExportModal onClose={() => setCreating(false)} onCreated={refetchExports} />}
+      {(creating || (draft ?? null) !== null) && (
+        <NewExportModal
+          onClose={() => {
+            setCreating(false)
+            onDraftClose?.()
+          }}
+          onCreated={refetchExports}
+          initialDeviceId={deviceId}
+          initialRange={draft ?? undefined}
+        />
+      )}
     </div>
   )
 }

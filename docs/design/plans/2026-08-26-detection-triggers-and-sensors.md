@@ -311,7 +311,7 @@ on the same set is the shape to use when the devices are more than one.
 
 ### 1.8 Where the mode is configured today in the UI
 
-- **Admin UI**: `packages/addon-admin-ui/src/pages/Recordings.tsx:48` mounts
+- **Admin UI**: the former Recordings page (now `packages/addon-admin-ui/src/pages/Archive.tsx`) mounts
   `CameraRecordingSettingsSection`, which renders the composites of `ui-library`:
   `RecordingSettings.tsx` (the Off/Events/Continuous shortcuts, `:14-18`) and
   `RecordingBandsEditor.tsx` (the bands table + the trigger ticks, `:146-201`).

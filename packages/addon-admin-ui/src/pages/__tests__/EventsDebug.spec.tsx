@@ -9,7 +9,7 @@
  *
  * The assertions that earn their place:
  *
- *  1. the tab exists on the Events strip and `?section=debug` deep-links to it;
+ *  1. (retired) the Debug view is a filter of the Archive camera page now;
  *  2. the actions are called with the MANIFEST addon id (`pipeline-analytics`).
  *     Getting that wrong is a 404 that looks like a missing deploy, and it has
  *     already cost this repo an afternoon;
@@ -140,18 +140,6 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-// The Feed tab owns its own tests; this file is about Debug.
-vi.mock('../../components/detection-intelligence/EventsSection', () => ({
-  EventsSection: () => <div>events-feed-section</div>,
-}))
-vi.mock('../../components/detection-intelligence/SemanticEventSearch', () => ({
-  SemanticEventSearch: () => <div>semantic-event-search</div>,
-}))
-vi.mock('../../components/detection-intelligence/StationarySection', () => ({
-  StationarySection: () => <div>stationary-section</div>,
-}))
-vi.mock('../Retrain', () => ({ RetrainPage: () => <div>retrain-page</div> }))
-
 // The detail modal is the Events feed's own surface and has its own spec. Here
 // it is a probe: what matters is that Debug opens THE SHARED PANEL, with the
 // track the operator clicked — not that it renders a second view of its own.
@@ -160,14 +148,14 @@ vi.mock('../../components/detection-intelligence/EventDetailPanel', () => ({
     row === null ? null : <div>detail-panel:{row.trackId}</div>,
 }))
 
-import { EventsPage } from '../Events'
+import { EventsDebugPage } from '../EventsDebug'
 
-function renderAt(path: string) {
+function renderAt(path: string, props: { readonly deviceId?: number } = {}) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={[path]}>
-        <EventsPage />
+        <EventsDebugPage {...props} />
       </MemoryRouter>
     </QueryClientProvider>,
   )
@@ -179,18 +167,15 @@ beforeEach(() => {
   localStorage.setItem('camstack_admin_token', 'tok')
 })
 
-describe('the Debug tab on the Events strip', () => {
-  it('is offered alongside Feed, and is not the default', () => {
-    renderAt('/library?tab=events')
-    expect(screen.getByRole('tab', { name: 'Debug' })).toBeInTheDocument()
-    expect(screen.getByRole('tab', { name: 'Feed' })).toHaveAttribute('aria-selected', 'true')
-    expect(screen.getByText('events-feed-section')).toBeInTheDocument()
-  })
-
-  it('deep-links via ?section=debug', async () => {
-    renderAt('/library?tab=events&section=debug')
-    expect(await screen.findByText(/postman/)).toBeInTheDocument()
-    expect(screen.queryByText('events-feed-section')).not.toBeInTheDocument()
+describe('Events → Debug on one camera (Archive camera page)', () => {
+  it('lists only that camera and offers no camera picker', async () => {
+    renderAt('/archive/102?section=events', { deviceId: 102 })
+    await waitFor(() => {
+      expect(custom).toHaveBeenCalled()
+    })
+    const list = custom.mock.calls.find((c) => c[0]?.action === 'debug.listTracks')?.[0]
+    expect(list?.input).toEqual({ deviceIds: [102] })
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument()
   })
 })
 
