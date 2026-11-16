@@ -48,6 +48,7 @@ function snapshot(
     cpu: { percent: 12, tempC: null, powerW: null },
     disks,
     dockers,
+    vms: [],
     notifications: { activeCount: 0, latest: null },
   }
 }

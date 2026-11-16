@@ -91,6 +91,15 @@ function fakeApi(over: Partial<UnraidApiSource> = {}): UnraidApiSource {
       stats$: () =>
         once({ id: 'c1', cpuPercent: 12, memUsage: '1', memPercent: 7, netIO: '', blockIO: '' }),
     },
+    vms: {
+      list: async () => [],
+      start: vi.fn(async () => true),
+      stop: vi.fn(async () => true),
+      pause: vi.fn(async () => true),
+      resume: vi.fn(async () => true),
+      forceStop: vi.fn(async () => true),
+      reboot: vi.fn(async () => true),
+    },
     system: {
       versions: async () => ({}),
       cpu$: () => once({ id: 'cpu', percentTotal: 33 }),
@@ -228,6 +237,7 @@ describe('createLiveUnraidClient', () => {
       cpu: await client.system.cpu(),
       disks: array.disks,
       dockers: await client.docker.list(),
+      vms: await client.vms.list(),
       notifications: await client.notifications.active(),
     })
     const values = descriptors

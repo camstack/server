@@ -35,6 +35,15 @@ function fakeFactory(failure: Error | null, seen: UnraidClientFactoryInput[]): U
         parity: { start: unused, cancel: unused },
       },
       docker: { list: unused, start: unused, stop: unused },
+      vms: {
+        list: unused,
+        start: unused,
+        stop: unused,
+        pause: unused,
+        resume: unused,
+        forceStop: unused,
+        reboot: unused,
+      },
       system: { cpu: unused },
       notifications: { active: unused },
     }

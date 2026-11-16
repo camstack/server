@@ -65,6 +65,7 @@ const SNAPSHOT: UnraidSnapshot = {
       memPercent: 2,
     },
   ],
+  vms: [],
   notifications: { activeCount: 0, latest: null },
 }
 
@@ -272,6 +273,15 @@ describe('Unraid integration: the API key', () => {
         list: async () => SNAPSHOT.dockers,
         start: async () => undefined,
         stop: async () => undefined,
+      },
+      vms: {
+        list: async () => [],
+        start: async () => undefined,
+        stop: async () => undefined,
+        pause: async () => undefined,
+        resume: async () => undefined,
+        forceStop: async () => undefined,
+        reboot: async () => undefined,
       },
       system: { cpu: async () => SNAPSHOT.cpu },
       notifications: { active: async () => SNAPSHOT.notifications },
