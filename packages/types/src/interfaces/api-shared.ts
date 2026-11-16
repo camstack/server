@@ -104,6 +104,8 @@ export interface CameraMetrics {
   readonly avgInferenceTimeMs: number
   readonly droppedFrames: number
   readonly phase: CameraPhase
+  /** Native crops the runner could not serve (a miss, an expired handle or no registry), since the runner started. */
+  readonly nativeCropMisses?: number
 }
 
 // ---------------------------------------------------------------------------
