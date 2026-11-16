@@ -4877,7 +4877,7 @@
 
 ### `terminal-session` → `terminalSession.*`
 
-- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:139`
+- **Source:** `packages/types/src/capabilities/terminal-session.cap.ts:143`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `ITerminalSessionProvider`

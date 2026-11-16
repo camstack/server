@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Device Interactions can record which ecosystem principal an exporter acted for.
 - A device proxy command accepts an optional call origin, so an exporter can state who it acted for.
 - New timed siren capability: sound a siren for a chosen duration and read until when it sounds
+- terminalSession.listSessions names who opened each session (openedBy) and when it last saw input or output (lastActivityAt).
 
 ## [1.2.584] - 2026-11-16
 

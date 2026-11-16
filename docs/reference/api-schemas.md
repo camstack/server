@@ -7295,6 +7295,8 @@ Enum: `"jwt-signing-key"`
 - `cols`: `number`
 - `rows`: `number`
 - `startedAt`: `number`
+- `openedBy?`: `string`
+- `lastActivityAt?`: `number`
 
 ### `TestConnectionResultSchema`
 

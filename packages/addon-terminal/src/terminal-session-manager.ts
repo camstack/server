@@ -312,7 +312,9 @@ export class TerminalSessionManager implements ITerminalSessionProvider {
   }
 
   async listSessions(): Promise<readonly TerminalSessionInfo[]> {
-    return [...this.sessions.values()].filter((s) => !s.exited).map((s) => s.info)
+    return [...this.sessions.values()]
+      .filter((s) => !s.exited)
+      .map((s) => ({ ...s.info, openedBy: s.openedByUserId, lastActivityAt: s.lastIoAt }))
   }
 
   async openSession(input: {

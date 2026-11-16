@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The session list says who opened each shell and when it last saw input or output.
+
 ## [0.1.165] - 2026-11-15
 
 ### Added

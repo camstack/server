@@ -26,6 +26,10 @@ const TerminalSessionInfoSchema = z.object({
   rows: z.number().int().positive(),
   /** ms-epoch the session's pty was spawned. */
   startedAt: z.number(),
+  /** User id of the admin who opened it; `unattributed` when the caller was not passed. */
+  openedBy: z.string().optional(),
+  /** ms-epoch of the last pty input or output — what the idle timeout measures. */
+  lastActivityAt: z.number().optional(),
 })
 
 /**
