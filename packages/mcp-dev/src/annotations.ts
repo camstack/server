@@ -87,6 +87,7 @@ const BY_CLASS: Readonly<Record<string, readonly string[]>> = {
     'model_pin_census',
     'retrain_census',
     'keyframe_presence',
+    'timeline_audit',
     'birth_decisions',
     'event_density',
     'hub_health_digest',

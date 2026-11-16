@@ -13,6 +13,7 @@ import { QueryRefusedError } from './hub.js'
 import { hubLogs, listLogProviders } from './logs.js'
 import { hubLogsExport, LogsExportArgsSchema } from './logs-export.js'
 import { lokiQuery } from './loki.js'
+import { timelineAudit, TimelineAuditArgsSchema } from './timeline-audit.js'
 import { auditTracksTool } from './track-audit.js'
 
 export type RegisterTool = <Args extends ZodRawShapeCompat>(
@@ -152,6 +153,13 @@ export function registerOpsTools(
           ...(plateDevices ? { plateDevices } : {}),
         }),
       ),
+  )
+
+  tool(
+    'timeline_audit',
+    'Audit the Timeline events of chosen cameras over the last N days: per event, do its images exist (thumbnail/firstFrame/lastFrame, kinds configurable) with the reason when missing, and is its time span on a recording. Returns a per-camera summary (events, % complete media, % covered, recording gaps with events) and a paginated list of failing events (offset/limit). Read-only; events capped per camera, media index sampled, no bytes fetched.',
+    TimelineAuditArgsSchema.shape,
+    (args) => guarded(() => timelineAudit(getHub(), TimelineAuditArgsSchema.parse(args))),
   )
 
   tool(

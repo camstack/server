@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The model-pin census reads the pipeline orchestrator's cluster settings through the scoped settings API
 - New hub_health_digest tool: the orchestrator's latest health findings
 - hub_health_digest returns the per-camera runner signals
+- timeline_audit: audit the Timeline events of chosen cameras over N days for missing images and recording coverage
 
 ## [0.1.0] - 2026-10-27
 
