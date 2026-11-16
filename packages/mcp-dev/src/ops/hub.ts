@@ -25,7 +25,7 @@ import {
   HubHttpError,
   HubRpcError,
 } from '@camstack/develop'
-import { createHubDownloader } from './download.js'
+import { createHubDownloader, type HubDownloader } from '@camstack/develop'
 
 /** The gate said no. The message is safe to show and says how to proceed. */
 export class QueryRefusedError extends Error {
@@ -35,12 +35,7 @@ export class QueryRefusedError extends Error {
   }
 }
 
-/** Streams one hub data-plane path to a local file; see `ops/download.ts`. */
-export type HubDownloader = (
-  urlPath: string,
-  destFile: string,
-  maxBytes: number,
-) => Promise<{ readonly bytes: number }>
+export type { HubDownloader }
 
 export interface OpsHub {
   readonly server: string

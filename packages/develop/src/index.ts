@@ -196,3 +196,15 @@ export {
 // (ops toolset) and the private operator MCP.
 export * from './mcp/ops/wire.js'
 export * from './mcp/ops/track-findings.js'
+export { createHubDownloader, DOWNLOAD_TIMEOUT_MS } from './hub/hub-download.js'
+export type { DownloaderOptions, HubDownloader } from './hub/hub-download.js'
+export {
+  DEFAULT_LOGS_EXPORT_MAX_MB,
+  downloadLogsExport,
+  HARD_LOGS_EXPORT_MAX_MB,
+  LOGS_EXPORT_URL_PATH,
+  LogsExportArgsSchema,
+  logsExportUrl,
+  summarizeLogsExport,
+} from './hub/logs-export.js'
+export type { LogsExportArgs, LogsExportDownload, LogsExportSummary } from './hub/logs-export.js'

@@ -5,7 +5,12 @@
  */
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { z } from 'zod'
-import { jwtClaims, type CredentialSource, type CredentialTier } from '@camstack/develop'
+import {
+  jwtClaims,
+  LogsExportArgsSchema,
+  type CredentialSource,
+  type CredentialTier,
+} from '@camstack/develop'
 import { text } from './tool-result.js'
 import type { McpContext, ToolTextResult } from './context.js'
 import { noSessionResult, type NoSessionResult } from './ops-hub.js'
@@ -13,6 +18,7 @@ import { opsAccelerators } from './ops-accelerators.js'
 import { opsDevice, opsUnhealthyDevices } from './ops-device.js'
 import { opsEvents, opsTrack } from './ops-events.js'
 import { opsLogs } from './ops-logs.js'
+import { opsLogsExport } from './ops-logs-export.js'
 import { opsStatus } from './ops-status.js'
 import { opsUpdateApply, UPDATE_APPLY_TOOL } from './ops-update-apply.js'
 import { opsUpdateCheck } from './ops-update-check.js'
@@ -124,6 +130,14 @@ export function registerOpsTools(
     'Every enabled device that is unhealthy, each with a typed reason (offline, detection-provisioning-failed, detection-not-assigned, recording-inactive). A function an operator switched off is never listed; a camera whose status could not be fully read is listed under `unknown`.',
     {},
     async (): Promise<ToolTextResult> => text(await opsUnhealthyDevices(ctx)),
+  )
+
+  server.tool(
+    'ops_logs_export',
+    'The Logs page export: logs of chosen components (addonIds) and/or devices over a time range, as one NDJSON file under ~/.camstack/exports/logs/ (tags kept, deviceId included). Default everything over the last 6 hours. Returns the path and a bounded summary (lines, span, busiest devices/components, truncated). Needs an admin `camstack login`.',
+    LogsExportArgsSchema.shape,
+    async (args): Promise<ToolTextResult> =>
+      text(await opsLogsExport(ctx, LogsExportArgsSchema.parse(args))),
   )
 
   server.tool(

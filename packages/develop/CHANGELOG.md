@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Shared hub downloader and logs-export helpers for the MCP servers
+
 ## [0.1.53] - 2026-11-12
 
 ### Changed
