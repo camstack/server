@@ -606,6 +606,16 @@ export const workloadCapability = {
               ),
               icon: 'server-crash',
             },
+            // A host that stopped answering its poll is `crashed`; answering again is a
+            // recovery, worded as the host coming back rather than a process restarting.
+            onRecovered: {
+              label: t('Back online', 'Di nuovo in linea'),
+              phrase: t(
+                'When {device} answers again after going down',
+                'Quando {device} torna a rispondere dopo essere caduto',
+              ),
+              icon: 'server',
+            },
           },
         },
       },

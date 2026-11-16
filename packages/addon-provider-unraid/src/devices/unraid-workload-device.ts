@@ -19,7 +19,9 @@ import {
 } from '../unraid-discovery.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
 import {
+  answeringSnapshot,
   unknownWorkloadStatus,
+  unraidServerReach,
   unraidWorkloadOptions,
   unraidWorkloadStatus,
 } from '../unraid-workload-state.js'
@@ -174,9 +176,11 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
     await manager.poll()
   }
 
-  /** The `workload` slice from the live snapshot. */
+  /** The `workload` slice from the live snapshot; unknown while the server does not answer. */
   private recompute(): void {
-    const snapshot = unraidInstances.getSnapshot(this.integrationId)
+    const snapshot = answeringSnapshot(
+      unraidServerReach(unraidInstances.getManager(this.integrationId)),
+    )
     this.runtimeState.setCapState(
       workloadCapability.name,
       unraidWorkloadStatus(

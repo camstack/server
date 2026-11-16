@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Docker containers and VMs are proposed one by one in Add devices and adopted as their own devices, no longer created as switches under the server; a container or VM list that cannot be read removes nothing
 - The server, each Docker container and each VM are adopted as workload devices: a container starts, stops, restarts (stop then start, as before), pauses and resumes, a VM also reboots and force-stops, each container and VM gets a power switch and shows its state, image, autostart and update status, and names the server as its host
 - A container workload shows its memory use, which was read and not shown
+- An Unraid server that stops answering now reports as down (raising the host's 'went down', then 'back online' when it answers again) and its containers and VMs read unknown, instead of all of them staying 'running' on the last poll
 
 ## [0.2.167] - 2026-11-14
 

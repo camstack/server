@@ -20,6 +20,7 @@ import {
   UNRAID_HOST_WORKLOAD_OPTIONS,
   unknownWorkloadStatus,
   unraidHostWorkloadStatus,
+  unraidServerReach,
 } from '../unraid-workload-state.js'
 import { UnraidEntityDevice } from './unraid-entity-device.js'
 
@@ -104,7 +105,10 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
   private recomputeWorkload(): void {
     this.runtimeState.setCapState(
       workloadCapability.name,
-      unraidHostWorkloadStatus(unraidInstances.getSnapshot(this.instanceId), Date.now()),
+      unraidHostWorkloadStatus(
+        unraidServerReach(unraidInstances.getManager(this.instanceId)),
+        Date.now(),
+      ),
     )
   }
 

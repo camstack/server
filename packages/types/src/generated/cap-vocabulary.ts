@@ -3559,6 +3559,14 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
               },
               icon: 'server-crash',
             },
+            onRecovered: {
+              label: { en: 'Back online', it: 'Di nuovo in linea' },
+              phrase: {
+                en: 'When {device} answers again after going down',
+                it: 'Quando {device} torna a rispondere dopo essere caduto',
+              },
+              icon: 'server',
+            },
           },
         },
       },

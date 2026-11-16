@@ -12,7 +12,7 @@ import {
 } from '../workload.cap.js'
 import { switchCapability } from '../switch.cap.js'
 import { resolveMethodAuth } from '../cap-router-predicates.js'
-import type { CapabilityMethodAuth } from '../capability-definition.js'
+import type { CapabilityDefinition, CapabilityMethodAuth } from '../capability-definition.js'
 import { CAP_VOCABULARY } from '../../generated/cap-vocabulary.js'
 import { capUnitResolver } from '../../automation/normalize-units.js'
 import type { CapNestedNumericPath } from '../../device/cap-vocabulary/types.js'
@@ -163,6 +163,13 @@ describe('workload cap — roles narrow it (D1033)', () => {
     const host = workloadCapability.vocabulary.overrides.byRole[DeviceRole.Host]
     expect(host.actions['workload.restart'].label.en).toBe('Reboot')
     expect(host.actions['workload.restart'].label.it).toBe('Riavvia')
+  })
+
+  it('words a host that answers again after going down as back online, not a crash recovery', () => {
+    const host = workloadCapability.vocabulary.overrides.byRole[DeviceRole.Host]
+    expect(host.events.onCrashed.label.en).toBe('Went down')
+    expect(host.events.onRecovered.label.en).toBe('Back online')
+    expect(host.events.onRecovered.label.it).toBe('Di nuovo in linea')
   })
 })
 
@@ -316,19 +323,20 @@ describe('workload cap — resource thresholds are rule triggers (D1056)', () =>
 })
 
 describe('workload cap — one tier per kind of act', () => {
+  // The router reads a cap through its general definition, as codegen does.
+  const workloadDef: CapabilityDefinition = workloadCapability
+  const switchDef: CapabilityDefinition = switchCapability
   it('starting, stopping, restarting, pausing and resuming are protected, like the derived switch', () => {
     const { methods } = workloadCapability
     const tierOf = (m: { readonly auth?: CapabilityMethodAuth }) =>
-      resolveMethodAuth(workloadCapability, m)
+      resolveMethodAuth(workloadDef, m)
     expect(
       [methods.start, methods.stop, methods.restart, methods.pause, methods.resume].map(tierOf),
     ).toEqual(['protected', 'protected', 'protected', 'protected', 'protected'])
-    expect(resolveMethodAuth(switchCapability, switchCapability.methods.setState)).toBe('protected')
+    expect(resolveMethodAuth(switchDef, switchCapability.methods.setState)).toBe('protected')
   })
 
   it('a force stop, which can lose data, is admin', () => {
-    expect(resolveMethodAuth(workloadCapability, workloadCapability.methods.forceStop)).toBe(
-      'admin',
-    )
+    expect(resolveMethodAuth(workloadDef, workloadCapability.methods.forceStop)).toBe('admin')
   })
 })

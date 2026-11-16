@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The workload capability reports memory as a percentage (memoryPercent) for a source that has no byte count, recorded in its history
 - A rule can trigger on a number grouped under an object in a device's status (a workload's CPU, memory or temperature above or below a threshold)
 - A workload restart needs the same permission as start and stop (it was admin only); force stop stays admin
+- A workload host that answers again after going down is worded 'Back online'
 
 ## [1.2.585] - 2026-11-16
 
