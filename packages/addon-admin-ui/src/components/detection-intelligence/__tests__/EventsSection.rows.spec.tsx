@@ -6,7 +6,7 @@
  */
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { EventsListReport } from '../EventsSection'
 import type { KeyEventRow } from '../key-events-merge'
@@ -33,12 +33,22 @@ const ROWS: readonly KeyEventRow[] = [
   eventRow('t3', 'person', 120_000),
 ]
 
+interface DeleteVars {
+  readonly deviceId: number
+  readonly trackIds: readonly string[]
+}
+
+const mocks = vi.hoisted(() => ({
+  confirm: vi.fn(async () => true),
+  deleteTracks: vi.fn(async (_vars: DeleteVars) => undefined),
+}))
+
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
     useAlert: () => vi.fn(),
-    useConfirm: () => vi.fn(),
+    useConfirm: () => mocks.confirm,
     useDeviceManagerListAll: () => ({ data: [{ id: 101, name: 'Front door' }] }),
     usePipelineAnalyticsListEventKindsBatch: () => ({ data: [], isLoading: false }),
   }
@@ -55,9 +65,9 @@ vi.mock('../../../lib/authed-media', () => ({
   useAuthedImage: () => ({ src: null }),
 }))
 vi.mock('../use-delete-tracks', () => ({
-  DELETE_TRACKS_AVAILABLE: false,
+  DELETE_TRACKS_AVAILABLE: true,
   DELETE_UNAVAILABLE_TITLE: '',
-  useDeleteTracksMutation: () => ({ isPending: false, mutateAsync: vi.fn() }),
+  useDeleteTracksMutation: () => ({ isPending: false, mutateAsync: mocks.deleteTracks }),
 }))
 interface DetailMockProps {
   readonly row: KeyEventRow
@@ -110,6 +120,22 @@ describe('EventsSection rows layout', () => {
     expect(screen.queryByTestId('detail')).not.toBeInTheDocument()
     fireEvent.click(second.getByRole('button', { name: 'Details' }))
     expect(screen.getByTestId('detail')).toHaveTextContent('t2')
+  })
+
+  it('rows are selectable one by one and all at once, and Delete removes the selection after a confirm', async () => {
+    renderRows()
+    fireEvent.click(screen.getAllByRole('checkbox', { name: /^Select person at/ })[0])
+    expect(screen.getByText(/1 selected/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('event-rows-select-all'))
+    expect(screen.getByText(/3 selected/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(mocks.deleteTracks).toHaveBeenCalledTimes(1))
+    expect(mocks.confirm).toHaveBeenCalledTimes(1)
+    const call = mocks.deleteTracks.mock.calls[0]
+    expect(call?.[0]).toEqual({
+      deviceId: 101,
+      trackIds: expect.arrayContaining(['t1', 't2', 't3']),
+    })
   })
 
   it('a class chip switched off narrows the list and the list the density bar draws', () => {

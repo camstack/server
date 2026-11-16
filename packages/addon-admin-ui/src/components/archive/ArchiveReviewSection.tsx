@@ -11,13 +11,19 @@
  *   named here: the rows are whatever the bindings returned.
  * - A click on the timeline or on an event drives the player. With the
  *   recorder selected the timeline plays it; with another source the clip of
- *   that source holding the instant plays.
+ *   that source holding the instant plays IN THE SAME player (`ClipPanel`
+ *   hands the clip to the hero through `vod.play`). The clip's quality and
+ *   download card sits at the top of the events column, so the timeline never
+ *   moves.
  * - Shift-drag on the coverage bar opens the export dialog on that range.
+ * - Sources still loading, or a failed `listSources`, are said in the bar —
+ *   never drawn as a camera with no sources (D315).
  *
  * The player is 16:9 and at most 40% of the viewport tall, so the timeline and
- * every source lane stay on screen at 1440×900. All filters (source, kinds,
- * score, sort, zone, subject, debug) share ONE bar, the timeline's controls
- * row, so the list and the density bar follow the same controls.
+ * every source lane stay on screen at 1440×900. All controls (source, kinds,
+ * classes, score, sort, zone, subject, debug) share ONE bar, the timeline's
+ * controls row. Every filter narrows the list and the density bar alike; sort
+ * only orders the list.
  * Phone: one column — player, timeline, events.
  */
 import {
@@ -42,19 +48,24 @@ import {
 import { RECORDING_SOURCE_CAMSTACK_ADDON, type CamProfile, type Clip } from '@camstack/types'
 import { useCallback, useMemo, useState, type ReactElement } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Link } from 'react-router-dom'
 import { EventsSection } from '../detection-intelligence/EventsSection'
+import { KEY_EVENTS_PER_CAMERA_LIMIT } from '../detection-intelligence/use-key-events-feed'
 import type { EventsListReport } from '../detection-intelligence/EventsSection'
 import { StreamPanelContent } from '../device/PanelContent'
 import { NewExportModal } from '../recordings/NewExportModal'
 import {
   densityPointsOf,
   factsByTrack,
+  needsTrackFacts,
   NO_REVIEW_FILTERS,
   reviewRowFilter,
+  uncheckedRows,
   zonesVisited,
   type ReviewFilters,
   type TrackFacts,
 } from './review-filters'
+import { libraryExportsPath } from './archive-redirects'
 import { ReviewEventTools } from './ReviewEventTools'
 import { ReviewFilterBar } from './ReviewFilterBar'
 
@@ -104,6 +115,7 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
   const [report, setReport] = useState<EventsListReport | null>(null)
   const [seek, setSeek] = useState<ReviewSeek | undefined>(undefined)
   const [draft, setDraft] = useState<ExportDraft | null>(null)
+  const [exportQueued, setExportQueued] = useState(false)
   const [picked, setPicked] = useState<string | null>(null)
   const [activeClip, setActiveClip] = useState<Clip | null>(null)
   const [profile, setProfile] = useState<CamProfile>('high')
@@ -118,11 +130,15 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
   const recorderPlays = provider === null || provider === RECORDING_SOURCE_CAMSTACK_ADDON
   const selectedClips = useClipLaneClips(deviceId, recorderPlays ? null : provider, view)
 
-  // The window's tracks: where the zone and face / plate facts live.
+  // The window's tracks: where the zone and face / plate facts live. The cap
+  // cannot be asked by track id, so it is asked for as many rows as the event
+  // feed holds per camera (the store's own default is far smaller); a row whose
+  // track is still missing is kept and counted, never silently dropped.
   const tracks = usePipelineAnalyticsListTracks({
     deviceId,
     since: view.fromMs,
     until: view.toMs,
+    limit: KEY_EVENTS_PER_CAMERA_LIMIT,
     projection: 'slim',
   })
   const trackRows: readonly TrackFacts[] = tracks.data ?? NO_TRACKS
@@ -131,7 +147,11 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
   const rowFilter = useMemo(() => reviewRowFilter(filters, facts), [filters, facts])
   // The density bar follows the list only while something narrows it; the
   // unnarrowed bar is the server histogram, motion and audio included.
-  const pageNarrows = filters.zone !== null || filters.identity !== 'any' || filters.debug
+  const pageNarrows = needsTrackFacts(filters) || filters.debug
+  const unchecked = useMemo(
+    () => (report === null ? 0 : uncheckedRows(report.rows, filters, facts)),
+    [report, filters, facts],
+  )
   const densityPoints = useMemo(
     () =>
       report !== null && (report.narrowed || pageNarrows)
@@ -172,8 +192,21 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
     setActiveClip(clip)
   }, [])
 
+  const sourcesState =
+    sources.status === 'pending' ? (
+      <span className="text-[11px] text-foreground-subtle" role="status">
+        {t('archive.review.sourcesLoading', 'Loading sources…')}
+      </span>
+    ) : sources.status === 'error' ? (
+      <span className="text-[11px] text-danger" role="alert">
+        {t('archive.review.sourcesFailed', 'Sources could not be read — {{reason}}', {
+          reason: sources.error?.message ?? t('archive.review.noReason', 'no reason given'),
+        })}
+      </span>
+    ) : null
   const sourcePicker =
-    options.length > 1 ? (
+    sourcesState ??
+    (options.length > 1 ? (
       <Select
         wrapperClassName="inline-block w-auto"
         aria-label={t('archive.review.source', 'Source')}
@@ -190,7 +223,7 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
           </option>
         ))}
       </Select>
-    ) : null
+    ) : null)
 
   return (
     <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,calc(40vh*16/9))_minmax(20rem,1fr)]">
@@ -201,6 +234,12 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
         >
           <StreamPanelContent deviceId={deviceId} />
         </div>
+      </div>
+
+      <div
+        className="order-3 flex min-w-0 flex-col gap-2 lg:order-none lg:col-start-2 lg:row-start-1 lg:max-h-[40vh] lg:overflow-y-auto"
+        data-testid="archive-review-events"
+      >
         {clipMiss !== null && (
           <ErrorBox
             variant="warning"
@@ -219,12 +258,6 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
             onProfileChange={setProfile}
           />
         )}
-      </div>
-
-      <div
-        className="order-3 flex min-w-0 flex-col gap-2 lg:order-none lg:col-start-2 lg:row-start-1 lg:max-h-[40vh] lg:overflow-y-auto"
-        data-testid="archive-review-events"
-      >
         <EventsSection
           deviceId={deviceId}
           window={eventsWindow}
@@ -240,14 +273,30 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
         <RecordingTimeline
           deviceId={deviceId}
           seekTo={seek}
-          onExportRange={(fromMs, toMs) => setDraft({ fromMs, toMs })}
+          onExportRange={(fromMs, toMs) => {
+            setExportQueued(false)
+            setDraft({ fromMs, toMs })
+          }}
           onViewChange={onViewChange}
           densityPoints={densityPoints}
           toolbar={
             <div className="contents" data-testid="archive-review-bar">
               {sourcePicker}
+              {exportQueued && (
+                <span className="text-[11px] text-success" role="status">
+                  {t('archive.review.exportQueued', 'Export queued.')}{' '}
+                  <Link to={libraryExportsPath(deviceId)} className="font-medium underline">
+                    {t('archive.review.openExports', 'Open Library → Exports')}
+                  </Link>
+                </span>
+              )}
               <span ref={setEventsBar} className="contents" />
-              <ReviewFilterBar filters={filters} zones={zones} onChange={setFilters} />
+              <ReviewFilterBar
+                filters={filters}
+                zones={zones}
+                onChange={setFilters}
+                unchecked={unchecked}
+              />
             </div>
           }
           lanes={
@@ -269,7 +318,10 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
       {draft !== null && (
         <NewExportModal
           onClose={() => setDraft(null)}
-          onCreated={() => setDraft(null)}
+          onCreated={() => {
+            setDraft(null)
+            setExportQueued(true)
+          }}
           initialDeviceId={deviceId}
           initialRange={draft}
         />

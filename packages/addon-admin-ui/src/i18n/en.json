@@ -4051,7 +4051,8 @@
       "clusterHeading_one": "1 event · {{time}}",
       "clusterHeading_other": "{{count}} events · latest {{time}}",
       "rowSize": "Size",
-      "rowSizeLabel": "Event row size"
+      "rowSizeLabel": "Event row size",
+      "selectAll": "Select all ({{count}})"
     },
     "faceDetailPanel": {
       "face": "Face",
@@ -4274,7 +4275,8 @@
       "openDetail": "Open event details",
       "seek": "Play {{className}} at {{time}}",
       "details": "Details",
-      "play": "Play"
+      "play": "Play",
+      "select": "Select {{className}} at {{time}}"
     },
     "eventClassChips": {
       "all": "All classes",
@@ -4394,7 +4396,10 @@
       "created": "Created",
       "by": "by {{who}}",
       "title": "Title",
-      "downloaded": "Downloaded"
+      "downloaded": "Downloaded",
+      "allCameras": "All cameras",
+      "noExportsForCamera": "No exports for this camera",
+      "noExportsForCameraHint": "Pick All cameras to see every export, or create one with New export."
     },
     "maintenanceAuditSection": {
       "reclaimOrphanedAnalyticsRows": "Reclaim orphaned analytics rows?",
@@ -13527,7 +13532,13 @@
       "identityFace": "With a face",
       "identityPlate": "With a plate",
       "noClipAt": "This source holds no clip at {{time}}. Pick another source or another moment.",
-      "tools": "Search, parked objects and debug"
+      "tools": "Search, parked objects and debug",
+      "unchecked": "Events not checked by this filter: {{count}}",
+      "sourcesLoading": "Loading sources…",
+      "sourcesFailed": "Sources could not be read — {{reason}}",
+      "noReason": "no reason given",
+      "exportQueued": "Export queued.",
+      "openExports": "Open Library → Exports"
     }
   }
 }

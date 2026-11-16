@@ -10,7 +10,11 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { selectOption, selectOptionLabels } from '@camstack/ui-library/testing'
 import type { Clip, ClipSource } from '@camstack/types'
 import type { ReactNode } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { useEffect } from 'react'
+import { MemoryRouter } from 'react-router-dom'
+import type { EventsListReport } from '../../detection-intelligence/EventsSection'
+import type { KeyEventRow } from '../../detection-intelligence/key-events-merge'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 expect.extend(jestDomMatchers)
 
@@ -31,6 +35,43 @@ const ONBOARD_CLIP: Clip = {
   timeRange: { startMs: EVENT_AT - 5_000, endMs: EVENT_AT + 25_000 },
 }
 
+interface SourcesAnswer {
+  readonly status: 'pending' | 'error' | 'success'
+  readonly data?: readonly ClipSource[]
+  readonly error?: { readonly message: string } | null
+}
+interface ListTracksInput {
+  readonly deviceId: number
+  readonly limit?: number
+}
+interface TrackFactsRow {
+  readonly trackId: string
+  readonly zoneNames?: readonly string[]
+}
+
+function feedRow(trackId: string): KeyEventRow {
+  return {
+    id: trackId,
+    trackId,
+    deviceId: 101,
+    timestamp: EVENT_AT,
+    className: 'person',
+    importance: 0.5,
+    bestEventId: '',
+  }
+}
+
+interface ReviewMockState {
+  sources: SourcesAnswer | null
+  tracks: TrackFactsRow[]
+  feed: KeyEventRow[]
+  listTracksInputs: ListTracksInput[]
+}
+
+const state = vi.hoisted(
+  (): ReviewMockState => ({ sources: null, tracks: [], feed: [], listTracksInputs: [] }),
+)
+
 interface SeekProp {
   readonly atMs: number
   readonly nonce: number
@@ -39,6 +80,17 @@ interface TimelineMockProps {
   readonly seekTo?: SeekProp
   readonly lanes?: ReactNode
   readonly toolbar?: ReactNode
+  readonly onExportRange?: (fromMs: number, toMs: number) => void
+}
+interface ExportModalProps {
+  readonly onCreated: () => void
+  readonly initialDeviceId?: number
+  readonly initialRange?: { readonly fromMs: number; readonly toMs: number }
+}
+interface EventsMockProps {
+  readonly onSeek?: (atMs: number) => void
+  readonly onListChange?: (report: EventsListReport) => void
+  readonly rowFilter?: (row: KeyEventRow) => boolean
 }
 interface LanesMockProps {
   readonly options: readonly { readonly value: string }[]
@@ -58,16 +110,22 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     RecordedPlaybackProvider: Pass,
     PlayerOverlaysProvider: Pass,
     ZoneEditingProvider: Pass,
-    useVideoclipsListSources: () => ({ data: SOURCES }),
-    usePipelineAnalyticsListTracks: () => ({ data: [] }),
+    useVideoclipsListSources: () => state.sources ?? { status: 'success', data: SOURCES },
+    usePipelineAnalyticsListTracks: (input: ListTracksInput) => {
+      state.listTracksInputs.push(input)
+      return { data: state.tracks }
+    },
     useClipLaneClips: (_deviceId: number, provider: string | null) => ({
       status: 'success',
       clips: provider === 'provider-onboard' ? [ONBOARD_CLIP] : [],
       error: null,
     }),
-    RecordingTimeline: ({ seekTo, lanes, toolbar }: TimelineMockProps) => (
+    RecordingTimeline: ({ seekTo, lanes, toolbar, onExportRange }: TimelineMockProps) => (
       <div data-testid="timeline">
         {toolbar}
+        <button type="button" onClick={() => onExportRange?.(EVENT_AT, EVENT_AT + 60_000)}>
+          shift-drag
+        </button>
         <span data-testid="timeline-seek">{seekTo === undefined ? '' : String(seekTo.atMs)}</span>
         {lanes}
       </div>
@@ -83,21 +141,46 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
   }
 })
 
-vi.mock('../../detection-intelligence/EventsSection', () => ({
-  EventsSection: ({ onSeek }: { readonly onSeek?: (atMs: number) => void }) => (
-    <button type="button" onClick={() => onSeek?.(EVENT_AT)}>
-      event at
-    </button>
-  ),
-}))
+function EventsMock({ onSeek, onListChange, rowFilter }: EventsMockProps) {
+  const kept = state.feed.filter((row) => rowFilter === undefined || rowFilter(row))
+  const keptIds = kept.map((row) => row.trackId).join(',')
+  useEffect(() => {
+    onListChange?.({ rows: kept, narrowed: false })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [keptIds, onListChange])
+  return (
+    <>
+      <span data-testid="events-kept">{keptIds}</span>
+      <button type="button" onClick={() => onSeek?.(EVENT_AT)}>
+        event at
+      </button>
+    </>
+  )
+}
+vi.mock('../../detection-intelligence/EventsSection', () => ({ EventsSection: EventsMock }))
 vi.mock('../../device/PanelContent', () => ({
   StreamPanelContent: () => <div data-testid="player" />,
 }))
-vi.mock('../../recordings/NewExportModal', () => ({ NewExportModal: () => null }))
+vi.mock('../../recordings/NewExportModal', () => ({
+  NewExportModal: ({ initialDeviceId, initialRange, onCreated }: ExportModalProps) => (
+    <div data-testid="export-modal">
+      {String(initialDeviceId)}:{String(initialRange?.fromMs)}-{String(initialRange?.toMs)}
+      <button type="button" onClick={onCreated}>
+        create export
+      </button>
+    </div>
+  ),
+}))
 vi.mock('../ReviewEventTools', () => ({ ReviewEventTools: () => null }))
-vi.mock('../ReviewFilterBar', () => ({ ReviewFilterBar: () => null }))
 
 const { ArchiveReviewSection } = await import('../ArchiveReviewSection')
+
+afterEach(() => {
+  state.sources = null
+  state.tracks = []
+  state.feed = []
+  state.listTracksInputs = []
+})
 
 describe('ArchiveReviewSection', () => {
   it('lists every source the camera returned, one lane each, recorder selected by default', () => {
@@ -133,5 +216,60 @@ describe('ArchiveReviewSection', () => {
     fireEvent.click(screen.getByRole('button', { name: 'event at' }))
     expect(screen.queryByTestId('clip-panel')).not.toBeInTheDocument()
     expect(screen.getByText(/holds no clip at/)).toBeInTheDocument()
+  })
+
+  it('asks for as many tracks as the event feed holds per camera, not the store default', () => {
+    render(<ArchiveReviewSection deviceId={101} />)
+    expect(state.listTracksInputs.at(-1)?.limit).toBe(200)
+  })
+
+  it('a zone filter keeps rows whose track did not load and says how many it did not check', () => {
+    state.tracks = Array.from({ length: 120 }, (_, i) => ({
+      trackId: `t${String(i)}`,
+      zoneNames: i === 0 ? ['Driveway'] : ['Yard'],
+    }))
+    state.feed = [feedRow('t0'), feedRow('t1'), feedRow('lost')]
+    render(<ArchiveReviewSection deviceId={101} />)
+    selectOption(screen.getByRole('combobox', { name: 'Zone' }), 'Driveway')
+    expect(screen.getByTestId('events-kept')).toHaveTextContent('t0,lost')
+    expect(screen.getByTestId('archive-review-unchecked')).toHaveTextContent(
+      'Events not checked by this filter: 1',
+    )
+  })
+
+  it('sources still loading are said so, not drawn as no sources', () => {
+    state.sources = { status: 'pending' }
+    render(<ArchiveReviewSection deviceId={101} />)
+    expect(screen.getByText('Loading sources…')).toBeInTheDocument()
+  })
+
+  it('a failed sources read says why', () => {
+    state.sources = { status: 'error', error: { message: 'provider offline' } }
+    render(<ArchiveReviewSection deviceId={101} />)
+    expect(screen.getByRole('alert')).toHaveTextContent('provider offline')
+  })
+
+  it('shift-drag on the timeline opens the export dialog for this camera and range', () => {
+    render(<ArchiveReviewSection deviceId={101} />)
+    expect(screen.queryByTestId('export-modal')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'shift-drag' }))
+    expect(screen.getByTestId('export-modal')).toHaveTextContent(
+      `101:${String(EVENT_AT)}-${String(EVENT_AT + 60_000)}`,
+    )
+  })
+
+  it('a created export says so and links to Library → Exports for this camera', () => {
+    render(
+      <MemoryRouter>
+        <ArchiveReviewSection deviceId={101} />
+      </MemoryRouter>,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'shift-drag' }))
+    fireEvent.click(screen.getByRole('button', { name: 'create export' }))
+    expect(screen.queryByTestId('export-modal')).not.toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Library → Exports/ })).toHaveAttribute(
+      'href',
+      '/library?tab=exports&camera=101',
+    )
   })
 })

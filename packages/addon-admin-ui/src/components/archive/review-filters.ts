@@ -6,8 +6,9 @@
  * (`listTracks`, slim), matched to the row by `trackId`.
  *
  * The same predicate narrows the list AND feeds the density bar, so the two
- * can never disagree. A row whose track is not in the answer cannot be vouched
- * for, so it is dropped while a zone or identity filter is on.
+ * can never disagree. A row whose track is not in the answer cannot be judged:
+ * it is KEPT, never silently dropped, and the bar says how many such rows the
+ * zone or identity filter did not check (`uncheckedRows`).
  */
 import type { DensityPoint } from '@camstack/ui-library'
 import type { KeyEventRow } from '../detection-intelligence/key-events-merge'
@@ -59,10 +60,25 @@ export function reviewRowFilter(
     if (filters.debug && row.debug !== true) return false
     if (filters.zone === null && filters.identity === 'any') return true
     const track = facts.get(row.trackId)
-    if (track === undefined) return false
+    if (track === undefined) return true
     if (filters.zone !== null && !(track.zoneNames ?? []).includes(filters.zone)) return false
     return matchesIdentity(track, filters.identity)
   }
+}
+
+/** The page narrows by zone or identity: the filters that need a track's facts. */
+export function needsTrackFacts(filters: ReviewFilters): boolean {
+  return filters.zone !== null || filters.identity !== 'any'
+}
+
+/** Rows the zone / identity filter could not check: their track is not in the answer. */
+export function uncheckedRows(
+  rows: readonly KeyEventRow[],
+  filters: ReviewFilters,
+  facts: ReadonlyMap<string, TrackFacts>,
+): number {
+  if (!needsTrackFacts(filters)) return 0
+  return rows.filter((row) => !facts.has(row.trackId)).length
 }
 
 /** The filtered rows as density points: an audio track is audio, the rest objects. */

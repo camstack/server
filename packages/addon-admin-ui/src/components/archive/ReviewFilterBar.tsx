@@ -12,6 +12,8 @@ export interface ReviewFilterBarProps {
   readonly filters: ReviewFilters
   readonly zones: readonly string[]
   readonly onChange: (next: ReviewFilters) => void
+  /** Rows the zone / identity filter could not check (their track facts did not load). */
+  readonly unchecked?: number
 }
 
 const ALL_ZONES = ''
@@ -20,7 +22,12 @@ function isIdentity(value: string): value is IdentityFilter {
   return value === 'any' || value === 'face' || value === 'plate'
 }
 
-export function ReviewFilterBar({ filters, zones, onChange }: ReviewFilterBarProps): ReactElement {
+export function ReviewFilterBar({
+  filters,
+  zones,
+  onChange,
+  unchecked = 0,
+}: ReviewFilterBarProps): ReactElement {
   const { t } = useTranslation()
   return (
     <div className="contents" data-testid="archive-review-filters">
@@ -65,6 +72,13 @@ export function ReviewFilterBar({ filters, zones, onChange }: ReviewFilterBarPro
         />
         {t('archive.camera.debugFilter', 'Debug-marked tracks only')}
       </label>
+      {unchecked > 0 && (
+        <span className="text-[11px] text-warning" data-testid="archive-review-unchecked">
+          {t('archive.review.unchecked', 'Events not checked by this filter: {{count}}', {
+            count: unchecked,
+          })}
+        </span>
+      )}
     </div>
   )
 }

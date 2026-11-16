@@ -1722,7 +1722,10 @@ The renderers (admin and viewer) are not built yet; nothing draws this model tod
 The Archive replaced the Recordings page and took over Library → Events. `/recordings`,
 `/library?tab=events` and the old `/archive/:deviceId` redirect through `archiveRedirectFor`
 (`components/archive/archive-redirects.ts`); the recordings exports tab leads to Library → Exports,
-which owns the exports list (the Archive only creates exports).
+which owns the exports list (the Archive only creates exports). An old camera URL keeps its
+`?section=`: `settings` → view `settings`, `space` / `health` → `health`, `events` / `review` →
+`review`, `exports` → `/library?tab=exports&camera=<id>`. Library → Exports honours `?camera=` with a
+camera picker (`recordings/export-camera-filter.ts`).
 
 - **Overview** (`components/archive/ArchiveOverview.tsx`, section `overview`): key numbers, one card
   per storage location, ONE camera table (a row opens the Cameras section on that camera), activity
@@ -1734,15 +1737,22 @@ which owns the exports list (the Archive only creates exports).
   picked in the header (no list); pill tabs Review (default), Health & space, Settings.
   - **Review** (`ArchiveReviewSection.tsx`): the 16:9 player (at most 40% of the viewport tall)
     beside the events of the timeline window (`EventsSection` with `window` + `rowFilter`,
-    `layout="rows"`: compact `EventRow`s whose click seeks, a size slider remembered per viewer),
+    `layout="rows"`: compact `EventRow`s whose body click seeks, with Details and Play icon buttons,
+    a selection checkbox and select-all for the window feeding the bulk Delete bar, and a size
+    slider remembered per viewer),
     and the `RecordingTimeline` below. ONE filter bar, the timeline's `toolbar` slot: source, kinds,
     class chips (`EventClassChips`, the classes present in the window), min score, sort (portalled
     from `EventsSection` via `toolbarTarget`), zone, face/plate (joined from slim `listTracks` by
-    `trackId`) and debug. Every filter narrows the list and, through `densityPoints`, the density
-    bar. Lanes are compact rows with the label inline, so every lane sits above the fold at 1440×900. Every
+    `trackId`, asked for as many rows as the event feed holds) and debug. Every filter narrows the
+    list and, through `densityPoints`, the density bar; sort only orders the list. A row whose track
+    facts did not load is kept, and the bar counts how many the zone / identity filter did not
+    check. Lanes are compact rows with the label inline, so every lane sits above the fold at 1440×900. Every
     `videoclips.listSources` provider is a `ClipSourceLanes` lane; the Source picker chooses what the
-    player plays (the recorder by default). A click on an event or a lane seeks or plays; shift-drag
-    opens `NewExportModal` on that range.
+    player plays (the recorder by default); sources still loading or a failed read are said in the
+    bar, never drawn as no sources. A click on an event or a lane seeks or plays; another source's
+    clip plays in the same player, its quality and download card at the top of the events column.
+    Shift-drag opens `NewExportModal` on that range, and a created export links to Library →
+    Exports for the camera.
   - **Health & space**: `buildCameraHealth` + the camera's own log, activity, where it writes, prune
     and delete behind confirms. **Settings**: retention plus the device aggregate with
     `tab: 'recording'`, derived from the capabilities.

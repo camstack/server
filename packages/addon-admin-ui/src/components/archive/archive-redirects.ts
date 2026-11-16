@@ -17,9 +17,29 @@ export const CAMERA_PARAM = 'camera'
 /** `?view=` of the Cameras section: `review` | `health` | `settings`. */
 export const VIEW_PARAM = 'view'
 
-/** The Cameras section, open on one camera. */
-export function archiveCameraPath(deviceId: number): string {
-  return `${ARCHIVE_PATH}?${SECTION_PARAM}=cameras&${CAMERA_PARAM}=${String(deviceId)}`
+/** A view of the Cameras section. */
+export type ArchiveCameraView = 'review' | 'health' | 'settings'
+
+/** The Cameras section, open on one camera (and one of its views). */
+export function archiveCameraPath(deviceId: number, view?: ArchiveCameraView): string {
+  const base = `${ARCHIVE_PATH}?${SECTION_PARAM}=cameras&${CAMERA_PARAM}=${String(deviceId)}`
+  return view === undefined ? base : `${base}&${VIEW_PARAM}=${view}`
+}
+
+/** Library → Exports, narrowed to one camera when one is given. */
+export function libraryExportsPath(deviceId?: number): string {
+  return deviceId === undefined
+    ? LIBRARY_EXPORTS_PATH
+    : `${LIBRARY_EXPORTS_PATH}&${CAMERA_PARAM}=${String(deviceId)}`
+}
+
+/** Old `/archive/:deviceId?section=` ids and the camera view that took each over. */
+const CAMERA_SECTION_VIEW: Readonly<Record<string, ArchiveCameraView>> = {
+  settings: 'settings',
+  space: 'health',
+  health: 'health',
+  events: 'review',
+  review: 'review',
 }
 
 /** Old `/recordings?tab=` ids and the place that took each over. */
@@ -52,6 +72,12 @@ export function archiveRedirectFor(pathname: string, search: string): string | n
     return ARCHIVE_PATH
   }
   const camera = ARCHIVE_CAMERA_PATH.exec(pathname)
-  if (camera?.[1] !== undefined) return archiveCameraPath(Number(camera[1]))
+  if (camera?.[1] !== undefined) {
+    const deviceId = Number(camera[1])
+    const section = params.get(SECTION_PARAM)
+    if (section === 'exports') return libraryExportsPath(deviceId)
+    const view = section === null ? undefined : CAMERA_SECTION_VIEW[section]
+    return archiveCameraPath(deviceId, view)
+  }
   return null
 }

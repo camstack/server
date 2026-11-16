@@ -4126,7 +4126,8 @@
       "clusterHeading_one": "1 evento · {{time}}",
       "clusterHeading_other": "{{count}} eventi · ultimo {{time}}",
       "rowSize": "Dimensione",
-      "rowSizeLabel": "Dimensione delle righe evento"
+      "rowSizeLabel": "Dimensione delle righe evento",
+      "selectAll": "Seleziona tutti ({{count}})"
     },
     "faceDetailPanel": {
       "face": "Volto",
@@ -4349,7 +4350,8 @@
       "openDetail": "Apri i dettagli dell'evento",
       "seek": "Riproduci {{className}} alle {{time}}",
       "details": "Dettagli",
-      "play": "Riproduci"
+      "play": "Riproduci",
+      "select": "Seleziona {{className}} alle {{time}}"
     },
     "eventClassChips": {
       "all": "Tutte le classi",
@@ -4469,7 +4471,10 @@
       "created": "Creato",
       "by": "da {{who}}",
       "title": "Titolo",
-      "downloaded": "Scaricato"
+      "downloaded": "Scaricato",
+      "allCameras": "Tutte le telecamere",
+      "noExportsForCamera": "Nessuna esportazione per questa telecamera",
+      "noExportsForCameraHint": "Scegli Tutte le telecamere per vedere ogni esportazione, o creane una con Nuova esportazione."
     },
     "maintenanceAuditSection": {
       "reclaimOrphanedAnalyticsRows": "Recuperare le righe di analisi orfane?",
@@ -13549,7 +13554,13 @@
       "identityFace": "Con un volto",
       "identityPlate": "Con una targa",
       "noClipAt": "Questa sorgente non ha clip alle {{time}}. Scegli un'altra sorgente o un altro momento.",
-      "tools": "Ricerca, oggetti fermi e debug"
+      "tools": "Ricerca, oggetti fermi e debug",
+      "unchecked": "Eventi non verificati da questo filtro: {{count}}",
+      "sourcesLoading": "Caricamento sorgenti…",
+      "sourcesFailed": "Impossibile leggere le sorgenti — {{reason}}",
+      "noReason": "nessun motivo indicato",
+      "exportQueued": "Esportazione in coda.",
+      "openExports": "Apri Libreria → Esportazioni"
     }
   }
 }

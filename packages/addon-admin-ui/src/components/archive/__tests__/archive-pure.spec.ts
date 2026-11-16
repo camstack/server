@@ -53,6 +53,24 @@ describe('archiveRedirectFor', () => {
   it('sends a retired camera page to the Cameras section on that camera', () => {
     expect(archiveRedirectFor('/archive/101', '')).toBe('/archive?section=cameras&camera=101')
     expect(archiveRedirectFor('/archive/101/', '?section=space')).toBe(
+      '/archive?section=cameras&camera=101&view=health',
+    )
+    expect(archiveRedirectFor('/archive/101', '?section=health')).toBe(
+      '/archive?section=cameras&camera=101&view=health',
+    )
+    expect(archiveRedirectFor('/archive/101', '?section=settings')).toBe(
+      '/archive?section=cameras&camera=101&view=settings',
+    )
+    expect(archiveRedirectFor('/archive/101', '?section=events')).toBe(
+      '/archive?section=cameras&camera=101&view=review',
+    )
+    expect(archiveRedirectFor('/archive/101', '?section=review')).toBe(
+      '/archive?section=cameras&camera=101&view=review',
+    )
+    expect(archiveRedirectFor('/archive/101', '?section=exports')).toBe(
+      '/library?tab=exports&camera=101',
+    )
+    expect(archiveRedirectFor('/archive/101', '?section=unknown')).toBe(
       '/archive?section=cameras&camera=101',
     )
     expect(archiveRedirectFor('/archive', '?section=cameras')).toBeNull()

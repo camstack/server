@@ -19,8 +19,6 @@ export interface ReviewEventToolsProps {
   readonly debug: boolean
 }
 
-function ignoreActive(): void {}
-
 export function ReviewEventTools({ deviceId, debug }: ReviewEventToolsProps): ReactElement {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
@@ -37,7 +35,7 @@ export function ReviewEventTools({ deviceId, debug }: ReviewEventToolsProps): Re
     >
       <div className="flex flex-col gap-3" data-testid="archive-review-tools">
         <RetrainTabCallout />
-        <SemanticEventSearch deviceId={deviceId} onActiveChange={ignoreActive} />
+        <SemanticEventSearch deviceId={deviceId} />
         <StationarySection deviceId={deviceId} />
         {debug && <EventsDebugPage deviceId={deviceId} />}
       </div>

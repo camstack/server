@@ -29,6 +29,7 @@ import {
 } from 'lucide-react'
 import {
   Button,
+  Checkbox,
   EmptyState,
   MediaGrid,
   useAlert,
@@ -314,6 +315,11 @@ export function EventsSection({
   }
   const clearSelection = () => setSelected(new Set())
 
+  // Rows layout: one tick selects every event of the window the filters left.
+  const listKeys = list.map((row) => trackSelectionKey(row.deviceId, row.trackId))
+  const allSelected = listKeys.length > 0 && listKeys.every((key) => selected.has(key))
+  const toggleSelectAll = (): void => setSelected(allSelected ? new Set() : new Set(listKeys))
+
   function toggleSelect(selectionKey: string) {
     setSelected((prev) => {
       const next = new Set(prev)
@@ -424,6 +430,8 @@ export function EventsSection({
         onSeek={onSeek}
         onOpenDetail={setDetailRow}
         size={rowSize}
+        selected={selected.has(trackSelectionKey(row.deviceId, row.trackId))}
+        onToggleSelect={toggleSelect}
       />
     ) : (
       renderCard(row)
@@ -604,20 +612,37 @@ export function EventsSection({
               top of the grid and live refreshes apply immediately. */}
           <div ref={feedTop.ref} aria-hidden className="h-0" />
           {rowsLayout && (
-            <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
-              <ImageIcon className="h-3.5 w-3.5" />
-              <span>{t('detectionIntelligence.eventsSection.rowSize', 'Size')}</span>
-              <Slider
-                min={0}
-                max={EVENT_ROW_SIZES.length - 1}
-                step={1}
-                value={rowSize}
-                onChange={(e) => setRowSizeStep(Number(e.target.value))}
-                className="h-1 w-24 cursor-pointer accent-primary"
-                data-testid="event-row-size"
-                aria-label={t('detectionIntelligence.eventsSection.rowSizeLabel', 'Event row size')}
-              />
-            </label>
+            <div className="flex flex-wrap items-center gap-3">
+              <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
+                <Checkbox
+                  checked={allSelected}
+                  onChange={toggleSelectAll}
+                  data-testid="event-rows-select-all"
+                />
+                <span>
+                  {t('detectionIntelligence.eventsSection.selectAll', 'Select all ({{count}})', {
+                    count: list.length,
+                  })}
+                </span>
+              </label>
+              <label className="flex items-center gap-1.5 text-[11px] text-foreground-subtle">
+                <ImageIcon className="h-3.5 w-3.5" />
+                <span>{t('detectionIntelligence.eventsSection.rowSize', 'Size')}</span>
+                <Slider
+                  min={0}
+                  max={EVENT_ROW_SIZES.length - 1}
+                  step={1}
+                  value={rowSize}
+                  onChange={(e) => setRowSizeStep(Number(e.target.value))}
+                  className="h-1 w-24 cursor-pointer accent-primary"
+                  data-testid="event-row-size"
+                  aria-label={t(
+                    'detectionIntelligence.eventsSection.rowSizeLabel',
+                    'Event row size',
+                  )}
+                />
+              </label>
+            </div>
           )}
           {/* Rows carry their own time, so they are not grouped under headings. */}
           {!rowsLayout && fixedDeviceId !== undefined && sortMode === 'time'

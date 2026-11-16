@@ -8,13 +8,20 @@
  * moment. Two explicit icon buttons, Details and Play, say the same at every
  * size step.
  */
-import { Button, IconButton, Tooltip, TooltipContent, TooltipTrigger } from '@camstack/ui-library'
+import {
+  Button,
+  Checkbox,
+  IconButton,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@camstack/ui-library'
 import { ImageOff, Info, Play, type LucideIcon } from 'lucide-react'
 import type { JSX } from 'react'
 import { useTranslation } from 'react-i18next'
 import { mediaIdPath, mediaOwnerPath, useAuthedImage } from '../../lib/authed-media.js'
 import { EVENT_ROW_THUMB_CLASS, type EventRowSize } from './event-row-size.js'
-import { rowDisplayLabel } from './key-events-merge.js'
+import { rowDisplayLabel, trackSelectionKey } from './key-events-merge.js'
 import type { TrackSubject } from './track-subject.js'
 
 export interface EventRowProps<T extends TrackSubject> {
@@ -23,6 +30,9 @@ export interface EventRowProps<T extends TrackSubject> {
   readonly onOpenDetail: (row: T) => void
   /** The size slider's step; the thumbnail grows with it. Default compact. */
   readonly size?: EventRowSize
+  /** Present: the row carries a selection checkbox (bulk delete). */
+  readonly onToggleSelect?: (selectionKey: string) => void
+  readonly selected?: boolean
 }
 
 export function EventRow<T extends TrackSubject>({
@@ -30,6 +40,8 @@ export function EventRow<T extends TrackSubject>({
   onSeek,
   onOpenDetail,
   size = 0,
+  onToggleSelect,
+  selected = false,
 }: EventRowProps<T>): JSX.Element {
   const { t } = useTranslation()
   const thumb = useAuthedImage(
@@ -41,9 +53,24 @@ export function EventRow<T extends TrackSubject>({
 
   return (
     <div
-      className="flex w-full items-center gap-2 rounded-md border border-border bg-surface hover:bg-surface-hover"
+      className={`flex w-full items-center gap-2 rounded-md border bg-surface hover:bg-surface-hover ${selected ? 'border-primary ring-1 ring-primary' : 'border-border'}`}
       data-testid="event-row"
     >
+      {onToggleSelect && (
+        <Checkbox
+          className="ml-2 shrink-0"
+          checked={selected}
+          onChange={() => onToggleSelect(trackSelectionKey(row.deviceId, row.trackId))}
+          aria-label={t(
+            'detectionIntelligence.eventRow.select',
+            'Select {{className}} at {{time}}',
+            {
+              className: row.className,
+              time,
+            },
+          )}
+        />
+      )}
       <Button
         variant="unstyled"
         type="button"
