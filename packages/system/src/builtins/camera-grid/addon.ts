@@ -4,12 +4,19 @@
  *
  * ## What it is
  *
- * A grid is a DEVICE this addon declares, with one stream that is composed
- * rather than dialled. Everything downstream treats it as a camera: it records,
- * it appears in the timeline, it has a profile slot, it is bound like any other
- * — with ONE deliberate exception, object detection, which is switched off at
- * creation (see `silence-analysis.ts` for why, and for why it is never
- * re-asserted afterwards).
+ * A grid is a core block (planning#580) with a `grid` helper spec. The composer
+ * owns its camera row `composed-<blockId>` and its name; this engine builds a
+ * `GridCameraDevice` ON that row and serves every camera cap there as a
+ * cross-addon native (D663, resolved through the bindings, D13). Everything
+ * downstream treats it as a camera: it records, it appears in the timeline, it
+ * has a profile slot — with ONE deliberate exception, object detection, which
+ * is switched off the first time the engine hosts the device (see
+ * `silence-analysis.ts`, and the per-device flag below).
+ *
+ * The engine keeps no list of its own (D3): each pass reads the blocks
+ * (`coreBlocks.listCompositions`) and the composer's rows. `not-loaded` or a
+ * failed read changes nothing, and a hosted grid is withdrawn only after two
+ * consecutive trusted reads agree it is gone (D49).
  *
  * ## Hub-only, one process
  *
@@ -26,10 +33,14 @@
 import type {
   AddonInitResult,
   CamStreamDescriptor,
-  ConfigUISchema,
+  CompositionListRead,
+  CompositionSourceRef,
   DeviceProxy,
+  EngineHostedBlock,
+  GridHelperSpec,
   GridLayoutPatch,
   GridLayoutView,
+  HostedEngineDevice,
   ProfileSlot,
   ProviderRegistration,
 } from '@camstack/types'
@@ -37,39 +48,33 @@ import {
   BaseAddon,
   bareAddonId,
   cameraGridLayoutCapability,
+  COMPOSER_ADDON_ID,
   DeclaredDevices,
-  DeviceType,
   EventCategory,
+  HostedWithdrawalGate,
+  hostEngineDevice,
   MOTION_CLOSE_AFTER_MS,
   type CamProfile,
   declarationOwnerNodeId,
   errMsg,
-  integrationInstancesCapability,
-  type InstanceChange,
   memoizePinnedFfmpeg,
-  RecordIntegrationInstances,
+  selectEngineHostedBlocks,
   type DetectionResultPayload,
   type MotionOnMotionChangedPayload,
   type PipelineAudioInferenceResultPayload,
 } from '@camstack/types'
-import {
-  buildGridCameraDeclarations,
-  gridCameraReconciliationIndex,
-  type GridCameraDeclaration,
-} from './grid-camera-declarations.js'
 import { GridCameraDevice, installGridCameraRuntime } from './grid-camera-device.js'
 import { acquireWithRetry } from './acquire-retry.js'
-import { readGridInstances, type GridInstance } from './grid-instances.js'
+import {
+  type GridComposition,
+  gridComposition,
+  gridSpecFromPatch,
+  resolveGridCells,
+  sourceRefKey,
+} from './grid-blocks.js'
 import { buildGridLayoutNativeProvider } from './grid-layout-native-provider.js'
 import { gridPlanFor } from './grid-plan.js'
-import {
-  CAMERA_GRID_KIND_NAME,
-  cameraGridKind,
-  type GridBody,
-  initialGridBody,
-  rawGridOfRecord,
-} from './grid-record-kinds.js'
-import { ADDON_MIGRATIONS, GRIDS_TO_RECORDS_ID, gridPortsOver } from './migrations/index.js'
+import { legacyGridCameraIndex } from './legacy-grid-cameras.js'
 import { GridActivityForwarder, type GridActivityTarget } from './grid-activity.js'
 import { GridFrameSampler } from './grid-frame-sample.js'
 import { GridLastFrameFileStore } from './grid-last-frame-store.js'
@@ -88,8 +93,11 @@ import { silenceAnalysisFor } from './silence-analysis.js'
 import { type GridChildContext } from './grid-child.js'
 import { startGridCompositorChild } from './grid-compositor-child.js'
 
-const INTEGRATION_NAME = 'Camera Grids'
+/** The integration the pre-block grid cameras were declared under; only its leftovers are swept. */
+const LEGACY_INTEGRATION_NAME = 'Camera Grids'
 const RECONCILE_MS = 60_000
+/** The per-device flag that analysis was silenced once (`ctx.settings` device store, D865). */
+const ANALYSIS_SILENCED_KEY = 'analysisSilenced'
 /**
  * How long a source acquire may keep asking while a provider is still coming up.
  * Long enough to cover the republish window after a hub restart, short enough
@@ -98,14 +106,14 @@ const RECONCILE_MS = 60_000
 const SOURCE_ACQUIRE_BUDGET_MS = 8_000
 const SOURCE_ACQUIRE_PAUSE_MS = 700
 
-/** The grids are records (D1013); the addon keeps no settings of its own. */
+/** The grids are core blocks (planning#580); the addon keeps no settings of its own. */
 type CameraGridAddonConfig = Record<string, never>
 
 const DEFAULTS: CameraGridAddonConfig = {}
 
 /** One composition per (grid, profile) — a grid composes each separately. */
-function sessionKey(instanceId: string, profile: CamProfile): string {
-  return `${instanceId}::${profile}`
+function sessionKey(blockId: string, profile: CamProfile): string {
+  return `${blockId}::${profile}`
 }
 
 /**
@@ -119,7 +127,7 @@ function sessionKey(instanceId: string, profile: CamProfile): string {
  */
 class GridSessionEntry {
   constructor(
-    readonly instanceId: string,
+    readonly blockId: string,
     readonly profile: CamProfile,
     readonly session: GridStreamSession,
   ) {}
@@ -129,21 +137,31 @@ class GridSessionEntry {
   }
 }
 
+/** A grid block this engine hosts: the block as last read, its cells resolved, its device. */
+interface HostedGrid {
+  readonly block: EngineHostedBlock<GridHelperSpec>
+  readonly layout: GridComposition
+  readonly hosted: HostedEngineDevice<GridCameraDevice>
+}
+
+/** Device ids by source identity, and the source addons whose rows could not be read. */
+interface SourceIndex {
+  readonly ids: ReadonlyMap<string, number>
+  readonly unreadAddons: ReadonlySet<string>
+}
+
 export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
   private relay: GridStreamRelay | null = null
   private reconcileTimer: ReturnType<typeof setInterval> | null = null
-  /** Keyed by instance id — ONE composition per grid. */
+  /** Keyed by session key — ONE composition per (grid, profile). */
   private readonly sessions = new Map<string, GridSessionEntry>()
-  private readonly deviceIdByInstanceId = new Map<string, number>()
-  private instances: RecordIntegrationInstances<GridBody> | null = null
-  /** The grids, as the last read of the records saw them. */
-  private instanceRows: readonly GridInstance[] = []
-  /**
-   * False until the records are readable and the grids migration landed: a camera is never
-   * withdrawn on a list that may be incomplete (D49).
-   */
-  private instancesTrusted = false
-  private migrationLanded = false
+  /** The grids this engine hosts, by block id. */
+  private grids: ReadonlyMap<string, HostedGrid> = new Map()
+  private readonly withdrawalGate = new HostedWithdrawalGate()
+  /** One pass at a time: a save and the timer must not host the same block twice. */
+  private passChain: Promise<void> = Promise.resolve()
+  /** True once a pass found no legacy `camera-grid` row left to remove. */
+  private legacySwept = false
   /**
    * What each grid can honestly publish, per profile.
    *
@@ -154,7 +172,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    * (D224), and 60 s is the window for a fact — "does 101 have a low assigned"
    * — that only changes when an operator changes it.
    */
-  private readonly plansByInstanceId = new Map<string, readonly GridProfilePlan[]>()
+  private readonly plansByBlockId = new Map<string, readonly GridProfilePlan[]>()
   private activity: GridActivityForwarder | null = null
   private snapshots: GridSnapshotSource<GridSessionEntry> | null = null
   private frameSampler: GridFrameSampler | null = null
@@ -165,7 +183,6 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
   private readonly pinnedFfmpeg = memoizePinnedFfmpeg(() => this.ctx.deps.ensureFfmpeg())
   /** A resolution in flight, so a reconcile pass never starts a second. */
   private ffmpegResolving: Promise<void> | null = null
-  private integrationId: string | null | undefined
 
   constructor() {
     super({ ...DEFAULTS })
@@ -173,7 +190,6 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
 
   protected async onInitialize(): Promise<AddonInitResult> {
     if (declarationOwnerNodeId(this.ctx.kernel.localNodeId) === 'hub') {
-      await this.initInstanceRecords()
       // A boot-time miss is logged and ASKED AGAIN by the next pass that wants
       // a composition (`ensureSessions`) — never fatal to the addon, never a
       // `null` kept for good, never PATH (D540).
@@ -205,8 +221,9 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       })
       this.subscribeSourceActivity()
       installGridCameraRuntime({
-        descriptorsFor: (instanceId) => this.descriptorsFor(instanceId),
+        descriptorsFor: (blockId) => this.descriptorsFor(blockId),
         getLayout: (deviceId) => this.gridViewFor(deviceId),
+        isGrid: (deviceId) => this.gridForDevice(deviceId) !== null,
         saveLayout: async (patch) => this.saveGridLayout(patch),
         getSnapshot: async (deviceId) => this.getSnapshot(deviceId),
         motionStatus: (deviceId) => {
@@ -258,17 +275,12 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
     // registrations, rather than two hand-written providers that would drift.
     const layoutProvider = buildGridLayoutNativeProvider({
       getLayout: (deviceId) => this.gridViewFor(deviceId),
+      isGrid: (deviceId) => this.gridForDevice(deviceId) !== null,
       saveLayout: (patch) => this.saveGridLayout(patch),
     })
     const providers: ProviderRegistration[] = [
       { capability: cameraGridLayoutCapability, provider: layoutProvider },
     ]
-    if (this.instances !== null) {
-      providers.push({
-        capability: integrationInstancesCapability,
-        provider: this.instances.toProvider(),
-      })
-    }
     return { providers }
   }
 
@@ -280,219 +292,281 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
     this.relay = null
     for (const entry of this.sessions.values()) await entry.session.dispose()
     this.sessions.clear()
+    for (const grid of this.grids.values()) await grid.hosted.withdraw().catch(() => undefined)
+    this.grids = new Map()
     this.snapshots = null
     this.frameSampler = null
   }
 
-  // ── Rows ────────────────────────────────────────────────────────────────
+  // ── Hosting ─────────────────────────────────────────────────────────────
 
-  private instanceList(): readonly GridInstance[] {
-    return this.instanceRows
+  private gridById(blockId: string): HostedGrid | null {
+    return this.grids.get(blockId) ?? null
   }
 
-  private instanceById(instanceId: string): GridInstance | undefined {
-    return this.instanceRows.find((instance) => instance.id === instanceId)
-  }
-
-  /**
-   * Hub only: declare the `camera-grid` kind, serve it through `integration-instances`, move the
-   * old settings list into records (D987), then read the rows. A migration that did not land
-   * leaves the declared cameras exactly as they are (`instancesTrusted` stays false).
-   */
-  private async initInstanceRecords(): Promise<void> {
-    const records = this.ctx.records
-    if (records === undefined) {
-      throw new Error('camera-grid: ctx.records is not available on the hub')
+  private gridForDevice(deviceId: number): HostedGrid | null {
+    for (const grid of this.grids.values()) {
+      if (grid.block.deviceId === deviceId) return grid
     }
-    await records.declare({ [CAMERA_GRID_KIND_NAME]: cameraGridKind })
-    this.instances = new RecordIntegrationInstances(records, cameraGridKind, {
-      description: {
-        role: 'services',
-        instanceMode: 'multiple',
-        kind: CAMERA_GRID_KIND_NAME,
-        canTest: false,
-        kinds: [
-          {
-            id: CAMERA_GRID_KIND_NAME,
-            label: 'Camera grid',
-            functionCap: 'camera-grid-layout',
-            canTest: false,
-          },
-        ],
-      },
-      kindOf: () => CAMERA_GRID_KIND_NAME,
-      formSchema: () => this.instanceForm(),
-      initialBody: (name) => initialGridBody(name),
-      mintId: () => crypto.randomUUID(),
-      configured: () => true,
-      onChanged: (id, change) => this.onInstanceChanged(id, change),
+    return null
+  }
+
+  /** One pass at a time, in order: a save waits for a running pass and the reverse. */
+  private serialized<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.passChain.then(work, work)
+    this.passChain = run.then(
+      () => undefined,
+      () => undefined,
+    )
+    return run
+  }
+
+  private reconcile(): Promise<void> {
+    return this.serialized(async () => {
+      if (!this.relay) return
+      await this.sweepLegacyCameras()
+      await this.hostGridBlocks()
     })
-    const report = await this.runMigrations(ADDON_MIGRATIONS, gridPortsOver)
-    this.migrationLanded =
-      report.declared &&
-      !report.failed.includes(GRIDS_TO_RECORDS_ID) &&
-      !report.blocked.includes(GRIDS_TO_RECORDS_ID)
-    if (!this.migrationLanded) {
-      this.ctx.logger.error(
-        'camera grid: the grids migration has not landed - the declared cameras are left as they are until it does',
-        { meta: { declared: report.declared, failed: report.failed, blocked: report.blocked } },
-      )
-    }
-    await this.refreshInstanceRows()
   }
 
-  /** Re-read every grid record. A failed read changes nothing (D49). */
-  private async refreshInstanceRows(): Promise<void> {
-    const handle = this.ctx.records?.kind(cameraGridKind)
-    if (handle === undefined || !this.migrationLanded) {
-      this.instancesTrusted = false
-      return
-    }
+  /** Read the grid blocks and host what they name. A read that cannot be trusted changes nothing (D49). */
+  private async hostGridBlocks(): Promise<void> {
+    let compositions: CompositionListRead
+    let composerRows: readonly { readonly id: number; readonly stableId: string }[]
     try {
-      const raw: Record<string, unknown>[] = []
-      let cursor: string | undefined
-      do {
-        const page = await handle.query({
-          limit: 500,
-          ...(cursor === undefined ? {} : { cursor }),
-        })
-        for (const row of page.records) raw.push(rawGridOfRecord(row.id, row.data))
-        cursor = page.nextCursor ?? undefined
-      } while (cursor !== undefined)
-      this.instanceRows = readGridInstances(raw, (message) => {
-        this.ctx.logger.warn(message)
+      compositions = await this.ctx.api.coreBlocks.listCompositions.query({})
+      composerRows = await this.ctx.api.deviceManager.listAll.query({
+        addonId: COMPOSER_ADDON_ID,
+        projection: 'slim',
       })
-      this.instancesTrusted = true
     } catch (error: unknown) {
-      this.instancesTrusted = false
-      this.ctx.logger.warn(
-        'camera grid: the grid records could not be read - keeping the last list',
-        {
-          meta: { error: errMsg(error) },
-        },
-      )
-    }
-  }
-
-  /**
-   * A grid is created with a name only; its layout is authored afterwards in the camera's own
-   * device details (a generated form for the geometry would render "cell 1 source = 592" and be
-   * unusable), so the form carries no field of its own.
-   */
-  private instanceForm(): ConfigUISchema {
-    return {
-      sections: [
-        {
-          id: 'camera-grid',
-          title: 'Camera grid',
-          description:
-            'A grid is a composite camera: several cameras composed into one picture, recorded and played back like any other camera. Create one with a name; open its camera to lay it out. Object detection is switched OFF on a new grid - the cameras it is composed from are already analysed.',
-          fields: [],
-        },
-      ],
-    }
-  }
-
-  /** Runs after every create / edit / switch / delete of a grid record, on the hub. */
-  private async onInstanceChanged(_id: string, _change: InstanceChange): Promise<void> {
-    await this.refreshInstanceRows()
-    if (this.relay === null) return
-    await this.applyLayoutChanges()
-    await this.reconcile().catch((error: unknown) => {
-      this.ctx.logger.warn('camera grid: reconciliation after an instance change failed', {
+      this.ctx.logger.warn('camera grid: the grid blocks could not be read - nothing changes', {
         meta: { error: errMsg(error) },
       })
-    })
-  }
-
-  // ── Declaration ─────────────────────────────────────────────────────────
-
-  private async reconcile(): Promise<void> {
-    if (!this.relay) return
-    await this.refreshInstanceRows()
-    // A list that may be incomplete never decides a withdrawal (D49).
-    if (!this.instancesTrusted) return
-    const instances = this.instanceList()
-    const declarations = buildGridCameraDeclarations(instances)
-    await this.refreshSourcePlans(instances)
-    await this.retireWithdrawnSessions(instances)
-
-    const declared = new DeclaredDevices({
-      logger: this.ctx.logger.child('declaration'),
-      addonId: bareAddonId(this.ctx.id),
-      devices: this.ctx.kernel.devices,
-      localNodeId: this.ctx.kernel.localNodeId,
-      getIntegration: async (addonId) => {
-        const integration = await this.ctx.api.integrations.getByAddonId.query({ addonId })
-        this.integrationId = integration?.id ?? null
-        return integration
-      },
-      createIntegration: async (input) => {
-        const created = await this.ctx.api.integrationInstances.createInstance.mutate({
-          addonId: input.addonId,
-          name: input.name,
-          seed: { info: input.info },
-        })
-        this.integrationId = created.id
-        return { id: created.id }
-      },
-      updateIntegration: async ({ id, info }) => {
-        await this.ctx.api.integrations.update.mutate({ id, info, skipRestart: true })
-      },
-      listOwnDevices: async () => {
-        // `{ addonId }` takes device-manager's INDEXED branch — this addon's
-        // handful of rows, never the fleet.
-        const rows = await this.ctx.api.deviceManager.listAll.query({
-          addonId: bareAddonId(this.ctx.id),
-        })
-        return gridCameraReconciliationIndex(rows, this.integrationId, declarations)
-      },
-    })
-
-    const result = await declared.reconcile({
-      integrationName: INTEGRATION_NAME,
-      placement: 'hub',
-      devices: declarations.map((camera: GridCameraDeclaration) => ({
-        stableId: camera.stableId,
-        name: camera.name,
-        type: DeviceType.Camera,
-        DeviceClass: GridCameraDevice,
-        config: camera.config,
-        role: 'camera-grid',
-      })),
-    })
-
-    const declaredByStableId = new Map(
-      declarations.map((camera) => [camera.stableId, camera] as const),
+      return
+    }
+    const read = selectEngineHostedBlocks('grid', compositions, composerRows)
+    if (read.kind === 'untrusted') {
+      this.ctx.logger.info('camera grid: the blocks are not loaded yet - nothing changes', {
+        meta: { reason: read.reason },
+      })
+      return
+    }
+    const wanted = read.blocks.filter((block) => block.enabled)
+    const { withdraw } = this.withdrawalGate.judge(
+      this.grids.keys(),
+      new Set(wanted.map((block) => block.blockId)),
     )
-    for (const outcome of result.devices) {
-      if (!(outcome.device instanceof GridCameraDevice)) continue
-      const declaration = declaredByStableId.get(outcome.stableId)
-      if (!declaration) continue
-      const config = outcome.device.config
-      if (config.get('instanceId') !== declaration.config.instanceId) {
-        await config.setAll(declaration.config)
-      }
-      const instanceId = declaration.config.instanceId
-      this.deviceIdByInstanceId.set(instanceId, outcome.device.id)
-      this.ensureSessions(instanceId, outcome.device.id)
-      // ONLY on creation. An operator who deliberately turns detection back on
-      // for a grid must win, and a pass that re-asserted this every minute
-      // would silently overrule them.
-      if (outcome.created) await this.silenceAnalysis(outcome.device.id)
-      outcome.device.setAddonOnline(true)
+    for (const blockId of withdraw) await this.unhost(blockId, 'its block is gone or switched off')
+
+    const sources = await this.readSources(wanted)
+    const next = new Map(this.grids)
+    for (const block of wanted) {
+      const hosted = await this.hostOne(block, sources)
+      if (hosted !== null) next.set(block.blockId, hosted)
+    }
+    this.grids = next
+    await this.refreshSourcePlans()
+    for (const grid of this.grids.values()) {
+      this.ensureSessions(grid.block.blockId, grid.block.deviceId)
     }
   }
 
-  private async silenceAnalysis(deviceId: number): Promise<void> {
+  /** Build (or refresh) one grid. A failure is logged per device and leaves the previous state. */
+  private async hostOne(
+    block: EngineHostedBlock<GridHelperSpec>,
+    sources: SourceIndex,
+  ): Promise<HostedGrid | null> {
+    const previous = this.gridById(block.blockId)
+    const layout = this.layoutOf(block, sources, previous)
+    if (previous !== null) {
+      if (previous.block.deviceId === block.deviceId) {
+        const changed = JSON.stringify(previous.layout) !== JSON.stringify(layout)
+        if (changed) await this.applyLayoutChanges(block.blockId)
+        return { block, layout, hosted: previous.hosted }
+      }
+      await this.unhost(block.blockId, 'its row changed')
+    }
+    try {
+      const hosted = await hostEngineDevice(
+        this.ctx.kernel.devices,
+        { id: block.deviceId, stableId: block.stableId },
+        { blockId: block.blockId },
+        GridCameraDevice,
+      )
+      this.ctx.logger.info('camera grid: hosting a grid block on its camera row', {
+        tags: { deviceId: block.deviceId },
+        meta: { blockId: block.blockId, cells: layout.cells.length },
+      })
+      await this.silenceOnce(block.deviceId)
+      return { block, layout, hosted }
+    } catch (error: unknown) {
+      this.ctx.logger.error('camera grid: a grid block could not be hosted', {
+        tags: { deviceId: block.deviceId },
+        meta: { blockId: block.blockId, error: errMsg(error) },
+      })
+      return null
+    }
+  }
+
+  /**
+   * The grid's cells resolved to device ids. A source whose addon could not be
+   * read keeps the previous resolution; a source that has no row is left out
+   * and named.
+   */
+  private layoutOf(
+    block: EngineHostedBlock<GridHelperSpec>,
+    sources: SourceIndex,
+    previous: HostedGrid | null,
+  ): GridComposition {
+    const blind = block.spec.cells.some((cell) => sources.unreadAddons.has(cell.source.addonId))
+    if (blind && previous !== null) return { ...previous.layout, fps: block.spec.fps }
+    const { cells, unresolved } = resolveGridCells(
+      block.spec,
+      (ref) => sources.ids.get(sourceRefKey(ref)) ?? null,
+    )
+    if (unresolved.length > 0) {
+      this.ctx.logger.warn('camera grid: a cell names a source with no device - it is left out', {
+        tags: { deviceId: block.deviceId },
+        meta: { blockId: block.blockId, missing: unresolved.map(sourceRefKey) },
+      })
+    }
+    return { fps: block.spec.fps, publishedProfiles: block.spec.publishedProfiles, cells }
+  }
+
+  /** One indexed read per source addon (`listAll({ addonId })`), never the fleet. */
+  private async readSources(
+    blocks: readonly EngineHostedBlock<GridHelperSpec>[],
+  ): Promise<SourceIndex> {
+    const addonIds = new Set(blocks.flatMap((b) => b.spec.cells.map((c) => c.source.addonId)))
+    const ids = new Map<string, number>()
+    const unreadAddons = new Set<string>()
+    for (const addonId of addonIds) {
+      try {
+        const rows = await this.ctx.api.deviceManager.listAll.query({
+          addonId,
+          projection: 'slim',
+        })
+        for (const row of rows) ids.set(sourceRefKey({ addonId, stableId: row.stableId }), row.id)
+      } catch (error: unknown) {
+        unreadAddons.add(addonId)
+        this.ctx.logger.warn('camera grid: the sources of one addon could not be read', {
+          meta: { addonId, error: errMsg(error) },
+        })
+      }
+    }
+    return { ids, unreadAddons }
+  }
+
+  private async unhost(blockId: string, reason: string): Promise<void> {
+    const grid = this.gridById(blockId)
+    if (grid === null) return
+    const deviceId = grid.block.deviceId
+    this.ctx.logger.info('camera grid: no longer hosting a grid block', {
+      tags: { deviceId },
+      meta: { blockId, reason },
+    })
+    for (const [key, entry] of [...this.sessions]) {
+      if (entry.blockId !== blockId) continue
+      this.sessions.delete(key)
+      await entry.session.dispose()
+    }
+    this.activity?.forget(deviceId)
+    this.plansByBlockId.delete(blockId)
+    grid.hosted.device.setAddonOnline(false)
+    try {
+      await grid.hosted.withdraw()
+    } catch (error: unknown) {
+      this.ctx.logger.warn('camera grid: withdrawing a grid device failed', {
+        tags: { deviceId },
+        meta: { blockId, error: errMsg(error) },
+      })
+    }
+    this.grids = new Map([...this.grids].filter(([id]) => id !== blockId))
+  }
+
+  /**
+   * Analysis is silenced the FIRST time this engine hosts the device, and the
+   * fact is kept per device (`ctx.settings` device store, cleared with the
+   * device, D865). An operator who turns detection back on must win: it is
+   * never re-asserted.
+   */
+  private async silenceOnce(deviceId: number): Promise<void> {
+    const settings = this.ctx.settings
+    if (!settings) {
+      // Without the flag the silence would be re-asserted on every boot, over
+      // an operator who turned detection back on. Refused by name instead.
+      this.ctx.logger.warn('camera grid: no settings store - analysis is not silenced', {
+        tags: { deviceId },
+      })
+      return
+    }
+    const store = await settings.readDeviceStore(deviceId)
+    if (store[ANALYSIS_SILENCED_KEY] === true) return
     try {
       await silenceAnalysisFor({ api: this.ctx.api, logger: this.ctx.logger }, deviceId)
+      await settings.writeDeviceStore(deviceId, { [ANALYSIS_SILENCED_KEY]: true })
     } catch (error) {
       // Thrown by design when a BOUND analyzer refused the write — the grid
       // would then run a full detection pipeline over a picture whose subjects
-      // are already counted on the cameras it was composed from.
+      // are already counted on the cameras it was composed from. Not marked,
+      // so the next hosting asks again.
       this.ctx.logger.error('camera grid: a new grid could not be silenced', {
         tags: { deviceId },
+        meta: { error: errMsg(error) },
+      })
+    }
+  }
+
+  /**
+   * The grid cameras declared before grids were blocks are not carried over
+   * (planning#580: the operator recreates them as blocks). Every row this addon
+   * still owns under its old integration is removed through the declared sweep
+   * (`removeDevice` → tombstone, D865). No integration means nothing was ever
+   * declared, and nothing is minted to find out.
+   */
+  private async sweepLegacyCameras(): Promise<void> {
+    if (this.legacySwept) return
+    const addonId = bareAddonId(this.ctx.id)
+    try {
+      const integration = await this.ctx.api.integrations.getByAddonId.query({ addonId })
+      if (integration === null) {
+        this.legacySwept = true
+        return
+      }
+      let found = 0
+      const declared = new DeclaredDevices({
+        logger: this.ctx.logger.child('legacy-sweep'),
+        addonId,
+        devices: this.ctx.kernel.devices,
+        localNodeId: this.ctx.kernel.localNodeId,
+        getIntegration: async () => integration,
+        createIntegration: async () => {
+          throw new Error('camera grid: the legacy sweep never mints an integration')
+        },
+        updateIntegration: async () => undefined,
+        listOwnDevices: async () => {
+          // `{ addonId }` takes device-manager's INDEXED branch.
+          const rows = await this.ctx.api.deviceManager.listAll.query({ addonId })
+          const index = legacyGridCameraIndex(rows, integration.id)
+          found = index.length
+          return index
+        },
+      })
+      const result = await declared.reconcile({
+        integrationName: LEGACY_INTEGRATION_NAME,
+        integrationId: integration.id,
+        placement: 'hub',
+        devices: [],
+      })
+      if (result.removed.length > 0) {
+        this.ctx.logger.info('camera grid: legacy grid cameras removed - recreate them as blocks', {
+          meta: { removed: [...result.removed] },
+        })
+      }
+      if (found === 0) this.legacySwept = true
+    } catch (error: unknown) {
+      this.ctx.logger.warn('camera grid: the legacy grid cameras could not be swept - retried', {
         meta: { error: errMsg(error) },
       })
     }
@@ -540,23 +614,23 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    */
   private gridsForSource(sourceDeviceId: number): readonly GridActivityTarget[] {
     const targets: GridActivityTarget[] = []
-    for (const [instanceId, deviceId] of this.deviceIdByInstanceId) {
-      const instance = this.instanceById(instanceId)
-      if (!instance || !instance.enabled) continue
+    for (const grid of this.grids.values()) {
+      const deviceId = grid.block.deviceId
+      const layout = grid.layout
       // A grid never forwards its OWN events back into itself. One grid used as
       // a cell of another is a shape this addon permits, and without this the
       // pair would echo each other for ever.
       if (sourceDeviceId === deviceId) continue
-      const cells = instance.cells.filter((cell) => cell.deviceId === sourceDeviceId)
+      const cells = layout.cells.filter((cell) => cell.deviceId === sourceDeviceId)
       if (cells.length === 0) continue
       targets.push({
         deviceId,
-        canvas: this.canvasFor(instanceId) ?? { width: 0, height: 0 },
+        canvas: this.canvasFor(grid.block.blockId) ?? { width: 0, height: 0 },
         cellsForSource: (id) =>
-          instance.cells
+          layout.cells
             .filter((cell) => cell.deviceId === id)
             .map((cell) => ({ source: cell.source, cell: cell.cell })),
-        sourceDeviceIds: [...new Set(instance.cells.map((cell) => cell.deviceId))],
+        sourceDeviceIds: [...new Set(layout.cells.map((cell) => cell.deviceId))],
       })
     }
     return targets
@@ -573,14 +647,15 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    * empty catalog, and turning it into one would retract the streams of every
    * grid on the hub.
    */
-  private async refreshSourcePlans(instances: readonly GridInstance[]): Promise<void> {
+  private async refreshSourcePlans(): Promise<void> {
+    const grids = [...this.grids.values()]
     let slots: readonly ProfileSlot[]
     try {
       slots = await this.ctx.api.streamBroker.listAllProfileSlots.query()
     } catch (error) {
       this.ctx.logger.warn(
         'camera grid: could not read the broker profile slots - keeping the last answer',
-        { meta: { error: errMsg(error), grids: instances.length } },
+        { meta: { error: errMsg(error), grids: grids.length } },
       )
       return
     }
@@ -600,10 +675,10 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       })
       servedBy.set(slot.deviceId, profiles)
     }
-    for (const instance of instances) {
+    for (const grid of grids) {
       const plans = gridProfilePlans({
-        publishedProfiles: instance.publishedProfiles,
-        cells: instance.cells.map((cell) => ({
+        publishedProfiles: grid.layout.publishedProfiles,
+        cells: grid.layout.cells.map((cell) => ({
           deviceId: cell.deviceId,
           source: cell.source,
           cell: cell.cell,
@@ -613,9 +688,9 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
         // from the list is one it has never published. Both are a refusal.
         profilesServedBy: (deviceId: number) => servedBy.get(deviceId) ?? null,
       })
-      const previous = this.plansByInstanceId.get(instance.id)
-      this.plansByInstanceId.set(instance.id, plans)
-      this.logSourcePlan(instance, plans, previous)
+      const previous = this.plansByBlockId.get(grid.block.blockId)
+      this.plansByBlockId.set(grid.block.blockId, plans)
+      this.logSourcePlan(grid, plans, previous)
     }
   }
 
@@ -633,19 +708,19 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    * line a minute for ever.
    */
   private logSourcePlan(
-    instance: GridInstance,
+    grid: HostedGrid,
     plans: readonly GridProfilePlan[],
     previous: readonly GridProfilePlan[] | undefined,
   ): void {
     const shape = (value: readonly GridProfilePlan[]): string => JSON.stringify(value)
     if (previous !== undefined && shape(previous) === shape(plans)) return
-    const deviceId = this.deviceIdByInstanceId.get(instance.id) ?? 0
+    const deviceId = grid.block.deviceId
     for (const row of plans) {
       if (row.offered || row.missingSources.length === 0) continue
       this.ctx.logger.info('camera grid: a profile is NOT on offer', {
         tags: { deviceId },
         meta: {
-          instanceId: instance.id,
+          blockId: grid.block.blockId,
           profile: row.profile,
           missingSources: [...row.missingSources],
         },
@@ -654,7 +729,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
     this.ctx.logger.info('camera grid: published profiles', {
       tags: { deviceId },
       meta: {
-        instanceId: instance.id,
+        blockId: grid.block.blockId,
         // The canvas beside the profile, because it is DERIVED and nothing
         // else in the system would ever say what it came out as.
         offered: Object.fromEntries(
@@ -669,12 +744,12 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
     })
   }
 
-  private plansFor(instanceId: string): readonly GridProfilePlan[] | null {
-    return this.plansByInstanceId.get(instanceId) ?? null
+  private plansFor(blockId: string): readonly GridProfilePlan[] | null {
+    return this.plansByBlockId.get(blockId) ?? null
   }
 
-  private planFor(instanceId: string, profile: CamProfile): GridProfilePlan | null {
-    return this.plansFor(instanceId)?.find((row) => row.profile === profile) ?? null
+  private planFor(blockId: string, profile: CamProfile): GridProfilePlan | null {
+    return this.plansFor(blockId)?.find((row) => row.profile === profile) ?? null
   }
 
   /**
@@ -686,10 +761,8 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    * offered one is the honest default; a grid offering nothing has no geometry
    * and says so.
    */
-  private canvasFor(
-    instanceId: string,
-  ): { readonly width: number; readonly height: number } | null {
-    for (const row of this.plansFor(instanceId) ?? []) {
+  private canvasFor(blockId: string): { readonly width: number; readonly height: number } | null {
+    for (const row of this.plansFor(blockId) ?? []) {
       if (row.offered) return row.canvas
     }
     return null
@@ -697,10 +770,10 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
 
   // ── Sessions ────────────────────────────────────────────
 
-  private ensureSessions(instanceId: string, deviceId: number): void {
+  private ensureSessions(blockId: string, deviceId: number): void {
     for (const profile of GRID_PROFILES) {
-      const key = sessionKey(instanceId, profile)
-      const plan = this.planFor(instanceId, profile)
+      const key = sessionKey(blockId, profile)
+      const plan = this.planFor(blockId, profile)
       if (plan === null || !plan.offered || !plan.published) {
         const stale = this.sessions.get(key)
         if (stale) {
@@ -719,7 +792,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
           'camera-grid: composition refused — no pinned ffmpeg on this node (D540)',
           {
             tags: { deviceId },
-            meta: { instanceId, profile },
+            meta: { blockId, profile },
           },
         )
         void this.resolveFfmpeg()
@@ -728,9 +801,9 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       this.sessions.set(
         key,
         new GridSessionEntry(
-          instanceId,
+          blockId,
           profile,
-          this.makeSession(instanceId, deviceId, profile, binaryPath),
+          this.makeSession(blockId, deviceId, profile, binaryPath),
         ),
       )
     }
@@ -765,7 +838,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
   }
 
   private makeSession(
-    instanceId: string,
+    blockId: string,
     deviceId: number,
     profile: CamProfile,
     binaryPath: string,
@@ -815,7 +888,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
                   'camera grid: a source has not republished yet — asking again',
                   {
                     tags: { deviceId },
-                    meta: { instanceId, profile, sourceDeviceId, waitedMs },
+                    meta: { blockId, profile, sourceDeviceId, waitedMs },
                   },
                 )
               },
@@ -827,7 +900,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
           this.ctx.logger.info('camera grid: source acquired', {
             tags: { deviceId },
             meta: {
-              instanceId,
+              blockId,
               profile,
               sourceDeviceId,
               mode: dial.mode,
@@ -847,13 +920,13 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
           }),
       },
       resolvePlan: () => {
-        const instance = this.instanceById(instanceId)
-        const plan = this.planFor(instanceId, profile)
+        const grid = this.gridById(blockId)
+        const plan = this.planFor(blockId, profile)
         // Re-read on every (re)start rather than captured: a layout saved while
         // a composition runs changes the canvas this profile derives, and the
         // next start must build the new picture, not the one it was made with.
-        if (!instance || plan === null || !plan.offered || !plan.published) return null
-        return gridPlanFor(instance, {
+        if (grid === null || plan === null || !plan.offered || !plan.published) return null
+        return gridPlanFor(grid.layout, {
           // Software encode, software decode. Resolving a hardware backend is
           // the DECODER ADDON's answer, per node, and asking for one here would
           // be the kernel resolver's qsv-first order - the known-bad one.
@@ -866,41 +939,21 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
     return session
   }
 
-  /** The session a dial is asking for, or `null` - which the relay answers 404 to. */
+  /** The session a dial is asking for, or `null` - which the relay answers 404 to. The relay's `instanceId` is the block id. */
   private sessionFor(request: GridStreamRequest): GridStreamSession | null {
     return this.sessions.get(sessionKey(request.instanceId, request.profile))?.session ?? null
   }
 
   /** This grid's sessions, in DESCENDING quality — the snapshot takes the first running one. */
   private sessionsForDevice(deviceId: number): readonly GridSessionEntry[] {
-    const instanceId = this.instanceIdForDevice(deviceId)
-    if (instanceId === null) return []
+    const grid = this.gridForDevice(deviceId)
+    if (grid === null) return []
     const entries: GridSessionEntry[] = []
     for (const profile of GRID_PROFILES) {
-      const entry = this.sessions.get(sessionKey(instanceId, profile))
+      const entry = this.sessions.get(sessionKey(grid.block.blockId, profile))
       if (entry) entries.push(entry)
     }
     return entries
-  }
-
-  /** A grid that is gone stops immediately - it must not keep N sources dialled. */
-  private async retireWithdrawnSessions(instances: readonly GridInstance[]): Promise<void> {
-    const live = new Set(instances.filter((instance) => instance.enabled).map((i) => i.id))
-    for (const [key, entry] of [...this.sessions]) {
-      if (live.has(entry.instanceId)) continue
-      this.ctx.logger.info('camera grid: retiring a withdrawn grid', {
-        tags: { deviceId: this.deviceIdByInstanceId.get(entry.instanceId) ?? 0 },
-        meta: { instanceId: entry.instanceId },
-      })
-      this.sessions.delete(key)
-      await entry.session.dispose()
-    }
-    for (const instanceId of [...this.deviceIdByInstanceId.keys()]) {
-      if (live.has(instanceId)) continue
-      this.activity?.forget(this.deviceIdByInstanceId.get(instanceId) ?? 0)
-      this.deviceIdByInstanceId.delete(instanceId)
-      this.plansByInstanceId.delete(instanceId)
-    }
   }
 
   /**
@@ -908,12 +961,13 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    * old one, and ffmpeg has no way to be told otherwise, so it is stopped: the
    * consumer's next read re-dials and gets the new picture.
    */
-  private async applyLayoutChanges(): Promise<void> {
+  private async applyLayoutChanges(blockId: string): Promise<void> {
+    const deviceId = this.gridById(blockId)?.block.deviceId ?? 0
     for (const entry of this.sessions.values()) {
-      if (!entry.session.isRunning()) continue
+      if (entry.blockId !== blockId || !entry.session.isRunning()) continue
       this.ctx.logger.info('camera grid: the layout changed - restarting the composition', {
-        tags: { deviceId: this.deviceIdByInstanceId.get(entry.instanceId) ?? 0 },
-        meta: { instanceId: entry.instanceId },
+        tags: { deviceId },
+        meta: { blockId, profile: entry.profile },
       })
       entry.session.onChildEnded('layout-changed')
     }
@@ -958,11 +1012,11 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
    * empty array would be the broker reading "this camera offers nothing" and
    * sweeping every stream it holds for the grid.
    */
-  private descriptorsFor(instanceId: string): readonly CamStreamDescriptor[] | null {
-    const instance = this.instanceById(instanceId)
+  private descriptorsFor(blockId: string): readonly CamStreamDescriptor[] | null {
+    const grid = this.gridById(blockId)
     const relay = this.relay
-    const plans = this.plansFor(instanceId)
-    if (!instance || !relay || plans === null) return null
+    const plans = this.plansFor(blockId)
+    if (grid === null || !relay || plans === null) return null
     // A profile nobody can serve is not NAMED here: naming it would have the
     // broker dial a composition that cannot start. `null` above is the
     // different answer — "this addon cannot say yet" — which the device turns
@@ -976,33 +1030,35 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
           // whatever its own sources imply (`grid-canvas-derivation.ts`).
           width: row.offered ? row.canvas.width : 0,
           height: row.offered ? row.canvas.height : 0,
-          fps: instance.fps,
-          url: relay.streamUrl({ instanceId, profile: row.profile }),
+          fps: grid.layout.fps,
+          url: relay.streamUrl({ instanceId: blockId, profile: row.profile }),
         }),
       )
   }
 
-  private instanceIdForDevice(deviceId: number): string | null {
-    for (const [instanceId, id] of this.deviceIdByInstanceId) {
-      if (id === deviceId) return instanceId
-    }
-    return null
-  }
-
-  private instanceForDevice(deviceId: number): GridInstance | null {
-    const instanceId = this.instanceIdForDevice(deviceId)
-    return instanceId === null ? null : (this.instanceById(instanceId) ?? null)
-  }
-
-  private gridViewFor(deviceId: number): GridLayoutView | null {
-    const instance = this.instanceForDevice(deviceId)
-    if (!instance) return null
+  /**
+   * The grid's name is its DEVICE row's: the composer owns the row and keeps
+   * it in step with the block, and an operator rename lands there. Asked at
+   * the moment the editor reads, never kept here (D224).
+   */
+  private async gridViewFor(deviceId: number): Promise<GridLayoutView | null> {
+    const grid = this.gridForDevice(deviceId)
+    if (grid === null) return null
+    const device = await this.ctx.api.deviceManager.getDevice
+      .query({ deviceId })
+      .catch((error: unknown) => {
+        this.ctx.logger.warn('camera grid: the grid row could not be read for its name', {
+          tags: { deviceId },
+          meta: { error: errMsg(error) },
+        })
+        return null
+      })
     return {
-      instanceId: instance.id,
+      blockId: grid.block.blockId,
       deviceId,
-      name: instance.name,
-      fps: instance.fps,
-      cells: instance.cells.map((cell) => ({
+      name: device?.name ?? grid.block.name,
+      fps: grid.layout.fps,
+      cells: grid.layout.cells.map((cell) => ({
         deviceId: cell.deviceId,
         source: cell.source,
         cell: cell.cell,
@@ -1011,7 +1067,7 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
       // editor renders a report, not a catalog, and a report that said
       // "unknown" for the two seconds after a boot would be noise. The CATALOG
       // refuses instead (see `descriptorsFor`).
-      profiles: (this.plansByInstanceId.get(instance.id) ?? []).map((row) => ({
+      profiles: (this.plansByBlockId.get(grid.block.blockId) ?? []).map((row) => ({
         profile: row.profile,
         offered: row.offered,
         // Serviceable is not the same as PUBLISHED: a profile can be sized and
@@ -1025,50 +1081,74 @@ export class CameraGridAddon extends BaseAddon<CameraGridAddonConfig> {
     }
   }
 
-  private async saveGridLayout(input: GridLayoutPatch): Promise<GridLayoutView> {
-    const instance = this.instanceForDevice(input.deviceId)
-    if (!instance) {
-      throw new Error(`camera-grid: device ${String(input.deviceId)} is not a grid camera`)
-    }
-    const updated = {
-      ...instance,
-      ...(input.name !== undefined ? { name: input.name.trim() } : {}),
-      ...(input.fps !== undefined ? { fps: input.fps } : {}),
-      ...(input.publishedProfiles !== undefined
-        ? { publishedProfiles: [...input.publishedProfiles] }
-        : {}),
-      cells: input.cells.map((cell) => ({ ...cell })),
-    }
-    this.ctx.logger.info('camera grid: layout saved', {
-      tags: { deviceId: input.deviceId },
-      meta: {
-        cells: updated.cells.length,
-        sources: [...new Set(updated.cells.map((cell) => cell.deviceId))],
-        // No canvas here: it is derived per profile and is not known until the
-        // next plan refresh reads the sources' sizes. `published profiles`
-        // carries it, with the profile it belongs to.
-        fps: updated.fps,
-      },
+  /** The identity `(addonId, stableId)` of each source device, by one targeted read. */
+  private async sourceRefs(
+    deviceIds: readonly number[],
+  ): Promise<ReadonlyMap<number, CompositionSourceRef>> {
+    const unique = [...new Set(deviceIds)]
+    if (unique.length === 0) return new Map()
+    const rows = await this.ctx.api.deviceManager.listAll.query({
+      deviceIds: unique,
+      projection: 'slim',
     })
-    const handle = this.ctx.records?.kind(cameraGridKind)
-    if (handle === undefined) throw new Error('camera-grid: the grid records are not available')
-    // An RFC 7396 merge: the cell list is replaced whole, the rest of the record is kept.
-    await handle.patch(instance.id, {
-      name: updated.name,
-      fps: updated.fps,
-      publishedProfiles: updated.publishedProfiles,
-      cells: updated.cells,
+    return new Map(rows.map((row) => [row.id, { addonId: row.addonId, stableId: row.stableId }]))
+  }
+
+  /**
+   * A layout save writes the BLOCK: its spec, sources by identity, with the
+   * block's `updatedAt` as the optimistic guard. The name is not the editor's
+   * to write (it is the block's, renamed through the block).
+   */
+  private saveGridLayout(input: GridLayoutPatch): Promise<GridLayoutView> {
+    return this.serialized(async () => {
+      const grid = this.gridForDevice(input.deviceId)
+      if (grid === null) {
+        throw new Error(`camera-grid: device ${String(input.deviceId)} is not a grid camera`)
+      }
+      const refs = await this.sourceRefs(input.cells.map((cell) => cell.deviceId))
+      const spec = gridSpecFromPatch(grid.block.spec, input, (id) => refs.get(id) ?? null)
+      const composition = gridComposition(spec)
+      const result = await this.ctx.api.coreBlocks.updateComposition.mutate({
+        blockId: grid.block.blockId,
+        expectedUpdatedAt: grid.block.updatedAt,
+        block: { composition },
+      })
+      this.ctx.logger.info('camera grid: layout saved', {
+        tags: { deviceId: input.deviceId },
+        meta: {
+          blockId: grid.block.blockId,
+          cells: spec.cells.length,
+          sources: [...new Set(input.cells.map((cell) => cell.deviceId))],
+          // No canvas here: it is derived per profile and is not known until
+          // the next plan refresh reads the sources' sizes. `published
+          // profiles` carries it, with the profile it belongs to.
+          fps: spec.fps,
+        },
+      })
+      const saved: HostedGrid = {
+        hosted: grid.hosted,
+        block: { ...grid.block, updatedAt: result.block.updatedAt, composition, spec },
+        layout: {
+          fps: spec.fps,
+          publishedProfiles: spec.publishedProfiles,
+          cells: input.cells.map((cell) => ({
+            deviceId: cell.deviceId,
+            source: cell.source,
+            cell: cell.cell,
+          })),
+        },
+      }
+      this.grids = new Map([...this.grids, [grid.block.blockId, saved]])
+      await this.applyLayoutChanges(grid.block.blockId)
+      // A new cell list is a new set of sources, so what is on offer may have
+      // changed. Asked NOW rather than at the next reconcile: the editor shows
+      // the answer, and a report a minute out of date is a report that lies.
+      await this.refreshSourcePlans()
+      this.ensureSessions(grid.block.blockId, input.deviceId)
+      const view = await this.gridViewFor(input.deviceId)
+      if (view === null) throw new Error('camera-grid: the grid vanished while it was being saved')
+      return view
     })
-    await this.refreshInstanceRows()
-    await this.applyLayoutChanges()
-    // A new cell list is a new set of sources, so what is on offer may have
-    // changed. Asked NOW rather than at the next reconcile: the editor shows
-    // the answer, and a report a minute out of date is a report that lies.
-    await this.refreshSourcePlans(this.instanceList())
-    this.ensureSessions(instance.id, input.deviceId)
-    const view = this.gridViewFor(input.deviceId)
-    if (!view) throw new Error('camera-grid: the grid vanished while it was being saved')
-    return view
   }
 
   // ── ffmpeg ──────────────────────────────────────────────────────────────

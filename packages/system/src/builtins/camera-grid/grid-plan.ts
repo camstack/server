@@ -1,5 +1,5 @@
 /**
- * A persisted grid row → the composition plan the stream session runs.
+ * A grid block's resolved layout → the composition plan the stream session runs.
  *
  * The one piece of real work here is the source→ordinal mapping. The operator
  * authors cells against CAMERAS; ffmpeg addresses them by INPUT ORDINAL, and a
@@ -10,7 +10,7 @@
  */
 import type { FfmpegVideoEncoderId } from '@camstack/types'
 import type { GridCell, GridLayout } from './grid-filter-graph.js'
-import type { GridInstance } from './grid-instances.js'
+import type { GridComposition } from './grid-blocks.js'
 import type { GridStreamPlan } from './grid-stream-session.js'
 
 export interface GridPlanEncodeContext {
@@ -47,7 +47,7 @@ function bitrateFor(width: number, height: number, fps: number): number {
 
 /** `null` when the grid has nothing to compose — the normal freshly-created state. */
 export function gridPlanFor(
-  instance: GridInstance,
+  instance: Pick<GridComposition, 'cells' | 'fps'>,
   encode: GridPlanEncodeContext,
 ): GridStreamPlan | null {
   if (instance.cells.length === 0) return null

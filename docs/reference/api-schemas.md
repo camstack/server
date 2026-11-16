@@ -2790,14 +2790,13 @@ Enum: `"replace" \| "add"`
 ### `GridLayoutPatchSchema`
 
 - `deviceId`: `number`
-- `name?`: `string`
 - `fps?`: `number`
 - `publishedProfiles?`: `("high" \| "mid" \| "low")[]`
 - `cells`: `({ deviceId: number; source: { x: number; y: number; width: number; height: number }; cell: { x: number; y: number; width: number; height: number } })[]`
 
 ### `GridLayoutViewSchema`
 
-- `instanceId`: `string`
+- `blockId`: `string`
 - `deviceId`: `number`
 - `name`: `string`
 - `fps`: `number`

@@ -52,8 +52,9 @@ export interface GridProfileOffer {
 }
 
 export interface GridLayoutView {
-  readonly instanceId: string
+  readonly blockId: string
   readonly deviceId: number
+  /** The device row's name. */
   readonly name: string
   readonly fps: number
   readonly cells: readonly GridLayoutCell[]
@@ -138,9 +139,9 @@ export function parseGridView(raw: unknown): GridLayoutReadOutcome {
   const grid = raw
   // No width/height: a grid's resolution is derived per profile and reported
   // on the offers, not authored on the view.
-  const { instanceId, deviceId, name, fps, cells, profiles } = grid
+  const { blockId, deviceId, name, fps, cells, profiles } = grid
   if (
-    typeof instanceId !== 'string' ||
+    typeof blockId !== 'string' ||
     typeof deviceId !== 'number' ||
     typeof name !== 'string' ||
     typeof fps !== 'number' ||
@@ -161,7 +162,7 @@ export function parseGridView(raw: unknown): GridLayoutReadOutcome {
     if (offer === null) return 'unreadable'
     offers.push(offer)
   }
-  return { instanceId, deviceId, name, fps, cells: parsed, profiles: offers }
+  return { blockId, deviceId, name, fps, cells: parsed, profiles: offers }
 }
 
 /**

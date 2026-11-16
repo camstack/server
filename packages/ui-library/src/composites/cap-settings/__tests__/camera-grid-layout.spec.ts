@@ -17,7 +17,7 @@ describe('parseGridView', () => {
 
   it('reads a grid the CAP answered with — the view itself, no envelope', () => {
     const view = parseGridView({
-      instanceId: 'i1',
+      blockId: 'i1',
       deviceId: 900,
       name: 'Front',
       fps: 10,
@@ -25,7 +25,7 @@ describe('parseGridView', () => {
       profiles: OFFERS,
     })
     expect(view).toEqual({
-      instanceId: 'i1',
+      blockId: 'i1',
       deviceId: 900,
       name: 'Front',
       fps: 10,
@@ -41,13 +41,13 @@ describe('parseGridView', () => {
     expect(parseGridView(null)).toBeNull()
     expect(parseGridView(undefined)).toBe('unreadable')
     expect(parseGridView({})).toBe('unreadable')
-    expect(parseGridView({ instanceId: 'i1' })).toBe('unreadable')
+    expect(parseGridView({ blockId: 'i1' })).toBe('unreadable')
   })
 
   it('refuses a reply with no profile report — a grid that says nothing offers nothing', () => {
     expect(
       parseGridView({
-        instanceId: 'i1',
+        blockId: 'i1',
         deviceId: 900,
         name: 'x',
         fps: 10,
@@ -59,7 +59,7 @@ describe('parseGridView', () => {
   it('refuses a cell whose rectangle is out of the unit square', () => {
     expect(
       parseGridView({
-        instanceId: 'i1',
+        blockId: 'i1',
         deviceId: 900,
         name: 'x',
         fps: 10,
@@ -119,7 +119,7 @@ describe('publishing a profile', () => {
     // Such a hub publishes whatever it offers, so absence must render the way
     // it behaves — anything else would show a grid as half switched off.
     const view = parseGridView({
-      instanceId: 'i1',
+      blockId: 'i1',
       deviceId: 900,
       name: 'Front',
       fps: 10,
@@ -132,7 +132,7 @@ describe('publishing a profile', () => {
 
   it('keeps PUBLISHED distinct from OFFERED — serviceable is not the same as on', () => {
     const view = parseGridView({
-      instanceId: 'i1',
+      blockId: 'i1',
       deviceId: 900,
       name: 'Front',
       fps: 10,

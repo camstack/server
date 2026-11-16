@@ -108,9 +108,10 @@ const GridProfileOfferSchema = z.object({
 })
 
 export const GridLayoutViewSchema = z.object({
-  /** The persisted grid row this camera was declared from. */
-  instanceId: z.string(),
+  /** The grid block (planning#580) whose camera this is. */
+  blockId: z.string(),
   deviceId: z.number().int().nonnegative(),
+  /** The device row's name — the only name a grid has; it is renamed on the block or the device. */
   name: z.string(),
   /**
    * NO canvas size. A grid's resolution is not authored: each profile derives
@@ -132,7 +133,6 @@ export type GridLayoutView = z.infer<typeof GridLayoutViewSchema>
 
 export const GridLayoutPatchSchema = z.object({
   deviceId: z.number().int().nonnegative(),
-  name: z.string().min(1).max(160).optional(),
   fps: z.number().int().min(1).max(60).optional(),
   /** Which profiles to publish. See `GridProfileOffer.published`. */
   publishedProfiles: z

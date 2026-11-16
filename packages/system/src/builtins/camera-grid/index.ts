@@ -16,30 +16,23 @@ export type {
   GridLayout,
   NormalizedRect,
 } from './grid-filter-graph.js'
-export {
-  buildGridCameraDeclarations,
-  gridCameraReconciliationIndex,
-  newGridCameraStableId,
-} from './grid-camera-declarations.js'
-export type {
-  ExistingGridCameraRow,
-  GridCameraConfig,
-  GridCameraDeclaration,
-} from './grid-camera-declarations.js'
+export { legacyGridCameraIndex } from './legacy-grid-cameras.js'
 export { GridCameraDevice, installGridCameraRuntime } from './grid-camera-device.js'
 export type { GridCameraRuntime } from './grid-camera-device.js'
-export { readGridInstances } from './grid-instances.js'
-export type { GridCellConfig, GridInstance } from './grid-instances.js'
+export {
+  gridComposition,
+  gridSpecFromPatch,
+  resolveGridCells,
+  sourceRefKey,
+} from './grid-blocks.js'
+export type {
+  GridCellConfig,
+  GridComposition,
+  GridSpecPatch,
+  ResolvedGridCells,
+} from './grid-blocks.js'
 export { gridPlanFor } from './grid-plan.js'
 export type { GridPlanEncodeContext } from './grid-plan.js'
-export {
-  CAMERA_GRID_KIND_NAME,
-  cameraGridKind,
-  GridBodySchema,
-  initialGridBody,
-  rawGridOfRecord,
-} from './grid-record-kinds.js'
-export type { GridBody } from './grid-record-kinds.js'
 export { gridStreamDescriptor } from './grid-stream-descriptor.js'
 export {
   GRID_CAM_STREAM_ID,

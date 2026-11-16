@@ -42,9 +42,9 @@ import { z } from 'zod'
 import { buildGridLayoutNativeProvider } from './grid-layout-native-provider.js'
 import type { GridSnapshotImage } from './grid-snapshot.js'
 
-const gridCameraSchema: z.ZodObject<{ instanceId: z.ZodString }> = z.object({
-  /** The persisted grid row this camera was declared from. */
-  instanceId: z.string().min(1),
+const gridCameraSchema: z.ZodObject<{ blockId: z.ZodString }> = z.object({
+  /** The grid block (planning#580) whose camera this is. Handed in, never persisted. */
+  blockId: z.string().min(1),
 })
 
 /**
@@ -58,9 +58,10 @@ export interface GridCameraRuntime {
    * when the addon cannot say. `null` is a REFUSAL to describe, never an empty
    * catalog with a shrug: see the note on the empty branch below.
    */
-  descriptorsFor(instanceId: string): readonly CamStreamDescriptor[] | null
+  descriptorsFor(blockId: string): readonly CamStreamDescriptor[] | null
   /** The grid behind a device, or `null` — which means "answered: not a grid". */
-  getLayout(deviceId: number): GridLayoutView | null
+  getLayout(deviceId: number): Promise<GridLayoutView | null>
+  isGrid(deviceId: number): boolean
   saveLayout(patch: GridLayoutPatch): Promise<GridLayoutView>
   /** A frame of the composition, or `null`. Never starts one. */
   getSnapshot(deviceId: number): Promise<GridSnapshotImage | null>
@@ -107,6 +108,7 @@ export class GridCameraDevice extends BaseDevice<typeof gridCameraSchema> {
     // (`grid-layout-native-provider.ts`).
     const layoutProvider = buildGridLayoutNativeProvider({
       getLayout: (deviceId) => activeRuntime().getLayout(deviceId),
+      isGrid: (deviceId) => activeRuntime().isGrid(deviceId),
       saveLayout: (patch) => activeRuntime().saveLayout(patch),
     })
     this.ctx.registerNativeCap(cameraGridLayoutCapability, layoutProvider)
@@ -138,10 +140,10 @@ export class GridCameraDevice extends BaseDevice<typeof gridCameraSchema> {
     // offers nothing" and retract every stream — a restart, or one unreadable
     // profile-slot list, would take the grid's slots with it. A refusal is an
     // error, and an error is not an empty catalog.
-    const descriptors = activeRuntime().descriptorsFor(this.config.get('instanceId'))
+    const descriptors = activeRuntime().descriptorsFor(this.config.get('blockId'))
     if (descriptors === null) {
       throw new Error(
-        `camera-grid: cannot describe the streams of instance ${this.config.get('instanceId')}`,
+        `camera-grid: cannot describe the streams of grid block ${this.config.get('blockId')}`,
       )
     }
     // ALWAYS named, including while the composition is idle. The catalog says

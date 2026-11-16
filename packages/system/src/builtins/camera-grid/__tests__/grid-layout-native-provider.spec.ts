@@ -18,7 +18,7 @@ import { GRID_LAYOUT_WIDGET_ID } from '../grid-device-settings.js'
 
 const VIEW: GridLayoutView = {
   deviceId: 4581,
-  instanceId: '6a2f1b3c-0000-4000-8000-000000000001',
+  blockId: '6a2f1b3c-0000-4000-8000-000000000001',
   name: 'Front yard 2x2',
   fps: 10,
   cells: [],
@@ -27,7 +27,8 @@ const VIEW: GridLayoutView = {
 
 function providerFor(layout: GridLayoutView | null) {
   return buildGridLayoutNativeProvider({
-    getLayout: () => layout,
+    getLayout: async () => layout,
+    isGrid: () => layout !== null,
     saveLayout: async (_patch: GridLayoutPatch) => VIEW,
   })
 }

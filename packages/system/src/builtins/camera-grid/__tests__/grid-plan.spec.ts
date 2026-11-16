@@ -1,15 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { gridPlanFor } from '../grid-plan.js'
-import type { GridInstance } from '../grid-instances.js'
+import type { GridComposition } from '../grid-blocks.js'
 
 const RECT = { x: 0, y: 0, width: 0.5, height: 0.5 } as const
 
-function instance(cells: GridInstance['cells']): GridInstance {
+function instance(cells: GridComposition['cells']): GridComposition {
   return {
-    id: 'i1',
-    cameraStableId: 'camera-grid-i1',
-    name: 'g',
-    enabled: true,
     fps: 10,
     publishedProfiles: ['mid', 'low'],
     cells,
@@ -84,11 +80,7 @@ describe('gridPlanFor', () => {
 })
 
 describe('gridPlanFor — the per-profile canvas', () => {
-  const instance: GridInstance = {
-    id: '11111111-1111-4111-8111-111111111111',
-    cameraStableId: 'grid-1',
-    name: 'Front',
-    enabled: true,
+  const instance: GridComposition = {
     fps: 10,
     publishedProfiles: ['mid', 'low'],
     cells: [
