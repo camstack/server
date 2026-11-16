@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- Notification toasts have an opaque background
+## [1.2.689] - 2026-11-16
 
 ### Changed
 
 - Force delete of a storage location moved into the delete dialog, behind a second confirmation
 - The embedded device card fills the viewer sheet and scrolls only inside its History overlay
+
+### Fixed
+
+- Notification toasts have an opaque background
 
 ## [1.2.688] - 2026-11-16
 
