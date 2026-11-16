@@ -202,7 +202,11 @@ describe('Unraid: a failed docker read keeps the devices', () => {
     return {
       connect: done,
       disconnect: done,
-      array: { get: async () => snapshot().array, setState: done, parity: { start: done, cancel: done } },
+      array: {
+        get: async () => snapshot().array,
+        setState: done,
+        parity: { start: done, cancel: done },
+      },
       docker: { list: dockerList, start: done, stop: done },
       vms: {
         list: async () => [],

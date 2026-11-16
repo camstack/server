@@ -38,13 +38,11 @@ function snapshot(disks: readonly UnraidArrayDiskInfo[]): UnraidSnapshot {
 describe('Unraid entity keys', () => {
   it('three disks sharing the server prefix yield three distinct entities', () => {
     const keys = buildEntityIdentities(
-      snapshot(
-        [
-          disk('WDC_WD80EFAX-68KNBN0_VAGW1111', 'disk1'),
-          disk('WDC_WD80EFAX-68KNBN0_VAGW2222', 'disk2'),
-          disk('Samsung_SSD_870_EVO_1TB_S6PU3333', 'cache'),
-        ],
-      ),
+      snapshot([
+        disk('WDC_WD80EFAX-68KNBN0_VAGW1111', 'disk1'),
+        disk('WDC_WD80EFAX-68KNBN0_VAGW2222', 'disk2'),
+        disk('Samsung_SSD_870_EVO_1TB_S6PU3333', 'cache'),
+      ]),
     ).map((identity) => identity.key)
 
     expect(new Set(keys.filter((k) => /^disk_.*_usage$/.test(k))).size).toBe(3)
@@ -55,14 +53,12 @@ describe('Unraid entity keys', () => {
   it('every key of a snapshot is unique, even for ids that slugify alike or truncate alike', () => {
     const long = 'x'.repeat(80)
     const identities = buildEntityIdentities(
-      snapshot(
-        [
-          disk('Disk_1', 'disk1'),
-          disk('disk-1', 'disk1b'),
-          disk(`${long}A`, 'a'),
-          disk(`${long}B`, 'b'),
-        ],
-      ),
+      snapshot([
+        disk('Disk_1', 'disk1'),
+        disk('disk-1', 'disk1b'),
+        disk(`${long}A`, 'a'),
+        disk(`${long}B`, 'b'),
+      ]),
     )
     const keys = identities.map((identity) => identity.key)
     expect(new Set(keys).size).toBe(keys.length)

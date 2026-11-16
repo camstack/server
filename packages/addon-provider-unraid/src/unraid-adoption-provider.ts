@@ -43,7 +43,9 @@ export interface UnraidAdoptionProviderDeps {
     readonly accessoryDeviceIds: readonly number[]
   }>
   /** Create one top-level Docker container or VM device. */
-  readonly adoptWorkload: (input: UnraidWorkloadAdoptInput) => Promise<{ readonly deviceId: number }>
+  readonly adoptWorkload: (
+    input: UnraidWorkloadAdoptInput,
+  ) => Promise<{ readonly deviceId: number }>
   /** The ids of a device's children (empty when it has none). */
   readonly childDeviceIds: (deviceId: number) => Promise<readonly number[]>
   readonly removeDevice: (deviceId: number) => Promise<void>

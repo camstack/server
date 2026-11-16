@@ -5,11 +5,7 @@ import {
   gatewayDeviceName,
 } from '@camstack/types'
 import { z } from 'zod'
-import type {
-  UnraidContainerInfo,
-  UnraidSnapshot,
-  UnraidVmInfo,
-} from './unraid-client-contract.js'
+import type { UnraidContainerInfo, UnraidSnapshot, UnraidVmInfo } from './unraid-client-contract.js'
 import { localIdOf } from './unraid-mapping.js'
 
 /** The `childNativeId` of the server itself (the Gateway), one per integration. */
@@ -132,11 +128,7 @@ export function buildUnraidCandidates(
   const status = input.server.online ? 'online' : 'offline'
   const gatewayAdopted = input.adopted.get(UNRAID_GATEWAY_ID) ?? null
   const instanceAdopted = input.adopted.get(UNRAID_INSTANCE_ID) ?? null
-  const workload = (
-    ref: UnraidWorkloadRef,
-    name: string,
-    model: string,
-  ): DiscoveredChildDevice => {
+  const workload = (ref: UnraidWorkloadRef, name: string, model: string): DiscoveredChildDevice => {
     const childNativeId = workloadNativeId(ref)
     const adoptedDeviceId = input.adopted.get(childNativeId) ?? null
     return {

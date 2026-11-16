@@ -52,14 +52,14 @@ const quiet: IScopedLogger = {
 
 /** An array disk carrying a marked name. */
 const MARKED_DISK: UnraidArrayDiskInfo = {
-      id: 'srv:d1',
-      name: 'marker-disk',
-      fsSizeBytes: 1000,
-      fsUsedBytes: 400,
-      fsFreeBytes: 600,
-      tempC: 30,
-      healthy: true,
-    }
+  id: 'srv:d1',
+  name: 'marker-disk',
+  fsSizeBytes: 1000,
+  fsUsedBytes: 400,
+  fsFreeBytes: 600,
+  tempC: 30,
+  healthy: true,
+}
 
 /** A snapshot with one marked disk and one docker container. */
 const SNAPSHOT: UnraidSnapshot = {
