@@ -7,12 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device Interactions show the add-on by name and, for an exporter, who it acted for.
+
 ## [1.2.461] - 2026-11-16
 
 ### Changed
 
 - Device card: History and Remote overlays keep the detail's height (or fill the host's) with a pinned top and one scrolling region; Interactions are grouped by day with one-line rows and no outcome badge; History opens on one block of lanes per unit with a Points selector, single charts collapsed
-- Device Interactions show the add-on by name and, for an exporter, who it acted for.
 
 ## [1.2.460] - 2026-11-16
 
