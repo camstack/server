@@ -131,6 +131,8 @@ function world(initialRows: readonly unknown[], opts: { refuseRestored?: boolean
       setMode: async () => undefined,
       setChildLock: async () => undefined,
       setDisplay: async () => undefined,
+      setTargetHumidity: async () => undefined,
+      refreshDevice: async () => null,
     }
     return client
   }

@@ -122,6 +122,22 @@ export const vesyncPurifierSchema = z.object({
 
 export type VeSyncPurifierConfig = z.infer<typeof vesyncPurifierSchema>
 
+/**
+ * Persisted config every VeSync humidifier carries. `humidifierNativeId` resolves the
+ * live snapshot; `integrationId` selects the account. A
+ * {@link import('@camstack/types').DeviceType.Humidifier} that registers `humidifier`
+ * and fans out accessory children (display switch, humidity + water-low sensors). It is
+ * a sibling of the Gateway.
+ */
+export const vesyncHumidifierSchema = z.object({
+  humidifierNativeId: z.string().min(1).describe('VeSync device cid'),
+  integrationId: z.string().min(1).describe('Owning integration'),
+  model: z.string().optional(),
+  system: z.literal(VESYNC_SYSTEM).optional(),
+})
+
+export type VeSyncHumidifierConfig = z.infer<typeof vesyncHumidifierSchema>
+
 /** The two boolean toggles a purifier exposes as `DeviceType.Switch` children. */
 export const VeSyncToggleKindSchema = z.enum(['child-lock', 'display'])
 export type VeSyncToggleKind = z.infer<typeof VeSyncToggleKindSchema>
@@ -134,7 +150,8 @@ export type VeSyncToggleKind = z.infer<typeof VeSyncToggleKindSchema>
  */
 export const vesyncToggleSchema = z.object({
   kind: VeSyncToggleKindSchema,
-  purifierNativeId: z.string().min(1).describe('VeSync device cid'),
+  /** The PARENT's VeSync cid — a purifier or a humidifier (name kept: stored children parse). */
+  purifierNativeId: z.string().min(1).describe('VeSync device cid of the parent'),
   integrationId: z.string().min(1).describe('Owning integration'),
   /** Legacy hub stableId. Kept so a migrated blob still parses; not read. */
   accountId: z.string().min(1).optional(),
@@ -143,8 +160,16 @@ export const vesyncToggleSchema = z.object({
 
 export type VeSyncToggleConfig = z.infer<typeof vesyncToggleSchema>
 
-/** The two read-only metrics a purifier exposes as `DeviceType.Sensor` children. */
-export const VeSyncSensorKindSchema = z.enum(['air-quality', 'filter-life'])
+/**
+ * The read-only metrics exposed as `DeviceType.Sensor` children: `air-quality` and
+ * `filter-life` of a purifier, `humidity` and `water-low` of a humidifier.
+ */
+export const VeSyncSensorKindSchema = z.enum([
+  'air-quality',
+  'filter-life',
+  'humidity',
+  'water-low',
+])
 export type VeSyncSensorKind = z.infer<typeof VeSyncSensorKindSchema>
 
 /**
@@ -154,7 +179,8 @@ export type VeSyncSensorKind = z.infer<typeof VeSyncSensorKindSchema>
  */
 export const vesyncSensorSchema = z.object({
   kind: VeSyncSensorKindSchema,
-  purifierNativeId: z.string().min(1).describe('VeSync device cid'),
+  /** The PARENT's VeSync cid — a purifier or a humidifier (name kept: stored children parse). */
+  purifierNativeId: z.string().min(1).describe('VeSync device cid of the parent'),
   integrationId: z.string().min(1).describe('Owning integration'),
   /** Legacy hub stableId. Kept so a migrated blob still parses; not read. */
   accountId: z.string().min(1).optional(),

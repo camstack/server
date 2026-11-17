@@ -3,6 +3,8 @@ import type { VeSyncConnectionConfig } from './config.js'
 import {
   type VeSyncClient,
   type VeSyncClientFactory,
+  type VeSyncDeviceSnapshot,
+  type VeSyncHumidifierSnapshot,
   type VeSyncPurifierSnapshot,
   type VeSyncSession,
   VeSyncSessionRejectedError,
@@ -21,6 +23,17 @@ import { tsVeSyncClientFactory } from './vesync-tsvesync-client.js'
 /** Status of a single VeSync account connection. */
 export type VeSyncAccountStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
 
+/** One device command: what to send, and who it is for (the log tag). */
+export interface VeSyncCommand {
+  /** The VeSync `cid` the command drives. */
+  readonly nativeId: string
+  /** The CamStack device the command came from — every log line about it is tagged with it. */
+  readonly deviceId: number
+  /** What is sent, for the log (`setPower(on)`, `setFanSpeed(67)` …). */
+  readonly name: string
+  readonly run: (client: VeSyncClient) => Promise<void>
+}
+
 /** Constructor options for {@link VeSyncIntegrationManager}. */
 export interface VeSyncIntegrationManagerOptions {
   readonly id: string
@@ -31,8 +44,8 @@ export interface VeSyncIntegrationManagerOptions {
   readonly sessions: VeSyncSessionStore
   readonly onConnected: (accountId: string) => void
   readonly onDisconnected: (accountId: string) => void
-  /** Fired after every poll cycle so the account device fans the fresh snapshot
-   *  out to its purifier children. */
+  /** Fired after every poll cycle, and after the refresh that follows a command, so the
+   *  account fans the fresh snapshot out to its devices. */
   readonly onPolled: (accountId: string) => void
   /** Factory seam — defaults to the `tsvesync` adapter. */
   readonly makeClient?: VeSyncClientFactory
@@ -56,7 +69,14 @@ export class VeSyncIntegrationManager {
   readonly #makeClient: VeSyncClientFactory
 
   #client: VeSyncClient | null = null
-  #purifiers: Map<string, VeSyncPurifierSnapshot> = new Map()
+  #devices: Map<string, VeSyncDeviceSnapshot> = new Map()
+  /**
+   * Freshness order of device reads. A poll takes a ticket when it starts; a single-device
+   * refresh takes one when it lands and records it per device. A poll that lands later keeps,
+   * for every device refreshed after it started, the fresher read (it read before the command).
+   */
+  #readSeq = 0
+  #refreshedAt: Map<string, number> = new Map()
   #status: VeSyncAccountStatus = 'disconnected'
   #pollTimer: ReturnType<typeof setInterval> | null = null
   #error: string | null = null
@@ -95,17 +115,34 @@ export class VeSyncIntegrationManager {
     return this.#connection
   }
 
+  /** Every device snapshot (purifiers and humidifiers) known to this account. */
+  getDevices(): readonly VeSyncDeviceSnapshot[] {
+    return [...this.#devices.values()]
+  }
+
+  /** Resolve one device snapshot by its native id, or null. */
+  getDevice(nativeId: string): VeSyncDeviceSnapshot | null {
+    return this.#devices.get(nativeId) ?? null
+  }
+
   /** All purifier snapshots known to this account. */
   getPurifiers(): readonly VeSyncPurifierSnapshot[] {
-    return [...this.#purifiers.values()]
+    return this.getDevices().filter((d): d is VeSyncPurifierSnapshot => d.kind === 'purifier')
   }
 
   /** Resolve a single purifier snapshot by its native id, or null. */
   getPurifier(nativeId: string): VeSyncPurifierSnapshot | null {
-    return this.#purifiers.get(nativeId) ?? null
+    const device = this.getDevice(nativeId)
+    return device?.kind === 'purifier' ? device : null
   }
 
-  /** The live client, or null when stopped. Purifier children drive commands here. */
+  /** Resolve a single humidifier snapshot by its native id, or null. */
+  getHumidifier(nativeId: string): VeSyncHumidifierSnapshot | null {
+    const device = this.getDevice(nativeId)
+    return device?.kind === 'humidifier' ? device : null
+  }
+
+  /** The live client, or null when stopped. */
   get client(): VeSyncClient | null {
     return this.#client
   }
@@ -145,7 +182,7 @@ export class VeSyncIntegrationManager {
     if (decision.kind === 'restore') {
       client.restoreSession(decision.session)
       try {
-        this.#purifiers = indexPurifiers(await client.listDevices())
+        this.#devices = indexDevices(await client.listDevices())
         // A session stored before the terminal id was kept: keep the one presented from now on.
         if (decision.session.terminalId === null) {
           this.#queueSessionSave(fingerprint, { ...decision.session, terminalId })
@@ -155,13 +192,13 @@ export class VeSyncIntegrationManager {
         signInReason = 'rejected'
         await this.#clearSession()
         await client.login()
-        this.#purifiers = indexPurifiers(await client.listDevices())
+        this.#devices = indexDevices(await client.listDevices())
       }
     } else {
       signInReason = decision.reason
       if (decision.reason !== 'none-stored') await this.#clearSession()
       await client.login()
-      this.#purifiers = indexPurifiers(await client.listDevices())
+      this.#devices = indexDevices(await client.listDevices())
     }
     await this.flushSessionWrites()
     this.#logger.info(
@@ -177,7 +214,7 @@ export class VeSyncIntegrationManager {
     this.#startPollLoop()
     this.#logger.info('VeSyncIntegrationManager: started', {
       tags: { accountId: this.#id },
-      meta: { purifierCount: this.#purifiers.size },
+      meta: { deviceCount: this.#devices.size },
     })
   }
 
@@ -189,7 +226,8 @@ export class VeSyncIntegrationManager {
     }
     const client = this.#client
     this.#client = null
-    this.#purifiers = new Map()
+    this.#devices = new Map()
+    this.#refreshedAt = new Map()
     this.#status = 'disconnected'
     if (client) {
       try {
@@ -260,12 +298,70 @@ export class VeSyncIntegrationManager {
     await this.start()
   }
 
+  /**
+   * Send one command, then re-read THAT device and push its real state at once — the UI should
+   * not wait for the next poll (30 s by default) to see what it asked for. Nothing is invented:
+   * the pushed state is what the device read answered. A refused command is logged and thrown; a
+   * failed read after an acknowledged command is logged and leaves the state to the next poll.
+   */
+  async runCommand(command: VeSyncCommand): Promise<void> {
+    const client = this.#client
+    const tags = { deviceId: command.deviceId }
+    if (client === null) {
+      throw new Error(`vesync: integration ${this.#id} is not connected — ${command.name} not sent`)
+    }
+    const started = Date.now()
+    try {
+      await command.run(client)
+    } catch (err) {
+      this.#logger.warn(`vesync: command ${command.name} failed`, {
+        tags,
+        meta: { nativeId: command.nativeId, commandMs: Date.now() - started, error: errMsg(err) },
+      })
+      throw err
+    }
+    const acked = Date.now()
+    this.#logger.info(`vesync: command ${command.name} acknowledged`, {
+      tags,
+      meta: { nativeId: command.nativeId, commandMs: acked - started },
+    })
+    try {
+      const fresh = await client.refreshDevice(command.nativeId)
+      if (this.#client !== client) return
+      if (fresh === null) {
+        this.#logger.warn(`vesync: refresh after ${command.name} found no such device`, {
+          tags,
+          meta: { nativeId: command.nativeId },
+        })
+        return
+      }
+      this.#readSeq += 1
+      this.#refreshedAt = new Map(this.#refreshedAt).set(command.nativeId, this.#readSeq)
+      this.#devices = new Map(this.#devices).set(command.nativeId, fresh)
+      this.#onPolled(this.#id)
+      const pushed = Date.now()
+      this.#logger.info(`vesync: state refreshed after ${command.name}`, {
+        tags,
+        meta: { nativeId: command.nativeId, refreshMs: pushed - acked, totalMs: pushed - started },
+      })
+    } catch (err) {
+      this.#logger.warn(`vesync: refresh after ${command.name} failed — the next poll updates it`, {
+        tags,
+        meta: { nativeId: command.nativeId, refreshMs: Date.now() - acked, error: errMsg(err) },
+      })
+    }
+  }
+
   /** Re-list devices once, then fan the snapshot out. Best-effort. */
   async poll(): Promise<void> {
     const client = this.#client
     if (client === null) return
+    this.#readSeq += 1
+    const ticket = this.#readSeq
     try {
-      this.#purifiers = indexPurifiers(await client.listDevices())
+      const listed = indexDevices(await client.listDevices())
+      if (this.#client !== client) return
+      this.#devices = this.#keepFresherReads(listed, ticket)
     } catch (err) {
       this.#error = errMsg(err)
       this.#logger.debug('VeSyncIntegrationManager: device poll failed', {
@@ -274,6 +370,21 @@ export class VeSyncIntegrationManager {
       })
     }
     this.#onPolled(this.#id)
+  }
+
+  /** A poll's list, with every device refreshed after the poll started kept as refreshed. */
+  #keepFresherReads(
+    listed: Map<string, VeSyncDeviceSnapshot>,
+    ticket: number,
+  ): Map<string, VeSyncDeviceSnapshot> {
+    const merged = new Map(listed)
+    for (const [nativeId, seq] of this.#refreshedAt) {
+      const current = this.#devices.get(nativeId)
+      if (seq > ticket && current !== undefined && merged.has(nativeId)) {
+        merged.set(nativeId, current)
+      }
+    }
+    return merged
   }
 
   #startPollLoop(): void {
@@ -291,11 +402,9 @@ export class VeSyncIntegrationManager {
   }
 }
 
-/** Index a purifier snapshot list by native id. */
-function indexPurifiers(
-  purifiers: readonly VeSyncPurifierSnapshot[],
-): Map<string, VeSyncPurifierSnapshot> {
-  const map = new Map<string, VeSyncPurifierSnapshot>()
-  for (const purifier of purifiers) map.set(purifier.nativeId, purifier)
+/** Index a device snapshot list by native id. */
+function indexDevices(devices: readonly VeSyncDeviceSnapshot[]): Map<string, VeSyncDeviceSnapshot> {
+  const map = new Map<string, VeSyncDeviceSnapshot>()
+  for (const device of devices) map.set(device.nativeId, device)
   return map
 }

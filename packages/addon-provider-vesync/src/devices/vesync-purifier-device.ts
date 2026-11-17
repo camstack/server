@@ -16,6 +16,7 @@ import {
 import { vesyncPurifierSchema, type VeSyncSensorKind, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncPurifierSnapshot } from '../vesync-client-contract.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
+import { describeSpeedSteps, planPurifierSpeed, runSpeedSteps } from '../vesync-commands.js'
 import { vesyncIdentifiers } from '../vesync-identifiers.js'
 import { VeSyncSensorDevice } from './vesync-sensor-device.js'
 import { VeSyncToggleDevice } from './vesync-toggle-device.js'
@@ -59,8 +60,9 @@ interface AccessoryPlan {
  *   - filter-life → {@link DeviceType.Sensor} ({@link VeSyncSensorDevice}, numeric-sensor %)
  *
  * The slices are fed from the live account snapshot on each poll tick (and seeded
- * cold on activate). Commands are driven through the live client resolved from
- * {@link vesyncAccounts}.
+ * cold on activate). Commands go through the account manager's `runCommand`, which
+ * re-reads this purifier right after the cloud acknowledged and pushes its real state.
+ * A speed set while a preset (Auto, Sleep) runs switches the purifier to Manual first.
  *
  * NOTE: the HA `night_light_level` select (`off` / `dim` / `on`) is intentionally
  * NOT surfaced — there is no clean existing cap for a 3-option settable select.
@@ -211,14 +213,15 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
     if (result.outcome !== 'declared') this.lastIdentityKey = null
   }
 
-  private resolveClient(): VeSyncClient {
-    const client = vesyncAccounts.getManager(this.integrationId)?.client ?? null
-    if (client === null) {
+  /** Send one command through the account manager (it refreshes and pushes afterwards). */
+  private async command(name: string, run: (client: VeSyncClient) => Promise<void>): Promise<void> {
+    const manager = vesyncAccounts.getManager(this.integrationId)
+    if (manager === null) {
       throw new Error(
-        `VeSync purifier ${this.purifierNativeId}: integration ${this.integrationId} client is not available`,
+        `VeSync purifier ${this.purifierNativeId}: integration ${this.integrationId} is not available`,
       )
     }
-    return client
+    await manager.runCommand({ nativeId: this.purifierNativeId, deviceId: this.id, name, run })
   }
 
   private registerSwitchCap(): void {
@@ -226,7 +229,9 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
       getStatus: async () =>
         this.runtimeState.getCapState<SwitchStatus>(SWITCH_CAP) ?? SWITCH_COLD_START,
       setState: async ({ on }) => {
-        await this.resolveClient().setPower(this.purifierNativeId, on)
+        await this.command(`setPower(${on ? 'on' : 'off'})`, (client) =>
+          client.setPower(this.purifierNativeId, on),
+        )
       },
     }
     this.ctx.registerNativeCap(switchCapability, provider)
@@ -237,19 +242,16 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
       getStatus: async () =>
         this.runtimeState.getCapState<FanControlStatus>(FAN_CAP) ?? FAN_COLD_START,
       setPercentage: async ({ speed: percentage }) => {
-        const client = this.resolveClient()
-        if (percentage <= 0) {
-          await client.setPower(this.purifierNativeId, false)
-          return
-        }
         const purifier = vesyncAccounts.getPurifier(this.integrationId, this.purifierNativeId)
-        if (purifier !== null && !purifier.power) {
-          await client.setPower(this.purifierNativeId, true)
-        }
-        await client.setFanSpeed(this.purifierNativeId, percentage)
+        const steps = planPurifierSpeed(purifier, percentage)
+        await this.command(describeSpeedSteps(steps), (client) =>
+          runSpeedSteps(client, this.purifierNativeId, steps),
+        )
       },
       setPreset: async ({ preset }) => {
-        await this.resolveClient().setMode(this.purifierNativeId, preset)
+        await this.command(`setMode(${preset})`, (client) =>
+          client.setMode(this.purifierNativeId, preset),
+        )
       },
       setDirection: async ({ direction }) => {
         throw new Error(`vesync purifier: direction control not supported (got "${direction}")`)

@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 8974 source files · 246 units claimed by at least one document (8943 files).**
+**253 units · 8976 source files · 246 units claimed by at least one document (8945 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -88,6 +88,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-dreo` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0953-a-cloud-session-that-ends-raises-one-standard-alert-per-integration-and-clears-itself.md`, 1 ADR | 2026-11-08 |
 | `packages/addon-provider-ecowitt` | 23 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-google-services` | 22 | — | `addons/addon-google-services.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0885-a-critical-alert-is-a-severity-on-the-alert-centre.md` | — |
+| `packages/addon-provider-vesync` | 22 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/addon-terminal` | 22 | `device-surfaces` | `architecture/terminal.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-07-26-terminal-session-design.md`, +3 more, 2 ADRs | 2026-11-16 |
 | `packages/types/src/utils` | 22 | `shared-types` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0177-a-python-pool-is-bounded-by-its-own-watchdog-not-the-kernel.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, +2 more, 2 ADRs | 2026-08-26 |
 | `packages/addon-model-studio/src/components` | 21 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_ | — |
@@ -97,7 +98,6 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-export-hap/src/hksv` | 20 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +10 more, 2 ADRs | 2026-09-29 |
 | `packages/addon-provider-homematic/src/devices` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1044-an-event-emitter-declares-its-events-in-a-typed-vocabulary-under-one-category.md`, +1 more | 2026-11-08 |
 | `packages/addon-provider-tuya` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, 1 ADR | 2026-11-08 |
-| `packages/addon-provider-vesync` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/cli/src/commands` | 20 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/authentication.md`, +3 more | 2026-10-21 |
 | `server/backend` | 20 | `api-surface` | `decisions/adr-0693-a-live-database-is-backed-up-by-its-owner-never-copied-as-files.md`, `design/2026-08-13-single-copy-addons-first-boot-install.md`, `architecture/overview.md`, +21 more, 6 ADRs | 2026-10-27 |
 | `packages/addon-cloudflare` | 19 | `remote-access` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, +1 more | — |

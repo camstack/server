@@ -87,6 +87,8 @@ describe('the VeSync country code', () => {
       setMode: async () => undefined,
       setChildLock: async () => undefined,
       setDisplay: async () => undefined,
+      setTargetHumidity: async () => undefined,
+      refreshDevice: async () => null,
     }
     const manager = new VeSyncIntegrationManager({
       id: 'int_1',
@@ -224,6 +226,8 @@ describe('a sign-in refused for the country code', () => {
         setMode: async () => undefined,
         setChildLock: async () => undefined,
         setDisplay: async () => undefined,
+        setTargetHumidity: async () => undefined,
+        refreshDevice: async () => null,
       }),
     })
     const result = await instances.testInstance({
