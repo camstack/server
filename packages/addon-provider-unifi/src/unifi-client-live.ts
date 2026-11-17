@@ -58,6 +58,7 @@ const deviceSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
   macAddress: z.string().optional(),
+  ipAddress: z.string().nullish(),
   model: z.string().optional(),
   state: z.string().optional(),
   features: z.array(z.string()).optional(),
@@ -281,6 +282,9 @@ export class UnifiLiveClient implements UnifiControllerClient {
       id: device.id,
       name: device.name ?? device.id,
       mac: device.macAddress === undefined ? null : device.macAddress.toLowerCase(),
+      ip: device.ipAddress ?? null,
+      // The Integration API reports no serial; a local account adds it (UnifiDualClient).
+      serial: null,
       model: device.model ?? '',
       kind: classifyUnifiInfra({
         model: device.model ?? '',

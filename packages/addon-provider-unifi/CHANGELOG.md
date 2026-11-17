@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- UniFi consoles, switches and access points declare their MAC, serial (with a local account) and IP as device identifiers
+
 ## [0.2.166] - 2026-11-17
 
 ### Changed

@@ -59,6 +59,10 @@ export interface UnifiInfraSnapshot {
   readonly name: string
   /** The device MAC (lower-case), or null when the controller did not report it. */
   readonly mac: string | null
+  /** The device's IP address on the LAN, or null when the controller did not report it. */
+  readonly ip: string | null
+  /** The hardware serial (classic API `serial`), or null — the Integration API reports none. */
+  readonly serial: string | null
   /** Hardware model string (e.g. `USW-Lite-8-PoE`, `U6-Pro`, `UDM-SE`). */
   readonly model: string
   /** What the device is (console, switch, access point, other) — `classifyUnifiInfra`. */
