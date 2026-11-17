@@ -60,6 +60,7 @@ import {
   splitRuntimeBlob,
 } from './field-ownership.js'
 import { MirrorRowWriter, type MirrorWriteHold } from './mirror-row-writer.js'
+import { type ArmRequest, CommandHolds, type HoldRelease } from './command-holds.js'
 import {
   persistableBlob,
   restoredPart,
@@ -69,6 +70,14 @@ import {
 } from './runtime-state-persist-gate.js'
 
 const RUNNING_STATE_CAP = 'running-state'
+
+/**
+ * Which slice a read wants (D1061): `effective` is what a UI or an exporter
+ * shows — a held command's value over the device's; `confirmed` is what the
+ * device reported (or a claim's merge), the only view history, automations and
+ * transition records read.
+ */
+export type SliceView = 'effective' | 'confirmed'
 
 /**
  * What the seed consults first: the claims index (Task 6). It is written
@@ -128,6 +137,9 @@ export class DeviceStateMirror {
   /** The claims and the merged view of every claimed cap (D663). */
   private readonly claims: ClaimViews
 
+  /** Commanded values shown before the device confirms them (D1061). Memory only. */
+  private readonly holds: CommandHolds
+
   /**
    * Devices whose CLAIMS are known: the row was read, or a loaded claims index
    * vouched that it names none (D447). This is a READ-path fact — what a
@@ -169,6 +181,14 @@ export class DeviceStateMirror {
       schemaFor,
       emitSlice: (deviceId, capName, slice) => this.emitStateChanged(deviceId, capName, slice),
     })
+    this.holds = new CommandHolds({
+      logger: ctx.logger,
+      baseSlice: (deviceId, capName) => this.baseSlice(deviceId, capName),
+      reemit: (deviceId, capName) => {
+        const base = this.baseSlice(deviceId, capName)
+        if (base !== null) this.emitStateChanged(deviceId, capName, { ...base })
+      },
+    })
     this.writer = new MirrorRowWriter({
       logger: ctx.logger,
       policyFor,
@@ -181,6 +201,27 @@ export class DeviceStateMirror {
   /** Set once by the device-manager: told, after the mirror stored it, of every native slice that actually changed (D1022). */
   setTransitionTap(tap: SliceChangeTap | null): void {
     this.transitionTap = tap
+  }
+
+  // ── Command holds (D1061) ────────────────────────────────────────────────
+
+  /**
+   * Hold what a command leads to: the effective slice shows it at once (and
+   * `DeviceStateChanged` carries it), the stored, persisted and recorded slice
+   * does not change. Returns the token {@link releaseCommand} takes, or `null`.
+   */
+  holdCommand(request: ArmRequest): number | null {
+    return this.holds.arm(request)
+  }
+
+  /** End a command's hold: refused (rolled back at once) or unconfirmed (at the limit). */
+  releaseCommand(token: number, reason: HoldRelease): void {
+    this.holds.release(token, reason)
+  }
+
+  /** Stop the hold timers (shutdown). */
+  disposeHolds(): void {
+    this.holds.dispose()
   }
 
   /** The native slice the mirror holds for `capName`, as a read-only view. */
@@ -456,6 +497,7 @@ export class DeviceStateMirror {
     await this.seeding.get(deviceId)?.catch(() => undefined)
     await this.writer.forget(deviceId)
     this.stateMirror.delete(deviceId)
+    this.holds.clearDevice(deviceId)
     this.workloadTransitions.forget(deviceId)
     this.claims.clearDevice(deviceId)
     this.seeded.delete(deviceId)
@@ -821,26 +863,50 @@ export class DeviceStateMirror {
     return lastProbedAt > 0
   }
 
-  /** The EFFECTIVE slices of a device: native for an unclaimed cap, the merge
-   *  for a claimed one (a held cap is not reported). */
-  snapshotForDevice(deviceId: number): Record<string, Record<string, unknown>> {
+  /** The slices of a device: native for an unclaimed cap, the merge for a
+   *  claimed one (a held cap is not reported) — and, in the `effective` view,
+   *  a commanded value over either (D1061). */
+  snapshotForDevice(
+    deviceId: number,
+    view: SliceView = 'effective',
+  ): Record<string, Record<string, unknown>> {
     const out: Record<string, Record<string, unknown>> = {}
     for (const [k, v] of this.stateMirror.get(deviceId) ?? []) {
       if (this.claims.isClaimed(deviceId, k)) continue
-      out[k] = { ...v }
+      out[k] = this.viewOf(deviceId, k, v, view)
     }
-    for (const [k, v] of this.claims.visibleCaps(deviceId)) out[k] = { ...v }
+    for (const [k, v] of this.claims.visibleCaps(deviceId)) {
+      out[k] = this.viewOf(deviceId, k, v, view)
+    }
     return out
   }
 
-  /** One cap's EFFECTIVE slice, cloned. Null when the device has never written
+  /** One cap's slice in `view`, cloned. Null when the device has never written
    *  it — callers read that as "the cap has no state", never as an empty slice —
    *  and null while a claim holds it. */
-  capSlice(deviceId: number, cap: string): Record<string, unknown> | null {
+  capSlice(
+    deviceId: number,
+    cap: string,
+    view: SliceView = 'effective',
+  ): Record<string, unknown> | null {
+    const base = this.baseSlice(deviceId, cap)
+    return base === null ? null : this.viewOf(deviceId, cap, base, view)
+  }
+
+  /** What the device reported for the cap, or the claim's merge — never a hold. Not cloned. */
+  private baseSlice(deviceId: number, cap: string): Readonly<Record<string, unknown>> | null {
     const visible = this.claims.visible(deviceId, cap)
-    if (visible !== undefined) return visible ? { ...visible } : null
-    const raw = this.stateMirror.get(deviceId)?.get(cap)
-    return raw ? { ...raw } : null
+    if (visible !== undefined) return visible ? visible : null
+    return this.stateMirror.get(deviceId)?.get(cap) ?? null
+  }
+
+  private viewOf(
+    deviceId: number,
+    cap: string,
+    base: Readonly<Record<string, unknown>>,
+    view: SliceView,
+  ): Record<string, unknown> {
+    return view === 'confirmed' ? { ...base } : { ...this.holds.overlay(deviceId, cap, base) }
   }
 
   /** The device's NATIVE slices — what the row stores under the cap names. */
@@ -854,11 +920,13 @@ export class DeviceStateMirror {
 
   /** Whole-system mirror dump. Backs `deviceState.getAllSnapshots` — one
    *  round-trip for a warm boot instead of N per-device calls. */
-  allSnapshots(): Record<string, Record<string, Record<string, unknown>>> {
+  allSnapshots(
+    view: SliceView = 'effective',
+  ): Record<string, Record<string, Record<string, unknown>>> {
     const out: Record<string, Record<string, Record<string, unknown>>> = {}
     const deviceIds = new Set([...this.stateMirror.keys(), ...this.claims.deviceIds()])
     for (const deviceId of deviceIds) {
-      out[String(deviceId)] = this.snapshotForDevice(deviceId)
+      out[String(deviceId)] = this.snapshotForDevice(deviceId, view)
     }
     return out
   }
@@ -887,22 +955,26 @@ export class DeviceStateMirror {
 
   /** Remember a restored running bit so the first public merge does not emit a flip. */
   private seedRunningFlip(deviceId: number): void {
-    const slice = this.capSlice(deviceId, RUNNING_STATE_CAP)
+    const slice = this.capSlice(deviceId, RUNNING_STATE_CAP, 'confirmed')
     if (slice === null) return
     const running = slice['running']
     this.runningFlip.seed(deviceId, running === true || running === false ? running : null)
   }
 
   /**
-   * The PUBLIC event: exactly `{ deviceId, capName, slice }` for every device,
-   * claimed or not. The native shadow never rides here (D224) — see
-   * `emitNativeShadow`.
+   * The PUBLIC event: `{ deviceId, capName, slice }` for every device, claimed
+   * or not; `slice` is the EFFECTIVE slice. While a command hold changes it
+   * (D1061), `confirmed` carries the slice without the hold — what history,
+   * automations and the edge detectors below read. The native shadow of a
+   * claim never rides here (D224) — see `emitNativeShadow`.
    */
   private emitStateChanged(
     deviceId: number,
     capName: string,
     slice: Record<string, unknown>,
   ): void {
+    this.holds.settle(deviceId, capName, slice)
+    const effective = this.holds.overlay(deviceId, capName, slice)
     if (capName === RUNNING_STATE_CAP) {
       const flip = this.runningFlip.note(deviceId, slice)
       if (flip !== null) {
@@ -922,7 +994,10 @@ export class DeviceStateMirror {
       timestamp: new Date(),
       source: { type: 'device', id: deviceId },
       category: EventCategory.DeviceStateChanged,
-      data: { deviceId, capName, slice },
+      data:
+        effective === slice
+          ? { deviceId, capName, slice }
+          : { deviceId, capName, slice: { ...effective }, confirmed: slice },
     })
   }
 

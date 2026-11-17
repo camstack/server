@@ -23,7 +23,7 @@ import { coreBlocksRecordKinds } from '../record-kinds.js'
 import { type RunsLedger, schedulerOwner } from '../runs-ledger.js'
 import { templateDoorOver } from '../device-template-door.js'
 import { conditionDoorOver } from '../step-condition-door.js'
-import { parseDeviceStateChanged } from '../../shared/device-state-changed.js'
+import { parseConfirmedStateChanged } from '../../shared/device-state-changed.js'
 import { SchedulerEngine, SCHEDULER_TRACE_KEEP } from './scheduler-engine.js'
 import { SchedulersService } from './scheduler-service.js'
 import { SchedulersStore } from './scheduler-store.js'
@@ -60,7 +60,8 @@ export function hostOver(api: () => AddonApi | undefined): SchedulerHost {
   }
   return {
     readSite: async (): Promise<SiteReading> => need().system.getSiteLocation.query(),
-    fetchSlice: (deviceId, cap) => need().deviceState.getCapSlice.query({ deviceId, capName: cap }),
+    fetchSlice: (deviceId, cap) =>
+      need().deviceState.getCapSlice.query({ deviceId, capName: cap, confirmed: true }),
     fetchStableIds: async () => {
       const all = await need().deviceManager.listAll.query({
         projection: 'slim',
@@ -110,7 +111,7 @@ export function buildSchedulersRuntime(deps: SchedulersRuntimeDeps): SchedulersR
       deps.eventBus.subscribe({ category }, () => engine.invalidateTargets()),
     ),
     deps.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
-      const data = parseDeviceStateChanged(event.data)
+      const data = parseConfirmedStateChanged(event.data)
       if (data !== null) engine.onDeviceState(data.deviceId, data.capName, data.slice)
     }),
   ]

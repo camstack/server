@@ -40,6 +40,7 @@ import {
   type ProviderRegistration,
 } from '@camstack/types'
 import { randomUUID } from 'node:crypto'
+import { parseConfirmedStateChanged } from '../shared/device-state-changed.js'
 import type { SnapshotMap } from './capture/capture-engine.js'
 import { DEFAULT_RETENTION, type RetentionPolicy } from './retention/retention.js'
 import { HistoryRuntime } from './runtime/history-runtime.js'
@@ -279,8 +280,10 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
           return d === null ? null : { id: d.id, type: d.type }
         },
       },
-      readSnapshots: async (): Promise<SnapshotMap> => api.deviceState.getAllSnapshots.query({}),
-      readCapSlice: (deviceId, capName) => api.deviceState.getCapSlice.query({ deviceId, capName }),
+      readSnapshots: async (): Promise<SnapshotMap> =>
+        api.deviceState.getAllSnapshots.query({ confirmed: true }),
+      readCapSlice: (deviceId, capName) =>
+        api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true }),
       readDeviceQuantity: async (deviceId) => {
         const device = await api.deviceManager.getDevice.query({ deviceId })
         const quantity = device?.sourceInfo?.quantity
@@ -302,10 +305,10 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     this.unsubscribe = this.ctx.eventBus.subscribe(
       { category: EventCategory.DeviceStateChanged },
       (event) => {
-        const data = event.data
-        if (!isRecord(data)) return
+        // What the device REPORTED, never a held command (D1061).
+        const data = parseConfirmedStateChanged(event.data)
+        if (data === null) return
         const { deviceId, capName, slice } = data
-        if (typeof deviceId !== 'number' || typeof capName !== 'string' || !isRecord(slice)) return
         const at = event.timestamp instanceof Date ? event.timestamp.getTime() : Date.now()
         runtime.capture.handleState(deviceId, capName, slice, at)
         runs.handleState(deviceId, capName, slice, at)
@@ -343,9 +346,9 @@ export class DeviceHistoryAddon extends BaseAddon<DeviceHistoryConfig> {
     return new DeviceRunsService({
       records,
       readSnapshots: async (): Promise<SnapshotMap> =>
-        ctx.api.deviceState.getAllSnapshots.query({}),
+        ctx.api.deviceState.getAllSnapshots.query({ confirmed: true }),
       readCapSlice: (deviceId, capName) =>
-        ctx.api.deviceState.getCapSlice.query({ deviceId, capName }),
+        ctx.api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true }),
       deviceTypeOf: (deviceId) => runtime.directory.ensure(deviceId),
       energyFromHistory: (deviceId, from, to) =>
         energyKwhFromHistory((query) => runtime.query.query(query), deviceId, from, to),

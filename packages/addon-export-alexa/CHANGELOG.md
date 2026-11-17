@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A thermostat directive answers with the state the hub shows after the command, instead of a projection of its own.
+
 ## [1.2.201] - 2026-11-17
 
 ### Changed

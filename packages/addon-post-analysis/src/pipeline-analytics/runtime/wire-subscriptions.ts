@@ -45,6 +45,8 @@ export type SensorStateChangedData = {
   readonly deviceId: number
   readonly capName: string
   readonly slice?: unknown
+  /** What the device reported, present while a held command changes `slice` (D1061). */
+  readonly confirmed?: unknown
 }
 
 /**
@@ -268,7 +270,10 @@ export function wireSubscriptions(deps: WireSubscriptionsDeps): Unsubscribe[] {
     // (battery, motion, …) exits before any async work.
     unsubs.push(
       deps.eventBus.subscribe({ category: EventCategory.DeviceStateChanged }, (ev) => {
-        const data = ev.data as SensorStateChangedData
+        const event = ev.data as SensorStateChangedData
+        // A sensor event is history: what the device REPORTED, never a held command (D1061).
+        const data: SensorStateChangedData =
+          event.confirmed === undefined ? event : { ...event, slice: event.confirmed }
         const timestamp = ev.timestamp instanceof Date ? ev.timestamp.getTime() : Date.now()
         // BEFORE the gate: `battery` is excluded from it on purpose, and it is
         // the LTS series that most needs a long baseline.

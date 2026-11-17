@@ -31,7 +31,7 @@ import {
   resolveMutate,
   processTimeZoneOr,
 } from '@camstack/types'
-import { isRecord, parseDeviceStateChanged } from '../shared/device-state-changed.js'
+import { isRecord, parseConfirmedStateChanged } from '../shared/device-state-changed.js'
 import { normalizedNativeOwner } from '../core-blocks/composition-sources.js'
 import { invokeActuatorCall } from './actuator-invoke.js'
 import { type ComposedDeviceHandle, isComposedDevice } from './composed-device.js'
@@ -104,7 +104,7 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
           const slice =
             view === 'native'
               ? await api.deviceState.getNativeCapSlice.query({ deviceId, capName })
-              : await api.deviceState.getCapSlice.query({ deviceId, capName })
+              : await api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true })
           return slice === null || slice === undefined ? { kind: 'none' } : { kind: 'slice', slice }
         } catch (err: unknown) {
           return { kind: 'unreadable', error: errMsg(err) }
@@ -148,7 +148,7 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
       },
       lookupCap,
       async (deviceId, capName) =>
-        (await api.deviceState.getCapSlice.query({ deviceId, capName })) ?? null,
+        (await api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true })) ?? null,
     )
     this.composer = new Composer({
       logger: logger.child('composer'),
@@ -190,7 +190,7 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
       },
       events: this.ctx.eventBus,
       readExistingTargetCap: async (deviceId, capName) =>
-        (await api.deviceState.getCapSlice.query({ deviceId, capName })) ?? null,
+        (await api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true })) ?? null,
       readPulseHistory: async (deviceId, cap, fieldPath, fromMs, toMs) => {
         try {
           const result = await api.deviceHistory.query.query({
@@ -374,7 +374,7 @@ export class ComposerAddon extends BaseAddon<Record<string, never>> {
     })
     // `device.state-changed` is not in the typed catalog: the shared parser (R9).
     this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
-      const data = parseDeviceStateChanged(event.data)
+      const data = parseConfirmedStateChanged(event.data)
       if (data !== null)
         void this.composer?.onStateChanged(data).catch((err: unknown) => {
           this.logEventFailure('device.state-changed', data.deviceId, err)

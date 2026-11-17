@@ -1,5 +1,6 @@
 import type {
   ChildCustomActionCatalogs,
+  CommandHoldOptions,
   CommandOriginClaim,
   CustomActionCaller,
   IReadinessRegistryRecord,
@@ -29,6 +30,11 @@ export interface ChildCapDescriptor {
    * back to the childId (identical to the historical single-addon behaviour).
    */
   readonly addonId?: string
+  /**
+   * The command-hold options the provider stated for this device cap (D1061),
+   * per method. OPTIONAL: absent = the core default (and a legacy child).
+   */
+  readonly commandHolds?: CommandHoldOptions
 }
 
 /** First message a child sends after connecting — its complete cap manifest. */

@@ -10,8 +10,10 @@
  * (the slice carries them) and refused with Amazon's
  * `TEMPERATURE_VALUE_OUT_OF_RANGE` and its `validRange`; a mode the device does
  * not have is `UNSUPPORTED_THERMOSTAT_MODE`. The commands are quick, so the
- * answer is synchronous (no DeferredResponse): the Response carries the state
- * the command set, projected from the slice read before it.
+ * answer is synchronous (no DeferredResponse): the Response carries the slice
+ * read AFTER the command — the core already shows what it set until the device
+ * confirms (D1061, amending D874), so this addon projects nothing of its own.
+ * Only when that read fails does the Response fall back to the plan's view.
  */
 import type { AddonApi, AddonContext, HvacMode, IScopedLogger } from '@camstack/types'
 import { z } from 'zod'
@@ -470,7 +472,9 @@ export async function handleClimateDirective(c: AdapterDirectiveContext): Promis
     tags: { deviceId: c.deviceId },
     meta: { commands: outcome.commands.length },
   })
-  return successResponse(c, climateProperties(outcome.projected).filter(outcome.keep))
+  // The core holds what the command set (D1061): the slice now is the answer.
+  const after = await readSlice(c, deps)
+  return successResponse(c, climateProperties(after ?? outcome.projected).filter(outcome.keep))
 }
 
 /**

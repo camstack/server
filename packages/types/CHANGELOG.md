@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Exports NormalizedRectSchema, the wire shape of a normalized rectangle.
 - runPipeline accepts motionRegions; the pipeline trace carries rootSource (which pixels the object-detection root ran on).
 - The pipeline trace's root-source reason can now also be subject-too-large or roi-missed
+- A command's vocabulary names every field it sets (a fan speed set in a preset also leaves the preset; a thermostat's fan mode, preset and range), and a device provider can say at registration that a command is never held, or held for another time.
 
 ## [1.2.590] - 2026-11-17
 

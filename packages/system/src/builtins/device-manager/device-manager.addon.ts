@@ -103,6 +103,7 @@ import { deviceManagerRecordKinds } from './record-kinds.js'
 import { DeviceRowStore, deviceRowBackendOf } from './device-row-store.js'
 import { createDeviceStateClaimMethods } from './device-state-claims.js'
 import { DeviceStateMirror } from './device-state-mirror.js'
+import { startCommandHolds } from './command-holds-wiring.js'
 import {
   startDeviceTransitions,
   type DeviceTransitionsHandle,
@@ -162,6 +163,8 @@ export class DeviceManagerAddon extends BaseAddon {
 
   /** The transition audit (D1022): command + mirror correlation, shipped to device-history. */
   private transitions: DeviceTransitionsHandle | null = null
+  /** Unsubscribes the command hold (D1061). */
+  private stopCommandHolds: (() => void) | null = null
 
   /**
    * Removes the claimed-status overlay this addon installed on the capability
@@ -757,6 +760,11 @@ export class DeviceManagerAddon extends BaseAddon {
     // Runtime-state mirror + debounced disk writer.
     this.stateMirrorImpl = new DeviceStateMirror(this.ctx)
     const stateMirror = this.stateMirrorImpl
+    // A command shows at once, before the device confirms it (D1061).
+    this.stopCommandHolds = startCommandHolds({
+      mirror: stateMirror,
+      logger: this.ctx.logger.child('command-holds'),
+    })
     this.transitions = startDeviceTransitions({
       mirror: stateMirror,
       logger: this.ctx.logger.child('transitions'),
@@ -1185,12 +1193,18 @@ export class DeviceManagerAddon extends BaseAddon {
       }): Promise<Record<string, Record<string, unknown>>> => {
         return stateMirror.snapshotForDevice(input.deviceId)
       },
-      // The EFFECTIVE slice: the merge every consumer sees (D663).
+      // The EFFECTIVE slice: the merge every consumer sees (D663), with a held
+      // command over it (D1061) — unless the reader asks for the CONFIRMED one.
       getCapSlice: async (input: {
         deviceId: number
         capName: string
+        confirmed?: boolean
       }): Promise<Record<string, unknown> | null> => {
-        return stateMirror.capSlice(input.deviceId, input.capName)
+        return stateMirror.capSlice(
+          input.deviceId,
+          input.capName,
+          input.confirmed === true ? 'confirmed' : 'effective',
+        )
       },
       // The NATIVE slice — the shadow under a `replace` claim, for the owner's
       // derived reads. Admin-only at the cap (D224): the public event channel
@@ -1206,10 +1220,10 @@ export class DeviceManagerAddon extends BaseAddon {
       // payload so callers (SystemManager, dashboards) seed their
       // local mirror with one round-trip instead of N per-device
       // calls. Empty inner record for devices with no slices yet.
-      getAllSnapshots: async (): Promise<
-        Record<string, Record<string, Record<string, unknown>>>
-      > => {
-        return stateMirror.allSnapshots()
+      getAllSnapshots: async (input?: {
+        confirmed?: boolean
+      }): Promise<Record<string, Record<string, Record<string, unknown>>>> => {
+        return stateMirror.allSnapshots(input?.confirmed === true ? 'confirmed' : 'effective')
       },
       // Canonical cross-layer write — the single entrypoint every
       // caller funnels through. In-process providers reach it via
@@ -1365,6 +1379,8 @@ export class DeviceManagerAddon extends BaseAddon {
     this.templateActions = null
     await this.transitions?.stop()
     this.transitions = null
+    this.stopCommandHolds?.()
+    this.stopCommandHolds = null
     this.removalCleanupImpl?.dispose()
     this.removalCleanupImpl = null
     this.removalHooksCleanupImpl?.dispose()

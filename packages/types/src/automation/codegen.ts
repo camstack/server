@@ -937,7 +937,7 @@ ${
 }  // ── the condition mirror (D49): memory only at fire time ──
   async function refreshMirror(): Promise<void> {
     const report = await mirror.refresh({
-      fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
+      fetchSlice: (deviceId, cap) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap, confirmed: true }),
       fetchStableIds: async () => {
         const all = await ctx.api.deviceManager.listAll.query({})
         return stableIdMapOf(all)
@@ -951,7 +951,7 @@ ${
 
   function mirrorFetchers() {
     return {
-      fetchSlice: (deviceId: number, cap: string) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap }),
+      fetchSlice: (deviceId: number, cap: string) => ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap, confirmed: true }),
       fetchStableIds: async () => {
         const all = await ctx.api.deviceManager.listAll.query({})
         return stableIdMapOf(all)
@@ -1024,7 +1024,7 @@ ${
     cap: string,
   ): Promise<{ readonly ok: true; readonly slice: unknown } | { readonly ok: false }> {
     try {
-      const slice = await ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap })
+      const slice = await ctx.api.deviceState.getCapSlice.query({ deviceId, capName: cap, confirmed: true })
       return { ok: true, slice }
     } catch (err: unknown) {
       ctx.logger.debug('device state read failed — the leaf keeps what it knew', {
@@ -1411,8 +1411,10 @@ ${hasTime ? '    await refreshSite()\n' : ''}    await refreshMirror()
         const deviceId = data['deviceId']
         const capName = data['capName']
         if (typeof deviceId === 'number' && typeof capName === 'string') {
-          mirror.apply(deviceId, capName, data['slice'])
-          guardMirror.apply(deviceId, capName, data['slice'])
+          // what the device reported: a held command is never a condition (D1061)
+          const slice = data['confirmed'] ?? data['slice']
+          mirror.apply(deviceId, capName, slice)
+          guardMirror.apply(deviceId, capName, slice)
           feedHolds()
           evaluateStateTree()
         }

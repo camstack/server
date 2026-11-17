@@ -43,6 +43,11 @@ import { ADDON_KEYED_CAPS, ActingAddonRefusedError } from './acting-addon.js'
 import { unpackPayload } from './frame-codec.js'
 import type { LocalChannel, LocalTransportServer } from './local-transport.js'
 import type { SocketTrafficSample } from './socket-traffic.js'
+import {
+  childHoldSource,
+  childCommandHoldEntries,
+  getCommandHoldOverrideRegistry,
+} from '../command-hold-overrides.js'
 
 /**
  * How many child `cap-call-out`s this parent forwarded WITHOUT reading their
@@ -1236,6 +1241,11 @@ export class LocalChildRegistry {
         // carries caps the pre-init one did not), so the index is dropped here
         // and not only when a child is new.
         this.invalidateCapIndex()
+        // So do the providers' command-hold options (D1061).
+        getCommandHoldOverrideRegistry().replaceSource(
+          childHoldSource(msg.childId),
+          childCommandHoldEntries(msg.caps),
+        )
         this.logPatternSet(msg.childId, eventPatterns)
         // A reconnect under the same id is a fresh process with no set yet.
         this.lastInterestKey.delete(msg.childId)
@@ -1486,6 +1496,7 @@ export class LocalChildRegistry {
       }
       this.children.delete(childId)
       this.invalidateCapIndex()
+      getCommandHoldOverrideRegistry().replaceSource(childHoldSource(childId), [])
       this.childEventStats.delete(childId)
       this.lastInterestKey.delete(childId)
       this.refreshEventInterest()

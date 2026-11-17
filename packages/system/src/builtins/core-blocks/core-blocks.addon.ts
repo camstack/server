@@ -60,7 +60,7 @@ import {
   remoteMigrationPortsOver,
 } from './migrations/index.js'
 import type { RemoteDeviceStores } from './migrations/remote-config-migrations.js'
-import { isRecord, parseDeviceStateChanged } from '../shared/device-state-changed.js'
+import { isRecord, parseConfirmedStateChanged } from '../shared/device-state-changed.js'
 import { armTimedRuns, buildTimedRunService } from './timed-run/timed-run-wiring.js'
 import type { TimedRunService } from './timed-run/timed-run-service.js'
 import {
@@ -241,7 +241,7 @@ export class CoreBlocksAddon extends BaseAddon {
     })
     this.timedRun = timedRun
     this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
-      const data = parseDeviceStateChanged(event.data)
+      const data = parseConfirmedStateChanged(event.data)
       if (data !== null) void timedRun.onDeviceState(data)
     })
     // ARMED, never awaited: the device registry answers only after boot.
@@ -354,7 +354,7 @@ export class CoreBlocksAddon extends BaseAddon {
             (e) => e.capName,
           ),
         slice: (deviceId, capName) =>
-          requireApi().deviceState.getCapSlice.query({ deviceId, capName }),
+          requireApi().deviceState.getCapSlice.query({ deviceId, capName, confirmed: true }),
         remoteCommands: async (deviceId) =>
           (await requireApi().remote.listCommands.query({ deviceId })).commands.length,
         switchOptions: (deviceId) => switchOptionsOf(requireApi(), deviceId),
@@ -448,7 +448,7 @@ export class CoreBlocksAddon extends BaseAddon {
       logger: this.ctx.logger.child('lock-door'),
     })
     this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
-      const data = parseDeviceStateChanged(event.data)
+      const data = parseConfirmedStateChanged(event.data)
       if (data !== null) gate.onStateChanged(data)
     })
     this.seedLockDoorGate = () => this.seedGate(gate)
@@ -486,6 +486,7 @@ export class CoreBlocksAddon extends BaseAddon {
         const slice = await requireApi().deviceState.getCapSlice.query({
           deviceId,
           capName: 'control',
+          confirmed: true,
         })
         if (slice === null) return null
         const kind = slice['kind']
@@ -527,7 +528,7 @@ export class CoreBlocksAddon extends BaseAddon {
       if (typeof deviceId === 'number') void remote.refreshSlice(deviceId)
     })
     this.subscribe({ category: EventCategory.DeviceStateChanged }, (event) => {
-      const data = parseDeviceStateChanged(event.data)
+      const data = parseConfirmedStateChanged(event.data)
       if (data !== null && REMOTE_SLICE_INPUT_CAPS.has(data.capName)) {
         void remote.onInputChanged(data.deviceId)
       }
@@ -1063,6 +1064,7 @@ export class CoreBlocksAddon extends BaseAddon {
               const slice = await requireApi().deviceState.getCapSlice.query({
                 deviceId,
                 capName: cap,
+                confirmed: true,
               })
               return slice === null ? undefined : slice[fieldPath]
             },

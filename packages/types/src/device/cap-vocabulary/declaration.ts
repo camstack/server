@@ -29,8 +29,10 @@ import type {
   L10n,
   LooseVocabEffect,
   LooseVocabOffer,
+  LooseVocabSideEffect,
   LooseVocabOverrides,
   LooseVocabStateTrigger,
+  VocabEffectCondition,
   VocabEffectValue,
   VocabEventTrigger,
   VocabIcon,
@@ -83,6 +85,10 @@ export interface MethodActionDecl<TInput = Readonly<Record<string, unknown>>> {
   readonly openArgs?: readonly MethodActionOpenArg<keyof MethodActionArgs<TInput> & string>[]
   /** The state this action leads to, when it is one. */
   readonly effect?: MethodActionEffect<keyof MethodActionArgs<TInput> & string>
+  /** Further states the command leads to, each under an optional condition on the current slice (D1061). */
+  readonly sideEffects?: readonly (MethodActionEffect<keyof MethodActionArgs<TInput> & string> & {
+    readonly when?: VocabEffectCondition
+  })[]
   /** When the device is offered it at all — absent = always ({@link MethodActionGate}). */
   readonly offeredWhen?: MethodActionGate
 }
@@ -96,6 +102,7 @@ export interface LooseMethodActionDecl {
   readonly args?: Readonly<Record<string, unknown>>
   readonly openArgs?: readonly MethodActionOpenArg[]
   readonly effect?: LooseVocabEffect
+  readonly sideEffects?: readonly LooseVocabSideEffect[]
   readonly offeredWhen?: MethodActionGate
 }
 

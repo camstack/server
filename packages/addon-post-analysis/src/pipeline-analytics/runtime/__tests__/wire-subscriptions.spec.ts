@@ -228,3 +228,37 @@ describe('the DeviceUnregistered payload', () => {
     expect(fire({ deviceId: 1.5 })).toEqual([])
   })
 })
+
+/**
+ * A sensor event is history (D1061): while a held command changes a slice the
+ * event carries the device's own in `confirmed`, and the ingest reads that.
+ */
+describe('the sensor ingest reads what the device reported', () => {
+  function fire(data: Record<string, unknown>): unknown[] {
+    const bus = new RecordingBus()
+    const seen: unknown[] = []
+    wireSubscriptions({
+      ...deps(bus, true),
+      onSensorStateChanged: async (change) => {
+        seen.push(change.slice)
+      },
+    })
+    for (const handler of bus.handlersByKey.get(EventCategory.DeviceStateChanged) ?? []) {
+      handler({
+        id: 'e1',
+        timestamp: new Date(0),
+        source: { type: 'core', id: 'device-manager' },
+        category: EventCategory.DeviceStateChanged,
+        data,
+      })
+    }
+    return seen
+  }
+
+  it('a held command is not a sensor event; the device report is', () => {
+    expect(
+      fire({ deviceId: 5, capName: 'switch', slice: { on: true }, confirmed: { on: false } }),
+    ).toEqual([{ on: false }])
+    expect(fire({ deviceId: 5, capName: 'switch', slice: { on: true } })).toEqual([{ on: true }])
+  })
+})

@@ -33,6 +33,7 @@ import type {
   LooseCapVocabularyEntry,
   LooseDynamicOffer,
   LooseVocabAction,
+  LooseVocabEffect,
   LooseVocabStateTrigger,
   LooseVocabWording,
   NumberOffer,
@@ -297,8 +298,27 @@ function checkEffect(
   inputShape: Readonly<Record<string, z.ZodType>>,
   problems: string[],
 ): void {
-  const effect = action.effect
-  if (effect === undefined) return
+  if (action.effect !== undefined) {
+    checkOneEffect(where, def, action.effect, inputShape, problems)
+  }
+  for (const side of action.sideEffects ?? []) {
+    checkOneEffect(`${where} side effect`, def, side, inputShape, problems)
+    if (side.when !== undefined && statusShape(def)?.[side.when.field] === undefined) {
+      problems.push(
+        `${where}: side effect condition reads '${side.when.field}', which is not a status field of ${def.name}`,
+      )
+    }
+  }
+}
+
+/** One effect (or side effect) names a real status field and a value it can hold. */
+function checkOneEffect(
+  where: string,
+  def: CapabilityDefinition,
+  effect: LooseVocabEffect,
+  inputShape: Readonly<Record<string, z.ZodType>>,
+  problems: string[],
+): void {
   const status = statusShape(def)
   const field = status?.[effect.field]
   if (field === undefined) {

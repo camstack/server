@@ -10,6 +10,7 @@ import type { AddonApi } from '../generated/addon-api.js'
 import type { DeviceProxy } from '../generated/device-proxy.js'
 import type { DeviceMeta, InitialDeviceMeta } from './device-management.js'
 import type { DeviceType } from './device-type.js'
+import type { NativeCapOptions } from './command-hold.js'
 
 /** What a device states about the config it persists. */
 export interface DevicePersistConfigOptions {
@@ -113,10 +114,13 @@ export interface DeviceContext {
   readonly streamProbe?: IKernelStreamProbe
 
   /** Register a native provider for `cap` on the device this context belongs to.
-   *  Multiple calls for the same cap throw. */
+   *  Multiple calls for the same cap throw. `options.commands` overrides the
+   *  core's command hold per method (D1061): `{ hold: 'never' }`, another
+   *  `holdMs`, or other effects — absent = the core default. */
   registerNativeCap<TCap extends CapabilityDefinition>(
     cap: TCap,
     provider: InferNativeProvider<TCap>,
+    options?: NativeCapOptions<TCap>,
   ): void
 
   /**

@@ -306,6 +306,8 @@ export const fanControlCapability = {
             icon: 'fan',
             effect: { field: 'speed', value: 100 },
             args: { speed: 100 },
+            // A speed set while a preset runs leaves the preset (D1061).
+            sideEffects: [{ field: 'preset', value: '', when: { field: 'preset', notIn: [''] } }],
           },
           {
             id: 'fan.speed',
@@ -316,6 +318,8 @@ export const fanControlCapability = {
             ),
             icon: 'fan',
             effect: { field: 'speed', fromArg: 'speed' },
+            // A speed set while a preset runs leaves the preset (D1061).
+            sideEffects: [{ field: 'preset', value: '', when: { field: 'preset', notIn: [''] } }],
             openArgs: [
               {
                 key: 'speed',
@@ -342,6 +346,7 @@ export const fanControlCapability = {
             label: t('Set preset', 'Imposta il preset'),
             phrase: t('Set {device} to preset {preset}', 'Imposta {device} sul preset {preset}'),
             icon: 'list',
+            effect: { field: 'preset', fromArg: 'preset' },
             openArgs: [
               {
                 key: 'preset',

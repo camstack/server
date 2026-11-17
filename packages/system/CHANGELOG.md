@@ -121,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The device manager stores each device's provider-declared identifiers and refuses them from anyone but the device's own provider.
 - device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
 - A restored alarm-panel state saved before the rename keeps its PIN requirement (requiresCode is read once into codeRequired).
+- A device shows a command's value at once: the hub holds what a switch, fan, cover or thermostat was told until the device confirms it, the command is refused, or 30 s pass; history and automations still record only what the device reported.
 
 ### Removed
 

@@ -295,6 +295,8 @@ export const climateControlCapability = {
               'Mantieni {device} tra {targetLow} e {targetHigh}',
             ),
             icon: 'thermometer',
+            effect: { field: 'targetLow', fromArg: 'targetLow' },
+            sideEffects: [{ field: 'targetHigh', fromArg: 'targetHigh' }],
             openArgs: [
               {
                 key: 'targetLow',
@@ -359,6 +361,7 @@ export const climateControlCapability = {
               'Imposta la ventilazione di {device} su {fanMode}',
             ),
             icon: 'fan',
+            effect: { field: 'fanMode', fromArg: 'fanMode' },
             openArgs: [
               {
                 key: 'fanMode',
@@ -389,6 +392,7 @@ export const climateControlCapability = {
             label: t('Set preset', 'Imposta il preset'),
             phrase: t('Set {device} to preset {preset}', 'Imposta {device} sul preset {preset}'),
             icon: 'list',
+            effect: { field: 'preset', fromArg: 'preset' },
             openArgs: [
               {
                 key: 'preset',

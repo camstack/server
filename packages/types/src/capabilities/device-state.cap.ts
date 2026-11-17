@@ -99,7 +99,12 @@ export const deviceStateCapability = {
      * `getNativeCapSlice`, admin-only.
      */
     getCapSlice: method(
-      z.object({ deviceId: z.number(), capName: z.string() }),
+      z.object({
+        deviceId: z.number(),
+        capName: z.string(),
+        /** The slice the device CONFIRMED, without a held command (D1061) — history and automations. */
+        confirmed: z.boolean().optional(),
+      }),
       z.record(z.string(), z.unknown()).nullable(),
     ),
     /**
@@ -110,7 +115,10 @@ export const deviceStateCapability = {
      * record for devices that haven't emitted any slice yet.
      */
     getAllSnapshots: method(
-      z.object({}),
+      z.object({
+        /** The slices the devices CONFIRMED, without held commands (D1061). */
+        confirmed: z.boolean().optional(),
+      }),
       z.record(z.string(), z.record(z.string(), z.record(z.string(), z.unknown()))),
     ),
 

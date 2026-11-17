@@ -1,0 +1,210 @@
+/**
+ * The command hold (D1061): what a device was just told to do, shown at once.
+ *
+ * A command arms a hold on each field its effects name; the mirror reads the
+ * device's slice through it (the EFFECTIVE slice) while the slice it stores,
+ * persists and records stays what the device reported. A held field ends when
+ *   1. the slice under it reaches the held value (confirmed),
+ *   2. the call is refused (rolled back at once),
+ *   3. the limit elapses with the slice still elsewhere (reverted, logged), or
+ *   4. a newer command names the same field (latest wins).
+ * A reading that contradicts the hold stays underneath and shows when it ends.
+ *
+ * Memory only: a restart drops every hold. Nothing here does I/O; the timers
+ * are unref'd so a hold never keeps a process alive.
+ */
+import type { CommandEffect, IScopedLogger, VocabEffectValue } from '@camstack/types'
+
+type Slice = Readonly<Record<string, unknown>>
+
+interface HeldField {
+  readonly value: VocabEffectValue
+  readonly token: number
+}
+
+interface Arming {
+  readonly token: number
+  readonly deviceId: number
+  readonly capName: string
+  readonly method: string
+  readonly timer: ReturnType<typeof setTimeout>
+}
+
+/** Why a hold ended other than by confirmation. */
+export type HoldRelease = 'refused' | 'unconfirmed'
+
+export interface CommandHoldsDeps {
+  readonly logger: IScopedLogger
+  /** The slice the hold sits on (native, or a claim's merge), `null` when the cap has none. */
+  readonly baseSlice: (deviceId: number, capName: string) => Slice | null
+  /** Re-emit the cap: the held set changed while the slice under it did not. */
+  readonly reemit: (deviceId: number, capName: string) => void
+}
+
+/** What one command armed. */
+export interface ArmRequest {
+  readonly deviceId: number
+  readonly capName: string
+  readonly method: string
+  readonly effects: readonly CommandEffect[]
+  readonly holdMs: number
+}
+
+function same(a: unknown, b: unknown): boolean {
+  return Object.is(a, b)
+}
+
+export class CommandHolds {
+  /** device → cap → field → held value. */
+  private readonly held = new Map<number, Map<string, Map<string, HeldField>>>()
+  private readonly armings = new Map<number, Arming>()
+  private seq = 0
+
+  constructor(private readonly deps: CommandHoldsDeps) {}
+
+  /**
+   * Hold what a command leads to. A field the slice already holds is not held
+   * (and a standing hold on it is dropped: the newer command wins). Returns the
+   * token that `release` takes, or `null` when nothing is held.
+   */
+  arm(request: ArmRequest): number | null {
+    const base = this.deps.baseSlice(request.deviceId, request.capName)
+    if (base === null) {
+      this.deps.logger.debug('command hold: the cap has no slice yet — nothing held', {
+        tags: { deviceId: request.deviceId },
+        meta: { cap: request.capName, method: request.method },
+      })
+      return null
+    }
+    this.seq += 1
+    const token = this.seq
+    const fields = this.fieldsOf(request.deviceId, request.capName)
+    let changed = false
+    let holding = false
+    for (const effect of request.effects) {
+      const standing = fields.get(effect.field)
+      if (Object.hasOwn(base, effect.field) && same(base[effect.field], effect.value)) {
+        if (standing !== undefined) {
+          fields.delete(effect.field)
+          changed = true
+        }
+        continue
+      }
+      if (standing === undefined || !same(standing.value, effect.value)) changed = true
+      fields.set(effect.field, { value: effect.value, token })
+      holding = true
+    }
+    this.dropEmpty(request.deviceId, request.capName)
+    this.forgetStaleArmings()
+    if (holding) {
+      const timer = setTimeout(() => this.release(token, 'unconfirmed'), request.holdMs)
+      timer.unref?.()
+      this.armings.set(token, {
+        token,
+        deviceId: request.deviceId,
+        capName: request.capName,
+        method: request.method,
+        timer,
+      })
+    }
+    if (changed) this.deps.reemit(request.deviceId, request.capName)
+    return holding ? token : null
+  }
+
+  /** End what `token` still holds — refused at once, or unconfirmed at the limit. */
+  release(token: number, reason: HoldRelease): void {
+    const arming = this.armings.get(token)
+    if (arming === undefined) return
+    this.armings.delete(token)
+    clearTimeout(arming.timer)
+    const fields = this.held.get(arming.deviceId)?.get(arming.capName)
+    if (fields === undefined) return
+    const dropped: string[] = []
+    for (const [field, held] of fields) {
+      if (held.token !== token) continue
+      fields.delete(field)
+      dropped.push(field)
+    }
+    if (dropped.length === 0) return
+    this.dropEmpty(arming.deviceId, arming.capName)
+    const tags = { deviceId: arming.deviceId }
+    const meta = { cap: arming.capName, method: arming.method, fields: dropped }
+    if (reason === 'unconfirmed') {
+      this.deps.logger.warn('command hold reverted: the device did not confirm in time', {
+        tags,
+        meta,
+      })
+    } else {
+      this.deps.logger.info('command hold rolled back: the command was refused', { tags, meta })
+    }
+    this.deps.reemit(arming.deviceId, arming.capName)
+  }
+
+  /** The slice under the hold moved: drop every held field it now confirms. */
+  settle(deviceId: number, capName: string, base: Slice): void {
+    const fields = this.held.get(deviceId)?.get(capName)
+    if (fields === undefined) return
+    for (const [field, held] of fields) {
+      if (Object.hasOwn(base, field) && same(base[field], held.value)) fields.delete(field)
+    }
+    this.dropEmpty(deviceId, capName)
+    this.forgetStaleArmings()
+  }
+
+  /** `base` with the held values over it; `base` itself when nothing is held. */
+  overlay(deviceId: number, capName: string, base: Slice): Slice {
+    const fields = this.held.get(deviceId)?.get(capName)
+    if (fields === undefined || fields.size === 0) return base
+    const out: Record<string, unknown> = { ...base }
+    for (const [field, held] of fields) out[field] = held.value
+    return out
+  }
+
+  /** Is any field of the cap held? */
+  isHolding(deviceId: number, capName: string): boolean {
+    return (this.held.get(deviceId)?.get(capName)?.size ?? 0) > 0
+  }
+
+  /** Forget a removed device's holds. */
+  clearDevice(deviceId: number): void {
+    this.held.delete(deviceId)
+    for (const [token, arming] of this.armings) {
+      if (arming.deviceId !== deviceId) continue
+      clearTimeout(arming.timer)
+      this.armings.delete(token)
+    }
+  }
+
+  /** Stop every timer (shutdown). */
+  dispose(): void {
+    for (const arming of this.armings.values()) clearTimeout(arming.timer)
+    this.armings.clear()
+    this.held.clear()
+  }
+
+  private fieldsOf(deviceId: number, capName: string): Map<string, HeldField> {
+    const perCap = this.held.get(deviceId) ?? new Map<string, Map<string, HeldField>>()
+    this.held.set(deviceId, perCap)
+    const fields = perCap.get(capName) ?? new Map<string, HeldField>()
+    perCap.set(capName, fields)
+    return fields
+  }
+
+  private dropEmpty(deviceId: number, capName: string): void {
+    const perCap = this.held.get(deviceId)
+    if (perCap === undefined) return
+    if ((perCap.get(capName)?.size ?? 0) === 0) perCap.delete(capName)
+    if (perCap.size === 0) this.held.delete(deviceId)
+  }
+
+  /** An arming whose fields were all confirmed or replaced holds nothing: stop its timer. */
+  private forgetStaleArmings(): void {
+    for (const [token, arming] of this.armings) {
+      const fields = this.held.get(arming.deviceId)?.get(arming.capName)
+      const owns = fields !== undefined && [...fields.values()].some((f) => f.token === token)
+      if (owns) continue
+      clearTimeout(arming.timer)
+      this.armings.delete(token)
+    }
+  }
+}

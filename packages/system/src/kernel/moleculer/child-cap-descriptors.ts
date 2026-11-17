@@ -1,3 +1,4 @@
+import type { CommandHoldOptions } from '@camstack/types'
 import type { ChildCapDescriptor } from '../transport/child-cap-protocol.js'
 
 /** One hosted addon's contribution to the runner UNION manifest. */
@@ -11,6 +12,8 @@ export interface NativeCapSnapshotEntry {
   readonly capName: string
   readonly addonId: string
   readonly deviceIds: readonly number[]
+  /** The hold options per device that stated any (D1061). */
+  readonly commandHolds?: ReadonlyMap<number, CommandHoldOptions>
 }
 
 /**
@@ -53,9 +56,16 @@ export function buildChildCapDescriptors(
   }
 
   // Device-scoped caps — one descriptor per (capName, deviceId)
-  for (const { capName, addonId, deviceIds } of nativeCapSnapshot) {
+  for (const { capName, addonId, deviceIds, commandHolds } of nativeCapSnapshot) {
     for (const deviceId of deviceIds) {
-      descriptors.push({ capName, mode: 'collection', deviceId, addonId })
+      const holds = commandHolds?.get(deviceId)
+      descriptors.push({
+        capName,
+        mode: 'collection',
+        deviceId,
+        addonId,
+        ...(holds !== undefined ? { commandHolds: holds } : {}),
+      })
     }
   }
 

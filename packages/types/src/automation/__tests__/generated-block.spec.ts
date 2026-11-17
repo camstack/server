@@ -49,7 +49,8 @@ interface Harness {
   readonly ledger: Ledger
   readonly reports: Array<Record<string, unknown>>
   readonly actionRuns: Array<Record<string, unknown>>
-  readonly sliceReads: { count: number }
+  /** `unconfirmed`: reads that asked for the effective view instead of the device's (D1061). */
+  readonly sliceReads: { count: number; unconfirmed: number }
   emit(category: string, data: Record<string, unknown>, deviceId?: number): void
   traces(): AutomationRunTrace[]
   stop(): void
@@ -108,6 +109,8 @@ async function load(input: RecipeInput, name = 'Test automation'): Promise<Block
 }
 
 interface Options {
+  /** The effective view while a command is held (D1061): what a read WITHOUT `confirmed` answers. */
+  readonly heldSlices?: Record<string, object>
   readonly slices?: Record<string, object>
   /** What `deviceManager.listAll({})` answers: the array, as production returns it. */
   readonly listing?: ReadonlyArray<{ id: number; stableId: string; addonId: string }>
@@ -136,7 +139,7 @@ function start(block: BlockFn, options: Options = {}): Harness {
   const ledger: Ledger = options.ledger ?? { doc: EMPTY_AUTOMATION_STATE }
   const reports: Array<Record<string, unknown>> = []
   const actionRuns: Array<Record<string, unknown>> = []
-  const sliceReads = { count: 0 }
+  const sliceReads = { count: 0, unconfirmed: 0 }
   const mutate = vi.fn(async () => undefined)
   const log = (level: string) => (msg: string, meta?: Record<string, unknown>) => {
     logs.push({ level, msg, meta })
@@ -189,8 +192,11 @@ function start(block: BlockFn, options: Options = {}): Harness {
       },
       deviceState: {
         getCapSlice: {
-          query: async (q: { deviceId: number; capName: string }) => {
+          query: async (q: { deviceId: number; capName: string; confirmed?: boolean }) => {
             sliceReads.count += 1
+            if (q.confirmed !== true) sliceReads.unconfirmed += 1
+            const held = options.heldSlices?.[`${q.deviceId}|${q.capName}`]
+            if (q.confirmed !== true && held !== undefined) return held
             if (options.failSliceReads === true) throw new Error('hub busy')
             return options.slices?.[`${q.deviceId}|${q.capName}`]
           },
@@ -975,6 +981,32 @@ describe('one when tree: an instant is an event, the rest is state', () => {
     expect(h.mutate).toHaveBeenCalledTimes(1)
     expect(h.traces()[0]).toMatchObject({ outcome: 'ran', trigger: { kind: 'device-becomes' } })
     expect(h.traces()[0]?.trigger.vars).toMatchObject({ deviceId: 5 })
+  })
+
+  it('reads what the device REPORTED, never a held command (D1061)', async () => {
+    const slices: Record<string, object> = {
+      '3|contact': { open: true },
+      '5|switch': { on: false },
+    }
+    const h = start(
+      await load({ when: { kind: 'all', children: [lightOn, doorOpenNow] }, actions: [SIREN] }),
+      { slices, heldSlices: { '5|switch': { on: true } } },
+    )
+    await settle()
+    // The light was told to turn on: the slice shows it, the device has not confirmed.
+    h.emit(
+      'device.state-changed',
+      { deviceId: 5, capName: 'switch', slice: { on: true }, confirmed: { on: false } },
+      5,
+    )
+    await settle()
+    expect(h.mutate).not.toHaveBeenCalled()
+    slices['5|switch'] = { on: true }
+    lightEvent(h)
+    await settle()
+    expect(h.mutate).toHaveBeenCalledTimes(1)
+    expect(h.sliceReads.count).toBeGreaterThan(0)
+    expect(h.sliceReads.unconfirmed).toBe(0)
   })
 
   it('a device-becomes run substitutes the device, the old value and the new one (#499)', async () => {

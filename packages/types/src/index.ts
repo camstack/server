@@ -1312,6 +1312,10 @@ export type {
   L10n as VocabL10n,
   ActionEffect,
   CommandEffect,
+  CommandSlice,
+  LooseVocabSideEffect,
+  VocabEffectCondition,
+  VocabEffectValue,
   IndexedVocabAction,
   VocabActionRefusal,
   VocabCall,
@@ -1358,6 +1362,9 @@ export {
   CAP_VOCABULARY,
   CAP_VOCABULARY_BY_NAME,
   commandEffect,
+  commandEffects,
+  effectConditionHolds,
+  resolveSideEffect,
   findVocabAction,
   isCommand,
   renderVocabPhrase,
@@ -2909,3 +2916,15 @@ export * from './migrations/api/migration-api.v1.js'
 export * from './migrations/api/migration-api.v1.schema.js'
 export * from './migrations/api/migration-api-ports.js'
 export { normalizeSearchText, searchRank, type SearchRankFields } from './search/search-match.js'
+// The command hold (D1061): commanded values shown at once, provider overrides.
+export {
+  DEFAULT_COMMAND_HOLD_MS,
+  MAX_COMMAND_HOLD_MS,
+  resolveCommandHold,
+} from './device/command-hold.js'
+export type {
+  CommandHoldOption,
+  CommandHoldOptions,
+  NativeCapOptions,
+  ResolvedCommandHold,
+} from './device/command-hold.js'

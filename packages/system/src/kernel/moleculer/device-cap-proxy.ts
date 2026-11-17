@@ -24,6 +24,7 @@ import { withDefaultSwitchToggle } from './switch-toggle.js'
 import type {
   AddonApi,
   CapabilityDefinition,
+  CommandHoldOptions,
   DeviceConstructor,
   DeviceContext,
   DeviceManagerApi,
@@ -36,6 +37,7 @@ import type {
   InferNativeProvider,
   InferProvider,
   IScopedLogger,
+  NativeCapOptions,
 } from '@camstack/types'
 import {
   addonSliceHandleApi,
@@ -60,6 +62,10 @@ import {
 import type { CapabilityRegistry } from '../capability-registry.js'
 import type { DeviceRegistry } from '../device-registry.js'
 import { capServiceName } from '../transport/cap-action-name.js'
+import {
+  getCommandHoldOverrideRegistry,
+  IN_PROCESS_HOLD_SOURCE,
+} from '../command-hold-overrides.js'
 import { AccessoryShrinkGate, classifyAccessoryRead } from './accessory-prune-gate.js'
 import { loadRuntimeStateOrRefuse, type RuntimeStateLoadPhase } from './runtime-state-load.js'
 
@@ -154,7 +160,25 @@ const workerNativeCaps = new Map<string, Map<number, unknown>>()
  */
 const workerNativeCapAddonIds = new Map<string, Map<number, string>>()
 
+/**
+ * The command-hold options a provider stated at registration (D1061).
+ * capName → deviceId → options. Carried on the child's cap descriptors so the
+ * hub's hold reads them; absent = the core default.
+ */
+const workerNativeCapHolds = new Map<string, Map<number, CommandHoldOptions>>()
+
 const mountedNativeCapServices = new Set<string>()
+
+/** A provider's hold options as plain data, or `undefined` when it stated none. */
+function commandHoldsOf(options: NativeCapOptions | undefined): CommandHoldOptions | undefined {
+  const commands = options?.commands
+  if (commands === undefined) return undefined
+  const out: Record<string, CommandHoldOptions[string]> = {}
+  for (const [method, option] of Object.entries(commands)) {
+    if (option !== undefined) out[method] = option
+  }
+  return Object.keys(out).length === 0 ? undefined : out
+}
 
 /**
  * Optional change listener fired whenever the worker native-cap set mutates
@@ -333,6 +357,7 @@ export function getWorkerNativeCapSnapshot(): ReadonlyArray<{
   readonly capName: string
   readonly addonId: string
   readonly deviceIds: readonly number[]
+  readonly commandHolds?: ReadonlyMap<number, CommandHoldOptions>
 }> {
   // Build a `(capName, addonId) → deviceIds[]` map so that multiple addons
   // in the same group-runner process that register the same cap for different
@@ -351,7 +376,16 @@ export function getWorkerNativeCapSnapshot(): ReadonlyArray<{
       }
     }
   }
-  return [...grouped.values()]
+  return [...grouped.values()].map((entry) => {
+    const holds = workerNativeCapHolds.get(entry.capName)
+    if (holds === undefined) return entry
+    const forEntry = new Map<number, CommandHoldOptions>()
+    for (const deviceId of entry.deviceIds) {
+      const options = holds.get(deviceId)
+      if (options !== undefined) forEntry.set(deviceId, options)
+    }
+    return forEntry.size === 0 ? entry : { ...entry, commandHolds: forEntry }
+  })
 }
 
 export function getWorkerNativeCapsForDevice(deviceId: number): readonly string[] {
@@ -687,7 +721,9 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
         // `systemOnly` methods (served by the cap's system/wrapper provider) are
         // optional here, matching the DeviceContext contract.
         provider: InferNativeProvider<TCap>,
+        options?: NativeCapOptions<TCap>,
       ): void {
+        const commandHolds = commandHoldsOf(options)
         // Auto-install the cap's runtime-state schema onto the
         // device's `runtimeState` (if the cap declares one). Hits
         // through `runtimeStateRef` set during the BaseDevice
@@ -742,6 +778,16 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
             addonId,
             finalProvider as unknown,
           )
+          // The hold's options (D1061): this process is the hub's, or reads nothing.
+          if (commandHolds !== undefined) {
+            getCommandHoldOverrideRegistry().set(IN_PROCESS_HOLD_SOURCE, {
+              deviceId: id,
+              capName: cap.name,
+              commands: commandHolds,
+            })
+          } else {
+            getCommandHoldOverrideRegistry().delete(IN_PROCESS_HOLD_SOURCE, id, cap.name)
+          }
         } else if (opts.broker || opts.udsMode) {
           // Worker path (broker-mode or UDS-mode): record the provider in the
           // per-process `workerNativeCaps` map. The UDS dispatch in
@@ -763,6 +809,14 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
             workerNativeCapAddonIds.set(cap.name, perAddonId)
           }
           perAddonId.set(id, addonId)
+          if (commandHolds !== undefined) {
+            const perHolds =
+              workerNativeCapHolds.get(cap.name) ?? new Map<number, CommandHoldOptions>()
+            perHolds.set(id, commandHolds)
+            workerNativeCapHolds.set(cap.name, perHolds)
+          } else {
+            workerNativeCapHolds.get(cap.name)?.delete(id)
+          }
           // Broker-mode ONLY mounts the `<addon>.native-provider.<cap>`
           // Moleculer service. A UDS-only child has no broker — the parent
           // dispatches device-scoped native caps over UDS (`callCapOnChild`
@@ -843,9 +897,11 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           )
         } else if (opts.capabilityRegistry) {
           opts.capabilityRegistry.unregisterNativeProvider(capName, id)
+          getCommandHoldOverrideRegistry().delete(IN_PROCESS_HOLD_SOURCE, id, capName)
         } else {
           workerNativeCaps.get(capName)?.delete(id)
           workerNativeCapAddonIds.get(capName)?.delete(id)
+          workerNativeCapHolds.get(capName)?.delete(id)
           // The runner re-sends `updateCaps`, so the hub's `LocalChildRegistry`
           // stops routing this (cap, device) to this child.
           onWorkerNativeCapsChanged?.()

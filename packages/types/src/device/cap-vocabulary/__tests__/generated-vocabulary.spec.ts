@@ -161,11 +161,36 @@ function withoutAddedOfferedWhen(cap: string, entry: unknown): unknown {
   return { ...entry, actions }
 }
 
+/**
+ * What a command leads to, declared after the snapshot (D1061): every action's
+ * `sideEffects`, and the `effect` of the listed actions, by cap.
+ */
+const ADDED_EFFECTS: Readonly<Record<string, readonly string[]>> = {
+  'fan-control': ['fan.preset'],
+  'climate-control': ['climate.targetRange', 'climate.fanMode', 'climate.preset'],
+}
+
+/** The entry with the D1061 effects taken out. */
+function withoutAddedEffects(cap: string, entry: unknown): unknown {
+  if (!isRecord(entry) || !Array.isArray(entry['actions'])) return entry
+  const ids = ADDED_EFFECTS[cap] ?? []
+  const actions = actionsOf(entry).map((action) => {
+    const { sideEffects: _s, ...withoutSide } = action
+    if (!ids.includes(String(action['id']))) return withoutSide
+    const { effect: _e, ...rest } = withoutSide
+    return rest
+  })
+  return { ...entry, actions }
+}
+
 /** The current entry with #524's additions taken out, and their excuses put back. */
 function withoutAdditions(cap: string, current: unknown, before: unknown): unknown {
   const entry = withMovedExcusesRestored(
     cap,
-    withoutAddedOfferedWhen(cap, withoutAddedExcuses(cap, withoutAddedRoles(cap, current))),
+    withoutAddedEffects(
+      cap,
+      withoutAddedOfferedWhen(cap, withoutAddedExcuses(cap, withoutAddedRoles(cap, current))),
+    ),
     before,
   )
   const added = ADDED_ACTIONS[cap]

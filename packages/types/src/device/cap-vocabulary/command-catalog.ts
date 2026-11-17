@@ -9,9 +9,9 @@
  * the hub mirror reads `auditedFields` so a slice write on a cap without any
  * costs one map miss.
  */
-import { actionEffect, allVocabActions, vocabActionIdFor } from './action-index.js'
+import { actionEffect, allVocabActions, findVocabAction, vocabActionIdFor } from './action-index.js'
 import { CAP_VOCABULARY_BY_NAME } from './vocabulary.js'
-import type { VocabEffectValue } from './types.js'
+import type { LooseVocabSideEffect, VocabEffectCondition, VocabEffectValue } from './types.js'
 
 /** The state a command leads to: a cap status field and the value it should hold. */
 export interface CommandEffect {
@@ -37,6 +37,7 @@ function buildAuditedFields(): ReadonlyMap<string, ReadonlySet<string>> {
   }
   for (const { cap, action } of allVocabActions()) {
     if (action.effect !== undefined) add(cap, action.effect.field)
+    for (const side of action.sideEffects ?? []) add(cap, side.field)
   }
   for (const [cap, entry] of Object.entries(CAP_VOCABULARY_BY_NAME)) {
     if (entry.scope !== 'device') continue
@@ -72,4 +73,58 @@ export function commandEffect(
 export function auditedFields(cap: string): ReadonlySet<string> {
   fieldsByCap ??= buildAuditedFields()
   return fieldsByCap.get(cap) ?? NO_FIELDS
+}
+
+/** The current slice of the command's cap, as a condition reads it. */
+export type CommandSlice = Readonly<Record<string, unknown>> | undefined
+
+/** Does `slice` meet `when`? A field the slice lacks is in no list. */
+export function effectConditionHolds(
+  when: VocabEffectCondition | undefined,
+  slice: CommandSlice,
+): boolean {
+  if (when === undefined) return true
+  const raw = slice?.[when.field]
+  const value =
+    typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean' ? raw : undefined
+  if ('in' in when) return value !== undefined && when.in.includes(value)
+  return value === undefined || !when.notIn.includes(value)
+}
+
+/** One side effect resolved against the args: `null` when the arg carrying its value is missing. */
+export function resolveSideEffect(
+  side: LooseVocabSideEffect,
+  args: Readonly<Record<string, unknown>> | undefined,
+): CommandEffect | null {
+  if ('value' in side) return { field: side.field, value: side.value }
+  const raw = args?.[side.fromArg]
+  if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean') {
+    return { field: side.field, value: raw }
+  }
+  return null
+}
+
+/**
+ * EVERY state the command `cap.method(args)` leads to (D1061): its `effect`
+ * first, then each side effect whose condition holds on `current` (the cap's
+ * slice when the command arrived). Empty when it leads to none. One field is
+ * named once — the first entry for it wins.
+ */
+export function commandEffects(
+  cap: string,
+  method: string,
+  args: Readonly<Record<string, unknown>> | undefined,
+  current: CommandSlice,
+): readonly CommandEffect[] {
+  const actionId = vocabActionIdFor(cap, method, args)
+  if (actionId === undefined) return []
+  const out: CommandEffect[] = []
+  const primary = actionEffect(actionId, args)
+  if (primary !== null) out.push({ field: primary.field, value: primary.value })
+  for (const side of findVocabAction(actionId)?.action.sideEffects ?? []) {
+    if (!effectConditionHolds(side.when, current)) continue
+    const resolved = resolveSideEffect(side, args)
+    if (resolved !== null && !out.some((e) => e.field === resolved.field)) out.push(resolved)
+  }
+  return out
 }

@@ -173,6 +173,17 @@ describe('parseSensorStateChanged', () => {
     ).toEqual({ deviceId: 42, capName: 'contact', slice: { entryOpen: true } })
   })
 
+  it('reads what the device reported while a held command changes the slice (D1061)', () => {
+    expect(
+      parseSensorStateChanged({
+        deviceId: 42,
+        capName: 'switch',
+        slice: { on: true },
+        confirmed: { on: false },
+      }),
+    ).toEqual({ deviceId: 42, capName: 'switch', slice: { on: false } })
+  })
+
   it('rejects a payload without shape — type guard, not cast', () => {
     expect(parseSensorStateChanged(null)).toBeNull()
     expect(parseSensorStateChanged({ deviceId: '42', capName: 'contact', slice: {} })).toBeNull()

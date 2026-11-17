@@ -42,7 +42,15 @@ export {
   vocabCall,
 } from './action-index.js'
 export type { CommandEffect } from './command-catalog.js'
-export { auditedFields, commandEffect, isCommand } from './command-catalog.js'
+export {
+  auditedFields,
+  commandEffect,
+  commandEffects,
+  effectConditionHolds,
+  isCommand,
+  resolveSideEffect,
+} from './command-catalog.js'
+export type { CommandSlice } from './command-catalog.js'
 export { VOCAB_TEMPLATES } from './templates.js'
 export type {
   ActionArgKey,
@@ -65,6 +73,8 @@ export type {
   LooseVocabAction,
   LooseVocabActionGate,
   LooseVocabEffect,
+  LooseVocabSideEffect,
+  VocabEffectCondition,
   LooseVocabOffer,
   LooseVocabOpenArg,
   LooseVocabStateTrigger,

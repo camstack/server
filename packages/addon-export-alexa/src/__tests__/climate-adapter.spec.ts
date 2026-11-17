@@ -5,7 +5,7 @@
  */
 import { readFileSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
-import type { AddonContext } from '@camstack/types'
+import { type AddonContext, commandEffects } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import {
   GENERIC_ADAPTERS,
@@ -384,16 +384,41 @@ describe('adapter registry', () => {
 
 // ── Directives ──────────────────────────────────────────────────────
 
-function climateApi(state: unknown, caps: readonly string[] = ['climate-control']) {
+function isSlice(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * The hub's command hold (D1061), reduced to what a directive sees: a command
+ * shows its vocabulary effects on the slice the next read answers. `hold:
+ * false` is a provider that registered `hold: 'never'`.
+ */
+function climateApi(
+  state: unknown,
+  caps: readonly string[] = ['climate-control'],
+  options: { readonly hold?: boolean } = {},
+) {
+  let current = state
+  const command = (method: string) => ({
+    mutate: vi.fn(async (args: Readonly<Record<string, unknown>>) => {
+      if (options.hold === false || !isSlice(current)) return undefined
+      const next: Record<string, unknown> = { ...current }
+      for (const e of commandEffects('climate-control', method, args, current)) {
+        next[e.field] = e.value
+      }
+      current = next
+      return undefined
+    }),
+  })
   return {
     climateControl: {
-      setMode: { mutate: vi.fn(async () => undefined) },
-      setFanMode: { mutate: vi.fn(async () => undefined) },
-      setPreset: { mutate: vi.fn(async () => undefined) },
-      setTarget: { mutate: vi.fn(async () => undefined) },
-      setTargetRange: { mutate: vi.fn(async () => undefined) },
+      setMode: command('setMode'),
+      setFanMode: command('setFanMode'),
+      setPreset: command('setPreset'),
+      setTarget: command('setTarget'),
+      setTargetRange: command('setTargetRange'),
     },
-    deviceState: { getCapSlice: { query: vi.fn(async () => state) } },
+    deviceState: { getCapSlice: { query: vi.fn(async () => current) } },
     deviceManager: {
       getBindings: {
         query: vi.fn(async () => ({ entries: caps.map((capName) => ({ capName })) })),
@@ -474,6 +499,19 @@ describe('climate directives: setpoints', () => {
     expect(answer.context?.properties.find((p) => p.name === 'targetSetpoint')?.value).toEqual(
       C(21.5),
     )
+  })
+
+  it('the answer is the slice after the command, not a projection (D1061)', async () => {
+    const api = climateApi(HEAT_ONLY, ['climate-control'], { hold: false })
+    const answer = (await handleClimateDirective(
+      directive(SET, { targetSetpoint: C(21.3) }, api),
+    )) as Answer
+    expect(api.climateControl.setTarget.mutate).toHaveBeenCalledTimes(1)
+    // A provider whose commands are never held: the device has not reported yet.
+    expect(answer.context?.properties.find((p) => p.name === 'targetSetpoint')?.value).not.toEqual(
+      C(21.5),
+    )
+    expect(api.deviceState.getCapSlice.query).toHaveBeenCalledTimes(2)
   })
 
   it('Fahrenheit and Kelvin are converted to Celsius', async () => {

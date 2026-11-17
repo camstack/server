@@ -892,6 +892,8 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'number', step: 0.5, unit: '°C' },
           },
         ],
+        effect: { field: 'targetLow', fromArg: 'targetLow' },
+        sideEffects: [{ field: 'targetHigh', fromArg: 'targetHigh' }],
       },
       {
         id: 'climate.targetHumidity',
@@ -927,6 +929,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'dynamic', from: 'status', field: 'availableFanModes' },
           },
         ],
+        effect: { field: 'fanMode', fromArg: 'fanMode' },
       },
       {
         id: 'climate.preset',
@@ -944,6 +947,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'dynamic', from: 'status', field: 'availablePresets' },
           },
         ],
+        effect: { field: 'preset', fromArg: 'preset' },
       },
       {
         id: 'climate.swingVerticalOn',
@@ -1075,6 +1079,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'fan',
         args: { speed: 100 },
         effect: { field: 'speed', value: 100 },
+        sideEffects: [{ field: 'preset', value: '', when: { field: 'preset', notIn: [''] } }],
       },
       {
         id: 'fan.speed',
@@ -1093,6 +1098,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'speed', fromArg: 'speed' },
+        sideEffects: [{ field: 'preset', value: '', when: { field: 'preset', notIn: [''] } }],
       },
       {
         id: 'fan.preset',
@@ -1110,6 +1116,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'dynamic', from: 'status', field: 'availablePresets' },
           },
         ],
+        effect: { field: 'preset', fromArg: 'preset' },
       },
       {
         id: 'fan.forward',

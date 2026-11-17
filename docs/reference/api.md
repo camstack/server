@@ -2627,8 +2627,8 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getSnapshot | `deviceState.getSnapshot` | query | protected | `{ deviceId: number }` | `Record<string, Record<string, unknown>>` |
-| getCapSlice | `deviceState.getCapSlice` | query | protected | `{ deviceId: number; capName: string }` | `Record<string, unknown> \| null` |
-| getAllSnapshots | `deviceState.getAllSnapshots` | query | protected | `{}` | `Record<string, Record<string, Record<string, unknown>>>` |
+| getCapSlice | `deviceState.getCapSlice` | query | protected | `{ deviceId: number; capName: string; confirmed?: boolean }` | `Record<string, unknown> \| null` |
+| getAllSnapshots | `deviceState.getAllSnapshots` | query | protected | `{ confirmed?: boolean }` | `Record<string, Record<string, Record<string, unknown>>>` |
 | setCapSlice | `deviceState.setCapSlice` | mutation | protected | `{ deviceId: number; capName: string; slice: Record<string, unknown> }` | `void` |
 | claimFields | `deviceState.claimFields` | mutation | admin | `{ deviceId: number; capName: string; owner: string; mode: FieldClaimModeSchema; fields: string[]; values: Record<string, unknown> }` | `ClaimOutcomeSchema` |
 | patchOwnedFields | `deviceState.patchOwnedFields` | mutation | admin | `{ deviceId: number; capName: string; owner: string; values: Record<string, unknown> }` | `ClaimOutcomeSchema` |

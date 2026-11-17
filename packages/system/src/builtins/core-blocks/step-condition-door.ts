@@ -65,7 +65,7 @@ export function conditionDoorOver(api: () => AddonApi | undefined): StepConditio
       when,
       {
         fetchSlice: (deviceId, cap) =>
-          current.deviceState.getCapSlice.query({ deviceId, capName: cap }),
+          current.deviceState.getCapSlice.query({ deviceId, capName: cap, confirmed: true }),
         fetchStableIds: async () => stableIdMapOf(await current.deviceManager.listAll.query({})),
       },
       () => Date.now(),

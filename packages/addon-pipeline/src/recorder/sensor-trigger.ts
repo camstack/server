@@ -52,7 +52,12 @@ export function parseSensorStateChanged(data: unknown): SensorStateChange | null
   if (!('deviceId' in data) || typeof data.deviceId !== 'number') return null
   if (!('capName' in data) || typeof data.capName !== 'string') return null
   if (!('slice' in data) || typeof data.slice !== 'object' || data.slice === null) return null
-  const slice: Readonly<Record<string, unknown>> = { ...data.slice }
+  // What the device REPORTED: a held command never starts a recording (D1061).
+  const reported =
+    'confirmed' in data && typeof data.confirmed === 'object' && data.confirmed !== null
+      ? data.confirmed
+      : data.slice
+  const slice: Readonly<Record<string, unknown>> = { ...reported }
   return { deviceId: data.deviceId, capName: data.capName, slice }
 }
 

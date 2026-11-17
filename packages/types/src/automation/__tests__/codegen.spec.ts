@@ -83,7 +83,7 @@ describe('triggers', () => {
     // The parameter is `capName`, NOT `cap`. Proven live 2026-08-09: with the
     // wrong name the call rejects, readField returns undefined, and EVERY
     // condition leaf is false forever — an automation that can never fire.
-    expect(g).toContain('getCapSlice.query({ deviceId, capName: cap })')
+    expect(g).toContain('getCapSlice.query({ deviceId, capName: cap, confirmed: true })')
   })
 })
 

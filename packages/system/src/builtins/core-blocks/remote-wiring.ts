@@ -282,7 +282,11 @@ export function remoteSliceWriterOver(
       const current = api()
       if (current === undefined) throw new Error('no ctx.api on this node')
       const kept = MediaPlayerStatusSchema.safeParse(
-        await current.deviceState.getCapSlice.query({ deviceId, capName: MEDIA_PLAYER_CAP }),
+        await current.deviceState.getCapSlice.query({
+          deviceId,
+          capName: MEDIA_PLAYER_CAP,
+          confirmed: true,
+        }),
       )
       if (kept.success && sameStatus(kept.data, status)) return
       await current.deviceState.setCapSlice.mutate({

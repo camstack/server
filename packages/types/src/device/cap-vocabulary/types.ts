@@ -253,6 +253,29 @@ export type VocabEffectFor<C extends VocabCapName, M extends CapMethodName<C>> =
   | { readonly field: CapStatusField<C>; readonly value: VocabEffectValue }
   | { readonly field: CapStatusField<C>; readonly fromArg: ActionArgKey<C, M> }
 
+/**
+ * A condition on the CURRENT slice of the action's cap (D1061): the side effect
+ * applies only when `field` holds one of `in`, or none of `notIn`. A field the
+ * slice lacks matches `notIn` and never matches `in`.
+ */
+export type VocabEffectCondition =
+  | { readonly field: string; readonly in: readonly VocabEffectValue[] }
+  | { readonly field: string; readonly notIn: readonly VocabEffectValue[] }
+
+/**
+ * A further state a command leads to (D1061), beside its `effect`: setting a
+ * fan's speed while a preset runs also clears the preset. Read by the core's
+ * command hold; never by a scheduler, which holds only `effect`.
+ */
+export type VocabSideEffectFor<C extends VocabCapName, M extends CapMethodName<C>> = VocabEffectFor<
+  C,
+  M
+> & {
+  readonly when?:
+    | { readonly field: CapStatusField<C>; readonly in: readonly VocabEffectValue[] }
+    | { readonly field: CapStatusField<C>; readonly notIn: readonly VocabEffectValue[] }
+}
+
 /** One operator-facing action: a cap method call with a phrase. */
 export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<C>> {
   /** Stable id — persisted by pickers as a select value (`switch.on`). */
@@ -272,6 +295,8 @@ export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<
   readonly openArgs?: readonly VocabOpenArg<C, ActionArgKey<C, M>>[]
   /** The state this action leads to, when it is one (see {@link VocabEffectFor}). */
   readonly effect?: VocabEffectFor<C, M>
+  /** Further states the command leads to, each under an optional condition (see {@link VocabSideEffectFor}). */
+  readonly sideEffects?: readonly VocabSideEffectFor<C, M>[]
   /** When a device is offered it at all: a read of this cap answering `false` at `field` withdraws it. */
   readonly offeredWhen?: { readonly method: CapMethodName<C>; readonly field: string }
 }
@@ -487,6 +512,9 @@ export type LooseVocabEffect =
   | { readonly field: string; readonly value: VocabEffectValue }
   | { readonly field: string; readonly fromArg: string }
 
+/** A side effect as a consumer reads it (see {@link VocabSideEffectFor}). */
+export type LooseVocabSideEffect = LooseVocabEffect & { readonly when?: VocabEffectCondition }
+
 /** An action as a consumer reads it. */
 export interface LooseVocabAction {
   readonly id: string
@@ -497,6 +525,7 @@ export interface LooseVocabAction {
   readonly args?: Readonly<Record<string, unknown>>
   readonly openArgs?: readonly LooseVocabOpenArg[]
   readonly effect?: LooseVocabEffect
+  readonly sideEffects?: readonly LooseVocabSideEffect[]
   readonly offeredWhen?: LooseVocabActionGate
 }
 

@@ -7,7 +7,7 @@ import { resolveMethodAuth } from '../../../capabilities/cap-router-predicates.j
 import { ALL_CAPABILITY_DEFINITIONS } from '../../../generated/capability-router-map.js'
 import { METHOD_ACCESS_MAP } from '../../../generated/method-access-map.js'
 import { allVocabActions } from '../action-index.js'
-import { auditedFields, commandEffect, isCommand } from '../command-catalog.js'
+import { auditedFields, commandEffect, commandEffects, isCommand } from '../command-catalog.js'
 import { CAP_VOCABULARY_BY_NAME } from '../vocabulary.js'
 
 describe('the command catalogue', () => {
@@ -32,6 +32,24 @@ describe('the command catalogue', () => {
   it('has no effect for a command that leads to no state (stop) and for a missing argument', () => {
     expect(commandEffect('cover', 'stop', {})).toBeNull()
     expect(commandEffect('brightness', 'setBrightness', {})).toBeNull()
+  })
+
+  it('lists a side effect only while its condition holds on the current slice (D1061)', () => {
+    // A purifier in Auto: a speed set also leaves the preset.
+    expect(
+      commandEffects('fan-control', 'setPercentage', { speed: 40 }, { speed: 20, preset: 'auto' }),
+    ).toEqual([
+      { field: 'speed', value: 40 },
+      { field: 'preset', value: '' },
+    ])
+    // Already manual: the speed alone.
+    expect(
+      commandEffects('fan-control', 'setPercentage', { speed: 40 }, { speed: 20, preset: '' }),
+    ).toEqual([{ field: 'speed', value: 40 }])
+    expect(commandEffects('fan-control', 'setPreset', { preset: 'sleep' }, undefined)).toEqual([
+      { field: 'preset', value: 'sleep' },
+    ])
+    expect(commandEffects('cover', 'stop', {}, undefined)).toEqual([])
   })
 
   it('audits the fields an action effect names and the boolean state fields', () => {
