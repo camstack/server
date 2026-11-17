@@ -59,6 +59,7 @@ import {
   ValveCardHero,
   WaterHeaterCardHero,
   WeatherCardHero,
+  WorkloadCardHero,
 } from './panel-controls'
 import { PetFeederInlineControl } from './pet-feeder-panel'
 import { PetFountainInlineControl } from './pet-fountain-panel'
@@ -68,6 +69,7 @@ import { VacuumInlineControl } from './vacuum-control'
 import { ValveInlineControl } from './valve-control'
 import { WaterHeaterInlineControl } from './water-heater-control'
 import { WeatherInlineControl } from './weather-control'
+import { WorkloadInlineControl } from './workload-control'
 
 // Re-export so consumers can import coverHighlight from the registry module
 // rather than from the implementation file directly.
@@ -207,6 +209,11 @@ const IMAGE_CONTROL: DeviceTypeControl = {
   HeroCard: ImageCardHero,
 }
 
+const WORKLOAD_CONTROL: DeviceTypeControl = {
+  InlineControl: WorkloadInlineControl,
+  HeroCard: WorkloadCardHero,
+}
+
 const PET_FEEDER_CONTROL: DeviceTypeControl = {
   InlineControl: PetFeederInlineControl,
   HeroCard: PetFeederCardHero,
@@ -273,6 +280,7 @@ const CONTROL_KIND_COMPONENTS: Record<DeviceControlKind, DeviceTypeControl> = {
   script: SCRIPT_CONTROL,
   automation: AUTOMATION_CONTROL,
   'energy-system': ENERGY_SYSTEM_CONTROL,
+  workload: WORKLOAD_CONTROL,
   dummy: DUMMY_CONTROL,
 }
 
@@ -343,7 +351,7 @@ export const CONTROL_FILLS: Record<DeviceType, boolean> = {
   [DeviceType.HeatPump]: false,
   // Energy system inline = solar kW · storage % readout (natural width).
   [DeviceType.EnergySystem]: false,
-  // Workload inline = no inline control yet; the workload card is a follow-up (#585).
+  // Workload inline = its state chip (natural width).
   [DeviceType.Workload]: false,
   [DeviceType.Sensor]: false,
   [DeviceType.Presence]: false,

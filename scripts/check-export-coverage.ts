@@ -473,12 +473,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
 }
 
-/** Zod object shapes are read through a getter; anything else has no shape. */
-function shapeKeys(schema: unknown): readonly string[] | null {
+/**
+ * Zod object shapes are read through a getter; anything else has no shape.
+ * A field that is itself an object contributes its own fields as dotted paths
+ * (`resources.cpuPercent`), the form a descriptor names a flat value inside it.
+ */
+function shapeKeys(schema: unknown, prefix = ''): readonly string[] | null {
   if (!isRecord(schema)) return null
   const shape = schema.shape
   if (!isRecord(shape)) return null
-  const keys = Object.keys(shape)
+  const keys = Object.entries(shape).flatMap(([key, child]) => {
+    const path = `${prefix}${key}`
+    return [path, ...(shapeKeys(child, `${path}.`) ?? [])]
+  })
   return keys.length > 0 ? keys : null
 }
 

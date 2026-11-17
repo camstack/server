@@ -122,6 +122,13 @@ Named here rather than shipped looking implemented:
   source did not answer or the function is not configured — a control defaulted
   to `on` is exactly the lie `CameraSwitch.available` exists to prevent. Proven
   on the live hub: 101's `privacy-mask` is `not-configured` and gets no switch.
+- **A catalog `field` may be a dotted path into a nested status object**
+  (`resources.cpuPercent` on `workload`). It is read only through
+  `readCapField`: a null parent is "not reported" (nothing published), an
+  absent key is "missing". `check-export-coverage` lists nested keys the same
+  way. A workload's buttons are declared for every workload because the catalog
+  cannot see one device's `getOptions`; a verb the platform does not support is
+  refused by its provider and logged, never faked.
 - **Every value on the wire is a STRING.** The component lowercases binary
   values verbatim; a JSON number or boolean raises inside its state callback,
   which it swallows — the entity then silently never updates again.

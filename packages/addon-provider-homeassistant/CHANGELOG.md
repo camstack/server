@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The workload capability is listed as not exported yet; its on/off reaches Home Assistant through its switch
+- Workloads are exported to Home Assistant: state and resource sensors, and restart, force stop, pause and resume buttons
 
 ## [1.2.690] - 2026-11-16
 

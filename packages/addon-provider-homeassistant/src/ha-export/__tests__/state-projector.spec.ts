@@ -601,11 +601,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** A zod object's field names, read through the `shape` getter. */
-function shapeKeys(schema: unknown): readonly string[] | null {
+/** The status fields, a nested object's own fields as dotted paths (`resources.cpuPercent`). */
+function shapeKeys(schema: unknown, prefix = ''): readonly string[] | null {
   if (!isRecord(schema)) return null
   const shape = schema.shape
   if (!isRecord(shape)) return null
-  const keys = Object.keys(shape)
+  const keys = Object.entries(shape).flatMap(([key, child]) => {
+    const path = `${prefix}${key}`
+    return [path, ...(shapeKeys(child, `${path}.`) ?? [])]
+  })
   return keys.length > 0 ? keys : null
 }
 
@@ -657,12 +661,29 @@ function sampleValue(descriptor: CapEntityDescriptor): unknown {
  * renders for both, whereas the raw sample (a number) would make the
  * derivation unrenderable and hide the very thing being tested.
  */
+/** `slice` with `value` at a dotted path; the objects on the way are new copies. */
+function withPath(
+  slice: Readonly<Record<string, unknown>>,
+  path: readonly string[],
+  value: unknown,
+): Readonly<Record<string, unknown>> {
+  const [head, ...rest] = path
+  if (head === undefined) return slice
+  const child = slice[head]
+  return {
+    ...slice,
+    [head]: rest.length === 0 ? value : withPath(isRecord(child) ? child : {}, rest, value),
+  }
+}
+
 function sliceFor(capName: string): Readonly<Record<string, unknown>> {
-  const slice: Record<string, unknown> = {}
+  let slice: Readonly<Record<string, unknown>> = {}
+  const seen = new Set<string>()
   for (const ref of capEntities(capName)) {
     if (ref.descriptor.platform === 'button') continue
-    if (ref.descriptor.derive === undefined && ref.descriptor.field in slice) continue
-    slice[ref.descriptor.field] = sampleValue(ref.descriptor)
+    if (ref.descriptor.derive === undefined && seen.has(ref.descriptor.field)) continue
+    seen.add(ref.descriptor.field)
+    slice = withPath(slice, ref.descriptor.field.split('.'), sampleValue(ref.descriptor))
   }
   return slice
 }

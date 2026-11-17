@@ -10694,7 +10694,53 @@
         "speed": "Speed",
         "direction": "Direction"
       },
-      "fault": "Fault"
+      "fault": "Fault",
+      "workload": {
+        "action": {
+          "forceStop": "Force stop",
+          "pause": "Pause",
+          "powerOn": "Power on",
+          "reboot": "Reboot",
+          "restart": "Restart",
+          "resume": "Resume",
+          "shutDown": "Shut down",
+          "start": "Start",
+          "stop": "Stop"
+        },
+        "addresses": "Addresses",
+        "autostartOff": "Does not start with its host",
+        "autostartOn": "Starts with its host",
+        "cpu": "CPU",
+        "disk": "Disk",
+        "diskOf": "Disk of {{total}}",
+        "image": "Image",
+        "load": "Load",
+        "memory": "Memory",
+        "memoryOf": "Memory of {{total}}",
+        "netRx": "Received",
+        "netTx": "Sent",
+        "openHost": "Open the host",
+        "openHostNamed": "Open {{name}}",
+        "os": "System",
+        "ports": "Ports",
+        "resources": "Resources",
+        "state": {
+          "crashed": "Crashed",
+          "down": "Down",
+          "online": "Online",
+          "paused": "Paused",
+          "running": "Running",
+          "shutDown": "Shut down",
+          "starting": "Starting",
+          "stopped": "Stopped",
+          "stopping": "Stopping",
+          "unknown": "State unknown"
+        },
+        "temperature": "Temperature",
+        "updateAvailable": "An update is available",
+        "vcpus": "vCPUs",
+        "version": "Version"
+      }
     },
     "language": "en",
     "measurement": {

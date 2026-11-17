@@ -25,6 +25,7 @@ export type CapCardKind =
   | 'image'
   | 'notifier'
   | 'gateway'
+  | 'workload'
 
 const BY_TYPE: Readonly<
   Partial<Record<DeviceType, { readonly cap: string | null; readonly kind: CapCardKind }>>
@@ -49,6 +50,7 @@ const BY_TYPE: Readonly<
   // The bridge box has no cap of its own: its card is its reachability, its
   // facts and whichever of `reboot` / `device-admin-link` it binds.
   [DeviceType.Gateway]: { cap: null, kind: 'gateway' },
+  [DeviceType.Workload]: { cap: 'workload', kind: 'workload' },
 }
 
 const DEVICE_TYPES: ReadonlySet<string> = new Set(Object.values(DeviceType))

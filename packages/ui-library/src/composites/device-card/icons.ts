@@ -6,6 +6,7 @@
  */
 import {
   AlarmClock,
+  AppWindow,
   ArrowLeftRight,
   ArrowRightLeft,
   ArrowUpDown,
@@ -15,6 +16,7 @@ import {
   BellOff,
   Bone,
   Bot,
+  Box,
   Boxes,
   Calendar,
   Car,
@@ -59,10 +61,12 @@ import {
   Menu,
   Mic,
   Minus,
+  Monitor,
   Moon,
   MousePointerClick,
   Music,
   Network,
+  OctagonX,
   Package,
   Palette,
   Pause,
@@ -76,6 +80,7 @@ import {
   RotateCcw,
   RotateCw,
   ScrollText,
+  Server,
   Send,
   Settings2,
   Shield,
@@ -228,6 +233,12 @@ export const CARD_GLYPHS = [
   'date',
   'select',
   'toggle',
+  'vm',
+  'appContainer',
+  'lxc',
+  'app',
+  'host',
+  'forceStop',
 ] as const
 
 export type CardGlyph = (typeof CARD_GLYPHS)[number]
@@ -347,4 +358,10 @@ export const CARD_ICONS: Readonly<Record<CardGlyph, LucideIcon>> = {
   date: Calendar,
   select: ListChecks,
   toggle: ToggleLeft,
+  vm: Monitor,
+  appContainer: Boxes,
+  lxc: Box,
+  app: AppWindow,
+  host: Server,
+  forceStop: OctagonX,
 }

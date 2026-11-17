@@ -30,6 +30,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - useCapabilityNodePresence also reports the nodes that run a provider (pending and unknown kept distinct from none).
 - The tag manager refreshes the notification rules list after a rename or remove
 - The archive timeline shows one lane per clip source and joins the date and zoom controls in one bar
+- Siren play-choices hook from the regenerated capability hooks
+- A workload (VM, container, app, host) has its own device card: state, the actions it supports, its resources and facts, and a link to its host
 
 ## [1.2.462] - 2026-11-16
 

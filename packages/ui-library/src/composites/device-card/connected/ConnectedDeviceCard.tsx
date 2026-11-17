@@ -18,6 +18,7 @@ import { ConnectedDishwasherCard } from './ConnectedDishwasherCard'
 import { ConnectedEventCard } from './ConnectedEventCard'
 import { ConnectedFanCard } from './ConnectedFanCard'
 import { ConnectedGatewayCard } from './ConnectedGatewayCard'
+import { ConnectedWorkloadCard } from './ConnectedWorkloadCard'
 import { ConnectedHeaterCard } from './ConnectedHeaterCard'
 import { ConnectedEnergyCard } from './ConnectedEnergyCard'
 import { ConnectedHeatPumpCard } from './ConnectedHeatPumpCard'
@@ -208,5 +209,7 @@ export function ConnectedDeviceCard({
       return <ConnectedNotifierCard {...props} />
     case 'gateway':
       return <ConnectedGatewayCard {...props} />
+    case 'workload':
+      return <ConnectedWorkloadCard {...props} />
   }
 }

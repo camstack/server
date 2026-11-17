@@ -856,7 +856,11 @@ export type CapValueDerivation =
  */
 export interface CapEntityDescriptor {
   readonly platform: HaPlatform
-  /** Slice field carrying the value. */
+  /**
+   * Slice field carrying the value. A dotted path (`resources.cpuPercent`)
+   * names a flat value inside a nested object of the status; the object
+   * itself is never a field (see the note on {@link CAP_ENTITY_MAP}).
+   */
   readonly field: string
   readonly deviceClass?: string
   readonly unit?: string
@@ -1560,6 +1564,119 @@ export const CAP_ENTITY_MAP: Readonly<Record<string, CapEntityMapping>> = {
    * `selectedProgram` / `program` are exported read-only. The raised events are separate
    * entities already — one `binary_sensor` per event and the events emitter.
    */
+  /**
+   * A VM, container, LXC, app or host. Its on / off is NOT here: a workload
+   * with start and stop registers `switch` from its power hint (#462), and
+   * that switch is the power entity. Here: the state (an unknown state is
+   * `unknown`, never `stopped`), the resources as flat values inside
+   * `resources` (a reading the provider did not report stays `unknown`), the
+   * facts, and the verbs as buttons. Which verbs a device serves is its
+   * `getOptions`, which the catalog cannot read per device: a button the
+   * provider does not serve is refused by the provider and logged.
+   */
+  workload: {
+    platform: 'sensor',
+    field: 'state',
+    icon: 'mdi:server',
+    extras: {
+      cpu: {
+        platform: 'sensor',
+        field: 'resources.cpuPercent',
+        label: 'CPU',
+        unit: '%',
+        icon: 'mdi:cpu-64-bit',
+      },
+      memory: {
+        platform: 'sensor',
+        field: 'resources.memoryPercent',
+        label: 'Memory',
+        unit: '%',
+        icon: 'mdi:memory',
+      },
+      'memory-used': {
+        platform: 'sensor',
+        field: 'resources.memoryUsedBytes',
+        label: 'Memory used',
+        deviceClass: 'data_size',
+        unit: 'B',
+        enabledByDefault: false,
+      },
+      'disk-used': {
+        platform: 'sensor',
+        field: 'resources.diskUsedBytes',
+        label: 'Disk used',
+        deviceClass: 'data_size',
+        unit: 'B',
+        enabledByDefault: false,
+      },
+      'net-rx': {
+        platform: 'sensor',
+        field: 'resources.netRxKbps',
+        label: 'Received',
+        deviceClass: 'data_rate',
+        unit: 'kbit/s',
+        enabledByDefault: false,
+      },
+      'net-tx': {
+        platform: 'sensor',
+        field: 'resources.netTxKbps',
+        label: 'Sent',
+        deviceClass: 'data_rate',
+        unit: 'kbit/s',
+        enabledByDefault: false,
+      },
+      load: {
+        platform: 'sensor',
+        field: 'resources.load1',
+        label: 'Load',
+        icon: 'mdi:gauge',
+      },
+      temperature: {
+        platform: 'sensor',
+        field: 'resources.temperature',
+        label: 'Temperature',
+        deviceClass: 'temperature',
+        unit: '°C',
+      },
+      'update-available': {
+        platform: 'binary_sensor',
+        field: 'updateAvailable',
+        label: 'Update available',
+        deviceClass: 'update',
+      },
+      version: {
+        platform: 'sensor',
+        field: 'version',
+        label: 'Version',
+        entityCategory: 'diagnostic',
+        enabledByDefault: false,
+      },
+      image: {
+        platform: 'sensor',
+        field: 'image',
+        label: 'Image',
+        entityCategory: 'diagnostic',
+        enabledByDefault: false,
+      },
+      os: {
+        platform: 'sensor',
+        field: 'os',
+        label: 'Operating system',
+        entityCategory: 'diagnostic',
+        enabledByDefault: false,
+      },
+    },
+    commands: {
+      restart: { label: 'Restart', icon: 'mdi:restart' },
+      'force-stop': {
+        label: 'Force stop',
+        icon: 'mdi:stop-circle',
+        enabledByDefault: false,
+      },
+      pause: { label: 'Pause', icon: 'mdi:pause', enabledByDefault: false },
+      resume: { label: 'Resume', icon: 'mdi:play', enabledByDefault: false },
+    },
+  },
   dishwasher: {
     platform: 'sensor',
     field: 'operationState',
@@ -2203,6 +2320,34 @@ export function capEntities(capName: string): readonly CapEntityRef[] {
  * a jammed lock as unlocked, which is the failure the derivation exists
  * to avoid.
  */
+/** A field read from a slice: `present` false when the slice has no such field. */
+export type CapFieldRead =
+  | { readonly present: false }
+  | { readonly present: true; readonly value: unknown }
+
+function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
+}
+
+/**
+ * Reads a descriptor's `field` from a slice, following a dotted path into a
+ * nested object. A `null` parent (`resources: null`) is the value `null`
+ * ("not reported"), never a missing field.
+ */
+export function readCapField(
+  slice: Readonly<Record<string, unknown>>,
+  field: string,
+): CapFieldRead {
+  let current: unknown = slice
+  for (const part of field.split('.')) {
+    if (current === null) return { present: true, value: null }
+    if (!isPlainRecord(current) || !Object.prototype.hasOwnProperty.call(current, part))
+      return { present: false }
+    current = current[part]
+  }
+  return { present: true, value: current }
+}
+
 export function deriveCapValue(derivation: CapValueDerivation | undefined, raw: unknown): unknown {
   if (derivation === undefined) return raw
   if (typeof raw !== 'string') return null
@@ -2360,14 +2505,6 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
     reason:
       'Typed setters keyed by circuit and mode; they need the same per-circuit entity ' +
       'mapping as the status, which the export does not have yet (D1026).',
-  },
-  {
-    cap: 'workload',
-    reason:
-      'Its on / off is already exported: a workload with start and stop registers ' +
-      '`switch` from its power hint (#462), and that switch is the entity. The state, ' +
-      'resources and the other controls wait for the first provider, so the mapping is ' +
-      'written against real values (#585).',
   },
   {
     cap: 'energy-system',

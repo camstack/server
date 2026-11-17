@@ -20,6 +20,7 @@ import {
   deriveCapValue,
   EXPORTED_MACROS,
   LABELLED_MACROS,
+  readCapField,
   ZONE_MACROS,
 } from './entity-catalog.js'
 import { derivedEntityId, stateTopic, toSlug } from './topics.js'
@@ -197,7 +198,8 @@ export function projectCapSlice(
   for (const ref of capEntities(capName)) {
     // Write-only: the catalog gives a button no state topic.
     if (ref.descriptor.platform === 'button') continue
-    if (!Object.prototype.hasOwnProperty.call(slice, ref.descriptor.field)) {
+    const read = readCapField(slice, ref.descriptor.field)
+    if (!read.present) {
       // The PRIMARY missing is the cap not being what the catalog says it
       // is — dropped work, reported as such. An EXTRA missing is skipped and
       // named: its siblings still publish.
@@ -212,7 +214,7 @@ export function projectCapSlice(
       missingFields.push(ref.descriptor.field)
       continue
     }
-    const raw = slice[ref.descriptor.field]
+    const raw = read.value
     // "Never observed" is a reading HA renders as `unknown`, which is
     // honest — and it must not stop the SIBLING entities being published.
     if (raw === null || raw === undefined) continue

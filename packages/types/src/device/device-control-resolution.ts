@@ -70,6 +70,7 @@ export type DeviceControlKind =
   | 'script'
   | 'automation'
   | 'energy-system'
+  | 'workload'
   | 'dummy'
 
 /**
@@ -85,8 +86,9 @@ export const DEVICE_TYPE_CONTROL_KIND: Record<DeviceType, DeviceControlKind> = {
   [DeviceType.WaterHeater]: 'water-heater',
   [DeviceType.HeatPump]: 'dummy',
   [DeviceType.EnergySystem]: 'energy-system',
-  // No inline control yet: the workload card (#585) is UI follow-up work.
-  [DeviceType.Workload]: 'dummy',
+  // A VM, container, LXC, app or host: its state chip on the row, the workload
+  // card (state, the controls `getOptions` declares, resources) as the hero.
+  [DeviceType.Workload]: 'workload',
   [DeviceType.Camera]: 'dummy',
   [DeviceType.Switch]: 'switch',
   [DeviceType.Siren]: 'switch',
