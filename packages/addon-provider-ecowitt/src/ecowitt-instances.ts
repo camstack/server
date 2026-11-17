@@ -8,12 +8,15 @@
 import {
   defineEntryKind,
   entryBody,
+  type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
+  REDACTED_SECRET,
   type ResolvedInstance,
 } from '@camstack/types'
 import { z } from 'zod'
-import { buildConnectionFormSchema } from './config.js'
+import { buildConnectionFormSchema, ecowittConfigSchema } from './config.js'
+import { type EcowittProbeFactory, testEcowittConnection } from './ecowitt-connection-test.js'
 
 export const EcowittConnectionBodySchema = entryBody({
   transport: z.enum(['local', 'listener']).nullish(),
@@ -32,8 +35,7 @@ export type EcowittConnectionBody = z.infer<typeof EcowittConnectionBodySchema>
 export const ecowittConnectionsEntryKind = defineEntryKind('connections', {
   title: 'Ecowitt gateways',
   schema: EcowittConnectionBodySchema,
-  writeTrigger:
-    'an operator adds, edits or removes an Ecowitt gateway',
+  writeTrigger: 'an operator adds, edits or removes an Ecowitt gateway',
 })
 
 /** Every kind this addon declares, keyed by its name. */
@@ -70,6 +72,51 @@ export function settingsReadOf(
 export interface EcowittInstancesDeps {
   /** Bring the live clients in line with the records after a change. */
   readonly onChanged: () => Promise<void>
+  /** The local client the connection test reads the gateway with. */
+  readonly makeProbe: EcowittProbeFactory
+}
+
+/**
+ * The connection test: the stored gateway under the edited form. A saved password is never
+ * retyped (the form hands back its redacted view), so the keychain value stands in.
+ */
+async function testEcowittInstance(
+  records: Pick<RecordsAccess, 'kind'>,
+  deps: Pick<EcowittInstancesDeps, 'makeProbe'>,
+  input: { readonly id: string | null; readonly values: Readonly<Record<string, unknown>> },
+): Promise<IntegrationTestConnectionResult> {
+  const handle = records.kind(ecowittConnectionsEntryKind)
+  const stored = input.id === null ? null : ((await handle.getResolved(input.id))?.data ?? null)
+  const typed = input.values['password']
+  const password =
+    typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+      ? typed
+      : (stored?.password ?? '')
+  if (typeof password !== 'string') {
+    return {
+      success: false,
+      status: 'inconclusive',
+      error: 'ecowitt: the stored password cannot be read right now (keychain unavailable)',
+    }
+  }
+  const merged: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries({ ...stored, ...input.values, password })) {
+    if (key === 'name' || value === null || value === undefined) continue
+    merged[key] = value
+  }
+  if (merged['transport'] === 'listener') {
+    return {
+      success: false,
+      status: 'inconclusive',
+      error:
+        'ecowitt: a push gateway has nothing to dial — it shows up with its first upload to the listener port',
+    }
+  }
+  const parsed = ecowittConfigSchema.safeParse({ ...merged, transport: 'local' })
+  if (!parsed.success || parsed.data.transport !== 'local') {
+    return { success: false, status: 'rejected', error: 'ecowitt: enter the gateway host' }
+  }
+  return testEcowittConnection(parsed.data, deps.makeProbe)
 }
 
 export function buildEcowittInstances(
@@ -85,7 +132,7 @@ export function buildEcowittInstances(
         discovery: { mode: 'lan', scopedToInstance: false },
         instanceMode: 'multiple',
         kind: 'connection',
-        canTest: false,
+        canTest: true,
         kinds: [
           { id: 'connection', label: 'Ecowitt', functionCap: 'device-provider', role: 'devices' },
         ],
@@ -95,6 +142,7 @@ export function buildEcowittInstances(
       configured: (body) =>
         body.transport === 'listener' ? true : (body.host ?? '').trim().length > 0,
       onChanged: () => deps.onChanged(),
+      test: (input) => testEcowittInstance(records, deps, input),
     },
   )
 }
