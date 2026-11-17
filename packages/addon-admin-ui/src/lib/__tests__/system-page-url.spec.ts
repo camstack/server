@@ -34,6 +34,7 @@ describe('SYSTEM_LEGACY_ROUTES', () => {
   it('every former standalone page redirects to its tab', () => {
     expect(Object.fromEntries(SYSTEM_LEGACY_ROUTES.map((r) => [r.path, r.tab]))).toEqual({
       '/system/capabilities': 'capabilities',
+      '/system/api-explorer': 'api-explorer',
     })
   })
 

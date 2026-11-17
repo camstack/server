@@ -106,6 +106,13 @@ export const CORE_ROUTER_EXPECTATIONS: readonly CoreRouterExpectation[] = [
       'Agent discovery, hub-initiated pairing and unpairing (D857). Every procedure is `adminProcedure`: it signs certificates for the mesh.',
   },
   {
+    key: 'apiCatalog',
+    file: 'server/backend/src/api/core/api-catalog.router.ts',
+    classification: 'admin-only',
+    rationale:
+      'The API explorer (planning#595): lists every method the hub serves with its tier and input schema. Every procedure is `adminProcedure`; it describes the API, it never calls it.',
+  },
+  {
     key: 'preferences',
     file: 'server/backend/src/api/core/preferences.router.ts',
     classification: 'session-self',

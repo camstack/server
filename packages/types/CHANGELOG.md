@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Locks and alarm panels report whether a PIN is needed in one state field, codeRequired (unknown = null); the lock-pin-required / alarm-pin-required device features are gone.
+- New API catalogue schemas (ApiCatalogEntry, ApiCatalogListOutput, ApiCatalogInputSchemaOutput) for the API explorer.
+
 ## [1.2.588] - 2026-11-17
 
 ### Changed
 
-- Locks and alarm panels report whether a PIN is needed in one state field, codeRequired (unknown = null); the lock-pin-required / alarm-pin-required device features are gone.
 - device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
 
 ## [1.2.587] - 2026-11-17

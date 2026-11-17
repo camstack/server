@@ -7,11 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Alarm cards ask for a code when the panel needs one or cannot tell (codeRequired).
+
 ## [1.2.465] - 2026-11-17
 
 ### Changed
 
-- Alarm cards ask for a code when the panel needs one or cannot tell (codeRequired).
 - device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
 
 ## [1.2.464] - 2026-11-17

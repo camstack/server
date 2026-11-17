@@ -3,7 +3,7 @@
  *
  * System (`/system/settings`, the path the sidebar's "System" entry and every
  * existing link already used) hosts the hub-level pages that have no tab strip
- * of their own: Settings and Capabilities (Terminal stays its own
+ * of their own: Settings, Capabilities and the API explorer (Terminal stays its own
  * sidebar entry by operator decision). Pages that
  * already own `?tab=` (Network, Identity, Data, Logs) stay their own sidebar
  * entries — nesting them would make two strips fight over one parameter.
@@ -15,12 +15,14 @@
 
 export const SYSTEM_PAGE_PATH = '/system/settings'
 
-export const SYSTEM_TABS = ['settings', 'capabilities'] as const
+export const SYSTEM_TABS = ['settings', 'capabilities', 'api-explorer'] as const
 export type SystemTab = (typeof SYSTEM_TABS)[number]
 
 /** Former standalone routes, each now a tab of the System page. */
 export const SYSTEM_LEGACY_ROUTES: readonly { readonly path: string; readonly tab: SystemTab }[] = [
   { path: '/system/capabilities', tab: 'capabilities' },
+  // The API explorer's public address (planning#595): the docs link here with `?method=`.
+  { path: '/system/api-explorer', tab: 'api-explorer' },
 ]
 
 /** `/system/settings?…&tab=<tab>`, keeping every other parameter of `search`. */

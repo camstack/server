@@ -1,5 +1,5 @@
 /**
- * System — Settings / Capabilities under SectionedPage (OSD template).
+ * System — Settings / Capabilities / API explorer under SectionedPage (OSD template).
  */
 import { Settings as SettingsIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
@@ -8,6 +8,7 @@ import { AdminSectionedPage } from '../../components/AdminSectionedPage'
 
 import { navChromeForPath } from '../../lib/nav-items'
 import { SYSTEM_PAGE_PATH, secretsTabHref, type SystemTab } from '../../lib/system-page-url'
+import { ApiExplorerPage } from './ApiExplorer'
 import { CapabilitiesPage } from './Capabilities'
 import { SettingsPage } from './Settings'
 
@@ -40,6 +41,12 @@ export function SystemPage() {
           id: 'capabilities',
           label: t('system.system.capabilities', 'Capabilities'),
           content: <CapabilitiesPage />,
+        },
+        {
+          id: 'api-explorer',
+          label: t('system.system.apiExplorer'),
+          content: <ApiExplorerPage />,
+          ownedParams: ['method'],
         },
       ]}
     />

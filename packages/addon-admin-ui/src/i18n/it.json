@@ -1017,7 +1017,8 @@
     "system": {
       "settings": "Impostazioni",
       "secrets": "Segreti",
-      "capabilities": "Capability"
+      "capabilities": "Capability",
+      "apiExplorer": "Esplora API"
     },
     "turnServers": {
       "turnProviders": "Provider TURN",
@@ -1300,6 +1301,88 @@
     },
     "bootstrapForm": {
       "saveFailed": "Impossibile salvare"
+    },
+    "apiExplorer": {
+      "title": "Esplora API",
+      "subtitle": "Tutti i metodi che questo hub espone, con input, livello e ambito del token. Le chiamate usano la tua sessione.",
+      "couldNotLoad": "Impossibile caricare l'elenco dei metodi",
+      "methodsTitle": "Metodi ({{count}})",
+      "unknownMethod": "Questo hub non espone alcun metodo chiamato {{method}}.",
+      "pickTitle": "Scegli un metodo",
+      "pickDescription": "Seleziona un metodo nell'elenco per vederne l'input, eseguirlo e copiarlo come curl.",
+      "kind": {
+        "query": "Query",
+        "mutation": "Mutation",
+        "subscription": "Subscription"
+      },
+      "tier": {
+        "public": "Pubblico",
+        "protected": "Autenticato",
+        "admin": "Admin"
+      },
+      "source": {
+        "capability": "Capability",
+        "core": "Core"
+      },
+      "group": {
+        "router": "Router",
+        "kind": "Tipo",
+        "tier": "Livello",
+        "source": "Origine"
+      },
+      "column": {
+        "method": "Metodo",
+        "kind": "Tipo",
+        "tier": "Livello",
+        "scope": "Ambito del token"
+      },
+      "coreRoute": "core",
+      "coreRouteLong": "Route core: nessun ambito capability; il livello decide chi può chiamarla",
+      "scopeValue": "{{cap}} · {{access}} ({{capScope}})",
+      "searchPlaceholder": "Cerca metodi…",
+      "searchLabel": "Cerca metodi",
+      "facetsLabel": "Filtra metodi",
+      "clearFilters": "Azzera filtri",
+      "noMatch": "Nessun metodo corrisponde ai filtri.",
+      "noMethods": "Questo hub non espone metodi.",
+      "callable": "Puoi chiamarlo",
+      "callableYes": "Sì",
+      "callableNo": "No",
+      "subscriptionNote": "Le subscription trasmettono su websocket e non si possono eseguire da questa pagina.",
+      "input": "Input (JSON)",
+      "noInput": "Questo metodo non accetta input.",
+      "run": "Esegui",
+      "running": "In esecuzione…",
+      "resetInput": "Ripristina input",
+      "curl": "curl",
+      "copy": "Copia",
+      "curlHint": "Imposta prima CAMSTACK_TOKEN con un token API. Gli input viaggiano nell'involucro superjson.",
+      "inputSchema": "Schema dell'input",
+      "schemaUnavailable": "Impossibile mostrare lo schema dell'input: {{error}}",
+      "invalidJson": "JSON non valido: {{error}}",
+      "issue": {
+        "type": "{{path}}: atteso {{expected}}",
+        "required": "{{path}}: obbligatorio",
+        "enum": "{{path}}: deve essere uno tra {{expected}}",
+        "const": "{{path}}: deve essere {{expected}}",
+        "unknown-field": "{{path}}: campo sconosciuto",
+        "no-branch": "{{path}}: non corrisponde a nessuna delle {{expected}} forme ammesse",
+        "minimum": "{{path}}: almeno {{expected}}",
+        "maximum": "{{path}}: al massimo {{expected}}",
+        "min-length": "{{path}}: almeno {{expected}} caratteri",
+        "max-length": "{{path}}: al massimo {{expected}} caratteri"
+      },
+      "rootPath": "input",
+      "duration": "{{ms}} ms",
+      "result": "Risultato",
+      "errorCode": "Codice",
+      "errorStatus": "Stato HTTP",
+      "errorPath": "Percorso",
+      "errorCapRoute": "Instradamento capability",
+      "callFailed": "Chiamata fallita",
+      "confirmTitle": "Eseguire una mutation?",
+      "confirmMessage": "{{method}} modifica lo stato di questo hub. Eseguirla con la tua sessione?",
+      "callablePerDevice": "Dipende dal dispositivo"
     }
   },
   "common": {

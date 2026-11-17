@@ -11,6 +11,7 @@ import { describe, expect, it, vi } from 'vitest'
 vi.mock('../Settings', () => ({ SettingsPage: () => <p>settings-content</p> }))
 vi.mock('../Secrets', () => ({ SecretsPage: () => <p>secrets-content</p> }))
 vi.mock('../Capabilities', () => ({ CapabilitiesPage: () => <p>capabilities-content</p> }))
+vi.mock('../ApiExplorer', () => ({ ApiExplorerPage: () => <p>api-explorer-content</p> }))
 
 import { SecretsTabRedirect, SystemTabRedirect } from '../../../components/system/SystemTabRedirect'
 import { buildNavSections } from '../../../lib/nav-items'
@@ -47,13 +48,14 @@ describe('SystemPage', () => {
     renderAt('/system/settings')
     expect(screen.getByText('settings-content')).toBeTruthy()
     expect(screen.getByRole('tablist', { name: 'System sections' })).toBeTruthy()
-    for (const label of ['Settings', 'Capabilities']) {
+    for (const label of ['Settings', 'Capabilities', 'API explorer']) {
       expect(screen.getByRole('tab', { name: label })).toBeTruthy()
     }
   })
 
   it.each([
     ['capabilities', 'capabilities-content'],
+    ['api-explorer', 'api-explorer-content'],
   ])('?tab=%s deep-links to its tab', (tab, content) => {
     renderAt(`/system/settings?tab=${tab}`)
     expect(screen.getByText(content)).toBeTruthy()
@@ -63,6 +65,11 @@ describe('SystemPage', () => {
 describe('legacy standalone routes', () => {
   it.each([
     ['/system/capabilities', '/system/settings?tab=capabilities', 'capabilities-content'],
+    [
+      '/system/api-explorer?method=addons.list',
+      '/system/settings?method=addons.list&tab=api-explorer',
+      'api-explorer-content',
+    ],
   ])('%s redirects to its tab', (from, to, content) => {
     renderAt(from)
     expect(screen.getByTestId('where').textContent).toBe(to)

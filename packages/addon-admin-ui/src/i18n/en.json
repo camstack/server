@@ -1017,7 +1017,8 @@
     "system": {
       "settings": "Settings",
       "secrets": "Secrets",
-      "capabilities": "Capabilities"
+      "capabilities": "Capabilities",
+      "apiExplorer": "API explorer"
     },
     "turnServers": {
       "turnProviders": "TURN providers",
@@ -1300,6 +1301,88 @@
     },
     "bootstrapForm": {
       "saveFailed": "Could not save"
+    },
+    "apiExplorer": {
+      "title": "API explorer",
+      "subtitle": "Every method this hub serves, with its input, tier and token scope. Calls run with your session.",
+      "couldNotLoad": "Could not load the method list",
+      "methodsTitle": "Methods ({{count}})",
+      "unknownMethod": "This hub serves no method named {{method}}.",
+      "pickTitle": "Pick a method",
+      "pickDescription": "Select a method in the list to see its input, run it and copy it as curl.",
+      "kind": {
+        "query": "Query",
+        "mutation": "Mutation",
+        "subscription": "Subscription"
+      },
+      "tier": {
+        "public": "Public",
+        "protected": "Signed in",
+        "admin": "Admin"
+      },
+      "source": {
+        "capability": "Capability",
+        "core": "Core"
+      },
+      "group": {
+        "router": "Router",
+        "kind": "Kind",
+        "tier": "Tier",
+        "source": "Source"
+      },
+      "column": {
+        "method": "Method",
+        "kind": "Kind",
+        "tier": "Tier",
+        "scope": "Token scope"
+      },
+      "coreRoute": "core",
+      "coreRouteLong": "Core route: no capability scope; the tier decides who may call it",
+      "scopeValue": "{{cap}} · {{access}} ({{capScope}})",
+      "searchPlaceholder": "Search methods…",
+      "searchLabel": "Search methods",
+      "facetsLabel": "Filter methods",
+      "clearFilters": "Clear filters",
+      "noMatch": "No method matches these filters.",
+      "noMethods": "This hub serves no methods.",
+      "callable": "You may call it",
+      "callableYes": "Yes",
+      "callableNo": "No",
+      "subscriptionNote": "Subscriptions stream over a websocket and cannot be run from this page.",
+      "input": "Input (JSON)",
+      "noInput": "This method takes no input.",
+      "run": "Run",
+      "running": "Running…",
+      "resetInput": "Reset input",
+      "curl": "curl",
+      "copy": "Copy",
+      "curlHint": "Set CAMSTACK_TOKEN to an API token first. Inputs travel in the superjson envelope.",
+      "inputSchema": "Input schema",
+      "schemaUnavailable": "The input schema cannot be shown: {{error}}",
+      "invalidJson": "Not valid JSON: {{error}}",
+      "issue": {
+        "type": "{{path}}: expected {{expected}}",
+        "required": "{{path}}: required",
+        "enum": "{{path}}: must be one of {{expected}}",
+        "const": "{{path}}: must be {{expected}}",
+        "unknown-field": "{{path}}: unknown field",
+        "no-branch": "{{path}}: matches none of the {{expected}} allowed shapes",
+        "minimum": "{{path}}: at least {{expected}}",
+        "maximum": "{{path}}: at most {{expected}}",
+        "min-length": "{{path}}: at least {{expected}} characters",
+        "max-length": "{{path}}: at most {{expected}} characters"
+      },
+      "rootPath": "input",
+      "duration": "{{ms}} ms",
+      "result": "Result",
+      "errorCode": "Code",
+      "errorStatus": "HTTP status",
+      "errorPath": "Path",
+      "errorCapRoute": "Capability route",
+      "callFailed": "Call failed",
+      "confirmTitle": "Run a mutation?",
+      "confirmMessage": "{{method}} changes state on this hub. Run it with your session?",
+      "callablePerDevice": "Depends on the device"
     }
   },
   "common": {
