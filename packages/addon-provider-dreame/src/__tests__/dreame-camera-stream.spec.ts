@@ -13,7 +13,7 @@ import {
 /**
  * The robot camera streams ON DEMAND: the relay only carries video between
  * `open()` and `close()`, so the stream-broker's battery path is the seam —
- * `battery.wakeForStream` opens the monitor, the catalog reconcile that
+ * `battery.wakeUp` opens the monitor, the catalog reconcile that
  * follows the wake reads a relay URL, and the broker pulls it. These are the
  * pure facts that seam is built from.
  */

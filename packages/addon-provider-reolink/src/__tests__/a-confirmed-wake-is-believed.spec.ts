@@ -11,7 +11,7 @@ import { decideSleepCommit } from '../sleep-state-decision.js'
  * Measured on device 3825 (Magicam, a Home Hub child) on 2026-09-19:
  *
  * ```
- * POST battery.wakeForStream {deviceId:3825}  →  { awoke: true, durationMs: 4129 }
+ * POST battery.wakeUp {deviceId:3825}  →  { awoke: true, durationMs: 4129 }
  * … immediately after, and again 40 s later (past WAKE_HYSTERESIS_MS):
  * debugRawRead osd/image/motion/ai/enc/mask/pir/led/…  →  15 of 16 refused,
  *   "Battery camera is asleep and the read is addressed to the camera channel"
@@ -21,7 +21,7 @@ import { decideSleepCommit } from '../sleep-state-decision.js'
  * answered because it does not touch the camera at all — the parent hub
  * serves it.
  *
- * The cause is a contradiction inside `wakeForStream`. For a hub child it
+ * The cause is a contradiction inside `wakeUp`. For a hub child it
  * returns `awoke: true` on `confirmed` (the channel is present and not
  * offline — "the dial wakes it on demand"), but it only commits
  * `sleeping: false` on `observedAwake`, which reads the parent's summary —
@@ -48,7 +48,7 @@ const source = readFileSync(resolve(here, '../reolink-camera.ts'), 'utf8')
  *   [Baby monitor] sentry: picture composed {source=cached-snapshot reason=sleeping}
  *
  * because the placeholder reads the battery slice and nothing had moved it.
- * One wake, two answers again — the same defect as `wakeForStream`, in its
+ * One wake, two answers again — the same defect as `wakeUp`, in its
  * sibling, found by the operator noticing the tile never changed.
  */
 describe('wakeIfSleeping', () => {
@@ -100,7 +100,7 @@ describe('a wake we drove and confirmed', () => {
   it('is committed on the same branch that answers the caller awake', () => {
     // The assertion that matters: whatever makes `awoke: true` true must also
     // make the mirror say awake. Anything else reintroduces the split.
-    const wake = source.slice(source.indexOf('wakeForStream: async ('))
+    const wake = source.slice(source.indexOf('wakeUp: async ('))
     // `lastIndexOf`: the FIRST `awoke: true` is the early-out for a camera
     // already believed awake, where the mirror needs no correcting. The one
     // that matters is the confirmed-wake path at the end.

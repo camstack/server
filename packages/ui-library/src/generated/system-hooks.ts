@@ -1763,8 +1763,8 @@ export const useLockControlOpen: typeof trpc.lockControl.open.useMutation = /*#_
 /** Generated alias around `trpc.lockControl.getStatus.useQuery`. */
 export const useLockControlGetStatus: typeof trpc.lockControl.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.lockControl.getStatus.useQuery)
 
-/** Generated alias around `trpc.lowPowerSleep.wakeForStream.useMutation`. */
-export const useLowPowerSleepWakeForStream: typeof trpc.lowPowerSleep.wakeForStream.useMutation = /*#__PURE__*/ alias(() => trpc.lowPowerSleep.wakeForStream.useMutation)
+/** Generated alias around `trpc.lowPowerSleep.wakeUp.useMutation`. */
+export const useLowPowerSleepWakeUp: typeof trpc.lowPowerSleep.wakeUp.useMutation = /*#__PURE__*/ alias(() => trpc.lowPowerSleep.wakeUp.useMutation)
 
 /** Generated alias around `trpc.lowPowerSleep.getStatus.useQuery`. */
 export const useLowPowerSleepGetStatus: typeof trpc.lowPowerSleep.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.lowPowerSleep.getStatus.useQuery)

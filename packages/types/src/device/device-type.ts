@@ -132,7 +132,7 @@ export enum DeviceFeature {
   BatteryOperated = 'battery-operated',
   /**
    * The device goes into low-power sleep and must be WOKEN before it streams
-   * (the `low-power-sleep` cap, `wakeForStream`). A battery reading alone is
+   * (the `low-power-sleep` cap, `wakeUp`). A battery reading alone is
    * not this: a battery sensor reports charge and never sleeps (#459, Q2).
    */
   Sleeps = 'sleeps',

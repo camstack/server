@@ -60,7 +60,7 @@ export const CAP_INPUT_DEFAULTS: Readonly<
     "ensureStarted": {"runtime":{"__nested__":{"contextSize":4096,"gpuLayers":0,"parallel":1,"flashAttention":false,"mlock":false,"noMmap":false,"extraArgs":[],"autoStart":false,"idleStopMinutes":30}}},
   },
   "low-power-sleep": {
-    "wakeForStream": {"timeoutMs":8000},
+    "wakeUp": {"timeoutMs":8000},
   },
   "media-player": {
     "channelDown": {"steps":1},

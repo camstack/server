@@ -19,15 +19,15 @@ const wake = method(
 )
 
 function cap(composedMethods: ComposedMethodsSubject['composedMethods']): ComposedMethodsSubject {
-  return { name: 'fixture', methods: { wakeForStream: wake }, composedMethods }
+  return { name: 'fixture', methods: { wakeUp: wake }, composedMethods }
 }
 
 describe('check-composed-methods rules', () => {
   it('passes an answer that parses and a refusal', () => {
     expect(
       checkComposedMethods([
-        cap({ wakeForStream: { kind: 'answer', value: { awoke: false, durationMs: 0 } } }),
-        cap({ wakeForStream: { kind: 'refuse', reason: 'not until slice 3' } }),
+        cap({ wakeUp: { kind: 'answer', value: { awoke: false, durationMs: 0 } } }),
+        cap({ wakeUp: { kind: 'refuse', reason: 'not until slice 3' } }),
         cap(undefined),
       ]),
     ).toEqual([])
@@ -44,11 +44,11 @@ describe('check-composed-methods rules', () => {
 
   it("refuses an answer that fails the method's own output schema", () => {
     const failures = checkComposedMethods([
-      cap({ wakeForStream: { kind: 'answer', value: { awoke: 'no' } } }),
+      cap({ wakeUp: { kind: 'answer', value: { awoke: 'no' } } }),
     ])
     expect(failures).toHaveLength(1)
     expect(failures[0]).toMatch(
-      /^fixture\.composedMethods\.wakeForStream: the 'answer' value fails fixture\.methods\.wakeForStream\.output\.safeParse/,
+      /^fixture\.composedMethods\.wakeUp: the 'answer' value fails fixture\.methods\.wakeUp\.output\.safeParse/,
     )
   })
 

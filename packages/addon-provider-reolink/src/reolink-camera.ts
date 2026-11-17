@@ -883,7 +883,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private lastProactiveWakeAt = 0
   /**
    * Minimum gap between two proactive wakes. Demand-driven wakes
-   * (`wakeForStream` from the broker, `wakeIfSleeping` behind an
+   * (`wakeUp` from the broker, `wakeIfSleeping` behind an
    * operator action, the intercom pre-wake) bypass this entirely —
    * the operator asked, the operator gets the camera. Only
    * self-initiated wakes are rate-limited, so a thumbnail cache miss
@@ -2225,7 +2225,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * (proactive config buttons such as Auto-configure email push). A
    * sleeping battery cam ignores Baichuan config round-trips, so clicking
    * "configure" would otherwise silently fail; this drives the same forced
-   * wake `wakeForStream` uses, then lets the caller proceed against a live
+   * wake `wakeUp` uses, then lets the caller proceed against a live
    * camera. No-op for non-battery or already-awake cams. Best-effort:
    * returns whether the camera is (now) reachable/awake.
    */
@@ -2269,7 +2269,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // sleeping tile. Measured 2026-09-19 21:29 — "Refresh from camera"
       // reported `awake=true` and re-read 5 of 5 slices off the camera, and
       // thirteen seconds later the broker was still composing
-      // `reason=sleeping`. The same split `wakeForStream` had, in its
+      // `reason=sleeping`. The same split `wakeUp` had, in its
       // sibling, found by the operator noticing the picture never changed.
       if (this.commitSleepState(false, 'confirmed-wake')) {
         this.ctx.logger.info('proactive action: camera is up — committing the mirror', {
@@ -2990,7 +2990,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }
         return sleepSliceOfBattery(this.state.battery)
       },
-      wakeForStream: async ({ deviceId, timeoutMs }) => {
+      wakeUp: async ({ deviceId, timeoutMs }) => {
         if (deviceId !== this.id) {
           throw new Error(`ReolinkCamera: deviceId mismatch, expected ${this.id}, got ${deviceId}`)
         }
@@ -3008,7 +3008,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // CONSUMER-driven (the broker has a viewer waiting): bypasses the
         // proactive-wake cooldown, stamps it so background paths back off.
         this.markWakeIssued()
-        this.ctx.logger.info('battery wakeForStream: cam sleeping — issuing wake', {
+        this.ctx.logger.info('battery wakeUp: cam sleeping — issuing wake', {
           tags: { deviceId: this.id },
           meta: { timeoutMs },
         })
@@ -3043,7 +3043,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
               await sleep(1500)
             })(),
             new Promise<void>((_, rej) =>
-              setTimeout(() => rej(new Error('wakeForStream timeout')), timeoutMs),
+              setTimeout(() => rej(new Error('wakeUp timeout')), timeoutMs),
             ),
           ])
           // The ACK is not the wake. After a DEMANDED wake we confirm the
@@ -3113,16 +3113,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           // confirmed wake gated out).
           const confirmSource = parent !== null ? 'hub-summary' : 'sleep-poll'
           if (observedAwake && this.commitSleepState(false, confirmSource)) {
-            this.ctx.logger.info(
-              'battery wakeForStream: wake confirmed — driving wake transition',
-              {
-                tags: { deviceId: this.id },
-                meta: {
-                  confirmMs: Date.now() - startedAt,
-                  source: confirmSource,
-                },
+            this.ctx.logger.info('battery wakeUp: wake confirmed — driving wake transition', {
+              tags: { deviceId: this.id },
+              meta: {
+                confirmMs: Date.now() - startedAt,
+                source: confirmSource,
               },
-            )
+            })
             void this.onWakeTransition(confirmSource).catch(() => {
               /* best-effort */
             })
@@ -3132,7 +3129,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             // again" instead of parking the client in a 20 s "waking"
             // window we already know will not produce a stream.
             this.ctx.logger.warn(
-              'battery wakeForStream: ACK received but no awake evidence inside the confirm window',
+              'battery wakeUp: ACK received but no awake evidence inside the confirm window',
               {
                 tags: { deviceId: this.id },
                 meta: { confirmTimeoutMs: CONFIRM_TIMEOUT_MS },
@@ -3161,7 +3158,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           // time. Committing only on the summary is what split one wake into
           // two contradictory answers.
           if (this.commitSleepState(false, 'confirmed-wake')) {
-            this.ctx.logger.info('battery wakeForStream: answering awake — committing the mirror', {
+            this.ctx.logger.info('battery wakeUp: answering awake — committing the mirror', {
               tags: { deviceId: this.id },
               meta: { confirmedMs: Date.now() - startedAt, observedAwake },
             })
@@ -3171,7 +3168,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           }
           return { awoke: true, durationMs: Date.now() - startedAt }
         } catch (err) {
-          this.ctx.logger.warn('battery wakeForStream: wake did not complete in time', {
+          this.ctx.logger.warn('battery wakeUp: wake did not complete in time', {
             tags: { deviceId: this.id },
             meta: {
               timeoutMs,
@@ -3377,7 +3374,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * `PROACTIVE_WAKE_COOLDOWN_MS` ago — the caller must then serve
    * whatever it has cached instead of reaching for the radio.
    *
-   * Demand-driven paths never call this: `wakeForStream` (a consumer
+   * Demand-driven paths never call this: `wakeUp` (a consumer
    * wants live video), `wakeIfSleeping` (an operator clicked
    * something) and the intercom pre-wake all wake unconditionally.
    */
@@ -3423,7 +3420,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         const entry = summary.devices.find((d) => d.channel === this.getChannel())
         if (entry?.sleeping === false) {
           if (this.commitSleepState(false, 'hub-summary')) {
-            this.ctx.logger.info('battery wakeForStream: hub child observed awake after the dial', {
+            this.ctx.logger.info('battery wakeUp: hub child observed awake after the dial', {
               tags: { deviceId: this.id },
             })
             void this.onWakeTransition('hub-summary').catch(() => {

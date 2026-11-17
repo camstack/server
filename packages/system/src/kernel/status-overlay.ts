@@ -13,7 +13,7 @@
  *
  * The wrap is a `Proxy`, never a spread. The HA feeder's native is built by the
  * hub's `nativeFallback` as `new Proxy({}, { get })`: an EMPTY target whose
- * every property is a forwarding function. Its spread is `{}` — `wakeForStream`
+ * every property is a forwarding function. Its spread is `{}` — `wakeUp`
  * and `reset` vanish and `requireDeviceScoped` answers NOT_IMPLEMENTED for every
  * non-status method of a claimed cap. A class-instance provider loses its
  * prototype methods the same way.

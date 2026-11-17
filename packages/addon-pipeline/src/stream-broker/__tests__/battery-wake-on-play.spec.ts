@@ -67,7 +67,7 @@ function makeHarness(overrides: {
         overrides.facts === undefined
           ? { sleeping: true, lastContactAt: NOW - 60_000 }
           : overrides.facts,
-      wakeForStream: async () => {
+      wakeUp: async () => {
         calls.wake += 1
         return { awoke: overrides.awoke ?? true, durationMs: 1_234 }
       },

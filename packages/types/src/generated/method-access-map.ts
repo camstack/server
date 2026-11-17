@@ -675,7 +675,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'logDestination.write': { capName: "log-destination", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'loginMethod.getLoginMethods': { capName: "login-method", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'lowPowerSleep.getStatus': { capName: "low-power-sleep", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'lowPowerSleep.wakeForStream': { capName: "low-power-sleep", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
+  'lowPowerSleep.wakeUp': { capName: "low-power-sleep", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.channelDown': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.channelUp': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.getStatus': { capName: "media-player", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,

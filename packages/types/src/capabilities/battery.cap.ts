@@ -167,7 +167,7 @@ export const batteryCapability = {
   mode: 'singleton',
   deviceTypes: BATTERY_DEVICE_TYPES,
   /**
-   * No methods: waking a sleeping camera is `low-power-sleep.wakeForStream`
+   * No methods: waking a sleeping camera is `low-power-sleep.wakeUp`
    * (#459, Q2). A battery reading says nothing about sleep — a battery sensor
    * reports charge and never needs waking.
    */

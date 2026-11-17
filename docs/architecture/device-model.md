@@ -253,7 +253,7 @@ this is the procedure, and after it the list of ways it was got wrong.
    `battery` cap registered on the device: `sleeping` = "the session is
    closed", `lastContactAt` refreshed on every sign of life (the broker refuses
    to wake a camera silent for hours — `deriveBatteryPresence`), and
-   `wakeForStream` = open the session inside the caller's bound, single
+   `wakeUp` = open the session inside the caller's bound, single
    in-flight (a second play joins, it does not cold-start the camera twice).
 2. **The stream is ALWAYS listed.** `stream-catalog.getCatalog` returns the
    stream in both states, as `pull-rfc4571`: while CLOSED the url is the

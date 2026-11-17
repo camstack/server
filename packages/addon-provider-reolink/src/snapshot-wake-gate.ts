@@ -33,7 +33,7 @@
  *
  * The cooldown is therefore absent from this decision. A forced read is
  * operator DEMAND and demand is never rate-limited (same rule as
- * `wakeForStream` / `wakeIfSleeping`); an unforced read never wakes, so there
+ * `wakeUp` / `wakeIfSleeping`); an unforced read never wakes, so there
  * is nothing left to rate-limit. `stampCooldown` still tells the caller to
  * stamp the shared timestamp on a wake it does issue, so the remaining
  * proactive paths (contact-expiry, aux align) back off behind it.

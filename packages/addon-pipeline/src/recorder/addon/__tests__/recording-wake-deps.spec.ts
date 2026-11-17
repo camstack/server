@@ -5,7 +5,7 @@ import { recordingWakeDeps, type RecordingWakeApi } from '../recording-wake-deps
 /**
  * The recorder wakes a camera that SLEEPS (#459, Q2): the class is
  * `DeviceFeature.Sleeps`, the facts are the `low-power-sleep` slice, the wake
- * is `lowPowerSleep.wakeForStream`. A device that only reports a battery is
+ * is `lowPowerSleep.wakeUp`. A device that only reports a battery is
  * not a sleeper, and its battery slice carries no sleep the recorder believes.
  */
 interface Calls {
@@ -34,7 +34,7 @@ function api(features: readonly string[] | null | 'throws', calls: Calls): Recor
       },
     },
     lowPowerSleep: {
-      wakeForStream: {
+      wakeUp: {
         mutate: async (input: { deviceId: number; timeoutMs?: number }) => {
           calls.wakes.push(input)
           return { awoke: true, durationMs: 10 }
@@ -77,12 +77,9 @@ describe('recordingWakeDeps', () => {
     expect(facts).toEqual({ sleeping: true, lastContactAt: 1234 })
   })
 
-  it('wakes through lowPowerSleep.wakeForStream with the device and the timeout', async () => {
+  it('wakes through lowPowerSleep.wakeUp with the device and the timeout', async () => {
     const calls = fresh()
-    await recordingWakeDeps(api([DeviceFeature.Sleeps], calls), 1000, () => 0).wakeForStream(
-      7,
-      9000,
-    )
+    await recordingWakeDeps(api([DeviceFeature.Sleeps], calls), 1000, () => 0).wakeUp(7, 9000)
     expect(calls.wakes).toEqual([{ deviceId: 7, timeoutMs: 9000 }])
   })
 })

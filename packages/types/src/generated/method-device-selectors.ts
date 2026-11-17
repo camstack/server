@@ -293,7 +293,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'lockControl.unlock': [{ name: "deviceId", form: "single", optional: false }] as const,
   'logDestination.read': [{ name: "deviceId", form: "single", optional: true }] as const,
   'lowPowerSleep.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'lowPowerSleep.wakeForStream': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'lowPowerSleep.wakeUp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.channelDown': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.channelUp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,

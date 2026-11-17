@@ -1256,7 +1256,7 @@ export class RecordingController {
    * after which the band's `postBufferSec` runs and `evaluateDevice` arms the
    * close exactly as it does for a motion episode. Both converge at once: the
    * rise is what wakes a battery camera and pins its source (the robot's
-   * monitor opens through `low-power-sleep.wakeForStream` on the attach), the fall is
+   * monitor opens through `low-power-sleep.wakeUp` on the attach), the fall is
    * what lets the source be released and the monitor close.
    *
    * No config read on this path (D49): the hold is recorded unconditionally —

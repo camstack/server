@@ -2492,7 +2492,7 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
     cap: 'low-power-sleep',
     reason:
       'Its sleep state is already exported through the battery entities of the same ' +
-      "camera, and its one method (wakeForStream) is a stream consumer's pre-wake, " +
+      "camera, and its one method (wakeUp) is a stream consumer's pre-wake, " +
       'not an automation action (#459).',
   },
   {

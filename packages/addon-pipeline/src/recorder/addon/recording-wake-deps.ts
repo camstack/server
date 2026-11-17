@@ -26,14 +26,14 @@ export interface RecordingWakeApi {
     }
   }
   readonly deviceState: Pick<AddonApi['deviceState'], 'getCapSlice'>
-  readonly lowPowerSleep: Pick<AddonApi['lowPowerSleep'], 'wakeForStream'>
+  readonly lowPowerSleep: Pick<AddonApi['lowPowerSleep'], 'wakeUp'>
 }
 
 /**
  * The recorder's wake deps, read from the hub (#459, Q2): the class is
  * `DeviceFeature.Sleeps` from the DEVICE registry (never the published
  * cam-streams: there are none — that is precisely why we are here), the facts
- * are the `low-power-sleep` slice, and the wake is that cap's `wakeForStream`.
+ * are the `low-power-sleep` slice, and the wake is that cap's `wakeUp`.
  *
  * BOUNDED. The two reads sit on the attach critical path, ahead of every
  * broker call, and an unbounded UDS round-trip here delays the writer spawn
@@ -65,8 +65,7 @@ export function recordingWakeDeps(
       if (!parsed.success) return null
       return { sleeping: parsed.data.sleeping, lastContactAt: parsed.data.lastContactAt }
     },
-    wakeForStream: async (id, timeoutMs) =>
-      api.lowPowerSleep.wakeForStream.mutate({ deviceId: id, timeoutMs }),
+    wakeUp: async (id, timeoutMs) => api.lowPowerSleep.wakeUp.mutate({ deviceId: id, timeoutMs }),
     nowMs,
   }
 }

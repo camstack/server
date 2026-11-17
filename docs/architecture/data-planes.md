@@ -202,13 +202,13 @@ Two halves, and getting either wrong looks like the other:
 - `WebrtcSessionProvider.ensureBrokerAvailable` → `wakeBatteryDeviceOnPlay`
   (`stream-broker/battery-wake-on-play.ts`) is the wake. When resolution leaves
   no broker AND the device carries `DeviceFeature.BatteryOperated`, it calls
-  `battery.wakeForStream`, waits a bounded window for the provider's
+  `battery.wakeUp`, waits a bounded window for the provider's
   `StreamParamsChanged` nudge, reconciles the catalog whether or not the nudge
   came (a ledger-restored catalog announces nothing), and retries **once**. The
   error it throws names the state — `sleeping`, `waking`, `unreachable` — and
   never `No broker for stream`, because that sentence is false for a healthy
   camera one wake away from streaming. This was the repo's ONLY live
-  `wakeForStream` caller after the Alexa handler's dead
+  `wakeUp` caller after the Alexa handler's dead
   `const hasBatteryCap = false` block was deleted.
 
 The dial is the only thing that touches the camera. The catalog poll, the

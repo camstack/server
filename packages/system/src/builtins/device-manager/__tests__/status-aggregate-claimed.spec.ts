@@ -163,11 +163,11 @@ describe('getDeviceStatusAggregate under a replace claim, claims already known',
   it('every other method of the claimed cap still reaches the native through the same resolved provider', async () => {
     const f = await seededAndClaimed()
     const p = f.registry.getNativeProvider<ForwardingNative>('battery', DEVICE)
-    expect(await p?.['wakeForStream']?.({ deviceId: DEVICE, timeoutMs: 1000 })).toEqual({
+    expect(await p?.['wakeUp']?.({ deviceId: DEVICE, timeoutMs: 1000 })).toEqual({
       awoke: true,
       durationMs: 5,
     })
-    expect(f.nativeCalls).toEqual([['wakeForStream', { deviceId: DEVICE, timeoutMs: 1000 }]])
+    expect(f.nativeCalls).toEqual([['wakeUp', { deviceId: DEVICE, timeoutMs: 1000 }]])
   })
 
   it('the uninstall the addon runs at shutdown hands getStatus back to the native', async () => {

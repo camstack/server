@@ -803,7 +803,7 @@ export function createDeviceProxy(
   }
 
   const lowPowerSleepInterface = {
-    wakeForStream: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('low-power-sleep', 'lowPowerSleep', 'wakeForStream', 'mutation', input, undefined, options),
+    wakeUp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('low-power-sleep', 'lowPowerSleep', 'wakeUp', 'mutation', input, undefined, options),
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('low-power-sleep', 'lowPowerSleep', 'getStatus', 'query', input, undefined, options),
   }
 

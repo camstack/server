@@ -192,7 +192,7 @@ describe('proactive wake cooldown', () => {
   })
 
   it('demand-driven wakes bypass the cooldown (stream + operator action)', () => {
-    // `wakeForStream` (a viewer is waiting) and `wakeIfSleeping` (the
+    // `wakeUp` (a viewer is waiting) and `wakeIfSleeping` (the
     // operator clicked something) must NEVER consult the cooldown —
     // they only stamp it so background paths back off afterwards.
     const wakeIfSleeping = sliceMethodBody(cameraSource, 'private async wakeIfSleeping(')

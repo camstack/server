@@ -593,7 +593,7 @@
   "logDestination.read": "admin",
   "logDestination.write": "admin",
   "loginMethod.getLoginMethods": "admin",
-  "lowPowerSleep.wakeForStream": "protected",
+  "lowPowerSleep.wakeUp": "protected",
   "mediaPlayer.channelDown": "protected",
   "mediaPlayer.channelUp": "protected",
   "mediaPlayer.next": "protected",

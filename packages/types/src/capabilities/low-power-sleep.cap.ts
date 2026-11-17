@@ -11,7 +11,7 @@ import { readingMeta } from '../units/quantity.js'
  * `battery` cap and never sleeps. The two meanings used to share
  * `DeviceFeature.BatteryOperated`; this cap is the one that answers "sleeps",
  * and `DeviceFeature.Sleeps` is derived from it being bound with
- * `wakeForStream` implemented.
+ * `wakeUp` implemented.
  *
  * The state is the sleep inputs (`deriveBatteryPresence`): whether the device
  * is asleep, and the last time it PROVED it was reachable. Read from this slice
@@ -57,7 +57,7 @@ export const lowPowerSleepCapability = {
      * `timeoutMs`, `awoke: false` when it timed out; the caller should still
      * attempt the stream — the passive broker wake remains as fallback.
      */
-    wakeForStream: method(
+    wakeUp: method(
       z.object({
         deviceId: z.number(),
         /** Bound on the wait. Sensible range 3000–10000ms. */
@@ -90,7 +90,7 @@ export const lowPowerSleepCapability = {
   history: 'none',
   volatileStateFields: ['lastUpdated'],
   // The sleep state stays phrased through the battery vocabulary (asleep / woke
-  // up) until its writer moves here; `wakeForStream` carries its own excuse.
+  // up) until its writer moves here; `wakeUp` carries its own excuse.
   vocabulary: { noun: t('Low-power sleep', 'Sospensione a basso consumo'), order: 5245 },
 } as const satisfies CapabilityDefinition
 

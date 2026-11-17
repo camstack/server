@@ -150,14 +150,14 @@ describe('LocalChildRegistry — getStatus of a CLAIMED cap never reaches the ow
     const wake = await exporter.request({
       kind: 'cap-call-out',
       capName: 'battery',
-      method: 'wakeForStream',
+      method: 'wakeUp',
       args: { deviceId: DEVICE, timeoutMs: 1000 },
       deviceId: DEVICE,
     })
     expect(status).toEqual(NATIVE)
     expect(wake).toEqual({ awoke: true, durationMs: 5 })
-    expect(seen.map((c) => c.method)).toEqual(['getStatus', 'wakeForStream'])
-    // The unclaimed getStatus paid one lookup; wakeForStream paid none.
+    expect(seen.map((c) => c.method)).toEqual(['getStatus', 'wakeUp'])
+    // The unclaimed getStatus paid one lookup; wakeUp paid none.
     expect(claimedStatus).toHaveBeenCalledTimes(1)
     expect(claimedStatus).toHaveBeenCalledWith('battery', OTHER_DEVICE)
   })

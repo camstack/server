@@ -1211,7 +1211,7 @@ export class StreamBrokerManager {
    * Device-scoped wake-on-play transactions. A camera wake is shared by every
    * profile, so Viewer retries or concurrent sessions must join the existing
    * sleeping → waking → broker-settle transaction instead of issuing another
-   * `low-power-sleep.wakeForStream` mutation.
+   * `low-power-sleep.wakeUp` mutation.
    */
   private readonly batteryWakeOnPlay = new BatteryWakeOnPlaySingleFlight()
   /**
@@ -2575,8 +2575,8 @@ export class StreamBrokerManager {
         logger: this.logger,
         isBatteryDevice: (id) => this.isSleeper(id),
         readBatteryFacts: (id) => this.readBatterySleepFacts(id),
-        wakeForStream: async (id, timeoutMs) =>
-          api.lowPowerSleep.wakeForStream.mutate({ deviceId: id, timeoutMs }),
+        wakeUp: async (id, timeoutMs) =>
+          api.lowPowerSleep.wakeUp.mutate({ deviceId: id, timeoutMs }),
         reconcileCatalog: (id) => this.reconcileDeviceCatalog(id),
         ensureBroker: () => this.ensureBrokerForWebrtcSession(deviceId, brokerId, camStreamId),
         hasBroker: demandHasBroker,

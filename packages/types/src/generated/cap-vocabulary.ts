@@ -5541,7 +5541,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
     scope: 'device',
     noun: { en: 'Low-power sleep', it: 'Sospensione a basso consumo' },
     notOperatorFacing: {
-      wakeForStream: 'a stream consumer wakes a sleeping camera to watch it; an automation that wants footage asks for the footage',
+      wakeUp: 'a stream consumer wakes a sleeping camera to watch it; an automation that wants footage asks for the footage',
     },
   },
   'network-link': {

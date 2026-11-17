@@ -267,7 +267,7 @@ export class DreameCameraDevice extends DreameChildDevice {
    * The camera's own "record me" LEVEL, derived from the vacuum lifecycle
    * state on every push (`recomputeSlice`). The recorder follows it
    * (`RecordingTriggers.deviceSignal`): a cleaning is one clip, opened by the
-   * rise (which wakes this camera through `low-power-sleep.wakeForStream` like any
+   * rise (which wakes this camera through `low-power-sleep.wakeUp` like any
    * consumer) and closed by the fall.
    */
   private registerRecordingSignalCap(): void {
@@ -310,7 +310,7 @@ export class DreameCameraDevice extends DreameChildDevice {
   // URL the way a mains camera does. The seam is the one the broker already
   // has for battery cameras (`battery-wake-on-play.ts`): while the monitor is
   // CLOSED the battery slice says `sleeping` and the catalog is EMPTY, so a
-  // play finds no broker and asks for a wake; `wakeForStream` opens the
+  // play finds no broker and asks for a wake; `wakeUp` opens the
   // monitor, the catalog reconcile that follows reads the relay URL, and the
   // broker pulls it. The monitor closes again when the consumer leaves, when
   // the duration cap fires, when the relay's keep-alive fails — and when the
@@ -382,7 +382,7 @@ export class DreameCameraDevice extends DreameChildDevice {
     // The robot's camera sleeps until a monitor is opened (#459, Q2):
     // `DeviceFeature.Sleeps` is derived from this binding.
     const sleepProvider: InferNativeProvider<typeof lowPowerSleepCapability> = {
-      wakeForStream: async ({ timeoutMs }) => this.wakeForStream(timeoutMs),
+      wakeUp: async ({ timeoutMs }) => this.wakeUp(timeoutMs),
     }
     this.ctx.registerNativeCap(lowPowerSleepCapability, sleepProvider)
     this.publishBattery()
@@ -501,10 +501,10 @@ export class DreameCameraDevice extends DreameChildDevice {
   }
 
   /**
-   * `low-power-sleep.wakeForStream`: open the monitor inside the caller's bound. An
+   * `low-power-sleep.wakeUp`: open the monitor inside the caller's bound. An
    * open that outlives the bound keeps running — the next play joins it.
    */
-  private async wakeForStream(timeoutMs: number): Promise<{ awoke: boolean; durationMs: number }> {
+  private async wakeUp(timeoutMs: number): Promise<{ awoke: boolean; durationMs: number }> {
     const startedAt = Date.now()
     if (this.session !== null) return { awoke: true, durationMs: 0 }
     const opened = this.openStream().then(

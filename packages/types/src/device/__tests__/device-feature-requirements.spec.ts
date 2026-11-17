@@ -103,9 +103,9 @@ describe('sleeps vs battery (#459, Q2) and resync (Q6)', () => {
     expect(out).not.toContain(DeviceFeature.Sleeps)
   })
 
-  it('sleeps is the low-power-sleep cap bound with wakeForStream, whatever the driver claims', () => {
+  it('sleeps is the low-power-sleep cap bound with wakeUp, whatever the driver claims', () => {
     expect(
-      settleDeviceFeatures([entry('battery'), entry('low-power-sleep', ['wakeForStream'])], []),
+      settleDeviceFeatures([entry('battery'), entry('low-power-sleep', ['wakeUp'])], []),
     ).toContain(DeviceFeature.Sleeps)
     expect(settleDeviceFeatures([entry('battery')], [DeviceFeature.Sleeps])).not.toContain(
       DeviceFeature.Sleeps,

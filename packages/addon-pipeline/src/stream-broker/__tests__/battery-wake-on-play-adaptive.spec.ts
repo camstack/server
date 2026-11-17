@@ -73,7 +73,7 @@ function makeManager(options: {
       },
     },
     lowPowerSleep: {
-      wakeForStream: {
+      wakeUp: {
         mutate: async () => {
           wakeCalls += 1
           return { awoke: options.awoke, durationMs: 100 }

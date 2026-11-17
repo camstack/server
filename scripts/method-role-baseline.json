@@ -652,7 +652,7 @@
   "logDestination.write": "admin",
   "loginMethod.getLoginMethods": "admin",
   "lowPowerSleep.getStatus": "viewer",
-  "lowPowerSleep.wakeForStream": "viewer",
+  "lowPowerSleep.wakeUp": "viewer",
   "mediaPlayer.channelDown": "viewer",
   "mediaPlayer.channelUp": "viewer",
   "mediaPlayer.getStatus": "viewer",

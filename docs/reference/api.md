@@ -666,7 +666,7 @@
 | `logDestination.cancelRead` | mutation | admin | log-destination |
 | `loginMethod.getLoginMethods` | query | admin | login-method |
 | `lowPowerSleep.getStatus` | query | protected | low-power-sleep (auto) |
-| `lowPowerSleep.wakeForStream` | mutation | protected | low-power-sleep |
+| `lowPowerSleep.wakeUp` | mutation | protected | low-power-sleep |
 | `mediaPlayer.getStatus` | query | protected | media-player (auto) |
 | `mediaPlayer.turnOn` | mutation | protected | media-player |
 | `mediaPlayer.turnOff` | mutation | protected | media-player |
@@ -3339,7 +3339,7 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `lowPowerSleep.getStatus` | query | protected | `{ deviceId: number }` | `LowPowerSleepStatusSchema` |
-| wakeForStream | `lowPowerSleep.wakeForStream` | mutation | protected | `{ deviceId: number; timeoutMs?: number = 8000 }` | `{ awoke: boolean; durationMs: number }` |
+| wakeUp | `lowPowerSleep.wakeUp` | mutation | protected | `{ deviceId: number; timeoutMs?: number = 8000 }` | `{ awoke: boolean; durationMs: number }` |
 
 ### `media-player` → `mediaPlayer.*`
 

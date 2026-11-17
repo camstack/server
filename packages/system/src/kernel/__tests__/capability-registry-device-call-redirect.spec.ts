@@ -33,7 +33,7 @@ function makeLogger(): IScopedLogger {
 
 interface Native {
   getStatus: (input?: unknown) => Promise<{ level: number }>
-  wakeForStream: (input?: unknown) => Promise<{ awoke: boolean }>
+  wakeUp: (input?: unknown) => Promise<{ awoke: boolean }>
 }
 
 function native(): Native & { calls: string[] } {
@@ -44,8 +44,8 @@ function native(): Native & { calls: string[] } {
       calls.push('getStatus')
       return { level: 1 }
     },
-    wakeForStream: async () => {
-      calls.push('wakeForStream')
+    wakeUp: async () => {
+      calls.push('wakeUp')
       return { awoke: true }
     },
   }
@@ -57,7 +57,7 @@ function redirect(answer: (call: DeviceCall) => DeviceCallAnswer): DeviceCallRed
   const seen: DeviceCall[] = []
   return {
     seen,
-    covers: (cap, method) => cap === 'battery' && method === 'wakeForStream',
+    covers: (cap, method) => cap === 'battery' && method === 'wakeUp',
     attempt: async (call) => {
       seen.push(call)
       return answer(call)
@@ -81,10 +81,10 @@ describe('CapabilityRegistry — the device-call redirect (D963)', () => {
     reg.setDeviceCallRedirect(r)
 
     const p = reg.getProviderForDevice<Native>('battery', DEVICE)
-    expect(await p?.wakeForStream({ deviceId: DEVICE })).toEqual({ awoke: false })
+    expect(await p?.wakeUp({ deviceId: DEVICE })).toEqual({ awoke: false })
     expect(n.calls).toEqual([])
     expect(r.seen).toEqual([
-      { capName: 'battery', method: 'wakeForStream', deviceId: DEVICE, args: { deviceId: DEVICE } },
+      { capName: 'battery', method: 'wakeUp', deviceId: DEVICE, args: { deviceId: DEVICE } },
     ])
   })
 
@@ -93,10 +93,10 @@ describe('CapabilityRegistry — the device-call redirect (D963)', () => {
     const n = native()
     reg.registerNativeProvider('battery', DEVICE, 'x', n)
     reg.setDeviceCallRedirect(redirect(() => ({ kind: 'not-redirected' })))
-    expect(await reg.getProviderForDevice<Native>('battery', DEVICE)?.wakeForStream()).toEqual({
+    expect(await reg.getProviderForDevice<Native>('battery', DEVICE)?.wakeUp()).toEqual({
       awoke: true,
     })
-    expect(n.calls).toEqual(['wakeForStream'])
+    expect(n.calls).toEqual(['wakeUp'])
   })
 
   it('never asks about a method it does not cover', async () => {
@@ -120,7 +120,7 @@ describe('CapabilityRegistry — the device-call redirect (D963)', () => {
     expect(
       await reg.redirectDeviceCall({
         capName: 'battery',
-        method: 'wakeForStream',
+        method: 'wakeUp',
         deviceId: OTHER,
         args: {},
       }),
@@ -133,7 +133,7 @@ describe('CapabilityRegistry — the device-call redirect (D963)', () => {
     const reg = newRegistry()
     const r = redirect(() => ({ kind: 'redirected', result: 'done' }))
     reg.setDeviceCallRedirect(r)
-    const call = { capName: 'battery', method: 'wakeForStream', deviceId: OTHER, args: {} }
+    const call = { capName: 'battery', method: 'wakeUp', deviceId: OTHER, args: {} }
     expect(await reg.redirectDeviceCall(call)).toEqual({ kind: 'redirected', result: 'done' })
     expect(await reg.redirectDeviceCall({ ...call, method: 'getStatus' })).toEqual({
       kind: 'not-redirected',
@@ -145,7 +145,7 @@ describe('a covered method the provider does not implement (D1034)', () => {
   // A fan whose driver has no `setOscillationAxis`: the Customize link answers it.
   interface Partial {
     getStatus: (input?: unknown) => Promise<{ level: number }>
-    wakeForStream?: (input?: unknown) => Promise<{ awoke: boolean }>
+    wakeUp?: (input?: unknown) => Promise<{ awoke: boolean }>
   }
   const bare = (): Partial => ({ getStatus: async () => ({ level: 1 }) })
 
@@ -155,7 +155,7 @@ describe('a covered method the provider does not implement (D1034)', () => {
     const r = redirect(() => ({ kind: 'redirected', result: { awoke: true } }))
     reg.setDeviceCallRedirect(r)
     const p = reg.getProviderForDevice<Partial>('battery', DEVICE)
-    expect(await p?.wakeForStream?.({ deviceId: DEVICE })).toEqual({ awoke: true })
+    expect(await p?.wakeUp?.({ deviceId: DEVICE })).toEqual({ awoke: true })
     expect(r.seen).toHaveLength(1)
   })
 
@@ -164,7 +164,7 @@ describe('a covered method the provider does not implement (D1034)', () => {
     reg.registerNativeProvider('battery', DEVICE, 'x', bare())
     reg.setDeviceCallRedirect(redirect(() => ({ kind: 'not-redirected' })))
     const p = reg.getProviderForDevice<Partial>('battery', DEVICE)
-    await expect(p?.wakeForStream?.({ deviceId: DEVICE })).rejects.toThrow(/battery\.wakeForStream/)
+    await expect(p?.wakeUp?.({ deviceId: DEVICE })).rejects.toThrow(/battery\.wakeUp/)
   })
 
   it('an uncovered missing method stays missing', () => {

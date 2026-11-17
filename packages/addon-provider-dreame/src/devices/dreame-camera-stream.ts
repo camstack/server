@@ -4,7 +4,7 @@
  * A Dreame relay carries video only between `open()` and `close()`, and the
  * robot runs on a battery, so the camera cannot sit in the catalog with a
  * URL the way a mains RTSP camera does. The seam is the broker's own battery
- * path: `low-power-sleep.wakeForStream` opens the monitor, and the catalog then
+ * path: `low-power-sleep.wakeUp` opens the monitor, and the catalog then
  * names the local RFC 4571 server (`dreame-rfc4571-server.ts`) the broker
  * pulls. While the monitor is CLOSED the
  * catalog carries the broker's lazy sentinel (Reolink's shape): the stream is

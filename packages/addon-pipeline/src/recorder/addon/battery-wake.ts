@@ -5,7 +5,7 @@
  *
  * A battery camera is asleep between events. Every other demand consumer in
  * this system already wakes it — the live/WebRTC path does, through
- * `low-power-sleep.wakeForStream` (D173, #459) — but the recorder did not, so an `events`
+ * `low-power-sleep.wakeUp` (D173, #459) — but the recorder did not, so an `events`
  * band pointed at a battery camera attached to a broker with no source and
  * produced nothing. Measured on camera 3629 (audit 2026-08-20): **48.9 % of its
  * episodes recorded zero footage.**
@@ -46,7 +46,7 @@ export interface BatteryFacts {
 }
 
 /** The wake RPC's answer. */
-export interface WakeForStreamResult {
+export interface WakeUpResult {
   readonly awoke: boolean
   readonly durationMs: number
 }
@@ -57,7 +57,7 @@ export interface RecordingWakeDeps {
   readonly isBatteryDevice: (deviceId: number) => Promise<boolean | null>
   /** `null` when the device has no battery slice or it did not parse. */
   readonly readBatteryFacts: (deviceId: number) => Promise<BatteryFacts | null>
-  readonly wakeForStream: (deviceId: number, timeoutMs: number) => Promise<WakeForStreamResult>
+  readonly wakeUp: (deviceId: number, timeoutMs: number) => Promise<WakeUpResult>
   readonly nowMs: () => number
 }
 
@@ -109,7 +109,7 @@ export async function wakeForRecording(
   if (presence === 'unreachable') return { outcome: 'unreachable' }
 
   try {
-    const wake = await deps.wakeForStream(deviceId, WAKE_FOR_RECORDING_TIMEOUT_MS)
+    const wake = await deps.wakeUp(deviceId, WAKE_FOR_RECORDING_TIMEOUT_MS)
     return {
       outcome: wake.awoke ? 'woken' : 'did-not-wake',
       durationMs: wake.durationMs,

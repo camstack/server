@@ -1444,7 +1444,7 @@ export interface EventCatalog {
     }
   }
   /**
-   * Emitted by the battery cap provider when `wakeForStream` enters the
+   * Emitted by the battery cap provider when `wakeUp` enters the
    * wake-in-progress window. Subscribers (stream-broker manager) flip
    * the broker's placeholder reason to `'waking'` so encoded-path
    * viewers see a labelled tile instead of the generic reconnecting

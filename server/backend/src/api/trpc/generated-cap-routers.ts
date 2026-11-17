@@ -10281,9 +10281,9 @@ export function createCapRouter_lowPowerSleep(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getStatus(methodInput as any)
       }),
-    wakeForStream: protectedProcedure
-      .input(lowPowerSleepCapability.methods.wakeForStream.input.loose())
-      .output(lowPowerSleepCapability.methods.wakeForStream.output)
+    wakeUp: protectedProcedure
+      .input(lowPowerSleepCapability.methods.wakeUp.input.loose())
+      .output(lowPowerSleepCapability.methods.wakeUp.output)
       .mutation(async ({ input, ctx }) => {
         const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
         const p = resolveProvider(
@@ -10293,7 +10293,7 @@ export function createCapRouter_lowPowerSleep(
           createRemoteProxy,
         )
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
-        return p.wakeForStream(methodInput as any)
+        return p.wakeUp(methodInput as any)
       }),
   })
 }

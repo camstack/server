@@ -59,7 +59,7 @@ export const DEVICE_FEATURE_REQUIREMENTS = {
   // A battery READING (#459, Q2). Reported until the drivers stop hand-setting it.
   [DeviceFeature.BatteryOperated]: bound('battery'),
   // Sleeps and must be woken: the `low-power-sleep` cap, never the battery (Q2).
-  [DeviceFeature.Sleeps]: derived('low-power-sleep', ['wakeForStream']),
+  [DeviceFeature.Sleeps]: derived('low-power-sleep', ['wakeUp']),
   [DeviceFeature.Rebootable]: derived('reboot', ['reboot']),
   [DeviceFeature.Resyncable]: derived('resync', ['resync']),
   [DeviceFeature.NativeSnapshot]: reported(CAP_PENDING),
