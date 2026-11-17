@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.691] - 2026-11-17
+
 ### Changed
 
 - The workload capability is listed as not exported yet; its on/off reaches Home Assistant through its switch

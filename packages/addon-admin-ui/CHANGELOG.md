@@ -7,17 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
+## [1.2.692] - 2026-11-17
 
-- The device page of a workload shows its card: state, actions, resources, image, ports, addresses and the host
-- Build-your-self offers Camera grid and Terminal camera blocks; the Camera grids page is gone, recreate old grids as blocks.
-- Archive Review says why when the track read fails instead of leaving the zone and face / plate filters silently empty; Library → Exports declares its ?camera= filter, so switching to another Library section drops it.
 ### Added
 
 - A workload device's role (VM, container, LXC, app, host) can be picked in Customize
 
 ### Changed
 
+- The device page of a workload shows its card: state, actions, resources, image, ports, addresses and the host
+- Build-your-self offers Camera grid and Terminal camera blocks; the Camera grids page is gone, recreate old grids as blocks.
+- Archive Review says why when the track read fails instead of leaving the zone and face / plate filters silently empty; Library → Exports declares its ?camera= filter, so switching to another Library section drops it.
 - The command picker no longer offers 'sound the siren N times' for a siren that counts no plays (Hikvision); it still does when the play counts could not be read
 - Automations no longer offer Turn on / Turn off / Toggle for a switch that only reports its state (a PoE port seen only through an API key).
 - The device page's power menu hides power on / off when the linked switch only reports (D1058)

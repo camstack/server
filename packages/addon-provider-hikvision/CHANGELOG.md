@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.189] - 2026-11-17
+
 ### Changed
 
 - The siren declares that it counts seconds and refuses a trigger in plays

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.657] - 2026-11-17
+
 ### Changed
 
 - Playing an SD-card clip in the viewer now carries your authorisation to wake a sleeping battery camera, so the clip plays instead of being refused as sleeping; background reads still never wake it.

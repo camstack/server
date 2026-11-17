@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.160] - 2026-11-17
+
 ### Changed
 
 - VeSync accounts now sign in through the tsvesync client (they could not log in before), and the integration form has a connection test that names a refused password, a region neither VeSync endpoint accepts, or an unreachable cloud

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-unraid",
-  "version": "0.2.168",
+  "version": "0.2.169",
   "description": "Unraid device-provider addon for CamStack — an adoption creates the server's Gateway, the server as a workload host with its array, disk and notification entities, and one workload device per Docker container and VM",
   "keywords": [
     "camstack",
@@ -63,7 +63,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.891"
+      "server": ">=1.2.892"
     }
   },
   "files": [

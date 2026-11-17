@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.587] - 2026-11-17
+
 ### Added
 
 - New workload device type (roles vm, app-container, lxc, app, host) with one workload capability: state, start/stop/restart/pause/resume/force stop, resources with history, and started/stopped/crashed/recovered events

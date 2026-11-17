@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.159] - 2026-11-17
+
 ### Changed
 
 - normaliseIdentifiers turns a MAC, serial or vendor id into the stored identifier form and names every value it refuses.

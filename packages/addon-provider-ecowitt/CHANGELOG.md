@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.169] - 2026-11-17
+
 ### Changed
 
 - The integration has a Test button: it reads the gateway once and says whether the password was refused, the gateway wants one, the address is not an Ecowitt gateway, or it did not answer.

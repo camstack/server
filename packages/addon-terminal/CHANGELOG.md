@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.167] - 2026-11-17
+
 ### Changed
 
 - A Terminal's camera is now a Terminal camera block in Build-your-self; existing Terminal cameras are removed on upgrade and must be recreated there.

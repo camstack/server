@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.166] - 2026-11-17
+
 ### Changed
 
 - Discovery shows each switch's PoE ports under it, and a poll whose port or sensor read failed no longer removes the adopted port and sensor children

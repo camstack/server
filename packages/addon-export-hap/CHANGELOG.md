@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.204] - 2026-11-17
+
 ### Changed
 
 - A switch that only reports its state (a PoE port seen only through an API key) is not published to HomeKit as a Switch.

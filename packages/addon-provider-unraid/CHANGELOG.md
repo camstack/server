@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.169] - 2026-11-17
+
 ### Changed
 
 - Every disk and Docker container of a server gets its own entity: they no longer collapse onto one because their ids share the server prefix

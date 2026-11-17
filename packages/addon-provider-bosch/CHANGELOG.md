@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.58] - 2026-11-17
+
 ### Changed
 
 - Home Connect appliances also declare their MAC, serial and appliance id as device identifiers (the metadata is unchanged); a MAC or serial not received yet keeps the one declared before.
