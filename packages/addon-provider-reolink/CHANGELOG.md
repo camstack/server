@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- An NVR / Home Hub integration has a Test button: it logs in once and says whether the username or password was refused or the hub did not answer, with the channel count on success.
+
 ## [1.2.242] - 2026-11-16
 
 ### Changed

@@ -7,8 +7,10 @@
 import {
   defineEntryKind,
   entryBody,
+  type IntegrationTestConnectionResult,
   type RecordsAccess,
   RecordIntegrationInstances,
+  REDACTED_SECRET,
   type ResolvedInstance,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -20,6 +22,7 @@ import {
 } from './hub-connection.js'
 import type { HubIntegrationConnection } from './reolink-hub-manager.js'
 import { mailboxLinkField } from './email-push-bridge.js'
+import { type ReolinkHubProbeFactory, testReolinkHubConnection } from './reolink-connection-test.js'
 import { ReolinkSocketDebugFlagSchema } from './schema.js'
 
 export const ReolinkConnectionBodySchema = entryBody({
@@ -42,8 +45,7 @@ export type ReolinkConnectionBody = z.infer<typeof ReolinkConnectionBodySchema>
 export const reolinkConnectionsEntryKind = defineEntryKind('connections', {
   title: 'Reolink integrations',
   schema: ReolinkConnectionBodySchema,
-  writeTrigger:
-    'an operator adds, edits or removes a Reolink integration',
+  writeTrigger: 'an operator adds, edits or removes a Reolink integration',
 })
 
 /** Every kind this addon declares, keyed by its name. */
@@ -62,6 +64,55 @@ export interface ReolinkInstancesDeps {
   readonly onChanged: () => Promise<void>
   /** The registry row of an integration; null when the registry does not know it. */
   readonly registryEvidenceOf: (id: string) => Promise<ReolinkRegistryEvidence | null>
+  /** The Baichuan session the connection test logs in with. */
+  readonly makeHubProbe: ReolinkHubProbeFactory
+}
+
+/**
+ * The connection test: the stored hub under the edited form. A saved password is never retyped
+ * (the form hands back its redacted view), so the keychain value stands in.
+ */
+async function testReolinkInstance(
+  records: Pick<RecordsAccess, 'kind'>,
+  deps: Pick<ReolinkInstancesDeps, 'makeHubProbe'>,
+  input: { readonly id: string | null; readonly values: Readonly<Record<string, unknown>> },
+): Promise<IntegrationTestConnectionResult> {
+  const handle = records.kind(reolinkConnectionsEntryKind)
+  const stored = input.id === null ? null : ((await handle.getResolved(input.id))?.data ?? null)
+  const typed = input.values['password']
+  const password =
+    typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+      ? typed
+      : stored?.password
+  const merged: Record<string, unknown> = {}
+  for (const [key, value] of Object.entries({ ...stored, ...input.values, password })) {
+    if (key === 'name' || value === null || value === undefined) continue
+    merged[key] = value
+  }
+  const read = readHubConnection(merged)
+  switch (read.kind) {
+    case 'no-host':
+      return {
+        success: false,
+        status: 'inconclusive',
+        error:
+          'reolink: no NVR / Home Hub host on this integration — standalone cameras are tested one by one when they are added',
+      }
+    case 'no-password':
+      return {
+        success: false,
+        status: 'rejected',
+        error: 'reolink: enter the NVR / Home Hub password',
+      }
+    case 'password-locked':
+      return {
+        success: false,
+        status: 'inconclusive',
+        error: 'reolink: the stored password cannot be read right now (keychain unavailable)',
+      }
+    case 'ok':
+      return testReolinkHubConnection(read.connection, deps.makeHubProbe)
+  }
 }
 
 /** The record body as the connection form's flat values: no name, no unset keys. */
@@ -120,7 +171,7 @@ export function buildReolinkInstances(
         discovery: { mode: 'lan', scopedToInstance: false },
         instanceMode: 'multiple',
         kind: 'connection',
-        canTest: false,
+        canTest: true,
         kinds: [
           { id: 'connection', label: 'Reolink', functionCap: 'device-provider', role: 'devices' },
         ],
@@ -129,6 +180,7 @@ export function buildReolinkInstances(
       initialBody: (name): ReolinkConnectionBody => ({ name }),
       configured: (body) => (body.host ?? '').length === 0 || (body.password ?? '').length > 0,
       onChanged: () => deps.onChanged(),
+      test: (input) => testReolinkInstance(records, deps, input),
     },
   )
   return instances
