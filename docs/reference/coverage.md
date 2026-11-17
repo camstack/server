@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 8956 source files · 246 units claimed by at least one document (8925 files).**
+**253 units · 8957 source files · 246 units claimed by at least one document (8926 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -96,12 +96,12 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-benchmark` | 20 | `tooling` | `architecture/benchmark.md`, `decisions/adr-0646-a-benchmark-names-a-pool-and-never-swaps-an-engine-a-replay-runs-the-cameras-root-step-pinned.md`, `decisions/adr-0792-the-benchmark-page-is-node-benchmark-image-and-audio-and-the-session-replay-is-deleted.md`, +3 more | 2026-10-23 |
 | `packages/addon-export-hap/src/hksv` | 20 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md`, +10 more, 2 ADRs | 2026-09-29 |
 | `packages/addon-provider-homematic/src/devices` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-1044-an-event-emitter-declares-its-events-in-a-typed-vocabulary-under-one-category.md`, +1 more | 2026-11-08 |
+| `packages/addon-provider-vesync` | 20 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/cli/src/commands` | 20 | `tooling` | `decisions/adr-0838-clients-find-a-hub-over-mdns-of-its-https-endpoint-mesh-discovery-stays-retired.md`, `decisions/adr-0988-a-terminal-signs-in-by-browser-approval.md`, `architecture/authentication.md`, +3 more | 2026-10-21 |
 | `server/backend` | 20 | `api-surface` | `decisions/adr-0693-a-live-database-is-backed-up-by-its-owner-never-copied-as-files.md`, `design/2026-08-13-single-copy-addons-first-boot-install.md`, `architecture/overview.md`, +21 more, 6 ADRs | 2026-10-27 |
 | `packages/addon-cloudflare` | 19 | `remote-access` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0783-secrets-are-declared-by-schema-type-and-never-travel-on-argv-env-or-logs.md`, `decisions/adr-0234-forked-addons-spawn-after-settings-door.md`, +1 more | — |
 | `packages/addon-post-analysis/src/shared` | 19 | `post-analysis`, `recognition` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0867-the-capture-paths-materialise-no-media-copies-in-the-js-process.md`, `architecture/notifications.md`, +4 more, 1 ADR | 2026-11-12 |
 | `packages/addon-provider-tuya` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, 1 ADR | 2026-11-08 |
-| `packages/addon-provider-vesync` | 19 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |
 | `packages/types/src/generated` | 19 | `capabilities` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0648-a-device-extension-is-a-slot-declared-by-the-cap-that-owns-the-function-and-served-over-its-existing-store.md`, `decisions/adr-0936-a-customize-declaration-is-the-override-contract.md`, +2 more, 2 ADRs | — |
 | `packages/addon-auth` | 18 | `auth` | `decisions/adr-0777-an-auth-providers-only-enable-is-its-capability-toggle-on-identity-authentication.md`, `decisions/adr-0780-an-icon-setting-is-a-display-icon-vocabulary-key-chosen-with-the-shared-picker.md`, `decisions/adr-1013-one-instance-model.md`, +8 more | 2026-10-21 |
 | `packages/addon-provider-wyze` | 18 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md` | 2026-11-08 |

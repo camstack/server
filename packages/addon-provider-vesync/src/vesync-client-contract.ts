@@ -36,6 +36,8 @@ export interface VeSyncPurifierSnapshot {
   readonly name: string
   /** VeSync device model string (e.g. `Core300S`), when reported. */
   readonly model?: string
+  /** The device MAC (`macID` of the device list), when reported. */
+  readonly mac?: string
   /** Main power state. */
   readonly power: boolean
   /** Active fan speed as 0..100 inclusive. Null when the device has not yet

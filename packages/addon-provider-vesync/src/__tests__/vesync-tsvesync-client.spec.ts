@@ -40,6 +40,7 @@ function fakeFan(
   }
   return {
     cid,
+    macId: '',
     deviceName: `Purifier ${cid}`,
     deviceType: 'Core300S',
     get deviceStatus() {

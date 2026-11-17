@@ -16,6 +16,7 @@ import {
 import { vesyncPurifierSchema, type VeSyncSensorKind, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncPurifierSnapshot } from '../vesync-client-contract.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
+import { vesyncIdentifiers } from '../vesync-identifiers.js'
 import { VeSyncSensorDevice } from './vesync-sensor-device.js'
 import { VeSyncToggleDevice } from './vesync-toggle-device.js'
 
@@ -72,6 +73,8 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
   private readonly integrationId: string
 
   private snapshotUnsub: (() => void) | null = null
+  /** The last identity declaration that landed (D1059); an unchanged one is not re-sent. */
+  private lastIdentityKey: string | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = vesyncPurifierSchema.parse(ctx.persistedConfig ?? {})
@@ -192,6 +195,20 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
     const now = Date.now()
     this.runtimeState.setCapState(SWITCH_CAP, { on: purifier.power, lastChangedAt: now })
     this.runtimeState.setCapState(FAN_CAP, fanSlice(purifier, now))
+    void this.declareIdentity(purifier)
+  }
+
+  /** Declare the cloud cid and the MAC as typed identifiers (D1059), when they changed. */
+  private async declareIdentity(purifier: VeSyncPurifierSnapshot): Promise<void> {
+    const declaration = vesyncIdentifiers(purifier)
+    if (declaration === null) return
+    const key = JSON.stringify(declaration)
+    if (key === this.lastIdentityKey) return
+    this.lastIdentityKey = key
+    const result = await this.declareIdentifiers(declaration.identifiers, {
+      unread: declaration.unread,
+    })
+    if (result.outcome !== 'declared') this.lastIdentityKey = null
   }
 
   private resolveClient(): VeSyncClient {
