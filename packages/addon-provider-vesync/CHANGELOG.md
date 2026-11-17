@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.164] - 2026-11-17
+
 ### Changed
 
 - Purifiers declare their VeSync device id and MAC as identifiers, so the same purifier from another integration can be matched.

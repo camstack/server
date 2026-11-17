@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.659] - 2026-11-17
+
 ### Changed
 
 - A phantom cell is no longer armed or cleared by a track too brief to judge (under 1.5 s or 4 sightings); the skip is logged per camera
