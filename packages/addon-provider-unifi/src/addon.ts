@@ -4,6 +4,10 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
+  type DeviceSummary,
+  type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
   DeviceType,
   deviceAdoptionCapability,
   errMsg,
@@ -32,6 +36,12 @@ import { resolveUnifiWorkerScript, withSecretFile } from './unifi-worker-files.j
 import { UnifiClientRegistry } from './unifi-client-registry.js'
 import { buildUnifiDeviceAdopter } from './unifi-device-adopter.js'
 import { unifiStableId } from './unifi-discovery.js'
+import {
+  UNIFI_DISCOVERY_MODES,
+  type UnifiDroppedHit,
+  unifiConsoleCandidates,
+  unifiConsolesFromHits,
+} from './unifi-lan-discovery.js'
 import { reconcileInfraFeatures } from './unifi-feature-reconcile.js'
 import { UnifiReconciler, type IntegrationLifecycleKind } from './unifi-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './unifi-integration-device-cascade.js'
@@ -63,8 +73,10 @@ const UNIFI_MIGRATIONS_DATE = '2026-11-05'
  * out as accessory children) and each network client ({@link DeviceType.Presence}), all as
  * siblings. Cameras are not in scope.
  *
- * `instanceMode: multiple` — many controllers may be added. Network auto-discovery is not
- * implemented; the controller is added by host.
+ * `instanceMode: multiple` — many controllers may be added. A LAN scan finds a UniFi OS console
+ * through the Ubiquiti discovery broadcast (`unifi-lan-discovery.ts`) and offers it as an
+ * integration to set up, host prefilled; the API key is asked at setup. Access points and
+ * switches are never offered: they arrive as children of the adopted console.
  */
 export class UnifiProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-unifi'
@@ -340,8 +352,66 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
     })
   }
 
+  // ── LAN discovery: the scan engine finds it, this addon classifies the hits ──
+
   override async supportsDiscovery(): Promise<boolean> {
-    return false
+    return true
+  }
+
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return UNIFI_DISCOVERY_MODES
+  }
+
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
+    const scan = unifiConsolesFromHits(input.hits)
+    const proposal = unifiConsoleCandidates(scan.consoles, await this.knownControllerHosts())
+    for (const drop of [...scan.dropped, ...proposal.dropped]) this.logDroppedHit(drop)
+    this.ctx.logger.info('UniFi console discovery finished', {
+      meta: { found: scan.consoles.length, proposed: proposal.candidates.length },
+    })
+    return proposal.candidates
+  }
+
+  /** A hit the scan did not turn into a candidate is logged with its reason (D391). */
+  private logDroppedHit(drop: UnifiDroppedHit): void {
+    this.ctx.logger.debug('UniFi discovery: hit not proposed', {
+      meta: { host: drop.host, reason: drop.reason, detail: drop.detail ?? null },
+    })
+  }
+
+  /** The hosts the existing UniFi integrations dial; an unreadable one is skipped and logged. */
+  private async knownControllerHosts(): Promise<readonly string[]> {
+    try {
+      const all = await this.ctx.api.integrations.list.query()
+      const hosts: string[] = []
+      for (const integration of all) {
+        if (integration.addonId !== this.ctx.id) continue
+        try {
+          const read = await unifiConnectionOf(this.requireInstances(), integration.id)
+          if (read !== null) hosts.push(read.connection.host)
+        } catch (err) {
+          this.ctx.logger.warn('UniFi discovery: settings read failed', {
+            tags: { integrationId: integration.id },
+            meta: { error: errMsg(err) },
+          })
+        }
+      }
+      return hosts
+    } catch (err) {
+      this.ctx.logger.warn('UniFi discovery: integration list failed', {
+        meta: { error: errMsg(err) },
+      })
+      return []
+    }
+  }
+
+  override async adoptDiscoveredDevice(_input: {
+    candidate: DiscoveryCandidate
+  }): Promise<DeviceSummary> {
+    throw new Error('A UniFi console is set up as an integration, not added as a device')
   }
 
   override async supportsManualCreation(): Promise<boolean> {
