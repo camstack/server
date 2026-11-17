@@ -20,7 +20,7 @@ import type { AddonContext } from '@camstack/types'
 import { buildCameraAccessory } from './camera-accessory.js'
 import { buildGenericAccessory } from './generic-accessory.js'
 import type { MapperKind } from './kind.js'
-import type { CameraMapperOptions, Mapper } from './types.js'
+import type { CameraMapperOptions, DeviceMapper } from './types.js'
 
 export interface MapperFactoryInput {
   readonly ctx: AddonContext
@@ -29,7 +29,7 @@ export interface MapperFactoryInput {
   readonly options: CameraMapperOptions
 }
 
-export type MapperFactory = (input: MapperFactoryInput) => Promise<Mapper>
+export type MapperFactory = (input: MapperFactoryInput) => Promise<DeviceMapper>
 
 const REGISTRY: Readonly<Record<MapperKind, MapperFactory>> = {
   camera: buildCameraAccessory,
@@ -51,4 +51,4 @@ export {
   pickMapperKind,
   SUPPORTED_MAPPER_KINDS,
 } from './kind.js'
-export type { CameraMapperOptions, Mapper } from './types.js'
+export type { CameraMapperOptions, DeviceMapper, Mapper } from './types.js'

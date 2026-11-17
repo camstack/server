@@ -48,7 +48,7 @@ import {
   type ConfigSectionWithValues,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
-  type DeviceType,
+  type DeviceProxy,
   defineAddonMigrations,
   deviceExportCapability,
   deviceExportStatusInstanceOf,
@@ -68,11 +68,7 @@ import {
   saveExposedName,
   videoclipsCapability,
 } from '@camstack/types'
-import {
-  canonicalDeviceFingerprint,
-  type ExportTargetEntry,
-  resolveExportFingerprint,
-} from '@camstack/types/node'
+import { type ExportTargetEntry, resolveExportFingerprint } from '@camstack/types/node'
 import { uuid as HapUuid } from '@homebridge/hap-nodejs'
 import { z } from 'zod'
 import {
@@ -112,7 +108,14 @@ import { createClipLocationPorts, HksvClipLocation } from './hksv/clip-location.
 import { CLIP_REMUX_TIMEOUT_MS, createClipRemuxer } from './hksv/clip-remux.js'
 import { HksvClipStore } from './hksv/clip-store.js'
 import { CLIP_THUMBNAIL_TIMEOUT_MS, createClipThumbnailMinter } from './hksv/clip-thumbnail.js'
-import { recordabilityTokenFor, withRecordabilityToken } from './hksv/recordability-token.js'
+import { recordabilityTokenFor } from './hksv/recordability-token.js'
+import {
+  type AccessoryShape,
+  accessoryShapeKey,
+  type BuiltAccessoryShape,
+  describeShapeChange,
+  shapeCapsFor,
+} from './reconcile/accessory-shape.js'
 import { describeHomekitRecording, readHomekitRecordingActive } from './hksv/recording-active.js'
 import {
   createHksvClipPlanes,
@@ -129,7 +132,9 @@ import {
   type HapDecodeMemos,
 } from './mappers/builders/stream-hwaccel-memo.js'
 import {
+  type DeviceMapper,
   getMapperFactory,
+  type Mapper,
   HAP_EXPORTABLE_DEVICE_TYPES,
   type MapperKind,
   pickMapperKind,
@@ -344,6 +349,11 @@ interface DeviceSummary {
   readonly name: string
   readonly type: string
 }
+
+/** A read of the per-bridge HomeKit name: an answer (a name, or none stored), or no answer. */
+type ExposedNameRead =
+  | { readonly kind: 'answered'; readonly name: string | null }
+  | { readonly kind: 'unreadable' }
 
 // HAP-banned trivial pincodes (per spec).
 const BANNED_PINCODES = new Set<string>([
@@ -580,8 +590,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     // fires `device.probed` has flipped true, so `computeExportFingerprint`
     // returns the now-full shape instead of the carried-forward persisted one).
     // Both reconcile per-device; an unchanged restart rebuilds nothing.
-    this.subscribeDeviceProvisionedForReconcile()
-    this.subscribeDeviceReadyForReconcile()
+    this.subscribeDeviceChangesForReconcile()
     this.subscribeStorageLocationsForClips()
 
     const provider = this.buildExportProvider()
@@ -732,12 +741,8 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         deviceId: Number.parseInt(entry.deviceId, 10),
       })
       try {
+        // `attachMapper` records and persists the shape the accessory was built from.
         await this.attachMapper(inst, entry)
-        const numericId = Number.parseInt(entry.deviceId, 10)
-        if (Number.isFinite(numericId)) {
-          const fp = await this.computeExportFingerprint(inst, numericId)
-          if (fp !== null) await this.persistFingerprint(inst, numericId, fp)
-        }
       } catch (err) {
         log.warn('export-hap: failed to re-attach mapper on boot', {
           meta: { error: errMsg(err) },
@@ -1240,10 +1245,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     const next = inst.exposure.devices.filter((e) => e.deviceId !== deviceId)
     next.push(finalEntry)
     await this.setExposedDevices(inst, next)
-    if (Number.isFinite(numericId)) {
-      const fp = await this.computeExportFingerprint(inst, numericId)
-      if (fp !== null) await this.persistFingerprint(inst, numericId, fp)
-    }
     log.info('export-hap: exposed device', {
       meta: {
         instanceId: inst.id,
@@ -1259,12 +1260,27 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   private async exposedNameOf(instanceId: string, deviceId: string): Promise<string | null> {
+    // A failed read names nothing; the listing and the accessory keep the device name.
+    const read = await this.readExposedNameState(instanceId, deviceId)
+    return read.kind === 'answered' ? read.name : null
+  }
+
+  /**
+   * The HomeKit name of a device on a bridge, keeping "the store did not answer" apart from
+   * "no name is stored" — the reconcile must not take a failed read for a rename (D49).
+   */
+  private async readExposedNameState(
+    instanceId: string,
+    deviceId: string,
+  ): Promise<ExposedNameRead> {
     const numericId = Number.parseInt(deviceId, 10)
-    if (!Number.isFinite(numericId)) return null
+    if (!Number.isFinite(numericId)) return { kind: 'answered', name: null }
     try {
-      return readExposedName(await this.nameStore().read(numericId), instanceId, hapNameValidator)
+      return {
+        kind: 'answered',
+        name: readExposedName(await this.nameStore().read(numericId), instanceId, hapNameValidator),
+      }
     } catch (err) {
-      // A failed read names nothing; the listing and the accessory keep the device name.
       this.ctx.logger.warn('export-hap: HomeKit name unreadable', {
         tags: { deviceId: numericId },
         meta: {
@@ -1272,7 +1288,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           error: err instanceof Error ? err.message : String(err),
         },
       })
-      return null
+      return { kind: 'unreadable' }
     }
   }
 
@@ -1363,9 +1379,21 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     inst: BridgeInstance,
     entry: ExposedConfigEntry,
   ): Promise<{ childAccessoryUuids: readonly string[] }> {
+    const mapper = await this.buildMapper(inst, entry)
+    await this.publishMapper(inst, entry, mapper)
+    await this.recordBuiltShape(inst, entry, mapper.builtFrom)
+    // `childAccessoryUuids` is now vestigial — kept on the persisted
+    // shape so old entries from Round 2 (when children were
+    // standalone) still round-trip without a migration. Always empty
+    // for fresh entries.
+    return { childAccessoryUuids: [] as readonly string[] }
+  }
+
+  /** Build the accessory of one exposed device (the mapper factory of its kind). */
+  protected buildMapper(inst: BridgeInstance, entry: ExposedConfigEntry): Promise<DeviceMapper> {
     const factory = getMapperFactory(entry.mapperKind)
     const entrySettings = entry.settings ?? DEFAULT_DEVICE_SETTINGS
-    const mapper = await factory({
+    return factory({
       ctx: this.ctx,
       deviceId: entry.deviceId,
       displayName: entry.displayName,
@@ -1389,6 +1417,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         },
       },
     })
+  }
+
+  /** Put a built accessory on the bridge (or standalone) and mark it live. */
+  private async publishMapper(
+    inst: BridgeInstance,
+    entry: ExposedConfigEntry,
+    mapper: DeviceMapper,
+  ): Promise<void> {
     // A CAMERA is published STANDALONE — HomeKit cannot bridge one. Round 3
     // collapsed accessory children (siren / floodlight / spotlight) into
     // Services on this same Accessory, so `mapper.accessories` carries exactly
@@ -1403,6 +1439,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       mapperKind: entry.mapperKind,
       useBridge: entry.settings?.useBridge,
     })
+    // A rebuild replaces the live accessory: take the old one down first, so
+    // its event subscriptions (the doorbell's among them) die with it and the
+    // new one is the only server under this UUID.
+    const replaced = inst.exposed.get(entry.deviceId)
+    if (replaced !== undefined && replaced !== mapper) {
+      inst.exposed.delete(entry.deviceId)
+      await this.retireMapper(inst, entry.deviceId, replaced)
+    }
     for (const accessory of mapper.accessories) {
       const bridged = wantsBridge && (await inst.bridgeHost.add(accessory))
       if (bridged) continue
@@ -1414,11 +1458,6 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       })
     }
     inst.exposed.set(entry.deviceId, mapper)
-    // `childAccessoryUuids` is now vestigial — kept on the persisted
-    // shape so old entries from Round 2 (when children were
-    // standalone) still round-trip without a migration. Always empty
-    // for fresh entries.
-    return { childAccessoryUuids: [] as readonly string[] }
   }
 
   protected async detachMapper(inst: BridgeInstance, deviceId: string): Promise<void> {
@@ -1440,6 +1479,12 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       return
     }
     inst.exposed.delete(deviceId)
+    inst.builtShapes.delete(deviceId)
+    await this.retireMapper(inst, deviceId, mapper)
+  }
+
+  /** Take one mapper's accessories off the network and dispose it. */
+  private async retireMapper(inst: BridgeInstance, deviceId: string, mapper: Mapper): Promise<void> {
     for (const accessory of mapper.accessories) {
       // A BRIDGED accessory has no server of its own: taking it off the bridge
       // is the whole of the teardown, and calling `unpublish` on it would be a
@@ -1490,55 +1535,127 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   protected readonly exportSyncState = this.state('exportSyncState', ExportSyncStateSchema, {})
 
   /**
-   * Export fingerprint of a device from its PERSISTED features + type
-   * (`canonicalDeviceFingerprint`). Returns `null` on a transient API error or
-   * a device not yet in the registry — the caller then leaves the current
+   * The export fingerprint of a device: the key of the accessory shape it would
+   * be built with NOW (`reconcile/accessory-shape.ts` — type, features, the
+   * bound caps the mapper branches on, role, name, recording slot). Returns
+   * `null` on a transient API error, a device not yet in the registry, or
+   * bindings that could not be read — the caller then leaves the current
    * accessory untouched (safer than tearing it down on incomplete info).
    *
    * Gated on `device.probed`: while a device's initial feature-probe has NOT
    * completed, its FRESH shape is partial (probe-gated caps — PTZ / intercom —
-   * land a few seconds later). Returning the partial fingerprint would make
-   * `reconcileDevice` detach + re-attach the accessory on restart (Apple emits
-   * a "discovered" notification), then rebuild AGAIN once the probe lands.
-   * `resolveExportFingerprint` carries the persisted (last-advertised)
-   * fingerprint forward for an un-probed device so the reconcile sees NO change.
-   * A brand-new un-probed device with no persisted entry falls back to its
-   * fresh fingerprint (publishes once, acceptable).
+   * land a few seconds later). `resolveExportFingerprint` carries the persisted
+   * (last-advertised) fingerprint forward for an un-probed device so the
+   * reconcile sees NO change. A brand-new un-probed device with no persisted
+   * entry falls back to its fresh fingerprint (publishes once, acceptable).
    */
   protected async computeExportFingerprint(
     inst: BridgeInstance,
     deviceId: number,
   ): Promise<string | null> {
+    return (await this.readCurrentShape(inst, deviceId))?.key ?? null
+  }
+
+  /** {@link computeExportFingerprint} with the shape it keys, for the reconcile's log. */
+  private async readCurrentShape(
+    inst: BridgeInstance,
+    deviceId: number,
+  ): Promise<{ readonly key: string; readonly shape: AccessoryShape } | null> {
     try {
-      const device = await this.ctx.api.deviceManager.getDevice.query({
-        deviceId,
-      })
+      const device = await this.ctx.api.deviceManager.getDevice.query({ deviceId })
       if (!device) return null
-      const fresh = canonicalDeviceFingerprint({
-        deviceId,
-        deviceType: device.type,
-        features: device.features,
-      })
+      // A type that no longer maps to a mapper is not a shape to rebuild into.
+      const kind = pickMapperKind(device.type)
+      if (kind === null) return null
+      const proxy = await this.ctx.fetchDevice(deviceId)
+      const bound = proxy.binding?.entries.map((e) => e.capName) ?? []
+      // No bindings at all is "not answered yet", never "every cap is gone":
+      // rebuilding on it would strip a live accessory to nothing (D49, D315).
+      if (bound.length === 0) return null
+      const log = this.ctx.logger.withTags({ deviceId })
+      const caps =
+        kind === 'camera'
+          ? shapeCapsFor('camera', bound)
+          : shapeCapsFor('generic', await exportableCapsOf(proxy, log))
+      const named = await this.readExposedNameState(inst.id, String(deviceId))
+      // An unreadable name store moves nothing: the name the accessory carries stands.
+      const name =
+        named.kind === 'unreadable'
+          ? (inst.builtShapes.get(String(deviceId))?.shape.inputs.name ??
+            inst.findEntry(deviceId)?.displayName ??
+            device.name ??
+            `Device ${deviceId}`)
+          : (named.name ?? device.name ?? `Device ${deviceId}`)
+      const shape: AccessoryShape = {
+        inputs: {
+          kind,
+          deviceType: device.type,
+          features: device.features,
+          caps,
+          role: kind === 'generic' && typeof device.role === 'string' ? device.role : null,
+          name,
+        },
+        // Whether the camera can be RECORDED is part of what the accessory
+        // advertises: a camera whose RTSP profiles were unreadable when the
+        // accessory was built was refused HKSV for ever, because nothing that
+        // moved afterwards was described here (592, 2026-09-21).
+        recordability: await this.readRecordabilityToken(inst, deviceId, kind, proxy),
+      }
       const persisted = (await this.syncStateOf(inst)).get(deviceId)?.fingerprint
-      // Whether the camera can be RECORDED is part of what the accessory
-      // advertises, so it belongs in the fingerprint: a camera whose RTSP
-      // profiles were unreadable when the accessory was built was refused HKSV
-      // for ever, because nothing that moved afterwards was described here
-      // (592, 2026-09-21). See `hksv/recordability-token.ts`.
-      const withToken = withRecordabilityToken({
-        base: fresh,
-        token: await this.readRecordabilityToken(inst, deviceId, device.type),
-        persisted,
-      })
       // Absent `probed` (record from an older device-manager build) → treat as
       // not-ready → carry forward; never advertise a partial shape.
-      return resolveExportFingerprint({
+      const key = resolveExportFingerprint({
         ready: device.probed ?? false,
-        fresh: withToken,
+        fresh: accessoryShapeKey(shape, persisted),
         persisted,
       })
+      return { key, shape }
     } catch {
       return null
+    }
+  }
+
+  /**
+   * Remember the shape a live accessory was BUILT from, and persist its key as
+   * the last-advertised fingerprint. The bindings and role are the build's own
+   * (`builtFrom`); the name is the one the accessory carries. A registry that
+   * cannot answer leaves nothing recorded: the reconcile then falls back to the
+   * persisted key, as before.
+   */
+  private async recordBuiltShape(
+    inst: BridgeInstance,
+    entry: ExposedConfigEntry,
+    builtFrom: DeviceMapper['builtFrom'],
+  ): Promise<void> {
+    const deviceId = Number.parseInt(entry.deviceId, 10)
+    if (!Number.isFinite(deviceId)) return
+    try {
+      const device = await this.ctx.api.deviceManager.getDevice.query({ deviceId })
+      if (!device) return
+      const shape: AccessoryShape = {
+        inputs: {
+          kind: entry.mapperKind,
+          deviceType: device.type,
+          features: device.features,
+          caps: builtFrom.caps,
+          role: builtFrom.role,
+          name: entry.displayName,
+        },
+        recordability: await this.readRecordabilityToken(
+          inst,
+          deviceId,
+          entry.mapperKind,
+          await this.ctx.fetchDevice(deviceId),
+        ),
+      }
+      const persisted = (await this.syncStateOf(inst)).get(deviceId)?.fingerprint
+      const built: BuiltAccessoryShape = { shape, key: accessoryShapeKey(shape, persisted) }
+      inst.builtShapes.set(entry.deviceId, built)
+      await this.persistFingerprint(inst, deviceId, built.key)
+    } catch (err) {
+      this.ctx.logger.withTags({ deviceId }).debug('export-hap: built shape not recorded', {
+        meta: { error: errMsg(err) },
+      })
     }
   }
 
@@ -1553,11 +1670,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   private async readRecordabilityToken(
     inst: BridgeInstance,
     deviceId: number,
-    type: DeviceType | undefined,
+    kind: MapperKind,
+    proxy: DeviceProxy,
   ): Promise<string | null> {
-    if (pickMapperKind(type) !== 'camera') return null
+    if (kind !== 'camera') return null
     try {
-      const proxy = await this.ctx.fetchDevice(deviceId)
       const entries = await proxy.cameraStreams?.getProfileRtspEntries({})
       return recordabilityTokenFor({
         allowTranscode: inst.findEntry(deviceId)?.settings?.allowTranscode !== false,
@@ -1653,7 +1770,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         if (existing) clearTimeout(existing)
         const timer = setTimeout(() => {
           inst.pendingRebuildTimers.delete(deviceId)
-          void this.reconcileDevice(inst, deviceId)
+          this.runReconcile(inst, deviceId)
         }, 500)
         if (typeof timer.unref === 'function') timer.unref()
         inst.pendingRebuildTimers.set(deviceId, timer)
@@ -1679,6 +1796,24 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /**
+   * Every device change that can move an accessory's SHAPE reconciles it; the
+   * shape key (`reconcile/accessory-shape.ts`) then decides, so an event that
+   * moved nothing rebuilds nothing.
+   *   - `DeviceProvisioned` / `DeviceReady`: features and the probe gate;
+   *   - `DeviceBindingsChanged`: a cap bound or unbound — the doorbell a
+   *     composition block grafts after the boot built the accessory;
+   *   - `DeviceMetaChanged`: a rename or a role change.
+   * `DeviceStateChanged` is NOT here: it carries runtime slices, and no slice
+   * is a shape input.
+   */
+  protected subscribeDeviceChangesForReconcile(): void {
+    this.subscribeDeviceProvisionedForReconcile()
+    this.subscribeDeviceReadyForReconcile()
+    this.subscribeDeviceLifecycleForReconcile(EventCategory.DeviceBindingsChanged)
+    this.subscribeDeviceLifecycleForReconcile(EventCategory.DeviceMetaChanged)
+  }
+
+  /**
    * Subscribe to `DeviceReady` — fired once a device's initial feature-probe
    * completes — and reconcile. This is the CLEAN post-probe trigger: by the
    * time it fires, `device.probed` has flipped true, so the reconcile builds
@@ -1689,12 +1824,40 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /**
-   * Reconcile one exposed device against its persisted export fingerprint.
-   *   - fingerprint unchanged → no-op (the storm-killer: a respawn's binding
-   *     churn no longer rebuilds the accessory),
+   * Run {@link reconcileDevice} for one device, one at a time. A change that
+   * lands while one runs is not dropped and does not start a second, overlapping
+   * rebuild: it marks the running one to go again, which then reads the latest
+   * state. Two overlapping rebuilds left two live accessories under one UUID.
+   */
+  private runReconcile(inst: BridgeInstance, deviceId: string): void {
+    const running = inst.reconcileFlights.get(deviceId)
+    if (running !== undefined) {
+      running.rerun = true
+      return
+    }
+    const flight = { rerun: false }
+    inst.reconcileFlights.set(deviceId, flight)
+    void (async () => {
+      try {
+        do {
+          flight.rerun = false
+          await this.reconcileDevice(inst, deviceId)
+        } while (flight.rerun)
+      } finally {
+        inst.reconcileFlights.delete(deviceId)
+      }
+    })()
+  }
+
+  /**
+   * Reconcile one exposed device against the shape its live accessory was
+   * BUILT from (`inst.builtShapes`; the persisted key when nothing was recorded).
+   *   - shape unchanged → no-op (the storm-killer: a respawn's binding churn
+   *     that leaves every shape input alone rebuilds nothing),
    *   - exposed but not attached (boot re-attach failed) → attach,
-   *   - fingerprint changed → detach + re-attach (documented structural
-   *     unpublish+republish fallback) and persist the new fingerprint.
+   *   - shape changed → re-expose in place: the same accessory UUID (the
+   *     pairing and the Home tile survive), rebuilt from the current inputs,
+   *     with the inputs that moved named on the log line.
    * Errors are logged and swallowed — a failed reconcile leaves the prior
    * accessory up, which is strictly better than removing it.
    */
@@ -1705,48 +1868,87 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     if (!entry) return
     const log = this.ctx.logger.withTags({ deviceId: numericId })
 
-    const current = await this.computeExportFingerprint(inst, numericId)
+    const current = await this.readCurrentShape(inst, numericId)
     if (current === null) {
-      log.debug('export-hap: reconcile skipped — fingerprint unavailable (transient)')
+      log.debug('export-hap: reconcile skipped — shape unavailable (transient)')
       return
     }
-    const last = (await this.syncStateOf(inst)).get(numericId)
+    const built = inst.builtShapes.get(deviceId)
+    const builtKey = built?.key ?? (await this.syncStateOf(inst)).get(numericId)?.fingerprint
 
-    if (last?.fingerprint === current) {
+    if (builtKey === current.key) {
       if (!inst.exposed.has(deviceId)) {
         // Exposed in config but not attached (boot re-attach failed earlier) —
         // attach now; shape is unchanged so this is a first publish, not churn.
         try {
           await this.attachMapper(inst, entry)
-          await this.persistFingerprint(inst, numericId, current)
+          await this.dropIfUnexposed(inst, deviceId)
         } catch (err) {
           log.warn('export-hap: reconcile attach failed', {
             meta: { error: errMsg(err) },
           })
         }
       } else {
-        log.debug('export-hap: reconcile — fingerprint unchanged, no rebuild', {
-          meta: { hashPrefix: current.slice(0, 12) },
+        log.debug('export-hap: reconcile — shape unchanged, no rebuild', {
+          meta: { hashPrefix: current.key.slice(0, 12) },
         })
       }
       return
     }
 
-    log.info('export-hap: reconciling accessory — export shape changed', {
+    const changed =
+      built === undefined
+        ? ['no built shape recorded — compared with the persisted key']
+        : describeShapeChange(built.shape, current.shape)
+    log.info('export-hap: rebuilding accessory — shape changed', {
       meta: {
-        from: last?.fingerprint?.slice(0, 12) ?? 'none',
-        to: current.slice(0, 12),
+        changed: changed.join('; '),
+        from: builtKey?.slice(0, 12) ?? 'none',
+        to: current.key.slice(0, 12),
       },
     })
     try {
-      await this.detachMapper(inst, deviceId)
-      await this.attachMapper(inst, entry)
-      await this.persistFingerprint(inst, numericId, current)
+      await this.rebuildInPlace(inst, entry, current.shape.inputs.name)
     } catch (err) {
       log.warn('export-hap: reconcile rebuild failed', {
         meta: { error: errMsg(err) },
       })
     }
+  }
+
+  /**
+   * Rebuild a live accessory under the same UUID (the pairing and the Home tile
+   * survive): the new one replaces the old in `publishMapper`. Only the name
+   * is written back to the exposure, and only onto an entry that still exists
+   * when the build is done — the operator may have unexposed the device while
+   * it was building, and a reconcile must never expose it again.
+   */
+  private async rebuildInPlace(
+    inst: BridgeInstance,
+    entry: ExposedConfigEntry,
+    name: string,
+  ): Promise<void> {
+    const next: ExposedConfigEntry =
+      entry.displayName === name ? entry : { ...entry, displayName: name }
+    await this.attachMapper(inst, next)
+    if (await this.dropIfUnexposed(inst, entry.deviceId)) return
+    if (next === entry) return
+    await this.setExposedDevices(
+      inst,
+      inst.exposure.devices.map((e) => (e.deviceId === entry.deviceId ? { ...e, displayName: name } : e)),
+    )
+  }
+
+  /** After a reconcile's build: a device unexposed meanwhile is taken down again. */
+  private async dropIfUnexposed(inst: BridgeInstance, deviceId: string): Promise<boolean> {
+    const numericId = Number.parseInt(deviceId, 10)
+    if (inst.findEntry(numericId) !== null) return false
+    this.ctx.logger
+      .withTags({ deviceId: numericId })
+      .info('export-hap: device unexposed during its rebuild — taken down again')
+    await this.detachMapper(inst, deviceId)
+    await this.forgetFingerprint(inst, numericId)
+    return true
   }
 
   /**

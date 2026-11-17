@@ -11,11 +11,23 @@ import type { ExposedConfigEntry, HapBridgeExportsBody } from './hap-export-reco
 import type { HapBridgeIdentity } from './hap-instance-kinds.js'
 import { accessoryUuidFor, type MapperKind } from './mappers/kind.js'
 import type { Mapper } from './mappers/types.js'
+import type { BuiltAccessoryShape } from './reconcile/accessory-shape.js'
 import type { ExportTargetEntry } from '@camstack/types/node'
 
 export class BridgeInstance {
   /** The devices of this bridge that have a live accessory, by device id. */
   readonly exposed = new Map<string, Mapper>()
+  /**
+   * The shape each live accessory was BUILT from, and its key, by device id. A reconcile compares
+   * against this — not against the persisted key, which can describe a shape the accessory never
+   * had (a doorbell bound after a boot built a plain camera). Dropped with the accessory.
+   */
+  readonly builtShapes = new Map<string, BuiltAccessoryShape>()
+  /**
+   * The reconcile running for a device, by device id. One at a time per device: a change that
+   * lands meanwhile sets `rerun`, and the running one goes again with the latest state.
+   */
+  readonly reconcileFlights = new Map<string, { rerun: boolean }>()
   /** Pending rebuild timers per device id: debounce, cleared on detach. */
   readonly pendingRebuildTimers = new Map<string, ReturnType<typeof setTimeout>>()
   actionExports: ActionExports | null = null

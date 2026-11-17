@@ -33,7 +33,13 @@ import {
   rowsForCaps,
 } from './builders/generic/cap-service-table.js'
 import { accessoryUuidFor } from './kind.js'
-import type { BuilderContext, BuilderHandle, CameraMapperOptions, Mapper } from './types.js'
+import { shapeCapsFor } from '../reconcile/accessory-shape.js'
+import type {
+  BuilderContext,
+  BuilderHandle,
+  CameraMapperOptions,
+  DeviceMapper,
+} from './types.js'
 
 export interface GenericAccessoryInput {
   readonly ctx: AddonContext
@@ -42,7 +48,9 @@ export interface GenericAccessoryInput {
   readonly options: CameraMapperOptions
 }
 
-export async function buildGenericAccessory(input: GenericAccessoryInput): Promise<Mapper> {
+export async function buildGenericAccessory(
+  input: GenericAccessoryInput,
+): Promise<DeviceMapper> {
   const { ctx, deviceId, displayName, options } = input
   const numericId = Number.parseInt(deviceId, 10)
   if (!Number.isFinite(numericId)) {
@@ -96,6 +104,7 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
   return {
     accessory,
     accessories: [accessory],
+    builtFrom: { caps: shapeCapsFor('generic', capNames), role },
     async dispose(): Promise<void> {
       for (const handle of handles) {
         try {
