@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
+
 ## [1.2.587] - 2026-11-17
 
 ### Added
@@ -33,7 +37,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - setIdentifiers keeps the stored value of every kind the provider lists as unread (a failed read), and an unchanged value keeps its first readAt, so a re-declaration on every boot writes and emits nothing.
 - A provider declaration that read some identifier kinds and found nothing now removes those stale kinds; only a declaration where every kind is unread is skipped
 - videoclips.dialClipStream accepts the operator wake, and clip refusals gain wake-timeout for a woken camera that did not come up in time.
-- device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
 
 ## [1.2.586] - 2026-11-16
 

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
+
 ## [1.2.892] - 2026-11-17
 
 ### Added
@@ -22,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A workload restart is allowed to the same users as start and stop; force stop stays admin
 - The API exposes deviceManager.setIdentifiers and returns each device's declared identifiers.
 - Power source: a switch whose options read keeps failing warns once per device until a read succeeds, not on every status read
-- device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
 
 ## [1.2.891] - 2026-11-16
 
