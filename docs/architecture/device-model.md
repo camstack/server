@@ -979,6 +979,10 @@ A child under a container is named from its role or type, in the active locale's
 
 Diagnostic children (battery, temperature, humidity, illuminance, signal, last-seen, a plain number or enum, an update) do not count as the container's meaningful child. Parent names come from one slim device list shared by the page, never a query per row. Until that list has answered, the stored name is shown. Search still matches the stored name.
 
+## A device's identity: declared identifiers, not metadata ([D1059](../decisions/adr-1059-a-device-identity-is-declared-by-its-provider-not-written-into-metadata.md))
+
+`metadata` is free-form display text anyone with `setMetadata` may overwrite. A device's identity — MACs, `<manufacturer>:<serial>`, `<vendor>:<id>`, a machine UUID, a hostname, an IP — is the separate typed field `identifiers` on the device row. Only the provider that owns the device writes it: `this.declareIdentifiers({ mac, serial: { manufacturer, serial }, vendorUid, host })` from a `BaseDevice`, or `declareDeviceIdentifiers(...)` from a populator. Values are normalised by `normaliseIdentifiers` (a malformed or placeholder value is refused and logged with the device tag); each entry records `origin` (`read` | `derived`) and `readAt`; how much a key proves is `identifierStrength(key)`, never stored. A declaration replaces the previous one, an empty one is not sent, and an unchanged one emits nothing, so a provider declares on every connect. The operator sees them in Device Info → Hardware, read-only. `scripts/check-device-identifiers-declared.ts` fails a provider that writes a MAC / serial / uid into metadata without declaring it.
+
 ## Reading further
 
 - Aggregation is binding-driven: [D12](../decisions/adr-0012.md)

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device Info → Hardware lists the identifiers the device's provider declared, read-only.
+
 ## [1.2.691] - 2026-11-16
 
 ### Added

@@ -136,3 +136,20 @@ export type {
   NvrConfig,
   ProviderConfigs,
 } from './nvr.js'
+
+// ─── Device identifiers (D1059) ─────────────────────────────────────
+// The normaliser lives in `@camstack/types` (the provider-facing contract every
+// addon bundles); re-exported here so a client or a tool normalises the same way.
+export {
+  DeviceIdentifiersSchema,
+  identifierStrength,
+  normaliseIdentifiers,
+  normaliseMac,
+} from '@camstack/types'
+export type {
+  DeviceIdentifierKey,
+  DeviceIdentifiers,
+  DeviceIdentifierStrength,
+  NormalisedIdentifiers,
+  RawDeviceIdentifiers,
+} from '@camstack/types'

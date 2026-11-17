@@ -103,6 +103,19 @@ export class HomeConnectApplianceDevice extends BaseDevice<typeof homeConnectApp
     }
     const serialized = JSON.stringify(patch)
     if (Object.keys(patch).length === 0 || serialized === this.#lastInfo) return
+    // Provider-declared identifiers (D1059): the matchable identity, normalised;
+    // the metadata keys stay for display.
+    const serial = patch['serialNumber']
+    const mac = patch['mac']
+    const brand = patch['manufacturer']
+    await this.declareIdentifiers({
+      mac: typeof mac === 'string' ? mac : null,
+      serial:
+        typeof serial === 'string'
+          ? { manufacturer: typeof brand === 'string' ? brand : 'Bosch', serial }
+          : null,
+      vendorUid: { vendor: 'home-connect', id: this.haId },
+    })
     const action = this.ctx.api.deviceManager?.setMetadata
     if (!action) return
     try {

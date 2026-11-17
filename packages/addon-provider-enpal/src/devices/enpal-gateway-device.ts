@@ -12,7 +12,7 @@ import { z } from 'zod'
 import { ENPAL_SYSTEM } from '../config.js'
 import { ENPAL_BOX_ID, accessoryChildSpecs } from '../enpal-equipment.js'
 import { enpalConnections } from '../enpal-resolver.js'
-import { EnpalMetadataSync } from './enpal-metadata-sync.js'
+import { EnpalMetadataSync, enpalIdentifiers } from './enpal-metadata-sync.js'
 
 export const enpalGatewaySchema = z.object({
   equipment: z.literal(ENPAL_BOX_ID),
@@ -59,6 +59,7 @@ export class EnpalGatewayDevice extends BaseDevice<typeof enpalGatewaySchema> {
       getSnapshot: () => enpalConnections.getSnapshot(this.integrationId),
       write: async (patch) => {
         await this.ctx.api.deviceManager.setMetadata.mutate({ deviceId: this.id, patch })
+        await this.declareIdentifiers(enpalIdentifiers(patch))
       },
       logger: this.ctx.logger,
     })

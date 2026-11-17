@@ -25,6 +25,8 @@ import {
   type SourceInfo,
 } from './source-info.js'
 import { createEvent } from '../interfaces/event-bus.js'
+import { declareDeviceIdentifiers, type DeclareIdentifiersResult } from './declare-identifiers.js'
+import type { NormaliseIdentifiersOptions, RawDeviceIdentifiers } from './device-identifiers.js'
 import { ERROR_STATUS_COLD, errorCapability, type ErrorStatus } from '../capabilities/error.cap.js'
 import { errMsg } from '../utils/err-msg.js'
 import {
@@ -436,6 +438,30 @@ export abstract class BaseDevice<
         { type: 'device', id: this.stableId },
         { deviceId: this.id, sourceInfo: next },
       ),
+    )
+  }
+
+  /**
+   * Declare this device's identifiers (D1059): MAC(s), serial, vendor uid,
+   * machine uuid, hostname, IP — what a later step matches across integrations.
+   * Normalises `raw` (`normaliseIdentifiers`), logs every refused value, and
+   * writes the result through `device-manager.setIdentifiers`, which accepts it
+   * only from the provider that owns this device. The declaration REPLACES the
+   * previous one, so pass everything known in one call; a call where nothing
+   * survives normalisation writes nothing. Best-effort: never throws.
+   */
+  protected async declareIdentifiers(
+    raw: RawDeviceIdentifiers,
+    options?: NormaliseIdentifiersOptions,
+  ): Promise<DeclareIdentifiersResult> {
+    return declareDeviceIdentifiers(
+      {
+        deviceId: this.id,
+        logger: this.ctx.logger,
+        writer: this.ctx.api.deviceManager?.setIdentifiers,
+      },
+      raw,
+      options,
     )
   }
 

@@ -10,6 +10,7 @@
 import type {
   ChildLayout,
   DeviceDisplayOverride,
+  DeviceIdentifiers,
   IconKey,
   RoleDisplayDefault,
 } from '@camstack/types'
@@ -184,6 +185,10 @@ export interface PersistedDeviceMeta {
    *  lifecycle as `childLayout`. Absent ⇒ no override. Applied at render time
    *  only — storage stays in source units. */
   display?: DeviceDisplayOverride
+  /** Provider-declared identifiers (D1059), set via `setIdentifiers` by the
+   *  owning provider only. Absent ⇒ none declared. Rides the device row like
+   *  `display`, so a re-registration never clobbers it. */
+  identifiers?: DeviceIdentifiers
 }
 
 /**

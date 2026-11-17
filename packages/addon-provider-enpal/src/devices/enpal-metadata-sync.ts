@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger, type RawDeviceIdentifiers } from '@camstack/types'
 import { findEquipment, metadataOf } from '../enpal-equipment.js'
 import type { EnpalSnapshot } from '../enpal-snapshot.js'
 
@@ -37,4 +37,16 @@ export class EnpalMetadataSync {
       })
     }
   }
+}
+
+/**
+ * The identifiers (D1059) a piece's attributes carry: its own `serialNumber`,
+ * prefixed by the vendor. The serials of parts it reports about (battery,
+ * dongle, gateway) belong to other objects and are not this device's identity.
+ */
+export function enpalIdentifiers(
+  attributes: Readonly<Record<string, string>>,
+): RawDeviceIdentifiers {
+  const serial = attributes['serialNumber']
+  return { serial: serial === undefined ? null : { manufacturer: 'Enpal', serial } }
 }

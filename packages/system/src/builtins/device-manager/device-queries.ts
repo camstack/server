@@ -334,6 +334,7 @@ export async function listAll(
         : {}),
       ...(m.tags !== undefined ? { tags: m.tags } : {}),
       ...(m.display !== undefined ? { display: m.display } : {}),
+      ...(m.identifiers !== undefined ? { identifiers: m.identifiers } : {}),
       // Forked-worker accessory children (e.g. HA sensor entities)
       // persist entityId + system in the config blob. Reconstruct
       // identity-only sourceInfo for dispatch routing.
@@ -419,6 +420,7 @@ export async function getDevice(
       : {}),
     ...(m.tags !== undefined ? { tags: m.tags } : {}),
     ...(m.display !== undefined ? { display: m.display } : {}),
+    ...(m.identifiers !== undefined ? { identifiers: m.identifiers } : {}),
     // Forked-worker accessory children (e.g. HA sensor entities)
     // persist entityId + system in the config blob. Reconstruct
     // identity-only sourceInfo for dispatch routing.
@@ -541,6 +543,7 @@ function projectChildren(
         : {}),
       ...(m.tags !== undefined ? { tags: m.tags } : {}),
       ...(m.display !== undefined ? { display: m.display } : {}),
+      ...(m.identifiers !== undefined ? { identifiers: m.identifiers } : {}),
       // Forked-worker accessory children (e.g. HA sensor entities)
       // persist entityId + system in the config blob. Reconstruct
       // identity-only sourceInfo for dispatch routing.

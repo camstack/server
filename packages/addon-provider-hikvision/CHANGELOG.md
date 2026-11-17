@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Cameras declare their MAC, serial and IP as device identifiers.
+
 ## [1.2.188] - 2026-11-16
 
 ### Changed

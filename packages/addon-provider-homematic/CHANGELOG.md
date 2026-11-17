@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The CCU gateway declares its address as a device identifier.
+
 ## [1.2.204] - 2026-11-16
 
 ### Fixed

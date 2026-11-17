@@ -32,7 +32,7 @@
  */
 
 import type { ReolinkBaichuanApi, ReolinkDeviceInfo } from '@apocaliss92/nodelink-js'
-import type { DeviceContext } from '@camstack/types'
+import { declareDeviceIdentifiers, type DeviceContext } from '@camstack/types'
 
 export interface MetadataPopulatorTarget {
   readonly id: number
@@ -176,6 +176,22 @@ export async function populateReolinkMetadata(
       meta: { error: err instanceof Error ? err.message : String(err) },
     })
   }
+
+  // ── 1b. provider-declared identifiers (D1059) — the matchable identity,
+  // typed and normalised; the metadata keys above stay for display.
+  await declareDeviceIdentifiers(
+    {
+      deviceId: target.id,
+      logger: target.ctx.logger,
+      writer: target.ctx.api.deviceManager?.setIdentifiers,
+    },
+    {
+      mac: mac ?? null,
+      serial: info.serialNumber ? { manufacturer: 'Reolink', serial: info.serialNumber } : null,
+      vendorUid: target.uid ? { vendor: 'reolink', id: target.uid } : null,
+      ip: ip ?? null,
+    },
+  )
 
   // ── 2. deviceCache config blob (durable identifiers for stableId)
   const cachePatch: Record<string, unknown> = {}

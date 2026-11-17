@@ -82,6 +82,10 @@ export class RademacherGatewayDevice extends BaseDevice<typeof rademacherGateway
     })
     const key = JSON.stringify(patch)
     if (key === this.lastMetadataKey) return
+    await this.declareIdentifiers({
+      mac: identity?.uid ?? null,
+      host: manager.getConnection().host,
+    })
     const action = this.ctx.api.deviceManager?.setMetadata
     if (action === undefined) return
     try {

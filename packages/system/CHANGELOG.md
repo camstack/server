@@ -114,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Core blocks, schedulers, templates, actions and devices keep operator tags; renaming or removing a tag rewrites all of them in one call
 - Renaming or removing a tag now also rewrites notification rules
 - The tags list survives an unreachable owner (its count shows unknown); rename and remove refuse naming that owner, and cover every notification rule kind
+- The device manager stores each device's provider-declared identifiers and refuses them from anyone but the device's own provider.
 
 ### Removed
 

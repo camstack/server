@@ -18,7 +18,7 @@
  * error leaves whatever the previous probe wrote in place.
  */
 
-import type { DeviceContext } from '@camstack/types'
+import { declareDeviceIdentifiers, type DeviceContext } from '@camstack/types'
 import type { HikvisionIsapiClient } from './hikvision-isapi-client.js'
 
 export interface HikvisionMetadataPopulatorTarget {
@@ -101,6 +101,21 @@ export async function populateHikvisionMetadata(
       meta: { error: err instanceof Error ? err.message : String(err) },
     })
   }
+
+  // ── 1b. provider-declared identifiers (D1059) — the matchable identity,
+  // typed and normalised; the metadata keys above stay for display.
+  await declareDeviceIdentifiers(
+    {
+      deviceId: target.id,
+      logger: target.ctx.logger,
+      writer: target.ctx.api.deviceManager?.setIdentifiers,
+    },
+    {
+      mac: net?.mac ?? null,
+      serial: info.serialNumber ? { manufacturer: 'Hikvision', serial: info.serialNumber } : null,
+      ip: net?.ip ?? null,
+    },
+  )
 
   // ── 2. deviceCache config blob (durable identifiers for stableId)
   const cachePatch: Record<string, unknown> = {}

@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 629 methods carry a device reference, of which
- * 198 are on SYSTEM-scope caps.
+ * Coverage: 630 methods carry a device reference, of which
+ * 199 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -167,6 +167,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceManager.setChildLayout': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setDisabled': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setDisplay': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceManager.setIdentifiers': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setIntegrationId': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setLinkDeviceId': [{ name: "deviceId", form: "single", optional: false }, { name: "linkDeviceId", form: "single", optional: true }] as const,
   'deviceManager.setLocation': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -723,6 +724,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "deviceManager.setChildLayout",
   "deviceManager.setDisabled",
   "deviceManager.setDisplay",
+  "deviceManager.setIdentifiers",
   "deviceManager.setIntegrationId",
   "deviceManager.setLinkDeviceId",
   "deviceManager.setLocation",

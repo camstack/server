@@ -16,7 +16,7 @@ import {
 import { ENPAL_LEGACY_CONSUMPTION_NAME } from '../enpal-catalog.js'
 import { renameLegacyCatalogDevices } from './enpal-catalog-rename.js'
 import { enpalConnections } from '../enpal-resolver.js'
-import { EnpalMetadataSync } from './enpal-metadata-sync.js'
+import { EnpalMetadataSync, enpalIdentifiers } from './enpal-metadata-sync.js'
 import { backfillPrimaryChildPreference } from './enpal-preference-backfill.js'
 
 /**
@@ -70,6 +70,7 @@ export class EnpalEquipmentDevice extends BaseDevice<typeof enpalEquipmentSchema
       getSnapshot: () => enpalConnections.getSnapshot(this.integrationId),
       write: async (patch) => {
         await this.ctx.api.deviceManager.setMetadata.mutate({ deviceId: this.id, patch })
+        await this.declareIdentifiers(enpalIdentifiers(patch))
       },
       logger: this.ctx.logger,
     })

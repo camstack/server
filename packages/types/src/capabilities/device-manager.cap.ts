@@ -36,6 +36,7 @@ import {
 } from '../device/location-icon.js'
 import { SiteZoneSchema } from '../device/site-zone.js'
 import { SourceInfoSchema } from '../device/source-info.js'
+import { DeviceIdentifiersSchema } from '../device/device-identifiers.js'
 import { TagsFieldSchema } from '../tags/tag.js'
 import { ReadingQuantitySchema } from '../units/quantity.js'
 import { DeviceSearchInputSchema, DeviceSearchResultSchema } from './device-search.js'
@@ -168,6 +169,10 @@ export const DeviceInfoSchema = z.object({
   /** Hardware + identity blob (manufacturer / model / firmware / sn /
    *  uid / mac / …). Populated by drivers; editable via setMetadata. */
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  /** Provider-declared identifiers (D1059): typed, normalised, written only by
+   *  the owning provider via `setIdentifiers`; read-only for the operator.
+   *  Absent ⇒ the provider declared none. */
+  identifiers: DeviceIdentifiersSchema.optional(),
   /** Optional upstream-system identity + rendering envelope. See
    *  `SourceInfo` in `packages/types/src/device/source-info.ts`. */
   sourceInfo: SourceInfoSchema.optional(),
@@ -374,6 +379,8 @@ export const DeviceMetaSchema = z.object({
   disabled: z.boolean(),
   parentDeviceId: z.number().nullable(),
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
+  /** Provider-declared identifiers (D1059). See `DeviceMeta.identifiers`. */
+  identifiers: DeviceIdentifiersSchema.optional(),
   /** Optional upstream-system identity + rendering envelope. See
    *  `SourceInfo`. Present when the device has been persisted with a
    *  non-synthetic source identifier (HA entities, vendor MAC, …);
@@ -948,6 +955,23 @@ export const deviceManagerCapability = {
       z.object({
         deviceId: z.number(),
         patch: z.record(z.string(), z.unknown()),
+      }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /** Declare the device's identifiers (D1059) — the typed, normalised keys
+     *  (`mac`, `serial`, `machine-uuid`, `vendor-uid`, `hostname`, `ip`) a later
+     *  step matches across integrations. REPLACES the whole declaration; `null`
+     *  clears it. Accepted only from the provider that OWNS the device: the
+     *  caller stamp the transport sets (`callerAddonId`) must equal the row's
+     *  `addonId`, so an operator session — which carries no stamp — is refused.
+     *  Build the value with `normaliseIdentifiers` (`@camstack/types`); a device
+     *  calls it through `BaseDevice.declareIdentifiers`. */
+    setIdentifiers: method(
+      z.object({
+        deviceId: z.number(),
+        identifiers: DeviceIdentifiersSchema.nullable(),
       }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },

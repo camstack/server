@@ -4812,7 +4812,15 @@
       "none": "None",
       "autoPopulatedByTheDriver": "Auto-populated by the driver on every connect. Read-only.",
       "integration": "Integration",
-      "parent": "Parent"
+      "parent": "Parent",
+      "identifierMac": "MAC address",
+      "identifierSerial": "Serial number",
+      "identifierVendorUid": "Vendor ID",
+      "identifierMachineUuid": "Machine UUID",
+      "identifierHostname": "Hostname",
+      "identifierIp": "IP address",
+      "identifierDerived": "(derived)",
+      "identifiersDeclared": "Identifiers declared by the provider. Read-only."
     }
   },
   "shared": {

@@ -1334,6 +1334,42 @@ export {
   NOT_A_DEVICE,
 } from './device/cap-vocabulary/index.js'
 // Device-link value transform
+// Provider-declared device identifiers (D1059)
+export {
+  DEVICE_IDENTIFIER_KEYS,
+  DeviceIdentifierEntrySchema,
+  DeviceIdentifierKeySchema,
+  DeviceIdentifierOriginSchema,
+  DeviceIdentifiersSchema,
+  identifierStrength,
+  isEmptyIdentifiers,
+  normaliseIdentifiers,
+  normaliseMac,
+} from './device/device-identifiers.js'
+export type {
+  AcceptedValue,
+  DeviceIdentifierEntry,
+  DeviceIdentifierKey,
+  DeviceIdentifierOrigin,
+  DeviceIdentifiers,
+  DeviceIdentifierStrength,
+  NormaliseIdentifiersOptions,
+  NormalisedIdentifiers,
+  NormaliseResult,
+  RawDeviceIdentifiers,
+  RawSerialIdentifier,
+  RawVendorUidIdentifier,
+  RejectedIdentifier,
+  RejectedReason,
+} from './device/device-identifiers.js'
+export { declareDeviceIdentifiers } from './device/declare-identifiers.js'
+export type {
+  DeclareIdentifiersDeps,
+  DeclareIdentifiersOutcome,
+  DeclareIdentifiersResult,
+  IdentifiersWriter,
+  SetIdentifiersInput,
+} from './device/declare-identifiers.js'
 // Device management
 export type {
   ChildLayout,
