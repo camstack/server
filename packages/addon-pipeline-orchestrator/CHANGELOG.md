@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Only a camera that sleeps defaults to no motion source; a device that merely reports a battery gets the normal default
+- Serves viewer 1.0.721
 
 ## [1.2.698] - 2026-11-17
 
