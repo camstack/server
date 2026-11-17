@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.161] - 2026-11-17
+
 ### Changed
 
 - VeSync: new optional Country code on the account (ISO two letters, e.g. IT) so a non-US account can sign in; an 'auth code expired' refusal now says to set it
