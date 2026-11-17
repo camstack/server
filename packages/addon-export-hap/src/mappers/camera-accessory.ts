@@ -50,7 +50,13 @@ import {
 import { buildMultiTierNegotiation } from '../multi-tier/negotiation.js'
 import { tiersForSensor } from '../multi-tier/tiers-for-sensor.js'
 import { TierVideoCodec } from '../multi-tier/video-stream-tiers.js'
-import type { BuilderContext, BuilderHandle, CameraMapperOptions, Mapper } from './types.js'
+import { shapeCapsFor } from '../reconcile/accessory-shape.js'
+import type {
+  BuilderContext,
+  BuilderHandle,
+  CameraMapperOptions,
+  DeviceMapper,
+} from './types.js'
 
 export interface CameraAccessoryInput {
   readonly ctx: AddonContext
@@ -59,7 +65,7 @@ export interface CameraAccessoryInput {
   readonly options: CameraMapperOptions
 }
 
-export async function buildCameraAccessory(input: CameraAccessoryInput): Promise<Mapper> {
+export async function buildCameraAccessory(input: CameraAccessoryInput): Promise<DeviceMapper> {
   const { ctx, deviceId, displayName, options } = input
   const numericId = Number.parseInt(deviceId, 10)
   if (!Number.isFinite(numericId)) {
@@ -271,6 +277,9 @@ export async function buildCameraAccessory(input: CameraAccessoryInput): Promise
   return {
     accessory,
     accessories: [accessory],
+    // Every cap this build branched on — the doorbell decision included — so a
+    // later bind or unbind of one of them rebuilds the accessory.
+    builtFrom: { caps: shapeCapsFor('camera', capNames), role: null },
     async dispose(): Promise<void> {
       const log = ctx.logger.withTags({ deviceId: numericId })
       for (const h of handles) {

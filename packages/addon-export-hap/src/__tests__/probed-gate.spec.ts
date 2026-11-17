@@ -18,13 +18,13 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { EventCategory } from '@camstack/types'
 import type { SystemEvent } from '@camstack/types'
-import { canonicalDeviceFingerprint } from '@camstack/types/node'
 import { BridgeInstance } from '../bridge-instance.js'
 import type { BridgeHost } from '../bridge-host.js'
 import type { DurableState } from '@camstack/types'
 import type { z } from 'zod'
 import { ExportHapAddon, type ExportSyncStateSchema } from '../hap-export.addon.js'
 import { HAP_DEFAULT_INSTANCE_ID } from '../hap-instance-kinds.js'
+import { accessoryShapeKey } from '../reconcile/accessory-shape.js'
 
 type LifecycleHandler = (event: SystemEvent) => void
 
@@ -91,6 +91,8 @@ class TestAddon extends ExportHapAddon {
           },
         },
       },
+      // Bound, so the shape is answered; no `cameraStreams`, so no recording token.
+      fetchDevice: async () => ({ binding: { entries: [{ capName: 'motion-detection' }] } }),
       logger,
       eventBus: {
         subscribe: (filter: { category: EventCategory }, handler: LifecycleHandler) => {
@@ -148,8 +150,19 @@ function exposed(deviceId: number): FakeConfig['exposed'][number] {
   }
 }
 
+/** The accessory-shape key of camera 1 as these fixtures describe it (no name stored → `Device 1`). */
 const fp = (type: string, features: readonly string[]): string =>
-  canonicalDeviceFingerprint({ deviceId: 0, deviceType: type, features })
+  accessoryShapeKey({
+    inputs: {
+      kind: 'camera',
+      deviceType: type,
+      features,
+      caps: ['motion-detection'],
+      role: null,
+      name: 'Device 1',
+    },
+    recordability: null,
+  })
 
 /**
  * A camera's fingerprint carries what it CAN record beside its shape — the

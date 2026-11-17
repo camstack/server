@@ -19,6 +19,7 @@ import type { AddonContext, DeviceProxy, PinnedFfmpegResolver } from '@camstack/
 import type { Accessory } from '@homebridge/hap-nodejs'
 
 import type { HksvBuildOutcome } from '../hksv/build-outcome.js'
+import type { MapperShapeReport } from '../reconcile/accessory-shape.js'
 import type { HksvClipStore } from '../hksv/clip-store.js'
 import type { HapDecodeMemos } from './builders/stream-hwaccel-memo.js'
 
@@ -28,6 +29,15 @@ export interface Mapper {
   readonly accessories: readonly Accessory[]
   /** Tear down event subscriptions, timers, etc. */
   dispose(): Promise<void>
+}
+
+/**
+ * The mapper of an exposed DEVICE: it also reports the shape inputs only the
+ * build saw (the bindings it branched on, the role it read), so the live
+ * accessory keeps the shape it was BUILT from (`reconcile/accessory-shape.ts`).
+ */
+export interface DeviceMapper extends Mapper {
+  readonly builtFrom: MapperShapeReport
 }
 
 /**

@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A switch that only reports its state (a PoE port seen only through an API key) is not published to HomeKit as a Switch.
 - A device left with nothing to export because its switch only reports says so instead of 'bound: none' (D1058)
+- HomeKit doorbell rings were lost after a hub restart when the doorbell came from a composed block; the accessory now rebuilds when its doorbell binding appears
+- A HomeKit accessory now follows its device: a capability bound or removed, a role change or a rename rebuilds it in place (same pairing), and nothing else does
 
 ## [1.2.203] - 2026-11-16
 
