@@ -4316,7 +4316,7 @@
 
 ### `recording-export` → `recordingExport.*`
 
-- **Source:** `packages/types/src/capabilities/recording-export.cap.ts:526`
+- **Source:** `packages/types/src/capabilities/recording-export.cap.ts:534`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IRecordingExportProvider`
@@ -5139,7 +5139,7 @@
 | getClipPlayback | `videoclips.getClipPlayback` | query | protected | `{ deviceId: number; clipId: string; profile?: CamProfileSchema }` | `ClipPlaybackSchema` |
 | readClipBytes | `videoclips.readClipBytes` | query | protected | `{ deviceId: number; clipId: string; provider: string; profile?: CamProfileSchema; maxBytes?: number; wake?: ClipWakeSchema }` | `ClipBytesSchema` |
 | offerClipBytes | `videoclips.offerClipBytes` | query | protected | `{ deviceId: number; clipId: string; provider: string; profile?: CamProfileSchema; maxBytes?: number; wake?: ClipWakeSchema }` | `ClipBytesOfferSchema` |
-| dialClipStream | `videoclips.dialClipStream` | query | protected | `{ deviceId: number; clipId: string; provider: string; profile?: CamProfileSchema; audio?: ClipStreamAudioSchema }` | `ClipStreamDialSchema` |
+| dialClipStream | `videoclips.dialClipStream` | query | protected | `{ deviceId: number; clipId: string; provider: string; profile?: CamProfileSchema; audio?: ClipStreamAudioSchema; wake?: ClipWakeSchema }` | `ClipStreamDialSchema` |
 | getPlaybackOptions | `videoclips.getPlaybackOptions` | query | protected | `{ deviceId: number; provider: string }` | `ClipPlaybackOptionsSchema` |
 
 ### `viewer-ui` → `viewerUi.*`

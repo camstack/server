@@ -198,6 +198,10 @@ async function harness(
     logger,
     resolveDevice: async () => device,
     resolveFfmpeg: async () => catScript,
+    // No read in this spec carries an authorisation, so a wake is a defect.
+    wakeDevice: async () => {
+      throw new Error('this spec never authorises a wake')
+    },
   })
   const list = async (): Promise<string> => {
     const clips = await service.provider.listClips({

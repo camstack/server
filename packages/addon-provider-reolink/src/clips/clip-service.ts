@@ -106,6 +106,15 @@ export interface ClipServiceDeps {
   readonly logger: IScopedLogger
   /** `null` when this device is not a Reolink camera in this runner. */
   resolveDevice(deviceId: number): Promise<ClipDeviceRef | null>
+  /**
+   * Wake a sleeping standalone battery camera and wait for it, under
+   * `timeoutMs` — the camera's own operator wake (`wakeIfSleeping`, the one a
+   * config button and the clip timer already drive), never a second one.
+   * Resolves `true` when the camera is up (or was never asleep), `false` when
+   * the wake did not bring it up inside the bound. Called ONLY on a clip read
+   * or dial that carries {@link ClipWake} `authorised`.
+   */
+  wakeDevice(deviceId: number, timeoutMs: number): Promise<boolean>
   /** The node's pinned ffmpeg (D540), asked at the point of use so a later
    *  successful resolution is picked up. A rejection is a named refusal —
    *  never a PATH `ffmpeg`. */
@@ -130,9 +139,12 @@ export type GateClipDeviceOutcome =
   | {
       readonly kind: 'refused'
       /** The branch that refused, as the log line names it. */
-      readonly branch: 'unknown-device' | 'sleeping' | 'uid-missing'
+      readonly branch: 'unknown-device' | 'sleeping' | 'wake-timeout' | 'uid-missing'
       /** The same refusal in the clip-export vocabulary (D572). */
-      readonly code: Extract<ClipBytesRefusalCode, 'catalog-unreachable' | 'sleeping'>
+      readonly code: Extract<
+        ClipBytesRefusalCode,
+        'catalog-unreachable' | 'sleeping' | 'wake-timeout'
+      >
       readonly detail: string
     }
 
@@ -183,6 +195,14 @@ export interface ClipService {
   hostBusy(hostKey: string): boolean
 }
 
+/**
+ * How long an AUTHORISED clip read or dial waits for a sleeping standalone
+ * battery camera to come up — the bound `wakeIfSleeping` already applies to
+ * every other operator wake on this provider. Past it the read is refused
+ * `wake-timeout`, naming this number, and no session is opened.
+ */
+export const CLIP_WAKE_TIMEOUT_MS = 15_000
+
 export function createClipService(deps: ClipServiceDeps): ClipService {
   const now = deps.now ?? (() => Date.now())
   const cache = new ClipCatalogCache<ReolinkClipRow>({ now })
@@ -214,6 +234,21 @@ export function createClipService(deps: ClipServiceDeps): ClipService {
    * a battery camera the operator authorised once.
    */
   const producing = new Map<string, Promise<PrepareClipBytesOutcome>>()
+  /**
+   * One wake in flight per camera. The file map above de-duplicates a
+   * production per twin; a dial and a read of DIFFERENT twins, or two dials,
+   * would otherwise each send their own wake to the same radio.
+   */
+  const waking = new Map<number, Promise<boolean>>()
+  const wakeOnce = (deviceId: number): Promise<boolean> => {
+    const inFlight = waking.get(deviceId)
+    if (inFlight !== undefined) return inFlight
+    const started = deps.wakeDevice(deviceId, CLIP_WAKE_TIMEOUT_MS).finally(() => {
+      waking.delete(deviceId)
+    })
+    waking.set(deviceId, started)
+    return started
+  }
 
   const rowFor = (deviceId: number, clipKey: string): ReolinkClipRow | null => {
     // The row is whatever the catalog last listed for this key. It is held by
@@ -453,7 +488,7 @@ export function createClipService(deps: ClipServiceDeps): ClipService {
   const gateClipDevice = async (input: GateClipDeviceInput): Promise<GateClipDeviceOutcome> => {
     const { deviceId, clipKey, twin, path } = input
     const tags = { deviceId }
-    const device = await deps.resolveDevice(deviceId)
+    let device = await deps.resolveDevice(deviceId)
     if (device === null) {
       deps.logger.warn('videoclips: no Reolink camera here to fetch this clip from', {
         tags,
@@ -484,11 +519,45 @@ export function createClipService(deps: ClipServiceDeps): ClipService {
         }
       }
       // One authorised yes is ONE wake, and it is spent HERE, once: the
-      // in-flight map above is what stops a second caller buying a second one.
+      // in-flight maps above are what stop a second caller buying a second
+      // one. The camera is woken and WAITED for under a bound — a fetch sent
+      // at a radio that is still coming up is a `camera-refused` that blames
+      // the wrong thing.
       deps.logger.warn('videoclips: waking a sleeping battery camera on an authorised clip read', {
         tags,
-        meta: { clipKey, twin, path, branch: 'wake-authorised' },
+        meta: { clipKey, twin, path, branch: 'wake-authorised', timeoutMs: CLIP_WAKE_TIMEOUT_MS },
       })
+      const up = await wakeOnce(deviceId)
+      if (!up) {
+        deps.logger.warn('videoclips: the authorised wake did not bring the camera up in time', {
+          tags,
+          meta: { clipKey, twin, path, branch: 'wake-timeout', timeoutMs: CLIP_WAKE_TIMEOUT_MS },
+        })
+        return {
+          kind: 'refused',
+          branch: 'wake-timeout',
+          code: 'wake-timeout',
+          detail:
+            `device ${deviceId} was woken on the operator's authorisation and did not come up ` +
+            `within ${CLIP_WAKE_TIMEOUT_MS} ms — the clip was not fetched`,
+        }
+      }
+      // The ref above is a snapshot taken asleep; the fetch runs on the
+      // camera as it is NOW.
+      const awake = await deps.resolveDevice(deviceId)
+      if (awake === null) {
+        deps.logger.warn('videoclips: the camera left this runner while it was being woken', {
+          tags,
+          meta: { clipKey, twin, path, branch: 'unknown-device' },
+        })
+        return {
+          kind: 'refused',
+          branch: 'unknown-device',
+          code: 'catalog-unreachable',
+          detail: `device ${deviceId} is not a Reolink camera on this node`,
+        }
+      }
+      device = awake
     }
     // The uid requirement is the hub child's, never every camera's
     // (`clip-addressing.ts`): a standalone ignores it.
@@ -785,11 +854,17 @@ export function createClipService(deps: ClipServiceDeps): ClipService {
     }),
     prepareBytes,
     prepareOffer,
-    prepareStreamDial: async ({ deviceId, row, twin, audio }) => {
+    prepareStreamDial: async ({ deviceId, row, twin, audio, wake }) => {
       // The same gate the file path and the stream route run — a sleeping
       // standalone, a hub child with no uid — decided BEFORE a URL exists,
       // so a refusal is named at the cap and no dial is minted for nothing.
-      const gate = await gateClipDevice({ deviceId, clipKey: row.clipKey, twin, path: 'stream' })
+      const gate = await gateClipDevice({
+        deviceId,
+        clipKey: row.clipKey,
+        twin,
+        path: 'stream',
+        ...(wake !== undefined ? { wake } : {}),
+      })
       if (gate.kind === 'refused') return { kind: 'refused', code: gate.code, detail: gate.detail }
       const minted = await streamDial.mint({ deviceId, clipKey: row.clipKey, twin, audio })
       if (minted.kind === 'refused') {

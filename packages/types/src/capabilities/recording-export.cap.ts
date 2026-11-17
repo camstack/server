@@ -320,6 +320,14 @@ export const ClipExportFailureSchema = z.enum([
    * rule 3).
    */
   'wake-expired',
+  /**
+   * The operator authorised a wake, it was SENT, and the camera did not come
+   * up inside the bound the provider waits for. The prose names the bound. Not
+   * `sleeping` — that one means nobody authorised a wake — and not
+   * `camera-refused` — the camera never answered at all. One authorised yes
+   * is one wake, so the provider does not try again on the same ask.
+   */
+  'wake-timeout',
 ])
 export type ClipExportFailure = z.infer<typeof ClipExportFailureSchema>
 

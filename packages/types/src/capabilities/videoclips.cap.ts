@@ -1077,6 +1077,17 @@ export const videoclipsCapability = {
          * ask is zero).
          */
         audio: ClipStreamAudioSchema.optional(),
+        /**
+         * The operator's authorisation to wake a sleeping camera for this
+         * dial — the same {@link ClipWakeSchema} the byte reads carry. Absent
+         * — the default — means a sleeping standalone battery camera is
+         * REFUSED by name before any URL is minted. A caller sets it only
+         * when a viewer itself asked for the clip (the broker's `playClip`);
+         * a prefetch, a reconcile or a retry never does. With it, the
+         * provider wakes the camera and waits under a bound; a camera that
+         * does not come up is refused `wake-timeout`, naming the wait.
+         */
+        wake: ClipWakeSchema.optional(),
       }),
       ClipStreamDialSchema,
       { kind: 'query', auth: 'protected' },

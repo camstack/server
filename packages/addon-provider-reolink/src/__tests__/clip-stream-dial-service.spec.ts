@@ -11,7 +11,7 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { CLIP_SOURCE_ONBOARD, mintClipId } from '../clips/clip-identity.js'
-import { type ClipService, createClipService } from '../clips/clip-service.js'
+import { CLIP_WAKE_TIMEOUT_MS, type ClipService, createClipService } from '../clips/clip-service.js'
 import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
 import { createRecordingLogger, type RecordingSink } from './clip-test-logger.js'
@@ -150,6 +150,7 @@ async function harness(options: { device?: Partial<ClipDeviceRef> } = {}) {
   const getApi = vi.fn(async () => api)
   /** Flipped by a test AFTER the row is listed: a camera that fell asleep. */
   const state = { isBattery: false, sleeping: false }
+  const wakes: { deviceId: number; timeoutMs: number }[] = []
   const device: ClipDeviceRef = {
     deviceId: 107,
     channel: 0,
@@ -171,6 +172,11 @@ async function harness(options: { device?: Partial<ClipDeviceRef> } = {}) {
     logger,
     resolveDevice: async () => device,
     resolveFfmpeg: async () => catScript,
+    wakeDevice: async (deviceId, timeoutMs) => {
+      wakes.push({ deviceId, timeoutMs })
+      state.sleeping = false
+      return true
+    },
   })
   cleanups.push(async () => {
     await service.disposeClipStreamDial()
@@ -185,18 +191,19 @@ async function harness(options: { device?: Partial<ClipDeviceRef> } = {}) {
     })
     return clips[0]?.id ?? ''
   }
-  const dial = (clipId: string, profile?: 'high' | 'low' | 'mid') =>
+  const dial = (clipId: string, profile?: 'high' | 'low' | 'mid', wake?: 'authorised') =>
     service.provider.dialClipStream?.({
       deviceId: 107,
       clipId,
       provider: REOLINK_ADDON_ID,
       ...(profile ? { profile } : {}),
+      ...(wake ? { wake } : {}),
     })
   const fallAsleep = (): void => {
     state.isBattery = true
     state.sleeping = true
   }
-  return { service, list, dial, download, getApi, logger, bodies, fallAsleep }
+  return { service, list, dial, download, getApi, logger, bodies, fallAsleep, wakes }
 }
 
 describe('videoclips.dialClipStream through the real service', () => {
@@ -266,5 +273,20 @@ describe('videoclips.dialClipStream through the real service', () => {
         'branch'
       ],
     ).toBe('sleeping')
+    expect(h.wakes).toEqual([])
+  })
+
+  it('an AUTHORISED dial on a sleeping standalone wakes it, waits, then mints the URL', async () => {
+    const h = await harness()
+    const id = await h.list()
+    h.getApi.mockClear()
+    h.fallAsleep()
+    const dialed = await h.dial(id, undefined, 'authorised')
+    expect(dialed).toMatchObject({ transport: 'forward-only' })
+    expect(h.wakes).toEqual([{ deviceId: 107, timeoutMs: CLIP_WAKE_TIMEOUT_MS }])
+    expect(
+      h.logger.warns.find((l) => l.extras.meta?.['branch'] === 'wake-authorised')?.extras.tags,
+    ).toEqual({ deviceId: 107 })
+    expect(h.logger.infos.find((l) => l.message.includes('dial minted'))).toBeDefined()
   })
 })

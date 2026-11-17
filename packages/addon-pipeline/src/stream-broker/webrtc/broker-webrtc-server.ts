@@ -89,10 +89,10 @@ import {
   type TimelineSessionClipFeeder,
 } from '../recorded/timeline-session.js'
 import { createClipFileSource } from '../recorded/clip-file-source.js'
+import type { ClipDialArgs, ClipReadArgs } from '../recorded/clip-cap-input.js'
 import { chooseClipPath, createRefusedClipFeeder } from '../recorded/clip-path-choice.js'
 import {
   createClipStreamFeeder,
-  type ClipStreamAudioAsk,
   type ClipStreamDialAnswer,
 } from '../recorded/clip-stream-feeder.js'
 import type { Fmp4AudioCodec } from '../recorded/fmp4-stream-demux.js'
@@ -212,15 +212,12 @@ export interface BrokerWebrtcServerOptions {
    * is decoded in this process (D9/D18 — frames never cross a process boundary
    * at frame-rate).
    */
-  readonly readClipBytes?: (args: {
-    deviceId: number
-    clipId: string
-    /** The `addonId` holding the file — NAMED, never left to in-process
-     *  resolution, which hands this addon its own sibling (D554's rule, one
-     *  method over; measured on 3628, 2026-09-21). */
-    provider: string
-    profile: CamProfile | null
-  }) => Promise<Uint8Array>
+  readonly readClipBytes?: (
+    /** `provider` is NAMED, never left to in-process resolution, which hands
+     *  this addon its own sibling (D554's rule, one method over; measured on
+     *  3628, 2026-09-21). `wake` is the viewer's, from its `playClip`. */
+    args: ClipReadArgs,
+  ) => Promise<Uint8Array>
   /**
    * Where a clip's STREAM is dialled (`videoclips.dialClipStream` — D597).
    *
@@ -235,13 +232,7 @@ export interface BrokerWebrtcServerOptions {
    * transcodes to before it muxes. It travels on the dial because the mux is
    * spawned once, ahead of the first byte, and cannot gain a track later.
    */
-  readonly dialClipStream?: (args: {
-    deviceId: number
-    clipId: string
-    provider: string
-    profile: CamProfile | null
-    audio: ClipStreamAudioAsk
-  }) => Promise<ClipStreamDialAnswer>
+  readonly dialClipStream?: (args: ClipDialArgs) => Promise<ClipStreamDialAnswer>
   /**
    * Resolve the ffmpeg binary path used by the recorded-playback demuxers
    * (`segment-demux` / `segment-audio` run one ffmpeg subprocess per fragment).
@@ -2414,6 +2405,8 @@ export class BrokerWebrtcServer {
                   provider: handle.provider,
                   profile: handle.profile,
                   audio,
+                  // The viewer's own `playClip` authorised it (D173's demand).
+                  ...(handle.wake !== undefined ? { wake: handle.wake } : {}),
                 }),
               open: openClipStream,
               audio: streamAudio,

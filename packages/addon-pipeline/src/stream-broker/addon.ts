@@ -58,6 +58,7 @@ import { DEFAULT_PREBUFFER_SEC, PREBUFFER_MAX_SEC, PREBUFFER_MIN_SEC } from './p
 import { DEFAULT_PRIME_BURST_BOUND } from './rtsp/rtsp-restreamer.js'
 import { CameraStreamsProvider, WebrtcSessionProvider } from './device-scoped-providers'
 import { BrokerWebrtcServer } from './webrtc/broker-webrtc-server'
+import { clipDialCapInput, clipReadCapInput } from './recorded/clip-cap-input.js'
 import { dialAnswerFromError } from './recorded/clip-stream-dial-answer.js'
 import { startBrokerMemReport } from './broker-mem-report.js'
 import { EventLoopStallMonitor } from './event-loop-stall-monitor'
@@ -810,30 +811,28 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
       // and the clip source turns that into a named refusal the operator sees
       // rather than a frozen frame.
       readClipBytes: async (args) => {
-        const res = await this.ctx.api.videoclips.readClipBytes.query({
-          deviceId: args.deviceId,
-          clipId: args.clipId,
-          // NAMED, always. This broker lives in the same addon as the
-          // RECORDER's videoclips provider, and with no provider named the
-          // in-process resolution handed the read to that sibling — which
-          // implements the method only to explain that an analytics visit has
-          // no file behind it. Every onboard clip died on that sentence
-          // (3628, 2026-09-21): a flash of video, then nothing.
-          // `provider` is the WHOLE pin, and it is now honoured on both paths:
-          // the hub's mount (`pinnedProvider`) and — since D593 — the Moleculer
-          // transport this call really travels on (`narrowToPinnedProvider`).
-          //
-          // A second field here was tried and was never read. This call leaves
-          // the runner over Moleculer, which used to take `candidates[0]` of
-          // every service exposing `videoclips.readClipBytes`: the recorder
-          // ("an analytics visit has no file behind it"), then export-hap
-          // ("was not minted by the HomeKit source") after a redeploy in a
-          // different order — the same clip, two different wrong answers, with
-          // the provider named twice over and nothing reading either field
-          // (measured 2026-09-22). A pin belongs where the dispatch happens.
-          provider: args.provider,
-          ...(args.profile !== null ? { profile: args.profile } : {}),
-        })
+        // `provider` is NAMED, always. This broker lives in the same addon as the
+        // RECORDER's videoclips provider, and with no provider named the
+        // in-process resolution handed the read to that sibling — which
+        // implements the method only to explain that an analytics visit has
+        // no file behind it. Every onboard clip died on that sentence
+        // (3628, 2026-09-21): a flash of video, then nothing.
+        // `provider` is the WHOLE pin, and it is now honoured on both paths:
+        // the hub's mount (`pinnedProvider`) and — since D593 — the Moleculer
+        // transport this call really travels on (`narrowToPinnedProvider`).
+        //
+        // A second field here was tried and was never read. This call leaves
+        // the runner over Moleculer, which used to take `candidates[0]` of
+        // every service exposing `videoclips.readClipBytes`: the recorder
+        // ("an analytics visit has no file behind it"), then export-hap
+        // ("was not minted by the HomeKit source") after a redeploy in a
+        // different order — the same clip, two different wrong answers, with
+        // the provider named twice over and nothing reading either field
+        // (measured 2026-09-22). A pin belongs where the dispatch happens.
+        //
+        // `wake` rides along only when the viewer's `playClip` set it — the
+        // operator path; `clipReadCapInput` is the one composition.
+        const res = await this.ctx.api.videoclips.readClipBytes.query(clipReadCapInput(args))
         return new Uint8Array(Buffer.from(res.base64, 'base64'))
       },
       // The clip STREAM's dial (D597): one cap call for a one-shot URL on the
@@ -844,17 +843,12 @@ export class StreamBrokerAddon extends BaseAddon<StreamBrokerConfig> {
       // is `unavailable`, a clip-vocabulary refusal keeps its code.
       dialClipStream: async (args) => {
         try {
-          const dial = await this.ctx.api.videoclips.dialClipStream.query({
-            deviceId: args.deviceId,
-            clipId: args.clipId,
-            provider: args.provider,
-            ...(args.profile !== null ? { profile: args.profile } : {}),
-            // The session's negotiated audio codec (D600). Always sent, `none`
-            // included: the mux is spawned once, before the first byte, so the
-            // ask cannot arrive later — and a provider older than the field
-            // ignores it and serves the video-only stream it always did.
-            audio: args.audio,
-          })
+          // The session's negotiated audio codec (D600) is always sent, `none`
+          // included: the mux is spawned once, before the first byte, so the
+          // ask cannot arrive later — and a provider older than the field
+          // ignores it and serves the video-only stream it always did. `wake`
+          // is the viewer's, from its `playClip`, and absent otherwise.
+          const dial = await this.ctx.api.videoclips.dialClipStream.query(clipDialCapInput(args))
           return {
             kind: 'dialed',
             url: dial.url,

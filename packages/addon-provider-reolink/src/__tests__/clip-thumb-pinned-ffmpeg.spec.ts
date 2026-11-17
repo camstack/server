@@ -89,6 +89,10 @@ async function serviceWith(resolveFfmpeg: () => Promise<string>) {
   }
   const service = createClipService({
     resolveFfmpeg,
+    // No read in this spec carries an authorisation, so a wake is a defect.
+    wakeDevice: async () => {
+      throw new Error('this spec never authorises a wake')
+    },
     dataDir,
     logger,
     resolveDevice: async () => device,

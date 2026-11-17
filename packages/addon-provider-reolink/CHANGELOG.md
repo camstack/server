@@ -7,14 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- An NVR / Home Hub integration has a Test button: it logs in once and says whether the username or password was refused or the hub did not answer, with the channel count on success.
 ### Added
 
 - The siren can be sounded a chosen number of times; the count goes to the camera as asked
 - Cameras also declare their MAC, serial, UID and IP as device identifiers (the hardware metadata is unchanged); a network read that fails keeps the MAC and IP declared before.
 - A network read that answers without a MAC or IP no longer erases the stored one; hub and NVR children no longer declare the hub's MAC or IP as their own identity
+
+### Changed
+
+- An NVR / Home Hub integration has a Test button: it logs in once and says whether the username or password was refused or the hub did not answer, with the channel count on success.
+- A clip on a sleeping battery camera's SD card now plays or downloads when you ask for it: the camera is woken, waited for up to 15 s, and a camera that does not come up is refused as wake-timeout instead of sleeping.
 
 ## [1.2.242] - 2026-11-16
 

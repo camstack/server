@@ -373,6 +373,20 @@ without meaning to:
   fetches — which is a second reason, on top of the return-shape defect, that a
   clip export takes exactly ONE profile per call (§ 5.4.2).
 
+**Playback carries the same flag, and the provider waits for the camera
+(2026-11-17).** A viewer's `playClip` on the broker is the operator asking for
+that clip — the demand wake-on-play already honours on the live path (D173) —
+so the broker's handle carries `wake: 'authorised'` and both of its calls
+(`readClipBytes` and `dialClipStream`, which gained the field) send it,
+composed in one place (`stream-broker/recorded/clip-cap-input.ts`). Nothing
+else builds a clip handle, so a prefetch, a reconcile or a retry still sends
+no wake. On the Reolink side the one gate (`gateClipDevice`) spends it: the
+camera's own operator wake (`wakeIfSleeping`), one in flight per camera,
+waited for under `CLIP_WAKE_TIMEOUT_MS` (15 s). A camera that does not come
+up is refused `wake-timeout`, with the bound in the prose — not `sleeping`
+(nobody authorised a wake) and not `camera-refused` (the camera never
+answered). The 15 % battery floor in rule 2 is not enforced by the provider.
+
 ### Considered and not taken: `wake: 'next-natural'`
 
 This document's first draft proposed a second mode: do not wake — fetch the next
