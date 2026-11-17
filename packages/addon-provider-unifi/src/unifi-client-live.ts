@@ -3,39 +3,25 @@ import { z } from 'zod'
 import type {
   UnifiClientSnapshot,
   UnifiControllerClient,
-  UnifiControllerClientFactory,
   UnifiInfraPort,
   UnifiInfraSnapshot,
   UnifiInfraState,
 } from './unifi-client-contract.js'
+import {
+  UnifiApiError,
+  UnifiAuthError,
+  UnifiNoCredentialError,
+  UnifiSiteNotFoundError,
+  UnifiUnsupportedError,
+} from './unifi-errors.js'
 
-/** The console refused the API key (HTTP 401 / 403). */
-export class UnifiAuthError extends Error {
-  constructor(message: string) {
-    super(message)
-    this.name = 'UnifiAuthError'
-  }
-}
-
-/** A feature the UniFi OS Integration API does not offer — a refusal, never a fake success. */
-export class UnifiUnsupportedError extends Error {
-  readonly feature: string
-  constructor(feature: string, message: string) {
-    super(message)
-    this.name = 'UnifiUnsupportedError'
-    this.feature = feature
-  }
-}
-
-/** The console answered with an unexpected status or body. */
-export class UnifiApiError extends Error {
-  readonly status: number
-  constructor(status: number, message: string) {
-    super(message)
-    this.name = 'UnifiApiError'
-    this.status = status
-  }
-}
+export {
+  UnifiApiError,
+  UnifiAuthError,
+  UnifiNoCredentialError,
+  UnifiSiteNotFoundError,
+  UnifiUnsupportedError,
+} from './unifi-errors.js'
 
 /** The subset of a fetch request the client sends. */
 export interface UnifiFetchInit {
@@ -151,9 +137,7 @@ export class UnifiLiveClient implements UnifiControllerClient {
 
   async connect(): Promise<void> {
     if (this.#apiKey === '') {
-      throw new UnifiAuthError(
-        'unifi: an API key is required (username + password is not supported)',
-      )
+      throw new UnifiNoCredentialError()
     }
     const sites = (await this.#list('/sites')).map((s) => siteSchema.parse(s))
     const ref = this.#siteRef.toLowerCase()
@@ -161,7 +145,10 @@ export class UnifiLiveClient implements UnifiControllerClient {
       (s) => s.internalReference?.toLowerCase() === ref || s.name?.toLowerCase() === ref,
     )
     if (match === undefined) {
-      throw new UnifiApiError(404, `unifi: site "${this.#siteRef}" not found on the console`)
+      throw new UnifiSiteNotFoundError(
+        this.#siteRef,
+        sites.map((s) => s.internalReference ?? s.name ?? s.id),
+      )
     }
     this.#siteId = match.id
   }
@@ -365,13 +352,3 @@ export function makeUndiciFetch(allowSelfSigned: boolean): UnifiFetch {
     return { ok: res.ok, status: res.status, json: () => res.json() }
   }
 }
-
-/** The factory the addon wires: one live client per connection. */
-export const liveUnifiClientFactory: UnifiControllerClientFactory = (input) =>
-  new UnifiLiveClient({
-    host: input.host,
-    port: input.port,
-    apiKey: input.apiKey,
-    site: input.site,
-    fetchImpl: makeUndiciFetch(input.allowSelfSigned),
-  })

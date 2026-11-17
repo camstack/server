@@ -58,11 +58,13 @@ export { trpc } from './trpc-react'
 export { HOST_WIDGETS, type HostWidgetProps } from './widgets/host-widgets'
 export {
   capabilityPresenceOnNode,
+  capabilityProviderNodes,
   classifyCapability,
   useCapabilityNodePresence,
   useCapabilityPresence,
   type CapabilityNodePresence,
   type CapabilityPresence,
+  type CapabilityProviderNodes,
   type CapabilityRegistryAnswer,
 } from './hooks/use-capability-presence'
 export {

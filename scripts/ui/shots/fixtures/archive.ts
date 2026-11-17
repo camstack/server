@@ -4,6 +4,7 @@
  * one export. Invented data.
  */
 import { defineFixtures } from './_define'
+import cameraArea from './camera'
 import { D, H, MINUTE, NOW } from './_time'
 
 const GB = 1024 ** 3
@@ -209,10 +210,100 @@ const EXPORT = {
   error: null,
 }
 
+/** Three clip sources on every camera: the recorder, the camera's card, a cloud relay. */
+const CLIP_SOURCES = [
+  {
+    source: 'camstack',
+    label: 'CamStack recordings',
+    addonId: 'recorder',
+    availability: { state: 'ok' },
+  },
+  {
+    source: 'onboard',
+    label: 'Camera SD card',
+    addonId: 'demo-onboard',
+    availability: { state: 'ok' },
+  },
+  {
+    source: 'relay',
+    label: 'Cloud relay',
+    addonId: 'demo-relay',
+    availability: {
+      state: 'sleeping',
+      reason: 'The camera is asleep; it answers on its next wake.',
+    },
+  },
+]
+
+/** Events through the morning, every 40 min — the review list and the density bar. */
+const EVENT_TIMES = Array.from({ length: 14 }, (_, i) => NOW - 20 * MINUTE - i * 40 * MINUTE)
+const EVENT_CLASSES = ['person', 'vehicle', 'person', 'animal', 'person', 'vehicle', 'face']
+
+interface DeviceInput {
+  readonly deviceId: number
+}
+interface DeviceIdsInput {
+  readonly deviceIds?: readonly number[]
+}
+interface ClipsInput {
+  readonly deviceId: number
+  readonly provider: string
+}
+
+function keyEventsFor(input: DeviceIdsInput): readonly unknown[] {
+  return (input.deviceIds ?? []).map((deviceId) => ({
+    deviceId,
+    events: EVENT_TIMES.map((timestamp, i) => ({
+      id: `ev-${String(deviceId)}-${String(i)}`,
+      trackId: `trk-${String(deviceId)}-${String(i)}`,
+      timestamp,
+      className: EVENT_CLASSES[i % EVENT_CLASSES.length] ?? 'person',
+      importance: 0.5 + (i % 4) * 0.1,
+      bestEventId: String(9000 + i),
+    })),
+  }))
+}
+
+function tracksFor(input: DeviceInput): readonly unknown[] {
+  return EVENT_TIMES.map((firstSeen, i) => ({
+    trackId: `trk-${String(input.deviceId)}-${String(i)}`,
+    deviceId: input.deviceId,
+    className: EVENT_CLASSES[i % EVENT_CLASSES.length] ?? 'person',
+    firstSeen,
+    lastSeen: firstSeen + 40_000,
+    zoneNames: i % 2 === 0 ? ['Driveway'] : ['Porch'],
+    classes: [EVENT_CLASSES[i % EVENT_CLASSES.length] ?? 'person'],
+    hasFace: i % 3 === 0,
+  }))
+}
+
+function clipsFor(input: ClipsInput): readonly unknown[] {
+  if (input.provider === 'demo-relay') return []
+  const every = input.provider === 'demo-onboard' ? 55 * MINUTE : 30 * MINUTE
+  return Array.from({ length: 12 }, (_, i) => {
+    const startMs = NOW - 15 * MINUTE - i * every
+    return {
+      id: `${input.provider}-${String(i)}`,
+      source: input.provider === 'demo-onboard' ? 'onboard' : 'camstack',
+      kind: 'native',
+      timeRange: { startMs, endMs: startMs + 2 * MINUTE },
+    }
+  })
+}
+
+function densityFor(): readonly unknown[] {
+  return EVENT_TIMES.map((t) => ({
+    bucketStart: t - (t % (5 * MINUTE)),
+    motion: 3,
+    object: 1,
+    audio: 0,
+  }))
+}
+
 export default defineFixtures({
   area: 'archive',
   description:
-    'Archive overview and camera page: footage, event storage, health, activity, exports.',
+    'Archive overview and Cameras section: footage, event storage, health, activity, three clip sources, review events; Library exports.',
   handlers: {
     'deviceManager.listAll': CAMERAS,
     // No urgent-alert toast over the page being shot.
@@ -285,6 +376,26 @@ export default defineFixtures({
       read: 'read',
       days: [NOW - 2 * D, NOW - 1 * D, NOW].map((t) => t - (t % D)),
     }),
+    'auth.listLoginMethods': [],
+    'preferences.get': { rows: [] },
+    // The Review player and the Settings view are the camera page's own parts.
+    'deviceManager.getDevice': cameraArea.handlers['deviceManager.getDevice'],
+    'deviceManager.getDeviceAggregate': cameraArea.handlers['deviceManager.getDeviceAggregate'],
+    'deviceManager.getBindings': cameraArea.handlers['deviceManager.getBindings'],
+    'recordingArchive.getDeviceConfig': cameraArea.handlers['recordingArchive.getDeviceConfig'],
+    'recordingArchive.getStatus': cameraArea.handlers['recordingArchive.getStatus'],
+    'streamBroker.listAllProfileSlots': cameraArea.handlers['streamBroker.listAllProfileSlots'],
+    'pipelineOrchestrator.getCameraMetrics': null,
+    'pipelineAnalytics.listRetrainCollections': [],
+    'turnProvider.getTurnServers': [],
+    'webrtcSession.listStreams': [],
+    'zoneAnalytics.getCurrentSnapshotBatch': {},
+    'videoclips.listSources': CLIP_SOURCES,
+    'videoclips.listClips': clipsFor,
+    'pipelineAnalytics.listTracks': tracksFor,
+    'pipelineAnalytics.getKeyEventsBatch': keyEventsFor,
+    'pipelineAnalytics.listEventKindsBatch': [],
+    'pipelineAnalytics.getEventDensity': densityFor,
     'recordingExport.listExports': [EXPORT],
     'recordingExport.listJobs': [EXPORT],
   },

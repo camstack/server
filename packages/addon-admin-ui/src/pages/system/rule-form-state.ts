@@ -82,6 +82,11 @@ export type NcTargetParamsMap = Readonly<Record<string, Readonly<Record<string, 
  */
 export interface NcRuleFormState {
   readonly name: string
+  /**
+   * Operator tags (D1054). Always sent on save, `[]` included — the hub drops an
+   * empty list — so an edit that removes the last tag really removes it.
+   */
+  readonly tags: readonly string[]
   readonly enabled: boolean
   readonly delivery: NcDelivery
   readonly targetIds: readonly string[]
@@ -391,6 +396,7 @@ export function emptyRuleForm(
 ): NcRuleFormState {
   return {
     name: '',
+    tags: [],
     enabled: true,
     delivery,
     targetIds: [],
@@ -441,6 +447,7 @@ export function ruleToForm(rule: NcRule): NcRuleFormState {
   }
   return {
     name: rule.name,
+    tags: rule.tags ?? [],
     enabled: rule.enabled,
     delivery: rule.delivery,
     targetIds: rule.targets.map((t) => t.targetId),

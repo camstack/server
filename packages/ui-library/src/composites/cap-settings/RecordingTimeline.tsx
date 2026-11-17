@@ -1,7 +1,16 @@
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { RECORDING_SOURCE_CAMSTACK_ADDON } from '@camstack/types'
 import { Film, Pause, Play, Radio } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState, type WheelEvent, type JSX } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+  type WheelEvent,
+  type JSX,
+} from 'react'
 import { useRecordedPlayback } from '../../contexts/recorded-playback'
 import { useSystem } from '../../contexts/system-context'
 import { useVodPlayback } from '../../contexts/vod-playback'
@@ -29,6 +38,8 @@ import {
   bucketMsForSpan,
   type DayWindow,
   dayWindow,
+  type DensityPoint,
+  densityPointsToRows,
   densityRowsToBuckets,
   formatFootageDuration,
   latestPastDay,
@@ -86,6 +97,21 @@ interface RecordingTimelineProps {
   readonly seekTo?: { readonly atMs: number; readonly nonce: number }
   /** Shift + drag on the coverage bar selects a range and reports it here. */
   readonly onExportRange?: (fromMs: number, toMs: number) => void
+  /** Told the visible window whenever it moves (day, zoom, pan, seek). */
+  readonly onViewChange?: (view: DayWindow) => void
+  /**
+   * Draw the density bar from these events instead of the server histogram —
+   * a surface that filters its event list passes that filtered list, so the
+   * list and the bar never disagree. Absent: the server's unfiltered density.
+   */
+  readonly densityPoints?: readonly DensityPoint[]
+  /** Extra lanes drawn under the coverage bar, over the same window. */
+  readonly lanes?: ReactNode
+  /**
+   * The surface's own filters, drawn at the start of the controls row so the
+   * page has ONE bar: its filters, then the date and window controls.
+   */
+  readonly toolbar?: ReactNode
 }
 
 // Continuous navigable timeline: date picker, a click-to-seek coverage track,
@@ -107,6 +133,10 @@ export function RecordingTimeline({
   deviceId,
   seekTo,
   onExportRange,
+  onViewChange,
+  densityPoints,
+  lanes,
+  toolbar,
 }: RecordingTimelineProps): JSX.Element {
   const t = useUiText()
   const system = useSystem()
@@ -173,7 +203,10 @@ export function RecordingTimeline({
   }, [sendControl, resetScrub])
 
   const handleRateToggle = useCallback((): void => {
-    sendControl({ t: 'setRate', rate: recordedModeRef.current === 'paused' ? 1 : 0 })
+    sendControl({
+      t: 'setRate',
+      rate: recordedModeRef.current === 'paused' ? 1 : 0,
+    })
   }, [sendControl])
 
   // D5: type filter — which event kinds to display and query.
@@ -254,12 +287,19 @@ export function RecordingTimeline({
     toMs: view.toMs,
   })
 
-  const eventDensityQuery = usePipelineAnalyticsGetEventDensity({
-    deviceId,
-    since: view.fromMs,
-    until: view.toMs,
-    bucketMs,
-  })
+  const eventDensityQuery = usePipelineAnalyticsGetEventDensity(
+    {
+      deviceId,
+      since: view.fromMs,
+      until: view.toMs,
+      bucketMs,
+    },
+    { enabled: densityPoints === undefined },
+  )
+
+  useEffect(() => {
+    onViewChange?.(view)
+  }, [view, onViewChange])
 
   // An `unreadable` answer is NOT an empty bar. Drawing it as one is the
   // failure D393 names: "no footage" where the truth is "nobody looked".
@@ -305,8 +345,15 @@ export function RecordingTimeline({
   )
 
   const buckets = useMemo(
-    () => densityRowsToBuckets(eventDensityQuery.data ?? [], view.fromMs, bucketMs),
-    [eventDensityQuery.data, view.fromMs, bucketMs],
+    () =>
+      densityRowsToBuckets(
+        densityPoints === undefined
+          ? (eventDensityQuery.data ?? [])
+          : densityPointsToRows(densityPoints, view.fromMs, view.toMs, bucketMs),
+        view.fromMs,
+        bucketMs,
+      ),
+    [densityPoints, eventDensityQuery.data, view.fromMs, view.toMs, bucketMs],
   )
 
   // Selection uses logical bucket index (stable across background refetches)
@@ -320,15 +367,33 @@ export function RecordingTimeline({
   const drillSince = selected?.startMs ?? 0
   const drillUntil = selected ? Math.min(selected.endMs, view.toMs) : 0
   const objectDrill = usePipelineAnalyticsGetObjectEvents(
-    { deviceId, since: drillSince, until: drillUntil, limit: pageLimit, projection: 'slim' },
+    {
+      deviceId,
+      since: drillSince,
+      until: drillUntil,
+      limit: pageLimit,
+      projection: 'slim',
+    },
     { enabled: drillEnabled && enabledKinds.has('object') },
   )
   const motionDrill = usePipelineAnalyticsGetMotionEvents(
-    { deviceId, since: drillSince, until: drillUntil, limit: pageLimit, projection: 'slim' },
+    {
+      deviceId,
+      since: drillSince,
+      until: drillUntil,
+      limit: pageLimit,
+      projection: 'slim',
+    },
     { enabled: drillEnabled && enabledKinds.has('motion') },
   )
   const audioDrill = usePipelineAnalyticsGetAudioEvents(
-    { deviceId, since: drillSince, until: drillUntil, limit: pageLimit, projection: 'slim' },
+    {
+      deviceId,
+      since: drillSince,
+      until: drillUntil,
+      limit: pageLimit,
+      projection: 'slim',
+    },
     { enabled: drillEnabled && enabledKinds.has('audio') },
   )
 
@@ -547,7 +612,7 @@ export function RecordingTimeline({
   }, [seekTo, handleDayChange, handlePlayClip, t])
 
   const coverageLoading = availabilityQuery.isLoading
-  const densityLoading = eventDensityQuery.isLoading
+  const densityLoading = densityPoints === undefined && eventDensityQuery.isLoading
   const drillLoading =
     (objectDrill.isLoading || motionDrill.isLoading || audioDrill.isLoading) && drillEnabled
 
@@ -586,19 +651,23 @@ export function RecordingTimeline({
       ) : null}
       {playbackError ? <ErrorBox variant="warning" message={playbackError} /> : null}
 
-      {/* D2: Controls row (date selector) */}
-      <TimelineControls
-        day={day}
-        onDayChange={handleUserDayChange}
-        view={view}
-        dayBounds={computedDayBounds}
-        onViewChange={handleViewChange}
-      />
-
-      {/* The frame at the playhead, into a training collection — including a
-          moment where the model saw nothing. Draws nothing without the admin
-          collection list. */}
-      <div className="flex justify-end">
+      {/* D2: one controls row — the surface's filters, the date and window
+          controls, and the frame at the playhead into a training collection
+          (including a moment where the model saw nothing; it draws nothing
+          without the admin collection list). */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5" data-testid="timeline-bar">
+        {toolbar !== undefined ? (
+          <div className="flex flex-wrap items-center gap-1.5">{toolbar}</div>
+        ) : null}
+        <div className="min-w-[16rem] flex-1">
+          <TimelineControls
+            day={day}
+            onDayChange={handleUserDayChange}
+            view={view}
+            dayBounds={computedDayBounds}
+            onViewChange={handleViewChange}
+          />
+        </div>
         <SendFrameToTrainingButton deviceId={deviceId} epochMs={displayPlayheadMs} />
       </div>
 
@@ -742,6 +811,8 @@ export function RecordingTimeline({
             />
           )}
         </div>
+
+        {lanes}
 
         {/* Event-density heatmap */}
         <div className="space-y-1">

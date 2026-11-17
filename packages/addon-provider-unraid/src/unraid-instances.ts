@@ -7,6 +7,8 @@
 import {
   defineEntryKind,
   entryBody,
+  type IntegrationTestConnectionResult,
+  REDACTED_SECRET,
   type RecordsAccess,
   RecordIntegrationInstances,
 } from '@camstack/types'
@@ -14,8 +16,11 @@ import { z } from 'zod'
 import {
   buildConnectionFormSchema,
   connectionFromSettings,
+  unraidConnectionSchema,
   type UnraidConnectionRead,
 } from './config.js'
+import type { UnraidClientFactory } from './unraid-client-contract.js'
+import { testUnraidConnection } from './unraid-connection-test.js'
 
 export const unraidConnectionsEntryKind = defineEntryKind('connections', {
   title: 'Unraid integrations',
@@ -32,27 +37,69 @@ export const unraidConnectionsEntryKind = defineEntryKind('connections', {
 export type UnraidConnectionBody = z.infer<typeof unraidConnectionsEntryKind.schema>
 
 /** Every kind this addon declares, keyed by its name. */
-export const unraidRecordKinds = { connections: unraidConnectionsEntryKind } as const
+export const unraidRecordKinds = {
+  connections: unraidConnectionsEntryKind,
+} as const
 
 export function buildUnraidInstances(
   records: Pick<RecordsAccess, 'kind' | 'owner'>,
-  deps: { readonly onChanged: () => Promise<void> },
+  deps: {
+    readonly onChanged: () => Promise<void>
+    /** The client factory the test signs in with (the same one the runtime polls with). */
+    readonly makeClient: UnraidClientFactory
+  },
 ): RecordIntegrationInstances<UnraidConnectionBody> {
+  const handle = records.kind(unraidConnectionsEntryKind)
   return new RecordIntegrationInstances<UnraidConnectionBody>(records, unraidConnectionsEntryKind, {
     description: {
       role: 'devices',
       discovery: { mode: 'account', scopedToInstance: true },
       instanceMode: 'multiple',
       kind: 'server',
-      canTest: false,
+      canTest: true,
       kinds: [
-        { id: 'connection', label: 'Unraid', functionCap: 'device-provider', role: 'devices' },
+        {
+          id: 'connection',
+          label: 'Unraid',
+          functionCap: 'device-provider',
+          role: 'devices',
+        },
       ],
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): UnraidConnectionBody => ({ name }),
     configured: (body) => (body.host ?? '').length > 0 && body.apiKey !== undefined,
     onChanged: () => deps.onChanged(),
+    test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
+      // The stored server under the edited form; a saved key is never retyped, the form hands
+      // back its redacted view, so the keychain value stands in.
+      const stored = id === null ? null : ((await handle.getResolved(id))?.data ?? null)
+      const typed = values['apiKey']
+      const apiKey =
+        typeof typed === 'string' && typed !== '' && typed !== REDACTED_SECRET
+          ? typed
+          : (stored?.apiKey ?? '')
+      if (typeof apiKey !== 'string') {
+        return {
+          success: false,
+          status: 'inconclusive',
+          error: 'unraid: the stored API key cannot be read right now (keychain unavailable)',
+        }
+      }
+      const parsed = unraidConnectionSchema.safeParse({
+        ...stored,
+        ...values,
+        apiKey,
+      })
+      if (!parsed.success) {
+        return {
+          success: false,
+          status: 'rejected',
+          error: 'unraid: enter the server host',
+        }
+      }
+      return testUnraidConnection(parsed.data, deps.makeClient)
+    },
   })
 }
 

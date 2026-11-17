@@ -19,6 +19,7 @@ import type { DataColumn } from '@camstack/ui-library'
 import {
   DataTable,
   EmptyState,
+  Select,
   useConfirm,
   useDeviceManagerListAll,
   useEventStreamMap,
@@ -31,6 +32,8 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 import { Download, Film, Loader2, Trash2, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { exportCameraIds, exportsOfCamera, parseExportCamera } from './export-camera-filter'
 import { authedFetchBlob } from '../../lib/authed-media.js'
 import { formatBytes } from '../../lib/format-size'
 import {
@@ -53,7 +56,10 @@ const STATE_STYLES: Record<
   ExportState,
   { readonly cls: string; readonly labelKey: string; readonly spin?: boolean }
 > = {
-  queued: { cls: 'bg-muted text-foreground-subtle', labelKey: 'recordings.exportsSection.queued' },
+  queued: {
+    cls: 'bg-surface-hover text-foreground-subtle',
+    labelKey: 'recordings.exportsSection.queued',
+  },
   rendering: {
     cls: 'bg-primary/10 text-primary',
     labelKey: 'recordings.exportsSection.rendering',
@@ -62,11 +68,11 @@ const STATE_STYLES: Record<
   ready: { cls: 'bg-success/10 text-success', labelKey: 'recordings.exportsSection.ready' },
   failed: { cls: 'bg-danger/10 text-danger', labelKey: 'recordings.exportsSection.failed' },
   expired: {
-    cls: 'bg-muted text-foreground-subtle',
+    cls: 'bg-surface-hover text-foreground-subtle',
     labelKey: 'recordings.exportsSection.expired',
   },
   deleted: {
-    cls: 'bg-muted text-foreground-subtle',
+    cls: 'bg-surface-hover text-foreground-subtle',
     labelKey: 'recordings.exportsSection.deleted',
   },
 }
@@ -116,15 +122,7 @@ function useNow(intervalMs: number): number {
   return now
 }
 
-export interface ExportsSectionProps {
-  /** Camera page: only this camera's exports, with the full record per row. */
-  readonly deviceId?: number
-  /** A range handed over from the Review timeline: opens the new-export dialog on it. */
-  readonly draft?: { readonly fromMs: number; readonly toMs: number } | null
-  readonly onDraftClose?: () => void
-}
-
-export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSectionProps = {}) {
+export function ExportsSection() {
   const { t } = useTranslation()
   const queryClient = useQueryClient()
   const [creating, setCreating] = useState(false)
@@ -136,10 +134,22 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
   const now = useNow(60_000)
 
   const { rows: allRows, isLoading } = useLiveExports()
-  const rows = useMemo(
-    () => (deviceId === undefined ? allRows : allRows.filter((r) => r.deviceId === deviceId)),
-    [allRows, deviceId],
-  )
+  // `?camera=<id>` narrows the list (the Archive links here with it).
+  const [params, setParams] = useSearchParams()
+  const cameraFilter = parseExportCamera(params.get('camera'))
+  const rows = useMemo(() => exportsOfCamera(allRows, cameraFilter), [allRows, cameraFilter])
+  const cameraIds = useMemo(() => exportCameraIds(allRows, cameraFilter), [allRows, cameraFilter])
+  const setCameraFilter = (value: string): void => {
+    setParams(
+      (prev) => {
+        const next = new URLSearchParams(prev)
+        if (value === '') next.delete('camera')
+        else next.set('camera', value)
+        return next
+      },
+      { replace: true },
+    )
+  }
   // Every export row is keyed by camera — cameras only, slim, and the query client's fleet window (D274) so the recordings-page sections share one fetch.
   const { data: devices } = useDeviceManagerListAll({ isCamera: true, projection: 'slim' })
 
@@ -222,19 +232,15 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
 
   const columns = useMemo<readonly DataColumn<ExportRecord>[]>(
     () => [
-      ...(deviceId === undefined
-        ? [
-            {
-              key: 'camera',
-              header: t('recordings.exportsSection.camera', 'Camera'),
-              render: (r: ExportRecord) => (
-                <span className="text-foreground">
-                  {cameraName.get(r.deviceId) ?? `#${String(r.deviceId)}`}
-                </span>
-              ),
-            },
-          ]
-        : []),
+      {
+        key: 'camera',
+        header: t('recordings.exportsSection.camera', 'Camera'),
+        render: (r: ExportRecord) => (
+          <span className="text-foreground">
+            {cameraName.get(r.deviceId) ?? `#${String(r.deviceId)}`}
+          </span>
+        ),
+      },
       {
         key: 'created',
         header: t('recordings.exportsSection.created', 'Created'),
@@ -355,7 +361,7 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
                     void handleCancel(r)
                   }}
                   disabled={cancel.isPending}
-                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-foreground-subtle hover:bg-amber-500/10 hover:text-amber-500 disabled:opacity-50"
+                  className="inline-flex items-center gap-1 rounded px-2 py-1 text-[10px] font-medium text-foreground-subtle hover:bg-warning/10 hover:text-warning disabled:opacity-50"
                   title={t('recordings.exportsSection.cancelRender', 'Cancel render')}
                 >
                   <XCircle className="h-3 w-3" />
@@ -381,7 +387,6 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
       },
     ],
     [
-      deviceId,
       cameraName,
       now,
       downloadingId,
@@ -405,7 +410,22 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
+      <div className="flex flex-wrap items-center justify-end gap-2">
+        {cameraIds.length > 1 || cameraFilter !== null ? (
+          <Select
+            wrapperClassName="mr-auto inline-block w-auto"
+            aria-label={t('recordings.exportsSection.camera', 'Camera')}
+            value={cameraFilter === null ? '' : String(cameraFilter)}
+            onChange={(e) => setCameraFilter(e.target.value)}
+          >
+            <option value="">{t('recordings.exportsSection.allCameras', 'All cameras')}</option>
+            {cameraIds.map((id) => (
+              <option key={id} value={String(id)}>
+                {cameraName.get(id) ?? `#${String(id)}`}
+              </option>
+            ))}
+          </Select>
+        ) : null}
         <Button
           variant="unstyled"
           onClick={() => setCreating(true)}
@@ -415,7 +435,16 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
           {t('recordings.exportsSection.newExport', 'New export')}
         </Button>
       </div>
-      {rows.length === 0 ? (
+      {rows.length === 0 && allRows.length > 0 ? (
+        <EmptyState
+          icon={Film}
+          title={t('recordings.exportsSection.noExportsForCamera', 'No exports for this camera')}
+          description={t(
+            'recordings.exportsSection.noExportsForCameraHint',
+            'Pick All cameras to see every export, or create one with New export.',
+          )}
+        />
+      ) : rows.length === 0 ? (
         <EmptyState
           icon={Film}
           title={t('recordings.exportsSection.noExportsYet', 'No exports yet')}
@@ -427,15 +456,11 @@ export function ExportsSection({ deviceId, draft, onDraftClose }: ExportsSection
       ) : (
         <DataTable columns={columns} rows={rows} rowKey={(r) => r.id} minWidthPx={720} />
       )}
-      {(creating || (draft ?? null) !== null) && (
+      {creating && (
         <NewExportModal
-          onClose={() => {
-            setCreating(false)
-            onDraftClose?.()
-          }}
+          onClose={() => setCreating(false)}
           onCreated={refetchExports}
-          initialDeviceId={deviceId}
-          initialRange={draft ?? undefined}
+          {...(cameraFilter === null ? {} : { initialDeviceId: cameraFilter })}
         />
       )}
     </div>

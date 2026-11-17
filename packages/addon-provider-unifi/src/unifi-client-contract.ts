@@ -1,12 +1,7 @@
 /**
- * The minimal contract the future UniFi Network **controller** client library
- * must satisfy. NO such library is wired yet (see `plan-unifi.md`) — this
- * interface is the seam the integration manager builds against, so the whole
- * device layer type-checks today. When a UniFi controller-API wrapper lands
- * (e.g. `node-unifi` / `unifi-client`, or a thin `@apocaliss92/nodeunifi`
- * wrapper), implement this contract in {@link UnifiIntegrationManager}'s
- * `makeClient` factory and drop the "not wired" default; NOTHING else in this
- * addon changes.
+ * The contract every UniFi Network controller client satisfies — the seam the integration manager
+ * builds against. Implemented by `UnifiLiveClient` (API key, the UniFi OS Integration API), built
+ * per connection by `unifi-client-factory.ts`.
  *
  * Scope is the **local controller API only** (UDM / UDM-Pro / Cloud Key / a
  * self-hosted Network controller): infra devices (switches / APs / gateways)
@@ -83,7 +78,7 @@ export interface UnifiClientSnapshot {
 
 /** The live client the addon drives ONE UniFi Network controller with. */
 export interface UnifiControllerClient {
-  /** Open the session and authenticate (API key or username + password). */
+  /** Open the session and authenticate (the API key). */
   connect(): Promise<void>
   /** Close the session. */
   disconnect(): Promise<void>

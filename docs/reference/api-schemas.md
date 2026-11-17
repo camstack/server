@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1091 shared schemas.**
+**1094 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4599,6 +4599,7 @@ Enum: `"template" \| "schedule" \| "targetUsers" \| "snoozeOptions" \| "snoozeAl
 - `groupingSec?`: `number`
 - `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
+- `tags?`: `string[]`
 
 ### `NcRuleKindSchema`
 
@@ -4647,6 +4648,7 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `groupingSec?`: `number`
 - `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
+- `tags?`: `string[]`
 - `disabledTargetIds?`: `string[]`
 
 ### `NcRuleSchema`
@@ -4672,11 +4674,18 @@ Enum: `"detection" \| "sensor" \| "occupancy" \| "sound" \| "device-events" \| "
 - `groupingSec?`: `number`
 - `groupWithinSec?`: `number`
 - `askVerdict?`: `boolean`
+- `tags?`: `string[]`
 - `id`: `string`
 - `createdBy`: `string`
 - `createdAt`: `number`
 - `updatedAt`: `number`
 - `disabledTargetIds?`: `string[] = []`
+
+### `NcRuleTagsEntrySchema`
+
+- `kind`: `NcTaggedRuleKindSchema`
+- `ruleId`: `string`
+- `tags`: `string[]`
 
 ### `NcRuleTargetSchema`
 
@@ -4799,6 +4808,10 @@ Enum: `"instant" \| "summary"`
 ### `NcSystemEventKindSchema`
 
 Enum: `"device-online" \| "device-offline" \| "device-disabled" \| "device-enabled" \| "device-battery-low" \| "device-battery-normal" \| "device-consumable-low" \| "device-consumable-normal" \| "stream-online" \| "stream-offline" \| "node-online" \| "node-offline" \| "node-restarting" \| "node-updating" \| "node-inference-unavailable" \| "detection-blind" \| "motion-noisy" \| "motion-calm" \| "package-llm-silent" \| "package-llm-answered" \| "recording-stalled" \| "recording-healthy" \| "recording-degraded" \| "device-attention-required" \| "device-attention-resolved" \| "device-command" \| "storage-location-low" \| "storage-location-critical" \| "storage-location-ok" \| "storage-drain-progress" \| "storage-drain-complete" \| "addon-crash-loop" \| "addon-update-available" \| "server-update-available" \| "wrapper-update-available" \| "alarm-triggered" \| "alarm-armed" \| "alarm-disarmed" \| "alarm-arming" \| "alarm-arm-refused" \| "alarm-pending" \| "alarm-rearmed" \| "alarm-sensor-bypass" \| "alarm-check-failed" \| "addon-updated" \| "server-updated" \| "export-completed" \| "backup-completed" \| "alert-critical" \| "alert-error" \| "alert-critical-resolved" \| "rule-broken" \| "rule-repaired" \| "camera-online" \| "camera-offline" \| "camera-disabled" \| "camera-enabled"`
+
+### `NcTaggedRuleKindSchema`
+
+Enum: `"event" \| "summary" \| "timelapse" \| "calendar-events"`
 
 ### `NcTargetAttachmentSchema`
 
@@ -7144,7 +7157,16 @@ Enum: `"jwt-signing-key"`
 - `color`: `"tag-a" \| "tag-b" \| "tag-c" \| "tag-d" \| "tag-e" \| "tag-f" \| "tag-g" \| "tag-h"`
 - `icon`: `<custom>`
 - `styled`: `boolean`
-- `counts`: `TagUsageCountsSchema`
+- `counts`: `TagListCountsSchema`
+
+### `TagListCountsSchema`
+
+- `coreBlocks`: `number \| null`
+- `schedulers`: `number \| null`
+- `templates`: `number \| null`
+- `actions`: `number \| null`
+- `devices`: `number \| null`
+- `notificationRules`: `number \| null`
 
 ### `TagUsageCountsSchema`
 
@@ -7153,6 +7175,7 @@ Enum: `"jwt-signing-key"`
 - `templates`: `number`
 - `actions`: `number`
 - `devices`: `number`
+- `notificationRules`: `number`
 
 ### `TamperStatusSchema`
 
@@ -7269,6 +7292,8 @@ Enum: `"jwt-signing-key"`
 - `cols`: `number`
 - `rows`: `number`
 - `startedAt`: `number`
+- `openedBy?`: `string`
+- `lastActivityAt?`: `number`
 
 ### `TestConnectionResultSchema`
 

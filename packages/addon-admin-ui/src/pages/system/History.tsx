@@ -9,6 +9,9 @@
  * ACCOUNT preferences (`admin.history-panels`, D894). Four built-in panels
  * are computed from what the hub records right now.
  *
+ * The Retention card under the overlay is device-history's cluster settings
+ * (#578: the page about the data owns the knobs that prune it).
+ *
  * device-history not installed, the catalogue not answered yet, and nothing
  * recorded are three different screens (D315). Series no longer linked to a
  * device are flagged on top, from an answered list only (D917).
@@ -17,11 +20,13 @@ import { useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
 import { DeviceType, parseOccupancyScope, type DeviceHistorySeriesInfo } from '@camstack/types'
 import {
+  AddonScopedSettingsForm,
   Button,
   EmptyState,
   ErrorBox,
   HistoryWindowBar,
   OCCUPANCY_KEY,
+  SECTION_BODY,
   SectionCard,
   Skeleton,
   decodeCustomWindow,
@@ -43,10 +48,11 @@ import {
   useSystem,
   withPanel,
   withoutPanel,
+  TEXT_HINT,
   type HistorySeriesRef,
   type HistoryWindowId,
 } from '@camstack/ui-library'
-import { History as HistoryIcon, LineChart, Save, X } from 'lucide-react'
+import { Archive, History as HistoryIcon, LineChart, Save, X } from 'lucide-react'
 import { useSearchParams } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { AdminPage } from '../../components/AdminPage'
@@ -294,6 +300,7 @@ export function HistoryPage() {
               </SectionCard>
             </div>
           </div>
+          <HistoryRetentionCard />
         </div>
       )}
     </AdminPage>
@@ -374,4 +381,34 @@ function useHistoryCatalog(enabled: boolean): HistoryCatalog {
     deviceQs.some((q) => q.isPending) ||
     nodeQs.some((q) => q.isPending)
   return { status: pending ? 'pending' : 'ok', error: '', candidates }
+}
+
+/** The device-history addon and the capability whose cluster form is its retention. */
+const DEVICE_HISTORY_ADDON_ID = 'device-history'
+const DEVICE_HISTORY_CAP = 'device-history'
+
+/** How long each rollup tier is kept — device-history's cluster settings. */
+function HistoryRetentionCard() {
+  const { t } = useTranslation()
+  const system = useSystem()
+  return (
+    <SectionCard
+      headingId="history-retention"
+      icon={Archive}
+      title={t('history.retention.title', 'Retention')}
+    >
+      <div className={`${SECTION_BODY} space-y-3`}>
+        <p className={TEXT_HINT}>
+          {t('history.retention.hint', 'How long each resolution of the recorded history is kept.')}
+        </p>
+        <AddonScopedSettingsForm
+          trpc={system.trpcClient}
+          addonId={DEVICE_HISTORY_ADDON_ID}
+          cap={DEVICE_HISTORY_CAP}
+          scope="cluster"
+          bare
+        />
+      </div>
+    </SectionCard>
+  )
 }

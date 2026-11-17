@@ -11,6 +11,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A Terminal's camera is now a Terminal camera block in Build-your-self; existing Terminal cameras are removed on upgrade and must be recreated there.
 
+## [0.1.166] - 2026-11-16
+
+### Changed
+
+- The session list says who opened each shell and when it last saw input or output.
+
 ## [0.1.165] - 2026-11-15
 
 ### Added

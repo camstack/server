@@ -9,9 +9,10 @@ import {
   DialogBody,
   DialogContent,
   Input,
+  TagInput,
+  Textarea,
   useCalendarsListCalendars,
   useSystem,
-  Textarea,
 } from '@camstack/ui-library'
 import { useMutation } from '@tanstack/react-query'
 import { Calendar as CalendarIcon, Loader2 } from 'lucide-react'
@@ -185,6 +186,15 @@ export function NotificationCalendarEventsEditor({
                     data-testid="calendar-events-name"
                   />
                 </label>
+                {/* Tags (D1054) — the same input as every rule kind and every Build section. */}
+                <div>
+                  <span className="mb-1 block text-sm">{t('common.tags', 'Tags')}</span>
+                  <TagInput
+                    value={form.tags}
+                    onChange={(next) => patch({ tags: next })}
+                    label={t('common.tags', 'Tags')}
+                  />
+                </div>
                 <DigestNumberField
                   label={t('system.notificationCalendarEventsEditor.horizonDays', 'Horizon (days)')}
                   value={form.horizonDays}

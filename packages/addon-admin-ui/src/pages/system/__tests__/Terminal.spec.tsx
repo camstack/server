@@ -4,8 +4,10 @@
  *  1. `parseSseBuffer` — the hand-rolled SSE frame parser that feeds xterm:
  *     decodes `data:` frames, skips `: keepalive` comments, and keeps a partial
  *     tail for the next chunk.
- *  2. `TerminalPage` — ONE table of every instance across nodes and nothing
- *     beside it: no per-node card (with `<TerminalPanel>` stubbed). The node picker's "not installed"
+ *  2. `TerminalPage` — two sub-sections: "Terminal devices" (the default) and
+ *     "Node shells"; a node shell never shows among the instance sessions and
+ *     the node list opens nothing. The devices tab is ONE table of every
+ *     instance across nodes: no per-node card (with `<TerminalPanel>` stubbed). The node picker's "not installed"
  *     reason is the library field's (`node-select-field-capability.spec`).
  */
 /// <reference types="@testing-library/jest-dom" />
@@ -20,6 +22,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 // `components/pipeline/__tests__/` already use.
 expect.extend(jestDomMatchers)
 
+import type { CapabilityRegistryAnswer } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { parseSseBuffer } from '../../../lib/terminal-io'
 
@@ -70,19 +73,36 @@ vi.mock('../../../components/settings/NodeAddonsSettingsPanel', () => ({
   ),
 }))
 
-const mocks = vi.hoisted(() => ({
-  openSession: vi.fn(async () => ({ sessionId: 's-1' })),
-  profileCalls: [] as string[],
-  compositions: undefined as unknown,
-  registry: {
-    status: 'success' as 'pending' | 'success' | 'error',
+const mocks = vi.hoisted(() => {
+  const hubRegistry = (): CapabilityRegistryAnswer => ({
+    status: 'success',
     data: {
       name: 'terminal-session',
+      mode: 'singleton',
       providers: ['terminal'],
-      perNode: [{ nodeId: 'hub', providers: ['terminal'] }],
-    } as unknown,
-  },
-}))
+      activeProvider: 'terminal',
+      disabledProviders: [],
+      perNode: [
+        { nodeId: 'hub', providers: ['terminal'], resolvedActive: 'terminal', hasOverride: false },
+      ],
+    },
+  })
+  return {
+    hubRegistry,
+    openSession: vi.fn(async () => ({ sessionId: 's-1' })),
+    profileCalls: [] as string[],
+    compositions: undefined as unknown,
+    sessions: [] as readonly {
+      sessionId: string
+      profileId: string
+      label: string
+      cols: number
+      rows: number
+      startedAt: number
+    }[],
+    registry: hubRegistry(),
+  }
+})
 
 const INSTANCES = [
   {
@@ -145,19 +165,17 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
 }))
 
 vi.mock('@camstack/ui-library', async () => {
-  const actual = await vi.importActual<Record<string, unknown>>('@camstack/ui-library')
+  const actual =
+    await vi.importActual<typeof import('@camstack/ui-library')>('@camstack/ui-library')
   const query = <T,>(data: T) => ({ data, isLoading: false, isError: false, refetch: vi.fn() })
   return {
     ...actual,
     hubPath: (p: string) => p,
     useCapabilityNodePresence: () => {
-      const onNodeOf = actual['capabilityPresenceOnNode'] as (
-        answer: unknown,
-        nodeId: string,
-      ) => string
+      const answer = mocks.registry
       return {
-        onNode: (nodeId: string) =>
-          onNodeOf({ status: mocks.registry.status, data: mocks.registry.data }, nodeId),
+        onNode: (nodeId: string) => actual.capabilityPresenceOnNode(answer, nodeId),
+        providerNodes: actual.capabilityProviderNodes(answer),
       }
     },
     // The library picker asks the registry itself; its behaviour is its own spec's.
@@ -178,7 +196,8 @@ vi.mock('@camstack/ui-library', async () => {
       mocks.profileCalls.push(input.nodeId)
       return query([{ profileId: 'monitor', label: 'BTM', description: 'btm' }])
     },
-    useTerminalSessionListSessions: () => query([]),
+    useTerminalSessionListSessions: () => query(mocks.sessions),
+    useTerminalSessionServerShellStatus: () => query(undefined),
     useTerminalSessionOpenSession: () => ({ mutateAsync: mocks.openSession, isPending: false }),
     useTerminalSessionClose: () => ({ mutateAsync: vi.fn(), isPending: false }),
   }
@@ -187,10 +206,10 @@ vi.mock('@camstack/ui-library', async () => {
 import { MemoryRouter } from 'react-router-dom'
 import { TerminalPage } from '../Terminal'
 
-function renderPage() {
+function renderPage(path = '/system/terminal') {
   return render(
     <QueryClientProvider client={new QueryClient()}>
-      <MemoryRouter>
+      <MemoryRouter initialEntries={[path]}>
         <TerminalPage />
       </MemoryRouter>
     </QueryClientProvider>,
@@ -227,12 +246,7 @@ function loadedCompositions(): unknown {
         block: HUB_MONITOR_BLOCK,
         state: {
           kind: 'answered',
-          state: {
-            blockId: 'b-1',
-            deviceId: 4101,
-            status: 'running',
-            fields: [],
-          },
+          state: { blockId: 'b-1', deviceId: 4101, status: 'running', fields: [] },
         },
       },
     ],
@@ -241,15 +255,11 @@ function loadedCompositions(): unknown {
 
 describe('TerminalPage', () => {
   beforeEach(() => {
-    mocks.compositions = loadedCompositions()
     mocks.openSession.mockClear()
     mocks.profileCalls.length = 0
-    mocks.registry.status = 'success'
-    mocks.registry.data = {
-      name: 'terminal-session',
-      providers: ['terminal'],
-      perNode: [{ nodeId: 'hub', providers: ['terminal'] }],
-    }
+    mocks.compositions = loadedCompositions()
+    mocks.sessions = []
+    mocks.registry = mocks.hubRegistry()
   })
 
   it('shows each terminal with its node, profile and the camera block that shows it', () => {
@@ -305,5 +315,39 @@ describe('TerminalPage', () => {
     expect(screen.queryByText('Nodes')).not.toBeInTheDocument()
     expect(screen.queryByText(/not installed/i)).not.toBeInTheDocument()
     expect(mocks.profileCalls).not.toContain('edge')
+  })
+
+  it('splits terminal devices and node shells into two sub-sections, devices first', () => {
+    renderPage()
+    expect(screen.getByRole('tab', { name: /terminal devices/i })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    )
+    expect(screen.getByRole('tab', { name: /node shells/i })).toBeInTheDocument()
+    // The node list belongs to the other tab and is not mounted here.
+    expect(screen.queryByRole('button', { name: /open shell/i })).not.toBeInTheDocument()
+  })
+
+  it('never lists a node shell among the live terminal sessions', () => {
+    mocks.sessions = [
+      { sessionId: 'tty-1', profileId: 'monitor', label: 'BTM', cols: 80, rows: 24, startedAt: 0 },
+      {
+        sessionId: 'sh-1',
+        profileId: 'server-shell',
+        label: 'Server shell',
+        cols: 80,
+        rows: 24,
+        startedAt: 0,
+      },
+    ]
+    renderPage()
+    expect(screen.getByText(/tty-1/)).toBeInTheDocument()
+    expect(screen.queryByText(/sh-1/)).not.toBeInTheDocument()
+  })
+
+  it('opens no session when the Node shells tab shows the node list', () => {
+    renderPage('/system/terminal?tab=shells')
+    expect(screen.getByRole('button', { name: /open shell/i })).toBeInTheDocument()
+    expect(mocks.openSession).not.toHaveBeenCalled()
   })
 })

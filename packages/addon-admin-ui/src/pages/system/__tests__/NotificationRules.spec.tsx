@@ -394,6 +394,13 @@ describe('NotificationRules page', () => {
   beforeEach(resetHarness)
 
   it('shows the empty state when there are no rules', async () => {
+    // "No rules" only from lists that ANSWERED empty — an unreadable producer
+    // list is an error on All, never an empty page (D315).
+    mockBridgeAnswers = {
+      'nc.listSummaryRules': { rules: [] },
+      'nc.listTimelapseRules': { rules: [] },
+      'nc.listCalendarEventsRules': { rules: [] },
+    }
     renderPage()
     await waitFor(() => expect(screen.getByText(/No rules yet/i)).toBeTruthy())
   })
@@ -1986,6 +1993,64 @@ describe('the unified Rules table', () => {
     await waitFor(() =>
       expect(screen.getByText('Summary rules are not available on this hub')).toBeTruthy(),
     )
+  })
+})
+
+describe('the All rules view — tags across kinds, one kind failing (#577)', () => {
+  beforeEach(resetHarness)
+
+  it('a tag filter keeps the tagged rules of every kind and hides the untagged', async () => {
+    answerProducers()
+    mockBridgeAnswers = {
+      ...mockBridgeAnswers,
+      'nc.listSummaryRules': { rules: [{ ...SUMMARY_ROW, tags: ['Garden'] }] },
+    }
+    mockRules = [rule({ tags: ['Garden'] })]
+    renderPage()
+    await waitFor(() => expect(screen.getByText('Week ahead')).toBeTruthy())
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search rules' }), {
+      target: { value: 'Garden' },
+    })
+
+    await waitFor(() => expect(screen.queryByText('Week ahead')).toBeNull())
+    expect(screen.getByText('Front door')).toBeTruthy()
+    expect(screen.getByText('Overnight sweep')).toBeTruthy()
+  })
+
+  it('a filter set on one area does not strand another on "Nothing matches"', async () => {
+    answerProducers()
+    mockRules = [rule()]
+    renderPage()
+    await waitFor(() => expect(screen.getByText('Week ahead')).toBeTruthy())
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search rules' }), {
+      target: { value: 'Week' },
+    })
+    await waitFor(() => expect(screen.queryByText('Front door')).toBeNull())
+
+    await openSection(/Summaries/)
+    expect(screen.getByText('Overnight sweep')).toBeTruthy()
+  })
+
+  it('one kind failing names that kind while the other kinds still list', async () => {
+    answerProducers()
+    mockBridgeAnswers = {
+      ...mockBridgeAnswers,
+      // An answer the build cannot read: not "no calendar rules".
+      'nc.listCalendarEventsRules': { kind: 'none', reason: 'down' },
+    }
+    mockRules = [rule()]
+    renderPage()
+
+    await waitFor(() => expect(screen.getByText('Overnight sweep')).toBeTruthy())
+    expect(screen.getByText('Front door')).toBeTruthy()
+    expect(screen.queryByText('Week ahead')).toBeNull()
+    await waitFor(() =>
+      expect(screen.getByText('Calendar-events rules are not available on this hub')).toBeTruthy(),
+    )
+    expect(screen.queryByText('Summary rules are not available on this hub')).toBeNull()
+    expect(screen.queryByText('No rules yet.')).toBeNull()
   })
 })
 

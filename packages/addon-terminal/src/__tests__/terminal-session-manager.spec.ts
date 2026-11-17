@@ -575,6 +575,27 @@ describe('server shell', () => {
     ).not.toHaveProperty('AWS_SECRET_ACCESS_KEY')
   })
 
+  it('lists who opened each session and when it last saw input or output', async () => {
+    let now = 1_700_000_000_000
+    const { manager, ptys } = shellManager({ now: () => now })
+    const info = await manager.openSession({
+      profileId: 'server-shell',
+      cols: 80,
+      rows: 24,
+      caller: shellCaller,
+    })
+    now += 5_000
+    ptys[0]!.emitData('prompt')
+    expect(await manager.listSessions()).toEqual([
+      expect.objectContaining({
+        sessionId: info.sessionId,
+        openedBy: 'admin-7',
+        startedAt: 1_700_000_000_000,
+        lastActivityAt: 1_700_000_005_000,
+      }),
+    ])
+  })
+
   it('writes an audit line with the node, user and session on open, attach and close', async () => {
     const { logger, lines } = auditLogger()
     const { manager } = shellManager({ logger })

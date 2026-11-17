@@ -558,7 +558,8 @@
           "clip": "Clip",
           "gif": "GIF"
         }
-      }
+      },
+      "searchRules": "Cerca regole"
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simula un evento",
@@ -4123,7 +4124,10 @@
       "eventCount_other": "{{count}} eventi",
       "showInReview": "Mostra in Revisione",
       "clusterHeading_one": "1 evento · {{time}}",
-      "clusterHeading_other": "{{count}} eventi · ultimo {{time}}"
+      "clusterHeading_other": "{{count}} eventi · ultimo {{time}}",
+      "rowSize": "Dimensione",
+      "rowSizeLabel": "Dimensione delle righe evento",
+      "selectAll": "Seleziona tutti ({{count}})"
     },
     "faceDetailPanel": {
       "face": "Volto",
@@ -4341,7 +4345,18 @@
       "detach": "Scollega"
     },
     "assignCount": "Assegna {{count}}",
-    "cameraFallback": "Telecamera #{{id}}"
+    "cameraFallback": "Telecamera #{{id}}",
+    "eventRow": {
+      "openDetail": "Apri i dettagli dell'evento",
+      "seek": "Riproduci {{className}} alle {{time}}",
+      "details": "Dettagli",
+      "play": "Riproduci",
+      "select": "Seleziona {{className}} alle {{time}}"
+    },
+    "eventClassChips": {
+      "all": "Tutte le classi",
+      "label": "Classi"
+    }
   },
   "recordings": {
     "activitySection": {
@@ -4456,7 +4471,10 @@
       "created": "Creato",
       "by": "da {{who}}",
       "title": "Titolo",
-      "downloaded": "Scaricato"
+      "downloaded": "Scaricato",
+      "allCameras": "Tutte le telecamere",
+      "noExportsForCamera": "Nessuna esportazione per questa telecamera",
+      "noExportsForCameraHint": "Scegli Tutte le telecamere per vedere ogni esportazione, o creane una con Nuova esportazione."
     },
     "maintenanceAuditSection": {
       "reclaimOrphanedAnalyticsRows": "Recuperare le righe di analisi orfane?",
@@ -5253,7 +5271,11 @@
     },
     "noNodes": "Ancora nessun nodo in questo cluster.",
     "subtitle": "Un nodo alla volta — topologia e pacchetti. Gli agent entrano tramite associazione (certificato, nessun segreto condiviso).",
-    "memoryUnknown": "sconosciuta"
+    "memoryUnknown": "sconosciuta",
+    "metricsSettings": {
+      "title": "Raccolta metriche — tutti i nodi",
+      "hint": "Ogni quanto ogni nodo campiona CPU, memoria e carico, e per quanto si conserva lo storico del carico."
+    }
   },
   "access": {
     "accessSection": {
@@ -5534,7 +5556,16 @@
       "inProcess": "in-process",
       "outdated": "non aggiornato",
       "requiresServer": "richiede server ≥ {{version}}",
-      "updateHeldTitle": "{{latest}} è in attesa: serve un server {{required}} o più recente"
+      "updateHeldTitle": "{{latest}} è in attesa: serve un server {{required}} o più recente",
+      "settingsElsewhere": "Altre impostazioni di questo addon si trovano in:",
+      "surface": {
+        "pipeline": "Pipeline → Impostazioni",
+        "history": "Storico",
+        "notifications": "Notifiche → Impostazioni",
+        "nodes": "Nodi",
+        "pipelineRoles": "Pipeline → Ruoli e nodi"
+      },
+      "allClusterSettingsElsewhere": "Le sue impostazioni per tutto il cluster sono nella pagina indicata sopra."
     },
     "addonRow": {
       "systemPackage": "Pacchetto di sistema",
@@ -5840,8 +5871,7 @@
       "saveFailed": "Salvataggio fallito:",
       "nothingToConfigureHereFor": "Nulla da configurare qui per questo nodo.",
       "noAddonsIn": "Nessun addon in {{scope}} espone impostazioni di livello {{level}} su questo nodo.",
-      "addonUnavailable": "{{name}} non disponibile.",
-      "providerPagesUnknown": "Non è stato possibile verificare quali impostazioni sono già su una pagina di connessione: {{reason}}"
+      "addonUnavailable": "{{name}} non disponibile."
     },
     "siteLocationCard": {
       "siteLocation": "Posizione del sito",
@@ -6838,11 +6868,12 @@
     "switchUnknown": "Sconosciuto"
   },
   "library": {
-    "peopleVehiclesCapturedEventsAnd": "Persone, veicoli e scene: ciò che il rilevamento ha riconosciuto.",
     "people": "Persone",
     "vehicles": "Veicoli",
     "events": "Eventi",
-    "scenes": "Scene"
+    "scenes": "Scene",
+    "exports": "Esportazioni",
+    "subtitleWithExports": "Persone, veicoli, scene ed esportazioni — ciò che il rilevamento ha riconosciuto e le clip che hai generato."
   },
   "plates": {
     "vehicles": "Veicoli",
@@ -6929,7 +6960,6 @@
         "loadingHubTopology": "Caricamento topologia dell'hub…",
         "noOnlineHubNodeFound": "Nessun nodo hub online trovato.",
         "settingsWillAppearOnceThe": "Le impostazioni compariranno quando l'hub sarà raggiungibile.",
-        "noAddonsInstalledOnThe": "Ancora nessun addon installato sull'hub.",
         "bootstrapUnavailable": "Non disponibile — l'addon che gestisce le impostazioni del server non ha risposto."
       },
       "users": {
@@ -7360,7 +7390,6 @@
     "colActions": "Azioni",
     "actionsNotSortable": "Le azioni non hanno un ordine",
     "attach": "Collega",
-    "subtitle": "Tieni un terminale sempre aperto su un nodo ed esportalo come una camera live.",
     "newTerminal": "Nuovo terminale",
     "instancesUnknown": "Impossibile leggere i terminali.",
     "empty": "Nessun terminale",
@@ -7382,14 +7411,39 @@
     "saveProfileSettings": "Salva impostazioni profilo",
     "adoptLegacy": "Adotta le camere storiche ({{count}})",
     "adoptLegacyFailed": "Impossibile adottare le camere storiche.",
-    "serverShell": "Shell del server",
     "serverShellLoading": "Verifica dei nodi che eseguono un terminale",
     "serverShellUnknown": "Il registro dei terminali non ha risposto. Riprova tra poco.",
-    "serverShellAbsent": "Il terminale non è installato su questo nodo",
-    "serverShellSubtitle": "Una shell di login nella cartella dati di questo nodo. Resta aperta quando esci e si chiude quando resta inattiva.",
-    "backToTerminals": "Terminali",
     "serverShellOff": "La shell del server è disattivata",
-    "serverShellSettings": "Attivala nelle impostazioni del Terminale",
+    "subtitleSections": "Tieni aperti terminali come telecamere live, o apri una shell su un nodo.",
+    "tabDevices": "Dispositivi terminale",
+    "tabShells": "Shell dei nodi",
+    "shellStatusUnknown": "Sconosciuto",
+    "shellOff": "Disattivata",
+    "shellOn": "Attiva",
+    "shellIdle": "Si chiude dopo {{minutes}} min senza input né output",
+    "shellOpening": "Apertura della shell",
+    "shellLeave": "Chiudi shell",
+    "shellStatusFailed": "Questo nodo non ha indicato se la shell è attiva. Riprova tra poco.",
+    "shellEnded": "La shell è terminata.",
+    "shellRestart": "Avvia una nuova shell",
+    "shellNoNodes": "Nessun nodo esegue l'addon Terminal",
+    "shellOpen": "Aperta",
+    "shellOpenAction": "Apri shell",
+    "shellRunning": "{{count}} attive",
+    "shellRunningUnknown": "Attive: sconosciuto",
+    "shellCloseFailed": "La shell non è stata chiusa: {{message}}",
+    "shellSessionsTitle": "Shell attive su questo nodo",
+    "shellSessionsFailed": "Questo nodo non ha elencato le sue shell attive. Riprova tra poco.",
+    "shellSessionsNone": "Nessuna shell attiva su questo nodo.",
+    "colOpenedBy": "Aperta da",
+    "colStarted": "Avviata",
+    "shellThisPage": "Questa pagina",
+    "shellCloseSession": "Chiudi",
+    "shellNotInstalled": "Terminal non è installato su questo nodo",
+    "shellLeaveFailed": "Una shell non è stata chiusa",
+    "shellLeaveFailedOn": "{{node}}: {{message}}",
+    "dismiss": "Ignora",
+    "shellLastActivity": "Ultimo input o output {{when}}",
     "cameraUnknown": "Sconosciuta",
     "deleteCamera": "Anche la sua telecamera {{name}} viene eliminata.",
     "addCamera": "Aggiungi una telecamera"
@@ -10903,6 +10957,13 @@
       "reachDays_other": "Indietro di {{count}} giorni",
       "sourcesFailed": "Impossibile leggere le sorgenti dei log",
       "sourcesFailedHint": "L'esportazione usa la sorgente log predefinita."
+    },
+    "clipSourceLanes": {
+      "count_one": "{{count}} clip",
+      "count_other": "{{count}} clip",
+      "failed": "Non leggibile — {{reason}}",
+      "refused": "Questa finestra è troppo ampia per elencare le clip.",
+      "playClip": "Riproduci la clip delle {{time}}"
     }
   },
   "helpers": {
@@ -11685,7 +11746,11 @@
       "loadTitle": "Bilanciamento del carico",
       "loadHint": "Come una nuova sessione di detection sceglie nodo e dispositivo, e cosa succede quando un nodo resta indietro.",
       "failoverTitle": "Failover",
-      "failoverHint": "Cosa succede alle camere quando un nodo si disconnette e poi torna."
+      "failoverHint": "Cosa succede alle camere quando un nodo si disconnette e poi torna.",
+      "streamingTitle": "Streaming",
+      "streamingHint": "Come il restream bufferizza e distribuisce il video live, e per quanto uno snapshot in cache può sostituirne uno nuovo.",
+      "recorderTitle": "Registrazione",
+      "recorderHint": "Come i nodi di registrazione raggiungono l’hub. Il nodo di registrazione si sceglie in Ruoli e nodi."
     },
     "loadBalancingViewModel": {
       "stalePinDisabled": "{{deviceKey}} non è abilitato su nessun nodo: le sessioni ignorano questo fissaggio",
@@ -11917,6 +11982,10 @@
       "col5m": "5 min",
       "col1h": "1 h",
       "col1d": "1 giorno"
+    },
+    "retention": {
+      "title": "Conservazione",
+      "hint": "Per quanto tempo si conserva ogni risoluzione dello storico registrato."
     }
   },
   "releaseIdentity": {
@@ -13462,12 +13531,10 @@
     },
     "tools": {
       "title": "Strumenti",
-      "subtitle": "Migrazione dello storage, eliminazione eventi, pulizia, tutte le esportazioni, riconciliazione dal disco",
+      "subtitle": "Migrazione dello storage, eliminazione eventi, pulizia, riconciliazione dal disco",
       "migration": "Sposta lo storage",
       "migrationHint": "Copia filmati, filmati a bassa risoluzione o media degli eventi in una nuova posizione, verifica, poi sposta il default. Vale per tutte le camere.",
-      "pruneEvents": "Elimina eventi vecchi",
-      "allExports": "Tutte le esportazioni",
-      "allExportsHint": "Tutte le esportazioni di tutte le camere, comprese quelle rimosse."
+      "pruneEvents": "Elimina eventi vecchi"
     },
     "activity": {
       "footageLog": "filmati",
@@ -13492,21 +13559,20 @@
     "section": {
       "storage": "Storage",
       "cameras": "Camere",
-      "activity": "Attività e salute"
+      "activity": "Attività e salute",
+      "overview": "Panoramica"
     },
     "camera": {
       "unknown": "Camera non trovata",
       "unknownHint": "Questa camera non è nell'Archivio. Sceglila dalla panoramica.",
-      "loading": "Camera",
       "picker": "Camera",
       "sections": "Sezioni della camera",
       "review": "Rivedi",
-      "events": "Eventi",
       "debugFilter": "Solo tracce marcate debug",
-      "exports": "Esportazioni",
-      "health": "Salute",
-      "space": "Spazio",
-      "settings": "Impostazioni"
+      "settings": "Impostazioni",
+      "none": "Ancora nessuna camera",
+      "noneHint": "Le camere compaiono qui appena ne aggiungi una.",
+      "healthSpace": "Salute e spazio"
     },
     "function": {
       "recording": "Registrazione",
@@ -13538,6 +13604,24 @@
       "info": "Info",
       "warning": "Avviso",
       "critical": "Critico"
+    },
+    "sections": "Sezioni dell'archivio",
+    "review": {
+      "source": "Sorgente",
+      "zone": "Zona",
+      "allZones": "Tutte le zone",
+      "identity": "Volto o targa",
+      "identityAny": "Qualsiasi soggetto",
+      "identityFace": "Con un volto",
+      "identityPlate": "Con una targa",
+      "noClipAt": "Questa sorgente non ha clip alle {{time}}. Scegli un'altra sorgente o un altro momento.",
+      "tools": "Ricerca, oggetti fermi e debug",
+      "unchecked": "Eventi non verificati da questo filtro: {{count}}",
+      "sourcesLoading": "Caricamento sorgenti…",
+      "sourcesFailed": "Impossibile leggere le sorgenti — {{reason}}",
+      "noReason": "nessun motivo indicato",
+      "exportQueued": "Esportazione in coda.",
+      "openExports": "Apri Libreria → Esportazioni"
     }
   }
 }

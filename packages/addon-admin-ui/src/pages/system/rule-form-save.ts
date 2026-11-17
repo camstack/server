@@ -289,6 +289,7 @@ export function buildRuleInput(
 
   return {
     name: form.name.trim(),
+    tags: [...form.tags],
     enabled: form.enabled,
     delivery: form.delivery,
     // The device scope is authored on its own tab and folded back in here. An

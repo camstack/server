@@ -27,6 +27,9 @@
  * event payload. The initial query is only a bootstrap — once the first event
  * arrives, the query is never refetched. Zero polling.
  *
+ * Below the node detail, the metrics provider's cluster settings — one value
+ * for every node (`MetricsCollectionCard`).
+ *
  * Offline nodes are selectable like any other (topology carries
  * `isOnline: false` rows for disconnected nodes) — there is no separate
  * "Offline agents" tab/panel.
@@ -40,6 +43,7 @@ import { Button, NodePicker, useClusterTopology, useSystem } from '@camstack/ui-
 import { AdminPage } from '../../components/AdminPage'
 import { ClusterUpdateDialog } from '../../components/cluster/ClusterUpdateDialog'
 import { AgentsFoundSection } from '../../components/cluster/pairing/AgentsFoundSection'
+import { MetricsCollectionCard } from '../../components/cluster/MetricsCollectionCard'
 import { NodeCard, type NodeData } from '../../components/cluster/NodeCard'
 import { StaleNodeNotice } from '../../components/shared/StaleNodeNotice'
 import { useNodeUrlSelection } from '../../hooks/useNodeUrlSelection'
@@ -204,6 +208,8 @@ export function ClusterPage() {
           <NodeCard node={selectedNode} />
         </div>
       )}
+
+      <MetricsCollectionCard />
     </AdminPage>
   )
 }

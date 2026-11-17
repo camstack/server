@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A camera grid or Terminal camera block's device is served by its engine on the composer's row; the engine alone reports its status and feature probe (engine-hosted blocks).
+
+## [1.2.586] - 2026-11-16
+
+### Added
+
+- Notification rules have an optional tags field and a setRuleTags method; tag counts include notification rules
+
+### Changed
+
+- terminalSession.listSessions names who opened each session (openedBy) and when it last saw input or output (lastActivityAt).
+- Summaries, timelapses and calendar-events rules carry tags too; the tags list shows an unreachable owner's count as unknown
+
 ## [1.2.585] - 2026-11-16
 
 ### Changed
@@ -180,7 +195,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Email images travel as peerBytes tickets on smtp-provider.sendEmail.
 - A cluster update can name a server install that stalled or hit its time limit.
 ### Changed
-
 
 ## [1.2.562] - 2026-11-13
 

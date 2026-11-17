@@ -22,9 +22,11 @@
  */
 import { useSystem } from '@camstack/ui-library'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 import { type KeyEventRow, mergeKeyEvents, sortKeyEvents } from './key-events-merge.js'
 
-const PER_CAMERA_LIMIT = 200
+/** Rows the feed asks of each camera; a page joining facts by track asks as many. */
+export const KEY_EVENTS_PER_CAMERA_LIMIT = 200
 const STALE_MS = 30_000
 
 export interface KeyEventsFeedInput {
@@ -67,7 +69,7 @@ export function useKeyEventsFeed(input: KeyEventsFeedInput): KeyEventsFeed {
         deviceIds: key,
         since: input.since,
         until: input.until,
-        limit: PER_CAMERA_LIMIT,
+        limit: KEY_EVENTS_PER_CAMERA_LIMIT,
         ...(input.minImportance !== undefined ? { minImportance: input.minImportance } : {}),
         ...(input.classFilter !== undefined ? { classFilter: input.classFilter } : {}),
       })
@@ -78,8 +80,8 @@ export function useKeyEventsFeed(input: KeyEventsFeedInput): KeyEventsFeed {
     },
   })
 
-  return {
-    rows: sortKeyEvents(mergeKeyEvents(data ?? NO_LANES), 'importance'),
-    isLoading: enabled && isLoading,
-  }
+  // Stable across renders: a consumer that hands the list on (the Archive's
+  // density bar) must not see a new array on every render.
+  const rows = useMemo(() => sortKeyEvents(mergeKeyEvents(data ?? NO_LANES), 'importance'), [data])
+  return { rows, isLoading: enabled && isLoading }
 }

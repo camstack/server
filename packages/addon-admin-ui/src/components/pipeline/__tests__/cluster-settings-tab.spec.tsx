@@ -33,6 +33,7 @@ interface PanelProps {
   readonly sectionIds?: readonly string[]
   readonly fieldScope?: string
   readonly omitSectionIds?: readonly string[]
+  readonly omitFieldKeys?: readonly string[]
 }
 
 vi.mock('../../settings/NodeAddonsSettingsPanel', () => ({
@@ -45,6 +46,7 @@ vi.mock('../../settings/NodeAddonsSettingsPanel', () => ({
       data-sections={(props.sectionIds ?? []).join(',')}
       data-scope={props.fieldScope ?? ''}
       data-omit={(props.omitSectionIds ?? []).join(',')}
+      data-omit-keys={(props.omitFieldKeys ?? []).join(',')}
     />
   ),
 }))
@@ -71,6 +73,8 @@ describe('Cluster → Settings', () => {
       'Semantic search',
       'Enrichment crop',
       'Full-resolution crops',
+      'Streaming',
+      'Recording',
       'Runner defaults',
       'Load balancer',
       'Failover',
@@ -83,6 +87,7 @@ describe('Cluster → Settings', () => {
     expect(panels.map((p) => p.dataset.addon)).toEqual([
       'pipeline-orchestrator',
       'pipeline-analytics',
+      'pipeline-orchestrator',
     ])
     expect(panels[0]?.dataset.keys).toBe(
       [
@@ -91,6 +96,8 @@ describe('Cluster → Settings', () => {
       ].join(','),
     )
     expect(panels[1]?.dataset.cap).toBe('face-gallery')
+    // The suggestion refresh interval (D866) — a section no other card draws.
+    expect(panels[2]?.dataset.sections).toBe('face-rescore')
   })
 
   it('draws every cluster-scoped encoder and knob exactly once', () => {
@@ -124,6 +131,28 @@ describe('Cluster → Settings', () => {
       .getAllByTestId('panel')
       .filter((p) => !(p.dataset.omit ?? '').split(',').includes('load'))
     expect(drawsLoad).toHaveLength(1)
+  })
+
+  it('Streaming draws the broker and snapshot cluster forms, Semantic search the encoder fallback', () => {
+    renderTab()
+    const streaming = within(card('Streaming')).getAllByTestId('panel')
+    expect(streaming.map((p) => [p.dataset.addon, p.dataset.cap, p.dataset.scope])).toEqual([
+      ['stream-broker', 'stream-broker', 'cluster'],
+      ['snapshot', 'snapshot', 'cluster'],
+    ])
+    const semantic = within(card('Semantic search')).getAllByTestId('panel')
+    expect(semantic.map((p) => p.dataset.addon)).toEqual([
+      'pipeline-orchestrator',
+      'embedding-encoder',
+    ])
+  })
+
+  it('Recording leaves the recording node to Roles & nodes', () => {
+    renderTab()
+    const [panel] = within(card('Recording')).getAllByTestId('panel')
+    expect(panel?.dataset.cap).toBe('recording')
+    expect(panel?.dataset.scope).toBe('cluster')
+    expect(panel?.dataset.omitKeys).toBe('recordingNodeId')
   })
 
   it('a cluster-scoped step links to the card its encoder is edited in', () => {

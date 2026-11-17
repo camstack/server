@@ -137,11 +137,19 @@ const UNAVAILABLE_COPY: Readonly<
 
 const UNREADABLE_MESSAGE_KEY = 'system.notificationProducerRules.unreadableMessage'
 
-function producerKindOfArea(area: RulesAreaKey): UnifiedProducerKind | null {
-  if (area === 'summaries') return 'summary'
-  if (area === 'timelapses') return 'timelapse'
-  if (area === 'calendar-events') return 'calendar-events'
-  return null
+const PRODUCER_KINDS: readonly UnifiedProducerKind[] = ['summary', 'timelapse', 'calendar-events']
+
+/**
+ * The producer kinds an area lists. The All area lists every kind, so each one
+ * that failed to load must say so there too — a failed kind never reads as
+ * "no rules" (D315).
+ */
+function producerKindsOfArea(area: RulesAreaKey): readonly UnifiedProducerKind[] {
+  if (area === 'all') return PRODUCER_KINDS
+  if (area === 'summaries') return ['summary']
+  if (area === 'timelapses') return ['timelapse']
+  if (area === 'calendar-events') return ['calendar-events']
+  return []
 }
 
 export function useProducerRulesHost({
@@ -373,27 +381,24 @@ export function useProducerRulesHost({
     else void calendarQuery.refetch()
   }
 
-  const listFailed = (area: RulesAreaKey): boolean => {
-    const areaKind = producerKindOfArea(area)
-    return areaKind !== null && unavailableOf(areaKind) !== null
-  }
+  const listFailed = (area: RulesAreaKey): boolean =>
+    producerKindsOfArea(area).some((kind) => unavailableOf(kind) !== null)
 
   const notices = (area: RulesAreaKey): ReactNode => {
-    const areaKind = producerKindOfArea(area)
-    const unavailable = areaKind === null ? null : unavailableOf(areaKind)
+    const failed = producerKindsOfArea(area).flatMap((kind) => {
+      const unavailable = unavailableOf(kind)
+      return unavailable === null ? [] : [{ kind, unreadable: unavailable.unreadable }]
+    })
     return (
       <>
-        {areaKind !== null && unavailable !== null && (
+        {failed.map(({ kind, unreadable }) => (
           <ErrorBox
-            title={t(UNAVAILABLE_COPY[areaKind].titleKey)}
-            message={t(
-              unavailable.unreadable
-                ? UNREADABLE_MESSAGE_KEY
-                : UNAVAILABLE_COPY[areaKind].messageKey,
-            )}
-            onRetry={() => refetchOf(areaKind)}
+            key={kind}
+            title={t(UNAVAILABLE_COPY[kind].titleKey)}
+            message={t(unreadable ? UNREADABLE_MESSAGE_KEY : UNAVAILABLE_COPY[kind].messageKey)}
+            onRetry={() => refetchOf(kind)}
           />
-        )}
+        ))}
         {deleteSummary.isError && (
           <ErrorBox
             title={t(

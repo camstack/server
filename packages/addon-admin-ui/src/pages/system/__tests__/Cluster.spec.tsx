@@ -24,6 +24,10 @@ vi.mock('../../../components/cluster/NodeGeneralIdentitySection', () => ({
 }))
 
 // Discovery and pairing have their own suites (components/cluster/pairing).
+vi.mock('../../../components/cluster/MetricsCollectionCard', () => ({
+  MetricsCollectionCard: () => <div data-testid="metrics-collection" />,
+}))
+
 vi.mock('../../../components/cluster/pairing/AgentsFoundSection', () => ({
   AgentsFoundSection: () => null,
 }))

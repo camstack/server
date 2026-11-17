@@ -178,7 +178,9 @@ async function harness() {
 describe('UniFi integration: the controller is a Gateway, a sibling of its devices', () => {
   it('is an account-mode integration with the adoption cap, not a standalone hub', () => {
     const pkg: {
-      camstack: { addons: Array<{ mode: string; capabilities: Array<{ name: string }> }> }
+      camstack: {
+        addons: Array<{ mode: string; capabilities: Array<{ name: string }> }>
+      }
     } = JSON.parse(readFileSync(join(__dirname, '..', '..', 'package.json'), 'utf8'))
     const addon = pkg.camstack.addons[0]
     expect(addon?.mode).toBe('account')
@@ -196,7 +198,13 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
   it('serves the connection form from the instance, both credentials keychain secrets', async () => {
     const mem = makeInMemoryRecords('provider-unifi')
     await mem.records.declare(unifiRecordKinds)
-    const instances = buildUnifiInstances(mem.records, { onChanged: async () => undefined })
+    const instances = buildUnifiInstances(mem.records, {
+      onChanged: async () => undefined,
+      makeClient: () => {
+        throw new Error('no client in this spec')
+      },
+      statusOf: () => null,
+    })
     const schema = await instances.instanceFormSchema({ id: null })
     expect(unifiConnectionsEntryKind.declaration.secretPaths).toEqual(['apiKey', 'password'])
     expect(schema).toEqual(buildConnectionFormSchema())
@@ -234,14 +242,24 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
 
   it('a retried adopt neither duplicates the Gateway nor an infra device', async () => {
     const h = await harness()
-    await h.provider.adopt({ integrationId: INT, childNativeIds: [UNIFI_GATEWAY_ID, 'infra:sw1'] })
-    await h.provider.adopt({ integrationId: INT, childNativeIds: [UNIFI_GATEWAY_ID, 'infra:sw1'] })
+    await h.provider.adopt({
+      integrationId: INT,
+      childNativeIds: [UNIFI_GATEWAY_ID, 'infra:sw1'],
+    })
+    await h.provider.adopt({
+      integrationId: INT,
+      childNativeIds: [UNIFI_GATEWAY_ID, 'infra:sw1'],
+    })
     expect(h.created).toHaveLength(2)
   })
 
   it('lists the Gateway first, then the infra and clients, all flat', async () => {
     const h = await harness()
-    const page = await h.provider.listCandidates({ integrationId: INT, page: 1, pageSize: 50 })
+    const page = await h.provider.listCandidates({
+      integrationId: INT,
+      page: 1,
+      pageSize: 50,
+    })
     expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
       [UNIFI_GATEWAY_ID, DeviceType.Gateway],
       ['infra:sw1', DeviceType.Container],
@@ -334,7 +352,13 @@ describe('UniFi integration: devices follow the integration', () => {
       applyDerivedSpec: apply,
     }
     const reg = { getAllForAddon: () => [{ id: 5, parentDeviceId: null }] }
-    const input = { reg, devices, addonId: 'provider-unifi', integrationId: INT, logger: quiet }
+    const input = {
+      reg,
+      devices,
+      addonId: 'provider-unifi',
+      integrationId: INT,
+      logger: quiet,
+    }
     expect(await reconcileInfraFeatures(input)).toBe(1)
     expect(JSON.stringify(apply.mock.calls[0])).toContain('poe')
     // A different integration is untouched.
@@ -369,7 +393,11 @@ describe('UniFi devices on a stub device context', () => {
       },
       persistedConfig: config,
       initialRuntimeState: {},
-      eventBus: { emit: vi.fn(), subscribe: vi.fn(() => () => {}), getRecent: vi.fn(() => []) },
+      eventBus: {
+        emit: vi.fn(),
+        subscribe: vi.fn(() => () => {}),
+        getRecent: vi.fn(() => []),
+      },
       persistConfig: vi.fn(async () => {}),
       bindRuntimeState: (rs: IDeviceRuntimeState) => {
         runtime = rs

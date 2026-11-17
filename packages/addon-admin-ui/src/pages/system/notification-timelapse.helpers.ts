@@ -48,6 +48,7 @@ import { z } from 'zod'
 import { agoLabel, sameShape, scheduleLabel, targetsFromIds } from './notification-digest.helpers'
 import { overridesForSave, type TargetFieldsOf } from './rule-form-target-settings'
 import i18n from '../../i18n/index'
+import { type TagsWire, tagsForCreate, tagsForPatch } from './rule-tags-wire'
 
 // ── The bridge ───────────────────────────────────────────────────────
 
@@ -154,6 +155,8 @@ export interface TimelapseFormState {
   readonly reportClasses: readonly string[]
   readonly priority: number
   readonly targetOverrides: NcTargetOverrides
+  /** Operator labels (D1054); `[]` = none. */
+  readonly tags: readonly string[]
 }
 
 /** The defaults a NEW timelapse opens on — the schema's own, verbatim. */
@@ -176,6 +179,7 @@ export function emptyTimelapseForm(): TimelapseFormState {
     reportClasses: [],
     priority: 3,
     targetOverrides: {},
+    tags: [],
   }
 }
 
@@ -198,12 +202,13 @@ export function timelapseRuleToForm(rule: TimelapseRuleView): TimelapseFormState
     reportClasses: [...(rule.reportClasses ?? [])],
     priority: rule.priority,
     targetOverrides: rule.targetOverrides ?? {},
+    tags: [...(rule.tags ?? [])],
   }
 }
 
 // ── What goes on the wire ────────────────────────────────────────────
 
-export interface TimelapseRuleInputWire {
+export interface TimelapseRuleInputWire extends TagsWire {
   readonly name: string
   readonly enabled: boolean
   readonly deviceIds: readonly number[]
@@ -227,7 +232,7 @@ export interface TimelapseTemplateWire {
 }
 
 /** `template` is the one clearable field: `null` removes it. */
-export interface TimelapseRulePatchWire {
+export interface TimelapseRulePatchWire extends TagsWire {
   readonly name?: string
   readonly enabled?: boolean
   readonly deviceIds?: readonly number[]
@@ -290,6 +295,7 @@ export function buildTimelapseCreateInput(
     ...(form.reportClasses.length > 0 ? { reportClasses: [...form.reportClasses] } : {}),
     priority: form.priority,
     ...(Object.keys(targetOverrides).length > 0 ? { targetOverrides } : {}),
+    ...tagsForCreate(form.tags),
   }
 }
 
@@ -354,7 +360,7 @@ export function buildTimelapsePatch(
     // The map replaces the stored one whole: every target, untouched ones included.
     patch.targetOverrides = next.targetOverrides ?? {}
   }
-  return patch
+  return { ...patch, ...tagsForPatch(form.tags, existing.tags) }
 }
 
 // ── The arithmetic the operator is actually tuning ───────────────────
@@ -558,7 +564,7 @@ export const NC_TIMELAPSE_TABS: readonly TimelapseTab[] = [
     get label() {
       return i18n.t('helpers.notificationTimelapse.tab_rule')
     },
-    fields: ['name', 'enabled', 'deviceIds'],
+    fields: ['name', 'enabled', 'tags', 'deviceIds'],
   },
   {
     key: 'window',

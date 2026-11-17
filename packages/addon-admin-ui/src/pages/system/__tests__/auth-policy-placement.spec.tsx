@@ -4,8 +4,7 @@
  * networks, allowed browser origins) renders in exactly one place: Identity ->
  * Authentication, which asks the bootstrap form for that section. System ->
  * Settings asks for no section and names no omit list: the form leaves the
- * sign-in policy out, and the aggregate panel drops function-cap sections
- * (passkeys included) on its own.
+ * sign-in policy out, and since #578 it draws no addon settings panel at all.
  */
 import { cleanup, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
@@ -98,9 +97,8 @@ describe('system-config auth section placement', () => {
     const form = screen.getByTestId('bootstrap-form')
     expect(form.dataset.sections).toBe('')
     expect(form.dataset.omit).toBe('')
-    const panel = screen.getByTestId('panel')
-    expect(panel.dataset.omit).toBe('')
-    expect(panel.dataset.addons).not.toContain('system-config')
+    // #578: addon cluster settings live on their feature pages; System -> Settings draws no addon panel.
+    expect(screen.queryByTestId('panel')).toBeNull()
     expect(screen.getByTestId('units')).toBeTruthy()
     expect(screen.getByTestId('hotkeys')).toBeTruthy()
   })

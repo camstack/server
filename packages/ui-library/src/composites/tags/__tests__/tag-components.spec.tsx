@@ -15,7 +15,14 @@ import { TagInput } from '../tag-input'
 import { TaggedDataTable } from '../tagged-data-table'
 import type { TagRegistry } from '../use-tag-registry'
 
-const NO_COUNTS = { coreBlocks: 0, schedulers: 0, templates: 0, actions: 0, devices: 0 }
+const NO_COUNTS = {
+  coreBlocks: 0,
+  schedulers: 0,
+  templates: 0,
+  actions: 0,
+  devices: 0,
+  notificationRules: 0,
+}
 
 const ENTRIES: readonly TagEntry[] = [
   { name: 'Garden', color: 'tag-c', icon: 'tag', styled: true, counts: NO_COUNTS },

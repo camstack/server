@@ -2078,6 +2078,12 @@ export const useNotificationRulesDeleteRule: typeof trpc.notificationRules.delet
 /** Generated alias around `trpc.notificationRules.setRuleEnabled.useMutation`. */
 export const useNotificationRulesSetRuleEnabled: typeof trpc.notificationRules.setRuleEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.notificationRules.setRuleEnabled.useMutation)
 
+/** Generated alias around `trpc.notificationRules.listRuleTags.useQuery`. */
+export const useNotificationRulesListRuleTags: typeof trpc.notificationRules.listRuleTags.useQuery = /*#__PURE__*/ alias(() => trpc.notificationRules.listRuleTags.useQuery)
+
+/** Generated alias around `trpc.notificationRules.setRuleTags.useMutation`. */
+export const useNotificationRulesSetRuleTags: typeof trpc.notificationRules.setRuleTags.useMutation = /*#__PURE__*/ alias(() => trpc.notificationRules.setRuleTags.useMutation)
+
 /** Generated alias around `trpc.notificationRules.getClipRetentionAsks.useQuery`. */
 export const useNotificationRulesGetClipRetentionAsks: typeof trpc.notificationRules.getClipRetentionAsks.useQuery = /*#__PURE__*/ alias(() => trpc.notificationRules.getClipRetentionAsks.useQuery)
 

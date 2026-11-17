@@ -886,6 +886,11 @@ out from a forked addon, and every row was destroyed on the first attempt.
 
 What both editors must keep true (operator review, 2026-10-01):
 
+- **Tags on every kind.** Event, summary, timelapse and calendar-events rules
+  carry optional, admin-only `tags` ([D1054](../decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md));
+  every Rules area, All included, filters and groups them through
+  `TaggedDataTable`, and a kind whose list failed shows an error, never "no rules".
+
 - **One mode per list.** Classes, zones, known faces and labels are each ONE
   field, "All | Only these | All except these" (`rule-scope-model.ts`); labels
   have no exclusion. No "any of / all of": `zones` is written as `{ ids }`, and

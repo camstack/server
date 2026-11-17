@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   pctForMs,
   densityRowsToBuckets,
+  densityPointsToRows,
   seekTargetForSpans,
   dayWindow,
   zoomWindowAnchoredRight,
@@ -356,5 +357,34 @@ describe('playbackFailureReason', () => {
   it('has no reason for an empty throw', () => {
     expect(playbackFailureReason(new Error('  '))).toBeNull()
     expect(playbackFailureReason(undefined)).toBeNull()
+  })
+})
+
+describe('densityPointsToRows', () => {
+  const FROM = 1_000_000
+  const BUCKET = 60_000
+
+  it('buckets points by kind, in window order, and drops points outside the window', () => {
+    const rows = densityPointsToRows(
+      [
+        { atMs: FROM + 2 * BUCKET + 5, kind: 'object' },
+        { atMs: FROM + 10, kind: 'object' },
+        { atMs: FROM + 20, kind: 'audio' },
+        { atMs: FROM + 2 * BUCKET + 9, kind: 'object' },
+        { atMs: FROM - 1, kind: 'object' },
+        { atMs: FROM + 3 * BUCKET, kind: 'object' },
+      ],
+      FROM,
+      FROM + 3 * BUCKET,
+      BUCKET,
+    )
+    expect(rows).toEqual([
+      { bucketStart: FROM, motion: 0, object: 1, audio: 1 },
+      { bucketStart: FROM + 2 * BUCKET, motion: 0, object: 2, audio: 0 },
+    ])
+  })
+
+  it('an empty list is an empty bar, not a missing one', () => {
+    expect(densityPointsToRows([], FROM, FROM + BUCKET, BUCKET)).toEqual([])
   })
 })

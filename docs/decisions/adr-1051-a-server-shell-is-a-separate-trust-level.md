@@ -9,7 +9,7 @@ applies-to:
   - packages/addon-terminal/src/server-shell.ts
   - packages/addon-terminal/src/terminal-session-manager.ts
   - packages/addon-terminal/src/pty.ts
-  - packages/addon-admin-ui/src/pages/system/ServerShell.tsx
+  - packages/addon-admin-ui/src/pages/system/terminal/NodeShells.tsx
 ---
 
 ## Context
@@ -48,6 +48,9 @@ controls:
 Any admin may attach to or close another admin's shell session. That is
 accepted because every method on the capability is `auth: 'admin'`. The
 session is not private to the admin who opened it; the tier is the bound.
+The admin UI exposes the close, not the attach: Node shells lists every shell
+a node is running, with who opened it, when, and its last input or output,
+and offers Close on each (D1055).
 
 The child is the login shell (`/bin/bash` in a container, otherwise `$SHELL`
 or `/bin/zsh` on macOS). It runs as the node's uid. Its working directory is
@@ -67,7 +70,10 @@ node, and can read what that uid can read in the data directory, including
 the keychain and the database. The audit line is the record of who did. A
 node that never opts in cannot be opened, and the UI shows that reason rather
 than a blank terminal. Turning the switch off closes the live shells. The
-idle close is the bound on a forgotten tab. Another admin on the same tier
+idle close bounds a forgotten tab only while its shell prints nothing: output
+counts as activity, so a shell running a command that keeps printing is never
+idle. The bound for that case is the running-shells list with its Close
+(D1055). Another admin on the same tier
 can attach to a session they did not open. An attach whose caller the data
 plane cannot name is logged unattributed: the camera relay opens a session
 with no caller, and a data-plane request with no hub user header is the same

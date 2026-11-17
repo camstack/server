@@ -36,7 +36,7 @@ import {
 import { type ReactNode, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { hubPath } from '../../lib/mount'
-import { NodeAddonsSettingsPanel } from '../settings/NodeAddonsSettingsPanel'
+import { AddonClusterSettings } from './AddonClusterSettings'
 import { AddonRowBadge } from './AddonRowBadge'
 import type { AddonTaskProgress } from './AddonsJobProgress'
 import { AddonsJobProgress } from './AddonsJobProgress'
@@ -1010,16 +1010,7 @@ export function AddonCard({
                   'Cluster-wide settings — one value for every node. Per-node settings live under Cluster → the node → Settings.',
                 )}
               </div>
-              <NodeAddonsSettingsPanel
-                nodeId={null}
-                addonIds={[manifest.id]}
-                level="global"
-                fieldScope="cluster"
-                emptyMessage={t(
-                  'addons.addonCard.thisAddonExposesNoCluster',
-                  'This addon exposes no cluster-wide settings. Anything it can configure is per-node — open it from Cluster → the node → Settings.',
-                )}
-              />
+              <AddonClusterSettings addonId={manifest.id} onOpen={(href) => navigate(href)} />
 
               {/* Generic device-export surface — rendered for any addon
                   that declares the `device-export` capability (HomeKit /

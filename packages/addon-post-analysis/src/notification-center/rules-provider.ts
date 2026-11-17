@@ -23,6 +23,9 @@ import { NcRuleActionRunner } from './rule-actions.js'
 import { guardPatchFamily, guardRuleFamily } from './rule-family-guard.js'
 import { NC_RULE_LAST_RUNS_SCAN_LIMIT, summariseRuleLastRuns } from './rule-last-runs.js'
 import { NcRuleStore } from './rule-store.js'
+import type { NcSummaryStore } from './summary/summary-store.js'
+import type { TimelapseStore } from './timelapse/timelapse-store.js'
+import type { NcCalendarEventsStore } from './calendar-events/calendar-events-store.js'
 import {
   guardPatchSystemEventDelivery,
   guardRuleSystemEventDelivery,
@@ -47,6 +50,8 @@ import type {
   NcSnooze,
   NcSnoozeInput,
   NcTestResult,
+  NcRuleTagsEntry,
+  NcTaggedRuleKind,
 } from '@camstack/types'
 import { NC_CONDITION_CATALOG, NC_TAXONOMY, servedTemplateVars } from '@camstack/types'
 import { randomUUID } from 'node:crypto'
@@ -190,11 +195,55 @@ export interface RulesProviderHost {
   readonly now: () => number
   readonly outbox: NcOutbox
   readonly rules: NcRuleStore
+  /** The scheduled producers' stores — they carry tags too (D1054). */
+  readonly producerRules: NcProducerRuleStores
   setAlarmConfig(patch: NcAlarmSettingsPatch): Promise<NcAlarmConfig>
   readonly snoozes: NcSnoozeStore
   readonly stateSummary: NcStateSummaryService
   readonly texts: NcTextCatalog
   validateTargetRefs(targetIds: readonly string[]): Promise<void>
+}
+
+/** The summary, timelapse and calendar-events stores, as the tags read needs them. */
+export interface NcProducerRuleStores {
+  readonly summaries: NcSummaryStore
+  readonly timelapses: TimelapseStore
+  readonly calendarEvents: NcCalendarEventsStore
+}
+
+/** Every rule of every kind with its tags — the `tags` cap's one read. */
+function listRuleTagsOf(host: RulesProviderHost): NcRuleTagsEntry[] {
+  const entry = (
+    kind: NcTaggedRuleKind,
+    rule: { readonly id: string; readonly tags?: readonly string[] },
+  ): NcRuleTagsEntry => ({ kind, ruleId: rule.id, tags: [...(rule.tags ?? [])] })
+  const p = host.producerRules
+  return [
+    ...host.rules.list().map((r) => entry('event', r)),
+    ...p.summaries.list().map((r) => entry('summary', r)),
+    ...p.timelapses.list().map((r) => entry('timelapse', r)),
+    ...p.calendarEvents.list().map((r) => entry('calendar-events', r)),
+  ]
+}
+
+/** Replace one rule's tags in the store its kind names; answers what was stored. */
+async function setRuleTagsOf(
+  host: RulesProviderHost,
+  kind: NcTaggedRuleKind,
+  ruleId: string,
+  tags: readonly string[],
+): Promise<readonly string[]> {
+  const p = host.producerRules
+  switch (kind) {
+    case 'event':
+      return (await host.rules.setTags(ruleId, tags)).tags ?? []
+    case 'summary':
+      return (await p.summaries.setTags(ruleId, tags)).tags ?? []
+    case 'timelapse':
+      return (await p.timelapses.setTags(ruleId, tags)).tags ?? []
+    case 'calendar-events':
+      return (await p.calendarEvents.setTags(ruleId, tags)).tags ?? []
+  }
 }
 
 export function buildProvider(host: RulesProviderHost): INotificationRulesProvider {
@@ -319,6 +368,14 @@ export function buildProvider(host: RulesProviderHost): INotificationRulesProvid
           fire: { ruleId: updated.id, rule: updated.name },
         })
       }
+      return { success: true }
+    },
+    // D1054: every rule kind carries tags; the `tags` cap reads and rewrites
+    // them here, one store per kind.
+    listRuleTags: async () => ({ rules: listRuleTagsOf(host) }),
+    setRuleTags: async ({ kind, ruleId, tags }) => {
+      const stored = await setRuleTagsOf(host, kind, ruleId, tags)
+      host.logger.info('notification rule tags set', { meta: { kind, ruleId, tags: stored } })
       return { success: true }
     },
     testRule: async ({ rule, lookbackMinutes }) => ({

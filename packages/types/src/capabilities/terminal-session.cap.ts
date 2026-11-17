@@ -1,6 +1,6 @@
 import { z } from 'zod'
-import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
+import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 
 /** Profile-exported FormBuilder schema. Shape is ConfigUISchema at the UI. */
 const ProfileSettingsSchemaBridge = z.unknown().nullable()
@@ -24,6 +24,10 @@ const TerminalSessionInfoSchema = z.object({
   rows: z.number().int().positive(),
   /** ms-epoch the session's pty was spawned. */
   startedAt: z.number(),
+  /** User id of the admin who opened it; `unattributed` when the caller was not passed. */
+  openedBy: z.string().optional(),
+  /** ms-epoch of the last pty input or output — what the idle timeout measures. */
+  lastActivityAt: z.number().optional(),
 })
 
 /**
@@ -193,10 +197,10 @@ export type ServerShellStatus = z.infer<typeof ServerShellStatusSchema>
 export type ServerShellRefusal = z.infer<typeof ServerShellRefusalSchema>
 
 export {
+  ServerShellRefusalSchema,
+  ServerShellStatusSchema,
   TerminalOutputBatchSchema,
   TerminalOutputEventSchema,
   TerminalProfileInfoSchema,
-  ServerShellRefusalSchema,
-  ServerShellStatusSchema,
   TerminalSessionInfoSchema,
 }

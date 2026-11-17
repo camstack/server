@@ -2518,6 +2518,13 @@
       "summary": "Classify ONE node from the registry's answer — the per-node form of `useCapabilityPresence`, for a picker that offers only the nodes running a provider."
     },
     {
+      "name": "capabilityProviderNodes",
+      "kind": "function",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-capability-presence.ts",
+      "summary": "Every node hosting at least one provider, in the registry's order. A row with providers but no `perNode` cannot name its nodes, so it is `unknown`."
+    },
+    {
       "name": "capCardKindOf",
       "kind": "function",
       "area": "composites",
@@ -3104,6 +3111,92 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/climate-model.ts",
       "summary": "What draws the heat or the cold, from the device's ROLE. A bound valve makes a plain thermostat (or an unset role) a radiator; a role the operator named (floor, heat pump circuit, ac...) is kept."
+    },
+    {
+      "name": "clipAtInstant",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/clips/clip-source-options.ts",
+      "summary": "The clip that holds `atMs`, or — when none does — the nearest one starting within `toleranceMs` after it (an event fires a moment before its clip opens). `null` when the source holds nothing near that instant."
+    },
+    {
+      "name": "ClipPanel",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/clips/ClipPanel.tsx",
+      "summary": "The selected clip — what it is, how it plays, and how it is saved.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "clip",
+          "type": "Clip",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "profile",
+          "type": "CamProfile",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "onProfileChange",
+          "type": "(profile: CamProfile) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
+      "name": "clipProviderOptions",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/clips/clip-source-options.ts",
+      "summary": "One option per provider; rows without an `addonId` (version skew) are skipped."
+    },
+    {
+      "name": "ClipSourceLanes",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/clips/ClipSourceLanes.tsx",
+      "summary": "Every provider's lane, in the order the camera listed its sources.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "options",
+          "type": "readonly ClipProviderOption[]",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "view",
+          "type": "DayWindow",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "selectedProvider",
+          "type": "string | null",
+          "optional": false,
+          "doc": "The provider the player plays, or null."
+        },
+        {
+          "name": "onPickClip",
+          "type": "(provider: string, clip: Clip) => void",
+          "optional": false,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "clusterRootModelIds",
@@ -4958,6 +5051,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/charts/chart-uplot.ts",
       "summary": "The default axis spec for a unit."
+    },
+    {
+      "name": "defaultClipProvider",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/clips/clip-source-options.ts",
+      "summary": "The provider a surface asks when the operator has not picked one: the `preferred` provider when the camera lists it, else the first one listed, else `null` (nobody to ask)."
     },
     {
       "name": "defaultOfField",
@@ -14740,6 +14840,30 @@
           "type": "(fromMs: number, toMs: number) => void",
           "optional": true,
           "doc": "Shift + drag on the coverage bar selects a range and reports it here."
+        },
+        {
+          "name": "onViewChange",
+          "type": "(view: DayWindow) => void",
+          "optional": true,
+          "doc": "Told the visible window whenever it moves (day, zoom, pan, seek)."
+        },
+        {
+          "name": "densityPoints",
+          "type": "readonly DensityPoint[]",
+          "optional": true,
+          "doc": "Draw the density bar from these events instead of the server histogram — a surface that filters its event list passes that filtered list, so"
+        },
+        {
+          "name": "lanes",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "Extra lanes drawn under the coverage bar, over the same window."
+        },
+        {
+          "name": "toolbar",
+          "type": "ReactNode",
+          "optional": true,
+          "doc": "The surface's own filters, drawn at the start of the controls row so the page has ONE bar: its filters, then the date and window controls."
         }
       ]
     },
@@ -19768,6 +19892,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/display-palette-context.tsx",
       "summary": "The cluster palette, when a host has read `display-palette` (D939). No provider, a pending read, or an unknown store all paint the bundled CamStack preset. Only `ready` replaces it. Callers that must say the store was…"
+    },
+    {
+      "name": "useClipLaneClips",
+      "kind": "hook",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/clips/ClipSourceLanes.tsx",
+      "summary": "The clips one provider holds in `view`. One hook for the lane and for any caller that needs the same answer (a player picking the clip at an instant), so both ask the identical question and share one cached read."
     },
     {
       "name": "useClusterNodes",

@@ -20,7 +20,14 @@ import {
   writeTagViewMode,
 } from '../tag-model'
 
-const COUNTS = { coreBlocks: 1, schedulers: 0, templates: 0, actions: 0, devices: 0 }
+const COUNTS = {
+  coreBlocks: 1,
+  schedulers: 0,
+  templates: 0,
+  actions: 0,
+  devices: 0,
+  notificationRules: 0,
+}
 
 const STYLED: TagEntry = {
   name: 'Garden',

@@ -11,6 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Build-your-self offers Camera grid and Terminal camera blocks; the Camera grids page is gone, recreate old grids as blocks.
 
+## [1.2.691] - 2026-11-16
+
+### Added
+
+- Notification rules carry tags: set them in the rule editor, then filter and group the rules list by tag like Build-your-self
+
+### Changed
+
+- The integration form shows no Test button for an integration that has no connection test
+- Archive is now Overview + Cameras: pick a camera in the header and review it with the player beside the window's events, the timeline below with zone, face/plate and debug filters, one lane per clip source; exports moved to Library → Exports.
+- Archive Review: compact event rows with a size slider, class chips and every filter in one bar above the timeline.
+- Archive Review: event rows are selectable for bulk delete, sources loading or failing are said, a zone filter counts the events it could not check, and old camera links open the matching view; Library → Exports filters by camera.
+- Terminal page: Terminal devices and Node shells are separate tabs; a node's shell opens only when you open that node and closes when you leave it.
+- Node shells counts each node's running shells and lists them, whoever opened them, with a Close; a failed close is shown, a node without Terminal says so, and a page restored from the back/forward cache returns to Open shell.
+- System → Settings no longer lists addon settings tabs; each addon's cluster settings moved to its page (Pipeline streaming/recording/semantic search, History retention, Nodes metrics), the rest stay in the addon's settings dialog
+- Pipeline → Settings → Faces draws the face-suggestion refresh interval; an addon's settings dialog leaves out the role pickers drawn on Roles & nodes and links there
+- Every notification rule kind (summaries, timelapses, calendar events) has a Tags field; every Rules area filters and groups by tag, and All names a kind whose list failed instead of looking empty
+
 ## [1.2.690] - 2026-11-16
 
 ### Changed
@@ -87,14 +105,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device History tab shows grouped charts and a per-chart unit switch
 
-
 ## [1.2.680] - 2026-11-15
 
 ### Changed
 
 - Rebuilt against updated dependencies.
 ### Changed
-
 
 ## [1.2.679] - 2026-11-15
 

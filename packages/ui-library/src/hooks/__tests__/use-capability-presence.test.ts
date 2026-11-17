@@ -4,7 +4,7 @@
  * `unknown`, and a row that cannot name its nodes is `unknown` per node.
  */
 import { describe, expect, it } from 'vitest'
-import { capabilityPresenceOnNode } from '../use-capability-presence'
+import { capabilityPresenceOnNode, capabilityProviderNodes } from '../use-capability-presence'
 
 const row = (providers: string[], perNode?: { nodeId: string; providers: string[] }[]) => ({
   name: 'terminal-session',
@@ -50,5 +50,43 @@ describe('capabilityPresenceOnNode', () => {
     expect(capabilityPresenceOnNode({ status: 'success', data: row(['terminal']) }, 'hub')).toBe(
       'unknown',
     )
+  })
+})
+
+describe('capabilityProviderNodes', () => {
+  it('carries no list while pending or after a failed read — never an empty answer', () => {
+    expect(capabilityProviderNodes({ status: 'pending' })).toEqual({ state: 'pending' })
+    expect(capabilityProviderNodes({ status: 'error' })).toEqual({ state: 'unknown' })
+  })
+
+  it('lists each node with a provider once, and skips a node with none', () => {
+    const answer = {
+      status: 'success' as const,
+      data: row(
+        ['terminal'],
+        [
+          { nodeId: 'hub', providers: ['terminal'] },
+          { nodeId: 'edge', providers: [] },
+          { nodeId: 'garage', providers: ['terminal'] },
+        ],
+      ),
+    }
+    expect(capabilityProviderNodes(answer)).toEqual({
+      state: 'answered',
+      nodeIds: ['hub', 'garage'],
+    })
+  })
+
+  it('answers an empty list only when the registry said nothing provides it', () => {
+    expect(capabilityProviderNodes({ status: 'success', data: null })).toEqual({
+      state: 'answered',
+      nodeIds: [],
+    })
+  })
+
+  it('is unknown when the row has providers but cannot name their nodes', () => {
+    expect(capabilityProviderNodes({ status: 'success', data: row(['terminal']) })).toEqual({
+      state: 'unknown',
+    })
   })
 })

@@ -1,13 +1,15 @@
 // @vitest-environment jsdom
 /**
- * The bootstrap form is a hub fact, not an addon pane: it shows whenever the hub is online, even
- * with no addon to list below it.
+ * System → Settings is the installation's own settings: the bootstrap form shows whenever the
+ * hub is online, and no addon's settings are drawn here (#578 — they live on the page about
+ * their subject, or in the addon's dialog).
  */
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 const state = vi.hoisted(() => ({
   addons: [] as Array<{ addonId: string }>,
+  online: true,
 }))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
@@ -16,7 +18,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     ...real,
     useClusterNodes: () => ({
       isLoading: false,
-      nodes: [{ id: 'hub', isHub: true, isOnline: true, addons: state.addons }],
+      nodes: [{ id: 'hub', isHub: true, isOnline: state.online, addons: state.addons }],
     }),
   }
 })
@@ -36,19 +38,20 @@ import { SettingsPage } from '../Settings'
 
 afterEach(cleanup)
 
-describe('SettingsPage bootstrap form', () => {
-  it('shows the bootstrap form when the hub lists no addon besides system-config', () => {
-    state.addons = [{ addonId: 'system-config' }]
+describe('SettingsPage', () => {
+  it('shows the bootstrap form and no addon settings, however many addons the hub runs', () => {
+    state.online = true
+    state.addons = [{ addonId: 'system-config' }, { addonId: 'stream-broker' }]
     render(<SettingsPage />)
     expect(screen.getByTestId('bootstrap-form')).toBeTruthy()
     expect(screen.queryByTestId('addon-panel')).toBeNull()
-    expect(screen.getByText(/No addons installed/i)).toBeTruthy()
+    expect(screen.queryByText(/not available/i)).toBeNull()
   })
 
-  it('shows the addon panel under it when addons exist', () => {
-    state.addons = [{ addonId: 'system-config' }, { addonId: 'mqtt-broker' }]
+  it('says the hub is not reachable instead of drawing the bootstrap form', () => {
+    state.online = false
     render(<SettingsPage />)
-    expect(screen.getByTestId('bootstrap-form')).toBeTruthy()
-    expect(screen.getByTestId('addon-panel')).toBeTruthy()
+    expect(screen.queryByTestId('bootstrap-form')).toBeNull()
+    expect(screen.getByText(/No online hub node found/i)).toBeTruthy()
   })
 })

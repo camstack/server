@@ -4,7 +4,9 @@ import { ConfirmDialogProvider } from '@camstack/ui-library'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const testMutate = vi.hoisted(() => vi.fn())
-const testVerdict = vi.hoisted(() => ({ current: { success: true, status: 'validated' } }))
+const testVerdict = vi.hoisted(() => ({
+  current: { success: true, status: 'validated' },
+}))
 const customMutate = vi.hoisted(() => vi.fn())
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
@@ -78,6 +80,31 @@ describe('ProviderConfigForm Next gate', () => {
     expect(next).not.toBeDisabled()
   })
 
+  it('renders no Test button at all when the integration declares no test (planning#581)', () => {
+    renderForm(
+      <ProviderConfigForm
+        addonId="provider-rtsp"
+        canTest={false}
+        configSchema={{
+          sections: [
+            {
+              id: 'c',
+              title: 'C',
+              fields: [{ type: 'text', key: 'host', label: 'Host' }],
+            },
+          ],
+        }}
+        onSave={vi.fn()}
+        onBack={() => {}}
+      />,
+    )
+    fireEvent.change(nameInput(), { target: { value: 'Home' } })
+    expect(screen.queryByRole('button', { name: 'Test connection' })).toBeNull()
+    expect(screen.queryByTitle(/cannot be tested/i)).toBeNull()
+    // No test to pass: Next is not gated on one.
+    expect(screen.getByRole('button', { name: 'Next' })).not.toBeDisabled()
+  })
+
   it('tests the draft through testInstance with a null id', () => {
     renderForm(
       <ProviderConfigForm
@@ -85,7 +112,11 @@ describe('ProviderConfigForm Next gate', () => {
         canTest
         configSchema={{
           sections: [
-            { id: 'c', title: 'C', fields: [{ type: 'text', key: 'host', label: 'Host' }] },
+            {
+              id: 'c',
+              title: 'C',
+              fields: [{ type: 'text', key: 'host', label: 'Host' }],
+            },
           ],
         }}
         onSave={vi.fn()}
@@ -109,7 +140,11 @@ describe('ProviderConfigForm Next gate', () => {
         instanceKind="account"
         configSchema={{
           sections: [
-            { id: 'c', title: 'C', fields: [{ type: 'text', key: 'host', label: 'Host' }] },
+            {
+              id: 'c',
+              title: 'C',
+              fields: [{ type: 'text', key: 'host', label: 'Host' }],
+            },
           ],
         }}
         onSave={vi.fn()}
@@ -128,7 +163,11 @@ describe('ProviderConfigForm Next gate', () => {
         canTest
         configSchema={{
           sections: [
-            { id: 'c', title: 'C', fields: [{ type: 'text', key: 'host', label: 'Host' }] },
+            {
+              id: 'c',
+              title: 'C',
+              fields: [{ type: 'text', key: 'host', label: 'Host' }],
+            },
           ],
         }}
         onSave={vi.fn()}

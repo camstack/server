@@ -19,6 +19,14 @@ describe('shapeSections', () => {
     expect(out[0]?.fields).toEqual([{ key: 'clusterModel:face-embedding' }])
   })
 
+  it('drops the omitted fields, and a section left empty', () => {
+    const out = shapeSections(SECTIONS, {
+      omitFieldKeys: ['clusterModel:face-embedding', 'hwaccel'],
+    })
+    expect(out).toHaveLength(1)
+    expect(out[0]?.fields).toEqual([{ key: 'clusterModel:clip-embedding' }])
+  })
+
   it('strips the section chrome when the host draws its own title', () => {
     const [first] = shapeSections(SECTIONS, { hideSectionChrome: true })
     expect(first?.title).toBe('')

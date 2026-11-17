@@ -20,6 +20,7 @@ import {
   NcCalendarEventsRuleSchema,
   type NcCalendarEventsTemplate,
 } from './calendar-events-rule.js'
+import { storedTags } from '../rule-tags.js'
 
 /**
  * @durable class=config owner=pipeline-analytics
@@ -142,8 +143,7 @@ export class NcCalendarEventsStore {
       createdAt: now,
       updatedAt: now,
     })
-    await this.write(rule)
-    return rule
+    return this.write(rule)
   }
 
   async update(ruleId: string, patch: NcCalendarEventsRulePatch): Promise<NcCalendarEventsRule> {
@@ -167,6 +167,11 @@ export class NcCalendarEventsStore {
         calendarsExclude,
       ),
     )
+  }
+
+  /** Replace only the tags (the `tags` cap's rename/remove, D1054); `[]` clears them. */
+  async setTags(ruleId: string, tags: readonly string[]): Promise<NcCalendarEventsRule> {
+    return this.update(ruleId, { tags: [...tags] })
   }
 
   async setEnabled(ruleId: string, enabled: boolean): Promise<NcCalendarEventsRule> {
@@ -199,7 +204,8 @@ export class NcCalendarEventsStore {
   }
 
   private async write(rule: NcCalendarEventsRule): Promise<NcCalendarEventsRule> {
-    const validated = NcCalendarEventsRuleSchema.parse(rule)
+    const { tags, ...untagged } = rule
+    const validated = NcCalendarEventsRuleSchema.parse({ ...untagged, ...storedTags(tags) })
     const { id, ...body } = validated
     await this.kind.put({ id, data: body })
     this.byId.set(id, validated)

@@ -128,6 +128,15 @@ describe('omitSectionIds', () => {
   })
 })
 
+describe('omitCapabilities', () => {
+  it('never fetches a capability another page draws', async () => {
+    renderPanel({ omitCapabilities: ['cap-a'] })
+    expect(await screen.findByText('Shared from B')).toBeTruthy()
+    expect(screen.queryByText('Only A')).toBeNull()
+    expect(getScopedSettings).not.toHaveBeenCalledWith(expect.objectContaining({ cap: 'cap-a' }))
+  })
+})
+
 describe('fieldScope perNode under a node', () => {
   it('reads the node scope for THAT node and nothing else', async () => {
     renderPanel({ nodeId: 'agent-a', fieldScope: 'perNode' })

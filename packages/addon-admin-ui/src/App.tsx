@@ -18,7 +18,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactElement, ReactNode } from 'react'
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { archiveRedirectFor } from './components/archive/archive-redirects'
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom'
 import { InstancePicker } from './components/instances/InstancePicker'
 import { DeviceQuickDetailHost } from './components/device/DeviceQuickDetail'
 import { ModelSelector } from './components/form-builder/ModelSelector'
@@ -61,10 +61,16 @@ function LegacyAdminRedirect() {
   return <Navigate to={`${stripLegacyAdminPrefix(pathname)}${search}${hash}`} replace />
 }
 
-/** `/recordings` and the old Library → Events tab now live in the Archive. */
+/** `/recordings`, the old Library → Events tab and `/archive/:deviceId` now lead into the Archive. */
 function ArchiveRedirect(): ReactElement {
   const { pathname, search } = useLocation()
   return <Navigate to={archiveRedirectFor(pathname, search) ?? '/archive'} replace />
+}
+
+/** The old full-page server shell (`/system/terminal/:nodeId[/:sessionId]`) is the Node shells tab. */
+function NodeShellRedirect(): ReactElement {
+  const { nodeId = '' } = useParams()
+  return <Navigate to={`/system/terminal?tab=shells&node=${encodeURIComponent(nodeId)}`} replace />
 }
 
 function LibraryRoute(): ReactElement {
@@ -110,9 +116,6 @@ const EmbedDevicePage = lazy(() =>
 )
 const LibraryPage = lazy(() => import('./pages/Library').then((m) => ({ default: m.LibraryPage })))
 const ArchivePage = lazy(() => import('./pages/Archive').then((m) => ({ default: m.ArchivePage })))
-const ArchiveCameraPage = lazy(() =>
-  import('./pages/ArchiveCamera').then((m) => ({ default: m.ArchiveCameraPage })),
-)
 const ViewerPage = lazy(() => import('./pages/Viewer').then((m) => ({ default: m.ViewerPage })))
 // Build-your-self: automations + scripts (core blocks) + composed devices. A
 // ROOT page, not a /system one: this is what the operator authors, not how the
@@ -163,9 +166,6 @@ const ClusterPage = lazy(() =>
 )
 const TerminalPage = lazy(() =>
   import('./pages/system/Terminal').then((m) => ({ default: m.TerminalPage })),
-)
-const ServerShellPage = lazy(() =>
-  import('./pages/system/ServerShell').then((m) => ({ default: m.ServerShellPage })),
 )
 const NotificationsPage = lazy(() =>
   import('./pages/system/Notifications').then((m) => ({
@@ -596,20 +596,8 @@ export function App() {
                                   element={<Navigate to={SYSTEM_PAGE_PATH} replace />}
                                 />
                                 <Route
-                                  path="/system/terminal/:nodeId/:sessionId"
-                                  element={
-                                    <ProtectedRoute requireAdmin>
-                                      <ServerShellPage />
-                                    </ProtectedRoute>
-                                  }
-                                />
-                                <Route
-                                  path="/system/terminal/:nodeId"
-                                  element={
-                                    <ProtectedRoute requireAdmin>
-                                      <ServerShellPage />
-                                    </ProtectedRoute>
-                                  }
+                                  path="/system/terminal/:nodeId/*"
+                                  element={<NodeShellRedirect />}
                                 />
                                 <Route
                                   path="/system/terminal"
@@ -692,14 +680,7 @@ export function App() {
                                     </ProtectedRoute>
                                   }
                                 />
-                                <Route
-                                  path="/archive/:deviceId"
-                                  element={
-                                    <ProtectedRoute requireAdmin>
-                                      <ArchiveCameraPage />
-                                    </ProtectedRoute>
-                                  }
-                                />
+                                <Route path="/archive/:deviceId" element={<ArchiveRedirect />} />
                                 <Route path="/recordings" element={<ArchiveRedirect />} />
                                 <Route
                                   path="/build"

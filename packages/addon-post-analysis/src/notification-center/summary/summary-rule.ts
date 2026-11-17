@@ -39,7 +39,12 @@
  * exactly one key.
  */
 
-import { NcRuleTargetSchema, NcScheduleSchema, NcTargetOverridesSchema } from '@camstack/types'
+import {
+  NcRuleTargetSchema,
+  NcScheduleSchema,
+  NcTargetOverridesSchema,
+  TagsFieldSchema,
+} from '@camstack/types'
 import { z } from 'zod'
 
 /** `{{var}}` templating — the same vocabulary the timelapse and rule bodies use. */
@@ -263,6 +268,8 @@ export const NcSummaryRuleInputSchema = z.object({
   priority: PriorityField.default(3),
   /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   targetOverrides: NcTargetOverridesSchema.optional(),
+  /** Operator labels (D1054) — optional and NEVER defaulted: an absent key leaves the stored tags alone; `[]` clears them. Admin-only. */
+  tags: TagsFieldSchema.optional(),
   ai: NcSummaryAiSchema.optional(),
 })
 export type NcSummaryRuleInput = z.infer<typeof NcSummaryRuleInputSchema>
@@ -295,6 +302,8 @@ export const NcSummaryRulePatchSchema = z.object({
   priority: PriorityField.optional(),
   /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
   targetOverrides: NcTargetOverridesSchema.optional(),
+  /** Absent = keep the stored tags; `[]` clears them (D1054). Never defaulted. */
+  tags: TagsFieldSchema.optional(),
   ai: NcSummaryAiSchema.nullable().optional(),
 })
 export type NcSummaryRulePatch = z.infer<typeof NcSummaryRulePatchSchema>

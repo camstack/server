@@ -2402,6 +2402,13 @@ export class NotificationCenter implements NcEventConsumer {
       get rules() {
         return self.rules
       },
+      get producerRules() {
+        return {
+          summaries: self.summaryRules,
+          timelapses: self.timelapseRules,
+          calendarEvents: self.calendarEventsRules,
+        }
+      },
       setAlarmConfig: (patch) => self.setAlarmConfig(patch),
       get snoozes() {
         return self.snoozes

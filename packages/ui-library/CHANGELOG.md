@@ -11,6 +11,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The camera grid layout editor is available to the block editor.
 
+## [1.2.463] - 2026-11-16
+
+### Changed
+
+- RecordingTimeline reports its window and takes caller density and extra lanes; new ClipSourceLanes draws one clip lane per source a camera lists.
+- RecordingTimeline takes a toolbar slot that joins the date and zoom controls in one bar; clip source lanes are compact rows with the label inline.
+- useCapabilityNodePresence also reports the nodes that run a provider (pending and unknown kept distinct from none).
+- The tag manager refreshes the notification rules list after a rename or remove
+- The archive timeline shows one lane per clip source and joins the date and zoom controls in one bar
+
 ## [1.2.462] - 2026-11-16
 
 ### Changed
@@ -68,7 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.2.454] - 2026-11-15
 ### Changed
-
 
 ### Fixed
 
@@ -201,7 +210,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
 ### Changed
-
 
 ## [1.2.438] - 2026-11-13
 

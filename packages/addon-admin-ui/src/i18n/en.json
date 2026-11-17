@@ -558,7 +558,8 @@
           "clip": "Clip",
           "gif": "GIF"
         }
-      }
+      },
+      "searchRules": "Search rules"
     },
     "notificationSimulate": {
       "simulateAnEvent": "Simulate an event",
@@ -4048,7 +4049,10 @@
       "eventCount_other": "{{count}} events",
       "showInReview": "Show in Review",
       "clusterHeading_one": "1 event · {{time}}",
-      "clusterHeading_other": "{{count}} events · latest {{time}}"
+      "clusterHeading_other": "{{count}} events · latest {{time}}",
+      "rowSize": "Size",
+      "rowSizeLabel": "Event row size",
+      "selectAll": "Select all ({{count}})"
     },
     "faceDetailPanel": {
       "face": "Face",
@@ -4266,7 +4270,18 @@
       "detach": "Detach"
     },
     "assignCount": "Assign {{count}}",
-    "cameraFallback": "Camera #{{id}}"
+    "cameraFallback": "Camera #{{id}}",
+    "eventRow": {
+      "openDetail": "Open event details",
+      "seek": "Play {{className}} at {{time}}",
+      "details": "Details",
+      "play": "Play",
+      "select": "Select {{className}} at {{time}}"
+    },
+    "eventClassChips": {
+      "all": "All classes",
+      "label": "Classes"
+    }
   },
   "recordings": {
     "activitySection": {
@@ -4381,7 +4396,10 @@
       "created": "Created",
       "by": "by {{who}}",
       "title": "Title",
-      "downloaded": "Downloaded"
+      "downloaded": "Downloaded",
+      "allCameras": "All cameras",
+      "noExportsForCamera": "No exports for this camera",
+      "noExportsForCameraHint": "Pick All cameras to see every export, or create one with New export."
     },
     "maintenanceAuditSection": {
       "reclaimOrphanedAnalyticsRows": "Reclaim orphaned analytics rows?",
@@ -5178,7 +5196,11 @@
     },
     "noNodes": "No nodes in this cluster yet.",
     "subtitle": "One node at a time — topology and packages. Agents join by pairing (certificate, no shared secret).",
-    "memoryUnknown": "unknown"
+    "memoryUnknown": "unknown",
+    "metricsSettings": {
+      "title": "Metrics collection — all nodes",
+      "hint": "How often every node samples its CPU, memory and load, and how long the load history is kept."
+    }
   },
   "access": {
     "accessSection": {
@@ -5459,7 +5481,16 @@
       "inProcess": "in-process",
       "outdated": "outdated",
       "requiresServer": "requires server ≥ {{version}}",
-      "updateHeldTitle": "{{latest}} is held until the server is {{required}} or newer"
+      "updateHeldTitle": "{{latest}} is held until the server is {{required}} or newer",
+      "settingsElsewhere": "More of this addon's settings are on:",
+      "surface": {
+        "pipeline": "Pipeline → Settings",
+        "history": "History",
+        "notifications": "Notifications → Settings",
+        "nodes": "Nodes",
+        "pipelineRoles": "Pipeline → Roles & nodes"
+      },
+      "allClusterSettingsElsewhere": "Its cluster-wide settings are on the page linked above."
     },
     "addonRow": {
       "systemPackage": "System package",
@@ -5765,8 +5796,7 @@
       "saveFailed": "Save failed:",
       "nothingToConfigureHereFor": "Nothing to configure here for this node.",
       "noAddonsIn": "No addons in {{scope}} expose {{level}}-level settings on this node.",
-      "addonUnavailable": "{{name}} not available.",
-      "providerPagesUnknown": "Could not check which settings already live on a connection page: {{reason}}"
+      "addonUnavailable": "{{name}} not available."
     },
     "siteLocationCard": {
       "siteLocation": "Site location",
@@ -6763,11 +6793,12 @@
     "switchUnknown": "Unknown"
   },
   "library": {
-    "peopleVehiclesCapturedEventsAnd": "People, vehicles and scenes — what detection has recognised.",
     "people": "People",
     "vehicles": "Vehicles",
     "events": "Events",
-    "scenes": "Scenes"
+    "scenes": "Scenes",
+    "exports": "Exports",
+    "subtitleWithExports": "People, vehicles, scenes and exports — what detection has recognised, and the clips you rendered."
   },
   "plates": {
     "vehicles": "Vehicles",
@@ -6854,7 +6885,6 @@
         "loadingHubTopology": "Loading hub topology…",
         "noOnlineHubNodeFound": "No online hub node found.",
         "settingsWillAppearOnceThe": "Settings will appear once the hub is reachable.",
-        "noAddonsInstalledOnThe": "No addons installed on the hub yet.",
         "bootstrapUnavailable": "Not available — the addon that owns the server settings did not answer."
       },
       "users": {
@@ -7285,7 +7315,6 @@
     "colActions": "Actions",
     "actionsNotSortable": "Actions have no order",
     "attach": "Attach",
-    "subtitle": "Keep a terminal open on a node and export it as a live camera.",
     "newTerminal": "New terminal",
     "instancesUnknown": "Could not read the terminals.",
     "empty": "No terminals yet",
@@ -7307,14 +7336,39 @@
     "saveProfileSettings": "Save profile settings",
     "adoptLegacy": "Adopt legacy cameras ({{count}})",
     "adoptLegacyFailed": "Failed to adopt the legacy cameras.",
-    "serverShell": "Server shell",
     "serverShellLoading": "Checking which nodes run a terminal",
     "serverShellUnknown": "The terminal registry did not answer. Try again in a moment.",
-    "serverShellAbsent": "Terminal is not installed on this node",
-    "serverShellSubtitle": "A login shell in this node’s data directory. It stays open after you leave, and closes when it sits idle.",
-    "backToTerminals": "Terminals",
     "serverShellOff": "Server shell is off",
-    "serverShellSettings": "Turn it on in Terminal settings",
+    "subtitleSections": "Keep terminals open as live cameras, or open a shell on a node.",
+    "tabDevices": "Terminal devices",
+    "tabShells": "Node shells",
+    "shellStatusUnknown": "Unknown",
+    "shellOff": "Off",
+    "shellOn": "On",
+    "shellIdle": "Closes after {{minutes}} min without input or output",
+    "shellOpening": "Opening the shell",
+    "shellLeave": "Close shell",
+    "shellStatusFailed": "This node did not say whether its shell is on. Try again in a moment.",
+    "shellEnded": "The shell ended.",
+    "shellRestart": "Start a new shell",
+    "shellNoNodes": "No node runs the Terminal addon",
+    "shellOpen": "Open",
+    "shellOpenAction": "Open shell",
+    "shellRunning": "{{count}} running",
+    "shellRunningUnknown": "Running: unknown",
+    "shellCloseFailed": "The shell was not closed: {{message}}",
+    "shellSessionsTitle": "Shells running on this node",
+    "shellSessionsFailed": "This node did not list its running shells. Try again in a moment.",
+    "shellSessionsNone": "No shell is running on this node.",
+    "colOpenedBy": "Opened by",
+    "colStarted": "Started",
+    "shellThisPage": "This page",
+    "shellCloseSession": "Close",
+    "shellNotInstalled": "Terminal is not installed on this node",
+    "shellLeaveFailed": "A shell was not closed",
+    "shellLeaveFailedOn": "{{node}}: {{message}}",
+    "dismiss": "Dismiss",
+    "shellLastActivity": "Last input or output {{when}}",
     "cameraUnknown": "Unknown",
     "deleteCamera": "Its camera {{name}} is deleted with it.",
     "addCamera": "Add a camera"
@@ -10881,6 +10935,13 @@
       "reachDays_other": "Back {{count}} days",
       "sourcesFailed": "The log sources could not be read",
       "sourcesFailedHint": "The export falls back to the default log source."
+    },
+    "clipSourceLanes": {
+      "count_one": "{{count}} clip",
+      "count_other": "{{count}} clips",
+      "failed": "Could not be read — {{reason}}",
+      "refused": "This window is too wide to list clips.",
+      "playClip": "Play clip at {{time}}"
     }
   },
   "helpers": {
@@ -11663,7 +11724,11 @@
       "loadTitle": "Load balancer",
       "loadHint": "How a new detection session picks its node and device, and what happens when a node falls behind.",
       "failoverTitle": "Failover",
-      "failoverHint": "What happens to cameras when a node disconnects and comes back."
+      "failoverHint": "What happens to cameras when a node disconnects and comes back.",
+      "streamingTitle": "Streaming",
+      "streamingHint": "How the restream buffers and hands out live video, and how long a cached snapshot may stand in for a fresh one.",
+      "recorderTitle": "Recording",
+      "recorderHint": "How recording nodes reach the hub. The recording node itself is picked in Roles & nodes."
     },
     "loadBalancingViewModel": {
       "stalePinDisabled": "{{deviceKey}} is not enabled on any node — sessions ignore this pin",
@@ -11895,6 +11960,10 @@
       "col5m": "5 min",
       "col1h": "1 h",
       "col1d": "1 day"
+    },
+    "retention": {
+      "title": "Retention",
+      "hint": "How long each resolution of the recorded history is kept."
     }
   },
   "releaseIdentity": {
@@ -13440,12 +13509,10 @@
     },
     "tools": {
       "title": "Tools",
-      "subtitle": "Storage migration, prune events, cleanup, all exports, reconcile from disk",
+      "subtitle": "Storage migration, prune events, cleanup, reconcile from disk",
       "migration": "Move storage",
       "migrationHint": "Copy footage, low-res footage or event media to a new location, verify, then repoint the default. Applies to every camera.",
-      "pruneEvents": "Prune old events",
-      "allExports": "All exports",
-      "allExportsHint": "Every export across all cameras, including cameras that were removed."
+      "pruneEvents": "Prune old events"
     },
     "activity": {
       "footageLog": "footage",
@@ -13470,21 +13537,20 @@
     "section": {
       "storage": "Storage",
       "cameras": "Cameras",
-      "activity": "Activity & health"
+      "activity": "Activity & health",
+      "overview": "Overview"
     },
     "camera": {
       "unknown": "Camera not found",
       "unknownHint": "This camera is not in the Archive. Pick one from the overview.",
-      "loading": "Camera",
       "picker": "Camera",
       "sections": "Camera sections",
       "review": "Review",
-      "events": "Events",
       "debugFilter": "Debug-marked tracks only",
-      "exports": "Exports",
-      "health": "Health",
-      "space": "Space",
-      "settings": "Settings"
+      "settings": "Settings",
+      "none": "No cameras yet",
+      "noneHint": "Cameras appear here once one is added.",
+      "healthSpace": "Health & space"
     },
     "function": {
       "recording": "Recording",
@@ -13516,6 +13582,24 @@
       "info": "Info",
       "warning": "Warning",
       "critical": "Critical"
+    },
+    "sections": "Archive sections",
+    "review": {
+      "source": "Source",
+      "zone": "Zone",
+      "allZones": "All zones",
+      "identity": "Face or plate",
+      "identityAny": "Any subject",
+      "identityFace": "With a face",
+      "identityPlate": "With a plate",
+      "noClipAt": "This source holds no clip at {{time}}. Pick another source or another moment.",
+      "tools": "Search, parked objects and debug",
+      "unchecked": "Events not checked by this filter: {{count}}",
+      "sourcesLoading": "Loading sources…",
+      "sourcesFailed": "Sources could not be read — {{reason}}",
+      "noReason": "no reason given",
+      "exportQueued": "Export queued.",
+      "openExports": "Open Library → Exports"
     }
   }
 }

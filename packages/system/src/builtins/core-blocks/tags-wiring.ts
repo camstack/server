@@ -1,10 +1,13 @@
 /**
  * Builds the `tags` cap provider (D1054) over the stores core-blocks owns and the
- * device manager (over `ctx.api`, never a copy of its data).
+ * device manager and the notification rules (over `ctx.api`, never a copy of
+ * their data).
  */
 import {
   type AddonApi,
   type IScopedLogger,
+  type NcTaggedRuleKind,
+  NcTaggedRuleKindSchema,
   normalizeTags,
   type RecordKindHandle,
   type RecordsAccess,
@@ -22,6 +25,8 @@ export interface TagsRuntimeDeps {
   readonly logger: IScopedLogger
   /** A spec swaps the device owner; production reads the device manager over `api`. */
   readonly devices?: TagOwnerPort
+  /** A spec swaps the rule owner; production reads the notification rules over `api`. */
+  readonly notificationRules?: TagOwnerPort
 }
 
 function coreBlocksPort(blocks: () => CoreBlockStore): TagOwnerPort {
@@ -92,6 +97,43 @@ function devicesPort(api: () => AddonApi | undefined): TagOwnerPort {
   }
 }
 
+function needApi(api: () => AddonApi | undefined): AddonApi {
+  const current = api()
+  if (current === undefined) throw new Error('[tags] the cluster API is not available yet')
+  return current
+}
+
+/**
+ * A notification rule's owner-port id is `<kind>:<ruleId>`: event rules,
+ * summaries, timelapses and calendar-events rules live in separate stores, so
+ * the write must name which one.
+ */
+export function ruleTagOwnerId(kind: NcTaggedRuleKind, ruleId: string): string {
+  return `${kind}:${ruleId}`
+}
+
+export function parseRuleTagOwnerId(id: string): { kind: NcTaggedRuleKind; ruleId: string } {
+  const sep = id.indexOf(':')
+  const kind = NcTaggedRuleKindSchema.safeParse(sep < 0 ? '' : id.slice(0, sep))
+  if (!kind.success) throw new Error(`[tags] not a notification-rule owner id: ${id}`)
+  return { kind: kind.data, ruleId: id.slice(sep + 1) }
+}
+
+function notificationRulesPort(api: () => AddonApi | undefined): TagOwnerPort {
+  return {
+    // Every rule KIND carries tags (D1054): one read covers all four stores.
+    list: async () => {
+      const { rules } = await needApi(api).notificationRules.listRuleTags.query({})
+      return rules.map((r) => ({ id: ruleTagOwnerId(r.kind, r.ruleId), tags: r.tags }))
+    },
+    // Only the tags: never a whole-rule update, which a stale copy would clobber.
+    setTags: async (id, tags) => {
+      const { kind, ruleId } = parseRuleTagOwnerId(id)
+      await needApi(api).notificationRules.setRuleTags.mutate({ kind, ruleId, tags })
+    },
+  }
+}
+
 export function buildTagsService(deps: TagsRuntimeDeps): TagsService {
   const { records } = deps
   return new TagsService({
@@ -111,6 +153,7 @@ export function buildTagsService(deps: TagsRuntimeDeps): TagsService {
         }),
       ),
       devices: deps.devices ?? devicesPort(deps.api),
+      notificationRules: deps.notificationRules ?? notificationRulesPort(deps.api),
     },
     styles: records.kind(coreBlocksRecordKinds['tag-styles']),
     logger: deps.logger,

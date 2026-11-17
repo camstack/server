@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1505 method paths across 210 capabilities.
+ * Coverage: 1507 method paths across 210 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -814,6 +814,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'notificationRules.getTemplateCatalog': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.listDeviceMutes': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.listRules': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'notificationRules.listRuleTags': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.listSnoozes': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.previewStateSummary': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'notificationRules.previewTemplate': { capName: "notification-rules", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -822,6 +823,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'notificationRules.setAlarmConfig': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.setDeviceMuted': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.setRuleEnabled': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'notificationRules.setRuleTags': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.testRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notificationRules.updateRule': { capName: "notification-rules", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'notifier.cancel': { capName: "notifier", capScope: "device", addonId: null, access: "create", role: "admin" } as const,

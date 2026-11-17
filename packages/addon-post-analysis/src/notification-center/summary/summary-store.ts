@@ -26,6 +26,7 @@ import {
   type NcSummaryTemplate,
 } from './summary-rule.js'
 import type { SummaryRuleClearableKey } from './summary-rule-clear.js'
+import { storedTags } from '../rule-tags.js'
 
 /**
  * @durable class=config owner=pipeline-analytics
@@ -214,6 +215,11 @@ export class NcSummaryStore {
     )
   }
 
+  /** Replace only the tags (the `tags` cap's rename/remove, D1054); `[]` clears them. */
+  async setTags(ruleId: string, tags: readonly string[]): Promise<NcSummaryRule> {
+    return this.update(ruleId, { tags: [...tags] })
+  }
+
   async setEnabled(ruleId: string, enabled: boolean): Promise<NcSummaryRule> {
     return this.update(ruleId, { enabled })
   }
@@ -244,7 +250,8 @@ export class NcSummaryStore {
   }
 
   private async write(candidate: NcSummaryRule): Promise<NcSummaryRule> {
-    const rule = NcSummaryRuleSchema.parse(candidate)
+    const { tags, ...untagged } = candidate
+    const rule = NcSummaryRuleSchema.parse({ ...untagged, ...storedTags(tags) })
     const { id, ...body } = rule
     await this.kind.put({ id, data: body })
     this.byId.set(id, rule)

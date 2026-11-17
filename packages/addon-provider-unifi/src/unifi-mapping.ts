@@ -121,7 +121,8 @@ export function featureSuffix(descriptor: UnifiFeatureDescriptor): string {
 /**
  * Derive the full feature-descriptor list an infra device fans out into:
  *   - per-PoE-port PoE switch + power-cycle button,
- *   - a device-level LED switch + restart button,
+ *   - a device-level restart button (no LED switch: the Integration API can neither read nor
+ *     set the LED, so it is not offered),
  *   - cpu / temp / clients / state / uptime sensors.
  * Pure — no I/O. Unit-testable in isolation.
  */
@@ -129,7 +130,6 @@ export function buildInfraFeatures(snapshot: UnifiInfraSnapshot): UnifiFeatureDe
   const features: UnifiFeatureDescriptor[] = []
 
   // Whole-device controls.
-  features.push({ kind: 'switch', switchFeature: 'led' })
   features.push({ kind: 'button', buttonAction: 'restart' })
 
   // Per-PoE-port controls.

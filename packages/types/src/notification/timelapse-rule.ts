@@ -28,6 +28,7 @@ import {
   NcScheduleSchema,
   NcTargetOverridesSchema,
 } from '../capabilities/notification-rules.cap.js'
+import { TagsFieldSchema } from '../tags/tag.js'
 
 /** `{{var}}` templating over camera/rule/time — same vocabulary as `NcRule`. */
 export const TimelapseTemplateSchema = z.object({
@@ -206,6 +207,8 @@ export const TimelapseRuleInputSchema = z.object({
   /** Canonical notification priority ordinal (1..5); per-target overridable. */
   priority: PriorityField.default(3),
   /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
+  /** Operator labels (D1054) — optional and NEVER defaulted: an absent key leaves the stored tags alone; `[]` clears them. Admin-only. */
+  tags: TagsFieldSchema.optional(),
   targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type TimelapseRuleInput = z.infer<typeof TimelapseRuleInputSchema>
@@ -251,6 +254,8 @@ export const TimelapseRulePatchSchema = z.object({
   reportClasses: ReportClassesField.optional(),
   priority: PriorityField.optional(),
   /** Per-target settings keyed by target id (D1032) — absent = every target follows the rule. */
+  /** Absent = keep the stored tags; `[]` clears them (D1054). Never defaulted. */
+  tags: TagsFieldSchema.optional(),
   targetOverrides: NcTargetOverridesSchema.optional(),
 })
 export type TimelapseRulePatch = z.infer<typeof TimelapseRulePatchSchema>

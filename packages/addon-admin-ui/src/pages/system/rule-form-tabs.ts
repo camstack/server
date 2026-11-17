@@ -56,6 +56,7 @@ export const NC_RULE_TABS: readonly NcRuleTab[] = [
     },
     fields: [
       'name',
+      'tags',
       'enabled',
       'delivery',
       'groupingSec',

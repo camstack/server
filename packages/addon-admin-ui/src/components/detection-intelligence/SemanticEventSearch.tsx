@@ -8,9 +8,8 @@
  * plus a semantic-match score badge — so there is ONE card/detail surface.
  *
  * The query is debounced (~350ms) and only fires for a non-empty term
- * (`enabled: text.length > 0`), so keystrokes don't spam the backend. When the
- * debounced term is empty the component reports `active: false` up to the page,
- * which restores the normal `EventsSection` view.
+ * (`enabled: text.length > 0`), so keystrokes don't spam the backend. Results
+ * render inside this component; the page's own event list stays as it is.
  *
  * `searchObjectEvents` returns `ScoredObjectEvent[]` (an `ObjectEvent` + `score`).
  * The card/detail surface speaks `KeyEventRow` (a {@link TrackSubject}), so each
@@ -125,14 +124,11 @@ function scoredEventToRow(event: ScoredObjectEvent): SemanticEventRow {
 }
 
 interface SemanticEventSearchProps {
-  /** Reports whether a non-empty search is active, so the page can hide the feed. */
-  readonly onActiveChange: (active: boolean) => void
   /** Camera page: search only this camera and hide the camera filter. */
   readonly deviceId?: number
 }
 
 export function SemanticEventSearch({
-  onActiveChange,
   deviceId: fixedDeviceId,
 }: SemanticEventSearchProps): JSX.Element {
   const searchFieldRef = useRef<HTMLInputElement>(null)
@@ -147,10 +143,6 @@ export function SemanticEventSearch({
 
   const debounced = useDebouncedString(text, SEARCH_DEBOUNCE_MS).trim()
   const active = debounced.length > 0
-
-  useEffect(() => {
-    onActiveChange(active)
-  }, [active, onActiveChange])
 
   // Coarse clock tick (60s) for stable relative timestamps on the cards.
   const [nowMs, setNowMs] = useState(() => Date.now())

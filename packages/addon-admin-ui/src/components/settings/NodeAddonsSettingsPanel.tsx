@@ -72,7 +72,6 @@ import {
   type ScopedTarget,
 } from '../../lib/settings-scoped-source'
 import { shapeSections, shownTab, type SectionShape } from '../../lib/settings-section-shape'
-import { isAggregateSettingsSurface, useProviderPageCaps } from './provider-page-settings'
 
 import {
   useAddonSettingsUpdateDeviceSettings,
@@ -104,6 +103,13 @@ interface NodeAddonsSettingsPanelProps {
    */
   readonly capability?: string
   /**
+   * Capabilities whose scoped schemas this surface does NOT draw, because
+   * another page owns them (an addon's settings dialog leaves out what the
+   * Pipeline / History / Notifications / Nodes pages draw —
+   * `lib/cluster-settings-claims.ts`).
+   */
+  readonly omitCapabilities?: readonly string[]
+  /**
    * Optional section ID allowlist. When present, only sections whose
    * `id` matches one of these strings are rendered — used by the
    * Balancer / Failover tabs that want to narrow the orchestrator's
@@ -124,6 +130,7 @@ interface NodeAddonsSettingsPanelProps {
    * section on another tab (`tabAliases`). See `lib/settings-section-shape.ts`.
    */
   readonly fieldKeys?: SectionShape['fieldKeys']
+  readonly omitFieldKeys?: SectionShape['omitFieldKeys']
   readonly hideSectionChrome?: SectionShape['hideSectionChrome']
   readonly tabAliases?: SectionShape['tabAliases']
   /** A label for a tab id, over the well-known one (the merged engine tab). */
@@ -309,9 +316,11 @@ export function NodeAddonsSettingsPanel({
   level,
   deviceId,
   capability,
+  omitCapabilities,
   sectionIds,
   omitSectionIds,
   fieldKeys,
+  omitFieldKeys,
   hideSectionChrome,
   tabAliases,
   tabLabelOverrides,
@@ -349,20 +358,6 @@ export function NodeAddonsSettingsPanel({
 
   const effectiveNodeId = nodeId ?? 'hub'
 
-  // System → Settings lists every hub addon and names no section. Sections whose
-  // capability an InstancesTable already shows are that page's, so they are not
-  // fetched here. A narrowed surface (a dialog, a node card) keeps them.
-  const aggregate = isAggregateSettingsSurface({
-    level,
-    ...(capability !== undefined ? { capability } : {}),
-    ...(sectionIds !== undefined ? { sectionIds } : {}),
-    ...(fieldScope !== undefined ? { fieldScope } : {}),
-    ...(fieldKeys !== undefined ? { fieldKeys } : {}),
-  })
-  const providerPages = useProviderPageCaps(aggregate)
-  const providerCapKey =
-    providerPages.phase === 'ready' ? [...providerPages.caps].sort().join('\n') : ''
-
   // ── Parallel fetches ─────────────────────────────────────────────
   // `useQueries` lets us issue one tRPC call per addonId without
   // violating hook rules (all at once, keys derived from addonIds).
@@ -375,16 +370,15 @@ export function NodeAddonsSettingsPanel({
           nodeId: effectiveNodeId,
           deviceId: deviceId ?? null,
           cap: capability ?? null,
+          omitCaps: omitCapabilities ?? null,
           // Two surfaces over the same addon can want different populations
           // (a node card wants the `node` scope, an addon card the `cluster`
           // one), and the payloads must not share a cache entry.
           scope: fieldScope ?? null,
           // The selection is part of what was fetched.
           sections: [sectionIds ?? null, omitSectionIds ?? null],
-          providerCaps: providerCapKey,
         },
       ],
-      enabled: providerPages.phase !== 'loading',
       queryFn: async (): Promise<AddonSettingsAnswer> => {
         if (level === 'global') {
           // The addon's scoped schemas: what it serves, per (cap, scope). `null` is
@@ -394,10 +388,8 @@ export function NodeAddonsSettingsPanel({
             nodeId: effectiveNodeId,
           })
           if (declarations === null) return { addonId, result: null, keyTargets: {} }
-          const visible =
-            providerPages.phase === 'ready'
-              ? declarations.filter((declaration) => !providerPages.caps.has(declaration.cap))
-              : declarations
+          const omitted = new Set(omitCapabilities ?? [])
+          const visible = declarations.filter((declaration) => !omitted.has(declaration.cap))
           const selected = selectDeclarations({
             declarations: visible,
             ...(fieldScope !== undefined ? { fieldScope } : {}),
@@ -447,7 +439,7 @@ export function NodeAddonsSettingsPanel({
     })),
   })
 
-  const isLoading = providerPages.phase === 'loading' || queries.some((q) => q.isLoading)
+  const isLoading = queries.some((q) => q.isLoading)
 
   // `useQueries` returns a brand-new array on every render, so a
   // `useMemo(..., [queries])` below would never hit the cache — its
@@ -666,6 +658,7 @@ export function NodeAddonsSettingsPanel({
       const { schema, values } = splitSchemaWithValues(result)
       const shape: SectionShape = {
         ...(fieldKeys !== undefined ? { fieldKeys } : {}),
+        ...(omitFieldKeys !== undefined ? { omitFieldKeys } : {}),
         ...(hideSectionChrome !== undefined ? { hideSectionChrome } : {}),
         ...(tabAliases !== undefined ? { tabAliases } : {}),
       }
@@ -695,7 +688,15 @@ export function NodeAddonsSettingsPanel({
       })
     }
     return out
-  }, [queriesDataHash, sectionIds, omitSectionIds, fieldKeys, hideSectionChrome, tabAliases])
+  }, [
+    queriesDataHash,
+    sectionIds,
+    omitSectionIds,
+    fieldKeys,
+    omitFieldKeys,
+    hideSectionChrome,
+    tabAliases,
+  ])
 
   // An addon that could not be asked and has no last-good view: UNKNOWN, not "nothing to
   // configure" (D315). The hash carries the `:n` marker of an unanswered query.
@@ -1010,19 +1011,6 @@ export function NodeAddonsSettingsPanel({
           onChange={selectTab}
           pendingByTab={pendingByTab}
         />
-      )}
-
-      {providerPages.error !== null && (
-        <div
-          role="alert"
-          className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-xs text-danger"
-        >
-          {t(
-            'settings.nodeAddonsSettingsPanel.providerPagesUnknown',
-            'Could not check which settings already live on a connection page: {{reason}}',
-            { reason: providerPages.error },
-          )}
-        </div>
       )}
 
       {saveMutation.isError && (
