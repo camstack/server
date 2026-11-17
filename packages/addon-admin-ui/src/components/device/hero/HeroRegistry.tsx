@@ -124,6 +124,9 @@ const HERO_REGISTRY: Readonly<Partial<Record<DeviceType, HeroComponent>>> = {
   // Energy system: ControlHero renders the registry-backed EnergyCardHero
   // (the energy-flow card: solar, storage, grid, house).
   [DeviceType.EnergySystem]: ControlHero,
+  // Workload (VM, container, LXC, app, host): ControlHero renders the
+  // registry-backed WorkloadCardHero (state, declared controls, resources).
+  [DeviceType.Workload]: ControlHero,
 }
 
 /**

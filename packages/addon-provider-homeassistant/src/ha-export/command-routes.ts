@@ -325,12 +325,20 @@ export type CapExportCommand =
       readonly control: DishwasherSwitch
       readonly on: boolean
     }
+  | {
+      readonly kind: 'workload-verb'
+      readonly deviceId: number
+      readonly verb: WorkloadVerb
+    }
   /** `consumables.reset` for one item, by the provider's own key. */
   | {
       readonly kind: 'consumable-reset'
       readonly deviceId: number
       readonly key: string
     }
+
+/** What a workload button does; start / stop are the power `switch` (#462). */
+export type WorkloadVerb = 'restart' | 'force-stop' | 'pause' | 'resume'
 
 /** What a dishwasher button does. */
 export type DishwasherVerb = 'start' | 'pause' | 'resume' | 'stop'
@@ -781,6 +789,14 @@ export const CAP_COMMAND_ROUTES: Readonly<Record<string, CapCommandRoute>> = {
       stop: (deviceId) => ({ kind: 'dishwasher-verb', deviceId, verb: 'stop' }),
     },
   },
+  workload: {
+    commands: {
+      restart: (deviceId) => ({ kind: 'workload-verb', deviceId, verb: 'restart' }),
+      'force-stop': (deviceId) => ({ kind: 'workload-verb', deviceId, verb: 'force-stop' }),
+      pause: (deviceId) => ({ kind: 'workload-verb', deviceId, verb: 'pause' }),
+      resume: (deviceId) => ({ kind: 'workload-verb', deviceId, verb: 'resume' }),
+    },
+  },
   'lawn-mower-control': {
     commands: {
       start: (deviceId) => ({ kind: 'mower-verb', deviceId, verb: 'start' }),
@@ -1079,6 +1095,7 @@ export type CapCommandDevice = Pick<
   | 'scriptRunner'
   | 'automationControl'
   | 'dishwasher'
+  | 'workload'
   | 'consumables'
 >
 
@@ -1472,6 +1489,19 @@ export async function applyCapCommand(
             return dishwasher.resume({}, options)
           case 'stop':
             return dishwasher.stop({}, options)
+        }
+      })
+    case 'workload-verb':
+      return call(device.workload, 'workload', (workload) => {
+        switch (command.verb) {
+          case 'restart':
+            return workload.restart({}, options)
+          case 'force-stop':
+            return workload.forceStop({}, options)
+          case 'pause':
+            return workload.pause({}, options)
+          case 'resume':
+            return workload.resume({}, options)
         }
       })
     case 'dishwasher-switch':

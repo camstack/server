@@ -10715,7 +10715,53 @@
         "speed": "Velocità",
         "direction": "Direzione"
       },
-      "fault": "Guasto"
+      "fault": "Guasto",
+      "workload": {
+        "action": {
+          "forceStop": "Arresto forzato",
+          "pause": "Pausa",
+          "powerOn": "Accendi",
+          "reboot": "Riavvia",
+          "restart": "Riavvia",
+          "resume": "Riprendi",
+          "shutDown": "Spegni",
+          "start": "Avvia",
+          "stop": "Arresta"
+        },
+        "addresses": "Indirizzi",
+        "autostartOff": "Non si avvia con l'host",
+        "autostartOn": "Si avvia con l'host",
+        "cpu": "CPU",
+        "disk": "Disco",
+        "diskOf": "Disco su {{total}}",
+        "image": "Immagine",
+        "load": "Carico",
+        "memory": "Memoria",
+        "memoryOf": "Memoria su {{total}}",
+        "netRx": "Ricevuti",
+        "netTx": "Inviati",
+        "openHost": "Apri l'host",
+        "openHostNamed": "Apri {{name}}",
+        "os": "Sistema",
+        "ports": "Porte",
+        "resources": "Risorse",
+        "state": {
+          "crashed": "Arrestato per errore",
+          "down": "Non raggiungibile",
+          "online": "Online",
+          "paused": "In pausa",
+          "running": "In esecuzione",
+          "shutDown": "Spento",
+          "starting": "In avvio",
+          "stopped": "Arrestato",
+          "stopping": "In arresto",
+          "unknown": "Stato sconosciuto"
+        },
+        "temperature": "Temperatura",
+        "updateAvailable": "È disponibile un aggiornamento",
+        "vcpus": "vCPU",
+        "version": "Versione"
+      }
     },
     "language": "it",
     "measurement": {

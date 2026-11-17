@@ -388,6 +388,7 @@ const SCRIPT_KINDS: readonly ConnectedCardKind[] = ['script']
 const AUTOMATION_KINDS: readonly ConnectedCardKind[] = ['automation']
 const CONTROL_KINDS: readonly ConnectedCardKind[] = ['control']
 const IMAGE_KINDS: readonly ConnectedCardKind[] = ['image']
+const WORKLOAD_KINDS: readonly ConnectedCardKind[] = ['workload']
 /** The `dummy` control kind's types that have a card of their own. */
 const DUMMY_CARD_KINDS: readonly ConnectedCardKind[] = ['event', 'notifier', 'gateway']
 
@@ -413,6 +414,11 @@ export function ControlCardHero(props: DeviceControlProps): ReactNode {
 
 export function ImageCardHero(props: DeviceControlProps): ReactNode {
   return <ResolvedCardHero {...props} kinds={IMAGE_KINDS} />
+}
+
+/** A VM, container, LXC, app or host: the workload card. */
+export function WorkloadCardHero(props: DeviceControlProps): ReactNode {
+  return <ResolvedCardHero {...props} kinds={WORKLOAD_KINDS} />
 }
 
 /**
