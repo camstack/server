@@ -13621,7 +13621,8 @@
       "sourcesFailed": "Impossibile leggere le sorgenti — {{reason}}",
       "noReason": "nessun motivo indicato",
       "exportQueued": "Esportazione in coda.",
-      "openExports": "Apri Libreria → Esportazioni"
+      "openExports": "Apri Libreria → Esportazioni",
+      "tracksFailed": "Impossibile leggere i dati delle tracce — {{reason}}"
     }
   }
 }

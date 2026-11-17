@@ -10,6 +10,7 @@ import { useTranslation } from 'react-i18next'
 import { AdminSectionedPage } from '../components/AdminSectionedPage'
 
 import { ExportsSection } from '../components/recordings/ExportsSection'
+import { EXPORT_CAMERA_PARAM } from '../components/recordings/export-camera-filter'
 import { navChromeForPath } from '../lib/nav-items'
 import { DetectionIntelligencePage } from './DetectionIntelligence'
 import { PlatesPage } from './Plates'
@@ -40,7 +41,13 @@ export function LibraryPage() {
         },
         { id: 'vehicles', label: t('library.vehicles', 'Vehicles'), content: <PlatesPage /> },
         { id: 'scenes', label: t('library.scenes', 'Scenes'), content: <ScenesPage /> },
-        { id: 'exports', label: t('library.exports', 'Exports'), content: <ExportsSection /> },
+        {
+          id: 'exports',
+          label: t('library.exports', 'Exports'),
+          content: <ExportsSection />,
+          // `?camera=` narrows Exports only; another section never inherits it.
+          ownedParams: [EXPORT_CAMERA_PARAM],
+        },
       ]}
     />
   )

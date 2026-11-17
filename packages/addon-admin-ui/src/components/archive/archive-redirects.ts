@@ -5,6 +5,7 @@
  * One pure map so the router and its spec read the same table. A URL that is
  * not one of the retired ones answers `null` and is left alone.
  */
+import { EXPORT_CAMERA_PARAM } from '../recordings/export-camera-filter'
 
 export const ARCHIVE_PATH = '/archive'
 export const TRAINING_PATH = '/addon/training'
@@ -30,7 +31,7 @@ export function archiveCameraPath(deviceId: number, view?: ArchiveCameraView): s
 export function libraryExportsPath(deviceId?: number): string {
   return deviceId === undefined
     ? LIBRARY_EXPORTS_PATH
-    : `${LIBRARY_EXPORTS_PATH}&${CAMERA_PARAM}=${String(deviceId)}`
+    : `${LIBRARY_EXPORTS_PATH}&${EXPORT_CAMERA_PARAM}=${String(deviceId)}`
 }
 
 /** Old `/archive/:deviceId?section=` ids and the camera view that took each over. */

@@ -33,7 +33,12 @@ import { useQueryClient } from '@tanstack/react-query'
 import { Download, Film, Loader2, Trash2, XCircle } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { exportCameraIds, exportsOfCamera, parseExportCamera } from './export-camera-filter'
+import {
+  EXPORT_CAMERA_PARAM,
+  exportCameraIds,
+  exportsOfCamera,
+  parseExportCamera,
+} from './export-camera-filter'
 import { authedFetchBlob } from '../../lib/authed-media.js'
 import { formatBytes } from '../../lib/format-size'
 import {
@@ -136,15 +141,15 @@ export function ExportsSection() {
   const { rows: allRows, isLoading } = useLiveExports()
   // `?camera=<id>` narrows the list (the Archive links here with it).
   const [params, setParams] = useSearchParams()
-  const cameraFilter = parseExportCamera(params.get('camera'))
+  const cameraFilter = parseExportCamera(params.get(EXPORT_CAMERA_PARAM))
   const rows = useMemo(() => exportsOfCamera(allRows, cameraFilter), [allRows, cameraFilter])
   const cameraIds = useMemo(() => exportCameraIds(allRows, cameraFilter), [allRows, cameraFilter])
   const setCameraFilter = (value: string): void => {
     setParams(
       (prev) => {
         const next = new URLSearchParams(prev)
-        if (value === '') next.delete('camera')
-        else next.set('camera', value)
+        if (value === '') next.delete(EXPORT_CAMERA_PARAM)
+        else next.set(EXPORT_CAMERA_PARAM, value)
         return next
       },
       { replace: true },

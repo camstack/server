@@ -204,6 +204,20 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
         })}
       </span>
     ) : null
+  // A failed track read leaves the zone and face / plate filters with nothing
+  // to check: say why, never let it read as "no zones" (D315).
+  const tracksState =
+    tracks.status === 'error' ? (
+      <span
+        className="text-[11px] text-danger"
+        role="alert"
+        data-testid="archive-review-tracks-failed"
+      >
+        {t('archive.review.tracksFailed', 'Track facts could not be read — {{reason}}', {
+          reason: tracks.error?.message ?? t('archive.review.noReason', 'no reason given'),
+        })}
+      </span>
+    ) : null
   const sourcePicker =
     sourcesState ??
     (options.length > 1 ? (
@@ -297,6 +311,7 @@ function ReviewBody({ deviceId }: ArchiveReviewSectionProps): ReactElement {
                 onChange={setFilters}
                 unchecked={unchecked}
               />
+              {tracksState}
             </div>
           }
           lanes={
