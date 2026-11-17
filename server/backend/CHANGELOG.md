@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
+- New admin-only apiCatalog.list and apiCatalog.inputSchema: the methods the hub serves, read off the live router, with kind, tier, token scope and input JSON Schema.
 
 ## [1.2.892] - 2026-11-17
 

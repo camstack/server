@@ -225,3 +225,22 @@ export const adminProcedure = protectedProcedure.use(({ ctx, next, path }) => {
   }
   return next({ ctx })
 })
+
+/** The gate a procedure runs behind, as the API explorer reports it (planning#595). */
+export type ProcedureTier = 'public' | 'protected' | 'admin'
+
+/**
+ * The tier of a built procedure, read off its middleware chain: a procedure
+ * built from `adminProcedure` carries the admin gate's function, one built from
+ * `protectedProcedure` the authentication gate's. The marks are the SAME
+ * function references the builders pipe, so the answer is the gate the call
+ * actually passes through — capability and core routes alike.
+ */
+const PROTECTED_MARK: unknown = protectedProcedure._def.middlewares.at(-1)
+const ADMIN_MARK: unknown = adminProcedure._def.middlewares.at(-1)
+
+export function procedureTierOf(middlewares: readonly unknown[]): ProcedureTier {
+  if (middlewares.includes(ADMIN_MARK)) return 'admin'
+  if (middlewares.includes(PROTECTED_MARK)) return 'protected'
+  return 'public'
+}

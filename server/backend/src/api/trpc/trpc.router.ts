@@ -49,6 +49,11 @@ import type { SessionBacking } from '../../auth/session-mint.js'
 import { getSessionConnections } from '../../auth/session-connections.js'
 import type { ExternalLinkIntents } from '../../auth/external-link-intents.js'
 import { createAgentPairingRouter } from '../core/agent-pairing.router.js'
+import {
+  createApiCatalogRouter,
+  type ProcedureSource,
+  type ServedProcedures,
+} from '../core/api-catalog.router.js'
 import { createCertificatesRouter } from '../core/certificates.router.js'
 import { createNodeCertificatesClient } from '../../core/agent/node-certificates-client.js'
 import { createAuthRouter, type NativeLinkRouterDeps } from '../core/auth.router.js'
@@ -422,7 +427,7 @@ function buildServerProviders(
  * runtime builder; the server only supplies `server-provided` provider factories
  * (`buildServerProviders`), never a hand-written cap-router override.
  */
-function buildCapabilityRouters(services: RouterServices) {
+function buildCapabilityRouters(services: RouterServices, servedProcedures: ProcedureSource) {
   // ── Dynamic cap routers (value) → static cap-router map (type). ──────
   // The runtime builder returns `Record<string, unknown>`; assigning it to
   // `ReturnType<typeof mountAllCaps>` is the documented type boundary that
@@ -491,6 +496,9 @@ function buildCapabilityRouters(services: RouterServices) {
       log: services.loggingService.createLogger('certificates'),
     }),
     // preferences - the caller's own account preferences, synced across their devices (D894).
+    // The API explorer (planning#595): reads the procedures of the router this
+    // object is mounted in, so it lists exactly what the hub serves.
+    apiCatalog: createApiCatalogRouter(servedProcedures),
     preferences: createPreferencesRouter({
       preferences: preferencesFromRegistry(services.capabilityRegistry),
     }),
@@ -531,9 +539,12 @@ function buildCapabilityRouters(services: RouterServices) {
 }
 
 export function buildAppRouter(services: RouterServices) {
-  return trpcRouter({
-    ...buildCapabilityRouters(services),
+  // `apiCatalog` reads the finished router lazily (at request time), after
+  // `appRouter` below is assigned.
+  const appRouter = trpcRouter({
+    ...buildCapabilityRouters(services, (): ServedProcedures => appRouter._def.procedures),
   })
+  return appRouter
 }
 
 export type AppRouter = ReturnType<typeof buildAppRouter>

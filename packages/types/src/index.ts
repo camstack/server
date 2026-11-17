@@ -634,6 +634,24 @@ export {
   PREFERENCES_NAMESPACE_PATTERN,
 } from './schemas/user-preferences.js'
 export {
+  type ApiCatalogEntry,
+  ApiCatalogEntrySchema,
+  type ApiCatalogInputSchemaOutput,
+  ApiCatalogInputSchemaOutputSchema,
+  type ApiCatalogListOutput,
+  ApiCatalogListOutputSchema,
+  type ApiCatalogMethod,
+  ApiCatalogMethodSchema,
+  type ApiCatalogScope,
+  ApiCatalogScopeSchema,
+  type ApiProcedureKind,
+  ApiProcedureKindSchema,
+  type ApiProcedureTier,
+  ApiProcedureTierSchema,
+  type JsonSchemaDocument,
+  JsonSchemaDocumentSchema,
+} from './schemas/api-catalog.js'
+export {
   APP_AUTH_CALLBACK_MAX_LENGTH,
   APP_AUTH_CALLBACK_URLS,
   canonicalizeAppCallback,

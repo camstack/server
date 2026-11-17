@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
+- New API catalogue schemas (ApiCatalogEntry, ApiCatalogListOutput, ApiCatalogInputSchemaOutput) for the API explorer.
 
 ## [1.2.587] - 2026-11-17
 
