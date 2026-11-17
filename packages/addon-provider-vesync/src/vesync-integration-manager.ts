@@ -77,6 +77,12 @@ export class VeSyncIntegrationManager {
    */
   #readSeq = 0
   #refreshedAt: Map<string, number> = new Map()
+  /**
+   * One device list at a time. The library rebuilds its device objects on every list, detail-less
+   * until each is read, so a second list running beside the first could hand it objects it has not
+   * read yet. A tick that lands while a poll runs is skipped (the running one answers it).
+   */
+  #polling = false
   #status: VeSyncAccountStatus = 'disconnected'
   #pollTimer: ReturnType<typeof setInterval> | null = null
   #error: string | null = null
@@ -301,8 +307,9 @@ export class VeSyncIntegrationManager {
   /**
    * Send one command, then re-read THAT device and push its real state at once — the UI should
    * not wait for the next poll (30 s by default) to see what it asked for. Nothing is invented:
-   * the pushed state is what the device read answered. A refused command is logged and thrown; a
-   * failed read after an acknowledged command is logged and leaves the state to the next poll.
+   * the pushed state is what the device read answered. A refused command is logged, the device
+   * re-read (part of it may have landed), and the failure thrown; a failed read is logged and
+   * leaves the state to the next poll.
    */
   async runCommand(command: VeSyncCommand): Promise<void> {
     const client = this.#client
@@ -318,13 +325,26 @@ export class VeSyncIntegrationManager {
         tags,
         meta: { nativeId: command.nativeId, commandMs: Date.now() - started, error: errMsg(err) },
       })
+      // A multi-step command can fail part-way (power on, then a refused mode): what did land
+      // is pushed before the caller hears of the failure.
+      await this.#refreshAfter(client, command, started)
       throw err
     }
-    const acked = Date.now()
     this.#logger.info(`vesync: command ${command.name} acknowledged`, {
       tags,
-      meta: { nativeId: command.nativeId, commandMs: acked - started },
+      meta: { nativeId: command.nativeId, commandMs: Date.now() - started },
     })
+    await this.#refreshAfter(client, command, started)
+  }
+
+  /** Re-read the commanded device and push its real state. A failed read is logged, not thrown. */
+  async #refreshAfter(
+    client: VeSyncClient,
+    command: VeSyncCommand,
+    started: number,
+  ): Promise<void> {
+    const tags = { deviceId: command.deviceId }
+    const acked = Date.now()
     try {
       const fresh = await client.refreshDevice(command.nativeId)
       if (this.#client !== client) return
@@ -352,10 +372,28 @@ export class VeSyncIntegrationManager {
     }
   }
 
-  /** Re-list devices once, then fan the snapshot out. Best-effort. */
+  /** Re-list devices once, then fan the snapshot out. Best-effort; one at a time. */
   async poll(): Promise<void> {
     const client = this.#client
     if (client === null) return
+    if (this.#polling) {
+      this.#logger.debug(
+        'VeSyncIntegrationManager: poll skipped — the previous one is still running',
+        {
+          tags: { accountId: this.#id },
+        },
+      )
+      return
+    }
+    this.#polling = true
+    try {
+      await this.#pollOnce(client)
+    } finally {
+      this.#polling = false
+    }
+  }
+
+  async #pollOnce(client: VeSyncClient): Promise<void> {
     this.#readSeq += 1
     const ticket = this.#readSeq
     try {

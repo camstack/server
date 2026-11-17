@@ -177,6 +177,12 @@ const REGION_PATTERN =
 const REGION_HINT =
   'set the Country code on the VeSync integration to the country the account was registered in'
 
+/** One sign-in in flight: its outcome and the lines it logged, for every call awaiting it. */
+interface SharedLogin {
+  readonly done: Promise<boolean>
+  readonly lines: readonly LibraryLine[]
+}
+
 /**
  * The process-wide library logger. A line goes to the capture of the call whose async context
  * logged it; calls run concurrently (a command never waits behind a poll). A line logged outside
@@ -197,6 +203,35 @@ class LibraryLogRouter implements TsVeSyncLogSink {
     const lines: LibraryLine[] = []
     const value = await this.#capture.run(lines, fn)
     return { value, lines }
+  }
+
+  /**
+   * Wrap a manager's sign-in so every call that awaits it receives its lines. The library runs one
+   * sign-in for every caller that needs one (its own re-login included) and logs it in the
+   * context of the call that STARTED it; a call that joined would see only "re-authentication
+   * failed" and classify a region or credentials refusal as a bare refusal. The sign-in's lines
+   * are collected apart and copied into each awaiting call's capture.
+   */
+  shareLogin(login: TsVeSyncManager['login']): TsVeSyncManager['login'] {
+    let inFlight: SharedLogin | null = null
+    return async (retryAttempts, initialDelayMs) => {
+      let shared = inFlight
+      if (shared === null) {
+        const lines: LibraryLine[] = []
+        const done = this.#capture
+          .run(lines, () => login(retryAttempts, initialDelayMs))
+          .finally(() => {
+            inFlight = null
+          })
+        shared = { done, lines }
+        inFlight = shared
+      }
+      try {
+        return await shared.done
+      } finally {
+        this.#capture.getStore()?.push(...shared.lines)
+      }
+    }
   }
 
   #push(level: LibraryLine['level'], message: string, args: readonly unknown[]): void {
@@ -319,8 +354,8 @@ function isDriven(device: object): device is TsVeSyncFan {
 }
 
 /** The contract snapshot of a driven library device. */
-export function deviceSnapshotOf(fan: TsVeSyncFan): VeSyncDeviceSnapshot {
-  return isHumidifier(fan) ? humidifierSnapshotOf(fan) : snapshotOf(fan)
+export function deviceSnapshotOf(fan: TsVeSyncFan, detailsRead: boolean): VeSyncDeviceSnapshot {
+  return isHumidifier(fan) ? humidifierSnapshotOf(fan, detailsRead) : snapshotOf(fan)
 }
 
 /** The library writes 0 for a humidity it did not get; no indoor reading or setpoint is 0 %. */
@@ -336,8 +371,15 @@ function stringArray(value: unknown): readonly string[] | null {
   return out.length > 0 ? out : null
 }
 
-/** Map one library humidifier onto the contract snapshot. */
-export function humidifierSnapshotOf(fan: TsVeSyncHumidifier): VeSyncHumidifierSnapshot {
+/**
+ * Map one library humidifier onto the contract snapshot. `detailsRead` says whether the detail
+ * read answered for this object: the classes' tank getter reads `water_lacks || false` and some
+ * seed `water_lacks: false`, so before a real read the tank is unknown (`null`), never "OK".
+ */
+export function humidifierSnapshotOf(
+  fan: TsVeSyncHumidifier,
+  detailsRead: boolean,
+): VeSyncHumidifierSnapshot {
   const details = isRecord(fan.details) ? fan.details : {}
   const configuration = isRecord(details['configuration']) ? details['configuration'] : {}
   const range = isRecord(fan.humidityRange) ? fan.humidityRange : {}
@@ -362,9 +404,15 @@ export function humidifierSnapshotOf(fan: TsVeSyncHumidifier): VeSyncHumidifierS
     minHumidity: typeof min === 'number' ? min : null,
     maxHumidity: typeof max === 'number' ? max : null,
     display: typeof display === 'boolean' ? display : fan.screenStatus === 'on',
-    waterLacks: typeof fan.waterLacks === 'boolean' ? fan.waterLacks : null,
+    waterLacks: detailsRead ? tankFlag(details['water_lacks'], fan.waterLacks) : null,
     online: fan.connectionStatus === 'online',
   }
+}
+
+/** The tank flag a read reported: the raw detail field, else the class getter, else unknown. */
+function tankFlag(detail: unknown, getter: boolean | undefined): boolean | null {
+  if (typeof detail === 'boolean') return detail
+  return typeof getter === 'boolean' ? getter : null
 }
 
 /** Map one library purifier onto the contract snapshot. */
@@ -442,6 +490,9 @@ class TsVeSyncClient implements VeSyncClient {
   #unprovenRestore = false
 
   constructor(manager: TsVeSyncManager, router: LibraryLogRouter) {
+    // The library calls its own `login` through the instance (a re-login inside a device list or
+    // an API call), so the shared wrapper is installed on the instance itself.
+    manager.login = router.shareLogin(manager.login.bind(manager))
     this.#manager = manager
     this.#router = router
   }
@@ -467,10 +518,11 @@ class TsVeSyncClient implements VeSyncClient {
     const { value: listed, lines } = await this.#router.run(async () => {
       const ok = await this.#manager.getDevices()
       if (!ok) return false
+      const read = new Set<string>()
       for (const device of this.#manager.fans) {
-        if (isDriven(device)) await device.getDetails()
+        if (isDriven(device) && (await device.getDetails())) read.add(device.cid)
       }
-      return true
+      return read
     })
     if (!listed) throw this.#listFailure(lines)
     this.#unprovenRestore = false
@@ -479,7 +531,7 @@ class TsVeSyncClient implements VeSyncClient {
     for (const device of this.#manager.fans) {
       if (!isDriven(device)) continue
       fans.set(device.cid, device)
-      snapshots.set(device.cid, deviceSnapshotOf(device))
+      snapshots.set(device.cid, deviceSnapshotOf(device, listed.has(device.cid)))
     }
     this.#fans = fans
     this.#snapshots = snapshots
@@ -494,7 +546,7 @@ class TsVeSyncClient implements VeSyncClient {
     if (value === false) {
       throw new Error(`vesync: refresh refused for "${nativeId}": ${failureWords(lines)}`)
     }
-    const snapshot = deviceSnapshotOf(fan)
+    const snapshot = deviceSnapshotOf(fan, true)
     this.#snapshots = new Map(this.#snapshots).set(nativeId, snapshot)
     return snapshot
   }

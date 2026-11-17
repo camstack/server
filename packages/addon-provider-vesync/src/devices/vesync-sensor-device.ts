@@ -29,7 +29,6 @@ const BINARY_CAP = binaryCapability.name
 const AQ_COLD_START: AirQualitySensorStatus = { lastFetchedAt: 0 }
 const FILTER_COLD_START: NumericSensorStatus = { value: 0, lastFetchedAt: 0 }
 const HUMIDITY_COLD_START: HumiditySensorStatus = { humidity: null, lastFetchedAt: 0 }
-const WATER_LOW_COLD_START: BinaryStatus = { on: false, lastChangedAt: 0 }
 
 /**
  * One VeSync read-only metric as a CamStack
@@ -45,7 +44,8 @@ const WATER_LOW_COLD_START: BinaryStatus = { on: false, lastChangedAt: 0 }
  *
  * `purifierNativeId` is the parent's VeSync cid, whatever its kind. The slice is fed
  * from the live device snapshot on each poll tick and after each command's refresh
- * (seeded cold on activate). No methods — every cap here is a read-only push slice.
+ * (seeded cold on activate, except water-low: it stays unset until a real read).
+ * No methods — every cap here is a read-only push slice.
  */
 export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
   readonly features: readonly DeviceFeature[] = []
@@ -128,14 +128,11 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
     }
   }
 
-  /** The tank flag; a model that does not report it leaves the slice alone. */
+  /** The tank flag; a snapshot that does not report it leaves the slice alone. */
   private writeWaterLow(device: VeSyncHumidifierSnapshot, now: number): void {
-    if (device.waterLacks === null) return
     const previous = this.runtimeState.getCapState<BinaryStatus>(BINARY_CAP)
-    if (previous !== undefined && previous.on === device.waterLacks && previous.lastChangedAt > 0) {
-      return
-    }
-    this.runtimeState.setCapState(BINARY_CAP, { on: device.waterLacks, lastChangedAt: now })
+    const next = waterLowNext(previous, device.waterLacks, now)
+    if (next !== null) this.runtimeState.setCapState(BINARY_CAP, next)
   }
 
   private registerSensorCap(): void {
@@ -149,12 +146,12 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
       return
     }
     if (this.kind === 'water-low') {
+      // No cold-start seed: `binary` has no "unknown", and a seeded `false` reads "tank OK".
       const provider: InferNativeProvider<typeof binaryCapability> = {
         getStatus: async () =>
-          this.runtimeState.getCapState<BinaryStatus>(BINARY_CAP) ?? WATER_LOW_COLD_START,
+          waterLowStatus(this.runtimeState.getCapState<BinaryStatus>(BINARY_CAP)),
       }
       this.ctx.registerNativeCap(binaryCapability, provider)
-      this.runtimeState.setCapState(BINARY_CAP, WATER_LOW_COLD_START)
       return
     }
     if (this.kind === 'air-quality') {
@@ -173,6 +170,28 @@ export class VeSyncSensorDevice extends BaseDevice<typeof vesyncSensorSchema> {
     this.ctx.registerNativeCap(numericSensorCapability, provider)
     this.runtimeState.setCapState(NUMERIC_CAP, FILTER_COLD_START)
   }
+}
+
+/**
+ * The water-low slice to write for a reported tank, or `null` to leave it: nothing reported
+ * (`null`, the tank was not read) or no change since the last real read.
+ */
+export function waterLowNext(
+  previous: BinaryStatus | undefined,
+  waterLacks: boolean | null,
+  now: number,
+): BinaryStatus | null {
+  if (waterLacks === null) return null
+  if (previous !== undefined && previous.on === waterLacks) return null
+  return { on: waterLacks, lastChangedAt: now }
+}
+
+/** The water-low status; refused until a real read reported the tank (D315: unknown ≠ OK). */
+export function waterLowStatus(current: BinaryStatus | undefined): BinaryStatus {
+  if (current === undefined) {
+    throw new Error('vesync: water tank not read yet — no status until the device reports it')
+  }
+  return current
 }
 
 /** Map a purifier snapshot's air-quality PM2.5 onto the air-quality-sensor slice. */

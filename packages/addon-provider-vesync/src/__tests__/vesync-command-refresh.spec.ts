@@ -162,7 +162,7 @@ describe('VeSyncIntegrationManager — refresh after a command', () => {
     expect(typeof refresh?.meta?.meta?.['refreshMs']).toBe('number')
   })
 
-  it('a refused command is logged, rethrown, and reads nothing', async () => {
+  it('a refused command is logged, re-read, and rethrown', async () => {
     const w = world()
     await w.manager.start()
     w.calls.length = 0
@@ -177,7 +177,7 @@ describe('VeSyncIntegrationManager — refresh after a command', () => {
         },
       }),
     ).rejects.toThrow(/refused/)
-    expect(w.calls).toEqual([])
+    expect(w.calls).toEqual(['refreshDevice:cid-1'])
     const failed = w.lines.find((l) => l.level === 'warn')
     expect(failed?.meta?.tags).toEqual({ deviceId: 5851 })
   })
@@ -201,5 +201,62 @@ describe('VeSyncIntegrationManager — refresh after a command', () => {
     release()
     await poll
     expect(w.manager.getDevice('cid-1')).toMatchObject({ power: true })
+  })
+
+  it('a command that fails part-way still pushes the real state before it rethrows', async () => {
+    const w = world()
+    await w.manager.start()
+    const pushesBefore = w.polledCount()
+    w.calls.length = 0
+    // setPower acknowledged, then setMode refused: the device IS on now.
+    await expect(
+      w.manager.runCommand({
+        nativeId: 'cid-1',
+        deviceId: 5851,
+        name: 'setSpeed(50)',
+        run: async (client) => {
+          await client.setPower('cid-1', true)
+          throw new Error('vesync: setMode refused')
+        },
+      }),
+    ).rejects.toThrow(/setMode refused/)
+    expect(w.calls).toEqual(['setPower:true', 'refreshDevice:cid-1'])
+    expect(w.manager.getDevice('cid-1')).toMatchObject({ power: true })
+    expect(w.polledCount()).toBe(pushesBefore + 1)
+  })
+})
+
+describe('VeSyncIntegrationManager — one poll at a time', () => {
+  it('a tick that lands while a poll runs is skipped and logged, never a second device list', async () => {
+    const w = world()
+    await w.manager.start()
+    let release: () => void = () => undefined
+    w.setPollGate(
+      new Promise<void>((r) => {
+        release = r
+      }),
+    )
+    w.calls.length = 0
+    w.lines.length = 0
+    const first = w.manager.poll()
+    const second = w.manager.poll()
+    // The skipped tick answers at once; release the first before asserting.
+    const secondOutcome = await Promise.race([
+      second.then((): 'done' => 'done'),
+      new Promise<'pending'>((r) => setTimeout(() => r('pending'), 20)),
+    ])
+    release()
+    await first
+    await second
+    expect(secondOutcome).toBe('done')
+    expect(w.calls.filter((c) => c === 'listDevices')).toEqual(['listDevices'])
+    const skipped = w.lines.find((l) => /poll .*skipped/.test(l.message))
+    expect(skipped?.level).toBe('debug')
+    expect(skipped?.meta?.tags).toEqual({ accountId: 'int_1' })
+
+    // Once the first poll is done, the next tick lists again.
+    w.setPollGate(null)
+    await w.manager.poll()
+    expect(w.calls.filter((c) => c === 'listDevices')).toHaveLength(2)
   })
 })

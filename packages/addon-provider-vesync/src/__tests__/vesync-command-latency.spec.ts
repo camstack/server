@@ -97,6 +97,8 @@ interface HumidState {
   mode: string
   humidity: number
   target: number
+  /** What the library's detail read answers; `false` leaves the class defaults in place. */
+  detailsOk?: boolean
 }
 
 /** A humidifier shaped like tsvesync's base `VeSyncHumidifier` (target only in `details`). */
@@ -136,7 +138,7 @@ function humidifier(cid: string, calls: Call[], state: HumidState): TsVeSyncHumi
     humidityRange: { min: 30, max: 80 },
     getDetails: async () => {
       calls.push(['getDetails', cid])
-      return true
+      return state.detailsOk ?? true
     },
     turnOn: async () => {
       calls.push(['turnOn', cid])
@@ -297,6 +299,17 @@ describe('tsvesync adapter — humidifiers', () => {
       ['setHumidity', 'hum-1', 60],
       ['setDisplay', 'hum-1', false],
     ])
+  })
+
+  it('a tank never read is unknown, not "tank OK" (the class default reads false)', async () => {
+    const w = world()
+    w.h1.detailsOk = false
+    await w.client.login()
+    await w.client.listDevices()
+    expect(w.client.getDevice('hum-1')).toMatchObject({ kind: 'humidifier', waterLacks: null })
+    w.h1.detailsOk = true
+    await w.client.refreshDevice('hum-1')
+    expect(w.client.getDevice('hum-1')).toMatchObject({ waterLacks: true })
   })
 
   it('a setpoint on a purifier is refused by name', async () => {
