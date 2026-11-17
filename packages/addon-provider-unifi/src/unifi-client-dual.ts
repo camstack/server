@@ -92,6 +92,8 @@ export class UnifiDualClient implements UnifiControllerClient {
           ? {
               ports: overlayPorts(device.ports, match.ports),
               cpuTempC: device.cpuTempC ?? match.cpuTempC,
+              ip: device.ip ?? match.ip,
+              serial: device.serial ?? match.serial,
               ledOn: match.ledOn,
             }
           : {}),

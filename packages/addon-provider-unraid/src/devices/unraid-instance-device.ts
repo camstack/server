@@ -17,6 +17,7 @@ import {
 import { UNRAID_SYSTEM } from '../config.js'
 import { UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
+import { UnraidIdentityDeclarer, unraidServerIdentifiers } from '../unraid-identifiers.js'
 import { UnraidEntityIdentitySchema } from '../unraid-mapping.js'
 import {
   UNRAID_HOST_WORKLOAD_OPTIONS,
@@ -59,6 +60,10 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
   private readonly instanceId: string
   private readonly integrationId: string
   private snapshotUnsub: (() => void) | null = null
+  private identityUnsub: (() => void) | null = null
+  private readonly identity: UnraidIdentityDeclarer
+  /** The identity read failures last logged, so a server that keeps failing logs once. */
+  private lastIdentityFailures = ''
 
   constructor(ctx: DeviceContext) {
     const cfg = unraidInstanceSchema.parse(ctx.persistedConfig ?? {})
@@ -71,6 +76,11 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
     )
     this.instanceId = cfg.instanceId
     this.integrationId = cfg.integrationId
+    this.identity = new UnraidIdentityDeclarer({
+      deviceId: this.id,
+      logger: ctx.logger,
+      writer: ctx.api.deviceManager?.setIdentifiers,
+    })
     this.online = unraidInstances.getSnapshot(this.instanceId) !== null
     // device-admin-link — the server device is a view of the same server.
     registerUnraidAdminLink(ctx, this.id, { instanceId: this.instanceId })
@@ -84,6 +94,14 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
     await super.onActivate()
     // The server device is the host its containers and VMs report, whatever its type.
     unraidInstances.setHostDevice(this.instanceId, this.id)
+    // The server's identity (D1059), from every poll, whatever the device type.
+    const declareIdentity = (): void => {
+      const identity = unraidInstances.getSnapshot(this.instanceId)?.identity
+      this.logIdentityFailures(identity?.readFailures ?? [])
+      void this.identity.declare(unraidServerIdentifiers(identity))
+    }
+    this.identityUnsub = unraidInstances.onSnapshot(this.instanceId, declareIdentity)
+    declareIdentity()
     if (this.type !== DeviceType.Workload) return
     const provider: InferNativeProvider<typeof workloadCapability> = {
       getOptions: async () => UNRAID_HOST_WORKLOAD_OPTIONS,
@@ -99,9 +117,23 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
     this.recomputeWorkload()
   }
 
+  /** A read the identity could not make keeps the stored values; say so once per change. */
+  private logIdentityFailures(failures: readonly string[]): void {
+    const key = failures.join('\n')
+    if (key === this.lastIdentityFailures) return
+    this.lastIdentityFailures = key
+    if (failures.length === 0) return
+    this.ctx.logger.warn('Unraid server: identity read failed, stored identifiers kept', {
+      tags: { deviceId: this.id },
+      meta: { instanceId: this.instanceId, failures },
+    })
+  }
+
   override async removeDevice(): Promise<void> {
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
+    this.identityUnsub?.()
+    this.identityUnsub = null
     if (unraidInstances.getHostDevice(this.instanceId) === this.id) {
       unraidInstances.setHostDevice(this.instanceId, null)
     }

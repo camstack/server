@@ -39,6 +39,8 @@ export interface TsVeSyncLogSink {
 /** The part of a `tsvesync` fan / air purifier the adapter reads and drives. */
 export interface TsVeSyncFan {
   readonly cid: string
+  /** The device-list `macID`; empty when not reported. */
+  readonly macId: string
   readonly deviceName: string
   readonly deviceType: string
   readonly deviceStatus: string
@@ -291,6 +293,7 @@ export function snapshotOf(fan: TsVeSyncFan): VeSyncPurifierSnapshot {
     nativeId: fan.cid,
     name: fan.deviceName,
     ...(fan.deviceType !== '' ? { model: fan.deviceType } : {}),
+    ...(fan.macId.trim() !== '' ? { mac: fan.macId.trim() } : {}),
     power,
     speedPercent,
     percentageStep: 100 / maxLevel,

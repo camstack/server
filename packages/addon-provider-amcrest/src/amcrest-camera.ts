@@ -97,6 +97,7 @@ import {
   readPostRecordSec,
 } from './recording-onboard-mapping.js'
 import { AMCREST_ADDON_ID, amcrestCameraSchema } from './schema.js'
+import { amcrestIdentifiers } from './amcrest-identifiers.js'
 
 /**
  * Amcrest/Dahua camera device — CGI control channel (snapshot, PTZ,
@@ -156,6 +157,8 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   /** Lazy-built CGI client. Recreated on credential / host changes via
    *  `applySettingsPatch` (see `disconnectClient`). */
   private client: AmcrestCgiClient | null = null
+  /** Whether this session has declared the camera's identifiers (D1059). */
+  private identityDeclared = false
   /** Active published streams keyed by `camStreamId` — mirrors the
    *  Hikvision provider's `published` map so the legacy
    *  `getStreamSources()` shim stays in sync with the last
@@ -849,7 +852,8 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     this.reachabilityPoll = startReachabilityPoll({
       probe: async () => {
         const client = this.ensureClient()
-        await client.getDeviceInfo()
+        const info = await client.getDeviceInfo()
+        if (!this.identityDeclared) void this.declareIdentity(client, info.serialNumber)
         return true
       },
       setOnline: (online) => {
@@ -858,6 +862,32 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
     })
+  }
+
+  /**
+   * Declare the serial, MAC (channel 1 only) and host the camera reports (D1059) — once per session, on the
+   * first answer of the reachability poll. A failed MAC read is `unread` and leaves the
+   * stored MAC; a write that did not land is tried again on the next poll.
+   */
+  private async declareIdentity(
+    client: AmcrestCgiClient,
+    serialNumber: string | null,
+  ): Promise<void> {
+    this.identityDeclared = true
+    const host = this.config.get('host') ?? ''
+    const channel = this.channel
+    // A recorder channel past the first shares the recorder's MAC: no read to make.
+    const readMac = channel === 1 ? client.resolveMac(host) : Promise.resolve(null)
+    const mac = await readMac.catch((err: unknown) => {
+      this.ctx.logger.debug('Amcrest identity: network read failed', {
+        tags: { deviceId: this.id },
+        meta: { error: err instanceof Error ? err.message : String(err) },
+      })
+      return null
+    })
+    const { identifiers, unread } = amcrestIdentifiers({ serialNumber, mac, host, channel })
+    const result = await this.declareIdentifiers(identifiers, { unread })
+    if (result.outcome !== 'declared') this.identityDeclared = false
   }
 
   /** Teardown — stop the stream + motion timers, drop the client. */

@@ -79,6 +79,8 @@ export function workerDeviceToSnapshot(device: UnifiWorkerDevice): UnifiInfraSna
     id: device.id,
     name: device.name,
     mac: device.mac,
+    ip: device.ip ?? null,
+    serial: device.serial ?? null,
     model: device.model,
     kind: classifyUnifiInfra({
       model: device.model,

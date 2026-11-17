@@ -62,6 +62,8 @@ export const workerPortSchema = z.object({
 export const workerDeviceSchema = z.object({
   id: z.string(),
   mac: z.string().nullable(),
+  ip: z.string().nullish(),
+  serial: z.string().nullish(),
   name: z.string(),
   model: z.string(),
   type: z.string().nullable(),

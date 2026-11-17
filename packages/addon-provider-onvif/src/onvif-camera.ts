@@ -11,6 +11,7 @@ import type {
 } from '@camstack/types'
 import {
   buildDeviceAdminUrl,
+  declareDeviceIdentifiers,
   DeviceConfig,
   DeviceFeature,
   DeviceType,
@@ -22,6 +23,7 @@ import {
 import { z } from 'zod'
 import type { OnvifClient } from './onvif-client.js'
 import { ONVIF_PTZ_TIMEOUT_MS } from './onvif-client.js'
+import { onvifIdentifiers } from './onvif-identifiers.js'
 
 // ---------------------------------------------------------------------------
 // Schema
@@ -435,6 +437,44 @@ export class OnvifCamera implements IDevice, INativeSnapshot, ICameraDevice {
     this.client = client
     this.online = true
     this.startReachabilityPolling()
+    void this.declareIdentity(client)
+  }
+
+  /**
+   * Declare the serial, MACs and host the camera reports (D1059), once per attach. Each
+   * read that fails is `unread`, so it never erases what an earlier attach declared.
+   */
+  private async declareIdentity(client: OnvifClient): Promise<void> {
+    const [deviceInfo, macs] = await Promise.all([
+      client
+        .getDeviceInfo()
+        .catch((err: unknown) => this.identityReadFailed('device information', err)),
+      client
+        .getMacAddresses()
+        .catch((err: unknown) => this.identityReadFailed('network interfaces', err)),
+    ])
+    const { identifiers, unread } = onvifIdentifiers({
+      deviceInfo,
+      macs,
+      host: this.config.get('host') ?? '',
+    })
+    await declareDeviceIdentifiers(
+      {
+        deviceId: this.id,
+        logger: this.ctx.logger,
+        writer: this.ctx.api.deviceManager?.setIdentifiers,
+      },
+      identifiers,
+      { unread },
+    )
+  }
+
+  private identityReadFailed(what: string, err: unknown): null {
+    this.ctx.logger.debug(`ONVIF identity: ${what} read failed`, {
+      tags: { deviceId: this.id },
+      meta: { error: err instanceof Error ? err.message : String(err) },
+    })
+    return null
   }
 
   /** Start the control-plane reachability poll: an ONVIF

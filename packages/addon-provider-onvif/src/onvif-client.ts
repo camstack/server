@@ -1,5 +1,6 @@
 import type { IScopedLogger } from '@camstack/types'
 import { Cam } from 'onvif'
+import { parseOnvifMacs } from './onvif-identifiers.js'
 
 /**
  * How long one ONVIF `ContinuousMove` runs before the camera stops itself, ms.
@@ -55,6 +56,17 @@ export class OnvifClient {
       this.cam.getDeviceInformation((err, info) => {
         if (err) reject(err)
         else resolve(info)
+      })
+    })
+  }
+
+  /** The MACs of the camera's network interfaces (`GetNetworkInterfaces`). */
+  async getMacAddresses(): Promise<readonly string[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.cam) return reject(new Error('Not connected'))
+      this.cam.getNetworkInterfaces((err, interfaces) => {
+        if (err) reject(err)
+        else resolve(parseOnvifMacs(interfaces))
       })
     })
   }

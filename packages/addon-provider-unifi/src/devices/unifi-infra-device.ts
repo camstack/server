@@ -26,6 +26,7 @@ import {
   UNIFI_HOST_WORKLOAD_UNKNOWN,
   unifiHostWorkloadStatus,
 } from '../unifi-host-workload.js'
+import { unifiInfraIdentifiers } from '../unifi-identifiers.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 import { UnifiFeatureDevice } from './unifi-feature-device.js'
 
@@ -53,6 +54,8 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
   private readonly integrationId: string
   private readonly infraNativeId: string
   private snapshotUnsub: (() => void) | null = null
+  /** The last identity declaration sent, so an unchanged poll sends nothing. */
+  private lastIdentityKey: string | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = unifiInfraSchema.parse(ctx.persistedConfig ?? {})
@@ -75,6 +78,11 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    this.snapshotUnsub = unifiControllers.onSnapshot(this.integrationId, () => {
+      this.recomputeWorkload()
+      void this.declareIdentity()
+    })
+    void this.declareIdentity()
     // The cap is gated to `workload` devices; a legacy Container keeps none.
     if (this.type !== DeviceType.Workload) return
     const provider: InferNativeProvider<typeof workloadCapability> = {
@@ -87,9 +95,6 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     // No start / stop is served, so the helper registers no switch (no fake control).
     registerPowerSwitch(this, workloadCapability, provider)
     this.runtimeState.setCapState(workloadCapability.name, UNIFI_HOST_WORKLOAD_UNKNOWN)
-    this.snapshotUnsub = unifiControllers.onSnapshot(this.integrationId, () =>
-      this.recomputeWorkload(),
-    )
     this.recomputeWorkload()
   }
 
@@ -104,6 +109,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
    * longer lists) is unknown, never the last state a reachable controller reported.
    */
   private recomputeWorkload(): void {
+    if (this.type !== DeviceType.Workload) return
     const previous =
       this.runtimeState.getCapState<WorkloadStatus>(workloadCapability.name) ??
       UNIFI_HOST_WORKLOAD_UNKNOWN
@@ -115,6 +121,24 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
         previous,
       ),
     )
+  }
+
+  /**
+   * Declare the MAC, serial and IP the controller reports NOW (D1059). A failed read declares
+   * nothing; an unchanged declaration is not re-sent.
+   */
+  private async declareIdentity(): Promise<void> {
+    const declaration = unifiInfraIdentifiers(
+      unifiControllers.getLiveInfra(this.integrationId, this.infraNativeId),
+    )
+    if (declaration === null) return
+    const key = JSON.stringify(declaration)
+    if (key === this.lastIdentityKey) return
+    this.lastIdentityKey = key
+    const result = await this.declareIdentifiers(declaration.identifiers, {
+      unread: declaration.unread,
+    })
+    if (result.outcome !== 'declared') this.lastIdentityKey = null
   }
 
   /** The client on one of this device's ports in the live snapshot, or null. */

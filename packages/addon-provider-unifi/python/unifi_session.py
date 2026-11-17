@@ -182,6 +182,8 @@ def normalize_device(raw: dict, wired: dict[str, dict]) -> dict:
         # `_id` (= `device_id`) is the id the classic API has always named the device by.
         "id": raw.get("_id") or raw.get("device_id") or mac,
         "mac": mac or None,
+        "ip": raw.get("ip") or None,
+        "serial": raw.get("serial") or None,
         "name": raw.get("name") or mac,
         "model": raw.get("model") or "",
         "type": raw.get("type"),

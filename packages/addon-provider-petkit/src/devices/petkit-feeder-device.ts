@@ -28,6 +28,7 @@ import {
 import { petkitConnections } from '../petkit-gateway.js'
 import { PollCadence } from '../petkit-poll-cadence.js'
 import { petkitSession } from '../petkit-session.js'
+import { petkitIdentifiers } from '../petkit-identifiers.js'
 
 const PET_FEEDER_CAP = 'pet-feeder'
 /** How long a slice stays "fresh" before a read triggers a re-poll. */
@@ -218,9 +219,17 @@ export class PetkitFeederDevice extends BaseDevice<typeof petkitFeederDeviceSche
     return handle
   }
 
+  /** Declare the cloud device id as a `vendor-uid` (D1059). */
+  private async declareVendorIdentity(): Promise<void> {
+    const declaration = petkitIdentifiers(this.petkitDeviceId)
+    if (declaration === null) return
+    await this.declareIdentifiers(declaration.identifiers, { unread: declaration.unread })
+  }
+
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerCap()
+    void this.declareVendorIdentity()
     this.registerConsumablesCap()
     this.runtimeState.setCapState(
       PET_FEEDER_CAP,

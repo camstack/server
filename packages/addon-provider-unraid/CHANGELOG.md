@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Unraid server declares its SMBIOS uuid, NIC MACs, flash GUID, hostname and LAN IP, and a VM its domain uuid, as device identifiers
+
 ## [0.2.170] - 2026-11-17
 
 ### Changed

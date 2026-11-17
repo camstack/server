@@ -59,6 +59,7 @@ import {
   dreameSelectChildFactory,
   dreameSwitchChildFactory,
 } from './dreame-child-class-factory.js'
+import { dreameIdentifiers } from '../dreame-identifiers.js'
 
 /** Accordion section the AI-obstacle Switch children are grouped into. */
 const AI_SECTION = 'AI / Obstacle'
@@ -664,9 +665,17 @@ export class DreameContainerDevice extends BaseDevice<typeof dreameContainerSche
    * (primary by type priority) and the map stay in the plain Overview. Re-run on
    * every reconcile so a changed supported-feature set re-sections automatically.
    */
+  /** Declare the cloud device id as a `vendor-uid` (D1059). */
+  private async declareVendorIdentity(): Promise<void> {
+    const declaration = dreameIdentifiers(this.dreameDeviceId)
+    if (declaration === null) return
+    await this.declareIdentifiers(declaration.identifiers, { unread: declaration.unread })
+  }
+
   override async onActivate(): Promise<void> {
     await super.onActivate()
     const kind = classifyDreameModel(this.model)
+    void this.declareVendorIdentity()
     // The vacuum and mower catalogs share some siids with different meanings, so
     // the layout sections are kind-gated exactly like the spawn block — a mower
     // must not pick up vacuum childKeys (and vice-versa).

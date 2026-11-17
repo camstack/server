@@ -14,6 +14,9 @@ import {
   type IDevice,
   type InitialDeviceMeta,
   type IScopedLogger,
+  type DeviceIdentifiers,
+  mergeIdentifiers,
+  type SetIdentifiersInput,
 } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { settingsToConnection, UNRAID_SYSTEM } from '../config.js'
@@ -306,7 +309,11 @@ function isWorkloadProvider(value: unknown): value is WorkloadProviderView {
 }
 
 /** A stub device context: only what the device reads. */
-function rig(config: Record<string, unknown>, id: number) {
+function rig(
+  config: Record<string, unknown>,
+  id: number,
+  extras: { readonly api?: object; readonly logger?: IScopedLogger } = {},
+) {
   const providers = new Map<string, unknown>()
   let runtime: IDeviceRuntimeState | null = null
   // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
@@ -338,8 +345,8 @@ function rig(config: Record<string, unknown>, id: number) {
         )
       }
     }),
-    api: {},
-    logger: quiet,
+    api: extras.api ?? {},
+    logger: extras.logger ?? quiet,
   } as unknown as DeviceContext
   return { ctx, providers }
 }
@@ -509,5 +516,92 @@ describe('Unraid workload devices serve the workload cap', () => {
     expect(addon.classFor(`unraid:${INT}:${UNRAID_INSTANCE_ID}`)).toBe(UnraidInstanceDevice)
     expect(addon.classFor(`unraid:${INT}:docker:plex`)).toBe(UnraidWorkloadDevice)
     expect(addon.classFor(`unraid:${INT}:vm:uuid-ccu`)).toBe(UnraidWorkloadDevice)
+  })
+})
+
+describe('the Unraid server device declares the identity each poll reads (D1059)', () => {
+  afterEach(() => unraidInstances.clear())
+
+  it('declares on activation and keeps the stored GUID and IP when server.info fails, warning with the deviceId', async () => {
+    const done = async (): Promise<void> => undefined
+    const reach = { serverDown: false }
+    const client: UnraidClientLike = {
+      connect: done,
+      disconnect: done,
+      array: {
+        get: async () => snapshot().array,
+        setState: done,
+        parity: { start: done, cancel: done },
+      },
+      docker: { list: async () => [], start: done, stop: done, pause: done, unpause: done },
+      vms: {
+        list: async () => [],
+        start: done,
+        stop: done,
+        pause: done,
+        resume: done,
+        forceStop: done,
+        reboot: done,
+      },
+      system: {
+        cpu: async () => snapshot().cpu,
+        info: async () => ({
+          hostname: 'Tower',
+          machineUuid: '4C4C4544-0042-3510-8051-B7C04F4E3732',
+          macs: ['AC:1F:6B:00:00:01'],
+        }),
+      },
+      server: {
+        info: async () => {
+          if (reach.serverDown) throw new Error('ECONNRESET')
+          return { flashGuid: '0781-5571-0000-123456789ABC', lanIp: '192.0.2.20' }
+        },
+      },
+      notifications: { active: async () => snapshot().notifications },
+    }
+    const manager = new UnraidIntegrationManager({
+      id: INT,
+      name: 'Tower',
+      connection: settingsToConnection({ host: 'tower.example.com', apiKey: 'k' }),
+      logger: quiet,
+      onConnected: () => undefined,
+      onDisconnected: () => undefined,
+      onPolled: () => undefined,
+      makeClient: () => client,
+    })
+    await manager.start()
+    unraidInstances.set(INT, manager)
+    const world: { stored: DeviceIdentifiers | null } = { stored: null }
+    const setIdentifiers = {
+      mutate: async (input: SetIdentifiersInput) => {
+        world.stored = mergeIdentifiers(world.stored, input.identifiers, input.unread ?? [])
+      },
+    }
+    const warn = vi.fn()
+    const logger: IScopedLogger = { ...quiet, warn }
+    const server = new UnraidInstanceDevice(
+      rig({ instanceId: INT, integrationId: INT, nativeId: UNRAID_INSTANCE_ID, entities: [] }, 42, {
+        api: { deviceManager: { setIdentifiers } },
+        logger,
+      }).ctx,
+    )
+    await server.onActivate()
+    await vi.waitFor(() =>
+      expect(world.stored?.['vendor-uid']?.value).toBe('unraid:0781-5571-0000-123456789abc'),
+    )
+    expect(world.stored?.mac?.[0]?.value).toBe('ac:1f:6b:00:00:01')
+
+    reach.serverDown = true
+    await manager.poll()
+    unraidInstances.emitSnapshot(INT)
+    await vi.waitFor(() =>
+      expect(warn).toHaveBeenCalledWith(
+        'Unraid server: identity read failed, stored identifiers kept',
+        expect.objectContaining({ tags: { deviceId: 42 } }),
+      ),
+    )
+    expect(world.stored?.['vendor-uid']?.value).toBe('unraid:0781-5571-0000-123456789abc')
+    expect(world.stored?.ip?.value).toBe('192.0.2.20')
+    await manager.stop()
   })
 })

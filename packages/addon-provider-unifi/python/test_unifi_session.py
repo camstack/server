@@ -23,7 +23,7 @@ from aiounifi.controller import Controller
 from aiounifi.errors import LoginRequired, TwoFaTokenRequired, Unauthorized
 from aiounifi.models.configuration import Configuration
 
-from unifi_session import UnifiSession, WorkerFailure, classify
+from unifi_session import UnifiSession, WorkerFailure, classify, normalize_device
 
 SWITCH_ID = "64aa00000000000000000001"
 SWITCH_MAC = "aa:bb:cc:00:00:01"
@@ -161,6 +161,16 @@ class PortTable(unittest.TestCase):
         self.assertEqual(snapshot["devices"][0]["id"], SWITCH_ID)
         self.assertEqual(snapshot["devices"][0]["cpuPercent"], 7.5)
         self.assertEqual(snapshot["devices"][0]["memoryPercent"], 63.1)
+
+
+class DeviceIdentity(unittest.TestCase):
+    def test_the_device_ip_and_serial_are_read_and_blank_is_none(self) -> None:
+        device = normalize_device({"_id": "x", "mac": "F0:9F:C2:00:00:01", "ip": "192.0.2.10", "serial": "F09FC2000001"}, {})
+        self.assertEqual(device["ip"], "192.0.2.10")
+        self.assertEqual(device["serial"], "F09FC2000001")
+        blank = normalize_device({"_id": "x", "mac": "f0:9f:c2:00:00:01", "serial": ""}, {})
+        self.assertIsNone(blank["ip"])
+        self.assertIsNone(blank["serial"])
 
 
 class WebsocketEvents(unittest.TestCase):

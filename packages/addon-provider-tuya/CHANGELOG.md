@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Devices declare their cloud device id as an identifier, so the same device from another integration can be matched.
+
 ## [0.2.160] - 2026-11-14
 
 ### Changed

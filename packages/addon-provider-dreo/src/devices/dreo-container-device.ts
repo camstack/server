@@ -11,6 +11,7 @@ import {
 import { dreoConnections } from '../dreo-gateway.js'
 import { classifyDreoModel, deviceTypeForKind } from '../dreo-domain-mapping.js'
 import { dreoChildFactory } from './dreo-child-class-factory.js'
+import { dreoIdentifiers } from '../dreo-identifiers.js'
 
 /**
  * Persisted config for a Dreo Container (the parent of one cloud device).
@@ -64,6 +65,18 @@ export class DreoContainerDevice extends BaseDevice<typeof dreoContainerSchema> 
     // online derives from whether the live handle is currently present.
     this.online = dreoConnections.getDevice(this.brokerId, this.dreoDeviceId) !== null
     void this.updateSourceInfo({ id: this.dreoDeviceId, system: 'dreo' })
+  }
+
+  override async onActivate(): Promise<void> {
+    await super.onActivate()
+    void this.declareVendorIdentity()
+  }
+
+  /** Declare the cloud device id as a `vendor-uid` (D1059). */
+  private async declareVendorIdentity(): Promise<void> {
+    const declaration = dreoIdentifiers(this.dreoDeviceId)
+    if (declaration === null) return
+    await this.declareIdentifiers(declaration.identifiers, { unread: declaration.unread })
   }
 
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {

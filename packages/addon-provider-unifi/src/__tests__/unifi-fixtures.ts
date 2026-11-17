@@ -26,6 +26,8 @@ export function infraSnapshot(
     id: over.id,
     name: over.id,
     mac: null,
+    ip: null,
+    serial: null,
     model: '',
     kind: 'other',
     cpuPercent: null,

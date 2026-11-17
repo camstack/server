@@ -14,6 +14,7 @@ import {
 import { DEFAULT_AC_CAPABILITIES, type AcCapabilities } from '@apocaliss92/nodegree'
 import { greeAcDeviceSchema, type GreeConfig, mergeConnectionPatch } from '../config.js'
 import { greeConnections } from '../gree-gateway.js'
+import { greeIdentifiers } from '../gree-identifiers.js'
 import { GreeIntegrationManager, type GreeMoved } from '../gree-integration-manager.js'
 import { greeScanScope, sweepGreeSubnets } from '../gree-sweep.js'
 import { GreeAcDevice } from './gree-ac-device.js'
@@ -50,6 +51,8 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
   private manager: GreeIntegrationManager | null = null
   private extrasUnsub: (() => void) | null = null
   private sensorPlanKey = ''
+  /** The last identity declaration that landed (D1059); an unchanged one is not re-sent. */
+  private lastIdentityKey: string | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = greeAcDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -81,6 +84,19 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
           meta: { newIp: move.newIp, error: errMsg(err) },
         })
       })
+    await this.declareIdentity()
+  }
+
+  /** Declare the bound MAC and the last-known LAN IP (D1059), when they changed. */
+  private async declareIdentity(): Promise<void> {
+    const declaration = greeIdentifiers({ mac: this.greeMac, ip: this.config.values.greeIp })
+    const key = JSON.stringify(declaration)
+    if (key === this.lastIdentityKey) return
+    this.lastIdentityKey = key
+    const result = await this.declareIdentifiers(declaration.identifiers, {
+      unread: declaration.unread,
+    })
+    if (result.outcome !== 'declared') this.lastIdentityKey = null
   }
 
   /** The connection as the discovery follow step and the settings form read it. */
@@ -136,6 +152,7 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.sensorPlanKey = this.currentSensorPlanKey()
+    void this.declareIdentity()
     // The extra columns are first answered after the bind: when the set of
     // sensor children the unit earns changes, re-run the accessory reconcile.
     this.extrasUnsub = greeConnections.onExtras(this.connectionKey, () => {
@@ -191,6 +208,7 @@ export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
       ...(parsed.host.length > 0 ? { greeIp: parsed.host } : {}),
     })
     this.connection = parsed
+    void this.declareIdentity()
     const mgr = this.manager
     if (mgr) {
       try {

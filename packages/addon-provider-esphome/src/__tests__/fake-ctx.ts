@@ -41,7 +41,7 @@ export interface FakeCtx {
  */
 export function makeCtx(
   persistedConfig: Record<string, unknown>,
-  options: { readonly type?: DeviceType; readonly logs?: LogLine[] } = {},
+  options: { readonly type?: DeviceType; readonly logs?: LogLine[]; readonly api?: object } = {},
 ): FakeCtx {
   let runtimeStateRef: IDeviceRuntimeState | null = null
   const providers = new Map<string, unknown>()
@@ -78,7 +78,7 @@ export function makeCtx(
       }
     },
     logger: captureLogger(options.logs ?? []),
-    api: {},
+    api: options.api ?? {},
   } as unknown as DeviceContext
   return { ctx, providers }
 }
