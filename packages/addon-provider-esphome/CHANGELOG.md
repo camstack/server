@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- ESPHome boards declare their MAC and node name as device identifiers
+
 ## [0.1.23] - 2026-11-17
 
 ### Changed

@@ -12,6 +12,7 @@ import { childConfigFor, childFactoryFor, deviceTypeOf, roleOf } from '../esphom
 import { planBoard, type ChildPlan } from '../esphome-entity-spec.js'
 import { espIrOverrides } from '../esphome-ir-overrides.js'
 import { planIrServices, type IrServicePlan } from '../esphome-ir-plan.js'
+import { espBoardIdentifiers } from '../esphome-identifiers.js'
 import { espLinkHub } from '../esphome-link-hub.js'
 import { EspIrTransmitterDevice } from './esp-ir-transmitter-device.js'
 
@@ -49,6 +50,8 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
   private connectDuringRegistration = false
   /** Overlapping reconciles would register the same child twice. */
   private reconcileChain: Promise<void> = Promise.resolve()
+  /** The last identity declaration sent, so a reconnect with the same board sends nothing. */
+  private lastIdentityKey: string | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = espContainerSchema.parse(ctx.persistedConfig ?? {})
@@ -78,6 +81,7 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
    */
   override async onActivate(): Promise<void> {
     this.registrationSettled = true
+    void this.declareBoardIdentity()
     if (!this.connectDuringRegistration) return
     this.connectDuringRegistration = false
     await this.reconcileBoard()
@@ -85,6 +89,7 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
 
   /** The board session connected. Deferred while registration is still spawning. */
   onBoardConnected(): void {
+    void this.declareBoardIdentity()
     if (!this.registrationSettled) {
       this.connectDuringRegistration = true
       return
@@ -109,6 +114,22 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
       () => undefined,
     )
     return run
+  }
+
+  /**
+   * Declare the MAC and node name the connected board reports (D1059). A board that is
+   * not connected declares nothing; an unchanged declaration is not re-sent.
+   */
+  private async declareBoardIdentity(): Promise<void> {
+    const declaration = espBoardIdentifiers(espLinkHub.link(this.brokerId)?.info() ?? null)
+    if (declaration === null) return
+    const key = JSON.stringify(declaration)
+    if (key === this.lastIdentityKey) return
+    this.lastIdentityKey = key
+    const result = await this.declareIdentifiers(declaration.identifiers, {
+      unread: declaration.unread,
+    })
+    if (result.outcome !== 'declared') this.lastIdentityKey = null
   }
 
   override getAccessoryChildren(): readonly AccessoryChildSpec[] {

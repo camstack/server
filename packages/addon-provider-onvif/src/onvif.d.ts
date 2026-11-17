@@ -38,6 +38,8 @@ declare module 'onvif' {
     constructor(options: Record<string, unknown>, callback: (err: Error | null) => void)
 
     getDeviceInformation(callback: OnvifCallback<OnvifDeviceInfo>): void
+    /** The answer as `linerase` shapes it — parsed by `parseOnvifMacs`, never trusted. */
+    getNetworkInterfaces(callback: OnvifCallback<unknown>): void
     getStreamUri(options: Record<string, unknown>, callback: OnvifCallback<OnvifStreamResult>): void
     getProfiles(callback: OnvifCallback<OnvifProfile[]>): void
     getSnapshotUri(options: Record<string, unknown>, callback: OnvifCallback<OnvifStreamResult>): void
