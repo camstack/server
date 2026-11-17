@@ -19,7 +19,6 @@ import {
   type FakeNativeCropRequest,
   type FakePipelineExecutor,
   type FakeRedetectAnswer,
-  isFullFrameRequest,
 } from './test-helpers.js'
 
 const DEVICE_ID = 1439
@@ -93,7 +92,7 @@ async function flush(stepMs: number): Promise<void> {
 }
 
 function isConfirmationCropRequest(request: FakeNativeCropRequest): boolean {
-  return !isFullFrameRequest(request) && request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
+  return request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
 }
 
 interface ExecutorCall {

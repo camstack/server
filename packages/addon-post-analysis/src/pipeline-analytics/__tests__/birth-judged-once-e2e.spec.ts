@@ -33,7 +33,6 @@ import { type Booted, bootAnalytics } from './boot-analytics.js'
 import {
   type FakeNativeCropRequest,
   type FakeRedetectResult,
-  isFullFrameRequest,
   makeFakePipelineExecutor,
   FAKE_SESSION_ROOT,
 } from './test-helpers.js'
@@ -100,7 +99,7 @@ async function flush(stepMs: number): Promise<void> {
 }
 
 function isConfirmationCropRequest(request: FakeNativeCropRequest): boolean {
-  return !isFullFrameRequest(request) && request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
+  return request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
 }
 
 const DOG_SEEN: FakeRedetectResult = {

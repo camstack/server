@@ -38,7 +38,7 @@ import type {
 import { EventCategory, createEvent } from '@camstack/types'
 import { CONFIRMATION_CROP_MAX_WIDTH } from '../index.js'
 import { bootAnalytics, type Booted } from './boot-analytics.js'
-import { isFullFrameRequest, type FakeNativeCropRequest } from './test-helpers.js'
+import type { FakeNativeCropRequest } from './test-helpers.js'
 
 /**
  * The confirmation gate's re-detect crop: a subject ROI at the gate's own width
@@ -49,7 +49,7 @@ import { isFullFrameRequest, type FakeNativeCropRequest } from './test-helpers.j
  * every spec loads doubled the suite's collect time.
  */
 function isConfirmationCropRequest(request: FakeNativeCropRequest): boolean {
-  return !isFullFrameRequest(request) && request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
+  return request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
 }
 
 const DEVICE_ID = 104

@@ -30,7 +30,6 @@ import { type Booted, bootAnalytics } from './boot-analytics.js'
 import {
   type FakeNativeCropRequest,
   type FakeRedetectResult,
-  isFullFrameRequest,
   makeFakePipelineExecutor,
   FAKE_SESSION_ROOT,
 } from './test-helpers.js'
@@ -99,12 +98,12 @@ async function flush(stepMs: number): Promise<void> {
 }
 
 function isConfirmationCropRequest(request: FakeNativeCropRequest): boolean {
-  return !isFullFrameRequest(request) && request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
+  return request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
 }
 
 /**
  * What the re-detector sees on the PERSON's crop: the person, and the dog
- * BESIDE it — low and to the right, in the 15% padding ring, so it is not
+ * BESIDE it — low and to the right, outside the person's own box, so it is not
  * mostly contained in the person's own box. That distinction is load-bearing:
  * a box that far inside a person is a body part read as a subject, not a
  * second subject — nothing in this pipeline should ever confuse the two.
@@ -163,14 +162,15 @@ describe('a subject the gate finds beside a birth becomes a track of its own', (
     const meta = (promotedExtras as { meta: Record<string, unknown> }).meta
     expect(meta['secondaryClass']).toBe('animal')
     expect(meta['secondaryScore']).toBe(0.85)
-    // The dog's box, put back where the crop was cut from: the person box
-    // padded 15% on each side (x 182..338, y 64..376), then the crop-relative
-    // box (240/320 .. 320/320, 230/320 .. 320/320) inside it.
+    // The dog's box, put back where the crop was cut from: the confirmation
+    // window, a square 4× the person's long side (960) capped at the frame —
+    // here the whole 640×480 frame — then the crop-relative box
+    // (240/320 .. 320/320, 230/320 .. 320/320) inside it.
     const bbox = meta['secondaryBbox'] as { x: number; y: number; w: number; h: number }
-    expect(bbox.x).toBeCloseTo(182 + (240 / 320) * 156, 3)
-    expect(bbox.y).toBeCloseTo(64 + (230 / 320) * 312, 3)
-    expect(bbox.w).toBeCloseTo((80 / 320) * 156, 3)
-    expect(bbox.h).toBeCloseTo((90 / 320) * 312, 3)
+    expect(bbox.x).toBeCloseTo((240 / 320) * 640, 3)
+    expect(bbox.y).toBeCloseTo((230 / 320) * 480, 3)
+    expect(bbox.w).toBeCloseTo((80 / 320) * 640, 3)
+    expect(bbox.h).toBeCloseTo((90 / 320) * 480, 3)
     expect(calls).toHaveLength(1)
 
     // The runner keeps seeing only the person. The promoted dog rides the next

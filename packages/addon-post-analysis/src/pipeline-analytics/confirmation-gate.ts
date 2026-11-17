@@ -335,12 +335,16 @@ export interface ConfirmationDecision {
 
 export interface ConfirmationGateDeps {
   /**
-   * The FRAME-pixel rectangle the candidate's crop was cut from — the padded,
-   * clamped window `fetchCrop` asks the runner for. Without it a crop-
-   * normalised box cannot be put back in the frame and no secondary is
-   * promoted. Optional so a caller that only confirms stays unchanged.
+   * The FRAME-pixel rectangle the candidate's crop was cut from — per
+   * source, because a carried crop (D379) and a native crop are cut from
+   * different windows. Without it a crop-normalised box cannot be put back in
+   * the frame and no secondary is promoted. Optional so a caller that only
+   * confirms stays unchanged.
    */
-  readonly cropRectFor?: (candidate: BirthCandidate) => GateRect | null
+  readonly cropRectFor?: (
+    candidate: BirthCandidate,
+    cropSource: ConfirmationCropSource,
+  ) => GateRect | null
   /** Fetch a hi-res NATIVE crop JPEG of the candidate's box. `null` = miss. */
   readonly fetchCrop: (candidate: BirthCandidate) => Promise<Buffer | null>
   /**
@@ -543,7 +547,7 @@ async function measure(
     )
   }
   const secondary = bestIncompatible
-    ? promoteSecondary(candidate, bestIncompatible, bar, deps)
+    ? promoteSecondary(candidate, bestIncompatible, bar, deps, cropSource)
     : null
   // The score the decision is reported with — the best compatible box, kept or
   // floor-refused. Absent when the crop held nothing compatible at all — never
@@ -593,9 +597,10 @@ function promoteSecondary(
   detection: ConfirmationDetection,
   bar: number,
   deps: ConfirmationGateDeps,
+  cropSource: ConfirmationCropSource,
 ): SecondarySubject | null {
   if (detection.score < bar || detection.bbox === undefined) return null
-  const rect = deps.cropRectFor?.(candidate) ?? null
+  const rect = deps.cropRectFor?.(candidate, cropSource) ?? null
   if (rect === null || rect.w <= 0 || rect.h <= 0) return null
   const box = detection.bbox
   return {
