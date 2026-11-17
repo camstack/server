@@ -12,7 +12,7 @@
  * ever being compared in the clear; it sits in the keychain too, so the blob gives nothing to
  * guess a password against.
  */
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import type { DurableState } from '@camstack/types'
 import { z } from 'zod'
 import type { VeSyncConnectionConfig } from './config.js'
@@ -43,6 +43,11 @@ export const vesyncStoredSessionSchema = z.object({
   region: z.string(),
   apiBaseUrl: z.string(),
   authFlowUsed: z.enum(['legacy', 'new']).nullable(),
+  /**
+   * The terminal id this integration presents to VeSync — an identifier, not a credential. A row
+   * stored before it was kept has none (null); the next start gives it one.
+   */
+  terminalId: z.string().min(1).nullable().default(null),
   issuedAt: z.number().nullable(),
   expiresAt: z.number().nullable(),
 })
@@ -153,9 +158,15 @@ export function sessionOfRow(row: VeSyncStoredSession): VeSyncSession {
     region: row.region,
     apiBaseUrl: row.apiBaseUrl,
     authFlowUsed: row.authFlowUsed,
+    terminalId: row.terminalId,
     issuedAt: row.issuedAt,
     expiresAt: row.expiresAt,
   }
+}
+
+/** A new terminal id, in the form the VeSync app (and tsvesync) uses: "2" + 32 hex digits. */
+export function newVeSyncTerminalId(): string {
+  return `2${randomUUID().replace(/-/g, '')}`
 }
 
 /** A session the client minted → the row persisted for this integration. */

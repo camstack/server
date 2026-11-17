@@ -74,6 +74,12 @@ export interface VeSyncSession {
   readonly region: string
   readonly apiBaseUrl: string
   readonly authFlowUsed: 'legacy' | 'new' | null
+  /**
+   * The terminal the token was minted for. VeSync binds a token to it and mails the account a
+   * "new login" for every terminal it has not seen, so it is kept and presented again. Null for a
+   * session stored before it was kept.
+   */
+  readonly terminalId: string | null
   readonly issuedAt: number | null
   readonly expiresAt: number | null
 }
@@ -127,6 +133,11 @@ export type VeSyncClientFactory = (input: {
   readonly region: VeSyncRegion
   /** ISO-3166 alpha-2 country the account signs in as; absent = the library default (`US`). */
   readonly countryCode?: string
+  /**
+   * The terminal id to present to VeSync on sign-in (one per integration, kept across restarts);
+   * absent lets the library make one up, which VeSync treats as a new device.
+   */
+  readonly terminalId?: string
   /**
    * Told every time the client holds a NEW session — after `login()`, and after the library
    * re-authenticated on its own when the cloud refused a token mid-run. The caller persists it.

@@ -34,6 +34,7 @@ function session(token: string, expiresAt: number | null): VeSyncSession {
     region: 'EU',
     apiBaseUrl: 'https://smartapi.vesync.eu',
     authFlowUsed: 'new',
+    terminalId: '2persisted',
     issuedAt: NOW_S - 60,
     expiresAt,
   }

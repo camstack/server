@@ -9,6 +9,7 @@ import {
 } from './vesync-client-contract.js'
 import {
   decideSessionRestore,
+  newVeSyncTerminalId,
   rowOfSession,
   type VeSyncSessionStore,
   type VeSyncSignInReason,
@@ -61,6 +62,12 @@ export class VeSyncIntegrationManager {
   #error: string | null = null
   /** Session writes, serialized so a start can wait for the one its sign-in queued. */
   #sessionWrites: Promise<void> = Promise.resolve()
+  /**
+   * The terminal id this integration presents to VeSync. Taken from the stored session when it
+   * has one, else made once for this manager; every session saved carries it, so it survives a
+   * restart. A fresh id per start is what made VeSync mail a "new login" on every restart.
+   */
+  #terminalId: string | null = null
 
   constructor(options: VeSyncIntegrationManagerOptions) {
     this.#id = options.id
@@ -120,21 +127,29 @@ export class VeSyncIntegrationManager {
 
     const connection = this.#connection
     const fingerprint = vesyncCredentialsFingerprint(connection)
+    const stored = await this.#loadSession()
+    const terminalId = stored?.terminalId ?? this.#terminalId ?? newVeSyncTerminalId()
+    this.#terminalId = terminalId
     const client = this.#makeClient({
       email: connection.email,
       password: connection.password,
       region: connection.region,
       ...(connection.countryCode !== undefined ? { countryCode: connection.countryCode } : {}),
+      terminalId,
       onSession: (session) => this.#queueSessionSave(fingerprint, session),
     })
     this.#client = client
 
-    const decision = decideSessionRestore(await this.#loadSession(), fingerprint, Date.now())
+    const decision = decideSessionRestore(stored, fingerprint, Date.now())
     let signInReason: VeSyncSignInReason | null = null
     if (decision.kind === 'restore') {
       client.restoreSession(decision.session)
       try {
         this.#purifiers = indexPurifiers(await client.listDevices())
+        // A session stored before the terminal id was kept: keep the one presented from now on.
+        if (decision.session.terminalId === null) {
+          this.#queueSessionSave(fingerprint, { ...decision.session, terminalId })
+        }
       } catch (err) {
         if (!(err instanceof VeSyncSessionRejectedError)) throw err
         signInReason = 'rejected'

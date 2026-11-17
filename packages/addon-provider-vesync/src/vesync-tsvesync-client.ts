@@ -80,6 +80,8 @@ export interface TsVeSyncManagerInput {
   readonly region: VeSyncRegion
   /** ISO-3166 alpha-2; absent leaves the library's own default (`US`). */
   readonly countryCode?: string
+  /** The terminal id to present on sign-in; absent leaves the library's random one. */
+  readonly terminalId?: string
   readonly logger: TsVeSyncLogSink
   /** The library's report of a freshly minted token (after its own login or re-login). */
   readonly onTokenChange?: (session: TsVeSyncSession) => void
@@ -182,9 +184,14 @@ class LibraryLogRouter implements TsVeSyncLogSink {
 
 const sharedRouter = new LibraryLogRouter()
 
-/** The real library: one `VeSync` manager per account, the shared router as its logger. */
-const createLibraryManager: TsVeSyncManagerFactory = (input) =>
-  new VeSync(input.email, input.password, undefined, {
+/**
+ * The real library: one `VeSync` manager per account, the shared router as its logger. The
+ * library signs in as VeSync's official app id by itself (tsvesync >= 1.7.1; any other id is
+ * refused at Step 2 as "auth code expired"); the terminal id is the integration's own, adopted
+ * through `restoreClientIdentity` so every sign-in presents the same device.
+ */
+export const createTsVeSyncLibraryManager: TsVeSyncManagerFactory = (input) => {
+  const manager = new VeSync(input.email, input.password, undefined, {
     region: input.region,
     ...(input.countryCode !== undefined ? { countryCode: input.countryCode } : {}),
     customLogger: input.logger,
@@ -192,6 +199,10 @@ const createLibraryManager: TsVeSyncManagerFactory = (input) =>
     debug: false,
     redact: true,
   })
+  if (input.terminalId !== undefined)
+    manager.restoreClientIdentity({ terminalId: input.terminalId })
+  return manager
+}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -308,6 +319,7 @@ export function sessionFromLibrary(session: TsVeSyncSession): VeSyncSession {
     region: session.region,
     apiBaseUrl: session.apiBaseUrl,
     authFlowUsed: session.authFlowUsed ?? null,
+    terminalId: session.terminalId ?? null,
     issuedAt: session.issuedAt ?? null,
     expiresAt: session.expiresAt ?? null,
   }
@@ -322,6 +334,7 @@ export function sessionToLibrary(session: VeSyncSession): TsVeSyncSession {
     region: session.region,
     apiBaseUrl: session.apiBaseUrl,
     ...(session.authFlowUsed !== null ? { authFlowUsed: session.authFlowUsed } : {}),
+    ...(session.terminalId !== null ? { terminalId: session.terminalId } : {}),
     issuedAt: session.issuedAt,
     expiresAt: session.expiresAt,
   }
@@ -462,15 +475,16 @@ function failureWords(lines: readonly LibraryLine[]): string {
 
 /** Build the client factory over a library manager factory (the real `tsvesync` by default). */
 export function createTsVeSyncClientFactory(
-  createManager: TsVeSyncManagerFactory = createLibraryManager,
+  createManager: TsVeSyncManagerFactory = createTsVeSyncLibraryManager,
 ): VeSyncClientFactory {
-  return ({ email, password, region, countryCode, onSession }) =>
+  return ({ email, password, region, countryCode, terminalId, onSession }) =>
     new TsVeSyncClient(
       createManager({
         email,
         password,
         region,
         ...(countryCode !== undefined ? { countryCode } : {}),
+        ...(terminalId !== undefined ? { terminalId } : {}),
         logger: sharedRouter,
         ...(onSession !== undefined
           ? { onTokenChange: (session) => onSession(sessionFromLibrary(session)) }

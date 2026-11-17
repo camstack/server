@@ -231,6 +231,7 @@ describe('tsvesync adapter — sessions', () => {
     region: 'EU',
     apiBaseUrl: 'https://smartapi.vesync.eu',
     authFlowUsed: null,
+    terminalId: null,
     issuedAt: null,
     expiresAt: null,
   }
@@ -273,6 +274,7 @@ describe('tsvesync adapter — sessions', () => {
         region: 'EU',
         apiBaseUrl: 'https://smartapi.vesync.eu',
         authFlowUsed: 'new',
+        terminalId: null,
         issuedAt: 100,
         expiresAt: 200,
       },

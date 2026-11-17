@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The VeSync Country code is a list to pick from.
+- VeSync sign-in works again (official app ID); restarts no longer trigger new-login emails.
 
 ## [0.2.162] - 2026-11-17
 

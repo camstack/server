@@ -115,6 +115,7 @@ function row(integrationId: string): VeSyncStoredSession {
     region: 'EU',
     apiBaseUrl: 'https://smartapi.vesync.eu',
     authFlowUsed: 'new',
+    terminalId: null,
     issuedAt: null,
     expiresAt: null,
   }
