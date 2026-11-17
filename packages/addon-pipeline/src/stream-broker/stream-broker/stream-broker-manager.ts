@@ -39,8 +39,8 @@ import type {
   SystemEvent,
 } from '@camstack/types'
 import {
-  BatteryStatusSchema,
-  batteryCapability,
+  LowPowerSleepStatusSchema,
+  lowPowerSleepCapability,
   CAM_PROFILE_ORDER,
   createHwAccelCache,
   DeviceFeature,
@@ -1211,7 +1211,7 @@ export class StreamBrokerManager {
    * Device-scoped wake-on-play transactions. A camera wake is shared by every
    * profile, so Viewer retries or concurrent sessions must join the existing
    * sleeping → waking → broker-settle transaction instead of issuing another
-   * `battery.wakeForStream` mutation.
+   * `low-power-sleep.wakeUp` mutation.
    */
   private readonly batteryWakeOnPlay = new BatteryWakeOnPlaySingleFlight()
   /**
@@ -1340,7 +1340,7 @@ export class StreamBrokerManager {
         // rather than re-deriving the rule from cap bindings of its own.
         sentryOffered: async (deviceId: number) =>
           sentryEligible({
-            batteryOperated: await this.isBatteryOperated(deviceId),
+            batteryOperated: await this.isSleeper(deviceId),
             declaresSignals: (await this.declaredSignalCodes(deviceId)).length > 0,
           }).eligible,
         // Create + register the egress restreamer on the main listen server.
@@ -1987,7 +1987,7 @@ export class StreamBrokerManager {
         // that is permanently a photograph. Both facts are asked; an
         // unanswerable question is a no (`sentry-eligibility.ts`).
         const gate = sentryEligible({
-          batteryOperated: await this.isBatteryOperated(deviceId),
+          batteryOperated: await this.isSleeper(deviceId),
           declaresSignals: (await this.declaredSignalCodes(deviceId)).length > 0,
         })
         if (!gate.eligible) {
@@ -2573,10 +2573,10 @@ export class StreamBrokerManager {
     await this.batteryWakeOnPlay
       .run(deviceId, {
         logger: this.logger,
-        isBatteryDevice: (id) => this.isBatteryOperated(id),
+        isBatteryDevice: (id) => this.isSleeper(id),
         readBatteryFacts: (id) => this.readBatterySleepFacts(id),
-        wakeForStream: async (id, timeoutMs) =>
-          api.battery.wakeForStream.mutate({ deviceId: id, timeoutMs }),
+        wakeUp: async (id, timeoutMs) =>
+          api.lowPowerSleep.wakeUp.mutate({ deviceId: id, timeoutMs }),
         reconcileCatalog: (id) => this.reconcileDeviceCatalog(id),
         ensureBroker: () => this.ensureBrokerForWebrtcSession(deviceId, brokerId, camStreamId),
         hasBroker: demandHasBroker,
@@ -5420,7 +5420,7 @@ export class StreamBrokerManager {
   private async probeBattery(deviceId: number): Promise<void> {
     this.batteryProbeInFlight.add(deviceId)
     try {
-      const isBattery = await this.isBatteryOperated(deviceId)
+      const isBattery = await this.isSleeper(deviceId)
       const facts = isBattery === true ? await this.readBatterySleepFacts(deviceId) : null
       const current = this.batteryProbe.get(deviceId)
       // An event that landed while we were reading is newer than the read.
@@ -5459,10 +5459,12 @@ export class StreamBrokerManager {
   private async readBatterySleepFacts(deviceId: number): Promise<BatterySleepFacts | null> {
     const api = this.api
     if (!api) return null
+    // The sleep inputs live on `low-power-sleep` (#459): the cap that says
+    // the device sleeps is the one asked how it sleeps.
     const slice = await api.deviceState.getCapSlice
-      .query({ deviceId, capName: batteryCapability.name })
+      .query({ deviceId, capName: lowPowerSleepCapability.name })
       .catch(() => null)
-    const parsed = BatteryStatusSchema.safeParse(slice)
+    const parsed = LowPowerSleepStatusSchema.safeParse(slice)
     if (!parsed.success) return null
     return { sleeping: parsed.data.sleeping, lastContactAt: parsed.data.lastContactAt }
   }
@@ -6324,7 +6326,10 @@ export class StreamBrokerManager {
   }
 
   /**
-   * Whether this device runs on a battery.
+   * Whether this device SLEEPS (`DeviceFeature.Sleeps`, #459 Q2) — the
+   * question every caller here asks. A device that only reports a battery
+   * (an HA sensor) is not one: it is dialled, prebuffered and judged like
+   * any mains camera.
    *
    * The DEVICE REGISTRY, never the published cam-streams: a sleeping camera has
    * none — which is precisely when this question gets asked — and
@@ -6336,13 +6341,13 @@ export class StreamBrokerManager {
    * than guessed: guessing yes puts a mains camera in a wake-hold loop, and
    * guessing no silently disables the feature on the cameras it exists for.
    */
-  private async isBatteryOperated(deviceId: number): Promise<boolean | null> {
+  private async isSleeper(deviceId: number): Promise<boolean | null> {
     if (!this.api) return null
     try {
       const device = await this.api.deviceManager.getDevice.query({ deviceId })
       const features = device?.features
       if (!Array.isArray(features)) return null
-      return features.includes(DeviceFeature.BatteryOperated)
+      return features.includes(DeviceFeature.Sleeps)
     } catch {
       return null
     }
@@ -6480,7 +6485,7 @@ export class StreamBrokerManager {
     // nothing keeps.
     const declaredSignals = await this.declaredSignalList(deviceId)
     const sentryGate = sentryEligible({
-      batteryOperated: await this.isBatteryOperated(deviceId),
+      batteryOperated: await this.isSleeper(deviceId),
       declaresSignals: declaredSignals.length > 0,
     })
     const sentryOffered = sentryGate.eligible
@@ -7093,7 +7098,7 @@ export class StreamBrokerManager {
               clusterSeconds: this.defaultPreBufferSec,
               overrides: pb,
               defaultWarm: this.isDefaultWarm(deviceId, camStreamId),
-              batteryOperated: this.deviceHasFeature(deviceId, DeviceFeature.BatteryOperated),
+              batteryOperated: this.deviceHasFeature(deviceId, DeviceFeature.Sleeps),
               terminalRelay:
                 this.cameraStreams.get(deviceId)?.get(camStreamId)?.kind === 'pull-http',
             }),
@@ -8025,11 +8030,11 @@ export class StreamBrokerManager {
   private buildSourceFromCamStream(cam: CameraStreamInternal): StreamSource {
     const label = cam.label ?? cam.camStreamId
     const codec = cam.codec !== undefined ? { videoCodec: cam.codec } : {}
-    // Battery-flagged devices want the stall watchdog relaxed (Reolink
-    // Argus and friends intentionally go silent between motion events).
-    // Derive the per-source flag from the device-level feature list so
+    // Sleeping devices want the stall watchdog relaxed (Reolink Argus and
+    // friends intentionally go silent between motion events). Derive the
+    // per-source flag from the device-level feature list (`sleeps`, #459) so
     // publishers don't have to carry their own per-stream flag.
-    const stall = cam.deviceFeatures.includes(DeviceFeature.BatteryOperated)
+    const stall = cam.deviceFeatures.includes(DeviceFeature.Sleeps)
       ? { allowStall: true as const }
       : {}
     // Pre-compose pass-through metadata so the publisher's opaque payload
@@ -8705,7 +8710,7 @@ export class StreamBrokerManager {
       clusterSeconds: this.defaultPreBufferSec,
       overrides: this.deviceOverrides.get(deviceId)?.preBuffer,
       defaultWarm: this.isDefaultWarm(deviceId, camStreamId),
-      batteryOperated: this.deviceHasFeature(deviceId, DeviceFeature.BatteryOperated),
+      batteryOperated: this.deviceHasFeature(deviceId, DeviceFeature.Sleeps),
       terminalRelay: this.cameraStreams.get(deviceId)?.get(camStreamId)?.kind === 'pull-http',
     })
   }

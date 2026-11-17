@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A battery on this device reports charge only; it no longer pretends to answer a camera wake
+- Re-sync is now offered through the device's own resync capability
+
 ## [1.2.692] - 2026-11-17
 
 ### Changed

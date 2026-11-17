@@ -39,7 +39,9 @@ import { GreeToggleDevice, type GreeToggleKind } from './gree-toggle-device.js'
  * model defaults when no live handle).
  */
 export class GreeContainerDevice extends BaseDevice<typeof greeAcDeviceSchema> {
-  readonly features: readonly DeviceFeature[] = [DeviceFeature.Resyncable]
+  // Not Resyncable (#459, Q6): this addon has no device-adoption provider, so a
+  // re-sync could only fail. Resyncable is derived from a `resync` binding.
+  readonly features: readonly DeviceFeature[] = []
 
   private readonly greeMac: string
   private readonly connectionKey: string

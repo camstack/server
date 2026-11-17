@@ -167,7 +167,7 @@ describe('createParentUnownedCallHandler — getStatus of a CLAIMED cap on the p
     await expect(
       handler({
         capName: 'battery',
-        method: 'wakeForStream',
+        method: 'wakeUp',
         args: { deviceId: DEVICE, timeoutMs: 1000 },
       }),
     ).resolves.toEqual({ awoke: true, durationMs: 5 })
@@ -179,7 +179,7 @@ describe('createParentUnownedCallHandler — getStatus of a CLAIMED cap on the p
     expect(resolveCapRoute).toHaveBeenNthCalledWith(1, 'battery', { deviceId: DEVICE })
     expect(resolveCapRoute).toHaveBeenNthCalledWith(2, 'battery', { deviceId: OTHER_DEVICE })
     expect(invoked).toEqual([
-      { method: 'wakeForStream', args: { deviceId: DEVICE, timeoutMs: 1000 } },
+      { method: 'wakeUp', args: { deviceId: DEVICE, timeoutMs: 1000 } },
       { method: 'getStatus', args: { deviceId: OTHER_DEVICE } },
     ])
     // The unclaimed device's getStatus paid exactly one lookup; the other method paid none.

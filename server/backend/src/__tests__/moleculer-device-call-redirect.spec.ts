@@ -74,7 +74,7 @@ function createHarness(): Harness {
   const attempts: DeviceCall[] = []
   let answer: DeviceCallAnswer | Error = { kind: 'redirected', result: 'sent' }
   registry.setDeviceCallRedirect({
-    covers: (cap, method) => cap === 'battery' && method === 'wakeForStream',
+    covers: (cap, method) => cap === 'battery' && method === 'wakeUp',
     attempt: async (call) => {
       attempts.push(call)
       if (answer instanceof Error) throw answer
@@ -125,11 +125,11 @@ describe('callCapabilityOnNode — a device call a redirect takes over, nodeId-p
 
   it('a pinned covered call is answered from the redirect, never routed to the child', async () => {
     const { driver, attempts } = createHarness()
-    await expect(
-      driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeForStream', wake),
-    ).resolves.toBe('sent')
+    await expect(driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeUp', wake)).resolves.toBe(
+      'sent',
+    )
     expect(attempts).toEqual([
-      { capName: 'battery', method: 'wakeForStream', deviceId: DEVICE, args: wake },
+      { capName: 'battery', method: 'wakeUp', deviceId: DEVICE, args: wake },
     ])
   })
 
@@ -137,7 +137,7 @@ describe('callCapabilityOnNode — a device call a redirect takes over, nodeId-p
     const { driver, setAnswer } = createHarness()
     setAnswer({ kind: 'not-redirected' })
     await expect(
-      driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeForStream', wake),
+      driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeUp', wake),
     ).rejects.toThrow(/does not currently provide cap "battery"/)
   })
 
@@ -153,7 +153,7 @@ describe('callCapabilityOnNode — a device call a redirect takes over, nodeId-p
     const { driver, setAnswer } = createHarness()
     setAnswer(new Error('board is off'))
     await expect(
-      driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeForStream', wake),
+      driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeUp', wake),
     ).rejects.toThrow('board is off')
   })
 })

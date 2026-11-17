@@ -162,7 +162,7 @@ export class HaRunner {
     return id
   }
 
-  /** `registerNativeCap` on the HA device's context; `extra` are the runner's other methods (`wakeForStream`). */
+  /** `registerNativeCap` on the HA device's context; `extra` are the runner's other methods. */
   register(id: number, capName: string, extra: ProviderRecord = {}): void {
     const def = ALL_CAPABILITY_DEFINITIONS.find((d) => d.name === capName)
     const ctx = this.contexts.get(id)
@@ -478,10 +478,8 @@ export async function adoptHa(
     null,
     knownIds.get(BATTERY_CAM.stableId),
   )
-  // `HaContainerDevice`'s native battery: an HA entity has no wake path.
-  ha.register(camId, 'battery', {
-    wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
-  })
+  // `HaContainerDevice`'s native battery: an HA entity reports charge, never sleep.
+  ha.register(camId, 'battery')
   await ha.push(camId, 'battery', {
     level: 80,
     charging: 'none',

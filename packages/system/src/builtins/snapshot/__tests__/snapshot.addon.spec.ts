@@ -138,7 +138,7 @@ function makeCtx(opts: CtxStubOptions = {}): {
           query: vi.fn(async ({ deviceId }: { deviceId: number }) => ({
             id: deviceId,
             name: 'test-cam',
-            features: opts.isBattery ? ['battery-operated'] : [],
+            features: opts.isBattery ? ['sleeps'] : [],
             disabled: opts.disabled ?? false,
             online: opts.online ?? true,
           })),

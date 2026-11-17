@@ -178,7 +178,7 @@ export async function handleInitiateSessionWithOffer(
   // design — pre-wake a sleeping camera so the Echo does not render black —
   // guarded by a constant that made sure it never ran. Reading this file, the
   // wake looked handled. It was not handled anywhere: this was the only
-  // `battery.wakeForStream` caller in the repo, so no consumer, including the
+  // `battery.wakeUp` caller in the repo, so no consumer, including the
   // viewer's own play button, could wake a sleeping camera (D173).
   //
   // The wake now belongs to the broker, one layer down and shared by every

@@ -57,7 +57,6 @@ function makeRecordingLogger(boundTags: LogTags = {}) {
 interface RtcStubApi {
   readonly battery: {
     readonly getStatus: { readonly query: (args: unknown) => Promise<unknown> }
-    readonly wakeForStream: { readonly mutate: (args: unknown) => Promise<unknown> }
   }
   readonly cameraStreams: {
     readonly pickStream: { readonly query: (args: unknown) => Promise<unknown> }
@@ -89,7 +88,6 @@ describe('Alexa session deviceId log-tagging', () => {
     const api: RtcStubApi = {
       battery: {
         getStatus: { query: vi.fn().mockResolvedValue(null) },
-        wakeForStream: { mutate: vi.fn().mockResolvedValue({ awoke: false, durationMs: 0 }) },
       },
       cameraStreams: {
         pickStream: { query: vi.fn().mockRejectedValue(new Error('boom')) },

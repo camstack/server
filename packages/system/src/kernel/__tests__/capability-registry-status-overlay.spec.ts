@@ -7,7 +7,7 @@
  * The HA feeder's native is built by the hub's `nativeFallback`
  * (`addon-registry.service.ts`): `new Proxy({}, { get })`, an EMPTY target whose
  * every property is a forwarding function. A spread copy of that is `{}` — it
- * loses `wakeForStream` and `reset`, and `requireDeviceScoped` then answers
+ * loses `wakeUp` and `reset`, and `requireDeviceScoped` then answers
  * NOT_IMPLEMENTED for every non-status method of a claimed cap. So the wrap is
  * a Proxy, and the HA-shaped test below is the one that would catch a spread.
  *
@@ -73,13 +73,13 @@ function newRegistry(): { reg: CapabilityRegistry; logger: ReturnType<typeof mak
 
 interface PlainNative {
   getStatus: (input?: unknown) => Promise<Record<string, unknown>>
-  wakeForStream: (input?: unknown) => Promise<{ awoke: boolean; durationMs: number }>
+  wakeUp: (input?: unknown) => Promise<{ awoke: boolean; durationMs: number }>
 }
 
 function plainNative(): PlainNative {
   return {
     getStatus: async () => NATIVE,
-    wakeForStream: async () => ({ awoke: true, durationMs: 5 }),
+    wakeUp: async () => ({ awoke: true, durationMs: 5 }),
   }
 }
 
@@ -111,7 +111,7 @@ describe('CapabilityRegistry — the claimed-status overlay (D13, S3)', () => {
 
     const p = reg.getProviderForDevice<PlainNative>('battery', DEVICE)
     expect(await p?.getStatus()).toEqual(OWNED_SLICE)
-    expect(await p?.wakeForStream()).toEqual({ awoke: true, durationMs: 5 })
+    expect(await p?.wakeUp()).toEqual({ awoke: true, durationMs: 5 })
     expect(reg.getNativeProvider('battery', OTHER_DEVICE)).toBeNull()
   })
 
@@ -125,12 +125,12 @@ describe('CapabilityRegistry — the claimed-status overlay (D13, S3)', () => {
 
     const p = reg.getNativeProvider<ForwardingNative>('battery', DEVICE)
     expect(await p?.['getStatus']?.({ deviceId: DEVICE })).toEqual(OWNED_SLICE)
-    expect(await p?.['wakeForStream']?.({ deviceId: DEVICE, timeoutMs: 1000 })).toEqual({
+    expect(await p?.['wakeUp']?.({ deviceId: DEVICE, timeoutMs: 1000 })).toEqual({
       awoke: true,
       durationMs: 5,
     })
-    // getStatus never reached the native; wakeForStream did, args intact.
-    expect(calls).toEqual([['wakeForStream', { deviceId: DEVICE, timeoutMs: 1000 }]])
+    // getStatus never reached the native; wakeUp did, args intact.
+    expect(calls).toEqual([['wakeUp', { deviceId: DEVICE, timeoutMs: 1000 }]])
   })
 
   it('a HELD claim answers null — never the native value', async () => {
@@ -200,7 +200,7 @@ describe('CapabilityRegistry — the claimed-status overlay (D13, S3)', () => {
     reg.setStatusOverlay(claimBattery7(OWNED_SLICE))
     const p = reg.getProviderForDevice<PlainNative>('battery', DEVICE)
     expect(await p?.getStatus()).toEqual(OWNED_SLICE)
-    expect(await p?.wakeForStream()).toEqual({ awoke: true, durationMs: 5 })
+    expect(await p?.wakeUp()).toEqual({ awoke: true, durationMs: 5 })
     // The same wrapper, unclaimed for another device, is handed back as is.
     expect(reg.getProviderForDevice('battery', OTHER_DEVICE)).toBe(wrapper)
   })
@@ -211,7 +211,7 @@ describe('CapabilityRegistry — the claimed-status overlay (D13, S3)', () => {
       async getStatus(): Promise<Record<string, unknown>> {
         return NATIVE
       }
-      async wakeForStream(): Promise<{ awoke: boolean; durationMs: number }> {
+      async wakeUp(): Promise<{ awoke: boolean; durationMs: number }> {
         return this.wake
       }
     }
@@ -220,7 +220,7 @@ describe('CapabilityRegistry — the claimed-status overlay (D13, S3)', () => {
     reg.setStatusOverlay(claimBattery7(OWNED_SLICE))
     const p = reg.getProviderForDevice<Native>('battery', DEVICE)
     expect(await p?.getStatus()).toEqual(OWNED_SLICE)
-    expect(await p?.wakeForStream()).toEqual({ awoke: true, durationMs: 5 })
+    expect(await p?.wakeUp()).toEqual({ awoke: true, durationMs: 5 })
   })
 })
 
@@ -254,7 +254,7 @@ describe('a device whose claims are not yet KNOWN is never answered native (D315
     expect(await p?.getStatus()).toEqual(OWNED_SLICE)
     expect(resolve).toHaveBeenCalledWith('battery', DEVICE)
     // Every other method is the native's, untouched by the pending resolution.
-    expect(await p?.wakeForStream()).toEqual({ awoke: true, durationMs: 5 })
+    expect(await p?.wakeUp()).toEqual({ awoke: true, durationMs: 5 })
   })
 
   it('unknown that resolves to UNCLAIMED answers the native — through the wrapper', async () => {
@@ -296,7 +296,7 @@ describe('CapabilityRegistry.resolveClaimedStatus — parsed with the cap status
     try {
       reg.setStatusOverlay(claimBattery7(OWNED_SLICE))
       const p = reg.getProviderForDevice<PlainNative>('battery', DEVICE)
-      await p?.wakeForStream()
+      await p?.wakeUp()
       expect(schemaSpy).not.toHaveBeenCalled()
       await p?.getStatus()
       expect(schemaSpy).toHaveBeenCalledTimes(1)

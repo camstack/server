@@ -5,6 +5,8 @@ import {
   DeviceType,
   type AccessoryChildSpec,
   type DeviceContext,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { dreoConnections } from '../dreo-gateway.js'
 import { classifyDreoModel, deviceTypeForKind } from '../dreo-domain-mapping.js'
@@ -50,6 +52,11 @@ export class DreoContainerDevice extends BaseDevice<typeof dreoContainerSchema> 
   constructor(ctx: DeviceContext) {
     const cfg = dreoContainerSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, dreoContainerSchema, { type: DeviceType.Container })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.dreoDeviceId = cfg.dreoDeviceId
     this.brokerId = cfg.brokerId
     this.model = cfg.model

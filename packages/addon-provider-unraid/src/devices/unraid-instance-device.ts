@@ -11,6 +11,8 @@ import {
   registerPowerSwitch,
   type WorkloadStatus,
   workloadCapability,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { UNRAID_SYSTEM } from '../config.js'
 import { UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
@@ -62,6 +64,11 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
     const cfg = unraidInstanceSchema.parse(ctx.persistedConfig ?? {})
     // The type the adoption stamped (a Container before the workload host), never a second decision.
     super(ctx, unraidInstanceSchema, { type: ctx.deviceMeta.type })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.instanceId = cfg.instanceId
     this.integrationId = cfg.integrationId
     this.online = unraidInstances.getSnapshot(this.instanceId) !== null

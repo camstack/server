@@ -69,6 +69,8 @@ const CLOCK_FIELD_EXEMPTIONS: Readonly<Record<string, string>> = {
     'the doorbell slice IS the record of the press — nothing else holds it, so the timestamp is the payload (D96 named this one of the two genuinely durable slices).',
   'battery.lastContactAt':
     'the observation itself, not a stamp on one: it is the ONLY signal separating "this battery camera is asleep" from "this battery camera is gone", and a 30-hour silence is visible in nothing else (D173). Excluding it from the compare would mean the fact that decides a fault badge is the one fact never committed. Writers quantise it to 5 minutes, so the commit rate it can cost is bounded at 12/hour/device — and only for a device that is actually being reached.',
+  'low-power-sleep.lastContactAt':
+    'the same observation as battery.lastContactAt, projected onto the sleep cap (#459): the provider copies it from its battery slice, so it inherits the 5-minute quantisation and the same bounded commit rate.',
 }
 
 interface Violation {

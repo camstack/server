@@ -128,12 +128,19 @@ export enum DeviceType {
 }
 
 export enum DeviceFeature {
+  /** The device reports a battery reading (the `battery` cap). Says nothing about sleep. */
   BatteryOperated = 'battery-operated',
+  /**
+   * The device goes into low-power sleep and must be WOKEN before it streams
+   * (the `low-power-sleep` cap, `wakeUp`). A battery reading alone is
+   * not this: a battery sensor reports charge and never sleeps (#459, Q2).
+   */
+  Sleeps = 'sleeps',
   Rebootable = 'rebootable',
   /**
    * Device supports an on-demand re-sync of its derived spec with its
-   * upstream source — drives the generic Re-sync button. The owning
-   * provider implements the action via the `device-adoption.resync` cap.
+   * upstream source — drives the generic Re-sync button. Present when the
+   * device has the `resync` cap bound (#459, Q6).
    */
   Resyncable = 'resyncable',
   NativeSnapshot = 'native-snapshot',
@@ -294,15 +301,9 @@ export enum DeviceFeature {
   // AI / mow controls against a fast scalar without iterating children.
   // Set ONLY when probe confirms the surface (never optimistically).
 
-  /** Robot vacuum exposes a live cleaning map (image child). Gates the
-   *  map tile in the vacuum UI. */
-  VacuumHasMap = 'vacuum-has-map',
   /** Robot vacuum exposes AI obstacle-detection toggles. Gates the AI
    *  switches group. */
   VacuumHasAi = 'vacuum-has-ai',
-  /** Robot mower exposes a live mowing map (SVG image child). Gates the
-   *  mower map tile. */
-  MowerHasMap = 'mower-has-map',
   /** Robot mower exposes targeted mowing (all-area / zones / edges /
    *  spots) — gates the Mow action + map selectors. */
   MowerHasTargetedMowing = 'mower-has-targeted-mowing',

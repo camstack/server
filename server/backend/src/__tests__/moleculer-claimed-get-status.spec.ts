@@ -133,7 +133,7 @@ describe('callCapabilityOnNode — getStatus of a CLAIMED cap, nodeId-pinned (S3
   it('every other method of the claimed device is routed too, and never asks the claim authority', async () => {
     const { driver, resolve } = createHarness()
     await expect(
-      driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeForStream', {
+      driver.callCapabilityOnNode(CHILD_NODE, 'battery', 'wakeUp', {
         deviceId: DEVICE,
         timeoutMs: 1000,
       }),

@@ -14,6 +14,8 @@ import {
   type InferNativeProvider,
   type RawStateResult,
   StoredDeviceTypeSchema,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { z } from 'zod'
 import { pickHaChildClass, tryPickHaChildClass } from '../ha-child-class-factory.js'
@@ -214,6 +216,11 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
     const cfg = haContainerSchema.parse(ctx.persistedConfig ?? {})
     const batteryEntity = selectBatteryEntity(cfg.entities)
     super(ctx, haContainerSchema, { type: DeviceType.Container })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.brokerId = cfg.brokerId
     this.integrationId = cfg.integrationId
     this.features =
@@ -244,8 +251,6 @@ export class HaContainerDevice extends BaseDevice<typeof haContainerSchema> {
       }
       const provider: InferNativeProvider<typeof batteryCapability> = {
         getStatus: async () => this.runtimeState.getCapState<BatteryStatus>('battery') ?? COLD,
-        // An HA entity is read-only upstream — there is no wake path.
-        wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
       }
       this.ctx.registerNativeCap(batteryCapability, provider)
       // Seed ONLY a device with no REAL observation: `battery` is

@@ -121,13 +121,10 @@ beforeEach(() => {
 })
 
 describe('graft — the provider is the cap’s composedMethods', () => {
-  it('battery.wakeForStream answers { awoke: false, durationMs: 0 }; getStatus is the MERGED slice, never {}', async () => {
+  it('a grafted battery serves no wake (it moved to low-power-sleep, #459); getStatus is the MERGED slice, never {}', async () => {
     expect(host.graft(FEEDER_ID, 'ha:feeder', 'battery')).toEqual({ kind: 'grafted' })
     const battery = contexts.provider(FEEDER_ID, 'battery')
-    await expect(battery['wakeForStream']?.({ deviceId: FEEDER_ID })).resolves.toEqual({
-      awoke: false,
-      durationMs: 0,
-    })
+    expect(battery['wakeUp']).toBeUndefined()
     await expect(battery['getStatus']?.({ deviceId: FEEDER_ID })).resolves.toBeNull()
     merged.set(`${FEEDER_ID}#battery`, { level: 100, charging: 'none' })
     await expect(battery['getStatus']?.({ deviceId: FEEDER_ID })).resolves.toEqual({

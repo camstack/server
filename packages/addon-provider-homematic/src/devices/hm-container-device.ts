@@ -7,6 +7,8 @@ import {
   type AccessoryChildSpec,
   type ConfigUISchemaWithValues,
   type DeviceContext,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import type { Homematic, HmDevice, ValueChangedEvent } from 'nodehomematic'
 import { homematicFacades } from '../homematic-facade-resolver.js'
@@ -67,6 +69,11 @@ export class HmContainerDevice extends BaseDevice<typeof hmContainerSchema> {
   constructor(ctx: DeviceContext) {
     const cfg = hmContainerSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, hmContainerSchema, { type: DeviceType.Container })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.address = cfg.address
     this.integrationId = cfg.integrationId
 

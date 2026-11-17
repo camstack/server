@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A linked camera is woken on an unknown state only when it sleeps; a device that only reports a battery is no longer woken
+
 ## [1.2.712] - 2026-11-17
 
 ### Changed

@@ -52,14 +52,16 @@ function reported(reason: string): ReportedFeature {
   return { kind: 'reported', reason }
 }
 
-const SLEEP_PENDING = 'splits into a sleeping cap in a later phase of #459'
 const CAP_PENDING = 'becomes a cap or is dropped in a later phase of #459'
 
 /** Exhaustive: a new `DeviceFeature` without a row does not compile. */
 export const DEVICE_FEATURE_REQUIREMENTS = {
-  [DeviceFeature.BatteryOperated]: reported(SLEEP_PENDING),
+  // A battery READING (#459, Q2). Reported until the drivers stop hand-setting it.
+  [DeviceFeature.BatteryOperated]: bound('battery'),
+  // Sleeps and must be woken: the `low-power-sleep` cap, never the battery (Q2).
+  [DeviceFeature.Sleeps]: derived('low-power-sleep', ['wakeUp']),
   [DeviceFeature.Rebootable]: derived('reboot', ['reboot']),
-  [DeviceFeature.Resyncable]: reported(CAP_PENDING),
+  [DeviceFeature.Resyncable]: derived('resync', ['resync']),
   [DeviceFeature.NativeSnapshot]: reported(CAP_PENDING),
   [DeviceFeature.DoorbellButton]: derived('doorbell'),
   [DeviceFeature.TwoWayAudio]: derived('intercom', [
@@ -111,9 +113,7 @@ export const DEVICE_FEATURE_REQUIREMENTS = {
   [DeviceFeature.NotifierRecipients]: reported(CAP_PENDING),
   [DeviceFeature.ScriptVariables]: reported(CAP_PENDING),
   [DeviceFeature.AutomationSkipCondition]: reported(CAP_PENDING),
-  [DeviceFeature.VacuumHasMap]: reported(CAP_PENDING),
   [DeviceFeature.VacuumHasAi]: reported(CAP_PENDING),
-  [DeviceFeature.MowerHasMap]: reported(CAP_PENDING),
   [DeviceFeature.MowerHasTargetedMowing]: reported(CAP_PENDING),
   [DeviceFeature.Navigation]: derived('navigation'),
   [DeviceFeature.NetworkLink]: derived('network-link'),

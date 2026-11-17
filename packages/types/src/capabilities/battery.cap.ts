@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
+import { type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import type { CapabilityCustomizeSpec } from './customize-spec.js'
 import { DeviceType } from '../device/device-type.js'
 import { readingMeta } from '../units/quantity.js'
@@ -7,9 +7,9 @@ import { t } from '../device/cap-vocabulary/l10n.js'
 import { EventCategory } from '../enums/event-category.js'
 
 /**
- * Battery status snapshot. Emitted by providers whose device is
- * battery-operated (cameras with `DeviceFeature.BatteryOperated`,
- * future sensor/button accessories). Consumers build their own "low
+ * Battery status snapshot. Emitted by providers whose device reports a
+ * battery (`DeviceFeature.BatteryOperated`): battery cameras, sensors,
+ * buttons. Whether the device SLEEPS is `low-power-sleep`, not this cap. Consumers build their own "low
  * battery" alerting on top — the cap deliberately does NOT enforce a
  * threshold.
  */
@@ -166,49 +166,12 @@ export const batteryCapability = {
   deviceNative: true,
   mode: 'singleton',
   deviceTypes: BATTERY_DEVICE_TYPES,
-  methods: {
-    /**
-     * Explicitly wake the camera from low-power sleep ahead of a
-     * streaming session start. Consumers that initiate a stream
-     * against a sleeping battery cam (HomeKit Secure Video, Alexa
-     * RTCSession, snapshot wrappers) call this with a short timeout
-     * before establishing the media pipeline — the broker's own
-     * passive wake-on-dial works but adds 5–7 seconds to first-frame,
-     * during which the consumer renders a black screen. Pre-waking
-     * compresses that gap.
-     *
-     * Returns `awoke: true` when the firmware acknowledged the wake
-     * before `timeoutMs`. Returns `awoke: false` when it timed out OR
-     * the cap surface is unavailable (no Baichuan / firmware
-     * channel); the caller should still attempt the stream — the
-     * passive broker wake remains as fallback.
-     */
-    wakeForStream: method(
-      z.object({
-        deviceId: z.number(),
-        /** Bound on the wait. Sensible range 3000–10000ms. */
-        timeoutMs: z.number().int().min(500).max(30_000).default(8_000),
-      }),
-      z.object({
-        awoke: z.boolean(),
-        durationMs: z.number(),
-      }),
-      {
-        kind: 'mutation',
-        notOperatorFacing:
-          'a stream consumer wakes a sleeping camera to watch it; an automation that wants footage asks for the footage',
-      },
-    ),
-  },
   /**
-   * A composed provider (battery ADDED to a pet feeder or container that has
-   * no wake surface) answers `wakeForStream` with the same "unavailable"
-   * result the contract already defines above: "Returns `awoke: false` when
-   * … the cap surface is unavailable." (D663).
+   * No methods: waking a sleeping camera is `low-power-sleep.wakeUp`
+   * (#459, Q2). A battery reading says nothing about sleep — a battery sensor
+   * reports charge and never needs waking.
    */
-  composedMethods: {
-    wakeForStream: { kind: 'answer', value: { awoke: false, durationMs: 0 } },
-  },
+  methods: {},
   events: {
     /**
      * Emitted whenever the cached status changes (firmware push OR

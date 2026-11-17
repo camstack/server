@@ -6,7 +6,7 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 641 methods carry a device reference, of which
+ * Coverage: 643 methods carry a device reference, of which
  * 199 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
@@ -59,7 +59,6 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'automationControl.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'automationControl.trigger': [{ name: "deviceId", form: "single", optional: false }] as const,
   'battery.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'battery.wakeForStream': [{ name: "deviceId", form: "single", optional: false }] as const,
   'binary.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'brightness.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'brightness.setBrightness': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -293,6 +292,8 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'lockControl.open': [{ name: "deviceId", form: "single", optional: false }] as const,
   'lockControl.unlock': [{ name: "deviceId", form: "single", optional: false }] as const,
   'logDestination.read': [{ name: "deviceId", form: "single", optional: true }] as const,
+  'lowPowerSleep.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'lowPowerSleep.wakeUp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.channelDown': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.channelUp': [{ name: "deviceId", form: "single", optional: false }] as const,
   'mediaPlayer.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -549,6 +550,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'remote.sendCommand': [{ name: "deviceId", form: "single", optional: false }] as const,
   'remote.sendMediaCommand': [{ name: "deviceId", form: "single", optional: false }] as const,
   'remote.setConfig': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'resync.resync': [{ name: "deviceId", form: "single", optional: false }] as const,
   'runningState.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'sceneMonitor.captureReference': [{ name: "deviceId", form: "single", optional: false }] as const,
   'sceneMonitor.createScene': [{ name: "deviceId", form: "single", optional: false }] as const,

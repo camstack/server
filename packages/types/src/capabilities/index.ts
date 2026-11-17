@@ -3151,6 +3151,13 @@ export {
 } from './running-state.cap.js'
 export { type IRebootProvider, rebootCapability } from './reboot.cap.js'
 export {
+  type ILowPowerSleepProvider,
+  type LowPowerSleepStatus,
+  LowPowerSleepStatusSchema,
+  lowPowerSleepCapability,
+} from './low-power-sleep.cap.js'
+export { type IResyncProvider, ResyncDeviceInputSchema, resyncCapability } from './resync.cap.js'
+export {
   type IRecordingProvider,
   RECORDING_SOURCE_CAMSTACK,
   RECORDING_SOURCE_CAMSTACK_ADDON,
@@ -3802,6 +3809,8 @@ import type { ptzCapability } from './ptz.cap.js'
 import type { ptzAutotrackCapability } from './ptz-autotrack.cap.js'
 import type { runningStateCapability } from './running-state.cap.js'
 import type { rebootCapability } from './reboot.cap.js'
+import type { lowPowerSleepCapability } from './low-power-sleep.cap.js'
+import type { resyncCapability } from './resync.cap.js'
 import type { recordingCapability } from './recording.cap.js'
 import type { recordingArchiveCapability } from './recording-archive.cap.js'
 import type { recordingExportCapability } from './recording-export.cap.js'
@@ -3943,6 +3952,8 @@ type AnyCapability =
   | typeof consumablesCapability
   | typeof runningStateCapability
   | typeof rebootCapability
+  | typeof lowPowerSleepCapability
+  | typeof resyncCapability
   | typeof brightnessCapability
   | typeof colorCapability
   | typeof climateControlCapability

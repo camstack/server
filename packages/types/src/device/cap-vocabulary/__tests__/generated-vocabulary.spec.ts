@@ -72,7 +72,29 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   'tags',
   'siren',
   'workload',
+  // #459 Q2: sleep and resync left `battery` / the device-type badges.
+  'low-power-sleep',
+  'resync',
 ]
+
+/**
+ * Method excuses that LEFT a cap after the snapshot, by cap: #459 Q2 moved the
+ * camera wake off `battery` onto `low-power-sleep` (as `wakeUp`). The
+ * comparison puts the fixture's excuse back.
+ */
+const MOVED_EXCUSES: Readonly<Record<string, readonly string[]>> = {
+  battery: ['wakeForStream'],
+}
+
+/** The entry with the moved-away method excuses restored from the fixture. */
+function withMovedExcusesRestored(cap: string, entry: unknown, before: unknown): unknown {
+  const methods = MOVED_EXCUSES[cap]
+  if (methods === undefined || !isRecord(entry)) return entry
+  const restored = Object.fromEntries(
+    Object.entries(excusesOf(before)).filter(([method]) => methods.includes(method)),
+  )
+  return { ...entry, notOperatorFacing: { ...excusesOf(entry), ...restored } }
+}
 
 function actionsOf(entry: unknown): readonly JsonRecord[] {
   const actions = isRecord(entry) ? entry['actions'] : undefined
@@ -141,9 +163,10 @@ function withoutAddedOfferedWhen(cap: string, entry: unknown): unknown {
 
 /** The current entry with #524's additions taken out, and their excuses put back. */
 function withoutAdditions(cap: string, current: unknown, before: unknown): unknown {
-  const entry = withoutAddedOfferedWhen(
+  const entry = withMovedExcusesRestored(
     cap,
-    withoutAddedExcuses(cap, withoutAddedRoles(cap, current)),
+    withoutAddedOfferedWhen(cap, withoutAddedExcuses(cap, withoutAddedRoles(cap, current))),
+    before,
   )
   const added = ADDED_ACTIONS[cap]
   if (added === undefined || !isRecord(entry)) return entry

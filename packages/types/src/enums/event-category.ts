@@ -525,7 +525,7 @@ export enum EventCategory {
    */
   NetworkLinkOnStatusChanged = 'network-link.onStatusChanged',
   /**
-   * Emitted by the battery cap provider WHEN `wakeForStream` enters the
+   * Emitted by the battery cap provider WHEN `wakeUp` enters the
    * "wake in progress" window — between the Baichuan wake-up issue and
    * the camera's first dialed-back RTP packet. The stream-broker
    * manager subscribes to flip the per-broker placeholder reason to

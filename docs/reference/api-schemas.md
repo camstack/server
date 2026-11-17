@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1102 shared schemas.**
+**1104 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -3745,6 +3745,12 @@ Enum: `"debug" \| "info" \| "warn" \| "error"`
 - `message`: `string`
 - `scope?`: `string`
 
+### `LowPowerSleepStatusSchema`
+
+- `sleeping`: `boolean`
+- `lastContactAt?`: `number`
+- `lastUpdated`: `number`
+
 ### `LtsBucketSchema`
 
 - `scope`: `string`
@@ -6044,6 +6050,11 @@ Enum: `"no-remote" \| "unbound-role" \| "action-failed" \| "unknown-source" \| "
 - `procedures`: `RequestCensusProcedureSchema[]`
 - `groups`: `RequestCensusGroupSchema[]`
 - `persisted`: `boolean`
+
+### `ResyncDeviceInputSchema`
+
+- `deviceId`: `number`
+- `resetToSource?`: `boolean`
 
 ### `RetrainAnnotationDraftSchema`
 

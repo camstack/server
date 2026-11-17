@@ -4,13 +4,18 @@
  * A Dreame relay carries video only between `open()` and `close()`, and the
  * robot runs on a battery, so the camera cannot sit in the catalog with a
  * URL the way a mains RTSP camera does. The seam is the broker's own battery
- * path: `battery.wakeForStream` opens the monitor, and the catalog then
+ * path: `low-power-sleep.wakeUp` opens the monitor, and the catalog then
  * names the local RFC 4571 server (`dreame-rfc4571-server.ts`) the broker
  * pulls. While the monitor is CLOSED the
  * catalog carries the broker's lazy sentinel (Reolink's shape): the stream is
  * listed, and the first dial asks the publisher to materialize it.
  */
-import { type BatteryStatus, type CamStreamDescriptor, hubAddressHostname } from '@camstack/types'
+import {
+  type BatteryStatus,
+  type CamStreamDescriptor,
+  DeviceFeature,
+  hubAddressHostname,
+} from '@camstack/types'
 
 /** The one stream the robot camera offers. Half of the broker id (`<deviceId>/live`). */
 export const CAMERA_STREAM_ID = 'live'
@@ -113,7 +118,7 @@ export function cameraStreamCatalog(
       url: session === null ? LAZY_RFC4571_URL : session.url,
       codec: 'h264',
       label: 'Robot camera',
-      deviceFeatures: ['battery-operated'],
+      deviceFeatures: [DeviceFeature.BatteryOperated, DeviceFeature.Sleeps],
       autoEligible: true,
       // The robot's ONE stream is a 720p relay: the `low` of this camera in
       // every respect, and the profile the recorder files under

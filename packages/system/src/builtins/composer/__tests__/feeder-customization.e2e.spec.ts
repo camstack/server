@@ -229,7 +229,7 @@ describe('2 — the added slices, as the status aggregate shows them', () => {
 })
 
 describe('3 — the grafted methods answer through the Task 7 wrapper', () => {
-  it('consumables.reset refuses by its declared reason; battery.wakeForStream answers { awoke: false }', async () => {
+  it('consumables.reset refuses by its declared reason; the added battery is claimed', async () => {
     const feederId = id(FEEDER)
     // The provider every consumer resolves (D13) — and it IS the overlay's
     // wrapper: both caps are claimed, so a spread-shaped wrap would lose these.
@@ -238,13 +238,9 @@ describe('3 — the grafted methods answer through the Task 7 wrapper', () => {
       'claimed',
     )
     const consumables = w.capabilities.getProviderForDevice<ProviderRecord>('consumables', feederId)
-    const battery = w.capabilities.getProviderForDevice<ProviderRecord>('battery', feederId)
     await expect(
       consumables?.['reset']?.({ deviceId: feederId, key: 'desiccant' }),
     ).rejects.toThrow('a consumable added to an existing device is not resettable')
-    await expect(
-      battery?.['wakeForStream']?.({ deviceId: feederId, timeoutMs: 1000 }),
-    ).resolves.toEqual({ awoke: false, durationMs: 0 })
   })
 })
 

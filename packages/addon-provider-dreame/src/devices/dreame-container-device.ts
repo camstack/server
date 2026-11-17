@@ -14,6 +14,8 @@ import {
   DeviceRole,
   DeviceType,
   errMsg,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { z } from 'zod'
 import {
@@ -136,6 +138,11 @@ export class DreameContainerDevice extends BaseDevice<typeof dreameContainerSche
   constructor(ctx: DeviceContext) {
     const cfg = dreameContainerSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, dreameContainerSchema, { type: DeviceType.Container })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.dreameDeviceId = cfg.dreameDeviceId
     this.brokerId = cfg.brokerId
     this.model = cfg.model

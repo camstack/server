@@ -54,23 +54,26 @@ function makeManager(options: {
       getDevice: {
         query: async () => ({
           id: 640,
-          features: [DeviceFeature.BatteryOperated],
+          features: [DeviceFeature.Sleeps],
         }),
       },
     },
     deviceState: {
       getCapSlice: {
-        query: async () => ({
-          percentage: 99,
-          charging: 'dc',
-          sleeping: true,
-          lastUpdated: Date.now(),
-          lastContactAt: Date.now(),
-        }),
+        query: async (input: { capName: string }) =>
+          input.capName !== 'low-power-sleep'
+            ? null
+            : {
+                percentage: 99,
+                charging: 'dc',
+                sleeping: true,
+                lastUpdated: Date.now(),
+                lastContactAt: Date.now(),
+              },
       },
     },
-    battery: {
-      wakeForStream: {
+    lowPowerSleep: {
+      wakeUp: {
         mutate: async () => {
           wakeCalls += 1
           return { awoke: options.awoke, durationMs: 100 }

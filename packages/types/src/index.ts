@@ -1210,6 +1210,12 @@ export {
   deriveBatteryPresence,
   isBatteryPresenceFault,
 } from './device/battery-presence.js'
+// "Sleeps and must be woken" — the `low-power-sleep` cap (#459, Q2).
+export { deviceSleeps, sleepSliceOfBattery } from './device/low-power-sleep.js'
+export {
+  type AdoptionResyncClient,
+  resyncThroughAdoption,
+} from './device/resync-through-adoption.js'
 // Camera device interface + stream sources
 export type { ICameraDevice, StreamSourceEntry } from './device/camera-device.js'
 export {

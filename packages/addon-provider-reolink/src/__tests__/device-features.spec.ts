@@ -36,12 +36,18 @@ describe('deriveReolinkCameraFeatures', () => {
     expect(features).toContain(DeviceFeature.BatteryOperated)
   })
 
+  it('a battery camera SLEEPS: the stream catalog carries sleeps next to battery-operated (#459, Q2)', () => {
+    const features = deriveReolinkCameraFeatures({ probe: {}, isBattery: true })
+    expect(features).toContain(DeviceFeature.Sleeps)
+  })
+
   it('does NOT invent battery-operated for a wired camera', () => {
     const features = deriveReolinkCameraFeatures({
       probe: { hasPtz: true },
       isBattery: false,
     })
     expect(features).not.toContain(DeviceFeature.BatteryOperated)
+    expect(features).not.toContain(DeviceFeature.Sleeps)
     expect(features).toContain(DeviceFeature.PanTiltZoom)
   })
 

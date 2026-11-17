@@ -188,7 +188,7 @@ async function makeHarness(
           query: vi.fn(async ({ deviceId }: { deviceId: number }) => ({
             id: deviceId,
             name: 'test-cam',
-            features: opts.isBattery === true ? ['battery-operated'] : [],
+            features: opts.isBattery === true ? ['sleeps'] : [],
           })),
         },
       },

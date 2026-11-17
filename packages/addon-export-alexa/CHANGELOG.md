@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- No behaviour change: a code comment names the renamed camera wake method (wakeUp)
+
 ## [1.2.200] - 2026-11-17
 
 ### Changed

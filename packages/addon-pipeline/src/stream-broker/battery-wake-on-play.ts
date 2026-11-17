@@ -9,7 +9,7 @@
  * sentence is true and useful: something is misconfigured. On a battery
  * camera it was neither — the camera was healthy, asleep, and one Baichuan
  * wake away from streaming. Nothing on the live path had ever called
- * `battery.wakeForStream`; its only caller in the whole repo was the Alexa
+ * `battery.wakeUp`; its only caller in the whole repo was the Alexa
  * addon, so the viewer's own play button was the one surface that could not
  * wake a camera.
  *
@@ -70,7 +70,7 @@ export interface BatteryFacts {
 export interface WakeOnPlayDeps {
   readonly logger: IScopedLogger
   /**
-   * Does this device carry `DeviceFeature.BatteryOperated`? Read from the
+   * Does this device carry `DeviceFeature.Sleeps` (#459)? Read from the
    * DEVICE registry, never from published cam-streams — the whole reason we
    * are here is that there are none.
    *
@@ -81,8 +81,8 @@ export interface WakeOnPlayDeps {
   readonly isBatteryDevice: (deviceId: number) => Promise<boolean | null>
   /** The device's `battery` slice, or `null` when absent/unreadable. */
   readonly readBatteryFacts: (deviceId: number) => Promise<BatteryFacts | null>
-  /** `battery.wakeForStream`. Resolves `awoke:false` on timeout, never throws. */
-  readonly wakeForStream: (
+  /** `low-power-sleep.wakeUp`. Resolves `awoke:false` on timeout, never throws. */
+  readonly wakeUp: (
     deviceId: number,
     timeoutMs: number,
   ) => Promise<{ awoke: boolean; durationMs: number }>
@@ -164,7 +164,7 @@ export class BatteryWakeOnPlaySingleFlight {
  * camera to wake.
  *
  * Returns normally when a broker exists (either it already did, or the wake
- * produced one, or the device is not battery-operated and the caller's
+ * produced one, or the device does not sleep and the caller's
  * pre-existing error path should run). Throws
  * {@link BatteryStreamUnavailableError} only for a battery camera we could not
  * produce a stream for — with the reason named.
@@ -212,10 +212,10 @@ export async function wakeBatteryDeviceForPlay(
   })
 
   const wake = await deps
-    .wakeForStream(deviceId, WAKE_FOR_STREAM_TIMEOUT_MS)
+    .wakeUp(deviceId, WAKE_FOR_STREAM_TIMEOUT_MS)
     .catch((): { awoke: boolean; durationMs: number } => ({ awoke: false, durationMs: 0 }))
 
-  // StreamParamsChanged is a lossy nudge and may fire before wakeForStream
+  // StreamParamsChanged is a lossy nudge and may fire before wakeUp
   // returns, so a single event wait + retry can miss the entire publication.
   // Reconcile immediately, then poll throughout the acknowledged wake's
   // settle window. An unacknowledged wake still gets one best-effort pass.

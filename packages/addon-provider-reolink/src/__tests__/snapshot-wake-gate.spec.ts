@@ -89,7 +89,7 @@ describe('decideSnapshotCameraAccess', () => {
 
   it('a forced read is never rate-limited — the decision takes no clock at all', () => {
     // Operator demand bypasses the proactive cooldown (parity with
-    // `wakeForStream` / `wakeIfSleeping`). If a timestamp ever reappears in
+    // `wakeUp` / `wakeIfSleeping`). If a timestamp ever reappears in
     // this signature, a refresh button will start returning null.
     const source = readFileSync(resolve(here, '../snapshot-wake-gate.ts'), 'utf8')
     const iface = /export interface SnapshotAccessInput \{[\s\S]*?\n\}/.exec(source)?.[0]

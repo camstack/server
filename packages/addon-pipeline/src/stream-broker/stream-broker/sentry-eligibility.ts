@@ -23,7 +23,7 @@
  */
 
 export interface SentryEligibilityInput {
-  /** Whether the device is battery-operated. `null` ⇒ nobody could say. */
+  /** Whether the device sleeps (`DeviceFeature.Sleeps`, #459). `null` ⇒ nobody could say. */
   readonly batteryOperated: boolean | null
   /** Whether the device binds `stream-signals`. `null` ⇒ nobody could say. */
   readonly declaresSignals: boolean | null

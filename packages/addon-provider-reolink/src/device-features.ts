@@ -42,7 +42,8 @@ export interface ReolinkFeatureInputs {
  * `features = ['native-snapshot','rebootable']` because the `feature-probe`
  * slice had never been written.
  *
- * That miss is not cosmetic. `DeviceFeature.BatteryOperated` is the gate for:
+ * That miss is not cosmetic. `DeviceFeature.BatteryOperated` (and, since #459,
+ * `DeviceFeature.Sleeps` beside it) is the gate for:
  *   - the viewer's battery badge + sleeping overlay (`use-cameras.ts` FEATURE
  *     map) — without it the camera is drawn as an ordinary awake camera;
  *   - the snapshot wrapper's sleep gate (`snapshot.addon.ts`
@@ -56,10 +57,26 @@ export interface ReolinkFeatureInputs {
  * clears it). This makes the DERIVED answer sticky the same way, for the
  * window before any probe has ever succeeded.
  */
+/**
+ * The ONE Reolink answer to "is this a battery camera that sleeps" (#459, Q2).
+ * The published features (`BatteryOperated` + `Sleeps`) and the registration
+ * of the `battery` and `low-power-sleep` caps both ask it, so a camera that
+ * claims `Sleeps` in the stream catalog is also one the registry can wake.
+ */
+export function reolinkCameraSleeps(inputs: ReolinkFeatureInputs): boolean {
+  return inputs.probe.hasBattery === true || inputs.isBattery
+}
+
 export function deriveReolinkCameraFeatures(inputs: ReolinkFeatureInputs): DeviceFeature[] {
-  const { probe, isBattery } = inputs
+  const { probe } = inputs
   const out: DeviceFeature[] = [DeviceFeature.NativeSnapshot, DeviceFeature.Rebootable]
-  if (probe.hasBattery === true || isBattery) out.push(DeviceFeature.BatteryOperated)
+  // A Reolink battery camera always sleeps: `Sleeps` rides with it so the
+  // stream catalog (which carries THESE features, not the registry's) knows
+  // to wake it. The registry derives its own Sleeps from the low-power-sleep
+  // binding (#459, Q2).
+  if (reolinkCameraSleeps(inputs)) {
+    out.push(DeviceFeature.BatteryOperated, DeviceFeature.Sleeps)
+  }
   if (probe.hasPtz === true) out.push(DeviceFeature.PanTiltZoom)
   if (probe.hasAutotrack === true) out.push(DeviceFeature.PtzAutotrack)
   if (probe.hasIntercom === true) out.push(DeviceFeature.TwoWayAudio)

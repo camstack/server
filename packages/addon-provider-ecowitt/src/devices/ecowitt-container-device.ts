@@ -9,6 +9,8 @@ import {
   type InferNativeProvider,
   type WeatherStationStatus,
   weatherStationCapability,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { ecowittFacades } from '../ecowitt-gateway.js'
 import { childEntriesForGroup, entriesForGroup } from '../ecowitt-sensor-groups.js'
@@ -82,6 +84,11 @@ export class EcowittContainerDevice extends BaseDevice<typeof ecowittContainerSc
     super(ctx, ecowittContainerSchema, {
       type: ecowittGroupDeviceType(cfg.deviceGroup),
     })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.gatewayId = cfg.gatewayId
     this.integrationId = cfg.integrationId
     this.station = cfg.deviceGroup === 'weather-station'

@@ -65,6 +65,7 @@ import type { intercomCapability } from '../capabilities/intercom.cap.js'
 import type { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
 import type { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
 import type { lockControlCapability } from '../capabilities/lock-control.cap.js'
+import type { lowPowerSleepCapability } from '../capabilities/low-power-sleep.cap.js'
 import type { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
 import type { meterCapability } from '../capabilities/meter.cap.js'
 import type { motionCapability } from '../capabilities/motion.cap.js'
@@ -92,6 +93,7 @@ import type { rebootCapability } from '../capabilities/reboot.cap.js'
 import type { recordingCapability } from '../capabilities/recording.cap.js'
 import type { recordingOnboardCapability } from '../capabilities/recording-onboard.cap.js'
 import type { recordingSignalCapability } from '../capabilities/recording-signal.cap.js'
+import type { resyncCapability } from '../capabilities/resync.cap.js'
 import type { runningStateCapability } from '../capabilities/running-state.cap.js'
 import type { sceneMonitorCapability } from '../capabilities/scene-monitor.cap.js'
 import type { scriptRunnerCapability } from '../capabilities/script-runner.cap.js'
@@ -188,6 +190,7 @@ export interface DeviceProxyState {
   readonly irTransmitter: SliceHandle<InferRuntimeState<typeof irTransmitterCapability>>
   readonly lawnMowerControl: SliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>
   readonly lockControl: SliceHandle<InferRuntimeState<typeof lockControlCapability>>
+  readonly lowPowerSleep: SliceHandle<InferRuntimeState<typeof lowPowerSleepCapability>>
   readonly mediaPlayer: SliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>
   readonly meter: SliceHandle<InferRuntimeState<typeof meterCapability>>
   readonly motion: SliceHandle<InferRuntimeState<typeof motionCapability>>
@@ -308,6 +311,7 @@ export interface DeviceProxy {
   readonly irTransmitter?: InferDeviceProxyCap<typeof irTransmitterCapability>
   readonly lawnMowerControl?: InferDeviceProxyCap<typeof lawnMowerControlCapability>
   readonly lockControl?: InferDeviceProxyCap<typeof lockControlCapability>
+  readonly lowPowerSleep?: InferDeviceProxyCap<typeof lowPowerSleepCapability>
   readonly mediaPlayer?: InferDeviceProxyCap<typeof mediaPlayerCapability>
   readonly meter?: InferDeviceProxyCap<typeof meterCapability>
   readonly motion?: InferDeviceProxyCap<typeof motionCapability>
@@ -335,6 +339,7 @@ export interface DeviceProxy {
   readonly recording?: InferDeviceProxyCap<typeof recordingCapability>
   readonly recordingOnboard?: InferDeviceProxyCap<typeof recordingOnboardCapability>
   readonly recordingSignal?: InferDeviceProxyCap<typeof recordingSignalCapability>
+  readonly resync?: InferDeviceProxyCap<typeof resyncCapability>
   readonly runningState?: InferDeviceProxyCap<typeof runningStateCapability>
   readonly sceneMonitor?: InferDeviceProxyCap<typeof sceneMonitorCapability>
   readonly scriptRunner?: InferDeviceProxyCap<typeof scriptRunnerCapability>
@@ -499,7 +504,6 @@ export function createDeviceProxy(
   }
 
   const batteryInterface = {
-    wakeForStream: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('battery', 'battery', 'wakeForStream', 'mutation', input, undefined, options),
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('battery', 'battery', 'getStatus', 'query', input, undefined, options),
   }
 
@@ -798,6 +802,11 @@ export function createDeviceProxy(
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('lock-control', 'lockControl', 'getStatus', 'query', input, undefined, options),
   }
 
+  const lowPowerSleepInterface = {
+    wakeUp: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('low-power-sleep', 'lowPowerSleep', 'wakeUp', 'mutation', input, undefined, options),
+    getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('low-power-sleep', 'lowPowerSleep', 'getStatus', 'query', input, undefined, options),
+  }
+
   const mediaPlayerInterface = {
     turnOn: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'turnOn', 'mutation', input, undefined, options),
     turnOff: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('media-player', 'mediaPlayer', 'turnOff', 'mutation', input, undefined, options),
@@ -1080,6 +1089,10 @@ export function createDeviceProxy(
 
   const recordingSignalInterface = {
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('recording-signal', 'recordingSignal', 'getStatus', 'query', input, undefined, options),
+  }
+
+  const resyncInterface = {
+    resync: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('resync', 'resync', 'resync', 'mutation', input, undefined, options),
   }
 
   const runningStateInterface = {
@@ -1513,6 +1526,7 @@ export function createDeviceProxy(
       irTransmitter: createSliceHandle<InferRuntimeState<typeof irTransmitterCapability>>(stateSource, binding.deviceId, 'ir-transmitter'),
       lawnMowerControl: createSliceHandle<InferRuntimeState<typeof lawnMowerControlCapability>>(stateSource, binding.deviceId, 'lawn-mower-control'),
       lockControl: createSliceHandle<InferRuntimeState<typeof lockControlCapability>>(stateSource, binding.deviceId, 'lock-control'),
+      lowPowerSleep: createSliceHandle<InferRuntimeState<typeof lowPowerSleepCapability>>(stateSource, binding.deviceId, 'low-power-sleep'),
       mediaPlayer: createSliceHandle<InferRuntimeState<typeof mediaPlayerCapability>>(stateSource, binding.deviceId, 'media-player'),
       meter: createSliceHandle<InferRuntimeState<typeof meterCapability>>(stateSource, binding.deviceId, 'meter'),
       motion: createSliceHandle<InferRuntimeState<typeof motionCapability>>(stateSource, binding.deviceId, 'motion'),
@@ -1614,6 +1628,7 @@ export function createDeviceProxy(
     ...(bound('ir-transmitter') ? { irTransmitter: irTransmitterInterface } : {}),
     ...(bound('lawn-mower-control') ? { lawnMowerControl: lawnMowerControlInterface } : {}),
     ...(bound('lock-control') ? { lockControl: lockControlInterface } : {}),
+    ...(bound('low-power-sleep') ? { lowPowerSleep: lowPowerSleepInterface } : {}),
     ...(bound('media-player') ? { mediaPlayer: mediaPlayerInterface } : {}),
     ...(bound('meter') ? { meter: meterInterface } : {}),
     ...(bound('motion') ? { motion: motionInterface } : {}),
@@ -1641,6 +1656,7 @@ export function createDeviceProxy(
     ...(bound('recording') ? { recording: recordingInterface } : {}),
     ...(bound('recording-onboard') ? { recordingOnboard: recordingOnboardInterface } : {}),
     ...(bound('recording-signal') ? { recordingSignal: recordingSignalInterface } : {}),
+    ...(bound('resync') ? { resync: resyncInterface } : {}),
     ...(bound('running-state') ? { runningState: runningStateInterface } : {}),
     ...(bound('scene-monitor') ? { sceneMonitor: sceneMonitorInterface } : {}),
     ...(bound('script-runner') ? { scriptRunner: scriptRunnerInterface } : {}),

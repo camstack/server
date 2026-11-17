@@ -97,16 +97,15 @@ describe('deriveContainerFeatures', () => {
     ).toEqual([DeviceFeature.Resyncable])
   })
 
-  it('vacuum with map + AI advertises VacuumHasMap + VacuumHasAi', () => {
+  it('vacuum with AI advertises VacuumHasAi (the has-map flags are gone, #459)', () => {
     const features = deriveContainerFeatures({
       kind: 'vacuum',
       vacuumCaps: vacuumCaps({ canMap: true, hasAiObstacleDetection: true, aiFeatureCount: 2 }),
       mowerCaps: null,
     })
     expect(features).toContain(DeviceFeature.Resyncable)
-    expect(features).toContain(DeviceFeature.VacuumHasMap)
     expect(features).toContain(DeviceFeature.VacuumHasAi)
-    expect(features).not.toContain(DeviceFeature.MowerHasMap)
+    expect(features).not.toContain(DeviceFeature.MowerHasTargetedMowing)
   })
 
   it('vacuum without map and without AI advertises only Resyncable', () => {
@@ -123,15 +122,14 @@ describe('deriveContainerFeatures', () => {
     expect(features).toEqual([DeviceFeature.Resyncable])
   })
 
-  it('mower with map + targeted mowing advertises MowerHasMap + MowerHasTargetedMowing', () => {
+  it('mower with targeted mowing advertises MowerHasTargetedMowing', () => {
     const features = deriveContainerFeatures({
       kind: 'mower',
       vacuumCaps: null,
       mowerCaps: mowerCaps({ canMap: true, canMowAllArea: true }),
     })
-    expect(features).toContain(DeviceFeature.MowerHasMap)
     expect(features).toContain(DeviceFeature.MowerHasTargetedMowing)
-    expect(features).not.toContain(DeviceFeature.VacuumHasMap)
+    expect(features).not.toContain(DeviceFeature.VacuumHasAi)
   })
 
   it('mower with an unresolved handle advertises only Resyncable (no optimistic flags)', () => {

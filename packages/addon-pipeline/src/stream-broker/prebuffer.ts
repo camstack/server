@@ -100,7 +100,8 @@ export interface PrebufferResolveInput {
    */
   readonly defaultWarm?: boolean
   /**
-   * True when the device carries `DeviceFeature.BatteryOperated`.
+   * True when the device carries `DeviceFeature.Sleeps` (#459: a device that
+   * only reports a battery is warmed like any other).
    *
    * The question is what this camera IS, not what it is doing (D193): a
    * retention default that flapped with naps would make the history a

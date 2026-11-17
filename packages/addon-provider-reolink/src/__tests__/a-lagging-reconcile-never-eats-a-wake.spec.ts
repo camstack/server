@@ -129,7 +129,7 @@ describe('a lagging reconcile never eats a real wake', () => {
   })
 
   it('a summary read taken DURING a wake we drove is first-hand and stamps', () => {
-    // `wakeForStream` confirms a hub child by reading the parent's summary
+    // `wakeUp` confirms a hub child by reading the parent's summary
     // right then. It passes `hub-summary`, not `hub-reconcile`, and it must
     // keep arming the grace — otherwise the very next periodic sweep undoes
     // the wake it just confirmed.

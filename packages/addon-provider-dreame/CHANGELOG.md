@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The battery camera now wakes through its low-power-sleep capability, so it is the one recognised as sleeping
+- Re-sync is now offered through the device's own resync capability
+
 ## [0.2.178] - 2026-11-15
 
 ### Changed

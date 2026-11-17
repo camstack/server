@@ -64,7 +64,6 @@ function makeBatteryProviderWithState() {
   }
   const provider: IBatteryNativeProvider = {
     getStatus: async () => ({ ...state }),
-    wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
   }
   const stateHandle = {
     get value() {
@@ -125,6 +124,12 @@ function makeCtxRoutingCaps(providers: {
    * scenarios must opt in here.
    */
   isBattery?: boolean
+  /**
+   * A device that REPORTS a battery and never sleeps (a battery sensor, #459
+   * Q2): `battery-operated` in its features and a `battery` slice, but no
+   * `low-power-sleep` slice and no `sleeps` feature.
+   */
+  chargeOnly?: boolean
 }): AddonContext {
   const logger = makeLogger()
   const getNativeProvider = vi.fn((cap: CapabilityDefinition, _deviceId: number) => {
@@ -139,15 +144,21 @@ function makeCtxRoutingCaps(providers: {
         query: vi.fn(async ({ deviceId }: { deviceId: number }) => ({
           id: deviceId,
           name: 'test-cam',
-          features: providers.isBattery ? ['battery-operated'] : [],
+          features: providers.chargeOnly
+            ? ['battery-operated']
+            : providers.isBattery
+              ? ['sleeps']
+              : [],
         })),
       },
     },
     deviceState: {
       getCapSlice: {
-        query: vi.fn(async () => {
+        query: vi.fn(async ({ capName }: { capName: string }) => {
           const handle = providers.batteryStateHandle
           if (!handle) return null
+          // A charge-only device has a battery slice and no sleep slice.
+          if (providers.chargeOnly === true && capName !== 'battery') return null
           await handle.refresh()
           return handle.value
         }),
@@ -352,6 +363,30 @@ describe('SnapshotAddon × battery cap — sleeping-aware cache E2E', () => {
       vi.setSystemTime(Date.now() + 10_000)
       await provider.getSnapshot({ deviceId: 42 })
       expect(snapshotNative.getCallCount()).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('a device that only REPORTS a battery is not a sleeper: the mains window applies (#459, Q2)', async () => {
+    const battery = makeBatteryProviderWithState()
+    const snapshotNative = makeSnapshotNativeWithCounter()
+    const ctx = makeCtxRoutingCaps({
+      battery: battery.provider,
+      batteryStateHandle: battery.stateHandle,
+      snapshot: snapshotNative.provider,
+      chargeOnly: true,
+    })
+    const provider = await initAddon(addon, ctx)
+
+    await provider.getSnapshot({ deviceId: 42 })
+    expect(snapshotNative.getCallCount()).toBe(1)
+    vi.useFakeTimers()
+    try {
+      // 60 s: past the mains window, deep inside the 1 h sleeper window.
+      vi.setSystemTime(Date.now() + 60 * 1000)
+      await provider.getSnapshot({ deviceId: 42 })
+      expect(snapshotNative.getCallCount()).toBe(2)
     } finally {
       vi.useRealTimers()
     }

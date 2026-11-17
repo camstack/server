@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 47 caps with series (130 series), 39 caps answered `'none'`.
+ * 47 caps with series (130 series), 40 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -302,6 +302,7 @@ export const HISTORY_NONE_CAPS: readonly string[] = [
   'image-settings',
   'intercom',
   'ir-transmitter',
+  'low-power-sleep',
   'motion-trigger',
   'motion-zones',
   'native-object-detection',

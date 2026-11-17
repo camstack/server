@@ -96,6 +96,32 @@ describe('deriveFeatureProvenance', () => {
   })
 })
 
+describe('sleeps vs battery (#459, Q2) and resync (Q6)', () => {
+  it('a device with only a battery bound (a battery sensor) does not sleep', () => {
+    const out = settleDeviceFeatures([entry('battery', [])], [DeviceFeature.BatteryOperated])
+    expect(out).toContain(DeviceFeature.BatteryOperated)
+    expect(out).not.toContain(DeviceFeature.Sleeps)
+  })
+
+  it('sleeps is the low-power-sleep cap bound with wakeUp, whatever the driver claims', () => {
+    expect(
+      settleDeviceFeatures([entry('battery'), entry('low-power-sleep', ['wakeUp'])], []),
+    ).toContain(DeviceFeature.Sleeps)
+    expect(settleDeviceFeatures([entry('battery')], [DeviceFeature.Sleeps])).not.toContain(
+      DeviceFeature.Sleeps,
+    )
+  })
+
+  it('resyncable is the resync cap bound, and a driver claim alone no longer makes it', () => {
+    expect(settleDeviceFeatures([entry('resync', ['resync'])], [])).toContain(
+      DeviceFeature.Resyncable,
+    )
+    expect(settleDeviceFeatures([], [DeviceFeature.Resyncable])).not.toContain(
+      DeviceFeature.Resyncable,
+    )
+  })
+})
+
 describe('settleDeviceFeatures', () => {
   it('takes derived features from the bindings and ignores the driver claim for them', () => {
     const out = settleDeviceFeatures(

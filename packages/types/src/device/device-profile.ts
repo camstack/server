@@ -133,7 +133,7 @@ export interface DeviceProfile {
    * shipped populated — `snapshot.minRefreshIntervalSec: 3600` and
    * `streamBroker.preBufferEnabled: false` on the battery profile — which read
    * as live policy and were not: both behaviours are really enforced off
-   * `DeviceFeature.BatteryOperated` directly, by `BATTERY_DEFAULT_MAX_AGE_S`
+   * `DeviceFeature.Sleeps` directly, by `BATTERY_DEFAULT_MAX_AGE_S`
    * in `snapshot.addon.ts` and by `getEffectivePreBufferSec` in
    * `stream-broker-manager.ts`. Emptied 2026-08-07; keep it empty until a
    * reader exists, or an entry here is just documentation that lies.
@@ -171,14 +171,15 @@ export function deviceMatchesProfile(
 export const BATTERY_DEVICE_PROFILE: DeviceProfile = {
   id: 'battery',
   label: 'Battery-operated camera',
-  when: { hasFeature: Feature.BatteryOperated },
+  // A camera that SLEEPS, not one that merely reports a battery (#459, Q2).
+  when: { hasFeature: Feature.Sleeps },
   defaults: {
     audioMode: 'disabled',
     detectionMode: 'on-motion',
   },
   // Empty on purpose — see `DeviceProfile.settings`. The snapshot interval and
   // the pre-buffer flag that used to sit here were never read; both are
-  // enforced off `DeviceFeature.BatteryOperated` at the addon that owns them.
+  // enforced off `DeviceFeature.Sleeps` at the addon that owns them.
   settings: {},
 }
 

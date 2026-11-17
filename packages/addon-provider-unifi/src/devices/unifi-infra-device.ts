@@ -10,6 +10,8 @@ import {
   registerPowerSwitch,
   type WorkloadStatus,
   workloadCapability,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { unifiInfraSchema } from '../config.js'
 import {
@@ -56,6 +58,11 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     const cfg = unifiInfraSchema.parse(ctx.persistedConfig ?? {})
     // The type the adoption stamped (`unifiDeviceTarget`), never a second decision here.
     super(ctx, unifiInfraSchema, { type: ctx.deviceMeta.type })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.integrationId = cfg.integrationId
     this.infraNativeId = cfg.infraNativeId
     registerUnifiAdminLink(ctx, this.id, { integrationId: this.integrationId })

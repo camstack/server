@@ -8,6 +8,8 @@ import {
   BaseDevice,
   type BatteryStatus,
   batteryCapability,
+  lowPowerSleepCapability,
+  sleepSliceOfBattery,
   buildDeviceAdminUrl,
   buildStreamParamsConfigSchema,
   createEvent,
@@ -104,7 +106,12 @@ import { resolveCameraUid } from './clips/clip-addressing.js'
 import { buildClipRefreshDeviceSection } from './clips/clip-refresh-settings.js'
 import type { ClipDeviceRef } from './clips/reolink-videoclips-provider.js'
 import { capDayNightModeToReolink, reolinkDayNightModeToCap } from './day-night-mapping.js'
-import { deriveReolinkCameraFeatures, type ReolinkProbeFlags } from './device-features.js'
+import {
+  deriveReolinkCameraFeatures,
+  reolinkCameraSleeps,
+  type ReolinkFeatureInputs,
+  type ReolinkProbeFlags,
+} from './device-features.js'
 import type { EmailPushParamsResolver } from './email-push-shared.js'
 import { reolinkExposureModeToCap } from './image-settings-mapping.js'
 import { denormalizeFromPercent, normalizeToPercent } from './image-value-normalization.js'
@@ -726,10 +733,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   }
 
   get features(): readonly DeviceFeature[] {
-    return deriveReolinkCameraFeatures({
-      probe: this.getProbeFlags<ReolinkProbeFlags>(),
-      isBattery: this.isBattery,
-    })
+    return deriveReolinkCameraFeatures(this.featureInputs())
+  }
+
+  /** What the features and the battery / sleep registration both read. */
+  private featureInputs(): ReolinkFeatureInputs {
+    return { probe: this.getProbeFlags<ReolinkProbeFlags>(), isBattery: this.isBattery }
   }
 
   /** Lazy-connected Baichuan API. Spans the lifetime of every active stream. */
@@ -874,7 +883,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   private lastProactiveWakeAt = 0
   /**
    * Minimum gap between two proactive wakes. Demand-driven wakes
-   * (`wakeForStream` from the broker, `wakeIfSleeping` behind an
+   * (`wakeUp` from the broker, `wakeIfSleeping` behind an
    * operator action, the intercom pre-wake) bypass this entirely —
    * the operator asked, the operator gets the camera. Only
    * self-initiated wakes are rate-limited, so a thumbnail cache miss
@@ -2216,7 +2225,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * (proactive config buttons such as Auto-configure email push). A
    * sleeping battery cam ignores Baichuan config round-trips, so clicking
    * "configure" would otherwise silently fail; this drives the same forced
-   * wake `wakeForStream` uses, then lets the caller proceed against a live
+   * wake `wakeUp` uses, then lets the caller proceed against a live
    * camera. No-op for non-battery or already-awake cams. Best-effort:
    * returns whether the camera is (now) reachable/awake.
    */
@@ -2260,7 +2269,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
       // sleeping tile. Measured 2026-09-19 21:29 — "Refresh from camera"
       // reported `awake=true` and re-read 5 of 5 slices off the camera, and
       // thirteen seconds later the broker was still composing
-      // `reason=sleeping`. The same split `wakeForStream` had, in its
+      // `reason=sleeping`. The same split `wakeUp` had, in its
       // sibling, found by the operator noticing the picture never changed.
       if (this.commitSleepState(false, 'confirmed-wake')) {
         this.ctx.logger.info('proactive action: camera is up — committing the mirror', {
@@ -2952,7 +2961,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    */
   private registerBatteryIfSupported(): void {
     if (this.batteryRegistered) return
-    if (!this.isBattery) return
+    // Same predicate as the published `Sleeps` feature: a camera the catalog
+    // calls a sleeper is one the registry can wake (#459, Q2).
+    if (!reolinkCameraSleeps(this.featureInputs())) return
     this.batteryRegistered = true
 
     const provider: InferNativeProvider<typeof batteryCapability> = {
@@ -2966,7 +2977,20 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // would defeat the purpose (and wake the camera).
         return this.state.battery
       },
-      wakeForStream: async ({ deviceId, timeoutMs }) => {
+    }
+    this.ctx.registerNativeCap(batteryCapability, provider)
+
+    // The sleep half (#459, Q2): `DeviceFeature.Sleeps` is derived from this
+    // binding, so every consumer that must WAKE the camera before it streams
+    // finds it here, and a device that only reports charge never does.
+    const sleepProvider: InferNativeProvider<typeof lowPowerSleepCapability> = {
+      getStatus: async ({ deviceId }) => {
+        if (deviceId !== this.id) {
+          throw new Error(`ReolinkCamera: deviceId mismatch, expected ${this.id}, got ${deviceId}`)
+        }
+        return sleepSliceOfBattery(this.state.battery)
+      },
+      wakeUp: async ({ deviceId, timeoutMs }) => {
         if (deviceId !== this.id) {
           throw new Error(`ReolinkCamera: deviceId mismatch, expected ${this.id}, got ${deviceId}`)
         }
@@ -2984,7 +3008,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // CONSUMER-driven (the broker has a viewer waiting): bypasses the
         // proactive-wake cooldown, stamps it so background paths back off.
         this.markWakeIssued()
-        this.ctx.logger.info('battery wakeForStream: cam sleeping — issuing wake', {
+        this.ctx.logger.info('battery wakeUp: cam sleeping — issuing wake', {
           tags: { deviceId: this.id },
           meta: { timeoutMs },
         })
@@ -3019,7 +3043,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
               await sleep(1500)
             })(),
             new Promise<void>((_, rej) =>
-              setTimeout(() => rej(new Error('wakeForStream timeout')), timeoutMs),
+              setTimeout(() => rej(new Error('wakeUp timeout')), timeoutMs),
             ),
           ])
           // The ACK is not the wake. After a DEMANDED wake we confirm the
@@ -3089,16 +3113,13 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           // confirmed wake gated out).
           const confirmSource = parent !== null ? 'hub-summary' : 'sleep-poll'
           if (observedAwake && this.commitSleepState(false, confirmSource)) {
-            this.ctx.logger.info(
-              'battery wakeForStream: wake confirmed — driving wake transition',
-              {
-                tags: { deviceId: this.id },
-                meta: {
-                  confirmMs: Date.now() - startedAt,
-                  source: confirmSource,
-                },
+            this.ctx.logger.info('battery wakeUp: wake confirmed — driving wake transition', {
+              tags: { deviceId: this.id },
+              meta: {
+                confirmMs: Date.now() - startedAt,
+                source: confirmSource,
               },
-            )
+            })
             void this.onWakeTransition(confirmSource).catch(() => {
               /* best-effort */
             })
@@ -3108,7 +3129,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
             // again" instead of parking the client in a 20 s "waking"
             // window we already know will not produce a stream.
             this.ctx.logger.warn(
-              'battery wakeForStream: ACK received but no awake evidence inside the confirm window',
+              'battery wakeUp: ACK received but no awake evidence inside the confirm window',
               {
                 tags: { deviceId: this.id },
                 meta: { confirmTimeoutMs: CONFIRM_TIMEOUT_MS },
@@ -3137,7 +3158,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           // time. Committing only on the summary is what split one wake into
           // two contradictory answers.
           if (this.commitSleepState(false, 'confirmed-wake')) {
-            this.ctx.logger.info('battery wakeForStream: answering awake — committing the mirror', {
+            this.ctx.logger.info('battery wakeUp: answering awake — committing the mirror', {
               tags: { deviceId: this.id },
               meta: { confirmedMs: Date.now() - startedAt, observedAwake },
             })
@@ -3147,7 +3168,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
           }
           return { awoke: true, durationMs: Date.now() - startedAt }
         } catch (err) {
-          this.ctx.logger.warn('battery wakeForStream: wake did not complete in time', {
+          this.ctx.logger.warn('battery wakeUp: wake did not complete in time', {
             tags: { deviceId: this.id },
             meta: {
               timeoutMs,
@@ -3159,7 +3180,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }
       },
     }
-    this.ctx.registerNativeCap(batteryCapability, provider)
+    this.ctx.registerNativeCap(lowPowerSleepCapability, sleepProvider)
     // Seed the slice once so subsequent field-level proxy writes
     // (e.g. `this.state.battery.sleeping = true`) merge cleanly through
     // `patchCapState` without tripping the schema's required-fields
@@ -3185,6 +3206,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // across the writers.
     this.runtimeState.subscribeCap<BatteryStatus>('battery', (slice) => {
       if (!slice) return
+      // The sleep inputs live on `low-power-sleep` too (#459): one writer,
+      // the battery slice, projected — never a second source of truth.
+      this.setCapSlice(lowPowerSleepCapability, sleepSliceOfBattery(slice))
       this.ctx.eventBus.emit(
         createEvent(EventCategory.BatteryOnStatusChanged, this.eventSource(), {
           deviceId: this.id,
@@ -3192,6 +3216,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }),
       )
     })
+    // The bridge fires on the NEXT write; project the slice we start from now.
+    this.setCapSlice(lowPowerSleepCapability, sleepSliceOfBattery(this.state.battery))
 
     // Seed the cache with a one-shot `getBatteryInfo` after registration.
     //
@@ -3348,7 +3374,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    * `PROACTIVE_WAKE_COOLDOWN_MS` ago — the caller must then serve
    * whatever it has cached instead of reaching for the radio.
    *
-   * Demand-driven paths never call this: `wakeForStream` (a consumer
+   * Demand-driven paths never call this: `wakeUp` (a consumer
    * wants live video), `wakeIfSleeping` (an operator clicked
    * something) and the intercom pre-wake all wake unconditionally.
    */
@@ -3394,7 +3420,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         const entry = summary.devices.find((d) => d.channel === this.getChannel())
         if (entry?.sleeping === false) {
           if (this.commitSleepState(false, 'hub-summary')) {
-            this.ctx.logger.info('battery wakeForStream: hub child observed awake after the dial', {
+            this.ctx.logger.info('battery wakeUp: hub child observed awake after the dial', {
               tags: { deviceId: this.id },
             })
             void this.onWakeTransition('hub-summary').catch(() => {
@@ -12231,6 +12257,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // call failed at the routing layer before any talk-session code ran (zero
     // intercom logs), and the two-way-audio panel closed immediately.
     this.registerIntercomIfSupported()
+    // A probe that found a battery makes this camera a sleeper by the same
+    // predicate the features use (`reolinkCameraSleeps`): register its
+    // battery and low-power-sleep caps, so the published `Sleeps` never
+    // outruns the binding the registry derives it from (#459, Q2).
+    this.registerBatteryIfSupported()
 
     // NOTE: hardware metadata refresh is NOT gated on the feature
     // probe — `adoptApi` / `ensureApi` already trigger it on every

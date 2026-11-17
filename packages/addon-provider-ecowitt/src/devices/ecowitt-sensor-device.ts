@@ -264,8 +264,6 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
     }
     const provider: InferNativeProvider<typeof batteryCapability> = {
       getStatus: async () => this.runtimeState.getCapState<BatteryStatus>('battery') ?? COLD,
-      // Ecowitt sensors are read-only — there is no wake path.
-      wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
     }
     this.ctx.registerNativeCap(batteryCapability, provider)
     this.runtimeState.setCapState('battery', COLD)
@@ -283,7 +281,6 @@ export class EcowittSensorDevice extends BaseDevice<typeof ecowittSensorSchema> 
     }
     const provider: InferNativeProvider<typeof batteryCapability> = {
       getStatus: async () => this.runtimeState.getCapState<BatteryStatus>('battery') ?? COLD,
-      wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
     }
     this.ctx.registerNativeCap(batteryCapability, provider)
     this.runtimeState.setCapState('battery', COLD)

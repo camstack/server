@@ -54,11 +54,8 @@ import { promises as fs } from 'node:fs'
 import path from 'node:path'
 import {
   type AddonApi,
-  BatteryStatusSchema,
-  batteryCapability,
   type CamProfile,
   DEFAULT_EVENTS_BAND_BUFFER_SEC,
-  DeviceFeature,
   errMsg,
   EventCategory,
   type FirstLevelMacroClass,
@@ -127,6 +124,7 @@ import { SpawnPressureGovernor } from './spawn-pressure.js'
 import type { ReapedWriter, StagingWriterGuard } from './staging-writer-guard.js'
 import type { HeapDeltaTracker } from './heap-delta.js'
 import { withDeadline } from './with-deadline.js'
+import { recordingWakeDeps } from './recording-wake-deps.js'
 import { RecordingStallMonitor } from './recording-stall-monitor.js'
 
 /** Spawn surface the SegmentWriter needs — injected so tests stay process-free. */
@@ -1258,7 +1256,7 @@ export class RecordingController {
    * after which the band's `postBufferSec` runs and `evaluateDevice` arms the
    * close exactly as it does for a motion episode. Both converge at once: the
    * rise is what wakes a battery camera and pins its source (the robot's
-   * monitor opens through `battery.wakeForStream` on the attach), the fall is
+   * monitor opens through `low-power-sleep.wakeUp` on the attach), the fall is
    * what lets the source be released and the monitor close.
    *
    * No config read on this path (D49): the hold is recorded unconditionally —
@@ -1825,43 +1823,10 @@ export class RecordingController {
   /** One wake attempt, fully reported. Absorbs its own failures. */
   private async runBatteryWake(deviceId: number): Promise<void> {
     const api = this.deps.api
-    const result = await wakeForRecording(deviceId, {
-      // The DEVICE registry, never the published cam-streams: there are none —
-      // that is precisely why we are here.
-      // BOUNDED. These two reads sit on the attach critical path, ahead of
-      // every broker call, and an unbounded UDS round-trip here delays the
-      // writer spawn for a camera that is not even battery-powered. A read that
-      // times out yields `null` -> UNKNOWN -> no wake, which is the same safe
-      // outcome as a read that failed (D49).
-      isBatteryDevice: async (id) => {
-        const dev = await withDeadline(
-          api.deviceManager.getDevice.query({ deviceId: id }),
-          BATTERY_READ_TIMEOUT_MS,
-          'getDevice',
-        ).catch(() => null)
-        if (!dev) return null
-        return dev.features.includes(DeviceFeature.BatteryOperated)
-      },
-      readBatteryFacts: async (id) => {
-        const slice = await withDeadline(
-          api.deviceState.getCapSlice.query({
-            deviceId: id,
-            capName: batteryCapability.name,
-          }),
-          BATTERY_READ_TIMEOUT_MS,
-          'getCapSlice',
-        ).catch(() => null)
-        const parsed = BatteryStatusSchema.safeParse(slice)
-        if (!parsed.success) return null
-        return {
-          sleeping: parsed.data.sleeping,
-          lastContactAt: parsed.data.lastContactAt,
-        }
-      },
-      wakeForStream: async (id, timeoutMs) =>
-        api.battery.wakeForStream.mutate({ deviceId: id, timeoutMs }),
-      nowMs: () => this.now(),
-    })
+    const result = await wakeForRecording(
+      deviceId,
+      recordingWakeDeps(api, BATTERY_READ_TIMEOUT_MS, () => this.now()),
+    )
 
     if (result.outcome === 'not-battery' || result.outcome === 'unknown') return
 

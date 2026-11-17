@@ -27,9 +27,6 @@ export const CAP_INPUT_DEFAULTS: Readonly<
     "pullEncoded": {"maxCount":8},
     "pullPcm": {"maxCount":8},
   },
-  "battery": {
-    "wakeForStream": {"timeoutMs":8000},
-  },
   "control": {
     "next": {"cycle":true},
     "previous": {"cycle":true},
@@ -61,6 +58,9 @@ export const CAP_INPUT_DEFAULTS: Readonly<
   "llm-runtime": {
     "complete": {"runtime":{"__nested__":{"contextSize":4096,"gpuLayers":0,"parallel":1,"flashAttention":false,"mlock":false,"noMmap":false,"extraArgs":[],"autoStart":false,"idleStopMinutes":30}}},
     "ensureStarted": {"runtime":{"__nested__":{"contextSize":4096,"gpuLayers":0,"parallel":1,"flashAttention":false,"mlock":false,"noMmap":false,"extraArgs":[],"autoStart":false,"idleStopMinutes":30}}},
+  },
+  "low-power-sleep": {
+    "wakeUp": {"timeoutMs":8000},
   },
   "media-player": {
     "channelDown": {"steps":1},

@@ -71,7 +71,7 @@ export type SleepCommitSource =
  * costs when we get them wrong.
  *
  * `→ awake` (`WAKE_HYSTERESIS_MS`): expensive if wrong. Believing an asleep
- * camera is awake un-gates every background probe and makes `wakeForStream`
+ * camera is awake un-gates every background probe and makes `wakeUp`
  * early-out without actually waking. Keep the window >= the library's UDP
  * inference cycle (~12 s on battery cams with idle-disconnect) and >= its
  * `getIdleDisconnectTimeoutMs` (30 s default).
@@ -148,7 +148,7 @@ function isSummarySourced(source: SleepCommitSource): boolean {
  *     the anti-flap window does not apply to it at all.
  *  3. A `confirmed-wake` in the `→ awake` direction is first-hand evidence
  *     this process produced: gating it with the anti-flap window is what
- *     stranded 3825's mirror on "asleep" while `wakeForStream` answered
+ *     stranded 3825's mirror on "asleep" while `wakeUp` answered
  *     `awoke: true`.
  *  4. Everything else is subject to the asymmetric hysteresis.
  *  5. A summary flip toward `sleeping` is refused while a first-hand
