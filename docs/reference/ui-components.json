@@ -3985,7 +3985,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedPlugCard.tsx",
-      "summary": "The plug card of a real device: `switch`, and `timed-run` when the device binds it.",
+      "summary": "The plug card of a real device: `switch`, `timed-run` when the device binds it, and the switch's native power cycle when its provider declares one.",
       "props": [
         {
           "name": "deviceId",
@@ -13940,7 +13940,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/plug/PlugCard.tsx",
-      "summary": "The plug: on / off, the switch's timed run, and what the shell shows for any device.",
+      "summary": "The plug: on / off, the switch's timed run, a two-step restart when the switch declares a native power cycle, and what the shell shows for any device.",
       "props": [
         {
           "name": "model",

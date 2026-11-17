@@ -19,6 +19,7 @@ function plugActions(): PlugCardActions {
     onPower: vi.fn(),
     onTimerStart: vi.fn(),
     onTimerStop: vi.fn(),
+    onPowerCycle: vi.fn(),
     onSupply: vi.fn(),
     onConsumableReset: vi.fn(),
     onRemoteKey: vi.fn(),
@@ -171,6 +172,36 @@ describe('plug scene — the zones of each mockup variant', () => {
     render(<PlugCard model={fixture.model} actions={actions} />)
     fireEvent.click(screen.getByTestId('dc-plug-power'))
     expect(actions.onPower).toHaveBeenCalledWith(false)
+  })
+
+  it('draws no restart when the switch declares no power cycle', () => {
+    const [fixture] = plugFixtures(NOW)
+    if (fixture === undefined) throw new Error('no plug fixture')
+    render(<PlugCard model={{ ...fixture.model, powerCycle: false }} actions={plugActions()} />)
+    expect(present('dc-plug-restart')).toBe(false)
+  })
+
+  it('power-cycles a switch that declares it, only after the confirmation', () => {
+    const [fixture] = plugFixtures(NOW)
+    if (fixture === undefined) throw new Error('no plug fixture')
+    const actions = plugActions()
+    render(<PlugCard model={{ ...fixture.model, powerCycle: true }} actions={actions} />)
+    fireEvent.click(screen.getByTestId('dc-plug-restart'))
+    expect(actions.onPowerCycle).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId('dc-plug-restart'))
+    expect(actions.onPowerCycle).toHaveBeenCalledTimes(1)
+    expect(actions.onPower).not.toHaveBeenCalled()
+  })
+
+  it('a read-only viewer cannot power-cycle', () => {
+    const [fixture] = plugFixtures(NOW)
+    if (fixture === undefined) throw new Error('no plug fixture')
+    const actions = plugActions()
+    const common = readOnly(fixture.model.common)
+    render(<PlugCard model={{ ...fixture.model, common, powerCycle: true }} actions={actions} />)
+    fireEvent.click(screen.getByTestId('dc-plug-restart'))
+    fireEvent.click(screen.getByTestId('dc-plug-restart'))
+    expect(actions.onPowerCycle).not.toHaveBeenCalled()
   })
 })
 

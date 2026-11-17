@@ -10266,7 +10266,8 @@
         "startAria": "Accendi per {{duration}}, poi spegni",
         "stop": "Ferma",
         "stopAria": "Ferma il ciclo a tempo e spegni",
-        "hours": "{{h}} h"
+        "hours": "{{h}} h",
+        "restart": "Riavvia"
       },
       "climate": {
         "cooling": "Raffresca",

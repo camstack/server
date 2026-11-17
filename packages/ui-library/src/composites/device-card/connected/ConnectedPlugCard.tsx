@@ -2,6 +2,7 @@ import type { ReactElement } from 'react'
 import { PlugCard } from '../scenes/plug/PlugCard'
 import type { CardOrientation } from '../shell/model'
 import { useCardCommon } from './use-card-common'
+import { usePowerCycle } from './use-power-cycle'
 import { useSwitchPower } from './use-switch-power'
 
 export interface ConnectedCardProps {
@@ -15,7 +16,10 @@ export interface ConnectedCardProps {
   readonly showName?: boolean
 }
 
-/** The plug card of a real device: `switch`, and `timed-run` when the device binds it. */
+/**
+ * The plug card of a real device: `switch`, `timed-run` when the device binds it,
+ * and the switch's native power cycle when its provider declares one.
+ */
 export function ConnectedPlugCard({
   deviceId,
   canActuate = true,
@@ -25,17 +29,25 @@ export function ConnectedPlugCard({
 }: ConnectedCardProps): ReactElement | null {
   const card = useCardCommon({ deviceId, canActuate })
   const power = useSwitchPower({ deviceId, optimistic, card })
+  const cycle = usePowerCycle({ deviceId, card })
   if (!power.bound || power.on === undefined) return null
   return (
     <PlugCard
       orientation={orientation}
       showName={showName}
-      model={{ common: card.common, on: power.on, since: power.since, timer: power.timer }}
+      model={{
+        common: card.common,
+        on: power.on,
+        since: power.since,
+        timer: power.timer,
+        powerCycle: cycle.declared,
+      }}
       actions={{
         ...card.actions,
         onPower: power.onPower,
         onTimerStart: power.onTimerStart,
         onTimerStop: power.onTimerStop,
+        onPowerCycle: cycle.onPowerCycle,
       }}
     />
   )

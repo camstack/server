@@ -55,7 +55,10 @@ import { heaterFixtures } from '../../../../packages/ui-library/src/composites/d
 import { heatPumpFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/heat-pump'
 import { lightFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/light'
 import { mediaFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/media'
-import { plugFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
+import {
+  plugFixtures,
+  plugPowerCycleFixtures,
+} from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/plug'
 import { robotFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/robot'
 import { waterHeaterFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/water-heater'
 import { irFixtures } from '../../../../packages/ui-library/src/composites/device-card/__fixtures__/ir'
@@ -97,7 +100,12 @@ function HistoryActuations(): ReactElement {
 }
 
 const noop = (): void => undefined
-const PLUG_ACTIONS: PlugCardActions = { onPower: noop, onTimerStart: noop, onTimerStop: noop }
+const PLUG_ACTIONS: PlugCardActions = {
+  onPower: noop,
+  onTimerStart: noop,
+  onTimerStop: noop,
+  onPowerCycle: noop,
+}
 const CLIMATE_ACTIONS: ClimateCardActions = {
   onPower: noop,
   onTarget: noop,
@@ -418,7 +426,7 @@ export function DeviceCardPreview(): ReactElement {
             </Cell>
           ))
         ) : (
-          plugFixtures().map((f) => (
+          [...plugFixtures(), ...plugPowerCycleFixtures()].map((f) => (
             <Cell key={f.id} id={f.id} caption={f.caption} wide={f.orientation === 'horizontal'}>
               <PlugCard model={f.model} actions={PLUG_ACTIONS} orientation={f.orientation} />
             </Cell>

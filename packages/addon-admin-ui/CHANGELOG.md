@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Adds the Restart / Riavvia label for the plug card's power-cycle button.
+
 ## [1.2.694] - 2026-11-17
 
 ### Changed
