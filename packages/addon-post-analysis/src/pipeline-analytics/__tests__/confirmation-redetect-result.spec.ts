@@ -12,17 +12,27 @@ describe('toConfirmationDetections', () => {
       width: 200,
       height: 100,
       detections: [],
-      discarded: [{ macroClass: 'person', score: 0.55, reason: 'below-threshold' }],
+      discarded: [
+        { bbox: [20, 10, 120, 60], macroClass: 'person', score: 0.55, reason: 'below-threshold' },
+      ],
     })
-    expect(out).toEqual([{ macroClass: 'person', score: 0.55, refusedByDetectorFloor: true }])
+    // Placed exactly like a kept box: `[x1, y1, x2, y2]` in crop px, normalised.
+    expect(out).toEqual([
+      {
+        macroClass: 'person',
+        score: 0.55,
+        refusedByDetectorFloor: true,
+        bbox: { x: 0.1, y: 0.1, w: 0.5, h: 0.5 },
+      },
+    ])
   })
 
   it('leaves out discards that are not a score the gate could use', () => {
     const out = toConfirmationDetections({
       detections: [],
       discarded: [
-        { macroClass: 'person', score: 0.9, reason: 'class-filter' },
-        { macroClass: 'vehicle', score: 0.3, reason: 'full-frame-guard' },
+        { bbox: [0, 0, 10, 10], macroClass: 'person', score: 0.9, reason: 'class-filter' },
+        { bbox: [0, 0, 10, 10], macroClass: 'vehicle', score: 0.3, reason: 'full-frame-guard' },
       ],
     })
     expect(out).toEqual([])

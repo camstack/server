@@ -110,7 +110,15 @@ function coralExecutor(calls: ExecutorCall[]): FakePipelineExecutor {
           width: 320,
           height: 320,
           detections: [],
-          discarded: [{ macroClass: 'person', score: 0.45, reason: 'below-threshold' }],
+          // On the subject: its window is the whole 640×480 frame at 320×320.
+          discarded: [
+            {
+              bbox: [150, 133, 180, 240],
+              macroClass: 'person',
+              score: 0.45,
+              reason: 'below-threshold',
+            },
+          ],
           rootModelId: CORAL_ROOT.rootModelId,
           rootDeviceKey: CORAL_ROOT.rootDeviceKey,
         }

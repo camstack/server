@@ -91,6 +91,22 @@ describe('a compatible box confirms only when it IS the subject', () => {
     expect(decision.bestScore).toBe(0.6)
   })
 
+  it('a neighbour the detector floor REFUSED does not confirm from off the subject', async () => {
+    // 1441: the second walker scored 0.56 — under the 0.65 person floor, over
+    // the gate's 0.4 bar. Refused boxes are judged on the gate's bar (D925),
+    // so where it is must decide, exactly as for a kept box.
+    const decision = await decide(
+      deps([{ macroClass: 'person', score: 0.56, bbox: NEIGHBOUR, refusedByDetectorFloor: true }]),
+    )
+    expect(decision.verdict).toBe('suppressed')
+    expect(decision.bestScore).toBeUndefined()
+  })
+
+  it('on the context window a box with no place never confirms', async () => {
+    const decision = await decide(deps([{ macroClass: 'person', score: 0.9 }]))
+    expect(decision.verdict).toBe('suppressed')
+  })
+
   it('the phantom-cell raised bar faces the subject, not the neighbour', async () => {
     const decision = await decide(
       deps(

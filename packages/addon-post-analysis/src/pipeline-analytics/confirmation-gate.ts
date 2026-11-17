@@ -529,8 +529,11 @@ async function measure(
   let bestIncompatible: ConfirmationDetection | undefined
   // WHERE a box is decides whether it is about this birth (see
   // `CONFIRMATION_SUBJECT_MIN_IOU`): a compatible box must BE the subject, an
-  // incompatible one must touch the old tight crop. A box that cannot be
-  // placed (no bbox, no rectangle) is judged by class alone, as before.
+  // incompatible one must touch the old tight crop. On a native or fallback
+  // context window a box with no place counts for nothing. Class alone is
+  // judged only where there is no geometry to judge by: a caller that supplies
+  // no `cropRectFor`, and the CARRIED crop, which is the tight box + 15% (the
+  // view the old class-only rule was written for).
   const placement = placementFor(candidate, cropSource, deps)
   //
   // ONE RULE (D925): the GATE'S bar decides every compatible box, kept or
@@ -613,9 +616,10 @@ function placementFor(
   const rect = deps.cropRectFor?.(candidate, cropSource) ?? null
   if (rect === null || rect.w <= 0 || rect.h <= 0) return { admits: () => true }
   const scope = deps.promotionScopeFor?.(candidate) ?? null
+  const classAloneWhenUnplaced = cropSource === 'carried'
   return {
     admits: (detection, compatible) => {
-      if (detection.bbox === undefined) return true
+      if (detection.bbox === undefined) return classAloneWhenUnplaced
       const inFrame = cropBoxToFrame(detection.bbox, rect)
       if (compatible) return iou(inFrame, candidate.bbox) >= CONFIRMATION_SUBJECT_MIN_IOU
       return scope === null || intersectionArea(inFrame, scope) > 0
