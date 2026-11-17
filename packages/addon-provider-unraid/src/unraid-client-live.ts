@@ -25,6 +25,8 @@ import type {
   UnraidContainerState,
   UnraidCpuInfo,
   UnraidNotificationsInfo,
+  UnraidServerInfo,
+  UnraidSystemInfo,
   UnraidVmInfo,
   UnraidVmState,
 } from './unraid-client-contract.js'
@@ -50,6 +52,35 @@ export class UnraidClientError extends Error {
 }
 
 /** The subset of the `node-unraid` `UnraidClient` the adapter reads; the real client satisfies it. */
+/** The slice of node-unraid's `SystemInfo` the client reads. */
+export interface UnraidApiSystemInfo {
+  readonly os?: { readonly hostname?: string | null } | null
+  readonly system?: { readonly uuid?: string | null } | null
+  readonly devices?: {
+    readonly network?: ReadonlyArray<{
+      readonly iface: string
+      readonly mac?: string | null
+    }> | null
+  } | null
+}
+
+/** Interfaces that are the machine's own hardware — not a bridge, a container veth or a VM tap. */
+const PHYSICAL_IFACE = /^(?:eth|en|wl|bond)/
+
+function physicalMacs(info: UnraidApiSystemInfo | undefined): readonly string[] {
+  const macs: string[] = []
+  for (const nic of info?.devices?.network ?? []) {
+    const mac = nic.mac?.trim() ?? ''
+    if (PHYSICAL_IFACE.test(nic.iface) && mac.length > 0) macs.push(mac)
+  }
+  return macs
+}
+
+function blankToNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ''
+  return trimmed.length > 0 ? trimmed : null
+}
+
 export interface UnraidApiSource {
   readonly array: {
     get(): Promise<ArrayInfo>
@@ -84,7 +115,11 @@ export interface UnraidApiSource {
   readonly system: {
     versions(): Promise<unknown>
     cpu$(): AsyncIterable<CpuMetrics>
-    info?(): Promise<{ readonly os?: { readonly hostname?: string | null } | null }>
+    info?(): Promise<UnraidApiSystemInfo>
+  }
+  /** `server.info()`: the flash GUID and LAN IP (or null when unavailable). */
+  readonly server?: {
+    info(): Promise<{ readonly guid?: string | null; readonly lanip?: string | null } | null>
   }
   readonly notifications: {
     warningsAndAlerts(): Promise<Notification[]>
@@ -327,14 +362,28 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
       ...(api.system.info !== undefined
         ? {
             info: () =>
-              guard(async () => {
+              guard(async (): Promise<UnraidSystemInfo> => {
                 const info = await api.system.info?.()
-                const hostname = info?.os?.hostname?.trim() ?? ''
-                return { hostname: hostname.length > 0 ? hostname : null }
+                return {
+                  hostname: blankToNull(info?.os?.hostname),
+                  machineUuid: blankToNull(info?.system?.uuid),
+                  macs: physicalMacs(info),
+                }
               }),
           }
         : {}),
     },
+    ...(api.server !== undefined
+      ? {
+          server: {
+            info: () =>
+              guard(async (): Promise<UnraidServerInfo> => {
+                const info = await api.server?.info()
+                return { flashGuid: blankToNull(info?.guid), lanIp: blankToNull(info?.lanip) }
+              }),
+          },
+        }
+      : {}),
     notifications: {
       active: () =>
         guard(async () => mapNotifications(await api.notifications.warningsAndAlerts())),

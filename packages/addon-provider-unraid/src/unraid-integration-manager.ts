@@ -3,6 +3,7 @@ import type { UnraidConnectionConfig } from './config.js'
 import type {
   UnraidClientFactory,
   UnraidClientLike,
+  UnraidServerIdentity,
   UnraidSnapshot,
 } from './unraid-client-contract.js'
 
@@ -221,13 +222,13 @@ async function fetchSnapshot(
   client: UnraidClientLike,
   onSectionFailed: (section: UnraidSnapshotSection) => (error: string) => void,
 ): Promise<UnraidSnapshot> {
-  const [array, cpu, dockers, vms, notifications, hostname] = await Promise.all([
+  const [array, cpu, dockers, vms, notifications, identity] = await Promise.all([
     client.array.get(),
     client.system.cpu(),
     readSection(() => client.docker.list(), onSectionFailed('dockers')),
     readSection(() => client.vms.list(), onSectionFailed('vms')),
     client.notifications.active(),
-    readHostname(client),
+    readIdentity(client),
   ])
   return {
     array,
@@ -236,7 +237,8 @@ async function fetchSnapshot(
     dockers,
     vms,
     notifications,
-    ...(hostname !== null ? { hostname } : {}),
+    ...(identity.hostname !== null ? { hostname: identity.hostname } : {}),
+    identity,
   }
 }
 
@@ -257,13 +259,21 @@ async function readSection<T>(
   }
 }
 
-/** A missing or failed hostname read leaves the gateway named "Unraid". */
-async function readHostname(client: UnraidClientLike): Promise<string | null> {
-  if (client.system.info === undefined) return null
-  try {
-    const hostname = (await client.system.info()).hostname?.trim() ?? ''
-    return hostname.length > 0 ? hostname : null
-  } catch {
-    return null
+/**
+ * The server's identity (D1059). A missing or failed read is `systemRead` / `serverRead`
+ * false — its values unknown, and the gateway named "Unraid" — and never fails the poll.
+ */
+async function readIdentity(client: UnraidClientLike): Promise<UnraidServerIdentity> {
+  const system =
+    client.system.info === undefined ? null : await client.system.info().catch(() => null)
+  const server = client.server === undefined ? null : await client.server.info().catch(() => null)
+  return {
+    systemRead: system !== null,
+    machineUuid: system?.machineUuid ?? null,
+    macs: system?.macs ?? [],
+    hostname: system?.hostname ?? null,
+    serverRead: server !== null,
+    flashGuid: server?.flashGuid ?? null,
+    lanIp: server?.lanIp ?? null,
   }
 }

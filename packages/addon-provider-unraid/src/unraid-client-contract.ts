@@ -168,6 +168,40 @@ export interface UnraidSnapshot {
   readonly notifications: UnraidNotificationsInfo
   /** Hostname from `system.info()`, when the client reported one. */
   readonly hostname?: string | null
+  /** What the server says it IS (D1059), read each poll; absent from a client that cannot read it. */
+  readonly identity?: UnraidServerIdentity
+}
+
+/**
+ * The server's identity as one poll read it (D1059). `systemRead` / `serverRead` say whether
+ * `system.info()` / `server.info()` answered: a value of a read that FAILED is unknown, never
+ * absent.
+ */
+export interface UnraidServerIdentity {
+  readonly systemRead: boolean
+  /** SMBIOS system uuid, or null when the board reports none. */
+  readonly machineUuid: string | null
+  /** MACs of the physical network interfaces (`eth*`, `en*`, `wl*`, `bond*`). */
+  readonly macs: readonly string[]
+  readonly hostname: string | null
+  readonly serverRead: boolean
+  /** The flash (license) GUID, or null. */
+  readonly flashGuid: string | null
+  /** The LAN IP the server reports, or null. */
+  readonly lanIp: string | null
+}
+
+/** What `system.info()` reads. */
+export interface UnraidSystemInfo {
+  readonly hostname: string | null
+  readonly machineUuid: string | null
+  readonly macs: readonly string[]
+}
+
+/** What `server.info()` reads. */
+export interface UnraidServerInfo {
+  readonly flashGuid: string | null
+  readonly lanIp: string | null
 }
 
 /** Array read + control domain — mirrors the real `ArrayDomain` subset. */
@@ -215,8 +249,13 @@ export interface UnraidVmsDomainLike {
 export interface UnraidSystemDomainLike {
   /** The live host CPU reading (percent + optional temperature + power). */
   cpu(): Promise<UnraidCpuInfo>
-  /** Hostname from the server, when the client can read it. */
-  info?(): Promise<{ readonly hostname: string | null }>
+  /** Hostname, SMBIOS uuid and NIC MACs from the server, when the client can read them. */
+  info?(): Promise<UnraidSystemInfo>
+}
+
+/** Server domain — the flash GUID and LAN IP (`server.info()`). */
+export interface UnraidServerDomainLike {
+  info(): Promise<UnraidServerInfo>
 }
 
 /** Notifications domain — mirrors the real `NotificationsDomain` subset. */
@@ -241,6 +280,8 @@ export interface UnraidClientLike {
   readonly vms: UnraidVmsDomainLike
   readonly system: UnraidSystemDomainLike
   readonly notifications: UnraidNotificationsDomainLike
+  /** Absent from a client that cannot read the server's identity. */
+  readonly server?: UnraidServerDomainLike
 }
 
 /** Connection inputs the factory needs to build a live {@link UnraidClientLike}. */

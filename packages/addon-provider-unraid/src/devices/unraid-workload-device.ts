@@ -17,6 +17,7 @@ import {
   type UnraidWorkloadRef,
   UnraidWorkloadRefSchema,
 } from '../unraid-discovery.js'
+import { UnraidIdentityDeclarer, unraidVmIdentifiers } from '../unraid-identifiers.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
 import {
   answeringSnapshot,
@@ -66,6 +67,8 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
   private readonly integrationId: string
   private readonly ref: UnraidWorkloadRef
   private snapshotUnsub: (() => void) | null = null
+  private identityUnsub: (() => void) | null = null
+  private readonly identity: UnraidIdentityDeclarer
 
   constructor(ctx: DeviceContext) {
     const cfg = unraidWorkloadSchema.parse(ctx.persistedConfig ?? {})
@@ -73,6 +76,11 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
     super(ctx, unraidWorkloadSchema, { type: ctx.deviceMeta.type })
     this.integrationId = cfg.integrationId
     this.ref = cfg.workload
+    this.identity = new UnraidIdentityDeclarer({
+      deviceId: this.id,
+      logger: ctx.logger,
+      writer: ctx.api.deviceManager?.setIdentifiers,
+    })
     this.online = unraidInstances.getSnapshot(cfg.integrationId) !== null
     void this.updateSourceInfo({
       id: `${cfg.integrationId}:${cfg.nativeId}`,
@@ -82,6 +90,15 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // A VM declares its domain uuid (D1059), whatever the device type; a container has none.
+    if (this.ref.kind === 'vm') {
+      const declareIdentity = (): void => {
+        const match = this.match()
+        void this.identity.declare(unraidVmIdentifiers(match?.kind === 'vm' ? match.vm : null))
+      }
+      this.identityUnsub = unraidInstances.onSnapshot(this.integrationId, declareIdentity)
+      declareIdentity()
+    }
     // The cap is gated to `workload` devices; a legacy Generic row keeps none.
     if (this.type !== DeviceType.Workload) return
     const provider = this.buildProvider()
@@ -98,6 +115,8 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
   override async removeDevice(): Promise<void> {
     this.snapshotUnsub?.()
     this.snapshotUnsub = null
+    this.identityUnsub?.()
+    this.identityUnsub = null
     await super.removeDevice()
   }
 
