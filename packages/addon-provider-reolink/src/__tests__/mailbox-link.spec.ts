@@ -19,6 +19,9 @@ async function world() {
   const instances = buildReolinkInstances(mem.records, {
     onChanged: async () => undefined,
     registryEvidenceOf: async () => null,
+    makeHubProbe: () => {
+      throw new Error('no hub probe in this spec')
+    },
   })
   await instances.createInstance({ id: 'int-default', name: 'Reolink' })
   await instances.createInstance({ id: 'int-nvr', name: 'NVR' })

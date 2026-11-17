@@ -92,6 +92,7 @@ import {
   readHubConnections,
   reolinkRecordKinds,
 } from './reolink-instances.js'
+import { liveReolinkHubProbe } from './reolink-connection-test.js'
 import { buildReolinkAdoptionProvider } from './reolink-adoption-provider.js'
 import {
   mapReolinkDiscoveryToCandidates,
@@ -993,6 +994,7 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
     const instances = buildReolinkInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
       registryEvidenceOf,
+      makeHubProbe: liveReolinkHubProbe,
     })
     this.instances = instances
     this.hubIntegrationProbe = (id) => integrationIsHub(instances, { registryEvidenceOf }, id)

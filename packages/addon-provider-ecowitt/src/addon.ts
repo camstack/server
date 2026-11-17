@@ -33,6 +33,7 @@ import {
   EcowittGatewayDevice,
 } from './devices/ecowitt-gateway-device.js'
 import { buildEcowittAdoptionProvider } from './ecowitt-adoption-provider.js'
+import { liveEcowittProbe } from './ecowitt-connection-test.js'
 import { EcowittClientRegistry, ecowittConnections } from './ecowitt-client-registry.js'
 import { gatewayDeviceNativeId } from './ecowitt-discovery.js'
 import { ecowittFacades } from './ecowitt-gateway.js'
@@ -106,6 +107,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     await records.declare(ecowittRecordKinds)
     const instances = buildEcowittInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
+      makeProbe: liveEcowittProbe,
     })
     this.instances = instances
     // The rows move BEFORE the instances provider registers (below): while it is registered the

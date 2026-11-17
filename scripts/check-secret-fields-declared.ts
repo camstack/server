@@ -86,8 +86,12 @@ export const ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([
     'Modal token id (public half of the pair); the secret is `tokenSecret` (password field)',
   ],
   [
-    'packages/addon-mqtt-broker/src/mqtt-broker.addon.ts#passwordHash',
-    'a bcrypt hash (one-way), shown so the operator can paste one in; keychain P2 decides',
+    'packages/addon-mqtt-broker/src/mqtt-embedded-instances.ts#passwordHash',
+    'a bcrypt hash (one-way, cost 10) the operator pastes into the `mqtt-client` record form; it cannot be turned back into the password, and the broker compares against it on every CONNECT',
+  ],
+  [
+    'packages/addon-mqtt-broker/src/migrations/clients-acl-to-records.ts#passwordHash',
+    'parses the legacy `embeddedClients` list (bcrypt hashes, one-way) once, to move it into `mqtt-client` records; not a config field',
   ],
   [
     'packages/addon-export-alexa/src/handlers/data-controller.ts#nextToken',
@@ -105,6 +109,10 @@ export const ALLOWLIST: ReadonlyMap<string, string> = new Map<string, string>([
   [
     'packages/addon-admin-ui/src/pages/EmbedPlayerPage.tsx#token',
     'embed bootstrap message from the host page; validated, never persisted',
+  ],
+  [
+    'packages/addon-admin-ui/src/pages/embed-device-host.ts#token',
+    'renewed access token in a `set-token` postMessage from the embedding host page; validated, handed to the session, never a config field',
   ],
   [
     'packages/addon-cloudflare/src/tunnel/cloudflare-actions.ts#token',
