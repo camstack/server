@@ -59,7 +59,8 @@ export class EnpalGatewayDevice extends BaseDevice<typeof enpalGatewaySchema> {
       getSnapshot: () => enpalConnections.getSnapshot(this.integrationId),
       write: async (patch) => {
         await this.ctx.api.deviceManager.setMetadata.mutate({ deviceId: this.id, patch })
-        await this.declareIdentifiers(enpalIdentifiers(patch))
+        const declared = enpalIdentifiers(patch)
+        await this.declareIdentifiers(declared.identifiers, { unread: declared.unread })
       },
       logger: this.ctx.logger,
     })

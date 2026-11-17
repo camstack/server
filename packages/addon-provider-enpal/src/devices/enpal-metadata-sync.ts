@@ -1,4 +1,9 @@
-import { errMsg, type IScopedLogger, type RawDeviceIdentifiers } from '@camstack/types'
+import {
+  type DeviceIdentifierKey,
+  errMsg,
+  type IScopedLogger,
+  type RawDeviceIdentifiers,
+} from '@camstack/types'
 import { findEquipment, metadataOf } from '../enpal-equipment.js'
 import type { EnpalSnapshot } from '../enpal-snapshot.js'
 
@@ -39,14 +44,27 @@ export class EnpalMetadataSync {
   }
 }
 
+/** What a piece declares (D1059): its identifiers, and the kinds its attributes did not answer. */
+export interface EnpalIdentifierDeclaration {
+  readonly identifiers: RawDeviceIdentifiers
+  readonly unread: readonly DeviceIdentifierKey[]
+}
+
 /**
  * The identifiers (D1059) a piece's attributes carry: its own `serialNumber`,
  * prefixed by the vendor. The serials of parts it reports about (battery,
  * dongle, gateway) belong to other objects and are not this device's identity.
+ * A serial never legitimately disappears, so attributes without one leave
+ * `serial` unread: the stored serial is kept, never removed (D49).
  */
 export function enpalIdentifiers(
   attributes: Readonly<Record<string, string>>,
-): RawDeviceIdentifiers {
+): EnpalIdentifierDeclaration {
   const serial = attributes['serialNumber']
-  return { serial: serial === undefined ? null : { manufacturer: 'Enpal', serial } }
+  return serial === undefined
+    ? { identifiers: { serial: null }, unread: ['serial'] }
+    : {
+        identifiers: { serial: { manufacturer: 'Enpal', serial } },
+        unread: [],
+      }
 }

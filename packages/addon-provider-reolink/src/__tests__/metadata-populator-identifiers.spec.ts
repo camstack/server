@@ -14,13 +14,12 @@
 import { ReolinkBaichuanApi, type ReolinkDeviceInfo } from '@apocaliss92/nodelink-js'
 import {
   mergeIdentifiers,
-  type DeviceContext,
   type DeviceIdentifiers,
   type IScopedLogger,
   type SetIdentifiersInput,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { populateReolinkMetadata } from '../metadata-populator.js'
+import { type MetadataPopulatorContext, populateReolinkMetadata } from '../metadata-populator.js'
 
 const INFO: ReolinkDeviceInfo = {
   type: 'RLC-811A',
@@ -66,8 +65,7 @@ function makeTarget(world: StoredWorld) {
       },
     },
   }
-  // The populator touches only `logger` and `api.deviceManager` of the device context.
-  const ctx = { logger: makeLogger(), api } as unknown as DeviceContext
+  const ctx: MetadataPopulatorContext = { logger: makeLogger(), api }
   return {
     id: 11,
     ctx,

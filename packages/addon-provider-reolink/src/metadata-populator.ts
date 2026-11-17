@@ -36,13 +36,34 @@
 import type { ReolinkBaichuanApi, ReolinkDeviceInfo } from '@apocaliss92/nodelink-js'
 import {
   declareDeviceIdentifiers,
-  type DeviceContext,
   type DeviceIdentifierKey,
+  type IdentifiersWriter,
+  type IScopedLogger,
 } from '@camstack/types'
+
+/** The `device-manager.setMetadata` input this populator sends. */
+export interface MetadataPatchInput {
+  readonly deviceId: number
+  readonly patch: Record<string, unknown>
+}
+
+/** The slice of `ctx.api.deviceManager` the populator writes through. */
+export interface MetadataPopulatorWriters {
+  readonly setMetadata?: {
+    mutate(input: MetadataPatchInput): Promise<unknown>
+  }
+  readonly setIdentifiers?: IdentifiersWriter
+}
+
+/** The slice of the device context the populator uses; a `DeviceContext` satisfies it. */
+export interface MetadataPopulatorContext {
+  readonly logger: IScopedLogger
+  readonly api: { readonly deviceManager?: MetadataPopulatorWriters }
+}
 
 export interface MetadataPopulatorTarget {
   readonly id: number
-  readonly ctx: DeviceContext
+  readonly ctx: MetadataPopulatorContext
   /** Existing deviceCache patch helper. Both classes use BaseDevice's
    *  `this.config.setAll(partial)` API. */
   readonly setDeviceCachePatch: (cachePatch: Record<string, unknown>) => Promise<void>
@@ -164,20 +185,10 @@ export async function populateReolinkMetadata(
     ...(channelCount !== undefined ? { channelCount } : {}),
   }
   try {
-    await (
-      target.ctx.api as
-        | {
-            deviceManager?: {
-              setMetadata?: {
-                mutate?: (input: {
-                  deviceId: number
-                  patch: Record<string, unknown>
-                }) => Promise<void>
-              }
-            }
-          }
-        | undefined
-    )?.deviceManager?.setMetadata?.mutate?.({ deviceId: target.id, patch })
+    await target.ctx.api.deviceManager?.setMetadata?.mutate({
+      deviceId: target.id,
+      patch,
+    })
     target.ctx.logger.info('populateReolinkMetadata: metadata patched', {
       tags: { deviceId: target.id },
       meta: {
