@@ -1146,6 +1146,8 @@ export function createDeviceProxy(
 
   const switchInterface = {
     setState: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'setState', 'mutation', input, undefined, options),
+    getOptions: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'getOptions', 'query', input, undefined, options),
+    powerCycle: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'powerCycle', 'mutation', input, undefined, options),
     toggle: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'toggle', 'mutation', input, undefined, options),
     getStatus: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('switch', 'switch', 'getStatus', 'query', input, undefined, options),
   }

@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - API routes for the new workload capability
 - API route for the siren's play choices
 
+### Changed
+
+- Routes for switch getOptions and powerCycle.
+
 ## [1.2.890] - 2026-11-16
 
 ### Changed

@@ -42,6 +42,9 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'toggle-right',
       },
     ],
+    notOperatorFacing: {
+      powerCycle: 'a power cycle is the forced restart of the device the switch powers (power-source), never a step of its own',
+    },
     state: [
       {
         kind: 'boolean',

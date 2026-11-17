@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType, SWITCH_DEFAULT_OPTIONS } from '@camstack/types'
 import type { IScopedLogger } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { HeroLayoutService, type HeroLayoutReader } from '../hero-layout-service.js'
@@ -38,6 +38,7 @@ function service(reader: Partial<HeroLayoutReader>, logs: Logged[] = []): HeroLa
       caps: async () => ['switch'],
       slice: async () => ({ on: true, lastChangedAt: 1 }),
       remoteCommands: async () => 0,
+      switchOptions: async () => SWITCH_DEFAULT_OPTIONS,
       ...reader,
     },
   })
@@ -52,6 +53,20 @@ describe('hero-layout provider', () => {
     expect(heater.rows).toEqual(['run-for', 'cycle'])
     const plain = await service({}).getLayout({ deviceType: DeviceType.Switch })
     expect(plain.rows).not.toContain('run-for')
+  })
+
+  it('a switch whose provider says it cannot be set offers no on/off', async () => {
+    const model = await service({
+      switchOptions: async () => ({ supportsSetState: false, supportsPowerCycle: true }),
+    }).getHeroModel({ deviceId: 7 })
+    expect(model?.ownPower).toBeNull()
+  })
+
+  it('a switch whose options cannot be read is a plain on/off switch', async () => {
+    const model = await service({
+      switchOptions: async () => Promise.reject(new Error('No procedure found')),
+    }).getHeroModel({ deviceId: 7 })
+    expect(model?.ownPower).not.toBeNull()
   })
 
   it('a numeric sensor reads with the unit of the quantity its device stored', async () => {

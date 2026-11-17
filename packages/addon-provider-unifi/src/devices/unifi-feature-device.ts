@@ -30,6 +30,7 @@ import type { UnifiControllerClient } from '../unifi-client-contract.js'
 import type { UnifiInfraPort } from '../unifi-client-contract.js'
 import { capForMetric, portLabel, portNameWrite, unitForMetric } from '../unifi-mapping.js'
 import { portNetworkLinkStatus, portPowerStatus, portSwitchStatus } from '../unifi-port-state.js'
+import { UnifiUnsupportedError } from '../unifi-errors.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
@@ -53,8 +54,9 @@ const COLD_PRESENCE: PresenceStatus = {
  *                  / enum); a CHILD of an infra Container.
  *   - `presence` → `presence` cap — a network client tracker; a top-level device,
  *                  a sibling of the controller's Gateway.
- *   - `port`     → one PoE port of a switch (a CHILD of it): `power-meter`, `network-link`,
- *                  and `switch` (PoE on/off through the local account) when `switchable`. Its name follows the client on the port
+ *   - `port`     → one PoE port of a switch (a CHILD of it): `power-meter`, `network-link`
+ *                  and `switch` — PoE on/off through the local account when `switchable`,
+ *                  else only a native power cycle (the API key's POWER_CYCLE). Its name follows the client on the port
  *                  unless the operator renamed it; the client's MAC is kept in its config.
  *
  * The slice is fed from the live controller snapshot on each poll tick (and
@@ -199,7 +201,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     if (live === null) return
     if (this.online !== live.online) this.markOnline(live.online)
     const now = Date.now()
-    if (this.switchable) this.runtimeState.setCapState('switch', portSwitchStatus(live.port, now))
+    this.runtimeState.setCapState('switch', portSwitchStatus(live.port, now))
     this.runtimeState.setCapState('power-meter', portPowerStatus(live.port, now))
     this.runtimeState.setCapState('network-link', portNetworkLinkStatus(live.port, now))
     void this.followClient(live.port)
@@ -353,20 +355,11 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   }
 
   private registerPortCaps(): void {
-    if (this.switchable) {
-      const toggle: InferNativeProvider<typeof switchCapability> = {
-        getStatus: async () => this.runtimeState.getCapState<SwitchStatus>('switch') ?? COLD_SWITCH,
-        setState: async ({ on }) => {
-          await this.resolveClient().setPortPoe(this.requireInfraId(), this.requirePortIdx(), on)
-          this.runtimeState.setCapState('switch', {
-            on,
-            lastChangedAt: Date.now(),
-          })
-        },
-      }
-      this.ctx.registerNativeCap(switchCapability, toggle)
-      this.runtimeState.setCapState('switch', COLD_SWITCH)
-    }
+    this.ctx.registerNativeCap(
+      switchCapability,
+      this.switchable ? this.poeToggleProvider() : this.poeCycleProvider(),
+    )
+    this.runtimeState.setCapState('switch', COLD_SWITCH)
     const power: InferNativeProvider<typeof powerMeterCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<PowerMeterStatus>('power-meter') ?? COLD_POWER,
@@ -379,6 +372,46 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     }
     this.ctx.registerNativeCap(networkLinkCapability, link)
     this.runtimeState.setCapState('network-link', NETWORK_LINK_UNKNOWN)
+  }
+
+  /**
+   * A port the local account can switch: PoE on/off. A forced restart through a linked
+   * power-source is off / wait / on, so no native cycle is declared.
+   */
+  private poeToggleProvider(): InferNativeProvider<typeof switchCapability> {
+    return {
+      getStatus: async () => this.runtimeState.getCapState<SwitchStatus>('switch') ?? COLD_SWITCH,
+      getOptions: async () => ({ supportsSetState: true, supportsPowerCycle: false }),
+      setState: async ({ on }) => {
+        await this.resolveClient().setPortPoe(this.requireInfraId(), this.requirePortIdx(), on)
+        this.runtimeState.setCapState('switch', { on, lastChangedAt: Date.now() })
+      },
+    }
+  }
+
+  /**
+   * A port seen only through the API key: it reports PoE on/off but cannot set it. The one
+   * thing it can do is the Integration API's POWER_CYCLE, which a linked power-source's
+   * forced restart uses. No button of its own.
+   */
+  private poeCycleProvider(): InferNativeProvider<typeof switchCapability> {
+    return {
+      getStatus: async () => this.runtimeState.getCapState<SwitchStatus>('switch') ?? COLD_SWITCH,
+      getOptions: async () => ({ supportsSetState: false, supportsPowerCycle: true }),
+      setState: async () => {
+        throw new UnifiUnsupportedError(
+          'poe-toggle',
+          'PoE on/off needs a local account on the UniFi integration; this port can only power-cycle',
+        )
+      },
+      powerCycle: async () => {
+        await this.resolveClient().powerCyclePort(this.requireInfraId(), this.requirePortIdx())
+        this.ctx.logger.info('UniFi PoE port power-cycled', {
+          tags: { deviceId: this.id },
+          meta: { infraId: this.infraNativeId, portIdx: this.portIdx },
+        })
+      },
+    }
   }
 
   private registerSwitchCap(): void {

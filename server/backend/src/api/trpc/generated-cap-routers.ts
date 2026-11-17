@@ -19655,6 +19655,38 @@ export function createCapRouter_switch(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setState(methodInput as any)
       }),
+    getOptions: protectedProcedure
+      .input(switchCapability.methods.getOptions.input.loose())
+      .output(switchCapability.methods.getOptions.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('switch', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.getOptions
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "switch" provider does not implement "getOptions"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
+    powerCycle: protectedProcedure
+      .input(switchCapability.methods.powerCycle.input.loose())
+      .output(switchCapability.methods.powerCycle.output)
+      .mutation(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider('switch', nodeId, () => getProvider(ctx), createRemoteProxy)
+        const fn = p.powerCycle
+        if (typeof fn !== 'function') {
+          throw new TRPCError({
+            code: 'NOT_IMPLEMENTED',
+            message: 'Capability "switch" provider does not implement "powerCycle"',
+          })
+        }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return fn.call(p, methodInput as any)
+      }),
     toggle: protectedProcedure
       .input(switchCapability.methods.toggle.input.loose())
       .output(switchCapability.methods.toggle.output)

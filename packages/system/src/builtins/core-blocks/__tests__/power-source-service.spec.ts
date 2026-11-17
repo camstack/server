@@ -100,9 +100,12 @@ function world(
     offSeconds?: number
     appliance?: boolean
     plugIsActuator?: boolean
+    /** The switch's native cycle: absent = the provider wires none, 'fails' = the call throws. */
+    nativeCycle?: 'declared' | 'not-declared' | 'fails'
   } = {},
 ) {
   const calls: { id: number; on: boolean }[] = []
+  const cycles: number[] = []
   const state = {
     online: opts.online ?? true,
     on: opts.on === undefined ? true : opts.on,
@@ -122,6 +125,16 @@ function world(
       calls.push({ id, on })
       state.on = on
     },
+    ...(opts.nativeCycle === undefined
+      ? {}
+      : {
+          cycle: async (id: number) => {
+            if (opts.nativeCycle === 'fails') throw new Error('POWER_CYCLE refused')
+            if (opts.nativeCycle === 'not-declared') return false
+            cycles.push(id)
+            return true
+          },
+        }),
   }
   const log = recordingLogger()
   const timers = fakeScheduler()
@@ -135,7 +148,7 @@ function world(
     scheduler: timers.scheduler,
     logger: log.logger,
   })
-  return { service, calls, state, log, timers }
+  return { service, calls, cycles, state, log, timers }
 }
 
 describe('forceRestart', () => {
@@ -154,6 +167,37 @@ describe('forceRestart', () => {
       { id: PLUG_ID, on: false },
       { id: PLUG_ID, on: true },
     ])
+  })
+
+  it('uses the switch’s native power cycle once when it declares one, and never switches off/on', async () => {
+    const w = world({ nativeCycle: 'declared' })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({ accepted: true })
+    expect(w.cycles).toEqual([PLUG_ID])
+    expect(w.calls).toEqual([])
+    expect(w.timers.pending).toHaveLength(0)
+    // The native cycle is one call: the restart slot is free again at once.
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({ accepted: true })
+    expect(w.cycles).toEqual([PLUG_ID, PLUG_ID])
+  })
+
+  it('switches off and on when the switch declares no native cycle', async () => {
+    const w = world({ nativeCycle: 'not-declared' })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({ accepted: true })
+    expect(w.cycles).toEqual([])
+    expect(w.calls).toEqual([{ id: PLUG_ID, on: false }])
+    expect(w.timers.pending).toHaveLength(1)
+  })
+
+  it('is refused, with the reason, when the native cycle fails, and switches nothing', async () => {
+    const w = world({ nativeCycle: 'fails' })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toMatchObject({
+      accepted: false,
+      reason: 'switch-call-failed',
+    })
+    expect(w.calls).toEqual([])
+    expect(w.timers.pending).toHaveLength(0)
+    const warn = w.log.lines.find((l) => l.level === 'warn')
+    expect(warn?.extras?.tags).toEqual({ deviceId: GATEWAY_ID })
   })
 
   it('cuts the plug of a composed appliance (a new-target composition)', async () => {

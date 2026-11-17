@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**211 capabilities · 1518 methods.**
+**211 capabilities · 1520 methods.**
 
 ## Method index
 
@@ -1358,6 +1358,8 @@
 | `streamSignals.listSignals` | query | protected | stream-signals |
 | `switch.getStatus` | query | protected | switch (auto) |
 | `switch.setState` | mutation | protected | switch |
+| `switch.getOptions` | query | protected | switch |
+| `switch.powerCycle` | mutation | protected | switch |
 | `switch.toggle` | mutation | protected | switch |
 | `system.info` | query | protected | system |
 | `system.health` | query | protected | system |
@@ -4797,7 +4799,7 @@
 
 ### `switch` → `switch.*`
 
-- **Source:** `packages/types/src/capabilities/switch.cap.ts:30`
+- **Source:** `packages/types/src/capabilities/switch.cap.ts:49`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `switch, siren, light, fan`
 - **Archetypes:** status(command-driven) · runtimeState · settings(1 binding(s))
 - **Provider interface:** `ISwitchProvider`
@@ -4808,6 +4810,8 @@
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `switch.getStatus` | query | protected | `{ deviceId: number }` | `SwitchStatusSchema` |
 | setState | `switch.setState` | mutation | protected | `{ deviceId: number; on: boolean }` | `void` |
+| getOptions | `switch.getOptions` | query | protected | `{ deviceId: number }` | `SwitchOptionsSchema` |
+| powerCycle | `switch.powerCycle` | mutation | protected | `{ deviceId: number }` | `void` |
 | toggle | `switch.toggle` | mutation | protected | `{ deviceId: number }` | `void` |
 
 ### `system` → `system.*`

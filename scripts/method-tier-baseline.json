@@ -1238,6 +1238,8 @@
   "streamParams.getOptions": "protected",
   "streamParams.setProfile": "admin",
   "streamSignals.listSignals": "protected",
+  "switch.getOptions": "protected",
+  "switch.powerCycle": "protected",
   "switch.setState": "protected",
   "switch.toggle": "protected",
   "system.debugWatch": "admin",

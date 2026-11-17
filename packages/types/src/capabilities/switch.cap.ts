@@ -27,6 +27,25 @@ export const SwitchStatusSchema = z.object({
 
 export type SwitchStatus = z.infer<typeof SwitchStatusSchema>
 
+/**
+ * What a switch can do, from its provider (`getOptions`). A provider that writes no
+ * `getOptions` is a plain on/off switch: the defaults are the old contract.
+ *
+ * - `supportsSetState: false` — the switch reports its state but cannot be set (a PoE port seen only
+ *   through an API key): the UI hides on/off, and `setState` refuses.
+ * - `supportsPowerCycle: true` — the device behind the switch can cut and restore its own output in
+ *   one native call (a PoE port's power cycle). It has no control of its own: a linked
+ *   `power-source.forceRestart` uses it instead of off / wait / on.
+ */
+export const SwitchOptionsSchema = z.object({
+  supportsSetState: z.boolean().default(true),
+  supportsPowerCycle: z.boolean().default(false),
+})
+export type SwitchOptions = z.infer<typeof SwitchOptionsSchema>
+
+/** The options of a provider that did not answer `getOptions`: a plain on/off switch. */
+export const SWITCH_DEFAULT_OPTIONS: SwitchOptions = SwitchOptionsSchema.parse({})
+
 export const switchCapability = {
   name: 'switch',
   scope: 'device',
@@ -57,6 +76,19 @@ export const switchCapability = {
           args: { on: false },
         },
       ],
+    }),
+    // What the switch can do; absent = a plain on/off switch (SWITCH_DEFAULT_OPTIONS).
+    getOptions: optionalMethod(z.object({ deviceId: z.number() }), SwitchOptionsSchema, {
+      auth: 'protected',
+    }),
+    // A native power cycle, declared by `getOptions().supportsPowerCycle`. No action of its own (no
+    // button): `power-source.forceRestart` on a device this switch powers calls it. Same tier
+    // as `setState` — it is actuation of the same output.
+    powerCycle: optionalMethod(z.object({ deviceId: z.number() }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      notOperatorFacing:
+        'a power cycle is the forced restart of the device the switch powers (power-source), never a step of its own',
     }),
     // Optional on the provider type: the one default is installed at
     // native-cap registration (`withDefaultSwitchToggle`) for a driver
@@ -95,6 +127,12 @@ export const switchCapability = {
    * not need to re-query the provider after a setState mutation.
    */
   runtimeState: SwitchStatusSchema,
+  // A composed switch is a plain on/off switch (its on/off is forwarded): it declares no
+  // native power cycle, so a linked forced restart is off / wait / on.
+  composedMethods: {
+    getOptions: { kind: 'answer', value: SWITCH_DEFAULT_OPTIONS },
+    powerCycle: { kind: 'refuse', reason: 'a composed switch has no native power cycle' },
+  },
 
   /**
    * Runtime-state durability: **restored** — device state an operator reads as authoritative; 55 devices, transition-driven.

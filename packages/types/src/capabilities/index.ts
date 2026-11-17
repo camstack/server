@@ -3398,6 +3398,9 @@ export {
 } from './stream-params-config-schema.js'
 export {
   type ISwitchProvider,
+  SWITCH_DEFAULT_OPTIONS,
+  type SwitchOptions,
+  SwitchOptionsSchema,
   type SwitchStatus,
   SwitchStatusSchema,
   switchCapability,

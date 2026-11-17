@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The tag manager refreshes the notification rules list after a rename or remove
 - The archive timeline shows one lane per clip source and joins the date and zoom controls in one bar
 - Siren play-choices hook from the regenerated capability hooks
+- Generated hooks for switch getOptions and powerCycle.
 
 ## [1.2.462] - 2026-11-16
 

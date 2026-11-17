@@ -10,7 +10,9 @@
  * The link and the off time are read from the STORED composition on each call
  * (D676), never cached as a second copy. A forced restart is switch off now,
  * switch on after `offSeconds`, through an injected scheduler so a spec drives
- * the clock; the pending switch-on is cancelled on `stop()`.
+ * the clock; the pending switch-on is cancelled on `stop()`. A switch that declares
+ * a native power cycle (a PoE port) is cycled in one call instead, and never
+ * switched off or on.
  *
  * Every refusal is a typed result with its reason, logged with the device tag.
  */
@@ -41,6 +43,13 @@ export interface PowerSourceDevices {
   /** The switch's on/off state, or null when it has none. Throws when it cannot be read. */
   readonly readOn: (switchDeviceId: number) => Promise<boolean | null>
   readonly setOn: (switchDeviceId: number, on: boolean) => Promise<void>
+  /**
+   * Cut and restore the switch's output in ONE native call, when its provider declares it
+   * (`switch.getOptions().supportsPowerCycle`). Resolves true when it cycled, false when the
+   * switch has no native cycle (the restart is then off / wait / on). Throws when the call fails.
+   * Absent = no switch here has one.
+   */
+  readonly cycle?: (switchDeviceId: number) => Promise<boolean>
 }
 
 export interface PowerSourceTimer {
@@ -148,6 +157,27 @@ export class PowerSourceService implements IPowerSourceProvider {
     const { link, switchDevice } = lookup.resolved
     const switchId = switchDevice.id
     pending.switchId = switchId
+    const cycle = this.deps.devices.cycle
+    if (cycle !== undefined) {
+      let cycled: boolean
+      try {
+        cycled = await cycle(switchId)
+      } catch (err: unknown) {
+        this.restarting.delete(deviceId)
+        return this.refuse(deviceId, 'switch-call-failed', errorText(err), switchId)
+      }
+      if (cycled) {
+        this.restarting.delete(deviceId)
+        this.deps.logger.info(
+          'power-source: forced restart through the switch’s native power cycle',
+          {
+            tags: { deviceId },
+            meta: { switchId, switchName: switchDevice.name },
+          },
+        )
+        return ACCEPTED
+      }
+    }
     try {
       await this.deps.devices.setOn(switchId, false)
     } catch (err: unknown) {

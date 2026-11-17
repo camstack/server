@@ -17,6 +17,7 @@ import {
   type WorkloadStatus,
   makeInMemoryRecords,
   secretTreeFromSchema,
+  type SwitchOptions,
 } from '@camstack/types'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -109,6 +110,15 @@ function isWorkloadProvider(value: unknown): value is WorkloadOptionsReader {
 
 function isSwitchProvider(value: unknown): value is SwitchProvider {
   return typeof value === 'object' && value !== null && 'setState' in value
+}
+
+interface PortSwitchProvider extends SwitchProvider {
+  getOptions(input: { deviceId: number }): Promise<SwitchOptions>
+  powerCycle?: (input: { deviceId: number }) => Promise<void>
+}
+
+function isPortSwitchProvider(value: unknown): value is PortSwitchProvider {
+  return isSwitchProvider(value) && 'getOptions' in value
 }
 
 /** Exposes the protected surface a spec needs; adds nothing. */
@@ -582,15 +592,28 @@ describe('UniFi devices on a stub device context', () => {
     )
   }
 
-  it('a PoE port without a local account offers no switch — only its power and link', async () => {
+  it('a PoE port without a local account is a switch that only power-cycles: no on/off', async () => {
     await harness()
+    const client = unifiControllers.getManager(INT)?.client
+    if (client === null || client === undefined) throw new Error('client should run')
+    const setPortPoe = vi.spyOn(client, 'setPortPoe')
+    const powerCyclePort = vi.spyOn(client, 'powerCyclePort')
     const { ctx, providers } = portRig(false)
     await new UnifiFeatureDevice(ctx).onActivate()
     const caps = [...providers.keys()]
-    expect(caps).toEqual(expect.arrayContaining(['power-meter', 'network-link']))
-    expect(caps).not.toContain('switch')
+    expect(caps).toEqual(expect.arrayContaining(['switch', 'power-meter', 'network-link']))
     expect(caps).not.toContain('reboot')
     expect(caps).not.toContain('button')
+    const port = providers.get('switch')
+    if (!isPortSwitchProvider(port)) throw new Error('switch cap missing')
+    expect(await port.getOptions({ deviceId: 7 })).toEqual({
+      supportsSetState: false,
+      supportsPowerCycle: true,
+    })
+    await port.powerCycle?.({ deviceId: 7 })
+    expect(powerCyclePort.mock.calls).toEqual([['sw1', 1]])
+    await expect(port.setState({ deviceId: 7, on: false })).rejects.toThrow(/local account/)
+    expect(setPortPoe).not.toHaveBeenCalled()
   })
 
   it('a switchable PoE port switches PoE through the client, and offers no power-cycle', async () => {
@@ -603,6 +626,13 @@ describe('UniFi devices on a stub device context', () => {
     const toggle = providers.get('switch')
     if (!isSwitchProvider(toggle)) throw new Error('switch cap missing')
     expect(providers.has('reboot')).toBe(false)
+    // It keeps off / wait / on for a forced restart: no native cycle is declared.
+    if (!isPortSwitchProvider(toggle)) throw new Error('switch options missing')
+    expect(await toggle.getOptions({ deviceId: 7 })).toEqual({
+      supportsSetState: true,
+      supportsPowerCycle: false,
+    })
+    expect(toggle.powerCycle).toBeUndefined()
     await toggle.setState({ deviceId: 7, on: false })
     await toggle.setState({ deviceId: 7, on: true })
     expect(setPortPoe.mock.calls).toEqual([

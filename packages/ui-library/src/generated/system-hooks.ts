@@ -3623,6 +3623,12 @@ export const useStreamSignalsListSignals: typeof trpc.streamSignals.listSignals.
 /** Generated alias around `trpc.switch.setState.useMutation`. */
 export const useSwitchSetState: typeof trpc.switch.setState.useMutation = /*#__PURE__*/ alias(() => trpc.switch.setState.useMutation)
 
+/** Generated alias around `trpc.switch.getOptions.useQuery`. */
+export const useSwitchGetOptions: typeof trpc.switch.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.switch.getOptions.useQuery)
+
+/** Generated alias around `trpc.switch.powerCycle.useMutation`. */
+export const useSwitchPowerCycle: typeof trpc.switch.powerCycle.useMutation = /*#__PURE__*/ alias(() => trpc.switch.powerCycle.useMutation)
+
 /** Generated alias around `trpc.switch.toggle.useMutation`. */
 export const useSwitchToggle: typeof trpc.switch.toggle.useMutation = /*#__PURE__*/ alias(() => trpc.switch.toggle.useMutation)
 

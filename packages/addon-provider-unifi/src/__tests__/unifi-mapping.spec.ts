@@ -42,10 +42,11 @@ describe('buildInfraFeatures', () => {
     })
   })
 
-  it('without a local account a port offers no switch — only its power and link', () => {
+  it('without a local account a port is still a switch (power cycle only), with its power and link', () => {
     const [first] = buildInfraFeatures(SWITCH).filter((f) => f.kind === 'port')
     expect(first).toEqual({ kind: 'port', portIdx: 1, switchable: false })
     expect(first === undefined ? [] : capsForDescriptor(first)).toEqual([
+      'switch',
       'power-meter',
       'network-link',
     ])

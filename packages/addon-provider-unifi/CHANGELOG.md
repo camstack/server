@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A local account now signs in through aiounifi (the library Home Assistant uses) in a Python worker: PoE on/off keeps every other port's setting, and the controller's live event stream updates port link, PoE and clients between polls.
 - An unreachable controller now shows its consoles, switches and access points as unknown instead of still running, and their running-since time no longer moves on every poll.
 - A UniFi console, switch or access point that drops off the controller now raises "Went down" (not "Shut down"), and "Came online" when it returns.
+- A PoE port seen only through the API key is now a switch that can power-cycle: a camera on it can be force-restarted from its power source.
 
 ## [0.2.164] - 2026-11-14
 

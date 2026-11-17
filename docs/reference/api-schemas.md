@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1103 shared schemas.**
+**1104 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -7146,6 +7146,11 @@ Enum: `"main" \| "sub" \| "ext"`
 - `stepId`: `string`
 - `modelId`: `string`
 - `detections`: `({ bbox: [number, number, number, number]; score: number; landmarks?: ({ x: number; y: number })[] })[]`
+
+### `SwitchOptionsSchema`
+
+- `supportsSetState?`: `boolean = true`
+- `supportsPowerCycle?`: `boolean = false`
 
 ### `SwitchStatusSchema`
 

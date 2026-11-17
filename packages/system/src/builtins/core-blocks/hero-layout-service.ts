@@ -16,6 +16,7 @@ import {
   type IScopedLogger,
   type ReadingQuantity,
   resolveHeroLayout,
+  type SwitchOptions,
 } from '@camstack/types'
 
 /** What the registry says about the device. */
@@ -41,6 +42,8 @@ export interface HeroLayoutReader {
   readonly slice: (deviceId: number, capName: string) => Promise<unknown>
   /** Saved remote commands; throws when the remote cannot be asked. */
   readonly remoteCommands: (deviceId: number) => Promise<number>
+  /** The `switch` provider's `getOptions`; throws when it has none or cannot be asked. */
+  readonly switchOptions: (deviceId: number) => Promise<SwitchOptions>
 }
 
 export interface HeroLayoutServiceDeps {
@@ -50,6 +53,7 @@ export interface HeroLayoutServiceDeps {
 }
 
 const REMOTE_CAP = 'remote'
+const SWITCH_CAP = 'switch'
 
 /** Models built at once for a list; the cap bounds the list, this bounds the fan-out on the registry. */
 const ROW_MODELS_CONCURRENCY = 16
@@ -86,6 +90,9 @@ export class HeroLayoutService implements IHeroLayoutProvider {
         }),
     )
     const remoteCommands = await this.remoteCommands(deviceId)
+    const switchOptions = bound.includes(SWITCH_CAP)
+      ? await this.switchOptions(deviceId)
+      : undefined
     return buildHeroModel({
       device: {
         id: deviceId,
@@ -104,6 +111,7 @@ export class HeroLayoutService implements IHeroLayoutProvider {
       now: this.deps.now(),
       remoteCommands,
       access: { canActuate: canActuate ?? true },
+      ...(switchOptions !== undefined ? { switchOptions } : {}),
     })
   }
 
@@ -139,6 +147,18 @@ export class HeroLayoutService implements IHeroLayoutProvider {
         meta: { error: error instanceof Error ? error.message : String(error) },
       })
       return null
+    }
+  }
+
+  /**
+   * What the switch can do. A provider without `getOptions` (or not redeployed yet) is a
+   * plain on/off switch: the read fails and the hero draws on/off, as before.
+   */
+  private async switchOptions(deviceId: number): Promise<SwitchOptions | undefined> {
+    try {
+      return await this.deps.reader.switchOptions(deviceId)
+    } catch {
+      return undefined
     }
   }
 

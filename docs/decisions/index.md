@@ -4,7 +4,7 @@
 
 # Decisions
 
-1023 architecture decision records. One file per decision, never
+1024 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1036,6 +1036,7 @@ that rots.
 | D1054 | [A tag lives on the record it labels; only its style is registered](adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md) | ✅ accepted | 2026-11-15 |
 | D1055 | [A node shell lives only while its node's section is open](adr-1055-a-node-shell-lives-only-while-its-node-section-is-open.md) | ✅ accepted | 2026-11-16 |
 | D1056 | [A workload is one device type and one cap, and its role is the kind](adr-1056-a-workload-is-one-device-type-and-one-cap-and-its-role-is-the-kind.md) | ✅ accepted | 2026-11-16 |
+| D1058 | [A switch that can only power-cycle is still a switch, and a forced restart uses its native cycle](adr-1058-a-switch-that-can-only-power-cycle-is-still-a-switch.md) | ✅ accepted | 2026-11-17 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

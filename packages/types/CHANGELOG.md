@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Summaries, timelapses and calendar-events rules carry tags too; the tags list shows an unreachable owner's count as unknown
 - network-link's link speed is speedKbps, the bitrate quantity in kbit/s, shown in the system's bitrate unit
 - A host that comes back after going down raises a "Came online" event (the workload recovered event, host wording).
+- A switch can say it only reports its state and can power-cycle natively (switch getOptions / powerCycle); the hero then hides on/off.
 
 ## [1.2.585] - 2026-11-16
 

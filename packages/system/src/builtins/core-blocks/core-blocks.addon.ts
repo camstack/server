@@ -79,6 +79,7 @@ import { RemoteComponentsService } from './remote-components-service.js'
 import { HeroLayoutService } from './hero-layout-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
 import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
+import { powerSourceDevicesOver } from './power-source-devices.js'
 import {
   PowerSourceService,
   type PowerSourceDevices,
@@ -356,6 +357,7 @@ export class CoreBlocksAddon extends BaseAddon {
           requireApi().deviceState.getCapSlice.query({ deviceId, capName }),
         remoteCommands: async (deviceId) =>
           (await requireApi().remote.listCommands.query({ deviceId })).commands.length,
+        switchOptions: (deviceId) => requireApi().switch.getOptions.query({ deviceId }),
       },
     })
   }
@@ -378,25 +380,7 @@ export class CoreBlocksAddon extends BaseAddon {
         throw new Error('core-blocks: no ctx.api on this node — power-source cannot reach devices')
       return api
     }
-    return {
-      find: async (ref) => {
-        const rows = await requireApi().deviceManager.listAll.query({
-          addonId: ref.addonId,
-          projection: 'slim',
-        })
-        const row = rows.find((r) => r.stableId === ref.stableId)
-        return row === undefined ? null : { id: row.id, name: row.name, online: row.online }
-      },
-      readOn: async (deviceId) => {
-        const status = await requireApi().switch.getStatus.query({ deviceId })
-        const on: unknown =
-          status !== null && typeof status === 'object' ? Reflect.get(status, 'on') : undefined
-        return typeof on === 'boolean' ? on : null
-      },
-      setOn: async (deviceId, on) => {
-        await requireApi().switch.setState.mutate({ deviceId, on })
-      },
-    }
+    return powerSourceDevicesOver(requireApi)
   }
 
   private buildRemote(records: NonNullable<typeof this.ctx.records>): RemoteRuntime | null {

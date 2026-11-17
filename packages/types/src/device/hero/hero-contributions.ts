@@ -81,10 +81,13 @@ function durationText(seconds: number): HeroText {
 
 // ── switch ─────────────────────────────────────────────────────────────────
 
-const switchContribution = contribution('switch', SwitchStatusSchema, (slice) => {
+const switchContribution = contribution('switch', SwitchStatusSchema, (slice, ctx) => {
   const on = slice?.on ?? null
+  const state = reading('switch', on === null ? 'unknown' : on ? 'on' : 'off')
+  // A switch that only reports its state (its provider said so) offers no on/off.
+  if (ctx.switchOptions?.supportsSetState === false) return { reading: state }
   return {
-    reading: reading('switch', on === null ? 'unknown' : on ? 'on' : 'off'),
+    reading: state,
     ownPower: {
       source: 'switch',
       on,

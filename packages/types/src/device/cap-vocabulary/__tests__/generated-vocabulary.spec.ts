@@ -105,9 +105,25 @@ function withoutAddedRoles(cap: string, entry: unknown): unknown {
   return { ...entry, overrides: { ...entry['overrides'], byRole } }
 }
 
+/** Methods declared after the snapshot with an excuse (`notOperatorFacing`), by cap. */
+const ADDED_EXCUSES: Readonly<Record<string, readonly string[]>> = {
+  switch: ['powerCycle'],
+}
+
+/** The entry with the listed method excuses taken out. */
+function withoutAddedExcuses(cap: string, entry: unknown): unknown {
+  const methods = ADDED_EXCUSES[cap]
+  if (methods === undefined || !isRecord(entry)) return entry
+  const excuses = Object.fromEntries(
+    Object.entries(excusesOf(entry)).filter(([method]) => !methods.includes(method)),
+  )
+  const { notOperatorFacing: _n, ...rest } = entry
+  return { ...rest, ...(Object.keys(excuses).length > 0 ? { notOperatorFacing: excuses } : {}) }
+}
+
 /** The current entry with #524's additions taken out, and their excuses put back. */
 function withoutAdditions(cap: string, current: unknown, before: unknown): unknown {
-  const entry = withoutAddedRoles(cap, current)
+  const entry = withoutAddedExcuses(cap, withoutAddedRoles(cap, current))
   const added = ADDED_ACTIONS[cap]
   if (added === undefined || !isRecord(entry)) return entry
   const kept = actionsOf(entry).filter((a) => !(String(a['id']) in added))

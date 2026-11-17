@@ -52,7 +52,7 @@ describe('buildDiscoveryCandidates', () => {
       ['infra:sw1:port-1', DeviceType.Switch, 'Port 1'],
       ['infra:sw1:port-3', DeviceType.Switch, 'snapshot-client (port 3)'],
     ])
-    expect(sw?.children?.[0]?.capabilities).toEqual(['power-meter', 'network-link'])
+    expect(sw?.children?.[0]?.capabilities).toEqual(['switch', 'power-meter', 'network-link'])
   })
 
   it('a device without PoE ports proposes no children', () => {

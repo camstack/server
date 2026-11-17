@@ -175,6 +175,20 @@ describe('the two power slots are never merged', () => {
     expect(model.powerSupply?.restart.call.method).toBe('forceRestart')
   })
 
+  it('a switch that only reports (supportsSetState: false) shows its state, offers no on/off', () => {
+    const model = buildHeroModel({
+      device: { id: 7, type: DeviceType.Switch, role: null, name: 'Port 3', online: true },
+      caps: ['switch'],
+      features: [],
+      slices: { switch: { on: true, lastChangedAt: 1 } },
+      now: 1,
+      remoteCommands: null,
+      access: { canActuate: true },
+      switchOptions: { supportsSetState: false, supportsPowerCycle: true },
+    })
+    expect(model.ownPower).toBeNull()
+  })
+
   it('a power-source alone is NOT the own power', () => {
     const model = build(DeviceType.Washer, ['power-source'], {
       'power-source': { switchOn: true, offSeconds: 10, lastFetchedAt: 1 },

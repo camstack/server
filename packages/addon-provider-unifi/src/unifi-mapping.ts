@@ -160,9 +160,9 @@ export function deviceTypeForDescriptor(descriptor: UnifiFeatureDescriptor): Dev
   }
 }
 
-/** The caps a PoE port device registers: `switch` only when its PoE can be switched. */
-export function capsForPort(switchable: boolean): readonly string[] {
-  return switchable ? ['switch', 'power-meter', 'network-link'] : ['power-meter', 'network-link']
+/** The caps a PoE port device registers: `switch` always — on/off with a local account, else only a native power cycle. */
+export function capsForPort(): readonly string[] {
+  return ['switch', 'power-meter', 'network-link']
 }
 
 /** The cap names a feature descriptor's child registers. */
@@ -175,7 +175,7 @@ export function capsForDescriptor(descriptor: UnifiFeatureDescriptor): readonly 
     case 'sensor':
       return [descriptor.metric !== undefined ? capForMetric(descriptor.metric) : 'numeric-sensor']
     case 'port':
-      return capsForPort(descriptor.switchable === true)
+      return capsForPort()
   }
 }
 
