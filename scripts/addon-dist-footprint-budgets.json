@@ -5,8 +5,8 @@
     "expires": "2026-12-28"
   },
   "addon-provider-reolink:provider-reolink": {
-    "maxGrowthMb": 62,
-    "reason": "Measured +60.0-60.1 MB over the bare runner on 2026-11-13, at the 60 MB default, once the automation-template and integration-kind (alsoServes, icon) schemas joined the types entry the addon inlines. The growth is the shared inlined types schemas, not Reolink code; moving those reads to '@camstack/types/addon' is the follow-up, this budget stops it growing further.",
+    "maxGrowthMb": 64,
+    "reason": "Measured +60.0-60.1 MB over the bare runner on 2026-11-13, at the 60 MB default, once the automation-template and integration-kind (alsoServes, icon) schemas joined the types entry the addon inlines; +62.2-62.3 MB on 2026-11-17 after the workload cap (WorkloadStatus), the switch getOptions/powerCycle schemas and the device-identifier schemas joined it too (all present in the built dist; nodelink-js 0.12.4 -> 0.12.5 grew 5 KB). The growth is the shared inlined types schemas, not Reolink code; moving those reads to '@camstack/types/addon' is the follow-up, this budget stops it growing further.",
     "expires": "2026-12-28"
   }
 }
