@@ -2071,6 +2071,17 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     }
   }
 
+  /**
+   * Wake this camera because the OPERATOR asked for one of its clips — a
+   * viewer pressing play, or an export — carrying `ClipWake` `authorised`.
+   * The same forced wake `wakeIfSleeping` drives for a config button, under
+   * the clip service's bound. Resolves whether the camera is up; never throws,
+   * so the service can refuse `wake-timeout` by name.
+   */
+  async wakeForClipRead(timeoutMs: number): Promise<boolean> {
+    return this.wakeIfSleeping(timeoutMs)
+  }
+
   private readonly clipTimeZoneWarned = { done: false }
 
   getClipDeviceRef(): ClipDeviceRef {

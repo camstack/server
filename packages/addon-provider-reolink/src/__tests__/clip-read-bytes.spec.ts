@@ -36,7 +36,7 @@ import {
 } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveCameraUid } from '../clips/clip-addressing.js'
-import { createClipService } from '../clips/clip-service.js'
+import { CLIP_WAKE_TIMEOUT_MS, createClipService } from '../clips/clip-service.js'
 import { CLIP_IDLE_WINDOW_MS, CLIP_IDLE_WINDOW_RETRY_MS } from '../clips/clip-truncation.js'
 import type { ClipDeviceRef } from '../clips/reolink-videoclips-provider.js'
 import { REOLINK_ADDON_ID } from '../schema.js'
@@ -92,6 +92,11 @@ interface HarnessOptions {
   readonly mainBytes?: number
   readonly subBytes?: number
   readonly inProgress?: boolean
+  /**
+   * What the camera's authorised wake answers: `true` brings it up (the
+   * sleep slice flips), `false` is a wake that ran out its bound.
+   */
+  readonly wakeComesUp?: boolean
 }
 
 interface Harness {
@@ -105,6 +110,8 @@ interface Harness {
   readonly scratchFiles: () => Promise<readonly string[]>
   /** Flip the camera's believed sleep state between calls. */
   readonly setSleeping: (value: boolean) => void
+  /** Every wake the service asked the camera for, with its bound. */
+  readonly wakes: readonly { readonly deviceId: number; readonly timeoutMs: number }[]
 }
 
 /**
@@ -229,6 +236,7 @@ async function harness(options: HarnessOptions = {}): Promise<Harness> {
 
   const logger = createRecordingLogger()
   let sleeping = false
+  const wakes: { deviceId: number; timeoutMs: number }[] = []
   const service = createClipService({
     dataDir,
     logger,
@@ -252,6 +260,12 @@ async function harness(options: HarnessOptions = {}): Promise<Harness> {
       },
     }),
     resolveFfmpeg: async () => ffmpegBinaryPath,
+    wakeDevice: async (deviceId, timeoutMs) => {
+      wakes.push({ deviceId, timeoutMs })
+      const up = options.wakeComesUp ?? true
+      if (up) sleeping = false
+      return up
+    },
   })
 
   const list = async (): Promise<readonly { readonly id: string }[]> =>
@@ -291,6 +305,7 @@ async function harness(options: HarnessOptions = {}): Promise<Harness> {
     seen,
     apiCalls: () => apiCalls,
     logger,
+    wakes,
     setSleeping: (value: boolean) => {
       sleeping = value
     },
@@ -463,17 +478,48 @@ describe('a read never wakes a standalone battery camera on its own', () => {
     expect(h.apiCalls()).toBe(before)
   })
 
-  it('spends an operator authorisation on exactly ONE fetch', async () => {
+  it('spends an operator authorisation on exactly ONE wake, waited for, then ONE fetch', async () => {
     const h = await harness({ isBattery: true })
     const id = await h.clipId()
     h.setSleeping(true)
+    const before = h.apiCalls()
 
     const answer = await h.read({ deviceId: 107, clipId: id, wake: 'authorised' })
     expect(answer.served).toBe('low')
     expect(h.seen.length).toBe(1)
+    // The camera was WOKEN, under the bound, before any session was opened —
+    // not left to whatever the login happens to do.
+    expect(h.wakes).toEqual([{ deviceId: 107, timeoutMs: CLIP_WAKE_TIMEOUT_MS }])
+    expect(h.apiCalls()).toBeGreaterThan(before)
     const line = h.logger.warns.find((l) => l.extras.meta?.['branch'] === 'wake-authorised')
     expect(line).toBeDefined()
     expect(line?.extras.tags).toEqual({ deviceId: 107 })
+  })
+
+  it('refuses `wake-timeout`, naming the wait, when the authorised wake does not bring it up', async () => {
+    const h = await harness({ isBattery: true, wakeComesUp: false })
+    const id = await h.clipId()
+    h.setSleeping(true)
+    const before = h.apiCalls()
+
+    const run = h.read({ deviceId: 107, clipId: id, wake: 'authorised' })
+    await expect(run).rejects.toThrow(new RegExp(`${CLIP_WAKE_TIMEOUT_MS} ms`))
+    expect(await refusalOf(h.read({ deviceId: 107, clipId: id, wake: 'authorised' }))).toBe(
+      'wake-timeout',
+    )
+    // Nothing was fetched from a camera that never came up.
+    expect(h.seen.length).toBe(0)
+    expect(h.apiCalls()).toBe(before)
+    const line = h.logger.warns.find((l) => l.extras.meta?.['branch'] === 'wake-timeout')
+    expect(line?.extras.tags).toEqual({ deviceId: 107 })
+  })
+
+  it('never asks for a wake without an authorisation', async () => {
+    const h = await harness({ isBattery: true })
+    const id = await h.clipId()
+    h.setSleeping(true)
+    expect(await refusalOf(h.read({ deviceId: 107, clipId: id }))).toBe('sleeping')
+    expect(h.wakes).toEqual([])
   })
 
   it('never gates a HUB CHILD on sleep — its bytes ride the parent socket', async () => {

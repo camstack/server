@@ -135,6 +135,10 @@ async function fixture(input: {
   }
   const service = createClipService({
     resolveFfmpeg: async () => '/deps/ffmpeg-pinned',
+    // No read in this spec carries an authorisation, so a wake is a defect.
+    wakeDevice: async () => {
+      throw new Error('this spec never authorises a wake')
+    },
     dataDir,
     logger,
     resolveDevice: async () => device,

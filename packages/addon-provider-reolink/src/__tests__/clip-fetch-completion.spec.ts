@@ -204,6 +204,10 @@ async function harness(durations: readonly number[]): Promise<Harness> {
     // spawned fails the same way everywhere. Everything asserted here happens
     // strictly before it.
     resolveFfmpeg: async () => join(dataDir, 'no-such-ffmpeg'),
+    // No read in this spec carries an authorisation, so a wake is a defect.
+    wakeDevice: async () => {
+      throw new Error('this spec never authorises a wake')
+    },
   })
 
   const play = async (): Promise<number> => {

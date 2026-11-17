@@ -231,7 +231,12 @@ export type { ClipTwin }
  */
 export type ClipBytesRefusalCode = Extract<
   ClipExportFailure,
-  'sleeping' | 'catalog-unreachable' | 'no-file-for-window' | 'camera-refused' | 'fetch-failed'
+  | 'sleeping'
+  | 'wake-timeout'
+  | 'catalog-unreachable'
+  | 'no-file-for-window'
+  | 'camera-refused'
+  | 'fetch-failed'
 >
 
 export interface PrepareClipBytesInput {
@@ -344,6 +349,8 @@ export interface PrepareStreamDialInput {
    * only one a caller that said nothing gets.
    */
   readonly audio: ClipStreamAudioAsk
+  /** See {@link PrepareClipBytesInput.wake}. Absent means REFUSED by name. */
+  readonly wake?: ClipWake
 }
 
 export type PrepareStreamDialOutcome =
@@ -1194,7 +1201,7 @@ export function createReolinkVideoclipsProvider(deps: ReolinkVideoclipsDeps): IV
      * actually carries. Refusing left the operator with `high` looking
      * unsupported, and left two transports behind one pointer.
      */
-    dialClipStream: async ({ deviceId, clipId, profile, audio }): Promise<ClipStreamDial> => {
+    dialClipStream: async ({ deviceId, clipId, profile, audio, wake }): Promise<ClipStreamDial> => {
       const tags = { deviceId }
       const refuse = (code: ClipExportFailure, detail: string, meta: ClipReadMeta): never => {
         deps.logger.warn('videoclips: refusing a clip stream dial', {
@@ -1257,6 +1264,7 @@ export function createReolinkVideoclipsProvider(deps: ReolinkVideoclipsDeps): IV
         row,
         twin: chosen.twin,
         audio: askedAudio,
+        ...(wake !== undefined ? { wake } : {}),
       })
       if (outcome.kind === 'refused') {
         return refuse(outcome.code, outcome.detail, { clipKey, twin: chosen.twin })

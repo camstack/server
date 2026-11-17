@@ -93,6 +93,10 @@ describe('TimelineSession — clip playback', () => {
         clipId: 'native:reolink:onboard/abc',
         provider: 'provider-reolink',
         profile: 'low',
+        // A `playClip` is the viewer's own gesture — the operator path — so
+        // the handle carries the authorised wake a sleeping battery camera
+        // needs to serve it. Nothing else builds a clip handle.
+        wake: 'authorised',
       },
     ])
     expect(feeder.seek).toHaveBeenCalledWith(1_500)

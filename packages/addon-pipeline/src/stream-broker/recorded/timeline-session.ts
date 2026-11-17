@@ -1,4 +1,4 @@
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile, ClipWake } from '@camstack/types'
 import type { ClipAudioReport, ClipIncompleteReport } from './clip-stream-feeder.js'
 import { serializeServerMessage, type ControlMessage } from './control-protocol'
 import type { FeederState, LocateResult, ScrubMapHint } from './recorded-feeder'
@@ -51,6 +51,13 @@ export interface ClipPlaybackHandle {
   /** The `addonId` that holds the bytes — see the control message's own note. */
   readonly provider: string
   readonly profile: CamProfile | null
+  /**
+   * The operator's authorisation to wake a sleeping camera for this clip.
+   * Set by {@link TimelineSession}'s `playClip` — a viewer's own gesture —
+   * and by nothing else; absent means the provider refuses a sleeping
+   * standalone battery camera by name (`sleeping`).
+   */
+  readonly wake?: ClipWake
 }
 
 export interface MakeClipFeederArgs {
@@ -373,7 +380,12 @@ export class TimelineSession {
       this._emitState('error')
       return
     }
-    this.clip = { deviceId, clipId, provider, profile }
+    // A `playClip` arrives only from the viewer on this session's control
+    // channel (or is replayed from one by the codec re-offer): the operator
+    // asked for THIS clip, which is the demand wake-on-play already honours
+    // on the live path (D173). It authorises one wake of a sleeping battery
+    // camera; the provider spends it, bounded, or refuses `wake-timeout`.
+    this.clip = { deviceId, clipId, provider, profile, wake: 'authorised' }
     this.lastPositionMs = null
     const feeder = this.enterRecorded()
     // No travel-from: a clip's axis has no relationship to where the recorded

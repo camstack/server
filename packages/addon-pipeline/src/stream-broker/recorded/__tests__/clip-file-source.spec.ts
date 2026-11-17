@@ -128,3 +128,12 @@ describe('createClipFileSource', () => {
     expect(await src.durationMs()).toBe(2000)
   })
 })
+
+describe('the clip file source carries the operator wake to the byte read', () => {
+  it("passes the handle's authorised wake on the ONE fetch", async () => {
+    const read = okReader(buildMp4Fixture(FASTSTART_CLIP))
+    const src = createClipFileSource({ handle: { ...HANDLE, wake: 'authorised' }, read })
+    await src.locate({ ...LOCATE_ARGS, epochMs: 0 })
+    expect(read).toHaveBeenCalledWith(expect.objectContaining({ wake: 'authorised' }))
+  })
+})

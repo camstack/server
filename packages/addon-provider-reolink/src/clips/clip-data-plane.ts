@@ -308,6 +308,8 @@ export { CLIP_STREAM_TRANSPORT_HEADER }
 export type ClipStreamRouteRefusalCode =
   | 'unknown-device'
   | 'sleeping'
+  /** An authorised wake that did not bring the camera up inside its bound. */
+  | 'wake-timeout'
   | 'uid-missing'
   | 'no-catalog-row'
   | 'clip-in-progress'
@@ -408,8 +410,9 @@ const STREAM_HEADERS = {
 } as const
 
 /** The status a refusal answers. `404` = nothing here to serve; `409` = a
- *  clip that exists and cannot be served right now; `502` = the camera. */
-function streamRefusalStatus(code: ClipStreamRouteRefusalCode): 404 | 409 | 502 {
+ *  clip that exists and cannot be served right now; `502` = the camera;
+ *  `504` = the camera did not come up inside the wake's bound. */
+function streamRefusalStatus(code: ClipStreamRouteRefusalCode): 404 | 409 | 502 | 504 {
   switch (code) {
     case 'unknown-device':
     case 'no-catalog-row':
@@ -421,6 +424,8 @@ function streamRefusalStatus(code: ClipStreamRouteRefusalCode): 404 | 409 | 502 
     case 'camera-refused':
     case 'fetch-failed':
       return 502
+    case 'wake-timeout':
+      return 504
   }
 }
 

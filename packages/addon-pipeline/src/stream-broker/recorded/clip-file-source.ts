@@ -1,4 +1,5 @@
-import type { CamProfile } from '@camstack/types'
+import type { CamProfile, ClipWake } from '@camstack/types'
+import type { ClipReadArgs } from './clip-cap-input.js'
 import { indexClipMp4, type ClipIndexRefusalReason, type ClipMp4Index } from './clip-mp4-index.js'
 import type { LocateResult } from './recorded-feeder.js'
 
@@ -36,15 +37,12 @@ export interface ClipHandle {
   readonly provider: string
   /** `null` ⇒ the provider's own default twin. */
   readonly profile: CamProfile | null
+  /** The operator's wake, carried from the viewer's `playClip` — see `clip-cap-input.ts`. */
+  readonly wake?: ClipWake
 }
 
 /** The one by-handle byte fetch. Resolves with the whole clip file. */
-export type ClipBytesReader = (args: {
-  deviceId: number
-  clipId: string
-  provider: string
-  profile: CamProfile | null
-}) => Promise<Uint8Array>
+export type ClipBytesReader = (args: ClipReadArgs) => Promise<Uint8Array>
 
 /** Why a clip cannot be played. Every value is reported and logged. */
 export type ClipSourceRefusalReason = ClipIndexRefusalReason | 'fetch-failed' | 'too-large'
@@ -92,7 +90,7 @@ interface ResolvedClip {
 
 export function createClipFileSource(deps: ClipFileSourceDeps): ClipFileSource {
   const maxBytes = deps.maxBytes ?? CLIP_SOURCE_MAX_BYTES
-  const { deviceId, clipId, provider, profile } = deps.handle
+  const { deviceId, clipId, provider, profile, wake } = deps.handle
   let resolved: ResolvedClip | null = null
   let inFlight: Promise<ResolvedClip> | null = null
   /**
@@ -116,7 +114,13 @@ export function createClipFileSource(deps: ClipFileSourceDeps): ClipFileSource {
   const load = async (): Promise<ResolvedClip> => {
     let bytes: Uint8Array
     try {
-      bytes = await deps.read({ deviceId, clipId, provider, profile })
+      bytes = await deps.read({
+        deviceId,
+        clipId,
+        provider,
+        profile,
+        ...(wake !== undefined ? { wake } : {}),
+      })
     } catch (err) {
       throw refuse('fetch-failed', 'clip playback: byte fetch failed', {
         error: err instanceof Error ? err.message : String(err),

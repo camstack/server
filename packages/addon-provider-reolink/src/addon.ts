@@ -912,6 +912,12 @@ export class ReolinkProviderAddon extends BaseDeviceProvider {
         const device = this.ctx.kernel.deviceRegistry?.getById(deviceId)
         return device instanceof ReolinkCamera ? device.getClipDeviceRef() : null
       },
+      // Reached only from a clip read or dial that carries the operator's
+      // `wake: 'authorised'` — the service gates it.
+      wakeDevice: async (deviceId, timeoutMs) => {
+        const device = this.ctx.kernel.deviceRegistry?.getById(deviceId)
+        return device instanceof ReolinkCamera ? device.wakeForClipRead(timeoutMs) : false
+      },
     })
     // The camera's clips carry OUR detections too (D923): every listing is
     // joined with the object events that overlap each clip's window, by the
