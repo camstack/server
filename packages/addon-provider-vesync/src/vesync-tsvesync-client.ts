@@ -70,6 +70,8 @@ export interface TsVeSyncManagerInput {
   readonly email: string
   readonly password: string
   readonly region: VeSyncRegion
+  /** ISO-3166 alpha-2; absent leaves the library's own default (`US`). */
+  readonly countryCode?: string
   readonly logger: TsVeSyncLogSink
 }
 
@@ -85,7 +87,11 @@ export class VeSyncLoginError extends Error {
   readonly words: string
 
   constructor(kind: VeSyncLoginFailureKind, words: string) {
-    super(`vesync: sign-in failed (${kind}): ${words}`)
+    super(
+      kind === 'region'
+        ? `vesync: sign-in failed (${kind}): ${words} — ${REGION_HINT}`
+        : `vesync: sign-in failed (${kind}): ${words}`,
+    )
     this.name = 'VeSyncLoginError'
     this.kind = kind
     this.words = words
@@ -119,7 +125,15 @@ const NETWORK_CODES: ReadonlySet<string> = new Set([
   'ERR_NETWORK',
 ])
 const CREDENTIALS_PATTERN = /credential/i
-const REGION_PATTERN = /both US and EU|COUNTRY CODE REQUIRED|region-change token/i
+/**
+ * A sign-in refused for the region or the country. "auth code expired" is what Step 2 answers when
+ * the account signs in under the wrong `userCountryCode`; `countryCode` is the library's own hint.
+ */
+const REGION_PATTERN =
+  /both US and EU|COUNTRY CODE REQUIRED|region-change token|auth code expired|countryCode/i
+/** What a region refusal tells the operator to do. */
+const REGION_HINT =
+  'set the Country code (e.g. IT) on the VeSync integration to the country the account was registered in'
 
 /**
  * The process-wide library logger. Lines go to the capture of the call in flight; calls are
@@ -162,6 +176,7 @@ const sharedRouter = new LibraryLogRouter()
 const createLibraryManager: TsVeSyncManagerFactory = (input) =>
   new VeSync(input.email, input.password, undefined, {
     region: input.region,
+    ...(input.countryCode !== undefined ? { countryCode: input.countryCode } : {}),
     customLogger: input.logger,
     debug: false,
     redact: true,
@@ -205,11 +220,13 @@ function isTransportFailure(line: LibraryLine): boolean {
 export function classifyLoginFailure(lines: readonly LibraryLine[]): VeSyncLoginError {
   const errors = lines.filter((l) => l.level === 'error' || l.level === 'warn')
   const words = errors.map(wordsOf).join('; ') || 'VeSync gave no reason'
+  // Region first: the library's closing line on ANY failure ("Unable to authenticate with
+  // supplied credentials …") matches the credentials pattern; a region refusal never names one.
+  if (errors.some((l) => REGION_PATTERN.test(wordsOf(l)))) {
+    return new VeSyncLoginError('region', words)
+  }
   if (errors.some((l) => CREDENTIALS_PATTERN.test(l.message))) {
     return new VeSyncLoginError('credentials', words)
-  }
-  if (errors.some((l) => REGION_PATTERN.test(l.message))) {
-    return new VeSyncLoginError('region', words)
   }
   if (errors.some(isTransportFailure)) return new VeSyncLoginError('unreachable', words)
   return new VeSyncLoginError('refused', words)
@@ -383,9 +400,15 @@ function failureWords(lines: readonly LibraryLine[]): string {
 export function createTsVeSyncClientFactory(
   createManager: TsVeSyncManagerFactory = createLibraryManager,
 ): VeSyncClientFactory {
-  return ({ email, password, region }) =>
+  return ({ email, password, region, countryCode }) =>
     new TsVeSyncClient(
-      createManager({ email, password, region, logger: sharedRouter }),
+      createManager({
+        email,
+        password,
+        region,
+        ...(countryCode !== undefined ? { countryCode } : {}),
+        logger: sharedRouter,
+      }),
       sharedRouter,
     )
 }

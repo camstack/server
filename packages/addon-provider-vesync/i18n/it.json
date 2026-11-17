@@ -6,5 +6,7 @@
   "connection.s_connection.region.label": "Regione",
   "connection.s_connection.region.o_EU.label": "Europa",
   "connection.s_connection.region.o_US.label": "Stati Uniti",
-  "connection.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)"
+  "connection.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)",
+  "connection.s_connection.countryCode.label": "Codice paese",
+  "connection.s_connection.countryCode.description": "Codice di due lettere del paese in cui è stato registrato l'account (IT, DE, FR …). Impostalo se l'accesso fallisce con \"auth code expired\"."
 }

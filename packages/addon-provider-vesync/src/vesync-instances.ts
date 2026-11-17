@@ -29,6 +29,7 @@ export const vesyncConnectionsEntryKind = defineEntryKind('connections', {
     email: z.string().optional(),
     password: z.string().optional().meta({ secret: true }),
     region: z.enum(['US', 'EU']).optional(),
+    countryCode: z.string().optional(),
     pollIntervalMs: z.number().optional(),
   }),
   writeTrigger: 'an operator adds, edits or removes a VeSync account integration',

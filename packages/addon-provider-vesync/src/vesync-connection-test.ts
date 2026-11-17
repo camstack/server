@@ -10,7 +10,10 @@ import type { VeSyncClientFactory } from './vesync-client-contract.js'
 import { VeSyncLoginError } from './vesync-tsvesync-client.js'
 
 /** The verdict for a failed sign-in. */
-function failureOf(err: unknown, region: string): IntegrationTestConnectionResult {
+function failureOf(
+  err: unknown,
+  connection: VeSyncConnectionConfig,
+): IntegrationTestConnectionResult {
   if (!(err instanceof VeSyncLoginError)) {
     return {
       success: false,
@@ -29,7 +32,7 @@ function failureOf(err: unknown, region: string): IntegrationTestConnectionResul
       return {
         success: false,
         status: 'rejected',
-        error: `vesync: neither the US nor the EU VeSync region accepts this account (region set: ${region}) — ${err.words}`,
+        error: `vesync: VeSync refused the account's region or country (region ${connection.region}, country code ${connection.countryCode ?? 'not set'}) — set the Country code to the country the account was registered in (e.g. IT). ${err.words}`,
       }
     case 'unreachable':
       return {
@@ -59,6 +62,7 @@ export async function testVeSyncConnection(
       email: connection.email,
       password: connection.password,
       region: connection.region,
+      ...(connection.countryCode !== undefined ? { countryCode: connection.countryCode } : {}),
     })
     try {
       await client.login()
@@ -67,6 +71,6 @@ export async function testVeSyncConnection(
       await client.logout().catch((): null => null)
     }
   } catch (err) {
-    return failureOf(err, connection.region)
+    return failureOf(err, connection)
   }
 }

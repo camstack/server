@@ -106,6 +106,9 @@ export class VeSyncIntegrationManager {
       email: this.#connection.email,
       password: this.#connection.password,
       region: this.#connection.region,
+      ...(this.#connection.countryCode !== undefined
+        ? { countryCode: this.#connection.countryCode }
+        : {}),
     })
     this.#client = client
 
