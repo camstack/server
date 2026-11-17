@@ -130,7 +130,11 @@ const ACCEPTED: PowerSourceActionResult = { accepted: true }
 export class PowerSourceService implements IPowerSourceProvider {
   /** Restarts whose switch-on has not run yet, by device id. */
   private readonly restarting = new Map<number, PendingRestart>()
-  /** Devices whose switch-options read is failing now: warned once per streak, cleared by a success. */
+  /**
+   * Devices whose switch-options read is failing now: warned once per streak, cleared by a
+   * success or when the device is no longer linked. A removed device leaves at most one bare id
+   * behind (this service has no removal hook); the set dies with the process.
+   */
   private readonly optionsReadFailing = new Set<number>()
 
   constructor(private readonly deps: PowerSourceServiceDeps) {}
@@ -138,6 +142,7 @@ export class PowerSourceService implements IPowerSourceProvider {
   getStatus = async ({ deviceId }: { deviceId: number }): Promise<PowerSourceInfo> => {
     const link = await this.linkOf(deviceId)
     if (link === null) {
+      this.optionsReadFailing.delete(deviceId)
       return {
         linked: false,
         switchDeviceId: null,

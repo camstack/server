@@ -2,13 +2,13 @@ import {
   type AddonApi,
   type IScopedLogger,
   BrightnessStatusSchema,
-  isCapMethodAbsent,
   isOutlet,
   isSwitchFan,
   isSwitchLight,
   SwitchStatusSchema,
   switchRefusesSetState,
 } from '@camstack/types'
+import { isCapMethodAbsent } from '@camstack/types/addon'
 import { handleSetBrightness } from '../../handlers/brightness-controller.js'
 import { handlePower } from '../../handlers/power-controller.js'
 import { iface, plainNumber } from './shared.js'

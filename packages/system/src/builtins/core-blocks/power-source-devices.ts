@@ -2,12 +2,8 @@
  * The devices `power-source` acts on, reached over `ctx.api`: the linked switch is read,
  * set, and — when its provider declares a native power cycle — cycled in one call.
  */
-import {
-  type AddonApi,
-  isCapMethodAbsent,
-  SWITCH_DEFAULT_OPTIONS,
-  type SwitchOptions,
-} from '@camstack/types'
+import { type AddonApi, SWITCH_DEFAULT_OPTIONS, type SwitchOptions } from '@camstack/types'
+import { isCapMethodAbsent } from '@camstack/types/addon'
 import { type PowerSourceDevices, SwitchOptionsUnreadableError } from './power-source-service.js'
 
 /** The switch's options; the defaults when its provider has no `getOptions`; throws typed when the read failed. */

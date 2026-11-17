@@ -86,6 +86,7 @@ export {
   CALLER_STAMPED_CAPABILITIES,
   withoutCallerStamp,
 } from './capabilities/caller-stamp.js'
+export { CAP_METHOD_NOT_IMPLEMENTED, isCapMethodAbsent } from './capabilities/cap-method-absent.js'
 export { deviceOpsCapability } from './capabilities/device-ops.cap.js'
 export type { IViewerUiProvider } from './capabilities/viewer-ui.cap.js'
 export { viewerUiCapability } from './capabilities/viewer-ui.cap.js'
