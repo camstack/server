@@ -501,7 +501,10 @@ describe('TrackStore — the one membership registry (fix round 1 M2, L1)', () =
 
   it('a DISCARDED survivor closes its members and forgets them', async () => {
     const store = buildTrackStoreForTest({ ttlMs: 1000 })
-    store.upsert({ ...sighting('A', 1000, 100), className: 'car' })
+    // A still car seen five times over 2 s: a scenery re-fire the store discards.
+    for (let i = 0; i < 5; i += 1) {
+      store.upsert({ ...sighting('A', 1000 + i * 500, 100), className: 'car' })
+    }
     store.noteMember(1, 'A', 'B')
     const discarded: string[] = []
     await store.expireStale(60_000, { onDiscard: (t) => discarded.push(t.trackId) })

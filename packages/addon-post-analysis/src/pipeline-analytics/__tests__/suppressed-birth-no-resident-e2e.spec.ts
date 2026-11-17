@@ -28,7 +28,6 @@ import { type Booted, bootAnalytics } from './boot-analytics.js'
 import {
   type FakeNativeCropRequest,
   type FakeRedetectResult,
-  isFullFrameRequest,
   makeFakePipelineExecutor,
   FAKE_SESSION_ROOT,
 } from './test-helpers.js'
@@ -100,7 +99,7 @@ async function flush(stepMs: number): Promise<void> {
 }
 
 function isConfirmationCropRequest(request: FakeNativeCropRequest): boolean {
-  return !isFullFrameRequest(request) && request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
+  return request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
 }
 
 function residentsOf(booted: Booted): TrackResidentState {
@@ -178,7 +177,7 @@ describe('the first birth verdict wins, in both directions', () => {
               {
                 macroClass: 'animal',
                 score: 0.95,
-                bbox: { x: 20, y: 20, width: 280, height: 280 },
+                bbox: { x: 120, y: 160, width: 80, height: 62 },
               },
             ],
           }

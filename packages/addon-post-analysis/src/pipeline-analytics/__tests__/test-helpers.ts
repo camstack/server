@@ -1551,6 +1551,8 @@ export const FAKE_SESSION_ROOT = {
 /** What a fake executor answers: the injected slice plus the stamps of what RAN. */
 export interface FakeRedetectAnswer extends FakeRedetectResult {
   readonly discarded?: ReadonlyArray<{
+    /** `[x1, y1, x2, y2]` in the crop's pixels, like `DiscardedDetection.bbox`. */
+    readonly bbox: readonly [number, number, number, number]
     readonly macroClass: string
     readonly score: number
     readonly reason: string

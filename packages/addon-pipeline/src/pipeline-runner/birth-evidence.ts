@@ -97,10 +97,12 @@ export const BIRTH_EVIDENCE_MAX_PER_FRAME = 2
 /**
  * Padding around the box, as a fraction of its size.
  *
- * 0.15 deliberately equals `CONFIRMATION_CROP_PADDING` in post-analysis: the
- * gate promotes a secondary subject by mapping a crop-space box back into the
- * frame through the rectangle the crop was cut from, and the two derivations
- * disagreeing is how a promoted box lands somewhere the pixels never were.
+ * 0.15 deliberately equals `CARRIED_EVIDENCE_PADDING` in post-analysis: the
+ * gate promotes a secondary subject found on a CARRIED crop by mapping its
+ * crop-space box back into the frame through this rectangle, and the two
+ * derivations disagreeing is how a promoted box lands somewhere the pixels
+ * never were. (The gate's own native crop is a wider context window,
+ * `confirmationCropWindow`; it no longer shares this padding.)
  */
 export const BIRTH_EVIDENCE_PADDING = 0.15
 

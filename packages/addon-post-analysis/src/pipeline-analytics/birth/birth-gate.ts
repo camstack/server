@@ -17,13 +17,18 @@ import {
 import type { ConfirmationGateSettings } from '../confirmation-gate-settings.js'
 import type { SessionDetector } from '../confirmation-session-detector.js'
 import type { FrameState } from '../frame/frame-state.js'
-import { type CaptureCropFn, captureCropFrameRect } from '../pipeline/capture-crop.js'
+import {
+  type CaptureCropBbox,
+  type CaptureCropFn,
+  captureCropFrameRect,
+} from '../pipeline/capture-crop.js'
 import type { DisplayCropFn } from '../pipeline/display-crop.js'
 import type { PhantomCellRegistry } from '../pipeline/stationary/phantom-cells.js'
 import type { CaptureScheduler } from '../runtime/capture-scheduler.js'
 import {
   CONFIRMATION_CROP_MAX_WIDTH,
-  CONFIRMATION_CROP_PADDING,
+  CARRIED_EVIDENCE_PADDING,
+  confirmationCropWindow,
   redetectCropForConfirmation,
 } from './birth-redetect.js'
 import type { BirthGateDeps } from './birth-types.js'
@@ -167,6 +172,24 @@ export class BirthGate {
     for (const c of candidates) {
       if (c.nativeRecovery !== undefined) candidateNativeRecovery.set(c.trackId, c.nativeRecovery)
     }
+    // The context window the native and fallback crops are cut from (one
+    // derivation, `confirmationCropWindow`), in this frame's pixels.
+    const confirmationWindowOf = (candidate: BirthCandidate): CaptureCropBbox =>
+      confirmationCropWindow(
+        { x: candidate.bbox.x, y: candidate.bbox.y, w: candidate.bbox.w, h: candidate.bbox.h },
+        frameWidth,
+        frameHeight,
+      )
+    // The old TIGHT crop (box + 15%, the runner's carried derivation): the
+    // whole carried crop, and inside a context window the scope a second
+    // subject must touch to be promoted (D925).
+    const tightRectOf = (candidate: BirthCandidate): CaptureCropBbox =>
+      captureCropFrameRect(
+        { x: candidate.bbox.x, y: candidate.bbox.y, w: candidate.bbox.w, h: candidate.bbox.h },
+        frameWidth,
+        frameHeight,
+        CARRIED_EVIDENCE_PADDING,
+      )
     const deps: ConfirmationGateDeps = {
       // S4: scheduler-routed, LATENCY-SENSITIVE — this crop gates track birth
       // (processFrame AWAITS confirmTrackBirths). kind 'confirm' ranks at
@@ -218,15 +241,11 @@ export class BirthGate {
           exec: () =>
             captureCrop(
               frameHandle,
-              {
-                x: candidate.bbox.x,
-                y: candidate.bbox.y,
-                w: candidate.bbox.w,
-                h: candidate.bbox.h,
-              },
+              confirmationWindowOf(candidate),
               frameWidth,
               frameHeight,
-              CONFIRMATION_CROP_PADDING,
+              // The window already carries the context; no padding on top.
+              0,
               CONFIRMATION_CROP_MAX_WIDTH,
               deviceId,
             ),
@@ -241,15 +260,10 @@ export class BirthGate {
         if (!displayCrop) return Promise.resolve(null)
         return displayCrop(
           frameHandle,
-          {
-            x: candidate.bbox.x,
-            y: candidate.bbox.y,
-            w: candidate.bbox.w,
-            h: candidate.bbox.h,
-          },
+          confirmationWindowOf(candidate),
           frameWidth,
           frameHeight,
-          CONFIRMATION_CROP_PADDING,
+          0,
           candidate.trackId,
           CONFIRMATION_CROP_MAX_WIDTH,
         )
@@ -261,16 +275,14 @@ export class BirthGate {
       keepCrop: (candidate, cropJpeg) => {
         offeredCrops.set(candidate.trackId, cropJpeg)
       },
-      // The frame rectangle `fetchCrop` above asks the runner for — the SAME
-      // derivation the capture applies (`captureCropWindow`), so a box the
-      // re-detector reports in crop space lands where the pixels were.
-      cropRectFor: (candidate) =>
-        captureCropFrameRect(
-          { x: candidate.bbox.x, y: candidate.bbox.y, w: candidate.bbox.w, h: candidate.bbox.h },
-          frameWidth,
-          frameHeight,
-          CONFIRMATION_CROP_PADDING,
-        ),
+      // The frame rectangle the judged crop was cut from, so a box the
+      // re-detector reports in crop space lands where the pixels were. A
+      // native or fallback crop is the context window `fetchCrop` /
+      // `fetchFallbackCrop` above ask for; a CARRIED crop is the runner's
+      // box + 15% (D379), a different rectangle.
+      cropRectFor: (candidate, cropSource) =>
+        cropSource === 'carried' ? tightRectOf(candidate) : confirmationWindowOf(candidate),
+      promotionScopeFor: tightRectOf,
       // PHANTOM-CELL BAR. A candidate born in a cell that has closed
       // short-and-motionless three or more times in 24 h faces a higher bar
       // than the same box a metre away. Synchronous, off the in-RAM mirror
@@ -389,6 +401,7 @@ export class BirthGate {
               secondaryScore: decision.secondary.score,
               secondaryBbox: decision.secondary.bbox,
               verdict: decision.verdict,
+              cropSource: decision.cropSource,
             },
           })
         }

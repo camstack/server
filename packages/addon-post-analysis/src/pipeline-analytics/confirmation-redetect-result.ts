@@ -35,6 +35,7 @@ interface RedetectDetection {
 
 /** One discarded box — `[x1, y1, x2, y2]` in the crop's pixels (`DiscardedDetection`). */
 interface RedetectDiscard {
+  readonly bbox: readonly [number, number, number, number]
   readonly macroClass: string
   readonly score: number
   readonly reason: string
@@ -85,14 +86,28 @@ export function toConfirmationDetections(
         : {}),
     }),
   )
+  // A refused box is placed exactly like a kept one: on a context window a
+  // box with no place could be anyone in it, and the gate will not let it
+  // confirm (`placementFor`).
   const refused = (result.discarded ?? [])
     .filter((d) => d.reason === 'below-threshold')
-    .map(
-      (d): ConfirmationDetection => ({
+    .map((d): ConfirmationDetection => {
+      const [x1, y1, x2, y2] = d.bbox
+      return {
         macroClass: d.macroClass,
         score: d.score,
         refusedByDetectorFloor: true,
-      }),
-    )
+        ...(cropWidth > 0 && cropHeight > 0 && x2 > x1 && y2 > y1
+          ? {
+              bbox: {
+                x: x1 / cropWidth,
+                y: y1 / cropHeight,
+                w: (x2 - x1) / cropWidth,
+                h: (y2 - y1) / cropHeight,
+              },
+            }
+          : {}),
+      }
+    })
   return [...kept, ...refused]
 }

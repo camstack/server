@@ -931,6 +931,10 @@ import { persistObjectFrame } from './pipeline/key-frame-persist.js'
 import { personOverVehicle } from './pipeline/person-over-vehicle.js'
 import { PhantomCellRegistry } from './pipeline/stationary/phantom-cells.js'
 import {
+  noteShortMotionlessClose,
+  type ShortMotionlessCloseTrack,
+} from './pipeline/stationary/short-motionless-close.js'
+import {
   executePromotionEffects,
   type PromotionEffects,
   type PromotionPlan,
@@ -1170,7 +1174,6 @@ import { PlateStore } from './store/plate-store.js'
 import { censusApi, logCensus, StoreReadCensus } from './store/read-census.js'
 import { SensorEventStore } from './store/sensor-event-store.js'
 import { RawDeviceBlobMirror, RawGlobalStoreMirror } from './store/settings-raw-mirror.js'
-import { isShortMotionlessTrack, netDisplacementPx } from './store/short-motionless.js'
 import { SweepCursorStore } from './store/sweep-cursor-store.js'
 import { TrackAliasStore } from './store/track-alias-store.js'
 import { TrackRelationsStore } from './store/track-relations-store.js'
@@ -1430,12 +1433,6 @@ export {
   stripGlobalOnlyFields,
   toAnalyticsDeviceSections,
 } from './settings-schema.js'
-
-/** Grid the spawn point is quantised to, so respawns whose boxes never repeat
- *  to the pixel still land in one cell. */
-const PHANTOM_CELL_PX = 32
-/** How long a cell remembers its closes. */
-const PHANTOM_CELL_WINDOW_MS = 6 * 60 * 60_000
 
 /** `pipelineAnalytics.selectRetrainFrames` input (D482: a media row is
  *  addressed by its own id, never the owning track/owner id). */
@@ -8765,101 +8762,19 @@ export default class PipelineAnalyticsAddon
    * short-motionless close ARMS its cell (raising the confirmation gate's bar
    * there), and a track that actually went somewhere CLEARS it.
    *
-   * The in-RAM counter below stays. It is the line an operator reads
+   * The logic lives in `pipeline/stationary/short-motionless-close.ts`; a
+   * track too brief to judge neither arms nor clears a cell, and logs that.
+   * The in-RAM counter stays. It is the line an operator reads
    * (`repeatsInWindow`), it costs one map, and it is the only thing that keeps
    * working if the durable registry failed to construct.
    */
-  private noteShortMotionlessTrack(track: {
-    readonly trackId: string
-    readonly deviceId: number
-    readonly className: string
-    readonly firstSeen: number
-    readonly lastSeen: number
-    readonly totalDistance?: number
-    readonly positions?: readonly { readonly x: number; readonly y: number }[]
-  }): void {
-    const first = track.positions?.[0]
-    if (!first) return
-    const lifeMs = track.lastSeen - track.firstSeen
-    const moved = netDisplacementPx(track.positions ?? [])
-    // Bounds: ≤25 s; person net ≤40 px (9310d1ff), vehicle net ≤8 px
-    // (86918072 at 15 px must still list). Net, not walk.
-    const motionless = isShortMotionlessTrack(lifeMs, moved, track.className)
-    if (!motionless) {
-      // REACTIVATION. A track born here that GOES SOMEWHERE revokes the
-      // scenery reading — the whole reason the memory is safe to hold. Fire and
-      // forget: the close path must never wait on SQLite, and a lost clear
-      // costs one more suppressed birth, not lost work.
-      void this.phantomCells
-        ?.noteMovingClose({
-          deviceId: track.deviceId,
-          className: track.className,
-          x: first.x,
-          y: first.y,
-        })
-        .then((forgotten) => {
-          if (!forgotten) return
-          // A suppression that LIFTS silently is as hard to explain as one that
-          // starts silently.
-          this.ctx.logger.info('phantom cell cleared — a real subject moved through it', {
-            tags: { deviceId: track.deviceId },
-            meta: {
-              trackId: track.trackId,
-              className: track.className,
-              lifeMs,
-              movedPx: moved,
-            },
-          })
-        })
-        .catch(() => undefined)
-      return
-    }
-    // Quantise to a coarse grid so the same scenery lands in one cell across
-    // respawns, whose boxes never repeat to the pixel.
-    const cell = `${Math.round(first.x / PHANTOM_CELL_PX)},${Math.round(first.y / PHANTOM_CELL_PX)}`
-    const key = `${track.deviceId}:${track.className}:${cell}`
-    const now = Date.now()
-    const seen =
-      this.frameState.shortMotionlessCells
-        .get(key)
-        ?.filter((t) => now - t < PHANTOM_CELL_WINDOW_MS) ?? []
-    seen.push(now)
-    this.frameState.shortMotionlessCells.set(key, seen)
-    this.ctx.logger.info('short motionless track closed', {
-      tags: { deviceId: track.deviceId },
-      meta: {
-        trackId: track.trackId,
-        className: track.className,
-        lifeMs,
-        movedPx: Math.round(moved * 10) / 10,
-        cell,
-        // The number that matters: how many times THIS cell has done this
-        // inside the window. A real subject standing still scores 1.
-        repeatsInWindow: seen.length,
-      },
+  private noteShortMotionlessTrack(track: ShortMotionlessCloseTrack): void {
+    noteShortMotionlessClose(track, {
+      phantomCells: this.phantomCells,
+      cells: this.frameState.shortMotionlessCells,
+      logger: this.ctx.logger,
+      now: Date.now(),
     })
-    void this.phantomCells
-      ?.noteMotionlessClose({
-        deviceId: track.deviceId,
-        className: track.className,
-        trackId: track.trackId,
-        x: first.x,
-        y: first.y,
-        now,
-      })
-      .then((result) => {
-        if (!result.raised) return
-        this.ctx.logger.info('phantom cell armed — spawn bar raised here', {
-          tags: { deviceId: track.deviceId },
-          meta: {
-            trackId: track.trackId,
-            className: track.className,
-            cell: result.cell,
-            closesInWindow: result.closesInWindow,
-          },
-        })
-      })
-      .catch(() => undefined)
   }
 
   private stationarySettingsFromCache(deviceId: number): StationarySettings {

@@ -123,7 +123,11 @@ describe('the session detector re-judges the birth (D925)', () => {
 
   it('passes at 0.45 against the 0.4 bar even though the person floor (0.65) refused the box', async () => {
     const { decision, confirmed } = await judge(CORAL, async () =>
-      ran({ discarded: [{ macroClass: 'person', score: 0.45, reason: 'below-threshold' }] }),
+      ran({
+        discarded: [
+          { bbox: [0, 0, 100, 100], macroClass: 'person', score: 0.45, reason: 'below-threshold' },
+        ],
+      }),
     )
     expect(confirmed).toBe(true)
     expect(decision.reason).toBe('confirmed')
@@ -133,7 +137,11 @@ describe('the session detector re-judges the birth (D925)', () => {
 
   it('the bar decides, not the model floor: 0.38 under a 0.4 bar is suppressed with its score', async () => {
     const { decision, confirmed } = await judge(CORAL, async () =>
-      ran({ discarded: [{ macroClass: 'person', score: 0.38, reason: 'below-threshold' }] }),
+      ran({
+        discarded: [
+          { bbox: [0, 0, 100, 100], macroClass: 'person', score: 0.38, reason: 'below-threshold' },
+        ],
+      }),
     )
     expect(confirmed).toBe(false)
     expect(decision.verdict).toBe('suppressed')

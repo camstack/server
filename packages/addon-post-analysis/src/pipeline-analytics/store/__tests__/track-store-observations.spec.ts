@@ -74,9 +74,11 @@ describe('TrackStore — the sighting count on a closed row', () => {
 
     const rows = await trackStore.queryHistorical({ deviceId: DEVICE_ID, projection: 'slim' })
     expect(rows[0]?.observations).toBe(2)
-    // Events hides this class of close (`listRecentTracks` drops
-    // `stationary-promotion`). The parked-pass digest already did.
-    expect(rows[0]?.closedReason).toBe('stationary-promotion')
+    // Too brief for the short-motionless rule to judge (under 1.5 s and 4
+    // sightings): "did not move" and "had no time to move" look the same, so
+    // the row closes as a normal track. A phantom of this shape is the
+    // confirmation gate's to refuse at birth, not this rule's to hide.
+    expect(rows[0]?.closedReason).toBeUndefined()
   })
 
   it('a row closed EARLY by stationary promotion carries its count too', async () => {

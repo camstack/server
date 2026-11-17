@@ -90,6 +90,22 @@ export interface GateRect {
   readonly h: number
 }
 
+/**
+ * How much a compatible box must overlap the candidate's OWN rectangle to be
+ * the candidate (IoU, frame pixels).
+ *
+ * The native crop is a context window four times the subject's long side
+ * (`confirmationCropWindow`), sixteen times its area: a confident box anywhere
+ * in it is not evidence about THIS birth. Measured on the 1441 replay
+ * (2026-11-17, nine person frames, yolov9m-640-int8, 4× window capped 320
+ * wide): the box that confirmed the subject overlapped its rectangle at IoU
+ * 0.92–0.99 (0.82 on the one frame that scored 0.11), while a second, real
+ * walker in the same window scored 0.56 at IoU 0.00 and the others 0.00–0.03.
+ * 0.3 is the usual "same object" match and leaves room for a ≤640-raster
+ * tracker box that is a few pixels off the native detector's.
+ */
+export const CONFIRMATION_SUBJECT_MIN_IOU = 0.3
+
 /** Minimal shape of a re-detection result the gate inspects. */
 export interface ConfirmationDetection {
   readonly macroClass: string
@@ -335,12 +351,24 @@ export interface ConfirmationDecision {
 
 export interface ConfirmationGateDeps {
   /**
-   * The FRAME-pixel rectangle the candidate's crop was cut from — the padded,
-   * clamped window `fetchCrop` asks the runner for. Without it a crop-
-   * normalised box cannot be put back in the frame and no secondary is
-   * promoted. Optional so a caller that only confirms stays unchanged.
+   * The FRAME-pixel rectangle the candidate's crop was cut from — per
+   * source, because a carried crop (D379) and a native crop are cut from
+   * different windows. Without it a crop-normalised box cannot be put back in
+   * the frame and no secondary is promoted. Optional so a caller that only
+   * confirms stays unchanged.
    */
-  readonly cropRectFor?: (candidate: BirthCandidate) => GateRect | null
+  readonly cropRectFor?: (
+    candidate: BirthCandidate,
+    cropSource: ConfirmationCropSource,
+  ) => GateRect | null
+  /**
+   * The FRAME-pixel rectangle a second subject must touch to be promoted —
+   * the tight crop (box + 15%) the gate used to judge on. The judged crop is
+   * now a context window sixteen times the subject's area; promotion keeps
+   * the old scope, so a car parked across the window is not born as a
+   * "secondary" of a passing walker. Absent: no scope is applied.
+   */
+  readonly promotionScopeFor?: (candidate: BirthCandidate) => GateRect | null
   /** Fetch a hi-res NATIVE crop JPEG of the candidate's box. `null` = miss. */
   readonly fetchCrop: (candidate: BirthCandidate) => Promise<Buffer | null>
   /**
@@ -499,6 +527,14 @@ async function measure(
   // the incompatible best is evidence about WHY a suppression happened.
   let best: ConfirmationDetection | undefined
   let bestIncompatible: ConfirmationDetection | undefined
+  // WHERE a box is decides whether it is about this birth (see
+  // `CONFIRMATION_SUBJECT_MIN_IOU`): a compatible box must BE the subject, an
+  // incompatible one must touch the old tight crop. On a native or fallback
+  // context window a box with no place counts for nothing. Class alone is
+  // judged only where there is no geometry to judge by: a caller that supplies
+  // no `cropRectFor`, and the CARRIED crop, which is the tight box + 15% (the
+  // view the old class-only rule was written for).
+  const placement = placementFor(candidate, cropSource, deps)
   //
   // ONE RULE (D925): the GATE'S bar decides every compatible box, kept or
   // refused by the detector's own per-class floor. That floor is the live
@@ -507,6 +543,7 @@ async function measure(
   // box never promotes a secondary (the discard trail carries no box to place).
   for (const d of detections) {
     const compatible = isConfirmationCompatible(candidate.className, d.macroClass)
+    if (!placement.admits(d, compatible)) continue
     if (compatible) {
       if (!best || d.score > best.score) best = d
     } else if (d.refusedByDetectorFloor !== true) {
@@ -543,7 +580,7 @@ async function measure(
     )
   }
   const secondary = bestIncompatible
-    ? promoteSecondary(candidate, bestIncompatible, bar, deps)
+    ? promoteSecondary(candidate, bestIncompatible, bar, deps, cropSource)
     : null
   // The score the decision is reported with — the best compatible box, kept or
   // floor-refused. Absent when the crop held nothing compatible at all — never
@@ -564,6 +601,51 @@ async function measure(
       : {}),
     ...(secondary ? { secondary } : {}),
   }
+}
+
+/** Decides, per box, whether a detection in the crop is about this birth. */
+interface CropPlacement {
+  readonly admits: (detection: ConfirmationDetection, compatible: boolean) => boolean
+}
+
+function placementFor(
+  candidate: BirthCandidate,
+  cropSource: ConfirmationCropSource,
+  deps: ConfirmationGateDeps,
+): CropPlacement {
+  const rect = deps.cropRectFor?.(candidate, cropSource) ?? null
+  if (rect === null || rect.w <= 0 || rect.h <= 0) return { admits: () => true }
+  const scope = deps.promotionScopeFor?.(candidate) ?? null
+  const classAloneWhenUnplaced = cropSource === 'carried'
+  return {
+    admits: (detection, compatible) => {
+      if (detection.bbox === undefined) return classAloneWhenUnplaced
+      const inFrame = cropBoxToFrame(detection.bbox, rect)
+      if (compatible) return iou(inFrame, candidate.bbox) >= CONFIRMATION_SUBJECT_MIN_IOU
+      return scope === null || intersectionArea(inFrame, scope) > 0
+    },
+  }
+}
+
+function cropBoxToFrame(box: GateRect, rect: GateRect): GateRect {
+  return {
+    x: rect.x + box.x * rect.w,
+    y: rect.y + box.y * rect.h,
+    w: box.w * rect.w,
+    h: box.h * rect.h,
+  }
+}
+
+function intersectionArea(a: GateRect, b: GateRect): number {
+  const w = Math.min(a.x + a.w, b.x + b.w) - Math.max(a.x, b.x)
+  const h = Math.min(a.y + a.h, b.y + b.h) - Math.max(a.y, b.y)
+  return w > 0 && h > 0 ? w * h : 0
+}
+
+function iou(a: GateRect, b: GateRect): number {
+  const inter = intersectionArea(a, b)
+  if (inter === 0) return 0
+  return inter / (a.w * a.h + b.w * b.h - inter)
 }
 
 /**
@@ -593,20 +675,15 @@ function promoteSecondary(
   detection: ConfirmationDetection,
   bar: number,
   deps: ConfirmationGateDeps,
+  cropSource: ConfirmationCropSource,
 ): SecondarySubject | null {
   if (detection.score < bar || detection.bbox === undefined) return null
-  const rect = deps.cropRectFor?.(candidate) ?? null
+  const rect = deps.cropRectFor?.(candidate, cropSource) ?? null
   if (rect === null || rect.w <= 0 || rect.h <= 0) return null
-  const box = detection.bbox
   return {
     className: detection.macroClass,
     score: detection.score,
-    bbox: {
-      x: rect.x + box.x * rect.w,
-      y: rect.y + box.y * rect.h,
-      w: box.w * rect.w,
-      h: box.h * rect.h,
-    },
+    bbox: cropBoxToFrame(detection.bbox, rect),
   }
 }
 

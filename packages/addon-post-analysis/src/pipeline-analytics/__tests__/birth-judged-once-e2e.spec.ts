@@ -33,7 +33,6 @@ import { type Booted, bootAnalytics } from './boot-analytics.js'
 import {
   type FakeNativeCropRequest,
   type FakeRedetectResult,
-  isFullFrameRequest,
   makeFakePipelineExecutor,
   FAKE_SESSION_ROOT,
 } from './test-helpers.js'
@@ -100,14 +99,14 @@ async function flush(stepMs: number): Promise<void> {
 }
 
 function isConfirmationCropRequest(request: FakeNativeCropRequest): boolean {
-  return !isFullFrameRequest(request) && request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
+  return request.maxWidth === CONFIRMATION_CROP_MAX_WIDTH
 }
 
 const DOG_SEEN: FakeRedetectResult = {
   width: 320,
   height: 320,
   detections: [
-    { macroClass: 'animal', score: 0.71, bbox: { x: 40, y: 40, width: 240, height: 240 } },
+    { macroClass: 'animal', score: 0.71, bbox: { x: 120, y: 160, width: 80, height: 62 } },
   ],
 }
 /** The very next crop of the same subject holds nothing compatible — the
