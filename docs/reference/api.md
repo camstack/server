@@ -4799,7 +4799,7 @@
 
 ### `switch` → `switch.*`
 
-- **Source:** `packages/types/src/capabilities/switch.cap.ts:67`
+- **Source:** `packages/types/src/capabilities/switch.cap.ts:57`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `switch, siren, light, fan`
 - **Archetypes:** status(command-driven) · runtimeState · settings(1 binding(s))
 - **Provider interface:** `ISwitchProvider`

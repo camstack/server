@@ -166,6 +166,8 @@ export { errMsg } from './utils/err-msg.js'
 export { maskUrlCredentials } from './utils/mask-url.js'
 export { asJsonObject, asString, parseJsonUnknown } from './utils/json-safe.js'
 export { sleep } from './utils/sleep.js'
+// D1058 - whether a switch can be set: the kernel's `switch.toggle` default refuses a report-only switch.
+export { SWITCH_SETTABLE_GATE, switchRefusesSetState } from './capabilities/switch-settable.js'
 // --- Keychain (D787): the ref / marker contract, `ctx.secrets`, the log
 // scrubber's known-value set. All schema-free (the cap schemas are imported
 // type-only), so the runner closure stays small.

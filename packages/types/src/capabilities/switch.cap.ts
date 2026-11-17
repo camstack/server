@@ -7,6 +7,7 @@ import {
 } from './capability-definition.js'
 import { DeviceType, DeviceRole } from '../device/device-type.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
+import { SWITCH_SETTABLE_GATE } from './switch-settable.js'
 
 /**
  * Generic on/off switch cap for accessory children (siren, floodlight,
@@ -51,18 +52,7 @@ export type SwitchOptions = z.infer<typeof SwitchOptionsSchema>
 /** The options of a provider that did not answer `getOptions`: a plain on/off switch. */
 export const SWITCH_DEFAULT_OPTIONS: SwitchOptions = SwitchOptionsSchema.parse({})
 
-/** The read that decides whether a switch is offered on/off (`offeredWhen` of its actions). */
-export const SWITCH_SETTABLE_GATE = { method: 'getOptions', field: 'supportsSetState' } as const
-
-/**
- * The predicate the on/off surfaces apply to a raw answer: true only when `answer` — what the switch's
- * `getOptions` returned — says `supportsSetState: false`. `undefined` (no provider method, a
- * failed or pending read) and any other shape are false: unknown keeps on/off (D315).
- */
-export function switchRefusesSetState(answer: unknown): boolean {
-  if (typeof answer !== 'object' || answer === null) return false
-  return Reflect.get(answer, SWITCH_SETTABLE_GATE.field) === false
-}
+export { SWITCH_SETTABLE_GATE, switchRefusesSetState } from './switch-settable.js'
 
 export const switchCapability = {
   name: 'switch',
