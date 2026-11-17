@@ -29,6 +29,7 @@ export function infraSnapshot(
     model: '',
     kind: 'other',
     cpuPercent: null,
+    memoryPercent: null,
     cpuTempC: null,
     clients: 0,
     state: 'online',

@@ -22,6 +22,7 @@ const SWITCH = infraSnapshot({
   model: 'USW-Lite-8-PoE',
   kind: 'switch',
   cpuPercent: 5,
+  memoryPercent: null,
   cpuTempC: 40,
   uptimeSec: 100,
   ports: [port({ idx: 1 }), port({ idx: 2, poeCapable: false }), port({ idx: 3 })],

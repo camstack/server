@@ -188,6 +188,7 @@ def normalize_device(raw: dict, wired: dict[str, dict]) -> dict:
         "state": raw.get("state"),
         "uptimeSec": raw.get("uptime"),
         "cpuPercent": _number(stats.get("cpu")),
+        "memoryPercent": _number(stats.get("mem")),
         "cpuTempC": _cpu_temperature(raw),
         "clients": raw.get("num_sta") or 0,
         "ledOverride": raw.get("led_override"),

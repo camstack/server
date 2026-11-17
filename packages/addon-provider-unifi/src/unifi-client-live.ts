@@ -80,6 +80,7 @@ const deviceDetailSchema = z.object({
 const statsSchema = z.object({
   uptimeSec: z.number().nullish(),
   cpuUtilizationPct: z.number().nullish(),
+  memoryUtilizationPct: z.number().nullish(),
 })
 
 const clientSchema = z.object({
@@ -286,6 +287,7 @@ export class UnifiLiveClient implements UnifiControllerClient {
         features: device.features ?? [],
       }),
       cpuPercent: stats?.cpuUtilizationPct ?? null,
+      memoryPercent: stats?.memoryUtilizationPct ?? null,
       // The Integration API reports no temperature.
       cpuTempC: null,
       clients: uplinkCounts.get(device.id) ?? 0,

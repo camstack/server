@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A UniFi console, switch or access point that drops off the controller now raises "Went down" (not "Shut down"), and "Came online" when it returns.
 - A PoE port seen only through the API key is now a switch that can power-cycle: a camera on it can be force-restarted from its power source.
 - The integration status says which credential signed in: the API key, the local account, or both (and when the local account stops answering).
+- UniFi hosts report memory use (percent) on their workload, from the Integration API statistics or the local account's device stats.
 
 ## [0.2.164] - 2026-11-14
 

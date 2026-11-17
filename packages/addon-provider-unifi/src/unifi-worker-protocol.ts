@@ -68,6 +68,7 @@ export const workerDeviceSchema = z.object({
   state: z.number().nullable(),
   uptimeSec: nullableNumber,
   cpuPercent: nullableNumber,
+  memoryPercent: nullableNumber,
   cpuTempC: nullableNumber,
   clients: z.number(),
   ledOverride: z.string().nullable(),

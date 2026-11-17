@@ -56,6 +56,7 @@ def switch(overrides: list[dict], ports: list[dict] | None = None) -> dict:
         "state": 1,
         "uptime": 1000,
         "num_sta": 2,
+        "system-stats": {"cpu": "7.5", "mem": "63.1", "uptime": "1000"},
         "port_overrides": overrides,
         "port_table": ports if ports is not None else [port(i) for i in range(1, 5)],
     }
@@ -158,6 +159,8 @@ class PortTable(unittest.TestCase):
         self.assertEqual(ports[4]["linkUp"], False)
         self.assertIsNone(ports[4]["speedMbps"])
         self.assertEqual(snapshot["devices"][0]["id"], SWITCH_ID)
+        self.assertEqual(snapshot["devices"][0]["cpuPercent"], 7.5)
+        self.assertEqual(snapshot["devices"][0]["memoryPercent"], 63.1)
 
 
 class WebsocketEvents(unittest.TestCase):

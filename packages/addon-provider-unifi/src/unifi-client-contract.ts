@@ -65,6 +65,8 @@ export interface UnifiInfraSnapshot {
   readonly kind: UnifiInfraKind
   /** CPU utilisation percent (0..100), or null when the model does not report it. */
   readonly cpuPercent: number | null
+  /** Memory utilisation percent (0..100), or null when the model does not report it. */
+  readonly memoryPercent: number | null
   /** CPU / system temperature in Celsius, or null when not reported. */
   readonly cpuTempC: number | null
   /** Number of clients currently associated with this device. */

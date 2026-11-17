@@ -64,6 +64,7 @@ const ROUTES: Record<string, unknown> = {
   '/sites/s1/devices/d1/statistics/latest': {
     uptimeSec: 100,
     cpuUtilizationPct: 12.5,
+    memoryUtilizationPct: 48.2,
   },
   '/sites/s1/devices/d1/actions': {},
   '/sites/s1/devices/d1/interfaces/ports/2/actions': {},
@@ -97,6 +98,7 @@ describe('UnifiLiveClient', () => {
     const sw = infra.find((d) => d.id === 'd1')
     expect(sw).toMatchObject({
       cpuPercent: 12.5,
+      memoryPercent: 48.2,
       uptimeSec: 100,
       online: true,
       clients: 1,

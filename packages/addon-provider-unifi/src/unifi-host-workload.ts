@@ -48,6 +48,7 @@ function emptyResources(): WorkloadResources {
   return {
     cpuPercent: null,
     memoryUsedBytes: null,
+    memoryPercent: null,
     memoryLimitBytes: null,
     vcpus: null,
     diskUsedBytes: null,
@@ -122,6 +123,8 @@ export function unifiHostWorkloadStatus(
     resources: {
       ...emptyResources(),
       cpuPercent: infra.cpuPercent,
+      // The controller reports a share of RAM, never bytes.
+      memoryPercent: infra.memoryPercent,
       temperature: infra.cpuTempC,
     },
     lastFetchedAt: now,

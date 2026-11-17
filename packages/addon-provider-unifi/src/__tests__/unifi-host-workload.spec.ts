@@ -23,12 +23,13 @@ const NOW = 1_000_000
 describe('unifiHostWorkloadStatus — a console, switch or AP as a workload host', () => {
   it('an online device is running since its uptime, with its CPU and temperature', () => {
     const status = unifiHostWorkloadStatus(
-      infraSnapshot({ id: 'sw1', cpuPercent: 7, cpuTempC: 41, uptimeSec: 100 }),
+      infraSnapshot({ id: 'sw1', cpuPercent: 7, memoryPercent: 63, cpuTempC: 41, uptimeSec: 100 }),
       NOW,
     )
     expect(status.state).toBe('running')
     expect(status.since).toBe(NOW - 100_000)
     expect(status.resources.cpuPercent).toBe(7)
+    expect(status.resources.memoryPercent).toBe(63)
     expect(status.resources.temperature).toBe(41)
     expect(WorkloadStatusSchema.parse(status)).toEqual(status)
   })
@@ -37,6 +38,7 @@ describe('unifiHostWorkloadStatus — a console, switch or AP as a workload host
     const status = unifiHostWorkloadStatus(infraSnapshot({ id: 'ap1' }), NOW)
     expect(status.since).toBeNull()
     expect(status.resources.cpuPercent).toBeNull()
+    expect(status.resources.memoryPercent).toBeNull()
     expect(status.resources.temperature).toBeNull()
     expect(status.resources.memoryUsedBytes).toBeNull()
     expect(status.hostDeviceId).toBeNull()

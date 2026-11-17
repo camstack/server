@@ -85,6 +85,7 @@ export function workerDeviceToSnapshot(device: UnifiWorkerDevice): UnifiInfraSna
       features: featuresOfType(device.type),
     }),
     cpuPercent: device.cpuPercent,
+    memoryPercent: device.memoryPercent,
     cpuTempC: device.cpuTempC,
     clients: device.clients,
     state,

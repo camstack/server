@@ -63,6 +63,7 @@ const SWITCH: UnifiInfraSnapshot = infraSnapshot({
   model: 'USW-Lite-8-PoE',
   kind: 'switch',
   cpuPercent: 5,
+  memoryPercent: null,
   cpuTempC: 40,
   clients: 3,
   uptimeSec: 100,

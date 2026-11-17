@@ -74,6 +74,7 @@ function switchDevice(port3LinkUp: boolean): UnifiWorkerDevice {
     state: 1,
     uptimeSec: 100,
     cpuPercent: 5,
+    memoryPercent: 31,
     cpuTempC: 40,
     clients: 1,
     ledOverride: 'default',
@@ -198,6 +199,7 @@ describe('a local account through the aiounifi worker', () => {
     const [sw] = await client.listInfraDevices()
     expect(sw).toMatchObject({
       id: 'dev1',
+      memoryPercent: 31,
       kind: 'switch',
       online: true,
       poeSwitchable: true,
