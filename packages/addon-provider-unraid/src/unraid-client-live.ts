@@ -32,8 +32,12 @@ import type {
 /** How long a live-metric subscription is sampled for one value, in ms. */
 const SAMPLE_WINDOW_MS = 2500
 
-/** Why a call to the Unraid API failed. */
-export type UnraidClientFailureKind = 'auth' | 'api' | 'transport' | 'unknown'
+/**
+ * Why a call to the Unraid API failed. `not-found` is an HTTP 404 from the endpoint: something
+ * answered, but no Unraid API lives there (https/443 on a server that serves it on http/80, or
+ * a host without the API).
+ */
+export type UnraidClientFailureKind = 'auth' | 'api' | 'not-found' | 'transport' | 'unknown'
 
 /** Typed failure of the live adapter; the message never carries the API key. */
 export class UnraidClientError extends Error {
@@ -86,22 +90,42 @@ export interface UnraidApiSource {
     warningsAndAlerts(): Promise<Notification[]>
   }
   close(): Promise<void>
+  /** The resolved `http(s)://host:port/graphql` endpoint, named when it answers 404. */
+  readonly endpoint: string
 }
 
-function classify(err: unknown): UnraidClientError {
+/** The HTTP status the GraphQL transport saw (`cause.response.status`), when it got one. */
+function httpStatusOf(err: UnraidTransportError): number | null {
+  const cause: unknown = err.cause
+  const response: unknown =
+    typeof cause === 'object' && cause !== null ? Reflect.get(cause, 'response') : undefined
+  const status: unknown =
+    typeof response === 'object' && response !== null ? Reflect.get(response, 'status') : undefined
+  return typeof status === 'number' ? status : null
+}
+
+function classify(err: unknown, endpoint: string): UnraidClientError {
   if (err instanceof UnraidClientError) return err
   const message = err instanceof Error ? err.message : String(err)
   if (err instanceof UnraidAuthError) return new UnraidClientError('auth', message)
   if (err instanceof UnraidApiError) return new UnraidClientError('api', message)
-  if (err instanceof UnraidTransportError) return new UnraidClientError('transport', message)
+  if (err instanceof UnraidTransportError) {
+    if (httpStatusOf(err) === 404) {
+      return new UnraidClientError(
+        'not-found',
+        `Unraid API not found at ${endpoint} (HTTP 404) — use http on port 80 with an API key`,
+      )
+    }
+    return new UnraidClientError('transport', message)
+  }
   return new UnraidClientError('unknown', message)
 }
 
-async function guard<T>(run: () => Promise<T>): Promise<T> {
+async function guardAt<T>(endpoint: string, run: () => Promise<T>): Promise<T> {
   try {
     return await run()
   } catch (err) {
-    throw classify(err)
+    throw classify(err, endpoint)
   }
 }
 
@@ -244,6 +268,7 @@ function mapNotifications(items: readonly Notification[]): UnraidNotificationsIn
 
 /** Implement {@link UnraidClientLike} over an {@link UnraidApiSource}. Pure polling plus one-shot samples. */
 export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
+  const guard = <T>(run: () => Promise<T>): Promise<T> => guardAt(api.endpoint, run)
   return {
     connect: () => guard(async () => void (await api.system.versions())),
     disconnect: () => guard(() => api.close()),

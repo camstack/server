@@ -53,6 +53,7 @@ function apiWith(vms: VmsSource): UnraidApiSource {
     system: { versions: unused, cpu$: none },
     notifications: { warningsAndAlerts: unused },
     close: async () => undefined,
+    endpoint: 'http://tower.example:80/graphql',
   }
 }
 

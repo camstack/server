@@ -330,6 +330,7 @@ export {
 } from './database-snapshot.cap.js'
 export { migrationsCapability, type IMigrationsProvider } from './migrations.cap.js'
 export { CALLER_STAMPED_CAPABILITIES, withoutCallerStamp } from './caller-stamp.js'
+export { CAP_METHOD_NOT_IMPLEMENTED, isCapMethodAbsent } from './cap-method-absent.js'
 export {
   type IStorageAdminProvider,
   type StaleDataReport,

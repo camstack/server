@@ -16,6 +16,10 @@ function failureOf(err: unknown): IntegrationTestConnectionResult {
       error: `unraid: the server refused the API key (${err.message}) — it needs the ADMIN role`,
     }
   }
+  if (err instanceof UnraidClientError && err.kind === 'not-found') {
+    // Something answered at that address, and it is not the Unraid API: a definite no.
+    return { success: false, status: 'rejected', error: `unraid: ${err.message}` }
+  }
   if (err instanceof UnraidClientError && err.kind === 'api') {
     return {
       success: false,

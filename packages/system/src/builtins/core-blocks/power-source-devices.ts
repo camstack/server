@@ -3,39 +3,15 @@
  * set, and — when its provider declares a native power cycle — cycled in one call.
  */
 import { type AddonApi, SWITCH_DEFAULT_OPTIONS, type SwitchOptions } from '@camstack/types'
-import { CAP_METHOD_NOT_IMPLEMENTED } from '../../kernel/moleculer/child-cap-dispatch.js'
+import { isCapMethodAbsent } from '@camstack/types/addon'
 import { type PowerSourceDevices, SwitchOptionsUnreadableError } from './power-source-service.js'
-
-/** tRPC's own answer for a path the hub does not mount (a hub that predates the method). */
-const UNKNOWN_PROCEDURE = 'No procedure found on path'
-/** `device-call-redirect` / `device-collection-dispatch`: a provider that lacks the method. */
-const PROVIDER_LACKS_METHOD = 'does not implement'
-
-/**
- * Whether a failed `switch.getOptions` means the provider does not HAVE the method (an optional
- * method it never wrote, or a hub that predates it) — a plain on/off switch — rather than a read
- * that failed. The typed code first: the hub cap router's `NOT_IMPLEMENTED`. A forked provider's
- * refusal crosses the UDS hop as a plain message, so it is matched by the dispatcher's exported
- * prefix (`CAP_METHOD_NOT_IMPLEMENTED`); the last two are the routing layer's own wording.
- */
-function isMethodAbsent(err: unknown): boolean {
-  const data: unknown =
-    typeof err === 'object' && err !== null ? Reflect.get(err, 'data') : undefined
-  const code: unknown =
-    typeof data === 'object' && data !== null ? Reflect.get(data, 'code') : undefined
-  if (code === 'NOT_IMPLEMENTED') return true
-  const message = err instanceof Error ? err.message : String(err)
-  return [CAP_METHOD_NOT_IMPLEMENTED, UNKNOWN_PROCEDURE, PROVIDER_LACKS_METHOD].some((marker) =>
-    message.includes(marker),
-  )
-}
 
 /** The switch's options; the defaults when its provider has no `getOptions`; throws typed when the read failed. */
 export async function switchOptionsOf(api: AddonApi, deviceId: number): Promise<SwitchOptions> {
   try {
     return await api.switch.getOptions.query({ deviceId })
   } catch (err: unknown) {
-    if (isMethodAbsent(err)) return SWITCH_DEFAULT_OPTIONS
+    if (isCapMethodAbsent(err)) return SWITCH_DEFAULT_OPTIONS
     throw new SwitchOptionsUnreadableError(deviceId, err)
   }
 }

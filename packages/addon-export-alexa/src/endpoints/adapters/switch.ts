@@ -8,6 +8,7 @@ import {
   SwitchStatusSchema,
   switchRefusesSetState,
 } from '@camstack/types'
+import { isCapMethodAbsent } from '@camstack/types/addon'
 import { handleSetBrightness } from '../../handlers/brightness-controller.js'
 import { handlePower } from '../../handlers/power-controller.js'
 import { iface, plainNumber } from './shared.js'
@@ -58,8 +59,9 @@ export const SWITCH_OPTIONS_KEY = 'switch.getOptions'
 
 /**
  * What the switch can do, read at discovery. No `getOptions` on the provider,
- * or a read that failed, leaves the key out: unknown keeps the switch (D315),
- * and the line says which.
+ * or a read that failed, leaves the key out: unknown keeps the switch (D315).
+ * A provider without the method is a plain switch, not a fault — it logs at
+ * debug; only a read that failed warns.
  */
 async function switchOptions(
   api: AddonApi,
@@ -71,6 +73,12 @@ async function switchOptions(
       [SWITCH_OPTIONS_KEY]: await api.switch.getOptions.query({ deviceId }),
     }
   } catch (err: unknown) {
+    if (isCapMethodAbsent(err)) {
+      logger.debug('alexa discovery: switch has no getOptions — a plain on/off switch', {
+        tags: { deviceId },
+      })
+      return {}
+    }
     logger.warn('alexa discovery: switch options unread — exported as a plain on/off switch', {
       tags: { deviceId },
       meta: { error: err instanceof Error ? err.message : String(err) },

@@ -130,12 +130,19 @@ const ACCEPTED: PowerSourceActionResult = { accepted: true }
 export class PowerSourceService implements IPowerSourceProvider {
   /** Restarts whose switch-on has not run yet, by device id. */
   private readonly restarting = new Map<number, PendingRestart>()
+  /**
+   * Devices whose switch-options read is failing now: warned once per streak, cleared by a
+   * success or when the device is no longer linked. A removed device leaves at most one bare id
+   * behind (this service has no removal hook); the set dies with the process.
+   */
+  private readonly optionsReadFailing = new Set<number>()
 
   constructor(private readonly deps: PowerSourceServiceDeps) {}
 
   getStatus = async ({ deviceId }: { deviceId: number }): Promise<PowerSourceInfo> => {
     const link = await this.linkOf(deviceId)
     if (link === null) {
+      this.optionsReadFailing.delete(deviceId)
       return {
         linked: false,
         switchDeviceId: null,
@@ -295,14 +302,20 @@ export class PowerSourceService implements IPowerSourceProvider {
 
   /**
    * Whether the switch can be set: `true` for a plain switch (no options reader, or a provider
-   * without `getOptions`), `null` when the read FAILED (logged, tagged) — never `false` for unknown.
+   * without `getOptions`), `null` when the read FAILED — never `false` for unknown. Every hero
+   * build reads `getStatus`, so a failing read warns once per device per failure streak (tagged);
+   * a successful read ends the streak.
    */
   private async settableOf(deviceId: number, switchId: number): Promise<boolean | null> {
     const options = this.deps.devices.options
     if (options === undefined) return true
     try {
-      return (await options(switchId)).supportsSetState
+      const settable = (await options(switchId)).supportsSetState
+      this.optionsReadFailing.delete(deviceId)
+      return settable
     } catch (err: unknown) {
+      if (this.optionsReadFailing.has(deviceId)) return null
+      this.optionsReadFailing.add(deviceId)
       this.deps.logger.warn(
         'power-source: the switch options could not be read; settable unknown',
         {

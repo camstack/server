@@ -1,4 +1,4 @@
-import { commandOrigin } from '@camstack/types/addon'
+import { CAP_METHOD_NOT_IMPLEMENTED, commandOrigin } from '@camstack/types/addon'
 import { runWithCapCallContext } from '../cap-call-scope.js'
 import type { CapCallInput } from '../transport/child-cap-protocol.js'
 
@@ -56,12 +56,8 @@ export interface ChildCapDispatchDeps {
   isProviderOptionalMethod(capName: string, method: string): boolean
 }
 
-/**
- * Prefix the hub matches to turn a child-side "declared optional, not served"
- * into a `NOT_IMPLEMENTED`. A prefix rather than an error subclass because the
- * error crosses a UDS boundary as a plain message.
- */
-export const CAP_METHOD_NOT_IMPLEMENTED = 'CAP_METHOD_NOT_IMPLEMENTED'
+/** The prefix lives in `@camstack/types` so an addon can recognise it too. */
+export { CAP_METHOD_NOT_IMPLEMENTED }
 
 /**
  * Extract a string `addonId` out of arbitrary method args — the fallback

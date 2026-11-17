@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A container workload shows its memory use, which was read and not shown
 - An Unraid server that stops answering now reports as down (raising the host's 'went down', then 'back online' when it answers again) and its containers and VMs read unknown, instead of all of them staying 'running' on the last poll
 - Upgrading removes the per-container switch children an existing server had under it; there is no migration: delete them first if you prefer, then adopt the Docker containers and VMs again from Add devices, where each comes back as its own workload device
+- An HTTP 404 from the Unraid API now says so: the connection test and the offline reason name the URL and tell you to use http on port 80 with an API key
 
 ## [0.2.168] - 2026-11-16
 
