@@ -39,6 +39,7 @@ function factoryOver(
         return script(input.logger)
       },
       getDevices: async () => true,
+      hydrateSession: () => undefined,
       fans: [],
     }
   })

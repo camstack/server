@@ -1,10 +1,20 @@
 import { errMsg, type IScopedLogger } from '@camstack/types'
 import type { VeSyncConnectionConfig } from './config.js'
-import type {
-  VeSyncClient,
-  VeSyncClientFactory,
-  VeSyncPurifierSnapshot,
+import {
+  type VeSyncClient,
+  type VeSyncClientFactory,
+  type VeSyncPurifierSnapshot,
+  type VeSyncSession,
+  VeSyncSessionRejectedError,
 } from './vesync-client-contract.js'
+import {
+  decideSessionRestore,
+  rowOfSession,
+  type VeSyncSessionStore,
+  type VeSyncSignInReason,
+  type VeSyncStoredSession,
+  vesyncCredentialsFingerprint,
+} from './vesync-session-store.js'
 import { tsVeSyncClientFactory } from './vesync-tsvesync-client.js'
 
 /** Status of a single VeSync account connection. */
@@ -16,6 +26,8 @@ export interface VeSyncIntegrationManagerOptions {
   readonly name: string
   readonly connection: VeSyncConnectionConfig
   readonly logger: IScopedLogger
+  /** Where the account's session survives a restart (keychain-backed). */
+  readonly sessions: VeSyncSessionStore
   readonly onConnected: (accountId: string) => void
   readonly onDisconnected: (accountId: string) => void
   /** Fired after every poll cycle so the account device fans the fresh snapshot
@@ -28,7 +40,7 @@ export interface VeSyncIntegrationManagerOptions {
 /**
  * Wraps exactly one {@link VeSyncClient} (= one VeSync account). VeSync exposes
  * no push channel via the wrapper we target, so the manager owns a poll loop: on
- * `start()` it logs in, lists devices once, and then periodically re-lists them,
+ * `start()` it adopts the stored session (or signs in), lists devices once, and then periodically re-lists them,
  * firing `onPolled` after every cycle. Mirrors the Velux / Rademacher integration
  * manager, with the same fresh-client-on-reconnect discipline.
  */
@@ -36,6 +48,7 @@ export class VeSyncIntegrationManager {
   readonly #id: string
   #connection: VeSyncConnectionConfig
   readonly #logger: IScopedLogger
+  readonly #sessions: VeSyncSessionStore
   readonly #onConnected: (accountId: string) => void
   readonly #onDisconnected: (accountId: string) => void
   readonly #onPolled: (accountId: string) => void
@@ -46,11 +59,14 @@ export class VeSyncIntegrationManager {
   #status: VeSyncAccountStatus = 'disconnected'
   #pollTimer: ReturnType<typeof setInterval> | null = null
   #error: string | null = null
+  /** Session writes, serialized so a start can wait for the one its sign-in queued. */
+  #sessionWrites: Promise<void> = Promise.resolve()
 
   constructor(options: VeSyncIntegrationManagerOptions) {
     this.#id = options.id
     this.#connection = options.connection
     this.#logger = options.logger
+    this.#sessions = options.sessions
     this.#onConnected = options.onConnected
     this.#onDisconnected = options.onDisconnected
     this.#onPolled = options.onPolled
@@ -88,9 +104,9 @@ export class VeSyncIntegrationManager {
   }
 
   /**
-   * Log in, list devices once, and start the poll loop. A failed login throws
-   * (the caller logs and keeps the device — a later `applyConnection` / restart
-   * retries).
+   * Adopt the stored session or sign in, list devices once, and start the poll loop. A failed
+   * sign-in throws (the caller logs and keeps the device — a later `applyConnection` / restart
+   * retries). A restored session the cloud refuses gets exactly one fresh sign-in.
    */
   async start(): Promise<void> {
     if (this.#client !== null) {
@@ -102,18 +118,43 @@ export class VeSyncIntegrationManager {
     this.#status = 'connecting'
     this.#error = null
 
+    const connection = this.#connection
+    const fingerprint = vesyncCredentialsFingerprint(connection)
     const client = this.#makeClient({
-      email: this.#connection.email,
-      password: this.#connection.password,
-      region: this.#connection.region,
-      ...(this.#connection.countryCode !== undefined
-        ? { countryCode: this.#connection.countryCode }
-        : {}),
+      email: connection.email,
+      password: connection.password,
+      region: connection.region,
+      ...(connection.countryCode !== undefined ? { countryCode: connection.countryCode } : {}),
+      onSession: (session) => this.#queueSessionSave(fingerprint, session),
     })
     this.#client = client
 
-    await client.login()
-    this.#purifiers = indexPurifiers(await client.listDevices())
+    const decision = decideSessionRestore(await this.#loadSession(), fingerprint, Date.now())
+    let signInReason: VeSyncSignInReason | null = null
+    if (decision.kind === 'restore') {
+      client.restoreSession(decision.session)
+      try {
+        this.#purifiers = indexPurifiers(await client.listDevices())
+      } catch (err) {
+        if (!(err instanceof VeSyncSessionRejectedError)) throw err
+        signInReason = 'rejected'
+        await this.#clearSession()
+        await client.login()
+        this.#purifiers = indexPurifiers(await client.listDevices())
+      }
+    } else {
+      signInReason = decision.reason
+      if (decision.reason !== 'none-stored') await this.#clearSession()
+      await client.login()
+      this.#purifiers = indexPurifiers(await client.listDevices())
+    }
+    await this.flushSessionWrites()
+    this.#logger.info(
+      signInReason === null
+        ? 'VeSyncIntegrationManager: session restored'
+        : `VeSyncIntegrationManager: signed in (${signInReason})`,
+      { tags: { accountId: this.#id }, meta: { session: signInReason ?? 'restored' } },
+    )
 
     this.#status = 'connected'
     this.#onConnected(this.#id)
@@ -146,6 +187,55 @@ export class VeSyncIntegrationManager {
       }
     }
     this.#onDisconnected(this.#id)
+  }
+
+  /** Wait until every session write queued so far has settled (a failed one is logged). */
+  async flushSessionWrites(): Promise<void> {
+    await this.#sessionWrites
+  }
+
+  /** Forget the stored session — the integration was deleted. */
+  async forgetSession(): Promise<void> {
+    await this.flushSessionWrites()
+    await this.#clearSession()
+  }
+
+  async #loadSession(): Promise<VeSyncStoredSession | null> {
+    try {
+      return await this.#sessions.load(this.#id)
+    } catch (err) {
+      this.#logger.warn('VeSyncIntegrationManager: stored session unreadable — signing in', {
+        tags: { accountId: this.#id },
+        meta: { error: errMsg(err) },
+      })
+      return null
+    }
+  }
+
+  async #clearSession(): Promise<void> {
+    try {
+      await this.#sessions.clear(this.#id)
+    } catch (err) {
+      this.#logger.warn('VeSyncIntegrationManager: clearing the stored session failed', {
+        tags: { accountId: this.#id },
+        meta: { error: errMsg(err) },
+      })
+    }
+  }
+
+  /** The client minted a session: persist it, bound to the credentials that minted it. */
+  #queueSessionSave(fingerprint: string, session: VeSyncSession): void {
+    const row = rowOfSession(this.#id, fingerprint, session)
+    this.#sessionWrites = this.#sessionWrites.then(async () => {
+      try {
+        await this.#sessions.save(row)
+      } catch (err) {
+        this.#logger.warn('VeSyncIntegrationManager: saving the session failed', {
+          tags: { accountId: this.#id },
+          meta: { error: errMsg(err) },
+        })
+      }
+    })
   }
 
   /** Atomically replace the connection: stop, swap config, reconnect. */

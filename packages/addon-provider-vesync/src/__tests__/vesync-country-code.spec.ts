@@ -78,6 +78,7 @@ describe('the VeSync country code', () => {
     const seen: Parameters<VeSyncClientFactory>[0][] = []
     const client: VeSyncClient = {
       login: async () => undefined,
+      restoreSession: () => undefined,
       logout: async () => undefined,
       listDevices: async () => [],
       getDevice: () => null,
@@ -97,6 +98,12 @@ describe('the VeSync country code', () => {
         countryCode: 'IT',
       }),
       logger: fakeAddonContext().logger,
+      sessions: {
+        load: async () => null,
+        save: async () => undefined,
+        clear: async () => undefined,
+        prune: async () => undefined,
+      },
       onConnected: () => undefined,
       onDisconnected: () => undefined,
       onPolled: () => undefined,
@@ -208,6 +215,7 @@ describe('a sign-in refused for the country code', () => {
         login: async () => {
           throw classifyLoginFailure(LIVE)
         },
+        restoreSession: () => undefined,
         logout: async () => undefined,
         listDevices: async () => [],
         getDevice: () => null,
