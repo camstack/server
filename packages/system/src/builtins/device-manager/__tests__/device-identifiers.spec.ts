@@ -172,6 +172,13 @@ describe('setIdentifiers', () => {
     expect(identifiersEvents(world.emit)).toHaveLength(1)
   })
 
+  it('projects the stored declaration on loadMeta too', async () => {
+    const world = await setup()
+    const dev = await registered(world, 'cam-1')
+    await world.provider.setIdentifiers(stamped({ deviceId: dev.id, identifiers: DECLARED }, OWNER))
+    expect((await world.provider.loadMeta({ deviceId: dev.id }))?.identifiers).toEqual(DECLARED)
+  })
+
   it('refuses an unstamped (operator) call and leaves the row untouched', async () => {
     const world = await setup()
     const dev = await registered(world, 'cam-2')

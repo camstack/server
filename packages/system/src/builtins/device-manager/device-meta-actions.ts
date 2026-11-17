@@ -1031,6 +1031,7 @@ export async function loadMeta(
     ...(m.integrationId !== undefined ? { integrationId: m.integrationId } : {}),
     ...(m.linkDeviceId !== undefined ? { linkDeviceId: m.linkDeviceId } : {}),
     ...(m.role !== undefined ? { role: m.role } : {}),
+    ...(m.identifiers !== undefined ? { identifiers: m.identifiers } : {}),
   }
 }
 
