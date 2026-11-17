@@ -15,9 +15,14 @@ import { withDeviceSearchHub, type SearchHubDevice } from '../../../test-setup/d
 import '../../../i18n'
 import { ActionPicker, type ActionPickDraft } from '../ActionPicker'
 
+const sirenRead = vi.hoisted(() => ({
+  playChoices: (): Promise<unknown> => Promise.resolve([]),
+}))
+
 vi.mock('../../../../../ui-library/src/contexts/system-context.js', () => ({
   useSystem: () => ({
     trpcClient: {
+      siren: { getPlayChoices: { query: () => sirenRead.playChoices() } },
       deviceManager: { listAll: { query: () => new Promise(() => undefined) } },
       addons: { list: { query: () => new Promise(() => undefined) } },
       integrations: { list: { query: () => new Promise(() => undefined) } },
@@ -44,6 +49,7 @@ const fleet = [
   fleetRow(4, 'Hall hub', 'container'),
   fleetRow(5, 'Fan', 'fan'),
   fleetRow(6, 'Fan 2', 'fan'),
+  fleetRow(7, 'Yard siren', 'siren'),
 ]
 
 const CAPS = new Map<number, readonly string[]>([
@@ -53,6 +59,7 @@ const CAPS = new Map<number, readonly string[]>([
   [4, ['switch']],
   [5, ['fan-control']],
   [6, ['fan-control']],
+  [7, ['siren']],
 ])
 
 vi.mock('@camstack/ui-library', async (importOriginal) => ({
@@ -140,6 +147,13 @@ const SEARCH_FLEET: readonly SearchHubDevice[] = [
     type: DeviceType.Fan,
     location: 'Kitchen',
     caps: ['fan-control'],
+  },
+  {
+    id: 7,
+    name: 'Yard siren',
+    type: DeviceType.Siren,
+    location: 'Kitchen',
+    caps: ['siren'],
   },
 ]
 
@@ -337,3 +351,28 @@ function cleanupAndMount(props: Parameters<typeof Harness>[0]): void {
   cleanup()
   mount(props)
 }
+
+describe('ActionPicker — a command whose argument the device answers', () => {
+  it('a siren that answers no play counts is not offered "sound N times"', async () => {
+    sirenRead.playChoices = () => Promise.resolve([])
+    mount()
+    await pickDevice(/Yard siren/)
+    await waitFor(() => expect(commands()).not.toContain('siren.triggerPlays'))
+    expect(commands()).toContain('siren.trigger')
+  })
+
+  it('a siren whose play counts could not be read is still offered it', async () => {
+    sirenRead.playChoices = () => Promise.reject(new Error('timeout'))
+    mount()
+    await pickDevice(/Yard siren/)
+    await waitFor(() => expect(commands()).toContain('siren.trigger'))
+    expect(commands()).toContain('siren.triggerPlays')
+  })
+
+  it('a siren with play counts is offered it', async () => {
+    sirenRead.playChoices = () => Promise.resolve([1, 2, 3])
+    mount()
+    await pickDevice(/Yard siren/)
+    await waitFor(() => expect(commands()).toContain('siren.triggerPlays'))
+  })
+})

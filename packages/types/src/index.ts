@@ -1298,6 +1298,8 @@ export type {
   ResolvedEventTrigger,
   ResolvedNumericTrigger,
   ResolvedValueTrigger,
+  DynamicOfferAnswer,
+  DynamicOfferAnswerOf,
   ResolvedVocabAction,
   ResolvedVocabTrigger,
   VocabBindingsInput,
@@ -1315,8 +1317,10 @@ export type {
 } from './device/cap-vocabulary/index.js'
 export {
   actionEffect,
+  actionOfferedWith,
   actionsForDevice as vocabularyActionsForDevice,
   deviceOffersActions,
+  offeredActionsWith,
   allVocabActions,
   auditedFields,
   CAP_VOCABULARY,

@@ -1517,7 +1517,7 @@
 | `workload.getStatus` | query | protected | workload (auto) |
 | `workload.start` | mutation | protected | workload |
 | `workload.stop` | mutation | protected | workload |
-| `workload.restart` | mutation | admin | workload |
+| `workload.restart` | mutation | protected | workload |
 | `workload.pause` | mutation | protected | workload |
 | `workload.resume` | mutation | protected | workload |
 | `workload.forceStop` | mutation | admin | workload |
@@ -5218,7 +5218,7 @@
 
 ### `workload` → `workload.*`
 
-- **Source:** `packages/types/src/capabilities/workload.cap.ts:287`
+- **Source:** `packages/types/src/capabilities/workload.cap.ts:296`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `workload`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IWorkloadProvider`
@@ -5230,7 +5230,7 @@
 | getStatus _(auto)_ | `workload.getStatus` | query | protected | `{ deviceId: number }` | `WorkloadStatusSchema` |
 | start | `workload.start` | mutation | protected | `{ deviceId: number }` | `void` |
 | stop | `workload.stop` | mutation | protected | `{ deviceId: number }` | `void` |
-| restart | `workload.restart` | mutation | admin | `{ deviceId: number }` | `void` |
+| restart | `workload.restart` | mutation | protected | `{ deviceId: number }` | `void` |
 | pause | `workload.pause` | mutation | protected | `{ deviceId: number }` | `void` |
 | resume | `workload.resume` | mutation | protected | `{ deviceId: number }` | `void` |
 | forceStop | `workload.forceStop` | mutation | admin | `{ deviceId: number }` | `void` |

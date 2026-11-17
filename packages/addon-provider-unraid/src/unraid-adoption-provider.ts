@@ -34,7 +34,7 @@ export interface UnraidAdoptionProviderDeps {
     readonly integrationId: string
     readonly name: string
   }) => Promise<{ readonly deviceId: number }>
-  /** Create the top-level instance Container; the kernel spawns its entity children. */
+  /** Create the top-level server device (the workload host); the kernel spawns its entity children. */
   readonly adoptInstance: (input: {
     readonly integrationId: string
     readonly name: string

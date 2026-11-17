@@ -3449,6 +3449,30 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         ],
         icon: 'activity',
       },
+      {
+        kind: 'numeric',
+        field: 'resources.cpuPercent',
+        quantity: { en: 'the CPU use', it: 'l\'uso della CPU' },
+        label: { en: 'CPU', it: 'CPU' },
+        unit: '%',
+        icon: 'cpu',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.memoryPercent',
+        quantity: { en: 'the memory use', it: 'l\'uso della memoria' },
+        label: { en: 'Memory', it: 'Memoria' },
+        unit: '%',
+        icon: 'memory-stick',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.temperature',
+        quantity: { en: 'the temperature', it: 'la temperatura' },
+        label: { en: 'Temperature', it: 'Temperatura' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
     ],
     events: {
       onStarted: {

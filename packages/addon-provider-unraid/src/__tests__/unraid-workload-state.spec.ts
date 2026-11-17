@@ -2,11 +2,18 @@
  * What an Unraid Docker container, VM and the server itself report through the `workload`
  * cap: the state, what is known, and only the controls node-unraid really serves.
  */
-import { DeviceRole, WorkloadStatusSchema, deriveWorkloadControls } from '@camstack/types'
+import {
+  DeviceRole,
+  WorkloadStatusSchema,
+  deriveWorkloadControls,
+  workloadTransition,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { UnraidContainerInfo, UnraidSnapshot } from '../unraid-client-contract.js'
+import type { UnraidInstanceStatus } from '../unraid-integration-manager.js'
 import {
   unraidHostWorkloadStatus,
+  unraidServerReach,
   UNRAID_HOST_WORKLOAD_OPTIONS,
   unraidWorkloadOptions,
   unraidWorkloadRole,
@@ -45,6 +52,8 @@ describe('unraidWorkloadStatus — a container', () => {
       lastFetchedAt: NOW,
     })
     expect(status.resources.cpuPercent).toBe(12)
+    // The API reports memory as a share of the limit, not in bytes.
+    expect(status.resources.memoryPercent).toBe(7)
     expect(status.resources.memoryUsedBytes).toBeNull()
     expect(WorkloadStatusSchema.parse(status)).toEqual(status)
   })
@@ -86,12 +95,12 @@ describe('unraidWorkloadStatus — a VM', () => {
 })
 
 describe('unraidWorkloadOptions — honest per kind', () => {
-  it('a container starts, stops and pauses; node-unraid has no restart or force stop for it', () => {
+  it('a container starts, stops, restarts (stop then start) and pauses; no force stop', () => {
     expect(unraidWorkloadOptions('docker')).toMatchObject({
       supportsStart: true,
       supportsStop: true,
       supportsPause: true,
-      supportsRestart: false,
+      supportsRestart: true,
       supportsForceStop: false,
       hasResources: true,
       hasAutostart: true,
@@ -129,8 +138,10 @@ describe('the server as the host', () => {
     }
   }
 
+  const answering = (snapshot: UnraidSnapshot) => ({ kind: 'answering' as const, snapshot })
+
   it('a polled server is running with its CPU and temperature', () => {
-    const status = unraidHostWorkloadStatus(server(), NOW)
+    const status = unraidHostWorkloadStatus(answering(server()), NOW)
     expect(status.state).toBe('running')
     expect(status.os).toBe('Unraid')
     expect(status.resources.cpuPercent).toBe(33)
@@ -138,8 +149,48 @@ describe('the server as the host', () => {
     expect(status.hostDeviceId).toBeNull()
   })
 
-  it('no snapshot is unknown, never stopped', () => {
-    expect(unraidHostWorkloadStatus(null, NOW).state).toBeNull()
+  it('not yet polled is unknown, never stopped', () => {
+    expect(unraidHostWorkloadStatus({ kind: 'unknown' }, NOW).state).toBeNull()
+  })
+
+  it('a server that stops answering went down, and coming back is a recovery — never still running', () => {
+    const down = unraidHostWorkloadStatus({ kind: 'unreachable' }, NOW)
+    expect(down.state).toBe('crashed')
+    expect(down.resources.cpuPercent).toBeNull()
+    expect(workloadTransition('running', down.state)).toBe('crashed')
+    const back = unraidHostWorkloadStatus(answering(server()), NOW)
+    expect(workloadTransition('crashed', back.state)).toBe('recovered')
+  })
+
+  describe('unraidServerReach — what the last poll says', () => {
+    const snap = server()
+    const view = (
+      status: UnraidInstanceStatus,
+      error: string | null,
+      snapshot: UnraidSnapshot | null,
+    ) => ({
+      status,
+      error,
+      getSnapshot: () => snapshot,
+    })
+
+    it('a connected manager whose last poll failed is unreachable, even with an old snapshot', () => {
+      expect(unraidServerReach(view('connected', 'ECONNREFUSED', snap)).kind).toBe('unreachable')
+    })
+
+    it('a connected manager with a fresh snapshot is answering', () => {
+      expect(unraidServerReach(view('connected', null, snap)).kind).toBe('answering')
+    })
+
+    it('no manager, or one still connecting or stopped, is unknown', () => {
+      expect(unraidServerReach(null).kind).toBe('unknown')
+      expect(unraidServerReach(view('connecting', null, null)).kind).toBe('unknown')
+      expect(unraidServerReach(view('disconnected', null, null)).kind).toBe('unknown')
+    })
+
+    it('a manager in error is unreachable', () => {
+      expect(unraidServerReach(view('error', 'boom', null)).kind).toBe('unreachable')
+    })
   })
 
   it('the server declares no control the API does not serve', () => {

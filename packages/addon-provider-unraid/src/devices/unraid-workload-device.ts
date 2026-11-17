@@ -19,7 +19,9 @@ import {
 } from '../unraid-discovery.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
 import {
+  answeringSnapshot,
   unknownWorkloadStatus,
+  unraidServerReach,
   unraidWorkloadOptions,
   unraidWorkloadStatus,
 } from '../unraid-workload-state.js'
@@ -110,8 +112,18 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
       pause: async () => this.run('pause', (c, id) => this.lifecycle(c).pause(id)),
       resume: async () => this.run('resume', (c, id) => this.lifecycle(c).resume(id)),
     }
-    if (this.ref.kind === 'docker') return base
-    // A VM also reboots (its restart) and force-stops; a container has neither in the API.
+    if (this.ref.kind === 'docker') {
+      // The API has no atomic container restart: stop then start, by the same live id.
+      return {
+        ...base,
+        restart: async () =>
+          this.run('restart', async (c, id) => {
+            await c.docker.stop(id)
+            await c.docker.start(id)
+          }),
+      }
+    }
+    // A VM reboots (its restart) and force-stops; a container has no force stop in the API.
     return {
       ...base,
       restart: async () => this.run('restart', (c, id) => c.vms.reboot(id)),
@@ -164,9 +176,11 @@ export class UnraidWorkloadDevice extends BaseDevice<typeof unraidWorkloadSchema
     await manager.poll()
   }
 
-  /** The `workload` slice from the live snapshot. */
+  /** The `workload` slice from the live snapshot; unknown while the server does not answer. */
   private recompute(): void {
-    const snapshot = unraidInstances.getSnapshot(this.integrationId)
+    const snapshot = answeringSnapshot(
+      unraidServerReach(unraidInstances.getManager(this.integrationId)),
+    )
     this.runtimeState.setCapState(
       workloadCapability.name,
       unraidWorkloadStatus(

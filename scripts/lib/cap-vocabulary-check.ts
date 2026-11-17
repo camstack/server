@@ -148,6 +148,22 @@ function statusShape(def: CapabilityDefinition): Readonly<Record<string, z.ZodTy
   return null
 }
 
+/**
+ * The status field a state trigger names: a top-level key, or a dotted path into
+ * nested objects (`resources.cpuPercent`), each step unwrapped like the runtime
+ * readers do (`pick` / `readField` walk the same path). Undefined when absent.
+ */
+function statusFieldAt(
+  shape: Readonly<Record<string, z.ZodType>> | null,
+  path: string,
+): z.ZodType | undefined {
+  const [head, ...rest] = path.split('.')
+  if (shape === null || head === undefined) return undefined
+  const field = shape[head]
+  if (field === undefined || rest.length === 0) return field
+  return statusFieldAt(objectShape(field), rest.join('.'))
+}
+
 /** Every `{ en, it }` in a value, with its path. */
 function collectL10n(value: unknown, path: string, out: { path: string; value: object }[]): void {
   if (value === null || typeof value !== 'object') return
@@ -407,7 +423,7 @@ function checkStateTrigger(
   if (!input.iconKeys.has(trigger.icon))
     problems.push(`${where}: icon '${trigger.icon}' is not in the catalog`)
   const shape = statusShape(def)
-  const field = shape?.[trigger.field]
+  const field = statusFieldAt(shape, trigger.field)
   if (field === undefined) {
     problems.push(`${where}: ${def.name} declares no status field '${trigger.field}'`)
     return

@@ -12,7 +12,7 @@ import { localIdOf } from './unraid-mapping.js'
 export const UNRAID_GATEWAY_ID = 'gateway'
 
 /**
- * The `childNativeId` of the single instance Container, one per integration. The
+ * The `childNativeId` of the single server device (the workload host), one per integration. The
  * Container fans every array / disk / CPU / notification entity out as accessory
  * children. Docker containers and VMs are NOT its children: each is its own candidate.
  */

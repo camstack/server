@@ -21974,7 +21974,7 @@ export function createCapRouter_workload(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return fn.call(p, methodInput as any)
       }),
-    restart: adminProcedure
+    restart: protectedProcedure
       .input(workloadCapability.methods.restart.input.loose())
       .output(workloadCapability.methods.restart.output)
       .mutation(async ({ input, ctx }) => {

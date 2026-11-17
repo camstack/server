@@ -8,7 +8,7 @@
  * inferred, nothing is assumed, and the port is not a control port wearing
  * an HTTP port's name (which is the Reolink trap).
  *
- * Every device the addon owns — the Gateway, the instance Container and each entity
+ * Every device the addon owns — the Gateway, the server device and each entity
  * child (array status, a Docker container's switch, a share's usage) — is a
  * view of the SAME server, so they all resolve to that server's WebGUI. There
  * is no per-entity deep link: the WebGUI's Docker and Shares pages exist but

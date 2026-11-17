@@ -350,6 +350,7 @@ describe('Unraid workload devices serve the workload cap', () => {
   async function live() {
     const done = async (): Promise<void> => undefined
     const calls: string[] = []
+    const reach = { down: false }
     const rec =
       (what: string) =>
       async (id: string): Promise<void> => {
@@ -379,7 +380,12 @@ describe('Unraid workload devices serve the workload cap', () => {
         forceStop: rec('vm.forceStop'),
         reboot: rec('vm.reboot'),
       },
-      system: { cpu: async () => snapshot().cpu },
+      system: {
+        cpu: async () => {
+          if (reach.down) throw new Error('ECONNREFUSED')
+          return snapshot().cpu
+        },
+      },
       notifications: { active: async () => snapshot().notifications },
     }
     const manager = new UnraidIntegrationManager({
@@ -394,7 +400,7 @@ describe('Unraid workload devices serve the workload cap', () => {
     })
     await manager.start()
     unraidInstances.set(INT, manager)
-    return { calls, manager }
+    return { calls, manager, reach }
   }
 
   const SERVER_CONFIG = {
@@ -420,12 +426,15 @@ describe('Unraid workload devices serve the workload cap', () => {
     expect(slice?.state).toBe('running')
     expect(slice?.hostDeviceId).toBe(42)
     expect(slice?.image).toBe('plex:latest')
-    expect(workload.restart).toBeUndefined()
     expect(workload.forceStop).toBeUndefined()
+    // The API has no atomic container restart: stop then start, as the old switch did.
+    await workload.restart?.({ deviceId: 50 })
     await workload.stop?.({ deviceId: 50 })
     await workload.pause?.({ deviceId: 50 })
     await workload.resume?.({ deviceId: 50 })
     expect(calls).toEqual([
+      `docker.stop ${SERVER}:aaa`,
+      `docker.start ${SERVER}:aaa`,
       `docker.stop ${SERVER}:aaa`,
       `docker.pause ${SERVER}:aaa`,
       `docker.unpause ${SERVER}:aaa`,
@@ -463,6 +472,30 @@ describe('Unraid workload devices serve the workload cap', () => {
     const slice = server.runtimeState.getCapState<WorkloadStatus>('workload')
     expect(slice?.state).toBe('running')
     expect(slice?.resources.cpuPercent).toBe(12)
+    await manager.stop()
+  })
+
+  it('a server that stops answering went down and its containers are unknown — never still running', async () => {
+    const { manager, reach } = await live()
+    const { ctx } = rig(SERVER_CONFIG, 42)
+    const server = new UnraidInstanceDevice(ctx)
+    await server.onActivate()
+    const container = new UnraidWorkloadDevice(
+      rig(
+        { nativeId: 'docker:plex', integrationId: INT, workload: { kind: 'docker', name: 'plex' } },
+        50,
+      ).ctx,
+    )
+    await container.onActivate()
+    reach.down = true
+    await manager.poll()
+    unraidInstances.emitSnapshot(INT)
+    expect(server.runtimeState.getCapState<WorkloadStatus>('workload')?.state).toBe('crashed')
+    expect(container.runtimeState.getCapState<WorkloadStatus>('workload')?.state).toBeNull()
+    reach.down = false
+    await manager.poll()
+    unraidInstances.emitSnapshot(INT)
+    expect(server.runtimeState.getCapState<WorkloadStatus>('workload')?.state).toBe('running')
     await manager.stop()
   })
 

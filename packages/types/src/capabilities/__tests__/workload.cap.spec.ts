@@ -11,6 +11,11 @@ import {
   type WorkloadStatus,
 } from '../workload.cap.js'
 import { switchCapability } from '../switch.cap.js'
+import { resolveMethodAuth } from '../cap-router-predicates.js'
+import type { CapabilityDefinition, CapabilityMethodAuth } from '../capability-definition.js'
+import { CAP_VOCABULARY } from '../../generated/cap-vocabulary.js'
+import { capUnitResolver } from '../../automation/normalize-units.js'
+import type { CapNestedNumericPath } from '../../device/cap-vocabulary/types.js'
 import { DeviceRole, DeviceType } from '../../device/device-type.js'
 import { capAppliesToDeviceKind } from '../../device/device-kind.js'
 import { DeviceRuntimeState } from '../../device/device-runtime-state.js'
@@ -107,6 +112,16 @@ describe('workload cap — schema', () => {
     expect(parsed.autostart).toBeNull()
   })
 
+  it('carries memory as a percentage of the limit when bytes are not reported', () => {
+    const meta = WorkloadStatusSchema.shape.resources.shape.memoryPercent.meta()
+    expect(meta?.['quantity']).toBe('percentage')
+    const parsed = WorkloadStatusSchema.parse(
+      status({ resources: { ...status({}).resources, memoryPercent: 7 } }),
+    )
+    expect(parsed.resources.memoryPercent).toBe(7)
+    expect(workloadCapability.history?.fields['resources.memoryPercent']?.kind).toBe('gauge')
+  })
+
   it('refuses a state outside the lifecycle', () => {
     expect(WorkloadStatusSchema.safeParse({ ...status({}), state: 'exited' }).success).toBe(false)
   })
@@ -148,6 +163,13 @@ describe('workload cap — roles narrow it (D1033)', () => {
     const host = workloadCapability.vocabulary.overrides.byRole[DeviceRole.Host]
     expect(host.actions['workload.restart'].label.en).toBe('Reboot')
     expect(host.actions['workload.restart'].label.it).toBe('Riavvia')
+  })
+
+  it('words a host that answers again after going down as came online, not a crash recovery', () => {
+    const host = workloadCapability.vocabulary.overrides.byRole[DeviceRole.Host]
+    expect(host.events.onCrashed.label.en).toBe('Went down')
+    expect(host.events.onRecovered.label.en).toBe('Came online')
+    expect(host.events.onRecovered.label.it).toBe('Tornato in linea')
   })
 })
 
@@ -271,5 +293,50 @@ describe('workload cap — transitions raise the events', () => {
     expect(workloadTransition('running', 'stopping')).toBeNull()
     expect(workloadTransition('running', null)).toBeNull()
     expect(workloadTransition('crashed', 'crashed')).toBeNull()
+  })
+})
+
+describe('workload cap — resource thresholds are rule triggers (D1056)', () => {
+  it('offers CPU, memory and temperature as numeric triggers on their nested paths', () => {
+    const numeric = (CAP_VOCABULARY.workload.state ?? [])
+      .filter((trigger) => trigger.kind === 'numeric')
+      .map((trigger) => trigger.field)
+    expect(numeric).toEqual([
+      'resources.cpuPercent',
+      'resources.memoryPercent',
+      'resources.temperature',
+    ])
+  })
+
+  it('types a nested number as a trigger path, never an array item or a string', () => {
+    const cpu: CapNestedNumericPath<'workload'> = 'resources.cpuPercent'
+    // @ts-expect-error — `ports` is an array: no dotted path into it.
+    const port: CapNestedNumericPath<'workload'> = 'ports.port'
+    expect([cpu, port]).toHaveLength(2)
+  })
+
+  it('resolves each threshold field to its quantity, so a rule converts the unit', () => {
+    const units = capUnitResolver([workloadCapability])
+    expect(units.fieldQuantity('workload', 'resources.cpuPercent')).toBe('percentage')
+    expect(units.fieldQuantity('workload', 'resources.temperature')).toBe('temperature')
+  })
+})
+
+describe('workload cap — one tier per kind of act', () => {
+  // The router reads a cap through its general definition, as codegen does.
+  const workloadDef: CapabilityDefinition = workloadCapability
+  const switchDef: CapabilityDefinition = switchCapability
+  it('starting, stopping, restarting, pausing and resuming are protected, like the derived switch', () => {
+    const { methods } = workloadCapability
+    const tierOf = (m: { readonly auth?: CapabilityMethodAuth }) =>
+      resolveMethodAuth(workloadDef, m)
+    expect(
+      [methods.start, methods.stop, methods.restart, methods.pause, methods.resume].map(tierOf),
+    ).toEqual(['protected', 'protected', 'protected', 'protected', 'protected'])
+    expect(resolveMethodAuth(switchDef, switchCapability.methods.setState)).toBe('protected')
+  })
+
+  it('a force stop, which can lose data, is admin', () => {
+    expect(resolveMethodAuth(workloadDef, workloadCapability.methods.forceStop)).toBe('admin')
   })
 })

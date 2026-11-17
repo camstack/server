@@ -23,6 +23,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System → Settings no longer lists addon settings tabs; each addon's cluster settings moved to its page (Pipeline streaming/recording/semantic search, History retention, Nodes metrics), the rest stay in the addon's settings dialog
 - Pipeline → Settings → Faces draws the face-suggestion refresh interval; an addon's settings dialog leaves out the role pickers drawn on Roles & nodes and links there
 - Every notification rule kind (summaries, timelapses, calendar events) has a Tags field; every Rules area filters and groups by tag, and All names a kind whose list failed instead of looking empty
+- The command picker no longer offers 'sound the siren N times' for a siren that counts no plays (Hikvision); it still does when the play counts could not be read
 
 ## [1.2.690] - 2026-11-16
 

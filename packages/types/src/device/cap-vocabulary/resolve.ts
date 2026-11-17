@@ -262,6 +262,43 @@ export function deviceOffersActions(
     : actionIds.some((id) => offered.has(id))
 }
 
+/**
+ * What a device answered for the list a `dynamic` offer reads. `failed` and
+ * `pending` are unknown, never "none" (D315); only `answered` carries a count.
+ */
+export type DynamicOfferAnswer =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'failed' }
+  | { readonly kind: 'answered'; readonly choiceCount: number }
+
+/** The answer for one dynamic offer of an action of `cap` on the device at hand. */
+export type DynamicOfferAnswerOf = (cap: string, offer: LooseDynamicOffer) => DynamicOfferAnswer
+
+/**
+ * Whether one device is offered an action, given what it answered for the
+ * lists its arguments read: withdrawn only when a dynamic read ANSWERED an
+ * empty list (a siren that counts no plays has nothing to sound N times). A
+ * read that failed or is pending keeps it offered.
+ */
+export function actionOfferedWith(
+  action: Pick<ResolvedVocabAction, 'cap' | 'openArgs'>,
+  answerOf: DynamicOfferAnswerOf,
+): boolean {
+  return action.openArgs.every((arg) => {
+    if (arg.offer.kind !== 'dynamic') return true
+    const answer = answerOf(action.cap, arg.offer)
+    return answer.kind !== 'answered' || answer.choiceCount > 0
+  })
+}
+
+/** One device's actions, minus those {@link actionOfferedWith} withdraws. */
+export function offeredActionsWith<A extends Pick<ResolvedVocabAction, 'cap' | 'openArgs'>>(
+  actions: readonly A[],
+  answerOf: DynamicOfferAnswerOf,
+): readonly A[] {
+  return actions.filter((action) => actionOfferedWith(action, answerOf))
+}
+
 function resolveEnumValue(v: EnumStateValue): ResolvedEnumValue {
   const phrase = v.phrase ?? fill(BECOMES, { en: { value: v.label.en }, it: { value: v.label.it } })
   return { value: v.value, label: v.label, phrase, phraseFor: heldFor(phrase) }

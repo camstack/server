@@ -1388,7 +1388,7 @@
   "workload.forceStop": "admin",
   "workload.getOptions": "protected",
   "workload.pause": "protected",
-  "workload.restart": "admin",
+  "workload.restart": "protected",
   "workload.resume": "protected",
   "workload.start": "protected",
   "workload.stop": "protected",

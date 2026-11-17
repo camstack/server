@@ -11,7 +11,7 @@ import { DeviceType } from '../device/device-type.js'
 
 /**
  * Cap history catalog, projected from every `*.cap.ts` `history` block.
- * 47 caps with series (129 series), 39 caps answered `'none'`.
+ * 47 caps with series (130 series), 39 caps answered `'none'`.
  * Field keys are `runtimeState` paths (`a.b` into fixed objects only).
  */
 export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, CapabilityHistoryField>>>> = {
@@ -235,6 +235,7 @@ export const HISTORY_CATALOG: Readonly<Record<string, Readonly<Record<string, Ca
     'state': { kind: 'enum', values: ['running', 'paused', 'stopped', 'starting', 'stopping', 'crashed'] },
     'resources.cpuPercent': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'CPU' },
     'resources.memoryUsedBytes': { kind: 'gauge', unit: 'bytes', displayName: 'Memory used' },
+    'resources.memoryPercent': { kind: 'gauge', unit: '%', deadband: 2, displayName: 'Memory' },
     'resources.netRxKbps': { group: 'network', kind: 'gauge', unit: 'kbps', displayName: 'Network received' },
     'resources.netTxKbps': { group: 'network', kind: 'gauge', unit: 'kbps', displayName: 'Network sent' },
   },

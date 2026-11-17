@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - network-link's link speed is speedKbps, the bitrate quantity in kbit/s, shown in the system's bitrate unit
 - A host that comes back after going down raises a "Came online" event (the workload recovered event, host wording).
 - A switch can say it only reports its state and can power-cycle natively (switch getOptions / powerCycle); the hero then hides on/off.
+- The workload capability reports memory as a percentage (memoryPercent) for a source that has no byte count, recorded in its history
+- A rule can trigger on a number grouped under an object in a device's status (a workload's CPU, memory or temperature above or below a threshold)
+- A workload restart needs the same permission as start and stop (it was admin only); force stop stays admin
+- A command whose argument is a list the device answers is not offered when the device answered an empty list (a siren that counts no plays is not offered 'sound N times'); a list that could not be read keeps it offered
 
 ## [1.2.585] - 2026-11-16
 

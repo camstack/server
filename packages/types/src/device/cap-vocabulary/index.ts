@@ -9,13 +9,17 @@ export type {
   ResolvedEventTrigger,
   ResolvedNumericTrigger,
   ResolvedValueTrigger,
+  DynamicOfferAnswer,
+  DynamicOfferAnswerOf,
   ResolvedVocabAction,
   ResolvedVocabTrigger,
   VocabBindingsInput,
 } from './resolve.js'
 export {
+  actionOfferedWith,
   actionsForDevice,
   deviceOffersActions,
+  offeredActionsWith,
   renderVocabPhrase,
   triggersForDevice,
 } from './resolve.js'
@@ -43,6 +47,7 @@ export type {
   BooleanOffer,
   CapEventName,
   CapMethodName,
+  CapNestedNumericPath,
   CapStatusField,
   CapVocabularyEntry,
   CapVocabularyMap,

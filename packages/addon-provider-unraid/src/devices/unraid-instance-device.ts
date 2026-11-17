@@ -20,11 +20,12 @@ import {
   UNRAID_HOST_WORKLOAD_OPTIONS,
   unknownWorkloadStatus,
   unraidHostWorkloadStatus,
+  unraidServerReach,
 } from '../unraid-workload-state.js'
 import { UnraidEntityDevice } from './unraid-entity-device.js'
 
 /**
- * Persisted config for the ONE instance Container per Unraid integration. `instanceId`
+ * Persisted config for the ONE server device (the workload host) per Unraid integration. `instanceId`
  * selects the integration's live client (it equals `integrationId`); `entities[]` is the
  * additively-reconciled identity list the addon re-derives from each snapshot and
  * re-persists via `applyDerivedSpec`. Each identity fans out as one accessory child.
@@ -64,7 +65,7 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
     this.instanceId = cfg.instanceId
     this.integrationId = cfg.integrationId
     this.online = unraidInstances.getSnapshot(this.instanceId) !== null
-    // device-admin-link — the instance Container is a view of the same server.
+    // device-admin-link — the server device is a view of the same server.
     registerUnraidAdminLink(ctx, this.id, { instanceId: this.instanceId })
     void this.updateSourceInfo({
       id: `${this.instanceId}:${UNRAID_INSTANCE_ID}`,
@@ -104,7 +105,10 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
   private recomputeWorkload(): void {
     this.runtimeState.setCapState(
       workloadCapability.name,
-      unraidHostWorkloadStatus(unraidInstances.getSnapshot(this.instanceId), Date.now()),
+      unraidHostWorkloadStatus(
+        unraidServerReach(unraidInstances.getManager(this.instanceId)),
+        Date.now(),
+      ),
     )
   }
 

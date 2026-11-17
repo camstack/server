@@ -4,8 +4,8 @@
  * snapshot. Pure.
  *
  * Only what the API reports is filled; everything else is `null` (D393). The controls are
- * the ones node-unraid serves: a container starts, stops, pauses and unpauses (no restart,
- * no force stop); a VM starts, stops, reboots, pauses, resumes and force-stops; the server
+ * the ones node-unraid serves: a container starts, stops, pauses and unpauses, and restarts
+ * as stop then start (the API has no atomic restart; no force stop); a VM starts, stops, reboots, pauses, resumes and force-stops; the server
  * itself has none.
  */
 import {
@@ -20,6 +20,7 @@ import type {
   UnraidSnapshot,
   UnraidVmState,
 } from './unraid-client-contract.js'
+import type { UnraidInstanceStatus } from './unraid-integration-manager.js'
 import type { UnraidWorkloadMatch, UnraidWorkloadRef } from './unraid-discovery.js'
 
 /** The workload kinds an adopted container or VM can be. */
@@ -47,6 +48,7 @@ const DOCKER_OPTIONS: WorkloadOptions = {
   ...NO_OPTIONS,
   supportsStart: true,
   supportsStop: true,
+  supportsRestart: true,
   supportsPause: true,
   hasResources: true,
   hasAutostart: true,
@@ -74,6 +76,7 @@ function emptyResources(): WorkloadResources {
   return {
     cpuPercent: null,
     memoryUsedBytes: null,
+    memoryPercent: null,
     memoryLimitBytes: null,
     vcpus: null,
     diskUsedBytes: null,
@@ -152,17 +155,58 @@ export function unraidWorkloadStatus(
     image: container.image,
     autostart: container.autostart,
     updateAvailable: container.updateAvailable,
-    resources: { ...emptyResources(), cpuPercent: container.cpuPercent },
+    resources: {
+      ...emptyResources(),
+      cpuPercent: container.cpuPercent,
+      memoryPercent: container.memPercent,
+    },
   }
 }
 
-/** The slice of the server itself: running while it answers the poll, with CPU and temperature. */
-export function unraidHostWorkloadStatus(
-  snapshot: UnraidSnapshot | null,
-  now: number,
-): WorkloadStatus {
+/**
+ * What the last poll says about the server. A failed poll keeps the old snapshot in the
+ * manager, so the snapshot alone would keep a server that stopped answering "running".
+ */
+export type UnraidServerReach =
+  | { readonly kind: 'answering'; readonly snapshot: UnraidSnapshot }
+  | { readonly kind: 'unreachable' }
+  | { readonly kind: 'unknown' }
+
+/** The part of the integration manager the reach is read from. */
+export interface UnraidPollView {
+  readonly status: UnraidInstanceStatus
+  readonly error: string | null
+  getSnapshot(): UnraidSnapshot | null
+}
+
+/**
+ * Answering = connected and the last poll landed; unreachable = connected but the last poll
+ * failed, or the manager is in error; unknown = no manager yet, connecting, or stopped.
+ */
+export function unraidServerReach(manager: UnraidPollView | null): UnraidServerReach {
+  if (manager === null) return { kind: 'unknown' }
+  if (manager.status === 'error') return { kind: 'unreachable' }
+  if (manager.status !== 'connected') return { kind: 'unknown' }
+  if (manager.error !== null) return { kind: 'unreachable' }
+  const snapshot = manager.getSnapshot()
+  return snapshot === null ? { kind: 'unknown' } : { kind: 'answering', snapshot }
+}
+
+/** The live snapshot when the server answered its last poll, else null (D393). */
+export function answeringSnapshot(reach: UnraidServerReach): UnraidSnapshot | null {
+  return reach.kind === 'answering' ? reach.snapshot : null
+}
+
+/**
+ * The slice of the server itself: running while it answers the poll, with CPU and
+ * temperature; `crashed` once it stops answering (the host's "went down", and a recovery
+ * when it answers again); unknown before the first poll.
+ */
+export function unraidHostWorkloadStatus(reach: UnraidServerReach, now: number): WorkloadStatus {
   const base = unknownWorkloadStatus(null, now)
-  if (snapshot === null) return base
+  if (reach.kind === 'unknown') return base
+  if (reach.kind === 'unreachable') return { ...base, state: 'crashed' }
+  const { snapshot } = reach
   return {
     ...base,
     state: 'running',

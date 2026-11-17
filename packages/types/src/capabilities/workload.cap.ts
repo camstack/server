@@ -58,6 +58,15 @@ export const WorkloadResourcesSchema = z.object({
     .nullable()
     .meta(readingMeta('percentage', { precision: 1 })),
   memoryUsedBytes: z.number().nullable().meta(readingMeta('information')),
+  /**
+   * Memory use, percent of `memoryLimitBytes`, for a source that reports a share
+   * and not bytes (a Docker container's stats). Absent or `null` = not reported.
+   */
+  memoryPercent: z
+    .number()
+    .nullable()
+    .optional()
+    .meta(readingMeta('percentage', { precision: 1 })),
   /** The memory it may use: the limit of a container, the RAM of a VM or host. */
   memoryLimitBytes: z.number().nullable().meta(readingMeta('information')),
   vcpus: z.number().nullable().meta(readingMeta('count')),
@@ -331,9 +340,10 @@ export const workloadCapability = {
         },
       ],
     }),
+    // Same tier as start / stop and the switch they derive: a restart is a stop and a start.
     restart: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
-      auth: 'admin',
+      auth: 'protected',
       actions: [
         {
           id: 'workload.restart',
@@ -369,6 +379,7 @@ export const workloadCapability = {
         },
       ],
     }),
+    // Admin: a force stop skips the orderly shutdown and can lose data.
     forceStop: optionalMethod(WorkloadDeviceInputSchema, z.void(), {
       kind: 'mutation',
       auth: 'admin',
@@ -462,6 +473,12 @@ export const workloadCapability = {
         unit: 'bytes',
         displayName: 'Memory used',
       },
+      'resources.memoryPercent': {
+        kind: 'gauge',
+        unit: '%',
+        deadband: 2,
+        displayName: 'Memory',
+      },
       'resources.netRxKbps': {
         group: 'network',
         kind: 'gauge',
@@ -506,6 +523,31 @@ export const workloadCapability = {
           },
         ],
         icon: 'activity',
+      },
+      // Resource thresholds: nested numbers, by dotted path (CapNestedNumericPath).
+      {
+        kind: 'numeric',
+        field: 'resources.cpuPercent',
+        quantity: t('the CPU use', "l'uso della CPU"),
+        label: t('CPU', 'CPU'),
+        unit: '%',
+        icon: 'cpu',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.memoryPercent',
+        quantity: t('the memory use', "l'uso della memoria"),
+        label: t('Memory', 'Memoria'),
+        unit: '%',
+        icon: 'memory-stick',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.temperature',
+        quantity: t('the temperature', 'la temperatura'),
+        label: t('Temperature', 'Temperatura'),
+        unit: '°C',
+        icon: 'thermometer',
       },
     ],
     overrides: {
@@ -564,6 +606,8 @@ export const workloadCapability = {
               ),
               icon: 'server-crash',
             },
+            // A host that stopped answering its poll is `crashed`; answering again is a
+            // recovery, worded as the host coming back rather than a process restarting.
             onRecovered: {
               label: t('Came online', 'Tornato in linea'),
               phrase: t(
