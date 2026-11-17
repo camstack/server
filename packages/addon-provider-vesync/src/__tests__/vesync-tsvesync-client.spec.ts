@@ -12,6 +12,7 @@ import {
   type TsVeSyncManagerInput,
   VeSyncLoginError,
 } from '../vesync-tsvesync-client.js'
+import { type VeSyncSession, VeSyncSessionRejectedError } from '../vesync-client-contract.js'
 
 interface FakeFanState {
   deviceStatus: string
@@ -118,6 +119,7 @@ function world(login: (log: TsVeSyncLogSink) => Promise<boolean>) {
         calls.push(['getDevices'])
         return true
       },
+      hydrateSession: () => undefined,
       fans,
     }
   })
@@ -206,5 +208,132 @@ describe('tsvesync adapter', () => {
     const w = world(async () => true)
     await w.client.login()
     await expect(w.client.setPower('nope', true)).rejects.toThrow(/nope/)
+  })
+})
+
+describe('tsvesync adapter — sessions', () => {
+  const LIB_SESSION = {
+    token: 'tok-lib',
+    accountId: 'acct-1',
+    countryCode: 'IT',
+    region: 'EU',
+    apiBaseUrl: 'https://smartapi.vesync.eu',
+    authFlowUsed: 'new' as const,
+    issuedAt: 100,
+    expiresAt: 200,
+    lastValidatedAt: 150,
+  }
+
+  const RESTORED: VeSyncSession = {
+    token: 'tok-stored',
+    accountId: 'acct-1',
+    countryCode: null,
+    region: 'EU',
+    apiBaseUrl: 'https://smartapi.vesync.eu',
+    authFlowUsed: null,
+    issuedAt: null,
+    expiresAt: null,
+  }
+
+  function sessionWorld(listDevices: (log: TsVeSyncLogSink) => boolean) {
+    const hydrated: unknown[] = []
+    const minted: VeSyncSession[] = []
+    const factory = createTsVeSyncClientFactory(
+      (input): TsVeSyncManager => ({
+        login: async () => {
+          input.onTokenChange?.(LIB_SESSION)
+          return true
+        },
+        getDevices: async () => listDevices(input.logger),
+        hydrateSession: (s) => {
+          hydrated.push(s)
+        },
+        fans: [],
+      }),
+    )
+    const client = factory({
+      email: 'me@example.com',
+      password: 'pw',
+      region: 'EU',
+      onSession: (s) => {
+        minted.push(s)
+      },
+    })
+    return { client, hydrated, minted }
+  }
+
+  it('reports a token the library minted as a contract session', async () => {
+    const w = sessionWorld(() => true)
+    await w.client.login()
+    expect(w.minted).toEqual([
+      {
+        token: 'tok-lib',
+        accountId: 'acct-1',
+        countryCode: 'IT',
+        region: 'EU',
+        apiBaseUrl: 'https://smartapi.vesync.eu',
+        authFlowUsed: 'new',
+        issuedAt: 100,
+        expiresAt: 200,
+      },
+    ])
+  })
+
+  it('restores a session through the library hydrate, sending nothing', () => {
+    const w = sessionWorld(() => true)
+    w.client.restoreSession(RESTORED)
+    expect(w.hydrated).toEqual([
+      {
+        token: 'tok-stored',
+        accountId: 'acct-1',
+        countryCode: null,
+        region: 'EU',
+        apiBaseUrl: 'https://smartapi.vesync.eu',
+        issuedAt: null,
+        expiresAt: null,
+      },
+    ])
+  })
+
+  it('a restored session the cloud refuses throws a session refusal', async () => {
+    const w = sessionWorld((log) => {
+      log.error('Not logged in to VeSync')
+      return false
+    })
+    w.client.restoreSession(RESTORED)
+    await expect(w.client.listDevices()).rejects.toBeInstanceOf(VeSyncSessionRejectedError)
+  })
+
+  it('a failed library re-login is a sign-in failure, not a session refusal', async () => {
+    const w = sessionWorld((log) => {
+      log.warn('Device list request returned token error; re-authenticating and retrying')
+      log.error('Credential error detected - invalid username or password')
+      return false
+    })
+    w.client.restoreSession(RESTORED)
+    await expect(w.client.listDevices()).rejects.toBeInstanceOf(VeSyncLoginError)
+  })
+
+  it('an unreachable cloud is neither (no fresh sign-in for a network outage)', async () => {
+    const w = sessionWorld((log) => {
+      log.error('API call failed', { code: 'ECONNREFUSED', message: 'connect refused' })
+      return false
+    })
+    w.client.restoreSession(RESTORED)
+    const err: unknown = await w.client.listDevices().catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(Error)
+    expect(err).not.toBeInstanceOf(VeSyncSessionRejectedError)
+    expect(err).not.toBeInstanceOf(VeSyncLoginError)
+  })
+
+  it('after a sign-in, a list failure is not a session refusal', async () => {
+    const w = sessionWorld((log) => {
+      log.error('Device list request returned error code:', { code: -1 })
+      return false
+    })
+    await w.client.login()
+    const err: unknown = await w.client.listDevices().catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(Error)
+    expect(err).not.toBeInstanceOf(VeSyncSessionRejectedError)
   })
 })

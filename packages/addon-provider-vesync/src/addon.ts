@@ -39,6 +39,12 @@ import {
   setIntegrationDevicesOnline,
 } from './vesync-integration-devices.js'
 import { VeSyncIntegrationManager } from './vesync-integration-manager.js'
+import {
+  createVeSyncSessionStore,
+  VESYNC_SESSION_SECRET_PATHS,
+  VESYNC_SESSIONS_STATE_KEY,
+  vesyncStoredSessionsSchema,
+} from './vesync-session-store.js'
 
 /**
  * VeSync cloud-account provider, `mode: account` and broker-less. An integration is one
@@ -55,8 +61,15 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
     [DeviceType.Gateway]: VeSyncGatewayDevice,
   }
 
+  /** Each account's session token (and its credentials fingerprint) live in the keychain. */
+  protected override readonly secretStatePaths = VESYNC_SESSION_SECRET_PATHS
+
   private instances: RecordIntegrationInstances<VeSyncConnectionBody> | null = null
   private readonly names = new Map<string, string>()
+  /** The sessions kept across restarts, one row per integration. */
+  private readonly sessions = createVeSyncSessionStore(
+    this.state(VESYNC_SESSIONS_STATE_KEY, vesyncStoredSessionsSchema, []),
+  )
 
   constructor() {
     super({})
@@ -230,6 +243,7 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
       name,
       connection,
       logger: this.ctx.logger,
+      sessions: this.sessions,
       onConnected: (accountId) => this.markIntegrationOnline(accountId, true),
       onDisconnected: (accountId) => this.markIntegrationOnline(accountId, false),
       onPolled: (accountId) => vesyncAccounts.emitSnapshot(accountId),
@@ -256,16 +270,17 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
         }
         const integrationId = event.data['integrationId']
         if (typeof integrationId !== 'string') return
-        void this.dropIntegration(integrationId)
+        void this.dropIntegration(integrationId, kind === 'deleted')
       }
     this.requireInstances().onSwitched((id, enabled) => {
       if (enabled) void this.reconcileIntegrations()
-      else void this.dropIntegration(id)
+      else void this.dropIntegration(id, false)
     })
     this.ctx.eventBus.subscribe({ category: EventCategory.IntegrationDeleted }, on('deleted'))
   }
 
-  private async dropIntegration(integrationId: string): Promise<void> {
+  /** Stop an integration's account; a DELETED one also forgets its stored session. */
+  private async dropIntegration(integrationId: string, forgetSession: boolean): Promise<void> {
     const mgr = vesyncAccounts.getManager(integrationId)
     vesyncAccounts.set(integrationId, null)
     this.names.delete(integrationId)
@@ -278,7 +293,22 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
         })
       }
     }
+    if (forgetSession) await this.forgetSession(integrationId, mgr)
     await this.cascade(integrationId)
+  }
+
+  private async forgetSession(
+    integrationId: string,
+    mgr: VeSyncIntegrationManager | null,
+  ): Promise<void> {
+    try {
+      if (mgr !== null) await mgr.forgetSession()
+      else await this.sessions.clear(integrationId)
+    } catch (err) {
+      this.ctx.logger.warn('VeSync: forgetting a deleted integration session failed', {
+        meta: { integrationId, error: errMsg(err) },
+      })
+    }
   }
 
   private async cascade(integrationId: string): Promise<void> {

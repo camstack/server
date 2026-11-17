@@ -10,16 +10,22 @@
  *     manager gets the same router and calls are serialized: one call's lines never land in
  *     another call's capture.
  *
+ * Sessions: the library reports every token it mints through `onTokenChange` and adopts a stored
+ * one through `hydrateSession`; the adapter maps both onto the contract's `VeSyncSession` so the
+ * library's own type never leaves this file.
+ *
  * Credentials: the email and password go to the library and nowhere else. Only the FIRST
  * argument of a library log line (its message) and the `code` / `message` / `msg` of an object
  * argument travel into an error text — never the request or response bodies.
  */
-import { VeSync } from 'tsvesync'
-import type {
-  VeSyncClient,
-  VeSyncClientFactory,
-  VeSyncPurifierSnapshot,
-  VeSyncRegion,
+import { type Session as TsVeSyncSession, VeSync } from 'tsvesync'
+import {
+  type VeSyncClient,
+  type VeSyncClientFactory,
+  type VeSyncPurifierSnapshot,
+  type VeSyncRegion,
+  type VeSyncSession,
+  VeSyncSessionRejectedError,
 } from './vesync-client-contract.js'
 
 /** The logger shape `tsvesync` accepts as `customLogger`. */
@@ -62,6 +68,8 @@ export interface TsVeSyncFan {
 export interface TsVeSyncManager {
   login(retryAttempts?: number, initialDelayMs?: number): Promise<boolean>
   getDevices(): Promise<boolean>
+  /** Adopt a persisted session (sets the token, account and region; sends nothing). */
+  hydrateSession(session: TsVeSyncSession): void
   readonly fans: readonly object[]
 }
 
@@ -73,6 +81,8 @@ export interface TsVeSyncManagerInput {
   /** ISO-3166 alpha-2; absent leaves the library's own default (`US`). */
   readonly countryCode?: string
   readonly logger: TsVeSyncLogSink
+  /** The library's report of a freshly minted token (after its own login or re-login). */
+  readonly onTokenChange?: (session: TsVeSyncSession) => void
 }
 
 /** Factory seam over `new VeSync(...)` — the spec substitutes a fake library here. */
@@ -178,6 +188,7 @@ const createLibraryManager: TsVeSyncManagerFactory = (input) =>
     region: input.region,
     ...(input.countryCode !== undefined ? { countryCode: input.countryCode } : {}),
     customLogger: input.logger,
+    ...(input.onTokenChange !== undefined ? { onTokenChange: input.onTokenChange } : {}),
     debug: false,
     redact: true,
   })
@@ -288,12 +299,45 @@ export function levelOf(percent: number, maxLevel: number): number {
   return Math.min(top, Math.max(MIN_LEVEL, Math.ceil((percent / 100) * top)))
 }
 
+/** The library's session → the contract's (nulls for what the token does not say). */
+export function sessionFromLibrary(session: TsVeSyncSession): VeSyncSession {
+  return {
+    token: session.token,
+    accountId: session.accountId,
+    countryCode: session.countryCode ?? null,
+    region: session.region,
+    apiBaseUrl: session.apiBaseUrl,
+    authFlowUsed: session.authFlowUsed ?? null,
+    issuedAt: session.issuedAt ?? null,
+    expiresAt: session.expiresAt ?? null,
+  }
+}
+
+/** The contract's session → the shape `hydrateSession` adopts. */
+export function sessionToLibrary(session: VeSyncSession): TsVeSyncSession {
+  return {
+    token: session.token,
+    accountId: session.accountId,
+    countryCode: session.countryCode,
+    region: session.region,
+    apiBaseUrl: session.apiBaseUrl,
+    ...(session.authFlowUsed !== null ? { authFlowUsed: session.authFlowUsed } : {}),
+    issuedAt: session.issuedAt,
+    expiresAt: session.expiresAt,
+  }
+}
+
+/** The library re-authenticated by itself inside a call (a token error mid-run). */
+const LIBRARY_RELOGIN_PATTERN = /re-authenticat/i
+
 /** One VeSync account driven through `tsvesync`. */
 class TsVeSyncClient implements VeSyncClient {
   readonly #manager: TsVeSyncManager
   readonly #router: LibraryLogRouter
   #fans: Map<string, TsVeSyncFan> = new Map()
   #snapshots: Map<string, VeSyncPurifierSnapshot> = new Map()
+  /** A restored session no call has proven yet: its first refusal is a session refusal. */
+  #unprovenRestore = false
 
   constructor(manager: TsVeSyncManager, router: LibraryLogRouter) {
     this.#manager = manager
@@ -302,8 +346,14 @@ class TsVeSyncClient implements VeSyncClient {
 
   /** One attempt, no library-side retry: a later reconnect is the manager's decision. */
   async login(): Promise<void> {
+    this.#unprovenRestore = false
     const { value, lines } = await this.#router.run(() => this.#manager.login(1, 0))
     if (!value) throw classifyLoginFailure(lines)
+  }
+
+  restoreSession(session: VeSyncSession): void {
+    this.#manager.hydrateSession(sessionToLibrary(session))
+    this.#unprovenRestore = true
   }
 
   async logout(): Promise<void> {
@@ -320,9 +370,8 @@ class TsVeSyncClient implements VeSyncClient {
       }
       return true
     })
-    if (!listed) {
-      throw new Error(`vesync: device list failed: ${failureWords(lines)}`)
-    }
+    if (!listed) throw this.#listFailure(lines)
+    this.#unprovenRestore = false
     const fans = new Map<string, TsVeSyncFan>()
     const snapshots = new Map<string, VeSyncPurifierSnapshot>()
     for (const device of this.#manager.fans) {
@@ -373,6 +422,21 @@ class TsVeSyncClient implements VeSyncClient {
     })
   }
 
+  /**
+   * Why a device list failed. The library re-authenticating by itself and failing is a sign-in
+   * failure; a restored session refused before any call proved it is a session refusal (the
+   * caller signs in fresh); a transport failure or anything else stays a plain error.
+   */
+  #listFailure(lines: readonly LibraryLine[]): Error {
+    if (lines.some((l) => LIBRARY_RELOGIN_PATTERN.test(l.message))) {
+      return classifyLoginFailure(lines)
+    }
+    if (this.#unprovenRestore && !lines.some(isTransportFailure)) {
+      return new VeSyncSessionRejectedError(failureWords(lines))
+    }
+    return new Error(`vesync: device list failed: ${failureWords(lines)}`)
+  }
+
   async #command(
     nativeId: string,
     name: string,
@@ -400,7 +464,7 @@ function failureWords(lines: readonly LibraryLine[]): string {
 export function createTsVeSyncClientFactory(
   createManager: TsVeSyncManagerFactory = createLibraryManager,
 ): VeSyncClientFactory {
-  return ({ email, password, region, countryCode }) =>
+  return ({ email, password, region, countryCode, onSession }) =>
     new TsVeSyncClient(
       createManager({
         email,
@@ -408,6 +472,9 @@ export function createTsVeSyncClientFactory(
         region,
         ...(countryCode !== undefined ? { countryCode } : {}),
         logger: sharedRouter,
+        ...(onSession !== undefined
+          ? { onTokenChange: (session) => onSession(sessionFromLibrary(session)) }
+          : {}),
       }),
       sharedRouter,
     )

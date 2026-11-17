@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- VeSync keeps its session across restarts instead of signing in each time.
+
 ## [0.2.161] - 2026-11-17
 
 ### Changed

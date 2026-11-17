@@ -62,10 +62,43 @@ export interface VeSyncPurifierSnapshot {
   readonly online: boolean
 }
 
+/**
+ * A VeSync cloud session — what a sign-in mints. `token` is a credential: it is kept in the
+ * keychain (never plain settings, env, argv or a log line). Times are epoch SECONDS, as the
+ * token's own JWT `iat` / `exp` carry them; null when the token does not say.
+ */
+export interface VeSyncSession {
+  readonly token: string
+  readonly accountId: string
+  readonly countryCode: string | null
+  readonly region: string
+  readonly apiBaseUrl: string
+  readonly authFlowUsed: 'legacy' | 'new' | null
+  readonly issuedAt: number | null
+  readonly expiresAt: number | null
+}
+
+/**
+ * The cloud refused the session a client was restored with (expired / revoked token, or the
+ * library could not adopt it). A fresh {@link VeSyncClient.login} is the remedy; any other
+ * failure (network, a refused re-authentication) is a different error.
+ */
+export class VeSyncSessionRejectedError extends Error {
+  constructor(words: string) {
+    super(`vesync: stored session refused: ${words}`)
+    this.name = 'VeSyncSessionRejectedError'
+  }
+}
+
 /** The live client the addon drives one VeSync account with. */
 export interface VeSyncClient {
   /** Authenticate with the VeSync cloud (email / password / region). */
   login(): Promise<void>
+  /**
+   * Adopt a session minted earlier instead of signing in. Nothing is sent: the next call
+   * either works or throws {@link VeSyncSessionRejectedError}.
+   */
+  restoreSession(session: VeSyncSession): void
   /** Drop the session / tokens. */
   logout(): Promise<void>
   /** Enumerate all air-purifier devices on the account. */
@@ -94,4 +127,9 @@ export type VeSyncClientFactory = (input: {
   readonly region: VeSyncRegion
   /** ISO-3166 alpha-2 country the account signs in as; absent = the library default (`US`). */
   readonly countryCode?: string
+  /**
+   * Told every time the client holds a NEW session — after `login()`, and after the library
+   * re-authenticated on its own when the cloud refused a token mid-run. The caller persists it.
+   */
+  readonly onSession?: (session: VeSyncSession) => void
 }) => VeSyncClient
