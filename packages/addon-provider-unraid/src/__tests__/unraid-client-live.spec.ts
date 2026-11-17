@@ -151,6 +151,7 @@ function fakeApi(over: Partial<UnraidApiSource> = {}): UnraidApiSource {
       ],
     },
     close: vi.fn(async () => undefined),
+    endpoint: 'https://tower.example:443/graphql',
     ...over,
   }
 }
@@ -265,6 +266,29 @@ describe('createLiveUnraidClient', () => {
     const failure = await client.connect().catch((e: unknown) => e)
     expect(failure).toBeInstanceOf(UnraidClientError)
     expect(failure).toMatchObject({ kind })
+  })
+
+  it('names a 404 — the API is not at that address — with the URL and what to do', async () => {
+    // graphql-request's ClientError carries the HTTP response; node-unraid wraps it as transport.
+    const notFound = new UnraidTransportError('GraphQL Error (Code: 404)', {
+      cause: Object.assign(new Error('GraphQL Error (Code: 404)'), { response: { status: 404 } }),
+    })
+    const client = createLiveUnraidClient(
+      fakeApi({
+        system: {
+          versions: async () => {
+            throw notFound
+          },
+          cpu$: () => once({ id: 'cpu', percentTotal: 1 }),
+        },
+      }),
+    )
+    const failure = await client.connect().catch((e: unknown) => e)
+    expect(failure).toBeInstanceOf(UnraidClientError)
+    expect(failure).toMatchObject({ kind: 'not-found' })
+    const message = failure instanceof Error ? failure.message : ''
+    expect(message).toContain('https://tower.example:443/graphql')
+    expect(message).toContain('http on port 80')
   })
 
   it('reports a failed cpu sample as null, never 0', async () => {

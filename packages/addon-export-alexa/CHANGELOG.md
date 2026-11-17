@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A switch that only reports its state (a PoE port seen only through an API key) is not discovered by Alexa as a power-controlled device.
 - Discovery logs, with the device, a switch whose options could not be read (D1058)
+- Discovery no longer warns for every plain switch whose provider has no getOptions; only a failed read warns
 
 ## [1.2.198] - 2026-11-16
 

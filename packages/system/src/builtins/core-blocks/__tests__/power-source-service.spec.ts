@@ -1,4 +1,9 @@
-import { composedDeviceRef, CompositionSchema, type SwitchOptions } from '@camstack/types'
+import {
+  composedDeviceRef,
+  CompositionSchema,
+  SWITCH_DEFAULT_OPTIONS,
+  type SwitchOptions,
+} from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   PowerSourceService,
@@ -109,9 +114,10 @@ function world(
 ) {
   const calls: { id: number; on: boolean }[] = []
   const cycles: number[] = []
-  const state = {
+  const state: { online: boolean; on: boolean | null; options: SwitchOptions | 'fails' } = {
     online: opts.online ?? true,
     on: opts.on === undefined ? true : opts.on,
+    options: opts.options ?? SWITCH_DEFAULT_OPTIONS,
   }
   const devices: PowerSourceDevices = {
     find: async (ref) => {
@@ -132,10 +138,9 @@ function world(
       ? {}
       : {
           options: async (id: number): Promise<SwitchOptions> => {
-            if (opts.options === 'fails')
+            if (state.options === 'fails')
               throw new SwitchOptionsUnreadableError(id, new Error('request timed out'))
-            if (opts.options === undefined) throw new Error('unreachable')
-            return opts.options
+            return state.options
           },
         }),
     ...(opts.nativeCycle === undefined
@@ -396,5 +401,21 @@ describe('a linked switch that only reports (D1058)', () => {
       accepted: true,
     })
     expect(w.cycles).toEqual([PLUG_ID])
+  })
+
+  it('a failing options read warns once per failure streak, per device; a success re-arms it', async () => {
+    const w = world({ options: 'fails' })
+    const optionsWarns = () =>
+      w.log.lines.filter((l) => l.level === 'warn' && l.message.includes('options could not be read'))
+    for (let i = 0; i < 3; i++) await w.service.getStatus({ deviceId: GATEWAY_ID })
+    expect(optionsWarns()).toHaveLength(1)
+    expect(optionsWarns()[0]?.extras?.tags).toEqual({ deviceId: GATEWAY_ID })
+
+    w.state.options = { supportsSetState: true, supportsPowerCycle: false }
+    await w.service.getStatus({ deviceId: GATEWAY_ID })
+    w.state.options = 'fails'
+    await w.service.getStatus({ deviceId: GATEWAY_ID })
+    await w.service.getStatus({ deviceId: GATEWAY_ID })
+    expect(optionsWarns()).toHaveLength(2)
   })
 })

@@ -112,6 +112,19 @@ describe('the Unraid integration declares and runs a connection test', () => {
     expect(down.error).toContain('host')
   })
 
+  it('an API that is not at the address (HTTP 404) is rejected with what to do', async () => {
+    const message =
+      'Unraid API not found at https://tower.example:443/graphql (HTTP 404) — use http on port 80 with an API key'
+    const result = await (
+      await world(new UnraidClientError('not-found', message))
+    ).instances.testInstance({
+      id: null,
+      values: { host: 'tower.example', apiKey: 'k' },
+    })
+    expect(result).toMatchObject({ success: false, status: 'rejected' })
+    expect(result.error).toContain(message)
+  })
+
   it('without an API key the test is refused before any client is built', async () => {
     const seen: UnraidClientFactoryInput[] = []
     const { instances } = await world(null, seen)
