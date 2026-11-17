@@ -501,7 +501,6 @@ export class MqttHaDevice extends BaseDevice<typeof mqttHaDeviceSchema> {
           batteryCapability,
           {
             getStatus: async () => this.getCapSlice(batteryCapability) ?? COLD_BATTERY,
-            wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
           },
           COLD_BATTERY,
         )

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs'
-import { BatteryStatusSchema, CamStreamDescriptorSchema } from '@camstack/types'
+import { BatteryStatusSchema, CamStreamDescriptorSchema, DeviceFeature } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   advertisedRfcHost,
@@ -101,6 +101,8 @@ describe('cameraStreamCatalog — the RTP server while open, the lazy sentinel w
     expect(only).toMatchObject({ kind: 'pull-rfc4571', url: 'tcp://127.0.0.1:4321', codec: 'h264' })
     expect(only?.metadata).toEqual({ sdp: 'v=0' })
     expect(only?.deviceFeatures).toContain('battery-operated')
+    // The broker wakes on `sleeps`, not on a battery (#459, Q2).
+    expect(only?.deviceFeatures).toContain(DeviceFeature.Sleeps)
     expect(CamStreamDescriptorSchema.safeParse(only).success).toBe(true)
   })
 })

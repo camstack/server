@@ -77,8 +77,6 @@ export class HaPresenceDevice extends HaBaseChildDevice {
     const provider: InferNativeProvider<typeof batteryCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<BatteryStatus>('battery') ?? COLD_BATTERY,
-      // An HA entity is read-only upstream — there is no wake path.
-      wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
     }
     this.ctx.registerNativeCap(batteryCapability, provider)
   }

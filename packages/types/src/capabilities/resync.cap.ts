@@ -26,7 +26,9 @@ export const resyncCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Container],
+  // The parent an integration adopted: a container, an Unraid / UniFi instance
+  // (a workload), an Ecowitt console retyped as a weather station.
+  deviceTypes: [DeviceType.Container, DeviceType.Workload, DeviceType.WeatherStation],
   methods: {
     resync: method(ResyncDeviceInputSchema, ResyncResultSchema, {
       kind: 'mutation',

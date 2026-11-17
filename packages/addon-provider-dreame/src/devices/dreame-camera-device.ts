@@ -6,6 +6,8 @@ import { DreameCameraStream, VacuumDevice as DreameVacuum } from '@apocaliss92/n
 import {
   type BatteryStatus,
   batteryCapability,
+  lowPowerSleepCapability,
+  sleepSliceOfBattery,
   type ConfigUISchema,
   type ConfigUISchemaWithValues,
   createEvent,
@@ -212,7 +214,10 @@ export function cameraSettingsValues(input: {
 
 export class DreameCameraDevice extends DreameChildDevice {
   // Battery robot → prebuffer off (mirrors the Reolink battery-camera rule).
-  override readonly features: readonly DeviceFeature[] = [DeviceFeature.BatteryOperated]
+  override readonly features: readonly DeviceFeature[] = [
+    DeviceFeature.BatteryOperated,
+    DeviceFeature.Sleeps,
+  ]
 
   // Widen the base's protected constructor to public so the factory can `new` it.
   // oxlint-disable-next-line no-useless-constructor
@@ -262,7 +267,7 @@ export class DreameCameraDevice extends DreameChildDevice {
    * The camera's own "record me" LEVEL, derived from the vacuum lifecycle
    * state on every push (`recomputeSlice`). The recorder follows it
    * (`RecordingTriggers.deviceSignal`): a cleaning is one clip, opened by the
-   * rise (which wakes this camera through `battery.wakeForStream` like any
+   * rise (which wakes this camera through `low-power-sleep.wakeForStream` like any
    * consumer) and closed by the fall.
    */
   private registerRecordingSignalCap(): void {
@@ -372,10 +377,14 @@ export class DreameCameraDevice extends DreameChildDevice {
   private lastContactAt: number | null = null
 
   private registerBatteryCap(): void {
-    const provider: InferNativeProvider<typeof batteryCapability> = {
+    const provider: InferNativeProvider<typeof batteryCapability> = {}
+    this.ctx.registerNativeCap(batteryCapability, provider)
+    // The robot's camera sleeps until a monitor is opened (#459, Q2):
+    // `DeviceFeature.Sleeps` is derived from this binding.
+    const sleepProvider: InferNativeProvider<typeof lowPowerSleepCapability> = {
       wakeForStream: async ({ timeoutMs }) => this.wakeForStream(timeoutMs),
     }
-    this.ctx.registerNativeCap(batteryCapability, provider)
+    this.ctx.registerNativeCap(lowPowerSleepCapability, sleepProvider)
     this.publishBattery()
     this.runtimeState.subscribeCap<BatteryStatus>(batteryCapability.name, (slice) => {
       if (!slice) return
@@ -472,16 +481,16 @@ export class DreameCameraDevice extends DreameChildDevice {
   private publishBattery(): void {
     const handle = this.resolveHandle()
     const vacuum = handle instanceof DreameVacuum ? handle : null
-    this.setCapSlice(
-      batteryCapability,
-      cameraBatterySlice({
-        level: vacuum?.battery ?? null,
-        charging: vacuum?.charging ?? null,
-        streamOpen: this.session !== null,
-        now: Date.now(),
-        contactAt: this.lastContactAt,
-      }),
-    )
+    const slice = cameraBatterySlice({
+      level: vacuum?.battery ?? null,
+      charging: vacuum?.charging ?? null,
+      streamOpen: this.session !== null,
+      now: Date.now(),
+      contactAt: this.lastContactAt,
+    })
+    this.setCapSlice(batteryCapability, slice)
+    // One writer, two slices: the sleep inputs are the battery's, projected.
+    this.setCapSlice(lowPowerSleepCapability, sleepSliceOfBattery(slice))
   }
 
   private publishCatalog(): void {
@@ -492,7 +501,7 @@ export class DreameCameraDevice extends DreameChildDevice {
   }
 
   /**
-   * `battery.wakeForStream`: open the monitor inside the caller's bound. An
+   * `low-power-sleep.wakeForStream`: open the monitor inside the caller's bound. An
    * open that outlives the bound keeps running — the next play joins it.
    */
   private async wakeForStream(timeoutMs: number): Promise<{ awoke: boolean; durationMs: number }> {

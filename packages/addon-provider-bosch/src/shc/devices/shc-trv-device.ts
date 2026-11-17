@@ -46,7 +46,6 @@ export class ShcTrvDevice extends ShcBaseDevice {
     const batteryProvider: InferNativeProvider<typeof batteryCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<BatteryStatus>(BATTERY_CAP) ?? BATTERY_COLD,
-      wakeForStream: async () => ({ awoke: true, durationMs: 0 }),
     }
     this.ctx.registerNativeCap(batteryCapability, batteryProvider)
     this.runtimeState.setCapState(BATTERY_CAP, BATTERY_COLD)

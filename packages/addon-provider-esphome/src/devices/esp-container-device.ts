@@ -7,6 +7,8 @@ import {
   errMsg,
   type AccessoryChildSpec,
   type DeviceContext,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { childConfigFor, childFactoryFor, deviceTypeOf, roleOf } from '../esphome-child-spec.js'
 import { planBoard, type ChildPlan } from '../esphome-entity-spec.js'
@@ -53,6 +55,11 @@ export class EspContainerDevice extends BaseDevice<typeof espContainerSchema> {
   constructor(ctx: DeviceContext) {
     const cfg = espContainerSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, espContainerSchema, { type: DeviceType.Container })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.brokerId = cfg.brokerId
     this.integrationId = cfg.integrationId
     this.online = espLinkHub.link(this.brokerId) !== null

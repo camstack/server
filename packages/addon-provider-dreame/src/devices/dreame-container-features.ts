@@ -114,10 +114,8 @@ export function deriveContainerFeatures(
   const flags: DeviceFeature[] = [DeviceFeature.Resyncable]
 
   if (input.kind === 'vacuum') {
-    if (vacuumSupportsMap(input.vacuumCaps)) flags.push(DeviceFeature.VacuumHasMap)
     if (vacuumSupportsAi(input.vacuumCaps)) flags.push(DeviceFeature.VacuumHasAi)
   } else if (input.kind === 'mower') {
-    if (mowerSupportsMap(input.mowerCaps)) flags.push(DeviceFeature.MowerHasMap)
     if (mowerSupportsTargetedMowing(input.mowerCaps)) {
       flags.push(DeviceFeature.MowerHasTargetedMowing)
     }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Re-sync is now offered through the device's own resync capability
+
 ## [1.2.205] - 2026-11-17
 
 ### Changed

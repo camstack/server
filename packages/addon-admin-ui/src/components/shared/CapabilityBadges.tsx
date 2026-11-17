@@ -13,7 +13,6 @@ import {
   BatteryFull,
   Bell,
   RefreshCw,
-  Map,
   Sparkles,
   Grid2x2,
 } from 'lucide-react'
@@ -47,9 +46,7 @@ const CAPABILITY_INFO: Record<string, { icon: LucideIcon; labelKey: string }> = 
   // Vacuum / mower container features (Dreame): friendly label + icon so the
   // canonical DeviceFeature value renders as a labelled badge rather than the
   // generic box + raw kebab string.
-  'vacuum-has-map': { icon: Map, labelKey: 'capabilityBadges.map' },
   'vacuum-has-ai': { icon: Sparkles, labelKey: 'capabilityBadges.aiObstacle' },
-  'mower-has-map': { icon: Map, labelKey: 'capabilityBadges.map' },
   'mower-has-targeted-mowing': { icon: Grid2x2, labelKey: 'capabilityBadges.targetedMowing' },
 }
 

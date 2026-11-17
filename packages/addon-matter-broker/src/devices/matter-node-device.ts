@@ -6,6 +6,8 @@ import {
   type AccessoryChildSpec,
   type DeviceContext,
   type IDevice,
+  resyncCapability,
+  resyncThroughAdoption,
 } from '@camstack/types'
 import { matterNodes } from '../matter-gateway.js'
 import { endpointLabel, mapMatterEndpointToCamStack } from '../matter-cluster-mapping.js'
@@ -57,6 +59,11 @@ export class MatterNodeDevice extends BaseDevice<typeof matterNodeSchema> {
   constructor(ctx: DeviceContext) {
     const cfg = matterNodeSchema.parse(ctx.persistedConfig ?? {})
     super(ctx, matterNodeSchema, { type: DeviceType.Container })
+    // Re-sync with the source (#459, Q6): this binding is what makes Resyncable true.
+    this.ctx.registerNativeCap(
+      resyncCapability,
+      resyncThroughAdoption(this.ctx.api.deviceManager, this.id),
+    )
     this.brokerId = cfg.brokerId
     this.nodeId = cfg.nodeId
     this.integrationId = cfg.integrationId

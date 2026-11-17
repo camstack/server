@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A camera that sleeps now says so through its own capability (low-power-sleep); a device that only reports a battery is no longer kept cold and unwatched as if it slept
+
 ## [1.2.894] - 2026-11-17
 
 ### Changed

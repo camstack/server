@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Re-sync button is no longer offered: this integration has no way to re-sync, so it could only fail
+
 ## [0.2.160] - 2026-11-15
 
 ### Changed

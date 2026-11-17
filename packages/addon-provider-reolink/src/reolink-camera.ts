@@ -8,6 +8,8 @@ import {
   BaseDevice,
   type BatteryStatus,
   batteryCapability,
+  lowPowerSleepCapability,
+  sleepSliceOfBattery,
   buildDeviceAdminUrl,
   buildStreamParamsConfigSchema,
   createEvent,
@@ -2966,6 +2968,19 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         // would defeat the purpose (and wake the camera).
         return this.state.battery
       },
+    }
+    this.ctx.registerNativeCap(batteryCapability, provider)
+
+    // The sleep half (#459, Q2): `DeviceFeature.Sleeps` is derived from this
+    // binding, so every consumer that must WAKE the camera before it streams
+    // finds it here, and a device that only reports charge never does.
+    const sleepProvider: InferNativeProvider<typeof lowPowerSleepCapability> = {
+      getStatus: async ({ deviceId }) => {
+        if (deviceId !== this.id) {
+          throw new Error(`ReolinkCamera: deviceId mismatch, expected ${this.id}, got ${deviceId}`)
+        }
+        return sleepSliceOfBattery(this.state.battery)
+      },
       wakeForStream: async ({ deviceId, timeoutMs }) => {
         if (deviceId !== this.id) {
           throw new Error(`ReolinkCamera: deviceId mismatch, expected ${this.id}, got ${deviceId}`)
@@ -3159,7 +3174,7 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }
       },
     }
-    this.ctx.registerNativeCap(batteryCapability, provider)
+    this.ctx.registerNativeCap(lowPowerSleepCapability, sleepProvider)
     // Seed the slice once so subsequent field-level proxy writes
     // (e.g. `this.state.battery.sleeping = true`) merge cleanly through
     // `patchCapState` without tripping the schema's required-fields
@@ -3185,6 +3200,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // across the writers.
     this.runtimeState.subscribeCap<BatteryStatus>('battery', (slice) => {
       if (!slice) return
+      // The sleep inputs live on `low-power-sleep` too (#459): one writer,
+      // the battery slice, projected — never a second source of truth.
+      this.setCapSlice(lowPowerSleepCapability, sleepSliceOfBattery(slice))
       this.ctx.eventBus.emit(
         createEvent(EventCategory.BatteryOnStatusChanged, this.eventSource(), {
           deviceId: this.id,
@@ -3192,6 +3210,8 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
         }),
       )
     })
+    // The bridge fires on the NEXT write; project the slice we start from now.
+    this.setCapSlice(lowPowerSleepCapability, sleepSliceOfBattery(this.state.battery))
 
     // Seed the cache with a one-shot `getBatteryInfo` after registration.
     //

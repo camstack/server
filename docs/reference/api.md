@@ -4430,7 +4430,7 @@
 ### `resync` → `resync.*`
 
 - **Source:** `packages/types/src/capabilities/resync.cap.ts:24`
-- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `container`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `container, workload, weather-station`
 - **Archetypes:** —
 - **Provider interface:** `IResyncProvider`
 
