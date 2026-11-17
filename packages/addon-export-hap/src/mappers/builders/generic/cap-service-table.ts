@@ -52,6 +52,7 @@ import {
   MotionStatusSchema,
   PresenceStatusSchema,
   SmokeStatusSchema,
+  switchRefusesSetState,
   TemperatureSensorStatusSchema,
 } from '@camstack/types'
 import { type Accessory, Categories, Characteristic, Service } from '@homebridge/hap-nodejs'
@@ -300,6 +301,42 @@ export const HAP_CAP_SERVICES: readonly HapCapServiceRow[] = [
 /** Every capability the generic path can publish. */
 export function hapExportableCapNames(): ReadonlySet<string> {
   return new Set(HAP_CAP_SERVICES.flatMap((row) => [...row.caps]))
+}
+
+/** What reading a switch's options came to, for the caller's log. */
+export type SwitchOptionsRead =
+  | { readonly kind: 'not-bound' }
+  | { readonly kind: 'answered'; readonly refusesSetState: boolean }
+  | { readonly kind: 'failed'; readonly error: unknown }
+
+/** The caps a device is EXPORTED with, and what its switch answered. */
+export interface ExportableCaps {
+  readonly capNames: ReadonlySet<string>
+  readonly switchOptions: SwitchOptionsRead
+}
+
+/**
+ * A device's bound caps minus `switch` when that switch ANSWERED it cannot be
+ * set (`getOptions().supportsSetState: false`, a PoE port seen only through an
+ * API key — D1058): a HomeKit Switch whose every write fails is a lie. A
+ * provider without `getOptions`, or a failed read, keeps the switch (D315).
+ */
+export async function exportableCaps(
+  bound: ReadonlySet<string>,
+  readSwitchOptions: () => Promise<unknown>,
+): Promise<ExportableCaps> {
+  if (!bound.has('switch')) return { capNames: bound, switchOptions: { kind: 'not-bound' } }
+  let answer: unknown
+  try {
+    answer = await readSwitchOptions()
+  } catch (error: unknown) {
+    return { capNames: bound, switchOptions: { kind: 'failed', error } }
+  }
+  const refusesSetState = switchRefusesSetState(answer)
+  return {
+    capNames: refusesSetState ? new Set([...bound].filter((cap) => cap !== 'switch')) : bound,
+    switchOptions: { kind: 'answered', refusesSetState },
+  }
 }
 
 /**

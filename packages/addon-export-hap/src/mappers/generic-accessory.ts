@@ -25,7 +25,11 @@ import { Accessory } from '@homebridge/hap-nodejs'
 import { type AddonContext, DeviceType, type DeviceProxy } from '@camstack/types'
 
 import { populateAccessoryInfo } from './builders/accessory-info.js'
-import { accessoryCategoryFor, rowsForCaps } from './builders/generic/cap-service-table.js'
+import {
+  accessoryCategoryFor,
+  exportableCaps,
+  rowsForCaps,
+} from './builders/generic/cap-service-table.js'
 import { accessoryUuidFor } from './kind.js'
 import type { BuilderContext, BuilderHandle, CameraMapperOptions, Mapper } from './types.js'
 
@@ -45,7 +49,7 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
   const log = ctx.logger.withTags({ deviceId: numericId })
 
   const proxy = await ctx.fetchDevice(numericId)
-  const capNames = new Set(proxy.binding?.entries.map((e) => e.capName) ?? [])
+  const capNames = await exportableCapsOf(proxy, log)
   const rows = rowsForCaps(capNames)
   if (rows.length === 0) {
     throw new Error(
@@ -101,6 +105,27 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
       }
     },
   }
+}
+
+/**
+ * The caps HomeKit may publish for this device: the bound caps, minus a switch
+ * that ANSWERED it cannot be set (D1058). Shared by the Export tab gate
+ * (`hap-export.addon.ts`) and the build, so both answer the same question.
+ */
+export async function exportableCapsOf(
+  proxy: DeviceProxy,
+  log: Pick<AddonContext['logger'], 'debug'>,
+): Promise<ReadonlySet<string>> {
+  const bound = new Set(proxy.binding?.entries.map((e) => e.capName) ?? [])
+  const result = await exportableCaps(bound, async () => proxy.switch?.getOptions({}))
+  if (result.switchOptions.kind === 'failed') {
+    log.debug('export-hap: switch options unread — exporting it as a plain on/off switch', {
+      meta: { error: errMsg(result.switchOptions.error) },
+    })
+  } else if (result.switchOptions.kind === 'answered' && result.switchOptions.refusesSetState) {
+    log.debug('export-hap: switch only reports its state — no HomeKit Switch for it')
+  }
+  return result.capNames
 }
 
 /**

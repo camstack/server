@@ -37,6 +37,21 @@ export interface PowerSourceDevice {
   readonly online: boolean
 }
 
+/** `switch.getOptions` FAILED (not absent): what the switch can do is unknown. */
+export class SwitchOptionsUnreadableError extends Error {
+  readonly switchDeviceId: number
+
+  constructor(switchDeviceId: number, cause: unknown) {
+    super(
+      `switch ${switchDeviceId}: its options could not be read (${
+        cause instanceof Error ? cause.message : String(cause)
+      }); not power-cycling and not switching it off blind`,
+    )
+    this.name = 'SwitchOptionsUnreadableError'
+    this.switchDeviceId = switchDeviceId
+  }
+}
+
 export interface PowerSourceDevices {
   /** The device for a source ref, or null when it cannot be found. */
   readonly find: (ref: CompositionSourceRef) => Promise<PowerSourceDevice | null>
@@ -46,7 +61,9 @@ export interface PowerSourceDevices {
   /**
    * Cut and restore the switch's output in ONE native call, when its provider declares it
    * (`switch.getOptions().supportsPowerCycle`). Resolves true when it cycled, false when the
-   * switch has no native cycle (the restart is then off / wait / on). Throws when the call fails.
+   * switch has no native cycle (the restart is then off / wait / on). Throws
+   * `SwitchOptionsUnreadableError` when what the switch can do could not be read, and any other
+   * error when the cycle call fails.
    * Absent = no switch here has one.
    */
   readonly cycle?: (switchDeviceId: number) => Promise<boolean>
@@ -164,7 +181,11 @@ export class PowerSourceService implements IPowerSourceProvider {
         cycled = await cycle(switchId)
       } catch (err: unknown) {
         this.restarting.delete(deviceId)
-        return this.refuse(deviceId, 'switch-call-failed', errorText(err), switchId)
+        const reason =
+          err instanceof SwitchOptionsUnreadableError
+            ? 'switch-options-unreadable'
+            : 'switch-call-failed'
+        return this.refuse(deviceId, reason, errorText(err), switchId)
       }
       if (cycled) {
         this.restarting.delete(deviceId)

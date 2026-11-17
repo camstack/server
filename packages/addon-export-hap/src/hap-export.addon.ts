@@ -123,6 +123,7 @@ import {
 import type { HksvCameraFacts } from './hksv/videoclips-source.js'
 import { createHksvVideoclipsProvider } from './hksv/videoclips-source.js'
 import { rowsForCaps } from './mappers/builders/generic/cap-service-table.js'
+import { exportableCapsOf } from './mappers/generic-accessory.js'
 import {
   createHapDecodeMemos,
   type HapDecodeMemos,
@@ -1793,7 +1794,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
 
     try {
       const proxy = await this.ctx.fetchDevice(deviceId)
-      const capNames = new Set(proxy.binding?.entries.map((entry) => entry.capName) ?? [])
+      const capNames = await exportableCapsOf(proxy, this.ctx.logger.withTags({ deviceId }))
       if (rowsForCaps(capNames).length > 0) return 'generic'
       this.ctx.logger.withTags({ deviceId }).debug('export-hap: no Export tab — no mapped caps', {
         meta: {

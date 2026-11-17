@@ -3399,6 +3399,8 @@ export {
 export {
   type ISwitchProvider,
   SWITCH_DEFAULT_OPTIONS,
+  SWITCH_SETTABLE_GATE,
+  switchRefusesSetState,
   type SwitchOptions,
   SwitchOptionsSchema,
   type SwitchStatus,

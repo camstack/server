@@ -5,7 +5,15 @@
  * `dynamicChoicesOf` — nothing here assumes a cap's shape.
  */
 
-import type { DynamicOfferAnswer, DynamicOfferAnswerOf, ResolvedVocabAction } from '@camstack/types'
+import {
+  type ActionGateAnswer,
+  type ActionGateAnswerOf,
+  actionGateAnswerFrom,
+  type DynamicOfferAnswer,
+  type DynamicOfferAnswerOf,
+  type LooseVocabActionGate,
+  type ResolvedVocabAction,
+} from '@camstack/types'
 import { useSystem } from '@camstack/ui-library'
 import { useQueries, useQuery } from '@tanstack/react-query'
 import {
@@ -107,6 +115,50 @@ export function useDynamicOfferAnswers(
   })
   return (cap, offer) =>
     answers.get(readKey(dynamicReadCap(cap, offer), dynamicReadName(offer))) ?? { kind: 'pending' }
+}
+
+interface GateRead {
+  readonly key: string
+  readonly cap: string
+  readonly gate: LooseVocabActionGate
+}
+
+function gateReadsOf(actions: readonly ResolvedVocabAction[]): readonly GateRead[] {
+  const reads = new Map<string, GateRead>()
+  for (const action of actions) {
+    if (action.offeredWhen === null) continue
+    const key = `${readKey(action.cap, action.offeredWhen.method)}#${action.offeredWhen.field}`
+    if (!reads.has(key)) reads.set(key, { key, cap: action.cap, gate: action.offeredWhen })
+  }
+  return [...reads.values()]
+}
+
+/**
+ * What ONE device answered for every `offeredWhen` read its commands name, as
+ * the `gateOf` of `offeredActionsWith` (a switch that only reports offers no
+ * on/off — D1058). A read that failed or is pending keeps the command (D315).
+ */
+export function useActionGateAnswers(
+  deviceId: number | null,
+  actions: readonly ResolvedVocabAction[],
+): ActionGateAnswerOf {
+  const system = useSystem()
+  const reads = gateReadsOf(actions)
+  const results = useQueries({
+    queries: reads.map((r) => ({
+      ...dynamicReadQuery(system.trpcClient, deviceId, r.cap, r.gate.method),
+      enabled: deviceId !== null && deviceId > 0,
+    })),
+  })
+  const answers = new Map<string, ActionGateAnswer>()
+  reads.forEach((r, i) => {
+    const result = results[i]
+    if (result === undefined || result.isPending) answers.set(r.key, { kind: 'pending' })
+    else if (result.isError) answers.set(r.key, { kind: 'failed' })
+    else answers.set(r.key, actionGateAnswerFrom(result.data, r.gate))
+  })
+  return (cap, gate) =>
+    answers.get(`${readKey(cap, gate.method)}#${gate.field}`) ?? { kind: 'pending' }
 }
 
 export function useDynamicChoices(

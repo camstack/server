@@ -7,11 +7,16 @@
  * provider's `setState` with the opposite `on`. A missing slice, or a slice
  * whose `on` is not a boolean (`null` is "never reported"), is unknown:
  * the call refuses and logs the device. It does not guess off.
+ *
+ * A switch whose `getOptions` ANSWERED `supportsSetState: false` (it only
+ * reports, D1058) cannot be toggled: the call refuses as `not-settable`
+ * before reading any state. A provider without `getOptions`, or a read that
+ * failed, toggles as before (D315).
  */
-import type { IScopedLogger } from '@camstack/types'
+import { type IScopedLogger, switchRefusesSetState } from '@camstack/types'
 
-/** Why a toggle will not act. Both are unknown; neither is off. */
-export type SwitchToggleRefusal = 'no-slice' | 'stale'
+/** Why a toggle will not act: the state is unknown, or the switch cannot be set. */
+export type SwitchToggleRefusal = 'no-slice' | 'stale' | 'not-settable'
 
 export type SwitchOn =
   | { readonly known: true; readonly on: boolean }
@@ -20,6 +25,7 @@ export type SwitchOn =
 const REFUSAL_TEXT: Readonly<Record<SwitchToggleRefusal, string>> = {
   'no-slice': 'switch has no state slice',
   stale: 'switch state is unknown',
+  'not-settable': 'switch only reports its state and cannot be set',
 }
 
 export class SwitchToggleRefusedError extends Error {
@@ -27,7 +33,11 @@ export class SwitchToggleRefusedError extends Error {
   readonly deviceId: number
 
   constructor(reason: SwitchToggleRefusal, deviceId: number) {
-    super(`device ${deviceId}: ${REFUSAL_TEXT[reason]}; refusing to guess on or off`)
+    super(
+      reason === 'not-settable'
+        ? `device ${deviceId}: ${REFUSAL_TEXT[reason]}`
+        : `device ${deviceId}: ${REFUSAL_TEXT[reason]}; refusing to guess on or off`,
+    )
     this.name = 'SwitchToggleRefusedError'
     this.reason = reason
     this.deviceId = deviceId
@@ -70,6 +80,36 @@ function refuse(read: SwitchToggleRead, deviceId: number, reason: SwitchToggleRe
   throw new SwitchToggleRefusedError(reason, deviceId)
 }
 
+interface GetOptions {
+  (input: { readonly deviceId: number }): Promise<unknown>
+}
+
+function isGetOptions(fn: unknown): fn is GetOptions {
+  return typeof fn === 'function'
+}
+
+/**
+ * What the provider's own `getOptions` answered; `undefined` when it has none, or when the read
+ * failed — logged, and the toggle then acts as a plain switch would (unknown is not "cannot").
+ */
+async function optionsOf(
+  provider: object,
+  read: SwitchToggleRead,
+  deviceId: number,
+): Promise<unknown> {
+  const getOptions: unknown = Reflect.get(provider, 'getOptions')
+  if (!isGetOptions(getOptions)) return undefined
+  try {
+    return await getOptions.call(provider, { deviceId })
+  } catch (err) {
+    read.logger.warn('switch.toggle: getOptions failed; toggling as a plain on/off switch', {
+      tags: { deviceId },
+      meta: { error: err instanceof Error ? err.message : String(err) },
+    })
+    return undefined
+  }
+}
+
 async function runToggle(
   provider: object,
   setState: SetState,
@@ -77,6 +117,9 @@ async function runToggle(
   input: SwitchToggleInput | undefined,
 ): Promise<void> {
   const deviceId = typeof input?.deviceId === 'number' ? input.deviceId : read.deviceId
+  if (switchRefusesSetState(await optionsOf(provider, read, deviceId))) {
+    refuse(read, deviceId, 'not-settable')
+  }
   const slice = deviceId === read.deviceId ? read.readSlice() : undefined
   const state = classifySwitchOn(slice)
   if (!state.known) refuse(read, deviceId, state.reason)

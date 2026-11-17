@@ -24,6 +24,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'power',
         args: { on: true },
         effect: { field: 'on', value: true },
+        offeredWhen: { method: 'getOptions', field: 'supportsSetState' },
       },
       {
         id: 'switch.off',
@@ -33,6 +34,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'power-off',
         args: { on: false },
         effect: { field: 'on', value: false },
+        offeredWhen: { method: 'getOptions', field: 'supportsSetState' },
       },
       {
         id: 'switch.toggle',
@@ -40,6 +42,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Toggle', it: 'Commuta' },
         phrase: { en: 'Toggle {device}', it: 'Commuta {device}' },
         icon: 'toggle-right',
+        offeredWhen: { method: 'getOptions', field: 'supportsSetState' },
       },
     ],
     notOperatorFacing: {

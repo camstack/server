@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The command picker no longer offers 'sound the siren N times' for a siren that counts no plays (Hikvision); it still does when the play counts could not be read
+- Automations no longer offer Turn on / Turn off / Toggle for a switch that only reports its state (a PoE port seen only through an API key).
 
 ## [1.2.691] - 2026-11-16
 

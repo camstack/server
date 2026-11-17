@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A rule can trigger on a number grouped under an object in a device's status (a workload's CPU, memory or temperature above or below a threshold)
 - A workload restart needs the same permission as start and stop (it was admin only); force stop stays admin
 - A command whose argument is a list the device answers is not offered when the device answered an empty list (a siren that counts no plays is not offered 'sound N times'); a list that could not be read keeps it offered
+- A switch that only reports its state (getOptions supportsSetState: false) is offered no on/off/toggle in automations (new offeredWhen action gate), and a forced restart whose switch options could not be read is refused as switch-options-unreadable.
 
 ## [1.2.586] - 2026-11-16
 

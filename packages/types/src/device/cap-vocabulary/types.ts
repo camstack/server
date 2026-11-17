@@ -272,6 +272,8 @@ export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<
   readonly openArgs?: readonly VocabOpenArg<C, ActionArgKey<C, M>>[]
   /** The state this action leads to, when it is one (see {@link VocabEffectFor}). */
   readonly effect?: VocabEffectFor<C, M>
+  /** When a device is offered it at all: a read of this cap answering `false` at `field` withdraws it. */
+  readonly offeredWhen?: { readonly method: CapMethodName<C>; readonly field: string }
 }
 
 /** Any action of cap `C`, discriminated by `method`. */
@@ -495,6 +497,13 @@ export interface LooseVocabAction {
   readonly args?: Readonly<Record<string, unknown>>
   readonly openArgs?: readonly LooseVocabOpenArg[]
   readonly effect?: LooseVocabEffect
+  readonly offeredWhen?: LooseVocabActionGate
+}
+
+/** When a device is offered an action, string-keyed (`MethodActionGate`). */
+export interface LooseVocabActionGate {
+  readonly method: string
+  readonly field: string
 }
 
 /** A boolean state trigger, string-keyed. */

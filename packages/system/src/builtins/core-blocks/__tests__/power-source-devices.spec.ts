@@ -30,8 +30,17 @@ const BLOCK = {
   },
 }
 
-/** `options: null` = the switch provider has no `getOptions` (a plain on/off switch). */
-function rig(options: SwitchOptions | null) {
+/** How `switch.getOptions` answers: options, or the error it rejects with. */
+type OptionsAnswer = SwitchOptions | Error
+
+/** What the hub answers when the switch provider does not implement `getOptions`. */
+function notImplemented(): Error {
+  return Object.assign(new Error('Capability "switch" provider does not implement "getOptions"'), {
+    data: { code: 'NOT_IMPLEMENTED' },
+  })
+}
+
+function rig(options: OptionsAnswer) {
   const setState: { deviceId: number; on: boolean }[] = []
   const powerCycle: number[] = []
   const fake = {
@@ -60,7 +69,7 @@ function rig(options: SwitchOptions | null) {
       getStatus: { query: async () => ({ on: true, lastChangedAt: 1 }) },
       getOptions: {
         query: async () => {
-          if (options === null) throw new Error('No procedure found on path "switch.getOptions"')
+          if (options instanceof Error) throw options
           return options
         },
       },
@@ -85,13 +94,14 @@ function rig(options: SwitchOptions | null) {
       return { cancel: () => undefined }
     },
   }
+  const recorded = recordingLogger()
   const service = new PowerSourceService({
     blocks: () => [BLOCK],
     devices: powerSourceDevicesOver(() => api),
     scheduler,
-    logger: recordingLogger().logger,
+    logger: recorded.logger,
   })
-  return { service, setState, powerCycle, scheduled }
+  return { service, setState, powerCycle, scheduled, recorded }
 }
 
 describe('power-source over ctx.api', () => {
@@ -118,9 +128,26 @@ describe('power-source over ctx.api', () => {
   })
 
   it('treats a switch whose provider has no getOptions as a plain on/off switch', async () => {
-    const r = rig(null)
-    expect(await r.service.forceRestart({ deviceId: CAMERA_ID })).toEqual({ accepted: true })
-    expect(r.setState).toEqual([{ deviceId: PORT_ID, on: false }])
+    for (const absent of [
+      notImplemented(),
+      new Error('No procedure found on path "switch.getOptions"'),
+    ]) {
+      const r = rig(absent)
+      expect(await r.service.forceRestart({ deviceId: CAMERA_ID })).toEqual({ accepted: true })
+      expect(r.setState).toEqual([{ deviceId: PORT_ID, on: false }])
+      expect(r.powerCycle).toEqual([])
+    }
+  })
+
+  it('a getOptions that FAILED refuses the restart with its own cause — never off / wait / on blind', async () => {
+    const r = rig(new Error('request timed out after 10000ms'))
+    const result = await r.service.forceRestart({ deviceId: CAMERA_ID })
+    expect(result).toMatchObject({ accepted: false, reason: 'switch-options-unreadable' })
+    expect(result.accepted ? '' : result.message).toContain('request timed out')
+    expect(r.setState).toEqual([])
     expect(r.powerCycle).toEqual([])
+    expect(r.scheduled).toHaveLength(0)
+    const line = r.recorded.lines.find((l) => l.message.includes('switch-options-unreadable'))
+    expect(line?.extras?.tags).toEqual({ deviceId: CAMERA_ID })
   })
 })

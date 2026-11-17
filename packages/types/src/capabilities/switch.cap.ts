@@ -32,7 +32,11 @@ export type SwitchStatus = z.infer<typeof SwitchStatusSchema>
  * `getOptions` is a plain on/off switch: the defaults are the old contract.
  *
  * - `supportsSetState: false` — the switch reports its state but cannot be set (a PoE port seen only
- *   through an API key): the UI hides on/off, and `setState` refuses.
+ *   through an API key). Its provider refuses `setState`; every surface that offers on/off withdraws
+ *   it once the device ANSWERED this (`switchRefusesSetState`): the device hero, the automation
+ *   action picker (`offeredWhen` on `switch.on` / `switch.off` / `switch.toggle`), the default
+ *   `toggle`, and the HomeKit, Alexa and Google exporters. A read that failed or is pending changes
+ *   nothing (D315).
  * - `supportsPowerCycle: true` — the device behind the switch can cut and restore its own output in
  *   one native call (a PoE port's power cycle). It has no control of its own: a linked
  *   `power-source.forceRestart` uses it instead of off / wait / on.
@@ -45,6 +49,19 @@ export type SwitchOptions = z.infer<typeof SwitchOptionsSchema>
 
 /** The options of a provider that did not answer `getOptions`: a plain on/off switch. */
 export const SWITCH_DEFAULT_OPTIONS: SwitchOptions = SwitchOptionsSchema.parse({})
+
+/** The read that decides whether a switch is offered on/off (`offeredWhen` of its actions). */
+export const SWITCH_SETTABLE_GATE = { method: 'getOptions', field: 'supportsSetState' } as const
+
+/**
+ * THE predicate every on/off surface uses: true only when `answer` — what the switch's
+ * `getOptions` returned — says `supportsSetState: false`. `undefined` (no provider method, a
+ * failed or pending read) and any other shape are false: unknown keeps on/off (D315).
+ */
+export function switchRefusesSetState(answer: unknown): boolean {
+  if (typeof answer !== 'object' || answer === null) return false
+  return Reflect.get(answer, SWITCH_SETTABLE_GATE.field) === false
+}
 
 export const switchCapability = {
   name: 'switch',
@@ -66,6 +83,7 @@ export const switchCapability = {
           icon: 'power',
           effect: { field: 'on', value: true },
           args: { on: true },
+          offeredWhen: SWITCH_SETTABLE_GATE,
         },
         {
           id: 'switch.off',
@@ -74,6 +92,7 @@ export const switchCapability = {
           icon: 'power-off',
           effect: { field: 'on', value: false },
           args: { on: false },
+          offeredWhen: SWITCH_SETTABLE_GATE,
         },
       ],
     }),
@@ -103,6 +122,7 @@ export const switchCapability = {
           label: t('Toggle', 'Commuta'),
           phrase: t('Toggle {device}', 'Commuta {device}'),
           icon: 'toggle-right',
+          offeredWhen: SWITCH_SETTABLE_GATE,
         },
       ],
     }),

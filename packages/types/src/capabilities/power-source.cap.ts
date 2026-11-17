@@ -51,6 +51,12 @@ export const PowerSourceRefusalReasonSchema = z.enum([
   /** The switch call itself failed. */
   'switch-call-failed',
   /**
+   * What the linked switch can do (`switch.getOptions`) could not be read — the
+   * read FAILED, which is not the same as a provider without the method. A forced
+   * restart neither power-cycles nor switches off blind (D1058).
+   */
+  'switch-options-unreadable',
+  /**
    * The linked switch is one of the device's own actuators (or the device
    * itself): a link stored before save-time validation refused it (#462).
    */

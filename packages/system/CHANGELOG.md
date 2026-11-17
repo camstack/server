@@ -116,6 +116,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Renaming or removing a tag now also rewrites notification rules
 - The tags list survives an unreachable owner (its count shows unknown); rename and remove refuse naming that owner, and cover every notification rule kind
 - A forced restart through a power source uses the switch's native power cycle when it has one, instead of off / wait / on.
+- The default switch toggle refuses a switch that only reports its state; a forced restart refuses (switch-options-unreadable) when the linked switch's options could not be read instead of switching it off blind.
 
 ### Removed
 

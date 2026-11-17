@@ -325,6 +325,34 @@ function checkEffect(
   }
 }
 
+/** D1058: an action's `offeredWhen` names a read of the same cap and a boolean field of its answer. */
+function checkGate(
+  where: string,
+  def: CapabilityDefinition,
+  action: LooseVocabAction,
+  problems: string[],
+): void {
+  const gate = action.offeredWhen
+  if (gate === undefined) return
+  const read = def.methods[gate.method]
+  if (read === undefined) {
+    problems.push(
+      `${where}: offeredWhen reads '${gate.method}', which does not exist on ${def.name}`,
+    )
+    return
+  }
+  if ((read.kind ?? 'query') !== 'query') {
+    problems.push(`${where}: offeredWhen reads '${gate.method}', which is not a query`)
+    return
+  }
+  const field = (objectShape(read.output) ?? {})[gate.field]
+  if (field === undefined || scalarKind(field) !== 'boolean') {
+    problems.push(
+      `${where}: offeredWhen field '${gate.field}' is not a boolean of ${def.name}.${gate.method}'s answer`,
+    )
+  }
+}
+
 function checkAction(
   def: CapabilityDefinition,
   action: LooseVocabAction,
@@ -354,6 +382,7 @@ function checkAction(
     }
   }
   checkEffect(where, def, action, shape, problems)
+  checkGate(where, def, action, problems)
   const open = action.openArgs ?? []
   for (const arg of open) {
     const field = shape[arg.key]

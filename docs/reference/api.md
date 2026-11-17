@@ -4120,7 +4120,7 @@
 
 ### `power-source` → `powerSource.*`
 
-- **Source:** `packages/types/src/capabilities/power-source.cap.ts:140`
+- **Source:** `packages/types/src/capabilities/power-source.cap.ts:146`
 - **Meta:** scope: `device` · mode: `singleton` · mount: `singleton` · deviceTypes: `gateway, camera, sensor, media-player, vacuum, generic, washer, dryer, dishwasher, pet-fountain, fan, humidifier, climate, water-heater`
 - **Archetypes:** runtimeState
 - **Provider interface:** `IPowerSourceProvider`
@@ -4799,7 +4799,7 @@
 
 ### `switch` → `switch.*`
 
-- **Source:** `packages/types/src/capabilities/switch.cap.ts:49`
+- **Source:** `packages/types/src/capabilities/switch.cap.ts:66`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `switch, siren, light, fan`
 - **Archetypes:** status(command-driven) · runtimeState · settings(1 binding(s))
 - **Provider interface:** `ISwitchProvider`

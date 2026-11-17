@@ -28,7 +28,10 @@ import {
 import { type ReactNode, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useDevicesBoundCaps } from './use-device-bound-caps'
-import { useDynamicOfferAnswers } from '../../pages/build/flow/use-dynamic-choices'
+import {
+  useActionGateAnswers,
+  useDynamicOfferAnswers,
+} from '../../pages/build/flow/use-dynamic-choices'
 import { type PickerDevice, toPickerDevices } from '../device/customize/source-picker-model'
 import { vocabularyCapTitle } from '../device/customize/vocabulary-field-label'
 import { SourceSelectorColumns } from '../device/customize/source-selector/source-selector-columns'
@@ -224,13 +227,16 @@ export function ActionPicker({
     [fleet, value.target, context],
   )
   // One device: a command whose list that device ANSWERED empty is withdrawn
-  // (a siren that counts no plays); a failed or pending read keeps it (D315).
+  // (a siren that counts no plays), and so is one whose `offeredWhen` read
+  // ANSWERED false (a switch that only reports, D1058); a failed or pending
+  // read keeps it (D315).
   const oneDevice =
     value.target?.kind === 'devices' && value.target.ids.length === 1
       ? (value.target.ids[0] ?? null)
       : null
   const answerOf = useDynamicOfferAnswers(oneDevice, targeted)
-  const offered = oneDevice === null ? targeted : offeredActionsWith(targeted, answerOf)
+  const gateOf = useActionGateAnswers(oneDevice, targeted)
+  const offered = oneDevice === null ? targeted : offeredActionsWith(targeted, answerOf, gateOf)
   const everyAction = useMemo(() => fleetActions(fleet), [fleet])
   const pickedAction = everyAction.find((a) => a.id === value.actionId)
   const setTarget = (picked: ActionTarget | null): void => {

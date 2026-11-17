@@ -94,3 +94,51 @@ describe('withDefaultSwitchToggle', () => {
     expect(withDefaultSwitchToggle('cover', cover, read({ on: true }))).toBe(cover)
   })
 })
+
+describe('withDefaultSwitchToggle — a switch that only reports (D1058)', () => {
+  it('refuses, typed and logged with the device, when getOptions ANSWERED supportsSetState: false', async () => {
+    const setState = vi.fn(async () => {})
+    const warn = vi.fn(silentWarn)
+    const provider = withDefaultSwitchToggle(
+      'switch',
+      {
+        setState,
+        getOptions: async () => ({ supportsSetState: false, supportsPowerCycle: true }),
+      },
+      read({ on: true }, warn),
+    )
+    const err = await toggleOf(provider)({ deviceId: DEVICE_ID }).catch((e: unknown) => e)
+    expect(err).toBeInstanceOf(SwitchToggleRefusedError)
+    expect(err instanceof SwitchToggleRefusedError ? err.reason : null).toBe('not-settable')
+    expect(setState).not.toHaveBeenCalled()
+    expect(warn).toHaveBeenCalledWith(
+      expect.any(String),
+      expect.objectContaining({ tags: { deviceId: DEVICE_ID } }),
+    )
+  })
+
+  it('a settable answer or a failed read keeps the toggle (unknown is not "cannot")', async () => {
+    const settable = vi.fn(async () => {})
+    await toggleOf(
+      withDefaultSwitchToggle(
+        'switch',
+        {
+          setState: settable,
+          getOptions: async () => ({ supportsSetState: true, supportsPowerCycle: false }),
+        },
+        read({ on: true }),
+      ),
+    )({ deviceId: DEVICE_ID })
+    expect(settable).toHaveBeenCalledWith({ deviceId: DEVICE_ID, on: false })
+
+    const failedRead = vi.fn(async () => {})
+    await toggleOf(
+      withDefaultSwitchToggle(
+        'switch',
+        { setState: failedRead, getOptions: () => Promise.reject(new Error('timeout')) },
+        read({ on: false }),
+      ),
+    )({ deviceId: DEVICE_ID })
+    expect(failedRead).toHaveBeenCalledWith({ deviceId: DEVICE_ID, on: true })
+  })
+})

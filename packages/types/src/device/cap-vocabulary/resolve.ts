@@ -20,6 +20,7 @@ import type {
   LooseCapVocabularyEntry,
   LooseDynamicOffer,
   LooseVocabAction,
+  LooseVocabActionGate,
   LooseVocabOpenArg,
   LooseVocabStateTrigger,
   LooseVocabWording,
@@ -48,6 +49,8 @@ export interface ResolvedVocabAction {
   readonly openArgs: readonly LooseVocabOpenArg[]
   /** The method's access tier (METHOD_ACCESS_MAP). */
   readonly access: CapabilityMethodAccess
+  /** The read that decides whether a device is offered it at all; null = always. */
+  readonly offeredWhen: LooseVocabActionGate | null
 }
 
 interface ResolvedTriggerBase {
@@ -220,6 +223,7 @@ function resolveAction(
     args: action.args ?? {},
     openArgs: action.openArgs ?? [],
     access,
+    offeredWhen: action.offeredWhen ?? null,
   }
 }
 
@@ -275,15 +279,45 @@ export type DynamicOfferAnswer =
 export type DynamicOfferAnswerOf = (cap: string, offer: LooseDynamicOffer) => DynamicOfferAnswer
 
 /**
- * Whether one device is offered an action, given what it answered for the
- * lists its arguments read: withdrawn only when a dynamic read ANSWERED an
- * empty list (a siren that counts no plays has nothing to sound N times). A
- * read that failed or is pending keeps it offered.
+ * What a device answered for the read an action's `offeredWhen` names.
+ * `failed` and `pending` are unknown, never "closed" (D315).
+ */
+export type ActionGateAnswer =
+  | { readonly kind: 'pending' }
+  | { readonly kind: 'failed' }
+  | { readonly kind: 'answered'; readonly open: boolean }
+
+/** The answer for one action gate of `cap` on the device at hand. */
+export type ActionGateAnswerOf = (cap: string, gate: LooseVocabActionGate) => ActionGateAnswer
+
+const GATE_PENDING: ActionGateAnswer = { kind: 'pending' }
+
+/**
+ * A gate's answer from what its read returned: closed only when the answer is
+ * an object whose `field` is `false`. A shape that is not an object is not an
+ * answer — it reads as `failed` and keeps the action offered.
+ */
+export function actionGateAnswerFrom(raw: unknown, gate: LooseVocabActionGate): ActionGateAnswer {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return { kind: 'failed' }
+  return { kind: 'answered', open: Reflect.get(raw, gate.field) !== false }
+}
+
+/**
+ * Whether one device is offered an action, given what it answered: withdrawn
+ * when its `offeredWhen` read ANSWERED `false` (a switch that only reports has
+ * no on/off), or when a dynamic list its arguments read ANSWERED empty (a
+ * siren that counts no plays has nothing to sound N times). A read that failed
+ * or is pending keeps it offered.
  */
 export function actionOfferedWith(
-  action: Pick<ResolvedVocabAction, 'cap' | 'openArgs'>,
+  action: Pick<ResolvedVocabAction, 'cap' | 'openArgs' | 'offeredWhen'>,
   answerOf: DynamicOfferAnswerOf,
+  gateOf: ActionGateAnswerOf = () => GATE_PENDING,
 ): boolean {
+  if (action.offeredWhen !== null) {
+    const gate = gateOf(action.cap, action.offeredWhen)
+    if (gate.kind === 'answered' && !gate.open) return false
+  }
   return action.openArgs.every((arg) => {
     if (arg.offer.kind !== 'dynamic') return true
     const answer = answerOf(action.cap, arg.offer)
@@ -292,11 +326,14 @@ export function actionOfferedWith(
 }
 
 /** One device's actions, minus those {@link actionOfferedWith} withdraws. */
-export function offeredActionsWith<A extends Pick<ResolvedVocabAction, 'cap' | 'openArgs'>>(
+export function offeredActionsWith<
+  A extends Pick<ResolvedVocabAction, 'cap' | 'openArgs' | 'offeredWhen'>,
+>(
   actions: readonly A[],
   answerOf: DynamicOfferAnswerOf,
+  gateOf?: ActionGateAnswerOf,
 ): readonly A[] {
-  return actions.filter((action) => actionOfferedWith(action, answerOf))
+  return actions.filter((action) => actionOfferedWith(action, answerOf, gateOf))
 }
 
 function resolveEnumValue(v: EnumStateValue): ResolvedEnumValue {

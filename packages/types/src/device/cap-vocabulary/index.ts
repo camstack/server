@@ -9,6 +9,8 @@ export type {
   ResolvedEventTrigger,
   ResolvedNumericTrigger,
   ResolvedValueTrigger,
+  ActionGateAnswer,
+  ActionGateAnswerOf,
   DynamicOfferAnswer,
   DynamicOfferAnswerOf,
   ResolvedVocabAction,
@@ -16,6 +18,7 @@ export type {
   VocabBindingsInput,
 } from './resolve.js'
 export {
+  actionGateAnswerFrom,
   actionOfferedWith,
   actionsForDevice,
   deviceOffersActions,
@@ -60,6 +63,7 @@ export type {
   LooseCapVocabularyEntry,
   LooseDynamicOffer,
   LooseVocabAction,
+  LooseVocabActionGate,
   LooseVocabEffect,
   LooseVocabOffer,
   LooseVocabOpenArg,
@@ -89,6 +93,7 @@ export type {
   MethodActionArgs,
   MethodActionDecl,
   MethodActionEffect,
+  MethodActionGate,
   MethodActionOpenArg,
   SystemCapVocabularyDecl,
 } from './declaration.js'
