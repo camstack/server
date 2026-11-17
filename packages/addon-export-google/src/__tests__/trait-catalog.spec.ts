@@ -84,10 +84,11 @@ function resolve(
   command: string,
   params: Record<string, unknown>,
   features: readonly string[] = [],
+  status?: unknown,
 ): CommandResolution {
   const row = traitForCommand(capNames, command)
   if (row === null) throw new Error(`no row answers ${command}`)
-  return row.resolveCommand({ deviceId: 7, command, params, features })
+  return row.resolveCommand({ deviceId: 7, command, params, features, status })
 }
 
 describe('OnOff', () => {
@@ -160,25 +161,48 @@ describe('LockUnlock', () => {
   })
 
   it('routes lock and unlock to different cap methods', () => {
-    expect(resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true })).toEqual(
-      {
-        kind: 'call',
-        call: { kind: 'lockControl.lock', deviceId: 7 },
-      },
-    )
+    const status = { state: 'unlocked', lastChangedAt: 1, codeRequired: false }
     expect(
-      resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: false }),
+      resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true }, [], status),
+    ).toEqual({ kind: 'call', call: { kind: 'lockControl.lock', deviceId: 7 } })
+    expect(
+      resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: false }, [], status),
     ).toEqual({ kind: 'call', call: { kind: 'lockControl.unlock', deviceId: 7 } })
   })
 
-  it('refuses a PIN-required lock, because Google sends no PIN', () => {
+  it('refuses a lock whose status says a PIN is required, because Google sends no PIN', () => {
     const resolution = resolve(
       ['lock-control'],
       'action.devices.commands.LockUnlock',
       { lock: true },
-      ['lock-pin-required'],
+      [],
+      { state: 'locked', lastChangedAt: 1, codeRequired: true },
     )
     expect(resolution).toMatchObject({ kind: 'refused', errorCode: 'functionNotSupported' })
+  })
+
+  it('dispatches when the lock ANSWERED that it cannot tell (null) or does not say (absent)', () => {
+    for (const status of [
+      { state: 'locked', lastChangedAt: 1, codeRequired: null },
+      { state: 'locked', lastChangedAt: 1 },
+    ]) {
+      expect(
+        resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true }, [], status),
+      ).toEqual({ kind: 'call', call: { kind: 'lockControl.lock', deviceId: 7 } })
+    }
+  })
+
+  it('refuses when the status could not be read — a failed read never widens what is allowed (D49)', () => {
+    for (const status of [null, undefined, { state: 'nonsense' }]) {
+      expect(
+        resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true }, [], status),
+      ).toMatchObject({ kind: 'refused', errorCode: 'deviceNotReady' })
+    }
+  })
+
+  it('the LockUnlock trait asks for the status before resolving a command', () => {
+    const row = traitForCommand(['lock-control'], 'action.devices.commands.LockUnlock')
+    expect(row?.commandReadsStatus).toBe(true)
   })
 })
 

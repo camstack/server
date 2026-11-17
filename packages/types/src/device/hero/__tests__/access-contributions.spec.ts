@@ -66,7 +66,7 @@ const alarm = (state: string, extra: object = {}) => ({
   'alarm-panel': {
     state,
     availableModes: ['home', 'away'],
-    requiresCode: false,
+    codeRequired: false,
     lastChangedAt: NOW - 600_000,
     ...extra,
   },
@@ -98,7 +98,11 @@ describe('alarm-panel', () => {
     expect(primaryOf(t, 'alarm')?.call.method).toBe('disarm')
   })
   it('a panel that wants a code offers no button: a hero action carries no secret', () => {
-    const m = build(DeviceType.AlarmPanel, caps, alarm('disarmed', { requiresCode: true }))
+    const m = build(DeviceType.AlarmPanel, caps, alarm('disarmed', { codeRequired: true }))
+    expect(m.rows.find((r) => r.id === 'alarm')?.controls).toEqual([])
+  })
+  it('codeRequired null (provider cannot tell, D393) offers no button either', () => {
+    const m = build(DeviceType.AlarmPanel, caps, alarm('disarmed', { codeRequired: null }))
     expect(m.rows.find((r) => r.id === 'alarm')?.controls).toEqual([])
   })
   it('unread: whether a code is needed is unknown, so no arm or disarm button is offered', () => {

@@ -224,15 +224,6 @@ describe('mapHaEntityToCamStack — domain mapping table', () => {
       expect(m?.features).toEqual([])
     })
 
-    it('PIN-required lock → LockPinRequired flag', () => {
-      const m = mapHaEntityToCamStack({
-        domain: 'lock',
-        deviceClass: null,
-        attributes: { code_format: '^\\d{4}$' },
-      })
-      expect(m?.features).toContain(DeviceFeature.LockPinRequired)
-    })
-
     it('lock with supported_features=1 (OPEN bit) → LockOpen flag', () => {
       const m = mapHaEntityToCamStack({
         domain: 'lock',
@@ -251,14 +242,13 @@ describe('mapHaEntityToCamStack — domain mapping table', () => {
       expect(m?.features).not.toContain(DeviceFeature.LockOpen)
     })
 
-    it('lock with PIN + OPEN (supported_features=1 + code_format) → both flags', () => {
+    it('lock with PIN + OPEN (supported_features=1 + code_format) → only LockOpen (PIN is slice state)', () => {
       const m = mapHaEntityToCamStack({
         domain: 'lock',
         deviceClass: null,
         attributes: { supported_features: 1, code_format: '^\\d{4}$' },
       })
-      expect(m?.features).toContain(DeviceFeature.LockPinRequired)
-      expect(m?.features).toContain(DeviceFeature.LockOpen)
+      expect(m?.features).toEqual([DeviceFeature.LockOpen])
     })
   })
 

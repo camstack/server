@@ -225,7 +225,8 @@ const PanelStatusSchema = z.looseObject({
   state: z.string(),
   targetMode: z.string().nullish(),
   availableModes: z.array(z.string()),
-  requiresCode: z.boolean(),
+  /** `null` / absent = the panel cannot tell (D393); treated as "a PIN is needed". */
+  codeRequired: z.boolean().nullish(),
 })
 
 export async function readAlarm(
@@ -265,7 +266,7 @@ export async function readAlarm(
               state: status.value.state,
               mode: status.value.targetMode ?? null,
               availableModes: status.value.availableModes,
-              requiresCode: status.value.requiresCode,
+              codeRequired: status.value.codeRequired ?? null,
             }
           : {
               deviceId: p.id,
@@ -306,7 +307,9 @@ export function alarmSetSpec(client: HubClient): GatedToolSpec<AlarmSetArgs> {
             problem: `device ${args.deviceId} is not an alarm panel`,
           },
         }
-      if (status.value.requiresCode) {
+      // Unknown is refused like a PIN: a tool never drives a panel that may want
+      // a secret it cannot pass, and the upstream refusal would read as a fault.
+      if (status.value.codeRequired !== false) {
         const link = await adminLink(client, `/devices/${args.deviceId}`)
         return {
           confirmable: false,

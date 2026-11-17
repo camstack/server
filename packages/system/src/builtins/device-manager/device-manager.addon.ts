@@ -253,6 +253,8 @@ export class DeviceManagerAddon extends BaseAddon {
       },
       remoteNativeCaps: this.remoteNativeCaps,
       seedMirror: (deviceId, blob, mode) => this.stateMirror.seedMirror(deviceId, blob, mode),
+      seedMirrorFromRow: (deviceId, row, settings) =>
+        this.stateMirror.seedMirrorFromRow(deviceId, row, settings),
       withResetSessionProbe: (blob) => this.stateMirror.withResetSessionProbe(blob),
       get fieldClaims(): FieldClaimsIndex {
         return fieldClaims()

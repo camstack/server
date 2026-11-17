@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Home Assistant locks and alarm panels report codeRequired in their state; an alarm that does not say is reported unknown, not 'no code'.
+
 ## [1.2.691] - 2026-11-17
 
 ### Changed

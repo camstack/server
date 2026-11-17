@@ -160,9 +160,6 @@ const COLD_POWER: PowerMeterStatus = { lastFetchedAt: 0 }
  * arrives, each cap reads its cold-start default.
  */
 export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema> {
-  /** Live RequirePinForRemoteOperation. Commands read this, not a stored PIN. */
-  private pinRequired = false
-
   private readonly brokerId: string
   private readonly nodeId: string
   private readonly endpointId: number
@@ -188,27 +185,16 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     this.booleanState = isLeakEndpoint({ deviceTypeIds: persisted.deviceTypeIds })
       ? 'flood'
       : 'contact'
-    this.pinRequired =
-      matterNodes.getAttribute(
-        this.brokerId,
-        this.nodeId,
-        this.endpointId,
-        MatterClusterId.DoorLock,
-        MatterAttributeId.RequirePinForRemoteOperation,
-      ) === true
     this.online = matterNodes.getNode(this.brokerId, this.nodeId)?.online ?? true
     void this.updateSourceInfo({ id: `${this.nodeId}:${this.endpointId}`, system: 'matter' })
   }
 
   /**
-   * PIN-required locks advertise the feature the lock UI already understands; a
-   * cover advertises `cover-stoppable` (WindowCovering `stopMotion` is mandatory).
+   * A cover advertises `cover-stoppable` (WindowCovering `stopMotion` is
+   * mandatory). A lock's PIN requirement is slice state (`codeRequired`, #459).
    */
   override get features(): readonly DeviceFeature[] {
-    return [
-      ...(this.pinRequired ? [DeviceFeature.LockPinRequired] : []),
-      ...(this.caps.includes('cover') ? [DeviceFeature.CoverStoppable] : []),
-    ]
+    return [...(this.caps.includes('cover') ? [DeviceFeature.CoverStoppable] : [])]
   }
 
   override async onActivate(): Promise<void> {
@@ -256,8 +242,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     if (decoded === null) return
     if (decoded.detail === 'pin-required' || decoded.detail === 'pin-not-required') {
       const next = decoded.detail === 'pin-required'
-      if (next !== this.pinRequired) {
-        this.pinRequired = next
+      if (next !== this.lockCodeRequired()) {
         this.ctx.logger.info('Matter lock PIN requirement changed', {
           tags: { deviceId: this.id },
           meta: { nodeId: this.nodeId, endpointId: this.endpointId, pinRequired: next },
@@ -454,8 +439,25 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     this.runtimeState.setCapState('color', COLD)
   }
 
+  /** The lock slice's `codeRequired` — what commands read; `null` until reported. */
+  private lockCodeRequired(): boolean | null {
+    return this.runtimeState.getCapState<LockControlStatus>('lock-control')?.codeRequired ?? null
+  }
+
   private registerLock(): void {
-    const COLD: LockControlStatus = { state: 'unlocked', lastChangedAt: 0 }
+    // RequirePinForRemoteOperation as already cached for the node; unknown → null (D393).
+    const cachedPin = matterNodes.getAttribute(
+      this.brokerId,
+      this.nodeId,
+      this.endpointId,
+      MatterClusterId.DoorLock,
+      MatterAttributeId.RequirePinForRemoteOperation,
+    )
+    const COLD: LockControlStatus = {
+      state: 'unlocked',
+      codeRequired: typeof cachedPin === 'boolean' ? cachedPin : null,
+      lastChangedAt: 0,
+    }
     const provider: InferNativeProvider<typeof lockControlCapability> = {
       getStatus: async () =>
         this.runtimeState.getCapState<LockControlStatus>('lock-control') ?? COLD,
@@ -483,7 +485,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
     pending: 'locking' | 'unlocking',
     code: string | undefined,
   ): Promise<void> {
-    const plan = planDoorLockCommand({ pinRequired: this.pinRequired, code })
+    const plan = planDoorLockCommand({ pinRequired: this.lockCodeRequired(), code })
     if (!plan.ok) {
       this.ctx.logger.warn('Matter lock command refused: PIN required and none was provided', {
         tags: { deviceId: this.id },
@@ -492,7 +494,7 @@ export class MatterEndpointDevice extends BaseDevice<typeof matterEndpointSchema
       throw new Error('matter-broker: this lock requires a PIN for remote operation')
     }
     const previous = this.runtimeState.getCapState<LockControlStatus>('lock-control')
-    this.runtimeState.setCapState('lock-control', { state: pending, lastChangedAt: Date.now() })
+    this.runtimeState.patchCapState('lock-control', { state: pending, lastChangedAt: Date.now() })
     try {
       const args = 'pinCode' in plan.args ? plan.args : undefined
       await this.invoke(MatterClusterId.DoorLock, commandName, args)

@@ -12,14 +12,17 @@ export type DoorLockCommandPlan =
 
 /**
  * Decide the command arguments. `pinRequired` comes from the live
- * RequirePinForRemoteOperation attribute, not from a stored secret.
+ * RequirePinForRemoteOperation attribute (the lock slice's `codeRequired`), not
+ * from a stored secret. `null` = never read (D393): the command is attempted,
+ * because the lock itself refuses a missing PIN and refusing here would disable
+ * every lock whose attribute has not been reported yet.
  */
 export function planDoorLockCommand(input: {
-  readonly pinRequired: boolean
+  readonly pinRequired: boolean | null
   readonly code: string | undefined
 }): DoorLockCommandPlan {
   const code = input.code?.trim() ?? ''
-  if (input.pinRequired && code.length === 0) {
+  if (input.pinRequired === true && code.length === 0) {
     return { ok: false, reason: 'pin-required' }
   }
   if (code.length > 0) return { ok: true, args: { pinCode: code } }

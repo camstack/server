@@ -133,11 +133,28 @@ async function executeOne(
     return failure(request.rawId, 'functionNotSupported')
   }
 
+  const status =
+    descriptor.commandReadsStatus === true
+      ? await deps.gateway.readStatus(descriptor.reads, deviceId).catch((err: unknown) => {
+          deps.logger.warn(
+            'google execute: status read before the command failed — the trait judges with no status',
+            {
+              tags: { deviceId },
+              meta: {
+                command: request.command,
+                error: err instanceof Error ? err.message : String(err),
+              },
+            },
+          )
+          return null
+        })
+      : undefined
   const resolution = descriptor.resolveCommand({
     deviceId,
     command: request.command,
     params: request.params,
     features: facts.features,
+    status,
   })
   if (resolution.kind === 'refused') {
     deps.logger.warn('google execute: refused by trait', {

@@ -223,6 +223,17 @@ describe('planDoorLockCommand', () => {
     })
     expect(planDoorLockCommand({ pinRequired: true, code: '1234' }).ok).toBe(true)
   })
+
+  it('an unread requirement (null, D393) is attempted: the lock itself refuses a missing PIN', () => {
+    expect(planDoorLockCommand({ pinRequired: null, code: undefined })).toEqual({
+      ok: true,
+      args: {},
+    })
+    expect(planDoorLockCommand({ pinRequired: null, code: '1234' })).toEqual({
+      ok: true,
+      args: { pinCode: '1234' },
+    })
+  })
 })
 
 describe('classifyCommissionError', () => {

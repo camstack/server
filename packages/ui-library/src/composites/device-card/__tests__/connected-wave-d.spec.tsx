@@ -162,7 +162,7 @@ const ALARM: AlarmPanelStatus = {
   state: 'armed_away',
   targetMode: null,
   availableModes: ['home', 'away', 'night'],
-  requiresCode: true,
+  codeRequired: true,
   lastChangedAt: 0,
 }
 
@@ -218,7 +218,7 @@ describe('an alarm panel', () => {
   })
 
   it('arms a panel that wants no code with the mode alone', async () => {
-    hub.alarmSlice = { ...ALARM, state: 'disarmed', requiresCode: false }
+    hub.alarmSlice = { ...ALARM, state: 'disarmed', codeRequired: false }
     render(<ConnectedAlarmCard deviceId={1} optimistic={false} />)
     fireEvent.click(screen.getByRole('radio', { name: 'Night' }))
     await vi.waitFor(() => expect(hub.alarm.arm).toHaveBeenCalledWith({ mode: 'night' }))

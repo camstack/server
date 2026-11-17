@@ -2059,7 +2059,7 @@ export class NcAlarmPanelDevice extends BaseDevice<typeof ncAlarmPanelSchema> {
       // No PIN yet. It becomes the second factor when a notification action can
       // disarm — see the alarm spec; until then claiming one would be a lie the
       // UI renders a keypad for.
-      requiresCode: false,
+      codeRequired: false,
       lastChangedAt: this.machine.changedAt,
     }
   }

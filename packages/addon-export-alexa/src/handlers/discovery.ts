@@ -386,7 +386,11 @@ export async function buildEndpointsForExposedDevice(
 /**
  * The panel endpoint, with what the panel says it accepts.
  *
- * A `getStatus` that fails leaves `availableModes` empty and `requiresCode`
+ * A panel that answers `codeRequired: null` (it cannot tell, D393) is declared
+ * with the PIN prompt: an unrequested prompt costs the user four digits, a
+ * missing one makes every Disarm of a PIN panel fail.
+ *
+ * A `getStatus` that fails leaves `availableModes` empty and `codeRequired`
  * false, and those are the UNKNOWN readings, not assertions: an empty mode
  * list makes discovery declare all three arm states (`supportedArmStatesFor`)
  * rather than publishing a panel that can only be disarmed, and the directive
@@ -409,7 +413,7 @@ async function buildAlarmPanelEndpointFor(
     })
   const parsed = AlarmPanelStatusSchema.pick({
     availableModes: true,
-    requiresCode: true,
+    codeRequired: true,
   }).safeParse(status)
   if (!parsed.success && status !== null) {
     deps.logger.warn('alexa discovery: panel status did not match the cap schema', {
@@ -417,14 +421,17 @@ async function buildAlarmPanelEndpointFor(
     })
   }
   const availableModes = parsed.success ? parsed.data.availableModes : []
-  const requiresCode = parsed.success ? parsed.data.requiresCode : false
+  // `null` (the panel cannot tell, D393) declares the PIN prompt on purpose: an
+  // unneeded prompt costs four digits, a missing one fails every Disarm of a PIN
+  // panel. A FAILED read stays `false`, as before — the directive re-reads.
+  const codeRequired = parsed.success ? parsed.data.codeRequired !== false : false
 
   deps.logger.info('alexa discovery: built alarm panel endpoint', {
     tags: { deviceId: info.id },
     meta: {
       name: info.name,
       availableModes: [...availableModes],
-      requiresCode,
+      codeRequired,
     },
   })
 
@@ -433,7 +440,7 @@ async function buildAlarmPanelEndpointFor(
     stableId: info.stableId,
     friendlyName: info.name,
     availableModes,
-    requiresCode,
+    codeRequired,
   })
 }
 

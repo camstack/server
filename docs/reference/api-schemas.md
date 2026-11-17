@@ -140,7 +140,7 @@ Enum: `"home" \| "away" \| "night" \| "vacation" \| "custom_bypass"`
 - `state`: `AlarmStateSchema`
 - `targetMode?`: `AlarmArmModeSchema \| null`
 - `availableModes`: `AlarmArmModeSchema[]`
-- `requiresCode`: `boolean`
+- `codeRequired`: `boolean \| null`
 - `lastChangedAt`: `number`
 
 ### `AlarmStateSchema`
@@ -3603,6 +3603,7 @@ Enum: `"guardrail" \| "model"`
 ### `LockControlStatusSchema`
 
 - `state`: `LockStateSchema`
+- `codeRequired?`: `boolean \| null`
 - `lastChangedAt`: `number`
 
 ### `LockStateSchema`

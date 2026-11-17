@@ -245,10 +245,8 @@ function mapLight(attributes: Record<string, unknown>): HaEntityMapping {
 // ── Lock mapping ────────────────────────────────────────────────────────
 
 function mapLock(attributes: Record<string, unknown>): HaEntityMapping {
+  // Whether a PIN is required is the slice's `codeRequired` (#459), not a feature.
   const features: DeviceFeature[] = []
-  if (attributes['code_format'] !== undefined && attributes['code_format'] !== null) {
-    features.push(DeviceFeature.LockPinRequired)
-  }
   // HA lock supported_features bitmask:
   //  - OPEN = 1 → latch-release "open door" action available
   const sf = readNumericAttr(attributes, 'supported_features')
@@ -497,16 +495,13 @@ function mapMediaPlayer(attributes: Record<string, unknown>): HaEntityMapping {
 
 // ── Alarm panel mapping ─────────────────────────────────────────────────
 
-function mapAlarmPanel(attributes: Record<string, unknown>): HaEntityMapping {
-  const features: DeviceFeature[] = []
-  if (attributes['code_format'] !== undefined && attributes['code_format'] !== null) {
-    features.push(DeviceFeature.AlarmPinRequired)
-  }
+function mapAlarmPanel(_attributes: Record<string, unknown>): HaEntityMapping {
+  // Whether a PIN is required is the slice's `codeRequired` (#459), not a feature.
   return {
     deviceType: DeviceType.AlarmPanel,
     role: null,
     capabilities: ['alarm-panel'],
-    features,
+    features: [],
   }
 }
 

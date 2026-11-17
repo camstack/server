@@ -51,7 +51,7 @@ export function ConnectedAlarmCard({
         since:
           display.lastChangedAt > 0 ? coarseDuration(Date.now() - display.lastChangedAt, t) : null,
         modes: display.availableModes,
-        requiresCode: display.requiresCode,
+        codeRequired: display.codeRequired,
         canArm: card.implements('alarm-panel', 'arm'),
         canDisarm: card.implements('alarm-panel', 'disarm'),
       }}

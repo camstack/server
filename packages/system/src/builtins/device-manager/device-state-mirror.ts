@@ -63,6 +63,7 @@ import { MirrorRowWriter, type MirrorWriteHold } from './mirror-row-writer.js'
 import {
   persistableBlob,
   restoredPart,
+  upgradeRenamedFields,
   type RuntimeStatePolicyLookup,
   sliceEffectivelyEqual,
 } from './runtime-state-persist-gate.js'
@@ -547,7 +548,7 @@ export class DeviceStateMirror {
     const read = (async () => {
       try {
         const row = await settings.readDeviceRuntimeState(deviceId)
-        this.seedMirror(deviceId, this.withResetSessionProbe(row))
+        this.seedMirrorFromRow(deviceId, row, settings)
         this.seedRefusalLogged.delete(deviceId)
       } catch (err: unknown) {
         if (!this.seedRefusalLogged.has(deviceId)) {
@@ -717,6 +718,36 @@ export class DeviceStateMirror {
       deviceId,
       persistableBlob(joinRuntimeBlob(split.native, split.owned, this.policyFor), this.policyFor),
     )
+  }
+
+  /**
+   * Seed from the device's STORED row (`fill`), and return the row read under
+   * the current field names. A row that still carries a field under its
+   * pre-rename name (`restoredFieldRenames`) is rewritten once: the baseline
+   * keeps the old key — that is what disk holds — so the write is not skipped
+   * as already persisted, and a write is armed even if nothing else changes.
+   * Without it the old key would stay on disk and the rename could never be
+   * retired.
+   */
+  seedMirrorFromRow(
+    deviceId: number,
+    row: Record<string, unknown>,
+    settings: DeviceManagerSettings,
+  ): Record<string, unknown> {
+    const upgraded = upgradeRenamedFields(row, this.policyFor)
+    this.seedMirror(deviceId, this.withResetSessionProbe(upgraded.blob))
+    if (upgraded.renamed.length === 0) return upgraded.blob
+    const baseline = { ...this.writer.persisted(deviceId) }
+    for (const { capName, legacy } of upgraded.renamed) {
+      baseline[capName] = { ...baseline[capName], ...legacy }
+    }
+    this.writer.markPersisted(deviceId, baseline)
+    this.ctx.logger.info('stored runtime state carries a renamed field — rewriting the row once', {
+      tags: { deviceId },
+      meta: { caps: upgraded.renamed.map((r) => r.capName) },
+    })
+    this.writer.armOrHold(deviceId, settings)
+    return upgraded.blob
   }
 
   /**

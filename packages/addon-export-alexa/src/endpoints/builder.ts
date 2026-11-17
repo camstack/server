@@ -625,8 +625,9 @@ export interface BuildAlarmPanelEndpointInput {
   readonly availableModes: readonly AlarmArmMode[]
   /** Whether the panel demands a PIN. Decides whether a `FOUR_DIGIT_PIN`
    *  authorization type is declared, which is what makes the Alexa app prompt
-   *  for one on Disarm. */
-  readonly requiresCode: boolean
+   *  for one on Disarm. The caller resolves an UNKNOWN requirement (`null` on
+   *  the cap) before it gets here — see `buildAlarmPanelEndpointFor`. */
+  readonly codeRequired: boolean
 }
 
 /**
@@ -656,7 +657,7 @@ export function buildAlarmPanelEndpoint(input: BuildAlarmPanelEndpointInput): Al
   const configuration: Record<string, unknown> = {
     supportedArmStates: supportedArmStatesFor(input.availableModes).map((value) => ({ value })),
   }
-  if (input.requiresCode) {
+  if (input.codeRequired) {
     configuration.supportedAuthorizationTypes = [{ type: 'FOUR_DIGIT_PIN' }]
   }
 

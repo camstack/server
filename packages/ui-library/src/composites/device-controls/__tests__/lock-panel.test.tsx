@@ -84,7 +84,7 @@ describe('LockPanel', () => {
       <LockPanel
         trpc={trpc}
         deviceId={1}
-        features={[DeviceFeature.LockPinRequired]}
+        features={[DeviceFeature.CoverStoppable]}
         layout="full"
       />,
     )

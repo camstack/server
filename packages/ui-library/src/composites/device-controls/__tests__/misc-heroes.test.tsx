@@ -83,7 +83,7 @@ function alarmSlice(over?: Record<string, unknown>): Record<string, unknown> {
   return {
     state: 'disarmed',
     availableModes: ['home', 'away'],
-    requiresCode: false,
+    codeRequired: false,
     lastChangedAt: 0,
     ...over,
   }

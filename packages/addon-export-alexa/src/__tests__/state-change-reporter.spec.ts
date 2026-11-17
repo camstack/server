@@ -48,7 +48,7 @@ const panel = buildAlarmPanelEndpoint({
   stableId: 'p',
   friendlyName: 'Casa',
   availableModes: ['away'],
-  requiresCode: false,
+  codeRequired: false,
 })
 
 const SIGNATURES: Record<number, string> = {

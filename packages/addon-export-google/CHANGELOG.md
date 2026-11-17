@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Google refuses lock commands only for a lock whose state says a PIN is required; an unknown requirement is sent to the lock.
+
 ## [0.1.136] - 2026-11-17
 
 ### Changed

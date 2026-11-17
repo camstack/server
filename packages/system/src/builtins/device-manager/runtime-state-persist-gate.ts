@@ -27,7 +27,7 @@
  * looks like a failure). These predicates decide only whether to WRITE.
  */
 import type { RuntimeStatePolicy } from '@camstack/types'
-import { OWNED_FIELDS_KEY } from './field-ownership.js'
+import { isPlainRecord, OWNED_FIELDS_KEY } from './field-ownership.js'
 
 /** Resolves the declared policy for a cap name. */
 export type RuntimeStatePolicyLookup = (capName: string) => RuntimeStatePolicy
@@ -71,18 +71,78 @@ export function persistableBlob(
 /**
  * The part of a `restored` slice that may live on disk (D1024). A cap that
  * names `restoredFields` keeps only those; every other restored cap keeps the
- * whole slice. One function for both directions — what is written and what the
+ * whole slice; a renamed field is read under its new name. One function for both directions — what is written and what the
  * boot seed reads back — so the two cannot drift.
  */
 export function restoredPart(
   slice: Readonly<Record<string, unknown>>,
   policy: RuntimeStatePolicy,
 ): Record<string, unknown> {
+  const current = withRenamedFields(slice, policy.renamedFields)
   const names = policy.restoredFields
-  if (names === undefined) return { ...slice }
+  if (names === undefined) return current
   const out: Record<string, unknown> = {}
-  for (const name of names) if (name in slice) out[name] = slice[name]
+  for (const name of names) if (name in current) out[name] = current[name]
   return out
+}
+
+/**
+ * A field the cap renamed (`restoredFieldRenames`, #459): a row persisted
+ * before the rename carries the OLD key. It is read once into the new name —
+ * only when the new one is absent, a value under the new name always wins — and
+ * dropped, so no reader of the mirror ever meets the old key.
+ */
+function withRenamedFields(
+  slice: Readonly<Record<string, unknown>>,
+  renames: Readonly<Record<string, string>> | undefined,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...slice }
+  if (renames === undefined) return out
+  for (const [from, to] of Object.entries(renames)) {
+    if (!(from in out)) continue
+    if (!(to in out)) out[to] = out[from]
+    delete out[from]
+  }
+  return out
+}
+
+/** A slice of a stored row that carried a field under its pre-rename name. */
+export interface RenamedSlice {
+  readonly capName: string
+  /** The old keys exactly as the row held them — what is still on disk. */
+  readonly legacy: Readonly<Record<string, unknown>>
+}
+
+/** A stored row with every renamed field read under its new name. */
+export interface UpgradedRow {
+  readonly blob: Record<string, unknown>
+  readonly renamed: readonly RenamedSlice[]
+}
+
+/**
+ * Read a whole stored row under the current field names (`restoredFieldRenames`).
+ * Only the renames are applied — nothing is trimmed — so the worker that loads
+ * the row is handed the same fields it would have got, under their new names.
+ * `renamed` names the slices that still carry an old key on disk: the row must
+ * be rewritten once, or the rename could never be retired.
+ */
+export function upgradeRenamedFields(
+  row: Readonly<Record<string, unknown>>,
+  policyFor: RuntimeStatePolicyLookup,
+): UpgradedRow {
+  const blob: Record<string, unknown> = { ...row }
+  const renamed: RenamedSlice[] = []
+  for (const [capName, slice] of Object.entries(row)) {
+    if (capName === OWNED_FIELDS_KEY || !isPlainRecord(slice)) continue
+    const renames = policyFor(capName).renamedFields
+    if (renames === undefined) continue
+    const legacy: Record<string, unknown> = {}
+    for (const from of Object.keys(renames)) if (from in slice) legacy[from] = slice[from]
+    if (Object.keys(legacy).length === 0) continue
+    blob[capName] = withRenamedFields(slice, renames)
+    renamed.push({ capName, legacy })
+  }
+  return { blob, renamed }
 }
 
 /**

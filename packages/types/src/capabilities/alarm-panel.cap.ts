@@ -12,9 +12,8 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * Many panels require a PIN code on arm / disarm — the optional
  * `code` field on the methods passes it through to the upstream
  * service; it's NEVER persisted in the runtime slice or any event
- * payload. The presence of a required code is signalled by
- * `DeviceFeature.AlarmPinRequired` so the UI gates a code-entry
- * field without a slice fetch.
+ * payload. Whether a code is required is the slice's `codeRequired`
+ * (#459): `null` when the provider cannot tell (D393).
  *
  * `availableModes` mirrors HA's `supported_features`-derived arm
  * mode list — the UI renders only the buttons the panel accepts.
@@ -54,9 +53,13 @@ export const AlarmPanelStatusSchema = z.object({
   /** Subset of arm modes the panel accepts. UI renders one button per
    *  mode in this list. */
   availableModes: z.array(AlarmArmModeSchema),
-  /** Whether the panel requires a PIN on arm / disarm. Mirrors
-   *  `DeviceFeature.AlarmPinRequired` for slice consumers. */
-  requiresCode: z.boolean(),
+  /**
+   * Whether the panel requires a PIN on arm / disarm (#459; the field was
+   * `requiresCode`, and the `alarm-pin-required` device feature is gone).
+   * `null` = the provider cannot tell (D393), never `false`. A slice restored
+   * from before the rename is upgraded at boot by `restoredFieldRenames`.
+   */
+  codeRequired: z.boolean().nullable(),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })
@@ -121,7 +124,7 @@ export const alarmPanelCapability = {
       z.object({
         deviceId: z.number().int().nonnegative(),
         mode: AlarmArmModeSchema,
-        /** Optional PIN code. Required when `requiresCode === true`.
+        /** Optional PIN code. Required when `codeRequired === true`.
          *  Passed through to the upstream service; never persisted. */
         code: z.string().min(1).optional(),
       }),
@@ -224,7 +227,7 @@ export const alarmPanelCapability = {
   /**
    * Runtime-state slice — mirrored by the kernel. UI panel reads the
    * full slice; renders an arm button per `availableModes` entry and
-   * a PIN field iff `requiresCode === true`.
+   * a PIN field iff `codeRequired === true`.
    */
   runtimeState: AlarmPanelStatusSchema,
 
@@ -235,6 +238,13 @@ export const alarmPanelCapability = {
    * `scripts/check-runtime-state-durability.ts`.
    */
   durability: 'restored',
+  /**
+   * A slice persisted before #459 carries `requiresCode`; the boot seed reads it
+   * once into `codeRequired` (`restoredPart`), so no reader meets the old key,
+   * and rewrites the row once without it (`seedMirrorFromRow`) — so this entry
+   * can be dropped after every node has booted once on a release that has it.
+   */
+  restoredFieldRenames: { requiresCode: 'codeRequired' },
   /**
    * History (D850): the panel's lifecycle state as an `enum` series —
    * change-only, no floor, so an `arming -> pending -> triggered` sequence of a

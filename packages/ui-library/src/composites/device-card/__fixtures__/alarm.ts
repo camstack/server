@@ -17,7 +17,7 @@ const base: Omit<AlarmCardModel, 'activity' | 'mode'> = {
   common: panel(),
   since: '1 h',
   modes: ['home', 'night', 'away'],
-  requiresCode: false,
+  codeRequired: false,
   canArm: true,
   canDisarm: true,
 }
@@ -48,7 +48,7 @@ export function alarmFixtures(): readonly AlarmFixture[] {
       orientation: 'vertical',
       model: {
         ...base,
-        requiresCode: true,
+        codeRequired: true,
         since: '2 min',
         activity: 'triggered',
         mode: 'away',

@@ -348,6 +348,7 @@
   "deviceManager.listDeletedSince": "admin",
   "deviceManager.listDeviceIdsByCaps": "viewer",
   "deviceManager.listDiscoveryProposals": "admin",
+  "deviceManager.listIdentityCandidates": "admin",
   "deviceManager.listLocationDescriptions": "admin",
   "deviceManager.listLocationIcons": "viewer",
   "deviceManager.listLocations": "admin",

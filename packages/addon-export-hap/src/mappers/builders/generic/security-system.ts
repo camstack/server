@@ -24,7 +24,7 @@
  * for the length of the delay, against inventing an intent, and the invention
  * is worse.
  *
- * ## `requiresCode`: the arm is REFUSED, not attempted
+ * ## `codeRequired`: the arm is REFUSED, not attempted — unknown included
  *
  * HomeKit's SecuritySystem has no PIN prompt — there is no characteristic for
  * it and no way to ask the operator mid-write. So a panel that requires a code
@@ -36,6 +36,10 @@
  * alternative. It is worse: the refusal costs a round trip, it is
  * indistinguishable from a broken panel in the log, and repeated code-less
  * attempts are what locks a real alarm panel out.
+ *
+ * The same reasoning decides an UNKNOWN requirement (`codeRequired: null`,
+ * D393, or no status read yet): refused. Only a panel that said "no PIN"
+ * (`false`) is driven from the Home app.
  */
 import { type AlarmArmMode, AlarmPanelStatusSchema } from '@camstack/types'
 import {
@@ -61,7 +65,7 @@ const PanelReadSchema = AlarmPanelStatusSchema.pick({
   state: true,
   targetMode: true,
   availableModes: true,
-  requiresCode: true,
+  codeRequired: true,
 })
 
 /** What one status push produces: the writes, the memo to carry forward, and
@@ -73,8 +77,17 @@ export interface SecurityUpdates {
    *  the panel answered. */
   readonly panel: {
     readonly availableModes: readonly AlarmArmMode[]
-    readonly requiresCode: boolean
+    /** `null` = the panel cannot tell (D393). */
+    readonly codeRequired: boolean | null
   } | null
+}
+
+/**
+ * HomeKit has no PIN prompt: a panel that requires a code, or whose requirement
+ * is unknown, is refused rather than sent a code-less command.
+ */
+export function homeKitRefusesForCode(codeRequired: boolean | null): boolean {
+  return codeRequired !== false
 }
 
 /** Cap `targetMode` → settled memo word, when the status names one. */
@@ -113,7 +126,7 @@ export function securityUpdatesFor(status: unknown, memo: ArmedMemo): SecurityUp
     memo: nextMemo,
     panel: {
       availableModes: parsed.data.availableModes,
-      requiresCode: parsed.data.requiresCode,
+      codeRequired: parsed.data.codeRequired,
     },
   }
 }
@@ -131,7 +144,8 @@ export async function buildSecuritySystem(bctx: BuilderContext): Promise<Builder
   // that happened to be true at build time.
   let memo: ArmedMemo = null
   let availableModes: readonly AlarmArmMode[] = []
-  let requiresCode = false
+  /** Unknown until the panel answers: refused like a PIN (see the module doc). */
+  let codeRequired: boolean | null = null
   /** Only log the `validValues` narrowing when it actually changes. */
   let lastValidValues = ''
 
@@ -173,7 +187,7 @@ export async function buildSecuritySystem(bctx: BuilderContext): Promise<Builder
     memo = next.memo
     if (next.panel !== null) {
       availableModes = next.panel.availableModes
-      requiresCode = next.panel.requiresCode
+      codeRequired = next.panel.codeRequired
       applyValidValues()
     }
     applyUpdates(service, next.updates)
@@ -195,11 +209,13 @@ export async function buildSecuritySystem(bctx: BuilderContext): Promise<Builder
       const disarm = target === Characteristic.SecuritySystemTargetState.DISARM
       const mode = disarm ? null : armModeForTarget(target, availableModes)
 
-      if (requiresCode) {
+      if (homeKitRefusesForCode(codeRequired)) {
         // Refused, loudly, on both sides. HomeKit cannot carry a PIN on this
         // service and this addon will not invent one.
         log.warn(
-          'export-hap: alarm panel requires a PIN — HomeKit cannot supply one, command REFUSED',
+          codeRequired === null
+            ? 'export-hap: alarm panel PIN requirement unknown — HomeKit cannot supply one, command REFUSED'
+            : 'export-hap: alarm panel requires a PIN — HomeKit cannot supply one, command REFUSED',
           { meta: { subtype: SUBTYPE, command: disarm ? 'disarm' : 'arm', mode, target } },
         )
         throw new HapStatusError(HAPStatus.INSUFFICIENT_AUTHORIZATION)

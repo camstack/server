@@ -20,8 +20,8 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * (workplace keypad locks, hospitality). The optional `code` field
  * on the methods passes it through to the upstream service — the
  * code is NEVER persisted in the runtime slice or any event payload.
- * Locks that REQUIRE a code set `DeviceFeature.LockPinRequired` so
- * the UI gates a code-entry field without a slice fetch.
+ * Whether a lock REQUIRES a code is the slice's `codeRequired` (#459):
+ * `true` / `false` when the provider knows, `null` when it does not (D393).
  *
  * Locks that support a latch-release ("open door") action advertise
  * `DeviceFeature.LockOpen`. The `open` method triggers the latch
@@ -53,6 +53,13 @@ export const LockControlStatusSchema = z.object({
   /** Lifecycle state of the lock. `jammed` means the motor reported
    *  failure to reach the target — operator intervention required. */
   state: LockStateSchema,
+  /**
+   * Whether lock / unlock need a PIN `code` (#459, replaces the
+   * `lock-pin-required` device feature). `null` = the provider cannot tell
+   * (D393) — never `false`. `.optional()` so a restored slice written before
+   * the field still parses; readers treat absent exactly like `null`.
+   */
+  codeRequired: z.boolean().nullable().optional(),
   /** Ms epoch when the slice was last updated. */
   lastChangedAt: z.number(),
 })

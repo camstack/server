@@ -18,6 +18,11 @@ export interface RuntimeStatePolicy {
    * back at boot (D1024); the rest stay session values. Absent = the whole slice.
    */
   readonly restoredFields?: readonly string[]
+  /**
+   * `{ old: new }` field renames of a `restored` slice: a row persisted
+   * before the rename is read once into the new name at boot (`restoredPart`).
+   */
+  readonly renamedFields?: Readonly<Record<string, string>>
 }
 
 /**
@@ -29,7 +34,7 @@ export interface RuntimeStatePolicy {
  */
 export const RUNTIME_STATE_POLICY: Readonly<Record<string, RuntimeStatePolicy>> = {
   'air-quality-sensor': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
-  'alarm-panel': { durability: 'restored', volatileFields: ['lastChangedAt'] },
+  'alarm-panel': { durability: 'restored', volatileFields: ['lastChangedAt'], renamedFields: { requiresCode: 'codeRequired' } },
   'ambient-light-sensor': { durability: 'restored', volatileFields: ['lastFetchedAt'] },
   'audio-metrics': { durability: 'session', volatileFields: [] },
   'automation-control': { durability: 'session', volatileFields: [] },

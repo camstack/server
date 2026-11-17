@@ -55,6 +55,8 @@ export interface CapInfo {
   readonly volatileStateFields: readonly string[]
   /** `restoredStateFields: [...]` as declared; `null` when the cap persists its whole slice. */
   readonly restoredStateFields: readonly string[] | null
+  /** `restoredFieldRenames: { old: 'new' }` as declared; empty when none. */
+  readonly restoredFieldRenames: Readonly<Record<string, string>>
   /** True when the cap declares `status: { ... }`. */
   readonly hasStatus: boolean
   /**
@@ -204,6 +206,15 @@ export function parseCapFile(capsDir: string, file: string): CapInfo | null {
   const restoredStateFields = restoredMatch
     ? [...restoredMatch[1]!.matchAll(/['"]([^'"]+)['"]/g)].map((m2) => m2[1]!)
     : null
+  const renamesMatch = src.match(/^\s*restoredFieldRenames\s*:\s*\{([^}]*)\}/m)
+  const restoredFieldRenames: Record<string, string> = {}
+  if (renamesMatch) {
+    for (const m2 of renamesMatch[1]!.matchAll(
+      /['"]?([A-Za-z_$][\w$]*)['"]?\s*:\s*['"]([^'"]+)['"]/g,
+    )) {
+      restoredFieldRenames[m2[1]!] = m2[2]!
+    }
+  }
   const hasStatus = /^\s*status\s*:\s*\{/m.test(src)
   const exposesDeviceSettings = /^\s*exposesDeviceSettings\s*:\s*true/m.test(src)
   const internal = /^\s*internal\s*:\s*true/m.test(src)
@@ -263,6 +274,7 @@ export function parseCapFile(capsDir: string, file: string): CapInfo | null {
     durability,
     volatileStateFields,
     restoredStateFields,
+    restoredFieldRenames,
     hasStatus,
     internal,
     providerKind,

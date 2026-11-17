@@ -34,7 +34,7 @@ describe('buildAlarmPanelEndpoint — what Alexa is told a panel can do', () => 
       stableId: 'stable-102',
       friendlyName: 'Casa',
       availableModes: ['home', 'away'],
-      requiresCode: false,
+      codeRequired: false,
     })
     expect(endpoint.endpointId).toBe('102__alarm')
     expect(endpoint.displayCategories).toEqual(['SECURITY_PANEL'])
@@ -53,7 +53,7 @@ describe('buildAlarmPanelEndpoint — what Alexa is told a panel can do', () => 
       stableId: 's',
       friendlyName: 'A',
       availableModes: ['away'],
-      requiresCode: false,
+      codeRequired: false,
     })
     const panelWithout = without.capabilities.find(
       (c) => c.interface === 'Alexa.SecurityPanelController',
@@ -65,7 +65,7 @@ describe('buildAlarmPanelEndpoint — what Alexa is told a panel can do', () => 
       stableId: 's',
       friendlyName: 'A',
       availableModes: ['away'],
-      requiresCode: true,
+      codeRequired: true,
     })
     const panelWith = withPin.capabilities.find(
       (c) => c.interface === 'Alexa.SecurityPanelController',
@@ -83,7 +83,7 @@ describe('buildAlarmPanelEndpoint — what Alexa is told a panel can do', () => 
       stableId: 's',
       friendlyName: 'A',
       availableModes: [],
-      requiresCode: false,
+      codeRequired: false,
     })
     const panel = endpoint.capabilities.find((c) => c.interface === 'Alexa.SecurityPanelController')
     expect(panel?.properties?.proactivelyReported).toBe(true)
@@ -96,7 +96,7 @@ describe('buildAlarmPanelEndpoint — what Alexa is told a panel can do', () => 
       stableId: 's',
       friendlyName: '',
       availableModes: [],
-      requiresCode: false,
+      codeRequired: false,
     })
     expect(endpoint.friendlyName).toBe('Alarm 42')
   })
