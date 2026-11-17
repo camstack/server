@@ -1,10 +1,50 @@
 import { describe, expect, it } from 'vitest'
 import {
-  isShortMotionlessTrack,
   MOTIONLESS_MAX_PX,
   netDisplacementPx,
+  SHORT_MOTIONLESS_MIN_LIFE_MS,
+  SHORT_MOTIONLESS_MIN_OBSERVATIONS,
   SHORT_TRACK_MAX_MS,
+  shortMotionlessVerdict,
 } from '../short-motionless.js'
+
+/** The calibration flashes: observation counts at a few detections a second. */
+const OBS = 10
+
+function isShortMotionlessTrack(lifeMs: number, movedPx: number, className: string): boolean {
+  return shortMotionlessVerdict(lifeMs, movedPx, className, OBS) === 'motionless'
+}
+
+describe('shortMotionlessVerdict — the minimum it needs to judge', () => {
+  it('a 387 ms / 2-observation walker is too brief, not motionless (1441 gfygqn22cf)', () => {
+    expect(shortMotionlessVerdict(387, 12, 'person', 2)).toBe('too-brief')
+  })
+
+  it('needs BOTH the minimum life and the minimum observations', () => {
+    expect(shortMotionlessVerdict(SHORT_MOTIONLESS_MIN_LIFE_MS - 1, 0, 'person', OBS)).toBe(
+      'too-brief',
+    )
+    expect(shortMotionlessVerdict(4_000, 0, 'person', SHORT_MOTIONLESS_MIN_OBSERVATIONS - 1)).toBe(
+      'too-brief',
+    )
+    expect(
+      shortMotionlessVerdict(
+        SHORT_MOTIONLESS_MIN_LIFE_MS,
+        0,
+        'person',
+        SHORT_MOTIONLESS_MIN_OBSERVATIONS,
+      ),
+    ).toBe('motionless')
+  })
+
+  it('a 4 s scenery re-fire is still motionless', () => {
+    expect(shortMotionlessVerdict(4_000, 1, 'vehicle', 12)).toBe('motionless')
+  })
+
+  it('a brief track that already went somewhere is moving, not too brief', () => {
+    expect(shortMotionlessVerdict(387, MOTIONLESS_MAX_PX + 1, 'person', 2)).toBe('moving')
+  })
+})
 
 describe('isShortMotionlessTrack — Events hide for scenery re-fires', () => {
   it('matches the six live 102/3829 flashes (2–13 s, net ≈ 0)', () => {

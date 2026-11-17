@@ -55,10 +55,47 @@ export function netDisplacementPx(
   return Math.hypot(last.x - first.x, last.y - first.y)
 }
 
-export function isShortMotionlessTrack(
+/**
+ * The least life a track needs before "it did not move" means anything.
+ *
+ * The rule above was calibrated on scenery re-fires that lived 3.8–19.0 s
+ * (the shortest live flash it was checked against: 1.6 s). Without a floor it
+ * also judged tracks it was never shown: camera 1441, 2026-11-17, a walker
+ * (`gfygqn22cf`) seen for 387 ms on 2 observations had a net displacement
+ * under 40 px because there was no time to cover more — and was hidden from
+ * the feed as scenery. Under 1.5 s a walking person covers roughly a metre,
+ * which on a wide camera is a few pixels: "short" and "motionless" cannot be
+ * told apart, so nothing is concluded.
+ */
+export const SHORT_MOTIONLESS_MIN_LIFE_MS = 1_500
+
+/**
+ * The fewest observations "net displacement" is measured on. Two points are a
+ * single step — their difference is bbox jitter or one stride, whichever
+ * happened; four give three steps, the least a stillness reading rests on. A
+ * scenery re-fire in the calibration set (2–19 s at the detection rate) holds
+ * far more than four.
+ */
+export const SHORT_MOTIONLESS_MIN_OBSERVATIONS = 4
+
+/**
+ * What a closing track's life says about it:
+ *  - `motionless` — a short scenery re-fire (stamped, hidden from Events);
+ *  - `moving` — it lived past the window or went somewhere;
+ *  - `too-brief` — under the minimum life or observations: no conclusion, the
+ *    track closes as a normal track and arms or clears nothing.
+ */
+export type ShortMotionlessVerdict = 'motionless' | 'moving' | 'too-brief'
+
+export function shortMotionlessVerdict(
   lifeMs: number,
   movedPx: number,
   className: string,
-): boolean {
-  return lifeMs <= SHORT_TRACK_MAX_MS && movedPx <= motionlessMaxPxForClass(className)
+  observations: number,
+): ShortMotionlessVerdict {
+  if (lifeMs > SHORT_TRACK_MAX_MS || movedPx > motionlessMaxPxForClass(className)) return 'moving'
+  if (lifeMs < SHORT_MOTIONLESS_MIN_LIFE_MS || observations < SHORT_MOTIONLESS_MIN_OBSERVATIONS) {
+    return 'too-brief'
+  }
+  return 'motionless'
 }

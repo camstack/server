@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Birth confirmation re-judges a new subject on a window four times its size instead of a tight crop, so real people at a distance are no longer retracted as false births; a track shorter than 1.5 s or with fewer than 4 sightings is no longer hidden as motionless scenery.
+
 ## [1.2.712] - 2026-11-17
 
 ### Changed

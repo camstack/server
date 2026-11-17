@@ -1170,7 +1170,7 @@ import { PlateStore } from './store/plate-store.js'
 import { censusApi, logCensus, StoreReadCensus } from './store/read-census.js'
 import { SensorEventStore } from './store/sensor-event-store.js'
 import { RawDeviceBlobMirror, RawGlobalStoreMirror } from './store/settings-raw-mirror.js'
-import { isShortMotionlessTrack, netDisplacementPx } from './store/short-motionless.js'
+import { netDisplacementPx, shortMotionlessVerdict } from './store/short-motionless.js'
 import { SweepCursorStore } from './store/sweep-cursor-store.js'
 import { TrackAliasStore } from './store/track-alias-store.js'
 import { TrackRelationsStore } from './store/track-relations-store.js'
@@ -8783,9 +8783,17 @@ export default class PipelineAnalyticsAddon
     const lifeMs = track.lastSeen - track.firstSeen
     const moved = netDisplacementPx(track.positions ?? [])
     // Bounds: ≤25 s; person net ≤40 px (9310d1ff), vehicle net ≤8 px
-    // (86918072 at 15 px must still list). Net, not walk.
-    const motionless = isShortMotionlessTrack(lifeMs, moved, track.className)
-    if (!motionless) {
+    // (86918072 at 15 px must still list). Net, not walk. A track too brief to
+    // judge (the store logged it when it spared the close) neither arms nor
+    // clears a cell: it is evidence of nothing.
+    const verdict = shortMotionlessVerdict(
+      lifeMs,
+      moved,
+      track.className,
+      track.positions?.length ?? 0,
+    )
+    if (verdict === 'too-brief') return
+    if (verdict === 'moving') {
       // REACTIVATION. A track born here that GOES SOMEWHERE revokes the
       // scenery reading — the whole reason the memory is safe to hold. Fire and
       // forget: the close path must never wait on SQLite, and a lost clear

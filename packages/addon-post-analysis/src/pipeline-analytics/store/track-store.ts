@@ -48,9 +48,11 @@ import {
   isAfterCursor,
 } from './recent-cursor.js'
 import {
-  isShortMotionlessTrack,
-  netDisplacementPx,
   isDiscardExemptClass,
+  netDisplacementPx,
+  SHORT_MOTIONLESS_MIN_LIFE_MS,
+  SHORT_MOTIONLESS_MIN_OBSERVATIONS,
+  shortMotionlessVerdict,
 } from './short-motionless.js'
 import { readTieredLabelColumns, tieredLabelColumnData } from './tiered-label-columns.js'
 import type { TrackProvenance } from '../pipeline/track-provenance.js'
@@ -1507,14 +1509,33 @@ export class TrackStore {
       // why it must not be asked (review C1).
       const kept = t.keptAtPromotion === true
       const knownParked = !kept && t.positions.length > 0 && opts?.isKnownParked?.(t) === true
-      const shortMotionless =
-        !kept &&
-        t.positions.length > 0 &&
-        isShortMotionlessTrack(
-          t.lastSeen - t.firstSeen,
-          netDisplacementPx(t.positions),
-          t.className,
-        )
+      // Too brief to judge (under 1.5 s or 4 observations): "short" and
+      // "motionless" cannot be told apart, so the track closes as a normal
+      // track — and says so, because a walker hidden as scenery was invisible.
+      const motionlessVerdict =
+        !kept && t.positions.length > 0
+          ? shortMotionlessVerdict(
+              t.lastSeen - t.firstSeen,
+              netDisplacementPx(t.positions),
+              t.className,
+              t.positions.length,
+            )
+          : 'moving'
+      if (motionlessVerdict === 'too-brief' && !knownParked) {
+        this.logger.info('short-motionless close spared — too brief to judge, kept as a track', {
+          tags: { deviceId: t.deviceId },
+          meta: {
+            trackId,
+            className: t.className,
+            lifeMs: t.lastSeen - t.firstSeen,
+            observations: t.positions.length,
+            netDisplacementPx: Math.round(netDisplacementPx(t.positions)),
+            minLifeMs: SHORT_MOTIONLESS_MIN_LIFE_MS,
+            minObservations: SHORT_MOTIONLESS_MIN_OBSERVATIONS,
+          },
+        })
+      }
+      const shortMotionless = motionlessVerdict === 'motionless'
       const stillObject = knownParked || shortMotionless
       // A censused box is an entity's re-sighting whatever its class; a short
       // motionless PERSON is nobody's entity and keeps its row (and its face).
