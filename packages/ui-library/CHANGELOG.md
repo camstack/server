@@ -14,13 +14,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Siren play-choices hook from the regenerated capability hooks
+- Generated hooks for switch getOptions and powerCycle.
+
+## [1.2.463] - 2026-11-16
+
+### Changed
+
 - RecordingTimeline reports its window and takes caller density and extra lanes; new ClipSourceLanes draws one clip lane per source a camera lists.
 - RecordingTimeline takes a toolbar slot that joins the date and zoom controls in one bar; clip source lanes are compact rows with the label inline.
 - useCapabilityNodePresence also reports the nodes that run a provider (pending and unknown kept distinct from none).
 - The tag manager refreshes the notification rules list after a rename or remove
 - The archive timeline shows one lane per clip source and joins the date and zoom controls in one bar
-- Siren play-choices hook from the regenerated capability hooks
-- Generated hooks for switch getOptions and powerCycle.
 
 ## [1.2.462] - 2026-11-16
 

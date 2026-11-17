@@ -9,15 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Notification rules have an optional tags field and a setRuleTags method; tag counts include notification rules
 - New workload device type (roles vm, app-container, lxc, app, host) with one workload capability: state, start/stop/restart/pause/resume/force stop, resources with history, and started/stopped/crashed/recovered events
 - PoE ports: a switch device can carry the poe-port role (worded Power on / Power off), and network-link reports a port's link speed and whether the link is up
 - Siren plays mode: a siren trigger takes a duration in seconds or a number of plays (never both), getOptions declares the plays a siren supports, the status reports a plays activation with an estimated end, and a rule can sound a siren N times
 
 ### Changed
 
-- terminalSession.listSessions names who opened each session (openedBy) and when it last saw input or output (lastActivityAt).
-- Summaries, timelapses and calendar-events rules carry tags too; the tags list shows an unreachable owner's count as unknown
 - network-link's link speed is speedKbps, the bitrate quantity in kbit/s, shown in the system's bitrate unit
 - A host that comes back after going down raises a "Came online" event (the workload recovered event, host wording).
 - A switch can say it only reports its state and can power-cycle natively (switch getOptions / powerCycle); the hero then hides on/off.
@@ -25,6 +22,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A rule can trigger on a number grouped under an object in a device's status (a workload's CPU, memory or temperature above or below a threshold)
 - A workload restart needs the same permission as start and stop (it was admin only); force stop stays admin
 - A command whose argument is a list the device answers is not offered when the device answered an empty list (a siren that counts no plays is not offered 'sound N times'); a list that could not be read keeps it offered
+
+## [1.2.586] - 2026-11-16
+
+### Added
+
+- Notification rules have an optional tags field and a setRuleTags method; tag counts include notification rules
+
+### Changed
+
+- terminalSession.listSessions names who opened each session (openedBy) and when it last saw input or output (lastActivityAt).
+- Summaries, timelapses and calendar-events rules carry tags too; the tags list shows an unreachable owner's count as unknown
 
 ## [1.2.585] - 2026-11-16
 

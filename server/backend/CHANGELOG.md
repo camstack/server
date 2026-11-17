@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- The notification rules API gains setRuleTags
 - API routes for the new workload capability
 - API route for the siren's play choices
 
@@ -17,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Routes for switch getOptions and powerCycle.
 - A workload restart is allowed to the same users as start and stop; force stop stays admin
+
+## [1.2.891] - 2026-11-16
+
+### Added
+
+- The notification rules API gains setRuleTags
 
 ## [1.2.890] - 2026-11-16
 

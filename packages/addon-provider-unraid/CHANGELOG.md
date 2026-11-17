@@ -9,7 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The Unraid connection can be tested from the form: a refused API key is named before the integration is created
 - Every disk and Docker container of a server gets its own entity: they no longer collapse onto one because their ids share the server prefix
 - VMs are read from the server with their run state; a VM list that cannot be read (VM service off) no longer affects the rest of the server
 - Docker containers and VMs are proposed one by one in Add devices and adopted as their own devices, no longer created as switches under the server; a container or VM list that cannot be read removes nothing
@@ -17,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A container workload shows its memory use, which was read and not shown
 - An Unraid server that stops answering now reports as down (raising the host's 'went down', then 'back online' when it answers again) and its containers and VMs read unknown, instead of all of them staying 'running' on the last poll
 - Upgrading removes the per-container switch children an existing server had under it; there is no migration: delete them first if you prefer, then adopt the Docker containers and VMs again from Add devices, where each comes back as its own workload device
+
+## [0.2.168] - 2026-11-16
+
+### Changed
+
+- The Unraid connection can be tested from the form: a refused API key is named before the integration is created
 
 ## [0.2.167] - 2026-11-14
 
