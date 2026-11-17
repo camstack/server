@@ -121,9 +121,30 @@ function withoutAddedExcuses(cap: string, entry: unknown): unknown {
   return { ...rest, ...(Object.keys(excuses).length > 0 ? { notOperatorFacing: excuses } : {}) }
 }
 
+/** Actions whose `offeredWhen` gate was declared after the snapshot (D1058), by cap. */
+const ADDED_OFFERED_WHEN: Readonly<Record<string, readonly string[]>> = {
+  switch: ['switch.on', 'switch.off'],
+  'power-source': ['powerSource.on', 'powerSource.off'],
+}
+
+/** The entry with the listed actions' `offeredWhen` gate taken out. */
+function withoutAddedOfferedWhen(cap: string, entry: unknown): unknown {
+  const ids = ADDED_OFFERED_WHEN[cap]
+  if (ids === undefined || !isRecord(entry)) return entry
+  const actions = actionsOf(entry).map((action) => {
+    if (!ids.includes(String(action['id']))) return action
+    const { offeredWhen: _o, ...rest } = action
+    return rest
+  })
+  return { ...entry, actions }
+}
+
 /** The current entry with #524's additions taken out, and their excuses put back. */
 function withoutAdditions(cap: string, current: unknown, before: unknown): unknown {
-  const entry = withoutAddedExcuses(cap, withoutAddedRoles(cap, current))
+  const entry = withoutAddedOfferedWhen(
+    cap,
+    withoutAddedExcuses(cap, withoutAddedRoles(cap, current)),
+  )
   const added = ADDED_ACTIONS[cap]
   if (added === undefined || !isRecord(entry)) return entry
   const kept = actionsOf(entry).filter((a) => !(String(a['id']) in added))
