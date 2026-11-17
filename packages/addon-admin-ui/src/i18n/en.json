@@ -11087,6 +11087,9 @@
       "failed": "Could not be read — {{reason}}",
       "refused": "This window is too wide to list clips.",
       "playClip": "Play clip at {{time}}"
+    },
+    "deviceCommand": {
+      "refusedTitle": "The device refused the change"
     }
   },
   "helpers": {

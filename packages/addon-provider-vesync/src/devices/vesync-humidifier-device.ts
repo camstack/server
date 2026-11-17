@@ -10,6 +10,7 @@ import {
   type HumidifierStatus,
   type IDevice,
   type InferNativeProvider,
+  registerPowerSwitch,
 } from '@camstack/types'
 import { vesyncHumidifierSchema, type VeSyncSensorKind, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncHumidifierSnapshot } from '../vesync-client-contract.js'
@@ -223,6 +224,7 @@ export class VeSyncHumidifierDevice extends BaseDevice<typeof vesyncHumidifierSc
       },
     }
     this.ctx.registerNativeCap(humidifierCapability, provider)
+    registerPowerSwitch(this, humidifierCapability, provider)
   }
 }
 

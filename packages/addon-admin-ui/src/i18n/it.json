@@ -11109,6 +11109,9 @@
       "failed": "Non leggibile — {{reason}}",
       "refused": "Questa finestra è troppo ampia per elencare le clip.",
       "playClip": "Riproduci la clip delle {{time}}"
+    },
+    "deviceCommand": {
+      "refusedTitle": "Il dispositivo ha rifiutato la modifica"
     }
   },
   "helpers": {
