@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device that refuses a change shows a translated message.
+
 ## [1.2.696] - 2026-11-17
 
 ### Changed
