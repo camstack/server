@@ -196,7 +196,7 @@ describe('LockHeroCard', () => {
   })
 
   it('does NOT render the Open button when features contains only unrelated features', () => {
-    render(<LockHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.LockPinRequired]} />)
+    render(<LockHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.CoverStoppable]} />)
     expect(screen.queryByRole('button', { name: /open/i })).toBeNull()
   })
 
@@ -210,7 +210,7 @@ describe('LockHeroCard', () => {
       <LockHeroCard
         trpc={trpc}
         deviceId={1}
-        features={[DeviceFeature.LockPinRequired, DeviceFeature.LockOpen]}
+        features={[DeviceFeature.CoverStoppable, DeviceFeature.LockOpen]}
       />,
     )
     expect(screen.getByRole('button', { name: /open/i })).toBeTruthy()

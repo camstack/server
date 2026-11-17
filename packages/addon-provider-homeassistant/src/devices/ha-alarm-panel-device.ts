@@ -8,12 +8,14 @@ import {
 } from '@camstack/types'
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import type { HaEntityState } from '../ha-types.js'
+import { haAlarmCodeRequired } from '../ha-code-required.js'
 
 const COLD_START: AlarmPanelStatus = {
   state: 'disarmed',
   targetMode: null,
   availableModes: [],
-  requiresCode: false,
+  // Not read yet: whether a PIN is needed is unknown (D393).
+  codeRequired: null,
   lastChangedAt: 0,
 }
 
@@ -23,7 +25,8 @@ const COLD_START: AlarmPanelStatus = {
  *   - arm({mode, code?}) → alarm_arm_<mode>({code})
  *   - disarm({code?})    → alarm_disarm({code})
  *   - trigger()          → alarm_trigger
- * `code_format !== null` → `requiresCode: true`.
+ * `codeRequired` from `code_format` (`haAlarmCodeRequired`): null when HA did
+ * not send it.
  */
 export class HaAlarmPanelDevice extends HaBaseChildDevice {
   constructor(ctx: DeviceContext) {
@@ -44,7 +47,7 @@ export class HaAlarmPanelDevice extends HaBaseChildDevice {
       // do. Null here is honest; the NC panel publishes targetMode always.
       targetMode: targetModeFromState(lifecycle),
       availableModes: deriveAvailableModes(attrs),
-      requiresCode: attrs['code_format'] !== undefined && attrs['code_format'] !== null,
+      codeRequired: haAlarmCodeRequired(attrs),
       lastChangedAt,
     })
   }

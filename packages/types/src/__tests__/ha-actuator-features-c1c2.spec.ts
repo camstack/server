@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { DeviceFeature } from '../device/device-type.js'
+import { LockControlStatusSchema } from '../capabilities/lock-control.cap.js'
 
 describe('HA actuator DeviceFeature flags — Phase C1/C2 retroactive', () => {
   it('C1 color sub-mode flags are present', () => {
@@ -27,11 +28,20 @@ describe('HA actuator DeviceFeature flags — Phase C1/C2 retroactive', () => {
     expect(DeviceFeature.FanOscillating).toBe('fan-oscillating')
   })
 
-  it('C2 lock-control PIN flag is present', () => {
-    expect(DeviceFeature.LockPinRequired).toBe('lock-pin-required')
+  it('the PIN-required flags are gone: codeRequired lives in the lock/alarm slice (#459)', () => {
+    const values: string[] = Object.values(DeviceFeature)
+    expect(values).not.toContain('lock-pin-required')
+    expect(values).not.toContain('alarm-pin-required')
   })
 
-  it('all 14 retroactive feature values are unique', () => {
+  it('lock-control status carries codeRequired, null when unknown (D393)', () => {
+    const base = { state: 'locked' as const, lastChangedAt: 1 }
+    expect(LockControlStatusSchema.parse({ ...base, codeRequired: true }).codeRequired).toBe(true)
+    expect(LockControlStatusSchema.parse({ ...base, codeRequired: null }).codeRequired).toBeNull()
+    expect(LockControlStatusSchema.safeParse({ ...base, codeRequired: 'yes' }).success).toBe(false)
+  })
+
+  it('all 13 retroactive feature values are unique', () => {
     const values: string[] = [
       DeviceFeature.LightColorRgb,
       DeviceFeature.LightColorHsv,
@@ -46,7 +56,6 @@ describe('HA actuator DeviceFeature flags — Phase C1/C2 retroactive', () => {
       DeviceFeature.FanPreset,
       DeviceFeature.FanDirection,
       DeviceFeature.FanOscillating,
-      DeviceFeature.LockPinRequired,
     ]
     expect(new Set(values).size).toBe(values.length)
   })
@@ -66,7 +75,6 @@ describe('HA actuator DeviceFeature flags — Phase C1/C2 retroactive', () => {
       DeviceFeature.FanPreset,
       DeviceFeature.FanDirection,
       DeviceFeature.FanOscillating,
-      DeviceFeature.LockPinRequired,
     ]
     for (const value of flags) {
       expect(value).toMatch(/^[a-z][a-z0-9-]*[a-z0-9]$/)
@@ -98,7 +106,6 @@ describe('HA actuator DeviceFeature flags — Phase C1/C2 retroactive', () => {
       DeviceFeature.FanPreset,
       DeviceFeature.FanDirection,
       DeviceFeature.FanOscillating,
-      DeviceFeature.LockPinRequired,
     ]
     const merged = new Set([...cameraFlags, ...retroactiveFlags])
     expect(merged.size).toBe(cameraFlags.length + retroactiveFlags.length)

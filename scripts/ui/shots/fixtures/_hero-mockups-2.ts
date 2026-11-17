@@ -153,7 +153,7 @@ export const SPECS_TUTTI2: Readonly<Record<number, MockupSpec>> = {
         state: 'armed_home',
         targetMode: null,
         availableModes: ['home', 'away', 'night'],
-        requiresCode: false,
+        codeRequired: false,
         lastChangedAt: NOW - 3_600_000,
       },
     },

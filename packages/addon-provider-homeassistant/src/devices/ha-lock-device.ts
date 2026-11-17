@@ -7,9 +7,12 @@ import {
 import { HaBaseChildDevice } from '../ha-base-child-device.js'
 import { haChangeStamp, type HaStatePushContext } from '../ha-change-stamp.js'
 import type { HaEntityState } from '../ha-types.js'
+import { haLockCodeRequired } from '../ha-code-required.js'
 
 const COLD_START: LockControlStatus = {
   state: 'unlocked',
+  // Not read yet: whether a PIN is needed is unknown (D393).
+  codeRequired: null,
   lastChangedAt: 0,
 }
 
@@ -49,6 +52,7 @@ export class HaLockDevice extends HaBaseChildDevice {
     }
     this.runtimeState.setCapState('lock-control', {
       state: lifecycleState,
+      codeRequired: haLockCodeRequired(state.attributes),
       lastChangedAt: stamp.at,
     })
   }

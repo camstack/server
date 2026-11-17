@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A switch that only reports its state (a PoE port seen only through an API key) gets no OnOff trait in Google Home.
+- Google refuses lock commands only for a lock whose state says a PIN is required; an unknown requirement is sent to the lock.
 
 ## [0.1.135] - 2026-11-16
 

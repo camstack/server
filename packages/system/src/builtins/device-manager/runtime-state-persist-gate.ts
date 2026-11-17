@@ -71,17 +71,38 @@ export function persistableBlob(
 /**
  * The part of a `restored` slice that may live on disk (D1024). A cap that
  * names `restoredFields` keeps only those; every other restored cap keeps the
- * whole slice. One function for both directions — what is written and what the
+ * whole slice; a renamed field is read under its new name. One function for both directions — what is written and what the
  * boot seed reads back — so the two cannot drift.
  */
 export function restoredPart(
   slice: Readonly<Record<string, unknown>>,
   policy: RuntimeStatePolicy,
 ): Record<string, unknown> {
+  const current = withRenamedFields(slice, policy.renamedFields)
   const names = policy.restoredFields
-  if (names === undefined) return { ...slice }
+  if (names === undefined) return current
   const out: Record<string, unknown> = {}
-  for (const name of names) if (name in slice) out[name] = slice[name]
+  for (const name of names) if (name in current) out[name] = current[name]
+  return out
+}
+
+/**
+ * A field the cap renamed (`restoredFieldRenames`, #459): a row persisted
+ * before the rename carries the OLD key. It is read once into the new name —
+ * only when the new one is absent, a value under the new name always wins — and
+ * dropped, so no reader of the mirror ever meets the old key.
+ */
+function withRenamedFields(
+  slice: Readonly<Record<string, unknown>>,
+  renames: Readonly<Record<string, string>> | undefined,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = { ...slice }
+  if (renames === undefined) return out
+  for (const [from, to] of Object.entries(renames)) {
+    if (!(from in out)) continue
+    if (!(to in out)) out[to] = out[from]
+    delete out[from]
+  }
   return out
 }
 

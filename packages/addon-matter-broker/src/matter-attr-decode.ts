@@ -257,9 +257,10 @@ function decodeDoorLock(attributeId: number, value: unknown): DecodedAttribute |
   if (attributeId === MatterAttributeId.RequirePinForRemoteOperation) {
     const required = asBoolean(value)
     if (required === null) return null
+    // The lock slice's `codeRequired` (#459); a missing report stays unknown.
     return {
       cap: 'lock-control',
-      patch: {},
+      patch: { codeRequired: required },
       detail: required ? 'pin-required' : 'pin-not-required',
     }
   }

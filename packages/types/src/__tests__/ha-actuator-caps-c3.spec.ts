@@ -376,7 +376,7 @@ describe('HA actuator caps — Phase C3', () => {
         state: 'disarmed' as const,
         targetMode: null,
         availableModes: ['home', 'away', 'night'] as const,
-        requiresCode: true,
+        codeRequired: true,
         lastChangedAt: 1,
       }
       expect(AlarmPanelStatusSchema.parse(sample)).toEqual(sample)
@@ -387,10 +387,16 @@ describe('HA actuator caps — Phase C3', () => {
         state: 'pending' as const,
         targetMode: 'night' as const,
         availableModes: ['home', 'away', 'night'] as const,
-        requiresCode: false,
+        codeRequired: null,
         lastChangedAt: 1,
       }
       expect(AlarmPanelStatusSchema.parse(sample)).toEqual(sample)
+    })
+
+    it('status carries codeRequired (null = unknown, D393) and no longer requiresCode', () => {
+      const base = { state: 'disarmed' as const, availableModes: [], lastChangedAt: 1 }
+      expect(AlarmPanelStatusSchema.safeParse({ ...base, codeRequired: null }).success).toBe(true)
+      expect(AlarmPanelStatusSchema.safeParse({ ...base, requiresCode: true }).success).toBe(false)
     })
   })
 
@@ -536,7 +542,6 @@ describe('HA actuator caps — Phase C3', () => {
         DeviceFeature.MediaPlayerNext,
         DeviceFeature.MediaPlayerPrevious,
         DeviceFeature.MediaPlayerStop,
-        DeviceFeature.AlarmPinRequired,
         DeviceFeature.PresenceGps,
         DeviceFeature.NotifierImage,
         DeviceFeature.NotifierPriority,

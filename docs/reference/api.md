@@ -1727,7 +1727,7 @@
 
 ### `alarm-panel` → `alarmPanel.*`
 
-- **Source:** `packages/types/src/capabilities/alarm-panel.cap.ts:66`
+- **Source:** `packages/types/src/capabilities/alarm-panel.cap.ts:69`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `alarm-panel`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IAlarmPanelProvider`
@@ -3275,7 +3275,7 @@
 
 ### `lock-control` → `lockControl.*`
 
-- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:85`
+- **Source:** `packages/types/src/capabilities/lock-control.cap.ts:92`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `lock`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILockControlProvider`

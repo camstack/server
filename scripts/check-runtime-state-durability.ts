@@ -162,6 +162,30 @@ function main(): void {
       continue
     }
     const src = readCapSource(cap.fileName)
+    const renames = Object.entries(cap.restoredFieldRenames)
+    if (renames.length > 0) {
+      if (cap.durability !== 'restored') {
+        violations.push({
+          capName: cap.capName,
+          message: `declares \`restoredFieldRenames\` but is \`${cap.durability}\`: only a \`restored\` slice is read back from disk.`,
+        })
+      }
+      const fields = new Set(runtimeStateFieldNames(src))
+      for (const [from, to] of renames) {
+        if (!fields.has(to)) {
+          violations.push({
+            capName: cap.capName,
+            message: `renames \`${from}\` to \`${to}\`, which is not a field of its runtime state.`,
+          })
+        }
+        if (fields.has(from)) {
+          violations.push({
+            capName: cap.capName,
+            message: `renames \`${from}\`, which is still a field of its runtime state.`,
+          })
+        }
+      }
+    }
     if (cap.restoredStateFields !== null) {
       if (cap.durability !== 'restored') {
         violations.push({

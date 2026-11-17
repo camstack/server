@@ -28,7 +28,7 @@ interface Calls {
 interface PanelStatus {
   readonly state: string
   readonly availableModes: readonly string[]
-  readonly requiresCode: boolean
+  readonly codeRequired: boolean | null
   readonly lastChangedAt: number
 }
 
@@ -47,7 +47,7 @@ function harness(opts: HarnessOpts = {}) {
   const status = opts.status ?? {
     state: 'disarmed',
     availableModes: ['home', 'away', 'night'],
-    requiresCode: false,
+    codeRequired: false,
     lastChangedAt: 1,
   }
   const record =
@@ -126,7 +126,7 @@ describe('Arm', () => {
       status: {
         state: 'disarmed',
         availableModes: ['custom_bypass'],
-        requiresCode: false,
+        codeRequired: false,
         lastChangedAt: 1,
       },
     })
@@ -139,7 +139,7 @@ describe('Arm', () => {
       status: {
         state: 'disarmed',
         availableModes: ['away'],
-        requiresCode: false,
+        codeRequired: false,
         lastChangedAt: 1,
       },
     })
@@ -166,7 +166,7 @@ describe('Arm', () => {
       status: {
         state: 'disarmed',
         availableModes: ['away'],
-        requiresCode: true,
+        codeRequired: true,
         lastChangedAt: 1,
       },
     })
@@ -184,6 +184,21 @@ describe('Arm', () => {
     expect(warn?.tags.deviceId).toBe(102)
   })
 
+  it('REFUSES to arm a panel whose PIN requirement is unknown (null, D393)', async () => {
+    const h = harness({
+      status: { state: 'disarmed', availableModes: ['away'], codeRequired: null, lastChangedAt: 1 },
+    })
+    const body = await handleArm(
+      header('Arm'),
+      endpoint(),
+      { armState: 'ARMED_AWAY' },
+      h.deps,
+      identity,
+    )
+    expect(h.calls.arm).toEqual([])
+    expect(errorType(body)).toBe('AUTHORIZATION_REQUIRED')
+  })
+
   it('reports what the panel SAYS afterwards, not what was asked for', async () => {
     // A panel in its exit delay is not armed. `arming` → DISARMED is the same
     // refusal the HomeKit mapping makes, and an INFO says why Alexa will show
@@ -192,7 +207,7 @@ describe('Arm', () => {
       statusAfter: {
         state: 'arming',
         availableModes: ['away'],
-        requiresCode: false,
+        codeRequired: false,
         lastChangedAt: 2,
       },
     })
@@ -260,13 +275,13 @@ describe('Disarm', () => {
       status: {
         state: 'armed_away',
         availableModes: ['away'],
-        requiresCode: true,
+        codeRequired: true,
         lastChangedAt: 1,
       },
       statusAfter: {
         state: 'disarmed',
         availableModes: ['away'],
-        requiresCode: true,
+        codeRequired: true,
         lastChangedAt: 2,
       },
     })
@@ -286,7 +301,7 @@ describe('Disarm', () => {
       status: {
         state: 'armed_away',
         availableModes: ['away'],
-        requiresCode: true,
+        codeRequired: true,
         lastChangedAt: 1,
       },
     })
@@ -296,12 +311,45 @@ describe('Disarm', () => {
     expect(h.logs.find((l) => l.level === 'warn')?.tags.deviceId).toBe(102)
   })
 
+  it('treats an unknown requirement (null, D393) as a PIN: a code-less disarm is refused', async () => {
+    const h = harness({
+      status: {
+        state: 'armed_away',
+        availableModes: ['away'],
+        codeRequired: null,
+        lastChangedAt: 1,
+      },
+    })
+    const body = await handleDisarm(header('Disarm'), endpoint(), {}, h.deps, identity)
+    expect(h.calls.disarm).toEqual([])
+    expect(errorType(body)).toBe('AUTHORIZATION_REQUIRED')
+  })
+
+  it('an unknown requirement still lets a disarm that CARRIES a PIN through', async () => {
+    const h = harness({
+      status: {
+        state: 'armed_away',
+        availableModes: ['away'],
+        codeRequired: null,
+        lastChangedAt: 1,
+      },
+    })
+    await handleDisarm(
+      header('Disarm'),
+      endpoint(),
+      { authorization: { type: 'FOUR_DIGIT_PIN', value: '1234' } },
+      h.deps,
+      identity,
+    )
+    expect(h.calls.disarm).toEqual([{ deviceId: 102, code: '1234' }])
+  })
+
   it('disarms without a code when the panel does not require one', async () => {
     const h = harness({
       status: {
         state: 'armed_away',
         availableModes: ['away'],
-        requiresCode: false,
+        codeRequired: false,
         lastChangedAt: 1,
       },
     })
@@ -314,7 +362,7 @@ describe('Disarm', () => {
       status: {
         state: 'armed_away',
         availableModes: ['away'],
-        requiresCode: true,
+        codeRequired: true,
         lastChangedAt: 1,
       },
       failCommand: true,
@@ -341,7 +389,7 @@ describe('Disarm', () => {
       status: {
         state: 'armed_away',
         availableModes: ['away'],
-        requiresCode: true,
+        codeRequired: true,
         lastChangedAt: 1,
       },
       failCommand: true,

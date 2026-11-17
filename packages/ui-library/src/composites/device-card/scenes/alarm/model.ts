@@ -14,8 +14,9 @@ export interface AlarmCardModel {
   readonly mode: AlarmArmMode | null
   /** The modes the panel declares; the mode row draws Disarmed plus these. */
   readonly modes: readonly AlarmArmMode[]
-  /** Arming and disarming ask for the panel's code. */
-  readonly requiresCode: boolean
+  /** Arming and disarming ask for the panel's code. `null` = the panel cannot
+   *  tell (D393), and the card asks for a code then too. */
+  readonly codeRequired: boolean | null
   readonly canArm: boolean
   readonly canDisarm: boolean
 }

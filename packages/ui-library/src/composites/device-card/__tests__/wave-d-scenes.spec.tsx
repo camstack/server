@@ -174,7 +174,7 @@ describe('the alarm', () => {
     const armed = alarmActions()
     const model: AlarmCardModel = {
       ...fixture(alarmFixtures(), 'alarm-away').model,
-      requiresCode: false,
+      codeRequired: false,
     }
     render(<AlarmCard model={model} actions={armed} />)
     fireEvent.click(screen.getByRole('radio', { name: 'Disarmed' }))
@@ -183,11 +183,23 @@ describe('the alarm', () => {
     expect(armed.onDisarm).toHaveBeenCalledWith(null)
   })
 
+  it('asks for a code when the panel cannot tell whether it needs one (null, D393)', () => {
+    const actions = alarmActions()
+    const model: AlarmCardModel = {
+      ...fixture(alarmFixtures(), 'alarm-disarmed').model,
+      codeRequired: null,
+    }
+    render(<AlarmCard model={model} actions={actions} />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Away' }))
+    expect(actions.onArm).not.toHaveBeenCalled()
+    expect(screen.getByTestId('dc-alarm-code')).toBeTruthy()
+  })
+
   it('asks a panel that wants a code for it, and sends it only with the command', () => {
     const actions = alarmActions()
     const model: AlarmCardModel = {
       ...fixture(alarmFixtures(), 'alarm-away').model,
-      requiresCode: true,
+      codeRequired: true,
     }
     render(<AlarmCard model={model} actions={actions} />)
     fireEvent.click(screen.getByRole('radio', { name: 'Disarmed' }))

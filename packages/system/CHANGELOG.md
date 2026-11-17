@@ -119,6 +119,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The default switch toggle refuses a switch that only reports its state; a forced restart refuses (switch-options-unreadable) when the linked switch's options could not be read instead of switching it off blind.
 - Power on / off of a device whose linked switch only reports are refused as not-settable before the switch is called; the hero draws no power on / off for it, and a failed switch-options read is logged with the device (D1058)
 - The device manager stores each device's provider-declared identifiers and refuses them from anyone but the device's own provider.
+- A restored alarm-panel state saved before the rename keeps its PIN requirement (requiresCode is read once into codeRequired).
 
 ### Removed
 

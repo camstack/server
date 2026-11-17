@@ -266,7 +266,7 @@ describe('what the device says about itself', () => {
         capSlices: {
           'alarm-panel': {
             availableModes: ['home', 'away'],
-            requiresCode: true,
+            codeRequired: true,
           },
         },
       }),
@@ -276,6 +276,21 @@ describe('what the device says about itself', () => {
 
     expect(native.code_arm_required).toBe(true)
     expect(native.options).toEqual(['home', 'away'])
+  })
+
+  it('an unknown PIN requirement (null, D393) is not announced as false', () => {
+    const plan = buildDerivedPlan(
+      device({
+        type: 'alarm-panel',
+        boundCaps: ['alarm-panel'],
+        slices: ['alarm-panel'],
+        capSlices: { 'alarm-panel': { availableModes: ['home'], codeRequired: null } },
+      }),
+      { platforms: NATIVE_SUPPORT },
+    )
+    const native = componentOf(plan, 'alarm_control_panel-alarm-panel')
+    // Omitted, so Home Assistant keeps its own default (a code is required).
+    expect(native).not.toHaveProperty('code_arm_required')
   })
 })
 

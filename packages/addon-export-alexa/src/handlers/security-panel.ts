@@ -12,13 +12,18 @@
  *
  * Every directive reads `alarmPanel.getStatus` before it commands anything:
  * `availableModes` decides which panel mode an Alexa arm state becomes, and
- * `requiresCode` decides whether the command may be attempted at all. A status
+ * `codeRequired` decides whether the command may be attempted at all. A status
  * read that FAILS is unknown, never "no modes and no PIN" — the command goes
  * through optimistically with the primary mode and the panel is left to be the
  * one that refuses, and the fact that we were flying blind is logged against
  * the device id.
  *
- * ## `requiresCode`
+ * ## `codeRequired`
+ *
+ * A panel that answers `codeRequired: null` (it cannot tell, D393) is treated
+ * as one that needs a PIN: a code-less Arm is refused and a code-less Disarm
+ * asks for one. A FAILED read is a different thing — no answer at all — and
+ * stays optimistic as above.
  *
  * Alexa's **Disarm** directive can carry a PIN (`payload.authorization`, type
  * `FOUR_DIGIT_PIN`); it is passed straight through as the cap's `code` and is
@@ -82,7 +87,7 @@ const PanelReadSchema = AlarmPanelStatusSchema.pick({
   state: true,
   targetMode: true,
   availableModes: true,
-  requiresCode: true,
+  codeRequired: true,
 })
 
 type PanelFacts = z.infer<typeof PanelReadSchema>
@@ -212,7 +217,7 @@ export async function handleArm(
   const api: AddonApi = deps.ctx.api
   const facts = await readPanel(api, deviceId, deps.logger, 'arm')
 
-  if (facts?.requiresCode === true) {
+  if (facts !== null && facts.codeRequired !== false) {
     deps.logger.warn(
       'alexa security-panel: panel requires a PIN and the Arm directive carries none — REFUSED',
       { tags: { deviceId }, meta: { requested } },
@@ -305,7 +310,7 @@ export async function handleDisarm(
   const api: AddonApi = deps.ctx.api
   const facts = await readPanel(api, deviceId, deps.logger, 'disarm')
 
-  if (facts?.requiresCode === true && code === undefined) {
+  if (facts !== null && facts.codeRequired !== false && code === undefined) {
     deps.logger.warn(
       'alexa security-panel: panel requires a PIN and the Disarm directive carried none — REFUSED',
       { tags: { deviceId } },

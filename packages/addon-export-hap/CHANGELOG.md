@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A switch that only reports its state (a PoE port seen only through an API key) is not published to HomeKit as a Switch.
 - A device left with nothing to export because its switch only reports says so instead of 'bound: none' (D1058)
+- HomeKit refuses to arm or disarm a panel whose PIN requirement is unknown, as it does for one that needs a PIN.
 
 ## [1.2.203] - 2026-11-16
 

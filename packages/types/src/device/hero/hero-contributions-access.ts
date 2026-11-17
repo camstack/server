@@ -167,10 +167,10 @@ const ALARM_MODES: readonly AlarmArmMode[] = ['home', 'away', 'night', 'vacation
 function alarmControls(
   state: AlarmState | null,
   modes: readonly AlarmArmMode[],
-  requiresCode: boolean,
+  codeRequired: boolean,
 ): HeroControl[] {
   // A hero button carries no secret: a panel that asks for a code is driven from its own page.
-  if (requiresCode) return []
+  if (codeRequired) return []
   const disarm = asAction(
     action(
       'alarm.disarm',
@@ -227,7 +227,8 @@ const alarmContribution = contribution('alarm-panel', AlarmPanelStatusSchema, (s
             ? 'shield-off'
             : 'shield-check',
         joinText([words?.title ?? NOT_REPORTED, since]),
-        alarmControls(state, modes, slice?.requiresCode ?? false),
+        // Unknown (`null`) is treated as "a code is needed": a hero action carries no secret.
+        alarmControls(state, modes, slice?.codeRequired !== false),
       ),
     ],
     ...(since === null || words === null

@@ -45,7 +45,12 @@ function main(): void {
         c.restoredStateFields === null
           ? ''
           : `, restoredFields: [${c.restoredStateFields.map((f) => `'${f}'`).join(', ')}]`
-      return `  '${c.capName}': { durability: '${c.durability ?? 'session'}', volatileFields: ${volatile}${restoredFields} },`
+      const renameEntries = Object.entries(c.restoredFieldRenames)
+      const renamed =
+        renameEntries.length === 0
+          ? ''
+          : `, renamedFields: { ${renameEntries.map(([from, to]) => `${from}: '${to}'`).join(', ')} }`
+      return `  '${c.capName}': { durability: '${c.durability ?? 'session'}', volatileFields: ${volatile}${restoredFields}${renamed} },`
     })
     .join('\n')
 
@@ -69,6 +74,11 @@ export interface RuntimeStatePolicy {
    * back at boot (D1024); the rest stay session values. Absent = the whole slice.
    */
   readonly restoredFields?: readonly string[]
+  /**
+   * \`{ old: new }\` field renames of a \`restored\` slice: a row persisted
+   * before the rename is read once into the new name at boot (\`restoredPart\`).
+   */
+  readonly renamedFields?: Readonly<Record<string, string>>
 }
 
 /**

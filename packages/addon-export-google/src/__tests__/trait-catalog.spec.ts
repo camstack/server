@@ -84,10 +84,11 @@ function resolve(
   command: string,
   params: Record<string, unknown>,
   features: readonly string[] = [],
+  status?: unknown,
 ): CommandResolution {
   const row = traitForCommand(capNames, command)
   if (row === null) throw new Error(`no row answers ${command}`)
-  return row.resolveCommand({ deviceId: 7, command, params, features })
+  return row.resolveCommand({ deviceId: 7, command, params, features, status })
 }
 
 describe('OnOff', () => {
@@ -171,14 +172,33 @@ describe('LockUnlock', () => {
     ).toEqual({ kind: 'call', call: { kind: 'lockControl.unlock', deviceId: 7 } })
   })
 
-  it('refuses a PIN-required lock, because Google sends no PIN', () => {
+  it('refuses a lock whose status says a PIN is required, because Google sends no PIN', () => {
     const resolution = resolve(
       ['lock-control'],
       'action.devices.commands.LockUnlock',
       { lock: true },
-      ['lock-pin-required'],
+      [],
+      { state: 'locked', lastChangedAt: 1, codeRequired: true },
     )
     expect(resolution).toMatchObject({ kind: 'refused', errorCode: 'functionNotSupported' })
+  })
+
+  it('dispatches when the PIN requirement is unknown (null, absent, or no status)', () => {
+    for (const status of [
+      { state: 'locked', lastChangedAt: 1, codeRequired: null },
+      { state: 'locked', lastChangedAt: 1 },
+      null,
+      undefined,
+    ]) {
+      expect(
+        resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true }, [], status),
+      ).toEqual({ kind: 'call', call: { kind: 'lockControl.lock', deviceId: 7 } })
+    }
+  })
+
+  it('the LockUnlock trait asks for the status before resolving a command', () => {
+    const row = traitForCommand(['lock-control'], 'action.devices.commands.LockUnlock')
+    expect(row?.commandReadsStatus).toBe(true)
   })
 })
 

@@ -173,6 +173,35 @@ describe('handleExecute', () => {
     ])
   })
 
+  it('refuses a lock whose status says a PIN is required, and dispatches nothing', async () => {
+    const gateway = createFakeGateway({
+      devices: { 616: LOCK },
+      statuses: {
+        [statusKey('lockControl', 616)]: { state: 'locked', lastChangedAt: 1, codeRequired: true },
+      },
+    })
+    const payload = await handleExecute(
+      executeInput('616', 'action.devices.commands.LockUnlock', { lock: false }),
+      { gateway, logger: new RecordingLogger(), isExposed: () => true },
+    )
+    expect(gateway.dispatched).toEqual([])
+    expect(payload.commands[0]?.errorCode).toBe('functionNotSupported')
+  })
+
+  it('unlocks a lock whose PIN requirement is unknown (null)', async () => {
+    const gateway = createFakeGateway({
+      devices: { 616: LOCK },
+      statuses: {
+        [statusKey('lockControl', 616)]: { state: 'locked', lastChangedAt: 1, codeRequired: null },
+      },
+    })
+    await handleExecute(
+      executeInput('616', 'action.devices.commands.LockUnlock', { lock: false }),
+      { gateway, logger: new RecordingLogger(), isExposed: () => true },
+    )
+    expect(gateway.dispatched).toEqual([{ kind: 'lockControl.unlock', deviceId: 616 }])
+  })
+
   it('refuses to actuate a device that is not exposed', async () => {
     const gateway = createFakeGateway({ devices: { 616: LOCK } })
     const logger = new RecordingLogger()

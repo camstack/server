@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Notifications name a Workload device by its type label
+- The zones alarm panel reports codeRequired: false.
 
 ## [1.2.710] - 2026-11-16
 

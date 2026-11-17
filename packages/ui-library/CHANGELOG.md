@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- A workload (VM, container, app, host) has its own device card: state, the actions it supports, its resources and facts, and a link to its host
-- The camera grid layout editor is available to the block editor.
 ### Added
 
 - Workload devices get their type and role names and icons
@@ -18,10 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A workload (VM, container, app, host) has its own device card: state, the actions it supports, its resources and facts, and a link to its host
+- The camera grid layout editor is available to the block editor.
 - Siren play-choices hook from the regenerated capability hooks
 - Generated hooks for switch getOptions and powerCycle.
 - The hero power menu offers only the restart when the supply's switch only reports (D1058)
 - Generated hooks include deviceManager.setIdentifiers.
+- Alarm cards ask for a code when the panel needs one or cannot tell (codeRequired).
 
 ## [1.2.463] - 2026-11-16
 

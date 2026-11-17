@@ -424,7 +424,7 @@ export function AlarmInlineControl({ trpc, deviceId, optimistic }: DeviceControl
  *    segment is highlighted; transitioning states highlight none.
  *
  * Cap-gated on `alarm-panel` — returns null when the device lacks the cap.
- * PIN entry (when `requiresCode`) is deferred to a later task; the segments
+ * PIN entry (when `codeRequired` is not `false`) is deferred to a later task; the segments
  * call arm/disarm without a code, and the provider rejects when a code is
  * required — surfaced upstream.
  *

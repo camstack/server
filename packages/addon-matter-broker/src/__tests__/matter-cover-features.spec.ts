@@ -79,3 +79,17 @@ describe('MatterEndpointDevice features', () => {
     expect(device.features).not.toContain(DeviceFeature.CoverStoppable)
   })
 })
+
+describe('MatterEndpointDevice lock PIN requirement (#459)', () => {
+  const base = { brokerId: 'b1', nodeId: '1', endpointId: 1 }
+
+  it('is slice state, never a device feature; unread is null (D393)', async () => {
+    const device = new MatterEndpointDevice(
+      makeCtx({ ...base, capabilities: ['lock-control'] }, DeviceType.Lock),
+    )
+    await device.onActivate()
+    expect(device.features).not.toContain('lock-pin-required')
+    expect(device.runtimeState.getCapState('lock-control')?.codeRequired).toBeNull()
+    await device.removeDevice()
+  })
+})

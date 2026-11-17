@@ -913,6 +913,15 @@ export interface CapabilityDefinition<
   readonly restoredStateFields?: readonly string[]
 
   /**
+   * Renamed runtime-state fields of a `durability: 'restored'` cap, `{ old: new }`.
+   * A row persisted before the rename still carries the old key: the boot seed
+   * reads it ONCE into the new name (when the new one is absent) and drops it, so
+   * no reader ever meets the old key. Requires `durability: 'restored'`; every
+   * target must be a field of `runtimeState`.
+   */
+  readonly restoredFieldRenames?: Readonly<Record<string, string>>
+
+  /**
    * Which `runtimeState` fields are recorded as long-term history series
    * (D850), or `'none'`. Mandatory for every cap declaring `runtimeState` —
    * `scripts/check-cap-history-declared.ts` fails the build otherwise. See

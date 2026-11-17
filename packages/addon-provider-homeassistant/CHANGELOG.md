@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The workload capability is listed as not exported yet; its on/off reaches Home Assistant through its switch
 - Workloads are exported to Home Assistant: state and resource sensors, and restart, force stop, pause and resume buttons
+- Home Assistant locks and alarm panels report codeRequired in their state; an alarm that does not say is reported unknown, not 'no code'.
 
 ## [1.2.690] - 2026-11-16
 

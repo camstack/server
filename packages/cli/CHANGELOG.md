@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The zones-alarm MCP tool reads codeRequired and refuses a dry run when the requirement is unknown.
+
 ## [1.2.233] - 2026-11-16
 
 ### Changed

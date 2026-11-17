@@ -139,7 +139,8 @@ export interface NativePlatformMapping {
    * lost its session.
    */
   readonly availableWhenOnline?: true
-  /** Boolean component keys read from the slice — `code_arm_required`. */
+  /** Boolean component keys read from the slice — `code_arm_required`. A non-boolean
+   *  (`null` = unknown) omits the key. */
   readonly flagFields?: Readonly<Record<string, string>>
 }
 
@@ -226,8 +227,9 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
   /**
    * `AlarmStateSchema` IS Home Assistant's alarm vocabulary, and
    * `availableModes` is the subset this panel accepts — a panel that
-   * cannot arm `vacation` must not offer the button. `requiresCode` is the
-   * panel's own answer about a PIN.
+   * cannot arm `vacation` must not offer the button. `codeRequired` is the
+   * panel's own answer about a PIN; `null` (unknown, D393) is NOT announced, so
+   * Home Assistant keeps its own default (a code is required) — the safe side.
    *
    * This is also the only row here whose degraded form is a REGRESSION
    * rather than the status quo: `CAP_ENTITY_MAP` already names
@@ -238,7 +240,7 @@ export const NATIVE_CAP_PLATFORMS: Readonly<Record<string, NativePlatformMapping
   'alarm-panel': {
     platform: 'alarm_control_panel',
     primary: { from: null, optionsField: 'availableModes' },
-    flagFields: { code_arm_required: 'requiresCode' },
+    flagFields: { code_arm_required: 'codeRequired' },
   },
   /**
    * `ClimateControlStatusSchema`. Every temperature is Celsius by the

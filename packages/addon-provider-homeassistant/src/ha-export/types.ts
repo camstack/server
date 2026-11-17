@@ -144,7 +144,7 @@ export interface HaComponent {
   /** `lock`: the payload that means a door standing open, and the template that rewrites `door-open` to it (D984). */
   readonly state_open?: string
   readonly value_template?: string
-  /** `alarm_control_panel`: the panel demands a PIN, per `requiresCode`. */
+  /** `alarm_control_panel`: the panel demands a PIN, per `codeRequired` (omitted when unknown). */
   readonly code_arm_required?: boolean
 
   /**

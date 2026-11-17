@@ -1,6 +1,6 @@
 import { Characteristic } from '@homebridge/hap-nodejs'
 import { describe, expect, it } from 'vitest'
-import { securityUpdatesFor } from './security-system.js'
+import { homeKitRefusesForCode, securityUpdatesFor } from './security-system.js'
 
 const C = Characteristic.SecuritySystemCurrentState
 const T = Characteristic.SecuritySystemTargetState
@@ -8,7 +8,7 @@ const T = Characteristic.SecuritySystemTargetState
 const status = (state: string, extra: Record<string, unknown> = {}): Record<string, unknown> => ({
   state,
   availableModes: ['home', 'away', 'night'],
-  requiresCode: false,
+  codeRequired: false,
   lastChangedAt: 1,
   ...extra,
 })
@@ -64,9 +64,13 @@ describe('securityUpdatesFor — a cap status becomes characteristic writes', ()
   it('reports the panel’s own facts, and `null` when it could not be read', () => {
     // The `onSet` handler translates against these. A default of "no modes,
     // no PIN" on an unreadable status would arm a panel that asked for a code.
-    expect(securityUpdatesFor(status('disarmed', { requiresCode: true }), null).panel).toEqual({
+    expect(securityUpdatesFor(status('disarmed', { codeRequired: true }), null).panel).toEqual({
       availableModes: ['home', 'away', 'night'],
-      requiresCode: true,
+      codeRequired: true,
+    })
+    expect(securityUpdatesFor(status('disarmed', { codeRequired: null }), null).panel).toEqual({
+      availableModes: ['home', 'away', 'night'],
+      codeRequired: null,
     })
     expect(securityUpdatesFor({ state: 'nonsense' }, null).panel).toBeNull()
   })
@@ -75,7 +79,7 @@ describe('securityUpdatesFor — a cap status becomes characteristic writes', ()
     // `.pick()` discipline: a provider omitting the clock must not silence the
     // panel.
     const out = securityUpdatesFor(
-      { state: 'armed_home', availableModes: [], requiresCode: false },
+      { state: 'armed_home', availableModes: [], codeRequired: false },
       null,
     )
     expect(out.updates[0]).toEqual({
@@ -93,5 +97,17 @@ describe('securityUpdatesFor — a cap status becomes characteristic writes', ()
       { characteristic: Characteristic.SecuritySystemCurrentState, value: C.NIGHT_ARM },
       { characteristic: Characteristic.SecuritySystemTargetState, value: T.NIGHT_ARM },
     ])
+  })
+})
+
+describe('homeKitRefusesForCode — HomeKit carries no PIN', () => {
+  it('refuses a panel that requires one', () => {
+    expect(homeKitRefusesForCode(true)).toBe(true)
+  })
+  it('refuses a panel whose requirement is unknown (null, D393): a code-less attempt can lock a real panel out', () => {
+    expect(homeKitRefusesForCode(null)).toBe(true)
+  })
+  it('lets a panel that said "no PIN" through', () => {
+    expect(homeKitRefusesForCode(false)).toBe(false)
   })
 })

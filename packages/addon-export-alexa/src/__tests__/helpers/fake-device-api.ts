@@ -91,7 +91,7 @@ export function fakeApi(devices: readonly FakeDevice[], extras: FakeApiExtras = 
           extras.panelStatus ?? {
             state: 'disarmed',
             availableModes: ['home', 'away'],
-            requiresCode: false,
+            codeRequired: false,
             lastChangedAt: 1,
           },
       },

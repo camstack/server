@@ -119,8 +119,12 @@ export interface TraitCommandInput {
   readonly deviceId: number
   readonly command: string
   readonly params: Readonly<Record<string, unknown>>
-  /** `DeviceInfo.features` — gates positionable covers and PIN-locked locks. */
+  /** `DeviceInfo.features` — gates positionable covers. */
   readonly features: readonly string[]
+  /** The trait's own cap `getStatus` payload, read just before the command —
+   *  present only for a descriptor with `commandReadsStatus`. `null` when the
+   *  read failed, `undefined` when it was not asked for. */
+  readonly status?: unknown
 }
 
 /** A trait's contribution to one device's QUERY state, or `null` when the
@@ -139,6 +143,9 @@ export interface TraitDescriptor {
   readonly projectState: (rawStatus: unknown) => TraitState
   /** Every `action.devices.commands.*` this trait answers. */
   readonly commands: readonly string[]
+  /** `true` when `resolveCommand` needs the current cap status (`status`). The
+   *  EXECUTE handler reads it only for these traits. */
+  readonly commandReadsStatus?: boolean
   readonly resolveCommand: (input: TraitCommandInput) => CommandResolution
 }
 
@@ -222,6 +229,12 @@ const brightnessTrait: TraitDescriptor = {
   },
 }
 
+/** `lock-control`'s `codeRequired` off a raw status: `null` when unknown. */
+function lockCodeRequired(status: unknown): boolean | null {
+  const parsed = LockControlStatusSchema.safeParse(status)
+  return parsed.success ? (parsed.data.codeRequired ?? null) : null
+}
+
 const lockUnlockTrait: TraitDescriptor = {
   capName: 'lock-control',
   trait: 'action.devices.traits.LockUnlock',
@@ -239,12 +252,16 @@ const lockUnlockTrait: TraitDescriptor = {
     }
   },
   commands: ['action.devices.commands.LockUnlock'],
-  resolveCommand: ({ deviceId, command, params, features }) => {
+  commandReadsStatus: true,
+  resolveCommand: ({ deviceId, command, params, status }) => {
     if (command !== 'action.devices.commands.LockUnlock') return unsupportedCommand(command)
-    if (features.includes(DeviceFeature.LockPinRequired)) {
+    if (lockCodeRequired(status) === true) {
       // The cap takes an optional `code`; Google's LockUnlock carries no PIN.
       // Dispatching anyway produces an upstream failure the operator cannot
-      // read, so refuse where the reason is still known.
+      // read, so refuse where the reason is still known. Only a lock that SAYS
+      // it needs one is refused: an unknown requirement (`null`, absent, a
+      // failed read — D393) is dispatched and the lock is left to refuse,
+      // because most lock providers can never tell.
       return {
         kind: 'refused',
         errorCode: 'functionNotSupported',

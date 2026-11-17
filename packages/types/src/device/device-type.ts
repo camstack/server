@@ -229,9 +229,6 @@ export enum DeviceFeature {
   FanDirection = 'fan-direction',
   /** Fan exposes an oscillation toggle. */
   FanOscillating = 'fan-oscillating',
-  /** Lock requires a PIN code on lock/unlock. Gates the code-entry
-   *  field on the UI lock-controls panel. */
-  LockPinRequired = 'lock-pin-required',
   /** Lock supports a latch-release ("open door") action distinct from
    *  unlock. Mirrors HA `LockEntityFeature.OPEN` (bit 1) in
    *  `supported_features`. Gates the Open Door button in the UI. */
@@ -270,8 +267,6 @@ export enum DeviceFeature {
   MediaPlayerChannelStep = 'media-player-channel-step',
   /** Media player exposes power on / off. */
   MediaPlayerPower = 'media-player-power',
-  /** Alarm panel requires a PIN code on arm/disarm. */
-  AlarmPinRequired = 'alarm-pin-required',
   /** Presence device carries GPS coordinates (lat/lng/accuracy) in
    *  addition to a textual location. */
   PresenceGps = 'presence-gps',

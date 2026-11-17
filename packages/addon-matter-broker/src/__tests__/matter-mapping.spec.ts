@@ -368,6 +368,15 @@ describe('decodeMatterAttribute', () => {
     })
     expect(required?.detail).toBe('pin-required')
     expect(required?.patch['state']).toBeUndefined()
+    // #459: the requirement is the lock slice's `codeRequired`, not a device feature.
+    expect(required?.patch).toEqual({ codeRequired: true })
+
+    const notRequired = decodeMatterAttribute({
+      clusterId: MatterClusterId.DoorLock,
+      attributeId: MatterAttributeId.RequirePinForRemoteOperation,
+      value: false,
+    })
+    expect(notRequired?.patch).toEqual({ codeRequired: false })
 
     const absent = decodeMatterAttribute({
       clusterId: MatterClusterId.DoorLock,

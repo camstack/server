@@ -55,7 +55,7 @@ function harness(opts: HarnessOpts) {
             opts.panelStatus ?? {
               state: 'disarmed',
               availableModes: ['home', 'away'],
-              requiresCode: false,
+              codeRequired: false,
               lastChangedAt: 1,
             }
           )
@@ -110,6 +110,23 @@ describe('discovery — an alarm panel is its own endpoint', () => {
     expect(panel?.configuration?.supportedArmStates).toHaveLength(4)
     const warn = h.logs.find((l) => l.level === 'warn')
     expect(warn?.tags.deviceId).toBe(102)
+  })
+
+  it('declares the PIN prompt when the panel cannot tell whether it needs one (null, D393)', async () => {
+    const h = harness({
+      capNames: ['alarm-panel'],
+      panelStatus: {
+        state: 'disarmed',
+        availableModes: ['away'],
+        codeRequired: null,
+        lastChangedAt: 1,
+      },
+    })
+    const endpoints = await buildEndpointsForExposedDevice(102, h.deps)
+    const panel = endpoints[0]?.capabilities.find(
+      (c) => c.interface === 'Alexa.SecurityPanelController',
+    )
+    expect(panel?.configuration?.supportedAuthorizationTypes).toEqual([{ type: 'FOUR_DIGIT_PIN' }])
   })
 
   it('branches on the BOUND CAP, not the device type', async () => {

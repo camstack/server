@@ -90,7 +90,7 @@ function confirmRows(
     pending.kind === 'disarm'
       ? t('uiLibrary.deviceCard.alarm.disarm', 'Disarm')
       : `${t('uiLibrary.deviceCard.alarm.arm', 'Arm')} · ${alarmModeLabel(pending.mode, t)}`
-  if (model.requiresCode) {
+  if (model.codeRequired !== false) {
     return [
       rowCodePad('confirm', {
         testId: 'dc-alarm-code',
@@ -157,7 +157,7 @@ export function AlarmCard({
     }
     const mode = model.modes.find((m) => m === id)
     if (mode === undefined) return
-    if (model.requiresCode) setPending({ kind: 'arm', mode })
+    if (model.codeRequired !== false) setPending({ kind: 'arm', mode })
     else actions.onArm(mode, null)
   }
   const run = (code: string | null): void => {

@@ -109,7 +109,7 @@ const OPEN_PANEL = {
   state: 'disarmed',
   targetMode: null,
   availableModes: ['home', 'away'],
-  requiresCode: false,
+  codeRequired: false,
   lastChangedAt: 1,
 }
 
@@ -121,7 +121,7 @@ describe('configure_alarm', () => {
     })
     const out = await readAlarm(ctx, {})
     expect(out).toMatchObject({
-      panels: [{ deviceId: 30, state: 'disarmed', requiresCode: false }],
+      panels: [{ deviceId: 30, state: 'disarmed', codeRequired: false }],
     })
   })
 })
@@ -150,7 +150,7 @@ describe('configure_alarm_set', () => {
 
   it('answers secret-required, never asking for the PIN, when the panel needs one', async () => {
     const { ctx, calls } = fakeHub({
-      'alarmPanel.getStatus': { ...OPEN_PANEL, requiresCode: true },
+      'alarmPanel.getStatus': { ...OPEN_PANEL, codeRequired: true },
       'localNetwork.getAddresses': {
         roles: { appConnections: { resolved: ['http://192.168.1.9:4443'] } },
       },
@@ -158,6 +158,18 @@ describe('configure_alarm_set', () => {
     const out = await alarmSet(withWrites(ctx), { deviceId: 30, action: 'disarm' }, undefined)
     expect(JSON.stringify(out)).toMatch(/secret-required/)
     expect(JSON.stringify(out)).toContain('192.168.1.9')
+    expect(calls.some((c) => c.path === 'alarmPanel.disarm')).toBe(false)
+  })
+
+  it('an unknown PIN requirement (null, D393) is treated as a PIN: secret-required, no call', async () => {
+    const { ctx, calls } = fakeHub({
+      'alarmPanel.getStatus': { ...OPEN_PANEL, codeRequired: null },
+      'localNetwork.getAddresses': {
+        roles: { appConnections: { resolved: ['http://192.168.1.9:4443'] } },
+      },
+    })
+    const out = await alarmSet(withWrites(ctx), { deviceId: 30, action: 'disarm' }, undefined)
+    expect(JSON.stringify(out)).toMatch(/secret-required/)
     expect(calls.some((c) => c.path === 'alarmPanel.disarm')).toBe(false)
   })
 
