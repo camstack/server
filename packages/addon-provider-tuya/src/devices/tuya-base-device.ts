@@ -9,6 +9,7 @@ import {
 import { z } from 'zod'
 import { DEFAULT_SWITCH_DP } from '../tuya-dp-mapping.js'
 import { tuyaConnections } from '../tuya-gateway.js'
+import { tuyaIdentifiers } from '../tuya-identifiers.js'
 
 /**
  * Persisted config every adopted Tuya device carries. `tuyaDeviceId` +
@@ -79,9 +80,17 @@ export abstract class TuyaBaseDevice extends BaseDevice<typeof tuyaDeviceConfigS
     return this.#handle
   }
 
+  /** Declare the cloud device id as a `vendor-uid` (D1059). */
+  private async declareVendorIdentity(): Promise<void> {
+    const declaration = tuyaIdentifiers(this.tuyaDeviceId)
+    if (declaration === null) return
+    await this.declareIdentifiers(declaration.identifiers, { unread: declaration.unread })
+  }
+
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.registerCaps()
+    void this.declareVendorIdentity()
     await this.startConnection()
   }
 
