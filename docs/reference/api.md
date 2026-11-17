@@ -3938,7 +3938,7 @@
 
 ### `pipeline-executor` → `pipelineExecutor.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-executor.cap.ts:433`
+- **Source:** `packages/types/src/capabilities/pipeline-executor.cap.ts:445`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IPipelineExecutorProvider`
@@ -3959,7 +3959,7 @@
 | getAddonModels | `pipelineExecutor.getAddonModels` | query | protected | `{ addonId: string }` | `<custom>` |
 | downloadModel | `pipelineExecutor.downloadModel` | mutation | protected | `{ addonId: string; modelId: string; format: "onnx" \| "coreml" \| "openvino" \| "tflite" \| "pt" \| "gguf" }` | `{ filePath: string; sizeMB: number; durationMs: number }` |
 | deleteModel | `pipelineExecutor.deleteModel` | mutation | protected | `{ addonId: string; modelId: string; format: "onnx" \| "coreml" \| "openvino" \| "tflite" \| "pt" \| "gguf" }` | `{ success: true }` |
-| runPipeline | `pipelineExecutor.runPipeline` | mutation | protected | `{ steps: ({ addonId: string; modelId?: string; enabled?: boolean = true; children?: self[]; settings?: Record<string, unknown>; jumpDeviceKey?: string })[]; frame?: FrameInputSchema; frameRef?: { registryId: string; id: string; width: number; height: number; format: "rgb" \| "gray"; timestamp: number; capturedAt?: number }; frameHandle?: FrameHandleSchema; imageBase64?: string; image?: <custom>; referenceImage?: string; deviceId?: number; sessionId?: string; plane?: "full" \| "frame"; deviceKey?: string; nativeCropRef?: NativeCropRefSchema; replay?: true; suppliedRoot?: SuppliedRootOutputSchema }` | `<custom>` |
+| runPipeline | `pipelineExecutor.runPipeline` | mutation | protected | `{ steps: ({ addonId: string; modelId?: string; enabled?: boolean = true; children?: self[]; settings?: Record<string, unknown>; jumpDeviceKey?: string })[]; frame?: FrameInputSchema; frameRef?: { registryId: string; id: string; width: number; height: number; format: "rgb" \| "gray"; timestamp: number; capturedAt?: number }; frameHandle?: FrameHandleSchema; imageBase64?: string; image?: <custom>; referenceImage?: string; deviceId?: number; sessionId?: string; plane?: "full" \| "frame"; deviceKey?: string; nativeCropRef?: NativeCropRefSchema; replay?: true; suppliedRoot?: SuppliedRootOutputSchema; motionRegions?: NormalizedRectSchema[] }` | `<custom>` |
 | runPipelineBatch | `pipelineExecutor.runPipelineBatch` | mutation | protected | `{ steps: ({ addonId: string; modelId?: string; enabled?: boolean = true; children?: self[]; settings?: Record<string, unknown>; jumpDeviceKey?: string })[]; frames: FrameInputSchema[]; deviceId?: number; sessionId?: string; frameId?: number; deviceKey?: string }` | `{ results: <custom>[] }` |
 | cacheFrameInPool | `pipelineExecutor.cacheFrameInPool` | mutation | protected | `{ data: <custom>; width: number; height: number; format: "rgb" \| "bgr" \| "gray" }` | `{ frameId: number; width: number; height: number }` |
 | inferCached | `pipelineExecutor.inferCached` | mutation | protected | `{ stepId: string; frameId: number; modelId: string }` | `Record<string, unknown>` |

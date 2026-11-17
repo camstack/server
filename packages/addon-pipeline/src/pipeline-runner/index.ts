@@ -5852,6 +5852,15 @@ export default class PipelineRunnerAddon
     } else {
       this.frameLazy.notePoolBytes({ deviceId, raw: frame.data.byteLength, jpeg: 0 })
     }
+    // Motion-guided root crop (D1060): the analyzer's fresh merged subjects
+    // ride the dispatch; the executor decides per frame whether the root runs
+    // on the full frame or on a crop around them. Only a co-located executor
+    // reading this frame through its `frameRef` can cut it, so only that path
+    // carries them.
+    const motionRegions =
+      executorCoLocated && frame.frameRef && image === undefined
+        ? this.motionRegions.fresh(deviceId, Date.now())
+        : []
     let result: FrameResult | null
     try {
       result = await api.pipelineExecutor.runPipeline.mutate({
@@ -5887,6 +5896,7 @@ export default class PipelineRunnerAddon
         // the request omits it. So a bench CAN be asked to measure this
         // same root-plane dispatch — which is the point of the knob.
         plane: 'frame',
+        ...(motionRegions.length > 0 ? { motionRegions: [...motionRegions] } : {}),
       })
     } catch (err: unknown) {
       // A real dispatch fault. Overload sheds no longer surface here — they

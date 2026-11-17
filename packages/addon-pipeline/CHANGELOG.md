@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A phantom cell is no longer armed or cleared by a track too brief to judge (under 1.5 s or 4 sightings); the skip is logged per camera
+- Object detection now runs on a crop around motion when subjects are small in a high-resolution frame (same inference count, a full frame at least once a second); the choice is on each frame's pipeline trace.
+- Object detection no longer magnifies a near subject into the crop around motion: a subject already seen large keeps the full frame, and a crop that misses a known subject hands the next frame to the full frame
 
 ## [1.2.658] - 2026-11-17
 

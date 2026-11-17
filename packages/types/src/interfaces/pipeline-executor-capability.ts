@@ -1,5 +1,6 @@
 import type { PipelineEngineChoice } from '../types/pipeline.js'
 import type { PipelineExecutionPlane } from '../types/pipeline-step.js'
+import type { NormalizedRect } from '../pipeline/second-pass/small-subject-recovery.js'
 import type { PipelineSchema } from '../types/pipeline-schema.js'
 import type { ModelFormat } from '../types/models.js'
 import type { FrameInput } from '../types/io.js'
@@ -114,6 +115,12 @@ export interface PipelineRunInput {
    * the camera's live trace stream. Absent ⇒ unchanged behaviour.
    */
   readonly replay?: true
+  /**
+   * The motion analyzer's fresh merged subjects (D394), normalised to the
+   * frame; feeds the motion-guided root crop (D1060). See
+   * `pipelineExecutor.runPipeline.motionRegions`. Absent ⇒ full frame.
+   */
+  readonly motionRegions?: readonly NormalizedRect[]
 }
 
 // Note: `IVisionAddonRegistry` lived here as a legacy adapter injected

@@ -1556,6 +1556,7 @@ export {
   PipelineValidationIssueSchema,
   PipelineValidationResultSchema,
   pipelineExecutorCapability,
+  NormalizedRectSchema,
   SuppliedRootOutputSchema,
 } from './pipeline-executor.cap.js'
 export type {
