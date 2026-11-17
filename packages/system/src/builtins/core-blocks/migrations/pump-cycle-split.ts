@@ -51,6 +51,7 @@ export interface CoreBlocksMigrationPorts {
   /** Replace a row's body, refused when the row changed since it was read. */
   replaceBlockRow(id: string, data: CoreBlockRowBody, ifRev: number): Promise<void>
   now(): number
+  info(message: string, meta: Readonly<Record<string, unknown>>): void
   warn(message: string, meta: Readonly<Record<string, unknown>>): void
 }
 
@@ -69,6 +70,9 @@ export function coreBlocksMigrationPorts(
       await blocks.put({ id, data }, { ifRev })
     },
     now,
+    info: (message, meta) => {
+      logger.info(message, { meta })
+    },
     warn: (message, meta) => {
       logger.warn(message, { meta })
     },

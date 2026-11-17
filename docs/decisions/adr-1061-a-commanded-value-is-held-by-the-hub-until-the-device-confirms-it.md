@@ -97,8 +97,14 @@ the slice after the command, which is the effective slice.
   override today; carrying them is a follow-up.
 - Input smoothing is not optimism: a slider may still debounce its trailing
   commit before sending.
-- An automation generated before this change reads the effective slice until
-  it is regenerated.
+- A stored automation the generator wrote before this change is regenerated
+  once at boot through its `AUTOMATION_RECIPE` (core-blocks migration
+  `2026-11-17-automation-confirmed-view`), so its device reads take the
+  confirmed view. One whose code is not the generator's output (hand-edited,
+  or written by an older generator) is left as it was and logged per
+  automation; saving it in the editor moves it. Hand-written code blocks and
+  the SDK `SystemMirror` still read the effective view — a confirmed default
+  for them is a follow-up.
 
 ## Enforcement
 

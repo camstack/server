@@ -1,4 +1,8 @@
 import type { AddonMigration } from '@camstack/types'
+import {
+  AUTOMATION_CONFIRMED_VIEW_ID,
+  regenerateAutomationsConfirmedView,
+} from './automation-confirmed-view.js'
 import { dropFountainDrinkCounters, FOUNTAIN_DRINK_DROP_ID } from './fountain-drink-drop.js'
 import { HELPER_TO_CUSTOMIZE_ID, rewriteHelpersToCustomize } from './helper-to-customize.js'
 import {
@@ -15,6 +19,7 @@ import {
   renameRemoteColourRoles,
 } from './remote-config-migrations.js'
 
+export { AUTOMATION_CONFIRMED_VIEW_ID } from './automation-confirmed-view.js'
 export { FOUNTAIN_DRINK_DROP_ID } from './fountain-drink-drop.js'
 export {
   REMOTE_COLOUR_ROLES_ID,
@@ -120,5 +125,22 @@ export const ADDON_MIGRATIONS: readonly AddonMigration<CoreBlocksCatalogPorts>[]
       fixtureMark: 'the binding action of each lettered key and the label of each layout button',
     },
     procedure: renameRemoteColourRoles,
+  },
+  {
+    meta: {
+      id: AUTOMATION_CONFIRMED_VIEW_ID,
+      owner: 'core-blocks',
+      level: 'addon-state',
+      seq: 6,
+      dependsOn: [],
+      store: 'settings',
+      scope: 'cluster',
+      onFailure: 'tolerate',
+      bodyKind: 'procedure',
+      description:
+        'Regenerate each stored generated automation from its embedded recipe so it reads what the device reported, never a command the hub still holds; code edited by hand is left as it is and logged',
+      fixtureMark: 'the block createdBy and name, which the migration does not know',
+    },
+    procedure: regenerateAutomationsConfirmedView,
   },
 ]
