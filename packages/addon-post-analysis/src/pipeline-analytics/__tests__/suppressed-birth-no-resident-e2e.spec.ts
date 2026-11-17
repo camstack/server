@@ -177,7 +177,7 @@ describe('the first birth verdict wins, in both directions', () => {
               {
                 macroClass: 'animal',
                 score: 0.95,
-                bbox: { x: 20, y: 20, width: 280, height: 280 },
+                bbox: { x: 120, y: 160, width: 80, height: 62 },
               },
             ],
           }

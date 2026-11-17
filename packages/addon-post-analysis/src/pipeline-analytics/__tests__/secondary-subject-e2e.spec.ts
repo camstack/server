@@ -102,9 +102,11 @@ function isConfirmationCropRequest(request: FakeNativeCropRequest): boolean {
 }
 
 /**
- * What the re-detector sees on the PERSON's crop: the person, and the dog
- * BESIDE it — low and to the right, outside the person's own box, so it is not
- * mostly contained in the person's own box. That distinction is load-bearing:
+ * What the re-detector sees on the PERSON's crop — the context window, here
+ * the whole 640×480 frame at 320×320 (×2 across, ×1.5 down): the person where
+ * it was born (frame 200,100 120×240), and the dog BESIDE it — low and to the
+ * right, touching the old tight crop (box + 15%) but outside the person's own
+ * box, so it is not mostly contained in the person's own box. That distinction is load-bearing:
  * a box that far inside a person is a body part read as a subject, not a
  * second subject — nothing in this pipeline should ever confuse the two.
  */
@@ -112,16 +114,20 @@ const PERSON_CROP: FakeRedetectResult = {
   width: 320,
   height: 320,
   detections: [
-    { macroClass: 'person', score: 0.9, bbox: { x: 20, y: 10, width: 140, height: 300 } },
-    { macroClass: 'animal', score: 0.85, bbox: { x: 240, y: 230, width: 80, height: 90 } },
+    { macroClass: 'person', score: 0.9, bbox: { x: 100, y: 67, width: 60, height: 160 } },
+    { macroClass: 'animal', score: 0.85, bbox: { x: 165, y: 166, width: 40, height: 60 } },
   ],
 }
-/** What it sees on the DOG's own crop, once the dog is a birth of its own. */
+/**
+ * What it sees on the DOG's own crop, once the dog is a birth of its own: its
+ * window is a 360 px square at frame 190,114, and the dog (frame 330,249
+ * 80×90) sits where it is, at 320/360 scale.
+ */
 const DOG_CROP: FakeRedetectResult = {
   width: 320,
   height: 320,
   detections: [
-    { macroClass: 'animal', score: 0.9, bbox: { x: 40, y: 40, width: 240, height: 240 } },
+    { macroClass: 'animal', score: 0.9, bbox: { x: 124, y: 120, width: 71, height: 80 } },
   ],
 }
 
@@ -164,13 +170,13 @@ describe('a subject the gate finds beside a birth becomes a track of its own', (
     expect(meta['secondaryScore']).toBe(0.85)
     // The dog's box, put back where the crop was cut from: the confirmation
     // window, a square 4× the person's long side (960) capped at the frame —
-    // here the whole 640×480 frame — then the crop-relative box
-    // (240/320 .. 320/320, 230/320 .. 320/320) inside it.
+    // here the whole 640×480 frame — then the crop-relative box inside it:
+    // frame 330,249 80×90, just right of the person and inside its tight crop.
     const bbox = meta['secondaryBbox'] as { x: number; y: number; w: number; h: number }
-    expect(bbox.x).toBeCloseTo((240 / 320) * 640, 3)
-    expect(bbox.y).toBeCloseTo((230 / 320) * 480, 3)
-    expect(bbox.w).toBeCloseTo((80 / 320) * 640, 3)
-    expect(bbox.h).toBeCloseTo((90 / 320) * 480, 3)
+    expect(bbox.x).toBeCloseTo((165 / 320) * 640, 3)
+    expect(bbox.y).toBeCloseTo((166 / 320) * 480, 3)
+    expect(bbox.w).toBeCloseTo((40 / 320) * 640, 3)
+    expect(bbox.h).toBeCloseTo((60 / 320) * 480, 3)
     expect(calls).toHaveLength(1)
 
     // The runner keeps seeing only the person. The promoted dog rides the next
@@ -203,8 +209,8 @@ describe('a subject the gate finds beside a birth becomes a track of its own', (
       width: 320,
       height: 320,
       detections: [
-        { macroClass: 'person', score: 0.9, bbox: { x: 20, y: 10, width: 140, height: 300 } },
-        { macroClass: 'animal', score: 0.3, bbox: { x: 240, y: 230, width: 80, height: 90 } },
+        { macroClass: 'person', score: 0.9, bbox: { x: 100, y: 67, width: 60, height: 160 } },
+        { macroClass: 'animal', score: 0.3, bbox: { x: 165, y: 166, width: 40, height: 60 } },
       ],
     }))
     booted = await bootAnalytics(

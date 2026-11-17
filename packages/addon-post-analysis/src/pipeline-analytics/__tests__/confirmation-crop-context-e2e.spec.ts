@@ -140,6 +140,65 @@ describe('the confirmation crop shows the subject with context', () => {
   }, 30_000)
 })
 
+describe('a CARRIED crop is placed where the runner cut it — box + 15%, not the window', () => {
+  let booted: Booted | undefined
+
+  afterEach(async () => {
+    await flush(1)
+    if (booted) await booted.addon.shutdown()
+    booted = undefined
+  })
+
+  it('puts a box the detector found in the carried crop back through the tight rectangle', async () => {
+    // The runner's carried crop (D379): the person padded 15% — frame 395.5,
+    // 136.5, 39×117 — here a 78×234 JPEG (×2). On it the detector sees the
+    // person and a car at the crop's lower right.
+    const { executor } = makeFakePipelineExecutor(() => ({
+      width: 78,
+      height: 234,
+      detections: [
+        { macroClass: 'person', score: 0.9, bbox: { x: 9, y: 27, width: 60, height: 180 } },
+        { macroClass: 'vehicle', score: 0.9, bbox: { x: 60, y: 180, width: 18, height: 54 } },
+      ],
+    }))
+    // No native crop at all: the carried crop is the only measurement.
+    booted = await bootAnalytics(DEVICE_ID, async () => null, { pipelineExecutor: executor })
+    const carried: ObjectDetection = {
+      ...PERSON,
+      birthEvidence: {
+        jpegBase64: CROP_JPEG_BASE64,
+        rect: { x: 395.5, y: 136.5, width: 39, height: 117 },
+        tier: 'analysis',
+      },
+    }
+    for (let i = 0; i < 4; i += 1) {
+      emitInference(booted.bus.bus, buildFrame(1_000 + i * 100, [{ ...carried, id: `p${i}` }]))
+      await flush(5)
+    }
+    await flush(20)
+
+    const promoted = booted.logs.find(
+      (line) => line.message === 'confirmation gate: secondary subject promoted from the crop',
+    )
+    expect(promoted, 'the car beside the carried person was promoted').toBeDefined()
+    // Through the TIGHT rectangle: 395.5 + (60/78)·39, 136.5 + (180/234)·117.
+    // Through the 360 px window it would land at x ≈ 512 — outside the tight
+    // crop, and not promoted at all.
+    expect(promoted?.extras).toMatchObject({
+      tags: { deviceId: DEVICE_ID },
+      meta: {
+        cropSource: 'carried',
+        secondaryBbox: {
+          x: expect.closeTo(425.5, 3),
+          y: expect.closeTo(226.5, 3),
+          w: expect.closeTo(9, 3),
+          h: expect.closeTo(27, 3),
+        },
+      },
+    })
+  }, 30_000)
+})
+
 describe('confirmationCropWindow', () => {
   it('slides a window that overflows an edge back inside, keeping its size', () => {
     // Subject against the right border: the 360 px square would end at 760.

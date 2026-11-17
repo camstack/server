@@ -106,7 +106,7 @@ const DOG_SEEN: FakeRedetectResult = {
   width: 320,
   height: 320,
   detections: [
-    { macroClass: 'animal', score: 0.71, bbox: { x: 40, y: 40, width: 240, height: 240 } },
+    { macroClass: 'animal', score: 0.71, bbox: { x: 120, y: 160, width: 80, height: 62 } },
   ],
 }
 /** The very next crop of the same subject holds nothing compatible — the

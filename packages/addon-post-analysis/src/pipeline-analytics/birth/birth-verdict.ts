@@ -195,12 +195,14 @@ export class BirthVerdict {
             })
         }
         // OPERATOR-DEBUG evidence for the gate's verdict. The
-        // `confirmationCrop` above is the TIGHT crop the detector actually
-        // judged — model input, unchanged, and deliberately so. This is the
-        // other half the 2026-09-18 traces needed and no stored row had: the
-        // same subject with its NEIGHBOURHOOD, so a reflection, a painted
-        // figure or a mis-paired box/frame is visible as such rather than
-        // filling the frame. Only inside this surviving-track branch, for the
+        // `confirmationCrop` above is the crop the detector actually judged —
+        // model input, unchanged, and deliberately so: for a native or fallback
+        // crop the context window (`confirmationCropWindow`, a square 4× the
+        // subject's long side), for a carried crop the runner's box + 15%
+        // (D379). This is the other half the 2026-09-18 traces needed and no
+        // stored row had: the subject in the full frame's NEIGHBOURHOOD, so a
+        // reflection, a painted figure or a mis-paired box/frame is visible as
+        // such. Only inside this surviving-track branch, for the
         // same reason the crop above is: a row beside a retracted birth would
         // outlive its owner (D161).
         if (frameHandle !== undefined) {

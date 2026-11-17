@@ -52,6 +52,14 @@ describe('the secondary subject — what the crop confidently contains besides t
   // The candidate's crop, in FRAME pixels: the gate is told where the crop
   // was cut from so a crop-normalised box can be put back in the frame.
   const cropRect = { x: 100, y: 200, w: 400, h: 400 }
+  // The candidate sits where the crop's person box lands in the frame
+  // (0.1,0.1 0.4×0.8 of the rect): a compatible box confirms only when it IS
+  // the subject (`CONFIRMATION_SUBJECT_MIN_IOU`).
+  const subject = (trackId: string): BirthCandidate => ({
+    trackId,
+    className: 'person',
+    bbox: { x: 140, y: 240, w: 160, h: 320 },
+  })
   const withRect = (over: Partial<ConfirmationGateDeps> = {}): ConfirmationGateDeps =>
     deps(
       [
@@ -64,7 +72,7 @@ describe('the secondary subject — what the crop confidently contains besides t
   it('promotes an incompatible class above the bar into a secondary birth candidate, in frame space', async () => {
     const decisions: ConfirmationDecision[] = []
     await confirmBirths(
-      [candidate('t1', 'person')],
+      [subject('t1')],
       enabled({ minConfidence: 0.6 }),
       withRect({
         onDecision: (d) => decisions.push(d),
@@ -82,7 +90,7 @@ describe('the secondary subject — what the crop confidently contains besides t
   it('does not promote an incompatible class below the bar', async () => {
     const decisions: ConfirmationDecision[] = []
     await confirmBirths(
-      [candidate('t1', 'person')],
+      [subject('t1')],
       enabled({ minConfidence: 0.85 }),
       withRect({ onDecision: (d) => decisions.push(d) }),
     )
@@ -93,7 +101,7 @@ describe('the secondary subject — what the crop confidently contains besides t
   it('does not promote without a box to put back in the frame, nor without the crop rectangle', async () => {
     const noBox: ConfirmationDecision[] = []
     await confirmBirths(
-      [candidate('t1', 'person')],
+      [subject('t1')],
       enabled({ minConfidence: 0.6 }),
       deps(
         [
@@ -107,7 +115,7 @@ describe('the secondary subject — what the crop confidently contains besides t
 
     const noRect: ConfirmationDecision[] = []
     await confirmBirths(
-      [candidate('t1', 'person')],
+      [subject('t1')],
       enabled({ minConfidence: 0.6 }),
       withRect({ cropRectFor: () => null, onDecision: (d) => noRect.push(d) }),
     )

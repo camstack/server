@@ -180,6 +180,16 @@ export class BirthGate {
         frameWidth,
         frameHeight,
       )
+    // The old TIGHT crop (box + 15%, the runner's carried derivation): the
+    // whole carried crop, and inside a context window the scope a second
+    // subject must touch to be promoted (D925).
+    const tightRectOf = (candidate: BirthCandidate): CaptureCropBbox =>
+      captureCropFrameRect(
+        { x: candidate.bbox.x, y: candidate.bbox.y, w: candidate.bbox.w, h: candidate.bbox.h },
+        frameWidth,
+        frameHeight,
+        CARRIED_EVIDENCE_PADDING,
+      )
     const deps: ConfirmationGateDeps = {
       // S4: scheduler-routed, LATENCY-SENSITIVE — this crop gates track birth
       // (processFrame AWAITS confirmTrackBirths). kind 'confirm' ranks at
@@ -271,19 +281,8 @@ export class BirthGate {
       // `fetchFallbackCrop` above ask for; a CARRIED crop is the runner's
       // box + 15% (D379), a different rectangle.
       cropRectFor: (candidate, cropSource) =>
-        cropSource === 'carried'
-          ? captureCropFrameRect(
-              {
-                x: candidate.bbox.x,
-                y: candidate.bbox.y,
-                w: candidate.bbox.w,
-                h: candidate.bbox.h,
-              },
-              frameWidth,
-              frameHeight,
-              CARRIED_EVIDENCE_PADDING,
-            )
-          : confirmationWindowOf(candidate),
+        cropSource === 'carried' ? tightRectOf(candidate) : confirmationWindowOf(candidate),
+      promotionScopeFor: tightRectOf,
       // PHANTOM-CELL BAR. A candidate born in a cell that has closed
       // short-and-motionless three or more times in 24 h faces a higher bar
       // than the same box a metre away. Synchronous, off the in-RAM mirror
@@ -402,6 +401,7 @@ export class BirthGate {
               secondaryScore: decision.secondary.score,
               secondaryBbox: decision.secondary.bbox,
               verdict: decision.verdict,
+              cropSource: decision.cropSource,
             },
           })
         }

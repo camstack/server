@@ -30,6 +30,7 @@ import {
   makeFakeSettingsStore,
   makeSilentLogger,
 } from '../../__tests__/test-helpers.js'
+import { type LogLine, makeRecordingLogger } from '../../__tests__/boot-analytics.js'
 import { TrackStore } from '../track-store.js'
 
 const DEVICE_ID = 102
@@ -207,6 +208,8 @@ describe('TrackStore — the close marker', () => {
   it('a 387 ms / 2-observation walker is too brief to judge — it closes as a normal track, visible (1441 gfygqn22cf)', async () => {
     // Net 12 px: under the 40 px person ceiling only because there was no time
     // to cover more. It used to be stamped and hidden from Events as scenery.
+    const logs: LogLine[] = []
+    trackStore = new TrackStore({ store: fake.client, logger: makeRecordingLogger(logs) })
     upsertPerson('walker', 1_000, 400)
     upsertPerson('walker', 1_387, 412)
 
@@ -216,6 +219,14 @@ describe('TrackStore — the close marker', () => {
     const rows = await trackStore.queryHistorical({ deviceId: DEVICE_ID, projection: 'slim' })
     expect(rows.map((r) => r.trackId)).toEqual(['walker'])
     expect(rows[0]?.closedReason).toBeUndefined()
+    // The spared close says so, per camera (D391).
+    const spared = logs.find((l) =>
+      l.message.startsWith('short-motionless close spared — too brief to judge'),
+    )
+    expect(spared?.extras).toMatchObject({
+      tags: { deviceId: DEVICE_ID },
+      meta: { trackId: 'walker', lifeMs: 387, observations: 2 },
+    })
   })
 
   it('a 4 s scenery re-fire with enough observations is still stamped and hidden', async () => {
