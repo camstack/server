@@ -39,3 +39,15 @@ session.
 | `unreadable-config` | the Builder answered something that is not a config |
 
 Why not read the Builder's own port: [D1001](../decisions/adr-1001-esphome-board-keys-are-read-through-ha-ingress-never-a-lan-port.md).
+
+## A rotated key: one bounded re-import
+
+When a board rejects its key (`encryption-key-invalid`, a permanent failure:
+no reconnect is scheduled), the registry reports it through
+`onPermanentFailure` and `EspKeyRotation` runs the same import for that one
+board, once. The bound is in memory: a board fetches at most once between two
+successful connects, so a read that fails, returns the same key, or returns a
+key the board rejects again leads to no further fetch. There is no polling and
+no timer. A failed read writes nothing (D49). The lines are logged under
+`key-rotation`, tagged with the board's container device id. A process restart
+clears the bound, so a still-rejected board fetches once more after a restart.

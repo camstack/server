@@ -58,6 +58,8 @@ export interface KeyImportDeps {
   readonly logger: IScopedLogger
   /** Limit the import to one integration's boards. */
   readonly integrationId?: string
+  /** Limit the import to one board (the bounded re-import after a rejected key). */
+  readonly boardId?: string
 }
 
 interface SourceListing {
@@ -84,6 +86,7 @@ export async function importBoardKeys(
   const entries = deps.boards
     .boards()
     .filter((b) => deps.integrationId === undefined || b.integrationId === deps.integrationId)
+    .filter((b) => deps.boardId === undefined || b.id === deps.boardId)
   if (entries.length === 0) return []
 
   const listings: SourceListing[] = []
