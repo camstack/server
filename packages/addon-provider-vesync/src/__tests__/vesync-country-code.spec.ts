@@ -226,3 +226,50 @@ describe('a sign-in refused for the country code', () => {
     expect(result.error).toMatch(/country code/i)
   })
 })
+
+describe('a malformed country code', () => {
+  async function instancesOver() {
+    const mem = makeInMemoryRecords('provider-vesync')
+    await mem.records.declare(vesyncRecordKinds)
+    return buildVeSyncInstances(mem.records, {
+      onChanged: async () => undefined,
+      makeClient: tsVeSyncClientFactory,
+    })
+  }
+
+  it('is refused at save, so a stored account always parses', async () => {
+    const instances = await instancesOver()
+    await expect(
+      instances.createInstance({
+        id: 'int_1',
+        name: 'Home',
+        values: { email: 'me@example.com', password: 'pw', countryCode: '1T' },
+      }),
+    ).rejects.toThrow()
+    await instances.createInstance({ id: 'int_2', name: 'Home' })
+    await expect(
+      instances.updateInstance({ id: 'int_2', values: { countryCode: 'I' } }),
+    ).rejects.toThrow()
+  })
+
+  it('a valid one is stored upper-cased', async () => {
+    const instances = await instancesOver()
+    await instances.createInstance({
+      id: 'int_3',
+      name: 'Home',
+      values: { email: 'me@example.com', password: 'pw', countryCode: ' it ' },
+    })
+    expect((await instances.getResolved('int_3'))?.countryCode).toBe('IT')
+  })
+
+  it('the Test names the country code, not the email', async () => {
+    const instances = await instancesOver()
+    const result = await instances.testInstance({
+      id: null,
+      values: { email: 'me@example.com', password: 'pw', countryCode: 'I' },
+    })
+    expect(result).toMatchObject({ success: false, status: 'rejected' })
+    expect(result.error).toMatch(/country/i)
+    expect(result.error).not.toMatch(/email/i)
+  })
+})

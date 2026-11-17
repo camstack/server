@@ -11,6 +11,18 @@ export const VESYNC_GATEWAY_KIND = 'account' as const
 const COUNTRY_CODE_PATTERN = /^[A-Z]{2}$/
 
 /**
+ * The account's country code as the form and the record carry it: trimmed, upper-cased, blank =
+ * not set. One schema for the record kind AND the connection, so a value the record accepts always
+ * parses as a connection (a stored bad code would drop a working account at reconcile).
+ */
+export const vesyncCountryCodeSchema = z
+  .preprocess(
+    (v) => (typeof v === 'string' ? v.trim().toUpperCase() || undefined : (v ?? undefined)),
+    z.string().regex(COUNTRY_CODE_PATTERN, 'a two-letter ISO country code, e.g. IT').optional(),
+  )
+  .describe('VeSync account country (ISO 3166 alpha-2)')
+
+/**
  * Operator-supplied credentials for ONE VeSync cloud account. They live on the
  * integration's typed record, not on a device. VeSync is cloud / account and
  * exposes no push channel via the wrapper we target, so the account is POLLED —
@@ -24,12 +36,7 @@ export const vesyncConnectionSchema = z.object({
    * The account's ISO-3166 alpha-2 country (`IT`, `DE` …). The library signs in as `US` without
    * it, which a non-US account is refused for at Step 2. Blank means "not set".
    */
-  countryCode: z
-    .preprocess(
-      (v) => (typeof v === 'string' ? v.trim().toUpperCase() || undefined : (v ?? undefined)),
-      z.string().regex(COUNTRY_CODE_PATTERN, 'a two-letter ISO country code, e.g. IT').optional(),
-    )
-    .describe('VeSync account country (ISO 3166 alpha-2)'),
+  countryCode: vesyncCountryCodeSchema,
   pollIntervalMs: z
     .preprocess(
       (v) => (v === '' || v === null ? undefined : v),
