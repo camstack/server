@@ -117,6 +117,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The tags list survives an unreachable owner (its count shows unknown); rename and remove refuse naming that owner, and cover every notification rule kind
 - A forced restart through a power source uses the switch's native power cycle when it has one, instead of off / wait / on.
 - The default switch toggle refuses a switch that only reports its state; a forced restart refuses (switch-options-unreadable) when the linked switch's options could not be read instead of switching it off blind.
+- Power on / off of a device whose linked switch only reports are refused as not-settable before the switch is called; the hero draws no power on / off for it, and a failed switch-options read is logged with the device (D1058)
 
 ### Removed
 

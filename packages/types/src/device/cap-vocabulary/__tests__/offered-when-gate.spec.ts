@@ -77,3 +77,33 @@ describe('actionGateAnswerFrom / switchRefusesSetState — what the read returne
     expect(switchRefusesSetState(null)).toBe(false)
   })
 })
+
+describe('offeredWhen — power-source on/off follow the LINKED switch (D1058)', () => {
+  const supplyActions = actionsForDevice(['power-source'], DeviceType.Camera)
+  const supplyIdsWith = (raw: unknown): readonly string[] =>
+    offeredActionsWith(supplyActions, NO_DYNAMIC, (_cap, gate) =>
+      actionGateAnswerFrom(raw, gate),
+    ).map((a) => a.id)
+
+  it('power on / off read getStatus().switchSettable; the forced restart has no gate', () => {
+    expect(supplyActions.map((a) => [a.id, a.offeredWhen])).toEqual([
+      ['powerSource.on', { method: 'getStatus', field: 'switchSettable' }],
+      ['powerSource.off', { method: 'getStatus', field: 'switchSettable' }],
+      ['powerSource.forceRestart', null],
+    ])
+  })
+
+  it('a camera on a reports-only PoE port is offered only the forced restart', () => {
+    expect(supplyIdsWith({ linked: true, switchSettable: false })).toEqual([
+      'powerSource.forceRestart',
+    ])
+  })
+
+  it('a settable, unknown (null) or unanswered switch keeps power on / off', () => {
+    const all = ['powerSource.on', 'powerSource.off', 'powerSource.forceRestart']
+    expect(supplyIdsWith({ linked: true, switchSettable: true })).toEqual(all)
+    expect(supplyIdsWith({ linked: true, switchSettable: null })).toEqual(all)
+    expect(supplyIdsWith({ linked: true })).toEqual(all)
+    expect(supplyIdsWith(undefined)).toEqual(all)
+  })
+})

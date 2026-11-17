@@ -67,14 +67,29 @@ describe('HeroModelCard utility section', () => {
     render(<HeroModelCard model={model} host={host(run)} />)
     fireEvent.click(screen.getByTestId('hero-utility-power-supply'))
     fireEvent.click(screen.getByTestId('hero-utility-action-power-supply.off'))
-    expect(run).toHaveBeenCalledWith(model.powerSupply?.powerOff.call, model.powerSupply?.powerOff)
-    expect(model.powerSupply?.powerOff.confirm).toBeDefined()
+    expect(run).toHaveBeenCalledWith(model.powerSupply?.powerOff?.call, model.powerSupply?.powerOff)
+    expect(model.powerSupply?.powerOff?.confirm).toBeDefined()
     fireEvent.click(screen.getByTestId('hero-utility-power-supply'))
     fireEvent.click(screen.getByTestId('hero-utility-action-power-supply.restart'))
     expect(run).toHaveBeenLastCalledWith(
       model.powerSupply?.restart.call,
       model.powerSupply?.restart,
     )
+  })
+
+  it('a supply whose switch only reports offers the restart but no power on / off (D1058)', () => {
+    const base = washer()
+    const supply = base.powerSupply
+    if (supply === null) throw new Error('the washer fixture has a power source')
+    const model: HeroModel = {
+      ...base,
+      powerSupply: { ...supply, powerOn: null, powerOff: null },
+    }
+    render(<HeroModelCard model={model} host={host()} />)
+    fireEvent.click(screen.getByTestId('hero-utility-power-supply'))
+    expect(screen.queryByTestId('hero-utility-action-power-supply.off')).toBeNull()
+    expect(screen.queryByTestId('hero-utility-action-power-supply.on')).toBeNull()
+    expect(screen.getByTestId('hero-utility-action-power-supply.restart')).toBeTruthy()
   })
 
   it('shows the power source read-only for a session that may not act', () => {

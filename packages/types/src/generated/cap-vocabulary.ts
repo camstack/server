@@ -661,6 +661,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Power on', it: 'Dai corrente' },
         phrase: { en: 'Power on {device}', it: 'Dai corrente a {device}' },
         icon: 'power',
+        offeredWhen: { method: 'getStatus', field: 'switchSettable' },
       },
       {
         id: 'powerSource.off',
@@ -668,6 +669,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Power off', it: 'Togli corrente' },
         phrase: { en: 'Cut the power of {device}', it: 'Togli la corrente a {device}' },
         icon: 'power-off',
+        offeredWhen: { method: 'getStatus', field: 'switchSettable' },
       },
       {
         id: 'powerSource.forceRestart',

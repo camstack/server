@@ -93,6 +93,11 @@ export interface HeroContext {
    * `supportsSetState: false` (a switch that only reports) offers no on/off.
    */
   readonly switchOptions?: SwitchOptions
+  /**
+   * Whether the switch that powers the device can be set (`power-source.getStatus().switchSettable`).
+   * Absent or `null` = not known, on / off stay; `false` withdraws power on / off (D1058).
+   */
+  readonly powerSupplySettable?: boolean | null
 }
 
 export interface HeroFragment {

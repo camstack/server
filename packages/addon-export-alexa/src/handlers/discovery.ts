@@ -514,7 +514,7 @@ async function readDiscoverySlices(
       }
     }),
   )
-  const extras = await discoveryExtrasFor(api, info.id, info.capNames)
+  const extras = await discoveryExtrasFor(api, info.id, info.capNames, logger)
   return {
     ...extras,
     ...Object.fromEntries(reads.filter((r): r is [string, unknown] => r !== null)),

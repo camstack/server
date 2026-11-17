@@ -662,6 +662,8 @@ export function DeviceDetailPage() {
     { enabled: isValidDeviceId, staleTime: 15_000 },
   )
   const powerSourceLinked = powerSource.data?.linked === true
+  // The linked switch ANSWERED it only reports: no power on / off, the restart stays (D1058).
+  const powerSourceSettable = powerSource.data?.switchSettable !== false
   const showAlert = useAlert()
   const onPowerResult = (result: PowerSourceActionResult): void => {
     void queryClient.invalidateQueries({ queryKey: [['powerSource']] })
@@ -1183,7 +1185,7 @@ export function DeviceDetailPage() {
                       { switchName: powerSwitchName },
                     ),
                     icon: Power,
-                    hidden: !powerSourceLinked,
+                    hidden: !powerSourceLinked || !powerSourceSettable,
                     disabled: powerOnMutation.isPending,
                     onClick: () => powerOnMutation.mutate({ deviceId }),
                   },
@@ -1196,7 +1198,7 @@ export function DeviceDetailPage() {
                       { switchName: powerSwitchName },
                     ),
                     icon: PowerOff,
-                    hidden: !powerSourceLinked,
+                    hidden: !powerSourceLinked || !powerSourceSettable,
                     disabled: powerOffMutation.isPending,
                     danger: true,
                     onClick: async () => {

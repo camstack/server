@@ -340,6 +340,18 @@ export async function exportableCaps(
 }
 
 /**
+ * Why a device left nothing HomeKit can export, for the build's refusal: a switch withdrawn
+ * because it only reports is named as such — "bound: none" would hide that the device HAS a
+ * switch. Otherwise the bound caps, as before.
+ */
+export function noExportableCapsReason(result: ExportableCaps): string {
+  if (result.switchOptions.kind === 'answered' && result.switchOptions.refusesSetState) {
+    return 'exportable: none, reports-only switch withdrawn'
+  }
+  return `bound: ${[...result.capNames].toSorted().join(', ') || 'none'}`
+}
+
+/**
  * The rows a device's bound capabilities select, in table order.
  *
  * A row matches when ANY of its caps is bound: a lamp with `switch` but no

@@ -1,6 +1,8 @@
 import type { AddonApi, SwitchOptions } from '@camstack/types'
 import { CompositionSchema } from '@camstack/types'
+import { TRPCClientError } from '@trpc/client'
 import { describe, expect, it } from 'vitest'
+import { createChildCapDispatch } from '../../../kernel/moleculer/child-cap-dispatch.js'
 import { powerSourceDevicesOver } from '../power-source-devices.js'
 import { PowerSourceService, type PowerSourceScheduler } from '../power-source-service.js'
 import { recordingLogger } from './fixtures.js'
@@ -104,7 +106,56 @@ function rig(options: OptionsAnswer) {
   return { service, setState, powerCycle, scheduled, recorded }
 }
 
+/**
+ * What a FORKED switch provider without `getOptions` really answers: the child's
+ * dispatcher refuses the optional method by name, and the in-hub link wraps it as
+ * a client error (`localProviderLink` / `brokerTransportLink`). No typed code
+ * survives the UDS hop — only the message prefix.
+ */
+async function forkedProviderWithoutGetOptions(): Promise<Error> {
+  const dispatch = createChildCapDispatch({
+    getSingletonProvider: () => null,
+    getDeviceProvider: () => ({ setState: async () => undefined }),
+    isCollectionListMethod: () => false,
+    isProviderOptionalMethod: (cap, method) => cap === 'switch' && method === 'getOptions',
+  })
+  try {
+    await dispatch({
+      capName: 'switch',
+      method: 'getOptions',
+      args: { deviceId: PORT_ID },
+      deviceId: PORT_ID,
+    })
+  } catch (cause: unknown) {
+    return TRPCClientError.from(cause instanceof Error ? cause : new Error(String(cause)))
+  }
+  throw new Error('the dispatcher served a method the provider does not have')
+}
+
 describe('power-source over ctx.api', () => {
+  it('a forked provider without getOptions (the real child refusal) is a plain on/off switch', async () => {
+    const r = rig(await forkedProviderWithoutGetOptions())
+    expect(await r.service.forceRestart({ deviceId: CAMERA_ID })).toEqual({
+      accepted: true,
+    })
+    expect(r.setState).toEqual([{ deviceId: PORT_ID, on: false }])
+    expect((await r.service.getStatus({ deviceId: CAMERA_ID })).switchSettable).toBe(true)
+  })
+
+  it('a camera on a reports-only PoE port is refused power on / off as not-settable; setState is never called', async () => {
+    const r = rig({ supportsSetState: false, supportsPowerCycle: true })
+    expect(await r.service.powerOn({ deviceId: CAMERA_ID })).toMatchObject({
+      accepted: false,
+      reason: 'not-settable',
+    })
+    expect(await r.service.powerOff({ deviceId: CAMERA_ID })).toMatchObject({
+      accepted: false,
+      reason: 'not-settable',
+    })
+    expect(r.setState).toEqual([])
+    expect((await r.service.getStatus({ deviceId: CAMERA_ID })).switchSettable).toBe(false)
+  })
+
   it('restarts a camera on an API-key-only PoE port with ONE native power cycle, never on/off', async () => {
     const r = rig({ supportsSetState: false, supportsPowerCycle: true })
     expect(await r.service.forceRestart({ deviceId: CAMERA_ID })).toEqual({ accepted: true })

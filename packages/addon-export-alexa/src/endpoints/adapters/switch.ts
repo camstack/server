@@ -1,5 +1,6 @@
 import {
   type AddonApi,
+  type IScopedLogger,
   BrightnessStatusSchema,
   isOutlet,
   isSwitchFan,
@@ -57,15 +58,23 @@ export const SWITCH_OPTIONS_KEY = 'switch.getOptions'
 
 /**
  * What the switch can do, read at discovery. No `getOptions` on the provider,
- * or a read that failed, leaves the key out: unknown keeps the switch (D315).
+ * or a read that failed, leaves the key out: unknown keeps the switch (D315),
+ * and the line says which.
  */
 async function switchOptions(
   api: AddonApi,
   deviceId: number,
+  logger: IScopedLogger,
 ): Promise<Readonly<Record<string, unknown>>> {
   try {
-    return { [SWITCH_OPTIONS_KEY]: await api.switch.getOptions.query({ deviceId }) }
-  } catch {
+    return {
+      [SWITCH_OPTIONS_KEY]: await api.switch.getOptions.query({ deviceId }),
+    }
+  } catch (err: unknown) {
+    logger.warn('alexa discovery: switch options unread — exported as a plain on/off switch', {
+      tags: { deviceId },
+      meta: { error: err instanceof Error ? err.message : String(err) },
+    })
     return {}
   }
 }

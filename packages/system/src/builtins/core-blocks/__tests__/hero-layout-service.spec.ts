@@ -39,6 +39,7 @@ function service(reader: Partial<HeroLayoutReader>, logs: Logged[] = []): HeroLa
       slice: async () => ({ on: true, lastChangedAt: 1 }),
       remoteCommands: async () => 0,
       switchOptions: async () => SWITCH_DEFAULT_OPTIONS,
+      powerSupplySettable: async () => true,
       ...reader,
     },
   })
@@ -62,11 +63,52 @@ describe('hero-layout provider', () => {
     expect(model?.ownPower).toBeNull()
   })
 
-  it('a switch whose options cannot be read is a plain on/off switch', async () => {
-    const model = await service({
-      switchOptions: async () => Promise.reject(new Error('No procedure found')),
-    }).getHeroModel({ deviceId: 7 })
+  it('a switch whose options cannot be read is a plain on/off switch, and says so tagged', async () => {
+    const logs: Logged[] = []
+    const model = await service(
+      {
+        switchOptions: async () => Promise.reject(new Error('request timed out')),
+      },
+      logs,
+    ).getHeroModel({ deviceId: 7 })
     expect(model?.ownPower).not.toBeNull()
+    const line = logs.find((l) => l.message.includes('switch options'))
+    expect(line?.tags).toEqual({ deviceId: 7 })
+  })
+
+  it('a camera whose linked supply only reports offers no power on / off (D1058)', async () => {
+    const camera = {
+      device: async () => ({
+        type: DeviceType.Camera,
+        role: null,
+        name: 'Cam',
+        online: true,
+        features: [],
+      }),
+      caps: async () => ['power-source'],
+      slice: async () => ({ switchOn: true, offSeconds: 10, lastFetchedAt: 1 }),
+    }
+    const refused = await service({
+      ...camera,
+      powerSupplySettable: async () => false,
+    }).getHeroModel({
+      deviceId: 21,
+    })
+    expect(refused?.powerSupply?.powerOn).toBeNull()
+    expect(refused?.powerSupply?.restart.call.method).toBe('forceRestart')
+
+    const logs: Logged[] = []
+    const unread = await service(
+      {
+        ...camera,
+        powerSupplySettable: async () => Promise.reject(new Error('timed out')),
+      },
+      logs,
+    ).getHeroModel({ deviceId: 21 })
+    expect(unread?.powerSupply?.powerOn).not.toBeNull()
+    expect(logs.find((l) => l.message.includes('power supply'))?.tags).toEqual({
+      deviceId: 21,
+    })
   })
 
   it('a numeric sensor reads with the unit of the quantity its device stored', async () => {

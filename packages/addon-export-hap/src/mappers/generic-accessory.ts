@@ -27,7 +27,9 @@ import { type AddonContext, DeviceType, type DeviceProxy } from '@camstack/types
 import { populateAccessoryInfo } from './builders/accessory-info.js'
 import {
   accessoryCategoryFor,
+  type ExportableCaps,
   exportableCaps,
+  noExportableCapsReason,
   rowsForCaps,
 } from './builders/generic/cap-service-table.js'
 import { accessoryUuidFor } from './kind.js'
@@ -49,12 +51,13 @@ export async function buildGenericAccessory(input: GenericAccessoryInput): Promi
   const log = ctx.logger.withTags({ deviceId: numericId })
 
   const proxy = await ctx.fetchDevice(numericId)
-  const capNames = await exportableCapsOf(proxy, log)
+  const exportable = await exportableOf(proxy, log)
+  const capNames = exportable.capNames
   const rows = rowsForCaps(capNames)
   if (rows.length === 0) {
     throw new Error(
       `export-hap: device ${numericId} carries no capability HomeKit can export ` +
-        `(bound: ${[...capNames].toSorted().join(', ') || 'none'})`,
+        `(${noExportableCapsReason(exportable)})`,
     )
   }
 
@@ -116,6 +119,14 @@ export async function exportableCapsOf(
   proxy: DeviceProxy,
   log: Pick<AddonContext['logger'], 'debug'>,
 ): Promise<ReadonlySet<string>> {
+  return (await exportableOf(proxy, log)).capNames
+}
+
+/** {@link exportableCapsOf} with what the switch answered, for the build's refusal. */
+async function exportableOf(
+  proxy: DeviceProxy,
+  log: Pick<AddonContext['logger'], 'debug'>,
+): Promise<ExportableCaps> {
   const bound = new Set(proxy.binding?.entries.map((e) => e.capName) ?? [])
   const result = await exportableCaps(bound, async () => proxy.switch?.getOptions({}))
   if (result.switchOptions.kind === 'failed') {
@@ -125,7 +136,7 @@ export async function exportableCapsOf(
   } else if (result.switchOptions.kind === 'answered' && result.switchOptions.refusesSetState) {
     log.debug('export-hap: switch only reports its state — no HomeKit Switch for it')
   }
-  return result.capNames
+  return result
 }
 
 /**

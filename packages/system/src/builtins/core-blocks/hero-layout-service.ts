@@ -42,8 +42,16 @@ export interface HeroLayoutReader {
   readonly slice: (deviceId: number, capName: string) => Promise<unknown>
   /** Saved remote commands; throws when the remote cannot be asked. */
   readonly remoteCommands: (deviceId: number) => Promise<number>
-  /** The `switch` provider's `getOptions`; throws when it has none or cannot be asked. */
+  /**
+   * The `switch` provider's `getOptions`: the defaults when it has none (a plain on/off switch);
+   * throws when it cannot be asked.
+   */
   readonly switchOptions: (deviceId: number) => Promise<SwitchOptions>
+  /**
+   * Whether the switch that powers the device can be set (`power-source.getStatus().switchSettable`);
+   * `null` = not known. Throws when it cannot be asked.
+   */
+  readonly powerSupplySettable: (deviceId: number) => Promise<boolean | null>
 }
 
 export interface HeroLayoutServiceDeps {
@@ -54,6 +62,7 @@ export interface HeroLayoutServiceDeps {
 
 const REMOTE_CAP = 'remote'
 const SWITCH_CAP = 'switch'
+const POWER_SOURCE_CAP = 'power-source'
 
 /** Models built at once for a list; the cap bounds the list, this bounds the fan-out on the registry. */
 const ROW_MODELS_CONCURRENCY = 16
@@ -93,6 +102,9 @@ export class HeroLayoutService implements IHeroLayoutProvider {
     const switchOptions = bound.includes(SWITCH_CAP)
       ? await this.switchOptions(deviceId)
       : undefined
+    const powerSupplySettable = bound.includes(POWER_SOURCE_CAP)
+      ? await this.powerSupplySettable(deviceId)
+      : null
     return buildHeroModel({
       device: {
         id: deviceId,
@@ -112,6 +124,7 @@ export class HeroLayoutService implements IHeroLayoutProvider {
       remoteCommands,
       access: { canActuate: canActuate ?? true },
       ...(switchOptions !== undefined ? { switchOptions } : {}),
+      powerSupplySettable,
     })
   }
 
@@ -151,14 +164,39 @@ export class HeroLayoutService implements IHeroLayoutProvider {
   }
 
   /**
-   * What the switch can do. A provider without `getOptions` (or not redeployed yet) is a
-   * plain on/off switch: the read fails and the hero draws on/off, as before.
+   * What the switch can do. A provider without `getOptions` answers the defaults through the
+   * reader; a read that FAILED is unknown — the hero draws on/off, as before (D315) — and is
+   * logged with the device.
    */
   private async switchOptions(deviceId: number): Promise<SwitchOptions | undefined> {
     try {
       return await this.deps.reader.switchOptions(deviceId)
-    } catch {
+    } catch (error) {
+      this.deps.logger.warn('hero model: the switch options could not be read; on/off drawn', {
+        tags: { deviceId },
+        meta: {
+          error: error instanceof Error ? error.message : String(error),
+        },
+      })
       return undefined
+    }
+  }
+
+  /** Whether the supply's switch can be set; a failed read is unknown (on/off drawn), logged. */
+  private async powerSupplySettable(deviceId: number): Promise<boolean | null> {
+    try {
+      return await this.deps.reader.powerSupplySettable(deviceId)
+    } catch (error) {
+      this.deps.logger.warn(
+        'hero model: the power supply status could not be read; power on/off drawn',
+        {
+          tags: { deviceId },
+          meta: {
+            error: error instanceof Error ? error.message : String(error),
+          },
+        },
+      )
+      return null
     }
   }
 

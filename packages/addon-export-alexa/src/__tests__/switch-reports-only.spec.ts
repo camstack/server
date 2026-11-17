@@ -3,8 +3,8 @@
  * port seen only through an API key) is not exported as a PowerController —
  * every TurnOn / TurnOff would fail. No answer keeps it (D315).
  */
-import type { AddonApi } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import type { AddonApi, IScopedLogger } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
 import { discoveryExtrasFor } from '../endpoints/adapters/index.js'
 import { SWITCH_OPTIONS_KEY } from '../endpoints/adapters/switch.js'
 import { planGenericEndpoint } from '../endpoints/generic-device.js'
@@ -18,9 +18,32 @@ function apiAnswering(getOptions: () => Promise<unknown>): AddonApi {
   })
 }
 
+function recordingLogger() {
+  const warn = vi.fn()
+  const logger: IScopedLogger = {
+    info: vi.fn(),
+    warn,
+    error: vi.fn(),
+    debug: vi.fn(),
+    withTags: () => logger,
+    child: () => logger,
+  }
+  return { logger, warn }
+}
+
 async function planFor(getOptions: () => Promise<unknown>) {
-  const slices = await discoveryExtrasFor(apiAnswering(getOptions), PORT.deviceId, ['switch'])
-  return { slices, plan: planGenericEndpoint({ ...PORT, capNames: ['switch'], slices }) }
+  const log = recordingLogger()
+  const slices = await discoveryExtrasFor(
+    apiAnswering(getOptions),
+    PORT.deviceId,
+    ['switch'],
+    log.logger,
+  )
+  return {
+    slices,
+    plan: planGenericEndpoint({ ...PORT, capNames: ['switch'], slices }),
+    log,
+  }
 }
 
 describe('Alexa — a switch that only reports (D1058)', () => {
@@ -44,10 +67,15 @@ describe('Alexa — a switch that only reports (D1058)', () => {
     expect(plan.kind).toBe('endpoint')
   })
 
-  it('a provider without getOptions, or a failed read, keeps the switch', async () => {
-    const { plan } = await planFor(() =>
+  it('a provider without getOptions, or a failed read, keeps the switch — and says so, tagged', async () => {
+    const { plan, log } = await planFor(() =>
       Promise.reject(new Error('does not implement "getOptions"')),
     )
     expect(plan.kind).toBe('endpoint')
+    expect(log.warn).toHaveBeenCalledTimes(1)
+    expect(log.warn.mock.calls[0]?.[1]).toMatchObject({
+      tags: { deviceId: PORT.deviceId },
+      meta: { error: 'does not implement "getOptions"' },
+    })
   })
 })

@@ -32,11 +32,12 @@ export type SwitchStatus = z.infer<typeof SwitchStatusSchema>
  * `getOptions` is a plain on/off switch: the defaults are the old contract.
  *
  * - `supportsSetState: false` — the switch reports its state but cannot be set (a PoE port seen only
- *   through an API key). Its provider refuses `setState`; every surface that offers on/off withdraws
- *   it once the device ANSWERED this (`switchRefusesSetState`): the device hero, the automation
- *   action picker (`offeredWhen` on `switch.on` / `switch.off` / `switch.toggle`), the default
- *   `toggle`, and the HomeKit, Alexa and Google exporters. A read that failed or is pending changes
- *   nothing (D315).
+ *   through an API key). Its provider refuses `setState`; these surfaces withdraw on/off once the
+ *   device ANSWERED this (`switchRefusesSetState`): the device hero, the automation action picker
+ *   (`offeredWhen` on `switch.on` / `switch.off` / `switch.toggle`), the default `toggle`, the
+ *   HomeKit, Alexa and Google exporters, and `power-source` on a device the switch powers
+ *   (`getStatus().switchSettable`, `offeredWhen` on `powerSource.on` / `.off`, `not-settable`). A
+ *   read that failed or is pending changes nothing (D315).
  * - `supportsPowerCycle: true` — the device behind the switch can cut and restore its own output in
  *   one native call (a PoE port's power cycle). It has no control of its own: a linked
  *   `power-source.forceRestart` uses it instead of off / wait / on.
@@ -54,7 +55,7 @@ export const SWITCH_DEFAULT_OPTIONS: SwitchOptions = SwitchOptionsSchema.parse({
 export const SWITCH_SETTABLE_GATE = { method: 'getOptions', field: 'supportsSetState' } as const
 
 /**
- * THE predicate every on/off surface uses: true only when `answer` — what the switch's
+ * The predicate the on/off surfaces apply to a raw answer: true only when `answer` — what the switch's
  * `getOptions` returned — says `supportsSetState: false`. `undefined` (no provider method, a
  * failed or pending read) and any other shape are false: unknown keeps on/off (D315).
  */

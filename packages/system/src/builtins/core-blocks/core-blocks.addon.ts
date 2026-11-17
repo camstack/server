@@ -79,7 +79,7 @@ import { RemoteComponentsService } from './remote-components-service.js'
 import { HeroLayoutService } from './hero-layout-service.js'
 import { composeRedirects, LockDoorGate } from './lock-door-gate.js'
 import { type DeviceNames, doorSensorOf, seedLockDoors } from './lock-door-sensor.js'
-import { powerSourceDevicesOver } from './power-source-devices.js'
+import { powerSourceDevicesOver, switchOptionsOf } from './power-source-devices.js'
 import {
   PowerSourceService,
   type PowerSourceDevices,
@@ -357,7 +357,9 @@ export class CoreBlocksAddon extends BaseAddon {
           requireApi().deviceState.getCapSlice.query({ deviceId, capName }),
         remoteCommands: async (deviceId) =>
           (await requireApi().remote.listCommands.query({ deviceId })).commands.length,
-        switchOptions: (deviceId) => requireApi().switch.getOptions.query({ deviceId }),
+        switchOptions: (deviceId) => switchOptionsOf(requireApi(), deviceId),
+        powerSupplySettable: async (deviceId) =>
+          (await requireApi().powerSource.getStatus.query({ deviceId })).switchSettable ?? null,
       },
     })
   }

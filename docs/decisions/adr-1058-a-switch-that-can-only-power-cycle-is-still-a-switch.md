@@ -38,10 +38,10 @@ make the port unlinkable as a power source, since the link compiles against
   writes no `getOptions`, or is not redeployed yet, is a plain on/off switch.
 - `powerCycle` has no action and no button. Its tier is the same as `setState`
   (protected, viewer role): it actuates the same output.
-- `supportsSetState: false` means the provider's `setState` refuses, and every
-  surface that offers on/off withdraws it once the device ANSWERED so — one
-  predicate, `switchRefusesSetState`. A provider without `getOptions`, or a read
-  that failed or is pending, changes nothing (D315):
+- `supportsSetState: false` means the provider's `setState` refuses, and these
+  surfaces withdraw on/off once the device ANSWERED so — one predicate,
+  `switchRefusesSetState`. A provider without `getOptions`, or a read that failed
+  or is pending, changes nothing (D315):
   - the device hero draws no on/off;
   - the automation action picker: `switch.on`, `switch.off` and `switch.toggle`
     carry `offeredWhen: { method: 'getOptions', field: 'supportsSetState' }`, a
@@ -49,12 +49,21 @@ make the port unlinkable as a power source, since the link compiles against
     action whose gate read answered `false`, beside the dynamic-offer rule);
   - the default `switch.toggle` refuses as `not-settable`, logged with the device;
   - the HomeKit, Alexa and Google exporters publish no on/off accessory, endpoint
-    or trait for that switch (a device with nothing else is not exportable).
+    or trait for that switch (a device with nothing else is not exportable; the
+    HomeKit build names it `exportable: none, reports-only switch withdrawn`);
+  - `power-source` on a device that switch POWERS: `getStatus` answers
+    `switchSettable` (`null` = not known: no link, or the options read failed),
+    `powerSource.on` / `.off` carry `offeredWhen: { method: 'getStatus', field:
+    'switchSettable' }`, the device hero and the device page's power menu draw
+    no power on / off, and `powerOn` / `powerOff` refuse as `not-settable`
+    before the switch is called. The forced restart is unaffected.
 - `power-source.forceRestart` asks the linked switch's options first. A switch
   that declares `supportsPowerCycle` is cycled in ONE call and never switched
   off or on. Any other switch keeps off / wait `offSeconds` / on. A provider
-  without `getOptions` (`NOT_IMPLEMENTED`, or a hub that predates the method)
-  is a plain switch; a read that FAILED refuses the restart as
+  without `getOptions` (the hub router's typed `NOT_IMPLEMENTED`, a forked
+  provider's `CAP_METHOD_NOT_IMPLEMENTED` refusal — a message prefix, the only
+  thing that crosses the UDS hop — or a hub that predates the method) is a
+  plain switch; a read that FAILED refuses the restart as
   `switch-options-unreadable` rather than switching off blind. A failed
   native cycle is refused as `switch-call-failed`, like a failed off.
 - UniFi: every PoE port is a `switch` device. With a local account it switches
@@ -68,8 +77,9 @@ make the port unlinkable as a power source, since the link compiles against
 - Any vendor whose relay or port has a native cycle (a smart PDU outlet) can
   declare it the same way, with no change to `power-source`.
 - The hero model (built in core-blocks `hero-layout-service`) reads the switch's
-  `getOptions` for any device bound to `switch`; a read that fails draws the plain
-  on/off switch, as before.
+  `getOptions` for any device bound to `switch`, and `power-source.getStatus` for
+  any device bound to `power-source`; a read that fails draws on/off, as before,
+  and is logged with the device.
 - A composed device's `switch` answers the default options whatever its source
   is: a composed switch forwarding to a port that only reports still offers
   on/off, and that on/off fails. Not handled yet.

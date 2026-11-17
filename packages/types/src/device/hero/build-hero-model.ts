@@ -59,6 +59,8 @@ export interface HeroModelInput {
   readonly access: { readonly canActuate: boolean }
   /** The `switch` provider's `getOptions` answer; absent = not asked (a plain on/off switch). */
   readonly switchOptions?: SwitchOptions
+  /** `power-source.getStatus().switchSettable`; absent or `null` = not known (on / off stay). */
+  readonly powerSupplySettable?: boolean | null
 }
 
 /** The first source with a known answer wins. */
@@ -135,7 +137,11 @@ function runningOf(input: HeroModelInput): boolean | null | undefined {
 function stateOf(
   input: HeroModelInput,
   readings: readonly StateReading[],
-): { readonly state: HeroState; readonly assumed: boolean; readonly title: HeroText } {
+): {
+  readonly state: HeroState
+  readonly assumed: boolean
+  readonly title: HeroText
+} {
   if (!input.device.online) return { state: 'offline', assumed: false, title: STATE_TEXT.offline }
   const picked = pickReading(readings)
   if (picked === null) return { state: 'unknown', assumed: false, title: STATE_TEXT.unknown }
@@ -247,6 +253,9 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     caps: input.caps,
     quantity: device.quantity ?? null,
     ...(input.switchOptions !== undefined ? { switchOptions: input.switchOptions } : {}),
+    ...(input.powerSupplySettable !== undefined
+      ? { powerSupplySettable: input.powerSupplySettable }
+      : {}),
   }
   const contributed = HERO_CAP_CONTRIBUTIONS.filter((c) => input.caps.includes(c.cap)).map((c) => ({
     cap: c.cap,
