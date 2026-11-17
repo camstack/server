@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.170] - 2026-11-17
+
 ### Changed
 
 - Matter locks report whether a PIN is required in their state (codeRequired) instead of a device feature.

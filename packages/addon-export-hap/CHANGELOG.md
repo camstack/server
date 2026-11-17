@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.206] - 2026-11-17
+
 ### Changed
 
 - HomeKit refuses to arm or disarm a panel whose PIN requirement is unknown, as it does for one that needs a PIN.

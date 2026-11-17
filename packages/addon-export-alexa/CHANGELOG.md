@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.200] - 2026-11-17
+
 ### Changed
 
 - Alexa asks for a PIN and refuses a code-less arm when an alarm panel cannot tell whether it needs one.

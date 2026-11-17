@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.894] - 2026-11-17
+
 ### Changed
 
 - New admin-only apiCatalog.list and apiCatalog.inputSchema: the methods the hub serves, read off the live router, with kind, tier, token scope and input JSON Schema.

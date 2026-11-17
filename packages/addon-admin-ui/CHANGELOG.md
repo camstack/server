@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.694] - 2026-11-17
+
 ### Changed
 
 - New System → API explorer tab: search every method the hub serves, see its input schema, run it with your session (mutations ask first) and copy it as curl; /system/api-explorer?method=… links straight to a method.
