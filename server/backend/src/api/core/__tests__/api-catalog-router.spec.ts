@@ -10,7 +10,9 @@
  *   - make `procedureTierOf` answer `protected` for everything → the admin
  *     method reports the wrong tier;
  *   - read the input schema with `io: 'output'` → the defaulted field turns
- *     required.
+ *     required;
+ *   - make `callableBy` answer `yes` for everything → the refused and the
+ *     per-device cases fail.
  */
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
@@ -21,7 +23,8 @@ import {
   publicProcedure,
   trpcRouter,
 } from '../../trpc/trpc.middleware.js'
-import { createApiCatalogRouter } from '../api-catalog.router.js'
+import type { ApiCatalogEntry, CredentialScope } from '@camstack/types'
+import { callableBy, createApiCatalogRouter } from '../api-catalog.router.js'
 
 const admin: AuthenticatedAgent = {
   id: 'u-admin',
@@ -102,7 +105,7 @@ describe('apiCatalog.list', () => {
 
   it('marks every method callable for a full admin', async () => {
     const { methods } = await buildApp().createCaller({ user: admin }).apiCatalog.list()
-    expect(methods.every((m) => m.callable)).toBe(true)
+    expect(methods.every((m) => m.callable === 'yes')).toBe(true)
   })
 
   it('is sorted by path', async () => {
@@ -141,5 +144,65 @@ describe('apiCatalog.inputSchema', () => {
     await expect(
       buildApp().createCaller({ user: admin }).apiCatalog.inputSchema({ path: 'nope.nothing' }),
     ).rejects.toMatchObject({ code: 'NOT_FOUND' })
+  })
+})
+
+/** A non-interactive API token holding only `scopes`. */
+function token(scopes: readonly CredentialScope[]): AuthenticatedAgent {
+  return {
+    ...viewer,
+    id: 'token:t',
+    username: 'token:t',
+    isApiKey: true,
+    interactive: false,
+    scopes,
+  }
+}
+
+/** A real device-scoped cap method (`switch` is per device), as the catalogue lists it. */
+function capEntry(path: string, tier: ApiCatalogEntry['tier']): ApiCatalogEntry {
+  const dot = path.lastIndexOf('.')
+  return {
+    path,
+    router: path.slice(0, dot),
+    method: path.slice(dot + 1),
+    kind: 'query',
+    tier,
+    source: 'capability',
+    scope: null,
+    hasInput: true,
+  }
+}
+
+describe('callableBy', () => {
+  const getStatus = capEntry('switch.getStatus', 'protected')
+
+  it('refuses a principal whose grants do not reach the method', () => {
+    const other = token([{ type: 'capability', target: 'logs', access: ['view'] }])
+    expect(callableBy(other, getStatus)).toBe('no')
+  })
+
+  it('a device grant at the method access depends on the device the input names', () => {
+    const plug = token([{ type: 'device', selector: { kind: 'ids', ids: [7] }, access: ['view'] }])
+    expect(callableBy(plug, getStatus)).toBe('per-device')
+  })
+
+  it('a device grant at another access is refused', () => {
+    const viewOnly = token([{ type: 'device', selector: { kind: 'ids', ids: [7] }, access: ['view'] }])
+    expect(callableBy(viewOnly, capEntry('switch.setState', 'protected'))).toBe('no')
+  })
+
+  it('a capability grant on the cap reaches it outright', () => {
+    const cap = token([{ type: 'capability', target: 'switch', access: ['view'] }])
+    expect(callableBy(cap, getStatus)).toBe('yes')
+  })
+
+  it('an admin-tier core method is refused to a non-admin', () => {
+    const cap = token([{ type: 'capability', target: 'switch', access: ['view'] }])
+    expect(callableBy(cap, { ...capEntry('addons.restart', 'admin'), source: 'core' })).toBe('no')
+  })
+
+  it('a public method is callable by anyone', () => {
+    expect(callableBy(token([]), { ...getStatus, tier: 'public' })).toBe('yes')
   })
 })

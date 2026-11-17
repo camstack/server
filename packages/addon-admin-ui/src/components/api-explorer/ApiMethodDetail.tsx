@@ -7,9 +7,10 @@
  * Calls go through the admin UI's own tRPC client, with the operator's
  * session — no other auth path.
  */
-import type { ApiCatalogMethod } from '@camstack/types'
+import type { ApiCallable, ApiCatalogMethod } from '@camstack/types'
 import {
   Badge,
+  type BadgeVariant,
   Button,
   CodeBlock,
   CopyButton,
@@ -47,6 +48,18 @@ type RunOutcome =
   | { readonly kind: 'ok'; readonly value: unknown; readonly ms: number }
   | { readonly kind: 'error'; readonly error: ApiCallError; readonly ms: number }
 
+const CALLABLE_VARIANT: Readonly<Record<ApiCallable, BadgeVariant>> = {
+  yes: 'success',
+  'per-device': 'warning',
+  no: 'danger',
+}
+
+const CALLABLE_LABEL: Readonly<Record<ApiCallable, string>> = {
+  yes: 'system.apiExplorer.callableYes',
+  'per-device': 'system.apiExplorer.callablePerDevice',
+  no: 'system.apiExplorer.callableNo',
+}
+
 function skeletonText(schema: JsonSchema | null): string {
   const skeleton = skeletonFromSchema(schema)
   return skeleton === undefined ? '' : JSON.stringify(skeleton, null, 2)
@@ -72,7 +85,7 @@ export function ApiMethodDetail({ method }: ApiMethodDetailProps): ReactNode {
 
   const parsed = useMemo(() => parseInputText(text), [text])
   const issues: readonly InputIssue[] = parsed.ok ? checkInputAgainstSchema(parsed.value, schema) : []
-  const runnable = method.kind !== 'subscription' && method.callable
+  const runnable = method.kind !== 'subscription' && method.callable !== 'no'
   const canRun = runnable && parsed.ok && issues.length === 0 && !running
   const callKind = method.kind === 'mutation' ? 'mutation' : 'query'
   const curl = buildCurl({
@@ -137,13 +150,9 @@ export function ApiMethodDetail({ method }: ApiMethodDetailProps): ReactNode {
             },
             {
               key: t('system.apiExplorer.callable'),
-              value: method.callable ? (
-                <Badge variant="success" size="sm">
-                  {t('system.apiExplorer.callableYes')}
-                </Badge>
-              ) : (
-                <Badge variant="danger" size="sm">
-                  {t('system.apiExplorer.callableNo')}
+              value: (
+                <Badge variant={CALLABLE_VARIANT[method.callable]} size="sm">
+                  {t(CALLABLE_LABEL[method.callable])}
                 </Badge>
               ),
             },

@@ -42,7 +42,8 @@ const METHODS = RAW.map((m) => {
         ? null
         : { capName: m.cap.name, capScope: 'device', access: m.cap.access, role: 'viewer' },
     hasInput: m.hasInput,
-    callable: true,
+    // A device grant alone reaches getDevice: the explorer says it depends on the device.
+    callable: m.path === 'deviceManager.getDevice' ? 'per-device' : 'yes',
   }
 })
 

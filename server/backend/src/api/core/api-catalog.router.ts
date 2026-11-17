@@ -2,19 +2,23 @@
  * `apiCatalog.*` — the API explorer's data (planning#595), admin-only.
  *
  *   list         every method the hub serves: kind, tier, token scope, and
- *                whether the CALLER may call it (decided at path level, without
- *                an input — a device-scoped grant still checks the device on the
- *                real call)
+ *                whether the CALLER may call it: `yes`, `no`, or `per-device`
+ *                when only a device grant reaches it — the list has no input,
+ *                and the real call is decided on the device it names
  *   inputSchema  one method's input as JSON Schema, for the editor skeleton
  *
  * The router reads the app router it is mounted in through `getProcedures`,
  * which `buildAppRouter` resolves once the router exists.
  */
 import type {
+  ApiCallable,
   ApiCatalogEntry,
   ApiCatalogInputSchemaOutput,
   ApiCatalogListOutput,
+  CredentialScope,
 } from '@camstack/types'
+import { capabilityScopesOf } from '@camstack/types'
+import { METHOD_ACCESS_MAP } from '@camstack/server/system'
 import { z } from 'zod'
 import type { AuthenticatedAgent } from '../trpc/trpc.context.js'
 import { enforcedScopesOf } from '../trpc/device-access.js'
@@ -30,14 +34,33 @@ export type ProcedureSource = () => ServedProcedures
 
 const InputSchemaInput = z.object({ path: z.string().min(1) })
 
-function callableBy(user: AuthenticatedAgent, entry: ApiCatalogEntry): boolean {
-  if (entry.tier === 'public') return true
+/**
+ * A device-scoped cap method refused at path level, for a principal holding a
+ * device grant at the method's access: the matcher refuses only because no
+ * device is named (`checkScopeAccess`), so the real call is decided per device.
+ */
+function reachedPerDevice(scopes: readonly CredentialScope[], path: string): boolean {
+  const meta = METHOD_ACCESS_MAP[path]
+  if (meta === undefined || meta.capScope !== 'device') return false
+  return capabilityScopesOf(scopes).some(
+    (s) => s.type === 'device' && s.access.includes(meta.access),
+  )
+}
+
+/** May `user` call the method — `per-device` when it depends on the device the input names. */
+export function callableBy(user: AuthenticatedAgent, entry: ApiCatalogEntry): ApiCallable {
+  if (entry.tier === 'public') return 'yes'
   const scopes = enforcedScopesOf(user)
-  if (!authorizeProcedure(scopes, entry.path, undefined).ok) return false
-  if (entry.tier === 'admin') {
-    return user.isAdmin || viewerPassesAdminTier(user.scopes ?? [], entry.path)
+  const pathLevel: ApiCallable = authorizeProcedure(scopes, entry.path, undefined).ok
+    ? 'yes'
+    : reachedPerDevice(scopes, entry.path)
+      ? 'per-device'
+      : 'no'
+  if (pathLevel === 'no') return 'no'
+  if (entry.tier === 'admin' && !user.isAdmin && !viewerPassesAdminTier(user.scopes ?? [], entry.path)) {
+    return 'no'
   }
-  return true
+  return pathLevel
 }
 
 export function createApiCatalogRouter(getProcedures: ProcedureSource) {

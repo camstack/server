@@ -1381,7 +1381,8 @@
       "errorCapRoute": "Instradamento capability",
       "callFailed": "Chiamata fallita",
       "confirmTitle": "Eseguire una mutation?",
-      "confirmMessage": "{{method}} modifica lo stato di questo hub. Eseguirla con la tua sessione?"
+      "confirmMessage": "{{method}} modifica lo stato di questo hub. Eseguirla con la tua sessione?",
+      "callablePerDevice": "Dipende dal dispositivo"
     }
   },
   "common": {

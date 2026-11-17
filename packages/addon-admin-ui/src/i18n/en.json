@@ -1381,7 +1381,8 @@
       "errorCapRoute": "Capability route",
       "callFailed": "Call failed",
       "confirmTitle": "Run a mutation?",
-      "confirmMessage": "{{method}} changes state on this hub. Run it with your session?"
+      "confirmMessage": "{{method}} changes state on this hub. Run it with your session?",
+      "callablePerDevice": "Depends on the device"
     }
   },
   "common": {

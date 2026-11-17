@@ -36,12 +36,16 @@ export const ApiCatalogEntrySchema = z.object({
 })
 export type ApiCatalogEntry = z.infer<typeof ApiCatalogEntrySchema>
 
+/**
+ * May the CALLER call a method. The list has no input, so a method reached
+ * only through a device grant is `per-device`: the real call is allowed or
+ * refused on the device its input names.
+ */
+export const ApiCallableSchema = z.enum(['yes', 'no', 'per-device'])
+export type ApiCallable = z.infer<typeof ApiCallableSchema>
+
 export const ApiCatalogMethodSchema = ApiCatalogEntrySchema.extend({
-  /**
-   * May the CALLER call it — decided at path level, without an input: a
-   * device-scoped grant still checks the device on the real call.
-   */
-  callable: z.boolean(),
+  callable: ApiCallableSchema,
 })
 export type ApiCatalogMethod = z.infer<typeof ApiCatalogMethodSchema>
 

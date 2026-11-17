@@ -634,6 +634,8 @@ export {
   PREFERENCES_NAMESPACE_PATTERN,
 } from './schemas/user-preferences.js'
 export {
+  type ApiCallable,
+  ApiCallableSchema,
   type ApiCatalogEntry,
   ApiCatalogEntrySchema,
   type ApiCatalogInputSchemaOutput,
