@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Prebuffer, stall tolerance, wake-on-play and the recorder's wake now apply to cameras that sleep, not to every device that reports a battery
+- The stream broker and the recorder read a sleeping camera's state from its sleep status, not its battery status
 
 ## [1.2.657] - 2026-11-17
 

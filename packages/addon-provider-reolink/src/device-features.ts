@@ -57,14 +57,24 @@ export interface ReolinkFeatureInputs {
  * clears it). This makes the DERIVED answer sticky the same way, for the
  * window before any probe has ever succeeded.
  */
+/**
+ * The ONE Reolink answer to "is this a battery camera that sleeps" (#459, Q2).
+ * The published features (`BatteryOperated` + `Sleeps`) and the registration
+ * of the `battery` and `low-power-sleep` caps both ask it, so a camera that
+ * claims `Sleeps` in the stream catalog is also one the registry can wake.
+ */
+export function reolinkCameraSleeps(inputs: ReolinkFeatureInputs): boolean {
+  return inputs.probe.hasBattery === true || inputs.isBattery
+}
+
 export function deriveReolinkCameraFeatures(inputs: ReolinkFeatureInputs): DeviceFeature[] {
-  const { probe, isBattery } = inputs
+  const { probe } = inputs
   const out: DeviceFeature[] = [DeviceFeature.NativeSnapshot, DeviceFeature.Rebootable]
   // A Reolink battery camera always sleeps: `Sleeps` rides with it so the
   // stream catalog (which carries THESE features, not the registry's) knows
   // to wake it. The registry derives its own Sleeps from the low-power-sleep
   // binding (#459, Q2).
-  if (probe.hasBattery === true || isBattery) {
+  if (reolinkCameraSleeps(inputs)) {
     out.push(DeviceFeature.BatteryOperated, DeviceFeature.Sleeps)
   }
   if (probe.hasPtz === true) out.push(DeviceFeature.PanTiltZoom)

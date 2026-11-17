@@ -60,13 +60,16 @@ function makeManager(options: {
     },
     deviceState: {
       getCapSlice: {
-        query: async () => ({
-          percentage: 99,
-          charging: 'dc',
-          sleeping: true,
-          lastUpdated: Date.now(),
-          lastContactAt: Date.now(),
-        }),
+        query: async (input: { capName: string }) =>
+          input.capName !== 'low-power-sleep'
+            ? null
+            : {
+                percentage: 99,
+                charging: 'dc',
+                sleeping: true,
+                lastUpdated: Date.now(),
+                lastContactAt: Date.now(),
+              },
       },
     },
     lowPowerSleep: {

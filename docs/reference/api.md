@@ -3330,7 +3330,7 @@
 
 ### `low-power-sleep` → `lowPowerSleep.*`
 
-- **Source:** `packages/types/src/capabilities/low-power-sleep.cap.ts:38`
+- **Source:** `packages/types/src/capabilities/low-power-sleep.cap.ts:41`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `ILowPowerSleepProvider`

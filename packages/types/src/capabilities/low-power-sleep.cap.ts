@@ -13,8 +13,11 @@ import { readingMeta } from '../units/quantity.js'
  * and `DeviceFeature.Sleeps` is derived from it being bound with
  * `wakeForStream` implemented.
  *
- * The state is the sleep inputs every consumer reads (`deriveBatteryPresence`):
- * whether the device is asleep, and the last time it PROVED it was reachable.
+ * The state is the sleep inputs (`deriveBatteryPresence`): whether the device
+ * is asleep, and the last time it PROVED it was reachable. Read from this slice
+ * by the stream broker (`readBatterySleepFacts`), the recorder
+ * (`recordingWakeDeps`) and the snapshot builtin. The broker's per-device
+ * mirror is still also fed by `BatteryOnStatusChanged` events.
  */
 export const LowPowerSleepStatusSchema = z.object({
   /**

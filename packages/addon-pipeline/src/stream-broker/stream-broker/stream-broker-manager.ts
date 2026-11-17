@@ -39,8 +39,8 @@ import type {
   SystemEvent,
 } from '@camstack/types'
 import {
-  BatteryStatusSchema,
-  batteryCapability,
+  LowPowerSleepStatusSchema,
+  lowPowerSleepCapability,
   CAM_PROFILE_ORDER,
   createHwAccelCache,
   DeviceFeature,
@@ -5459,10 +5459,12 @@ export class StreamBrokerManager {
   private async readBatterySleepFacts(deviceId: number): Promise<BatterySleepFacts | null> {
     const api = this.api
     if (!api) return null
+    // The sleep inputs live on `low-power-sleep` (#459): the cap that says
+    // the device sleeps is the one asked how it sleeps.
     const slice = await api.deviceState.getCapSlice
-      .query({ deviceId, capName: batteryCapability.name })
+      .query({ deviceId, capName: lowPowerSleepCapability.name })
       .catch(() => null)
-    const parsed = BatteryStatusSchema.safeParse(slice)
+    const parsed = LowPowerSleepStatusSchema.safeParse(slice)
     if (!parsed.success) return null
     return { sleeping: parsed.data.sleeping, lastContactAt: parsed.data.lastContactAt }
   }

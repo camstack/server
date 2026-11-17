@@ -106,7 +106,12 @@ import { resolveCameraUid } from './clips/clip-addressing.js'
 import { buildClipRefreshDeviceSection } from './clips/clip-refresh-settings.js'
 import type { ClipDeviceRef } from './clips/reolink-videoclips-provider.js'
 import { capDayNightModeToReolink, reolinkDayNightModeToCap } from './day-night-mapping.js'
-import { deriveReolinkCameraFeatures, type ReolinkProbeFlags } from './device-features.js'
+import {
+  deriveReolinkCameraFeatures,
+  reolinkCameraSleeps,
+  type ReolinkFeatureInputs,
+  type ReolinkProbeFlags,
+} from './device-features.js'
 import type { EmailPushParamsResolver } from './email-push-shared.js'
 import { reolinkExposureModeToCap } from './image-settings-mapping.js'
 import { denormalizeFromPercent, normalizeToPercent } from './image-value-normalization.js'
@@ -728,10 +733,12 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
   }
 
   get features(): readonly DeviceFeature[] {
-    return deriveReolinkCameraFeatures({
-      probe: this.getProbeFlags<ReolinkProbeFlags>(),
-      isBattery: this.isBattery,
-    })
+    return deriveReolinkCameraFeatures(this.featureInputs())
+  }
+
+  /** What the features and the battery / sleep registration both read. */
+  private featureInputs(): ReolinkFeatureInputs {
+    return { probe: this.getProbeFlags<ReolinkProbeFlags>(), isBattery: this.isBattery }
   }
 
   /** Lazy-connected Baichuan API. Spans the lifetime of every active stream. */
@@ -2954,7 +2961,9 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
    */
   private registerBatteryIfSupported(): void {
     if (this.batteryRegistered) return
-    if (!this.isBattery) return
+    // Same predicate as the published `Sleeps` feature: a camera the catalog
+    // calls a sleeper is one the registry can wake (#459, Q2).
+    if (!reolinkCameraSleeps(this.featureInputs())) return
     this.batteryRegistered = true
 
     const provider: InferNativeProvider<typeof batteryCapability> = {
@@ -12251,6 +12260,11 @@ export class ReolinkCamera extends BaseDevice<typeof reolinkCameraSchema> implem
     // call failed at the routing layer before any talk-session code ran (zero
     // intercom logs), and the two-way-audio panel closed immediately.
     this.registerIntercomIfSupported()
+    // A probe that found a battery makes this camera a sleeper by the same
+    // predicate the features use (`reolinkCameraSleeps`): register its
+    // battery and low-power-sleep caps, so the published `Sleeps` never
+    // outruns the binding the registry derives it from (#459, Q2).
+    this.registerBatteryIfSupported()
 
     // NOTE: hardware metadata refresh is NOT gated on the feature
     // probe — `adoptApi` / `ensureApi` already trigger it on every

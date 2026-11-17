@@ -101,7 +101,14 @@ function fakeApi(answers: {
         },
       },
     },
-    deviceState: { getCapSlice: { query: async () => answers.slice } },
+    // The sleep inputs are the `low-power-sleep` slice (#459); a battery slice
+    // carries no sleep the sweep may believe.
+    deviceState: {
+      getCapSlice: {
+        query: async (input: { capName: string }) =>
+          input.capName === 'low-power-sleep' ? answers.slice : null,
+      },
+    },
   }
   return Reflect.construct(Object, [api]) as AddonApi
 }
