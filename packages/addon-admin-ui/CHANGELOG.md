@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The device page of a workload shows its card: state, actions, resources, image, ports, addresses and the host
 - Build-your-self offers Camera grid and Terminal camera blocks; the Camera grids page is gone, recreate old grids as blocks.
 - Archive Review says why when the track read fails instead of leaving the zone and face / plate filters silently empty; Library → Exports declares its ?camera= filter, so switching to another Library section drops it.
 ### Added
@@ -39,7 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - System → Settings no longer lists addon settings tabs; each addon's cluster settings moved to its page (Pipeline streaming/recording/semantic search, History retention, Nodes metrics), the rest stay in the addon's settings dialog
 - Pipeline → Settings → Faces draws the face-suggestion refresh interval; an addon's settings dialog leaves out the role pickers drawn on Roles & nodes and links there
 - Every notification rule kind (summaries, timelapses, calendar events) has a Tags field; every Rules area filters and groups by tag, and All names a kind whose list failed instead of looking empty
-- The device page of a workload shows its card: state, actions, resources, image, ports, addresses and the host
 
 ## [1.2.690] - 2026-11-16
 

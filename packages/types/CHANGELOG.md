@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A workload host that answers again after going down is worded 'Back online'
+- The workload device type is drawn by its own card kind instead of the placeholder
 - A camera grid or Terminal camera block's device is served by its engine on the composer's row; the engine alone reports its status and feature probe (engine-hosted blocks).
 ### Added
 
@@ -41,8 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - terminalSession.listSessions names who opened each session (openedBy) and when it last saw input or output (lastActivityAt).
 - Summaries, timelapses and calendar-events rules carry tags too; the tags list shows an unreachable owner's count as unknown
-- A workload host that answers again after going down is worded 'Back online'
-- The workload device type is drawn by its own card kind instead of the placeholder
 
 ## [1.2.585] - 2026-11-16
 
