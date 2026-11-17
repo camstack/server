@@ -66,6 +66,7 @@ function setup(factory: FakeFactory) {
     random: () => 0.5,
     onConnected: (id) => events.push(`up:${id}`),
     onDisconnected: (id) => events.push(`down:${id}`),
+    onPermanentFailure: (id, reason) => events.push(`permanent:${id}:${reason}`),
   })
   return { registry, hub, lines, queue, events }
 }
@@ -130,6 +131,30 @@ describe('board session', () => {
     await flush()
     expect(registry.get(entry.id)?.status).toBe('auth-failed')
     expect(queue.filter((q) => !q.cancelled)).toHaveLength(0)
+  })
+
+  it('a permanent failure is reported once with its reason; a transient one is not', async () => {
+    const bad = new EspLinkError('encryption-key-invalid', 'rejected')
+    const { registry, events } = setup(new FakeFactory(bad))
+    const entry = await registry.createEntry('Board A', connection)
+    await flush()
+    expect(events).toEqual([`permanent:${entry.id}:encryption-key-invalid`])
+
+    const refused = new EspLinkError('refused', 'connection refused')
+    const other = setup(new FakeFactory(refused))
+    await other.registry.createEntry('Board B', connection)
+    await flush()
+    expect(other.events).toEqual([])
+  })
+
+  it('a session that drops with a rejected key reports it as permanent', async () => {
+    const link = new FakeLink([])
+    const { registry, events } = setup(new FakeFactory(link))
+    const entry = await registry.createEntry('Board A', connection)
+    await flush()
+    link.drop(new EspLinkError('encryption-key-invalid', 'rejected'))
+    await flush()
+    expect(events).toContain(`permanent:${entry.id}:encryption-key-invalid`)
   })
 
   it('changing the connection after a permanent failure tries again', async () => {

@@ -38,6 +38,12 @@ export interface EspRegistryDeps {
   readonly random?: () => number
   readonly onConnected?: (brokerId: string) => void
   readonly onDisconnected?: (brokerId: string) => void
+  /**
+   * Fires each time a board stops on a failure the operator must fix (no retry
+   * is scheduled). Telemetry for the caller: the board's own state is already
+   * recorded, and nothing here waits on the callback.
+   */
+  readonly onPermanentFailure?: (brokerId: string, reason: EspFailureReason) => void
 }
 
 const defaultSchedule: EspScheduler = (run, delayMs) => {
@@ -100,7 +106,7 @@ class BoardSession {
     private readonly deps: Required<
       Pick<EspRegistryDeps, 'factory' | 'logger' | 'hub' | 'schedule' | 'random'>
     > &
-      Pick<EspRegistryDeps, 'onConnected' | 'onDisconnected'>,
+      Pick<EspRegistryDeps, 'onConnected' | 'onDisconnected' | 'onPermanentFailure'>,
   ) {}
 
   get connected(): boolean {
@@ -197,7 +203,10 @@ class BoardSession {
     this.status = statusForReason(failure.reason)
     this.error = scrubSecrets(failure.message, this.connection)
     this.lastCheckedAt = Date.now()
-    if (isPermanentFailure(failure.reason)) return
+    if (isPermanentFailure(failure.reason)) {
+      this.deps.onPermanentFailure?.(this.id, failure.reason)
+      return
+    }
     const delay = reconnectDelayMs(this.attempt, this.deps.random())
     this.attempt += 1
     this.cancelRetry = this.deps.schedule(() => {
@@ -238,6 +247,9 @@ export class EspBrokerRegistry {
       random: deps.random ?? Math.random,
       ...(deps.onConnected !== undefined ? { onConnected: deps.onConnected } : {}),
       ...(deps.onDisconnected !== undefined ? { onDisconnected: deps.onDisconnected } : {}),
+      ...(deps.onPermanentFailure !== undefined
+        ? { onPermanentFailure: deps.onPermanentFailure }
+        : {}),
     }
   }
 

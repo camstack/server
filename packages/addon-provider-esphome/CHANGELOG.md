@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A board that rejects its encryption key reads the key again from the key source once, and stores it if one was found; it fetches again only after the board has connected
+
 ## [0.1.22] - 2026-11-14
 
 ### Added

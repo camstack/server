@@ -58,6 +58,7 @@ import {
   summarizeImport,
   type KeySourceClient,
 } from './esphome-key-import.js'
+import { EspKeyRotation } from './esphome-key-rotation.js'
 import type { EspServiceArgValue, EspServiceInfo } from './esphome-link.js'
 
 export { espServiceActions as customActions } from './custom-actions.js'
@@ -81,6 +82,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
   private services: EspServiceRunner | null = null
   private brokerStore: EspBrokerStore | null = null
   private integrationBoards: EspIntegrationBoards | null = null
+  private keyRotation: EspKeyRotation | null = null
 
   constructor() {
     super({ ...DEFAULTS })
@@ -125,10 +127,14 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
       factory: clientLinkFactory,
       logger: this.ctx.logger,
       onConnected: (brokerId) => {
+        this.keyRotation?.onConnected(brokerId)
         this.setBrokerDevicesOnline(brokerId, true)
         this.notifyBoardConnected(brokerId)
       },
       onDisconnected: (brokerId) => this.setBrokerDevicesOnline(brokerId, false),
+      onPermanentFailure: (brokerId, reason) => {
+        void this.keyRotation?.onPermanentFailure(brokerId, reason)
+      },
     })
     const registry = this.registry
     this.integrationBoards = new EspIntegrationBoards({
@@ -143,6 +149,12 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
       store: buildEspBoardsStore(records, instances),
       cascadeRemoveDevices: (boardId) => this.cascadeRemoveDevicesForBroker(boardId),
       logger: this.ctx.logger,
+    })
+    this.keyRotation = new EspKeyRotation({
+      boards: this.integrationBoards,
+      keySources: () => this.keySources(),
+      logger: this.ctx.logger.child('key-rotation'),
+      deviceIdFor: (boardId) => this.containersFor(boardId)[0]?.id,
     })
     // Does not wait for any board to answer: an unreachable board must not hold
     // the addon's boot, and it retries on its own bounded schedule.
@@ -220,6 +232,7 @@ export class ESPHomeProviderAddon extends BaseDeviceProvider<EspAddonConfig> {
       this.ctx.logger.warn('ESPHome: provider shutdown error', { meta: { error: errMsg(err) } })
     }
     this.registry = null
+    this.keyRotation = null
     await super.onShutdown()
   }
 
