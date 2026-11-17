@@ -7,14 +7,16 @@ import {
 
 /**
  * LAN discovery of an Unraid server: its GraphQL endpoint answers the introspection question
- * `{__typename}` without credentials (`{"data":{"__typename":"Query"}}`). The scan engine sends it
+ * `{__type(name:"UnraidArray"){name}}` without credentials, and only Unraid's schema has that type
+ * (any other GraphQL server answers `__type: null`; checked on a real Unraid 2026-11-17). The scan engine sends it
  * to every host on port 80, and on 443 over TLS for a server that serves only https; this module
  * reads the answers. The API key is still asked when the integration is set up.
  */
 const GRAPHQL_PATH = '/graphql'
 const PLAIN_PORT = 80
 const TLS_PORT = 443
-const PROBE_BODY = JSON.stringify({ query: '{__typename}' })
+const UNRAID_ONLY_TYPE = 'UnraidArray'
+const PROBE_BODY = JSON.stringify({ query: `{__type(name:"${UNRAID_ONLY_TYPE}"){name}}` })
 
 function graphqlProbe(port: number, tls: boolean): DiscoveryMode {
   return {
@@ -35,7 +37,7 @@ export const UNRAID_DISCOVERY_MODES: readonly DiscoveryMode[] = [
   graphqlProbe(TLS_PORT, true),
 ]
 
-/** Whether a body is the GraphQL answer `{"data":{"__typename":"Query"}}`. */
+/** Whether a body is the GraphQL answer `{"data":{"__type":{"name":"UnraidArray"}}}`. */
 export function isUnraidGraphqlAnswer(status: number, text: string): boolean {
   if (status !== 200) return false
   let parsed: unknown
@@ -47,7 +49,9 @@ export function isUnraidGraphqlAnswer(status: number, text: string): boolean {
   if (typeof parsed !== 'object' || parsed === null) return false
   const data: unknown = Reflect.get(parsed, 'data')
   if (typeof data !== 'object' || data === null) return false
-  return Reflect.get(data, '__typename') === 'Query'
+  const type: unknown = Reflect.get(data, '__type')
+  if (typeof type !== 'object' || type === null) return false
+  return Reflect.get(type, 'name') === UNRAID_ONLY_TYPE
 }
 
 /** One Unraid server found on the LAN, with the way it answered. */
@@ -137,6 +141,8 @@ export function unraidServerCandidates(
         host: server.host,
         port: server.port,
         https: server.https,
+        // The scan reached it by IP over TLS: its certificate is self-signed or names another host.
+        allowSelfSigned: server.https,
       },
       setupIntegration: true,
     })

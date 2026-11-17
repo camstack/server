@@ -7,7 +7,7 @@ import {
   unraidServersFromHits,
 } from '../unraid-lan-discovery.js'
 
-const ANSWER = JSON.stringify({ data: { __typename: 'Query' } })
+const ANSWER = JSON.stringify({ data: { __type: { name: 'UnraidArray' } } })
 
 const hit = (host: string, port: number, bodyText: string, status = 200): DiscoveryHit => ({
   modeIndex: port === 80 ? 0 : 1,
@@ -17,8 +17,8 @@ const hit = (host: string, port: number, bodyText: string, status = 200): Discov
 })
 
 describe('UNRAID_DISCOVERY_MODES', () => {
-  it('asks {__typename} of /graphql on 80 plain and 443 over TLS', () => {
-    const body = JSON.stringify({ query: '{__typename}' })
+  it('asks for the Unraid-only UnraidArray type of /graphql on 80 plain and 443 over TLS', () => {
+    const body = JSON.stringify({ query: '{__type(name:"UnraidArray"){name}}' })
     expect(UNRAID_DISCOVERY_MODES).toEqual([
       {
         kind: 'http-probe',
@@ -45,13 +45,15 @@ describe('UNRAID_DISCOVERY_MODES', () => {
 })
 
 describe('isUnraidGraphqlAnswer', () => {
-  it('accepts only the GraphQL Query answer', () => {
+  it('accepts only an answer that knows the UnraidArray type', () => {
+    // Any GraphQL server answers {__typename}; a non-Unraid schema answers __type: null.
+    expect(isUnraidGraphqlAnswer(200, JSON.stringify({ data: { __typename: 'Query' } }))).toBe(
+      false,
+    )
+    expect(isUnraidGraphqlAnswer(200, JSON.stringify({ data: { __type: null } }))).toBe(false)
     expect(isUnraidGraphqlAnswer(200, ANSWER)).toBe(true)
     expect(isUnraidGraphqlAnswer(401, ANSWER)).toBe(false)
     expect(isUnraidGraphqlAnswer(200, '<html>login</html>')).toBe(false)
-    expect(isUnraidGraphqlAnswer(200, JSON.stringify({ data: { __typename: 'Mutation' } }))).toBe(
-      false,
-    )
     expect(isUnraidGraphqlAnswer(200, JSON.stringify({ errors: [{ message: 'nope' }] }))).toBe(
       false,
     )
@@ -87,14 +89,14 @@ describe('unraidServerCandidates', () => {
         stableId: 'unraid-server:192.0.2.20',
         type: DeviceType.Gateway,
         suggestedName: 'Unraid - 192.0.2.20',
-        prefilledConfig: { host: '192.0.2.20', port: 80, https: false },
+        prefilledConfig: { host: '192.0.2.20', port: 80, https: false, allowSelfSigned: false },
         setupIntegration: true,
       },
       {
         stableId: 'unraid-server:192.0.2.21',
         type: DeviceType.Gateway,
         suggestedName: 'Unraid - 192.0.2.21',
-        prefilledConfig: { host: '192.0.2.21', port: 443, https: true },
+        prefilledConfig: { host: '192.0.2.21', port: 443, https: true, allowSelfSigned: true },
         setupIntegration: true,
       },
     ])
