@@ -66,6 +66,7 @@ import type {
 } from '@camstack/types'
 import type { RetiredRowStore } from '../sqlite-storage/retired-settings-keys.js'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
+import type { DeviceRowObserver } from './device-identity-index.js'
 import { FleetReadCensus } from './fleet-read-census.js'
 import { MigrationRefusedError } from './migration-refused.js'
 
@@ -519,6 +520,8 @@ export class DeviceRowStore {
     private readonly backend: DeviceRowBackend,
     private readonly logger: IScopedLogger,
     census?: FleetReadCensus,
+    /** Told of every row write after it succeeded — the identifier index (planning#593). */
+    private readonly observer?: DeviceRowObserver,
   ) {
     this.census =
       census ?? new FleetReadCensus(process.env['CAMSTACK_FLEET_READ_CENSUS_MS'], Date.now())
@@ -835,6 +838,7 @@ export class DeviceRowStore {
       key: String(meta.id),
       value: encodeDeviceRow(meta, extra),
     })
+    this.observer?.rowWritten(meta)
   }
 
   /**
@@ -862,7 +866,9 @@ export class DeviceRowStore {
         tags: { deviceId },
         meta: { columns: Object.keys(columns) },
       })
+      return
     }
+    this.observer?.rowPatched(deviceId, patch)
   }
 
   /**
@@ -889,6 +895,7 @@ export class DeviceRowStore {
         exportFingerprint: row.exportFingerprint,
       },
     })
+    this.observer?.registrationWritten(row)
   }
 
   /** Drop the device's row. Idempotent. */
@@ -1003,6 +1010,7 @@ export class DeviceRowStore {
   async remove(deviceId: number): Promise<void> {
     await this.declare()
     await this.backend.delete({ collection: DEVICE_ROWS_COLLECTION, key: String(deviceId) })
+    this.observer?.rowRemoved(deviceId)
   }
 
   /**

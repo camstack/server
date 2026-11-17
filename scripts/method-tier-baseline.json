@@ -314,6 +314,7 @@
   "deviceManager.listDeletedSince": "admin",
   "deviceManager.listDeviceIdsByCaps": "protected",
   "deviceManager.listDiscoveryProposals": "admin",
+  "deviceManager.listIdentityCandidates": "admin",
   "deviceManager.listLocationDescriptions": "protected",
   "deviceManager.listLocationIcons": "protected",
   "deviceManager.listLocations": "protected",

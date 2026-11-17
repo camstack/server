@@ -86,6 +86,7 @@ import { createDeviceManagerExtensionProvider } from './device-extension-linked-
 import { getLinkedDevices, getLinkedDevicesBatch } from './device-linked-devices.js'
 import * as metaActions from './device-meta-actions.js'
 import { setIdentifiers } from './device-identifiers-action.js'
+import { DeviceIdentityIndex } from './device-identity-index.js'
 import { runLocationBackfillAtBoot } from './location-alignment.js'
 import { runLinkedDevicesManualBackfillAtBoot } from './linked-devices-manual-backfill.js'
 import * as aliasActions from './device-alias-actions.js'
@@ -693,9 +694,15 @@ export class DeviceManagerAddon extends BaseAddon {
         '[device-manager] settings-store API not available — refusing to serve a fleet it cannot persist',
       )
     }
+    // The identifier index (planning#593) observes every row write from here
+    // on; it is seeded from the boot fleet listing below and answers `unknown`
+    // until then.
+    const identityIndex = new DeviceIdentityIndex()
     const deviceRows = new DeviceRowStore(
       deviceRowBackendOf(settingsStoreApi),
       this.ctx.logger.child('rows'),
+      undefined,
+      identityIndex,
     )
     await deviceRows.declare()
     this.deviceRows = deviceRows
@@ -806,6 +813,7 @@ export class DeviceManagerAddon extends BaseAddon {
     // a clean boot pays exactly this one fleet listing, same as before.
     const bootRows = await deviceRows.listAll()
     for (const row of bootRows) idToAddonId.set(row.meta.id, row.meta.addonId)
+    identityIndex.seed(bootRows)
 
     // D3 note: The previous pull-based recovery triggers (`$node.connected` →
     // `syncWorkerNativeCaps` and `AddonRestarted` → `syncWorkerNativeCaps`)
@@ -961,6 +969,7 @@ export class DeviceManagerAddon extends BaseAddon {
       setRole: (input) => metaActions.setRole(pctx, input),
       setDisplay: (input) => metaActions.setDisplay(pctx, input),
       setIdentifiers: (input) => setIdentifiers(pctx, input),
+      listIdentityCandidates: async () => identityIndex.candidates(),
       getRoleDisplayDefaults: (input) => metaActions.getRoleDisplayDefaults(pctx, input),
       setRoleDisplayDefaults: (input) => metaActions.setRoleDisplayDefaults(pctx, input),
       applyInitialMeta: (input) => metaActions.applyInitialMeta(pctx, input),

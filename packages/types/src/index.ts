@@ -1383,6 +1383,21 @@ export type {
   IdentifiersWriter,
   SetIdentifiersInput,
 } from './device/declare-identifiers.js'
+// Cross-integration identity candidates (planning#593)
+export {
+  IdentityCandidateDeviceSchema,
+  IdentityCandidatePairSchema,
+  IdentityCandidatesSchema,
+  IdentityConfidenceSchema,
+  IdentityMatchedKeySchema,
+} from './device/device-identity-candidates.js'
+export type {
+  IdentityCandidateDevice,
+  IdentityCandidatePair,
+  IdentityCandidates,
+  IdentityConfidence,
+  IdentityMatchedKey,
+} from './device/device-identity-candidates.js'
 // Device management
 export type {
   ChildLayout,
