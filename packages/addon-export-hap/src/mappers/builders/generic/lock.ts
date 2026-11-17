@@ -9,15 +9,19 @@
  *  cap state    LockCurrentState   LockTargetState
  *  locked       SECURED            SECURED
  *  unlocked     UNSECURED          UNSECURED
- *  locking      UNKNOWN            SECURED      (in flight — do not claim SECURED)
- *  unlocking    UNKNOWN            UNSECURED
+ *  locking      unchanged          SECURED      (in flight — do not claim SECURED)
+ *  unlocking    unchanged          UNSECURED
  *  jammed       JAMMED             unchanged    (the controller's intent stands)
  *  door-open    UNSECURED          UNSECURED    (D984: the linked door contact reads open)
  * ```
  *
  * Reporting SECURED while the bolt is still moving is the failure worth naming:
  * iOS renders the lock as closed, the operator walks away, and the motor stalls
- * behind them. `UNKNOWN` is the honest answer for an in-flight transition.
+ * behind them. An in-flight transition therefore moves only the TARGET (the
+ * command) and leaves the current state where the device last put it — which
+ * is also what the server's command hold (D1061) needs: while a lock command
+ * is held the served slice reads `locking`, and a bolt that bounces back must
+ * never have been shown as SECURED.
  *
  * `open` (the cap's third method, for locks with a latch/buzzer) has no HomeKit
  * counterpart on this service and is deliberately not wired — a Switch that
@@ -42,7 +46,9 @@ const readLock = reader(LockControlStatusSchema.pick({ state: true }), (status) 
         ? Characteristic.LockCurrentState.UNSECURED
         : status.state === 'jammed'
           ? Characteristic.LockCurrentState.JAMMED
-          : Characteristic.LockCurrentState.UNKNOWN
+          : status.state === 'locking' || status.state === 'unlocking'
+            ? null
+            : Characteristic.LockCurrentState.UNKNOWN
   const target =
     status.state === 'locked' || status.state === 'locking'
       ? Characteristic.LockTargetState.SECURED
@@ -50,7 +56,9 @@ const readLock = reader(LockControlStatusSchema.pick({ state: true }), (status) 
         ? Characteristic.LockTargetState.UNSECURED
         : null
   return [
-    { characteristic: Characteristic.LockCurrentState, value: current },
+    ...(current === null
+      ? []
+      : [{ characteristic: Characteristic.LockCurrentState, value: current }]),
     ...(target === null ? [] : [{ characteristic: Characteristic.LockTargetState, value: target }]),
   ]
 })

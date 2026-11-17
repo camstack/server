@@ -398,6 +398,49 @@ describe('the generic accessory', () => {
     await mapper.dispose()
   })
 
+  it('keeps the current state while a lock is in flight: target = commanded, current unchanged (D1061)', async () => {
+    const listeners: Array<(value: unknown) => void> = []
+    const push = (value: unknown): void => {
+      for (const listener of listeners) listener(value)
+    }
+    const proxy: FakeProxy = {
+      ...makeProxy(['lock-control'], DeviceType.Lock, {
+        lockControl: {
+          getStatus: async () => ({ state: 'unlocked', lastChangedAt: 1 }),
+          lock: async () => undefined,
+          unlock: async () => undefined,
+        },
+      }),
+      state: {
+        lockControl: {
+          subscribe: (listener: (value: unknown) => void) => {
+            listeners.push(listener)
+            return () => undefined
+          },
+        },
+      },
+    }
+    const mapper = await build(proxy)
+    const service = serviceOfType(mapper.accessory, Service.LockMechanism)
+    const current = () => service?.getCharacteristic(Characteristic.LockCurrentState).value
+    const target = () => service?.getCharacteristic(Characteristic.LockTargetState).value
+
+    // The served slice holds `locking` while the command is in flight.
+    push({ state: 'locking', lastChangedAt: 2 })
+    expect(target()).toBe(Characteristic.LockTargetState.SECURED)
+    expect(current()).toBe(Characteristic.LockCurrentState.UNSECURED)
+
+    // The bolt bounced back: the hold ran out on the pre-command value.
+    push({ state: 'unlocked', lastChangedAt: 3 })
+    expect(current()).toBe(Characteristic.LockCurrentState.UNSECURED)
+    expect(target()).toBe(Characteristic.LockTargetState.UNSECURED)
+
+    push({ state: 'unlocking', lastChangedAt: 4 })
+    push({ state: 'locked', lastChangedAt: 5 })
+    expect(current()).toBe(Characteristic.LockCurrentState.SECURED)
+    await mapper.dispose()
+  })
+
   it('publishes one service per sensor capability, each separately labelled', async () => {
     const proxy = makeProxy(['temperature-sensor', 'humidity-sensor'], DeviceType.Sensor, {
       temperatureSensor: { getStatus: async () => ({ temperature: 21.5, lastFetchedAt: 1 }) },

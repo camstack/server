@@ -277,6 +277,21 @@ export type VocabSideEffectFor<C extends VocabCapName, M extends CapMethodName<C
     | { readonly field: CapStatusField<C>; readonly notIn: readonly VocabEffectValue[] }
 }
 
+/**
+ * How the hub holds an action's command (D1061) when its `effect` is not what
+ * to show before the device answers.
+ */
+export interface VocabActionHoldFor<C extends VocabCapName, M extends CapMethodName<C>> {
+  /**
+   * Held INSTEAD of `effect` and `sideEffects`. A lock holds `locking`, never
+   * `locked`: a bolt that did not throw must never read as locked. A one-shot
+   * (feed, run) holds its in-progress flag, so a second tap is refused.
+   */
+  readonly effects?: readonly VocabSideEffectFor<C, M>[]
+  /** The hold's limit in ms (default 30 s). A one-shot is held only long enough to refuse a double tap. */
+  readonly holdMs?: number
+}
+
 /** One operator-facing action: a cap method call with a phrase. */
 export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<C>> {
   /** Stable id — persisted by pickers as a select value (`switch.on`). */
@@ -298,6 +313,8 @@ export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<
   readonly effect?: VocabEffectFor<C, M>
   /** Further states the command leads to, each under an optional condition (see {@link VocabSideEffectFor}). */
   readonly sideEffects?: readonly VocabSideEffectFor<C, M>[]
+  /** How the hub holds this command while the device has not answered (see {@link VocabActionHoldFor}). */
+  readonly hold?: VocabActionHoldFor<C, M>
   /** When a device is offered it at all: a read of this cap answering `false` at `field` withdraws it. */
   readonly offeredWhen?: { readonly method: CapMethodName<C>; readonly field: string }
 }
@@ -530,7 +547,14 @@ export interface LooseVocabAction {
   readonly openArgs?: readonly LooseVocabOpenArg[]
   readonly effect?: LooseVocabEffect
   readonly sideEffects?: readonly LooseVocabSideEffect[]
+  readonly hold?: LooseVocabActionHold
   readonly offeredWhen?: LooseVocabActionGate
+}
+
+/** An action's hold as a consumer reads it (see {@link VocabActionHoldFor}). */
+export interface LooseVocabActionHold {
+  readonly effects?: readonly LooseVocabSideEffect[]
+  readonly holdMs?: number
 }
 
 /** When a device is offered an action, string-keyed (`MethodActionGate`). */

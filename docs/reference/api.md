@@ -3803,7 +3803,7 @@
 
 ### `pet-feeder` → `petFeeder.*`
 
-- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:138`
+- **Source:** `packages/types/src/capabilities/pet-feeder.cap.ts:139`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `pet-feeder`
 - **Archetypes:** status(poll) · runtimeState
 - **Provider interface:** `IPetFeederProvider`
@@ -4494,7 +4494,7 @@
 
 ### `script-runner` → `scriptRunner.*`
 
-- **Source:** `packages/types/src/capabilities/script-runner.cap.ts:33`
+- **Source:** `packages/types/src/capabilities/script-runner.cap.ts:34`
 - **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `script`
 - **Archetypes:** status(push) · runtimeState
 - **Provider interface:** `IScriptRunnerProvider`

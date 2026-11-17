@@ -12,6 +12,7 @@
 import { actionEffect, allVocabActions, findVocabAction, vocabActionIdFor } from './action-index.js'
 import { CAP_VOCABULARY_BY_NAME } from './vocabulary.js'
 import type {
+  LooseVocabActionHold,
   LooseVocabOpenArg,
   LooseVocabSideEffect,
   VocabEffectCondition,
@@ -142,12 +143,48 @@ export function resolveSideEffect(
 }
 
 /**
+ * The hold limit the vocabulary declares for `cap.method(args)` (its action's
+ * `hold.holdMs`), or `undefined` for the default.
+ */
+export function commandHoldMs(
+  cap: string,
+  method: string,
+  args: Readonly<Record<string, unknown>> | undefined,
+): number | undefined {
+  return holdFor(cap, method, args)?.holdMs
+}
+
+/**
+ * The hold the vocabulary declares for `cap.method(args)`: the matched
+ * action's, or — when several actions share the method and the args cannot
+ * tell them apart (`petFeeder.feed` / `feedHoppers`) — the one they all
+ * declare alike. Different holds on such actions resolve to none.
+ */
+function holdFor(
+  cap: string,
+  method: string,
+  args: Readonly<Record<string, unknown>> | undefined,
+): LooseVocabActionHold | undefined {
+  const actionId = vocabActionIdFor(cap, method, args)
+  if (actionId !== undefined) return findVocabAction(actionId)?.action.hold
+  const holds = allVocabActions()
+    .filter(({ cap: c, action }) => c === cap && action.method === method)
+    .map(({ action }) => action.hold)
+  const first = holds[0]
+  if (first === undefined) return undefined
+  const key = JSON.stringify(first)
+  return holds.every((h) => JSON.stringify(h) === key) ? first : undefined
+}
+
+/**
  * EVERY state the command `cap.method(args)` leads to (D1061): its `effect`
  * first, then each side effect whose condition holds on `current` (the cap's
  * slice the device reported when the command arrived). Empty when it leads to
  * none. One field is named once — the first entry for it wins. A `negate`
  * side effect flips what `shown` (the slice the person saw, held values
  * included) holds, so a second toggle before the first is confirmed undoes it.
+ * An action that declares `hold.effects` is held as THOSE instead (a lock
+ * holds `locking`, not `locked`).
  */
 export function commandEffects(
   cap: string,
@@ -156,10 +193,19 @@ export function commandEffects(
   current: CommandSlice,
   shown: CommandSlice = current,
 ): readonly CommandEffect[] {
+  const out: CommandEffect[] = []
+  const hold = holdFor(cap, method, args)
+  if (hold?.effects !== undefined) {
+    for (const entry of hold.effects) {
+      if (!effectConditionHolds(entry.when, current)) continue
+      const resolved = resolveSideEffect(entry, args, shown)
+      if (resolved !== null && !out.some((e) => e.field === resolved.field)) out.push(resolved)
+    }
+    return out
+  }
   const actionId = vocabActionIdFor(cap, method, args)
   if (actionId === undefined) return []
   const action = findVocabAction(actionId)?.action
-  const out: CommandEffect[] = []
   if (action?.effect !== undefined) {
     const primary = resolveSideEffect(action.effect, args, shown, action.openArgs)
     if (primary !== null) out.push(primary)

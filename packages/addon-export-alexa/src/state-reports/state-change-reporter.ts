@@ -32,9 +32,19 @@ const DeviceStateChangedSchema = z.object({
   deviceId: z.number(),
   capName: z.string(),
   slice: z.record(z.string(), z.unknown()),
+  /**
+   * Present while a command is held (D1061): `slice` is what the screen shows
+   * (the command's effect), `confirmed` is what the device itself reported.
+   */
+  confirmed: z.record(z.string(), z.unknown()).optional(),
 })
 
-export type StateChange = z.infer<typeof DeviceStateChangedSchema>
+/** One change as Alexa sees it: always the device's own (confirmed) values. */
+export interface StateChange {
+  readonly deviceId: number
+  readonly capName: string
+  readonly slice: Readonly<Record<string, unknown>>
+}
 
 export interface StateChangeReporterDeps {
   readonly eventBus: AddonContext['eventBus']
@@ -86,7 +96,12 @@ export class StateChangeReporter {
       { category: EventCategory.DeviceStateChanged },
       (event) => {
         const parsed = DeviceStateChangedSchema.safeParse(event.data)
-        if (parsed.success) void this.onChange(parsed.data)
+        if (!parsed.success) return
+        // Alexa is told only what the device confirmed: a held `locking`
+        // would map to LOCKED, a held `disarming` to DISARMED — a claim a
+        // bolt that bounces back would turn into a lie (D1061).
+        const { deviceId, capName, slice, confirmed } = parsed.data
+        void this.onChange({ deviceId, capName, slice: confirmed ?? slice })
       },
     )
   }

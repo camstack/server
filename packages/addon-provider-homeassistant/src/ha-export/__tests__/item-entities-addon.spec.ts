@@ -176,3 +176,17 @@ describe('the item mirror', () => {
     expect(settle(h.addon, undefined)).toEqual([])
   })
 })
+
+describe('a slice changed while a command is held (D1061)', () => {
+  it('publishes the device-confirmed values, never the held ones', () => {
+    const h = harness(TWO_ITEMS)
+    const held: ConsumablesStatus = {
+      ...TWO_ITEMS,
+      items: TWO_ITEMS.items.map((item) => ({ ...item, level: 100 })),
+    }
+    h.slice({ deviceId: 503, capName: 'consumables', slice: held, confirmed: TWO_ITEMS })
+    const values = h.pushed.map((p) => p.value)
+    expect(values).toContain('63')
+    expect(values).not.toContain('100')
+  })
+})

@@ -108,6 +108,15 @@ export const alarmPanelCapability = {
             phrase: t('Disarm {device}', 'Disinserisci {device}'),
             icon: 'shield-off',
             effect: { field: 'state', value: 'disarmed' },
+            hold: {
+              effects: [
+                {
+                  field: 'state',
+                  value: 'disarming',
+                  when: { field: 'state', notIn: ['disarmed'] },
+                },
+              ],
+            },
             openArgs: [
               {
                 key: 'code',
@@ -139,6 +148,15 @@ export const alarmPanelCapability = {
             phrase: t('Arm {device} for home', 'Inserisci {device} in modalità casa'),
             icon: 'house',
             effect: { field: 'state', value: 'armed_home' },
+            hold: {
+              effects: [
+                {
+                  field: 'state',
+                  value: 'arming',
+                  when: { field: 'state', notIn: ['armed_home'] },
+                },
+              ],
+            },
             args: { mode: 'home' },
             openArgs: [
               {
@@ -155,6 +173,15 @@ export const alarmPanelCapability = {
             phrase: t('Arm {device} for away', 'Inserisci {device} in modalità fuori casa'),
             icon: 'shield-check',
             effect: { field: 'state', value: 'armed_away' },
+            hold: {
+              effects: [
+                {
+                  field: 'state',
+                  value: 'arming',
+                  when: { field: 'state', notIn: ['armed_away'] },
+                },
+              ],
+            },
             args: { mode: 'away' },
             openArgs: [
               {
@@ -171,6 +198,15 @@ export const alarmPanelCapability = {
             phrase: t('Arm {device} for the night', 'Inserisci {device} in modalità notte'),
             icon: 'moon',
             effect: { field: 'state', value: 'armed_night' },
+            hold: {
+              effects: [
+                {
+                  field: 'state',
+                  value: 'arming',
+                  when: { field: 'state', notIn: ['armed_night'] },
+                },
+              ],
+            },
             args: { mode: 'night' },
             openArgs: [
               {
@@ -187,6 +223,15 @@ export const alarmPanelCapability = {
             phrase: t('Arm {device} for vacation', 'Inserisci {device} in modalità vacanza'),
             icon: 'plane',
             effect: { field: 'state', value: 'armed_vacation' },
+            hold: {
+              effects: [
+                {
+                  field: 'state',
+                  value: 'arming',
+                  when: { field: 'state', notIn: ['armed_vacation'] },
+                },
+              ],
+            },
             args: { mode: 'vacation' },
             openArgs: [
               {
@@ -206,6 +251,15 @@ export const alarmPanelCapability = {
             ),
             icon: 'shield-half',
             effect: { field: 'state', value: 'armed_custom_bypass' },
+            hold: {
+              effects: [
+                {
+                  field: 'state',
+                  value: 'arming',
+                  when: { field: 'state', notIn: ['armed_custom_bypass'] },
+                },
+              ],
+            },
             args: { mode: 'custom_bypass' },
             openArgs: [
               {

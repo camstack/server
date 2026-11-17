@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A thermostat directive answers with the state the hub shows after the command, instead of a projection of its own.
+- Alexa is told a lock or alarm state only once the device confirms it; a command still in flight is never reported as locked or disarmed.
 
 ## [1.2.201] - 2026-11-17
 

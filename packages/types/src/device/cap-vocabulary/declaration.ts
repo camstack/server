@@ -29,6 +29,7 @@ import type {
   L10n,
   LooseVocabEffect,
   LooseVocabOffer,
+  LooseVocabActionHold,
   LooseVocabSideEffect,
   LooseVocabOverrides,
   LooseVocabStateTrigger,
@@ -92,6 +93,16 @@ export interface MethodActionDecl<TInput = Readonly<Record<string, unknown>>> {
   ) & {
     readonly when?: VocabEffectCondition
   })[]
+  /** How the hub holds the command before the device answers (D1061, {@link LooseVocabActionHold}). */
+  readonly hold?: {
+    readonly effects?: readonly ((
+      | MethodActionEffect<keyof MethodActionArgs<TInput> & string>
+      | { readonly field: string; readonly negate: true }
+    ) & {
+      readonly when?: VocabEffectCondition
+    })[]
+    readonly holdMs?: number
+  }
   /** When the device is offered it at all — absent = always ({@link MethodActionGate}). */
   readonly offeredWhen?: MethodActionGate
 }
@@ -106,6 +117,7 @@ export interface LooseMethodActionDecl {
   readonly openArgs?: readonly MethodActionOpenArg[]
   readonly effect?: LooseVocabEffect
   readonly sideEffects?: readonly LooseVocabSideEffect[]
+  readonly hold?: LooseVocabActionHold
   readonly offeredWhen?: MethodActionGate
 }
 

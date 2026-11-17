@@ -14,6 +14,7 @@ import {
   type CommandEffect,
   type CommandSlice,
   commandEffects,
+  commandHoldMs,
   effectConditionHolds,
   resolveSideEffect,
 } from './cap-vocabulary/command-catalog.js'
@@ -98,5 +99,5 @@ export function resolveCommandHold(
     resolveList(option.extraEffects, args, current, shown, effects)
   }
   if (effects.length === 0) return null
-  return { effects, holdMs: clampHoldMs(option?.holdMs) }
+  return { effects, holdMs: clampHoldMs(option?.holdMs ?? commandHoldMs(cap, method, args)) }
 }

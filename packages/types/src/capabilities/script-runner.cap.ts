@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
+import { ONE_SHOT_HOLD_MS } from '../device/cap-vocabulary/hold-limits.js'
 
 /**
  * Script-runner cap. Models HA `script.*` entities on
@@ -55,6 +56,7 @@ export const scriptRunnerCapability = {
             label: t('Run script', 'Esegui lo script'),
             phrase: t('Run {device}', 'Esegui {device}'),
             icon: 'scroll-text',
+            hold: { effects: [{ field: 'isRunning', value: true }], holdMs: ONE_SHOT_HOLD_MS },
           },
         ],
       },

@@ -1313,6 +1313,7 @@ export type {
   ActionEffect,
   CommandEffect,
   CommandSlice,
+  LooseVocabActionHold,
   LooseVocabSideEffect,
   VocabEffectCondition,
   VocabEffectValue,
@@ -1363,6 +1364,7 @@ export {
   CAP_VOCABULARY_BY_NAME,
   commandEffect,
   commandEffects,
+  commandHoldMs,
   effectConditionHolds,
   resolveSideEffect,
   findVocabAction,
@@ -2922,6 +2924,7 @@ export {
   MAX_COMMAND_HOLD_MS,
   resolveCommandHold,
 } from './device/command-hold.js'
+export { ONE_SHOT_HOLD_MS } from './device/cap-vocabulary/hold-limits.js'
 export type {
   CommandHoldOption,
   CommandHoldOptions,

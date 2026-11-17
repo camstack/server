@@ -719,6 +719,11 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'locked' },
+        hold: {
+          effects: [
+            { field: 'state', value: 'locking', when: { field: 'state', notIn: ['locked'] } },
+          ],
+        },
       },
       {
         id: 'lock.unlock',
@@ -735,6 +740,11 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'unlocked' },
+        hold: {
+          effects: [
+            { field: 'state', value: 'unlocking', when: { field: 'state', notIn: ['unlocked'] } },
+          ],
+        },
       },
       {
         id: 'lock.open',
@@ -1440,6 +1450,11 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'disarmed' },
+        hold: {
+          effects: [
+            { field: 'state', value: 'disarming', when: { field: 'state', notIn: ['disarmed'] } },
+          ],
+        },
       },
       {
         id: 'alarm.arm.home',
@@ -1457,6 +1472,11 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'armed_home' },
+        hold: {
+          effects: [
+            { field: 'state', value: 'arming', when: { field: 'state', notIn: ['armed_home'] } },
+          ],
+        },
       },
       {
         id: 'alarm.arm.away',
@@ -1474,6 +1494,11 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'armed_away' },
+        hold: {
+          effects: [
+            { field: 'state', value: 'arming', when: { field: 'state', notIn: ['armed_away'] } },
+          ],
+        },
       },
       {
         id: 'alarm.arm.night',
@@ -1491,6 +1516,11 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'armed_night' },
+        hold: {
+          effects: [
+            { field: 'state', value: 'arming', when: { field: 'state', notIn: ['armed_night'] } },
+          ],
+        },
       },
       {
         id: 'alarm.arm.vacation',
@@ -1508,6 +1538,11 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'armed_vacation' },
+        hold: {
+          effects: [
+            { field: 'state', value: 'arming', when: { field: 'state', notIn: ['armed_vacation'] } },
+          ],
+        },
       },
       {
         id: 'alarm.arm.custom_bypass',
@@ -1528,6 +1563,15 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
           },
         ],
         effect: { field: 'state', value: 'armed_custom_bypass' },
+        hold: {
+          effects: [
+            {
+              field: 'state',
+              value: 'arming',
+              when: { field: 'state', notIn: ['armed_custom_bypass'] },
+            },
+          ],
+        },
       },
     ],
     state: [
@@ -2254,6 +2298,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             optional: true,
           },
         ],
+        hold: { effects: [{ field: 'feeding', value: true }], holdMs: 10000 },
       },
       {
         id: 'petFeeder.feedHoppers',
@@ -2278,6 +2323,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             optional: true,
           },
         ],
+        hold: { effects: [{ field: 'feeding', value: true }], holdMs: 10000 },
       },
       {
         id: 'petFeeder.cancelFeed',
@@ -3047,6 +3093,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Run script', it: 'Esegui lo script' },
         phrase: { en: 'Run {device}', it: 'Esegui {device}' },
         icon: 'scroll-text',
+        hold: { effects: [{ field: 'isRunning', value: true }], holdMs: 10000 },
       },
       {
         id: 'script.stop',

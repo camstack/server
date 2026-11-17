@@ -114,6 +114,11 @@ export const lockControlCapability = {
             phrase: t('Lock {device}', 'Chiudi a chiave {device}'),
             icon: 'lock',
             effect: { field: 'state', value: 'locked' },
+            hold: {
+              effects: [
+                { field: 'state', value: 'locking', when: { field: 'state', notIn: ['locked'] } },
+              ],
+            },
             openArgs: [
               {
                 key: 'code',
@@ -149,6 +154,15 @@ export const lockControlCapability = {
             phrase: t('Unlock {device}', 'Sblocca {device}'),
             icon: 'lock-open',
             effect: { field: 'state', value: 'unlocked' },
+            hold: {
+              effects: [
+                {
+                  field: 'state',
+                  value: 'unlocking',
+                  when: { field: 'state', notIn: ['unlocked'] },
+                },
+              ],
+            },
             openArgs: [
               {
                 key: 'code',

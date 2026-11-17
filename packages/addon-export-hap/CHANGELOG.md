@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A lock command in flight moves only the HomeKit target; the current state stays where the device last put it.
+
 ## [1.2.206] - 2026-11-17
 
 ### Changed

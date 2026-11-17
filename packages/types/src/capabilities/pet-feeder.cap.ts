@@ -4,6 +4,7 @@ import { readingMeta } from '../units/quantity.js'
 import { method, type CapabilityDefinition, type InferProvider } from './capability-definition.js'
 import { DeviceType } from '../device/device-type.js'
 import { t } from '../device/cap-vocabulary/l10n.js'
+import { ONE_SHOT_HOLD_MS } from '../device/cap-vocabulary/hold-limits.js'
 
 /**
  * PetKit pet-feeder cap. Models the control + telemetry surface of a
@@ -166,6 +167,7 @@ export const petFeederCapability = {
             label: t('Feed', 'Dai da mangiare'),
             phrase: t('Dispense {grams} from {device}', 'Eroga {grams} da {device}'),
             icon: 'paw-print',
+            hold: { effects: [{ field: 'feeding', value: true }], holdMs: ONE_SHOT_HOLD_MS },
             openArgs: [
               {
                 key: 'grams',
@@ -190,6 +192,7 @@ export const petFeederCapability = {
               'Eroga {hopper1} e {hopper2} da {device}',
             ),
             icon: 'paw-print',
+            hold: { effects: [{ field: 'feeding', value: true }], holdMs: ONE_SHOT_HOLD_MS },
             openArgs: [
               {
                 key: 'hopper1',

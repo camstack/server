@@ -158,6 +158,31 @@ describe('StateChangeReporter + gateway', () => {
     ])
   })
 
+  it('a held command is never reported before the device confirms it (D1061)', async () => {
+    const h = setup()
+    await h.emit({ deviceId: 30, capName: 'alarm-panel', slice: { state: 'armed_away' } })
+    const before = sent().length
+    // While a command is held the event carries the shown value in `slice`
+    // and the device's own in `confirmed`; Alexa is told only the latter. A
+    // held `disarming` maps to DISARMED, a held `locking` to LOCKED.
+    await h.emit({
+      deviceId: 30,
+      capName: 'alarm-panel',
+      slice: { state: 'disarming' },
+      confirmed: { state: 'armed_away' },
+    })
+    expect(sent().slice(before)).toEqual([])
+    // The panel stayed armed: nothing was ever claimed, nothing to correct.
+    await h.emit({ deviceId: 30, capName: 'alarm-panel', slice: { state: 'armed_away' } })
+    expect(sent().slice(before)).toEqual([])
+    await h.emit({ deviceId: 30, capName: 'alarm-panel', slice: { state: 'disarmed' } })
+    expect(
+      sent()
+        .slice(before)
+        .flatMap((s) => s.props.map((p) => p.value)),
+    ).toContain('DISARMED')
+  })
+
   it('a siren switched at the device reaches Alexa once; a re-announced slice does not repeat it', async () => {
     const h = setup()
     await h.emit({ deviceId: 11, capName: 'switch', slice: { on: true, lastChangedAt: 1 } })

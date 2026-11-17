@@ -701,7 +701,11 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
   private onSliceChanged(data: unknown): void {
     const deviceId = readNumber(data, 'deviceId')
     const capName = readString(data, 'capName')
-    const slice = readRecord(data, 'slice')
+    // While a command is held (D1061) the event carries the shown value in
+    // `slice` and the device's own in `confirmed`. Home Assistant is told only
+    // what the device confirmed: a held `locking` would flip the lock switch
+    // on before the bolt moved, and a bolt that bounces back never locked.
+    const slice = readRecord(data, 'confirmed') ?? readRecord(data, 'slice')
     if (deviceId === null || capName === null || slice === null) return
     const deviceKey = this.keyByDeviceId.get(deviceId)
     if (deviceKey === undefined) return

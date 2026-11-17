@@ -301,7 +301,7 @@ function checkEffect(
   if (action.effect !== undefined) {
     checkOneEffect(where, def, action.effect, inputShape, problems)
   }
-  for (const side of action.sideEffects ?? []) {
+  for (const side of [...(action.sideEffects ?? []), ...(action.hold?.effects ?? [])]) {
     if ('negate' in side) checkNegate(`${where} side effect`, def, side.field, problems)
     else checkOneEffect(`${where} side effect`, def, side, inputShape, problems)
     if (side.when !== undefined && statusShape(def)?.[side.when.field] === undefined) {

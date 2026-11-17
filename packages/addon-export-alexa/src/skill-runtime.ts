@@ -515,7 +515,7 @@ export class SkillRuntime {
       reporter: this.stateReporter,
       getExportedEndpoints: () => this.view.exportedEndpoints,
       readSlice: (deviceId, capName) =>
-        this.ctx.api.deviceState.getCapSlice.query({ deviceId, capName }),
+        this.ctx.api.deviceState.getCapSlice.query({ deviceId, capName, confirmed: true }),
       logger: this.ctx.logger,
     })
     this.stateReconciler.start()

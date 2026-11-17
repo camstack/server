@@ -9,6 +9,7 @@ import type {
   IScopedLogger,
   LogExtras,
 } from '@camstack/types'
+import { ONE_SHOT_HOLD_MS } from '@camstack/types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   __resetCommandObserverRegistryForTests,
@@ -241,29 +242,75 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
       h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locked' })
       command('lock-control', 'unlock', {})
       h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locked' })
-      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'unlocked' })
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'unlocking' })
       expect(answered(h)).toEqual([])
       stop()
     })
 
-    it('shows locking the moment the lock says locking, and logs device-answered', () => {
+    it('holds a lock as locking; the lock saying locking confirms it, locked follows', () => {
       const { h, stop } = rig()
       h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'unlocked' })
       command('lock-control', 'lock', {})
-      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locked' })
-      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locking' })
       expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locking' })
-      expect(lastSlice(h, 'lock-control')).toEqual({ state: 'locking' })
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locking' })
+      expect(answered(h)).toEqual([])
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locked' })
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locked' })
+      vi.advanceTimersByTime(60_000)
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locked' })
+      expect(h.logs.filter((l) => l.level === 'warn')).toEqual([])
+      stop()
+    })
+
+    it('a lock that goes straight to locked releases the hold, logged device-answered', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'unlocked' })
+      command('lock-control', 'lock', {})
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locked' })
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locked' })
       expect(answered(h)).toEqual([
         {
           tags: { deviceId: DEVICE },
           meta: { cap: 'lock-control', field: 'state', reason: 'device-answered' },
         },
       ])
-      // The answer released the hold: the limit passing reverts nothing and warns nothing.
-      vi.advanceTimersByTime(60_000)
+      stop()
+    })
+
+    it('a bolt that bounces back is never shown or told as locked', () => {
+      const { h, told, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'unlocked' })
+      command('lock-control', 'lock', {})
+      // The lock reports its pre-command value again: the bolt did not throw.
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'unlocked' })
       expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locking' })
-      expect(h.logs.filter((l) => l.level === 'warn')).toEqual([])
+      vi.advanceTimersByTime(60_000)
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'unlocked' })
+      const states = [
+        ...h.events.filter((e) => e.capName === 'lock-control').map((e) => e.slice?.['state']),
+        ...told.filter((t) => t.capName === 'lock-control').map((t) => t.slice['state']),
+      ]
+      expect(states).not.toContain('locked')
+      stop()
+    })
+
+    it('holds a feed as feeding for the short one-shot limit only', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'pet-feeder', { feeding: false })
+      command('pet-feeder', 'feed', { grams: 10 })
+      expect(h.mirror.capSlice(DEVICE, 'pet-feeder')).toEqual({ feeding: true })
+      vi.advanceTimersByTime(ONE_SHOT_HOLD_MS - 1)
+      expect(h.mirror.capSlice(DEVICE, 'pet-feeder')).toEqual({ feeding: true })
+      vi.advanceTimersByTime(1)
+      expect(h.mirror.capSlice(DEVICE, 'pet-feeder')).toEqual({ feeding: false })
+      stop()
+    })
+
+    it('holds nothing when the lock is already locked', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locked' })
+      command('lock-control', 'lock', {})
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locked' })
       stop()
     })
 
@@ -276,13 +323,15 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
       stop()
     })
 
-    it('shows arming when the panel says arming', () => {
+    it('holds an alarm panel as arming until the panel says armed', () => {
       const { h, stop } = rig()
       h.mirror.applySingleCapUpdate(DEVICE, 'alarm-panel', { state: 'disarmed' })
       command('alarm-panel', 'arm', { mode: 'away' })
-      expect(h.mirror.capSlice(DEVICE, 'alarm-panel')).toEqual({ state: 'armed_away' })
+      expect(h.mirror.capSlice(DEVICE, 'alarm-panel')).toEqual({ state: 'arming' })
       h.mirror.applySingleCapUpdate(DEVICE, 'alarm-panel', { state: 'arming' })
       expect(h.mirror.capSlice(DEVICE, 'alarm-panel')).toEqual({ state: 'arming' })
+      h.mirror.applySingleCapUpdate(DEVICE, 'alarm-panel', { state: 'armed_away' })
+      expect(h.mirror.capSlice(DEVICE, 'alarm-panel')).toEqual({ state: 'armed_away' })
       stop()
     })
 

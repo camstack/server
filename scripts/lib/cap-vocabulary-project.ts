@@ -51,6 +51,7 @@ function projectActions(def: CapabilityDefinition): readonly LooseVocabAction[] 
         ...(a.openArgs !== undefined ? { openArgs: a.openArgs } : {}),
         ...(a.effect !== undefined ? { effect: a.effect } : {}),
         ...(a.sideEffects !== undefined ? { sideEffects: a.sideEffects } : {}),
+        ...(a.hold !== undefined ? { hold: a.hold } : {}),
         ...(a.offeredWhen !== undefined ? { offeredWhen: a.offeredWhen } : {}),
       }),
     ),

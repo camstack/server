@@ -194,12 +194,12 @@ const ADDED_EFFECTS: Readonly<Record<string, readonly string[]>> = {
   'automation-control': ['haAutomation.enable', 'haAutomation.disable'],
 }
 
-/** The entry with the D1061 effects taken out. */
+/** The entry with the D1061 effects and holds taken out. */
 function withoutAddedEffects(cap: string, entry: unknown): unknown {
   if (!isRecord(entry) || !Array.isArray(entry['actions'])) return entry
   const ids = ADDED_EFFECTS[cap] ?? []
   const actions = actionsOf(entry).map((action) => {
-    const { sideEffects: _s, ...withoutSide } = action
+    const { sideEffects: _s, hold: _h, ...withoutSide } = action
     if (!ids.includes(String(action['id']))) return withoutSide
     const { effect: _e, ...rest } = withoutSide
     return rest

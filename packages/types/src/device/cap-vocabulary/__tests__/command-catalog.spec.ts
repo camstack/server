@@ -7,7 +7,14 @@ import { resolveMethodAuth } from '../../../capabilities/cap-router-predicates.j
 import { ALL_CAPABILITY_DEFINITIONS } from '../../../generated/capability-router-map.js'
 import { METHOD_ACCESS_MAP } from '../../../generated/method-access-map.js'
 import { allVocabActions } from '../action-index.js'
-import { auditedFields, commandEffect, commandEffects, isCommand } from '../command-catalog.js'
+import {
+  auditedFields,
+  commandEffect,
+  commandEffects,
+  commandHoldMs,
+  isCommand,
+} from '../command-catalog.js'
+import { ONE_SHOT_HOLD_MS } from '../hold-limits.js'
 import { CAP_VOCABULARY_BY_NAME } from '../vocabulary.js'
 
 describe('the command catalogue', () => {
@@ -133,5 +140,42 @@ describe('the command catalogue', () => {
       }
     }
     expect(missing).toEqual([])
+  })
+})
+
+describe('an action that declares how it is held (D1061)', () => {
+  it('holds a lock as locking / unlocking, never as the final state', () => {
+    expect(commandEffects('lock-control', 'lock', {}, { state: 'unlocked' })).toEqual([
+      { field: 'state', value: 'locking' },
+    ])
+    expect(commandEffects('lock-control', 'unlock', {}, { state: 'locked' })).toEqual([
+      { field: 'state', value: 'unlocking' },
+    ])
+  })
+
+  it('holds nothing when the lock is already where it was told to go', () => {
+    expect(commandEffects('lock-control', 'lock', {}, { state: 'locked' })).toEqual([])
+    expect(commandEffects('lock-control', 'unlock', {}, { state: 'unlocked' })).toEqual([])
+  })
+
+  it('holds an alarm panel as arming / disarming', () => {
+    expect(commandEffects('alarm-panel', 'arm', { mode: 'away' }, { state: 'disarmed' })).toEqual([
+      { field: 'state', value: 'arming' },
+    ])
+    expect(commandEffects('alarm-panel', 'disarm', {}, { state: 'armed_home' })).toEqual([
+      { field: 'state', value: 'disarming' },
+    ])
+  })
+
+  it('holds a one-shot as in progress, for the short limit it declares', () => {
+    expect(commandEffects('pet-feeder', 'feed', { grams: 10 }, { feeding: false })).toEqual([
+      { field: 'feeding', value: true },
+    ])
+    expect(commandHoldMs('pet-feeder', 'feed', { grams: 10 })).toBe(ONE_SHOT_HOLD_MS)
+    expect(commandEffects('script-runner', 'run', {}, { isRunning: false })).toEqual([
+      { field: 'isRunning', value: true },
+    ])
+    expect(commandHoldMs('script-runner', 'run', {})).toBe(ONE_SHOT_HOLD_MS)
+    expect(commandHoldMs('switch', 'setState', { on: true })).toBeUndefined()
   })
 })

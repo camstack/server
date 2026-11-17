@@ -157,7 +157,7 @@ async function collectGenericProperties(
   const reads = await Promise.all(
     GENERIC_STATE_CAPS.map(async (capName) => {
       const status: unknown = await api.deviceState.getCapSlice
-        .query({ deviceId, capName })
+        .query({ deviceId, capName, confirmed: true })
         .catch(() => null)
       return status === null ? [] : genericPropertiesFor(capName, status)
     }),
