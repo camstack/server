@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.660] - 2026-11-17
+
 ### Changed
 
 - Object detection now runs on a crop around motion when subjects are small in a high-resolution frame (same inference count, a full frame at least once a second); the choice is on each frame's pipeline trace.

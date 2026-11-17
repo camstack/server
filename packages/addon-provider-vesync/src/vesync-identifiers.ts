@@ -1,13 +1,13 @@
 /**
- * What a VeSync purifier declares as its identity (D1059): its cloud device id
+ * What a VeSync purifier or humidifier declares as its identity (D1059): its cloud device id
  * (`vendor-uid` `vesync:<cid>`) and the MAC its device-list entry carries. An
  * entry without a MAC (not reported) keeps the stored one (D49); no snapshot
  * declares nothing.
  */
 import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
-import type { VeSyncPurifierSnapshot } from './vesync-client-contract.js'
+import type { VeSyncDeviceSnapshot } from './vesync-client-contract.js'
 
-export type VeSyncIdentityRead = Pick<VeSyncPurifierSnapshot, 'nativeId' | 'mac'>
+export type VeSyncIdentityRead = Pick<VeSyncDeviceSnapshot, 'nativeId' | 'mac'>
 
 export interface VeSyncIdentifierDeclaration {
   readonly identifiers: RawDeviceIdentifiers

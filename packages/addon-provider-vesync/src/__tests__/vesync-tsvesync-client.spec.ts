@@ -159,6 +159,7 @@ describe('tsvesync adapter', () => {
     expect(w.calls).toContainEqual(['getDetails', 'cid-1'])
     expect(list.map((p) => p.nativeId)).toEqual(['cid-1', 'cid-3'])
     expect(list[0]).toMatchObject({
+      kind: 'purifier',
       name: 'Purifier cid-1',
       model: 'Core300S',
       power: true,
@@ -171,9 +172,12 @@ describe('tsvesync adapter', () => {
       filterLifePercent: 87,
       online: true,
     })
-    expect(list[0]?.percentageStep).toBeCloseTo(33.33, 1)
+    const first = list[0]
+    expect(first?.kind === 'purifier' ? first.percentageStep : null).toBeCloseTo(33.33, 1)
     expect(list[1]).toMatchObject({ power: false, speedPercent: null, preset: 'sleep' })
-    expect(list[1]?.airQuality).toBeUndefined()
+    const second = list[1]
+    expect(second?.kind).toBe('purifier')
+    expect(second?.kind === 'purifier' ? second.airQuality : 'not-a-purifier').toBeUndefined()
     expect(w.client.getDevice('cid-3')?.name).toBe('Purifier cid-3')
     expect(w.client.getDevice('cid-2')).toBeNull()
   })

@@ -85,13 +85,14 @@ describe('vesync integration instances', () => {
 })
 
 describe('vesync discovery', () => {
-  it('proposes the Gateway as a sibling of the purifiers', () => {
+  it('proposes the Gateway as a sibling of the purifiers and humidifiers', () => {
     const out = buildVeSyncCandidates({
       integrationId: 'int-1',
       accountName: 'Home',
       online: true,
-      purifiers: [
+      devices: [
         {
+          kind: 'purifier',
           nativeId: 'cid-1',
           name: 'Living room',
           power: true,
@@ -103,13 +104,34 @@ describe('vesync discovery', () => {
           filterLifePercent: 80,
           online: true,
         },
+        {
+          kind: 'humidifier',
+          nativeId: 'hum-1',
+          name: 'Bedroom',
+          power: true,
+          currentHumidity: 41,
+          targetHumidity: 55,
+          mode: 'auto',
+          availableModes: ['auto', 'manual', 'sleep'],
+          minHumidity: 30,
+          maxHumidity: 80,
+          display: true,
+          waterLacks: false,
+          online: true,
+        },
       ],
       adoptedGatewayId: null,
       adoptedDeviceIdByCid: {},
     })
-    expect(out.map((c) => c.type)).toEqual([DeviceType.Gateway, DeviceType.Fan])
+    expect(out.map((c) => c.type)).toEqual([
+      DeviceType.Gateway,
+      DeviceType.Fan,
+      DeviceType.Humidifier,
+    ])
     expect(out[0]?.childNativeId).toBe('account')
     expect(out[0]?.children).toBeUndefined()
     expect(out[1]?.childNativeId).toBe('int-1:purifier:cid-1')
+    expect(out[2]?.childNativeId).toBe('int-1:humidifier:hum-1')
+    expect(out[2]?.capabilities).toEqual(['humidifier'])
   })
 })

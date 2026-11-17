@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-vesync",
-  "version": "0.2.164",
+  "version": "0.2.165",
   "description": "VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors)",
   "keywords": [
     "camstack",
@@ -40,7 +40,7 @@
         "category": "providers",
         "name": "VeSync",
         "version": "0.1.0",
-        "description": "Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors)",
+        "description": "Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors) and its humidifiers as Humidifier devices (target humidity, mode, display + humidity / water-tank sensors)",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.png",
         "color": "#4a8cff",
@@ -64,7 +64,7 @@
       }
     ],
     "requires": {
-      "server": ">=1.2.896"
+      "server": ">=1.2.897"
     }
   },
   "files": [

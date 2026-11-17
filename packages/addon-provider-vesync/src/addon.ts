@@ -18,6 +18,7 @@ import {
 } from '@camstack/types'
 import { VESYNC_SYSTEM, type VeSyncConnectionConfig } from './config.js'
 import { VeSyncGatewayDevice } from './devices/vesync-gateway-device.js'
+import { VeSyncHumidifierDevice } from './devices/vesync-humidifier-device.js'
 import { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'
 import {
   VESYNC_RETIRED_MIGRATION_IDS,
@@ -50,14 +51,15 @@ import {
  * VeSync cloud-account provider, `mode: account` and broker-less. An integration is one
  * VeSync account: email, password, region and poll interval live on its `connections`
  * record (the password in the keychain). Discovery offers the account as a
- * {@link DeviceType.Gateway} and each air purifier as a {@link DeviceType.Fan} sibling
- * of it.
+ * {@link DeviceType.Gateway}, each air purifier as a {@link DeviceType.Fan} and each
+ * humidifier as a {@link DeviceType.Humidifier}, siblings of it.
  */
 export class VeSyncProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-vesync'
   protected readonly providerName = 'VeSync'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Fan]: VeSyncPurifierDevice,
+    [DeviceType.Humidifier]: VeSyncHumidifierDevice,
     [DeviceType.Gateway]: VeSyncGatewayDevice,
   }
 
@@ -144,6 +146,13 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
       throw new Error('vesync generateStableId: integrationId required')
     }
     if (type === DeviceType.Gateway) return gatewayStableId(integrationId)
+    if (type === DeviceType.Humidifier) {
+      const humidifierCid = stringField(config, 'humidifierNativeId')
+      if (humidifierCid.length === 0) {
+        throw new Error('vesync generateStableId: humidifierNativeId required')
+      }
+      return `${integrationId}:humidifier:${humidifierCid}`
+    }
     const cid = stringField(config, 'purifierNativeId')
     if (cid.length === 0) throw new Error('vesync generateStableId: purifierNativeId required')
     return `${integrationId}:purifier:${cid}`
@@ -350,7 +359,7 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
 
   private buildAdoptionProvider() {
     return buildVeSyncAdoptionProvider({
-      getPurifiers: (integrationId) => vesyncAccounts.getPurifiers(integrationId),
+      getDevices: (integrationId) => vesyncAccounts.getDevices(integrationId),
       hasIntegration: (integrationId) => vesyncAccounts.getManager(integrationId) !== null,
       integrationOnline: (integrationId) =>
         vesyncAccounts.getManager(integrationId)?.status === 'connected',
@@ -386,6 +395,29 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
           integrationId,
         })
         this.ctx.logger.info('VeSync: adopted purifier', {
+          tags: { deviceId: device.id },
+          meta: { cid, stableId, integrationId },
+        })
+        return { deviceId: device.id }
+      },
+      adoptHumidifier: async ({ integrationId, cid, name, model }) => {
+        const devices = this.ctx.kernel.devices
+        if (!devices) throw new Error('vesync adopt: kernel.devices unavailable')
+        const config: Record<string, unknown> = {
+          humidifierNativeId: cid,
+          integrationId,
+          system: VESYNC_SYSTEM,
+          ...(model !== undefined ? { model } : {}),
+        }
+        const stableId = this.generateStableId(DeviceType.Humidifier, config)
+        const existing = (await devices.getAll()).find((d) => d.stableId === stableId)
+        if (existing !== undefined) return { deviceId: existing.id }
+        const device = await devices.create(stableId, VeSyncHumidifierDevice, config, null, {
+          type: DeviceType.Humidifier,
+          name,
+          integrationId,
+        })
+        this.ctx.logger.info('VeSync: adopted humidifier', {
           tags: { deviceId: device.id },
           meta: { cid, stableId, integrationId },
         })

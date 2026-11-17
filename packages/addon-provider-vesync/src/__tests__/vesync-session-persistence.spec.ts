@@ -124,6 +124,8 @@ function world(initial: VeSyncStoredSessions, opts: { refuseRestored?: boolean }
       setMode: async () => undefined,
       setChildLock: async () => undefined,
       setDisplay: async () => undefined,
+      setTargetHumidity: async () => undefined,
+      refreshDevice: async () => null,
     }
     return client
   }

@@ -8,15 +8,17 @@ import {
   type IScopedLogger,
 } from '@camstack/types'
 import { VESYNC_SYSTEM } from './config.js'
-import type { VeSyncPurifierSnapshot } from './vesync-client-contract.js'
+import type { VeSyncDeviceSnapshot } from './vesync-client-contract.js'
 import {
   buildVeSyncCandidates,
+  parseHumidifierNativeId,
   parsePurifierNativeId,
   VESYNC_GATEWAY_NATIVE_ID,
 } from './vesync-discovery.js'
 
 export interface VeSyncAdoptionProviderDeps {
-  readonly getPurifiers: (integrationId: string) => readonly VeSyncPurifierSnapshot[]
+  /** Every purifier and humidifier the account lists. */
+  readonly getDevices: (integrationId: string) => readonly VeSyncDeviceSnapshot[]
   readonly hasIntegration: (integrationId: string) => boolean
   readonly integrationOnline: (integrationId: string) => boolean
   readonly listIntegrations: () => readonly string[]
@@ -29,6 +31,13 @@ export interface VeSyncAdoptionProviderDeps {
   >
   /** Create the purifier Fan, parent null. The kernel spawns its accessories. */
   readonly adoptPurifier: (input: {
+    readonly integrationId: string
+    readonly cid: string
+    readonly name: string
+    readonly model: string | undefined
+  }) => Promise<{ readonly deviceId: number }>
+  /** Create the humidifier, parent null. The kernel spawns its accessories. */
+  readonly adoptHumidifier: (input: {
     readonly integrationId: string
     readonly cid: string
     readonly name: string
@@ -66,7 +75,7 @@ export function buildVeSyncAdoptionProvider(
       const cfg = device.config
       if (cfg['system'] !== VESYNC_SYSTEM || cfg['integrationId'] !== integrationId) continue
       if (cfg['kind'] === VESYNC_GATEWAY_NATIVE_ID) gatewayId = device.id
-      const cid = cfg['purifierNativeId']
+      const cid = cfg['purifierNativeId'] ?? cfg['humidifierNativeId']
       if (typeof cid === 'string') byCid[cid] = device.id
     }
     return { gatewayId, byCid }
@@ -78,7 +87,7 @@ export function buildVeSyncAdoptionProvider(
       integrationId,
       accountName: accountName(integrationId),
       online: deps.integrationOnline(integrationId),
-      purifiers: deps.getPurifiers(integrationId),
+      devices: deps.getDevices(integrationId),
       adoptedGatewayId: adopted.gatewayId,
       adoptedDeviceIdByCid: adopted.byCid,
     })
@@ -86,11 +95,11 @@ export function buildVeSyncAdoptionProvider(
 
   async function status(integrationId: string): Promise<AdoptionStatus> {
     const adopted = await adoptedOf(integrationId)
-    const purifierCount = Object.keys(adopted.byCid).length
+    const deviceCount = Object.keys(adopted.byCid).length
     return {
       lastDiscoveryAt: Date.now(),
       candidateCount: (await candidates(integrationId)).length,
-      adoptedCount: purifierCount + (adopted.gatewayId === null ? 0 : 1),
+      adoptedCount: deviceCount + (adopted.gatewayId === null ? 0 : 1),
       lastError: null,
     }
   }
@@ -160,15 +169,44 @@ export function buildVeSyncAdoptionProvider(
             })
             continue
           }
+          const humidifierCid = parseHumidifierNativeId(nativeId)
+          if (humidifierCid !== null) {
+            const humidifier = deps
+              .getDevices(integrationId)
+              .find((d) => d.kind === 'humidifier' && d.nativeId === humidifierCid)
+            if (humidifier === undefined) {
+              deps.logger.warn('vesync adopt: the account reports no such humidifier — skipping', {
+                meta: { cid: humidifierCid, integrationId },
+              })
+              failures++
+              continue
+            }
+            const { deviceId } = await deps.adoptHumidifier({
+              integrationId,
+              cid: humidifierCid,
+              name:
+                perCandidate?.[nativeId]?.name ??
+                (humidifier.name.length > 0 ? humidifier.name : `humidifier ${humidifierCid}`),
+              model: humidifier.model,
+            })
+            adopted.push({
+              childNativeId: nativeId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds: [],
+            })
+            continue
+          }
           const cid = parsePurifierNativeId(nativeId)
           if (cid === null) {
-            deps.logger.warn('vesync adopt: not a purifier native id — skipping', {
+            deps.logger.warn('vesync adopt: not a purifier or humidifier native id — skipping', {
               meta: { nativeId, integrationId },
             })
             failures++
             continue
           }
-          const purifier = deps.getPurifiers(integrationId).find((p) => p.nativeId === cid)
+          const purifier = deps
+            .getDevices(integrationId)
+            .find((d) => d.kind === 'purifier' && d.nativeId === cid)
           if (purifier === undefined) {
             deps.logger.warn('vesync adopt: the account reports no such purifier — skipping', {
               meta: { cid, integrationId },

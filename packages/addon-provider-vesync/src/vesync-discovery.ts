@@ -3,9 +3,14 @@ import {
   type DiscoveredChildDevice,
   fanControlCapability,
   gatewayDeviceName,
+  humidifierCapability,
   switchCapability,
 } from '@camstack/types'
-import type { VeSyncPurifierSnapshot } from './vesync-client-contract.js'
+import type {
+  VeSyncDeviceSnapshot,
+  VeSyncHumidifierSnapshot,
+  VeSyncPurifierSnapshot,
+} from './vesync-client-contract.js'
 
 /** The `childNativeId` of the account Gateway, one per integration. A sibling of the purifiers. */
 export const VESYNC_GATEWAY_NATIVE_ID = 'account'
@@ -31,6 +36,56 @@ export function parsePurifierNativeId(childNativeId: string): string | null {
   if (idx < 0) return null
   const cid = childNativeId.slice(idx + marker.length)
   return cid.length > 0 ? cid : null
+}
+
+/** The `childNativeId` a discovered VeSync humidifier candidate is keyed on. */
+export function humidifierNativeId(accountId: string, cid: string): string {
+  return `${accountId}:humidifier:${cid}`
+}
+
+/** Extract the VeSync `cid` from a {@link humidifierNativeId} value, or null. */
+export function parseHumidifierNativeId(childNativeId: string): string | null {
+  const marker = ':humidifier:'
+  const idx = childNativeId.lastIndexOf(marker)
+  if (idx < 0) return null
+  const cid = childNativeId.slice(idx + marker.length)
+  return cid.length > 0 ? cid : null
+}
+
+/** Inputs for {@link buildHumidifierCandidates}. */
+export interface BuildHumidifierCandidatesInput {
+  readonly accountId: string
+  readonly accountName: string
+  readonly humidifiers: readonly VeSyncHumidifierSnapshot[]
+  /** Adopted CamStack device id PER humidifier `cid`, or null when not adopted. */
+  readonly adoptedDeviceIdByCid: Readonly<Record<string, number | null>>
+}
+
+/** One {@link DeviceType.Humidifier} adoption candidate per VeSync humidifier. Pure. */
+export function buildHumidifierCandidates(
+  input: BuildHumidifierCandidatesInput,
+): readonly DiscoveredChildDevice[] {
+  return input.humidifiers.map((humidifier) => {
+    const adoptedDeviceId = input.adoptedDeviceIdByCid[humidifier.nativeId] ?? null
+    return {
+      childNativeId: humidifierNativeId(input.accountId, humidifier.nativeId),
+      name:
+        humidifier.name.length > 0
+          ? humidifier.name
+          : `${input.accountName} — humidifier ${humidifier.nativeId}`,
+      type: DeviceType.Humidifier,
+      status: humidifier.online ? 'online' : 'offline',
+      metadata: {
+        manufacturer: 'VeSync',
+        integration: 'vesync',
+        ...(humidifier.model !== undefined ? { model: humidifier.model } : {}),
+      },
+      alreadyAdopted: adoptedDeviceId !== null,
+      adoptedDeviceId,
+      // display / humidity / water-low fan out as accessory children.
+      capabilities: [humidifierCapability.name],
+    } satisfies DiscoveredChildDevice
+  })
 }
 
 /** Inputs for {@link buildPurifierCandidates}. */
@@ -83,15 +138,17 @@ export interface BuildVeSyncCandidatesInput {
   readonly accountName: string
   /** Whether the integration's client is connected. */
   readonly online: boolean
-  readonly purifiers: readonly VeSyncPurifierSnapshot[]
+  /** Every purifier and humidifier on the account. */
+  readonly devices: readonly VeSyncDeviceSnapshot[]
   /** The adopted Gateway device id, or null. */
   readonly adoptedGatewayId: number | null
-  /** Adopted CamStack device id per purifier `cid`, or null when not adopted. */
+  /** Adopted CamStack device id per device `cid`, or null when not adopted. */
   readonly adoptedDeviceIdByCid: Readonly<Record<string, number | null>>
 }
 
 /**
- * The account Gateway, then one Fan candidate per purifier. The Gateway is a sibling
+ * The account Gateway, then one Fan candidate per purifier and one Humidifier candidate per
+ * humidifier. The Gateway is a sibling
  * of the purifiers: nothing in this list is a child of it. Pure.
  */
 export function buildVeSyncCandidates(
@@ -110,8 +167,16 @@ export function buildVeSyncCandidates(
   const purifiers = buildPurifierCandidates({
     accountId: input.integrationId,
     accountName: input.accountName,
-    purifiers: input.purifiers,
+    purifiers: input.devices.filter((d): d is VeSyncPurifierSnapshot => d.kind === 'purifier'),
     adoptedDeviceIdByCid: input.adoptedDeviceIdByCid,
   })
-  return [gateway, ...purifiers]
+  const humidifiers = buildHumidifierCandidates({
+    accountId: input.integrationId,
+    accountName: input.accountName,
+    humidifiers: input.devices.filter(
+      (d): d is VeSyncHumidifierSnapshot => d.kind === 'humidifier',
+    ),
+    adoptedDeviceIdByCid: input.adoptedDeviceIdByCid,
+  })
+  return [gateway, ...purifiers, ...humidifiers]
 }

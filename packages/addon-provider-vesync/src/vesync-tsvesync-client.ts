@@ -7,8 +7,10 @@
  *   - `login()` answers only a boolean — the REASON lives in the library's log lines. The adapter
  *     captures the lines a call produces and classifies them ({@link VeSyncLoginError}).
  *   - the library logger is process-wide (`setLogger` inside the `VeSync` constructor), so every
- *     manager gets the same router and calls are serialized: one call's lines never land in
- *     another call's capture.
+ *     manager gets the same router. The router attributes each line to the call that caused it
+ *     through the async context of that call (`AsyncLocalStorage`), so calls run CONCURRENTLY and
+ *     one call's lines still never land in another call's capture. (It used to serialize every
+ *     call through one queue; a command then waited behind a whole device poll.)
  *
  * Sessions: the library reports every token it mints through `onTokenChange` and adopts a stored
  * one through `hydrateSession`; the adapter maps both onto the contract's `VeSyncSession` so the
@@ -18,10 +20,13 @@
  * argument of a library log line (its message) and the `code` / `message` / `msg` of an object
  * argument travel into an error text — never the request or response bodies.
  */
+import { AsyncLocalStorage } from 'node:async_hooks'
 import { type Session as TsVeSyncSession, VeSync } from 'tsvesync'
 import {
   type VeSyncClient,
   type VeSyncClientFactory,
+  type VeSyncDeviceSnapshot,
+  type VeSyncHumidifierSnapshot,
   type VeSyncPurifierSnapshot,
   type VeSyncRegion,
   type VeSyncSession,
@@ -52,9 +57,9 @@ export interface TsVeSyncFan {
   readonly childLock: boolean
   readonly airQualityValue: number
   getMaxFanSpeed(): number
-  getSupportedModes(): ReadonlyArray<string>
+  getSupportedModes(defaultModes?: ReadonlyArray<string>): ReadonlyArray<string>
   hasFeature(feature: string): boolean
-  /** Refreshes the cached details; the answer is ignored (a failed refresh keeps the last ones). */
+  /** Refreshes the cached details; `false` = refused (the library keeps the last ones). */
   getDetails(): Promise<unknown>
   turnOn(): Promise<boolean>
   turnOff(): Promise<boolean>
@@ -64,6 +69,25 @@ export interface TsVeSyncFan {
   setChildLock?(on: boolean): Promise<boolean>
   /** Present on the air-purifier models (`VeSyncAirBypass` and kin). */
   setDisplay?(on: boolean): Promise<boolean>
+}
+
+/**
+ * The part of a `tsvesync` humidifier the adapter reads and drives (`VeSyncHumidifier`,
+ * `VeSyncHumid200S`, `VeSyncWarmHumidifier`, `VeSyncHumid1000S`, `VeSyncSuperior6000S`). The
+ * classes disagree on where they keep the setpoint, the display and the modes, so the optional
+ * fields are read defensively: `targetHumidity` (200S / 1000S / 6000S) else
+ * `details.configuration.auto_target_humidity` (the base and warm classes); `details.display`;
+ * the class's `modes` and `humidityRange`.
+ */
+export interface TsVeSyncHumidifier extends TsVeSyncFan {
+  setHumidity(humidity: number): Promise<boolean>
+  setDisplay(on: boolean): Promise<boolean>
+  readonly currentHumidity?: number
+  readonly targetHumidity?: number
+  readonly waterLacks?: boolean
+  readonly details?: unknown
+  readonly modes?: unknown
+  readonly humidityRange?: unknown
 }
 
 /** The part of the `tsvesync` `VeSync` manager the adapter uses. */
@@ -125,6 +149,10 @@ const MIN_LEVEL = 1
 const MANUAL_MODE = 'manual'
 /** A purifier is the fan kind that has a filter (humidifiers and tower fans do not). */
 const PURIFIER_FEATURE = 'filter_life'
+/** A humidifier is the fan kind with a humidity setpoint. */
+const HUMIDIFIER_FEATURE = 'humidity'
+/** The modes every tsvesync humidifier class accepts, when the class does not say. */
+const HUMIDIFIER_DEFAULT_MODES: readonly string[] = ['auto', 'manual', 'sleep']
 const AIR_QUALITY_FEATURE = 'air_quality'
 /** Transport error codes that mean "the cloud was not reached". */
 const NETWORK_CODES: ReadonlySet<string> = new Set([
@@ -149,38 +177,65 @@ const REGION_PATTERN =
 const REGION_HINT =
   'set the Country code on the VeSync integration to the country the account was registered in'
 
+/** One sign-in in flight: its outcome and the lines it logged, for every call awaiting it. */
+interface SharedLogin {
+  readonly done: Promise<boolean>
+  readonly lines: readonly LibraryLine[]
+}
+
 /**
- * The process-wide library logger. Lines go to the capture of the call in flight; calls are
- * serialized so exactly one capture is open at a time.
+ * The process-wide library logger. A line goes to the capture of the call whose async context
+ * logged it; calls run concurrently (a command never waits behind a poll). A line logged outside
+ * any call (a library timer) has no capture and is dropped, as before.
  */
 class LibraryLogRouter implements TsVeSyncLogSink {
-  #capture: LibraryLine[] | null = null
-  #queue: Promise<unknown> = Promise.resolve()
+  readonly #capture = new AsyncLocalStorage<LibraryLine[]>()
 
   readonly debug = (message: string, ...args: unknown[]): void => this.#push('debug', message, args)
   readonly info = (message: string, ...args: unknown[]): void => this.#push('info', message, args)
   readonly warn = (message: string, ...args: unknown[]): void => this.#push('warn', message, args)
   readonly error = (message: string, ...args: unknown[]): void => this.#push('error', message, args)
 
-  /** Run `fn` alone, with every library line it causes collected. */
-  run<T>(
+  /** Run `fn` with every library line it causes collected (and only those). */
+  async run<T>(
     fn: () => Promise<T>,
   ): Promise<{ readonly value: T; readonly lines: readonly LibraryLine[] }> {
-    const next = this.#queue.then(async () => {
-      const lines: LibraryLine[] = []
-      this.#capture = lines
-      try {
-        return { value: await fn(), lines }
-      } finally {
-        this.#capture = null
+    const lines: LibraryLine[] = []
+    const value = await this.#capture.run(lines, fn)
+    return { value, lines }
+  }
+
+  /**
+   * Wrap a manager's sign-in so every call that awaits it receives its lines. The library runs one
+   * sign-in for every caller that needs one (its own re-login included) and logs it in the
+   * context of the call that STARTED it; a call that joined would see only "re-authentication
+   * failed" and classify a region or credentials refusal as a bare refusal. The sign-in's lines
+   * are collected apart and copied into each awaiting call's capture.
+   */
+  shareLogin(login: TsVeSyncManager['login']): TsVeSyncManager['login'] {
+    let inFlight: SharedLogin | null = null
+    return async (retryAttempts, initialDelayMs) => {
+      let shared = inFlight
+      if (shared === null) {
+        const lines: LibraryLine[] = []
+        const done = this.#capture
+          .run(lines, () => login(retryAttempts, initialDelayMs))
+          .finally(() => {
+            inFlight = null
+          })
+        shared = { done, lines }
+        inFlight = shared
       }
-    })
-    this.#queue = next.catch((): null => null)
-    return next
+      try {
+        return await shared.done
+      } finally {
+        this.#capture.getStore()?.push(...shared.lines)
+      }
+    }
   }
 
   #push(level: LibraryLine['level'], message: string, args: readonly unknown[]): void {
-    this.#capture?.push({ level, message: String(message), args })
+    this.#capture.getStore()?.push({ level, message: String(message), args })
   }
 }
 
@@ -282,6 +337,84 @@ function isPurifier(fan: TsVeSyncFan): boolean {
   return fan.hasFeature(PURIFIER_FEATURE)
 }
 
+function isHumidifier(fan: TsVeSyncFan): fan is TsVeSyncHumidifier {
+  return (
+    !fan.hasFeature(PURIFIER_FEATURE) &&
+    fan.hasFeature(HUMIDIFIER_FEATURE) &&
+    'setHumidity' in fan &&
+    typeof fan.setHumidity === 'function' &&
+    'setDisplay' in fan &&
+    typeof fan.setDisplay === 'function'
+  )
+}
+
+/** Whether the adapter drives this library device (a purifier or a humidifier). */
+function isDriven(device: object): device is TsVeSyncFan {
+  return isFan(device) && (isPurifier(device) || isHumidifier(device))
+}
+
+/** The contract snapshot of a driven library device. */
+export function deviceSnapshotOf(fan: TsVeSyncFan, detailsRead: boolean): VeSyncDeviceSnapshot {
+  return isHumidifier(fan) ? humidifierSnapshotOf(fan, detailsRead) : snapshotOf(fan)
+}
+
+/** The library writes 0 for a humidity it did not get; no indoor reading or setpoint is 0 %. */
+function humidityOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 && value <= 100
+    ? value
+    : null
+}
+
+function stringArray(value: unknown): readonly string[] | null {
+  if (!Array.isArray(value)) return null
+  const out = value.filter((v): v is string => typeof v === 'string')
+  return out.length > 0 ? out : null
+}
+
+/**
+ * Map one library humidifier onto the contract snapshot. `detailsRead` says whether the detail
+ * read answered for this object: the classes' tank getter reads `water_lacks || false` and some
+ * seed `water_lacks: false`, so before a real read the tank is unknown (`null`), never "OK".
+ */
+export function humidifierSnapshotOf(
+  fan: TsVeSyncHumidifier,
+  detailsRead: boolean,
+): VeSyncHumidifierSnapshot {
+  const details = isRecord(fan.details) ? fan.details : {}
+  const configuration = isRecord(details['configuration']) ? details['configuration'] : {}
+  const range = isRecord(fan.humidityRange) ? fan.humidityRange : {}
+  const min = range['min']
+  const max = range['max']
+  const display = details['display']
+  return {
+    kind: 'humidifier',
+    nativeId: fan.cid,
+    name: fan.deviceName,
+    ...(fan.deviceType !== '' ? { model: fan.deviceType } : {}),
+    ...(fan.macId.trim() !== '' ? { mac: fan.macId.trim() } : {}),
+    power: fan.deviceStatus === 'on',
+    currentHumidity: humidityOrNull(fan.currentHumidity ?? details['humidity']),
+    targetHumidity: humidityOrNull(
+      fan.targetHumidity ?? configuration['auto_target_humidity'] ?? details['target_humidity'],
+    ),
+    mode: fan.mode,
+    availableModes: [
+      ...(stringArray(fan.modes) ?? fan.getSupportedModes(HUMIDIFIER_DEFAULT_MODES)),
+    ],
+    minHumidity: typeof min === 'number' ? min : null,
+    maxHumidity: typeof max === 'number' ? max : null,
+    display: typeof display === 'boolean' ? display : fan.screenStatus === 'on',
+    waterLacks: detailsRead ? tankFlag(details['water_lacks'], fan.waterLacks) : null,
+    online: fan.connectionStatus === 'online',
+  }
+}
+
+/** The tank flag a read reported: the raw detail field, else the class getter, else unknown. */
+function tankFlag(detail: unknown, getter: boolean | undefined): boolean | null {
+  if (typeof detail === 'boolean') return detail
+  return typeof getter === 'boolean' ? getter : null
+}
+
 /** Map one library purifier onto the contract snapshot. */
 export function snapshotOf(fan: TsVeSyncFan): VeSyncPurifierSnapshot {
   const maxLevel = Math.max(MIN_LEVEL, fan.getMaxFanSpeed())
@@ -290,6 +423,7 @@ export function snapshotOf(fan: TsVeSyncFan): VeSyncPurifierSnapshot {
   const speedPercent =
     power && fan.speed >= MIN_LEVEL ? Math.round((fan.speed / maxLevel) * 100) : null
   return {
+    kind: 'purifier',
     nativeId: fan.cid,
     name: fan.deviceName,
     ...(fan.deviceType !== '' ? { model: fan.deviceType } : {}),
@@ -351,11 +485,14 @@ class TsVeSyncClient implements VeSyncClient {
   readonly #manager: TsVeSyncManager
   readonly #router: LibraryLogRouter
   #fans: Map<string, TsVeSyncFan> = new Map()
-  #snapshots: Map<string, VeSyncPurifierSnapshot> = new Map()
+  #snapshots: Map<string, VeSyncDeviceSnapshot> = new Map()
   /** A restored session no call has proven yet: its first refusal is a session refusal. */
   #unprovenRestore = false
 
   constructor(manager: TsVeSyncManager, router: LibraryLogRouter) {
+    // The library calls its own `login` through the instance (a re-login inside a device list or
+    // an API call), so the shared wrapper is installed on the instance itself.
+    manager.login = router.shareLogin(manager.login.bind(manager))
     this.#manager = manager
     this.#router = router
   }
@@ -377,30 +514,44 @@ class TsVeSyncClient implements VeSyncClient {
     this.#snapshots = new Map()
   }
 
-  async listDevices(): Promise<readonly VeSyncPurifierSnapshot[]> {
+  async listDevices(): Promise<readonly VeSyncDeviceSnapshot[]> {
     const { value: listed, lines } = await this.#router.run(async () => {
       const ok = await this.#manager.getDevices()
       if (!ok) return false
+      const read = new Set<string>()
       for (const device of this.#manager.fans) {
-        if (isFan(device) && isPurifier(device)) await device.getDetails()
+        if (isDriven(device) && (await device.getDetails())) read.add(device.cid)
       }
-      return true
+      return read
     })
     if (!listed) throw this.#listFailure(lines)
     this.#unprovenRestore = false
     const fans = new Map<string, TsVeSyncFan>()
-    const snapshots = new Map<string, VeSyncPurifierSnapshot>()
+    const snapshots = new Map<string, VeSyncDeviceSnapshot>()
     for (const device of this.#manager.fans) {
-      if (!isFan(device) || !isPurifier(device)) continue
+      if (!isDriven(device)) continue
       fans.set(device.cid, device)
-      snapshots.set(device.cid, snapshotOf(device))
+      snapshots.set(device.cid, deviceSnapshotOf(device, listed.has(device.cid)))
     }
     this.#fans = fans
     this.#snapshots = snapshots
     return [...snapshots.values()]
   }
 
-  getDevice(nativeId: string): VeSyncPurifierSnapshot | null {
+  async refreshDevice(nativeId: string): Promise<VeSyncDeviceSnapshot | null> {
+    const fan = this.#fans.get(nativeId)
+    if (fan === undefined) return null
+    const { value, lines } = await this.#router.run(() => fan.getDetails())
+    // The library answers a refused read with a falsy value and keeps its last details.
+    if (value === false) {
+      throw new Error(`vesync: refresh refused for "${nativeId}": ${failureWords(lines)}`)
+    }
+    const snapshot = deviceSnapshotOf(fan, true)
+    this.#snapshots = new Map(this.#snapshots).set(nativeId, snapshot)
+    return snapshot
+  }
+
+  getDevice(nativeId: string): VeSyncDeviceSnapshot | null {
     return this.#snapshots.get(nativeId) ?? null
   }
 
@@ -438,6 +589,15 @@ class TsVeSyncClient implements VeSyncClient {
     })
   }
 
+  setTargetHumidity(nativeId: string, percent: number): Promise<void> {
+    return this.#command(nativeId, 'setHumidity', (fan) => {
+      if (!isHumidifier(fan)) {
+        throw new Error(`vesync: ${fan.deviceType} has no humidity setpoint`)
+      }
+      return fan.setHumidity(Math.round(percent))
+    })
+  }
+
   /**
    * Why a device list failed. The library re-authenticating by itself and failing is a sign-in
    * failure; a restored session refused before any call proved it is a session refusal (the
@@ -460,7 +620,7 @@ class TsVeSyncClient implements VeSyncClient {
   ): Promise<void> {
     const fan = this.#fans.get(nativeId)
     if (fan === undefined) {
-      throw new Error(`vesync: unknown purifier "${nativeId}" — not on the last device list`)
+      throw new Error(`vesync: unknown device "${nativeId}" — not on the last device list`)
     }
     const { value, lines } = await this.#router.run(() => run(fan))
     if (!value) throw new Error(`vesync: ${name} refused for "${nativeId}": ${failureWords(lines)}`)
