@@ -134,6 +134,7 @@ import {
 import {
   type DeviceMapper,
   getMapperFactory,
+  type Mapper,
   HAP_EXPORTABLE_DEVICE_TYPES,
   type MapperKind,
   pickMapperKind,
@@ -348,6 +349,11 @@ interface DeviceSummary {
   readonly name: string
   readonly type: string
 }
+
+/** A read of the per-bridge HomeKit name: an answer (a name, or none stored), or no answer. */
+type ExposedNameRead =
+  | { readonly kind: 'answered'; readonly name: string | null }
+  | { readonly kind: 'unreadable' }
 
 // HAP-banned trivial pincodes (per spec).
 const BANNED_PINCODES = new Set<string>([
@@ -1254,12 +1260,27 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   private async exposedNameOf(instanceId: string, deviceId: string): Promise<string | null> {
+    // A failed read names nothing; the listing and the accessory keep the device name.
+    const read = await this.readExposedNameState(instanceId, deviceId)
+    return read.kind === 'answered' ? read.name : null
+  }
+
+  /**
+   * The HomeKit name of a device on a bridge, keeping "the store did not answer" apart from
+   * "no name is stored" — the reconcile must not take a failed read for a rename (D49).
+   */
+  private async readExposedNameState(
+    instanceId: string,
+    deviceId: string,
+  ): Promise<ExposedNameRead> {
     const numericId = Number.parseInt(deviceId, 10)
-    if (!Number.isFinite(numericId)) return null
+    if (!Number.isFinite(numericId)) return { kind: 'answered', name: null }
     try {
-      return readExposedName(await this.nameStore().read(numericId), instanceId, hapNameValidator)
+      return {
+        kind: 'answered',
+        name: readExposedName(await this.nameStore().read(numericId), instanceId, hapNameValidator),
+      }
     } catch (err) {
-      // A failed read names nothing; the listing and the accessory keep the device name.
       this.ctx.logger.warn('export-hap: HomeKit name unreadable', {
         tags: { deviceId: numericId },
         meta: {
@@ -1267,7 +1288,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
           error: err instanceof Error ? err.message : String(err),
         },
       })
-      return null
+      return { kind: 'unreadable' }
     }
   }
 
@@ -1418,6 +1439,14 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       mapperKind: entry.mapperKind,
       useBridge: entry.settings?.useBridge,
     })
+    // A rebuild replaces the live accessory: take the old one down first, so
+    // its event subscriptions (the doorbell's among them) die with it and the
+    // new one is the only server under this UUID.
+    const replaced = inst.exposed.get(entry.deviceId)
+    if (replaced !== undefined && replaced !== mapper) {
+      inst.exposed.delete(entry.deviceId)
+      await this.retireMapper(inst, entry.deviceId, replaced)
+    }
     for (const accessory of mapper.accessories) {
       const bridged = wantsBridge && (await inst.bridgeHost.add(accessory))
       if (bridged) continue
@@ -1451,6 +1480,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     }
     inst.exposed.delete(deviceId)
     inst.builtShapes.delete(deviceId)
+    await this.retireMapper(inst, deviceId, mapper)
+  }
+
+  /** Take one mapper's accessories off the network and dispose it. */
+  private async retireMapper(inst: BridgeInstance, deviceId: string, mapper: Mapper): Promise<void> {
     for (const accessory of mapper.accessories) {
       // A BRIDGED accessory has no server of its own: taking it off the bridge
       // is the whole of the teardown, and calling `unpublish` on it would be a
@@ -1543,8 +1577,15 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         kind === 'camera'
           ? shapeCapsFor('camera', bound)
           : shapeCapsFor('generic', await exportableCapsOf(proxy, log))
+      const named = await this.readExposedNameState(inst.id, String(deviceId))
+      // An unreadable name store moves nothing: the name the accessory carries stands.
       const name =
-        (await this.exposedNameOf(inst.id, String(deviceId))) ?? device.name ?? `Device ${deviceId}`
+        named.kind === 'unreadable'
+          ? (inst.builtShapes.get(String(deviceId))?.shape.inputs.name ??
+            inst.findEntry(deviceId)?.displayName ??
+            device.name ??
+            `Device ${deviceId}`)
+          : (named.name ?? device.name ?? `Device ${deviceId}`)
       const shape: AccessoryShape = {
         inputs: {
           kind,
@@ -1729,7 +1770,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         if (existing) clearTimeout(existing)
         const timer = setTimeout(() => {
           inst.pendingRebuildTimers.delete(deviceId)
-          void this.reconcileDevice(inst, deviceId)
+          this.runReconcile(inst, deviceId)
         }, 500)
         if (typeof timer.unref === 'function') timer.unref()
         inst.pendingRebuildTimers.set(deviceId, timer)
@@ -1783,6 +1824,32 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /**
+   * Run {@link reconcileDevice} for one device, one at a time. A change that
+   * lands while one runs is not dropped and does not start a second, overlapping
+   * rebuild: it marks the running one to go again, which then reads the latest
+   * state. Two overlapping rebuilds left two live accessories under one UUID.
+   */
+  private runReconcile(inst: BridgeInstance, deviceId: string): void {
+    const running = inst.reconcileFlights.get(deviceId)
+    if (running !== undefined) {
+      running.rerun = true
+      return
+    }
+    const flight = { rerun: false }
+    inst.reconcileFlights.set(deviceId, flight)
+    void (async () => {
+      try {
+        do {
+          flight.rerun = false
+          await this.reconcileDevice(inst, deviceId)
+        } while (flight.rerun)
+      } finally {
+        inst.reconcileFlights.delete(deviceId)
+      }
+    })()
+  }
+
+  /**
    * Reconcile one exposed device against the shape its live accessory was
    * BUILT from (`inst.builtShapes`; the persisted key when nothing was recorded).
    *   - shape unchanged → no-op (the storm-killer: a respawn's binding churn
@@ -1815,6 +1882,7 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
         // attach now; shape is unchanged so this is a first publish, not churn.
         try {
           await this.attachMapper(inst, entry)
+          await this.dropIfUnexposed(inst, deviceId)
         } catch (err) {
           log.warn('export-hap: reconcile attach failed', {
             meta: { error: errMsg(err) },
@@ -1840,14 +1908,47 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       },
     })
     try {
-      // The rename path's re-expose: detach, rebuild under the current name and
-      // the same UUID, record the new built shape.
-      await this.exposeDevice(inst, deviceId)
+      await this.rebuildInPlace(inst, entry, current.shape.inputs.name)
     } catch (err) {
       log.warn('export-hap: reconcile rebuild failed', {
         meta: { error: errMsg(err) },
       })
     }
+  }
+
+  /**
+   * Rebuild a live accessory under the same UUID (the pairing and the Home tile
+   * survive): the new one replaces the old in `publishMapper`. Only the name
+   * is written back to the exposure, and only onto an entry that still exists
+   * when the build is done — the operator may have unexposed the device while
+   * it was building, and a reconcile must never expose it again.
+   */
+  private async rebuildInPlace(
+    inst: BridgeInstance,
+    entry: ExposedConfigEntry,
+    name: string,
+  ): Promise<void> {
+    const next: ExposedConfigEntry =
+      entry.displayName === name ? entry : { ...entry, displayName: name }
+    await this.attachMapper(inst, next)
+    if (await this.dropIfUnexposed(inst, entry.deviceId)) return
+    if (next === entry) return
+    await this.setExposedDevices(
+      inst,
+      inst.exposure.devices.map((e) => (e.deviceId === entry.deviceId ? { ...e, displayName: name } : e)),
+    )
+  }
+
+  /** After a reconcile's build: a device unexposed meanwhile is taken down again. */
+  private async dropIfUnexposed(inst: BridgeInstance, deviceId: string): Promise<boolean> {
+    const numericId = Number.parseInt(deviceId, 10)
+    if (inst.findEntry(numericId) !== null) return false
+    this.ctx.logger
+      .withTags({ deviceId: numericId })
+      .info('export-hap: device unexposed during its rebuild — taken down again')
+    await this.detachMapper(inst, deviceId)
+    await this.forgetFingerprint(inst, numericId)
+    return true
   }
 
   /**

@@ -23,6 +23,11 @@ export class BridgeInstance {
    * had (a doorbell bound after a boot built a plain camera). Dropped with the accessory.
    */
   readonly builtShapes = new Map<string, BuiltAccessoryShape>()
+  /**
+   * The reconcile running for a device, by device id. One at a time per device: a change that
+   * lands meanwhile sets `rerun`, and the running one goes again with the latest state.
+   */
+  readonly reconcileFlights = new Map<string, { rerun: boolean }>()
   /** Pending rebuild timers per device id: debounce, cleared on detach. */
   readonly pendingRebuildTimers = new Map<string, ReturnType<typeof setTimeout>>()
   actionExports: ActionExports | null = null

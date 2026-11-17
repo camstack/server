@@ -93,6 +93,8 @@ class TestAddon extends ExportHapAddon {
       },
       // Bound, so the shape is answered; no `cameraStreams`, so no recording token.
       fetchDevice: async () => ({ binding: { entries: [{ capName: 'motion-detection' }] } }),
+      // The HomeKit name store answers "none stored", so the device's own name is used.
+      settings: { readDeviceStore: async () => ({}), writeDeviceStore: async () => {} },
       logger,
       eventBus: {
         subscribe: (filter: { category: EventCategory }, handler: LifecycleHandler) => {
