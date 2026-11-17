@@ -319,6 +319,7 @@ export const petFeederCapability = {
         actions: [
           {
             id: 'petFeeder.childLockOn',
+            effect: { field: 'childLock', value: true },
             label: t('Child lock on', 'Blocco bambini attivo'),
             phrase: t('Turn on the child lock of {device}', 'Attiva il blocco bambini di {device}'),
             icon: 'lock',
@@ -326,6 +327,7 @@ export const petFeederCapability = {
           },
           {
             id: 'petFeeder.childLockOff',
+            effect: { field: 'childLock', value: false },
             label: t('Child lock off', 'Blocco bambini spento'),
             phrase: t(
               'Turn off the child lock of {device}',
@@ -347,6 +349,7 @@ export const petFeederCapability = {
         actions: [
           {
             id: 'petFeeder.lightOn',
+            effect: { field: 'indicatorLight', value: true },
             label: t('Indicator light on', 'Spia accesa'),
             phrase: t('Turn on the indicator light of {device}', 'Accendi la spia di {device}'),
             icon: 'lightbulb',
@@ -354,6 +357,7 @@ export const petFeederCapability = {
           },
           {
             id: 'petFeeder.lightOff',
+            effect: { field: 'indicatorLight', value: false },
             label: t('Indicator light off', 'Spia spenta'),
             phrase: t('Turn off the indicator light of {device}', 'Spegni la spia di {device}'),
             icon: 'lightbulb-off',
@@ -372,6 +376,7 @@ export const petFeederCapability = {
         actions: [
           {
             id: 'petFeeder.feedSoundOn',
+            effect: { field: 'feedSound', value: true },
             label: t('Feeding sound on', 'Suono di erogazione attivo'),
             phrase: t(
               'Turn on the feeding sound of {device}',
@@ -382,6 +387,7 @@ export const petFeederCapability = {
           },
           {
             id: 'petFeeder.feedSoundOff',
+            effect: { field: 'feedSound', value: false },
             label: t('Feeding sound off', 'Suono di erogazione spento'),
             phrase: t(
               'Turn off the feeding sound of {device}',
@@ -406,6 +412,7 @@ export const petFeederCapability = {
         actions: [
           {
             id: 'petFeeder.volume',
+            effect: { field: 'volume', fromArg: 'level' },
             label: t('Set volume', 'Imposta il volume'),
             phrase: t(
               'Set the volume of {device} to {level}',

@@ -3,12 +3,19 @@
  *
  * A command arms a hold on each field its effects name; the mirror reads the
  * device's slice through it (the EFFECTIVE slice) while the slice it stores,
- * persists and records stays what the device reported. A held field ends when
- *   1. the slice under it reaches the held value (confirmed),
- *   2. the call is refused (rolled back at once),
- *   3. the limit elapses with the slice still elsewhere (reverted, logged), or
- *   4. a newer command names the same field (latest wins).
- * A reading that contradicts the hold stays underneath and shows when it ends.
+ * persists and records stays what the device reported. Each held field
+ * remembers what the device reported for it when the command arrived. A
+ * reading of a held field is
+ *   - STALE when it equals that pre-command value (or a value an older,
+ *     replaced command held): the device has not acted yet — keep holding;
+ *   - the CONFIRMATION when it equals the held value, a number within the
+ *     effect's tolerance (the step of the arg it came from) — release;
+ *   - the DEVICE'S OWN ANSWER otherwise (locking, jammed, arming, a value
+ *     rounded beyond the step) — release at once and serve it (logged at
+ *     debug, `device-answered`).
+ * A held field also ends when the call is refused (rolled back at once), when
+ * the limit elapses with the device still stale (reverted, warned), or when a
+ * newer command names the same field (latest wins).
  *
  * Memory only: a restart drops every hold. Nothing here does I/O; the timers
  * are unref'd so a hold never keeps a process alive.
@@ -19,6 +26,9 @@ type Slice = Readonly<Record<string, unknown>>
 
 interface HeldField {
   readonly value: VocabEffectValue
+  readonly tolerance: number
+  /** What the device reported before the command(s): a reading equal to one of these is stale. */
+  readonly stale: readonly unknown[]
   readonly token: number
 }
 
@@ -54,6 +64,23 @@ function same(a: unknown, b: unknown): boolean {
   return Object.is(a, b)
 }
 
+/** Does `reading` confirm `held`: equal, or a number within its tolerance? */
+function confirms(reading: unknown, held: VocabEffectValue, tolerance: number): boolean {
+  if (same(reading, held)) return true
+  if (typeof reading !== 'number' || typeof held !== 'number' || tolerance <= 0) return false
+  // A float step (0.5 °C) must not lose an exact match to rounding noise.
+  return Math.abs(reading - held) <= tolerance + 1e-9
+}
+
+/** What a reading of a held field means. */
+type Reading = 'stale' | 'confirmed' | 'device-answered'
+
+function judge(reading: unknown, held: HeldField): Reading {
+  if (confirms(reading, held.value, held.tolerance)) return 'confirmed'
+  if (held.stale.some((v) => same(v, reading))) return 'stale'
+  return 'device-answered'
+}
+
 export class CommandHolds {
   /** device → cap → field → held value. */
   private readonly held = new Map<number, Map<string, Map<string, HeldField>>>()
@@ -83,7 +110,9 @@ export class CommandHolds {
     let holding = false
     for (const effect of request.effects) {
       const standing = fields.get(effect.field)
-      if (Object.hasOwn(base, effect.field) && same(base[effect.field], effect.value)) {
+      const tolerance = effect.tolerance ?? 0
+      const reported = Object.hasOwn(base, effect.field) ? base[effect.field] : undefined
+      if (Object.hasOwn(base, effect.field) && confirms(reported, effect.value, tolerance)) {
         if (standing !== undefined) {
           fields.delete(effect.field)
           changed = true
@@ -91,7 +120,9 @@ export class CommandHolds {
         continue
       }
       if (standing === undefined || !same(standing.value, effect.value)) changed = true
-      fields.set(effect.field, { value: effect.value, token })
+      // A value the replaced command held is the device catching up, not an answer.
+      const stale = standing === undefined ? [reported] : [...standing.stale, standing.value]
+      fields.set(effect.field, { value: effect.value, tolerance, stale, token })
       holding = true
     }
     this.dropEmpty(request.deviceId, request.capName)
@@ -140,12 +171,24 @@ export class CommandHolds {
     this.deps.reemit(arming.deviceId, arming.capName)
   }
 
-  /** The slice under the hold moved: drop every held field it now confirms. */
+  /**
+   * The slice under the hold moved: keep each held field it still reports
+   * stale, drop the ones it confirms or answers otherwise.
+   */
   settle(deviceId: number, capName: string, base: Slice): void {
     const fields = this.held.get(deviceId)?.get(capName)
     if (fields === undefined) return
     for (const [field, held] of fields) {
-      if (Object.hasOwn(base, field) && same(base[field], held.value)) fields.delete(field)
+      if (!Object.hasOwn(base, field)) continue
+      const reading = judge(base[field], held)
+      if (reading === 'stale') continue
+      fields.delete(field)
+      if (reading === 'device-answered') {
+        this.deps.logger.debug('command hold released: the device answered otherwise', {
+          tags: { deviceId },
+          meta: { cap: capName, field, reason: reading },
+        })
+      }
     }
     this.dropEmpty(deviceId, capName)
     this.forgetStaleArmings()

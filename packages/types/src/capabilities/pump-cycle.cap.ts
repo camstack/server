@@ -48,6 +48,7 @@ export const pumpCycleCapability = {
       actions: [
         {
           id: 'pumpCycle.on',
+          effect: { field: 'enabled', value: true },
           label: t('Pump cycle on', 'Ciclo pompa attivo'),
           phrase: t(
             'Run the pump of {device} on its on/off cycle',
@@ -58,6 +59,7 @@ export const pumpCycleCapability = {
         },
         {
           id: 'pumpCycle.off',
+          effect: { field: 'enabled', value: false },
           label: t('Pump cycle off', 'Ciclo pompa spento'),
           phrase: t(
             'Run the pump of {device} continuously',

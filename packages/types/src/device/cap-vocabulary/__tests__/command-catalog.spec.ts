@@ -39,17 +39,65 @@ describe('the command catalogue', () => {
     expect(
       commandEffects('fan-control', 'setPercentage', { speed: 40 }, { speed: 20, preset: 'auto' }),
     ).toEqual([
-      { field: 'speed', value: 40 },
+      { field: 'speed', value: 40, tolerance: 1 },
       { field: 'preset', value: '' },
     ])
     // Already manual: the speed alone.
     expect(
       commandEffects('fan-control', 'setPercentage', { speed: 40 }, { speed: 20, preset: '' }),
-    ).toEqual([{ field: 'speed', value: 40 }])
+    ).toEqual([{ field: 'speed', value: 40, tolerance: 1 }])
     expect(commandEffects('fan-control', 'setPreset', { preset: 'sleep' }, undefined)).toEqual([
       { field: 'preset', value: 'sleep' },
     ])
     expect(commandEffects('cover', 'stop', {}, undefined)).toEqual([])
+  })
+
+  it('lends a copied number the step of its arg as the tolerance (D1061)', () => {
+    expect(commandEffects('brightness', 'setBrightness', { level: 37 }, undefined)).toEqual([
+      { field: 'level', value: 37, tolerance: 1 },
+    ])
+    expect(commandEffects('climate-control', 'setTarget', { target: 21.5 }, undefined)).toEqual([
+      { field: 'target', value: 21.5, tolerance: 0.5 },
+    ])
+    // A literal value names no arg, and so no tolerance.
+    expect(commandEffects('brightness', 'setBrightness', { level: 0 }, undefined)).toEqual([
+      { field: 'level', value: 0 },
+    ])
+  })
+
+  it('a toggle leads to the opposite of what the person saw, held values included', () => {
+    expect(commandEffects('switch', 'toggle', {}, { on: false })).toEqual([
+      { field: 'on', value: true },
+    ])
+    // The device still reports off, the person sees the held on: a second toggle turns it off.
+    expect(commandEffects('switch', 'toggle', {}, { on: false }, { on: true })).toEqual([
+      { field: 'on', value: false },
+    ])
+    expect(commandEffects('switch', 'toggle', {}, undefined)).toEqual([])
+  })
+
+  it.each([
+    ['media-player', 'setMute', { muted: true }, { field: 'isMuted', value: true }],
+    ['media-player', 'setRepeat', { repeat: 'all' }, { field: 'repeat', value: 'all' }],
+    ['media-player', 'play', {}, { field: 'state', value: 'playing' }],
+    ['media-player', 'pause', {}, { field: 'state', value: 'paused' }],
+    [
+      'media-player',
+      'setVolume',
+      { volumeLevel: 40 },
+      { field: 'volumeLevel', value: 40, tolerance: 1 },
+    ],
+    ['pet-feeder', 'setChildLock', { on: true }, { field: 'childLock', value: true }],
+    ['pet-feeder', 'setFeedSound', { on: false }, { field: 'feedSound', value: false }],
+    ['pet-feeder', 'setIndicatorLight', { on: true }, { field: 'indicatorLight', value: true }],
+    ['pet-feeder', 'setVolume', { level: 3 }, { field: 'volume', value: 3, tolerance: 1 }],
+    ['pet-fountain', 'setPump', { on: true }, { field: 'pumpRunning', value: true }],
+    ['pump-cycle', 'setEnabled', { on: false }, { field: 'enabled', value: false }],
+    ['script-runner', 'stop', {}, { field: 'isRunning', value: false }],
+    ['automation-control', 'enable', {}, { field: 'enabled', value: true }],
+    ['automation-control', 'disable', {}, { field: 'enabled', value: false }],
+  ])('%s.%s leads to its state (D1061)', (cap, method, args, effect) => {
+    expect(commandEffects(cap, method, args, undefined)).toEqual([effect])
   })
 
   it('audits the fields an action effect names and the boolean state fields', () => {

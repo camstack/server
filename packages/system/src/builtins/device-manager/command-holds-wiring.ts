@@ -30,8 +30,9 @@ export function startCommandHolds(deps: CommandHoldsWiringDeps): () => void {
   const unsubscribe = getCommandObserverRegistry().subscribe((obs) => {
     try {
       const current = deps.mirror.capSlice(obs.deviceId, obs.capName, 'confirmed') ?? undefined
+      const shown = deps.mirror.capSlice(obs.deviceId, obs.capName) ?? undefined
       const option = optionsFor(obs.deviceId, obs.capName)?.[obs.method]
-      const hold = resolveCommandHold(obs.capName, obs.method, obs.args, current, option)
+      const hold = resolveCommandHold(obs.capName, obs.method, obs.args, current, option, shown)
       if (hold === null) return
       const token = deps.mirror.holdCommand({
         deviceId: obs.deviceId,

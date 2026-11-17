@@ -110,6 +110,8 @@ export const switchCapability = {
       actions: [
         {
           id: 'switch.toggle',
+          // A toggle leads to the opposite of what the person saw (D1061).
+          sideEffects: [{ field: 'on', negate: true }],
           label: t('Toggle', 'Commuta'),
           phrase: t('Toggle {device}', 'Commuta {device}'),
           icon: 'toggle-right',

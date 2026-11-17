@@ -168,6 +168,30 @@ function withoutAddedOfferedWhen(cap: string, entry: unknown): unknown {
 const ADDED_EFFECTS: Readonly<Record<string, readonly string[]>> = {
   'fan-control': ['fan.preset'],
   'climate-control': ['climate.targetRange', 'climate.fanMode', 'climate.preset'],
+  'media-player': [
+    'media.play',
+    'media.pause',
+    'media.volume',
+    'media.mute',
+    'media.unmute',
+    'media.shuffleOn',
+    'media.shuffleOff',
+    'media.repeat',
+    'media.source',
+  ],
+  'pet-feeder': [
+    'petFeeder.childLockOn',
+    'petFeeder.childLockOff',
+    'petFeeder.lightOn',
+    'petFeeder.lightOff',
+    'petFeeder.feedSoundOn',
+    'petFeeder.feedSoundOff',
+    'petFeeder.volume',
+  ],
+  'pet-fountain': ['petFountain.pumpOn', 'petFountain.pumpOff'],
+  'pump-cycle': ['pumpCycle.on', 'pumpCycle.off'],
+  'script-runner': ['script.stop'],
+  'automation-control': ['haAutomation.enable', 'haAutomation.disable'],
 }
 
 /** The entry with the D1061 effects taken out. */

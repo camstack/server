@@ -242,6 +242,7 @@ export const mediaPlayerCapability = {
       actions: [
         {
           id: 'media.play',
+          effect: { field: 'state', value: 'playing' },
           label: t('Play', 'Riproduci'),
           phrase: t('Play on {device}', 'Avvia la riproduzione su {device}'),
           icon: 'play',
@@ -254,6 +255,7 @@ export const mediaPlayerCapability = {
       actions: [
         {
           id: 'media.pause',
+          effect: { field: 'state', value: 'paused' },
           label: t('Pause media', 'Metti in pausa'),
           phrase: t('Pause {device}', 'Metti in pausa {device}'),
           icon: 'pause',
@@ -311,6 +313,7 @@ export const mediaPlayerCapability = {
         actions: [
           {
             id: 'media.volume',
+            effect: { field: 'volumeLevel', fromArg: 'volumeLevel' },
             label: t('Set volume', 'Imposta il volume'),
             phrase: t(
               'Set the volume of {device} to {volumeLevel}',
@@ -340,6 +343,7 @@ export const mediaPlayerCapability = {
         actions: [
           {
             id: 'media.mute',
+            effect: { field: 'isMuted', value: true },
             label: t('Mute', 'Silenzia'),
             phrase: t('Mute {device}', 'Silenzia {device}'),
             icon: 'volume-x',
@@ -347,6 +351,7 @@ export const mediaPlayerCapability = {
           },
           {
             id: 'media.unmute',
+            effect: { field: 'isMuted', value: false },
             label: t('Unmute', 'Riattiva l’audio'),
             phrase: t('Unmute {device}', 'Riattiva l’audio di {device}'),
             icon: 'volume-2',
@@ -367,6 +372,7 @@ export const mediaPlayerCapability = {
         actions: [
           {
             id: 'media.shuffleOn',
+            effect: { field: 'shuffle', value: true },
             label: t('Shuffle on', 'Riproduzione casuale attiva'),
             phrase: t('Turn on shuffle on {device}', 'Attiva la riproduzione casuale su {device}'),
             icon: 'shuffle',
@@ -374,6 +380,7 @@ export const mediaPlayerCapability = {
           },
           {
             id: 'media.shuffleOff',
+            effect: { field: 'shuffle', value: false },
             label: t('Shuffle off', 'Riproduzione casuale spenta'),
             phrase: t(
               'Turn off shuffle on {device}',
@@ -397,6 +404,7 @@ export const mediaPlayerCapability = {
         actions: [
           {
             id: 'media.repeat',
+            effect: { field: 'repeat', fromArg: 'repeat' },
             label: t('Set repeat', 'Imposta la ripetizione'),
             phrase: t(
               'Set repeat on {device} to {repeat}',
@@ -433,6 +441,7 @@ export const mediaPlayerCapability = {
         actions: [
           {
             id: 'media.source',
+            effect: { field: 'source', fromArg: 'source' },
             label: t('Select source', 'Scegli la sorgente'),
             phrase: t('Switch {device} to {source}', 'Passa {device} alla sorgente {source}'),
             icon: 'cast',

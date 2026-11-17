@@ -264,13 +264,14 @@ export type VocabEffectCondition =
 
 /**
  * A further state a command leads to (D1061), beside its `effect`: setting a
- * fan's speed while a preset runs also clears the preset. Read by the core's
+ * fan's speed while a preset runs also clears the preset. `negate` flips the
+ * boolean the person saw (`switch.toggle` → `on = !on`). Read by the core's
  * command hold; never by a scheduler, which holds only `effect`.
  */
-export type VocabSideEffectFor<C extends VocabCapName, M extends CapMethodName<C>> = VocabEffectFor<
-  C,
-  M
-> & {
+export type VocabSideEffectFor<C extends VocabCapName, M extends CapMethodName<C>> = (
+  | VocabEffectFor<C, M>
+  | { readonly field: CapStatusField<C>; readonly negate: true }
+) & {
   readonly when?:
     | { readonly field: CapStatusField<C>; readonly in: readonly VocabEffectValue[] }
     | { readonly field: CapStatusField<C>; readonly notIn: readonly VocabEffectValue[] }
@@ -513,7 +514,10 @@ export type LooseVocabEffect =
   | { readonly field: string; readonly fromArg: string }
 
 /** A side effect as a consumer reads it (see {@link VocabSideEffectFor}). */
-export type LooseVocabSideEffect = LooseVocabEffect & { readonly when?: VocabEffectCondition }
+export type LooseVocabSideEffect = (
+  | LooseVocabEffect
+  | { readonly field: string; readonly negate: true }
+) & { readonly when?: VocabEffectCondition }
 
 /** An action as a consumer reads it. */
 export interface LooseVocabAction {

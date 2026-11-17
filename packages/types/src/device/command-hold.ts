@@ -66,19 +66,21 @@ function resolveList(
   list: readonly LooseVocabSideEffect[],
   args: Readonly<Record<string, unknown>> | undefined,
   current: CommandSlice,
+  shown: CommandSlice,
   into: CommandEffect[],
 ): void {
   for (const entry of list) {
     if (!effectConditionHolds(entry.when, current)) continue
-    const resolved = resolveSideEffect(entry, args)
+    const resolved = resolveSideEffect(entry, args, shown)
     if (resolved !== null && !into.some((e) => e.field === resolved.field)) into.push(resolved)
   }
 }
 
 /**
- * What to hold for `cap.method(args)` given the cap's slice when it arrived and
- * the provider's option for the method. `null` = hold nothing (`never`, or a
- * command that leads to no state).
+ * What to hold for `cap.method(args)` given the cap's slice when it arrived
+ * (`current`, as the device reported it; `shown`, with the held values over
+ * it — what a `negate` flips) and the provider's option for the method.
+ * `null` = hold nothing (`never`, or a command that leads to no state).
  */
 export function resolveCommandHold(
   cap: string,
@@ -86,12 +88,15 @@ export function resolveCommandHold(
   args: Readonly<Record<string, unknown>> | undefined,
   current: CommandSlice,
   option: CommandHoldOption | undefined,
+  shown: CommandSlice = current,
 ): ResolvedCommandHold | null {
   if (option?.hold === 'never') return null
   const effects: CommandEffect[] = []
-  if (option?.effects !== undefined) resolveList(option.effects, args, current, effects)
-  else effects.push(...commandEffects(cap, method, args, current))
-  if (option?.extraEffects !== undefined) resolveList(option.extraEffects, args, current, effects)
+  if (option?.effects !== undefined) resolveList(option.effects, args, current, shown, effects)
+  else effects.push(...commandEffects(cap, method, args, current, shown))
+  if (option?.extraEffects !== undefined) {
+    resolveList(option.extraEffects, args, current, shown, effects)
+  }
   if (effects.length === 0) return null
   return { effects, holdMs: clampHoldMs(option?.holdMs) }
 }

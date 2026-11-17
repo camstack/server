@@ -25,7 +25,12 @@ export function hubMotionSliceStore(api: () => AddonApi): HubMotionSliceStore {
     },
     readSlice: async (deviceId) => {
       try {
-        const slice = await api().deviceState.getCapSlice.query({ deviceId, capName: 'motion' })
+        // The slice as written, never a held command over it (D1061).
+        const slice = await api().deviceState.getCapSlice.query({
+          deviceId,
+          capName: 'motion',
+          confirmed: true,
+        })
         return { kind: 'answered', slice }
       } catch (err: unknown) {
         return { kind: 'unreadable', error: errMsg(err) }

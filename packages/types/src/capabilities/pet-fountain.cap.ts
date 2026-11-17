@@ -90,6 +90,7 @@ export const petFountainCapability = {
       actions: [
         {
           id: 'petFountain.pumpOn',
+          effect: { field: 'pumpRunning', value: true },
           label: t('Pump on', 'Pompa accesa'),
           phrase: t('Start the pump of {device}', 'Avvia la pompa di {device}'),
           icon: 'play',
@@ -97,6 +98,7 @@ export const petFountainCapability = {
         },
         {
           id: 'petFountain.pumpOff',
+          effect: { field: 'pumpRunning', value: false },
           label: t('Pump off', 'Pompa spenta'),
           phrase: t('Stop the pump of {device}', 'Ferma la pompa di {device}'),
           icon: 'square',

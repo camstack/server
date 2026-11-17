@@ -302,12 +302,32 @@ function checkEffect(
     checkOneEffect(where, def, action.effect, inputShape, problems)
   }
   for (const side of action.sideEffects ?? []) {
-    checkOneEffect(`${where} side effect`, def, side, inputShape, problems)
+    if ('negate' in side) checkNegate(`${where} side effect`, def, side.field, problems)
+    else checkOneEffect(`${where} side effect`, def, side, inputShape, problems)
     if (side.when !== undefined && statusShape(def)?.[side.when.field] === undefined) {
       problems.push(
         `${where}: side effect condition reads '${side.when.field}', which is not a status field of ${def.name}`,
       )
     }
+  }
+}
+
+/** A `negate` side effect flips a boolean status field. */
+function checkNegate(
+  where: string,
+  def: CapabilityDefinition,
+  fieldName: string,
+  problems: string[],
+): void {
+  const field = statusShape(def)?.[fieldName]
+  if (field === undefined) {
+    problems.push(`${where}: effect field '${fieldName}' is not a status field of ${def.name}`)
+    return
+  }
+  if (scalarKind(field) !== 'boolean') {
+    problems.push(
+      `${where}: negate names status field '${fieldName}' (${scalarKind(field)}), not a boolean`,
+    )
   }
 }
 

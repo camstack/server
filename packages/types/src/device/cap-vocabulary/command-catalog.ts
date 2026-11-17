@@ -11,12 +11,23 @@
  */
 import { actionEffect, allVocabActions, findVocabAction, vocabActionIdFor } from './action-index.js'
 import { CAP_VOCABULARY_BY_NAME } from './vocabulary.js'
-import type { LooseVocabSideEffect, VocabEffectCondition, VocabEffectValue } from './types.js'
+import type {
+  LooseVocabOpenArg,
+  LooseVocabSideEffect,
+  VocabEffectCondition,
+  VocabEffectValue,
+} from './types.js'
 
 /** The state a command leads to: a cap status field and the value it should hold. */
 export interface CommandEffect {
   readonly field: string
   readonly value: VocabEffectValue
+  /**
+   * How far a numeric reading may sit from `value` and still confirm it (D1061):
+   * the step of the number arg the value was copied from (brightness 1, a
+   * temperature target 0.5). Absent = the reading must equal the value.
+   */
+  readonly tolerance?: number
 }
 
 let commandKeys: ReadonlySet<string> | undefined
@@ -91,15 +102,41 @@ export function effectConditionHolds(
   return value === undefined || !when.notIn.includes(value)
 }
 
-/** One side effect resolved against the args: `null` when the arg carrying its value is missing. */
+/** The step of the number open arg `key`, when the action offers one. */
+function stepOf(
+  openArgs: readonly LooseVocabOpenArg[] | undefined,
+  key: string,
+): number | undefined {
+  const offer = openArgs?.find((a) => a.key === key)?.offer
+  return offer?.kind === 'number' && offer.step !== undefined && offer.step > 0
+    ? offer.step
+    : undefined
+}
+
+/**
+ * One side effect resolved against the args and the slice the command acts
+ * on: `null` when the arg carrying its value is missing, or a `negate` names a
+ * field the slice holds no boolean in. `openArgs` lends a copied number its
+ * step as the tolerance.
+ */
 export function resolveSideEffect(
   side: LooseVocabSideEffect,
   args: Readonly<Record<string, unknown>> | undefined,
+  shown?: CommandSlice,
+  openArgs?: readonly LooseVocabOpenArg[],
 ): CommandEffect | null {
   if ('value' in side) return { field: side.field, value: side.value }
+  if ('negate' in side) {
+    const raw = shown?.[side.field]
+    return typeof raw === 'boolean' ? { field: side.field, value: !raw } : null
+  }
   const raw = args?.[side.fromArg]
-  if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean') {
-    return { field: side.field, value: raw }
+  if (typeof raw === 'string' || typeof raw === 'boolean') return { field: side.field, value: raw }
+  if (typeof raw === 'number') {
+    const tolerance = stepOf(openArgs, side.fromArg)
+    return tolerance === undefined
+      ? { field: side.field, value: raw }
+      : { field: side.field, value: raw, tolerance }
   }
   return null
 }
@@ -107,23 +144,29 @@ export function resolveSideEffect(
 /**
  * EVERY state the command `cap.method(args)` leads to (D1061): its `effect`
  * first, then each side effect whose condition holds on `current` (the cap's
- * slice when the command arrived). Empty when it leads to none. One field is
- * named once — the first entry for it wins.
+ * slice the device reported when the command arrived). Empty when it leads to
+ * none. One field is named once — the first entry for it wins. A `negate`
+ * side effect flips what `shown` (the slice the person saw, held values
+ * included) holds, so a second toggle before the first is confirmed undoes it.
  */
 export function commandEffects(
   cap: string,
   method: string,
   args: Readonly<Record<string, unknown>> | undefined,
   current: CommandSlice,
+  shown: CommandSlice = current,
 ): readonly CommandEffect[] {
   const actionId = vocabActionIdFor(cap, method, args)
   if (actionId === undefined) return []
+  const action = findVocabAction(actionId)?.action
   const out: CommandEffect[] = []
-  const primary = actionEffect(actionId, args)
-  if (primary !== null) out.push({ field: primary.field, value: primary.value })
-  for (const side of findVocabAction(actionId)?.action.sideEffects ?? []) {
+  if (action?.effect !== undefined) {
+    const primary = resolveSideEffect(action.effect, args, shown, action.openArgs)
+    if (primary !== null) out.push(primary)
+  }
+  for (const side of action?.sideEffects ?? []) {
     if (!effectConditionHolds(side.when, current)) continue
-    const resolved = resolveSideEffect(side, args)
+    const resolved = resolveSideEffect(side, args, shown, action?.openArgs)
     if (resolved !== null && !out.some((e) => e.field === resolved.field)) out.push(resolved)
   }
   return out

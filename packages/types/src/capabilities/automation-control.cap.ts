@@ -45,6 +45,7 @@ export const automationControlCapability = {
       actions: [
         {
           id: 'haAutomation.enable',
+          effect: { field: 'enabled', value: true },
           label: t('Enable automation', 'Abilita l’automazione'),
           phrase: t('Enable {device}', 'Abilita {device}'),
           icon: 'toggle-right',
@@ -57,6 +58,7 @@ export const automationControlCapability = {
       actions: [
         {
           id: 'haAutomation.disable',
+          effect: { field: 'enabled', value: false },
           label: t('Disable automation', 'Disabilita l’automazione'),
           phrase: t('Disable {device}', 'Disabilita {device}'),
           icon: 'toggle-left',

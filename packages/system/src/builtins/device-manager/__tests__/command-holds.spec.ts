@@ -228,4 +228,120 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
     expect(h.mirror.snapshotForDevice(DEVICE)).toMatchObject({ switch: { on: true } })
     stop()
   })
+
+  describe('the release rule: stale keeps, confirmed or answered releases', () => {
+    function answered(h: Harness): readonly unknown[] {
+      return h.logs
+        .filter((l) => l.level === 'debug' && l.message.includes('the device answered'))
+        .map((l) => l.extras)
+    }
+
+    it('keeps holding while the device still reports the pre-command value', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locked' })
+      command('lock-control', 'unlock', {})
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locked' })
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'unlocked' })
+      expect(answered(h)).toEqual([])
+      stop()
+    })
+
+    it('shows locking the moment the lock says locking, and logs device-answered', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'unlocked' })
+      command('lock-control', 'lock', {})
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locked' })
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'locking' })
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locking' })
+      expect(lastSlice(h, 'lock-control')).toEqual({ state: 'locking' })
+      expect(answered(h)).toEqual([
+        {
+          tags: { deviceId: DEVICE },
+          meta: { cap: 'lock-control', field: 'state', reason: 'device-answered' },
+        },
+      ])
+      // The answer released the hold: the limit passing reverts nothing and warns nothing.
+      vi.advanceTimersByTime(60_000)
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'locking' })
+      expect(h.logs.filter((l) => l.level === 'warn')).toEqual([])
+      stop()
+    })
+
+    it('shows jammed when the lock jams', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'unlocked' })
+      command('lock-control', 'lock', {})
+      h.mirror.applySingleCapUpdate(DEVICE, 'lock-control', { state: 'jammed' })
+      expect(h.mirror.capSlice(DEVICE, 'lock-control')).toEqual({ state: 'jammed' })
+      stop()
+    })
+
+    it('shows arming when the panel says arming', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'alarm-panel', { state: 'disarmed' })
+      command('alarm-panel', 'arm', { mode: 'away' })
+      expect(h.mirror.capSlice(DEVICE, 'alarm-panel')).toEqual({ state: 'armed_away' })
+      h.mirror.applySingleCapUpdate(DEVICE, 'alarm-panel', { state: 'arming' })
+      expect(h.mirror.capSlice(DEVICE, 'alarm-panel')).toEqual({ state: 'arming' })
+      stop()
+    })
+
+    it('takes a brightness within the step of the command as its confirmation (37 -> 36)', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'brightness', { level: 20 })
+      command('brightness', 'setBrightness', { level: 37 })
+      expect(h.mirror.capSlice(DEVICE, 'brightness')).toEqual({ level: 37 })
+      h.mirror.applySingleCapUpdate(DEVICE, 'brightness', { level: 36 })
+      expect(h.mirror.capSlice(DEVICE, 'brightness')).toEqual({ level: 36 })
+      expect(answered(h)).toEqual([])
+      vi.advanceTimersByTime(60_000)
+      expect(h.logs.filter((l) => l.level === 'warn')).toEqual([])
+      stop()
+    })
+
+    it('a value a newer command replaced is the device catching up, not an answer', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'fan-control', { speed: 20, preset: '' })
+      command('fan-control', 'setPercentage', { speed: 40 })
+      command('fan-control', 'setPercentage', { speed: 60 })
+      h.mirror.applySingleCapUpdate(DEVICE, 'fan-control', { speed: 40, preset: '' })
+      expect(h.mirror.capSlice(DEVICE, 'fan-control')).toEqual({ speed: 60, preset: '' })
+      h.mirror.applySingleCapUpdate(DEVICE, 'fan-control', { speed: 60, preset: '' })
+      expect(h.mirror.capSlice(DEVICE, 'fan-control', 'confirmed')).toEqual({
+        speed: 60,
+        preset: '',
+      })
+      vi.advanceTimersByTime(60_000)
+      expect(h.logs.filter((l) => l.level === 'warn')).toEqual([])
+      stop()
+    })
+  })
+
+  describe('a hold ends with its device and with the process', () => {
+    it('forgetting the device drops its holds and their timers', async () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
+      command('switch', 'setState', { on: true })
+      await h.mirror.forgetDevice(DEVICE)
+      h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
+      expect(h.mirror.capSlice(DEVICE, 'switch')).toEqual({ on: false })
+      vi.advanceTimersByTime(60_000)
+      expect(h.logs.filter((l) => l.level === 'warn')).toEqual([])
+      expect(vi.getTimerCount()).toBe(0)
+      stop()
+    })
+
+    it('stopping the wiring drops every hold and timer', () => {
+      const { h, stop } = rig()
+      h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
+      command('switch', 'setState', { on: true })
+      expect(vi.getTimerCount()).toBe(1)
+      stop()
+      expect(vi.getTimerCount()).toBe(0)
+      expect(h.mirror.capSlice(DEVICE, 'switch')).toEqual({ on: false })
+      // A command after the stop is no longer observed.
+      command('switch', 'setState', { on: true })
+      expect(h.mirror.capSlice(DEVICE, 'switch')).toEqual({ on: false })
+    })
+  })
 })

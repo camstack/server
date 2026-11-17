@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 8981 source files · 246 units claimed by at least one document (8950 files).**
+**253 units · 8982 source files · 246 units claimed by at least one document (8951 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -129,10 +129,10 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/records` | 13 | — | `architecture/records.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0881-records-are-the-third-storage-api-and-a-secret-field-is-a-feature-of-the-kind.md`, +2 more | 2026-10-22 |
 | `packages/ui-library/src/contexts` | 13 | `admin-ui` | `architecture/ui.md` _(covers)_, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +3 more | 2026-11-02 |
 | `packages/addon-model-studio/src/tabs` | 12 | `tooling` | `decisions/adr-1013-one-instance-model.md`, `design/2026-10-05-detector-classifier-label-link.md` _(covers)_, `design/2026-10-05-model-training-playback.md` _(covers)_, +1 more | — |
+| `packages/addon-pipeline-orchestrator/src/camera-sensors` | 12 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, +2 more, 1 ADR | 2026-10-24 |
 | `packages/addon-smtp-nodemailer` | 12 | `notification-center` | `decisions/adr-0999-inbound-camera-alarms-ride-existing-planes-smtp-is-a-broker-kind-http-is-the-addon-data-plane.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0996-connection-holding-addons-are-integration-instances.md` | — |
 | `packages/types/src/expression` | 12 | `automations` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `design/2026-08-08-automation-scripts-custom-devices.md`, `design/2026-08-09-automation-recipe-phase6-design.md`, +4 more | — |
 | `packages/types/src/ffmpeg` | 12 | `decode-and-data-planes` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `architecture/ffmpeg.md`, `decisions/adr-0527-a-composites-tile-skew-is-a-probe-budget-not-a-clock.md`, +5 more, 3 ADRs | 2026-10-13 |
-| `packages/addon-pipeline-orchestrator/src/camera-sensors` | 11 | `pipeline-orchestration` | `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0673-a-camera-sensor-has-a-mode-and-one-bridge-emits-the-cameras-effective-onboard-motion.md`, +2 more, 1 ADR | 2026-10-24 |
 | `packages/addon-pipeline-orchestrator/src/widgets` | 11 | `pipeline-orchestration` | `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0931-a-packages-rule-can-open-a-candidate-from-a-scene-difference-and-confirm-it-with-the-llm.md`, 1 ADR | — |
 | `packages/types/src/ir` | 11 | — | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0963-infrared-control-is-two-caps-a-transport-on-the-board-and-a-remote-on-the-appliance-and-its-state-is-assumed-never-reported.md` | — |
 | `packages/addon-export-hap/src/multi-tier` | 10 | `ecosystem-exports` | `decisions/adr-0968-an-exporter-may-expose-actions-and-notification-targets-as-list-entries-beside-devices.md`, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-05-homekit-export-diagnosis-and-matter-plan.md` _(covers)_, +3 more, 1 ADR | 2026-09-29 |

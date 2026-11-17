@@ -42,6 +42,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Toggle', it: 'Commuta' },
         phrase: { en: 'Toggle {device}', it: 'Commuta {device}' },
         icon: 'toggle-right',
+        sideEffects: [{ field: 'on', negate: true }],
         offeredWhen: { method: 'getOptions', field: 'supportsSetState' },
       },
     ],
@@ -2336,6 +2337,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'lock',
         args: { on: true },
+        effect: { field: 'childLock', value: true },
       },
       {
         id: 'petFeeder.childLockOff',
@@ -2347,6 +2349,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'lock-open',
         args: { on: false },
+        effect: { field: 'childLock', value: false },
       },
       {
         id: 'petFeeder.lightOn',
@@ -2355,6 +2358,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         phrase: { en: 'Turn on the indicator light of {device}', it: 'Accendi la spia di {device}' },
         icon: 'lightbulb',
         args: { on: true },
+        effect: { field: 'indicatorLight', value: true },
       },
       {
         id: 'petFeeder.lightOff',
@@ -2363,6 +2367,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         phrase: { en: 'Turn off the indicator light of {device}', it: 'Spegni la spia di {device}' },
         icon: 'lightbulb-off',
         args: { on: false },
+        effect: { field: 'indicatorLight', value: false },
       },
       {
         id: 'petFeeder.feedSoundOn',
@@ -2374,6 +2379,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'volume-2',
         args: { on: true },
+        effect: { field: 'feedSound', value: true },
       },
       {
         id: 'petFeeder.feedSoundOff',
@@ -2385,6 +2391,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'volume-x',
         args: { on: false },
+        effect: { field: 'feedSound', value: false },
       },
       {
         id: 'petFeeder.volume',
@@ -2402,6 +2409,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'number', min: 0, step: 1 },
           },
         ],
+        effect: { field: 'volume', fromArg: 'level' },
       },
     ],
     state: [
@@ -2451,6 +2459,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         phrase: { en: 'Start the pump of {device}', it: 'Avvia la pompa di {device}' },
         icon: 'play',
         args: { on: true },
+        effect: { field: 'pumpRunning', value: true },
       },
       {
         id: 'petFountain.pumpOff',
@@ -2459,6 +2468,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         phrase: { en: 'Stop the pump of {device}', it: 'Ferma la pompa di {device}' },
         icon: 'square',
         args: { on: false },
+        effect: { field: 'pumpRunning', value: false },
       },
     ],
     state: [
@@ -2500,6 +2510,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'timer',
         args: { on: true },
+        effect: { field: 'enabled', value: true },
       },
       {
         id: 'pumpCycle.off',
@@ -2511,6 +2522,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'timer-off',
         args: { on: false },
+        effect: { field: 'enabled', value: false },
       },
       {
         id: 'pumpCycle.onMinutes',
@@ -2622,6 +2634,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Play', it: 'Riproduci' },
         phrase: { en: 'Play on {device}', it: 'Avvia la riproduzione su {device}' },
         icon: 'play',
+        effect: { field: 'state', value: 'playing' },
       },
       {
         id: 'media.pause',
@@ -2629,6 +2642,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Pause media', it: 'Metti in pausa' },
         phrase: { en: 'Pause {device}', it: 'Metti in pausa {device}' },
         icon: 'pause',
+        effect: { field: 'state', value: 'paused' },
       },
       {
         id: 'media.stop',
@@ -2673,6 +2687,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'number', min: 0, max: 100, step: 1, unit: '%' },
           },
         ],
+        effect: { field: 'volumeLevel', fromArg: 'volumeLevel' },
       },
       {
         id: 'media.mute',
@@ -2681,6 +2696,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         phrase: { en: 'Mute {device}', it: 'Silenzia {device}' },
         icon: 'volume-x',
         args: { muted: true },
+        effect: { field: 'isMuted', value: true },
       },
       {
         id: 'media.unmute',
@@ -2689,6 +2705,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         phrase: { en: 'Unmute {device}', it: 'Riattiva l’audio di {device}' },
         icon: 'volume-2',
         args: { muted: false },
+        effect: { field: 'isMuted', value: false },
       },
       {
         id: 'media.shuffleOn',
@@ -2700,6 +2717,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'shuffle',
         args: { shuffle: true },
+        effect: { field: 'shuffle', value: true },
       },
       {
         id: 'media.shuffleOff',
@@ -2711,6 +2729,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         },
         icon: 'shuffle',
         args: { shuffle: false },
+        effect: { field: 'shuffle', value: false },
       },
       {
         id: 'media.repeat',
@@ -2735,6 +2754,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             },
           },
         ],
+        effect: { field: 'repeat', fromArg: 'repeat' },
       },
       {
         id: 'media.source',
@@ -2749,6 +2769,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'dynamic', from: 'status', field: 'availableSources' },
           },
         ],
+        effect: { field: 'source', fromArg: 'source' },
       },
       {
         id: 'media.seek',
@@ -3033,6 +3054,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Stop script', it: 'Ferma lo script' },
         phrase: { en: 'Stop {device}', it: 'Ferma {device}' },
         icon: 'square',
+        effect: { field: 'isRunning', value: false },
       },
     ],
     state: [
@@ -3056,6 +3078,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Enable automation', it: 'Abilita l’automazione' },
         phrase: { en: 'Enable {device}', it: 'Abilita {device}' },
         icon: 'toggle-right',
+        effect: { field: 'enabled', value: true },
       },
       {
         id: 'haAutomation.disable',
@@ -3063,6 +3086,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Disable automation', it: 'Disabilita l’automazione' },
         phrase: { en: 'Disable {device}', it: 'Disabilita {device}' },
         icon: 'toggle-left',
+        effect: { field: 'enabled', value: false },
       },
       {
         id: 'haAutomation.trigger',

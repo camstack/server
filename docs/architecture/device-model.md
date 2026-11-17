@@ -190,11 +190,17 @@ device reported. A `sideEffects` entry with a `when` condition adds a field
 only on the state it names (a purifier speed set in Auto also holds
 `preset: ''`).
 
-A held field ends when the device reports the same value (confirmed), when the
-call is refused (rolled back at once), after 30 s with the device still
-elsewhere (reverted, a `warn` with `tags: { deviceId }`), or when a newer
-command names the same field. A reading that contradicts the hold stays
-underneath and shows when the hold ends. Holds live in memory only.
+Each held field remembers what the device reported before the command. A new
+reading of the field equal to that value (or to a value a replaced command
+held) is stale: the hold stays. A reading equal to the held value, a number
+within the step of the arg it came from (`CommandEffect.tolerance`), confirms
+it: the hold ends. Any other reading (`locking`, `jammed`, `arming`) is the
+device's own answer: the hold ends at once and the reading shows, logged at
+debug with reason `device-answered`. A held field also ends when the call is
+refused (rolled back at once), after 30 s with the device still stale
+(reverted, a `warn` with `tags: { deviceId }`), or when a newer command names
+the same field. A `negate` side effect (`switch.toggle`) holds the opposite of
+what the person saw. Holds live in memory only.
 
 Two views of one slice:
 

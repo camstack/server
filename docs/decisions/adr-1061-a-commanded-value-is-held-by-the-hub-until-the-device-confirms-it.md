@@ -43,12 +43,27 @@ tRPC mount, the UDS parent for a forked addon, an in-process addon's
 vocabulary's effects for that method (D920/D983, now a list, with
 `sideEffects` conditional on the current slice) are laid over the slice the
 device reported. The mirror serves and emits the EFFECTIVE slice; the slice it
-stores, persists and records stays the device's. A held field ends when the
-device confirms it, when the call is refused (rolled back at once), when the
-limit elapses (30 s, the D1022 match window; reverted and logged with
-`tags: { deviceId }`), or when a newer command names the same field (latest
-wins). A reading that contradicts a hold stays underneath and shows when the
-hold ends. The held value carries no pending marker.
+stores, persists and records stays the device's. Each held field remembers
+what the device reported for it when the command arrived, and judges every
+new reading of that field:
+
+- equal to the pre-command value (or to a value an older command on the field
+  held, before a newer one replaced it): STALE, the device has not acted yet —
+  the hold stays;
+- equal to the held value — a number within the effect's tolerance, the step
+  of the arg it was copied from (brightness ±1, a temperature target ± its
+  0.5 step): CONFIRMED — the hold ends;
+- anything else (`locking`, `jammed`, `arming`, `opening`, a value rounded
+  beyond the step): the DEVICE'S OWN ANSWER — the hold ends at once and the
+  device's value is served, logged at debug with `tags: { deviceId }`, the
+  cap, the field and reason `device-answered`.
+
+A held field also ends when the call is refused (rolled back at once), when
+the limit elapses with the device still stale (30 s, the D1022 match window;
+reverted and warned with `tags: { deviceId }`), or when a newer command names
+the same field (latest wins). The held value carries no pending marker. A
+`negate` side effect (`switch.toggle`) holds the opposite of what the person
+saw, held values included.
 
 What reads which:
 
@@ -76,8 +91,10 @@ the slice after the command, which is the effective slice.
 - A restart drops every hold (memory only); the device's next report decides.
 - A command the hub does not see (a provider writing its device on its own, a
   device changed by hand) holds nothing: there is nothing to hold.
-- A broker-mode agent's provider registrations do not carry their overrides to
-  the hub yet; its devices get the default.
+- Overrides registered by an agent's child process do not reach the hub's
+  override registry yet (a broker-mode agent's provider registrations do not
+  carry them); its devices get the vocabulary default. No provider sets an
+  override today; carrying them is a follow-up.
 - Input smoothing is not optimism: a slider may still debounce its trailing
   commit before sending.
 - An automation generated before this change reads the effective slice until
@@ -86,8 +103,10 @@ the slice after the command, which is the effective slice.
 ## Enforcement
 
 - `packages/system/src/builtins/device-manager/__tests__/command-holds.spec.ts`
-  (the stale-poll, refusal, revert, `never`, multi-field, latest-wins and
-  confirmed-view cases), `shared/__tests__/device-state-changed.spec.ts` (the
+  (the stale-poll, refusal, revert, `never`, multi-field, latest-wins,
+  stale / confirmed-within-step / device-answered, device-removal, shutdown
+  and confirmed-view cases), `cap-vocabulary/__tests__/command-catalog.spec.ts`
+  (tolerance, `negate`, the effects of each cap), `shared/__tests__/device-state-changed.spec.ts` (the
   confirmed readers) and the automation codegen specs.
 - `scripts/check-no-ui-optimism.ts` refuses the old hook and its patch in any
   UI source (ui-library, admin UI, an addon `.tsx`).

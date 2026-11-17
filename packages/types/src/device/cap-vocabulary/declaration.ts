@@ -86,7 +86,10 @@ export interface MethodActionDecl<TInput = Readonly<Record<string, unknown>>> {
   /** The state this action leads to, when it is one. */
   readonly effect?: MethodActionEffect<keyof MethodActionArgs<TInput> & string>
   /** Further states the command leads to, each under an optional condition on the current slice (D1061). */
-  readonly sideEffects?: readonly (MethodActionEffect<keyof MethodActionArgs<TInput> & string> & {
+  readonly sideEffects?: readonly ((
+    | MethodActionEffect<keyof MethodActionArgs<TInput> & string>
+    | { readonly field: string; readonly negate: true }
+  ) & {
     readonly when?: VocabEffectCondition
   })[]
   /** When the device is offered it at all — absent = always ({@link MethodActionGate}). */

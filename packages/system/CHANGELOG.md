@@ -122,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - device-manager.listIdentityCandidates lists devices of different integrations that share hardware identifiers (auto / proposal confidence); read-only, no links yet
 - A restored alarm-panel state saved before the rename keeps its PIN requirement (requiresCode is read once into codeRequired).
 - A device shows a command's value at once: the hub holds what a switch, fan, cover or thermostat was told until the device confirms it, the command is refused, or 30 s pass; history and automations still record only what the device reported.
+- A held command ends the moment the device answers otherwise (locking, jammed, arming) instead of hiding that answer for 30 s; a stale report still keeps the commanded value.
 
 ### Removed
 

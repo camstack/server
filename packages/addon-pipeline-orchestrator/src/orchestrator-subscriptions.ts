@@ -54,6 +54,7 @@ import {
 } from './device-activity-source.js'
 import type { CameraSensorsController } from './camera-sensors/controller.js'
 import type { CameraMotionSlice } from './camera-sensors/motion-slice.js'
+import { reportedSensorSlice } from './camera-sensors/sensor-state-event.js'
 import type { WatchdogStage } from './pipeline-watchdog.js'
 import { RepeatWarnSampler } from './repeat-warn-sampler.js'
 
@@ -113,11 +114,6 @@ export interface OrchestratorSubscriptionsDeps {
   readonly cameraSensors: CameraSensorsController
   /** The camera's `motion` slice, written only here, with the effective motion (D696) — block 9d. */
   readonly cameraMotionSlice: CameraMotionSlice
-}
-
-/** A `DeviceStateChanged` slice is an object; anything else carries no level. */
-function isSlice(value: unknown): value is Readonly<Record<string, unknown>> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 /** Debounce window for `CameraStreamsProfileSlotsChanged` coalescing (block 4). */
@@ -649,8 +645,9 @@ export function wireOrchestratorSubscriptions(deps: OrchestratorSubscriptionsDep
       const capName = data['capName']
       if (typeof deviceId !== 'number' || typeof capName !== 'string') return
       if (!isSourceCap(capName) || !deps.cameraSensors.watches(deviceId)) return
-      const slice = data['slice']
-      if (!isSlice(slice)) return
+      // What the sensor reported: a held command never moves a camera's motion (D1061).
+      const slice = reportedSensorSlice(data)
+      if (slice === null) return
       deps.cameraSensors.onSensorState({
         sensorId: deviceId,
         capName,

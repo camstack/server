@@ -67,6 +67,7 @@ export const scriptRunnerCapability = {
       actions: [
         {
           id: 'script.stop',
+          effect: { field: 'isRunning', value: false },
           label: t('Stop script', 'Ferma lo script'),
           phrase: t('Stop {device}', 'Ferma {device}'),
           icon: 'square',

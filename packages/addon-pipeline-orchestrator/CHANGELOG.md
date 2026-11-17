@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A sensor attached to a camera moves the camera's motion only on what the sensor reported, never on a command still waiting for its confirmation.
+
 ## [1.2.700] - 2026-11-17
 
 ### Changed
