@@ -39,7 +39,8 @@
     "washer": "Washing machine",
     "water-heater": "Water heater",
     "weather": "Weather",
-    "weather-station": "Weather station"
+    "weather-station": "Weather station",
+    "workload": "Workload"
   },
   "it": {
     "alarm-panel": "Pannello allarme",
@@ -81,6 +82,7 @@
     "washer": "Lavatrice",
     "water-heater": "Scaldabagno",
     "weather": "Meteo",
-    "weather-station": "Stazione meteo"
+    "weather-station": "Stazione meteo",
+    "workload": "Carico di lavoro"
   }
 }
