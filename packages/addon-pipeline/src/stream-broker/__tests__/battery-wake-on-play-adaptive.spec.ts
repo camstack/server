@@ -54,7 +54,7 @@ function makeManager(options: {
       getDevice: {
         query: async () => ({
           id: 640,
-          features: [DeviceFeature.BatteryOperated],
+          features: [DeviceFeature.Sleeps],
         }),
       },
     },
@@ -69,7 +69,7 @@ function makeManager(options: {
         }),
       },
     },
-    battery: {
+    lowPowerSleep: {
       wakeForStream: {
         mutate: async () => {
           wakeCalls += 1

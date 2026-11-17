@@ -265,7 +265,7 @@ export function resolveDetectionSettings(
       // Not the battery `[]` and not the analyzer: a device that says when it
       // is working needs neither a guess nor a frame-diff to know when to look.
       defaulted = []
-    } else if (profile && features.includes(DeviceFeature.BatteryOperated)) {
+    } else if (profile && features.includes(DeviceFeature.Sleeps)) {
       defaulted = []
     } else {
       defaulted = MotionSourcesSchema.parse(flat['motionSources'])

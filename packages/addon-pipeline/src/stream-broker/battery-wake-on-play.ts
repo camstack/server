@@ -70,7 +70,7 @@ export interface BatteryFacts {
 export interface WakeOnPlayDeps {
   readonly logger: IScopedLogger
   /**
-   * Does this device carry `DeviceFeature.BatteryOperated`? Read from the
+   * Does this device carry `DeviceFeature.Sleeps` (#459)? Read from the
    * DEVICE registry, never from published cam-streams — the whole reason we
    * are here is that there are none.
    *
@@ -81,7 +81,7 @@ export interface WakeOnPlayDeps {
   readonly isBatteryDevice: (deviceId: number) => Promise<boolean | null>
   /** The device's `battery` slice, or `null` when absent/unreadable. */
   readonly readBatteryFacts: (deviceId: number) => Promise<BatteryFacts | null>
-  /** `battery.wakeForStream`. Resolves `awoke:false` on timeout, never throws. */
+  /** `low-power-sleep.wakeForStream`. Resolves `awoke:false` on timeout, never throws. */
   readonly wakeForStream: (
     deviceId: number,
     timeoutMs: number,
@@ -164,7 +164,7 @@ export class BatteryWakeOnPlaySingleFlight {
  * camera to wake.
  *
  * Returns normally when a broker exists (either it already did, or the wake
- * produced one, or the device is not battery-operated and the caller's
+ * produced one, or the device does not sleep and the caller's
  * pre-existing error path should run). Throws
  * {@link BatteryStreamUnavailableError} only for a battery camera we could not
  * produce a stream for — with the reason named.

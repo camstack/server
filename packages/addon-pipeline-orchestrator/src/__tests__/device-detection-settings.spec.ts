@@ -121,7 +121,7 @@ describe('resolveDetectionSettings — motionSources default ladder', () => {
       baseInput({
         raw: { motionSources: ['onboard'] },
         hasOnboardMotion: false,
-        features: [DeviceFeature.BatteryOperated],
+        features: [DeviceFeature.Sleeps],
       }),
     )
     // Operator value wins even though the battery-profile branch would otherwise pick [].
@@ -130,7 +130,7 @@ describe('resolveDetectionSettings — motionSources default ladder', () => {
 
   it('branch 3: no operator value + device has an onboard motion cap — defaults to [onboard]', () => {
     const result = resolveDetectionSettings(
-      baseInput({ raw: {}, hasOnboardMotion: true, features: [DeviceFeature.BatteryOperated] }),
+      baseInput({ raw: {}, hasOnboardMotion: true, features: [DeviceFeature.Sleeps] }),
     )
     // Onboard-cap preference wins over the battery-profile branch too.
     expect(result.motionSources).toEqual(['onboard'])
@@ -138,9 +138,16 @@ describe('resolveDetectionSettings — motionSources default ladder', () => {
 
   it('branch 4: no operator value, no onboard cap, battery-profile device — defaults to []', () => {
     const result = resolveDetectionSettings(
-      baseInput({ raw: {}, hasOnboardMotion: false, features: [DeviceFeature.BatteryOperated] }),
+      baseInput({ raw: {}, hasOnboardMotion: false, features: [DeviceFeature.Sleeps] }),
     )
     expect(result.motionSources).toEqual([])
+  })
+
+  it('branch 4 is the SLEEPER branch: a device that only reports a battery falls back to the schema default (#459, Q2)', () => {
+    const result = resolveDetectionSettings(
+      baseInput({ raw: {}, hasOnboardMotion: false, features: [DeviceFeature.BatteryOperated] }),
+    )
+    expect(result.motionSources).toEqual(['analyzer'])
   })
 
   it('branch 5: no operator value, no onboard cap, non-battery device — falls back to the schema default', () => {
@@ -197,7 +204,7 @@ describe('resolveDetectionSettings — the device-activity default', () => {
 
   it('a device that reports its own activity gets the source by default', () => {
     const result = resolveDetectionSettings(
-      baseInput({ hasActivitySignal: true, features: [DeviceFeature.BatteryOperated] }),
+      baseInput({ hasActivitySignal: true, features: [DeviceFeature.Sleeps] }),
     )
     expect(result.motionSources).toEqual(['device-activity'])
   })
@@ -329,15 +336,13 @@ describe('resolveDetectionSettings — other operator-wins → profile → fallb
 
   it('detectionMode: operator value wins over the battery-profile default', () => {
     const result = resolveDetectionSettings(
-      baseInput({ raw: { detectionMode: 'always-on' }, features: [DeviceFeature.BatteryOperated] }),
+      baseInput({ raw: { detectionMode: 'always-on' }, features: [DeviceFeature.Sleeps] }),
     )
     expect(result.detectionMode).toBe('always-on')
   })
 
   it('detectionMode: battery profile default (on-motion) fires when unset', () => {
-    const result = resolveDetectionSettings(
-      baseInput({ features: [DeviceFeature.BatteryOperated] }),
-    )
+    const result = resolveDetectionSettings(baseInput({ features: [DeviceFeature.Sleeps] }))
     expect(result.detectionMode).toBe('on-motion')
   })
 
@@ -347,9 +352,7 @@ describe('resolveDetectionSettings — other operator-wins → profile → fallb
   })
 
   it('audioMode: battery profile default (disabled) fires when unset', () => {
-    const result = resolveDetectionSettings(
-      baseInput({ features: [DeviceFeature.BatteryOperated] }),
-    )
+    const result = resolveDetectionSettings(baseInput({ features: [DeviceFeature.Sleeps] }))
     expect(result.audioMode).toBe('disabled')
   })
 
@@ -725,7 +728,7 @@ describe('resolveDetectionSettings — detectionSources', () => {
           preRollInferenceEnabled: true,
           preRollInferenceFrames: 12,
         },
-        features: [DeviceFeature.BatteryOperated],
+        features: [DeviceFeature.Sleeps],
         hasOnboardMotion: true,
         hasActivitySignal: true,
         pipelineEnabled: true,

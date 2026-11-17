@@ -44,7 +44,7 @@ describe('wakeForRecording', () => {
     expect(wakeForStream).toHaveBeenCalledWith(3629, WAKE_FOR_RECORDING_TIMEOUT_MS)
   })
 
-  it('does not touch a camera that is not battery-operated', async () => {
+  it('does not touch a camera that does not sleep', async () => {
     const wakeForStream = vi.fn(async () => ({ awoke: true, durationMs: 0 }))
     const result = await wakeForRecording(
       101,

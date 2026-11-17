@@ -262,7 +262,9 @@ describe('stream health — battery sleep is not an outage, a failure is one dev
     }
 
     it('a battery camera the registry names, asleep per its slice, is suppressed — not judged a mains one', async () => {
-      h.manager.setApiAccess(fakeApi({ features: ['battery-operated'], slice: sleepingSlice }))
+      h.manager.setApiAccess(
+        fakeApi({ features: ['battery-operated', 'sleeps'], slice: sleepingSlice }),
+      )
       const { main } = await twoProfiles(106)
       h.sweep('106/native:main', main) // class not known yet: the edge waits
       expect(h.seen).toEqual([])
@@ -275,8 +277,19 @@ describe('stream health — battery sleep is not an outage, a failure is one dev
       )
     })
 
+    it('a camera that only REPORTS a battery is not a sleeper: its silence is an outage (#459, Q2)', async () => {
+      h.manager.setApiAccess(fakeApi({ features: ['battery-operated'], slice: sleepingSlice }))
+      const { main } = await twoProfiles(106)
+      h.sweep('106/native:main', main)
+      await flush()
+      h.sweep('106/native:main', main)
+      expect(h.seen.map((e) => [e.category, e.reason])).toEqual([
+        ['stream.offline', 'stale-timeout'],
+      ])
+    })
+
     it('a battery camera whose slice cannot be read is NOT suppressed (unknown excludes nothing)', async () => {
-      h.manager.setApiAccess(fakeApi({ features: ['battery-operated'], slice: null }))
+      h.manager.setApiAccess(fakeApi({ features: ['battery-operated', 'sleeps'], slice: null }))
       const { main } = await twoProfiles(106)
       h.sweep('106/native:main', main)
       await flush()

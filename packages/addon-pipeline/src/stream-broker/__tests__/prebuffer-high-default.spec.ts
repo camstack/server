@@ -6,7 +6,7 @@
  * decode/GPU) with zero attached consumers — when the operator has NOT
  * set an explicit per-stream override. Every other profile
  * (mid/low/unassigned) stays strictly on-demand (off by default), and
- * battery-operated devices are NEVER default-warmed regardless of
+ * sleeping (`sleeps`) devices are NEVER default-warmed regardless of
  * profile. An explicit operator override — on or off — is always
  * honored verbatim and never overridden by this default.
  *
@@ -153,7 +153,7 @@ describe('applyPrebufferConfig — high-profile default warm', () => {
     expect(broker!.getPreBufferDuration()).toBeGreaterThan(0)
   })
 
-  it('a battery-operated device is never default-warmed even on the high profile', async () => {
+  it('a sleeping device is never default-warmed even on the high profile', async () => {
     await manager.publishCameraStream({
       deviceId: 43,
       camStreamId: 'main',
@@ -161,7 +161,7 @@ describe('applyPrebufferConfig — high-profile default warm', () => {
       url: 'rtsp://cam43/main',
       label: 'Main',
       resolution: { width: 1920, height: 1080 },
-      deviceFeatures: ['battery-operated'],
+      deviceFeatures: ['battery-operated', 'sleeps'],
     })
     await manager.assignProfile({ deviceId: 43, profile: 'high', camStreamId: 'main' })
     await manager.restartProfile({ deviceId: 43, profile: 'high' })
@@ -169,6 +169,24 @@ describe('applyPrebufferConfig — high-profile default warm', () => {
     const broker = await manager.getBroker({ brokerId: '43/main' })
     expect(broker).not.toBeNull()
     expect(broker!.getPreBufferDuration()).toBe(0)
+  })
+
+  it('a device that only REPORTS a battery is warmed like any other (#459, Q2)', async () => {
+    await manager.publishCameraStream({
+      deviceId: 45,
+      camStreamId: 'main',
+      kind: 'pull-rtsp',
+      url: 'rtsp://cam45/main',
+      label: 'Main',
+      resolution: { width: 1920, height: 1080 },
+      deviceFeatures: ['battery-operated'],
+    })
+    await manager.assignProfile({ deviceId: 45, profile: 'high', camStreamId: 'main' })
+    await manager.restartProfile({ deviceId: 45, profile: 'high' })
+
+    const broker = await manager.getBroker({ brokerId: '45/main' })
+    expect(broker).not.toBeNull()
+    expect(broker!.getPreBufferDuration()).toBeGreaterThan(0)
   })
 
   // ── Terminal-style (`pull-http`) sources are never default-warm ───────

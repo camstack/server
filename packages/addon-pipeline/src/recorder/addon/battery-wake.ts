@@ -5,7 +5,7 @@
  *
  * A battery camera is asleep between events. Every other demand consumer in
  * this system already wakes it — the live/WebRTC path does, through
- * `battery.wakeForStream` (D173) — but the recorder did not, so an `events`
+ * `low-power-sleep.wakeForStream` (D173, #459) — but the recorder did not, so an `events`
  * band pointed at a battery camera attached to a broker with no source and
  * produced nothing. Measured on camera 3629 (audit 2026-08-20): **48.9 % of its
  * episodes recorded zero footage.**
