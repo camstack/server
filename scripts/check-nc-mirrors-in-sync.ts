@@ -241,9 +241,6 @@ const SCHEMA_KEYS: readonly SchemaKeysPair[] = [
       path: 'camstack/src/data/notification-center.ts',
       marker: 'export const NcRuleInputSchema = z.object(',
     },
-    // Rule tags (D1054) are authored in the admin rules editor; the phone keeps
-    // them through the hub's patch merge until its own release mirrors the key.
-    aheadOfViewer: ['tags'],
   },
 ]
 
