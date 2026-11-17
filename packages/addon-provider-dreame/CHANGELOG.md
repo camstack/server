@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.179] - 2026-11-17
+
 ### Changed
 
 - The battery camera now wakes through its low-power-sleep capability, so it is the one recognised as sleeping
