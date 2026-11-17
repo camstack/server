@@ -53,7 +53,9 @@ on the frame after a crop that found nothing where the root had recent boxes
 (`roi-missed`; the crop miss keeps those boxes, so a subject that grew past
 the crop keeps getting the full frame), and on a forced full frame at least
 once a second per camera. A shed root (no inference ran) leaves the recent
-boxes untouched. The crop REPLACES the full
+boxes untouched. A near subject that enters between two forced full
+frames, seen only as motion, is cropped until the next forced full frame (at
+most about a second); from then on the scale bound holds it on the full frame. The crop REPLACES the full
 frame; it never adds an inference. It is automatic for every camera with no
 setting. A `crop-zone` root always keeps its package-zone crop: the motion crop
 never applies to it, whatever the decision names. Each frame's choice and reason

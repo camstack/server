@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Exports NormalizedRectSchema, the wire shape of a normalized rectangle.
 - runPipeline accepts motionRegions; the pipeline trace carries rootSource (which pixels the object-detection root ran on).
 - The pipeline trace's root-source reason can now also be subject-too-large or roi-missed
 

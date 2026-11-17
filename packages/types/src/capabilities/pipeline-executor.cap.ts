@@ -29,10 +29,6 @@ import { FrameInputSchema } from './schemas/detection-shared.js'
 import { FrameHandleSchema } from './schemas/streaming-shared.js'
 
 /**
- * A root model's boxes standing in for one crop-kind step's own inference
- * (D730) — see `runPipeline.suppliedRoot`.
- */
-/**
  * A rectangle as a fraction of a frame, `[0, 1]` on both axes — the wire shape
  * of `NormalizedRect` (which is derived from it).
  */
@@ -43,6 +39,10 @@ export const NormalizedRectSchema = z.object({
   h: z.number(),
 })
 
+/**
+ * A root model's boxes standing in for one crop-kind step's own inference
+ * (D730) — see `runPipeline.suppliedRoot`.
+ */
 export const SuppliedRootOutputSchema = z.object({
   stepId: z.string(),
   /** The root model that drew the boxes — stamped on the result. */
