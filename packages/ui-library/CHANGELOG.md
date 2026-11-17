@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.467] - 2026-11-17
+
 ### Changed
 
 - Generated hooks follow the new low-power-sleep and resync capabilities

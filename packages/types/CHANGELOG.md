@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.590] - 2026-11-17
+
 ### Changed
 
 - A camera that sleeps now says so through its own capability (low-power-sleep) — a device that only reports a battery is no longer treated as sleeping; Re-sync is offered by the devices that can do it
