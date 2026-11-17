@@ -1,12 +1,9 @@
 /**
- * The minimal contract the VeSync client library is adapted to. The chosen lib
- * is **`tsvesync`** (v1.0.68, MIT, TypeScript-native) — DECLARED as a dependency
- * but its adapter is not wired yet (see `plan-vesync.md`). This interface is the
- * seam the integration manager builds against, so the whole device layer
- * type-checks today. The method / field names below are modelled on `tsvesync`'s
- * real air-purifier API so the future factory is a THIN adapter:
- *   - `login()`                 → `VeSync.login()`
- *   - `listDevices()`           → `VeSync.getDevices()` → `fans` / air-purifier list
+ * The minimal contract the VeSync client library is adapted to. The library is **`tsvesync`**
+ * (MIT, TypeScript-native); its adapter is `vesync-tsvesync-client.ts`, the default
+ * `makeClient` of {@link VeSyncIntegrationManager}. The names map onto `tsvesync` thinly:
+ *   - `login()`                 → `VeSync.login(1, 0)` (one attempt; a failure is a typed error)
+ *   - `listDevices()`           → `VeSync.getDevices()` + each purifier's `getDetails()`
  *   - `setPower(on)`            → device `turnOn()` / `turnOff()`
  *   - `setFanSpeed(pct)`        → device `changeFanSpeed(level)`
  *   - `setMode(mode)`           → device `setMode('sleep' | 'manual' | 'auto')`
@@ -14,10 +11,6 @@
  *   - `setDisplay(on)`          → device `setDisplay(on)`
  *   - (`nightLight` — tsvesync `setNightLight(mode)` — is deferred; it maps to the
  *      HA `night_light_level` select and needs a new `select-control` cap first)
- *
- * When the adapter is implemented in {@link VeSyncIntegrationManager}'s
- * `makeClient` factory, the "not wired" default is dropped; NOTHING else in this
- * addon changes.
  *
  * VeSync is a CLOUD ACCOUNT integration (unlike the local-gateway Velux / Ecowitt
  * pattern): the client logs in with an email / password / region against the

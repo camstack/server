@@ -37,10 +37,14 @@ export {
   gatewayStableId,
   VESYNC_GATEWAY_NATIVE_ID,
 } from './vesync-discovery.js'
+export { VeSyncIntegrationManager } from './vesync-integration-manager.js'
 export {
-  VeSyncIntegrationManager,
-  defaultVeSyncClientFactory,
-} from './vesync-integration-manager.js'
+  createTsVeSyncClientFactory,
+  tsVeSyncClientFactory,
+  VeSyncLoginError,
+} from './vesync-tsvesync-client.js'
+export type { VeSyncLoginFailureKind } from './vesync-tsvesync-client.js'
+export { testVeSyncConnection } from './vesync-connection-test.js'
 export { VeSyncAccountResolver, vesyncAccounts } from './vesync-account-resolver.js'
 export { VeSyncGatewayDevice } from './devices/vesync-gateway-device.js'
 export { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'
