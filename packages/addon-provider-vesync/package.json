@@ -42,7 +42,7 @@
         "version": "0.1.0",
         "description": "Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors)",
         "entry": "./dist/addon.js",
-        "icon": "assets/icon.svg",
+        "icon": "assets/icon.png",
         "color": "#4a8cff",
         "integrationRole": "devices",
         "instanceMode": "multiple",
