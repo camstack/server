@@ -240,7 +240,9 @@ export const alarmPanelCapability = {
   durability: 'restored',
   /**
    * A slice persisted before #459 carries `requiresCode`; the boot seed reads it
-   * once into `codeRequired` (`restoredPart`), so no reader meets the old key.
+   * once into `codeRequired` (`restoredPart`), so no reader meets the old key,
+   * and rewrites the row once without it (`seedMirrorFromRow`) — so this entry
+   * can be dropped after every node has booted once on a release that has it.
    */
   restoredFieldRenames: { requiresCode: 'codeRequired' },
   /**

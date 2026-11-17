@@ -421,6 +421,9 @@ async function buildAlarmPanelEndpointFor(
     })
   }
   const availableModes = parsed.success ? parsed.data.availableModes : []
+  // `null` (the panel cannot tell, D393) declares the PIN prompt on purpose: an
+  // unneeded prompt costs four digits, a missing one fails every Disarm of a PIN
+  // panel. A FAILED read stays `false`, as before — the directive re-reads.
   const codeRequired = parsed.success ? parsed.data.codeRequired !== false : false
 
   deps.logger.info('alexa discovery: built alarm panel endpoint', {

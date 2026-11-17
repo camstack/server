@@ -916,8 +916,12 @@ export interface CapabilityDefinition<
    * Renamed runtime-state fields of a `durability: 'restored'` cap, `{ old: new }`.
    * A row persisted before the rename still carries the old key: the boot seed
    * reads it ONCE into the new name (when the new one is absent) and drops it, so
-   * no reader ever meets the old key. Requires `durability: 'restored'`; every
-   * target must be a field of `runtimeState`.
+   * no reader ever meets the old key, and the worker that loads the row is handed
+   * it under the new name too. The upgraded row is then REWRITTEN once
+   * (`seedMirrorFromRow`), so the old key leaves the disk: an entry can be
+   * retired after every node has booted once on the release that added it.
+   * Requires `durability: 'restored'`; every target must be a field of
+   * `runtimeState`.
    */
   readonly restoredFieldRenames?: Readonly<Record<string, string>>
 

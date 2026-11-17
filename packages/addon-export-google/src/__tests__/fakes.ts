@@ -54,6 +54,8 @@ export interface FakeGatewayOptions {
   readonly failingFacts?: readonly number[]
   /** Cap-call kinds whose dispatch should reject. */
   readonly failingCalls?: readonly string[]
+  /** Device ids whose `readStatus` should reject. */
+  readonly failingStatus?: readonly number[]
 }
 
 export interface FakeGateway extends DeviceGateway {
@@ -71,6 +73,7 @@ export function createFakeGateway(options: FakeGatewayOptions = {}): FakeGateway
   const statuses = options.statuses ?? {}
   const failingFacts = options.failingFacts ?? []
   const failingCalls = options.failingCalls ?? []
+  const failingStatus = options.failingStatus ?? []
   const dispatched: CapCall[] = []
   const principals: (GooglePrincipal | undefined)[] = []
 
@@ -81,7 +84,10 @@ export function createFakeGateway(options: FakeGatewayOptions = {}): FakeGateway
       if (failingFacts.includes(deviceId)) throw new Error(`registry down for ${deviceId}`)
       return devices[deviceId] ?? null
     },
-    readStatus: async (read, deviceId) => statuses[statusKey(read, deviceId)] ?? null,
+    readStatus: async (read, deviceId) => {
+      if (failingStatus.includes(deviceId)) throw new Error(`status read failed for ${deviceId}`)
+      return statuses[statusKey(read, deviceId)] ?? null
+    },
     dispatch: async (call, principal) => {
       principals.push(principal)
       if (failingCalls.includes(call.kind)) throw new Error(`provider refused ${call.kind}`)

@@ -1808,11 +1808,11 @@ export async function loadRuntimeState(
   // for the mirror (see `withResetSessionProbe`) so a stale pre-restart
   // probe doesn't masquerade as a completed THIS-SESSION probe and
   // trigger a spurious export re-advertise. The returned `data` (the
-  // worker's `initialRuntimeState`) is untouched — except that the claims
+  // worker's `initialRuntimeState`) is the row read under the current field
+  // names (`restoredFieldRenames`), nothing else changed — except that the claims
   // record (`$owned`, D663) stays on the hub: the provider hydrates exactly
   // its own truth and never learns which of its fields a composition owns.
-  pctx.host.seedMirror(deviceId, pctx.host.withResetSessionProbe(data))
-  return splitRuntimeBlob(data).native
+  return splitRuntimeBlob(pctx.host.seedMirrorFromRow(deviceId, data, pctx.settings)).native
 }
 
 /**

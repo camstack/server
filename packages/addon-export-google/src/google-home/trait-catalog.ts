@@ -229,10 +229,14 @@ const brightnessTrait: TraitDescriptor = {
   },
 }
 
-/** `lock-control`'s `codeRequired` off a raw status: `null` when unknown. */
-function lockCodeRequired(status: unknown): boolean | null {
+/**
+ * `lock-control`'s `codeRequired` off a raw status: `null` when the lock
+ * answered that it cannot tell (or does not say), `'unread'` when there is no
+ * status to judge — a failed read, or one that is not the cap's shape.
+ */
+function lockCodeRequired(status: unknown): boolean | null | 'unread' {
   const parsed = LockControlStatusSchema.safeParse(status)
-  return parsed.success ? (parsed.data.codeRequired ?? null) : null
+  return parsed.success ? (parsed.data.codeRequired ?? null) : 'unread'
 }
 
 const lockUnlockTrait: TraitDescriptor = {
@@ -255,13 +259,23 @@ const lockUnlockTrait: TraitDescriptor = {
   commandReadsStatus: true,
   resolveCommand: ({ deviceId, command, params, status }) => {
     if (command !== 'action.devices.commands.LockUnlock') return unsupportedCommand(command)
-    if (lockCodeRequired(status) === true) {
+    const codeRequired = lockCodeRequired(status)
+    if (codeRequired === 'unread') {
+      // No status to judge: a failed read never widens what is allowed (D49) —
+      // a lock that needs a PIN must not be driven code-less because its read
+      // failed this once.
+      return {
+        kind: 'refused',
+        errorCode: 'deviceNotReady',
+        reason: 'lock status could not be read, so whether it needs a PIN is unknown',
+      }
+    }
+    if (codeRequired === true) {
       // The cap takes an optional `code`; Google's LockUnlock carries no PIN.
       // Dispatching anyway produces an upstream failure the operator cannot
-      // read, so refuse where the reason is still known. Only a lock that SAYS
-      // it needs one is refused: an unknown requirement (`null`, absent, a
-      // failed read — D393) is dispatched and the lock is left to refuse,
-      // because most lock providers can never tell.
+      // read, so refuse where the reason is still known. A lock that ANSWERED
+      // it cannot tell (`null`, or the field absent — D393) is dispatched and
+      // left to refuse, because most lock providers can never tell.
       return {
         kind: 'refused',
         errorCode: 'functionNotSupported',

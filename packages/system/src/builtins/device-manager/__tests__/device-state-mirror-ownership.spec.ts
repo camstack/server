@@ -352,10 +352,8 @@ describe('DeviceStateMirror — per-field claims (D663)', () => {
       metaStore: { resolvePersistedById: async () => ({ id: 7 }) },
       settings: { readDeviceRuntimeState: async () => row },
       host: {
-        seedMirror: (id: number, blob: Record<string, unknown>) =>
-          restarted.mirror.seedMirror(id, blob),
-        withResetSessionProbe: (blob: Record<string, unknown>) =>
-          restarted.mirror.withResetSessionProbe(blob),
+        seedMirrorFromRow: (id: number, row: Record<string, unknown>) =>
+          restarted.mirror.seedMirrorFromRow(id, row, restarted.settings),
       },
     } as unknown as ProviderContext
     const initial = await loadRuntimeState(pctx, { deviceId: 7 })

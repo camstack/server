@@ -27,7 +27,7 @@
  * looks like a failure). These predicates decide only whether to WRITE.
  */
 import type { RuntimeStatePolicy } from '@camstack/types'
-import { OWNED_FIELDS_KEY } from './field-ownership.js'
+import { isPlainRecord, OWNED_FIELDS_KEY } from './field-ownership.js'
 
 /** Resolves the declared policy for a cap name. */
 export type RuntimeStatePolicyLookup = (capName: string) => RuntimeStatePolicy
@@ -104,6 +104,45 @@ function withRenamedFields(
     delete out[from]
   }
   return out
+}
+
+/** A slice of a stored row that carried a field under its pre-rename name. */
+export interface RenamedSlice {
+  readonly capName: string
+  /** The old keys exactly as the row held them — what is still on disk. */
+  readonly legacy: Readonly<Record<string, unknown>>
+}
+
+/** A stored row with every renamed field read under its new name. */
+export interface UpgradedRow {
+  readonly blob: Record<string, unknown>
+  readonly renamed: readonly RenamedSlice[]
+}
+
+/**
+ * Read a whole stored row under the current field names (`restoredFieldRenames`).
+ * Only the renames are applied — nothing is trimmed — so the worker that loads
+ * the row is handed the same fields it would have got, under their new names.
+ * `renamed` names the slices that still carry an old key on disk: the row must
+ * be rewritten once, or the rename could never be retired.
+ */
+export function upgradeRenamedFields(
+  row: Readonly<Record<string, unknown>>,
+  policyFor: RuntimeStatePolicyLookup,
+): UpgradedRow {
+  const blob: Record<string, unknown> = { ...row }
+  const renamed: RenamedSlice[] = []
+  for (const [capName, slice] of Object.entries(row)) {
+    if (capName === OWNED_FIELDS_KEY || !isPlainRecord(slice)) continue
+    const renames = policyFor(capName).renamedFields
+    if (renames === undefined) continue
+    const legacy: Record<string, unknown> = {}
+    for (const from of Object.keys(renames)) if (from in slice) legacy[from] = slice[from]
+    if (Object.keys(legacy).length === 0) continue
+    blob[capName] = withRenamedFields(slice, renames)
+    renamed.push({ capName, legacy })
+  }
+  return { blob, renamed }
 }
 
 /**

@@ -161,14 +161,12 @@ describe('LockUnlock', () => {
   })
 
   it('routes lock and unlock to different cap methods', () => {
-    expect(resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true })).toEqual(
-      {
-        kind: 'call',
-        call: { kind: 'lockControl.lock', deviceId: 7 },
-      },
-    )
+    const status = { state: 'unlocked', lastChangedAt: 1, codeRequired: false }
     expect(
-      resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: false }),
+      resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true }, [], status),
+    ).toEqual({ kind: 'call', call: { kind: 'lockControl.lock', deviceId: 7 } })
+    expect(
+      resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: false }, [], status),
     ).toEqual({ kind: 'call', call: { kind: 'lockControl.unlock', deviceId: 7 } })
   })
 
@@ -183,16 +181,22 @@ describe('LockUnlock', () => {
     expect(resolution).toMatchObject({ kind: 'refused', errorCode: 'functionNotSupported' })
   })
 
-  it('dispatches when the PIN requirement is unknown (null, absent, or no status)', () => {
+  it('dispatches when the lock ANSWERED that it cannot tell (null) or does not say (absent)', () => {
     for (const status of [
       { state: 'locked', lastChangedAt: 1, codeRequired: null },
       { state: 'locked', lastChangedAt: 1 },
-      null,
-      undefined,
     ]) {
       expect(
         resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true }, [], status),
       ).toEqual({ kind: 'call', call: { kind: 'lockControl.lock', deviceId: 7 } })
+    }
+  })
+
+  it('refuses when the status could not be read — a failed read never widens what is allowed (D49)', () => {
+    for (const status of [null, undefined, { state: 'nonsense' }]) {
+      expect(
+        resolve(['lock-control'], 'action.devices.commands.LockUnlock', { lock: true }, [], status),
+      ).toMatchObject({ kind: 'refused', errorCode: 'deviceNotReady' })
     }
   })
 

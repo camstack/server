@@ -56,6 +56,15 @@ export interface ProviderHost {
    */
   seedMirror(deviceId: number, blob: Record<string, unknown>, mode?: SeedMode): void
   /**
+   * Seed the mirror from a device's STORED row and return the row under the
+   * current field names; a row carrying a renamed field is rewritten once.
+   */
+  seedMirrorFromRow(
+    deviceId: number,
+    row: Record<string, unknown>,
+    settings: DeviceManagerSettings,
+  ): Record<string, unknown>
+  /**
    * Drain the mirror's debounced writer on these devices and hold it off their
    * rows until `release` — a migration swapping the rows must not race a write
    * that read the pre-swap hardware's blob (D663).

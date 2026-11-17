@@ -137,7 +137,7 @@ async function executeOne(
     descriptor.commandReadsStatus === true
       ? await deps.gateway.readStatus(descriptor.reads, deviceId).catch((err: unknown) => {
           deps.logger.warn(
-            'google execute: status read before the command failed — resolving blind',
+            'google execute: status read before the command failed — the trait judges with no status',
             {
               tags: { deviceId },
               meta: {
