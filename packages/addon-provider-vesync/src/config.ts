@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigUISchema } from '@camstack/types'
+import type { ConfigOption, ConfigUISchema } from '@camstack/types'
 
 /** The device-registry `system` tag every VeSync device carries. */
 export const VESYNC_SYSTEM = 'vesync' as const
@@ -21,6 +21,50 @@ export const vesyncCountryCodeSchema = z
     z.string().regex(COUNTRY_CODE_PATTERN, 'a two-letter ISO country code, e.g. IT').optional(),
   )
   .describe('VeSync account country (ISO 3166 alpha-2)')
+
+/** The countries the Country code select offers: ISO alpha-2 code and English name. */
+const VESYNC_COUNTRIES: readonly { readonly code: string; readonly name: string }[] = [
+  { code: 'AT', name: 'Austria' },
+  { code: 'BE', name: 'Belgium' },
+  { code: 'CA', name: 'Canada' },
+  { code: 'CZ', name: 'Czechia' },
+  { code: 'DK', name: 'Denmark' },
+  { code: 'FI', name: 'Finland' },
+  { code: 'FR', name: 'France' },
+  { code: 'DE', name: 'Germany' },
+  { code: 'GR', name: 'Greece' },
+  { code: 'HU', name: 'Hungary' },
+  { code: 'IE', name: 'Ireland' },
+  { code: 'IT', name: 'Italy' },
+  { code: 'JP', name: 'Japan' },
+  { code: 'LU', name: 'Luxembourg' },
+  { code: 'MX', name: 'Mexico' },
+  { code: 'NL', name: 'Netherlands' },
+  { code: 'NO', name: 'Norway' },
+  { code: 'PL', name: 'Poland' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'RO', name: 'Romania' },
+  { code: 'ES', name: 'Spain' },
+  { code: 'SE', name: 'Sweden' },
+  { code: 'CH', name: 'Switzerland' },
+  { code: 'GB', name: 'United Kingdom' },
+  { code: 'US', name: 'United States' },
+]
+
+const COUNTRY_CODE_KEY = 'provider-vesync:connection.s_connection.countryCode'
+
+/**
+ * The Country code select: "Not set" (empty value, which `vesyncCountryCodeSchema` reads as not
+ * set) first, then the countries by English name. A stored code outside this list still parses.
+ */
+const COUNTRY_CODE_OPTIONS: readonly ConfigOption[] = [
+  { label: 'Not set', labelKey: `${COUNTRY_CODE_KEY}.o_none.label`, value: '' },
+  ...VESYNC_COUNTRIES.map((country) => ({
+    label: country.name,
+    labelKey: `${COUNTRY_CODE_KEY}.o_${country.code}.label`,
+    value: country.code,
+  })),
+]
 
 /**
  * Operator-supplied credentials for ONE VeSync cloud account. They live on the
@@ -223,15 +267,14 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             ],
           },
           {
-            type: 'text',
+            type: 'select',
             key: 'countryCode',
             label: 'Country code',
             labelKey: 'provider-vesync:connection.s_connection.countryCode.label',
             description:
-              'Two-letter code of the country the account was registered in (IT, DE, FR …). Set it when sign-in fails with "auth code expired".',
+              'Country the account was registered in. Set it when sign-in fails with "auth code expired".',
             descriptionKey: 'provider-vesync:connection.s_connection.countryCode.description',
-            placeholder: 'IT',
-            maxLength: 2,
+            options: COUNTRY_CODE_OPTIONS,
           },
           {
             type: 'number',
