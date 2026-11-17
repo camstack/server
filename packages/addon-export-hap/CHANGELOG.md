@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.205] - 2026-11-17
+
 ### Fixed
 
 - HomeKit doorbell rings were lost after a hub restart when the doorbell came from a composed block; the accessory now rebuilds when its doorbell binding appears

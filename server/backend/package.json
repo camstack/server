@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.892",
+  "version": "1.2.893",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,28 +66,11 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.692",
-        "@camstack/addon-agent-ui": ">=1.2.403",
-        "@camstack/addon-export-alexa": ">=1.2.199",
-        "@camstack/addon-export-google": ">=0.1.136",
-        "@camstack/addon-export-hap": ">=1.2.204",
-        "@camstack/addon-pipeline": ">=1.2.657",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.697",
-        "@camstack/addon-post-analysis": ">=1.2.711",
-        "@camstack/addon-provider-bosch": ">=0.1.58",
-        "@camstack/addon-provider-ecowitt": ">=0.2.169",
-        "@camstack/addon-provider-enpal": ">=0.1.25",
-        "@camstack/addon-provider-esphome": ">=0.1.23",
-        "@camstack/addon-provider-hikvision": ">=1.2.189",
-        "@camstack/addon-provider-homeassistant": ">=1.2.691",
-        "@camstack/addon-provider-homematic": ">=1.2.205",
-        "@camstack/addon-provider-rademacher": ">=0.2.167",
-        "@camstack/addon-provider-reolink": ">=1.2.243",
-        "@camstack/addon-provider-unifi": ">=0.2.166",
-        "@camstack/addon-provider-unraid": ">=0.2.169",
-        "@camstack/addon-provider-velux": ">=0.2.171",
-        "@camstack/addon-provider-vesync": ">=0.2.160",
-        "@camstack/addon-terminal": ">=0.1.167"
+        "@camstack/addon-admin-ui": ">=1.2.693",
+        "@camstack/addon-agent-ui": ">=1.2.404",
+        "@camstack/addon-export-hap": ">=1.2.205",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.698",
+        "@camstack/addon-provider-vesync": ">=0.2.161"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
