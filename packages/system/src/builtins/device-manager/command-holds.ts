@@ -21,6 +21,7 @@
  * are unref'd so a hold never keeps a process alive.
  */
 import type { CommandEffect, IScopedLogger, VocabEffectValue } from '@camstack/types'
+import { ONE_SHOT_HOLD_MS } from '@camstack/types'
 
 type Slice = Readonly<Record<string, unknown>>
 
@@ -37,6 +38,7 @@ interface Arming {
   readonly deviceId: number
   readonly capName: string
   readonly method: string
+  readonly holdMs: number
   readonly timer: ReturnType<typeof setTimeout>
 }
 
@@ -135,6 +137,7 @@ export class CommandHolds {
         deviceId: request.deviceId,
         capName: request.capName,
         method: request.method,
+        holdMs: request.holdMs,
         timer,
       })
     }
@@ -160,7 +163,10 @@ export class CommandHolds {
     this.dropEmpty(arming.deviceId, arming.capName)
     const tags = { deviceId: arming.deviceId }
     const meta = { cap: arming.capName, method: arming.method, fields: dropped }
-    if (reason === 'unconfirmed') {
+    if (reason === 'unconfirmed' && arming.holdMs <= ONE_SHOT_HOLD_MS) {
+      // A one-shot (feed, run) usually finishes before the next poll: its end is the normal case.
+      this.deps.logger.debug('one-shot command hold ended', { tags, meta })
+    } else if (reason === 'unconfirmed') {
       this.deps.logger.warn('command hold reverted: the device did not confirm in time', {
         tags,
         meta,

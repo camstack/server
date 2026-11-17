@@ -1218,7 +1218,7 @@ export class HaExportAddon extends BaseAddon<Record<string, never>> {
 
       const enabled = this.enabledTargetIds()
       const devices = await this.ctx.api.deviceManager.listAll.query({})
-      const snapshots = await this.ctx.api.deviceState.getAllSnapshots.query({})
+      const snapshots = await this.ctx.api.deviceState.getAllSnapshots.query({ confirmed: true })
       const byId = new Map(devices.map((device) => [device.id, device]))
 
       /**
