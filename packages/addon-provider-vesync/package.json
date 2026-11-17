@@ -83,7 +83,7 @@
   },
   "devDependencies": {
     "@camstack/types": "*",
-    "tsvesync": "^1.0.68",
+    "tsvesync": "^1.4.9",
     "typescript": "~6.0.3",
     "vite": "^8.0.11",
     "vitest": "^2.0.0",
