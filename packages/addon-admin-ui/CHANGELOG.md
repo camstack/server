@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Archive Review says why when the track read fails instead of leaving the zone and face / plate filters silently empty; Library → Exports declares its ?camera= filter, so switching to another Library section drops it.
+
 ## [1.2.691] - 2026-11-16
 
 ### Added

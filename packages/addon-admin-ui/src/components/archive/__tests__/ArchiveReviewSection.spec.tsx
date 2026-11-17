@@ -64,12 +64,19 @@ function feedRow(trackId: string): KeyEventRow {
 interface ReviewMockState {
   sources: SourcesAnswer | null
   tracks: TrackFactsRow[]
+  tracksError: string | null
   feed: KeyEventRow[]
   listTracksInputs: ListTracksInput[]
 }
 
 const state = vi.hoisted(
-  (): ReviewMockState => ({ sources: null, tracks: [], feed: [], listTracksInputs: [] }),
+  (): ReviewMockState => ({
+    sources: null,
+    tracks: [],
+    tracksError: null,
+    feed: [],
+    listTracksInputs: [],
+  }),
 )
 
 interface SeekProp {
@@ -113,7 +120,9 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useVideoclipsListSources: () => state.sources ?? { status: 'success', data: SOURCES },
     usePipelineAnalyticsListTracks: (input: ListTracksInput) => {
       state.listTracksInputs.push(input)
-      return { data: state.tracks }
+      return state.tracksError === null
+        ? { status: 'success', data: state.tracks, error: null }
+        : { status: 'error', data: undefined, error: { message: state.tracksError } }
     },
     useClipLaneClips: (_deviceId: number, provider: string | null) => ({
       status: 'success',
@@ -178,6 +187,7 @@ const { ArchiveReviewSection } = await import('../ArchiveReviewSection')
 afterEach(() => {
   state.sources = null
   state.tracks = []
+  state.tracksError = null
   state.feed = []
   state.listTracksInputs = []
 })
@@ -247,6 +257,15 @@ describe('ArchiveReviewSection', () => {
     state.sources = { status: 'error', error: { message: 'provider offline' } }
     render(<ArchiveReviewSection deviceId={101} />)
     expect(screen.getByRole('alert')).toHaveTextContent('provider offline')
+  })
+
+  it('a failed track read says why, so the zone and face / plate filters are not read as empty', () => {
+    state.tracksError = 'analytics store offline'
+    render(<ArchiveReviewSection deviceId={101} />)
+    expect(screen.getByTestId('archive-review-tracks-failed')).toHaveTextContent(
+      'Track facts could not be read — analytics store offline',
+    )
+    expect(screen.getByTestId('archive-review-tracks-failed')).toHaveAttribute('role', 'alert')
   })
 
   it('shift-drag on the timeline opens the export dialog for this camera and range', () => {

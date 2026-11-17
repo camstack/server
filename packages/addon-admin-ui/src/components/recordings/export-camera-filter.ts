@@ -2,6 +2,12 @@
  * Library → Exports narrowed to one camera: `?camera=<deviceId>`, the param the
  * Archive links with. A missing or malformed param is "every camera".
  */
+/**
+ * The Library → Exports param naming one camera. Declared as the section's own
+ * (`ownedParams` in `Library.tsx`), so leaving Exports drops it.
+ */
+export const EXPORT_CAMERA_PARAM = 'camera'
+
 /** Anything kept per camera — an export row is one. */
 export interface CameraOwned {
   readonly deviceId: number
