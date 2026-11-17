@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Cameras also declare their MAC, serial, UID and IP as device identifiers (the hardware metadata is unchanged); a network read that fails keeps the MAC and IP declared before.
+- A network read that answers without a MAC or IP no longer erases the stored one; hub and NVR children no longer declare the hub's MAC or IP as their own identity
 
 ## [1.2.242] - 2026-11-16
 

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest'
 import type { IScopedLogger } from '../../interfaces/logging.js'
 import { declareDeviceIdentifiers, type SetIdentifiersInput } from '../declare-identifiers.js'
+import { DEVICE_IDENTIFIER_KEYS } from '../device-identifiers.js'
 
 function makeLogger(): IScopedLogger {
   const l: IScopedLogger = {
@@ -19,7 +20,11 @@ describe('declareDeviceIdentifiers', () => {
     const logger = makeLogger()
     const sent: SetIdentifiersInput[] = []
     const result = await declareDeviceIdentifiers(
-      { deviceId: 9, logger, writer: { mutate: async (input) => void sent.push(input) } },
+      {
+        deviceId: 9,
+        logger,
+        writer: { mutate: async (input) => void sent.push(input) },
+      },
       { mac: ['AA-BB-CC-DD-EE-FF', 'garbage'], ip: '192.0.2.1' },
       { readAt: 5 },
     )
@@ -41,7 +46,9 @@ describe('declareDeviceIdentifiers', () => {
 
   it('sends the kinds whose read failed as unread, and omits an empty list', async () => {
     const sent: SetIdentifiersInput[] = []
-    const writer = { mutate: async (input: SetIdentifiersInput) => void sent.push(input) }
+    const writer = {
+      mutate: async (input: SetIdentifiersInput) => void sent.push(input),
+    }
     const deps = { deviceId: 9, logger: makeLogger(), writer }
     await declareDeviceIdentifiers(
       deps,
@@ -65,11 +72,27 @@ describe('declareDeviceIdentifiers', () => {
     })
   })
 
-  it('writes nothing when no value survives, so an empty probe never erases a declaration', async () => {
+  it('sends an empty declaration when every kind was read and found absent, so the stale kinds are removed', async () => {
+    const sent: SetIdentifiersInput[] = []
+    const result = await declareDeviceIdentifiers(
+      {
+        deviceId: 9,
+        logger: makeLogger(),
+        writer: { mutate: async (input) => void sent.push(input) },
+      },
+      { mac: null, serial: null },
+      { unread: ['ip'] },
+    )
+    expect(result.outcome).toBe('declared')
+    expect(sent).toEqual([{ deviceId: 9, identifiers: {}, unread: ['ip'] }])
+  })
+
+  it('writes nothing when every kind is unread, so a probe that read nothing never erases a declaration', async () => {
     const mutate = vi.fn(async () => {})
     const result = await declareDeviceIdentifiers(
       { deviceId: 9, logger: makeLogger(), writer: { mutate } },
-      { mac: 'not-a-mac', serial: { manufacturer: 'acme', serial: 'unknown' } },
+      {},
+      { unread: [...DEVICE_IDENTIFIER_KEYS] },
     )
     expect(result.outcome).toBe('nothing-to-declare')
     expect(mutate).not.toHaveBeenCalled()

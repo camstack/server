@@ -12,6 +12,7 @@
 import type { IScopedLogger } from '../interfaces/logging.js'
 import { errMsg } from '../utils/err-msg.js'
 import {
+  DEVICE_IDENTIFIER_KEYS,
   isEmptyIdentifiers,
   type DeviceIdentifierKey,
   normaliseIdentifiers,
@@ -42,8 +43,10 @@ export interface DeclareIdentifiersDeps {
 
 /**
  * - `declared` — written (or already equal to what is stored);
- * - `nothing-to-declare` — no value survived normalisation; NOTHING is written, so
- *   a probe that read nothing never erases an earlier declaration;
+ * - `nothing-to-declare` — every kind is `unread`; NOTHING is written, so a probe
+ *   that read nothing never erases an earlier declaration. A declaration that
+ *   carries no value but READ some kinds is still sent: those kinds were read and
+ *   found absent, and are removed;
  * - `unavailable` — no device-manager to write to;
  * - `failed` — the write was refused or threw (logged).
  */
@@ -83,12 +86,20 @@ export async function declareDeviceIdentifiers(
       meta: { key: r.key, value: r.value, reason: r.reason },
     })
   }
-  if (isEmptyIdentifiers(identifiers)) {
-    logger.debug('no identifier to declare', { tags: { deviceId } })
+  const unreadKinds: ReadonlySet<DeviceIdentifierKey> = new Set(unread ?? [])
+  if (
+    isEmptyIdentifiers(identifiers) &&
+    DEVICE_IDENTIFIER_KEYS.every((key) => unreadKinds.has(key))
+  ) {
+    logger.debug('no identifier read — nothing declared', {
+      tags: { deviceId },
+    })
     return { outcome: 'nothing-to-declare', identifiers }
   }
   if (writer === undefined) {
-    logger.warn('identifiers not declared — device-manager unreachable', { tags: { deviceId } })
+    logger.warn('identifiers not declared — device-manager unreachable', {
+      tags: { deviceId },
+    })
     return { outcome: 'unavailable', identifiers }
   }
   try {

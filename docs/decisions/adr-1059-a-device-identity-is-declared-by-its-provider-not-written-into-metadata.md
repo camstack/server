@@ -45,8 +45,9 @@ A declaration is merged into what is stored, kind by kind
 (`mergeIdentifiers`): a kind it carries replaces the stored one, a kind it
 lacks was read and found absent and is removed, and a kind the provider lists
 in `unread` — it tried to read it and the read FAILED — keeps its stored
-value, so a failed read never erases a fact (D49). An empty declaration is not
-sent at all. An entry whose value and origin are unchanged keeps its stored
+value, so a failed read never erases a fact (D49). A declaration that carries
+no value is still sent when it read some kind — that kind was found absent and
+is removed; only a declaration where every kind is `unread` is not sent. An entry whose value and origin are unchanged keeps its stored
 `readAt`, which is therefore when that value was FIRST read; a provider
 re-declaring the same values on every boot writes nothing and emits nothing.
 
@@ -57,7 +58,12 @@ re-declaring the same values on every boot writes nothing and emits nothing.
   no longer where identity is read from.
 - A populator whose probe can fail partway (a camera's network read) must list
   the kinds that read would have produced in `unread`; otherwise its next boot
-  erases them.
+  erases them. When the probe cannot say WHICH sub-read failed (Reolink's
+  `getNetworkInfo` swallows each one), every kind its answer lacks is `unread`:
+  such a provider never removes that kind, it only replaces it.
+- A hub or NVR child declares no MAC or IP: the channel's network read may
+  answer with the hub's own address, and a child carrying it would match the
+  hub.
 - The row gains a nullable JSON column `identifiers` — an additive change;
   rows written before it read as "nothing declared".
 - Providers still to migrate: unifi and unraid (being rewritten elsewhere),

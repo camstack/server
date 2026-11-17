@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Devices carry typed identifiers (MAC, serial, vendor id, machine UUID, hostname, IP) declared by their provider, separate from the editable metadata.
 - setIdentifiers keeps the stored value of every kind the provider lists as unread (a failed read), and an unchanged value keeps its first readAt, so a re-declaration on every boot writes and emits nothing.
+- A provider declaration that read some identifier kinds and found nothing now removes those stale kinds; only a declaration where every kind is unread is skipped
 
 ## [1.2.586] - 2026-11-16
 

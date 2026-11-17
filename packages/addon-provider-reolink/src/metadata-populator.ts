@@ -17,7 +17,9 @@
  *
  * `channel`: pass `undefined` for hubs / top-level cameras (host-level
  * cmd 80 + cmd 76 host). Pass a numeric index for hub-adopted child
- * cameras (cmd 318 ch=N + cmd 76 ch=N — the sub-channel's own data).
+ * cameras (cmd 318 ch=N + cmd 76 ch=N). The channel's network read may
+ * answer with the hub's own MAC/IP, so a child never declares them as its
+ * identity (see 1b below).
  *
  * Passing `0` for a hub returns sub-channel-0's data (i.e. one of the
  * attached cameras) — an upstream lib quirk that historically polluted
@@ -32,7 +34,11 @@
  */
 
 import type { ReolinkBaichuanApi, ReolinkDeviceInfo } from '@apocaliss92/nodelink-js'
-import { declareDeviceIdentifiers, type DeviceContext } from '@camstack/types'
+import {
+  declareDeviceIdentifiers,
+  type DeviceContext,
+  type DeviceIdentifierKey,
+} from '@camstack/types'
 
 export interface MetadataPopulatorTarget {
   readonly id: number
@@ -90,11 +96,17 @@ export async function populateReolinkMetadata(
 
   let info: ExtendedDeviceInfo | undefined
   try {
-    info = await apiX.getInfo(channel, { timeoutMs: 4000, tags: EXTENDED_INFO_TAGS })
+    info = await apiX.getInfo(channel, {
+      timeoutMs: 4000,
+      tags: EXTENDED_INFO_TAGS,
+    })
   } catch (err) {
     target.ctx.logger.info('populateReolinkMetadata: getInfo failed — skipping populate', {
       tags: { deviceId: target.id },
-      meta: { channel: channel ?? 'host', error: err instanceof Error ? err.message : String(err) },
+      meta: {
+        channel: channel ?? 'host',
+        error: err instanceof Error ? err.message : String(err),
+      },
     })
     return
   }
@@ -112,7 +124,10 @@ export async function populateReolinkMetadata(
   } catch (err) {
     target.ctx.logger.debug('populateReolinkMetadata: getNetworkInfo failed (non-fatal)', {
       tags: { deviceId: target.id },
-      meta: { channel: channel ?? 'host', error: err instanceof Error ? err.message : String(err) },
+      meta: {
+        channel: channel ?? 'host',
+        error: err instanceof Error ? err.message : String(err),
+      },
     })
   }
 
@@ -179,8 +194,25 @@ export async function populateReolinkMetadata(
 
   // ── 1b. provider-declared identifiers (D1059) — the matchable identity,
   // typed and normalised, duplicated from the metadata keys above (which stay
-  // for display). A network read that threw or answered nothing keeps the
-  // stored MAC and IP.
+  // for display).
+  //
+  // `getNetworkInfo` swallows each of its sub-reads: the host path merges cmd 76
+  // (the one that carries the MAC) with cmd 93 and falls back to cmd 104, so an
+  // answer without a MAC or an IP cannot tell "cmd 76 timed out" from "the
+  // device has none". A kind the answer lacks is therefore `unread` — its stored
+  // value is kept, never removed.
+  //
+  // A hub or NVR child (the channel path) declares NO MAC and NO IP: cmd 76 is a
+  // host-level network read, and nothing in the lib shows that the hub answers
+  // it for the channel rather than with its own MAC and IP. A child carrying the
+  // hub's address would match the hub. Declared absent (not unread), so a value
+  // an earlier version stored is removed.
+  const hostRead = channel === undefined
+  const identifierMac = hostRead ? mac : undefined
+  const identifierIp = hostRead ? ip : undefined
+  const unread: DeviceIdentifierKey[] = hostRead
+    ? [...(mac === undefined ? ['mac' as const] : []), ...(ip === undefined ? ['ip' as const] : [])]
+    : []
   await declareDeviceIdentifiers(
     {
       deviceId: target.id,
@@ -188,12 +220,12 @@ export async function populateReolinkMetadata(
       writer: target.ctx.api.deviceManager?.setIdentifiers,
     },
     {
-      mac: mac ?? null,
+      mac: identifierMac ?? null,
       serial: info.serialNumber ? { manufacturer: 'Reolink', serial: info.serialNumber } : null,
       vendorUid: target.uid ? { vendor: 'reolink', id: target.uid } : null,
-      ip: ip ?? null,
+      ip: identifierIp ?? null,
     },
-    net === undefined ? { unread: ['mac', 'ip'] } : {},
+    { unread },
   )
 
   // ── 2. deviceCache config blob (durable identifiers for stableId)

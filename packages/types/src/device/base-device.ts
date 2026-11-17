@@ -453,8 +453,8 @@ export abstract class BaseDevice<
    * only from the provider that owns this device. Each kind it carries replaces
    * the stored one and each kind it lacks is removed — except the kinds listed in
    * `options.unread` (reads that FAILED), which keep their stored value. Pass
-   * everything read in one call; a call where nothing survives normalisation
-   * writes nothing. Best-effort: never throws.
+   * everything read in one call; a call where every kind is unread writes
+   * nothing. Best-effort: never throws.
    */
   protected async declareIdentifiers(
     raw: RawDeviceIdentifiers,
