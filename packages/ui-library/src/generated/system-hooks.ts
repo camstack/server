@@ -380,9 +380,6 @@ export const useBackupUpsertSchedule: typeof trpc.backup.upsertSchedule.useMutat
 /** Generated alias around `trpc.backup.deleteSchedule.useMutation`. */
 export const useBackupDeleteSchedule: typeof trpc.backup.deleteSchedule.useMutation = /*#__PURE__*/ alias(() => trpc.backup.deleteSchedule.useMutation)
 
-/** Generated alias around `trpc.battery.wakeForStream.useMutation`. */
-export const useBatteryWakeForStream: typeof trpc.battery.wakeForStream.useMutation = /*#__PURE__*/ alias(() => trpc.battery.wakeForStream.useMutation)
-
 /** Generated alias around `trpc.battery.getStatus.useQuery`. */
 export const useBatteryGetStatus: typeof trpc.battery.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.battery.getStatus.useQuery)
 
@@ -1765,6 +1762,12 @@ export const useLockControlOpen: typeof trpc.lockControl.open.useMutation = /*#_
 
 /** Generated alias around `trpc.lockControl.getStatus.useQuery`. */
 export const useLockControlGetStatus: typeof trpc.lockControl.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.lockControl.getStatus.useQuery)
+
+/** Generated alias around `trpc.lowPowerSleep.wakeForStream.useMutation`. */
+export const useLowPowerSleepWakeForStream: typeof trpc.lowPowerSleep.wakeForStream.useMutation = /*#__PURE__*/ alias(() => trpc.lowPowerSleep.wakeForStream.useMutation)
+
+/** Generated alias around `trpc.lowPowerSleep.getStatus.useQuery`. */
+export const useLowPowerSleepGetStatus: typeof trpc.lowPowerSleep.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.lowPowerSleep.getStatus.useQuery)
 
 /** Generated alias around `trpc.mediaPlayer.turnOn.useMutation`. */
 export const useMediaPlayerTurnOn: typeof trpc.mediaPlayer.turnOn.useMutation = /*#__PURE__*/ alias(() => trpc.mediaPlayer.turnOn.useMutation)
@@ -3214,6 +3217,9 @@ export const useRemoteSendMediaCommand: typeof trpc.remote.sendMediaCommand.useM
 
 /** Generated alias around `trpc.remoteLayoutComponents.listComponents.useQuery`. */
 export const useRemoteLayoutComponentsListComponents: typeof trpc.remoteLayoutComponents.listComponents.useQuery = /*#__PURE__*/ alias(() => trpc.remoteLayoutComponents.listComponents.useQuery)
+
+/** Generated alias around `trpc.resync.resync.useMutation`. */
+export const useResyncResync: typeof trpc.resync.resync.useMutation = /*#__PURE__*/ alias(() => trpc.resync.resync.useMutation)
 
 /** Generated alias around `trpc.runningState.getStatus.useQuery`. */
 export const useRunningStateGetStatus: typeof trpc.runningState.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.runningState.getStatus.useQuery)

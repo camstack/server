@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**211 capabilities · 1520 methods.**
+**213 capabilities · 1522 methods.**
 
 ## Method index
 
@@ -143,7 +143,6 @@
 | `backup.upsertSchedule` | mutation | admin | backup |
 | `backup.deleteSchedule` | mutation | admin | backup |
 | `battery.getStatus` | query | protected | battery (auto) |
-| `battery.wakeForStream` | mutation | protected | battery |
 | `binary.getStatus` | query | protected | binary (auto) |
 | `boardKeySource.listSources` | query | admin | board-key-source |
 | `boardKeySource.listBoards` | query | admin | board-key-source |
@@ -666,6 +665,8 @@
 | `logDestination.read` | query | admin | log-destination |
 | `logDestination.cancelRead` | mutation | admin | log-destination |
 | `loginMethod.getLoginMethods` | query | admin | login-method |
+| `lowPowerSleep.getStatus` | query | protected | low-power-sleep (auto) |
+| `lowPowerSleep.wakeForStream` | mutation | protected | low-power-sleep |
 | `mediaPlayer.getStatus` | query | protected | media-player (auto) |
 | `mediaPlayer.turnOn` | mutation | protected | media-player |
 | `mediaPlayer.turnOff` | mutation | protected | media-player |
@@ -1191,6 +1192,7 @@
 | `remote.getAssumedStatus` | query | protected | remote |
 | `remote.sendMediaCommand` | mutation | protected | remote |
 | `remoteLayoutComponents.listComponents` | query | protected | remote-layout-components |
+| `resync.resync` | mutation | admin | resync |
 | `runningState.getStatus` | query | protected | running-state (auto) |
 | `sceneMonitor.getStatus` | query | protected | scene-monitor (auto) |
 | `sceneMonitor.listScenes` | query | protected | scene-monitor |
@@ -1907,7 +1909,6 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | getStatus _(auto)_ | `battery.getStatus` | query | protected | `{ deviceId: number }` | `BatteryStatusSchema` |
-| wakeForStream | `battery.wakeForStream` | mutation | protected | `{ deviceId: number; timeoutMs?: number = 8000 }` | `{ awoke: boolean; durationMs: number }` |
 
 ### `binary` → `binary.*`
 
@@ -3327,6 +3328,19 @@
 |---|---|---|---|---|---|
 | getLoginMethods | `loginMethod.getLoginMethods` | query | admin | `void` | `LoginMethodContributionSchema[]` |
 
+### `low-power-sleep` → `lowPowerSleep.*`
+
+- **Source:** `packages/types/src/capabilities/low-power-sleep.cap.ts:38`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera`
+- **Archetypes:** status(push) · runtimeState
+- **Provider interface:** `ILowPowerSleepProvider`
+- **runtimeState:** `LowPowerSleepStatusSchema`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| getStatus _(auto)_ | `lowPowerSleep.getStatus` | query | protected | `{ deviceId: number }` | `LowPowerSleepStatusSchema` |
+| wakeForStream | `lowPowerSleep.wakeForStream` | mutation | protected | `{ deviceId: number; timeoutMs?: number = 8000 }` | `{ awoke: boolean; durationMs: number }` |
+
 ### `media-player` → `mediaPlayer.*`
 
 - **Source:** `packages/types/src/capabilities/media-player.cap.ts:150`
@@ -4412,6 +4426,17 @@
 | Method | tRPC path | Kind | Auth | Input | Output |
 |---|---|---|---|---|---|
 | listComponents | `remoteLayoutComponents.listComponents` | query | protected | `{}` | `({ id: string; name: string; nameI18n?: { en: string; it: string }; icon: string; category: "power" \| "navigation" \| "volume" \| "numbers" \| "media" \| "colour" \| "apps" \| "layout"; size: { rows: number; cols: number }; group: { frame: "none" \| "panel" \| "divider" \| "dpad" \| "rocker-v" \| "rocker-h" \| "keypad"; title?: string } \| null; buttons: ({ idSuffix: string; row: number; col: number; rowSpan: number; colSpan: number; role: string; icon?: string; label?: string; shape?: "rect" \| "rounded" \| "round" \| "pill"; tone?: "neutral" \| "accent" \| "danger" \| "red" \| "green" \| "yellow" \| "blue"; showLegend?: boolean })[] })[]` |
+
+### `resync` → `resync.*`
+
+- **Source:** `packages/types/src/capabilities/resync.cap.ts:24`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `container`
+- **Archetypes:** —
+- **Provider interface:** `IResyncProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| resync | `resync.resync` | mutation | admin | `ResyncDeviceInputSchema` | `{ changed: boolean; rebuiltChildren: number; removedChildren?: number }` |
 
 ### `running-state` → `runningState.*`
 

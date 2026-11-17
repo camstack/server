@@ -4,7 +4,7 @@
 
 # Capabilities
 
-211 capability definitions in `packages/types/src/capabilities/`.
+213 capability definitions in `packages/types/src/capabilities/`.
 The `.cap.ts` file is the single source of truth: codegen derives the tRPC
 routers, the status-type map and the `DeviceProxy` facade from it. Touching a
 cap without `npm run codegen` = silent drift.
@@ -17,7 +17,7 @@ has no `runtimeState`.
 installed addon declares it — either it is server-provided, or the cap is
 registered at runtime only (`registerNativeCap` from a `BaseDevice`).
 
-## Device-scoped (109)
+## Device-scoped (111)
 
 Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`.
 
@@ -30,7 +30,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `audio-analysis` | 4 | — | — | — | — | `audio-analyzer` |
 | `audio-metrics` | 2 | — | ✓ | none | — | `pipeline-analytics` |
 | `automation-control` | 4 | ✓ | ✓ | none | — | — |
-| `battery` | 2 | ✓ | ✓ | 2 series | — | — |
+| `battery` | 1 | ✓ | ✓ | 2 series | — | — |
 | `binary` | 1 | ✓ | ✓ | 1 series | — | — |
 | `brightness` | 2 | ✓ | ✓ | 1 series | — | — |
 | `button` | 1 | — | — | — | — | — |
@@ -79,6 +79,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `ir-transmitter` | 3 | — | ✓ | none | — | — |
 | `lawn-mower-control` | 4 | ✓ | ✓ | 1 series | — | `provider-homeassistant` |
 | `lock-control` | 4 | ✓ | ✓ | 1 series | — | — |
+| `low-power-sleep` | 2 | ✓ | ✓ | none | — | — |
 | `media-player` | 19 | ✓ | ✓ | 2 series | — | — |
 | `meter` | 1 | ✓ | ✓ | 1 series | — | — |
 | `motion` | 2 | ✓ | ✓ | 1 series | — | `camera-grid` |
@@ -106,6 +107,7 @@ Resolved per device via `CapabilityRegistry.getProviderForDevice(cap, deviceId)`
 | `recording` | 5 | — | — | — | — | `recorder` |
 | `recording-onboard` | 3 | ✓ | ✓ | none | — | `provider-amcrest` `provider-hikvision` `provider-reolink` |
 | `recording-signal` | 1 | ✓ | ✓ | none | — | `provider-dreame` |
+| `resync` | 1 | — | — | — | — | — |
 | `running-state` | 1 | ✓ | ✓ | 1 series | — | `bosch-home-connect` `provider-dreame` `provider-homeassistant` |
 | `scene-monitor` | 10 | ✓ | ✓ | none | — | `pipeline-analytics` |
 | `script-runner` | 3 | ✓ | ✓ | none | — | — |

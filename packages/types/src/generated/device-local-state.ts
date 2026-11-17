@@ -46,6 +46,7 @@ import { intercomCapability } from '../capabilities/intercom.cap.js'
 import { irTransmitterCapability } from '../capabilities/ir-transmitter.cap.js'
 import { lawnMowerControlCapability } from '../capabilities/lawn-mower-control.cap.js'
 import { lockControlCapability } from '../capabilities/lock-control.cap.js'
+import { lowPowerSleepCapability } from '../capabilities/low-power-sleep.cap.js'
 import { mediaPlayerCapability } from '../capabilities/media-player.cap.js'
 import { meterCapability } from '../capabilities/meter.cap.js'
 import { motionCapability } from '../capabilities/motion.cap.js'
@@ -146,6 +147,7 @@ export interface DeviceLocalState {
   irTransmitter: InferRuntimeState<typeof irTransmitterCapability>
   lawnMowerControl: InferRuntimeState<typeof lawnMowerControlCapability>
   lockControl: InferRuntimeState<typeof lockControlCapability>
+  lowPowerSleep: InferRuntimeState<typeof lowPowerSleepCapability>
   mediaPlayer: InferRuntimeState<typeof mediaPlayerCapability>
   meter: InferRuntimeState<typeof meterCapability>
   motion: InferRuntimeState<typeof motionCapability>
@@ -242,6 +244,7 @@ export const DEVICE_LOCAL_STATE_CAPS: Record<keyof DeviceLocalState, CapabilityD
   irTransmitter: irTransmitterCapability,
   lawnMowerControl: lawnMowerControlCapability,
   lockControl: lockControlCapability,
+  lowPowerSleep: lowPowerSleepCapability,
   mediaPlayer: mediaPlayerCapability,
   meter: meterCapability,
   motion: motionCapability,
@@ -345,6 +348,7 @@ export interface CapNameToRuntimeStateMap {
   'ir-transmitter': InferRuntimeState<typeof irTransmitterCapability>
   'lawn-mower-control': InferRuntimeState<typeof lawnMowerControlCapability>
   'lock-control': InferRuntimeState<typeof lockControlCapability>
+  'low-power-sleep': InferRuntimeState<typeof lowPowerSleepCapability>
   'media-player': InferRuntimeState<typeof mediaPlayerCapability>
   'meter': InferRuntimeState<typeof meterCapability>
   'motion': InferRuntimeState<typeof motionCapability>

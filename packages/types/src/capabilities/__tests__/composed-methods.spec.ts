@@ -5,12 +5,9 @@ import { consumablesCapability, ConsumableItemSchema } from '../consumables.cap.
 import { DeviceType } from '../../device/device-type.js'
 
 describe('composedMethods (D663)', () => {
-  it('battery answers wakeForStream with the contract’s own "unavailable" answer', () => {
-    const answer = batteryCapability.composedMethods.wakeForStream
-    expect(answer).toEqual({ kind: 'answer', value: { awoke: false, durationMs: 0 } })
-    expect(batteryCapability.methods.wakeForStream.output.safeParse(answer.value).success).toBe(
-      true,
-    )
+  it('battery has no method left to compose: waking moved to low-power-sleep (#459, Q2)', () => {
+    expect(Object.keys(batteryCapability.methods)).toEqual([])
+    expect('composedMethods' in batteryCapability).toBe(false)
   })
 
   it('consumables refuses reset by name', () => {

@@ -2489,6 +2489,19 @@ export interface UnexportedCap {
 
 export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
   {
+    cap: 'low-power-sleep',
+    reason:
+      'Its sleep state is already exported through the battery entities of the same ' +
+      "camera, and its one method (wakeForStream) is a stream consumer's pre-wake, " +
+      'not an automation action (#459).',
+  },
+  {
+    cap: 'resync',
+    reason:
+      'Re-aligning a container with its source is an admin onboarding step, offered on ' +
+      'the device page; it is not an entity an automation reads or presses (#459).',
+  },
+  {
     cap: 'siren',
     reason:
       'A timed trigger with a countdown: the siren is already exported as its on/off ' +

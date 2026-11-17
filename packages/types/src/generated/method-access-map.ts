@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1520 method paths across 211 capabilities.
+ * Coverage: 1522 method paths across 213 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -152,7 +152,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'backup.upsertDestinationPolicy': { capName: "backup", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'backup.upsertSchedule': { capName: "backup", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'battery.getStatus': { capName: "battery", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'battery.wakeForStream': { capName: "battery", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'binary.getStatus': { capName: "binary", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'boardKeySource.getBoardKey': { capName: "board-key-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'boardKeySource.listBoards': { capName: "board-key-source", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
@@ -675,6 +674,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'logDestination.read': { capName: "log-destination", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'logDestination.write': { capName: "log-destination", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'loginMethod.getLoginMethods': { capName: "login-method", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'lowPowerSleep.getStatus': { capName: "low-power-sleep", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
+  'lowPowerSleep.wakeForStream': { capName: "low-power-sleep", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.channelDown': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.channelUp': { capName: "media-player", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'mediaPlayer.getStatus': { capName: "media-player", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1200,6 +1201,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'remote.sendMediaCommand': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'remote.setConfig': { capName: "remote", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'remoteLayoutComponents.listComponents': { capName: "remote-layout-components", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'resync.resync': { capName: "resync", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'runningState.getStatus': { capName: "running-state", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'sceneMonitor.captureReference': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
   'sceneMonitor.createScene': { capName: "scene-monitor", capScope: "device", addonId: null, access: "create", role: "feature:scenes" } as const,
@@ -1654,6 +1656,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "log-channels",
   "log-destination",
   "login-method",
+  "low-power-sleep",
   "media-player",
   "mesh-network",
   "meter",
@@ -1707,6 +1710,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "records",
   "remote",
   "remote-layout-components",
+  "resync",
   "running-state",
   "scene-monitor",
   "schedulers",
@@ -1817,6 +1821,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "ir-transmitter",
   "lawn-mower-control",
   "lock-control",
+  "low-power-sleep",
   "media-player",
   "meter",
   "motion",
@@ -1844,6 +1849,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "recording",
   "recording-onboard",
   "recording-signal",
+  "resync",
   "running-state",
   "scene-monitor",
   "script-runner",

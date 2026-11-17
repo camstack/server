@@ -3,7 +3,7 @@
  * ADDS to a device the composer does not own — a battery on an HA pet feeder
  * that registers none. Without it the added cap has claimed values on the hub
  * but nothing answers its methods, so `getBindings` never lists it and a caller
- * of `battery.wakeForStream` finds no provider.
+ * of the cap (its `getStatus`, a composed method) finds no provider.
  *
  * - The provider is built ONLY from the cap's `composedMethods` (Task 1): an
  *   `answer` resolves to its value, a `refuse` rejects naming its reason. A cap

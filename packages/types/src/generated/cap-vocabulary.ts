@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 211 caps (109 device, 102 system).
+ * `*.cap.ts` (D1050): 213 caps (111 device, 102 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -4175,6 +4175,13 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
       },
     ],
   },
+  'resync': {
+    scope: 'device',
+    noun: { en: 'Re-sync', it: 'Risincronizzazione' },
+    notOperatorFacing: {
+      resync: 'device adoption — re-aligning a device with its source is an onboarding step, not an automation action',
+    },
+  },
   'recording': { scope: 'device', noun: { en: 'Recording', it: 'Registrazione' } },
   'recording-onboard': {
     scope: 'device',
@@ -5459,9 +5466,6 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
   'battery': {
     scope: 'device',
     noun: { en: 'Battery', it: 'Batteria' },
-    notOperatorFacing: {
-      wakeForStream: 'a stream consumer wakes a sleeping camera to watch it; an automation that wants footage asks for the footage',
-    },
     state: [
       {
         kind: 'numeric',
@@ -5532,6 +5536,13 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'moon',
       },
     ],
+  },
+  'low-power-sleep': {
+    scope: 'device',
+    noun: { en: 'Low-power sleep', it: 'Sospensione a basso consumo' },
+    notOperatorFacing: {
+      wakeForStream: 'a stream consumer wakes a sleeping camera to watch it; an automation that wants footage asks for the footage',
+    },
   },
   'network-link': {
     scope: 'device',

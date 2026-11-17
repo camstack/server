@@ -78,7 +78,7 @@ function makeCtxRoutingCaps(providers: {
         query: vi.fn(async ({ deviceId }: { deviceId: number }) => ({
           id: deviceId,
           name: 'test-cam',
-          features: providers.isBattery ? ['battery-operated'] : [],
+          features: providers.isBattery ? ['sleeps'] : [],
         })),
       },
     },

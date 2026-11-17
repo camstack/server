@@ -4,12 +4,12 @@ import type { IncomingMessage, ServerResponse } from 'node:http'
 import type {
   AddonApi,
   AddonDataPlaneHandle,
-  BatteryStatus,
   ConfigUISchema,
   ConfigUISchemaWithValues,
   DataPlaneHandler,
   InferProvider,
   IngestOwner,
+  LowPowerSleepStatus,
   IScopedLogger,
   BatteryPresence,
   ProfileSlot,
@@ -18,11 +18,11 @@ import type {
 } from '@camstack/types'
 import {
   BaseAddon,
-  batteryCapability,
-  BatteryStatusSchema,
   deriveBatteryPresence,
+  deviceSleeps,
+  lowPowerSleepCapability,
+  LowPowerSleepStatusSchema,
   bareAddonId,
-  DeviceFeature,
   DeviceType,
   EventCategory,
   errMsg,
@@ -811,10 +811,10 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
     const meta = await this.lookupDeviceMeta(deviceId)
     const state = await this.resolveSnapshotState(deviceId, meta)
     const hit = this.cache.latest(deviceId)
-    const batterySlice = await this.ctx.api.deviceState.getCapSlice
-      .query({ deviceId, capName: batteryCapability.name })
+    const sleepSlice = await this.ctx.api.deviceState.getCapSlice
+      .query({ deviceId, capName: lowPowerSleepCapability.name })
       .catch(() => null)
-    const parsed = BatteryStatusSchema.safeParse(batterySlice)
+    const parsed = LowPowerSleepStatusSchema.safeParse(sleepSlice)
     return {
       battery: parsed.success
         ? {
@@ -1791,11 +1791,13 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
    * Resolve the state that must be visible on a snapshot.
    *
    * Uses the same two canonical sources as wake-on-play:
-   *  1. `deviceManager.getDevice` for the registry's BatteryOperated feature;
-   *  2. `deviceState.getCapSlice('battery')` for the durable runtime mirror.
+   *  1. `deviceManager.getDevice` for the registry's `Sleeps` feature;
+   *  2. `deviceState.getCapSlice('low-power-sleep')` for the durable mirror of
+   *     the sleep inputs.
    *
-   * A valid battery slice is itself positive evidence that the device is
-   * battery-operated. That closes the field failure where "Baby monitor" had a
+   * A valid `low-power-sleep` slice is itself positive evidence that the device
+   * sleeps. A `battery` slice is NOT: a battery sensor reports charge and never
+   * sleeps (#459, Q2). That closes the field failure where "Baby monitor" had a
    * sleeping battery slice but a stale persisted feature projection, so the
    * snapshot wrapper classified it as mains and a Viewer thumbnail logged in
    * to the sleeping camera. The reverse is deliberately not guessed: no
@@ -1813,16 +1815,16 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
     if (meta?.disabled === true) return { isBattery: meta.isBattery, reason: 'disabled' }
 
     const waking = this.isDeviceWaking(deviceId)
-    let batteryStatus: BatteryStatus | null = null
+    let batteryStatus: LowPowerSleepStatus | null = null
     try {
       const raw: unknown = await this.ctx.api.deviceState.getCapSlice.query({
         deviceId,
-        capName: batteryCapability.name,
+        capName: lowPowerSleepCapability.name,
       })
-      const parsed = BatteryStatusSchema.safeParse(raw)
+      const parsed = LowPowerSleepStatusSchema.safeParse(raw)
       if (parsed.success) batteryStatus = parsed.data
     } catch (err) {
-      this.ctx.logger.debug('snapshot: battery runtime-state read failed', {
+      this.ctx.logger.debug('snapshot: sleep runtime-state read failed', {
         tags: { deviceId },
         meta: { error: errMsg(err) },
       })
@@ -2191,7 +2193,8 @@ export class SnapshotAddon extends BaseAddon<SnapshotAddonConfig> {
       const row = found as { disabled?: unknown; online?: unknown }
       return {
         ...(found.name ? { name: found.name } : {}),
-        isBattery: features.includes(DeviceFeature.BatteryOperated),
+        // A camera that SLEEPS, not one that reports a battery (#459, Q2).
+        isBattery: deviceSleeps(features),
         ...(rawType ? { type: rawType as DeviceType } : {}),
         disabled: row.disabled === true,
         // Absent `online` means "no opinion" — treat as up. Only an explicit

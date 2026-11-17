@@ -11,10 +11,14 @@ import {
 import { DeviceFeature } from '../device-type.js'
 
 describe('resolveDeviceProfile', () => {
-  it('matches a battery camera on its feature', () => {
-    expect(resolveDeviceProfile(['native-snapshot', DeviceFeature.BatteryOperated])).toBe(
+  it('matches a camera that sleeps on its feature', () => {
+    expect(resolveDeviceProfile(['native-snapshot', DeviceFeature.Sleeps])).toBe(
       BATTERY_DEVICE_PROFILE,
     )
+  })
+
+  it('a battery READING alone is not a sleeping camera (#459, Q2)', () => {
+    expect(resolveDeviceProfile([DeviceFeature.BatteryOperated])).toBeNull()
   })
 
   it('returns null for a mains camera', () => {
