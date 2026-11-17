@@ -865,7 +865,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   }
 
   /**
-   * Declare the serial, MAC and host the camera reports (D1059) — once per session, on the
+   * Declare the serial, MAC (channel 1 only) and host the camera reports (D1059) — once per session, on the
    * first answer of the reachability poll. A failed MAC read is `unread` and leaves the
    * stored MAC; a write that did not land is tried again on the next poll.
    */
@@ -875,14 +875,17 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   ): Promise<void> {
     this.identityDeclared = true
     const host = this.config.get('host') ?? ''
-    const mac = await client.resolveMac(host).catch((err: unknown) => {
+    const channel = this.channel
+    // A recorder channel past the first shares the recorder's MAC: no read to make.
+    const readMac = channel === 1 ? client.resolveMac(host) : Promise.resolve(null)
+    const mac = await readMac.catch((err: unknown) => {
       this.ctx.logger.debug('Amcrest identity: network read failed', {
         tags: { deviceId: this.id },
         meta: { error: err instanceof Error ? err.message : String(err) },
       })
       return null
     })
-    const { identifiers, unread } = amcrestIdentifiers({ serialNumber, mac, host })
+    const { identifiers, unread } = amcrestIdentifiers({ serialNumber, mac, host, channel })
     const result = await this.declareIdentifiers(identifiers, { unread })
     if (result.outcome !== 'declared') this.identityDeclared = false
   }

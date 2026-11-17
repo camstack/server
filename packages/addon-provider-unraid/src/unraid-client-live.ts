@@ -67,9 +67,11 @@ export interface UnraidApiSystemInfo {
 /** Interfaces that are the machine's own hardware — not a bridge, a container veth or a VM tap. */
 const PHYSICAL_IFACE = /^(?:eth|en|wl|bond)/
 
-function physicalMacs(info: UnraidApiSystemInfo | undefined): readonly string[] {
+function physicalMacs(info: UnraidApiSystemInfo | undefined): readonly string[] | null {
+  const network = info?.devices?.network
+  if (network === null || network === undefined) return null
   const macs: string[] = []
-  for (const nic of info?.devices?.network ?? []) {
+  for (const nic of network) {
     const mac = nic.mac?.trim() ?? ''
     if (PHYSICAL_IFACE.test(nic.iface) && mac.length > 0) macs.push(mac)
   }
@@ -377,9 +379,10 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
       ? {
           server: {
             info: () =>
-              guard(async (): Promise<UnraidServerInfo> => {
+              guard(async (): Promise<UnraidServerInfo | null> => {
                 const info = await api.server?.info()
-                return { flashGuid: blankToNull(info?.guid), lanIp: blankToNull(info?.lanip) }
+                if (info === null || info === undefined) return null
+                return { flashGuid: blankToNull(info.guid), lanIp: blankToNull(info.lanip) }
               }),
           },
         }

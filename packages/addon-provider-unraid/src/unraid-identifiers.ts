@@ -5,7 +5,8 @@
  *   its flash GUID (`vendor-uid` `unraid:<guid>`, the USB key the license is
  *   bound to), its hostname and LAN IP (weak). The kinds of a read that FAILED
  *   are `unread` (D49): `system.info()` carries the uuid, MACs and hostname,
- *   `server.info()` the GUID and IP.
+ *   `server.info()` the GUID and IP. An answer without a server, or without a
+ *   network list, is unknown too, never "found absent".
  * - A VM: its libvirt domain uuid, which is the guest's SMBIOS uuid, so the
  *   guest's own integration can match it. A VM the poll could not see declares
  *   nothing.
@@ -43,13 +44,14 @@ export function unraidServerIdentifiers(
 ): UnraidIdentifierDeclaration | null {
   if (identity === undefined) return null
   const unread: DeviceIdentifierKey[] = [
-    ...(identity.systemRead ? [] : (['machine-uuid', 'mac', 'hostname'] as const)),
+    ...(identity.systemRead ? [] : (['machine-uuid', 'hostname'] as const)),
+    ...(identity.systemRead && identity.macs !== null ? [] : (['mac'] as const)),
     ...(identity.serverRead ? [] : (['vendor-uid', 'ip'] as const)),
   ]
   return {
     identifiers: {
       machineUuid: machineUuid(identity.machineUuid),
-      mac: identity.macs,
+      mac: identity.macs ?? [],
       hostname: identity.hostname,
       vendorUid: identity.flashGuid === null ? null : { vendor: 'unraid', id: identity.flashGuid },
       ip: identity.lanIp,

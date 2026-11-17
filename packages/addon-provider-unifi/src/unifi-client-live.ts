@@ -16,6 +16,12 @@ import {
   UnifiUnsupportedError,
 } from './unifi-errors.js'
 
+/** A blank string the API sent means "not reported", never a value. */
+function blankToNull(value: string | null | undefined): string | null {
+  const trimmed = value?.trim() ?? ''
+  return trimmed.length > 0 ? trimmed : null
+}
+
 export {
   UnifiApiError,
   UnifiAuthError,
@@ -281,8 +287,8 @@ export class UnifiLiveClient implements UnifiControllerClient {
     return {
       id: device.id,
       name: device.name ?? device.id,
-      mac: device.macAddress === undefined ? null : device.macAddress.toLowerCase(),
-      ip: device.ipAddress ?? null,
+      mac: blankToNull(device.macAddress)?.toLowerCase() ?? null,
+      ip: blankToNull(device.ipAddress),
       // The Integration API reports no serial; a local account adds it (UnifiDualClient).
       serial: null,
       model: device.model ?? '',

@@ -15,6 +15,7 @@ import {
 import { describe, expect, it } from 'vitest'
 import type { UnraidServerIdentity, UnraidVmInfo } from '../unraid-client-contract.js'
 import { createLiveUnraidClient, type UnraidApiSource } from '../unraid-client-live.js'
+import { readIdentity } from '../unraid-integration-manager.js'
 import {
   type UnraidIdentifierDeclaration,
   unraidServerIdentifiers,
@@ -57,6 +58,7 @@ const TOWER: UnraidServerIdentity = {
   serverRead: true,
   flashGuid: '0781-5571-0000-123456789ABC',
   lanIp: '192.0.2.20',
+  readFailures: [],
 }
 
 describe('unraidServerIdentifiers', () => {
@@ -83,6 +85,7 @@ describe('unraidServerIdentifiers', () => {
         serverRead: false,
         flashGuid: null,
         lanIp: null,
+        readFailures: ['system.info: timeout', 'server.info: timeout'],
       }),
     )
     expect(world.stored?.['machine-uuid']?.value).toBe('4c4c4544-0042-3510-8051-b7c04f4e3732')
@@ -189,5 +192,33 @@ describe('the live client reads the identity', () => {
       flashGuid: '0781-5571-0000-123456789ABC',
       lanIp: '192.0.2.20',
     })
+  })
+
+  it('an answer without a server or without a network list keeps the stored GUID, IP and MACs', async () => {
+    const world: StoredWorld = { stored: null }
+    await declare(world, unraidServerIdentifiers(TOWER))
+    const client = createLiveUnraidClient(
+      api({
+        system: {
+          versions: async () => ({}),
+          cpu$: async function* () {},
+          info: async () => ({
+            os: { hostname: 'Tower' },
+            system: { uuid: '4C4C4544-0042-3510-8051-B7C04F4E3732' },
+            devices: { network: null },
+          }),
+        },
+        server: { info: async () => null },
+      }),
+    )
+    const identity = await readIdentity(client)
+    expect(identity.serverRead).toBe(false)
+    expect(identity.macs).toBeNull()
+    expect(identity.readFailures).toEqual(['server.info: answered without a server'])
+    await declare(world, unraidServerIdentifiers(identity))
+    expect(world.stored?.['vendor-uid']?.value).toBe('unraid:0781-5571-0000-123456789abc')
+    expect(world.stored?.ip?.value).toBe('192.0.2.20')
+    expect(world.stored?.mac?.[0]?.value).toBe('ac:1f:6b:00:00:01')
+    expect(world.stored?.['machine-uuid']?.value).toBe('4c4c4544-0042-3510-8051-b7c04f4e3732')
   })
 })

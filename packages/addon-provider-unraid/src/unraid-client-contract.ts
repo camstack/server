@@ -181,21 +181,28 @@ export interface UnraidServerIdentity {
   readonly systemRead: boolean
   /** SMBIOS system uuid, or null when the board reports none. */
   readonly machineUuid: string | null
-  /** MACs of the physical network interfaces (`eth*`, `en*`, `wl*`, `bond*`). */
-  readonly macs: readonly string[]
+  /**
+   * MACs of the physical network interfaces (`eth*`, `en*`, `wl*`, `bond*`); null when the
+   * answer carried no network list (unknown, never "no NIC").
+   */
+  readonly macs: readonly string[] | null
   readonly hostname: string | null
+  /** True when `server.info()` answered with a server; a failed or empty answer is unknown. */
   readonly serverRead: boolean
   /** The flash (license) GUID, or null. */
   readonly flashGuid: string | null
   /** The LAN IP the server reports, or null. */
   readonly lanIp: string | null
+  /** Why a read is unknown (`system.info: …`, `server.info: …`); empty when both answered. */
+  readonly readFailures: readonly string[]
 }
 
 /** What `system.info()` reads. */
 export interface UnraidSystemInfo {
   readonly hostname: string | null
   readonly machineUuid: string | null
-  readonly macs: readonly string[]
+  /** Null when the answer carried no network list. */
+  readonly macs: readonly string[] | null
 }
 
 /** What `server.info()` reads. */
@@ -255,7 +262,8 @@ export interface UnraidSystemDomainLike {
 
 /** Server domain — the flash GUID and LAN IP (`server.info()`). */
 export interface UnraidServerDomainLike {
-  info(): Promise<UnraidServerInfo>
+  /** Null when the API answered without a server. */
+  info(): Promise<UnraidServerInfo | null>
 }
 
 /** Notifications domain — mirrors the real `NotificationsDomain` subset. */

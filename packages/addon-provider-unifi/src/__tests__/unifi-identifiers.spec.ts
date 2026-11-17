@@ -110,6 +110,37 @@ describe('where the identity comes from', () => {
     expect(device).toMatchObject({ mac: 'f0:9f:c2:00:00:01', ip: '192.0.2.10', serial: null })
   })
 
+  it('a blank IP or MAC from the Integration API is unread, so the stored ones stay', async () => {
+    const routes: Record<string, unknown> = {
+      '/sites': { data: [{ id: 's1', internalReference: 'default' }], totalCount: 1 },
+      '/sites/s1/devices': {
+        data: [{ id: 'd1', macAddress: ' ', ipAddress: '' }],
+        totalCount: 1,
+      },
+      '/sites/s1/clients': { data: [], totalCount: 0 },
+    }
+    const fetchImpl: UnifiFetch = async (url) => {
+      const body = routes[url.split('/integration/v1')[1]?.split('?')[0] ?? '']
+      if (body === undefined) return { ok: false, status: 404, json: async () => ({}) }
+      return { ok: true, status: 200, json: async () => body }
+    }
+    const client = new UnifiLiveClient({
+      host: 'console.example',
+      port: 443,
+      apiKey: 'k',
+      site: 'default',
+      fetchImpl,
+    })
+    await client.connect()
+    const [device] = await client.listInfraDevices()
+    expect(device).toMatchObject({ mac: null, ip: null })
+    const world: StoredWorld = { stored: null, writes: 0 }
+    await declare(world, SWITCH)
+    await declare(world, device ?? null)
+    expect(world.stored?.ip?.value).toBe('192.0.2.10')
+    expect(world.stored?.mac?.[0]?.value).toBe('f0:9f:c2:00:00:01')
+  })
+
   it('the local account (classic API) carries the serial and the IP', () => {
     const snapshot = workerDeviceToSnapshot({
       id: 'c1',

@@ -263,17 +263,36 @@ async function readSection<T>(
  * The server's identity (D1059). A missing or failed read is `systemRead` / `serverRead`
  * false — its values unknown, and the gateway named "Unraid" — and never fails the poll.
  */
-async function readIdentity(client: UnraidClientLike): Promise<UnraidServerIdentity> {
-  const system =
-    client.system.info === undefined ? null : await client.system.info().catch(() => null)
-  const server = client.server === undefined ? null : await client.server.info().catch(() => null)
+export async function readIdentity(client: UnraidClientLike): Promise<UnraidServerIdentity> {
+  const failures: string[] = []
+  const attempt = async <T>(what: string, read: () => Promise<T>): Promise<T | null> => {
+    try {
+      return await read()
+    } catch (err) {
+      failures.push(`${what}: ${errMsg(err)}`)
+      return null
+    }
+  }
+  const systemInfo = client.system.info
+  const system = systemInfo === undefined ? null : await attempt('system.info', () => systemInfo())
+  const serverDomain = client.server
+  const server =
+    serverDomain === undefined ? null : await attempt('server.info', () => serverDomain.info())
+  if (
+    serverDomain !== undefined &&
+    server === null &&
+    failures.every((f) => !f.startsWith('server.info'))
+  ) {
+    failures.push('server.info: answered without a server')
+  }
   return {
     systemRead: system !== null,
     machineUuid: system?.machineUuid ?? null,
-    macs: system?.macs ?? [],
+    macs: system?.macs ?? null,
     hostname: system?.hostname ?? null,
     serverRead: server !== null,
     flashGuid: server?.flashGuid ?? null,
     lanIp: server?.lanIp ?? null,
+    readFailures: failures,
   }
 }

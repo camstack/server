@@ -1,5 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest'
-import { DeviceType } from '@camstack/types'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  type DeviceIdentifiers,
+  DeviceType,
+  mergeIdentifiers,
+  type SetIdentifiersInput,
+} from '@camstack/types'
 import { EspContainerDevice } from '../devices/esp-container-device.js'
 import { espLinkHub } from '../esphome-link-hub.js'
 import { type LogLine, makeCtx } from './fake-ctx.js'
@@ -148,5 +153,31 @@ describe('EspContainerDevice', () => {
       'switch-relay',
     ])
     expect(logs.some((l) => l.level === 'warn' && l.message.includes('repeated'))).toBe(true)
+  })
+})
+
+describe('EspContainerDevice declares the board identity (D1059)', () => {
+  it('on activation, from the live board: MAC and node name; an unreachable board declares nothing', async () => {
+    const world: { stored: DeviceIdentifiers | null; writes: number } = { stored: null, writes: 0 }
+    const setIdentifiers = {
+      mutate: async (input: SetIdentifiersInput) => {
+        world.writes += 1
+        world.stored = mergeIdentifiers(world.stored, input.identifiers, input.unread ?? [])
+      },
+    }
+    const api = { deviceManager: { setIdentifiers } }
+    const offline = new EspContainerDevice(
+      makeCtx({ brokerId: BROKER, system: 'esphome', integrationId: 'int-1' }, { api }).ctx,
+    )
+    await offline.onActivate()
+    expect(world.writes).toBe(0)
+
+    espLinkHub.attach(BROKER, new FakeLink(BOARD))
+    const dev = new EspContainerDevice(
+      makeCtx({ brokerId: BROKER, system: 'esphome', integrationId: 'int-1' }, { api }).ctx,
+    )
+    await dev.onActivate()
+    await vi.waitFor(() => expect(world.stored?.mac?.[0]?.value).toBe('aa:bb:cc:00:00:01'))
+    expect(world.stored?.hostname?.value).toBe('board-a')
   })
 })

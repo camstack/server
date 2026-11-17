@@ -60,6 +60,8 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
   private snapshotUnsub: (() => void) | null = null
   private identityUnsub: (() => void) | null = null
   private readonly identity: UnraidIdentityDeclarer
+  /** The identity read failures last logged, so a server that keeps failing logs once. */
+  private lastIdentityFailures = ''
 
   constructor(ctx: DeviceContext) {
     const cfg = unraidInstanceSchema.parse(ctx.persistedConfig ?? {})
@@ -86,10 +88,11 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
     // The server device is the host its containers and VMs report, whatever its type.
     unraidInstances.setHostDevice(this.instanceId, this.id)
     // The server's identity (D1059), from every poll, whatever the device type.
-    const declareIdentity = (): void =>
-      void this.identity.declare(
-        unraidServerIdentifiers(unraidInstances.getSnapshot(this.instanceId)?.identity),
-      )
+    const declareIdentity = (): void => {
+      const identity = unraidInstances.getSnapshot(this.instanceId)?.identity
+      this.logIdentityFailures(identity?.readFailures ?? [])
+      void this.identity.declare(unraidServerIdentifiers(identity))
+    }
     this.identityUnsub = unraidInstances.onSnapshot(this.instanceId, declareIdentity)
     declareIdentity()
     if (this.type !== DeviceType.Workload) return
@@ -105,6 +108,18 @@ export class UnraidInstanceDevice extends BaseDevice<typeof unraidInstanceSchema
     this.runtimeState.setCapState(workloadCapability.name, unknownWorkloadStatus(null, Date.now()))
     this.snapshotUnsub = unraidInstances.onSnapshot(this.instanceId, () => this.recomputeWorkload())
     this.recomputeWorkload()
+  }
+
+  /** A read the identity could not make keeps the stored values; say so once per change. */
+  private logIdentityFailures(failures: readonly string[]): void {
+    const key = failures.join('\n')
+    if (key === this.lastIdentityFailures) return
+    this.lastIdentityFailures = key
+    if (failures.length === 0) return
+    this.ctx.logger.warn('Unraid server: identity read failed, stored identifiers kept', {
+      tags: { deviceId: this.id },
+      meta: { instanceId: this.instanceId, failures },
+    })
   }
 
   override async removeDevice(): Promise<void> {

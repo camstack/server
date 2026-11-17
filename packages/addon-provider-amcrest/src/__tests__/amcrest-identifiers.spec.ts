@@ -44,6 +44,7 @@ describe('amcrestIdentifiers', () => {
       serialNumber: 'AMC0123456789',
       mac: '9C:8E:CD:00:00:01',
       host: '192.0.2.40',
+      channel: 1,
     })
     expect(world.stored?.serial?.value).toBe('amcrest:amc0123456789')
     expect(world.stored?.mac?.map((m) => m.value)).toEqual(['9c:8e:cd:00:00:01'])
@@ -56,9 +57,29 @@ describe('amcrestIdentifiers', () => {
       serialNumber: 'AMC0123456789',
       mac: '9C:8E:CD:00:00:01',
       host: '192.0.2.40',
+      channel: 1,
     })
-    await declare(world, { serialNumber: null, mac: null, host: '192.0.2.40' })
+    await declare(world, { serialNumber: null, mac: null, host: '192.0.2.40', channel: 1 })
     expect(world.stored?.serial?.value).toBe('amcrest:amc0123456789')
     expect(world.stored?.mac?.[0]?.value).toBe('9c:8e:cd:00:00:01')
+  })
+
+  it("a recorder channel past the first declares no serial or MAC: they are the recorder's, shared by every channel", async () => {
+    const world: StoredWorld = { stored: null }
+    await declare(world, {
+      serialNumber: 'NVR0123456789',
+      mac: '9C:8E:CD:00:00:02',
+      host: '192.0.2.41',
+      channel: 1,
+    })
+    await declare(world, {
+      serialNumber: 'NVR0123456789',
+      mac: '9C:8E:CD:00:00:02',
+      host: '192.0.2.41',
+      channel: 3,
+    })
+    expect(world.stored?.serial).toBeUndefined()
+    expect(world.stored?.mac).toBeUndefined()
+    expect(world.stored?.ip?.value).toBe('192.0.2.41')
   })
 })

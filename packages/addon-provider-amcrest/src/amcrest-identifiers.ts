@@ -4,6 +4,10 @@
  * (`resolveMac`), and the host itself (weak). A serial or MAC that was not read
  * — the read failed, or answered without it — is `unread`: neither ever
  * legitimately disappears, so the stored value is kept (D49).
+ *
+ * Only channel 1 declares the serial and MAC: on a recorder every channel answers
+ * with the recorder's own, so a channel past the first declares neither (and drops
+ * one stored before), keeping only its host.
  */
 import type { DeviceIdentifierKey, RawDeviceIdentifiers } from '@camstack/types'
 
@@ -12,6 +16,8 @@ export interface AmcrestIdentityRead {
   /** Null when the network read failed or found no MAC. */
   readonly mac: string | null
   readonly host: string
+  /** The device's channel on the unit (1 for a camera, 1…N on a recorder). */
+  readonly channel: number
 }
 
 export interface AmcrestIdentifierDeclaration {
@@ -20,6 +26,9 @@ export interface AmcrestIdentifierDeclaration {
 }
 
 export function amcrestIdentifiers(read: AmcrestIdentityRead): AmcrestIdentifierDeclaration {
+  if (read.channel !== 1) {
+    return { identifiers: { serial: null, mac: null, host: read.host }, unread: [] }
+  }
   const serial = read.serialNumber?.trim() ?? ''
   const mac = read.mac?.trim() ?? ''
   return {
