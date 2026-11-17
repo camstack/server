@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.165] - 2026-11-17
+
 ### Changed
 
 - Commands no longer wait behind a device poll and the device state refreshes right after each command; humidifiers (Classic, Dual, LV600S/OasisMist, 1000S, Superior 6000S) are adopted with target humidity, mode, display and humidity / water-tank sensors; moving the purifier speed slider in Auto or Sleep switches it to Manual
