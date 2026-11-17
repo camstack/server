@@ -177,7 +177,9 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
   private async reconcileIntegrations(): Promise<void> {
     try {
       const all = await this.ctx.api.integrations.list.query()
-      const mine = all.filter((i) => i.addonId === this.ctx.id && i.enabled)
+      const ours = all.filter((i) => i.addonId === this.ctx.id)
+      await this.pruneSessions(new Set(ours.map((i) => i.id)))
+      const mine = ours.filter((i) => i.enabled)
       const surviving = new Set<string>()
       for (const integration of mine) {
         this.names.set(integration.id, integration.name)
@@ -295,6 +297,17 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
     }
     if (forgetSession) await this.forgetSession(integrationId, mgr)
     await this.cascade(integrationId)
+  }
+
+  /** A stored session whose integration no longer exists (disabled ones do) is forgotten. */
+  private async pruneSessions(existing: ReadonlySet<string>): Promise<void> {
+    try {
+      await this.sessions.prune(existing)
+    } catch (err) {
+      this.ctx.logger.warn('VeSync: pruning sessions of deleted integrations failed', {
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   private async forgetSession(

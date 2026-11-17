@@ -59,6 +59,11 @@ export interface VeSyncSessionStore {
   load(integrationId: string): Promise<VeSyncStoredSession | null>
   save(row: VeSyncStoredSession): Promise<void>
   clear(integrationId: string): Promise<void>
+  /**
+   * Drop every row whose integration is not in `existing` — the reconcile's answer to a delete
+   * event that was dropped, or a sign-in that saved after its integration was deleted.
+   */
+  prune(existing: ReadonlySet<string>): Promise<void>
 }
 
 /**
@@ -86,6 +91,13 @@ export function createVeSyncSessionStore(
         const rows = await state.get()
         if (!rows.some((r) => r.integrationId === integrationId)) return
         await state.set(rows.filter((r) => r.integrationId !== integrationId))
+      }),
+    prune: (existing) =>
+      serialized(async () => {
+        const rows = await state.get()
+        const kept = rows.filter((r) => existing.has(r.integrationId))
+        if (kept.length === rows.length) return
+        await state.set(kept)
       }),
   }
 }

@@ -102,6 +102,7 @@ describe('the VeSync country code', () => {
         load: async () => null,
         save: async () => undefined,
         clear: async () => undefined,
+        prune: async () => undefined,
       },
       onConnected: () => undefined,
       onDisconnected: () => undefined,

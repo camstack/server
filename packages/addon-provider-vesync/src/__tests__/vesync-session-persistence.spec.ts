@@ -201,6 +201,7 @@ describe('VeSync session persistence', () => {
     ['email', { email: 'other@example.com' }],
     ['password', { password: 'pw2' }],
     ['country code', { countryCode: 'DE' }],
+    ['region', { region: 'US' }],
   ])('a changed %s ignores the stored session and replaces it', async (_what, change) => {
     const w = world([rowOfSession('int_1', FINGERPRINT, session(OLD_TOKEN, NOW_S + 86_400))])
     const changed = vesyncConnectionSchema.parse({ ...CONNECTION, ...change })
