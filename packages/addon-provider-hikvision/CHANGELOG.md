@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The siren declares that it counts seconds and refuses a trigger in plays
+- Cameras also declare their MAC, serial and IP as device identifiers (the hardware metadata is unchanged); a network read that fails keeps the MAC and IP declared before.
 
 ## [1.2.188] - 2026-11-16
 

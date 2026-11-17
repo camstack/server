@@ -1,3 +1,4 @@
+import type { DeviceIdentifiers } from './device-identifiers.js'
 import type { z } from 'zod'
 import type { IDevice } from './device.js'
 import type { DeviceType } from './device-type.js'
@@ -83,6 +84,11 @@ export interface SavedDevice {
  *
  * Anything else the driver knows can land alongside (`onvifProfile`,
  * `ipAddress`, `apiPort`, …). All values must be JSON-serializable.
+ *
+ * Identity used to MATCH devices (MAC, serial, vendor uid, machine uuid,
+ * hostname, IP) is declared separately, typed and read-only for the operator:
+ * `DeviceMeta.identifiers` (D1059). The `mac` / `serialNumber` / `uid` keys
+ * above stay for display until a later step retires them.
  */
 export type DeviceMetadata = Record<string, unknown>
 
@@ -164,6 +170,10 @@ export interface DeviceMeta {
   readonly parentDeviceId: number | null
   /** Hardware + identity blob; null when nothing has been populated yet. */
   readonly metadata: DeviceMetadata | null
+  /** Provider-declared identifiers (D1059): typed, normalised, written only by
+   *  the owning provider through `device-manager.setIdentifiers`, read-only for
+   *  the operator. Absent ⇒ the provider declared none. */
+  readonly identifiers?: DeviceIdentifiers
   /** Optional upstream-system identity + rendering envelope. See
    *  `SourceInfo`. Persisted under `metadata.sourceInfo` — this field
    *  is the typed projection callers consume directly. `BaseDevice`

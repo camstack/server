@@ -4886,7 +4886,15 @@
       "none": "Nessuna",
       "autoPopulatedByTheDriver": "Compilato automaticamente dal driver a ogni connessione. Sola lettura.",
       "integration": "Integrazione",
-      "parent": "Padre"
+      "parent": "Padre",
+      "identifierMac": "Indirizzo MAC",
+      "identifierSerial": "Numero di serie",
+      "identifierVendorUid": "ID del produttore",
+      "identifierMachineUuid": "UUID della macchina",
+      "identifierHostname": "Nome host",
+      "identifierIp": "Indirizzo IP",
+      "identifierDerived": "(dedotto)",
+      "identifiersDeclared": "Identificativi dichiarati dal provider. Sola lettura."
     }
   },
   "shared": {

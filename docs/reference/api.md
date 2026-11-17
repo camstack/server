@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**211 capabilities · 1518 methods.**
+**211 capabilities · 1519 methods.**
 
 ## Method index
 
@@ -340,6 +340,7 @@
 | `deviceManager.setRole` | mutation | admin | device-manager |
 | `deviceManager.applyInitialMeta` | mutation | admin | device-manager |
 | `deviceManager.setMetadata` | mutation | admin | device-manager |
+| `deviceManager.setIdentifiers` | mutation | admin | device-manager |
 | `deviceManager.listLocations` | query | protected | device-manager |
 | `deviceManager.addLocation` | mutation | admin | device-manager |
 | `deviceManager.removeLocation` | mutation | admin | device-manager |
@@ -2433,7 +2434,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:542`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:549`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2447,7 +2448,7 @@
 | persistConfig | `deviceManager.persistConfig` | mutation | admin | `{ deviceId: number; data: Record<string, unknown>; secretConfigPaths?: string[] }` | `void` |
 | loadConfig | `deviceManager.loadConfig` | query | admin | `{ deviceId: number }` | `Record<string, unknown>` |
 | loadRuntimeState | `deviceManager.loadRuntimeState` | query | admin | `{ deviceId: number }` | `Record<string, unknown>` |
-| loadMeta | `deviceManager.loadMeta` | query | protected | `{ deviceId: number }` | `{ id: number; stableId: string; addonId: string; type: string; name: string; userNamed?: boolean; location: string \| null; tags?: string[]; disabled: boolean; parentDeviceId: number \| null; metadata?: Record<string, unknown> \| null; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; integrationId?: string; linkDeviceId?: number \| null; primaryChildEntityId?: string \| null; childLayout?: ({ childKey: string; section: string; order?: number; collapsed?: boolean })[]; primaryChildPreference?: string[]; role?: string \| null; display?: { icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> } } \| null` |
+| loadMeta | `deviceManager.loadMeta` | query | protected | `{ deviceId: number }` | `{ id: number; stableId: string; addonId: string; type: string; name: string; userNamed?: boolean; location: string \| null; tags?: string[]; disabled: boolean; parentDeviceId: number \| null; metadata?: Record<string, unknown> \| null; identifiers?: { mac?: ({ value: string; origin: "read" \| "derived"; readAt: number })[]; serial?: { value: string; origin: "read" \| "derived"; readAt: number }; machine-uuid?: { value: string; origin: "read" \| "derived"; readAt: number }; vendor-uid?: { value: string; origin: "read" \| "derived"; readAt: number }; hostname?: { value: string; origin: "read" \| "derived"; readAt: number }; ip?: { value: string(ipv4) \| string(ipv6); origin: "read" \| "derived"; readAt: number } }; sourceInfo?: { id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }; integrationId?: string; linkDeviceId?: number \| null; primaryChildEntityId?: string \| null; childLayout?: ({ childKey: string; section: string; order?: number; collapsed?: boolean })[]; primaryChildPreference?: string[]; role?: string \| null; display?: { icon?: string; label?: string; unit?: string; precision?: number; hidden?: boolean; perCap?: Record<string, { unit?: string; precision?: number }> } } \| null` |
 | setName | `deviceManager.setName` | mutation | admin | `{ deviceId: number; name: string; stampUserNamed?: boolean }` | `void` |
 | setAlias | `deviceManager.setAlias` | mutation | admin | `{ deviceId: number; alias: string }` | `{ ok: true; alias: string } \| { ok: false; reason: "empty" \| "too-long" \| "grammar" \| "reserved" \| "taken"; takenBy?: number }` |
 | renderDeviceTemplates | `deviceManager.renderDeviceTemplates` | query | admin | `{ templates: string[]; allowedDeviceIds?: number[]; thisDevice?: { deviceId: number; values?: Record<string, string \| number \| boolean> } }` | `{ results: ({ ok: true; text: string; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] } \| { ok: false; refusal: { reason: "too-long" \| "syntax" \| "forbidden-syntax" \| "forbidden-member" \| "unknown-filter" \| "ambiguous-field" \| "busy" \| "budget-exceeded" \| "timeout" \| "output-too-large" \| "render-failed" \| "out-of-scope" \| "unavailable"; message: string }; trace: ({ ref: string; reason: "unknown-alias" \| "unknown-field" \| "no-field" \| "unavailable" })[] })[] }` |
@@ -2467,6 +2468,7 @@
 | setRole | `deviceManager.setRole` | mutation | admin | `{ deviceId: number; role: string \| null }` | `void` |
 | applyInitialMeta | `deviceManager.applyInitialMeta` | mutation | admin | `{ deviceId: number; name?: string; location?: string \| null; tags?: string[]; type?: "camera" \| "light" \| "siren" \| "switch" \| "sensor" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "weather-station" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway" \| "heat-pump" \| "energy-system" \| "workload"; integrationId?: string; linkDeviceId?: number \| null; role?: string \| null }` | `void` |
 | setMetadata | `deviceManager.setMetadata` | mutation | admin | `{ deviceId: number; patch: Record<string, unknown> }` | `void` |
+| setIdentifiers | `deviceManager.setIdentifiers` | mutation | admin | `{ deviceId: number; identifiers: { mac?: ({ value: string; origin: "read" \| "derived"; readAt: number })[]; serial?: { value: string; origin: "read" \| "derived"; readAt: number }; machine-uuid?: { value: string; origin: "read" \| "derived"; readAt: number }; vendor-uid?: { value: string; origin: "read" \| "derived"; readAt: number }; hostname?: { value: string; origin: "read" \| "derived"; readAt: number }; ip?: { value: string(ipv4) \| string(ipv6); origin: "read" \| "derived"; readAt: number } } \| null; unread?: ("mac" \| "serial" \| "machine-uuid" \| "vendor-uid" \| "hostname" \| "ip")[] }` | `void` |
 | listLocations | `deviceManager.listLocations` | query | protected | `void` | `string[]` |
 | addLocation | `deviceManager.addLocation` | mutation | admin | `{ name: string }` | `void` |
 | removeLocation | `deviceManager.removeLocation` | mutation | admin | `{ name: string; cascade?: boolean }` | `void` |

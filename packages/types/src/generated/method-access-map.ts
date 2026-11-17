@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1518 method paths across 211 capabilities.
+ * Coverage: 1510 method paths across 210 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -402,6 +402,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceManager.setChildLayout': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setDisabled': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setDisplay': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceManager.setIdentifiers': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setIntegrationId': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setLinkDeviceId': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceManager.setLocation': { capName: "device-manager", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1248,7 +1249,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'settingsStore.upsert': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'settingsStore.upsertMany': { capName: "settings-store", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'siren.getOptions': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'siren.getPlayChoices': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'siren.getStatus': { capName: "siren", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'siren.stop': { capName: "siren", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'siren.trigger': { capName: "siren", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
@@ -1365,9 +1365,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'streamParams.getStatus': { capName: "stream-params", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'streamParams.setProfile': { capName: "stream-params", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'streamSignals.listSignals': { capName: "stream-signals", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'switch.getOptions': { capName: "switch", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'switch.getStatus': { capName: "switch", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'switch.powerCycle': { capName: "switch", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'switch.setState': { capName: "switch", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'switch.toggle': { capName: "switch", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'system.debugWatch': { capName: "system", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1397,7 +1395,9 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'template.get': { capName: "template", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'template.list': { capName: "template", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'template.update': { capName: "template", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'terminalSession.adoptLegacyMonitor': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.close': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'terminalSession.listLegacyCameras': { capName: "terminal-session", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'terminalSession.listProfiles': { capName: "terminal-session", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'terminalSession.listSessions': { capName: "terminal-session", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'terminalSession.openSession': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1521,14 +1521,6 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'webrtcSession.handleOffer': { capName: "webrtc-session", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'webrtcSession.hasAdaptiveBitrate': { capName: "webrtc-session", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'webrtcSession.listStreams': { capName: "webrtc-session", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'workload.forceStop': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
-  'workload.getOptions': { capName: "workload", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'workload.getStatus': { capName: "workload", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
-  'workload.pause': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'workload.restart': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'workload.resume': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'workload.start': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
-  'workload.stop': { capName: "workload", capScope: "device", addonId: null, access: "create", role: "viewer" } as const,
   'zoneAnalytics.getCameraHistory': { capName: "zone-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'zoneAnalytics.getCurrentSnapshot': { capName: "zone-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'zoneAnalytics.getCurrentSnapshotBatch': { capName: "zone-analytics", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1751,7 +1743,6 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "weather",
   "weather-station",
   "webrtc-session",
-  "workload",
   "zone-analytics",
   "zone-rules",
   "zones",
@@ -1864,7 +1855,6 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "weather",
   "weather-station",
   "webrtc-session",
-  "workload",
   "zone-analytics",
   "zone-rules",
   "zones",

@@ -76,6 +76,7 @@ export class HomematicGatewayDevice extends BaseDevice<typeof homematicGatewayDe
     const patch = gatewayMetadataPatch({ host: session.getConnection().host })
     const key = JSON.stringify(patch)
     if (key === this.lastMetadataKey) return
+    await this.declareIdentifiers({ host: session.getConnection().host })
     const action = this.ctx.api.deviceManager?.setMetadata
     if (action === undefined) return
     try {

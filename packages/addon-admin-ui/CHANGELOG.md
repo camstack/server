@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The command picker no longer offers 'sound the siren N times' for a siren that counts no plays (Hikvision); it still does when the play counts could not be read
 - Automations no longer offer Turn on / Turn off / Toggle for a switch that only reports its state (a PoE port seen only through an API key).
 - The device page's power menu hides power on / off when the linked switch only reports (D1058)
+- Device Info → Hardware lists the identifiers the device's provider declared, read-only.
 
 ## [1.2.691] - 2026-11-16
 

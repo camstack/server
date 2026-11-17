@@ -4,7 +4,7 @@
 
 # Decisions
 
-1025 architecture decision records. One file per decision, never
+1026 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1038,6 +1038,7 @@ that rots.
 | D1056 | [A workload is one device type and one cap, and its role is the kind](adr-1056-a-workload-is-one-device-type-and-one-cap-and-its-role-is-the-kind.md) | ✅ accepted | 2026-11-16 |
 | D1057 | [A hosted camera row is the composer's; engines serve caps on it](adr-1057-a-hosted-camera-row-is-the-composers-engines-serve-caps-on-it.md) | ✅ accepted | 2026-11-16 |
 | D1058 | [A switch that can only power-cycle is still a switch, and a forced restart uses its native cycle](adr-1058-a-switch-that-can-only-power-cycle-is-still-a-switch.md) | ✅ accepted | 2026-11-17 |
+| D1059 | [A device's identity is declared by its provider as typed identifiers, not written into metadata](adr-1059-a-device-identity-is-declared-by-its-provider-not-written-into-metadata.md) | ✅ accepted | 2026-11-17 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

@@ -82,6 +82,45 @@ export type {
   InitialDeviceMeta,
   SavedDevice,
 } from './device-management.js'
+// Provider-declared device identifiers (D1059)
+export {
+  DEVICE_IDENTIFIER_KEYS,
+  DeviceIdentifierEntrySchema,
+  DeviceIdentifierKeySchema,
+  DeviceIdentifierOriginSchema,
+  DeviceIdentifiersSchema,
+  identifierStrength,
+  isEmptyIdentifiers,
+  mergeIdentifiers,
+  normaliseIdentifiers,
+  sameIdentifiers,
+  normaliseMac,
+} from './device-identifiers.js'
+export type {
+  AcceptedValue,
+  DeviceIdentifierEntry,
+  DeviceIdentifierKey,
+  DeviceIdentifierOrigin,
+  DeviceIdentifiers,
+  DeviceIdentifierStrength,
+  NormaliseIdentifiersOptions,
+  NormalisedIdentifiers,
+  NormaliseResult,
+  RawDeviceIdentifiers,
+  RawSerialIdentifier,
+  RawVendorUidIdentifier,
+  RejectedIdentifier,
+  RejectedReason,
+} from './device-identifiers.js'
+export { declareDeviceIdentifiers } from './declare-identifiers.js'
+export type {
+  DeclareIdentifiersDeps,
+  DeclareIdentifiersOptions,
+  DeclareIdentifiersOutcome,
+  DeclareIdentifiersResult,
+  IdentifiersWriter,
+  SetIdentifiersInput,
+} from './declare-identifiers.js'
 export type {
   DeviceProfile,
   DeviceProfileDefaults,

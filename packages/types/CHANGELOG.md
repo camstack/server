@@ -27,6 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A command whose argument is a list the device answers is not offered when the device answered an empty list (a siren that counts no plays is not offered 'sound N times'); a list that could not be read keeps it offered
 - A switch that only reports its state (getOptions supportsSetState: false) is offered no on/off/toggle in automations (new offeredWhen action gate), and a forced restart whose switch options could not be read is refused as switch-options-unreadable.
 - A device powered by a switch that only reports offers no power on / off: power-source getStatus answers switchSettable, and powerSource.on / .off are gated on it (D1058)
+- Devices carry typed identifiers (MAC, serial, vendor id, machine UUID, hostname, IP) declared by their provider, separate from the editable metadata.
+- setIdentifiers keeps the stored value of every kind the provider lists as unread (a failed read), and an unchanged value keeps its first readAt, so a re-declaration on every boot writes and emits nothing.
+- A provider declaration that read some identifier kinds and found nothing now removes those stale kinds; only a declaration where every kind is unread is skipped
 
 ## [1.2.586] - 2026-11-16
 

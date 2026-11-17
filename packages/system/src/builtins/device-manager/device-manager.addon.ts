@@ -85,6 +85,7 @@ import { FeatureDeriver, subscribeFeatureDeriver } from './feature-deriver.js'
 import { createDeviceManagerExtensionProvider } from './device-extension-linked-slot.js'
 import { getLinkedDevices, getLinkedDevicesBatch } from './device-linked-devices.js'
 import * as metaActions from './device-meta-actions.js'
+import { setIdentifiers } from './device-identifiers-action.js'
 import { runLocationBackfillAtBoot } from './location-alignment.js'
 import { runLinkedDevicesManualBackfillAtBoot } from './linked-devices-manual-backfill.js'
 import * as aliasActions from './device-alias-actions.js'
@@ -959,6 +960,7 @@ export class DeviceManagerAddon extends BaseAddon {
       setPrimaryChildPreference: (input) => metaActions.setPrimaryChildPreference(pctx, input),
       setRole: (input) => metaActions.setRole(pctx, input),
       setDisplay: (input) => metaActions.setDisplay(pctx, input),
+      setIdentifiers: (input) => setIdentifiers(pctx, input),
       getRoleDisplayDefaults: (input) => metaActions.getRoleDisplayDefaults(pctx, input),
       setRoleDisplayDefaults: (input) => metaActions.setRoleDisplayDefaults(pctx, input),
       applyInitialMeta: (input) => metaActions.applyInitialMeta(pctx, input),

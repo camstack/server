@@ -13,6 +13,9 @@
  *                    model / firmware / hardware / serial / uid /
  *                    mac / itemNo / …). Read-only — drivers refresh
  *                    on every probe / reconnect via setMetadata.
+ *                    Below it, the typed identifiers the provider
+ *                    DECLARED (D1059: MAC, serial, vendor uid, …) —
+ *                    written only by the owning provider, never edited here.
  *
  * Reads the cached device snapshot from `useDeviceSnapshot()` when the
  * host page provides one; otherwise falls back to a thin
@@ -20,6 +23,7 @@
  * works in subtrees that haven't seeded the context.
  */
 import { useState } from 'react'
+import { DeviceIdentifiersSchema, type DeviceIdentifiers } from '@camstack/types'
 import {
   useDeviceId,
   useDeviceManagerGetBindings,
@@ -46,6 +50,37 @@ const HARDWARE_KEY_ORDER: readonly string[] = [
   'mac',
   'itemNo',
 ] as const
+
+type IdentifierKey = keyof DeviceIdentifiers
+
+export interface IdentifierRow {
+  readonly key: IdentifierKey
+  readonly value: string
+  readonly derived: boolean
+}
+
+const IDENTIFIER_KEY_ORDER: readonly IdentifierKey[] = [
+  'mac',
+  'serial',
+  'vendor-uid',
+  'machine-uuid',
+  'hostname',
+  'ip',
+] as const
+
+/** The declared identifiers as rows; a value the schema refuses shows nothing. */
+export function identifierRows(raw: unknown): readonly IdentifierRow[] {
+  const parsed = DeviceIdentifiersSchema.safeParse(raw)
+  if (!parsed.success) return []
+  const ids = parsed.data
+  return IDENTIFIER_KEY_ORDER.flatMap((key): IdentifierRow[] => {
+    if (key === 'mac') {
+      return (ids.mac ?? []).map((e) => ({ key, value: e.value, derived: e.origin === 'derived' }))
+    }
+    const entry = ids[key]
+    return entry ? [{ key, value: entry.value, derived: entry.origin === 'derived' }] : []
+  })
+}
 
 function formatHardwareLabel(key: string): string {
   return key.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (s) => s.toUpperCase())
@@ -103,7 +138,9 @@ export function DeviceInfoAdapter() {
   // fall back to the device's native caps so sensors aren't shown as "None".
   const capabilityList = features.length > 0 ? features : nativeCaps
   const metadata = (device.metadata as Record<string, unknown> | null | undefined) ?? null
-  const hasHardware = metadata !== null && Object.keys(metadata).length > 0
+  const identifiers = identifierRows(device.identifiers)
+  const hasHardware =
+    (metadata !== null && Object.keys(metadata).length > 0) || identifiers.length > 0
 
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
@@ -174,7 +211,9 @@ export function DeviceInfoAdapter() {
           />
         </div>
       )}
-      {hasHardware && activeSubTab === 'hardware' && <HardwareInfoBody metadata={metadata!} />}
+      {hasHardware && activeSubTab === 'hardware' && (
+        <HardwareInfoBody metadata={metadata ?? {}} identifiers={identifiers} />
+      )}
     </div>
   )
 }
@@ -204,8 +243,21 @@ function SubTabButton({
   )
 }
 
-function HardwareInfoBody({ metadata }: { metadata: Record<string, unknown> }) {
+interface HardwareInfoBodyProps {
+  readonly metadata: Record<string, unknown>
+  readonly identifiers: readonly IdentifierRow[]
+}
+
+function HardwareInfoBody({ metadata, identifiers }: HardwareInfoBodyProps) {
   const { t } = useTranslation()
+  const identifierLabel: Record<IdentifierKey, string> = {
+    mac: t('overviewAdapters.deviceInfoAdapter.identifierMac', 'MAC address'),
+    serial: t('overviewAdapters.deviceInfoAdapter.identifierSerial', 'Serial number'),
+    'vendor-uid': t('overviewAdapters.deviceInfoAdapter.identifierVendorUid', 'Vendor ID'),
+    'machine-uuid': t('overviewAdapters.deviceInfoAdapter.identifierMachineUuid', 'Machine UUID'),
+    hostname: t('overviewAdapters.deviceInfoAdapter.identifierHostname', 'Hostname'),
+    ip: t('overviewAdapters.deviceInfoAdapter.identifierIp', 'IP address'),
+  }
   const knownKeys = HARDWARE_KEY_ORDER.filter((k) => k in metadata)
   const extraKeys = Object.keys(metadata)
     .filter((k) => !HARDWARE_KEY_ORDER.includes(k))
@@ -214,7 +266,7 @@ function HardwareInfoBody({ metadata }: { metadata: Record<string, unknown> }) {
 
   return (
     <div>
-      <div className="px-3 sm:px-4 py-1.5 text-[10px] text-foreground-subtle border-b border-border bg-surface-subtle/40">
+      <div className="px-3 sm:px-4 py-1.5 text-[10px] text-foreground-subtle border-b border-border">
         {t(
           'overviewAdapters.deviceInfoAdapter.autoPopulatedByTheDriver',
           'Auto-populated by the driver on every connect. Read-only.',
@@ -233,6 +285,34 @@ function HardwareInfoBody({ metadata }: { metadata: Record<string, unknown> }) {
           />
         ))}
       </div>
+      {identifiers.length > 0 && (
+        <>
+          <div className="px-3 sm:px-4 py-1.5 text-[10px] text-foreground-subtle border-y border-border">
+            {t(
+              'overviewAdapters.deviceInfoAdapter.identifiersDeclared',
+              'Identifiers declared by the provider. Read-only.',
+            )}
+          </div>
+          <div className="divide-y divide-border">
+            {identifiers.map((row) => (
+              <InfoRow
+                key={`${row.key}:${row.value}`}
+                label={identifierLabel[row.key]}
+                value={
+                  <span className="font-mono text-[11px] text-foreground break-all">
+                    {row.value}
+                    {row.derived && (
+                      <span className="ml-1.5 text-foreground-subtle">
+                        {t('overviewAdapters.deviceInfoAdapter.identifierDerived', '(derived)')}
+                      </span>
+                    )}
+                  </span>
+                }
+              />
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }

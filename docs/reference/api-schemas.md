@@ -1698,6 +1698,7 @@ Enum: `"raw" \| "5m" \| "1h" \| "1d"`
 - `config`: `Record<string, unknown>`
 - `secretConfigPaths?`: `string[]`
 - `metadata?`: `Record<string, unknown> \| null`
+- `identifiers?`: `{ mac?: ({ value: string; origin: "read" \| "derived"; readAt: number })[]; serial?: { value: string; origin: "read" \| "derived"; readAt: number }; machine-uuid?: { value: string; origin: "read" \| "derived"; readAt: number }; vendor-uid?: { value: string; origin: "read" \| "derived"; readAt: number }; hostname?: { value: string; origin: "read" \| "derived"; readAt: number }; ip?: { value: string(ipv4) \| string(ipv6); origin: "read" \| "derived"; readAt: number } }`
 - `sourceInfo?`: `{ id: string; system: string; uniqueId?: string; quantity?: "temperature" \| "pressure" \| "speed" \| "precipitation" \| "precipitation-rate" \| "length" \| "area" \| "illuminance" \| "irradiance" \| "power" \| "energy" \| "voltage" \| "current" \| "apparent-power" \| "humidity" \| "percentage" \| "concentration-volume" \| "concentration-mass" \| "concentration-ppb" \| "volume" \| "duration" \| "duration-ms" \| "information" \| "sound-level" \| "signal-level" \| "signal-ratio" \| "frequency" \| "colour-temperature" \| "angle" \| "bitrate" \| "rate" \| "mass" \| "index" \| "ratio" \| "count" \| "none" \| "device"; dateTimeShape?: "date" \| "time" \| "datetime"; raw?: Record<string, unknown> }`
 - `integrationId?`: `string`
 - `linkDeviceId?`: `number \| null`

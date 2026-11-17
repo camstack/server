@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Routes for switch getOptions and powerCycle.
 - A workload restart is allowed to the same users as start and stop; force stop stays admin
+- The API exposes deviceManager.setIdentifiers and returns each device's declared identifiers.
 
 ## [1.2.891] - 2026-11-16
 

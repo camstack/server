@@ -300,6 +300,7 @@ export function toDeviceInfo(
       : {}),
     ...(metaRow?.tags !== undefined ? { tags: metaRow.tags } : {}),
     ...(metaRow?.display !== undefined ? { display: metaRow.display } : {}),
+    ...(metaRow?.identifiers !== undefined ? { identifiers: metaRow.identifiers } : {}),
   }
 }
 

@@ -18,7 +18,7 @@
  * error leaves whatever the previous probe wrote in place.
  */
 
-import type { DeviceContext } from '@camstack/types'
+import { declareDeviceIdentifiers, type DeviceContext } from '@camstack/types'
 import type { HikvisionIsapiClient } from './hikvision-isapi-client.js'
 
 export interface HikvisionMetadataPopulatorTarget {
@@ -45,9 +45,11 @@ export async function populateHikvisionMetadata(
   }
 
   let net: Awaited<ReturnType<HikvisionIsapiClient['getNetworkInterfaceInfo']>> | null = null
+  let netReadFailed = false
   try {
     net = await isapi.getNetworkInterfaceInfo()
   } catch (err) {
+    netReadFailed = true
     target.ctx.logger.debug(
       'populateHikvisionMetadata: getNetworkInterfaceInfo failed (non-fatal)',
       {
@@ -101,6 +103,23 @@ export async function populateHikvisionMetadata(
       meta: { error: err instanceof Error ? err.message : String(err) },
     })
   }
+
+  // ── 1b. provider-declared identifiers (D1059) — the matchable identity,
+  // typed and normalised, duplicated from the metadata keys above (which stay
+  // for display). A network read that failed keeps the stored MAC and IP.
+  await declareDeviceIdentifiers(
+    {
+      deviceId: target.id,
+      logger: target.ctx.logger,
+      writer: target.ctx.api.deviceManager?.setIdentifiers,
+    },
+    {
+      mac: net?.mac ?? null,
+      serial: info.serialNumber ? { manufacturer: 'Hikvision', serial: info.serialNumber } : null,
+      ip: net?.ip ?? null,
+    },
+    netReadFailed ? { unread: ['mac', 'ip'] } : {},
+  )
 
   // ── 2. deviceCache config blob (durable identifiers for stableId)
   const cachePatch: Record<string, unknown> = {}

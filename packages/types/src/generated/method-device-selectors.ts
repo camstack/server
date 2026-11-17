@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 640 methods carry a device reference, of which
- * 198 are on SYSTEM-scope caps.
+ * Coverage: 630 methods carry a device reference, of which
+ * 199 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -167,6 +167,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceManager.setChildLayout': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setDisabled': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setDisplay': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceManager.setIdentifiers': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setIntegrationId': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setLinkDeviceId': [{ name: "deviceId", form: "single", optional: false }, { name: "linkDeviceId", form: "single", optional: true }] as const,
   'deviceManager.setLocation': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -563,7 +564,6 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'scriptRunner.run': [{ name: "deviceId", form: "single", optional: false }] as const,
   'scriptRunner.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.getOptions': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'siren.getPlayChoices': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
   'siren.trigger': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -600,9 +600,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'streamParams.getOptions': [{ name: "deviceId", form: "single", optional: false }] as const,
   'streamParams.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
   'streamParams.setProfile': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'switch.getOptions': [{ name: "deviceId", form: "single", optional: false }] as const,
   'switch.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'switch.powerCycle': [{ name: "deviceId", form: "single", optional: false }] as const,
   'switch.setState': [{ name: "deviceId", form: "single", optional: false }] as const,
   'switch.toggle': [{ name: "deviceId", form: "single", optional: false }] as const,
   'system.debugWatch': [{ name: "deviceIds", form: "array", optional: true }] as const,
@@ -651,14 +649,6 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'webrtcSession.handleOffer': [{ name: "deviceId", form: "single", optional: false }] as const,
   'webrtcSession.hasAdaptiveBitrate': [{ name: "deviceId", form: "single", optional: false }] as const,
   'webrtcSession.listStreams': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.forceStop': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.getOptions': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.getStatus': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.pause': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.restart': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.resume': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.start': [{ name: "deviceId", form: "single", optional: false }] as const,
-  'workload.stop': [{ name: "deviceId", form: "single", optional: false }] as const,
   'zoneAnalytics.getCameraHistory': [{ name: "deviceId", form: "single", optional: false }] as const,
   'zoneAnalytics.getCurrentSnapshot': [{ name: "deviceId", form: "single", optional: false }] as const,
   'zoneAnalytics.getCurrentSnapshotBatch': [{ name: "deviceIds", form: "array", optional: false }] as const,
@@ -734,6 +724,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "deviceManager.setChildLayout",
   "deviceManager.setDisabled",
   "deviceManager.setDisplay",
+  "deviceManager.setIdentifiers",
   "deviceManager.setIntegrationId",
   "deviceManager.setLinkDeviceId",
   "deviceManager.setLocation",

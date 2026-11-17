@@ -80,6 +80,7 @@ export class VeluxGatewayDevice extends BaseDevice<typeof veluxGatewayDeviceSche
     })
     const key = JSON.stringify(patch)
     if (key === this.lastMetadataKey) return
+    await this.declareIdentifiers({ host: manager.getConnection().host })
     const action = this.ctx.api.deviceManager?.setMetadata
     if (action === undefined) return
     try {

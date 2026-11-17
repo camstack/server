@@ -292,6 +292,7 @@ jobs:
             scripts/check-records-index-served.ts \
             scripts/check-records-no-unindexed-where.ts \
             scripts/check-device-settings-standard.ts \
+            scripts/check-device-identifiers-declared.ts \
             scripts/check-integration-instances-declared.ts \
             scripts/check-instances-kinds-declared.ts \
             scripts/check-one-row-switch.ts \

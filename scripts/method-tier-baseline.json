@@ -345,6 +345,7 @@
   "deviceManager.setChildLayout": "admin",
   "deviceManager.setDisabled": "admin",
   "deviceManager.setDisplay": "admin",
+  "deviceManager.setIdentifiers": "admin",
   "deviceManager.setIntegrationId": "admin",
   "deviceManager.setLinkDeviceId": "admin",
   "deviceManager.setLocation": "admin",
