@@ -123,6 +123,16 @@ describe('PetFeederInlineControl', () => {
     expect(screen.queryByLabelText('Cancel feed')).toBeNull()
   })
 
+  it('a second tap while the feed is in flight sends no second feed (D1061)', () => {
+    feed.mockReturnValue(new Promise(() => {}))
+    render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
+    const button = screen.getByLabelText('Feed now')
+    fireEvent.click(button)
+    fireEvent.click(button)
+    expect(feed).toHaveBeenCalledTimes(1)
+    expect((screen.getByLabelText('Feed now') as HTMLButtonElement).disabled).toBe(true)
+  })
+
   it('disables the Feed button when not available', () => {
     mockResult = { ...mockResult, available: false }
     render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
@@ -155,6 +165,15 @@ describe('PetFeederHeroCard', () => {
     render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
     fireEvent.click(screen.getByRole('button', { name: 'Feed' }))
     expect(feed).toHaveBeenCalledWith({ grams: 20 })
+  })
+
+  it('a double tap on the hero Feed sends one feed (D1061)', () => {
+    feed.mockReturnValue(new Promise(() => {}))
+    render(<PetFeederHeroCard trpc={trpc} deviceId={1} features={[]} />)
+    const button = screen.getByRole('button', { name: 'Feed' })
+    fireEvent.click(button)
+    fireEvent.click(button)
+    expect(feed).toHaveBeenCalledTimes(1)
   })
 
   it('shows per-hopper feed controls on dual-hopper models', () => {

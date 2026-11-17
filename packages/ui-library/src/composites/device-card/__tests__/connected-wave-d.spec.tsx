@@ -49,7 +49,7 @@ interface WaveDHub {
     setOnMinutes: ReturnType<typeof vi.fn>
     setOffMinutes: ReturnType<typeof vi.fn>
   }
-  feeder: { markFoodReplenished: ReturnType<typeof vi.fn> }
+  feeder: { markFoodReplenished: ReturnType<typeof vi.fn>; feed: ReturnType<typeof vi.fn> }
   lockSlice: LockControlStatus | null
   alarmSlice: AlarmPanelStatus | null
   valveSlice: ValveStatus | null
@@ -67,7 +67,7 @@ const hub = vi.hoisted(
     valve: { open: vi.fn(), close: vi.fn(), stop: vi.fn(), setPosition: vi.fn() },
     fountain: { setPump: vi.fn() },
     cycle: { setEnabled: vi.fn(), setOnMinutes: vi.fn(), setOffMinutes: vi.fn() },
-    feeder: { markFoodReplenished: vi.fn() },
+    feeder: { markFoodReplenished: vi.fn(), feed: vi.fn() },
     lockSlice: null,
     alarmSlice: null,
     valveSlice: null,
@@ -349,5 +349,16 @@ describe('a pet feeder', () => {
     hub.feederSlice = feederStatus({ supportsMarkRefilled: false, lowFood: true })
     render(<ConnectedPetFeederCard deviceId={1} />)
     expect(screen.queryByTestId('dc-feeder-refilled')).toBeNull()
+  })
+
+  it('a double tap while the feed is in flight feeds once (D1061)', async () => {
+    hub.feederSlice = feederStatus({})
+    hub.feeder.feed.mockReturnValueOnce(new Promise(() => {}))
+    render(<ConnectedPetFeederCard deviceId={1} />)
+    fireEvent.click(screen.getByTestId('dc-feeder-feed'))
+    fireEvent.click(screen.getByTestId('dc-feeder-feed'))
+    await vi.waitFor(() => expect(hub.feeder.feed).toHaveBeenCalledTimes(1))
+    expect((screen.getByTestId('dc-feeder-feed') as HTMLButtonElement).disabled).toBe(true)
+    expect(hub.feeder.feed).toHaveBeenCalledTimes(1)
   })
 })

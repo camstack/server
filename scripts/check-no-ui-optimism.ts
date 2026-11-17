@@ -1,6 +1,12 @@
 #!/usr/bin/env tsx
 /**
- * No UI code patches what a control shows (D1061).
+ * The client-side optimism helpers stay removed from the UI (D1061).
+ *
+ * What it checks: no UI source names `useOptimisticSlice`,
+ * `applyOptimistic*`, `OptimisticApply`, `UseOptimisticSlice*` or imports
+ * `use-optimistic-slice`. What it does NOT check: a control that patches a
+ * served slice by hand (local state copied from the slice and overwritten on
+ * a command) — that is a review item, not something this scan can see.
  *
  * The hub holds a commanded value until the device confirms it, and serves
  * that held slice to every client. A control that patched its own display
@@ -93,7 +99,9 @@ function main(): void {
     .map((rel) => ({ path: rel, text: readFileSync(path.join(ROOT, rel), 'utf-8') }))
   const findings = findUiOptimism(files)
   if (findings.length === 0) {
-    console.log(`check-no-ui-optimism: ${files.length} UI files, none patch what a control shows`)
+    console.log(
+      `check-no-ui-optimism: ${files.length} UI files, none uses the removed optimism helpers`,
+    )
     return
   }
   console.error(

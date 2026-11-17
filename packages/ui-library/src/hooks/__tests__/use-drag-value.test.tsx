@@ -95,6 +95,36 @@ describe('useDragValue', () => {
     expect(onCommit).toHaveBeenCalledTimes(1)
   })
 
+  it('commits when the pointer is released outside the input', () => {
+    // The hand slid off the thumb and let go elsewhere on the page: the
+    // input never sees the pointerup, the window does.
+    const { result, onCommit } = setup(40)
+    act(() => result.current.move(70))
+    act(() => {
+      window.dispatchEvent(new Event('pointerup'))
+    })
+    expect(onCommit).toHaveBeenCalledTimes(1)
+    expect(onCommit).toHaveBeenCalledWith(70)
+    expect(result.current.shown).toBe(70)
+  })
+
+  it('commits when the browser cancels the pointer mid-drag', () => {
+    const { result, onCommit } = setup(40)
+    act(() => result.current.move(30))
+    act(() => {
+      window.dispatchEvent(new Event('pointercancel'))
+    })
+    expect(onCommit).toHaveBeenCalledWith(30)
+  })
+
+  it('a window pointerup with nothing moving sends nothing', () => {
+    const { onCommit } = setup(40)
+    act(() => {
+      window.dispatchEvent(new Event('pointerup'))
+    })
+    expect(onCommit).not.toHaveBeenCalled()
+  })
+
   it('clears its timer on unmount', () => {
     const { result, unmount } = setup(40)
     act(() => result.current.move(70))

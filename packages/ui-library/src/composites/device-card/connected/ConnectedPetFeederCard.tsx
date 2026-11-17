@@ -9,6 +9,7 @@ import { type UiTextFn, useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useDeviceCommand } from '../../../hooks/use-device-command'
+import { useOneShotCommand } from '../../../hooks/use-one-shot-command'
 import { resolveBowlReading } from '../../device-controls/pet-feeder-panel'
 import { PetFeederCard } from '../scenes/pet/PetFeederCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -73,6 +74,8 @@ export function ConnectedPetFeederCard({
   const slice = useDeviceStateSlice(dev?.petFeeder === undefined ? undefined : dev.state.petFeeder)
   const display = slice
   const runCommand = useDeviceCommand()
+  // Feed is one-shot: a double tap must not feed twice (D1061).
+  const feedShot = useOneShotCommand()
   const cap = dev?.petFeeder
   if (cap === undefined || display === undefined) return null
   const send = reportedCommand(runCommand, {
@@ -106,6 +109,7 @@ export function ConnectedPetFeederCard({
         portionMin: PET_FEEDER_MANUAL_FEED_MIN,
         portionMax: PET_FEEDER_MANUAL_FEED_MAX,
         canFeed: has('feed'),
+        feedPending: feedShot.inFlight,
         canCancel: has('cancelFeed'),
         canCallPet: has('callPet'),
         canMarkRefilled: display.supportsMarkRefilled,
@@ -118,7 +122,10 @@ export function ConnectedPetFeederCard({
       }}
       actions={{
         ...card.actions,
-        onFeed: (grams, hopper) => send(() => cap.feed(petFeedInput(grams, hopper))),
+        onFeed: (grams, hopper) => {
+          const command = feedShot.claim(() => cap.feed(petFeedInput(grams, hopper)))
+          if (command !== null) send(command)
+        },
         onCancelFeed: () => send(() => cap.cancelFeed({})),
         onCallPet: () => send(() => cap.callPet({})),
         onMarkRefilled: () => send(() => cap.markFoodReplenished({})),

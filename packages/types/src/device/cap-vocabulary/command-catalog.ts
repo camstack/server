@@ -134,10 +134,12 @@ export function resolveSideEffect(
   const raw = args?.[side.fromArg]
   if (typeof raw === 'string' || typeof raw === 'boolean') return { field: side.field, value: raw }
   if (typeof raw === 'number') {
-    const tolerance = stepOf(openArgs, side.fromArg)
-    return tolerance === undefined
-      ? { field: side.field, value: raw }
-      : { field: side.field, value: raw, tolerance }
+    // An arg in another unit (minutes → seconds) scales its value and step.
+    const scale = side.scale ?? 1
+    const step = stepOf(openArgs, side.fromArg)
+    return step === undefined
+      ? { field: side.field, value: raw * scale }
+      : { field: side.field, value: raw * scale, tolerance: step * scale }
   }
   return null
 }

@@ -21,6 +21,8 @@ export interface ScriptCardModel {
   readonly lastError: string | null
   readonly runnable: boolean
   readonly stoppable: boolean
+  /** A Run is in flight: the button is off so a double tap runs once (D1061). */
+  readonly runPending?: boolean
 }
 
 export interface ScriptCardActions extends CardCommonActions {

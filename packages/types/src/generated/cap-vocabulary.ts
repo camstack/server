@@ -2586,6 +2586,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
           },
         ],
+        effect: { field: 'onTime', fromArg: 'minutes', scale: 60 },
       },
       {
         id: 'pumpCycle.offMinutes',
@@ -2603,6 +2604,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
             offer: { kind: 'number', min: 0, step: 1, unit: 'min' },
           },
         ],
+        effect: { field: 'offTime', fromArg: 'minutes', scale: 60 },
       },
     ],
     state: [

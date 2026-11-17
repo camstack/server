@@ -184,7 +184,7 @@ describe('CoverHeroCard', () => {
       expect(win.className).toContain('cursor-ns-resize')
     })
 
-    it('a pointer-drag on the window calls setPosition with the mapped %', () => {
+    it('a pointer-drag on the window moves the lever and sends ONE setPosition on release (D1061)', () => {
       render(
         <CoverHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.CoverPositionable]} />,
       )
@@ -197,36 +197,40 @@ describe('CoverHeroCard', () => {
 
       // Drag DOWN to y=250 → ratio=(250-100)/200=0.75 → position = round(100-75) = 25.
       fireEvent.pointerDown(win, { pointerId: 1, clientY: 250 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 25 })
+      expect(screen.getByTestId('cover-position-pct').textContent).toBe('25%')
 
       // Move UP to y=150 → ratio=0.25 → position = 75.
       fireEvent.pointerMove(win, { pointerId: 1, clientY: 150 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 75 })
+      expect(screen.getByTestId('cover-position-pct').textContent).toBe('75%')
 
       // Clamp: drag above the top → 100.
       fireEvent.pointerMove(win, { pointerId: 1, clientY: 50 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 100 })
+      expect(screen.getByTestId('cover-position-pct').textContent).toBe('100%')
 
       // Clamp: drag below the bottom → 0.
       fireEvent.pointerMove(win, { pointerId: 1, clientY: 400 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 0 })
+      expect(setPosition).not.toHaveBeenCalled()
 
       fireEvent.pointerUp(win, { pointerId: 1, clientY: 400 })
+      expect(setPosition).toHaveBeenCalledTimes(1)
+      expect(setPosition).toHaveBeenCalledWith({ position: 0 })
     })
 
-    it('does not emit again when the rounded % is unchanged', () => {
+    it('commits the lever when the pointer is let go outside the window (D1061)', () => {
       render(
         <CoverHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.CoverPositionable]} />,
       )
       const win = screen.getByTestId('cover-window')
       stubRect(win, 0, 100)
       win.setPointerCapture = vi.fn()
-      win.hasPointerCapture = vi.fn(() => true)
+      win.hasPointerCapture = vi.fn(() => false)
       win.releasePointerCapture = vi.fn()
 
       fireEvent.pointerDown(win, { pointerId: 1, clientY: 50 }) // → 50
-      fireEvent.pointerMove(win, { pointerId: 1, clientY: 50.3 }) // still rounds to 50
+      fireEvent.pointerMove(win, { pointerId: 1, clientY: 40 }) // → 60
+      fireEvent(window, new Event('pointerup'))
       expect(setPosition).toHaveBeenCalledTimes(1)
+      expect(setPosition).toHaveBeenCalledWith({ position: 60 })
     })
 
     it('non-positionable cover renders NO interactive handlers (display-only)', () => {

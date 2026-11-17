@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Device controls show the state the hub serves: a command's new value now comes from the hub and is the same on every screen, and a refused command is still reported
 - Device sliders (brightness, colour temperature, fan speed, volume, position, tilt, target humidity, light level) send one command when released and no longer snap back while dragged
+- Feed and Run buttons are disabled while their command is in flight, so a double tap sends one command; the cover and valve levers send one command on release, also when the pointer is let go outside the control.
 
 ## [1.2.467] - 2026-11-17
 

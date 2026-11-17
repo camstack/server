@@ -96,7 +96,10 @@ export function actionEffect(
   if (found === undefined || effect === undefined) return null
   if (isLiteral(effect)) return { cap: found.cap, field: effect.field, value: effect.value }
   const raw = args?.[effect.fromArg]
-  if (typeof raw === 'string' || typeof raw === 'number' || typeof raw === 'boolean') {
+  if (typeof raw === 'number') {
+    return { cap: found.cap, field: effect.field, value: raw * (effect.scale ?? 1) }
+  }
+  if (typeof raw === 'string' || typeof raw === 'boolean') {
     return { cap: found.cap, field: effect.field, value: raw }
   }
   return null

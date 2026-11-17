@@ -3,6 +3,7 @@ import { AlertTriangle, CircleStop, Play, Zap } from 'lucide-react'
 import type { AutomationControlStatus, ScriptRunnerStatus } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
+import { useOneShotCommand } from '../../hooks/use-one-shot-command'
 import { cn } from '../../lib/cn'
 import { defaultUiText, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { DeviceControlProps } from './control-registry'
@@ -131,7 +132,9 @@ function useScriptControl(trpc: DeviceControlProps['trpc'], deviceId: number): U
   })
   const display = slice
   const runCommand = useDeviceCommand()
-  const busy = !available
+  // Run is one-shot: a double tap must not run the script twice (D1061).
+  const runShot = useOneShotCommand()
+  const busy = !available || runShot.inFlight
   const running = display?.isRunning === true
 
   return {
@@ -141,7 +144,8 @@ function useScriptControl(trpc: DeviceControlProps['trpc'], deviceId: number): U
     running,
     run: () => {
       if (cap === undefined || busy || running) return
-      runCommand(() => cap.run({}))
+      const command = runShot.claim(() => cap.run({}))
+      if (command !== null) runCommand(command)
     },
     stop: () => {
       if (cap === undefined || busy || !running) return

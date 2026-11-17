@@ -22,6 +22,7 @@ import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { type ValveStatus, type ValveState, DeviceFeature, NOT_REPORTED } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
+import { useDragValue } from '../../hooks/use-drag-value'
 import { cn } from '../../lib/cn'
 import type { DeviceControlProps } from './control-registry'
 import { coverHighlight, type CoverHighlightVariant } from './cover-inline'
@@ -159,13 +160,9 @@ export function ValveInlineControl({ trpc, deviceId }: DeviceControlProps): Reac
   const busy = !available
   const hl = coverHighlight(display?.state)
 
-  const press = (
-    fn?: (input: Record<string, never>) => Promise<void>,
-    patch?: Partial<ValveStatus>,
-  ): void => {
+  const press = (fn?: (input: Record<string, never>) => Promise<void>): void => {
     if (busy || !fn) return
-    if (patch !== undefined) runCommand(() => fn({}))
-    else void fn({})
+    runCommand(() => fn({}))
   }
 
   return (
@@ -174,7 +171,7 @@ export function ValveInlineControl({ trpc, deviceId }: DeviceControlProps): Reac
         label={t('uiLibrary.valveControl.open', 'Open')}
         busy={busy}
         variant={hl.up}
-        onClick={() => press(cap.open, { state: 'opening' })}
+        onClick={() => press(cap.open)}
       >
         <ChevronUp className="h-3.5 w-3.5" />
       </ValveCtrlButton>
@@ -182,7 +179,7 @@ export function ValveInlineControl({ trpc, deviceId }: DeviceControlProps): Reac
         label={t('uiLibrary.valveControl.stop', 'Stop')}
         busy={busy}
         variant={hl.stop}
-        onClick={() => press(cap.stop, { state: 'stopped' })}
+        onClick={() => press(cap.stop)}
       >
         <Square className="h-3 w-3" />
       </ValveCtrlButton>
@@ -190,7 +187,7 @@ export function ValveInlineControl({ trpc, deviceId }: DeviceControlProps): Reac
         label={t('uiLibrary.valveControl.close', 'Close')}
         busy={busy}
         variant={hl.down}
-        onClick={() => press(cap.close, { state: 'closing' })}
+        onClick={() => press(cap.close)}
       >
         <ChevronDown className="h-3.5 w-3.5" />
       </ValveCtrlButton>
@@ -294,7 +291,7 @@ interface ValveGraphicProps {
   readonly position: number | null
   /** When true, the graphic becomes a vertical drag surface that sets position. */
   readonly interactive: boolean
-  /** Called with the new (clamped, integer) position as the user drags. */
+  /** Called ONCE per drag, on release, with the clamped integer position (D1061). */
   readonly onSetPosition?: (pos: number) => void
 }
 
@@ -314,6 +311,10 @@ interface ValveGraphicProps {
  * DOWN closes it. The drag is ADDITIVE to the bottom range slider, which
  * remains for fine control + accessibility. The decorative SVG is
  * `aria-hidden`; the drag surface carries the slider a11y.
+ *
+ * The drag is a `useDragValue` gesture (D1061): the gate follows the hand,
+ * ONE command is sent on release (pointer up / cancel, or a pointer let go
+ * outside the box), then the served position is shown again.
  */
 function ValveGraphic({
   state,
@@ -323,10 +324,18 @@ function ValveGraphic({
 }: ValveGraphicProps): ReactNode {
   const t = useUiText()
   const tint = valveGraphicTint(state)
+  const drag = useDragValue({
+    served: position ?? 0,
+    onCommit: (next) => onSetPosition?.(next),
+  })
+  // Only a valve that reports a position is dragged; the hand's value then
+  // stands in for the served one until the hub answers.
+  const shownPosition = position === null ? null : drag.shown
   // gateFraction: 1.0 = fully closed (gate seals bore), 0.0 = fully open.
   // With a numeric position, derive from it; otherwise (open/close-only) drive
   // the gate from STATE so an open valve shows an OPEN gate matching the label.
-  const gateFraction = position !== null ? 1 - position / 100 : gateFractionFromState(state)
+  const gateFraction =
+    shownPosition !== null ? 1 - shownPosition / 100 : gateFractionFromState(state)
   // Gate disc Y within the bore (bore spans y≈40..60 around the valve body).
   const gateTop = 41 + gateFraction * 8
   // Handle rotation: closed (gateFraction 1) = horizontal, open (0) = vertical-ish.
@@ -335,7 +344,6 @@ function ValveGraphic({
 
   const boxRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
-  const lastEmittedRef = useRef<number | null>(null)
 
   // Map a pointer Y coordinate to a clamped, integer position.
   // Dragging UP (smaller y) = more open = higher position. Dragging is only
@@ -352,12 +360,9 @@ function ValveGraphic({
     return Math.min(100, Math.max(0, next))
   }
 
-  const emit = (clientY: number): void => {
+  const follow = (clientY: number): void => {
     if (onSetPosition === undefined) return
-    const next = positionFromPointer(clientY)
-    if (lastEmittedRef.current === next) return
-    lastEmittedRef.current = next
-    onSetPosition(next)
+    drag.move(positionFromPointer(clientY))
   }
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>): void => {
@@ -365,22 +370,21 @@ function ValveGraphic({
     e.stopPropagation()
     e.preventDefault()
     draggingRef.current = true
-    lastEmittedRef.current = null
     e.currentTarget.setPointerCapture(e.pointerId)
-    emit(e.clientY)
+    follow(e.clientY)
   }
 
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
     if (!interactive || !draggingRef.current) return
     e.stopPropagation()
-    emit(e.clientY)
+    follow(e.clientY)
   }
 
   const endDrag = (e: ReactPointerEvent<HTMLDivElement>): void => {
     if (!interactive || !draggingRef.current) return
     e.stopPropagation()
     draggingRef.current = false
-    lastEmittedRef.current = null
+    drag.commit()
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
@@ -396,7 +400,7 @@ function ValveGraphic({
             role: 'slider',
             'aria-valuemin': 0,
             'aria-valuemax': 100,
-            'aria-valuenow': position ?? 0,
+            'aria-valuenow': shownPosition ?? 0,
           }
         : { 'aria-hidden': 'true' })}
       onPointerDown={interactive ? onPointerDown : undefined}
@@ -584,13 +588,9 @@ export function ValveHeroCard({ trpc, deviceId, features }: DeviceControlProps):
   const position = display?.position ?? null
   const hasPosition = position !== null
 
-  const press = (
-    fn?: (input: Record<string, never>) => Promise<void>,
-    patch?: Partial<ValveStatus>,
-  ): void => {
+  const press = (fn?: (input: Record<string, never>) => Promise<void>): void => {
     if (busy || !fn) return
-    if (patch !== undefined) runCommand(() => fn({}))
-    else void fn({})
+    runCommand(() => fn({}))
   }
 
   const handleSetPosition = (pos: number): void => {
@@ -636,7 +636,7 @@ export function ValveHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               label={t('uiLibrary.valveControl.open', 'Open')}
               busy={busy}
               variant={hl.up}
-              onClick={() => press(cap.open, { state: 'opening' })}
+              onClick={() => press(cap.open)}
             >
               <ChevronUp className="h-5 w-5" />
             </ValveHeroButton>
@@ -644,7 +644,7 @@ export function ValveHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               label={t('uiLibrary.valveControl.stop', 'Stop')}
               busy={busy}
               variant={hl.stop}
-              onClick={() => press(cap.stop, { state: 'stopped' })}
+              onClick={() => press(cap.stop)}
             >
               <Square className="h-4 w-4" />
             </ValveHeroButton>
@@ -652,7 +652,7 @@ export function ValveHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               label={t('uiLibrary.valveControl.close', 'Close')}
               busy={busy}
               variant={hl.down}
-              onClick={() => press(cap.close, { state: 'closing' })}
+              onClick={() => press(cap.close)}
             >
               <ChevronDown className="h-5 w-5" />
             </ValveHeroButton>

@@ -6,7 +6,7 @@ import {
 import { resolveMethodAuth } from '../../../capabilities/cap-router-predicates.js'
 import { ALL_CAPABILITY_DEFINITIONS } from '../../../generated/capability-router-map.js'
 import { METHOD_ACCESS_MAP } from '../../../generated/method-access-map.js'
-import { allVocabActions } from '../action-index.js'
+import { actionEffect, allVocabActions } from '../action-index.js'
 import {
   auditedFields,
   commandEffect,
@@ -177,5 +177,24 @@ describe('an action that declares how it is held (D1061)', () => {
     ])
     expect(commandHoldMs('script-runner', 'run', {})).toBe(ONE_SHOT_HOLD_MS)
     expect(commandHoldMs('switch', 'setState', { on: true })).toBeUndefined()
+  })
+})
+
+describe('an effect whose arg is in another unit (D1061)', () => {
+  it('holds a pump run time set in minutes as the seconds the slice reports', () => {
+    expect(commandEffects('pump-cycle', 'setOnMinutes', { minutes: 2 }, undefined)).toEqual([
+      { field: 'onTime', value: 120, tolerance: 60 },
+    ])
+    expect(commandEffects('pump-cycle', 'setOffMinutes', { minutes: 15 }, undefined)).toEqual([
+      { field: 'offTime', value: 900, tolerance: 60 },
+    ])
+  })
+
+  it('the action leads to the same scaled state', () => {
+    expect(actionEffect('pumpCycle.onMinutes', { minutes: 3 })).toEqual({
+      cap: 'pump-cycle',
+      field: 'onTime',
+      value: 180,
+    })
   })
 })

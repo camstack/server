@@ -56,7 +56,7 @@ export interface MethodActionOpenArg<TKey extends string = string> {
 /** The state a method action leads to (D983) — see `VocabEffectFor`. */
 export type MethodActionEffect<TKey extends string = string> =
   | { readonly field: string; readonly value: VocabEffectValue }
-  | { readonly field: string; readonly fromArg: TKey }
+  | { readonly field: string; readonly fromArg: TKey; readonly scale?: number }
 
 /**
  * When a device is offered an action: a read method of the same cap, and the

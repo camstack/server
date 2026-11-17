@@ -217,7 +217,7 @@ export function PetFeederCard({
                     columnButton('feed', {
                       glyph: 'feed',
                       tone: 'primary',
-                      disabled: fault || feeding,
+                      disabled: fault || feeding || model.feedPending === true,
                       label: t('uiLibrary.deviceCard.petFeeder.feed', 'Feed'),
                       testId: 'dc-feeder-feed',
                       onPress: () => actions.onFeed(portion, hopper),

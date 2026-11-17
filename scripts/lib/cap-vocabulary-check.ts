@@ -363,6 +363,15 @@ function checkOneEffect(
       `${where}: effect copies arg '${effect.fromArg}' (${scalarKind(arg)}) into status field '${effect.field}' (${scalarKind(field)})`,
     )
   }
+  if (
+    'scale' in effect &&
+    effect.scale !== undefined &&
+    (scalarKind(arg) !== 'number' || !(effect.scale > 0))
+  ) {
+    problems.push(
+      `${where}: effect scales arg '${effect.fromArg}', which is not a number, or by ${effect.scale}`,
+    )
+  }
 }
 
 /** D1058: an action's `offeredWhen` names a read of the same cap and a boolean field of its answer. */

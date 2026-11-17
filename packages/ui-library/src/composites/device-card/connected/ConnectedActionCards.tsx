@@ -3,6 +3,7 @@ import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useDeviceCommand } from '../../../hooks/use-device-command'
+import { useOneShotCommand } from '../../../hooks/use-one-shot-command'
 import { AutomationCard, ButtonCard, ScriptCard } from '../scenes/action/ActionCards'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { sinceText } from './since-text'
@@ -55,6 +56,8 @@ export function ConnectedScriptCard({
   )
   const display = slice
   const runCommand = useDeviceCommand()
+  // Run is one-shot: a double tap must not run the script twice (D1061).
+  const runShot = useOneShotCommand()
   const cap = dev?.scriptRunner
   if (cap === undefined || display === undefined) return null
   const send = reportedCommand(runCommand, card)
@@ -69,10 +72,14 @@ export function ConnectedScriptCard({
         lastError: display.lastError,
         runnable: card.implements('script-runner', 'run'),
         stoppable: card.implements('script-runner', 'stop'),
+        runPending: runShot.inFlight,
       }}
       actions={{
         ...card.actions,
-        onRun: () => send(() => cap.run({})),
+        onRun: () => {
+          const command = runShot.claim(() => cap.run({}))
+          if (command !== null) send(command)
+        },
         onStop: () => send(() => cap.stop({})),
       }}
     />

@@ -251,7 +251,15 @@ export type VocabEffectValue = string | number | boolean
  */
 export type VocabEffectFor<C extends VocabCapName, M extends CapMethodName<C>> =
   | { readonly field: CapStatusField<C>; readonly value: VocabEffectValue }
-  | { readonly field: CapStatusField<C>; readonly fromArg: ActionArgKey<C, M> }
+  | {
+      readonly field: CapStatusField<C>
+      readonly fromArg: ActionArgKey<C, M>
+      /**
+       * A number arg in another unit than the field (minutes → seconds): the
+       * field holds `arg × scale`. Only on a number arg.
+       */
+      readonly scale?: number
+    }
 
 /**
  * A condition on the CURRENT slice of the action's cap (D1061): the side effect
@@ -528,7 +536,7 @@ export interface LooseVocabOpenArg {
 /** An effect as a consumer reads it, with no cap-specific key type. */
 export type LooseVocabEffect =
   | { readonly field: string; readonly value: VocabEffectValue }
-  | { readonly field: string; readonly fromArg: string }
+  | { readonly field: string; readonly fromArg: string; readonly scale?: number }
 
 /** A side effect as a consumer reads it (see {@link VocabSideEffectFor}). */
 export type LooseVocabSideEffect = (

@@ -34,6 +34,8 @@ export interface PetFeederCardModel {
   readonly portionMin: number
   readonly portionMax: number
   readonly canFeed: boolean
+  /** A Feed is in flight: the button is off so a double tap feeds once (D1061). */
+  readonly feedPending?: boolean
   readonly canCancel: boolean
   readonly canCallPet: boolean
   /** Mark refilled is offered when the feeder says the action exists. */

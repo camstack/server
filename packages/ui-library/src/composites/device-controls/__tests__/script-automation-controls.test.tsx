@@ -58,11 +58,7 @@ vi.mock('../../../hooks/use-device-capability', () => ({
   },
 }))
 
-import {
-  AutomationHeroCard,
-  lastRunLabel,
-  ScriptHeroCard,
-} from '../script-automation-controls'
+import { AutomationHeroCard, lastRunLabel, ScriptHeroCard } from '../script-automation-controls'
 
 const trpc = {} as never
 
@@ -155,6 +151,18 @@ describe('ScriptHeroCard', () => {
     expect(scriptCap.stop).not.toHaveBeenCalled()
   })
 
+  it('a second tap while the run is in flight sends no second run (D1061)', () => {
+    scriptCap.run.mockReturnValue(new Promise(() => {}))
+    withScript(scriptSlice())
+    render(<ScriptHeroCard trpc={trpc} deviceId={7} features={undefined} />)
+    const button = screen.getByTestId('script-run')
+    fireEvent.click(button)
+    fireEvent.click(button)
+    expect(scriptCap.run).toHaveBeenCalledTimes(1)
+    expect(scriptCap.stop).not.toHaveBeenCalled()
+    expect((button as HTMLButtonElement).disabled).toBe(true)
+  })
+
   it('the SAME button stops a running one', () => {
     // Two buttons would mean a Stop that is disabled almost always — a
     // permanent invitation to click something that does nothing.
@@ -243,4 +251,3 @@ describe('AutomationHeroCard', () => {
     expect(screen.getByTestId('automation-state').getAttribute('data-enabled')).toBe('true')
   })
 })
-

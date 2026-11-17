@@ -154,6 +154,17 @@ describe('a script', () => {
     await vi.waitFor(() => expect(hub.script.stop).toHaveBeenCalledWith({}))
   })
 
+  it('a double tap while the run is in flight runs once (D1061)', async () => {
+    hub.scriptSlice = SCRIPT
+    hub.script.run.mockReturnValueOnce(new Promise(() => {}))
+    render(<ConnectedScriptCard deviceId={1} />)
+    fireEvent.click(screen.getByTestId('dc-script-run'))
+    fireEvent.click(screen.getByTestId('dc-script-run'))
+    await vi.waitFor(() => expect(hub.script.run).toHaveBeenCalledTimes(1))
+    expect((screen.getByTestId('dc-script-run') as HTMLButtonElement).disabled).toBe(true)
+    expect(hub.script.run).toHaveBeenCalledTimes(1)
+  })
+
   it('draws no Stop when the binding cannot stop', () => {
     hub.scriptSlice = { ...SCRIPT, isRunning: true }
     hub.missing = ['stop']

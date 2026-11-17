@@ -91,6 +91,7 @@ export function ScriptCard({
           tone: 'primary',
           label: t('uiLibrary.deviceCard.script.run', 'Run'),
           testId: 'dc-script-run',
+          disabled: model.runPending === true,
           onPress: actions.onRun,
         })
       : null

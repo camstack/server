@@ -189,7 +189,7 @@ const ADDED_EFFECTS: Readonly<Record<string, readonly string[]>> = {
     'petFeeder.volume',
   ],
   'pet-fountain': ['petFountain.pumpOn', 'petFountain.pumpOff'],
-  'pump-cycle': ['pumpCycle.on', 'pumpCycle.off'],
+  'pump-cycle': ['pumpCycle.on', 'pumpCycle.off', 'pumpCycle.onMinutes', 'pumpCycle.offMinutes'],
   'script-runner': ['script.stop'],
   'automation-control': ['haAutomation.enable', 'haAutomation.disable'],
 }

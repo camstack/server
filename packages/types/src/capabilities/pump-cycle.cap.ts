@@ -83,6 +83,8 @@ export const pumpCycleCapability = {
             'Imposta la pompa di {device} a lavorare {minutes} minuti per ciclo',
           ),
           icon: 'timer',
+          // The arg is in minutes, the slice in seconds.
+          effect: { field: 'onTime', fromArg: 'minutes', scale: 60 },
           openArgs: [
             {
               key: 'minutes',
@@ -109,6 +111,8 @@ export const pumpCycleCapability = {
               'Imposta la pompa di {device} a riposare {minutes} minuti per ciclo',
             ),
             icon: 'timer-off',
+            // The arg is in minutes, the slice in seconds.
+            effect: { field: 'offTime', fromArg: 'minutes', scale: 60 },
             openArgs: [
               {
                 key: 'minutes',

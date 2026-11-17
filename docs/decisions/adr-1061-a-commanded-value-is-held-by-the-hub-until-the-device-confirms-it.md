@@ -59,6 +59,17 @@ new reading of that field:
   device's value is served, logged at debug with `tags: { deviceId }`, the
   cap, the field and reason `device-answered`.
 
+An action whose final state is not something to show before the device
+reaches it declares how it is held instead (`hold.effects` on the vocabulary
+action, honouring `when`): a lock command holds `locking` / `unlocking`, an
+alarm command `arming` / `disarming`, never `locked` or `armed_*`. A bolt that
+bounces back is therefore never shown or told as locked; the device's own
+`locked` / `jammed` / final state ends the hold. A one-shot action (Feed, Run)
+holds its running flag (`feeding`, `isRunning`) for a shorter limit declared
+with it (`hold.holdMs`, `ONE_SHOT_HOLD_MS` = 10 s). An effect copied from an
+arg in another unit declares `scale` (a pump run time set in minutes is held
+as the seconds the slice reports, its tolerance one step × scale).
+
 A held field also ends when the call is refused (rolled back at once), when
 the limit elapses with the device still stale (30 s, the D1022 match window;
 reverted and warned with `tags: { deviceId }`), or when a newer command names
@@ -68,7 +79,12 @@ saw, held values included.
 
 What reads which:
 
-- UIs, voice and exporters read the effective slice (the default).
+- UIs and voice read the effective slice (the default).
+- Exporters to another ecosystem report what the DEVICE said: the Alexa
+  ChangeReports, ReportState and reconciler and the Home Assistant export
+  read the confirmed slice; HomeKit, which models a commanded target beside a
+  current state, moves only the lock TARGET for an in-flight transition and
+  leaves the current state where the device put it.
 - History, automations and every decision read the CONFIRMED slice:
   `DeviceStateChanged` carries `confirmed` while a hold changes the slice,
   `getCapSlice` / `getAllSnapshots` take `confirmed: true`, and generated
@@ -102,6 +118,13 @@ the slice after the command, which is the effective slice.
   sent on release, and the released value stays until the served value equals
   it, moves away from what it was at release, or 1.5 s pass. A slider that sent
   on every move and rendered the served value snapped back under the hand.
+- A one-shot button (Feed, Run) is disabled from the tap until its command
+  settles (`useOneShotCommand`), so a double tap sends one command; the held
+  running flag takes over from there.
+- Not yet held: a colour temperature (`color.setColor`'s actions are all
+  baked, so a slider value matches none, and its value is a nested arg) and
+  `control.setValue` (no action, nested arg). Holding them needs a nested
+  `fromArg` path and an action-less hold; a follow-up.
 - A stored automation the generator wrote before this change is regenerated
   once at boot through its `AUTOMATION_RECIPE` (core-blocks migration
   `2026-11-17-automation-confirmed-view`), so its device reads take the
@@ -123,5 +146,12 @@ the slice after the command, which is the effective slice.
 - `ui-library/src/hooks/__tests__/use-drag-value.test.tsx` and
   `device-controls/__tests__/brightness-panel.test.tsx` (one command on
   release, no snap back during the gesture or before the hub answers).
-- `scripts/check-no-ui-optimism.ts` refuses the old hook and its patch in any
-  UI source (ui-library, admin UI, an addon `.tsx`).
+- `command-holds.spec.ts` (a lock held as `locking`, the bolt that bounces
+  back, a feed held for `ONE_SHOT_HOLD_MS`), the Alexa
+  `state-change-reporter.spec.ts`, the HomeKit `generic-accessory.spec.ts`
+  and the HA export `item-entities-addon.spec.ts` (held values never
+  exported), `use-one-shot-command.test.tsx` and the feeder / script double-tap
+  specs.
+- `scripts/check-no-ui-optimism.ts` refuses the removed optimism helpers in
+  any UI source (ui-library, admin UI, an addon `.tsx`). It does not see a
+  control that patches a served slice by hand; that is a review item.

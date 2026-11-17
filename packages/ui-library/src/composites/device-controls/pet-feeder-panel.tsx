@@ -46,6 +46,7 @@ import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { cn } from '../../lib/cn.js'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display.js'
 import { Button } from '../../primitives/button'
+import { useOneShotCommand } from '../../hooks/use-one-shot-command.js'
 import type { ControlPanelProps } from './types.js'
 
 /** Default one-tap manual-feed portion (grams) — the low end of the
@@ -135,6 +136,8 @@ export function PetFeederPanel({ trpc, deviceId, layout }: ControlPanelProps): R
 
   const display = slice
   const runCommand = useDeviceCommand()
+  // Feed is one-shot: a double tap must not feed twice (D1061).
+  const feedShot = useOneShotCommand()
 
   // The stepper is local state the moment the operator touches it; until then
   // it starts from the last manual feed the device remembers. Taps never wait
@@ -148,6 +151,13 @@ export function PetFeederPanel({ trpc, deviceId, layout }: ControlPanelProps): R
   if (display === undefined) return null
 
   const busy = !available
+  const feedBusy = busy || feedShot.inFlight
+  type FeedInput = Parameters<typeof cap.feed>[0]
+  const sendFeed = (input: FeedInput): void => {
+    if (busy) return
+    const command = feedShot.claim(() => cap.feed(input))
+    if (command !== null) runCommand(command)
+  }
 
   // A non-null, non-sentinel `error` is an active device fault; `offline`
   // status is a connectivity fault. Both surface as warnings.
@@ -225,11 +235,10 @@ export function PetFeederPanel({ trpc, deviceId, layout }: ControlPanelProps): R
             variant="outline"
             size="sm"
             aria-label={t('uiLibrary.petFeeder.feedNow', 'Feed now')}
-            disabled={busy}
+            disabled={feedBusy}
             onClick={(e) => {
               e.stopPropagation()
-              if (busy) return
-              runCommand(() => cap.feed({ grams: DEFAULT_PORTION }))
+              sendFeed({ grams: DEFAULT_PORTION })
             }}
           >
             <PawPrint className="h-3.5 w-3.5" aria-hidden />
@@ -246,8 +255,7 @@ export function PetFeederPanel({ trpc, deviceId, layout }: ControlPanelProps): R
     runCommand(() => cap.cancelFeed({}))
   }
   const feedSingle = (grams: number): void => {
-    if (busy) return
-    runCommand(() => cap.feed({ grams: clampPortion(grams) }))
+    sendFeed({ grams: clampPortion(grams) })
   }
 
   return (
@@ -335,33 +343,27 @@ export function PetFeederPanel({ trpc, deviceId, layout }: ControlPanelProps): R
           <HopperFeed
             label={t('uiLibrary.petFeeder.hopper1', 'Hopper 1')}
             grams={hopper1}
-            busy={busy}
+            busy={feedBusy}
             feeding={display.feeding}
             onCancel={cancel}
             onGrams={setHopper1}
-            onFeed={() => {
-              if (busy) return
-              runCommand(() => cap.feed({ hopper1: clampPortion(hopper1) }))
-            }}
+            onFeed={() => sendFeed({ hopper1: clampPortion(hopper1) })}
           />
           <HopperFeed
             label={t('uiLibrary.petFeeder.hopper2', 'Hopper 2')}
             grams={hopper2}
-            busy={busy}
+            busy={feedBusy}
             feeding={display.feeding}
             onCancel={cancel}
             onGrams={setHopper2}
-            onFeed={() => {
-              if (busy) return
-              runCommand(() => cap.feed({ hopper2: clampPortion(hopper2) }))
-            }}
+            onFeed={() => sendFeed({ hopper2: clampPortion(hopper2) })}
           />
         </div>
       ) : (
         <HopperFeed
           label={t('uiLibrary.petFeeder.manualFeed', 'Manual feed')}
           grams={portion}
-          busy={busy}
+          busy={feedBusy}
           feeding={display.feeding}
           onCancel={cancel}
           onGrams={setPortion}

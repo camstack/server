@@ -174,7 +174,7 @@ describe('ValveHeroCard', () => {
       expect(surface.className).toContain('cursor-ns-resize')
     })
 
-    it('pointer-down emits the position mapped from clientY (top=open, bottom=closed)', () => {
+    it('the drag follows clientY (top=open, bottom=closed) and sends ONE setPosition on release (D1061)', () => {
       render(
         <ValveHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.ValvePositionable]} />,
       )
@@ -184,13 +184,16 @@ describe('ValveHeroCard', () => {
 
       // Drag DOWN to y=250 → ratio=(250-100)/200=0.75 → position = round(100-75) = 25.
       fireEvent.pointerDown(surface, { pointerId: 1, clientY: 250 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 25 })
+      expect(surface.getAttribute('aria-valuenow')).toBe('25')
 
       // Move UP to y=150 → ratio=0.25 → position = 75 (UP = more open).
       fireEvent.pointerMove(surface, { pointerId: 1, clientY: 150 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 75 })
+      expect(surface.getAttribute('aria-valuenow')).toBe('75')
+      expect(setPosition).not.toHaveBeenCalled()
 
       fireEvent.pointerUp(surface, { pointerId: 1, clientY: 150 })
+      expect(setPosition).toHaveBeenCalledTimes(1)
+      expect(setPosition).toHaveBeenCalledWith({ position: 75 })
     })
 
     it('pointer-move clamps clientY → 0..100 at both ends', () => {
@@ -204,15 +207,17 @@ describe('ValveHeroCard', () => {
       fireEvent.pointerDown(surface, { pointerId: 1, clientY: 200 }) // mid → 50
       // Clamp: drag above the top → 100.
       fireEvent.pointerMove(surface, { pointerId: 1, clientY: 50 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 100 })
+      expect(surface.getAttribute('aria-valuenow')).toBe('100')
       // Clamp: drag below the bottom → 0.
       fireEvent.pointerMove(surface, { pointerId: 1, clientY: 400 })
-      expect(setPosition).toHaveBeenCalledWith({ position: 0 })
+      expect(surface.getAttribute('aria-valuenow')).toBe('0')
 
       fireEvent.pointerUp(surface, { pointerId: 1, clientY: 400 })
+      expect(setPosition).toHaveBeenCalledTimes(1)
+      expect(setPosition).toHaveBeenCalledWith({ position: 0 })
     })
 
-    it('does not emit again when the rounded % is unchanged (lastEmittedRef dedupe)', () => {
+    it('commits when the pointer is let go outside the graphic (D1061)', () => {
       render(
         <ValveHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.ValvePositionable]} />,
       )
@@ -221,8 +226,10 @@ describe('ValveHeroCard', () => {
       stubPointerCapture(surface)
 
       fireEvent.pointerDown(surface, { pointerId: 1, clientY: 50 }) // → 50
-      fireEvent.pointerMove(surface, { pointerId: 1, clientY: 50.3 }) // still rounds to 50
+      fireEvent.pointerMove(surface, { pointerId: 1, clientY: 30 }) // → 70
+      fireEvent(window, new Event('pointerup'))
       expect(setPosition).toHaveBeenCalledTimes(1)
+      expect(setPosition).toHaveBeenCalledWith({ position: 70 })
     })
 
     it('pointer-cancel ends the drag (subsequent moves do not emit)', () => {

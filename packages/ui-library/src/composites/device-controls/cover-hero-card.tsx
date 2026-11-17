@@ -4,6 +4,7 @@ import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from '
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
+import { useDragValue } from '../../hooks/use-drag-value'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
 import { type CoverStatus, DeviceFeature } from '@camstack/types'
@@ -78,7 +79,7 @@ interface WindowWithLeverProps {
   readonly position: number
   /** When true, the window becomes a vertical drag surface that sets position. */
   readonly interactive: boolean
-  /** Called with the new (clamped, integer) position as the user drags. */
+  /** Called ONCE per drag, on release, with the clamped integer position (D1061). */
   readonly onSetPosition?: (pos: number) => void
 }
 
@@ -96,6 +97,10 @@ interface WindowWithLeverProps {
  * range slider, which remains for fine control + accessibility. When not
  * interactive the graphic is display-only with no pointer handlers and no
  * resize affordance — identical to the original behaviour.
+ *
+ * The lever is a `useDragValue` gesture (D1061): it follows the hand while
+ * the pointer moves, sends ONE command on release (pointer up / cancel, or a
+ * pointer let go outside the window), then shows the served position again.
  */
 function WindowWithLever({
   position,
@@ -103,13 +108,17 @@ function WindowWithLever({
   onSetPosition,
 }: WindowWithLeverProps): ReactNode {
   const t = useUiText()
+  const drag = useDragValue({
+    served: position,
+    onCommit: (next) => onSetPosition?.(next),
+  })
+  const shown = drag.shown
   // slatFraction: 1.0 = fully closed (slats fill frame), 0.0 = fully open
-  const slatFraction = 1 - position / 100
+  const slatFraction = 1 - shown / 100
   const slatPct = slatFraction * 100
 
   const windowRef = useRef<HTMLDivElement>(null)
   const draggingRef = useRef(false)
-  const lastEmittedRef = useRef<number | null>(null)
 
   // Map a pointer Y coordinate to a clamped, integer position.
   // boundaryY from top = (100 - position)% * height → position = 100 - (y/h)*100.
@@ -124,12 +133,9 @@ function WindowWithLever({
     return Math.min(100, Math.max(0, next))
   }
 
-  const emit = (clientY: number): void => {
+  const follow = (clientY: number): void => {
     if (onSetPosition === undefined) return
-    const next = positionFromPointer(clientY)
-    if (lastEmittedRef.current === next) return
-    lastEmittedRef.current = next
-    onSetPosition(next)
+    drag.move(positionFromPointer(clientY))
   }
 
   const onPointerDown = (e: ReactPointerEvent<HTMLDivElement>): void => {
@@ -137,22 +143,21 @@ function WindowWithLever({
     e.stopPropagation()
     e.preventDefault()
     draggingRef.current = true
-    lastEmittedRef.current = null
     e.currentTarget.setPointerCapture(e.pointerId)
-    emit(e.clientY)
+    follow(e.clientY)
   }
 
   const onPointerMove = (e: ReactPointerEvent<HTMLDivElement>): void => {
     if (!interactive || !draggingRef.current) return
     e.stopPropagation()
-    emit(e.clientY)
+    follow(e.clientY)
   }
 
   const endDrag = (e: ReactPointerEvent<HTMLDivElement>): void => {
     if (!interactive || !draggingRef.current) return
     e.stopPropagation()
     draggingRef.current = false
-    lastEmittedRef.current = null
+    drag.commit()
     if (e.currentTarget.hasPointerCapture(e.pointerId)) {
       e.currentTarget.releasePointerCapture(e.pointerId)
     }
@@ -168,7 +173,7 @@ function WindowWithLever({
             role: 'slider',
             'aria-valuemin': 0,
             'aria-valuemax': 100,
-            'aria-valuenow': position,
+            'aria-valuenow': shown,
           }
         : { 'aria-hidden': 'true' })}
       onPointerDown={interactive ? onPointerDown : undefined}
@@ -212,7 +217,7 @@ function WindowWithLever({
           data-testid="cover-position-pct"
           className="absolute left-full ml-2 text-xs font-semibold text-foreground tabular-nums whitespace-nowrap"
         >
-          {position}%
+          {shown}%
         </span>
       </div>
     </div>
@@ -327,13 +332,9 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
   // Determine open/closed from state for the state-only variant
   const isOpenState = display?.state === 'open' || display?.state === 'opening'
 
-  const press = (
-    fn?: (input: Record<string, never>) => Promise<void>,
-    patch?: Partial<CoverStatus>,
-  ): void => {
+  const press = (fn?: (input: Record<string, never>) => Promise<void>): void => {
     if (busy || !fn) return
-    if (patch !== undefined) runCommand(() => fn({}))
-    else void fn({})
+    runCommand(() => fn({}))
   }
 
   const handleSetPosition = (pos: number): void => {
@@ -385,7 +386,7 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               label={t('uiLibrary.coverHeroCard.open', 'Open')}
               busy={busy}
               variant={hl.up}
-              onClick={() => press(cap?.open, { state: 'opening' })}
+              onClick={() => press(cap?.open)}
             >
               <ChevronUp className="h-5 w-5" />
             </HeroButton>
@@ -393,7 +394,7 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               label={t('uiLibrary.coverHeroCard.stop', 'Stop')}
               busy={busy}
               variant={hl.stop}
-              onClick={() => press(cap?.stop, { state: 'stopped' })}
+              onClick={() => press(cap?.stop)}
             >
               <Square className="h-4 w-4" />
             </HeroButton>
@@ -401,7 +402,7 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               label={t('uiLibrary.coverHeroCard.close', 'Close')}
               busy={busy}
               variant={hl.down}
-              onClick={() => press(cap?.close, { state: 'closing' })}
+              onClick={() => press(cap?.close)}
             >
               <ChevronDown className="h-5 w-5" />
             </HeroButton>
