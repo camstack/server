@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Cameras declare their MAC and LAN IP as identifiers, so the same camera from another integration can be matched.
+
 ## [0.2.173] - 2026-11-10
 
 ### Changed

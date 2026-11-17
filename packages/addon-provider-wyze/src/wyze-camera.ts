@@ -38,6 +38,7 @@ import {
   buildSyntheticSdp,
 } from './constants.js'
 import { classifyCloudError } from './error-classifier.js'
+import { wyzeIdentifiers } from './wyze-identifiers.js'
 import {
   bitrateFor,
   cameraConfigFromCloud,
@@ -515,6 +516,16 @@ export class WyzeCamera extends BaseDevice<typeof wyzeCameraSchema> implements I
 
   override async onActivate(): Promise<void> {
     this.startMotionPolling()
+    await this.declareIdentity()
+  }
+
+  /** Declare the hardware MAC and the last-known LAN IP (D1059). */
+  private async declareIdentity(): Promise<void> {
+    const declaration = wyzeIdentifiers({
+      mac: this.config.get('mac'),
+      ip: this.config.get('ip'),
+    })
+    await this.declareIdentifiers(declaration.identifiers, { unread: declaration.unread })
   }
 
   override async removeDevice(): Promise<void> {
