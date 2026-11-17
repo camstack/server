@@ -229,4 +229,32 @@ describe('the integration status names why it is offline', () => {
     })
     await registry.shutdown()
   })
+
+  it.each<[string, Record<string, string>, string]>([
+    [
+      'the local account alone',
+      { username: 'u', password: 'p' },
+      'Signed in with the local account',
+    ],
+    [
+      'both credentials',
+      { apiKey: 'k', username: 'u', password: 'p' },
+      'Signed in with the API key and the local account',
+    ],
+  ])('a connected integration over %s says so', async (_name, fields, detail) => {
+    const registry = new UnifiClientRegistry(quiet, {
+      makeClient: fakeFactory(null),
+      onConnected: () => undefined,
+      onDisconnected: () => undefined,
+      onPolled: () => undefined,
+    })
+    await registry.upsert(
+      'int_1',
+      'Home',
+      settingsToConnection({ host: 'console.example', ...fields }),
+      false,
+    )
+    expect(registry.statusOf('int_1')?.detail).toBe(detail)
+    await registry.shutdown()
+  })
 })

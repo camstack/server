@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An unreachable controller now shows its consoles, switches and access points as unknown instead of still running, and their running-since time no longer moves on every poll.
 - A UniFi console, switch or access point that drops off the controller now raises "Went down" (not "Shut down"), and "Came online" when it returns.
 - A PoE port seen only through the API key is now a switch that can power-cycle: a camera on it can be force-restarted from its power source.
+- The integration status says which credential signed in: the API key, the local account, or both (and when the local account stops answering).
 
 ## [0.2.164] - 2026-11-14
 

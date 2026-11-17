@@ -1,5 +1,6 @@
 import { errMsg, type IntegrationInstanceStatus, type IScopedLogger } from '@camstack/types'
 import type { UnifiConnectionConfig } from './config.js'
+import { unifiCredentialOf } from './unifi-client-factory.js'
 import { classifyUnifiError } from './unifi-connection-test.js'
 import type {
   UnifiClientSnapshot,
@@ -105,16 +106,27 @@ export class UnifiIntegrationManager {
     if (this.#error !== null) return { state: 'error', label: 'Offline', detail: this.#error }
     switch (this.#status) {
       case 'connected':
-        return {
-          state: 'ok',
-          label: 'Connected',
-          detail: 'Signed in with the API key',
-        }
+        return { state: 'ok', label: 'Connected', detail: this.#signedInWith() }
       case 'connecting':
         return { state: 'unknown', label: 'Connecting' }
       case 'error':
       case 'disconnected':
         return { state: 'off', label: 'Disconnected' }
+    }
+  }
+
+  /** Which credential signed in; a local account that stopped answering is named as such. */
+  #signedInWith(): string {
+    switch (unifiCredentialOf(this.#connection)) {
+      case 'local-account':
+        return 'Signed in with the local account'
+      case 'both':
+        return this.#degraded === null
+          ? 'Signed in with the API key and the local account'
+          : 'Signed in with the API key; the local account does not answer (PoE on/off unavailable)'
+      case 'api-key':
+      case null:
+        return 'Signed in with the API key'
     }
   }
 
