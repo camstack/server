@@ -18,6 +18,7 @@ import {
   connectionFromBody,
   type VeSyncConnectionConfig,
   vesyncConnectionSchema,
+  vesyncCountryCodeSchema,
 } from './config.js'
 import type { VeSyncClientFactory } from './vesync-client-contract.js'
 import { testVeSyncConnection } from './vesync-connection-test.js'
@@ -29,6 +30,7 @@ export const vesyncConnectionsEntryKind = defineEntryKind('connections', {
     email: z.string().optional(),
     password: z.string().optional().meta({ secret: true }),
     region: z.enum(['US', 'EU']).optional(),
+    countryCode: vesyncCountryCodeSchema,
     pollIntervalMs: z.number().optional(),
   }),
   writeTrigger: 'an operator adds, edits or removes a VeSync account integration',
@@ -63,6 +65,15 @@ export function buildVeSyncInstances(
     initialBody: (name): VeSyncConnectionBody => ({ name }),
     configured: (body) => (body.email ?? '').length > 0 && body.password !== undefined,
     onChanged: () => deps.onChanged(),
+    // The country code is checked at save (the record layer stores what it is handed): a stored
+    // bad code would fail `connectionFromBody` and drop a working account at reconcile.
+    validateWrite: ({ body }) => {
+      const parsed = vesyncCountryCodeSchema.safeParse(body['countryCode'])
+      if (!parsed.success) {
+        throw new Error(`vesync: Country code — ${parsed.error.issues[0]?.message ?? 'invalid'}`)
+      }
+      return parsed.data === undefined ? undefined : { countryCode: parsed.data }
+    },
     test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {
       // The stored account under the edited form; a saved password is never retyped, the form
       // hands back its redacted view, so the keychain value stands in.
@@ -81,11 +92,20 @@ export function buildVeSyncInstances(
       }
       const parsed = vesyncConnectionSchema.safeParse({ ...stored, ...values, password })
       if (!parsed.success) {
-        return { success: false, status: 'rejected', error: 'vesync: enter the account email' }
+        return { success: false, status: 'rejected', error: refusalOf(parsed.error) }
       }
       return testVeSyncConnection(parsed.data, makeClient)
     },
   })
+}
+
+/** The form refusal a failed parse means: the field Zod named, in its own words. */
+function refusalOf(error: z.ZodError): string {
+  const issue = error.issues[0]
+  const field = issue?.path.join('.') ?? ''
+  if (issue === undefined || field === 'email') return 'vesync: enter the account email'
+  if (field === 'countryCode') return `vesync: Country code — ${issue.message}`
+  return `vesync: ${field} — ${issue.message}`
 }
 
 /** What the runtime reads for one integration. `passwordLocked` keeps the previous client (D49). */

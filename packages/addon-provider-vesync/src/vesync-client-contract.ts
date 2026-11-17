@@ -92,4 +92,6 @@ export type VeSyncClientFactory = (input: {
   readonly email: string
   readonly password: string
   readonly region: VeSyncRegion
+  /** ISO-3166 alpha-2 country the account signs in as; absent = the library default (`US`). */
+  readonly countryCode?: string
 }) => VeSyncClient

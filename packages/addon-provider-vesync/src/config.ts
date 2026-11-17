@@ -7,6 +7,21 @@ export const VESYNC_SYSTEM = 'vesync' as const
 /** The Gateway device's `kind`: the account's presence, a sibling of its purifiers. */
 export const VESYNC_GATEWAY_KIND = 'account' as const
 
+/** An ISO-3166 alpha-2 country code, upper case. */
+const COUNTRY_CODE_PATTERN = /^[A-Z]{2}$/
+
+/**
+ * The account's country code as the form and the record carry it: trimmed, upper-cased, blank =
+ * not set. One schema for the record kind AND the connection, so a value the record accepts always
+ * parses as a connection (a stored bad code would drop a working account at reconcile).
+ */
+export const vesyncCountryCodeSchema = z
+  .preprocess(
+    (v) => (typeof v === 'string' ? v.trim().toUpperCase() || undefined : (v ?? undefined)),
+    z.string().regex(COUNTRY_CODE_PATTERN, 'a two-letter ISO country code, e.g. IT').optional(),
+  )
+  .describe('VeSync account country (ISO 3166 alpha-2)')
+
 /**
  * Operator-supplied credentials for ONE VeSync cloud account. They live on the
  * integration's typed record, not on a device. VeSync is cloud / account and
@@ -17,6 +32,11 @@ export const vesyncConnectionSchema = z.object({
   email: z.string().min(1).describe('VeSync account email'),
   password: z.string().default('').describe('VeSync account password').meta({ secret: true }),
   region: z.enum(['US', 'EU']).default('EU').describe('VeSync account home region'),
+  /**
+   * The account's ISO-3166 alpha-2 country (`IT`, `DE` …). The library signs in as `US` without
+   * it, which a non-US account is refused for at Step 2. Blank means "not set".
+   */
+  countryCode: vesyncCountryCodeSchema,
   pollIntervalMs: z
     .preprocess(
       (v) => (v === '' || v === null ? undefined : v),
@@ -121,6 +141,7 @@ export interface VeSyncAccountFields {
   readonly email?: string | undefined
   readonly password?: string | undefined
   readonly region?: 'US' | 'EU' | undefined
+  readonly countryCode?: string | undefined
   readonly pollIntervalMs?: number | undefined
 }
 
@@ -136,6 +157,7 @@ export function connectionFromBody(body: VeSyncAccountFields): VeSyncConnectionC
     email,
     password,
     ...(body.region !== undefined ? { region: body.region } : {}),
+    ...(body.countryCode !== undefined ? { countryCode: body.countryCode } : {}),
     ...(body.pollIntervalMs !== undefined ? { pollIntervalMs: body.pollIntervalMs } : {}),
   })
 }
@@ -199,6 +221,17 @@ export function buildConnectionFormSchema(): ConfigUISchema {
                 value: 'US',
               },
             ],
+          },
+          {
+            type: 'text',
+            key: 'countryCode',
+            label: 'Country code',
+            labelKey: 'provider-vesync:connection.s_connection.countryCode.label',
+            description:
+              'Two-letter code of the country the account was registered in (IT, DE, FR …). Set it when sign-in fails with "auth code expired".',
+            descriptionKey: 'provider-vesync:connection.s_connection.countryCode.description',
+            placeholder: 'IT',
+            maxLength: 2,
           },
           {
             type: 'number',

@@ -398,6 +398,7 @@ function sameAccount(a: VeSyncConnectionConfig, b: VeSyncConnectionConfig): bool
     a.email === b.email &&
     a.password === b.password &&
     a.region === b.region &&
+    a.countryCode === b.countryCode &&
     a.pollIntervalMs === b.pollIntervalMs
   )
 }
