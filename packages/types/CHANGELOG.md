@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- runPipeline accepts motionRegions; the pipeline trace carries rootSource (which pixels the object-detection root ran on).
+
 ## [1.2.590] - 2026-11-17
 
 ### Changed

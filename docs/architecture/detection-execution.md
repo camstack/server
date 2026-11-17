@@ -274,6 +274,35 @@ slow`), and a dispatch waits for it at most 500 ms — the dispatch guard stays
 held until the overrunning census settles, so a late runner snapshot cannot
 deregister the session it never saw.
 
+### The root's own input: a motion-guided crop, per frame (D1060)
+
+Before any second pass, the object-detection ROOT itself picks its pixels per
+frame ([D1060](../decisions/adr-1060-motion-guided-root-crop.md)): the full
+frame, or ONE crop derived in `detection-pipeline/motion-root-roi.ts`. It is
+automatic for every camera, and the crop **replaces** the full frame — the
+inference count does not change.
+
+| Rule | Value (constant) |
+| --- | --- |
+| ROI | union of the analyzer's merged motion subjects (D394) and the root's own boxes of the last `ROI_LIVE_BOX_MAX_AGE_MS` (2 s) |
+| margin | 15% of the union's long side, each side (`ROI_MARGIN_FRACTION`) |
+| shape | expanded to the root model's input aspect, shifted inside the frame |
+| minimum long side | the larger of 0.45x the frame's long side (`ROI_MIN_FRAME_FRACTION`) and 2x the model input (`ROI_MIN_DOWNSCALE`) |
+| full frame instead | crop long side above 0.6x the frame's (`ROI_MAX_FRAME_FRACTION`); no motion and no recent box; a forced full frame at least every 1 s per camera (`ROI_FORCED_FULL_INTERVAL_MS`) |
+
+The minimum is deliberately large: the int8 detector scores a person about
+300 px tall in its input at 0.09 and the same person at about 75 px at 0.65, so
+a native 1:1 crop made the replay worse. A 1080p main stream with a 640 model
+never fits the floor under the ceiling and keeps the full frame. The motion
+subjects reach the executor on `runPipeline.motionRegions`, only on the
+co-located `frameRef` path; the root's boxes are re-projected into frame space
+through the view geometry, exactly as a `crop-zone` root's are.
+
+Precedence: a `crop-zone` root (`package-detection`) always runs on its package
+zones and never on the motion crop. Each frame's choice rides the camera's
+`pipeline.trace` event as `rootSource` (`source: roi | full`, `reason:
+motion | no-motion | roi-too-large | forced-full | no-geometry`, and the crop).
+
 ### The second detector pass, and WHICH regions it runs on
 
 Motion is also the trigger for a second detector pass at native resolution

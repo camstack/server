@@ -30,6 +30,7 @@ import type {
   PipelineExecutionPlane,
   PipelineExecutionTrace,
   PipelineRunOptions,
+  RootInputSource,
   StepOutput,
 } from '@camstack/types'
 import { errMsg } from '@camstack/types'
@@ -209,6 +210,19 @@ function reprojectViewDetections(
       }
     }),
   }
+}
+
+/**
+ * The frame-space crop a motion-ROI decision (D1060) gives this root, if any:
+ * only a `roi` decision naming this root's step.
+ */
+function motionRoiCrop(
+  decision: RootInputSource | undefined,
+  stepId: string,
+): AbsoluteBbox | undefined {
+  if (decision?.source !== 'roi' || decision.stepId !== stepId || !decision.crop) return undefined
+  const { left, top, width, height } = decision.crop
+  return [left, top, left + width, top + height]
 }
 
 export interface RootInputView {
@@ -491,12 +505,22 @@ export class PipelineExecutor {
       // are re-projected back to full-frame coords below. A missing/degenerate
       // crop (no zones, benchmark, encode failure) falls back to full-frame —
       // mirrors the crop-roi child path (cropJpeg + transformBboxToImageSpace).
-      const rootCrop = rootStep.definition.extractMode === 'crop-zone' ? cropZoneBbox : undefined
+      //
+      // Motion-guided root crop (D1060): the provider's per-frame decision for
+      // the object-detection root. Precedence: a `crop-zone` root ALWAYS runs on
+      // its package zones and never on the motion ROI, whatever the decision
+      // names; the motion ROI needs a frame view (no JPEG-crop fallback — the
+      // provider only decides `roi` when a frame view exists).
+      const isCropZoneRoot = rootStep.definition.extractMode === 'crop-zone'
+      const motionCrop = isCropZoneRoot
+        ? undefined
+        : motionRoiCrop(runOpts?.rootInputSource, rootStep.stepId)
+      const rootCrop = isCropZoneRoot ? cropZoneBbox : motionCrop
       const rootView = rootInputViewProvider
         ? await rootInputViewProvider(rootStep, rootCrop)
         : null
       const cropPrep =
-        !rootView && rootCrop !== undefined
+        !rootView && isCropZoneRoot && rootCrop !== undefined
           ? await this.prepareCropZoneInput(
               rootCrop,
               fullFrameJpegProvider,

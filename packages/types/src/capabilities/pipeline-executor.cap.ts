@@ -719,6 +719,24 @@ export const pipelineExecutorCapability = {
          * PIXELS of the image this call carries. Absent ⇒ the root step runs.
          */
         suppliedRoot: SuppliedRootOutputSchema.optional(),
+        /**
+         * The motion analyzer's merged subjects (D394) for this camera, fresh,
+         * normalised to the frame (0..1). Feeds the motion-guided root crop
+         * (D1060): the executor picks per frame whether the object-detection
+         * root runs on the full frame or on a crop around them. Honoured only
+         * on the live `frame` plane with a `frameRef`. Absent or empty ⇒ no
+         * motion known ⇒ full frame.
+         */
+        motionRegions: z
+          .array(
+            z.object({
+              x: z.number(),
+              y: z.number(),
+              w: z.number(),
+              h: z.number(),
+            }),
+          )
+          .optional(),
       }),
       PipelineRunResultBridge,
       { kind: 'mutation' },

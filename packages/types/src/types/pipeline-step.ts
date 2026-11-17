@@ -441,6 +441,40 @@ export interface PipelineRunOptions {
    * `pipelineExecutor.runPipeline.suppliedRoot`): that step is not inferred.
    */
   readonly suppliedRoot?: SuppliedRootOutput
+  /**
+   * Motion-guided root crop (D1060): which pixels the object-detection root
+   * runs on for THIS frame. `roi` carries the frame-space crop; `full` keeps
+   * the full frame. Never applies to a `crop-zone` root, whose package-zone
+   * crop always wins. Absent ⇒ full frame.
+   */
+  readonly rootInputSource?: RootInputSource
+}
+
+/** Why the object-detection root ran on the pixels it ran on (D1060). */
+export type RootInputSourceReason =
+  /** A crop around the motion subjects and the recent root boxes. */
+  | 'motion'
+  /** Neither motion nor a recent root box: nothing to crop around. */
+  | 'no-motion'
+  /** The crop would exceed the ceiling fraction of the frame — too little magnification. */
+  | 'roi-too-large'
+  /** The per-camera periodic full frame. */
+  | 'forced-full'
+  /** Frame or model geometry unknown. */
+  | 'no-geometry'
+
+/** The root input source decided for one frame (D1060). Rides the `pipeline.trace` event. */
+export interface RootInputSource {
+  readonly stepId: string
+  readonly source: 'roi' | 'full'
+  readonly reason: RootInputSourceReason
+  /** Frame-space pixel crop, present iff `source === 'roi'`. */
+  readonly crop?: {
+    readonly left: number
+    readonly top: number
+    readonly width: number
+    readonly height: number
+  }
 }
 
 export interface StepTrace {
@@ -480,6 +514,8 @@ export interface PipelineExecutionTrace {
   readonly steps: readonly StepTrace[]
   readonly totalMs: number
   readonly detectionCount: number
+  /** Which pixels the object-detection root ran on for this frame (D1060). */
+  readonly rootSource?: RootInputSource
   // Index signature keeps this type assignable to `SystemEvent.data`
   // (Record<string, unknown>) so it can be used directly as the typed
   // payload for the `pipeline.trace` event category. Mirrors the pattern

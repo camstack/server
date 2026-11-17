@@ -115,6 +115,11 @@ import {
   pruneUnrunnableDetailSteps,
 } from './engine/step-utils.js'
 import { checkReplayPin, resolveTreeRoot } from './model-pin.js'
+import {
+  MOTION_ROI_ROOT_STEP_ID,
+  MotionRootRoiGovernor,
+  normalizedFirstLevelBoxes,
+} from './motion-root-roi.js'
 import { EngineProvisioner, type EngineProvisioningState } from './engine-provisioner.js'
 import {
   createRootFrameViewResolver,
@@ -719,6 +724,8 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
       warn: (message, extras) => this.log.warn(message, extras),
     },
   })
+  /** Per-camera motion-guided root crop state: forced-full cadence, recent root boxes (D1060). */
+  private readonly motionRootRoi = new MotionRootRoiGovernor()
   /** One line per camera when a cluster-scoped step starts running another model (D658). */
   private readonly clusterModelSwitchLog = new ClusterModelSwitchLog({
     info: (message, extras) => this.log.info(message, extras),
@@ -2818,6 +2825,32 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
         }
       }
     }
+    // Motion-guided root crop (D1060): which pixels the object-detection root
+    // runs on for THIS frame. Live frame plane only, with a frame view to cut
+    // from; a replay, a benchmark or a supplied root keep the full frame.
+    const motionRoiRoot =
+      runtimeFrameRef &&
+      input.plane === 'frame' &&
+      input.replay !== true &&
+      input.suppliedRoot === undefined &&
+      effectiveDeviceId > 0
+        ? effectiveTree.roots.find(
+            (r) => r.stepId === MOTION_ROI_ROOT_STEP_ID && r.definition.extractMode !== 'crop-zone',
+          )
+        : undefined
+    const motionRoiModel = motionRoiRoot?.definition.models.find(
+      (m) => m.id === motionRoiRoot.modelId,
+    )
+    const rootInputSource =
+      motionRoiModel !== undefined
+        ? this.motionRootRoi.decide({
+            deviceId: effectiveDeviceId,
+            now: Date.now(),
+            motion: input.motionRegions ?? [],
+            frame: { width: imageWidth, height: imageHeight },
+            modelInput: motionRoiModel.inputSize,
+          })
+        : undefined
     let executionSucceeded = false
     let execution: Awaited<ReturnType<PipelineExecutor['run']>>
     try {
@@ -2833,6 +2866,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
           plane: input.plane,
           occasion: input.replay === true ? 'replay' : 'live',
           ...(input.suppliedRoot !== undefined ? { suppliedRoot: input.suppliedRoot } : {}),
+          ...(rootInputSource !== undefined ? { rootInputSource } : {}),
         },
         nativeCropProvider,
         cropZoneBbox,
@@ -2842,7 +2876,16 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     } finally {
       frameViewResolver?.release(executionSucceeded ? 'success' : 'error')
     }
-    const { result, trace } = execution
+    const { result } = execution
+    if (rootInputSource !== undefined) {
+      // The root's own boxes stand in for the live tracks on the next frames.
+      this.motionRootRoi.noteBoxes(effectiveDeviceId, normalizedFirstLevelBoxes(result), Date.now())
+    }
+    // The per-camera trace says which pixels the root ran on (D1060).
+    const trace =
+      execution.trace && rootInputSource !== undefined
+        ? { ...execution.trace, rootSource: rootInputSource }
+        : execution.trace
 
     if (isRuntime) {
       // Runtime path mirrors the legacy `runFrame` behaviour: emit a
@@ -4178,6 +4221,7 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     }
     this.proxyUnsubs.delete(deviceId)
     this.deviceProxies.delete(deviceId)
+    this.motionRootRoi.forget(deviceId)
   }
 
   /**
