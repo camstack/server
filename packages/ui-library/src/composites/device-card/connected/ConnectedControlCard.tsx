@@ -1,10 +1,10 @@
-import type { ControlSetValueInput, ControlStatus } from '@camstack/types'
+import type { ControlSetValueInput } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useOptionalSystem, useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { formatControlDateTime } from '../../../lib/format-control-datetime'
 import { controlQuantityOf, numericControlDisplay } from '../../device-controls/control-panel'
 import { ControlCard } from '../scenes/control/ControlCard'
@@ -25,7 +25,6 @@ export function ConnectedControlCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -35,12 +34,11 @@ export function ConnectedControlCard({
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
   const slice = useDeviceStateSlice(dev?.control === undefined ? undefined : dev.state.control)
-  const { display, applyOptimisticAction } = useOptimisticSlice<ControlStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.control
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, card)
+  const send = reportedCommand(runCommand, card)
   const numeric = numericControlDisplay({
     quantity: controlQuantityOf(info?.sourceInfo?.quantity),
     display: info?.display,
@@ -64,7 +62,7 @@ export function ConnectedControlCard({
         ...card.actions,
         onSet: (value) => {
           const input: ControlSetValueInput | null = controlSetInput(display.kind, value, numeric)
-          if (input !== null) send({ value: input.value }, () => cap.setValue({ control: input }))
+          if (input !== null) send(() => cap.setValue({ control: input }))
         },
       }}
     />

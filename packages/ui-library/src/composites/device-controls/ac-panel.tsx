@@ -3,7 +3,7 @@ import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { type CSSProperties, type ReactNode } from 'react'
 import type { ClimateControlStatus, HvacMode } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
+import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { cn } from '../../lib/cn.js'
 import type { ControlPanelProps } from './types.js'
 import { climateOffersCooling } from './climate-offers-cooling.js'
@@ -71,7 +71,7 @@ export const KEYFRAMES = `
 }
 `
 
-export function AcPanel({ trpc, deviceId, optimistic }: ControlPanelProps): ReactNode {
+export function AcPanel({ trpc, deviceId }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability({
     trpc,
@@ -80,9 +80,8 @@ export function AcPanel({ trpc, deviceId, optimistic }: ControlPanelProps): Reac
     slice: (d) => d.state.climateControl,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<ClimateControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   if (cap === undefined) return null
   if (display === undefined) return null
@@ -115,7 +114,7 @@ export function AcPanel({ trpc, deviceId, optimistic }: ControlPanelProps): Reac
               e.stopPropagation()
               if (!busy && display.target !== null) {
                 const next = nextClimateTarget(display.target, -1, display)
-                applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
+                runCommand(() => cap.setTarget({ target: next }))
               }
             }}
             className={cn(
@@ -133,7 +132,7 @@ export function AcPanel({ trpc, deviceId, optimistic }: ControlPanelProps): Reac
               e.stopPropagation()
               if (!busy && display.target !== null) {
                 const next = nextClimateTarget(display.target, 1, display)
-                applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
+                runCommand(() => cap.setTarget({ target: next }))
               }
             }}
             className={cn(
@@ -155,7 +154,7 @@ export function AcPanel({ trpc, deviceId, optimistic }: ControlPanelProps): Reac
           e.stopPropagation()
           const mode = display.availableModes.find((m) => m === e.target.value)
           if (!busy && mode) {
-            applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
+            runCommand(() => cap.setMode({ mode }))
           }
         }}
         className={cn(

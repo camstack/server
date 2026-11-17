@@ -148,16 +148,6 @@ export function workloadActionLabel(
   }
 }
 
-/** The state an action moves the card to while the provider confirms; restart moves nothing. */
-export const WORKLOAD_ACTION_EFFECT: Readonly<Record<WorkloadAction, WorkloadState | null>> = {
-  start: 'starting',
-  stop: 'stopping',
-  restart: null,
-  pause: 'paused',
-  resume: 'running',
-  forceStop: 'stopping',
-}
-
 /**
  * Power on the scene: both start and stop are declared and the state is
  * known. The toggle answers only while the move it would make is allowed.

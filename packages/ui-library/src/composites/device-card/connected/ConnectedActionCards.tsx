@@ -1,9 +1,8 @@
-import type { AutomationControlStatus, ScriptRunnerStatus } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { AutomationCard, ButtonCard, ScriptCard } from '../scenes/action/ActionCards'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { sinceText } from './since-text'
@@ -26,7 +25,10 @@ export function ConnectedButtonCard({
     <ButtonCard
       orientation={orientation}
       showName={showName}
-      model={{ common: card.common, pressable: card.implements('button', 'press') }}
+      model={{
+        common: card.common,
+        pressable: card.implements('button', 'press'),
+      }}
       actions={{
         ...card.actions,
         onPress: () => {
@@ -42,7 +44,6 @@ export function ConnectedScriptCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -52,12 +53,11 @@ export function ConnectedScriptCard({
   const slice = useDeviceStateSlice(
     dev?.scriptRunner === undefined ? undefined : dev.state.scriptRunner,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<ScriptRunnerStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.scriptRunner
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, card)
+  const send = reportedCommand(runCommand, card)
   return (
     <ScriptCard
       orientation={orientation}
@@ -72,8 +72,8 @@ export function ConnectedScriptCard({
       }}
       actions={{
         ...card.actions,
-        onRun: () => send({ isRunning: true }, () => cap.run({})),
-        onStop: () => send({ isRunning: false }, () => cap.stop({})),
+        onRun: () => send(() => cap.run({})),
+        onStop: () => send(() => cap.stop({})),
       }}
     />
   )
@@ -87,7 +87,6 @@ export function ConnectedAutomationCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -97,12 +96,11 @@ export function ConnectedAutomationCard({
   const slice = useDeviceStateSlice(
     dev?.automationControl === undefined ? undefined : dev.state.automationControl,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<AutomationControlStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.automationControl
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, card)
+  const send = reportedCommand(runCommand, card)
   const has = (method: string): boolean => card.implements('automation-control', method)
   return (
     <AutomationCard
@@ -118,9 +116,8 @@ export function ConnectedAutomationCard({
       }}
       actions={{
         ...card.actions,
-        onEnabled: (enabled) =>
-          send({ enabled }, () => (enabled ? cap.enable({}) : cap.disable({}))),
-        onTrigger: () => send({}, () => cap.trigger({})),
+        onEnabled: (enabled) => send(() => (enabled ? cap.enable({}) : cap.disable({}))),
+        onTrigger: () => send(() => cap.trigger({})),
       }}
     />
   )

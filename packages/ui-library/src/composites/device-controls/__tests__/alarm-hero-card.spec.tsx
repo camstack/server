@@ -2,12 +2,10 @@
 /**
  * Tests for AlarmHeroCard / AlarmInlineControl — a rejected cap.arm()/
  * cap.disarm() must surface as a visible refusal, not a swallowed promise
- * (D630/Task 3), on BOTH surfaces, and a stale rejection must never roll
- * back a newer press's optimistic state.
+ * (D630/Task 3), on BOTH surfaces, and a stale rejection must never put an
+ * error over a newer press. The card shows the served slice only (D1061).
  *
- * Strategy: mock `useDeviceCapability` so we control the cap/slice returned;
- * `useOptimisticSlice` runs for REAL, so a rollback is asserted against the
- * actual hook, not a stub (mirrors optimistic-controls.test.tsx).
+ * Strategy: mock `useDeviceCapability` so we control the cap/slice returned.
  */
 import { selectOption } from '../../../testing/select-option'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
@@ -67,20 +65,20 @@ beforeEach(() => {
 })
 
 describe('AlarmHeroCard — arm refusal (D630)', () => {
-  it('surfaces the refusal message and rolls back the optimistic state', async () => {
+  it('surfaces the refusal message and keeps showing the served state', async () => {
     arm.mockRejectedValue(new Error('arm refused — open: Porch'))
-    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} optimistic={undefined} />)
+    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
 
     const stateGlyph = screen.getByTestId('alarm-state')
     expect(stateGlyph.getAttribute('data-state')).toBe('disarmed')
 
     fireEvent.click(screen.getByRole('button', { name: 'Away' }))
 
-    // Optimistic: immediately shows "arming"
-    expect(stateGlyph.getAttribute('data-state')).toBe('arming')
+    // The served slice decides the state (D1061): no client-side "arming".
+    expect(stateGlyph.getAttribute('data-state')).toBe('disarmed')
     expect(arm).toHaveBeenCalledWith({ mode: 'away' })
 
-    // After the rejection settles: error surfaces, state rolls back to the slice
+    // After the rejection settles: the error surfaces over the same slice
     await waitFor(() => {
       expect(screen.getByText('arm refused — open: Porch')).toBeTruthy()
     })
@@ -98,11 +96,11 @@ describe('AlarmHeroCard — arm refusal (D630)', () => {
       available: true,
     }
     disarm.mockRejectedValue(new Error('disarm refused — code required'))
-    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} optimistic={undefined} />)
+    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
 
     const stateGlyph = screen.getByTestId('alarm-state')
     fireEvent.click(screen.getByRole('button', { name: 'Disarm' }))
-    expect(stateGlyph.getAttribute('data-state')).toBe('disarming')
+    expect(stateGlyph.getAttribute('data-state')).toBe('armed_away')
 
     await waitFor(() => {
       expect(screen.getByText('disarm refused — code required')).toBeTruthy()
@@ -112,9 +110,7 @@ describe('AlarmHeroCard — arm refusal (D630)', () => {
 
   it('clears a stale error once a new slice arrives from the server', async () => {
     arm.mockRejectedValue(new Error('arm refused — open: Porch'))
-    const { rerender } = render(
-      <AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} optimistic={undefined} />,
-    )
+    const { rerender } = render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
 
     fireEvent.click(screen.getByRole('button', { name: 'Away' }))
     await waitFor(() => {
@@ -132,48 +128,43 @@ describe('AlarmHeroCard — arm refusal (D630)', () => {
         },
         available: true,
       }
-      rerender(
-        <AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} optimistic={undefined} />,
-      )
+      rerender(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     })
 
     expect(screen.queryByText('arm refused — open: Porch')).toBeNull()
   })
 
   it('does not render an error message before any refusal', () => {
-    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} optimistic={undefined} />)
+    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     expect(screen.queryByTestId('alarm-error')).toBeNull()
   })
 
-  it('a stale rejection does not roll back or error over a NEWER press', async () => {
+  it('a stale rejection does not put an error over a NEWER press', async () => {
     const first = deferred<void>()
     const second = deferred<void>()
     arm.mockImplementationOnce(() => first.promise).mockImplementationOnce(() => second.promise)
 
-    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} optimistic={undefined} />)
+    render(<AlarmHeroCard trpc={trpc} deviceId={1} features={undefined} />)
     const stateGlyph = screen.getByTestId('alarm-state')
 
-    // First press: Away — optimistic "arming", call #1 in flight.
+    // First press: Away — call #1 in flight.
     fireEvent.click(screen.getByRole('button', { name: 'Away' }))
-    expect(stateGlyph.getAttribute('data-state')).toBe('arming')
     expect(arm).toHaveBeenNthCalledWith(1, { mode: 'away' })
 
-    // Second press, before #1 settles: Home — supersedes #1. Still "arming"
-    // (same optimistic patch shape), but now call #2's business.
+    // Second press, before #1 settles: Home — supersedes #1.
     fireEvent.click(screen.getByRole('button', { name: 'Home' }))
-    expect(stateGlyph.getAttribute('data-state')).toBe('arming')
     expect(arm).toHaveBeenNthCalledWith(2, { mode: 'home' })
 
-    // Call #1 (stale) rejects. Must be a no-op: no rollback, no error.
+    // Call #1 (stale) rejects. Must be a no-op: no error.
     await act(async () => {
       first.reject(new Error('stale refusal — must be ignored'))
       await Promise.resolve()
       await Promise.resolve()
     })
-    expect(stateGlyph.getAttribute('data-state')).toBe('arming')
+    expect(stateGlyph.getAttribute('data-state')).toBe('disarmed')
     expect(screen.queryByTestId('alarm-error')).toBeNull()
 
-    // Call #2 (latest) rejects. THIS one rolls back and surfaces.
+    // Call #2 (latest) rejects. THIS one surfaces.
     await act(async () => {
       second.reject(new Error('arm refused — open: Porch'))
     })
@@ -187,9 +178,7 @@ describe('AlarmHeroCard — arm refusal (D630)', () => {
 describe('AlarmInlineControl — arm refusal (D630)', () => {
   it('surfaces a compact refusal badge that carries the message in its title', async () => {
     arm.mockRejectedValue(new Error('arm refused — open: Porch'))
-    render(
-      <AlarmInlineControl trpc={trpc} deviceId={1} features={undefined} optimistic={undefined} />,
-    )
+    render(<AlarmInlineControl trpc={trpc} deviceId={1} features={undefined} />)
 
     expect(screen.queryByTestId('alarm-inline-error')).toBeNull()
 

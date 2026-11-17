@@ -4,11 +4,11 @@
  * off through it — and `timed-run`, when the device binds it and its type and
  * role are offered one (D1033), is the switch's timer.
  */
-import { DeviceType, type SwitchStatus, timedRunLimitOf, timedRunMaxIn } from '@camstack/types'
+import { DeviceType, timedRunLimitOf, timedRunMaxIn } from '@camstack/types'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import type { SwitchTimerActions, SwitchTimerModel } from '../parts/switch-timer-model'
 import { sinceText } from './since-text'
 import type { CardCommonResult } from './use-card-common'
@@ -26,22 +26,20 @@ export interface SwitchPower extends SwitchTimerActions {
 
 export interface SwitchPowerInput {
   readonly deviceId: number
-  readonly optimistic: boolean
   readonly card: Pick<CardCommonResult, 'deviceType' | 'role' | 'fail' | 'succeed'>
 }
 
 const DEVICE_TYPES: ReadonlySet<string> = new Set(Object.values(DeviceType))
 const isDeviceType = (value: string): value is DeviceType => DEVICE_TYPES.has(value)
 
-export function useSwitchPower({ deviceId, optimistic, card }: SwitchPowerInput): SwitchPower {
+export function useSwitchPower({ deviceId, card }: SwitchPowerInput): SwitchPower {
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
   const slice = useDeviceStateSlice(dev?.switch === undefined ? undefined : dev.state.switch)
   const run = useDeviceStateSlice(dev?.timedRun === undefined ? undefined : dev.state.timedRun)
-  const { display, applyOptimisticAction } = useOptimisticSlice<SwitchStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.switch
   const timedRun = dev?.timedRun
   const limit =
@@ -63,8 +61,7 @@ export function useSwitchPower({ deviceId, optimistic, card }: SwitchPowerInput)
     on: display === undefined ? undefined : display.on,
     since: sinceText(display?.lastChangedAt, Date.now(), t) ?? null,
     timer,
-    onPower: (on) =>
-      reportedCommand(applyOptimisticAction, report)({ on }, () => cap?.setState({ on })),
+    onPower: (on) => reportedCommand(runCommand, report)(() => cap?.setState({ on })),
     onTimerStart: (minutes) =>
       void timedRun?.runFor({ duration: minutes, unit: 'min' }).then(card.succeed, card.fail),
     onTimerStop: () => void timedRun?.cancel({}).then(card.succeed, card.fail),

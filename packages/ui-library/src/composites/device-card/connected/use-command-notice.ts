@@ -1,12 +1,6 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useUiText } from '../../../contexts/ui-text'
-
-/** Applies a patch optimistically, runs the command, and reports a refusal. */
-export type OptimisticApply<T> = (
-  patch: Partial<T>,
-  run: () => PromiseLike<unknown> | undefined,
-  onError?: (error: unknown) => void,
-) => void
+import type { RunDeviceCommand } from '../../../hooks/use-device-command'
 
 export interface CommandNotice {
   /** Why the last command failed, for the card's reason line; null when it went through. */
@@ -22,7 +16,11 @@ export function useCommandNotice(): CommandNotice {
   const fail = useCallback(
     (error: unknown): void => {
       const reason = error instanceof Error ? error.message : String(error)
-      setNotice(t('uiLibrary.deviceCard.commandFailed', 'Command failed: {{reason}}', { reason }))
+      setNotice(
+        t('uiLibrary.deviceCard.commandFailed', 'Command failed: {{reason}}', {
+          reason,
+        }),
+      )
     },
     [t],
   )
@@ -31,18 +29,18 @@ export function useCommandNotice(): CommandNotice {
 }
 
 /**
- * An optimistic command whose outcome lands on the card: a refusal puts its
- * reason on the reason line, the next success clears it.
+ * A command whose outcome lands on the card: a refusal puts its reason on the
+ * reason line, the next success clears it. The card shows the slice the hub
+ * serves, which holds the commanded value until the device confirms it (D1061).
  */
-export function reportedCommand<T>(
-  apply: OptimisticApply<T>,
+export function reportedCommand(
+  run: RunDeviceCommand,
   report: Pick<CommandNotice, 'fail' | 'succeed'>,
-): (patch: Partial<T>, run: () => PromiseLike<unknown> | undefined) => void {
-  return (patch, run) =>
-    apply(
-      patch,
+): (command: () => PromiseLike<unknown> | undefined) => void {
+  return (command) =>
+    run(
       () =>
-        Promise.resolve(run()).then((result) => {
+        Promise.resolve(command()).then((result) => {
           report.succeed()
           return result
         }),
@@ -83,8 +81,7 @@ export function presentCommand<I, R>(
 }
 
 /**
- * A plain command whose outcome lands on the card, for a field the card shows
- * as reported (no optimistic patch): a refusal names its reason, a success
+ * A plain command whose outcome lands on the card, awaited by the caller: a refusal names its reason, a success
  * clears it. The promise tells the caller whether it went through (true) or
  * failed (false); it never rejects.
  */

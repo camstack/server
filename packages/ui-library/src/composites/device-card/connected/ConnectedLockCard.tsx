@@ -1,10 +1,10 @@
-import { DeviceFeature, type LockControlStatus } from '@camstack/types'
+import { DeviceFeature } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useLockDoorSensor } from '../../../hooks/use-lock-door-sensor'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { LockCard } from '../scenes/lock/LockCard'
 import { coarseDuration } from './coarse-duration'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -21,7 +21,6 @@ export function ConnectedLockCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -32,12 +31,11 @@ export function ConnectedLockCard({
   const slice = useDeviceStateSlice(
     dev?.lockControl === undefined ? undefined : dev.state.lockControl,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<LockControlStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.lockControl
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, {
+  const send = reportedCommand(runCommand, {
     fail: card.fail,
     succeed: card.succeed,
   })
@@ -60,11 +58,11 @@ export function ConnectedLockCard({
       }}
       actions={{
         ...card.actions,
-        onLock: () => send({ state: 'locking' }, () => cap.lock({})),
-        onUnlock: () => send({ state: 'unlocking' }, () => cap.unlock({})),
+        onLock: () => send(() => cap.lock({})),
+        onUnlock: () => send(() => cap.unlock({})),
         onOpen: () => {
           const open = cap.open
-          if (open !== undefined) send({}, () => open({}))
+          if (open !== undefined) send(() => open({}))
         },
       }}
     />

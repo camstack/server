@@ -162,7 +162,7 @@ afterEach(cleanup)
 describe('a heat pump', () => {
   it('draws the readings, the compressor and the pump’s own draw in the corner', () => {
     hub.hpSlice = HEAT_PUMP
-    render(<ConnectedHeatPumpCard deviceId={1} optimistic={false} />)
+    render(<ConnectedHeatPumpCard deviceId={1} />)
     expect(screen.getByTestId('dc-hp-outdoor').textContent).toContain('8.3°')
     expect(screen.getByTestId('dc-hp-cop').textContent).toContain('3.9')
     expect(screen.getByTestId('dc-hp-compressor').textContent).toContain('45%')
@@ -171,7 +171,7 @@ describe('a heat pump', () => {
 
   it('offers all four system modes the gateway declares, and writes each through its method', async () => {
     hub.hpSlice = HEAT_PUMP
-    render(<ConnectedHeatPumpCard deviceId={1} optimistic={false} />)
+    render(<ConnectedHeatPumpCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-hp-system-silent'))
     await vi.waitFor(() => expect(hub.hp.setSilentMode).toHaveBeenCalledWith({ mode: 'on' }))
     fireEvent.click(screen.getByTestId('dc-hp-system-away'))
@@ -189,7 +189,7 @@ describe('a heat pump', () => {
     hub.methods = {
       'heat-pump-control': ['setAwayMode', 'setHolidayMode', 'setAdditionalHeaterMode'],
     }
-    render(<ConnectedHeatPumpCard deviceId={1} optimistic={false} />)
+    render(<ConnectedHeatPumpCard deviceId={1} />)
     expect(screen.queryByTestId('dc-hp-system-silent')).toBeNull()
     expect(screen.queryByTestId('dc-hp-system-away')).toBeNull()
     expect(screen.queryByTestId('dc-hp-system-holiday')).toBeNull()
@@ -198,7 +198,7 @@ describe('a heat pump', () => {
 
   it('sets a heating circuit’s mode and the hot water’s level through their methods', async () => {
     hub.hpSlice = HEAT_PUMP
-    render(<ConnectedHeatPumpCard deviceId={1} optimistic={false} />)
+    render(<ConnectedHeatPumpCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-hp-circuit-hc1'))
     fireEvent.click(screen.getByRole('radio', { name: 'Manual' }))
     await vi.waitFor(() =>
@@ -220,7 +220,7 @@ describe('a heat pump', () => {
   it('offers no circuit picker whose method the binding does not implement', () => {
     hub.hpSlice = HEAT_PUMP
     hub.methods = { 'heat-pump-control': ['setSilentMode'] }
-    render(<ConnectedHeatPumpCard deviceId={1} optimistic={false} />)
+    render(<ConnectedHeatPumpCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-hp-circuit-hc1'))
     expect(screen.queryByRole('radio', { name: 'Manual' })).toBeNull()
     fireEvent.click(screen.getByTestId('dc-hp-circuit-dhw1'))
@@ -236,23 +236,23 @@ describe('a heat pump', () => {
 describe('a water heater', () => {
   it('steps the target and stops at its maximum', async () => {
     hub.whSlice = { ...WATER, targetTemp: 59 }
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     fireEvent.click(screen.getByRole('button', { name: 'Raise target' }))
     await vi.waitFor(() => expect(hub.wh.setTargetTemp).toHaveBeenCalledWith({ temp: 60 }))
     cleanup()
     hub.whSlice = { ...WATER, targetTemp: 60 }
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     expect(screen.getByRole('button', { name: 'Raise target' }).hasAttribute('disabled')).toBe(true)
   })
 
   it('turns off through the off mode and back on in the last mode it ran', async () => {
     hub.whSlice = WATER
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-wh-power'))
     await vi.waitFor(() => expect(hub.wh.setOperationMode).toHaveBeenCalledWith({ mode: 'off' }))
     cleanup()
     hub.whSlice = { ...WATER, operationMode: 'off' }
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-wh-power'))
     await vi.waitFor(() =>
       expect(hub.wh.setOperationMode).toHaveBeenCalledWith({ mode: 'performance' }),
@@ -261,24 +261,24 @@ describe('a water heater', () => {
 
   it('toggles away, and draws no away button when the device has none', async () => {
     hub.whSlice = WATER
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-wh-away'))
     await vi.waitFor(() => expect(hub.wh.setAway).toHaveBeenCalledWith({ on: true }))
     cleanup()
     hub.whSlice = { ...WATER, away: null }
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     expect(screen.queryByTestId('dc-wh-away')).toBeNull()
   })
 
   it('has no power button when its modes cannot switch it off', () => {
     hub.whSlice = { ...WATER, availableModes: ['eco', 'performance'] }
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     expect(screen.queryByTestId('dc-wh-power')).toBeNull()
   })
 
   it('keeps the mode menu open when no mode is reported and nothing can switch it off', () => {
     hub.whSlice = { ...WATER, availableModes: ['eco', 'performance'], operationMode: null }
-    render(<ConnectedWaterHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedWaterHeaterCard deviceId={1} />)
     expect(screen.queryByTestId('dc-wh-power')).toBeNull()
     expect(screen.getByTestId('dc-wh-mode').hasAttribute('disabled')).toBe(false)
   })

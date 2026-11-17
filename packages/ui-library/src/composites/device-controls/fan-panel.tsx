@@ -3,18 +3,12 @@ import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import type { FanControlStatus } from '@camstack/types'
 import type { ControlPanelProps } from './types'
 
-export function FanPanel({
-  trpc,
-  deviceId,
-  features,
-  layout,
-  optimistic,
-}: ControlPanelProps): ReactNode {
+export function FanPanel({ trpc, deviceId, features, layout }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<
     {
@@ -34,9 +28,8 @@ export function FanPanel({
         | undefined,
     slice: (d) => d.state.fanControl,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<FanControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   if (display === undefined) return null
   const busy = !available
   const feats = features ?? []
@@ -62,8 +55,7 @@ export function FanPanel({
             onChange={(e) => {
               const raw = Number(e.target.value)
               const pct = Math.min(100, Math.max(0, Math.round(raw / step) * step))
-              if (!busy)
-                applyOptimisticAction({ speed: pct }, () => cap?.setPercentage({ speed: pct }))
+              if (!busy) runCommand(() => cap?.setPercentage({ speed: pct }))
             }}
           />
           <span className="tabular-nums w-8 text-right">{display.speed ?? '—'}%</span>
@@ -78,7 +70,7 @@ export function FanPanel({
             onChange={(e) => {
               const preset = e.target.value
               if (!busy && preset) {
-                applyOptimisticAction({ preset }, () => cap?.setPreset({ preset }))
+                runCommand(() => cap?.setPreset({ preset }))
               }
             }}
             className="bg-surface border border-border rounded px-1 py-0.5"

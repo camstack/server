@@ -219,7 +219,7 @@ describe('the energy system card', () => {
 
   it('renders the scene with the storage from the model and no battery corner', () => {
     hub.slice = FULL
-    render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
+    render(<ConnectedEnergyCard deviceId={1} />)
     expect(screen.getByText('Charging · 74%')).toBeTruthy()
     expect(screen.getAllByTestId('dc-energy-today')[0]?.textContent).toContain('18.4 kWh')
     expect(screen.queryByText('19%')).toBeNull()
@@ -227,7 +227,7 @@ describe('the energy system card', () => {
 
   it('every total of today is its own pill, and each names its unit', () => {
     hub.slice = FULL
-    render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
+    render(<ConnectedEnergyCard deviceId={1} />)
     const chips = screen.getAllByTestId('dc-energy-today-chip')
     expect(chips.map((chip) => chip.textContent)).toEqual([
       'Produced18.4 kWh',
@@ -246,7 +246,7 @@ describe('the energy system card', () => {
 
   it('mounts the primary trend of THIS device under the readings', () => {
     hub.slice = FULL
-    render(<ConnectedEnergyCard deviceId={42} optimistic={false} />)
+    render(<ConnectedEnergyCard deviceId={42} />)
     expect(screen.getByTestId('dc-primary-trend').getAttribute('data-device-id')).toBe('42')
   })
 
@@ -265,7 +265,7 @@ describe('the energy system card', () => {
         healthPct: 96,
       },
     }
-    render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
+    render(<ConnectedEnergyCard deviceId={1} />)
     expect(screen.queryByText('Charging · 74%')).toBeNull()
     const chips = screen.getAllByTestId('dc-energy-today-chip')
     expect(chips.map((chip) => chip.textContent)).toContain('Charge74%')
@@ -290,12 +290,12 @@ describe('the energy system card', () => {
         healthPct: null,
       },
     }
-    render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
+    render(<ConnectedEnergyCard deviceId={1} />)
     expect(screen.queryByTestId('dc-energy-today')).toBeNull()
   })
 
   it('draws nothing before the cap answers', () => {
-    const { container } = render(<ConnectedEnergyCard deviceId={1} optimistic={false} />)
+    const { container } = render(<ConnectedEnergyCard deviceId={1} />)
     expect(container.innerHTML).toBe('')
   })
 })

@@ -114,12 +114,13 @@ describe('PetFeederInlineControl', () => {
     expect(cancelFeed).toHaveBeenCalledWith({})
   })
 
-  it('shows Cancel the moment Feed is tapped, before the device reports it', () => {
+  it('sends the feed and keeps the served state until a slice says it is feeding (D1061)', () => {
     feed.mockReturnValue(new Promise(() => {}))
     render(<PetFeederInlineControl trpc={trpc} deviceId={1} features={[]} />)
     fireEvent.click(screen.getByLabelText('Feed now'))
-    expect(screen.queryByLabelText('Feed now')).toBeNull()
-    expect(screen.getByLabelText('Cancel feed')).toBeTruthy()
+    expect(feed).toHaveBeenCalled()
+    expect(screen.getByLabelText('Feed now')).toBeTruthy()
+    expect(screen.queryByLabelText('Cancel feed')).toBeNull()
   })
 
   it('disables the Feed button when not available', () => {

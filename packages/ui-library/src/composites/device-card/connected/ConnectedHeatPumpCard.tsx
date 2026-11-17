@@ -1,9 +1,9 @@
-import { type HeatPumpStatus, heatPumpInstantCop } from '@camstack/types'
+import { heatPumpInstantCop } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import type { HeatPumpSystemModeId } from '../scenes/heat-pump/model'
 import { HeatPumpCard } from '../scenes/heat-pump/HeatPumpCard'
 import type { CardCommon } from '../shell/model'
@@ -25,33 +25,6 @@ const SYSTEM_METHOD = {
   holiday: 'setHolidayMode',
 } as const satisfies Readonly<Record<HeatPumpSystemModeId, string>>
 
-/** Writes one system mode into the slice's `system`, for the optimistic patch. */
-function withSystemMode(
-  system: HeatPumpStatus['system'],
-  id: HeatPumpSystemModeId,
-  value: string,
-): HeatPumpStatus['system'] {
-  const setting = system[id]
-  return setting === null ? system : { ...system, [id]: { ...setting, value } }
-}
-
-/** Writes one circuit's mode / level into the slice's `circuits`, for the optimistic patch. */
-function withCircuit(
-  circuits: HeatPumpStatus['circuits'],
-  circuitId: string,
-  kind: 'mode' | 'level',
-  value: string,
-): HeatPumpStatus['circuits'] {
-  return circuits.map((c) => {
-    if (c.id !== circuitId) return c
-    if (kind === 'level')
-      return c.temperatureLevel === null
-        ? c
-        : { ...c, temperatureLevel: { ...c.temperatureLevel, value } }
-    return c.operationMode === null ? c : { ...c, operationMode: { ...c.operationMode, value } }
-  })
-}
-
 /**
  * A heat pump (`heat-pump-status`): what it reports, and through
  * `heat-pump-control` each circuit's mode / hot-water level and the four
@@ -62,7 +35,6 @@ export function ConnectedHeatPumpCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -72,12 +44,14 @@ export function ConnectedHeatPumpCard({
   const slice = useDeviceStateSlice(
     dev?.heatPumpStatus === undefined ? undefined : dev.state.heatPumpStatus,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<HeatPumpStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   if (dev?.heatPumpStatus === undefined || display === undefined) return null
   const control = dev.heatPumpControl
-  const send = reportedCommand(applyOptimisticAction, { fail: card.fail, succeed: card.succeed })
+  const send = reportedCommand(runCommand, {
+    fail: card.fail,
+    succeed: card.succeed,
+  })
   const has = (method: string): boolean => card.implements('heat-pump-control', method)
   const circuits = display.circuits.map((c) => {
     const view = heatPumpCircuitView(c, t)
@@ -118,7 +92,7 @@ export function ConnectedHeatPumpCard({
           if (control === undefined) return
           const circuit = display.circuits.find((c) => c.id === circuitId)
           if (circuit === undefined) return
-          send({ circuits: withCircuit(display.circuits, circuitId, kind, value) }, () =>
+          send(() =>
             kind === 'level'
               ? control.setDhwTemperatureLevel({ circuitId, level: value })
               : circuit.kind === 'dhw'
@@ -128,9 +102,7 @@ export function ConnectedHeatPumpCard({
         },
         onSystemMode: (id, value) => {
           if (control === undefined) return
-          send({ system: withSystemMode(display.system, id, value) }, () =>
-            control[SYSTEM_METHOD[id]]({ mode: value }),
-          )
+          send(() => control[SYSTEM_METHOD[id]]({ mode: value }))
         },
       }}
     />

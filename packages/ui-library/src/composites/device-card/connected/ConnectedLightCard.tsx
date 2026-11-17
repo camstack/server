@@ -30,13 +30,12 @@ export function ConnectedLightCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
-  const power = useSwitchPower({ deviceId, optimistic, card })
+  const power = useSwitchPower({ deviceId, card })
   const brightness = useDeviceStateSlice(
     dev?.brightness === undefined ? undefined : dev.state.brightness,
   )

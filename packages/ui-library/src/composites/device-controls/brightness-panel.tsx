@@ -1,18 +1,13 @@
 import { Slider } from '../../primitives/slider'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
 import type { BrightnessStatus } from '@camstack/types'
 import type { ControlPanelProps } from './types'
 
-export function BrightnessPanel({
-  trpc,
-  deviceId,
-  layout,
-  optimistic,
-}: ControlPanelProps): ReactNode {
+export function BrightnessPanel({ trpc, deviceId, layout }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<
     { setBrightness: (i: { level: number }) => Promise<void> },
@@ -24,9 +19,8 @@ export function BrightnessPanel({
       d.brightness as { setBrightness: (i: { level: number }) => Promise<void> } | undefined,
     slice: (d) => d.state.brightness,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<BrightnessStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   if (display === undefined) return null
   const busy = !available
   return (
@@ -47,7 +41,7 @@ export function BrightnessPanel({
         disabled={busy}
         onChange={(e) => {
           const pct = Number(e.target.value)
-          if (!busy) applyOptimisticAction({ level: pct }, () => cap?.setBrightness({ level: pct }))
+          if (!busy) runCommand(() => cap?.setBrightness({ level: pct }))
         }}
       />
       <span className="tabular-nums w-8 text-right">{display.level}%</span>

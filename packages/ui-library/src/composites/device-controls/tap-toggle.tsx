@@ -9,8 +9,8 @@ import { cn } from '../../lib/cn'
  * slide-to-confirm is reserved for safety-gated actions (lock) ONLY. This
  * component must NEVER be built on `SlideToggle` — a single tap flips state.
  *
- * Presentational: the caller owns the cap mutation + optimistic update via
- * `onToggle`. Mirrors the `SwitchPanel` button treatment at hero scale.
+ * Presentational: the caller owns the cap mutation via `onToggle`; the state
+ * shown is the served slice. Mirrors the `SwitchPanel` button treatment at hero scale.
  */
 export interface TapToggleProps {
   readonly on: boolean

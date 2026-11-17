@@ -4,11 +4,11 @@ import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { Pause, Play } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
+import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { deriveMediaPlayerView } from '@camstack/types'
 import { cn } from '../../lib/cn.js'
 import type { ControlPanelProps } from './types.js'
-import type { MediaPlayerStatus, MediaPlayerState, MediaPlayerRepeat } from '@camstack/types'
+import type { MediaPlayerState, MediaPlayerRepeat } from '@camstack/types'
 
 /**
  * Exhaustive colour map — one entry per MediaPlayerState.
@@ -65,7 +65,6 @@ export function MediaPlayerPanel({
   deviceId,
   features,
   layout,
-  optimistic,
 }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability({
@@ -75,9 +74,8 @@ export function MediaPlayerPanel({
     slice: (d) => d.state.mediaPlayer,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<MediaPlayerStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   if (display === undefined) return null
   const declared = deriveMediaPlayerView(display, features, {})
@@ -119,9 +117,9 @@ export function MediaPlayerPanel({
             e.stopPropagation()
             if (busy) return
             if (action === 'play') {
-              applyOptimisticAction({ state: 'playing' }, () => cap?.play({}))
+              runCommand(() => cap?.play({}))
             } else {
-              applyOptimisticAction({ state: 'paused' }, () => cap?.pause({}))
+              runCommand(() => cap?.pause({}))
             }
           }}
           className={cn(
@@ -183,8 +181,7 @@ export function MediaPlayerPanel({
                 disabled={busy}
                 onChange={(e) => {
                   const volumeLevel = Number(e.target.value)
-                  if (!busy)
-                    applyOptimisticAction({ volumeLevel }, () => cap?.setVolume({ volumeLevel }))
+                  if (!busy) runCommand(() => cap?.setVolume({ volumeLevel }))
                 }}
               />
               <span className="tabular-nums w-8 text-right">
@@ -207,7 +204,7 @@ export function MediaPlayerPanel({
                 e.stopPropagation()
                 if (!busy) {
                   const muted = display.isMuted === null ? true : !display.isMuted
-                  applyOptimisticAction({ isMuted: muted }, () => cap?.setMute({ muted }))
+                  runCommand(() => cap?.setMute({ muted }))
                 }
               }}
               className={cn(
@@ -233,7 +230,7 @@ export function MediaPlayerPanel({
                 onChange={(e) => {
                   const source = e.target.value
                   if (!busy && source) {
-                    applyOptimisticAction({ source }, () => cap?.selectSource({ source }))
+                    runCommand(() => cap?.selectSource({ source }))
                   }
                 }}
                 className="rounded border border-border bg-surface px-1 py-0.5"
@@ -260,7 +257,7 @@ export function MediaPlayerPanel({
                 e.stopPropagation()
                 if (!busy && display.shuffle !== null) {
                   const shuffle = !display.shuffle
-                  applyOptimisticAction({ shuffle }, () => cap?.setShuffle({ shuffle }))
+                  runCommand(() => cap?.setShuffle({ shuffle }))
                 }
               }}
               className={cn(
@@ -286,7 +283,7 @@ export function MediaPlayerPanel({
                 onChange={(e) => {
                   const v = e.target.value
                   if (!busy && isRepeat(v)) {
-                    applyOptimisticAction({ repeat: v }, () => cap?.setRepeat({ repeat: v }))
+                    runCommand(() => cap?.setRepeat({ repeat: v }))
                   }
                 }}
                 className="rounded border border-border bg-surface px-1 py-0.5"

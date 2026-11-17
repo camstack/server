@@ -4,12 +4,12 @@
 
 # Guards
 
-251 repository guards: 246 in `scripts/`,
+252 repository guards: 247 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (241)
+## Enforced by CI checks (242)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -174,6 +174,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-third-party-products.ts` | Third-party product names — name the mechanism. |
 | `scripts/check-no-token-file-lookup.ts` | No tool looks for a specific token file: the `camstack login` session is the credential. |
 | `scripts/check-no-tsc6-typecheck.ts` | TypeScript 7 (tsgo) is the only type-check engine (D832). No TS 6 type-check path comes back. |
+| `scripts/check-no-ui-optimism.ts` | No UI code patches what a control shows (D1061). |
 | `scripts/check-notification-tap-targets.ts` | A notification's tap URL lands on a page that PARSES it. |
 | `scripts/check-npm-orphan-packages.ts` | A published package whose source left the workspace must be DEPRECATED, not merely forgotten. |
 | `scripts/check-object-media-scope-required.ts` | an `object` media read MUST require NcEventMediaScope. |

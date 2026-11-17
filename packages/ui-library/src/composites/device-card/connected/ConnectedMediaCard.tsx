@@ -1,9 +1,9 @@
-import { DeviceFeature, type MediaPlayerStatus } from '@camstack/types'
+import { DeviceFeature } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { MediaPlayerCard } from '../scenes/media/MediaPlayerCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import {
@@ -27,7 +27,6 @@ export function ConnectedMediaCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -37,13 +36,12 @@ export function ConnectedMediaCard({
   const slice = useDeviceStateSlice(
     dev?.mediaPlayer === undefined ? undefined : dev.state.mediaPlayer,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<MediaPlayerStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.mediaPlayer
   if (cap === undefined || display === undefined) return null
   const report = { fail: card.fail, succeed: card.succeed }
-  const send = reportedCommand(applyOptimisticAction, report)
+  const send = reportedCommand(runCommand, report)
   const call = reportedCall(report)
   const features = card.features
   const declares = (f: DeviceFeature): boolean => features.includes(f)
@@ -95,36 +93,28 @@ export function ConnectedMediaCard({
       actions={{
         ...card.actions,
         onPower: (next) =>
-          send({ state: next ? 'on' : 'off' }, () =>
+          send(() =>
             next ? command(cap.turnOn, 'turnOn')({}) : command(cap.turnOff, 'turnOff')({}),
           ),
         onVolumeUp: () => stepVolume(true),
         onVolumeDown: () => stepVolume(false),
-        onVolume: (volumeLevel) =>
-          send({ volumeLevel, isMuted: false }, () =>
-            command(cap.setVolume, 'setVolume')({ volumeLevel }),
-          ),
+        onVolume: (volumeLevel) => send(() => command(cap.setVolume, 'setVolume')({ volumeLevel })),
         onMute: (muted) =>
           volume?.muteReadback === true
-            ? send({ isMuted: muted }, () => command(cap.setMute, 'setMute')({ muted }))
+            ? send(() => command(cap.setMute, 'setMute')({ muted }))
             : void call(() => command(cap.setMute, 'setMute')({ muted })),
-        onSource: (source) =>
-          send({ source }, () => command(cap.selectSource, 'selectSource')({ source })),
+        onSource: (source) => send(() => command(cap.selectSource, 'selectSource')({ source })),
         onSeek: (sec) => {
           const position = Math.round(sec * 1000)
-          send({ position, positionUpdatedAt: Date.now() }, () =>
-            command(cap.seek, 'seek')({ position }),
-          )
+          send(() => command(cap.seek, 'seek')({ position }))
         },
-        onPlay: () => send({ state: 'playing' }, () => cap.play({})),
-        onPause: () => send({ state: 'paused' }, () => cap.pause({})),
+        onPlay: () => send(() => cap.play({})),
+        onPause: () => send(() => cap.pause({})),
         onStop: () => void call(() => command(cap.stop, 'stop')({})),
         onNext: () => void call(() => command(cap.next, 'next')({})),
         onPrevious: () => void call(() => command(cap.previous, 'previous')({})),
-        onShuffle: (on) =>
-          send({ shuffle: on }, () => command(cap.setShuffle, 'setShuffle')({ shuffle: on })),
-        onRepeat: (repeat) =>
-          send({ repeat }, () => command(cap.setRepeat, 'setRepeat')({ repeat })),
+        onShuffle: (on) => send(() => command(cap.setShuffle, 'setShuffle')({ shuffle: on })),
+        onRepeat: (repeat) => send(() => command(cap.setRepeat, 'setRepeat')({ repeat })),
       }}
     />
   )

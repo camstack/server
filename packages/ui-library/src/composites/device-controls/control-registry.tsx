@@ -79,8 +79,6 @@ export interface DeviceControlProps {
   readonly trpc: UseDeviceProxyTrpc
   readonly deviceId: number
   readonly features: readonly string[] | undefined
-  /** Enable optimistic UI mode (default: true). Set to false to disable. */
-  readonly optimistic?: boolean
 }
 
 export interface DeviceTypeControl {

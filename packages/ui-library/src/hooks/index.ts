@@ -21,6 +21,8 @@ export type {
   UseDeviceCapabilityResult,
 } from './use-device-capability'
 export { useDeviceCapability } from './use-device-capability'
+export type { RunDeviceCommand } from './use-device-command'
+export { useDeviceCommand } from './use-device-command'
 export {
   useLockDoorSensor,
   type LockDoorSensor,
@@ -77,8 +79,6 @@ export { useIsMidWidth, useIsMobile, useIsPhone } from './use-is-mobile'
 export type { LiveBuffer } from './use-live-buffer'
 export { useLiveBuffer } from './use-live-buffer'
 export { type LiveEventCallback, useLiveEvent } from './use-live-event'
-export type { UseOptimisticSliceOptions, UseOptimisticSliceResult } from './use-optimistic-slice'
-export { useOptimisticSlice } from './use-optimistic-slice'
 export type { PTZDirection, PTZTrpcProxy, UsePTZOptions, UsePTZResult } from './use-ptz'
 export { usePTZ } from './use-ptz'
 export {

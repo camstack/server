@@ -1,9 +1,8 @@
-import type { LawnMowerControlStatus, VacuumControlStatus } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { RobotCard } from '../scenes/robot/RobotCard'
 import type { CardCommon } from '../shell/model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -25,7 +24,6 @@ export function ConnectedVacuumCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -35,13 +33,12 @@ export function ConnectedVacuumCard({
   const slice = useDeviceStateSlice(
     dev?.vacuumControl === undefined ? undefined : dev.state.vacuumControl,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<VacuumControlStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.vacuumControl
   if (cap === undefined || display === undefined) return null
   const report = { fail: card.fail, succeed: card.succeed }
-  const send = reportedCommand(applyOptimisticAction, report)
+  const send = reportedCommand(runCommand, report)
   const call = reportedCall(report)
   const speeds = display.availableFanSpeeds
   const has = (method: string): boolean => card.implements('vacuum-control', method)
@@ -68,12 +65,12 @@ export function ConnectedVacuumCard({
       }}
       actions={{
         ...card.actions,
-        onStart: () => send({ state: 'cleaning' }, () => cap.start({})),
-        onPause: () => send({ state: 'paused' }, () => cap.pause({})),
-        onDock: () => send({ state: 'returning' }, () => cap.returnToBase({})),
-        onStop: () => send({ state: 'idle' }, () => cap.stop({})),
+        onStart: () => send(() => cap.start({})),
+        onPause: () => send(() => cap.pause({})),
+        onDock: () => send(() => cap.returnToBase({})),
+        onStop: () => send(() => cap.stop({})),
         onLocate: () => void call(() => cap.locate({})),
-        onSuction: (speed) => send({ fanSpeed: speed }, () => cap.setFanSpeed({ speed })),
+        onSuction: (speed) => send(() => cap.setFanSpeed({ speed })),
       }}
     />
   )
@@ -84,7 +81,6 @@ export function ConnectedMowerCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -94,13 +90,12 @@ export function ConnectedMowerCard({
   const slice = useDeviceStateSlice(
     dev?.lawnMowerControl === undefined ? undefined : dev.state.lawnMowerControl,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<LawnMowerControlStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.lawnMowerControl
   if (cap === undefined || display === undefined) return null
   const report = { fail: card.fail, succeed: card.succeed }
-  const send = reportedCommand(applyOptimisticAction, report)
+  const send = reportedCommand(runCommand, report)
   const call = reportedCall(report)
   const code = display.currentCodeLabel
   const has = (method: string): boolean => card.implements('lawn-mower-control', method)
@@ -128,8 +123,8 @@ export function ConnectedMowerCard({
       }}
       actions={{
         ...card.actions,
-        onStart: () => send({ activity: 'mowing' }, () => cap.startMowing({})),
-        onPause: () => send({ activity: 'paused' }, () => cap.pause({})),
+        onStart: () => send(() => cap.startMowing({})),
+        onPause: () => send(() => cap.pause({})),
         // No `returning` activity in the cap: the mower reports docked only once it is.
         onDock: () => void call(() => cap.dock({})),
         onStop: noop,

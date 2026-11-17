@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { Lock, LockOpen, DoorOpen } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useUiText } from '../../contexts/ui-text'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import type { LockControlStatus, LockState } from '@camstack/types'
 import { DeviceFeature } from '@camstack/types'
@@ -50,12 +50,30 @@ type GlyphConfig = {
 }
 
 const LOCK_STATE_GLYPH = {
-  locked: { colorClass: 'border-success/30 bg-success/10 text-success', icon: 'locked' },
-  locking: { colorClass: 'border-success/30 bg-success/10 text-success', icon: 'locked' },
-  unlocked: { colorClass: 'border-warning/30 bg-warning/10 text-warning', icon: 'open' },
-  unlocking: { colorClass: 'border-warning/30 bg-warning/10 text-warning', icon: 'open' },
-  jammed: { colorClass: 'border-danger/30 bg-danger/10 text-danger', icon: 'locked' },
-  'door-open': { colorClass: 'border-warning/30 bg-warning/10 text-warning', icon: 'open' },
+  locked: {
+    colorClass: 'border-success/30 bg-success/10 text-success',
+    icon: 'locked',
+  },
+  locking: {
+    colorClass: 'border-success/30 bg-success/10 text-success',
+    icon: 'locked',
+  },
+  unlocked: {
+    colorClass: 'border-warning/30 bg-warning/10 text-warning',
+    icon: 'open',
+  },
+  unlocking: {
+    colorClass: 'border-warning/30 bg-warning/10 text-warning',
+    icon: 'open',
+  },
+  jammed: {
+    colorClass: 'border-danger/30 bg-danger/10 text-danger',
+    icon: 'locked',
+  },
+  'door-open': {
+    colorClass: 'border-warning/30 bg-warning/10 text-warning',
+    icon: 'open',
+  },
 } satisfies Record<LockState, GlyphConfig>
 
 interface LockGlyphProps {
@@ -187,12 +205,7 @@ function OpenButton({ busy, onOpen }: OpenButtonProps): ReactNode {
  *
  * Cap-gated: returns null when the device has no lockControl cap.
  */
-export function LockHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function LockHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const { cap, slice, available } = useDeviceCapability<LockControlCap, LockControlStatus>({
     trpc,
     deviceId,
@@ -200,9 +213,8 @@ export function LockHeroCard({
     slice: (d) => d.state.lockControl,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<LockControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const door = useLockDoorSensor(trpc, deviceId)
   const t = useUiText()
 
@@ -225,9 +237,9 @@ export function LockHeroCard({
   const handleToggle = (): void => {
     if (busy || doorBlocksLock) return
     if (locked) {
-      applyOptimisticAction({ state: 'unlocking' }, () => cap.unlock({}))
+      runCommand(() => cap.unlock({}))
     } else {
-      applyOptimisticAction({ state: 'locking' }, () => cap.lock({}))
+      runCommand(() => cap.lock({}))
     }
   }
 

@@ -1,9 +1,8 @@
-import type { DishwasherStatus } from '@camstack/types'
 import { type ReactElement, useEffect, useRef, useState } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { ApplianceCard } from '../scenes/appliance/ApplianceCard'
 import {
   cycleEndsAt,
@@ -75,7 +74,6 @@ export function ConnectedDishwasherCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -85,13 +83,15 @@ export function ConnectedDishwasherCard({
   const slice = useDeviceStateSlice(
     dev?.dishwasher === undefined ? undefined : dev.state.dishwasher,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<DishwasherStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.dishwasher
   const catalog = useDishwasherProgramCatalog(deviceId, cap)
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, { fail: card.fail, succeed: card.succeed })
+  const send = reportedCommand(runCommand, {
+    fail: card.fail,
+    succeed: card.succeed,
+  })
   const phase = dishwasherPhase(display)
   const remaining = display.remaining
   const cycle = phase === 'run' || phase === 'pause'
@@ -122,13 +122,12 @@ export function ConnectedDishwasherCard({
       }}
       actions={{
         ...card.actions,
-        onPower: (on) => send({ powerOn: on }, () => cap.setPower({ on })),
-        onProgram: (program) =>
-          send({ selectedProgram: program }, () => cap.setProgram({ program })),
-        onStart: () => send({ state: 'running' }, () => cap.start({})),
-        onPause: () => send({ state: 'paused' }, () => cap.pause({})),
-        onResume: () => send({ state: 'running' }, () => cap.resume({})),
-        onStop: () => send({ state: 'idle' }, () => cap.stop({})),
+        onPower: (on) => send(() => cap.setPower({ on })),
+        onProgram: (program) => send(() => cap.setProgram({ program })),
+        onStart: () => send(() => cap.start({})),
+        onPause: () => send(() => cap.pause({})),
+        onResume: () => send(() => cap.resume({})),
+        onStop: () => send(() => cap.stop({})),
       }}
     />
   )

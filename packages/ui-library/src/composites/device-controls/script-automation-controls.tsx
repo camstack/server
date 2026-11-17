@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { AlertTriangle, CircleStop, Play, Zap } from 'lucide-react'
 import type { AutomationControlStatus, ScriptRunnerStatus } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import { defaultUiText, useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { DeviceControlProps } from './control-registry'
@@ -122,20 +122,15 @@ interface UseScriptControl {
  * Subscribes to `script-runner` ONCE, so the hero and the inline control never
  * double-subscribe. Mirrors `useAlarmControl`.
  */
-function useScriptControl(
-  trpc: DeviceControlProps['trpc'],
-  deviceId: number,
-  optimistic: boolean | undefined,
-): UseScriptControl {
+function useScriptControl(trpc: DeviceControlProps['trpc'], deviceId: number): UseScriptControl {
   const { cap, slice, available } = useDeviceCapability<ScriptRunnerCap, ScriptRunnerStatus>({
     trpc,
     deviceId,
     cap: (d) => d.scriptRunner as ScriptRunnerCap | undefined,
     slice: (d) => d.state.scriptRunner,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<ScriptRunnerStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const busy = !available
   const running = display?.isRunning === true
 
@@ -146,11 +141,11 @@ function useScriptControl(
     running,
     run: () => {
       if (cap === undefined || busy || running) return
-      applyOptimisticAction({ isRunning: true }, () => cap.run({}))
+      runCommand(() => cap.run({}))
     },
     stop: () => {
       if (cap === undefined || busy || !running) return
-      applyOptimisticAction({ isRunning: false }, () => cap.stop({}))
+      runCommand(() => cap.stop({}))
     },
   }
 }
@@ -207,13 +202,9 @@ function RunButton({ running, busy, large, onRun, onStop }: RunButtonProps): Rea
   )
 }
 
-export function ScriptHeroCard({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function ScriptHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { display, capPresent, busy, running, run, stop } = useScriptControl(
-    trpc,
-    deviceId,
-    optimistic,
-  )
+  const { display, capPresent, busy, running, run, stop } = useScriptControl(trpc, deviceId)
   if (!capPresent) return null
   if (display === undefined) return null
 
@@ -263,7 +254,6 @@ interface UseAutomationControl {
 function useAutomationControl(
   trpc: DeviceControlProps['trpc'],
   deviceId: number,
-  optimistic: boolean | undefined,
 ): UseAutomationControl {
   const { cap, slice, available } = useDeviceCapability<
     AutomationControlCap,
@@ -274,9 +264,8 @@ function useAutomationControl(
     cap: (d) => d.automationControl as AutomationControlCap | undefined,
     slice: (d) => d.state.automationControl,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<AutomationControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const busy = !available
 
   return {
@@ -285,12 +274,10 @@ function useAutomationControl(
     busy,
     setEnabled: (next) => {
       if (cap === undefined || busy) return
-      applyOptimisticAction({ enabled: next }, () => (next ? cap.enable({}) : cap.disable({})))
+      runCommand(() => (next ? cap.enable({}) : cap.disable({})))
     },
     trigger: () => {
       if (cap === undefined || busy) return
-      // No optimistic patch. `isRunning` is never written by the provider, so
-      // setting it here would show a spinner that nothing ever clears.
       void cap.trigger({})
     },
   }
@@ -371,13 +358,9 @@ function TriggerButton({ busy, large, onTrigger }: TriggerButtonProps): ReactNod
   )
 }
 
-export function AutomationHeroCard({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function AutomationHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { display, capPresent, busy, setEnabled, trigger } = useAutomationControl(
-    trpc,
-    deviceId,
-    optimistic,
-  )
+  const { display, capPresent, busy, setEnabled, trigger } = useAutomationControl(trpc, deviceId)
   if (!capPresent) return null
   if (display === undefined) return null
 

@@ -12,7 +12,7 @@
  *     are available).
  *
  * Mirrors the climate / valve controls' `useDeviceCapability` +
- * `useOptimisticSlice` pattern so the row and hero never diverge.
+ * `useDeviceCommand` pattern so the row and hero never diverge.
  * Controls are gated on `available`. The decorative SVG is aria-hidden.
  */
 import { Slider } from '../../primitives/slider'
@@ -22,7 +22,7 @@ import { useId, type ReactNode } from 'react'
 import { Power } from 'lucide-react'
 import type { HumidifierStatus } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import type { DeviceControlProps } from './control-registry'
 
@@ -99,16 +99,11 @@ function useHumidifier(trpc: DeviceControlProps['trpc'], deviceId: number) {
  * HumidifierInlineControl — compact on/off toggle + current→target readout
  * for a device-list row. Must NOT blow out the row width.
  */
-export function HumidifierInlineControl({
-  trpc,
-  deviceId,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function HumidifierInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useHumidifier(trpc, deviceId)
-  const { display, applyOptimisticAction } = useOptimisticSlice<HumidifierStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   if (cap === undefined) return null
 
@@ -117,7 +112,7 @@ export function HumidifierInlineControl({
 
   const toggle = (): void => {
     if (busy) return
-    applyOptimisticAction({ on: !on }, () => cap.setOn({ on: !on }))
+    runCommand(() => cap.setOn({ on: !on }))
   }
 
   return (
@@ -285,12 +280,11 @@ function HumidifierGraphic({ fillPct, tint }: HumidifierGraphicProps): ReactNode
  * `<select>` (only when modes are available). Gated on `available`.
  * Only hides when the device truly has no humidifier cap.
  */
-export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function HumidifierHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useHumidifier(trpc, deviceId)
-  const { display, applyOptimisticAction } = useOptimisticSlice<HumidifierStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   if (cap === undefined) return null
   if (display === undefined) return null
@@ -306,12 +300,12 @@ export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControl
 
   const toggle = (): void => {
     if (busy) return
-    applyOptimisticAction({ on: !display.on }, () => cap.setOn({ on: !display.on }))
+    runCommand(() => cap.setOn({ on: !display.on }))
   }
 
   const setTarget = (humidity: number): void => {
     if (busy) return
-    applyOptimisticAction({ targetHumidity: humidity }, () => cap.setTargetHumidity({ humidity }))
+    runCommand(() => cap.setTargetHumidity({ humidity }))
   }
 
   return (
@@ -395,7 +389,7 @@ export function HumidifierHeroCard({ trpc, deviceId, optimistic }: DeviceControl
             e.stopPropagation()
             const mode = display.availableModes.find((m) => m === e.target.value)
             if (!busy && mode !== undefined) {
-              applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
+              runCommand(() => cap.setMode({ mode }))
             }
           }}
           className={cn(

@@ -2,7 +2,6 @@ import { Select } from '../../primitives/select'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Shield, ShieldCheck, ShieldAlert, ShieldOff } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
 import type { AlarmPanelStatus, AlarmState, AlarmArmMode } from '@camstack/types'
@@ -242,26 +241,20 @@ function messageOf(err: unknown): string {
 
 /**
  * Subscribes to the alarm-panel cap ONCE and exposes the disarm/arm handlers
- * with optimistic state updates. Both the hero and the inline control consume
+ * over the served slice (D1061). Both the hero and the inline control consume
  * this, so the cap is never double-subscribed.
  *
  * A rejected `arm`/`disarm` (the panel refusing, per D630) is never swallowed:
- * the optimistic patch is rolled back to the real slice and the rejection's
- * message is surfaced through `error`, which callers render. `error` also
+ * the rejection's message is surfaced through `error`, which callers render. `error` also
  * clears on its own the next time a real slice arrives — a fresh server push
  * means the refusal is no longer the last word on the panel's state.
  *
  * A rejection is only ever the LATEST press's business. Each call captures a
  * fresh token; if a second press starts before the first's promise settles,
- * the first press's eventual rejection must not roll back or error over the
- * second press's still-pending optimistic state — the token check makes a
- * stale rejection a no-op instead.
+ * the first press's eventual rejection must not error over the second press
+ * — the token check makes a stale rejection a no-op instead.
  */
-function useAlarmControl(
-  trpc: DeviceControlProps['trpc'],
-  deviceId: number,
-  optimistic: boolean | undefined,
-): UseAlarmControl {
+function useAlarmControl(trpc: DeviceControlProps['trpc'], deviceId: number): UseAlarmControl {
   const { cap, slice, available } = useDeviceCapability<AlarmPanelCap, AlarmPanelStatus>({
     trpc,
     deviceId,
@@ -269,9 +262,7 @@ function useAlarmControl(
     slice: (d) => d.state.alarmPanel,
   })
 
-  const { display, applyOptimistic, rollback } = useOptimisticSlice<AlarmPanelStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
 
   const [error, setError] = useState<string | null>(null)
   const clearError = (): void => setError(null)
@@ -292,10 +283,8 @@ function useAlarmControl(
   const handleDisarm = (): void => {
     if (cap === undefined || busy) return
     const call = ++latestCallRef.current
-    applyOptimistic({ state: 'disarming' })
     cap.disarm({}).catch((err: unknown) => {
       if (latestCallRef.current !== call) return
-      rollback()
       setError(messageOf(err))
     })
   }
@@ -303,10 +292,8 @@ function useAlarmControl(
   const handleArm = (mode: AlarmArmMode): void => {
     if (cap === undefined || busy) return
     const call = ++latestCallRef.current
-    applyOptimistic({ state: 'arming' })
     cap.arm({ mode }).catch((err: unknown) => {
       if (latestCallRef.current !== call) return
-      rollback()
       setError(messageOf(err))
     })
   }
@@ -348,12 +335,11 @@ function useAlarmControl(
  * pattern as `OfflineBadge`) appended after the select. It never grows the
  * row past one line.
  */
-export function AlarmInlineControl({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function AlarmInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { display, capPresent, busy, handleDisarm, handleArm, error } = useAlarmControl(
     trpc,
     deviceId,
-    optimistic,
   )
 
   if (!capPresent) return null
@@ -429,15 +415,14 @@ export function AlarmInlineControl({ trpc, deviceId, optimistic }: DeviceControl
  * required — surfaced upstream.
  *
  * A refusal (D630: an open device, a required code, …) is never a swallowed
- * promise — `useAlarmControl` rolls the optimistic state back and hands the
- * rejection's message back as `error`, rendered below the segments.
+ * promise — `useAlarmControl` hands the rejection's message back as
+ * `error`, rendered below the segments.
  */
-export function AlarmHeroCard({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function AlarmHeroCard({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { display, capPresent, busy, handleDisarm, handleArm, error, clearError } = useAlarmControl(
     trpc,
     deviceId,
-    optimistic,
   )
 
   if (!capPresent) return null

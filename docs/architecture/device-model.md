@@ -178,6 +178,44 @@ suite: a battery-camera sleep gate read `handle.value` without awaiting
 pre-seeded `value`, keeping the suite green. When a gate depends on remote state,
 the test must not supply that state for free.
 
+## A command is held until the device confirms it ([D1061](../decisions/adr-1061-a-commanded-value-is-held-by-the-hub-until-the-device-confirms-it.md))
+
+A device command moves the slice at once, on every client, without any client
+guessing. Each command the hub sees (the D1022 seams: its tRPC mount, the UDS
+parent for a forked addon, an in-process `ctx.api`) arms a hold in
+`DeviceStateMirror` (`device-manager/command-holds.ts`, wired by
+`command-holds-wiring.ts`): the cap vocabulary's effects for the method,
+`commandEffects(cap, method, args, current)`, are laid over the slice the
+device reported. A `sideEffects` entry with a `when` condition adds a field
+only on the state it names (a purifier speed set in Auto also holds
+`preset: ''`).
+
+A held field ends when the device reports the same value (confirmed), when the
+call is refused (rolled back at once), after 30 s with the device still
+elsewhere (reverted, a `warn` with `tags: { deviceId }`), or when a newer
+command names the same field. A reading that contradicts the hold stays
+underneath and shows when the hold ends. Holds live in memory only.
+
+Two views of one slice:
+
+| Reader | View | How |
+| --- | --- | --- |
+| UI, viewer, voice, exporters | effective (held) | the default slice, `DeviceStateChanged.slice` |
+| History, automations, conditions, any decision | confirmed (the device's) | `DeviceStateChanged.confirmed` when present (`parseConfirmedStateChanged`), `getCapSlice({ confirmed: true })`, `getAllSnapshots({ confirmed: true })` |
+
+`confirmed` rides the event only while a hold changes the slice; a reader that
+needs the device's word takes it when present and the slice otherwise.
+
+A provider overrides a method where it registers the cap:
+`ctx.registerNativeCap(cap, provider, { commands: { setState: { hold: 'never' } } })`,
+or `{ holdMs, effects, extraEffects }` (`holdMs` at most 120 s). A forked
+child's overrides travel on its cap descriptors to
+`kernel/command-hold-overrides.ts`; a broker-mode agent's do not yet.
+
+A control in the UI renders the served slice and runs its command through
+`useDeviceCommand` (ui-library), which only reports a refusal;
+`scripts/check-no-ui-optimism.ts` refuses a client-side patch.
+
 ## A slice whose authority is elsewhere must be hydrated at boot
 
 Some slices are not written by the device at all: an addon owns the durable

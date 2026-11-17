@@ -15,10 +15,10 @@
  */
 import { Flame } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { TIMED_RUN_HEATER_LIMIT, type SwitchStatus } from '@camstack/types'
+import { TIMED_RUN_HEATER_LIMIT } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import { Switch } from '../../primitives/switch'
 import { AirflowViz, KEYFRAMES } from './ac-panel'
@@ -29,17 +29,16 @@ const HEATER_LIMIT = TIMED_RUN_HEATER_LIMIT
 const HEAT_ACCENT = 'var(--color-warning)'
 const HEAT_PERIOD_SEC = 1.8
 
-function useHeaterSwitch({ trpc, deviceId, optimistic }: DeviceControlProps) {
+function useHeaterSwitch({ trpc, deviceId }: DeviceControlProps) {
   const { cap, slice, available } = useDeviceCapability({
     trpc,
     deviceId,
     cap: (d) => d.switch,
     slice: (d) => d.state.switch,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<SwitchStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
-  return { cap, display, available, applyOptimisticAction }
+  const display = slice
+  const runCommand = useDeviceCommand()
+  return { cap, display, available, runCommand }
 }
 
 function useHeater(props: DeviceControlProps) {
@@ -66,7 +65,7 @@ function useHeater(props: DeviceControlProps) {
 
 export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { cap, display, available, applyOptimisticAction } = useHeaterSwitch(props)
+  const { cap, display, available, runCommand } = useHeaterSwitch(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
   return (
@@ -78,7 +77,7 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
           disabled={!available}
           aria-label={t('uiLibrary.heater.power', 'Heater')}
           onCheckedChange={(next) => {
-            applyOptimisticAction({ on: next }, () => cap.setState({ on: next }))
+            runCommand(() => cap.setState({ on: next }))
           }}
         />
       </span>
@@ -88,7 +87,7 @@ export function HeaterInlineControl(props: DeviceControlProps): ReactNode {
 
 export function HeaterHeroCard(props: DeviceControlProps): ReactNode {
   const t = useUiText()
-  const { cap, display, available, applyOptimisticAction, running, timer } = useHeater(props)
+  const { cap, display, available, runCommand, running, timer } = useHeater(props)
   if (cap === undefined || display === undefined) return null
   const on = display.on === true
   const heating = running?.running ?? on
@@ -126,7 +125,7 @@ export function HeaterHeroCard(props: DeviceControlProps): ReactNode {
           checked={on}
           disabled={!available}
           onCheckedChange={(next) => {
-            applyOptimisticAction({ on: next }, () => cap.setState({ on: next }))
+            runCommand(() => cap.setState({ on: next }))
           }}
         />
       </label>

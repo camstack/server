@@ -2,7 +2,7 @@ import { Slider } from '../../primitives/slider'
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
 import { type CoverStatus, DeviceFeature } from '@camstack/types'
@@ -278,12 +278,7 @@ function WindowStateOnly({ isOpen }: WindowStateOnlyProps): ReactNode {
  * Only hides when the device truly has no cover cap — a transient undefined slice
  * renders a neutral "unknown" state with all buttons still mounted.
  */
-export function CoverHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<
     {
@@ -310,9 +305,8 @@ export function CoverHeroCard({
     slice: (d) => d.state.cover,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<CoverStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   // Only hide entirely when the device has no cover cap at all.
   if (cap === undefined) return null
@@ -337,13 +331,13 @@ export function CoverHeroCard({
     patch?: Partial<CoverStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    if (patch !== undefined) runCommand(() => fn({}))
     else void fn({})
   }
 
   const handleSetPosition = (pos: number): void => {
     if (busy) return
-    applyOptimisticAction({ position: pos }, () => cap?.setPosition({ position: pos }))
+    runCommand(() => cap?.setPosition({ position: pos }))
   }
 
   return (
@@ -466,10 +460,7 @@ export function CoverHeroCard({
             className="flex-1"
             onChange={(e) => {
               const tp = Number(e.target.value)
-              if (!busy)
-                applyOptimisticAction({ tiltPosition: tp }, () =>
-                  cap?.setTiltPosition({ tiltPosition: tp }),
-                )
+              if (!busy) runCommand(() => cap?.setTiltPosition({ tiltPosition: tp }))
             }}
           />
           <span className="w-8 text-right tabular-nums">{display?.tiltPosition ?? '—'}%</span>

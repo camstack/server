@@ -74,7 +74,8 @@ step; other refusals use Amazon's own types (`UNSUPPORTED_THERMOSTAT_MODE`,
 `REQUESTED_SETPOINTS_TOO_CLOSE` with `minimumTemperatureDelta`,
 `UNWILLING_TO_SET_VALUE` for a single setpoint while in range mode). A slice that
 cannot be read is `ENDPOINT_UNREACHABLE`, never a guessed command. The Response
-carries the state the command set, projected from the slice read before it.
+carries the state the command set: since D1061, the slice read again after the
+command (see the amendment below).
 
 **One key, several caps.** An `AdapterDirective` may declare `claims(ctx)`; the
 router resolves a key through `resolveGenericDirective` - the first adapter, in
@@ -116,3 +117,13 @@ the shaped ChangeReports, and the directive resolution between caps. Removing
 the bounds check, the PowerController claim or the temperature deadband turns
 its spec red. `ha-climate-slice.spec.ts` pins the bounds the HA provider
 publishes.
+
+## Amended 2026-11-17 — the Response reads the effective slice (D1061)
+
+The Response no longer projects the commanded state from the slice read before
+the command. The hub now holds what a command leads to until the device
+confirms it ([D1061](adr-1061-a-commanded-value-is-held-by-the-hub-until-the-device-confirms-it.md)),
+so `climate-controller.ts` reads the slice again after the commands and answers
+with it: the same state the admin UI, the viewer and the change reports show.
+A re-read that fails falls back to the projection, so a command that went
+through is never answered as unreachable.

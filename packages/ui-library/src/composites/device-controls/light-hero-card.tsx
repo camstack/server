@@ -3,7 +3,7 @@ import type { ReactNode } from 'react'
 import { Lightbulb, Thermometer } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useUiText } from '../../contexts/ui-text'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import type { BrightnessStatus, ColorStatus, SwitchStatus } from '@camstack/types'
 import { DeviceFeature } from '@camstack/types'
 import type { DeviceControlProps } from './control-registry'
@@ -62,12 +62,7 @@ const ARC_COLOR_OFF = '#d4d4d8'
  * Composes three caps: `switch` (on/off), `brightness` (level), `color` (CT).
  * Cap-gated on `switch` (always present on a Light) — returns null without it.
  */
-export function LightHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function LightHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const sw = useDeviceCapability<SwitchCap, SwitchStatus>({
     trpc,
@@ -88,33 +83,29 @@ export function LightHeroCard({
     slice: (d) => d.state.color,
   })
 
-  const swOpt = useOptimisticSlice<SwitchStatus>(sw.slice, { enabled: optimistic ?? true })
-  const brightOpt = useOptimisticSlice<BrightnessStatus>(bright.slice, {
-    enabled: optimistic ?? true,
-  })
-  const colorOpt = useOptimisticSlice<ColorStatus>(color.slice, { enabled: optimistic ?? true })
+  const runCommand = useDeviceCommand()
 
   // Cap-gate on switch — a Light always exposes on/off.
   if (sw.cap === undefined) return null
-  if (swOpt.display === undefined) return null
+  if (sw.slice === undefined) return null
 
-  const on = swOpt.display.on === true
+  const on = sw.slice.on === true
   const swBusy = !sw.available
 
-  const percentage = brightOpt.display?.level ?? 0
+  const percentage = bright.slice?.level ?? 0
   const brightBusy = !bright.available
   const fraction = on ? percentage / 100 : 0
   const arcColor = on ? ARC_COLOR_ON : ARC_COLOR_OFF
 
   const supportsCt =
     (features?.includes(DeviceFeature.LightColorMired) ?? false) && color.cap !== undefined
-  const ctMireds = colorOpt.display?.colorTemperature
+  const ctMireds = color.slice?.colorTemperature
   const ctBusy = !color.available
 
   const handleToggle = (): void => {
     if (swBusy) return
     const next = !on
-    swOpt.applyOptimisticAction({ on: next }, () => sw.cap?.setState({ on: next }))
+    runCommand(() => sw.cap?.setState({ on: next }))
   }
 
   return (
@@ -147,10 +138,7 @@ export function LightHeroCard({
               disabled={brightBusy || !on}
               onChange={(e) => {
                 const pct = Number(e.target.value)
-                if (!brightBusy)
-                  brightOpt.applyOptimisticAction({ level: pct }, () =>
-                    bright.cap?.setBrightness({ level: pct }),
-                  )
+                if (!brightBusy) runCommand(() => bright.cap?.setBrightness({ level: pct }))
               }}
             />
             <span className="tabular-nums w-9 text-right">{percentage}%</span>
@@ -185,8 +173,10 @@ export function LightHeroCard({
               onChange={(e) => {
                 const mireds = Number(e.target.value)
                 if (!ctBusy)
-                  colorOpt.applyOptimisticAction({ mode: 'mired', colorTemperature: mireds }, () =>
-                    color.cap?.setColor({ color: { mode: 'mired', colorTemperature: mireds } }),
+                  runCommand(() =>
+                    color.cap?.setColor({
+                      color: { mode: 'mired', colorTemperature: mireds },
+                    }),
                   )
               }}
             />

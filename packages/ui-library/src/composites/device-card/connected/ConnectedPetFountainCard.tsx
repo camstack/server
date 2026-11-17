@@ -1,9 +1,8 @@
-import type { PetFountainStatus, PumpCycleStatus } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { PetFountainCard } from '../scenes/pet/PetFountainCard'
 import type { PetFountainCycle } from '../scenes/pet/model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -23,7 +22,6 @@ export function ConnectedPetFountainCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -33,21 +31,19 @@ export function ConnectedPetFountainCard({
   const slice = useDeviceStateSlice(
     dev?.petFountain === undefined ? undefined : dev.state.petFountain,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<PetFountainStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cycleSlice = useDeviceStateSlice(
     dev?.pumpCycle === undefined ? undefined : dev.state.pumpCycle,
   )
-  const cycleOpt = useOptimisticSlice<PumpCycleStatus>(cycleSlice, { enabled: optimistic })
   const cap = dev?.petFountain
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, {
+  const send = reportedCommand(runCommand, {
     fail: card.fail,
     succeed: card.succeed,
   })
   const cycleCap = dev?.pumpCycle
-  const cycleDisplay = cycleOpt.display
+  const cycleDisplay = cycleSlice
   const cycle: PetFountainCycle | null =
     cycleCap === undefined || cycleDisplay === undefined
       ? null
@@ -56,7 +52,7 @@ export function ConnectedPetFountainCard({
           runMinutes: minutesOf(cycleDisplay.onTime),
           restMinutes: minutesOf(cycleDisplay.offTime),
         }
-  const sendCycle = reportedCommand(cycleOpt.applyOptimisticAction, {
+  const sendCycle = reportedCommand(runCommand, {
     fail: card.fail,
     succeed: card.succeed,
   })
@@ -77,22 +73,18 @@ export function ConnectedPetFountainCard({
       }}
       actions={{
         ...card.actions,
-        onPump: (on) => send({ pumpRunning: on }, () => cap.setPump({ on })),
+        onPump: (on) => send(() => cap.setPump({ on })),
         onCycle: (on) => {
           if (cycleCap === undefined) return
-          sendCycle({ enabled: on }, () => cycleCap.setEnabled({ on }))
+          sendCycle(() => cycleCap.setEnabled({ on }))
         },
         onRunMinutes: (minutes) => {
           if (cycleCap === undefined) return
-          sendCycle({ onTime: minutes * SECONDS_PER_MINUTE }, () =>
-            cycleCap.setOnMinutes({ minutes }),
-          )
+          sendCycle(() => cycleCap.setOnMinutes({ minutes }))
         },
         onRestMinutes: (minutes) => {
           if (cycleCap === undefined) return
-          sendCycle({ offTime: minutes * SECONDS_PER_MINUTE }, () =>
-            cycleCap.setOffMinutes({ minutes }),
-          )
+          sendCycle(() => cycleCap.setOffMinutes({ minutes }))
         },
       }}
     />

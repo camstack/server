@@ -21,14 +21,13 @@ export function ConnectedApplianceCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
-  const power = useSwitchPower({ deviceId, optimistic, card })
+  const power = useSwitchPower({ deviceId, card })
   const running = useDeviceStateSlice(
     dev?.runningState === undefined ? undefined : dev.state.runningState,
   )

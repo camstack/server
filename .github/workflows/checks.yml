@@ -356,6 +356,7 @@ jobs:
             scripts/check-migration-ports-surface.ts \
             scripts/check-no-camera-model-layer.ts \
             scripts/check-no-hub-address-env.ts \
+            scripts/check-no-ui-optimism.ts \
             scripts/check-no-hub-device-type.ts \
             scripts/check-no-config-yaml.ts \
             scripts/check-power-hint.ts \

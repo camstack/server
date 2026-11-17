@@ -1,12 +1,12 @@
 import { useState, type ReactNode, type CSSProperties } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { useUiText } from '../../contexts/ui-text'
 import { cn } from '../../lib/cn'
 import type { SwitchStatus } from '@camstack/types'
 import type { ControlPanelProps } from './types'
 
-export function SwitchPanel({ trpc, deviceId, optimistic }: ControlPanelProps): ReactNode {
+export function SwitchPanel({ trpc, deviceId }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<
     { setState: (i: { on: boolean }) => Promise<void> },
@@ -17,27 +17,20 @@ export function SwitchPanel({ trpc, deviceId, optimistic }: ControlPanelProps): 
     cap: (d) => d.switch as { setState: (i: { on: boolean }) => Promise<void> } | undefined,
     slice: (d) => d.state.switch,
   })
-  const { display, applyOptimistic, rollback } = useOptimisticSlice<SwitchStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const [pending, setPending] = useState(false)
   if (display === undefined) return null
   const on = display.on === true
   const busy = pending || !available
-  const knob: CSSProperties = { transform: on ? 'translateX(14px)' : 'translateX(2px)' }
-  const toggle = async (): Promise<void> => {
+  const knob: CSSProperties = {
+    transform: on ? 'translateX(14px)' : 'translateX(2px)',
+  }
+  const toggle = (): void => {
     if (busy || !cap) return
     const next = !on
-    applyOptimistic({ on: next })
     setPending(true)
-    try {
-      await cap.setState({ on: next })
-    } catch {
-      // Refused: the switch returns to what the device last reported.
-      rollback()
-    } finally {
-      setPending(false)
-    }
+    runCommand(() => cap.setState({ on: next }).finally(() => setPending(false)))
   }
   return (
     <button

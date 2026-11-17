@@ -996,13 +996,6 @@
       "summary": "The mode row's id for Disarmed (never a cap arm mode)."
     },
     {
-      "name": "alarmArmingPatch",
-      "kind": "function",
-      "area": "composites",
-      "file": "packages/ui-library/src/composites/device-card/connected/alarm-model.ts",
-      "summary": "The optimistic state for an arm command."
-    },
-    {
       "name": "AlarmCard",
       "kind": "component",
       "area": "composites",
@@ -4004,12 +3997,6 @@
           "type": "CardOrientation",
           "optional": true,
           "doc": ""
-        },
-        {
-          "name": "optimistic",
-          "type": "boolean",
-          "optional": true,
-          "doc": "Show a command's effect before the device confirms it (default: true)."
         },
         {
           "name": "showName",
@@ -15087,14 +15074,14 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
-      "summary": "A plain command whose outcome lands on the card, for a field the card shows as reported (no optimistic patch): a refusal names its reason, a success clears it. The promise tells the caller whether it went through (tru…"
+      "summary": "A plain command whose outcome lands on the card, awaited by the caller: a refusal names its reason, a success clears it. The promise tells the caller whether it went through (true) or failed (false); it never rejects."
     },
     {
       "name": "reportedCommand",
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/use-command-notice.ts",
-      "summary": "An optimistic command whose outcome lands on the card: a refusal puts its reason on the reason line, the next success clears it."
+      "summary": "A command whose outcome lands on the card: a refusal puts its reason on the reason line, the next success clears it. The card shows the slice the hub serves, which holds the commanded value until the device confirms i…"
     },
     {
       "name": "resetHubMountForTests",
@@ -20013,6 +20000,13 @@
       "summary": "Read an arbitrary cap's runtime-state slice by its raw kebab-case name."
     },
     {
+      "name": "useDeviceCommand",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-device-command.ts",
+      "summary": "useDeviceCommand — run a device command from a control and report a refusal."
+    },
+    {
       "name": "useDeviceDetections",
       "kind": "hook",
       "area": "hooks",
@@ -20326,13 +20320,6 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-navigation.ts",
       "summary": "useNavigation — drive a `navigation` robot camera from the UI."
-    },
-    {
-      "name": "useOptimisticSlice",
-      "kind": "hook",
-      "area": "hooks",
-      "file": "packages/ui-library/src/hooks/use-optimistic-slice.ts",
-      "summary": "useOptimisticSlice — generic optimistic-UI helper for device-control panels."
     },
     {
       "name": "useOptionalSystem",

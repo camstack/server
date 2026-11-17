@@ -1,9 +1,8 @@
-import type { WaterHeaterStatus } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { WaterHeaterCard } from '../scenes/water-heater/WaterHeaterCard'
 import { coarseDuration } from './coarse-duration'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -26,7 +25,6 @@ export function ConnectedWaterHeaterCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -36,17 +34,18 @@ export function ConnectedWaterHeaterCard({
   const slice = useDeviceStateSlice(
     dev?.waterHeater === undefined ? undefined : dev.state.waterHeater,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<WaterHeaterStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.waterHeater
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, { fail: card.fail, succeed: card.succeed })
+  const send = reportedCommand(runCommand, {
+    fail: card.fail,
+    succeed: card.succeed,
+  })
   const has = (method: string): boolean => card.implements('water-heater', method)
   const activity = waterHeaterActivityOf(display)
   const onMode = has('setOperationMode') ? waterHeaterOnMode(display) : null
-  const setMode = (mode: string): void =>
-    send({ operationMode: mode }, () => cap.setOperationMode({ mode }))
+  const setMode = (mode: string): void => send(() => cap.setOperationMode({ mode }))
   const since =
     activity === 'off'
       ? coarseDuration(Date.now() - display.lastChangedAt, t)
@@ -77,9 +76,9 @@ export function ConnectedWaterHeaterCard({
           const mode = on ? onMode : WATER_HEATER_OFF_MODE
           if (mode !== null) setMode(mode)
         },
-        onTarget: (temp) => send({ targetTemp: temp }, () => cap.setTargetTemp({ temp })),
+        onTarget: (temp) => send(() => cap.setTargetTemp({ temp })),
         onMode: setMode,
-        onAway: (on) => send({ away: on }, () => cap.setAway({ on })),
+        onAway: (on) => send(() => cap.setAway({ on })),
       }}
     />
   )

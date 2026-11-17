@@ -9,7 +9,7 @@
  *     valve is positionable, the full action set (Open / Stop / Close),
  *     and a position slider gated on `ValvePositionable`.
  *
- * Mirrors the cover controls' `useDeviceCapability` + `useOptimisticSlice`
+ * Mirrors the cover controls' `useDeviceCapability` + `useDeviceCommand`
  * pattern so the row and hero never diverge. The button highlight reuses
  * `coverHighlight` — the valve state enum is identical to the cover one.
  * Buttons are gated on `available`.
@@ -20,7 +20,7 @@ import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from '
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { type ValveStatus, type ValveState, DeviceFeature, NOT_REPORTED } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import type { DeviceControlProps } from './control-registry'
 import { coverHighlight, type CoverHighlightVariant } from './cover-inline'
@@ -50,18 +50,30 @@ export function valveStateMeta(
 ): ValveStateMeta {
   switch (state) {
     case 'open':
-      return { label: t('uiLibrary.valveControl.open', 'Open'), tone: 'text-primary' }
+      return {
+        label: t('uiLibrary.valveControl.open', 'Open'),
+        tone: 'text-primary',
+      }
     case 'opening':
-      return { label: t('uiLibrary.valveControl.opening', 'Opening'), tone: 'text-primary' }
+      return {
+        label: t('uiLibrary.valveControl.opening', 'Opening'),
+        tone: 'text-primary',
+      }
     case 'closing':
-      return { label: t('uiLibrary.valveControl.closing', 'Closing'), tone: 'text-warning' }
+      return {
+        label: t('uiLibrary.valveControl.closing', 'Closing'),
+        tone: 'text-warning',
+      }
     case 'closed':
       return {
         label: t('uiLibrary.valveControl.closed', 'Closed'),
         tone: 'text-foreground-subtle',
       }
     case 'stopped':
-      return { label: t('uiLibrary.valveControl.stopped', 'Stopped'), tone: 'text-warning' }
+      return {
+        label: t('uiLibrary.valveControl.stopped', 'Stopped'),
+        tone: 'text-warning',
+      }
     case undefined:
       return {
         label: NOT_REPORTED.en,
@@ -133,12 +145,11 @@ function ValveCtrlButton({
  * device-list row. Open ▲ Stop ■ Close ▼ + optional position % badge.
  * Mirrors `CoverInlineControl` exactly. Must NOT blow out the row width.
  */
-export function ValveInlineControl({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function ValveInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useValve(trpc, deviceId)
-  const { display, applyOptimisticAction } = useOptimisticSlice<ValveStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   // Only hide entirely when the device has no valve cap at all. A transient
   // undefined slice must NOT remove the buttons.
@@ -152,7 +163,7 @@ export function ValveInlineControl({ trpc, deviceId, optimistic }: DeviceControl
     patch?: Partial<ValveStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    if (patch !== undefined) runCommand(() => fn({}))
     else void fn({})
   }
 
@@ -208,11 +219,26 @@ export interface ValveGraphicTint {
 export function valveGraphicTint(state: ValveState | undefined): ValveGraphicTint {
   switch (state) {
     case 'open':
-      return { glow: 'bg-primary/15', accent: 'text-primary', flowing: true, active: false }
+      return {
+        glow: 'bg-primary/15',
+        accent: 'text-primary',
+        flowing: true,
+        active: false,
+      }
     case 'opening':
-      return { glow: 'bg-primary/10', accent: 'text-primary', flowing: true, active: true }
+      return {
+        glow: 'bg-primary/10',
+        accent: 'text-primary',
+        flowing: true,
+        active: true,
+      }
     case 'closing':
-      return { glow: 'bg-warning/10', accent: 'text-warning', flowing: false, active: true }
+      return {
+        glow: 'bg-warning/10',
+        accent: 'text-warning',
+        flowing: false,
+        active: true,
+      }
     case 'closed':
       return {
         glow: 'bg-transparent',
@@ -221,7 +247,12 @@ export function valveGraphicTint(state: ValveState | undefined): ValveGraphicTin
         active: false,
       }
     case 'stopped':
-      return { glow: 'bg-warning/10', accent: 'text-warning', flowing: false, active: false }
+      return {
+        glow: 'bg-warning/10',
+        accent: 'text-warning',
+        flowing: false,
+        active: false,
+      }
     case undefined:
       return {
         glow: 'bg-transparent',
@@ -535,17 +566,11 @@ function ValveHeroButton({
  * interactive setPosition surface is gated on `DeviceFeature.ValvePositionable`.
  * Only hides when the device truly has no valve cap.
  */
-export function ValveHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function ValveHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useValve(trpc, deviceId)
-  const { display, applyOptimisticAction } = useOptimisticSlice<ValveStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   // Only hide entirely when the device has no valve cap at all.
   if (cap === undefined) return null
@@ -563,13 +588,13 @@ export function ValveHeroCard({
     patch?: Partial<ValveStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    if (patch !== undefined) runCommand(() => fn({}))
     else void fn({})
   }
 
   const handleSetPosition = (pos: number): void => {
     if (busy) return
-    applyOptimisticAction({ position: pos }, () => cap.setPosition({ position: pos }))
+    runCommand(() => cap.setPosition({ position: pos }))
   }
 
   return (

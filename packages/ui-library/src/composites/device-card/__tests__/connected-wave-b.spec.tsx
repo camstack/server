@@ -241,7 +241,7 @@ describe('a supply-fed washer', () => {
       phase: null,
       lastFetchedAt: null,
     }
-    render(<ConnectedApplianceCard deviceId={1} optimistic={false} />)
+    render(<ConnectedApplianceCard deviceId={1} />)
     const power = screen.getByTestId('dc-appliance-power')
     fireEvent.click(power)
     expect(hub.setState).not.toHaveBeenCalled()
@@ -310,14 +310,14 @@ describe('a dishwasher that speaks for itself', () => {
       selectedProgram: key,
       availablePrograms: [key, 'Dishcare.Dishwasher.Program.Quick65'],
     }
-    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    render(<ConnectedDishwasherCard deviceId={1} />)
     expect(screen.getByTestId('dc-appliance-program-value').textContent).toBe('Eco 50°')
     expect(screen.getByTestId('dc-appliance-start').textContent).toBe('Start Eco 50°')
     cleanup()
     hub.getOptions = vi.fn().mockResolvedValue({
       programs: [{ key, name: 'Economy wash' }],
     })
-    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    render(<ConnectedDishwasherCard deviceId={1} />)
     await vi.waitFor(() =>
       expect(screen.getByTestId('dc-appliance-program-value').textContent).toBe('Economy wash'),
     )
@@ -326,7 +326,7 @@ describe('a dishwasher that speaks for itself', () => {
 
   it('starts the selected program through dishwasher.start', async () => {
     hub.dishSlice = DISH
-    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    render(<ConnectedDishwasherCard deviceId={1} />)
     const start = screen.getByTestId('dc-appliance-start')
     expect(start.textContent).toBe('Start Eco 50')
     fireEvent.click(start)
@@ -335,7 +335,7 @@ describe('a dishwasher that speaks for itself', () => {
 
   it('steps the program through dishwasher.setProgram', async () => {
     hub.dishSlice = DISH
-    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    render(<ConnectedDishwasherCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-appliance-program-down'))
     await vi.waitFor(() =>
       expect(hub.dish.setProgram).toHaveBeenCalledWith({ program: 'Quick 45' }),
@@ -353,7 +353,7 @@ describe('a dishwasher that speaks for itself', () => {
 
   it('a running cycle pauses, and stops only after the second press', async () => {
     hub.dishSlice = { ...DISH, state: 'running', remaining: 38 * 60, progress: 40 }
-    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    render(<ConnectedDishwasherCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-appliance-pause'))
     await vi.waitFor(() => expect(hub.dish.pause).toHaveBeenCalledWith({}))
     const stop = screen.getByTestId('dc-appliance-stop')
@@ -366,7 +366,7 @@ describe('a dishwasher that speaks for itself', () => {
 
   it('powers off through setPower, and asks first while a cycle runs or is paused', async () => {
     hub.dishSlice = { ...DISH, state: 'running', powerOn: true }
-    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    render(<ConnectedDishwasherCard deviceId={1} />)
     const power = screen.getByTestId('dc-appliance-power')
     fireEvent.click(power)
     expect(hub.dish.setPower).not.toHaveBeenCalled()
@@ -375,7 +375,7 @@ describe('a dishwasher that speaks for itself', () => {
     cleanup()
     hub.dish.setPower.mockClear()
     hub.dishSlice = { ...DISH, state: 'paused', powerOn: true }
-    render(<ConnectedDishwasherCard deviceId={1} optimistic={false} />)
+    render(<ConnectedDishwasherCard deviceId={1} />)
     const paused = screen.getByTestId('dc-appliance-power')
     fireEvent.click(paused)
     expect(hub.dish.setPower).not.toHaveBeenCalled()
@@ -409,7 +409,7 @@ describe('a media player draws what it declares', () => {
 
   it('pauses through media-player.pause', async () => {
     hub.mediaSlice = MEDIA
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-media-play'))
     await vi.waitFor(() => expect(hub.media.pause).toHaveBeenCalledWith({}))
   })
@@ -417,7 +417,7 @@ describe('a media player draws what it declares', () => {
   it('a known volume with setVolume is a slider that sets the level on release', async () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerVolume]
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     const slider = screen.getByTestId('dc-media-volume')
     expect(slider).toHaveProperty('value', '40')
     expect(slider.getAttribute('min')).toBe('0')
@@ -434,7 +434,7 @@ describe('a media player draws what it declares', () => {
   it('an unknown volume, or only volume keys, keeps the step buttons', async () => {
     hub.mediaSlice = { ...MEDIA, volumeLevel: null }
     hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerVolumeStep]
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     expect(screen.queryByRole('slider')).toBeNull()
     fireEvent.click(screen.getByTestId('dc-media-volume-up'))
     await vi.waitFor(() => expect(hub.media.volumeUp).toHaveBeenCalledWith({ steps: 1 }))
@@ -443,7 +443,7 @@ describe('a media player draws what it declares', () => {
     hub.media.volumeUp.mockClear()
     hub.features = [DeviceFeature.MediaPlayerVolumeStep]
     hub.mediaSlice = MEDIA
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-media-volume-up'))
     await vi.waitFor(() => expect(hub.media.volumeUp).toHaveBeenCalledWith({ steps: 1 }))
     expect(hub.media.setVolume).not.toHaveBeenCalled()
@@ -453,7 +453,7 @@ describe('a media player draws what it declares', () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerVolumeStep]
     hub.methods = { 'media-player': ['volumeUp', 'volumeDown'] }
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     expect(screen.queryByRole('slider')).toBeNull()
     fireEvent.click(screen.getByTestId('dc-media-volume-up'))
     await vi.waitFor(() => expect(hub.media.volumeUp).toHaveBeenCalledWith({ steps: 1 }))
@@ -463,7 +463,7 @@ describe('a media player draws what it declares', () => {
   it('mutes through setMute when mute is declared', async () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerMute]
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-media-mute'))
     await vi.waitFor(() => expect(hub.media.setMute).toHaveBeenCalledWith({ muted: true }))
   })
@@ -485,7 +485,7 @@ describe('a media player draws what it declares', () => {
   it('turns off through turnOff when power is declared', async () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerPower]
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-media-power'))
     await vi.waitFor(() => expect(hub.media.turnOff).toHaveBeenCalledWith({}))
   })
@@ -494,7 +494,7 @@ describe('a media player draws what it declares', () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerVolume, DeviceFeature.MediaPlayerMute]
     hub.media.setMute.mockRejectedValueOnce(new Error('busy'))
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-media-mute'))
     const reason = await screen.findByTestId('dc-reason')
     expect(reason.textContent).toBe('Command failed: busy')
@@ -504,7 +504,7 @@ describe('a media player draws what it declares', () => {
     hub.mediaSlice = MEDIA
     hub.features = [DeviceFeature.MediaPlayerVolumeStep]
     hub.volumeUpMissing = true
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-media-volume-up'))
     const reason = await screen.findByTestId('dc-reason')
     expect(reason.textContent).toBe('Command failed: media-player does not implement volumeUp')
@@ -513,12 +513,12 @@ describe('a media player draws what it declares', () => {
 
   it('shuffle and repeat sit in the remote sheet, only when declared', async () => {
     hub.mediaSlice = { ...MEDIA, shuffle: false, repeat: 'off' }
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     expect(screen.queryByTestId('dc-remote')).toBeNull()
     expect(screen.queryByTestId('dc-media-shuffle')).toBeNull()
     cleanup()
     hub.features = [DeviceFeature.MediaPlayerShuffle, DeviceFeature.MediaPlayerRepeat]
-    render(<ConnectedMediaCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMediaCard deviceId={1} />)
     expect(screen.queryByTestId('dc-media-shuffle')).toBeNull()
     fireEvent.click(screen.getByTestId('dc-remote'))
     fireEvent.click(screen.getByTestId('dc-media-shuffle'))
@@ -536,7 +536,7 @@ describe('a robot vacuum', () => {
 
   it('cleans through vacuum-control.start and steps suction through setFanSpeed', async () => {
     hub.vacuumSlice = VACUUM
-    render(<ConnectedVacuumCard deviceId={1} optimistic={false} />)
+    render(<ConnectedVacuumCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-robot-go'))
     await vi.waitFor(() => expect(hub.vacuum.start).toHaveBeenCalledWith({}))
     fireEvent.click(screen.getByTestId('dc-robot-suction-up'))
@@ -552,7 +552,7 @@ describe('a robot vacuum', () => {
 
   it('arms Stop while cleaning, and hides it when stop is not implemented', async () => {
     hub.vacuumSlice = { ...VACUUM, state: 'cleaning' }
-    render(<ConnectedVacuumCard deviceId={1} optimistic={false} />)
+    render(<ConnectedVacuumCard deviceId={1} />)
     const stop = screen.getByTestId('dc-robot-stop')
     fireEvent.click(stop)
     expect(hub.vacuum.stop).not.toHaveBeenCalled()
@@ -595,7 +595,7 @@ describe('a robot mower', () => {
 
   it('pauses while mowing, and docks through lawn-mower-control.dock', async () => {
     hub.mowerSlice = MOWER
-    render(<ConnectedMowerCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMowerCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-robot-go'))
     await vi.waitFor(() => expect(hub.mower.pause).toHaveBeenCalledWith({}))
     fireEvent.click(screen.getByTestId('dc-robot-dock'))
@@ -615,7 +615,7 @@ describe('a robot mower', () => {
 
   it('starts mowing through startMowing when docked', async () => {
     hub.mowerSlice = { ...MOWER, activity: 'docked' }
-    render(<ConnectedMowerCard deviceId={1} optimistic={false} />)
+    render(<ConnectedMowerCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-robot-go'))
     await vi.waitFor(() => expect(hub.mower.startMowing).toHaveBeenCalledWith({}))
   })

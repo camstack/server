@@ -169,7 +169,7 @@ const ALARM: AlarmPanelStatus = {
 describe('a lock', () => {
   it('unlocks through lock-control after the confirmation', async () => {
     hub.lockSlice = { state: 'locked', lastChangedAt: 0 }
-    render(<ConnectedLockCard deviceId={1} optimistic={false} />)
+    render(<ConnectedLockCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-lock-unlock'))
     fireEvent.click(screen.getByTestId('dc-lock-unlock'))
     await vi.waitFor(() => expect(hub.lock.unlock).toHaveBeenCalledWith({}))
@@ -177,11 +177,11 @@ describe('a lock', () => {
 
   it('releases the latch only when the device declares lock-open', async () => {
     hub.lockSlice = { state: 'locked', lastChangedAt: 0 }
-    render(<ConnectedLockCard deviceId={1} optimistic={false} />)
+    render(<ConnectedLockCard deviceId={1} />)
     expect(screen.queryByTestId('dc-lock-open')).toBeNull()
     cleanup()
     hub.features = [DeviceFeature.LockOpen]
-    render(<ConnectedLockCard deviceId={1} optimistic={false} />)
+    render(<ConnectedLockCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-lock-open'))
     fireEvent.click(screen.getByTestId('dc-lock-open'))
     await vi.waitFor(() => expect(hub.lock.open).toHaveBeenCalledWith({}))
@@ -190,7 +190,7 @@ describe('a lock', () => {
   it('refuses to lock while the linked door contact reads open', () => {
     hub.lockSlice = { state: 'unlocked', lastChangedAt: 0 }
     hub.door = { name: 'Contatto porta', reading: 'open' }
-    render(<ConnectedLockCard deviceId={1} optimistic={false} />)
+    render(<ConnectedLockCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-lock-lock'))
     expect(hub.lock.lock).not.toHaveBeenCalled()
     expect(screen.getByTestId('dc-lock-door').textContent).toContain('Contatto porta')
@@ -199,7 +199,7 @@ describe('a lock', () => {
   it('locks through lock-control when the door is closed', async () => {
     hub.lockSlice = { state: 'unlocked', lastChangedAt: 0 }
     hub.door = { name: 'Contatto porta', reading: 'closed' }
-    render(<ConnectedLockCard deviceId={1} optimistic={false} />)
+    render(<ConnectedLockCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-lock-lock'))
     await vi.waitFor(() => expect(hub.lock.lock).toHaveBeenCalledWith({}))
   })
@@ -208,7 +208,7 @@ describe('a lock', () => {
 describe('an alarm panel', () => {
   it('sends the code with the disarm, and nowhere else', async () => {
     hub.alarmSlice = ALARM
-    render(<ConnectedAlarmCard deviceId={1} optimistic={false} />)
+    render(<ConnectedAlarmCard deviceId={1} />)
     fireEvent.click(screen.getByRole('radio', { name: 'Disarmed' }))
     for (const digit of ['4', '2', '4', '2'])
       fireEvent.click(screen.getByTestId(`dc-code-${digit}`))
@@ -219,7 +219,7 @@ describe('an alarm panel', () => {
 
   it('arms a panel that wants no code with the mode alone', async () => {
     hub.alarmSlice = { ...ALARM, state: 'disarmed', codeRequired: false }
-    render(<ConnectedAlarmCard deviceId={1} optimistic={false} />)
+    render(<ConnectedAlarmCard deviceId={1} />)
     fireEvent.click(screen.getByRole('radio', { name: 'Night' }))
     await vi.waitFor(() => expect(hub.alarm.arm).toHaveBeenCalledWith({ mode: 'night' }))
   })
@@ -228,23 +228,23 @@ describe('an alarm panel', () => {
 describe('a valve', () => {
   it('opens a closed valve and stops a moving one', async () => {
     hub.valveSlice = { state: 'closed', position: null, lastChangedAt: 0 }
-    render(<ConnectedValveCard deviceId={1} optimistic={false} />)
+    render(<ConnectedValveCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-valve-open'))
     await vi.waitFor(() => expect(hub.valve.open).toHaveBeenCalledWith({}))
     cleanup()
     hub.valveSlice = { state: 'opening', position: 40, lastChangedAt: 0 }
-    render(<ConnectedValveCard deviceId={1} optimistic={false} />)
+    render(<ConnectedValveCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-valve-stop'))
     await vi.waitFor(() => expect(hub.valve.stop).toHaveBeenCalledWith({}))
   })
 
   it('draws no position slider when setPosition exists but valve-positionable does not', () => {
     hub.valveSlice = { state: 'open', position: 40, lastChangedAt: 0 }
-    render(<ConnectedValveCard deviceId={1} optimistic={false} />)
+    render(<ConnectedValveCard deviceId={1} />)
     expect(screen.queryByRole('slider', { name: 'Opening' })).toBeNull()
     cleanup()
     hub.features = [DeviceFeature.ValvePositionable]
-    render(<ConnectedValveCard deviceId={1} optimistic={false} />)
+    render(<ConnectedValveCard deviceId={1} />)
     expect(screen.getByRole('slider', { name: 'Opening' })).toBeTruthy()
   })
 })
@@ -291,7 +291,7 @@ describe('a pet fountain', () => {
   it('draws the pump cycle and the tank volume when those caps are composed', () => {
     hub.fountainSlice = FOUNTAIN
     hub.cycleSlice = { enabled: true, onTime: 600, offTime: 1200, lastFetchedAt: 1 }
-    render(<ConnectedPetFountainCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFountainCard deviceId={1} />)
     expect(screen.getByTestId('dc-fountain-volume').textContent).toContain('1300 mL')
     expect(screen.getByTestId('dc-fountain-cycle').getAttribute('aria-pressed')).toBe('true')
     expect(screen.getByTestId('dc-fountain-run').textContent).toContain('10')
@@ -300,13 +300,13 @@ describe('a pet fountain', () => {
 
   it('draws no cycle on a fountain that does not compose pump-cycle', () => {
     hub.fountainSlice = FOUNTAIN
-    render(<ConnectedPetFountainCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFountainCard deviceId={1} />)
     expect(screen.queryByTestId('dc-fountain-cycle')).toBeNull()
   })
 
   it('does not draw an unknown pump as off', () => {
     hub.fountainSlice = { ...FOUNTAIN, pumpRunning: null }
-    render(<ConnectedPetFountainCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFountainCard deviceId={1} />)
     expect(screen.getByTestId('dc-fountain-pump-on')).toBeTruthy()
     expect(screen.getByTestId('dc-fountain-pump-off')).toBeTruthy()
     expect(screen.queryByTestId('dc-fountain-pump')).toBeNull()
@@ -320,7 +320,7 @@ describe('a pet feeder', () => {
       powerSource: 'mains',
       status: 'normal',
     })
-    render(<ConnectedPetFeederCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFeederCard deviceId={1} />)
     expect(screen.getByTestId('dc-battery').textContent).toContain('Backup 40%')
     expect(screen.getByTestId('dc-state').textContent).toContain('Mains')
   })
@@ -331,23 +331,23 @@ describe('a pet feeder', () => {
       powerSource: 'battery',
       status: 'on_batteries',
     })
-    render(<ConnectedPetFeederCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFeederCard deviceId={1} />)
     expect(screen.getByTestId('dc-state').textContent).toContain('On battery')
     expect(screen.getByTestId('dc-battery').textContent).toContain('40%')
     expect(screen.getByTestId('dc-battery').textContent).not.toContain('Backup')
     cleanup()
     hub.feederSlice = feederStatus({ status: 'offline', batteryPower: null, powerSource: null })
-    render(<ConnectedPetFeederCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFeederCard deviceId={1} />)
     expect(screen.getByTestId('dc-state').textContent).toContain('Offline')
   })
 
   it('offers Mark refilled from supportsMarkRefilled alone', () => {
     hub.feederSlice = feederStatus({ supportsMarkRefilled: true, lowFood: false })
-    render(<ConnectedPetFeederCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFeederCard deviceId={1} />)
     expect(screen.getByTestId('dc-feeder-refilled')).toBeTruthy()
     cleanup()
     hub.feederSlice = feederStatus({ supportsMarkRefilled: false, lowFood: true })
-    render(<ConnectedPetFeederCard deviceId={1} optimistic={false} />)
+    render(<ConnectedPetFeederCard deviceId={1} />)
     expect(screen.queryByTestId('dc-feeder-refilled')).toBeNull()
   })
 })

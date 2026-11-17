@@ -34,7 +34,7 @@ import {
   Volume2,
   WifiOff,
 } from 'lucide-react'
-import type { DeviceDisplayOverride, PetFeederStatus } from '@camstack/types'
+import type { DeviceDisplayOverride } from '@camstack/types'
 import {
   PET_FEEDER_MANUAL_FEED_MAX,
   PET_FEEDER_MANUAL_FEED_MIN,
@@ -42,7 +42,7 @@ import {
 } from '@camstack/types'
 import { useUnitPreferences } from '../../contexts/unit-preferences.js'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
+import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { cn } from '../../lib/cn.js'
 import { resolveSensorDisplay } from '../../lib/resolve-sensor-display.js'
 import { Button } from '../../primitives/button'
@@ -88,7 +88,12 @@ export function resolveBowlReading(
 ): BowlReading {
   if (kilograms === null) return { text: '—', unit: '', label: '—', grams: null }
   const display: DeviceDisplayOverride = {
-    perCap: { 'pet-feeder': { unit: BOWL_UNIT[system], precision: BOWL_PRECISION[system] } },
+    perCap: {
+      'pet-feeder': {
+        unit: BOWL_UNIT[system],
+        precision: BOWL_PRECISION[system],
+      },
+    },
   }
   const resolved = resolveSensorDisplay({
     display,
@@ -119,12 +124,7 @@ const KEYFRAMES = `
 }
 `
 
-export function PetFeederPanel({
-  trpc,
-  deviceId,
-  layout,
-  optimistic,
-}: ControlPanelProps): ReactNode {
+export function PetFeederPanel({ trpc, deviceId, layout }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability({
     trpc,
@@ -133,9 +133,8 @@ export function PetFeederPanel({
     slice: (d) => d.state.petFeeder,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<PetFeederStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   // The stepper is local state the moment the operator touches it; until then
   // it starts from the last manual feed the device remembers. Taps never wait
@@ -215,7 +214,7 @@ export function PetFeederPanel({
             onClick={(e) => {
               e.stopPropagation()
               if (busy) return
-              applyOptimisticAction({ feeding: false }, () => cap.cancelFeed({}))
+              runCommand(() => cap.cancelFeed({}))
             }}
           >
             <Ban className="h-3.5 w-3.5" aria-hidden />
@@ -230,7 +229,7 @@ export function PetFeederPanel({
             onClick={(e) => {
               e.stopPropagation()
               if (busy) return
-              applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: DEFAULT_PORTION }))
+              runCommand(() => cap.feed({ grams: DEFAULT_PORTION }))
             }}
           >
             <PawPrint className="h-3.5 w-3.5" aria-hidden />
@@ -244,11 +243,11 @@ export function PetFeederPanel({
   // ── Full layout (hero card) ──────────────────────────────────────────────────
   const cancel = (): void => {
     if (busy) return
-    applyOptimisticAction({ feeding: false }, () => cap.cancelFeed({}))
+    runCommand(() => cap.cancelFeed({}))
   }
   const feedSingle = (grams: number): void => {
     if (busy) return
-    applyOptimisticAction({ feeding: true }, () => cap.feed({ grams: clampPortion(grams) }))
+    runCommand(() => cap.feed({ grams: clampPortion(grams) }))
   }
 
   return (
@@ -342,9 +341,7 @@ export function PetFeederPanel({
             onGrams={setHopper1}
             onFeed={() => {
               if (busy) return
-              applyOptimisticAction({ feeding: true }, () =>
-                cap.feed({ hopper1: clampPortion(hopper1) }),
-              )
+              runCommand(() => cap.feed({ hopper1: clampPortion(hopper1) }))
             }}
           />
           <HopperFeed
@@ -356,9 +353,7 @@ export function PetFeederPanel({
             onGrams={setHopper2}
             onFeed={() => {
               if (busy) return
-              applyOptimisticAction({ feeding: true }, () =>
-                cap.feed({ hopper2: clampPortion(hopper2) }),
-              )
+              runCommand(() => cap.feed({ hopper2: clampPortion(hopper2) }))
             }}
           />
         </div>
@@ -400,7 +395,7 @@ export function PetFeederPanel({
             on={display.childLock}
             busy={busy}
             onToggle={(next) => {
-              applyOptimisticAction({ childLock: next }, () => cap.setChildLock({ on: next }))
+              runCommand(() => cap.setChildLock({ on: next }))
             }}
           />
           <SettingToggle
@@ -409,9 +404,7 @@ export function PetFeederPanel({
             on={display.indicatorLight}
             busy={busy}
             onToggle={(next) => {
-              applyOptimisticAction({ indicatorLight: next }, () =>
-                cap.setIndicatorLight({ on: next }),
-              )
+              runCommand(() => cap.setIndicatorLight({ on: next }))
             }}
           />
           <SettingToggle
@@ -420,7 +413,7 @@ export function PetFeederPanel({
             on={display.feedSound}
             busy={busy}
             onToggle={(next) => {
-              applyOptimisticAction({ feedSound: next }, () => cap.setFeedSound({ on: next }))
+              runCommand(() => cap.setFeedSound({ on: next }))
             }}
           />
         </div>
@@ -436,7 +429,7 @@ export function PetFeederPanel({
             repeat={false}
             onStep={() => {
               const next = Math.max(0, display.volume - 1)
-              applyOptimisticAction({ volume: next }, () => cap.setVolume({ level: next }))
+              runCommand(() => cap.setVolume({ level: next }))
             }}
           />
           <span className="w-6 text-center text-lg font-semibold tabular-nums text-foreground">
@@ -449,7 +442,7 @@ export function PetFeederPanel({
             repeat={false}
             onStep={() => {
               const next = Math.min(VOLUME_MAX, display.volume + 1)
-              applyOptimisticAction({ volume: next }, () => cap.setVolume({ level: next }))
+              runCommand(() => cap.setVolume({ level: next }))
             }}
           />
         </div>
@@ -537,7 +530,9 @@ function BowlGauge({
       aria-label={
         grams === null
           ? t('uiLibrary.petFeeder.levelUnknown', 'Food level unknown')
-          : t('uiLibrary.petFeeder.gramsInBowl', '{{amount}} in bowl', { amount: label })
+          : t('uiLibrary.petFeeder.gramsInBowl', '{{amount}} in bowl', {
+              amount: label,
+            })
       }
       className="shrink-0"
     >
@@ -800,39 +795,16 @@ interface DeviceControlProps {
   readonly trpc: ControlPanelProps['trpc']
   readonly deviceId: number
   readonly features: readonly string[] | undefined
-  readonly optimistic?: boolean
 }
 
 export function PetFeederInlineControl({
   trpc,
   deviceId,
   features,
-  optimistic,
 }: DeviceControlProps): ReactNode {
-  return (
-    <PetFeederPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="compact"
-      optimistic={optimistic}
-    />
-  )
+  return <PetFeederPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
 }
 
-export function PetFeederHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
-  return (
-    <PetFeederPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="full"
-      optimistic={optimistic}
-    />
-  )
+export function PetFeederHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
+  return <PetFeederPanel trpc={trpc} deviceId={deviceId} features={features} layout="full" />
 }

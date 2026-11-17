@@ -11,7 +11,6 @@ export interface ConnectedCardProps {
   readonly canActuate?: boolean
   readonly orientation?: CardOrientation
   /** Show a command's effect before the device confirms it (default: true). */
-  readonly optimistic?: boolean
   /** Draw the device name (default true); false when the host already names the device. */
   readonly showName?: boolean
 }
@@ -24,11 +23,10 @@ export function ConnectedPlugCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const card = useCardCommon({ deviceId, canActuate })
-  const power = useSwitchPower({ deviceId, optimistic, card })
+  const power = useSwitchPower({ deviceId, card })
   const cycle = usePowerCycle({ deviceId, card })
   if (!power.bound || power.on === undefined) return null
   return (

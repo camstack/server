@@ -2,7 +2,7 @@ import { Slider } from '../../primitives/slider'
 import { Select } from '../../primitives/select'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
+import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { cn } from '../../lib/cn.js'
 import { useUiText } from '../../contexts/ui-text.js'
 import type { ControlPanelProps } from './types.js'
@@ -129,7 +129,6 @@ export function ClimatePanel({
   deviceId,
   features: _features,
   layout,
-  optimistic,
 }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability({
@@ -139,9 +138,8 @@ export function ClimatePanel({
     slice: (d) => d.state.climateControl,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<ClimateControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   if (cap === undefined) return null
   if (display === undefined) return null
@@ -180,7 +178,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, -1, display)
-                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
+                  runCommand(() => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -198,7 +196,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, 1, display)
-                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
+                  runCommand(() => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -221,7 +219,7 @@ export function ClimatePanel({
             e.stopPropagation()
             const mode = e.target.value as HvacMode
             if (!busy) {
-              applyOptimisticAction({ mode }, () => cap.setMode({ mode }))
+              runCommand(() => cap.setMode({ mode }))
             }
           }}
           className={cn(
@@ -271,7 +269,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, -1, display)
-                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
+                  runCommand(() => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -289,7 +287,7 @@ export function ClimatePanel({
                 e.stopPropagation()
                 if (!busy && display.target !== null) {
                   const next = nextClimateTarget(display.target, 1, display)
-                  applyOptimisticAction({ target: next }, () => cap.setTarget({ target: next }))
+                  runCommand(() => cap.setTarget({ target: next }))
                 }
               }}
               className={cn(
@@ -314,7 +312,7 @@ export function ClimatePanel({
             onClick={(e) => {
               e.stopPropagation()
               if (!busy) {
-                applyOptimisticAction({ mode: m }, () => cap.setMode({ mode: m }))
+                runCommand(() => cap.setMode({ mode: m }))
               }
             }}
             className={cn(
@@ -346,9 +344,7 @@ export function ClimatePanel({
                 if (!busy) {
                   const targetLow = Number(e.target.value)
                   const targetHigh = display.targetHigh ?? targetLow
-                  applyOptimisticAction({ targetLow }, () =>
-                    cap.setTargetRange({ targetLow, targetHigh }),
-                  )
+                  runCommand(() => cap.setTargetRange({ targetLow, targetHigh }))
                 }
               }}
               className="w-14 rounded border border-border bg-surface px-1 py-0.5 tabular-nums"
@@ -366,9 +362,7 @@ export function ClimatePanel({
                 if (!busy) {
                   const targetHigh = Number(e.target.value)
                   const targetLow = display.targetLow ?? targetHigh
-                  applyOptimisticAction({ targetHigh }, () =>
-                    cap.setTargetRange({ targetLow, targetHigh }),
-                  )
+                  runCommand(() => cap.setTargetRange({ targetLow, targetHigh }))
                 }
               }}
               className="w-14 rounded border border-border bg-surface px-1 py-0.5 tabular-nums"
@@ -388,7 +382,7 @@ export function ClimatePanel({
             onChange={(e) => {
               const fanMode = e.target.value
               if (!busy && fanMode) {
-                applyOptimisticAction({ fanMode }, () => cap.setFanMode({ fanMode }))
+                runCommand(() => cap.setFanMode({ fanMode }))
               }
             }}
             className="rounded border border-border bg-surface px-1 py-0.5"
@@ -416,7 +410,7 @@ export function ClimatePanel({
             onChange={(e) => {
               const preset = e.target.value
               if (!busy && preset) {
-                applyOptimisticAction({ preset }, () => cap.setPreset({ preset }))
+                runCommand(() => cap.setPreset({ preset }))
               }
             }}
             className="rounded border border-border bg-surface px-1 py-0.5"
@@ -446,10 +440,7 @@ export function ClimatePanel({
             disabled={busy}
             onChange={(e) => {
               const targetHumidity = Number(e.target.value)
-              if (!busy)
-                applyOptimisticAction({ targetHumidity }, () =>
-                  cap.setTargetHumidity({ targetHumidity }),
-                )
+              if (!busy) runCommand(() => cap.setTargetHumidity({ targetHumidity }))
             }}
           />
           <span className="tabular-nums w-8 text-right">{display.targetHumidity}%</span>

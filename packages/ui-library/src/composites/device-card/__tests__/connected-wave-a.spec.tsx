@@ -122,7 +122,7 @@ afterEach(cleanup)
 
 describe('power goes through switch, never a per-cap setter', () => {
   it('the light turns off through switch.setState', async () => {
-    render(<ConnectedLightCard deviceId={1} optimistic={false} />)
+    render(<ConnectedLightCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-light-power'))
     await vi.waitFor(() => expect(hub.setState).toHaveBeenCalledWith({ on: false }))
     expect(hub.setBrightness).not.toHaveBeenCalled()
@@ -130,7 +130,7 @@ describe('power goes through switch, never a per-cap setter', () => {
 
   it('the fan turns off through switch.setState', async () => {
     hub.deviceType = DeviceType.Fan
-    render(<ConnectedFanCard deviceId={1} optimistic={false} />)
+    render(<ConnectedFanCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-fan-power'))
     await vi.waitFor(() => expect(hub.setState).toHaveBeenCalledWith({ on: false }))
     expect(hub.setPercentage).not.toHaveBeenCalled()
@@ -139,7 +139,7 @@ describe('power goes through switch, never a per-cap setter', () => {
   it('the heater turns off through switch.setState', async () => {
     hub.deviceType = DeviceType.Switch
     hub.role = DeviceRole.SwitchHeater
-    render(<ConnectedHeaterCard deviceId={1} optimistic={false} />)
+    render(<ConnectedHeaterCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-heater-power'))
     await vi.waitFor(() => expect(hub.setState).toHaveBeenCalledWith({ on: false }))
   })

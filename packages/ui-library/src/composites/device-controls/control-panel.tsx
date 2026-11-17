@@ -3,7 +3,7 @@ import { useUiText } from '../../contexts/ui-text'
 import { useOptionalSystem } from '../../contexts/system-context.js'
 import { useState, type ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice.js'
+import { useDeviceCommand } from '../../hooks/use-device-command.js'
 import { cn } from '../../lib/cn.js'
 import { formatNumeric } from '../../lib/format-numeric.js'
 import { useUnitPreferences } from '../../contexts/unit-preferences.js'
@@ -299,13 +299,19 @@ function ControlWidget({
   switch (kind) {
     case 'numeric': {
       const numericValue = typeof slice.value === 'number' ? slice.value : Number(slice.value)
-      const shown = numericControlDisplay({ quantity, display, unitPreferences })
+      const shown = numericControlDisplay({
+        quantity,
+        display,
+        unitPreferences,
+      })
       return (
         <NumericControl
           value={shown.toShown(numericValue)}
           busy={busy}
           onCommit={(v) => {
-            setValueFn({ control: { kind: 'numeric', value: shown.toBase(v) } })
+            setValueFn({
+              control: { kind: 'numeric', value: shown.toBase(v) },
+            })
           }}
           unit={shown.unit}
           min={slice.min === undefined ? undefined : shown.toShown(slice.min)}
@@ -433,7 +439,6 @@ export function ControlPanel({
   deviceId,
   features: _features,
   layout,
-  optimistic,
 }: ControlPanelProps): ReactNode {
   const info = useOptionalSystem()?.getDeviceInfo(deviceId) ?? null
   const { cap, slice, available } = useDeviceCapability({
@@ -443,9 +448,8 @@ export function ControlPanel({
     slice: (d) => d.state.control,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<ControlStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   if (display === undefined) return null
 
@@ -454,8 +458,7 @@ export function ControlPanel({
 
   const setValueFn: SetValueFn = (input) => {
     if (!busy && cap) {
-      // Apply optimistic patch — the value field maps to control.value
-      applyOptimisticAction({ value: input.control.value }, () => cap.setValue(input))
+      runCommand(() => cap.setValue(input))
     }
   }
 

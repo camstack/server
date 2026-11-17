@@ -14,11 +14,10 @@ export function ConnectedSirenCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const card = useCardCommon({ deviceId, canActuate })
-  const power = useSwitchPower({ deviceId, optimistic, card })
+  const power = useSwitchPower({ deviceId, card })
   if (!power.bound) return null
   // An unanswered switch is not off: the card stays pending until the slice answers.
   if (power.on === undefined) {

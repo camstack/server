@@ -24,14 +24,13 @@ export function ConnectedFanCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
   const client = useTrpcClient()
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
-  const power = useSwitchPower({ deviceId, optimistic, card })
+  const power = useSwitchPower({ deviceId, card })
   const fan = useDeviceStateSlice(dev?.fanControl === undefined ? undefined : dev.state.fanControl)
   const presetsPresence = useCapabilityPresence('fan-presets')
   const saved = useFanPresetsGetPresets(

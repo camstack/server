@@ -6,7 +6,6 @@
 import type { ReactNode } from 'react'
 import type { WaterHeaterStatus } from '@camstack/types'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
 import type { DeviceControlProps } from './control-registry'
 
 /** The mutations the `water-heater` cap exposes (deviceId injected by the proxy). */
@@ -31,15 +30,9 @@ function useWaterHeater(trpc: DeviceControlProps['trpc'], deviceId: number) {
  * WaterHeaterInlineControl — compact current→target readout + mode hint
  * for a device-list row. Must NOT blow out the row width.
  */
-export function WaterHeaterInlineControl({
-  trpc,
-  deviceId,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function WaterHeaterInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const { cap, slice } = useWaterHeater(trpc, deviceId)
-  const { display } = useOptimisticSlice<WaterHeaterStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
 
   if (cap === undefined) return null
   if (display === undefined) return null

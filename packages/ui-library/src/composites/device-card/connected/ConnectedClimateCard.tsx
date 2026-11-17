@@ -1,9 +1,9 @@
-import type { ClimateControlStatus, HvacMode } from '@camstack/types'
+import type { HvacMode } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { ClimateCard } from '../scenes/climate/ClimateCard'
 import { climateModelOf } from './climate-model'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -19,7 +19,6 @@ export function ConnectedClimateCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -35,11 +34,10 @@ export function ConnectedClimateCard({
   const valveSlice = useDeviceStateSlice(
     dev?.heatingValve === undefined ? undefined : dev.state.heatingValve,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<ClimateControlStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   // A refused command says why on the card, like the shared mutations.
-  const command = reportedCommand(applyOptimisticAction, { fail, succeed })
+  const command = reportedCommand(runCommand, { fail, succeed })
   if (dev === undefined || dev === null) return null
   const cap = dev.climateControl
   // A bound climate cap whose slice has not answered yet is not a valve-only device.
@@ -81,39 +79,36 @@ export function ConnectedClimateCard({
         onPower: (next) => {
           if (cap === undefined) return
           const mode: HvacMode = next ? (display?.lastActiveMode ?? modes[0] ?? 'auto') : 'off'
-          command({ mode }, () => cap.setMode({ mode }))
+          command(() => cap.setMode({ mode }))
         },
         onTarget: (value) => {
           if (cap === undefined) return
-          command({ target: value }, () => cap.setTarget({ target: value }))
+          command(() => cap.setTarget({ target: value }))
         },
         onRange: (targetLow, targetHigh) => {
           const setRange = cap?.setTargetRange
           if (setRange === undefined) return
-          command({ targetLow, targetHigh }, () => setRange({ targetLow, targetHigh }))
+          command(() => setRange({ targetLow, targetHigh }))
         },
         onMode: (id) => {
           const mode = modes.find((m) => m === id)
-          if (cap !== undefined && mode !== undefined)
-            command({ mode }, () => cap.setMode({ mode }))
+          if (cap !== undefined && mode !== undefined) command(() => cap.setMode({ mode }))
         },
         onFan: (fanMode) => {
           const setFan = cap?.setFanMode
-          if (setFan !== undefined) command({ fanMode }, () => setFan({ fanMode }))
+          if (setFan !== undefined) command(() => setFan({ fanMode }))
         },
         onSwing: (swing) => {
           const setSwing = cap?.setSwingVertical
-          if (setSwing !== undefined)
-            command({ swingVertical: swing }, () => setSwing({ on: swing }))
+          if (setSwing !== undefined) command(() => setSwing({ on: swing }))
         },
         onSwingHorizontal: (swing) => {
           const setSwing = cap?.setSwingHorizontal
-          if (setSwing !== undefined)
-            command({ swingHorizontal: swing }, () => setSwing({ on: swing }))
+          if (setSwing !== undefined) command(() => setSwing({ on: swing }))
         },
         onPreset: (preset) => {
           const setPreset = cap?.setPreset
-          if (setPreset !== undefined) command({ preset }, () => setPreset({ preset }))
+          if (setPreset !== undefined) command(() => setPreset({ preset }))
         },
         onHeatCool: () => undefined,
       }}

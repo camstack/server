@@ -1,12 +1,12 @@
-import { deriveWorkloadControls, type WorkloadAction, type WorkloadStatus } from '@camstack/types'
+import { deriveWorkloadControls, type WorkloadAction } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useDeviceQuickDetailOpen } from '../../../contexts/device-quick-detail'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceManagerGetDevice, useWorkloadGetOptions } from '../../../generated/system-hooks'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
-import { WORKLOAD_ACTION_EFFECT, workloadRoleOf } from '../scenes/workload/model'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
+import { workloadRoleOf } from '../scenes/workload/model'
 import { WorkloadCard } from '../scenes/workload/WorkloadCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { sinceText } from './since-text'
@@ -23,7 +23,6 @@ export function ConnectedWorkloadCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -31,9 +30,8 @@ export function ConnectedWorkloadCard({
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
   const slice = useDeviceStateSlice(dev?.workload === undefined ? undefined : dev.state.workload)
-  const { display, applyOptimisticAction } = useOptimisticSlice<WorkloadStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const options = useWorkloadGetOptions({ deviceId })
   const hostId = display?.hostDeviceId ?? null
   const hostDevice = useDeviceManagerGetDevice(
@@ -43,7 +41,10 @@ export function ConnectedWorkloadCard({
   const openDevice = useDeviceQuickDetailOpen()
   const cap = dev?.workload
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, { fail: card.fail, succeed: card.succeed })
+  const send = reportedCommand(runCommand, {
+    fail: card.fail,
+    succeed: card.succeed,
+  })
   const derived =
     options.data === undefined || options.data === null
       ? null
@@ -65,8 +66,7 @@ export function ConnectedWorkloadCard({
     }
   }
   const onAction = (action: WorkloadAction): void => {
-    const effect = WORKLOAD_ACTION_EFFECT[action]
-    send(effect === null ? {} : { state: effect }, () => run(action))
+    send(() => run(action))
   }
   return (
     <WorkloadCard

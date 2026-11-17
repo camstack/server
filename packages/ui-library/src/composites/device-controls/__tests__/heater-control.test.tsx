@@ -11,13 +11,6 @@ vi.mock('../../../hooks/use-device-capability', () => ({
     online: true,
   }),
 }))
-vi.mock('../../../hooks/use-optimistic-slice', () => ({
-  useOptimisticSlice: (slice: unknown) => ({
-    display: slice,
-    applyOptimisticAction: (_patch: unknown, run: () => unknown) => void run(),
-  }),
-}))
-
 const trpc = {} as never
 
 afterEach(cleanup)

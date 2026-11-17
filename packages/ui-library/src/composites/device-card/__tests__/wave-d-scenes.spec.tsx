@@ -16,7 +16,7 @@ import { petFeederFixtures, petFountainFixtures } from '../__fixtures__/pet'
 import { sirenFixtures } from '../__fixtures__/siren'
 import { valveFixtures } from '../__fixtures__/valve'
 import { weatherFixtures } from '../__fixtures__/weather'
-import { alarmArmingPatch, alarmReadingOf } from '../connected/alarm-model'
+import { alarmReadingOf } from '../connected/alarm-model'
 import { capCardKindOf } from '../connected/cap-card-kinds'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
 import { humidifierActivityOf } from '../connected/humidifier-model'
@@ -159,7 +159,6 @@ describe('the alarm', () => {
       mode: 'night',
     })
     expect(alarmReadingOf({ state: 'disarmed', targetMode: null }).activity).toBe('disarmed')
-    expect(alarmArmingPatch('home')).toEqual({ state: 'arming', targetMode: 'home' })
   })
 
   it('arms straight away without a code, but always confirms a disarm', () => {

@@ -2,7 +2,7 @@ import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import type { CoverStatus, CoverState } from '@camstack/types'
 import type { DeviceControlProps } from './control-registry'
@@ -101,7 +101,7 @@ function CoverCtrlButton({
  * device-list row. Renders ↑ ■ ↓ buttons + optional % open badge.
  * Reuses `useDeviceCapability` exactly as `CoverPanel` does.
  */
-export function CoverInlineControl({ trpc, deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function CoverInlineControl({ trpc, deviceId }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<
     {
@@ -126,9 +126,8 @@ export function CoverInlineControl({ trpc, deviceId, optimistic }: DeviceControl
     slice: (d) => d.state.cover,
   })
 
-  const { display, applyOptimisticAction } = useOptimisticSlice<CoverStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   // Only hide the control entirely when the device has no cover cap at all.
   // A transient undefined slice (state refetch / mid-transition re-render) must NOT
@@ -148,7 +147,7 @@ export function CoverInlineControl({ trpc, deviceId, optimistic }: DeviceControl
     patch?: Partial<CoverStatus>,
   ): void => {
     if (busy || !fn) return
-    if (patch !== undefined) applyOptimisticAction(patch, () => fn({}))
+    if (patch !== undefined) runCommand(() => fn({}))
     else void fn({})
   }
 

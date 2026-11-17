@@ -3,7 +3,7 @@ import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { Fan, RefreshCw } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import type { FanControlStatus, SwitchStatus } from '@camstack/types'
 import { DeviceFeature } from '@camstack/types'
@@ -44,12 +44,7 @@ const ARC_COLOR_OFF = '#d4d4d8'
  * Composes two caps: `switch` (on/off) + `fan-control` (speed / oscillate).
  * Cap-gated on `switch` (always present on a Fan) — returns null without it.
  */
-export function FanHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function FanHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const t = useUiText()
   const sw = useDeviceCapability<SwitchCap, SwitchStatus>({
     trpc,
@@ -64,21 +59,16 @@ export function FanHeroCard({
     slice: (d) => d.state.fanControl,
   })
 
-  const swOpt = useOptimisticSlice<SwitchStatus>(sw.slice, {
-    enabled: optimistic ?? true,
-  })
-  const fanOpt = useOptimisticSlice<FanControlStatus>(fan.slice, {
-    enabled: optimistic ?? true,
-  })
+  const runCommand = useDeviceCommand()
 
   // Cap-gate on switch — a Fan always exposes on/off.
   if (sw.cap === undefined) return null
-  if (swOpt.display === undefined) return null
+  if (sw.slice === undefined) return null
 
-  const on = swOpt.display.on === true
+  const on = sw.slice.on === true
   const swBusy = !sw.available
 
-  const percentage = fanOpt.display?.speed ?? 0
+  const percentage = fan.slice?.speed ?? 0
   const fanBusy = !fan.available
   const fraction = on ? percentage / 100 : 0
   const arcColor = on ? ARC_COLOR_ON : ARC_COLOR_OFF
@@ -86,42 +76,40 @@ export function FanHeroCard({
   const supportsSpeed = features?.includes(DeviceFeature.FanSpeed) ?? false
   const supportsOscillate =
     (features?.includes(DeviceFeature.FanOscillating) ?? false) && fan.cap !== undefined
-  const availablePresets = fanOpt.display?.availablePresets ?? []
+  const availablePresets = fan.slice?.availablePresets ?? []
   const supportsPreset =
     (features?.includes(DeviceFeature.FanPreset) ?? false) &&
     fan.cap !== undefined &&
     availablePresets.length > 0
-  const activePreset = fanOpt.display?.preset ?? ''
-  const oscillating = fanOpt.display?.oscillating === true
+  const activePreset = fan.slice?.preset ?? ''
+  const oscillating = fan.slice?.oscillating === true
 
   const handleToggle = (): void => {
     if (swBusy) return
     const next = !on
-    swOpt.applyOptimisticAction({ on: next }, () => sw.cap?.setState({ on: next }))
+    runCommand(() => sw.cap?.setState({ on: next }))
   }
 
   const handleOscillate = (): void => {
     if (fanBusy) return
     const next = !oscillating
-    fanOpt.applyOptimisticAction({ oscillating: next }, () =>
-      fan.cap?.setOscillating({ oscillating: next }),
-    )
+    runCommand(() => fan.cap?.setOscillating({ oscillating: next }))
   }
 
   /** Drag the speed gauge: arc fraction → step-snapped 0..100 percentage. */
   const handleDragSpeed = (f: number): void => {
     if (fanBusy) return
-    const slice = fanOpt.display
+    const slice = fan.slice
     if (slice === undefined) return
     const step =
       slice.percentageStep !== undefined && slice.percentageStep > 0 ? slice.percentageStep : 1
     const pct = Math.min(100, Math.max(0, Math.round((f * 100) / step) * step))
-    fanOpt.applyOptimisticAction({ speed: pct }, () => fan.cap?.setPercentage({ speed: pct }))
+    runCommand(() => fan.cap?.setPercentage({ speed: pct }))
   }
 
   const handlePreset = (preset: string): void => {
     if (fanBusy || preset === '') return
-    fanOpt.applyOptimisticAction({ preset }, () => fan.cap?.setPreset({ preset }))
+    runCommand(() => fan.cap?.setPreset({ preset }))
   }
 
   return (

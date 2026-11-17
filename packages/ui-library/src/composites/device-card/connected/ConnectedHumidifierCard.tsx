@@ -1,9 +1,8 @@
-import type { HumidifierStatus } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { HumidifierCard } from '../scenes/humidifier/HumidifierCard'
 import { coarseDuration } from './coarse-duration'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -23,7 +22,6 @@ export function ConnectedHumidifierCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -33,12 +31,11 @@ export function ConnectedHumidifierCard({
   const slice = useDeviceStateSlice(
     dev?.humidifier === undefined ? undefined : dev.state.humidifier,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<HumidifierStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.humidifier
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, {
+  const send = reportedCommand(runCommand, {
     fail: card.fail,
     succeed: card.succeed,
   })
@@ -69,10 +66,9 @@ export function ConnectedHumidifierCard({
       }}
       actions={{
         ...card.actions,
-        onPower: (on) => send({ on }, () => cap.setOn({ on })),
-        onTarget: (humidity) =>
-          send({ targetHumidity: humidity }, () => cap.setTargetHumidity({ humidity })),
-        onMode: (mode) => send({ mode }, () => cap.setMode({ mode })),
+        onPower: (on) => send(() => cap.setOn({ on })),
+        onTarget: (humidity) => send(() => cap.setTargetHumidity({ humidity })),
+        onMode: (mode) => send(() => cap.setMode({ mode })),
       }}
     />
   )

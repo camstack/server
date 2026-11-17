@@ -2,7 +2,7 @@ import { useUiText } from '../../contexts/ui-text'
 import { useState, type MouseEvent, type ReactNode } from 'react'
 import { Lock, LockOpen, DoorOpen, Loader2 } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import {
   Dialog,
@@ -34,13 +34,7 @@ function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err)
 }
 
-export function LockPanel({
-  trpc,
-  deviceId,
-  layout,
-  optimistic,
-  features,
-}: ControlPanelProps): ReactNode {
+export function LockPanel({ trpc, deviceId, layout, features }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability<LockControlCap, LockControlStatus>({
     trpc,
@@ -48,10 +42,8 @@ export function LockPanel({
     cap: (d) => d.lockControl as LockControlCap | undefined,
     slice: (d) => d.state.lockControl,
   })
-  const { display, applyOptimistic, applyOptimisticAction, rollback } =
-    useOptimisticSlice<LockControlStatus>(slice, {
-      enabled: optimistic ?? true,
-    })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const [pending, setPending] = useState<PendingAction>(null)
   const [running, setRunning] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -68,11 +60,11 @@ export function LockPanel({
   const requiresConfirm = layout === 'compact'
 
   const doLock = (): void => {
-    applyOptimisticAction({ state: 'locking' }, () => cap?.lock({}))
+    runCommand(() => cap?.lock({}))
   }
 
   const doUnlock = (): void => {
-    applyOptimisticAction({ state: 'unlocking' }, () => cap?.unlock({}))
+    runCommand(() => cap?.unlock({}))
   }
 
   const doOpen = (): void => {
@@ -117,14 +109,12 @@ export function LockPanel({
     setRunning(true)
     try {
       if (pending === 'unlock') {
-        applyOptimistic({ state: 'unlocking' })
         await cap?.unlock({})
       } else {
         await cap?.open({})
       }
       setPending(null)
     } catch (err) {
-      rollback()
       setError(errorMessage(err))
     } finally {
       setRunning(false)

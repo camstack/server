@@ -42,7 +42,10 @@ import { SwitchPanel } from './switch-panel'
 // AlarmPanelInlineControl is the row-sized compact strip; AlarmHeroCard the
 // full glyph+label+segments surface. Both live in alarm-hero-card.tsx and
 // subscribe to the cap once (no double useDeviceCapability).
-export { AlarmHeroCard, AlarmInlineControl as AlarmPanelInlineControl } from './alarm-hero-card'
+export {
+  AlarmHeroCard,
+  AlarmInlineControl as AlarmPanelInlineControl,
+} from './alarm-hero-card'
 export { FanHeroCard } from './fan-hero-card'
 export { LightHeroCard } from './light-hero-card'
 export { LockHeroCard } from './lock-hero-card'
@@ -81,23 +84,10 @@ function useSwitchCapGuard(trpc: DeviceControlProps['trpc'], deviceId: number): 
   return cap !== undefined
 }
 
-export function SwitchInlineControl({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function SwitchInlineControl({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const hasSwitch = useSwitchCapGuard(trpc, deviceId)
   if (!hasSwitch) return null
-  return (
-    <SwitchPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="compact"
-      optimistic={optimistic}
-    />
-  )
+  return <SwitchPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
 }
 
 // ── Lock ──────────────────────────────────────────────────────────────────────
@@ -112,53 +102,23 @@ function useLockCapGuard(trpc: DeviceControlProps['trpc'], deviceId: number): bo
   return cap !== undefined
 }
 
-export function LockInlineControl({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function LockInlineControl({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const hasLock = useLockCapGuard(trpc, deviceId)
   if (!hasLock) return null
-  return (
-    <LockPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="compact"
-      optimistic={optimistic}
-    />
-  )
+  return <LockPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
 }
 
 // ── Light ─────────────────────────────────────────────────────────────────────
 // Light = switch toggle + optional brightness slider.
 // Guard on switch cap (always present on a Light device).
 
-export function LightInlineControl({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function LightInlineControl({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const hasSwitch = useSwitchCapGuard(trpc, deviceId)
   if (!hasSwitch) return null
   return (
     <div className="inline-flex items-center gap-2">
-      <SwitchPanel
-        trpc={trpc}
-        deviceId={deviceId}
-        features={features}
-        layout="compact"
-        optimistic={optimistic}
-      />
-      <BrightnessPanel
-        trpc={trpc}
-        deviceId={deviceId}
-        features={features}
-        layout="compact"
-        optimistic={optimistic}
-      />
+      <SwitchPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
+      <BrightnessPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
     </div>
   )
 }
@@ -180,30 +140,13 @@ function useFanCapGuard(trpc: DeviceControlProps['trpc'], deviceId: number): boo
   return cap !== undefined
 }
 
-export function FanInlineControl({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function FanInlineControl({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const hasFan = useFanCapGuard(trpc, deviceId)
   if (!hasFan) return null
   return (
     <div className="inline-flex items-center gap-2">
-      <SwitchPanel
-        trpc={trpc}
-        deviceId={deviceId}
-        features={features}
-        layout="compact"
-        optimistic={optimistic}
-      />
-      <FanPanel
-        trpc={trpc}
-        deviceId={deviceId}
-        features={features}
-        layout="compact"
-        optimistic={optimistic}
-      />
+      <SwitchPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
+      <FanPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
     </div>
   )
 }
@@ -237,7 +180,6 @@ export function ThermostatInlineControl({
   trpc,
   deviceId,
   features,
-  optimistic,
 }: DeviceControlProps): ReactNode {
   const hasClimate = useClimateCapGuard(trpc, deviceId)
   const hasValve = useHeatingValveCapGuard(trpc, deviceId)
@@ -245,13 +187,7 @@ export function ThermostatInlineControl({
   return (
     <span className="inline-flex items-center gap-2">
       {hasClimate ? (
-        <ClimatePanel
-          trpc={trpc}
-          deviceId={deviceId}
-          features={features}
-          layout="compact"
-          optimistic={optimistic}
-        />
+        <ClimatePanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
       ) : null}
       {hasValve ? <HeatingValveReadout trpc={trpc} deviceId={deviceId} layout="compact" /> : null}
     </span>
@@ -260,23 +196,10 @@ export function ThermostatInlineControl({
 
 // ── Climate (air-conditioner) ─────────────────────────────────────────────────
 
-export function AcInlineControl({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function AcInlineControl({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const hasClimate = useClimateCapGuard(trpc, deviceId)
   if (!hasClimate) return null
-  return (
-    <AcPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="compact"
-      optimistic={optimistic}
-    />
-  )
+  return <AcPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
 }
 
 /**
@@ -284,16 +207,16 @@ export function AcInlineControl({
  * one frame for every device type, the scene filling its zones. The registry
  * keeps handing a hero per control kind; these two adapt its props.
  */
-export function PlugCardHero({ deviceId, optimistic }: DeviceControlProps): ReactNode {
+export function PlugCardHero({ deviceId }: DeviceControlProps): ReactNode {
   // A siren device or a switch in the siren role is drawn as the siren.
   const kind = useConnectedCardKind(deviceId)
   if (kind === 'pending') return null
-  if (kind === 'siren') return <ConnectedSirenCard deviceId={deviceId} optimistic={optimistic} />
-  return <ConnectedPlugCard deviceId={deviceId} optimistic={optimistic} />
+  if (kind === 'siren') return <ConnectedSirenCard deviceId={deviceId} />
+  return <ConnectedPlugCard deviceId={deviceId} />
 }
 
-export function ClimateCardHero({ deviceId, optimistic }: DeviceControlProps): ReactNode {
-  return <ConnectedClimateCard deviceId={deviceId} optimistic={optimistic} />
+export function ClimateCardHero({ deviceId }: DeviceControlProps): ReactNode {
+  return <ConnectedClimateCard deviceId={deviceId} />
 }
 
 /**
@@ -303,12 +226,13 @@ export function ClimateCardHero({ deviceId, optimistic }: DeviceControlProps): R
  */
 function ResolvedCardHero({
   deviceId,
-  optimistic,
   kinds,
-}: DeviceControlProps & { readonly kinds: readonly ConnectedCardKind[] }): ReactNode {
+}: DeviceControlProps & {
+  readonly kinds: readonly ConnectedCardKind[]
+}): ReactNode {
   const kind = useConnectedCardKind(deviceId)
   if (kind === null || kind === 'pending' || !kinds.includes(kind)) return null
-  return <ConnectedDeviceCard kind={kind} deviceId={deviceId} optimistic={optimistic} />
+  return <ConnectedDeviceCard kind={kind} deviceId={deviceId} />
 }
 
 const APPLIANCE_KINDS: readonly ConnectedCardKind[] = ['appliance']
@@ -429,9 +353,7 @@ export function DummyCardHero(props: DeviceControlProps): ReactNode {
   const kind = useConnectedCardKind(props.deviceId)
   if (kind === 'pending') return null
   if (kind !== null && DUMMY_CARD_KINDS.includes(kind))
-    return (
-      <ConnectedDeviceCard kind={kind} deviceId={props.deviceId} optimistic={props.optimistic} />
-    )
+    return <ConnectedDeviceCard kind={kind} deviceId={props.deviceId} />
   return <DummyHeroCard {...props} />
 }
 
@@ -451,19 +373,10 @@ export function MediaPlayerInlineControl({
   trpc,
   deviceId,
   features,
-  optimistic,
 }: DeviceControlProps): ReactNode {
   const hasMedia = useMediaPlayerCapGuard(trpc, deviceId)
   if (!hasMedia) return null
-  return (
-    <MediaPlayerPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="compact"
-      optimistic={optimistic}
-    />
-  )
+  return <MediaPlayerPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
 }
 
 // The media player's hero is the device card (`MediaCardHero` above).
@@ -485,23 +398,12 @@ function useControlCapGuard(trpc: DeviceControlProps['trpc'], deviceId: number):
   return cap !== undefined
 }
 
-export function ControlHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
+export function ControlHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
   const hasControl = useControlCapGuard(trpc, deviceId)
   if (!hasControl) return null
   return (
     <HeroShell>
-      <ControlPanel
-        trpc={trpc}
-        deviceId={deviceId}
-        features={features}
-        layout="full"
-        optimistic={optimistic}
-      />
+      <ControlPanel trpc={trpc} deviceId={deviceId} features={features} layout="full" />
     </HeroShell>
   )
 }

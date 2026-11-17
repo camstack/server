@@ -8,8 +8,6 @@ export interface ControlPanelProps {
   readonly deviceId: number
   readonly features: readonly string[] | undefined
   readonly layout: 'compact' | 'full'
-  /** Enable optimistic UI mode (default: true). Set to false to disable. */
-  readonly optimistic?: boolean
 }
 
 /** Cap names whose presence (bound on a device) means it has a control surface.

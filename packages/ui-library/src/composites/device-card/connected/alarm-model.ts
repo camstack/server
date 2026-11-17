@@ -31,10 +31,3 @@ export function alarmReadingOf(
       return { activity: 'disarming', mode: null }
   }
 }
-
-/** The optimistic state for an arm command. */
-export function alarmArmingPatch(
-  mode: AlarmArmMode,
-): Pick<AlarmPanelStatus, 'state' | 'targetMode'> {
-  return { state: 'arming', targetMode: mode }
-}

@@ -8,7 +8,7 @@ import { useTrpcClient } from '../../../contexts/system-context'
 import { type UiTextFn, useUiText } from '../../../contexts/ui-text'
 import { useUnitPreferences } from '../../../contexts/unit-preferences'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { resolveBowlReading } from '../../device-controls/pet-feeder-panel'
 import { PetFeederCard } from '../scenes/pet/PetFeederCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
@@ -63,7 +63,6 @@ export function ConnectedPetFeederCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -72,12 +71,11 @@ export function ConnectedPetFeederCard({
   const dev = useDeviceProxy(client, deviceId)
   const card = useCardCommon({ deviceId, canActuate })
   const slice = useDeviceStateSlice(dev?.petFeeder === undefined ? undefined : dev.state.petFeeder)
-  const { display, applyOptimisticAction } = useOptimisticSlice<PetFeederStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.petFeeder
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, {
+  const send = reportedCommand(runCommand, {
     fail: card.fail,
     succeed: card.succeed,
   })
@@ -120,15 +118,14 @@ export function ConnectedPetFeederCard({
       }}
       actions={{
         ...card.actions,
-        onFeed: (grams, hopper) =>
-          send({ feeding: true }, () => cap.feed(petFeedInput(grams, hopper))),
-        onCancelFeed: () => send({ feeding: false }, () => cap.cancelFeed({})),
-        onCallPet: () => send({}, () => cap.callPet({})),
-        onMarkRefilled: () => send({ lowFood: false }, () => cap.markFoodReplenished({})),
-        onChildLock: (on) => send({ childLock: on }, () => cap.setChildLock({ on })),
-        onLight: (on) => send({ indicatorLight: on }, () => cap.setIndicatorLight({ on })),
-        onFeedSound: (on) => send({ feedSound: on }, () => cap.setFeedSound({ on })),
-        onVolume: (level) => send({ volume: level }, () => cap.setVolume({ level })),
+        onFeed: (grams, hopper) => send(() => cap.feed(petFeedInput(grams, hopper))),
+        onCancelFeed: () => send(() => cap.cancelFeed({})),
+        onCallPet: () => send(() => cap.callPet({})),
+        onMarkRefilled: () => send(() => cap.markFoodReplenished({})),
+        onChildLock: (on) => send(() => cap.setChildLock({ on })),
+        onLight: (on) => send(() => cap.setIndicatorLight({ on })),
+        onFeedSound: (on) => send(() => cap.setFeedSound({ on })),
+        onVolume: (level) => send(() => cap.setVolume({ level })),
       }}
     />
   )

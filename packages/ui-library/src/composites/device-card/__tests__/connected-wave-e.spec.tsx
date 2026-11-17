@@ -144,12 +144,12 @@ describe('a button', () => {
 describe('a script', () => {
   it('runs, and stops while it runs', async () => {
     hub.scriptSlice = SCRIPT
-    render(<ConnectedScriptCard deviceId={1} optimistic={false} />)
+    render(<ConnectedScriptCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-script-run'))
     await vi.waitFor(() => expect(hub.script.run).toHaveBeenCalledWith({}))
     cleanup()
     hub.scriptSlice = { ...SCRIPT, isRunning: true }
-    render(<ConnectedScriptCard deviceId={1} optimistic={false} />)
+    render(<ConnectedScriptCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-script-stop'))
     await vi.waitFor(() => expect(hub.script.stop).toHaveBeenCalledWith({}))
   })
@@ -157,7 +157,7 @@ describe('a script', () => {
   it('draws no Stop when the binding cannot stop', () => {
     hub.scriptSlice = { ...SCRIPT, isRunning: true }
     hub.missing = ['stop']
-    render(<ConnectedScriptCard deviceId={1} optimistic={false} />)
+    render(<ConnectedScriptCard deviceId={1} />)
     expect(screen.queryByTestId('dc-script-stop')).toBeNull()
   })
 })
@@ -165,7 +165,7 @@ describe('a script', () => {
 describe('an automation', () => {
   it('disables and triggers through automation-control', async () => {
     hub.automationSlice = AUTOMATION
-    render(<ConnectedAutomationCard deviceId={1} optimistic={false} />)
+    render(<ConnectedAutomationCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-automation-enabled'))
     await vi.waitFor(() => expect(hub.automation.disable).toHaveBeenCalledWith({}))
     expect(hub.automation.enable).not.toHaveBeenCalled()
@@ -175,7 +175,7 @@ describe('an automation', () => {
 
   it('enables a disabled one', async () => {
     hub.automationSlice = { ...AUTOMATION, enabled: false }
-    render(<ConnectedAutomationCard deviceId={1} optimistic={false} />)
+    render(<ConnectedAutomationCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-automation-enabled'))
     await vi.waitFor(() => expect(hub.automation.enable).toHaveBeenCalledWith({}))
   })
@@ -190,7 +190,7 @@ describe('an update', () => {
       state: null,
       inProgress: false,
     }
-    render(<ConnectedUpdateCard deviceId={1} optimistic={false} />)
+    render(<ConnectedUpdateCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-update-install'))
     await vi.waitFor(() => expect(hub.update.installUpdate).toHaveBeenCalledWith({}))
   })
@@ -204,7 +204,7 @@ describe('an update', () => {
       inProgress: false,
     }
     hub.missing = ['installUpdate']
-    render(<ConnectedUpdateCard deviceId={1} optimistic={false} />)
+    render(<ConnectedUpdateCard deviceId={1} />)
     expect(screen.queryByTestId('dc-update-install')).toBeNull()
   })
 })
@@ -220,7 +220,7 @@ describe('a control', () => {
       max: 80,
       step: 5,
     }
-    render(<ConnectedControlCard deviceId={1} optimistic={false} />)
+    render(<ConnectedControlCard deviceId={1} />)
     fireEvent.click(screen.getByTestId('dc-control-up'))
     await vi.waitFor(() =>
       expect(hub.control.setValue).toHaveBeenCalledWith({
@@ -231,7 +231,7 @@ describe('a control', () => {
 
   it('saves a text through control.setValue', async () => {
     hub.controlSlice = { kind: 'text', value: 'Bentornati', options: [], lastChangedAt: 0 }
-    render(<ConnectedControlCard deviceId={1} optimistic={false} />)
+    render(<ConnectedControlCard deviceId={1} />)
     fireEvent.change(screen.getByTestId('dc-control-entry'), { target: { value: 'Ciao' } })
     fireEvent.click(screen.getByTestId('dc-control-entry-save'))
     await vi.waitFor(() =>

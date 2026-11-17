@@ -9,11 +9,10 @@ export function ConnectedHeaterCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const card = useCardCommon({ deviceId, canActuate })
-  const power = useSwitchPower({ deviceId, optimistic, card })
+  const power = useSwitchPower({ deviceId, card })
   if (!power.bound || power.on === undefined) return null
   return (
     <HeaterCard

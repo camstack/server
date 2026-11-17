@@ -1,11 +1,10 @@
-import type { AlarmPanelStatus } from '@camstack/types'
 import type { ReactElement } from 'react'
 import { useTrpcClient } from '../../../contexts/system-context'
 import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
-import { useOptimisticSlice } from '../../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../../hooks/use-device-command'
 import { AlarmCard } from '../scenes/alarm/AlarmCard'
-import { alarmArmingPatch, alarmReadingOf } from './alarm-model'
+import { alarmReadingOf } from './alarm-model'
 import { coarseDuration } from './coarse-duration'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
 import { useCardCommon } from './use-card-common'
@@ -20,7 +19,6 @@ export function ConnectedAlarmCard({
   deviceId,
   canActuate = true,
   orientation,
-  optimistic = true,
   showName = true,
 }: ConnectedCardProps): ReactElement | null {
   const t = useUiText()
@@ -30,12 +28,11 @@ export function ConnectedAlarmCard({
   const slice = useDeviceStateSlice(
     dev?.alarmPanel === undefined ? undefined : dev.state.alarmPanel,
   )
-  const { display, applyOptimisticAction } = useOptimisticSlice<AlarmPanelStatus>(slice, {
-    enabled: optimistic,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   const cap = dev?.alarmPanel
   if (cap === undefined || display === undefined) return null
-  const send = reportedCommand(applyOptimisticAction, {
+  const send = reportedCommand(runCommand, {
     fail: card.fail,
     succeed: card.succeed,
   })
@@ -57,10 +54,8 @@ export function ConnectedAlarmCard({
       }}
       actions={{
         ...card.actions,
-        onArm: (mode, code) =>
-          send(alarmArmingPatch(mode), () => cap.arm(code === null ? { mode } : { mode, code })),
-        onDisarm: (code) =>
-          send({ state: 'disarming' }, () => cap.disarm(code === null ? {} : { code })),
+        onArm: (mode, code) => send(() => cap.arm(code === null ? { mode } : { mode, code })),
+        onDisarm: (code) => send(() => cap.disarm(code === null ? {} : { code })),
       }}
     />
   )

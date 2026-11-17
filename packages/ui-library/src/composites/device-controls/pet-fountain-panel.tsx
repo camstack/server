@@ -18,14 +18,10 @@
  */
 import { AlertTriangle, Droplet, Droplets, Pause, Play, Timer } from 'lucide-react'
 import type { ReactNode } from 'react'
-import {
-  TIMED_RUN_PET_FOUNTAIN_LIMIT,
-  type PetFountainStatus,
-  type PumpCycleStatus,
-} from '@camstack/types'
+import { TIMED_RUN_PET_FOUNTAIN_LIMIT } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
-import { useOptimisticSlice } from '../../hooks/use-optimistic-slice'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import { Button } from '../../primitives/button'
 import { Switch } from '../../primitives/switch'
@@ -57,12 +53,7 @@ function minutesOf(seconds: number | null): number | null {
   return seconds === null ? null : Math.round(seconds / SECONDS_PER_MINUTE)
 }
 
-export function PetFountainPanel({
-  trpc,
-  deviceId,
-  layout,
-  optimistic,
-}: ControlPanelProps): ReactNode {
+export function PetFountainPanel({ trpc, deviceId, layout }: ControlPanelProps): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability({
     trpc,
@@ -70,9 +61,8 @@ export function PetFountainPanel({
     cap: (d) => d.petFountain,
     slice: (d) => d.state.petFountain,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<PetFountainStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
 
   if (cap === undefined || display === undefined) return null
 
@@ -81,7 +71,7 @@ export function PetFountainPanel({
   const pumpOn = display.pumpRunning === true
   const level = display.waterLevel
   const setPump = (on: boolean): void => {
-    applyOptimisticAction({ pumpRunning: on }, () => cap.setPump({ on }))
+    runCommand(() => cap.setPump({ on }))
   }
 
   if (layout === 'compact') {
@@ -158,7 +148,7 @@ export function PetFountainPanel({
             disabled={busy}
             onChange={setPump}
           />
-          <PumpCycleSection trpc={trpc} deviceId={deviceId} optimistic={optimistic} />
+          <PumpCycleSection trpc={trpc} deviceId={deviceId} />
         </div>
       </Section>
 
@@ -181,8 +171,7 @@ export function PetFountainPanel({
 function PumpCycleSection({
   trpc,
   deviceId,
-  optimistic,
-}: Pick<ControlPanelProps, 'trpc' | 'deviceId' | 'optimistic'>): ReactNode {
+}: Pick<ControlPanelProps, 'trpc' | 'deviceId'>): ReactNode {
   const t = useUiText()
   const { cap, slice, available } = useDeviceCapability({
     trpc,
@@ -190,9 +179,8 @@ function PumpCycleSection({
     cap: (d) => d.pumpCycle,
     slice: (d) => d.state.pumpCycle,
   })
-  const { display, applyOptimisticAction } = useOptimisticSlice<PumpCycleStatus>(slice, {
-    enabled: optimistic ?? true,
-  })
+  const display = slice
+  const runCommand = useDeviceCommand()
   if (cap === undefined || display === undefined) return null
   const busy = !available
   const intervalOn = display.enabled === true
@@ -204,7 +192,7 @@ function PumpCycleSection({
         checked={intervalOn}
         disabled={busy}
         onChange={(on) => {
-          applyOptimisticAction({ enabled: on }, () => cap.setEnabled({ on }))
+          runCommand(() => cap.setEnabled({ on }))
         }}
       />
       {intervalOn && (
@@ -214,9 +202,7 @@ function PumpCycleSection({
             minutes={minutesOf(display.onTime)}
             disabled={busy}
             onChange={(minutes) => {
-              applyOptimisticAction({ onTime: minutes * SECONDS_PER_MINUTE }, () =>
-                cap.setOnMinutes({ minutes }),
-              )
+              runCommand(() => cap.setOnMinutes({ minutes }))
             }}
           />
           <MinutesStepper
@@ -224,9 +210,7 @@ function PumpCycleSection({
             minutes={minutesOf(display.offTime)}
             disabled={busy}
             onChange={(minutes) => {
-              applyOptimisticAction({ offTime: minutes * SECONDS_PER_MINUTE }, () =>
-                cap.setOffMinutes({ minutes }),
-              )
+              runCommand(() => cap.setOffMinutes({ minutes }))
             }}
           />
         </div>
@@ -435,7 +419,9 @@ function MinutesStepper({
         <span className="w-14 text-center text-sm font-semibold tabular-nums text-foreground">
           {minutes === null
             ? '—'
-            : t('uiLibrary.petFountain.minutes', '{{count}} min', { count: current })}
+            : t('uiLibrary.petFountain.minutes', '{{count}} min', {
+                count: current,
+              })}
         </span>
         <Button
           variant="outline"
@@ -457,39 +443,16 @@ interface DeviceControlProps {
   readonly trpc: ControlPanelProps['trpc']
   readonly deviceId: number
   readonly features: readonly string[] | undefined
-  readonly optimistic?: boolean
 }
 
 export function PetFountainInlineControl({
   trpc,
   deviceId,
   features,
-  optimistic,
 }: DeviceControlProps): ReactNode {
-  return (
-    <PetFountainPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="compact"
-      optimistic={optimistic}
-    />
-  )
+  return <PetFountainPanel trpc={trpc} deviceId={deviceId} features={features} layout="compact" />
 }
 
-export function PetFountainHeroCard({
-  trpc,
-  deviceId,
-  features,
-  optimistic,
-}: DeviceControlProps): ReactNode {
-  return (
-    <PetFountainPanel
-      trpc={trpc}
-      deviceId={deviceId}
-      features={features}
-      layout="full"
-      optimistic={optimistic}
-    />
-  )
+export function PetFountainHeroCard({ trpc, deviceId, features }: DeviceControlProps): ReactNode {
+  return <PetFountainPanel trpc={trpc} deviceId={deviceId} features={features} layout="full" />
 }
