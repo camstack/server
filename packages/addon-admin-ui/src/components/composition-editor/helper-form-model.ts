@@ -27,6 +27,7 @@ import {
   type HelperSpec,
   type IntegralHelperSpec,
   MAX_HELPER_MEMBERS,
+  newGridHelperSpec,
   type ResetPeriod,
   reducerForActive,
   type RollingWindow,
@@ -43,6 +44,7 @@ import {
   type StatisticStat,
   type StatisticWindow,
 } from '@camstack/types'
+import { CREATE_TEMPLATE_PARAM, CREATE_TERMINAL_PARAM } from '../../lib/customization-routes'
 
 export type HelperPickerId = GroupTemplateId
 
@@ -124,7 +126,34 @@ export type MathFormDraft =
   | ExpressionFormDraft
   | DerivativeFormDraft
 
-export type HelperDraft = HelperFormDraft | StatisticFormDraft | IntegralFormDraft | MathFormDraft
+/** A camera grid: created empty, its cells laid out on the block afterwards (planning#580). */
+export interface GridFormDraft {
+  readonly kind: 'grid'
+  readonly name: string
+  readonly room: string
+}
+
+/** A Terminal camera: one Terminal's screen as a camera (planning#580). */
+export interface TerminalCameraFormDraft {
+  readonly kind: 'terminal'
+  readonly name: string
+  readonly room: string
+  readonly terminalId: string | null
+}
+
+/** The camera blocks an engine hosts: no members, no parameters step. */
+export type CameraFormDraft = GridFormDraft | TerminalCameraFormDraft
+
+export type HelperDraft =
+  | HelperFormDraft
+  | StatisticFormDraft
+  | IntegralFormDraft
+  | MathFormDraft
+  | CameraFormDraft
+
+export function isCameraDraft(draft: HelperDraft): draft is CameraFormDraft {
+  return draft.kind === 'grid' || draft.kind === 'terminal'
+}
 
 export type HelperTemplatePick =
   | { readonly kind: 'group'; readonly templateId: GroupTemplateId }
@@ -134,6 +163,8 @@ export type HelperTemplatePick =
   | { readonly kind: 'arithmetic'; readonly op: ArithmeticOp }
   | { readonly kind: 'expression' }
   | { readonly kind: 'derivative' }
+  | { readonly kind: 'grid' }
+  | { readonly kind: 'terminal' }
 
 /** The math tiles, in the order the picker shows them. A sum is one tile per operation. */
 export type MathTileId = 'threshold' | ArithmeticOp | 'expression' | 'derivative'
@@ -303,8 +334,20 @@ export function draftForTemplate(templateId: HelperPickerId): HelperFormDraft | 
   }
 }
 
+/**
+ * The draft a create link asks for (`?template=terminal&terminalId=…`), or
+ * null to start on the picker. Only the Terminal camera is linked today.
+ */
+export function draftFromCreateLink(params: URLSearchParams): HelperDraft | null {
+  if (params.get(CREATE_TEMPLATE_PARAM) !== 'terminal') return null
+  const terminalId = params.get(CREATE_TERMINAL_PARAM)
+  return { kind: 'terminal', name: '', room: '', terminalId: terminalId === '' ? null : terminalId }
+}
+
 export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
   if (pick.kind === 'group') return draftForTemplate(pick.templateId)
+  if (pick.kind === 'grid') return { kind: 'grid', name: '', room: '' }
+  if (pick.kind === 'terminal') return { kind: 'terminal', name: '', room: '', terminalId: null }
   if (pick.kind === 'statistic') {
     return {
       kind: 'statistic',
@@ -352,7 +395,9 @@ export function draftForPick(pick: HelperTemplatePick): HelperDraft | null {
   }
 }
 
+/** A camera block an engine hosts is edited on its block, never through the helper wizard. */
 export function draftFromHelper(spec: HelperSpec, name: string, room: string): HelperDraft | null {
+  if (spec.kind === 'grid' || spec.kind === 'terminal') return null
   if (spec.kind === 'statistic') {
     return {
       kind: 'statistic',
@@ -461,6 +506,7 @@ export type HelperSaveResult =
   | { readonly kind: 'refused'; readonly lines: readonly RefusalLine[] }
 
 export function memberRequest(draft: HelperDraft): SourcePickRequest | null {
+  if (isCameraDraft(draft)) return null
   if (draft.kind === 'statistic' || draft.kind === 'integral')
     return sourcePickForHistory(draft.kind)
   if (draft.kind === 'threshold') return sourcePickForMath('threshold')
@@ -479,6 +525,10 @@ export function specFromDraft(draft: HelperDraft): HelperSpec | null {
   if (draft.kind === 'arithmetic') return arithmeticSpec(draft)
   if (draft.kind === 'expression') return expressionSpec(draft)
   if (draft.kind === 'derivative') return derivativeSpec(draft)
+  if (draft.kind === 'grid') return newGridHelperSpec()
+  if (draft.kind === 'terminal') {
+    return draft.terminalId === null ? null : { kind: 'terminal', terminalId: draft.terminalId }
+  }
   return groupSpec(draft)
 }
 
@@ -512,7 +562,14 @@ const MISSING_INPUTS: CompositionProblem = {
   message: 'pick the readings this helper combines', // i18n-ignore: refusal line in the engine's own vocabulary
 }
 
+const MISSING_TERMINAL: CompositionProblem = {
+  code: 'member-constraint',
+  path: 'helper.terminalId',
+  message: 'pick the Terminal this camera shows', // i18n-ignore: refusal line in the engine's own vocabulary
+}
+
 function missingFor(draft: HelperDraft): CompositionProblem {
+  if (draft.kind === 'terminal') return MISSING_TERMINAL
   if (draft.kind === 'group') return MISSING_INPUTS
   if (draft.kind === 'threshold') return MISSING_READING
   if (draft.kind === 'arithmetic' || draft.kind === 'expression') return MISSING_INPUTS
@@ -542,6 +599,8 @@ export async function writeHelper(
 }
 
 export function canSaveDraft(draft: HelperDraft): boolean {
+  if (draft.kind === 'grid') return draft.name.trim() !== ''
+  if (draft.kind === 'terminal') return draft.name.trim() !== '' && draft.terminalId !== null
   if (draft.kind === 'statistic' || draft.kind === 'integral' || draft.kind === 'derivative') {
     return draft.source !== null
   }
@@ -800,6 +859,7 @@ export function draftMembers(draft: HelperDraft): readonly HelperMember[] {
   if (draft.kind === 'group') return draft.members
   if (draft.kind === 'arithmetic') return draft.inputs
   if (draft.kind === 'expression') return draft.inputs.map((input) => input.member)
+  if (isCameraDraft(draft)) return []
   return draft.source === null ? [] : [draft.source]
 }
 
@@ -814,6 +874,7 @@ export function withDraftMembers(
 ): HelperDraft {
   if (draft.kind === 'group') return { ...draft, members }
   if (draft.kind === 'arithmetic') return { ...draft, inputs: members }
+  if (isCameraDraft(draft)) return draft
   if (draft.kind === 'expression') {
     const kept = new Map(draft.inputs.map((input) => [memberKeyOf(input.member), input.name]))
     const taken = new Set<string>()

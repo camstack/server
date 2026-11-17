@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A camera grid or Terminal camera block's device is served by its engine on the composer's row; the engine alone reports its status and feature probe (engine-hosted blocks).
+
 ## [1.2.586] - 2026-11-16
 
 ### Added

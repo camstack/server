@@ -4,12 +4,12 @@
 
 # Guards
 
-249 repository guards: 244 in `scripts/`,
+250 repository guards: 245 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (239)
+## Enforced by CI checks (240)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -88,6 +88,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-docs-english.ts` | Docs-language guard — documentation under docs/ is written in English. |
 | `scripts/check-drain-listener-rearmed.ts` | Drain-listener guard (D618) — a one-shot drain listener may only be registered from the path that was REFUSED, never once at setup. |
 | `scripts/check-durable-state-declared.ts` | Durable-state guard — a NEW declared collection must say what class of fact it holds, and the duplicated durable primitives must not drift apart. |
+| `scripts/check-engine-hosted-no-own-rows.ts` | An engine that hosts a camera block never declares a camera row of its own (D1057, planning#580). |
 | `scripts/check-event-bus-usage.ts` | D11 event-bus guard — fail the build if any file OUTSIDE the kernel's event-bus module hand-rolls a raw cross-process event topic. |
 | `scripts/check-event-emitter-vocabulary.ts` | Every `event-emitter` provider declares its event vocabulary (D1044). |
 | `scripts/check-event-kind-coverage.ts` | Event-kind coverage guard — fail the build if an EVENTFUL sensor / control cap lacks an `EVENT_KIND_BY_CAP` (taxonomy) entry. |

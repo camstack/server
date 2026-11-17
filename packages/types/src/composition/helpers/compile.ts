@@ -18,7 +18,12 @@ import { type GroupTemplate, groupTemplate } from './catalog.js'
 import { derivativeDraft, integralDraft, statisticDraft } from './compile-history.js'
 import { arithmeticDraft, expressionDraft, thresholdDraft } from './compile-math.js'
 import { DEFAULT_HISTORY_RETENTION, type HistoryRetention } from './history-window.js'
-import { type GroupHelperSpec, type HelperMember, type HelperSpec } from './spec.js'
+import {
+  type EngineHostedHelperSpec,
+  type GroupHelperSpec,
+  type HelperMember,
+  type HelperSpec,
+} from './spec.js'
 
 export interface HelperCompiled {
   readonly ok: true
@@ -213,7 +218,19 @@ export function compileHelper(
       return compileMath(arithmeticDraft(spec))
     case 'expression':
       return compileMath(expressionDraft(spec))
+    case 'grid':
+    case 'terminal':
+      return parseDraft(engineHostedDraft(spec))
   }
+}
+
+/**
+ * A grid or a Terminal camera (planning#580): a bare `new` Camera. The composer
+ * declares the row; the engine serves every cap on it, so there is nothing to
+ * compose.
+ */
+function engineHostedDraft(spec: EngineHostedHelperSpec): unknown {
+  return { target: { kind: 'new', type: DeviceType.Camera }, helper: spec, features: [] }
 }
 
 function compileMath(built: {

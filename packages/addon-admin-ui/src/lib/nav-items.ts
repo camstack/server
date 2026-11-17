@@ -16,7 +16,6 @@ import {
   Bot,
   Box,
   Calendar,
-  LayoutGrid,
   Camera,
   Cpu,
   Database,
@@ -221,12 +220,6 @@ export function buildNavSections({ t, isAdmin }: BuildNavSectionsParams): readon
         label: t('system.terminal', 'Terminal'),
         icon: Terminal,
         path: '/system/terminal',
-        adminOnly: true,
-      },
-      {
-        label: t('system.cameraGrids', 'Camera grids'),
-        icon: LayoutGrid,
-        path: '/system/camera-grids',
         adminOnly: true,
       },
       // "My access" deliberately NOT listed here — it lives in the bottom

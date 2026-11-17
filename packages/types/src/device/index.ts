@@ -10,6 +10,7 @@ export type {
   AccessoryChildrenRead,
   AccessoryChildrenUnknown,
   AccessoryChildSpec,
+  DeviceStatusOwnership,
 } from './base-device.js'
 export { accessoryChildrenComplete, accessoryChildrenUnknown, BaseDevice } from './base-device.js'
 export type {

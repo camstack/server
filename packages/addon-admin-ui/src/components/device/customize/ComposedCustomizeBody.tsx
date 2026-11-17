@@ -5,6 +5,7 @@ import {
   COMPOSED_DEVICE_STABLE_ID_PREFIX,
   coreBlockComposition,
   type DeviceInfo,
+  isEngineHostedHelper,
 } from '@camstack/types'
 import {
   Badge,
@@ -112,15 +113,17 @@ export function ComposedCustomizeBody({ device }: ComposedCustomizeBodyProps): R
   }
   // A helper keeps its read-only summary and its Edit dialog, and ALSO gets the lists any
   // composed device gets (D1004): the helper never hides Customize.
+  // A camera block an engine hosts (a grid, a Terminal camera) has no summary: it is edited
+  // on its block, and its own caps' settings sit on the device page (planning#580).
   const helperDraft = isHelperComposition(composition)
     ? draftFromHelper(composition.helper, device.name, device.location ?? '')
     : null
   return (
     <div className="flex flex-col gap-3">
       <IdentityRow device={device} />
-      {isHelperComposition(composition) && helperDraft === null && (
-        <p role="alert">{t('helper.unreadable')}</p>
-      )}
+      {isHelperComposition(composition) &&
+        !isEngineHostedHelper(composition.helper) &&
+        helperDraft === null && <p role="alert">{t('helper.unreadable')}</p>}
       {helperDraft !== null && (
         <>
           <HelperSummaryCard draft={helperDraft} device={device} onEdit={() => setEditing(true)} />

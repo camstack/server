@@ -1298,7 +1298,6 @@
       "noProvidersDescription": "Install a training provider addon (for example @camstack/addon-training) to train on your own GPU-cloud account.",
       "addAccount": "Add account"
     },
-    "cameraGrids": "Camera grids",
     "bootstrapForm": {
       "saveFailed": "Could not save"
     }
@@ -7313,7 +7312,6 @@
     "enabledLabel": "Enabled: {{name}}",
     "colCamera": "Camera",
     "noCamera": "None",
-    "cameraLink": "Camera {{id}}",
     "colActions": "Actions",
     "actionsNotSortable": "Actions have no order",
     "attach": "Attach",
@@ -7370,7 +7368,10 @@
     "shellLeaveFailed": "A shell was not closed",
     "shellLeaveFailedOn": "{{node}}: {{message}}",
     "dismiss": "Dismiss",
-    "shellLastActivity": "Last input or output {{when}}"
+    "shellLastActivity": "Last input or output {{when}}",
+    "cameraUnknown": "Unknown",
+    "deleteCamera": "Its camera {{name}} is deleted with it.",
+    "addCamera": "Add a camera"
   },
   "deviceQuickDetail": {
     "discard": "Discard",
@@ -12032,7 +12033,9 @@
       "media-playerSummary": "Playing when at least one player is playing, or only when all are. Volume appears only when every player has it.",
       "climateSummary": "Running when at least one device is not off, or only when all are. Target temperature and fan appear only when every device has them.",
       "composition": "Free composition",
-      "device": "New device"
+      "device": "New device",
+      "grid": "Camera grid",
+      "terminal": "Terminal camera"
     },
     "aggregate": {
       "mean": "Mean",
@@ -12071,6 +12074,10 @@
           "parameters": "Choose the window and the unit of time, and name it.",
           "members": "Pick the one reading, which must keep a history."
         }
+      },
+      "camera": {
+        "grid": "Name the grid. You lay out its cells on the device once it is saved.",
+        "terminal": "Name the camera and pick the Terminal it shows."
       }
     },
     "reducer": "Combine by",
@@ -12163,7 +12170,9 @@
       "valve": "New valve group",
       "lock": "New lock group",
       "media-player": "New media player group",
-      "climate": "New climate group"
+      "climate": "New climate group",
+      "grid": "New camera grid",
+      "terminal": "New Terminal camera"
     },
     "detail": {
       "statistic": "Minimum, maximum, time-weighted mean, sum, count or change over a range, read from history. Sum is for a counter; a gauge's sum is the integral.",
@@ -12178,7 +12187,9 @@
       "derivative": "How fast a reading rises or falls over a window, per second, minute or hour.",
       "lockConfirm": "Unlocking the group always asks for a confirmation, and nothing is sent without it.",
       "composition": "Build the device block by block: pick its type and edit its fields yourself.",
-      "device": "Create a device of the type you choose. Power metrics, running state and the rest are added afterwards in Customize."
+      "device": "Create a device of the type you choose. Power metrics, running state and the rest are added afterwards in Customize.",
+      "grid": "Several cameras tiled into one camera. Lay out the cells after saving.",
+      "terminal": "A Terminal's screen as a live camera. Each Terminal shows on one camera."
     },
     "stat": "Statistic",
     "statName": {
@@ -12321,7 +12332,8 @@
       "calculation": "Calculation",
       "advanced": "Advanced",
       "presets": "Presets",
-      "device": "Device"
+      "device": "Device",
+      "cameras": "Cameras"
     },
     "badge": {
       "group": "Group: {{kind}}",
@@ -12334,6 +12346,18 @@
     "deviceSource": {
       "media-source": "Source (optional): the device whose media-player commands this player carries.",
       "control-source": "Plug: the switch this heater turns on and off."
+    },
+    "terminal": {
+      "pick": "Terminal",
+      "placeholder": "Pick a Terminal",
+      "taken": "{{name}} — shown by {{block}}",
+      "none": "No Terminal yet.",
+      "openPage": "Create one on the Terminal page",
+      "unknown": "The Terminals could not be read.",
+      "saveFailed": "Could not change the Terminal"
+    },
+    "grid": {
+      "cameraPending": "The grid's camera is being created. Its cells can be laid out once it is running."
     }
   },
   "pageRequires": {
@@ -13361,13 +13385,6 @@
     "allFailed": "{{count}} calendars could not be fetched",
     "allCollections": "{{count}} sources refreshed.",
     "allNotFetched": "The calendars could not be fetched"
-  },
-  "cameraGrids": {
-    "title": "Camera grids",
-    "subtitle": "A grid is a composite camera: several cameras composed into one picture, recorded and played back like any other. Create one with a name, then open its camera to lay it out.",
-    "empty": "No camera grids yet",
-    "emptyHint": "Add a grid to compose several cameras into one.",
-    "add": "Add grid"
   },
   "deviceModule": {
     "history": "History"

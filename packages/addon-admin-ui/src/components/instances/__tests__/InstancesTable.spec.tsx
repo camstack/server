@@ -172,6 +172,7 @@ function renderPanel(
       | 'pageActions'
       | 'rowFilter'
       | 'onDeleteRefused'
+      | 'deleteNote'
       | 'typedId'
       | 'testLabel'
       | 'testHint'
@@ -668,6 +669,15 @@ describe('InstancesTable', () => {
         addonId: 'smtp-nodemailer',
         id: 'relay-default',
       })
+    })
+
+    it("delete adds the page's note for the record to the confirmation", async () => {
+      h.targets = []
+      renderPanel('', {
+        deleteNote: (row) => `The camera ${row.name} goes with it.`,
+      })
+      fireEvent.click(await screen.findByRole('button', { name: 'Delete Default relay' }))
+      expect(await screen.findByText(/The camera Default relay goes with it\./)).toBeTruthy()
     })
 
     it('a failed delete is offered to onDeleteRefused first, and a handled one shows no failure toast', async () => {

@@ -3710,12 +3710,6 @@ export const useTemplateDelete: typeof trpc.template.delete.useMutation = /*#__P
 /** Generated alias around `trpc.terminalSession.listProfiles.useQuery`. */
 export const useTerminalSessionListProfiles: typeof trpc.terminalSession.listProfiles.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.listProfiles.useQuery)
 
-/** Generated alias around `trpc.terminalSession.listLegacyCameras.useQuery`. */
-export const useTerminalSessionListLegacyCameras: typeof trpc.terminalSession.listLegacyCameras.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.listLegacyCameras.useQuery)
-
-/** Generated alias around `trpc.terminalSession.adoptLegacyMonitor.useMutation`. */
-export const useTerminalSessionAdoptLegacyMonitor: typeof trpc.terminalSession.adoptLegacyMonitor.useMutation = /*#__PURE__*/ alias(() => trpc.terminalSession.adoptLegacyMonitor.useMutation)
-
 /** Generated alias around `trpc.terminalSession.listSessions.useQuery`. */
 export const useTerminalSessionListSessions: typeof trpc.terminalSession.listSessions.useQuery = /*#__PURE__*/ alias(() => trpc.terminalSession.listSessions.useQuery)
 

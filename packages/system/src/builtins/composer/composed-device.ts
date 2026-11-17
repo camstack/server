@@ -33,6 +33,7 @@ import {
   coverCapability,
   type DeviceConstructor,
   type DeviceContext,
+  type DeviceStatusOwnership,
   type DeviceFeature,
   DeviceType,
   errMsg,
@@ -153,8 +154,13 @@ export class ComposedDevice
     void this.refreshFeatures()
   }
 
-  constructor(ctx: DeviceContext, type: DeviceType, caps: readonly CapabilityDefinition[]) {
-    super(ctx, COMPOSED_DEVICE_CONFIG_SCHEMA, { type })
+  constructor(
+    ctx: DeviceContext,
+    type: DeviceType,
+    caps: readonly CapabilityDefinition[],
+    deviceStatus: DeviceStatusOwnership = 'own',
+  ) {
+    super(ctx, COMPOSED_DEVICE_CONFIG_SCHEMA, { type, deviceStatus })
     this.derivesWater = type === DeviceType.PetFountain
     // Motion's `isDetected` is a slice answer (D944): the group reads `detected`.
     // Switch fans a command out. Every other composed cap stays an empty native;
@@ -186,6 +192,7 @@ export class ComposedDevice
       })
     }
     // NOT presumed reachable: available only once the runtime has seeded every cap.
+    // (A no-op on an engine-hosted row: the engine writes its status.)
     this.markOnline(false)
   }
 
@@ -474,6 +481,19 @@ export function composedDeviceClass(
  * ROW's (`deviceMeta.type`) — only ever adopted from an existing row, where the
  * row is canonical — because there is no plan to take one from.
  */
+/**
+ * The composer's device on an ENGINE-HOSTED row (Camera grid, Terminal camera —
+ * planning#580). The composer owns the row, its name and its lifetime; the
+ * engine serves every camera cap on it as a cross-addon native (D663) and is
+ * the only writer of its `device-status`. This device registers no cap and
+ * never writes availability.
+ */
+export class EngineHostedComposedDevice extends ComposedDevice {
+  constructor(ctx: DeviceContext) {
+    super(ctx, DeviceType.Camera, [], 'external')
+  }
+}
+
 export class ComposedPlaceholderDevice extends ComposedDevice {
   constructor(ctx: DeviceContext) {
     super(ctx, ctx.deviceMeta.type, [])

@@ -189,7 +189,6 @@ export function CameraGridLayoutEditor({ deviceId }: CameraGridLayoutEditorProps
       try {
         const outcome = parseGridView(
           await layout.saveLayout({
-            name: draft.name,
             fps: draft.fps,
             cells: draft.cells.map((cell) => ({ ...cell })),
             ...(extra?.publishedProfiles !== undefined

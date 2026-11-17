@@ -1298,7 +1298,6 @@
       "noProvidersDescription": "Installa un addon provider di training (ad esempio @camstack/addon-training) per addestrare sul tuo account GPU-cloud.",
       "addAccount": "Aggiungi account"
     },
-    "cameraGrids": "Griglie di camere",
     "bootstrapForm": {
       "saveFailed": "Impossibile salvare"
     }
@@ -7388,7 +7387,6 @@
     "enabledLabel": "Attivo: {{name}}",
     "colCamera": "Camera",
     "noCamera": "Nessuna",
-    "cameraLink": "Camera {{id}}",
     "colActions": "Azioni",
     "actionsNotSortable": "Le azioni non hanno un ordine",
     "attach": "Collega",
@@ -7445,7 +7443,10 @@
     "shellLeaveFailed": "Una shell non è stata chiusa",
     "shellLeaveFailedOn": "{{node}}: {{message}}",
     "dismiss": "Ignora",
-    "shellLastActivity": "Ultimo input o output {{when}}"
+    "shellLastActivity": "Ultimo input o output {{when}}",
+    "cameraUnknown": "Sconosciuta",
+    "deleteCamera": "Anche la sua telecamera {{name}} viene eliminata.",
+    "addCamera": "Aggiungi una telecamera"
   },
   "deviceQuickDetail": {
     "discard": "Annulla",
@@ -12054,7 +12055,9 @@
       "media-playerSummary": "In riproduzione se almeno un lettore riproduce, oppure solo se lo fanno tutti. Il volume compare solo se ogni lettore lo ha.",
       "climateSummary": "Attivo se almeno un dispositivo non è spento, oppure solo se lo sono tutti. Temperatura obiettivo e ventola compaiono solo se ogni dispositivo le ha.",
       "composition": "Composizione libera",
-      "device": "Nuovo dispositivo"
+      "device": "Nuovo dispositivo",
+      "grid": "Griglia di telecamere",
+      "terminal": "Telecamera del Terminale"
     },
     "aggregate": {
       "mean": "Media",
@@ -12093,6 +12096,10 @@
           "parameters": "Scegli la finestra e l'unità di tempo e dagli un nome.",
           "members": "Scegli la lettura, che deve avere uno storico."
         }
+      },
+      "camera": {
+        "grid": "Dai un nome alla griglia. Le celle si dispongono sul dispositivo dopo il salvataggio.",
+        "terminal": "Dai un nome alla telecamera e scegli il Terminale da mostrare."
       }
     },
     "reducer": "Combina con",
@@ -12185,7 +12192,9 @@
       "valve": "Nuovo gruppo di valvole",
       "lock": "Nuovo gruppo di serrature",
       "media-player": "Nuovo gruppo di lettori multimediali",
-      "climate": "Nuovo gruppo di clima"
+      "climate": "Nuovo gruppo di clima",
+      "grid": "Nuova griglia di telecamere",
+      "terminal": "Nuova telecamera del Terminale"
     },
     "detail": {
       "statistic": "Minimo, massimo, media pesata nel tempo, somma, conteggio o variazione su un intervallo, letti dallo storico. La somma è per un contatore; la somma di un valore istantaneo è l'integrale.",
@@ -12200,7 +12209,9 @@
       "derivative": "Quanto velocemente una lettura sale o scende su una finestra, al secondo, al minuto o all'ora.",
       "lockConfirm": "Aprire il gruppo chiede sempre una conferma e senza non viene inviato nulla.",
       "composition": "Costruisci il dispositivo blocco per blocco: scegli il tipo e modifica i campi a mano.",
-      "device": "Crea un dispositivo del tipo che scegli. Metriche di potenza, stato di funzionamento e il resto si aggiungono dopo, in Personalizza."
+      "device": "Crea un dispositivo del tipo che scegli. Metriche di potenza, stato di funzionamento e il resto si aggiungono dopo, in Personalizza.",
+      "grid": "Più telecamere affiancate in una sola. Disponi le celle dopo il salvataggio.",
+      "terminal": "Lo schermo di un Terminale come telecamera dal vivo. Ogni Terminale appare in una sola telecamera."
     },
     "stat": "Statistica",
     "statName": {
@@ -12343,7 +12354,8 @@
       "calculation": "Calcolo",
       "advanced": "Avanzato",
       "presets": "Preset",
-      "device": "Dispositivo"
+      "device": "Dispositivo",
+      "cameras": "Telecamere"
     },
     "badge": {
       "group": "Gruppo: {{kind}}",
@@ -12356,6 +12368,18 @@
     "deviceSource": {
       "media-source": "Sorgente (facoltativa): il dispositivo di cui questo player porta i comandi media-player.",
       "control-source": "Presa: l'interruttore che questo riscaldatore accende e spegne."
+    },
+    "terminal": {
+      "pick": "Terminale",
+      "placeholder": "Scegli un Terminale",
+      "taken": "{{name}} — già mostrato da {{block}}",
+      "none": "Nessun Terminale ancora.",
+      "openPage": "Creane uno nella pagina Terminale",
+      "unknown": "Impossibile leggere i Terminali.",
+      "saveFailed": "Impossibile cambiare il Terminale"
+    },
+    "grid": {
+      "cameraPending": "La telecamera della griglia è in creazione. Le celle si possono disporre quando è attiva."
     }
   },
   "pageRequires": {
@@ -13383,13 +13407,6 @@
     "allFailed": "{{count}} calendari non aggiornati",
     "allCollections": "{{count}} sorgenti aggiornate.",
     "allNotFetched": "Non è stato possibile aggiornare i calendari"
-  },
-  "cameraGrids": {
-    "title": "Griglie di camere",
-    "subtitle": "Una griglia e una camera composita: piu camere riunite in un'unica immagine, registrata e riprodotta come ogni altra. Creala con un nome, poi apri la sua camera per disporla.",
-    "empty": "Nessuna griglia di camere",
-    "emptyHint": "Aggiungi una griglia per riunire piu camere in una.",
-    "add": "Aggiungi griglia"
   },
   "deviceModule": {
     "history": "Storico"

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The camera grid layout editor is available to the block editor.
+
 ## [1.2.463] - 2026-11-16
 
 ### Changed

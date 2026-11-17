@@ -35,7 +35,9 @@ import { buildGridDeviceSchema } from './grid-device-settings.js'
 /** What the provider needs from the running addon — nothing more. */
 export interface GridLayoutSource {
   /** The grid behind a device, or `null` — "answered: not a grid". */
-  getLayout(deviceId: number): GridLayoutView | null
+  getLayout(deviceId: number): Promise<GridLayoutView | null>
+  /** Whether this engine hosts a grid on the device — answered from memory. */
+  isGrid(deviceId: number): boolean
   saveLayout(patch: GridLayoutPatch): Promise<GridLayoutView>
 }
 
@@ -46,7 +48,7 @@ export function buildGridLayoutNativeProvider(
     getLayout: async ({ deviceId }) => source.getLayout(deviceId),
     saveLayout: async (patch) => source.saveLayout(patch),
     getDeviceSettingsContribution: async ({ deviceId }) => {
-      const schema = buildGridDeviceSchema(source.getLayout(deviceId) !== null)
+      const schema = buildGridDeviceSchema(source.isGrid(deviceId))
       // `hydrateSchema` carries no values here — a widget stores none, it reads
       // and writes through the cap's own methods. It is what turns a plain
       // schema into the wire shape the aggregation expects.

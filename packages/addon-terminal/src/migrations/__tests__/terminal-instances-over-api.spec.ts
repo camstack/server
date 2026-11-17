@@ -3,13 +3,13 @@
  * bound through the migration API only: the legacy list is read from a hand-seeded SQLite
  * `addon-settings` table over `api.settings`, the records live in the in-memory records engine. A
  * field the old row carried that a re-built row would lose (`profileSettings.mark`) is the
- * discriminator: it must be on the record, under the SAME id, so `terminal-camera-instance-<id>`
- * stays the camera's stable id.
+ * discriminator: it must be on the record, under the SAME id. The old camera stable id is not
+ * carried: a Terminal camera is a core block now (planning#580).
  */
 import { makeInMemoryRecords } from '@camstack/types'
 import Database from 'better-sqlite3'
 import { describe, expect, it } from 'vitest'
-import { newTerminalCameraStableId, terminalInstancesKind } from '../../terminal-record-kinds.js'
+import { terminalInstancesKind } from '../../terminal-record-kinds.js'
 import {
   ADDON_MIGRATIONS,
   LEGACY_TERMINAL_INSTANCES_KEY,
@@ -96,7 +96,9 @@ async function boot() {
   const portsOver = (): TerminalMigrationPorts => terminalPortsOver(api)
   const run = (ports: TerminalMigrationPorts = portsOver()) => copyTerminalsToRecords(ports)
   const settingsRow = () =>
-    db.prepare<[string], { id: string }>('SELECT id FROM "addon-settings" WHERE id = ?').get(LEGACY_ID)
+    db
+      .prepare<[string], { id: string }>('SELECT id FROM "addon-settings" WHERE id = ?')
+      .get(LEGACY_ID)
   return { db, handle, run, portsOver, settingsRow, warnings }
 }
 
@@ -125,15 +127,13 @@ describe('Terminal instances settings to records, over the migration API', () =>
     expect(w.settingsRow()).toBeUndefined()
   })
 
-  it('the camera each record yields is the camera the old row named (device ids stay)', async () => {
+  it('the old camera stable id is read and not carried (a Terminal camera is a block)', async () => {
     const w = await boot()
     seedTerminalLegacySettings(w.db)
     await w.run()
     for (const seed of TERMINAL_SEED_ROWS) {
       const row = await w.handle.get(seed.id)
-      expect(row?.data.cameraStableId ?? newTerminalCameraStableId(seed.id)).toBe(
-        seed.cameraStableId,
-      )
+      expect(row?.data).not.toHaveProperty('cameraStableId')
     }
   })
 
@@ -236,14 +236,13 @@ describe('Terminal instances settings to records, over the migration API', () =>
     expect(legacyValue(w)).toEqual([dup])
   })
 
-  it('a disabled row survives disabled and an adopted legacy camera id survives', async () => {
+  it('a disabled row survives disabled', async () => {
     const w = await boot()
     seedTerminalLegacySettings(w.db)
     await w.run()
     const adopted = TERMINAL_SEED_ROWS[1]
     const record = await w.handle.get(adopted?.id ?? '')
     expect(record?.data.enabled).toBe(false)
-    expect(record?.data.cameraStableId).toBe(adopted?.cameraStableId)
   })
 
   it('keeps the old key when a written record does not read back equal', async () => {

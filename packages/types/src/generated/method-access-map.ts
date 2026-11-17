@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1509 method paths across 210 capabilities.
+ * Coverage: 1507 method paths across 210 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1394,9 +1394,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'template.get': { capName: "template", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'template.list': { capName: "template", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'template.update': { capName: "template", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'terminalSession.adoptLegacyMonitor': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'terminalSession.close': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
-  'terminalSession.listLegacyCameras': { capName: "terminal-session", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'terminalSession.listProfiles': { capName: "terminal-session", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'terminalSession.listSessions': { capName: "terminal-session", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'terminalSession.openSession': { capName: "terminal-session", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

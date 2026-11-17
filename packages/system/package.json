@@ -546,7 +546,7 @@
         "name": "Camera Grids",
         "icon": "assets/camera-grid/icon.svg",
         "color": "#7c3aed",
-        "description": "Composite cameras: several cameras composed into one fixed picture and emitted as an ordinary camera — recorded, played back and bound like any other. The composition runs only while something is consuming it; object detection is switched off on a new grid because the cameras it is composed from are already analysed. Runs in its OWN process (`execution.isolate`): it spawns an ffmpeg per live composition and relays its bytes, and neither belongs on the event loop that serves the API.",
+        "description": "Composite cameras: the engine behind the Camera grid block — several cameras composed into one fixed picture and emitted as an ordinary camera — recorded, played back and bound like any other. The composition runs only while something is consuming it; object detection is switched off on a new grid because the cameras it is composed from are already analysed. Runs in its OWN process (`execution.isolate`): it spawns an ffmpeg per live composition and relays its bytes, and neither belongs on the event loop that serves the API.",
         "entry": "./dist/builtins/camera-grid/index.js",
         "instanceMode": "unique",
         "execution": {
@@ -557,9 +557,6 @@
         "capabilities": [
           {
             "name": "camera-grid-layout"
-          },
-          {
-            "name": "integration-instances"
           },
           {
             "name": "motion"

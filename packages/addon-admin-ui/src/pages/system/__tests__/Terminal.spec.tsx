@@ -7,9 +7,7 @@
  *  2. `TerminalPage` — two sub-sections: "Terminal devices" (the default) and
  *     "Node shells"; a node shell never shows among the instance sessions and
  *     the node list opens nothing. The devices tab is ONE table of every
- *     instance across nodes: no per-node card, no legacy-camera list. Legacy cameras are
- *     one header action, shown only when the hub answered that some exist
- *     (with `<TerminalPanel>` stubbed). The node picker's "not installed"
+ *     instance across nodes: no per-node card (with `<TerminalPanel>` stubbed). The node picker's "not installed"
  *     reason is the library field's (`node-select-field-capability.spec`).
  */
 /// <reference types="@testing-library/jest-dom" />
@@ -93,8 +91,7 @@ const mocks = vi.hoisted(() => {
     hubRegistry,
     openSession: vi.fn(async () => ({ sessionId: 's-1' })),
     profileCalls: [] as string[],
-    legacy: undefined as readonly { stableId: string }[] | undefined,
-    custom: vi.fn(async () => ({ adopted: 1, cameras: [] })),
+    compositions: undefined as unknown,
     sessions: [] as readonly {
       sessionId: string
       profileId: string
@@ -116,7 +113,6 @@ const INSTANCES = [
       nodeId: 'hub',
       profileId: 'monitor',
       profileLabel: 'BTM',
-      cameraStableId: 'cam-1',
       executable: '/bin/btm',
       args: ['-b'],
       cwd: '',
@@ -139,10 +135,9 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
       render: (row: unknown) => unknown
     }[]
     rowActions: (row: unknown) => unknown
-    pageActions?: (rows: readonly unknown[]) => unknown
+    deleteNote?: (row: unknown) => string | null
   }) => (
     <table>
-      <caption>{props.pageActions?.([]) as never}</caption>
       <tbody>
         {INSTANCES.map((instance) => {
           const row = {
@@ -160,6 +155,7 @@ vi.mock('../../../components/instances/InstancesTable', () => ({
                 <td key={column.key}>{column.render(row) as never}</td>
               ))}
               <td>{props.rowActions(row) as never}</td>
+              <td data-testid={`delete-note-${instance.id}`}>{props.deleteNote?.(row) ?? ''}</td>
             </tr>
           )
         })}
@@ -182,7 +178,6 @@ vi.mock('@camstack/ui-library', async () => {
         providerNodes: actual.capabilityProviderNodes(answer),
       }
     },
-    useAddonsCustom: () => ({ mutateAsync: mocks.custom, isPending: false }),
     // The library picker asks the registry itself; its behaviour is its own spec's.
     NodePicker: () => null,
     useClusterNodes: () => ({
@@ -191,9 +186,12 @@ vi.mock('@camstack/ui-library', async () => {
         { id: 'edge', name: 'edge-proxmox' },
       ],
     }),
-    useDeviceManagerListAll: () => query([{ id: 4101, stableId: 'cam-1' }]),
+    useCoreBlocksListCompositions: () => ({
+      data: mocks.compositions,
+      isError: false,
+      isLoading: mocks.compositions === undefined,
+    }),
     useInstancesOfCap: () => query(INSTANCES),
-    useTerminalSessionListLegacyCameras: () => query(mocks.legacy),
     useTerminalSessionListProfiles: (input: { nodeId: string }) => {
       mocks.profileCalls.push(input.nodeId)
       return query([{ profileId: 'monitor', label: 'BTM', description: 'btm' }])
@@ -218,23 +216,81 @@ function renderPage(path = '/system/terminal') {
   )
 }
 
+// The camera of a Terminal is the block that names it (planning#580).
+const HUB_MONITOR_BLOCK = {
+  id: 'b-1',
+  name: 'Hub monitor',
+  code: '',
+  enabled: true,
+  placement: 'hub',
+  createdAt: 1,
+  updatedAt: 2,
+  createdBy: 'test',
+  status: 'running',
+  lastChangedAt: 1,
+  source: {
+    kind: 'composition',
+    composition: {
+      target: { kind: 'new', type: 'camera' },
+      features: [],
+      helper: { kind: 'terminal', terminalId: 'i-1' },
+    },
+  },
+}
+
+function loadedCompositions(): unknown {
+  return {
+    state: 'loaded',
+    views: [
+      {
+        block: HUB_MONITOR_BLOCK,
+        state: {
+          kind: 'answered',
+          state: { blockId: 'b-1', deviceId: 4101, status: 'running', fields: [] },
+        },
+      },
+    ],
+  }
+}
+
 describe('TerminalPage', () => {
   beforeEach(() => {
     mocks.openSession.mockClear()
     mocks.profileCalls.length = 0
-    mocks.legacy = []
-    mocks.custom.mockClear()
+    mocks.compositions = loadedCompositions()
     mocks.sessions = []
     mocks.registry = mocks.hubRegistry()
   })
 
-  it('shows each terminal with its node, profile and camera link', () => {
+  it('shows each terminal with its node, profile and the camera block that shows it', () => {
     renderPage()
     const table = screen.getByRole('table')
     expect(within(table).getByText('BTM Hub')).toBeInTheDocument()
     expect(within(table).getByText('Hub')).toBeInTheDocument()
-    expect(within(table).getByRole('link', { name: /camera 4101/i })).toBeInTheDocument()
+    const link = within(table).getByRole('link', { name: /hub monitor/i })
+    expect(link).toHaveAttribute('href', '/devices/4101')
     expect(within(table).getAllByText('None')).toHaveLength(1)
+  })
+
+  it('a terminal with no camera links to Build-your-self on the Terminal camera template', () => {
+    renderPage()
+    const link = screen.getByRole('link', { name: /add a camera/i })
+    expect(link).toHaveAttribute(
+      'href',
+      '/build?tab=custom-device&new=helper&template=terminal&terminalId=i-2',
+    )
+  })
+
+  it('a camera read that has not answered is never "None"', () => {
+    mocks.compositions = undefined
+    renderPage()
+    expect(screen.queryByText('None')).not.toBeInTheDocument()
+  })
+
+  it('the delete confirmation names the camera block that goes with the terminal', () => {
+    renderPage()
+    expect(screen.getByTestId('delete-note-i-1').textContent).toMatch(/Hub monitor/)
+    expect(screen.getByTestId('delete-note-i-2').textContent).toBe('')
   })
 
   it('attaches with the spawn values read from the record', async () => {
@@ -259,30 +315,6 @@ describe('TerminalPage', () => {
     expect(screen.queryByText('Nodes')).not.toBeInTheDocument()
     expect(screen.queryByText(/not installed/i)).not.toBeInTheDocument()
     expect(mocks.profileCalls).not.toContain('edge')
-  })
-
-  it('shows no legacy action while the legacy read has not answered, or answered none', () => {
-    mocks.legacy = undefined
-    const { unmount } = renderPage()
-    expect(screen.queryByRole('button', { name: /legacy/i })).not.toBeInTheDocument()
-    unmount()
-    mocks.legacy = []
-    renderPage()
-    expect(screen.queryByRole('button', { name: /legacy/i })).not.toBeInTheDocument()
-  })
-
-  it('offers ONE action that adopts every legacy camera, with no list of them', async () => {
-    mocks.legacy = [{ stableId: 'terminal-camera-hub' }, { stableId: 'terminal-camera-edge-top' }]
-    renderPage()
-    expect(screen.queryByText('terminal-camera-hub')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Adopt legacy cameras (2)' }))
-    await waitFor(() => {
-      expect(mocks.custom).toHaveBeenCalledWith({
-        addonId: 'terminal',
-        action: 'adoptLegacyCameras',
-        input: {},
-      })
-    })
   })
 
   it('splits terminal devices and node shells into two sub-sections, devices first', () => {

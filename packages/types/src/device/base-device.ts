@@ -46,6 +46,12 @@ import type { CustomActionSpec } from '../capabilities/custom-actions.js'
 // Using it on the type parameter keeps the typed inference path
 // (`z.infer<T>`, `T['shape']['host']`) intact while admitting concrete
 // schemas from subclasses.
+/**
+ * Who writes a device's base slices (`device-status`, `feature-probe`): the
+ * device itself, or another process (planning#580).
+ */
+export type DeviceStatusOwnership = 'own' | 'external'
+
 export abstract class BaseDevice<
   T extends z.ZodObject<z.core.$ZodLooseShape> = z.ZodObject<z.ZodRawShape>,
 > implements IDevice
@@ -53,6 +59,8 @@ export abstract class BaseDevice<
   readonly id: number
   readonly stableId: string
   readonly type: DeviceType
+  /** True when another process owns the base slices (`options.deviceStatus: 'external'`). */
+  private readonly statusIsExternal: boolean
   readonly name: string
   readonly parentDeviceId: number | null
   readonly role?: DeviceRole
@@ -171,6 +179,14 @@ export abstract class BaseDevice<
       type: DeviceType
       /** Optional semantic role within parent — see `DeviceRole`. */
       role?: DeviceRole
+      /**
+       * `external`: another process serves this row's base slices,
+       * `device-status` and `feature-probe` (an engine hosting caps on a row
+       * it does not own, planning#580). This device then registers neither
+       * native, seeds nothing, and `markOnline` / the default `onProbe` are
+       * no-ops — one writer per slice.
+       */
+      deviceStatus?: DeviceStatusOwnership
     },
   ) {
     this.ctx = ctx
@@ -283,7 +299,8 @@ export abstract class BaseDevice<
     // instead of having to special-case `online` against the device
     // summary RPC. Driver-specific caps (`battery`, `doorbell`, …)
     // own their own slices.
-    ctx.registerNativeCap?.(deviceStatusCapability, {})
+    this.statusIsExternal = options.deviceStatus === 'external'
+    if (!this.statusIsExternal) ctx.registerNativeCap?.(deviceStatusCapability, {})
     // Seed the slice synchronously so the `online` getter resolves and
     // the first cross-process read returns a populated record. A freshly
     // registered device is PRESUMED reachable (`online: true`) until its
@@ -293,8 +310,10 @@ export abstract class BaseDevice<
     // `markOnline(true)` — accessory children (sirens/floodlights/PIR) and
     // never-managed devices — permanently OFFLINE once `listAll` surfaces
     // the real cap-state online flag instead of a hardcoded `true`.
-    const seed: DeviceStatus = { online: true, lastChangedAt: Date.now() }
-    this.runtimeState.setCapState('device-status', seed)
+    if (!this.statusIsExternal) {
+      const seed: DeviceStatus = { online: true, lastChangedAt: Date.now() }
+      this.runtimeState.setCapState('device-status', seed)
+    }
 
     // Auto-register the generic `feature-probe` cap. Drivers populate it
     // from `onProbe()` (kernel calls it once after register, before
@@ -302,16 +321,19 @@ export abstract class BaseDevice<
     // for `getAccessoryChildren()` decisions and the public `features`
     // array — it replaces the older driver-local `deviceCache.has*`
     // duplication.
-    ctx.registerNativeCap?.(featureProbeCapability, {})
-    const probeSeed: FeatureProbeStatus = {
-      flags: {},
-      deviceType: null,
-      model: null,
-      channelCount: null,
-      lastProbedAt: 0,
-      lastFetchedAt: 0,
+    // An engine-hosted row: the engine serving the caps owns this slice too.
+    if (!this.statusIsExternal) {
+      ctx.registerNativeCap?.(featureProbeCapability, {})
+      const probeSeed: FeatureProbeStatus = {
+        flags: {},
+        deviceType: null,
+        model: null,
+        channelCount: null,
+        lastProbedAt: 0,
+        lastFetchedAt: 0,
+      }
+      this.runtimeState.setCapState('feature-probe', probeSeed)
     }
-    this.runtimeState.setCapState('feature-probe', probeSeed)
   }
 
   private readonly deviceActions = new Map<
@@ -356,7 +378,7 @@ export abstract class BaseDevice<
    * override to gate side effects on the transition.
    */
   markOnline(online: boolean): void {
-    if (this.online === online) return
+    if (this.statusIsExternal || this.online === online) return
     const next: DeviceStatus = { online, lastChangedAt: Date.now() }
     this.runtimeState.setCapState('device-status', next)
   }
@@ -677,6 +699,7 @@ export abstract class BaseDevice<
    * `lastProbedAt`) once their probe actually succeeds.
    */
   async onProbe(): Promise<void> {
+    if (this.statusIsExternal) return
     const current = this.runtimeState.getCapState<FeatureProbeStatus>('feature-probe')
     const base: FeatureProbeStatus = current ?? {
       flags: {},

@@ -1933,10 +1933,6 @@ export {
 } from './stream-signals.cap.js'
 export {
   type ITerminalSessionProvider,
-  type TerminalInstanceInfo,
-  TerminalInstanceInfoSchema,
-  type TerminalLegacyCamera,
-  TerminalLegacyCameraSchema,
   type TerminalOutputBatch,
   TerminalOutputBatchSchema,
   type TerminalOutputEvent,

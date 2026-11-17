@@ -114,38 +114,6 @@ describe('TerminalSessionManager', () => {
     expect(profiles.map((p) => p.profileId)).toEqual(['monitor', 'server-shell'])
   })
 
-  it('does not treat profile templates as Terminal instances until hub control adopts one', async () => {
-    const { manager } = makeManager()
-    expect(await manager.listLegacyCameras()).toEqual([])
-    await expect(
-      manager.adoptLegacyMonitor({ stableId: 'terminal-camera-agent-1' }),
-    ).rejects.toThrow(/managed on the hub/)
-
-    const created = {
-      instanceId: 'instance-a',
-      cameraStableId: 'terminal-camera-instance-a',
-      nodeInCluster: true,
-      nodeId: 'hub',
-      profileId: 'monitor',
-      profileLabel: 'BTM',
-      name: 'Hub monitor',
-      enabled: true,
-      executable: '',
-      args: [],
-      cwd: '',
-      environment: [],
-      profileSettings: {},
-    }
-    manager.setInstanceControl({
-      listLegacyCameras: async () => [],
-      adoptLegacyMonitor: async () => created,
-    })
-
-    await expect(
-      manager.adoptLegacyMonitor({ stableId: 'terminal-camera-agent-1' }),
-    ).resolves.toEqual(created)
-  })
-
   it('adds a shell profile only when allowShell is set', async () => {
     const { manager } = makeManager({ allowShell: true })
     expect((await manager.listProfiles()).map((p) => p.profileId)).toEqual([

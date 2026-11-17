@@ -5,8 +5,6 @@ import { type CapabilityDefinition, type InferProvider, method } from './capabil
 /** Profile-exported FormBuilder schema. Shape is ConfigUISchema at the UI. */
 const ProfileSettingsSchemaBridge = z.unknown().nullable()
 
-const ProfileSettingsBagSchema = z.record(z.string(), z.unknown())
-
 /**
  * A live terminal session hosted by the provider addon. Output and input do
  * NOT flow through the capability — they use the addon data plane
@@ -49,41 +47,6 @@ const TerminalProfileInfoSchema = z.object({
   environment: z.array(z.string()).readonly().optional(),
   /** ConfigUISchema for instance knobs, or null when the profile has none. */
   settingsSchema: ProfileSettingsSchemaBridge.optional(),
-})
-
-/**
- * A durable operator-created Terminal instance. Profiles are templates; only
- * an instance declares a camera.
- */
-const TerminalInstanceInfoSchema = z.object({
-  instanceId: z.string(),
-  cameraStableId: z.string(),
-  nodeId: z.string(),
-  /**
-   * False while the node the instance is bound to is not in the cluster
-   * topology (forgotten, renamed, re-paired). The instance is kept; the
-   * operator re-points it on the Terminal page.
-   */
-  nodeInCluster: z.boolean(),
-  profileId: z.string(),
-  profileLabel: z.string(),
-  name: z.string(),
-  enabled: z.boolean(),
-  executable: z.string(),
-  args: z.array(z.string()).readonly(),
-  cwd: z.string(),
-  environment: z.array(z.string()).readonly(),
-  profileSettings: ProfileSettingsBagSchema,
-})
-
-const TerminalLegacyCameraSchema = z.object({
-  stableId: z.string(),
-  nodeId: z.string(),
-  profileId: z.string(),
-  profileLabel: z.string(),
-  name: z.string(),
-  /** Only legacy monitor cameras can retain their historic stable identity. */
-  adoptable: z.boolean(),
 })
 
 const TerminalOutputEventSchema = z.discriminatedUnion('kind', [
@@ -137,8 +100,8 @@ const TerminalOutputBatchSchema = z.object({
  * terminal-session — singleton system capability for interactive TTY sessions.
  *
  * Owns both live PTY lifecycle and durable Terminal instance management.
- * Profiles are allowlisted templates; an explicit instance is the only path
- * that declares a camera.
+ * Profiles are allowlisted templates; a Terminal camera is a core block naming
+ * one Terminal (planning#580).
  */
 export const terminalSessionCapability = {
   name: 'terminal-session',
@@ -149,19 +112,6 @@ export const terminalSessionCapability = {
     listProfiles: method(z.void(), z.array(TerminalProfileInfoSchema).readonly(), {
       auth: 'admin',
     }),
-    /** Existing automatic cameras are shown for explicit migration only. */
-    listLegacyCameras: method(z.void(), z.array(TerminalLegacyCameraSchema).readonly(), {
-      auth: 'admin',
-    }),
-    /** Explicitly adopt one legacy monitor camera, retaining its stable id. */
-    adoptLegacyMonitor: method(
-      z.object({
-        stableId: z.string().min(1),
-        name: z.string().trim().min(1).max(160).optional(),
-      }),
-      TerminalInstanceInfoSchema,
-      { kind: 'mutation', auth: 'admin' },
-    ),
     /** Live sessions currently hosted by the provider. */
     listSessions: method(z.void(), z.array(TerminalSessionInfoSchema).readonly(), {
       auth: 'admin',
@@ -241,8 +191,6 @@ export type ITerminalSessionProvider = InferProvider<typeof terminalSessionCapab
 
 export type TerminalSessionInfo = z.infer<typeof TerminalSessionInfoSchema>
 export type TerminalProfileInfo = z.infer<typeof TerminalProfileInfoSchema>
-export type TerminalInstanceInfo = z.infer<typeof TerminalInstanceInfoSchema>
-export type TerminalLegacyCamera = z.infer<typeof TerminalLegacyCameraSchema>
 export type TerminalOutputEvent = z.infer<typeof TerminalOutputEventSchema>
 export type TerminalOutputBatch = z.infer<typeof TerminalOutputBatchSchema>
 export type ServerShellStatus = z.infer<typeof ServerShellStatusSchema>
@@ -251,8 +199,6 @@ export type ServerShellRefusal = z.infer<typeof ServerShellRefusalSchema>
 export {
   ServerShellRefusalSchema,
   ServerShellStatusSchema,
-  TerminalInstanceInfoSchema,
-  TerminalLegacyCameraSchema,
   TerminalOutputBatchSchema,
   TerminalOutputEventSchema,
   TerminalProfileInfoSchema,

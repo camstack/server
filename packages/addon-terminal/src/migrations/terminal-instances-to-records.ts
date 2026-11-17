@@ -1,12 +1,12 @@
 /**
  * The Terminals a pre-record install kept in the addon settings (`terminalInstances`) become
- * `terminals` records (planning#440 step 7, D1013). The record id IS the old instance id, so the
- * camera `terminal-camera-instance-<id>` and everything that names it keeps its identity; a
- * stable id that is not derivable from the id (an adopted legacy monitor) is carried on the body.
+ * `terminals` records (planning#440 step 7, D1013). The record id IS the old instance id. The old
+ * row's camera stable id is read and dropped: a Terminal camera is a core block now (planning#580)
+ * and the old cameras are recreated as blocks.
  *
  * Every good row is converted BEFORE any is written, each write is read back equal, and a record
  * that already exists is never overwritten. A row that cannot be converted (malformed, a duplicate
- * id or camera) never blocks the others: the old reader skipped it and ran the rest. The legacy key
+ * id) never blocks the others: the old reader skipped it and ran the rest. The legacy key
  * is rewritten to hold ONLY those raw rows (nothing reads it any more; kept for forensics), one warn
  * per row, and the migration lands as done. With no bad row the key is deleted.
  */
@@ -16,11 +16,7 @@ import {
   type MigrationRecordsKindV1,
 } from '@camstack/types'
 import { z } from 'zod'
-import {
-  newTerminalCameraStableId,
-  type TerminalBody,
-  terminalInstancesKind,
-} from '../terminal-record-kinds.js'
+import { type TerminalBody, terminalInstancesKind } from '../terminal-record-kinds.js'
 
 export const LEGACY_TERMINAL_INSTANCES_KEY = 'terminalInstances'
 
@@ -68,7 +64,6 @@ function draftOf(raw: unknown): Draft | string {
   const parsed = LegacyRowSchema.safeParse(raw)
   if (!parsed.success) return 'the row does not match the legacy shape'
   const row = parsed.data
-  const derived = row.cameraStableId === newTerminalCameraStableId(row.id)
   return {
     id: row.id,
     body: {
@@ -76,7 +71,6 @@ function draftOf(raw: unknown): Draft | string {
       nodeId: row.nodeId,
       profileId: row.profileId,
       profileLabel: row.profileLabel,
-      ...(derived ? {} : { cameraStableId: row.cameraStableId }),
       executable: row.executable,
       args: row.args,
       cwd: row.cwd,
@@ -122,20 +116,17 @@ export async function copyTerminalsToRecords(
   const drafts: Draft[] = []
   const skipped: { readonly raw: unknown; readonly reason: string }[] = []
   const ids = new Set<string>()
-  const cameras = new Set<string>()
   for (const raw of rows) {
     const draft = draftOf(raw)
     if (typeof draft === 'string') {
       skipped.push({ raw, reason: draft })
       continue
     }
-    const camera = draft.body.cameraStableId ?? newTerminalCameraStableId(draft.id)
-    if (ids.has(draft.id) || cameras.has(camera)) {
-      skipped.push({ raw, reason: 'a duplicate instance or camera' })
+    if (ids.has(draft.id)) {
+      skipped.push({ raw, reason: 'a duplicate instance' })
       continue
     }
     ids.add(draft.id)
-    cameras.add(camera)
     drafts.push(draft)
   }
 

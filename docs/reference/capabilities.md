@@ -179,7 +179,7 @@ Singleton or collection providers, addressed without a device.
 | `fan-presets` | 4 | — | — | — | — | `core-blocks` |
 | `filesystem-browse` | 3 | — | — | — | ✓ | `filesystem-storage` |
 | `hero-layout` | 3 | — | — | — | — | `core-blocks` |
-| `integration-instances` | 9 | — | — | — | — | `ai` `auth-oidc` `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `notifiers` `pipeline-analytics` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `tailscale-client` `terminal` `training-modal` `waste-collections` `loki-logging` `storage-orchestrator` `core-blocks` `camera-grid` |
+| `integration-instances` | 9 | — | — | — | — | `ai` `auth-oidc` `cloudflare-tunnel` `cloudflare-turn` `export-alexa` `export-google` `export-hap` `google-services` `import-alexa` `matter-broker` `mqtt-broker` `notifiers` `pipeline-analytics` `provider-amcrest` `bosch-shc` `bosch-home-connect` `bosch-homecom` `provider-dreame` `provider-dreo` `provider-ecowitt` `provider-enpal` `provider-esphome` `provider-gree` `provider-hikvision` `provider-homeassistant` `homeassistant-export` `provider-homematic` `provider-mqtt-ha` `provider-onvif` `provider-petkit` `provider-rademacher` `provider-reolink` `provider-rtsp` `provider-tuya` `provider-unifi` `provider-unraid` `provider-velux` `provider-vesync` `provider-wyze` `smtp-nodemailer` `static-turn` `tailscale-client` `terminal` `training-modal` `waste-collections` `loki-logging` `storage-orchestrator` `core-blocks` |
 | `integrations` | 6 | — | — | — | — | — |
 | `keychain` | 7 | — | — | — | ✓ | `keychain` |
 | `keychain-admin` | 13 | — | — | — | — | `keychain` |
@@ -231,7 +231,7 @@ Singleton or collection providers, addressed without a device.
 | `system` | 16 | — | — | — | — | — |
 | `tags` | 4 | — | — | — | — | `core-blocks` |
 | `template` | 5 | — | — | — | — | `core-blocks` |
-| `terminal-session` | 10 | — | — | — | — | `terminal` |
+| `terminal-session` | 8 | — | — | — | — | `terminal` |
 | `toast` | 1 | — | — | — | — | — |
 | `training` | 13 | — | — | — | — | `training` |
 | `training-provider` | 13 | — | — | — | ✓ | `training-modal` |

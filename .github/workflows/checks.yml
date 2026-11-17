@@ -254,6 +254,7 @@ jobs:
             scripts/check-nc-simulate-mirror.ts \
             scripts/check-nc-system-filter-scope.ts \
             scripts/check-declared-device-single-owner.ts \
+            scripts/check-engine-hosted-no-own-rows.ts \
             scripts/check-no-device-links.ts \
             scripts/check-addon-pin-refusal.ts \
             scripts/check-no-commit-sha-references.ts \

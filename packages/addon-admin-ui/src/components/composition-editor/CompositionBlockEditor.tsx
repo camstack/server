@@ -1,7 +1,7 @@
 /**
  * Shared card editor for a stored composition block (/build/compositions/:id).
  */
-import { coreBlockComposition, DeviceType } from '@camstack/types'
+import { coreBlockComposition, DeviceType, isEngineHostedHelper } from '@camstack/types'
 import {
   Badge,
   ErrorBox,
@@ -17,6 +17,7 @@ import { keyedArrayCardTargets } from '../device/customize/keyed/KeyedArrayCard'
 import { scalarCardTargets } from '../device/customize/scalar/scalar-targets'
 import { skeletonFillStatus } from './build-skeleton'
 import { CommandsSection } from './CommandsSection'
+import { EngineHostedBlockEditor } from './EngineHostedBlockEditor'
 import { HelperWizard } from './HelperWizard'
 import { draftFromHelper, isHelperComposition, writeHelper } from './helper-form-model'
 
@@ -55,6 +56,25 @@ export function CompositionBlockEditor({
   if (view === null) return <p>{t('compositionEditor.notFound', { blockId })}</p>
   const composition = coreBlockComposition(view.block)
   if (composition === null) return <p>{t('compositionEditor.notComposition')}</p>
+
+  if (isHelperComposition(composition) && isEngineHostedHelper(composition.helper)) {
+    return (
+      <EngineHostedBlockEditor
+        blockId={view.block.id}
+        helper={composition.helper}
+        deviceId={view.state.kind === 'answered' ? (view.state.state?.deviceId ?? null) : null}
+        saving={update.isPending}
+        onWrite={async (next) => {
+          await update.mutateAsync({
+            blockId: view.block.id,
+            expectedUpdatedAt: view.block.updatedAt,
+            block: { composition: next },
+          })
+          await read.refetch()
+        }}
+      />
+    )
+  }
 
   if (isHelperComposition(composition)) {
     const helperDraft = draftFromHelper(composition.helper, view.block.name, '')

@@ -2264,6 +2264,21 @@
       "summary": "ButtonHeroCard — large press-actuator card for the device-detail hero area."
     },
     {
+      "name": "CameraGridLayoutEditor",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/cap-settings/CameraGridLayoutEditor.tsx",
+      "summary": "The camera-grid layout editor.",
+      "props": [
+        {
+          "name": "deviceId",
+          "type": "number",
+          "optional": false,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "CameraStreamPlayer",
       "kind": "component",
       "area": "composites",

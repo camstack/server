@@ -149,6 +149,7 @@ import {
   type InstanceLifecycleDeps,
   withInstanceLifecycle,
 } from './instance-lifecycle.js'
+import { retireUndeclaredFixedIntegrations } from './retire-undeclared-fixed-integrations.js'
 import { wireSettingsDoor } from './settings-door-wiring.js'
 
 type AddonSource = 'core' | 'installed'
@@ -1373,6 +1374,53 @@ export class AddonRegistryService {
       category: EventCategory.SystemAddonsReady,
       data: { activeAddons: initializedIds },
     })
+
+    void this.retireUndeclaredFixedRows()
+  }
+
+  /**
+   * The hub's seed door let a fixed integration row in; the hub retires it once its addon no
+   * longer declares `integration-instances` and no live device hangs off it (planning#580).
+   * Off the boot path, never throws: a registry not wired yet retires nothing this boot.
+   */
+  private async retireUndeclaredFixedRows(): Promise<void> {
+    const logger = this.loggingService.createLogger('integrations')
+    const registry = this.integrationRegistry
+    if (registry === null) {
+      logger.info('fixed-row retire skipped: the integration registry is not wired yet', {
+        meta: { reason: this.integrationRegistryUnavailable ?? 'still wiring' },
+      })
+      return
+    }
+    try {
+      await retireUndeclaredFixedIntegrations({
+        logger,
+        listIntegrations: () => registry.listIntegrations(),
+        declaredCapabilities: (addonId) =>
+          this.addonEntries.get(addonId)?.declaredCapabilities.map((c) => c.name),
+        listDevices: async () => {
+          const dm = this.capabilityRegistry.getSingleton<DeviceCascadePort>('device-manager')
+          if (dm?.listAll === undefined) return null
+          return dm.listAll({})
+        },
+        retire: async (integration) => {
+          const { fixed: _fixed, ...info } = integration.info
+          await registry.updateIntegration(integration.id, { info })
+          await registry.deleteIntegration(integration.id)
+          this.eventBusService.emit({
+            id: randomUUID(),
+            timestamp: new Date(),
+            source: { type: 'integration', id: integration.id },
+            category: EventCategory.IntegrationDeleted,
+            data: { integrationId: integration.id, addonId: integration.addonId },
+          })
+        },
+      })
+    } catch (err: unknown) {
+      logger.warn('fixed-row retire failed: nothing retired this boot', {
+        meta: { error: errMsg(err) },
+      })
+    }
   }
 
   /**
