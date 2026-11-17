@@ -143,7 +143,7 @@ const REGION_PATTERN =
   /both US and EU|COUNTRY CODE REQUIRED|region-change token|auth code expired|countryCode/i
 /** What a region refusal tells the operator to do. */
 const REGION_HINT =
-  'set the Country code (e.g. IT) on the VeSync integration to the country the account was registered in'
+  'set the Country code on the VeSync integration to the country the account was registered in'
 
 /**
  * The process-wide library logger. Lines go to the capture of the call in flight; calls are

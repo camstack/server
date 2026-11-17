@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The VeSync Country code is a list to pick from.
+
 ## [0.2.162] - 2026-11-17
 
 ### Changed

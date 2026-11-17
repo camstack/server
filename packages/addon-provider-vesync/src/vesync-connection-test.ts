@@ -32,7 +32,7 @@ function failureOf(
       return {
         success: false,
         status: 'rejected',
-        error: `vesync: VeSync refused the account's region or country (region ${connection.region}, country code ${connection.countryCode ?? 'not set'}) — set the Country code to the country the account was registered in (e.g. IT). ${err.words}`,
+        error: `vesync: VeSync refused the account's region or country (region ${connection.region}, country code ${connection.countryCode ?? 'not set'}) — set the Country code on the VeSync integration to the country the account was registered in. ${err.words}`,
       }
     case 'unreachable':
       return {
