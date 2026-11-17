@@ -1,3 +1,4 @@
+import { SWITCH_DEFAULT_OPTIONS } from '@camstack/types'
 import { commandOrigin } from '@camstack/types/addon'
 import { describe, expect, it } from 'vitest'
 import { applyCapCommand, type CapCommandDevice } from '../command-routes.js'
@@ -11,6 +12,8 @@ describe('applyCapCommand hands the call origin to the device proxy', () => {
           seen.push(args)
         },
         toggle: async () => undefined,
+        getOptions: async () => SWITCH_DEFAULT_OPTIONS,
+        powerCycle: async () => undefined,
         getStatus: async () => null,
       },
     }

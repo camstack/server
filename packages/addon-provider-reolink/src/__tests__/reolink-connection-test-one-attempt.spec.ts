@@ -24,9 +24,12 @@ describe('liveReolinkHubProbe', () => {
     const probe = liveReolinkHubProbe({
       host: '192.0.2.10',
       port: 9000,
+      rtspPort: 554,
       username: 'admin',
       password: 'x',
       transport: 'tcp',
+      debugGeneral: false,
+      debugSocketLogs: [],
     })
     await probe.login()
     expect(loginCalls).toEqual([[undefined, { maxAttempts: 1 }]])

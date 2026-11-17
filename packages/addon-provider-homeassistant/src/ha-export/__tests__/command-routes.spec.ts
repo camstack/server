@@ -13,7 +13,7 @@ import {
 } from '../command-routes.js'
 import { capCommandEntities, capEntities, CAP_ENTITY_MAP } from '../entity-catalog.js'
 import { derivedEntityId, derivedExtraEntityId } from '../topics.js'
-import type { ClimateControlStatus } from '@camstack/types'
+import { SWITCH_DEFAULT_OPTIONS, type ClimateControlStatus } from '@camstack/types'
 
 const CAMERA: CommandTarget = {
   deviceId: 101,
@@ -204,6 +204,8 @@ function recordingDevice(calls: RecordedCall[]): CapCommandDevice {
       toggle: async (input) => {
         calls.push({ method: 'switch.toggle', input })
       },
+      getOptions: async () => SWITCH_DEFAULT_OPTIONS,
+      powerCycle: rec(calls, 'switch.powerCycle'),
       getStatus: async () => null,
     },
     lockControl: {
