@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Re-sync is now offered through the device's own resync capability
+- A network scan now finds Unraid servers (their GraphQL endpoint on port 80, or 443 over TLS) and offers them as an integration with host, port and scheme filled in.
 
 ## [0.2.169] - 2026-11-17
 

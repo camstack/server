@@ -5,6 +5,10 @@ import {
   type CreateDeviceSpec,
   type DeviceClassRow,
   type DeviceConstructor,
+  type DeviceSummary,
+  type DiscoveryCandidate,
+  type DiscoveryHit,
+  type DiscoveryMode,
   DeviceType,
   deviceAdoptionCapability,
   errMsg,
@@ -29,6 +33,12 @@ import { makeLiveUnraidClient } from './unraid-client-live.js'
 import { UnraidClientRegistry } from './unraid-client-registry.js'
 import { buildUnraidDeviceAdopter } from './unraid-device-adopter.js'
 import { UNRAID_INSTANCE_ID, unraidStableId } from './unraid-discovery.js'
+import {
+  UNRAID_DISCOVERY_MODES,
+  type UnraidDroppedHit,
+  unraidServerCandidates,
+  unraidServersFromHits,
+} from './unraid-lan-discovery.js'
 import { reconcileInstanceEntities } from './unraid-entity-reconcile.js'
 import { UnraidReconciler, type IntegrationLifecycleKind } from './unraid-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './unraid-integration-device-cascade.js'
@@ -59,8 +69,9 @@ const UNRAID_MIGRATIONS_DATE = '2026-11-05'
  * The server is reached through `node-unraid` ({@link makeLiveUnraidClient}), polled on
  * the integration's `pollIntervalMs`; a failed connect keeps the devices offline.
  *
- * `instanceMode: multiple` — many servers may be added. Network auto-discovery
- * is not implemented; the server is added by host.
+ * `instanceMode: multiple` — many servers may be added. A LAN scan finds a server by its
+ * GraphQL endpoint (`unraid-lan-discovery.ts`) and offers it as an integration to set up, host,
+ * port and scheme prefilled; the API key is asked at setup.
  */
 export class UnraidProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-unraid'
@@ -327,8 +338,66 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     })
   }
 
+  // ── LAN discovery: the scan engine finds it, this addon classifies the hits ──
+
   override async supportsDiscovery(): Promise<boolean> {
-    return false
+    return true
+  }
+
+  override async getDiscoveryModes(): Promise<readonly DiscoveryMode[]> {
+    return UNRAID_DISCOVERY_MODES
+  }
+
+  override async classifyDiscoveryHits(input: {
+    hits: readonly DiscoveryHit[]
+    params?: Record<string, unknown>
+  }): Promise<readonly DiscoveryCandidate[]> {
+    const scan = unraidServersFromHits(input.hits)
+    const proposal = unraidServerCandidates(scan.servers, await this.knownServerHosts())
+    for (const drop of [...scan.dropped, ...proposal.dropped]) this.logDroppedHit(drop)
+    this.ctx.logger.info('Unraid server discovery finished', {
+      meta: { found: scan.servers.length, proposed: proposal.candidates.length },
+    })
+    return proposal.candidates
+  }
+
+  /** A hit the scan did not turn into a candidate is logged with its reason (D391). */
+  private logDroppedHit(drop: UnraidDroppedHit): void {
+    this.ctx.logger.debug('Unraid discovery: hit not proposed', {
+      meta: { host: drop.host, port: drop.port, reason: drop.reason },
+    })
+  }
+
+  /** The hosts the existing Unraid integrations dial; an unreadable one is skipped and logged. */
+  private async knownServerHosts(): Promise<readonly string[]> {
+    try {
+      const all = await this.ctx.api.integrations.list.query()
+      const hosts: string[] = []
+      for (const integration of all) {
+        if (integration.addonId !== this.ctx.id) continue
+        try {
+          const read = await unraidConnectionOf(this.requireInstances(), integration.id)
+          if (read !== null) hosts.push(read.connection.host)
+        } catch (err) {
+          this.ctx.logger.warn('Unraid discovery: settings read failed', {
+            tags: { integrationId: integration.id },
+            meta: { error: errMsg(err) },
+          })
+        }
+      }
+      return hosts
+    } catch (err) {
+      this.ctx.logger.warn('Unraid discovery: integration list failed', {
+        meta: { error: errMsg(err) },
+      })
+      return []
+    }
+  }
+
+  override async adoptDiscoveredDevice(_input: {
+    candidate: DiscoveryCandidate
+  }): Promise<DeviceSummary> {
+    throw new Error('An Unraid server is set up as an integration, not added as a device')
   }
 
   override async supportsManualCreation(): Promise<boolean> {

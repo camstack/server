@@ -31,3 +31,11 @@ Edit these from System, Addons, this addon, Settings (a device's own settings ar
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 <!-- readme:generated:end -->
+
+## Finding the server on the network
+
+A network scan asks every host `{__typename}` on `/graphql` — port 80, and port 443 over TLS for a
+server that serves only https — and offers each host that answers like an Unraid API as an
+integration to set up, named after its address, with host, port and scheme filled in. The API key
+is still asked when the integration is set up. A server whose host an integration already uses is
+not offered again.

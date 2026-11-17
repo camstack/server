@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Re-sync is now offered through the device's own resync capability
+- A network scan now finds UniFi OS consoles (Ubiquiti discovery broadcast) and offers them as an integration with the host filled in; access points and switches are not offered.
 
 ## [0.2.166] - 2026-11-17
 

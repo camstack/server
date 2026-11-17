@@ -23,3 +23,11 @@ Package `@camstack/addon-provider-unifi` on npm.
 See [CHANGELOG.md](./CHANGELOG.md) for what changed in each version.
 
 <!-- readme:generated:end -->
+
+## Finding the console on the network
+
+A network scan broadcasts the Ubiquiti discovery probe (UDP port 10001) and offers each UniFi OS
+console (Dream Machine, Dream Router, Cloud Gateway, Cloud Key, Express …) as an integration to
+set up, with its host filled in. The API key is still asked when the integration is set up.
+Access points and switches answer the same probe but are never offered: they arrive as devices of
+the adopted console. A console whose host an integration already uses is not offered again.
