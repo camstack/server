@@ -7,7 +7,12 @@ import {
   enumSensorCapability,
   errMsg,
   type InferNativeProvider,
+  NETWORK_LINK_UNKNOWN,
+  type NetworkLinkStatus,
+  networkLinkCapability,
   numericSensorCapability,
+  type PowerMeterStatus,
+  powerMeterCapability,
   type PresenceStatus,
   presenceCapability,
   type SwitchStatus,
@@ -22,10 +27,14 @@ import {
   unifiFeatureSchema,
 } from '../config.js'
 import type { UnifiControllerClient } from '../unifi-client-contract.js'
-import { capForMetric, unitForMetric } from '../unifi-mapping.js'
+import type { UnifiInfraPort } from '../unifi-client-contract.js'
+import { capForMetric, portLabel, portNameWrite, unitForMetric } from '../unifi-mapping.js'
+import { portNetworkLinkStatus, portPowerStatus, portSwitchStatus } from '../unifi-port-state.js'
+import { UnifiUnsupportedError } from '../unifi-errors.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
+const COLD_POWER: PowerMeterStatus = { lastFetchedAt: 0 }
 const COLD_PRESENCE: PresenceStatus = {
   state: 'not_home',
   location: null,
@@ -45,6 +54,10 @@ const COLD_PRESENCE: PresenceStatus = {
  *                  / enum); a CHILD of an infra Container.
  *   - `presence` → `presence` cap — a network client tracker; a top-level device,
  *                  a sibling of the controller's Gateway.
+ *   - `port`     → one PoE port of a switch (a CHILD of it): `power-meter`, `network-link`
+ *                  and `switch` — PoE on/off through the local account when `switchable`,
+ *                  else only a native power cycle (the API key's POWER_CYCLE). Its name follows the client on the port
+ *                  unless the operator renamed it; the client's MAC is kept in its config.
  *
  * The slice is fed from the live controller snapshot on each poll tick (and
  * seeded cold on activate). Commands are driven through the live client resolved
@@ -61,6 +74,10 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   private readonly portIdx: number | undefined
   private readonly metric: UnifiSensorMetric | undefined
   private readonly mac: string | undefined
+  private readonly switchable: boolean
+  /** The last client MAC persisted / the last auto name decided, so a tick writes only on change. */
+  private lastClientMac: string | undefined
+  private lastDesiredName: string | null = null
 
   private snapshotUnsub: (() => void) | null = null
 
@@ -76,6 +93,8 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     this.portIdx = cfg.portIdx
     this.metric = cfg.metric
     this.mac = cfg.mac
+    this.switchable = cfg.switchable === true
+    this.lastClientMac = cfg.clientMac
     this.online = false
     void this.updateSourceInfo({ id: this.identityKey(), system: 'unifi' })
   }
@@ -142,7 +161,8 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         this.recomputeSlice()
       } catch (err) {
         this.ctx.logger.warn('unifi feature: snapshot handler error', {
-          meta: { deviceId: this.id, kind: this.kind, error: errMsg(err) },
+          tags: { deviceId: this.id },
+          meta: { kind: this.kind, error: errMsg(err) },
         })
       }
     }
@@ -160,6 +180,79 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         return this.recomputeSensor()
       case 'presence':
         return this.recomputePresence()
+      case 'port':
+        return this.recomputePort()
+    }
+  }
+
+  private livePort(): {
+    readonly online: boolean
+    readonly port: UnifiInfraPort
+  } | null {
+    const infra = this.infraNativeId
+      ? unifiControllers.getInfra(this.integrationId, this.infraNativeId)
+      : null
+    const port = infra?.ports.find((p) => p.idx === this.portIdx)
+    return infra === null || port === undefined ? null : { online: infra.online, port }
+  }
+
+  private recomputePort(): void {
+    const live = this.livePort()
+    if (live === null) return
+    if (this.online !== live.online) this.markOnline(live.online)
+    const now = Date.now()
+    this.runtimeState.setCapState('switch', portSwitchStatus(live.port, now))
+    this.runtimeState.setCapState('power-meter', portPowerStatus(live.port, now))
+    this.runtimeState.setCapState('network-link', portNetworkLinkStatus(live.port, now))
+    void this.followClient(live.port)
+  }
+
+  /**
+   * Keep the last client's MAC in config (cross-integration linking, planning#583) and the name
+   * on "<client> (port N)" unless the operator renamed the port. A port whose client left keeps
+   * the last MAC: absence on one poll is not a different client.
+   */
+  private async followClient(port: UnifiInfraPort): Promise<void> {
+    try {
+      if (port.clientMac !== null && port.clientMac !== this.lastClientMac) {
+        this.lastClientMac = port.clientMac
+        await this.config.set('clientMac', port.clientMac)
+        this.ctx.logger.info('UniFi PoE port: client on the port changed', {
+          tags: { deviceId: this.id },
+          meta: { portIdx: port.idx, clientMac: port.clientMac },
+        })
+      }
+      if (port.clientName === null) return
+      const desired = portLabel(port.idx, port.clientName)
+      if (desired === this.lastDesiredName) return
+      this.lastDesiredName = desired
+      const manager = this.ctx.api?.deviceManager
+      if (manager === undefined) return
+      const meta = await manager.loadMeta.query({ deviceId: this.id })
+      if (meta === null) return
+      const decision = portNameWrite({
+        currentName: meta.name,
+        userNamed: meta.userNamed,
+        desiredName: desired,
+        portIdx: port.idx,
+        stableId: this.stableId,
+      })
+      if (decision.kind === 'keep') return
+      await manager.setName.mutate({
+        deviceId: this.id,
+        name: decision.name,
+        ...(decision.stampUserNamed ? {} : { stampUserNamed: false }),
+      })
+      this.ctx.logger.info('UniFi PoE port took its client name', {
+        tags: { deviceId: this.id },
+        meta: { portIdx: port.idx, name: decision.name },
+      })
+    } catch (err) {
+      this.lastDesiredName = null
+      this.ctx.logger.warn('UniFi PoE port: client name / MAC update failed', {
+        tags: { deviceId: this.id },
+        meta: { portIdx: port.idx, error: errMsg(err) },
+      })
     }
   }
 
@@ -199,7 +292,10 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         })
         return
       case 'enum-sensor':
-        this.runtimeState.setCapState('enum-sensor', { value: infra.state, lastFetchedAt: now })
+        this.runtimeState.setCapState('enum-sensor', {
+          value: infra.state,
+          lastFetchedAt: now,
+        })
         return
       case 'numeric-sensor': {
         const value = this.metric === 'clients' ? infra.clients : this.numericMetricValue(infra)
@@ -253,6 +349,68 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         return this.registerSensorCap()
       case 'presence':
         return this.registerPresenceCap()
+      case 'port':
+        return this.registerPortCaps()
+    }
+  }
+
+  private registerPortCaps(): void {
+    this.ctx.registerNativeCap(
+      switchCapability,
+      this.switchable ? this.poeToggleProvider() : this.poeCycleProvider(),
+    )
+    this.runtimeState.setCapState('switch', COLD_SWITCH)
+    const power: InferNativeProvider<typeof powerMeterCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<PowerMeterStatus>('power-meter') ?? COLD_POWER,
+    }
+    this.ctx.registerNativeCap(powerMeterCapability, power)
+    this.runtimeState.setCapState('power-meter', COLD_POWER)
+    const link: InferNativeProvider<typeof networkLinkCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<NetworkLinkStatus>('network-link') ?? NETWORK_LINK_UNKNOWN,
+    }
+    this.ctx.registerNativeCap(networkLinkCapability, link)
+    this.runtimeState.setCapState('network-link', NETWORK_LINK_UNKNOWN)
+  }
+
+  /**
+   * A port the local account can switch: PoE on/off. A forced restart through a linked
+   * power-source is off / wait / on, so no native cycle is declared.
+   */
+  private poeToggleProvider(): InferNativeProvider<typeof switchCapability> {
+    return {
+      getStatus: async () => this.runtimeState.getCapState<SwitchStatus>('switch') ?? COLD_SWITCH,
+      getOptions: async () => ({ supportsSetState: true, supportsPowerCycle: false }),
+      setState: async ({ on }) => {
+        await this.resolveClient().setPortPoe(this.requireInfraId(), this.requirePortIdx(), on)
+        this.runtimeState.setCapState('switch', { on, lastChangedAt: Date.now() })
+      },
+    }
+  }
+
+  /**
+   * A port seen only through the API key: it reports PoE on/off but cannot set it. The one
+   * thing it can do is the Integration API's POWER_CYCLE, which a linked power-source's
+   * forced restart uses. No button of its own.
+   */
+  private poeCycleProvider(): InferNativeProvider<typeof switchCapability> {
+    return {
+      getStatus: async () => this.runtimeState.getCapState<SwitchStatus>('switch') ?? COLD_SWITCH,
+      getOptions: async () => ({ supportsSetState: false, supportsPowerCycle: true }),
+      setState: async () => {
+        throw new UnifiUnsupportedError(
+          'poe-toggle',
+          'PoE on/off needs a local account on the UniFi integration; this port can only power-cycle',
+        )
+      },
+      powerCycle: async () => {
+        await this.resolveClient().powerCyclePort(this.requireInfraId(), this.requirePortIdx())
+        this.ctx.logger.info('UniFi PoE port power-cycled', {
+          tags: { deviceId: this.id },
+          meta: { infraId: this.infraNativeId, portIdx: this.portIdx },
+        })
+      },
     }
   }
 
@@ -266,7 +424,10 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         } else {
           await client.setPortPoe(this.requireInfraId(), this.requirePortIdx(), on)
         }
-        this.runtimeState.setCapState('switch', { on, lastChangedAt: Date.now() })
+        this.runtimeState.setCapState('switch', {
+          on,
+          lastChangedAt: Date.now(),
+        })
       },
     }
     this.ctx.registerNativeCap(switchCapability, provider)
@@ -311,7 +472,11 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
       }
       case 'numeric-sensor': {
         const unit = unitForMetric(this.metric)
-        const COLD = { value: 0, lastFetchedAt: 0, ...(unit !== undefined ? { unit } : {}) }
+        const COLD = {
+          value: 0,
+          lastFetchedAt: 0,
+          ...(unit !== undefined ? { unit } : {}),
+        }
         const provider: InferNativeProvider<typeof numericSensorCapability> = {
           getStatus: async () =>
             this.runtimeState.getCapState<typeof COLD>('numeric-sensor') ?? COLD,

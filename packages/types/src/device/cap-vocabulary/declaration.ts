@@ -25,6 +25,7 @@
  * `check-cap-vocabulary` checks values against the Zod schemas.
  */
 import type {
+  LooseVocabActionGate,
   L10n,
   LooseVocabEffect,
   LooseVocabOffer,
@@ -55,6 +56,15 @@ export type MethodActionEffect<TKey extends string = string> =
   | { readonly field: string; readonly fromArg: TKey }
 
 /**
+ * When a device is offered an action: a read method of the same cap, and the
+ * boolean field of its answer that must not be `false`. Only an ANSWERED
+ * `false` withdraws the action (D315) — a provider without the method, a read
+ * that failed or is still pending keeps it offered. `switch.on` reads
+ * `getOptions().supportsSetState`: a switch that only reports offers no on/off.
+ */
+export type MethodActionGate = LooseVocabActionGate
+
+/**
  * One operator-facing action declared on the method it calls. `TInput` is the
  * method's Zod input; the action's `method` is the key the method is declared
  * under, filled in by codegen.
@@ -73,6 +83,8 @@ export interface MethodActionDecl<TInput = Readonly<Record<string, unknown>>> {
   readonly openArgs?: readonly MethodActionOpenArg<keyof MethodActionArgs<TInput> & string>[]
   /** The state this action leads to, when it is one. */
   readonly effect?: MethodActionEffect<keyof MethodActionArgs<TInput> & string>
+  /** When the device is offered it at all — absent = always ({@link MethodActionGate}). */
+  readonly offeredWhen?: MethodActionGate
 }
 
 /** A method action as codegen reads it off a method schema, string-keyed. */
@@ -84,6 +96,7 @@ export interface LooseMethodActionDecl {
   readonly args?: Readonly<Record<string, unknown>>
   readonly openArgs?: readonly MethodActionOpenArg[]
   readonly effect?: LooseVocabEffect
+  readonly offeredWhen?: MethodActionGate
 }
 
 /** What a declared cap event is to an automation: a trigger, or an excuse. */

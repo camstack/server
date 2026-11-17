@@ -22,7 +22,7 @@ function identitiesEqual(a: readonly unknown[], b: readonly UnraidEntityIdentity
 }
 
 /**
- * Re-derive the integration's instance Container `entities[]` from the live snapshot and
+ * Re-derive the server device's `entities[]` from the live snapshot and
  * re-persist via `applyDerivedSpec` when it changed, so new containers and disks appear and
  * removed ones prune without re-adoption. Best-effort per device; returns how many changed.
  */

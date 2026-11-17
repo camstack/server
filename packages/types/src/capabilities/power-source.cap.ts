@@ -27,6 +27,9 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * `core-blocks` system provider, so they are `systemMethod`s and carry a
  * top-level `deviceId`.
  *
+ * Power on / off are withdrawn — and refused as `not-settable` — when the linked
+ * switch ANSWERED it only reports (D1058); the forced restart stays.
+ *
  * Every action answers a typed result and never throws for an expected
  * refusal, so a caller tells "the switch is offline" from "a restart is
  * already running" without parsing text.
@@ -50,6 +53,18 @@ export const PowerSourceRefusalReasonSchema = z.enum([
   'restart-in-progress',
   /** The switch call itself failed. */
   'switch-call-failed',
+  /**
+   * What the linked switch can do (`switch.getOptions`) could not be read — the
+   * read FAILED, which is not the same as a provider without the method. A forced
+   * restart neither power-cycles nor switches off blind (D1058).
+   */
+  'switch-options-unreadable',
+  /**
+   * The linked switch ANSWERED it cannot be set (`switch.getOptions().supportsSetState:
+   * false`, a PoE port seen only through an API key): power on / off are refused before
+   * the switch is called (D1058). The forced restart is not affected.
+   */
+  'not-settable',
   /**
    * The linked switch is one of the device's own actuators (or the device
    * itself): a link stored before save-time validation refused it (#462).
@@ -77,6 +92,14 @@ export const PowerSourceInfoSchema = z.object({
   /** The switch's on/off state, or null when it is unknown. Never false for unknown (D393). */
   switchOn: z.boolean().nullable(),
   switchOnline: z.boolean().nullable(),
+  /**
+   * Whether the linked switch can be set (`switch.getOptions().supportsSetState`; a provider
+   * without the method is a plain switch, `true`). `null` = not known: no link, the switch is
+   * missing, or the read FAILED. Absent = a provider that predates the field. Only `false`
+   * withdraws power on / off (`offeredWhen` of `powerSource.on` / `.off`, the device hero) —
+   * unknown keeps them (D315, D1058).
+   */
+  switchSettable: z.boolean().nullable().optional(),
   restartInProgress: z.boolean(),
   offSeconds: z.number().int(),
 })
@@ -137,6 +160,12 @@ const powerSourceCustomize = {
 
 const deviceInput = z.object({ deviceId: z.number().int().nonnegative() })
 
+/** The read that decides whether power on / off are offered (`offeredWhen`, D1058). */
+export const POWER_SOURCE_SETTABLE_GATE = {
+  method: 'getStatus',
+  field: 'switchSettable',
+} as const
+
 export const powerSourceCapability = {
   name: 'power-source',
   scope: 'device',
@@ -155,6 +184,7 @@ export const powerSourceCapability = {
           label: t('Power on', 'Dai corrente'),
           phrase: t('Power on {device}', 'Dai corrente a {device}'),
           icon: 'power',
+          offeredWhen: POWER_SOURCE_SETTABLE_GATE,
         },
       ],
     }),
@@ -167,6 +197,7 @@ export const powerSourceCapability = {
           label: t('Power off', 'Togli corrente'),
           phrase: t('Cut the power of {device}', 'Togli la corrente a {device}'),
           icon: 'power-off',
+          offeredWhen: POWER_SOURCE_SETTABLE_GATE,
         },
       ],
     }),

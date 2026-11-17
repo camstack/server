@@ -3,7 +3,7 @@
  * other key is kept — the identity draft writes the same object on Save — and
  * an override with nothing left is cleared (`null`).
  */
-import { type DeviceDisplayOverride, DeviceRole, DeviceType } from '@camstack/types'
+import { type DeviceDisplayOverride, DeviceRole, DeviceType, WORKLOAD_ROLES } from '@camstack/types'
 
 export function displayWithHidden(
   display: DeviceDisplayOverride | undefined,
@@ -106,6 +106,7 @@ const ROLES_BY_TYPE: Readonly<Partial<Record<DeviceType, readonly DeviceRole[]>>
     DeviceRole.EmailNotifier,
     DeviceRole.GenericNotifier,
   ],
+  [DeviceType.Workload]: [...WORKLOAD_ROLES],
 }
 
 function isDeviceType(value: string): value is DeviceType {

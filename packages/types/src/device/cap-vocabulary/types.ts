@@ -98,6 +98,27 @@ export type CapStatusField<C extends VocabCapName> = [StatusOf<C>] extends [neve
   ? never
   : keyof StatusOf<C> & string
 
+/** The keys of `T` whose value is a number (nullable / optional allowed). */
+type NumericKeysOf<T> = {
+  [K in keyof T & string]-?: NonNullable<T[K]> extends number ? K : never
+}[keyof T & string]
+
+/**
+ * A number one object below the top of cap `C`'s status, by its dotted path
+ * (`resources.cpuPercent`). The rule runtime reads dotted paths (`readField`,
+ * the condition mirror) and the unit resolver finds their quantity, so a
+ * reading grouped under an object is a threshold trigger like a top-level one.
+ */
+export type CapNestedNumericPath<C extends VocabCapName> = [StatusOf<C>] extends [never]
+  ? never
+  : {
+      [K in keyof StatusOf<C> & string]-?: NonNullable<StatusOf<C>[K]> extends readonly unknown[]
+        ? never
+        : NonNullable<StatusOf<C>[K]> extends object
+          ? `${K}.${NumericKeysOf<NonNullable<StatusOf<C>[K]>>}`
+          : never
+    }[keyof StatusOf<C> & string]
+
 /** An event name declared by cap `C`. */
 export type CapEventName<C extends VocabCapName> =
   CapDef<C> extends { readonly events: infer E } ? keyof E & string : never
@@ -251,6 +272,8 @@ export interface VocabActionFor<C extends VocabCapName, M extends CapMethodName<
   readonly openArgs?: readonly VocabOpenArg<C, ActionArgKey<C, M>>[]
   /** The state this action leads to, when it is one (see {@link VocabEffectFor}). */
   readonly effect?: VocabEffectFor<C, M>
+  /** When a device is offered it at all: a read of this cap answering `false` at `field` withdraws it. */
+  readonly offeredWhen?: { readonly method: CapMethodName<C>; readonly field: string }
 }
 
 /** Any action of cap `C`, discriminated by `method`. */
@@ -274,7 +297,8 @@ export interface BooleanStateTrigger<C extends VocabCapName> {
 /** A number: rises above / falls below / changes by, with a unit. */
 export interface NumericStateTrigger<C extends VocabCapName> {
   readonly kind: 'numeric'
-  readonly field: CapStatusField<C>
+  /** A top-level field, or a number nested one object down ({@link CapNestedNumericPath}). */
+  readonly field: CapStatusField<C> | CapNestedNumericPath<C>
   /** The quantity WITH its article, as it reads in a sentence ("the temperature" / "la temperatura"). */
   readonly quantity: L10n
   readonly label: L10n
@@ -473,6 +497,13 @@ export interface LooseVocabAction {
   readonly args?: Readonly<Record<string, unknown>>
   readonly openArgs?: readonly LooseVocabOpenArg[]
   readonly effect?: LooseVocabEffect
+  readonly offeredWhen?: LooseVocabActionGate
+}
+
+/** When a device is offered an action, string-keyed (`MethodActionGate`). */
+export interface LooseVocabActionGate {
+  readonly method: string
+  readonly field: string
 }
 
 /** A boolean state trigger, string-keyed. */

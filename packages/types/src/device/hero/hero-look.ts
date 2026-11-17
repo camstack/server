@@ -457,6 +457,7 @@ export const HERO_LOOK_BY_TYPE = {
   [DeviceType.WaterHeater]: WATER_HEATER_LOOK,
   [DeviceType.HeatPump]: HEAT_PUMP_LOOK,
   [DeviceType.EnergySystem]: HERO_LOOK_DEFAULT,
+  [DeviceType.Workload]: HERO_LOOK_DEFAULT,
   [DeviceType.Fan]: FAN_LOOK,
   [DeviceType.MediaPlayer]: MEDIA_PLAYER_LOOK,
   [DeviceType.AlarmPanel]: ALARM_LOOK,
@@ -500,6 +501,7 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.SwitchHeater]: HEATER_LOOK,
   [DeviceRole.SwitchFan]: FAN_LOOK,
   [DeviceRole.SwitchLight]: LIGHT_LOOK,
+  [DeviceRole.PoePort]: 'inherit',
   // An air conditioner draws its MODE when on, so its look is picked after the
   // mode (`resolveHeroLook`), not here where a role beats the mode.
   [DeviceRole.ClimateAc]: 'inherit',
@@ -547,6 +549,11 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.EmailNotifier]: 'inherit',
   [DeviceRole.GenericNotifier]: 'inherit',
   [DeviceRole.IrTransmitter]: 'inherit',
+  [DeviceRole.Vm]: 'inherit',
+  [DeviceRole.AppContainer]: 'inherit',
+  [DeviceRole.Lxc]: 'inherit',
+  [DeviceRole.App]: 'inherit',
+  [DeviceRole.Host]: 'inherit',
 } as const satisfies Record<DeviceRole, HeroLook | 'inherit'>
 
 function isDeviceType(type: string): type is DeviceType {

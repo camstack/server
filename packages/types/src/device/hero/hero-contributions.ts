@@ -81,10 +81,13 @@ function durationText(seconds: number): HeroText {
 
 // ── switch ─────────────────────────────────────────────────────────────────
 
-const switchContribution = contribution('switch', SwitchStatusSchema, (slice) => {
+const switchContribution = contribution('switch', SwitchStatusSchema, (slice, ctx) => {
   const on = slice?.on ?? null
+  const state = reading('switch', on === null ? 'unknown' : on ? 'on' : 'off')
+  // A switch that only reports its state (its provider said so) offers no on/off.
+  if (ctx.switchOptions?.supportsSetState === false) return { reading: state }
   return {
-    reading: reading('switch', on === null ? 'unknown' : on ? 'on' : 'off'),
+    reading: state,
     ownPower: {
       source: 'switch',
       on,
@@ -431,37 +434,45 @@ const timedRunContribution = contribution('timed-run', TimedRunStatusSchema, (sl
 const powerSourceContribution = contribution(
   'power-source',
   PowerSourceStateSchema,
-  (slice, ctx) => ({
-    powerSupply: {
-      on: slice?.switchOn ?? null,
-      confirmOffWhileRunning: ctx.running === true,
-      running: ctx.running ?? null,
-      powerOn: action(
-        'power-supply.on',
-        heroText('Power on', 'Alimenta'),
-        'plug',
-        'power-source',
-        'powerOn',
-      ),
-      powerOff: action(
-        'power-supply.off',
-        heroText('Power off', 'Togli alimentazione'),
-        'plug-zap',
-        'power-source',
-        'powerOff',
-        {},
-        'normal',
-        'off-while-running',
-      ),
-      restart: action(
-        'power-supply.restart',
-        heroText('Restart', 'Riavvia'),
-        'rotate-cw',
-        'power-source',
-        'forceRestart',
-      ),
-    },
-  }),
+  (slice, ctx) => {
+    // The linked switch ANSWERED it only reports: on / off would always be refused (D1058).
+    const settable = ctx.powerSupplySettable !== false
+    return {
+      powerSupply: {
+        on: slice?.switchOn ?? null,
+        confirmOffWhileRunning: ctx.running === true,
+        running: ctx.running ?? null,
+        powerOn: settable
+          ? action(
+              'power-supply.on',
+              heroText('Power on', 'Alimenta'),
+              'plug',
+              'power-source',
+              'powerOn',
+            )
+          : null,
+        powerOff: settable
+          ? action(
+              'power-supply.off',
+              heroText('Power off', 'Togli alimentazione'),
+              'plug-zap',
+              'power-source',
+              'powerOff',
+              {},
+              'normal',
+              'off-while-running',
+            )
+          : null,
+        restart: action(
+          'power-supply.restart',
+          heroText('Restart', 'Riavvia'),
+          'rotate-cw',
+          'power-source',
+          'forceRestart',
+        ),
+      },
+    }
+  },
 )
 
 // ── remote / consumables ───────────────────────────────────────────────────

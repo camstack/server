@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 210 caps (108 device, 102 system).
+ * `*.cap.ts` (D1050): 211 caps (109 device, 102 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -24,6 +24,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'power',
         args: { on: true },
         effect: { field: 'on', value: true },
+        offeredWhen: { method: 'getOptions', field: 'supportsSetState' },
       },
       {
         id: 'switch.off',
@@ -33,6 +34,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'power-off',
         args: { on: false },
         effect: { field: 'on', value: false },
+        offeredWhen: { method: 'getOptions', field: 'supportsSetState' },
       },
       {
         id: 'switch.toggle',
@@ -40,8 +42,12 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Toggle', it: 'Commuta' },
         phrase: { en: 'Toggle {device}', it: 'Commuta {device}' },
         icon: 'toggle-right',
+        offeredWhen: { method: 'getOptions', field: 'supportsSetState' },
       },
     ],
+    notOperatorFacing: {
+      powerCycle: 'a power cycle is the forced restart of the device the switch powers (power-source), never a step of its own',
+    },
     state: [
       {
         kind: 'boolean',
@@ -221,6 +227,31 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         [DeviceRole.Outlet]: {
           actions: { 'switch.on': { icon: 'plug-zap' }, 'switch.off': { icon: 'plug' } },
           state: { on: { icon: 'plug-zap' } },
+        },
+        [DeviceRole.PoePort]: {
+          actions: {
+            'switch.on': {
+              label: { en: 'Power on', it: 'Alimenta' },
+              phrase: { en: 'Power on {device}', it: 'Alimenta {device}' },
+              icon: 'plug-zap',
+            },
+            'switch.off': {
+              label: { en: 'Power off', it: 'Togli alimentazione' },
+              phrase: { en: 'Power off {device}', it: 'Togli alimentazione a {device}' },
+              icon: 'unplug',
+            },
+          },
+          state: {
+            on: {
+              label: { en: 'Powered', it: 'Alimentata' },
+              whenTrue: { en: 'When {device} is powered', it: 'Quando {device} viene alimentata' },
+              whenFalse: {
+                en: 'When {device} loses power',
+                it: 'Quando {device} perde l’alimentazione',
+              },
+              icon: 'plug-zap',
+            },
+          },
         },
       },
     },
@@ -630,6 +661,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Power on', it: 'Dai corrente' },
         phrase: { en: 'Power on {device}', it: 'Dai corrente a {device}' },
         icon: 'power',
+        offeredWhen: { method: 'getStatus', field: 'switchSettable' },
       },
       {
         id: 'powerSource.off',
@@ -637,6 +669,7 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         label: { en: 'Power off', it: 'Togli corrente' },
         phrase: { en: 'Cut the power of {device}', it: 'Togli la corrente a {device}' },
         icon: 'power-off',
+        offeredWhen: { method: 'getStatus', field: 'switchSettable' },
       },
       {
         id: 'powerSource.forceRestart',
@@ -1694,6 +1727,25 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         phrase: { en: 'Sound {device}', it: 'Fai suonare {device}' },
         icon: 'siren',
         args: {  },
+      },
+      {
+        id: 'siren.triggerPlays',
+        method: 'trigger',
+        label: { en: 'Sound the siren N times', it: 'Fai suonare la sirena N volte' },
+        phrase: { en: 'Sound {device} {plays} times', it: 'Fai suonare {device} {plays} volte' },
+        icon: 'siren',
+        openArgs: [
+          {
+            key: 'plays',
+            label: { en: 'Plays', it: 'Riproduzioni' },
+            offer: {
+              kind: 'dynamic',
+              from: 'method',
+              method: 'getPlayChoices',
+              valueKind: 'number',
+            },
+          },
+        ],
       },
       {
         id: 'siren.stop',
@@ -3319,6 +3371,214 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
         icon: 'loader',
       },
     ],
+  },
+  'workload': {
+    scope: 'device',
+    noun: { en: 'Workload', it: 'Carico di lavoro' },
+    actions: [
+      {
+        id: 'workload.start',
+        method: 'start',
+        label: { en: 'Start', it: 'Avvia' },
+        phrase: { en: 'Start {device}', it: 'Avvia {device}' },
+        icon: 'play',
+        effect: { field: 'state', value: 'running' },
+      },
+      {
+        id: 'workload.stop',
+        method: 'stop',
+        label: { en: 'Stop', it: 'Arresta' },
+        phrase: { en: 'Stop {device}', it: 'Arresta {device}' },
+        icon: 'square',
+        effect: { field: 'state', value: 'stopped' },
+      },
+      {
+        id: 'workload.restart',
+        method: 'restart',
+        label: { en: 'Restart', it: 'Riavvia' },
+        phrase: { en: 'Restart {device}', it: 'Riavvia {device}' },
+        icon: 'rotate-ccw',
+      },
+      {
+        id: 'workload.pause',
+        method: 'pause',
+        label: { en: 'Pause', it: 'Metti in pausa' },
+        phrase: { en: 'Pause {device}', it: 'Metti in pausa {device}' },
+        icon: 'pause',
+        effect: { field: 'state', value: 'paused' },
+      },
+      {
+        id: 'workload.resume',
+        method: 'resume',
+        label: { en: 'Resume', it: 'Riprendi' },
+        phrase: { en: 'Resume {device}', it: 'Riprendi {device}' },
+        icon: 'circle-play',
+        effect: { field: 'state', value: 'running' },
+      },
+      {
+        id: 'workload.forceStop',
+        method: 'forceStop',
+        label: { en: 'Force stop', it: 'Arresto forzato' },
+        phrase: { en: 'Force {device} to stop', it: 'Forza l’arresto di {device}' },
+        icon: 'octagon-x',
+        effect: { field: 'state', value: 'stopped' },
+      },
+    ],
+    state: [
+      {
+        kind: 'enum',
+        field: 'state',
+        label: { en: 'State', it: 'Stato' },
+        values: [
+          {
+            value: 'running',
+            label: { en: 'Running', it: 'In esecuzione' },
+            phrase: { en: 'When {device} is running', it: 'Quando {device} è in esecuzione' },
+          },
+          { value: 'paused', label: { en: 'Paused', it: 'In pausa' } },
+          {
+            value: 'stopped',
+            label: { en: 'Stopped', it: 'Arrestato' },
+            phrase: { en: 'When {device} is stopped', it: 'Quando {device} è arrestato' },
+          },
+          { value: 'starting', label: { en: 'Starting', it: 'In avvio' } },
+          { value: 'stopping', label: { en: 'Stopping', it: 'In arresto' } },
+          {
+            value: 'crashed',
+            label: { en: 'Crashed', it: 'Arrestato in modo anomalo' },
+            phrase: {
+              en: 'When {device} has crashed',
+              it: 'Quando {device} è arrestato in modo anomalo',
+            },
+          },
+        ],
+        icon: 'activity',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.cpuPercent',
+        quantity: { en: 'the CPU use', it: 'l\'uso della CPU' },
+        label: { en: 'CPU', it: 'CPU' },
+        unit: '%',
+        icon: 'cpu',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.memoryPercent',
+        quantity: { en: 'the memory use', it: 'l\'uso della memoria' },
+        label: { en: 'Memory', it: 'Memoria' },
+        unit: '%',
+        icon: 'memory-stick',
+      },
+      {
+        kind: 'numeric',
+        field: 'resources.temperature',
+        quantity: { en: 'the temperature', it: 'la temperatura' },
+        label: { en: 'Temperature', it: 'Temperatura' },
+        unit: '°C',
+        icon: 'thermometer',
+      },
+    ],
+    events: {
+      onStarted: {
+        category: EventCategory.WorkloadStarted,
+        label: { en: 'Started', it: 'Avviato' },
+        phrase: { en: 'When {device} starts', it: 'Quando {device} si avvia' },
+        icon: 'play',
+      },
+      onStopped: {
+        category: EventCategory.WorkloadStopped,
+        label: { en: 'Stopped', it: 'Arrestato' },
+        phrase: { en: 'When {device} stops', it: 'Quando {device} si arresta' },
+        icon: 'square',
+      },
+      onCrashed: {
+        category: EventCategory.WorkloadCrashed,
+        label: { en: 'Crashed', it: 'Arrestato in modo anomalo' },
+        phrase: {
+          en: 'When {device} stops without being asked',
+          it: 'Quando {device} si arresta senza che sia stato richiesto',
+        },
+        icon: 'triangle-alert',
+      },
+      onRecovered: {
+        category: EventCategory.WorkloadRecovered,
+        label: { en: 'Recovered', it: 'Ripristinato' },
+        phrase: {
+          en: 'When {device} runs again after a crash',
+          it: 'Quando {device} riparte dopo un arresto anomalo',
+        },
+        icon: 'heart-pulse',
+      },
+    },
+    overrides: {
+      byRole: {
+        [DeviceRole.Vm]: {
+          actions: { 'workload.start': { icon: 'monitor' } },
+          state: { state: { icon: 'monitor' } },
+        },
+        [DeviceRole.AppContainer]: {
+          actions: { 'workload.start': { icon: 'container' } },
+          state: { state: { icon: 'container' } },
+        },
+        [DeviceRole.Lxc]: {
+          actions: { 'workload.start': { icon: 'box' } },
+          state: { state: { icon: 'box' } },
+        },
+        [DeviceRole.App]: {
+          actions: { 'workload.start': { icon: 'app-window' } },
+          state: { state: { icon: 'app-window' } },
+        },
+        [DeviceRole.Host]: {
+          actions: {
+            'workload.start': {
+              label: { en: 'Power on', it: 'Accendi' },
+              phrase: { en: 'Power on {device}', it: 'Accendi {device}' },
+              icon: 'power',
+            },
+            'workload.stop': {
+              label: { en: 'Shut down', it: 'Spegni' },
+              phrase: { en: 'Shut down {device}', it: 'Spegni {device}' },
+              icon: 'power-off',
+            },
+            'workload.restart': {
+              label: { en: 'Reboot', it: 'Riavvia' },
+              phrase: { en: 'Reboot {device}', it: 'Riavvia {device}' },
+              icon: 'refresh-cw',
+            },
+          },
+          state: { state: { icon: 'server' } },
+          events: {
+            onStarted: {
+              label: { en: 'Came online', it: 'Tornato in linea' },
+              phrase: { en: 'When {device} comes online', it: 'Quando {device} torna in linea' },
+              icon: 'server',
+            },
+            onStopped: {
+              label: { en: 'Shut down', it: 'Spento' },
+              phrase: { en: 'When {device} shuts down', it: 'Quando {device} si spegne' },
+              icon: 'server-off',
+            },
+            onCrashed: {
+              label: { en: 'Went down', it: 'Caduto' },
+              phrase: {
+                en: 'When {device} goes down unexpectedly',
+                it: 'Quando {device} cade inaspettatamente',
+              },
+              icon: 'server-crash',
+            },
+            onRecovered: {
+              label: { en: 'Came online', it: 'Tornato in linea' },
+              phrase: {
+                en: 'When {device} comes back online after going down',
+                it: 'Quando {device} torna in linea dopo essere caduto',
+              },
+              icon: 'server',
+            },
+          },
+        },
+      },
+    },
   },
   'accessories': {
     scope: 'device',

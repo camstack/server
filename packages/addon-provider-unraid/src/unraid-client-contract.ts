@@ -14,7 +14,7 @@
  * subscriptions over WebSocket). It authenticates with an ADMIN-role API key
  * created via `unraid-api apikey --create`. This contract exposes only the
  * READ surface the poll loop aggregates into an {@link UnraidSnapshot} plus the
- * WRITE surface the array / docker actuators drive.
+ * WRITE surface the array / docker / VM actuators drive.
  */
 
 /** Array lifecycle state — mirrors the real lib's `ArrayState` string-union. */
@@ -80,17 +80,42 @@ export interface UnraidArrayInfo {
 }
 
 /** One docker container read model — subset of `DockerContainer` + live stats. */
+/** A container's run state, from the API's `RUNNING` / `PAUSED` / `EXITED`; a state a newer
+ *  API adds is `unknown`. */
+export type UnraidContainerState = 'running' | 'paused' | 'exited' | 'unknown'
+
 export interface UnraidContainerInfo {
   /** Stable container id. */
   readonly id: string
   /** Human name (first of the real `names[]`, leading slash stripped). */
   readonly name: string
-  /** `true` when the container state is `RUNNING`. */
-  readonly running: boolean
+  readonly state: UnraidContainerState
+  /** The image it runs; null when the API reports none. */
+  readonly image: string | null
+  /** Starts with the array; null when not reported. */
+  readonly autostart: boolean | null
+  /** A newer image exists; null when the server has not checked. */
+  readonly updateAvailable: boolean | null
   /** Live CPU usage percent (from the `dockerContainerStats` subscription); null when the sample failed. */
   readonly cpuPercent: number | null
   /** Live memory usage percent; null when the sample failed. */
   readonly memPercent: number | null
+}
+
+/**
+ * A VM's run state, read from the libvirt domain state the API reports. `running`
+ * includes libvirt's IDLE (a running domain blocked on I/O); `paused` includes a
+ * guest suspended to RAM; `stopping` is a domain being shut down.
+ */
+export type UnraidVmState = 'running' | 'paused' | 'stopping' | 'shut off' | 'crashed' | 'unknown'
+
+/** One VM (libvirt domain) read model — subset of the real `VmDomain`. */
+export interface UnraidVmInfo {
+  /** Stable VM id (a PrefixedID whose local part is the domain UUID). */
+  readonly id: string
+  /** Domain name; the id when the API reports none. */
+  readonly name: string
+  readonly state: UnraidVmState
 }
 
 /** Live host CPU reading — composed from the real `systemMetricsCpu` + info. */
@@ -132,7 +157,14 @@ export interface UnraidSnapshot {
   readonly array: UnraidArrayInfo
   readonly cpu: UnraidCpuInfo
   readonly disks: readonly UnraidArrayDiskInfo[]
-  readonly dockers: readonly UnraidContainerInfo[]
+  /**
+   * Docker containers, or `null` when the list could not be read this poll (Docker service
+   * off, API error). `null` is UNKNOWN, never "no containers": nothing adopted is removed
+   * for it.
+   */
+  readonly dockers: readonly UnraidContainerInfo[] | null
+  /** VMs, or `null` when the list could not be read this poll. Same rule as `dockers`. */
+  readonly vms: readonly UnraidVmInfo[] | null
   readonly notifications: UnraidNotificationsInfo
   /** Hostname from `system.info()`, when the client reported one. */
   readonly hostname?: string | null
@@ -159,6 +191,24 @@ export interface UnraidDockerDomainLike {
   start(id: string): Promise<void>
   /** Stop a container. */
   stop(id: string): Promise<void>
+  /** Pause a container. */
+  pause(id: string): Promise<void>
+  /** Unpause a paused container. */
+  unpause(id: string): Promise<void>
+}
+
+/** VM read + control domain — mirrors the real `VmsDomain` subset. */
+export interface UnraidVmsDomainLike {
+  /** Every VM and its run state (empty when the host runs none). */
+  list(): Promise<readonly UnraidVmInfo[]>
+  start(id: string): Promise<void>
+  /** Graceful shutdown. */
+  stop(id: string): Promise<void>
+  pause(id: string): Promise<void>
+  resume(id: string): Promise<void>
+  /** Power off without asking the guest. */
+  forceStop(id: string): Promise<void>
+  reboot(id: string): Promise<void>
 }
 
 /** System/CPU domain — composed from the real `SystemDomain` metrics. */
@@ -188,6 +238,7 @@ export interface UnraidClientLike {
   disconnect(): Promise<void>
   readonly array: UnraidArrayDomainLike
   readonly docker: UnraidDockerDomainLike
+  readonly vms: UnraidVmsDomainLike
   readonly system: UnraidSystemDomainLike
   readonly notifications: UnraidNotificationsDomainLike
 }

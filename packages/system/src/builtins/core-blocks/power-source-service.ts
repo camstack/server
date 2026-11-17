@@ -10,7 +10,11 @@
  * The link and the off time are read from the STORED composition on each call
  * (D676), never cached as a second copy. A forced restart is switch off now,
  * switch on after `offSeconds`, through an injected scheduler so a spec drives
- * the clock; the pending switch-on is cancelled on `stop()`.
+ * the clock; the pending switch-on is cancelled on `stop()`. A switch that declares
+ * a native power cycle (a PoE port) is cycled in one call instead, and never
+ * switched off or on. A switch that ANSWERED it only reports (D1058) is never
+ * switched on or off: power on / off are refused as `not-settable`, and `getStatus`
+ * says so (`switchSettable`) for the surfaces that withdraw them.
  *
  * Every refusal is a typed result with its reason, logged with the device tag.
  */
@@ -26,6 +30,7 @@ import {
   type PowerSourceRefusalReason,
   powerSourceActuatorConflicts,
   powerSourceLinkOfComposition,
+  type SwitchOptions,
 } from '@camstack/types'
 
 /** What the service needs to know about a device it names. */
@@ -35,12 +40,42 @@ export interface PowerSourceDevice {
   readonly online: boolean
 }
 
+/** `switch.getOptions` FAILED (not absent): what the switch can do is unknown. */
+export class SwitchOptionsUnreadableError extends Error {
+  readonly switchDeviceId: number
+
+  constructor(switchDeviceId: number, cause: unknown) {
+    super(
+      `switch ${switchDeviceId}: its options could not be read (${
+        cause instanceof Error ? cause.message : String(cause)
+      }); not power-cycling and not switching it off blind`,
+    )
+    this.name = 'SwitchOptionsUnreadableError'
+    this.switchDeviceId = switchDeviceId
+  }
+}
+
 export interface PowerSourceDevices {
   /** The device for a source ref, or null when it cannot be found. */
   readonly find: (ref: CompositionSourceRef) => Promise<PowerSourceDevice | null>
   /** The switch's on/off state, or null when it has none. Throws when it cannot be read. */
   readonly readOn: (switchDeviceId: number) => Promise<boolean | null>
   readonly setOn: (switchDeviceId: number, on: boolean) => Promise<void>
+  /**
+   * What the switch can do (`switch.getOptions`): the defaults when its provider has no such
+   * method, `SwitchOptionsUnreadableError` when the read FAILED.
+   * Absent = every switch here is a plain on/off switch.
+   */
+  readonly options?: (switchDeviceId: number) => Promise<SwitchOptions>
+  /**
+   * Cut and restore the switch's output in ONE native call, when its provider declares it
+   * (`switch.getOptions().supportsPowerCycle`). Resolves true when it cycled, false when the
+   * switch has no native cycle (the restart is then off / wait / on). Throws
+   * `SwitchOptionsUnreadableError` when what the switch can do could not be read, and any other
+   * error when the cycle call fails.
+   * Absent = no switch here has one.
+   */
+  readonly cycle?: (switchDeviceId: number) => Promise<boolean>
 }
 
 export interface PowerSourceTimer {
@@ -107,6 +142,7 @@ export class PowerSourceService implements IPowerSourceProvider {
         switchName: null,
         switchOn: null,
         switchOnline: null,
+        switchSettable: null,
         restartInProgress: false,
         offSeconds: 0,
       }
@@ -116,12 +152,15 @@ export class PowerSourceService implements IPowerSourceProvider {
       switchDevice === null
         ? null
         : await this.deps.devices.readOn(switchDevice.id).catch(() => null)
+    const switchSettable =
+      switchDevice === null ? null : await this.settableOf(deviceId, switchDevice.id)
     return {
       linked: true,
       switchDeviceId: switchDevice?.id ?? null,
       switchName: switchDevice?.name ?? link.switch.stableId,
       switchOn,
       switchOnline: switchDevice?.online ?? null,
+      switchSettable,
       restartInProgress: this.restarting.has(deviceId),
       offSeconds: link.offSeconds,
     }
@@ -148,6 +187,31 @@ export class PowerSourceService implements IPowerSourceProvider {
     const { link, switchDevice } = lookup.resolved
     const switchId = switchDevice.id
     pending.switchId = switchId
+    const cycle = this.deps.devices.cycle
+    if (cycle !== undefined) {
+      let cycled: boolean
+      try {
+        cycled = await cycle(switchId)
+      } catch (err: unknown) {
+        this.restarting.delete(deviceId)
+        const reason =
+          err instanceof SwitchOptionsUnreadableError
+            ? 'switch-options-unreadable'
+            : 'switch-call-failed'
+        return this.refuse(deviceId, reason, errorText(err), switchId)
+      }
+      if (cycled) {
+        this.restarting.delete(deviceId)
+        this.deps.logger.info(
+          'power-source: forced restart through the switch’s native power cycle',
+          {
+            tags: { deviceId },
+            meta: { switchId, switchName: switchDevice.name },
+          },
+        )
+        return ACCEPTED
+      }
+    }
     try {
       await this.deps.devices.setOn(switchId, false)
     } catch (err: unknown) {
@@ -208,6 +272,15 @@ export class PowerSourceService implements IPowerSourceProvider {
     const lookup = await this.lookup(deviceId)
     if (lookup.kind === 'refused') return this.refuse(deviceId, lookup.reason, lookup.message, null)
     const { switchDevice } = lookup.resolved
+    // Only an ANSWERED "cannot be set" refuses; a failed read changes nothing (D315, D1058).
+    if ((await this.settableOf(deviceId, switchDevice.id)) === false) {
+      return this.refuse(
+        deviceId,
+        'not-settable',
+        `the switch ${switchDevice.name} only reports its state; it cannot be switched ${on ? 'on' : 'off'}`,
+        switchDevice.id,
+      )
+    }
     try {
       await this.deps.devices.setOn(switchDevice.id, on)
     } catch (err: unknown) {
@@ -218,6 +291,27 @@ export class PowerSourceService implements IPowerSourceProvider {
       meta: { switchId: switchDevice.id, switchName: switchDevice.name },
     })
     return ACCEPTED
+  }
+
+  /**
+   * Whether the switch can be set: `true` for a plain switch (no options reader, or a provider
+   * without `getOptions`), `null` when the read FAILED (logged, tagged) — never `false` for unknown.
+   */
+  private async settableOf(deviceId: number, switchId: number): Promise<boolean | null> {
+    const options = this.deps.devices.options
+    if (options === undefined) return true
+    try {
+      return (await options(switchId)).supportsSetState
+    } catch (err: unknown) {
+      this.deps.logger.warn(
+        'power-source: the switch options could not be read; settable unknown',
+        {
+          tags: { deviceId },
+          meta: { switchId, error: errorText(err) },
+        },
+      )
+      return null
+    }
   }
 
   /** The link and the switch, or the reason there is nothing to act on. Reads the switch state: unknown is refused. */

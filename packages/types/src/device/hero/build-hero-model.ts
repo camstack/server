@@ -8,6 +8,7 @@
  * slice that is missing or does not parse is "not answered": unknown is never
  * off (D315/D393), a heater whose switch has not reported renders `unknown`.
  */
+import type { SwitchOptions } from '../../capabilities/switch.cap.js'
 import { RunningStateStatusSchema } from '../../capabilities/running-state.cap.js'
 import type { ReadingQuantity } from '../../units/quantity.js'
 import { DeviceType } from '../device-type.js'
@@ -56,6 +57,10 @@ export interface HeroModelInput {
   readonly remoteCommands: number | null
   /** Whether the session may act on the device; the model lists what it must hide. */
   readonly access: { readonly canActuate: boolean }
+  /** The `switch` provider's `getOptions` answer; absent = not asked (a plain on/off switch). */
+  readonly switchOptions?: SwitchOptions
+  /** `power-source.getStatus().switchSettable`; absent or `null` = not known (on / off stay). */
+  readonly powerSupplySettable?: boolean | null
 }
 
 /** The first source with a known answer wins. */
@@ -132,7 +137,11 @@ function runningOf(input: HeroModelInput): boolean | null | undefined {
 function stateOf(
   input: HeroModelInput,
   readings: readonly StateReading[],
-): { readonly state: HeroState; readonly assumed: boolean; readonly title: HeroText } {
+): {
+  readonly state: HeroState
+  readonly assumed: boolean
+  readonly title: HeroText
+} {
   if (!input.device.online) return { state: 'offline', assumed: false, title: STATE_TEXT.offline }
   const picked = pickReading(readings)
   if (picked === null) return { state: 'unknown', assumed: false, title: STATE_TEXT.unknown }
@@ -243,6 +252,10 @@ export function buildHeroModel(input: HeroModelInput): HeroModel {
     remoteCommands: input.remoteCommands,
     caps: input.caps,
     quantity: device.quantity ?? null,
+    ...(input.switchOptions !== undefined ? { switchOptions: input.switchOptions } : {}),
+    ...(input.powerSupplySettable !== undefined
+      ? { powerSupplySettable: input.powerSupplySettable }
+      : {}),
   }
   const contributed = HERO_CAP_CONTRIBUTIONS.filter((c) => input.caps.includes(c.cap)).map((c) => ({
     cap: c.cap,

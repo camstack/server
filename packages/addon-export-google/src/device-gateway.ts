@@ -8,7 +8,7 @@
  * the intent logic is exercised for real — including the branches that DROP a
  * device, which are the ones that matter.
  */
-import type { AddonApi, IScopedLogger } from '@camstack/types'
+import { type AddonApi, type IScopedLogger, switchRefusesSetState } from '@camstack/types'
 import { dispatchCapCall, readCapStatus, type GooglePrincipal } from './google-home/cap-dispatch.js'
 import type { ExportableDeviceFacts } from './google-home/device-model.js'
 import type { CapCall, CapStatusRead } from './google-home/trait-catalog.js'
@@ -33,6 +33,37 @@ export interface ApiDeviceGatewayDeps {
 }
 
 /**
+ * The caps Google may see for a device: its bound caps, minus `switch` when that
+ * switch ANSWERED it cannot be set (`getOptions().supportsSetState: false`, a PoE
+ * port seen only through an API key — D1058): an OnOff trait whose every EXECUTE
+ * fails is a lie. A provider without `getOptions`, or a failed read, keeps the
+ * switch (D315); the failure is logged against the device.
+ */
+export async function exportedCapNames(
+  deviceId: number,
+  bound: readonly string[],
+  readSwitchOptions: () => Promise<unknown>,
+  logger: Pick<IScopedLogger, 'debug'>,
+): Promise<readonly string[]> {
+  if (!bound.includes('switch')) return bound
+  let answer: unknown
+  try {
+    answer = await readSwitchOptions()
+  } catch (err: unknown) {
+    logger.debug('export-google: switch options unread — exporting it as a plain OnOff switch', {
+      tags: { deviceId },
+      meta: { error: err instanceof Error ? err.message : String(err) },
+    })
+    return bound
+  }
+  if (!switchRefusesSetState(answer)) return bound
+  logger.debug('export-google: switch only reports its state — no OnOff trait for it', {
+    tags: { deviceId },
+  })
+  return bound.filter((cap) => cap !== 'switch')
+}
+
+/**
  * `DeviceGateway` over the real hub API.
  *
  * `loadFacts` swallows nothing: a device missing from the registry returns
@@ -54,7 +85,12 @@ export function createApiDeviceGateway(deps: ApiDeviceGatewayDeps): DeviceGatewa
         deviceType: device.type,
         role: device.role ?? null,
         features: device.features,
-        capNames: entries.map((entry) => entry.capName),
+        capNames: await exportedCapNames(
+          device.id,
+          entries.map((entry) => entry.capName),
+          () => deps.api.switch.getOptions.query({ deviceId: device.id }),
+          deps.logger,
+        ),
       }
     },
     readStatus: (read, deviceId) => readCapStatus(deps.api, read, deviceId),

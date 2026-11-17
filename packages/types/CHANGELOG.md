@@ -10,6 +10,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A camera grid or Terminal camera block's device is served by its engine on the composer's row; the engine alone reports its status and feature probe (engine-hosted blocks).
+### Added
+
+- New workload device type (roles vm, app-container, lxc, app, host) with one workload capability: state, start/stop/restart/pause/resume/force stop, resources with history, and started/stopped/crashed/recovered events
+- PoE ports: a switch device can carry the poe-port role (worded Power on / Power off), and network-link reports a port's link speed and whether the link is up
+- Siren plays mode: a siren trigger takes a duration in seconds or a number of plays (never both), getOptions declares the plays a siren supports, the status reports a plays activation with an estimated end, and a rule can sound a siren N times
+
+### Changed
+
+- network-link's link speed is speedKbps, the bitrate quantity in kbit/s, shown in the system's bitrate unit
+- A host that comes back after going down raises a "Came online" event (the workload recovered event, host wording).
+- A switch can say it only reports its state and can power-cycle natively (switch getOptions / powerCycle); the hero then hides on/off.
+- The workload capability reports memory as a percentage (memoryPercent) for a source that has no byte count, recorded in its history
+- A rule can trigger on a number grouped under an object in a device's status (a workload's CPU, memory or temperature above or below a threshold)
+- A workload restart needs the same permission as start and stop (it was admin only); force stop stays admin
+- A command whose argument is a list the device answers is not offered when the device answered an empty list (a siren that counts no plays is not offered 'sound N times'); a list that could not be read keeps it offered
+- A switch that only reports its state (getOptions supportsSetState: false) is offered no on/off/toggle in automations (new offeredWhen action gate), and a forced restart whose switch options could not be read is refused as switch-options-unreadable.
+- A device powered by a switch that only reports offers no power on / off: power-source getStatus answers switchSettable, and powerSource.on / .off are gated on it (D1058)
 
 ## [1.2.586] - 2026-11-16
 

@@ -2623,6 +2623,36 @@ export {
   energySystemSelfConsumptionPct,
 } from './energy-system.cap.js'
 export {
+  type IWorkloadProvider,
+  type WorkloadAction,
+  type WorkloadControl,
+  type WorkloadControls,
+  type WorkloadOptions,
+  type WorkloadPort,
+  type WorkloadPortProtocol,
+  type WorkloadResources,
+  type WorkloadSections,
+  type WorkloadSettledState,
+  type WorkloadState,
+  type WorkloadStatus,
+  type WorkloadTransitionEventData,
+  type WorkloadTransitionKind,
+  WORKLOAD_ACTIONS,
+  WORKLOAD_ROLES,
+  WORKLOAD_STATES,
+  WORKLOAD_TRANSITION_CATEGORY,
+  WorkloadOptionsSchema,
+  WorkloadPortProtocolSchema,
+  WorkloadPortSchema,
+  WorkloadResourcesSchema,
+  WorkloadStateSchema,
+  WorkloadStatusSchema,
+  deriveWorkloadControls,
+  isWorkloadSettled,
+  workloadCapability,
+  workloadTransition,
+} from './workload.cap.js'
+export {
   type HeatPumpCircuit,
   type HeatPumpCircuitKind,
   type HeatPumpEnergy,
@@ -2829,7 +2859,19 @@ export {
   MotionStatusSchema,
   motionCapability,
 } from './motion.cap.js'
-export { resolveSirenSeconds, sirenIdleStatus, sirenTriggeredStatus } from './siren-duration.js'
+export {
+  planSirenTrigger,
+  resolveSirenPlays,
+  resolveSirenSeconds,
+  sirenIdleStatus,
+  sirenPlayChoices,
+  sirenTriggeredStatus,
+} from './siren-duration.js'
+export type {
+  SirenPlaysActivation,
+  SirenTriggerPlan,
+  SirenTriggerRequest,
+} from './siren-duration.js'
 export {
   type ISirenProvider,
   type SirenDurationRange,
@@ -2844,6 +2886,8 @@ export {
   SirenRuntimeStateSchema,
   type SirenStatus,
   SirenStatusSchema,
+  type SirenTriggerInput,
+  SirenTriggerInputSchema,
   sirenCapability,
 } from './siren.cap.js'
 export {
@@ -3350,6 +3394,11 @@ export {
 } from './stream-params-config-schema.js'
 export {
   type ISwitchProvider,
+  SWITCH_DEFAULT_OPTIONS,
+  SWITCH_SETTABLE_GATE,
+  switchRefusesSetState,
+  type SwitchOptions,
+  SwitchOptionsSchema,
   type SwitchStatus,
   SwitchStatusSchema,
   switchCapability,
@@ -3690,6 +3739,7 @@ import type { groupStatusCapability } from './group-status.cap.js'
 import type { heatingValveCapability } from './heating-valve.cap.js'
 import type { heatPumpStatusCapability } from './heat-pump-status.cap.js'
 import type { energySystemCapability } from './energy-system.cap.js'
+import type { workloadCapability } from './workload.cap.js'
 import type { heatPumpControlCapability } from './heat-pump-control.cap.js'
 import type { humidifierCapability } from './humidifier.cap.js'
 import type { humiditySensorCapability } from './humidity-sensor.cap.js'
@@ -3946,6 +3996,7 @@ type AnyCapability =
   | typeof heatingValveCapability
   | typeof heatPumpStatusCapability
   | typeof energySystemCapability
+  | typeof workloadCapability
   | typeof heatPumpControlCapability
   | typeof humiditySensorCapability
   | typeof ambientLightSensorCapability

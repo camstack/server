@@ -34,7 +34,8 @@ function PowerPanel({
 }): ReactNode {
   const supply = model.powerSupply
   if (supply === null) return null
-  const toggle: HeroAction = supply.on === true ? supply.powerOff : supply.powerOn
+  // Null when the supply's switch only reports (D1058): the menu keeps the restart alone.
+  const toggle: HeroAction | null = supply.on === true ? supply.powerOff : supply.powerOn
   const entry = (action: HeroAction, disabled: boolean): ReactNode => (
     <Button
       size="sm"
@@ -52,7 +53,7 @@ function PowerPanel({
   )
   return (
     <div className="flex min-w-48 flex-col gap-1.5 p-2">
-      {entry(toggle, false)}
+      {toggle === null ? null : entry(toggle, false)}
       {entry(supply.restart, supply.on !== true)}
     </div>
   )

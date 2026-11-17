@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Discovery shows each switch's PoE ports under it, and a poll whose port or sensor read failed no longer removes the adopted port and sensor children
+- Each PoE port of a UniFi switch is now its own device under the switch, showing its PoE power, link and the client on it (named after that client); with a local account (username and password) added beside the API key, the port's PoE can be switched on and off — and a camera can use that port as its power source for restarts
+- Consoles, switches and access points are adopted as workload hosts showing whether they run, their uptime, CPU and temperature; PoE ports carry the PoE port role and report link up and link speed
+- A local account now signs in through aiounifi (the library Home Assistant uses) in a Python worker: PoE on/off keeps every other port's setting, and the controller's live event stream updates port link, PoE and clients between polls.
+- An unreachable controller now shows its consoles, switches and access points as unknown instead of still running, and their running-since time no longer moves on every poll.
+- A UniFi console, switch or access point that drops off the controller now raises "Went down" (not "Shut down"), and "Came online" when it returns.
+- A PoE port seen only through the API key is now a switch that can power-cycle: a camera on it can be force-restarted from its power source.
+- The integration status says which credential signed in: the API key, the local account, or both (and when the local account stops answering).
+- UniFi hosts report memory use (percent) on their workload, from the Integration API statistics or the local account's device stats.
+
 ## [0.2.165] - 2026-11-16
 
 ### Changed

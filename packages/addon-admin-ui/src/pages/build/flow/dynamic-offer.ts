@@ -10,7 +10,7 @@
  * missing list must never block saving a step the operator can still type.
  */
 
-import type { LooseVocabOffer } from '@camstack/types'
+import type { DynamicOfferAnswer, LooseVocabOffer } from '@camstack/types'
 
 export type DynamicOffer = Extract<LooseVocabOffer, { readonly kind: 'dynamic' }>
 
@@ -74,4 +74,15 @@ export function dynamicChoicesOf(raw: unknown, offer: DynamicOffer): readonly Dy
     out.push({ value, label: isScalar(label) ? String(label) : String(value) })
   }
   return out
+}
+
+/**
+ * What the device answered, for deciding whether the command is offered at all
+ * (`offeredActionsWith`): a list, counted; a shape that is not a list is not an
+ * answer, so it reads as `failed` and keeps the command offered (D315).
+ */
+export function dynamicAnswerOf(raw: unknown, offer: DynamicOffer): DynamicOfferAnswer {
+  const list = offer.from === 'status' ? field(raw, offer.field) : raw
+  if (!Array.isArray(list)) return { kind: 'failed' }
+  return { kind: 'answered', choiceCount: dynamicChoicesOf(raw, offer).length }
 }

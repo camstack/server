@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A switch that only reports its state (a PoE port seen only through an API key) gets no OnOff trait in Google Home.
+
 ## [0.1.135] - 2026-11-16
 
 ### Changed

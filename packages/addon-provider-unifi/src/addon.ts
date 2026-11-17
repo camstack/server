@@ -23,7 +23,12 @@ import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
 import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'
 import { buildUnifiAdoptionProvider } from './unifi-adoption-provider.js'
-import { liveUnifiClientFactory } from './unifi-client-factory.js'
+import type { UnifiControllerClientFactory } from './unifi-client-contract.js'
+import { makeUnifiClientFactory } from './unifi-client-factory.js'
+import { makeUndiciFetch } from './unifi-client-live.js'
+import { UnifiUnsupportedError } from './unifi-errors.js'
+import { startUnifiWorkerChannel, type UnifiWorkerChannel } from './unifi-worker-channel.js'
+import { resolveUnifiWorkerScript, withSecretFile } from './unifi-worker-files.js'
 import { UnifiClientRegistry } from './unifi-client-registry.js'
 import { buildUnifiDeviceAdopter } from './unifi-device-adopter.js'
 import { unifiStableId } from './unifi-discovery.js'
@@ -47,13 +52,14 @@ const UNIFI_MIGRATIONS_DATE = '2026-11-05'
  * UniFi Network device-provider addon, `mode: account` and broker-less. An integration is one
  * controller: its host, port, credential, site and poll interval live on the integration's
  * settings, and the addon polls it with one client per `integrationId`. The client signs in with
- * the console's API key (the UniFi OS Integration API, `unifi-client-factory.ts`); the username
- * and password fields are kept but not used yet. Both secrets live in the keychain. The integration declares a
+ * the console's API key (the UniFi OS Integration API), a local account (the classic Network API
+ * through aiounifi in `python/unifi_worker.py`, with the websocket's live changes), or both —
+ * `unifi-client-factory.ts`. Both secrets live in the keychain. The integration declares a
  * connection test (`unifi-connection-test.ts`), and a connection that fails names its reason on
  * the integration's status.
  *
  * Discovery offers the controller itself ({@link DeviceType.Gateway}, with a link to its UI),
- * each infra device ({@link DeviceType.Container}, fanning per-port PoE, restart and sensors
+ * each infra device (a {@link DeviceType.Workload} host, fanning per-port PoE, restart and sensors
  * out as accessory children) and each network client ({@link DeviceType.Presence}), all as
  * siblings. Cameras are not in scope.
  *
@@ -66,6 +72,7 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
     [DeviceType.Gateway]: UnifiGatewayDevice,
     [DeviceType.Container]: UnifiInfraDevice,
+    [DeviceType.Workload]: UnifiInfraDevice,
     [DeviceType.Switch]: UnifiFeatureDevice,
     [DeviceType.Button]: UnifiFeatureDevice,
     [DeviceType.Sensor]: UnifiFeatureDevice,
@@ -78,6 +85,30 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
 
   constructor() {
     super({})
+  }
+
+  /** The clients over undici (API key) and the aiounifi worker on the embedded Python (account). */
+  private clientFactory(): UnifiControllerClientFactory {
+    return makeUnifiClientFactory({
+      fetchFor: makeUndiciFetch,
+      openWorker: () => this.openWorker(),
+      secretFiles: withSecretFile,
+    })
+  }
+
+  private async openWorker(): Promise<UnifiWorkerChannel> {
+    const pythonPath = await this.ctx.deps.ensurePython()
+    if (pythonPath === null) {
+      throw new UnifiUnsupportedError(
+        'local-account',
+        'unifi: the embedded Python is unavailable, so the local account cannot sign in',
+      )
+    }
+    return startUnifiWorkerChannel({
+      pythonPath,
+      scriptPath: resolveUnifiWorkerScript(),
+      logger: this.ctx.logger,
+    })
   }
 
   protected override async onInitialize(): Promise<AddonInitResult> {
@@ -107,14 +138,14 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
     )
     this.instances = buildUnifiInstances(records, {
       onChanged: () => this.reconcileIntegrations(),
-      makeClient: liveUnifiClientFactory,
+      makeClient: this.clientFactory(),
       statusOf: (id) => this.clients?.statusOf(id) ?? null,
     })
     this.clients = new UnifiClientRegistry(this.ctx.logger, {
       onConnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, true),
       onDisconnected: (integrationId) => this.setIntegrationDevicesOnline(integrationId, false),
       onPolled: (integrationId) => this.handlePolled(integrationId),
-      makeClient: liveUnifiClientFactory,
+      makeClient: this.clientFactory(),
     })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()

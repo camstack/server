@@ -64,6 +64,7 @@ const ROUTES: Record<string, unknown> = {
   '/sites/s1/devices/d1/statistics/latest': {
     uptimeSec: 100,
     cpuUtilizationPct: 12.5,
+    memoryUtilizationPct: 48.2,
   },
   '/sites/s1/devices/d1/actions': {},
   '/sites/s1/devices/d1/interfaces/ports/2/actions': {},
@@ -97,16 +98,29 @@ describe('UnifiLiveClient', () => {
     const sw = infra.find((d) => d.id === 'd1')
     expect(sw).toMatchObject({
       cpuPercent: 12.5,
+      memoryPercent: 48.2,
       uptimeSec: 100,
       online: true,
       clients: 1,
       cpuTempC: null,
+      kind: 'switch',
     })
+    // The Integration API reports no per-port power or wired client: absent, never 0.
+    const unread = {
+      linkUp: null,
+      speedMbps: null,
+      poePowerW: null,
+      poeVoltageV: null,
+      poeCurrentA: null,
+      clientMac: null,
+      clientName: null,
+    }
     expect(sw?.ports).toEqual([
-      { idx: 1, poeCapable: true, poeOn: true },
-      { idx: 2, poeCapable: true, poeOn: false },
-      { idx: 3, poeCapable: false, poeOn: false },
+      { idx: 1, poeCapable: true, poeOn: true, ...unread },
+      { idx: 2, poeCapable: true, poeOn: false, ...unread },
+      { idx: 3, poeCapable: false, poeOn: false, ...unread },
     ])
+    expect(sw?.poeSwitchable).toBe(false)
     // statistics unavailable for the AP -> null, never 0
     const ap = infra.find((d) => d.id === 'd2')
     expect(ap).toMatchObject({
@@ -114,6 +128,7 @@ describe('UnifiLiveClient', () => {
       uptimeSec: null,
       online: false,
       state: 'offline',
+      kind: 'access-point',
     })
     const clients = await client.listClients()
     expect(clients[0]).toMatchObject({

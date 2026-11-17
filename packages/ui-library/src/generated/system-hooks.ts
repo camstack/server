@@ -3359,6 +3359,9 @@ export const useSettingsStoreDeclareCollection: typeof trpc.settingsStore.declar
 /** Generated alias around `trpc.siren.getOptions.useQuery`. */
 export const useSirenGetOptions: typeof trpc.siren.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.siren.getOptions.useQuery)
 
+/** Generated alias around `trpc.siren.getPlayChoices.useQuery`. */
+export const useSirenGetPlayChoices: typeof trpc.siren.getPlayChoices.useQuery = /*#__PURE__*/ alias(() => trpc.siren.getPlayChoices.useQuery)
+
 /** Generated alias around `trpc.siren.trigger.useMutation`. */
 export const useSirenTrigger: typeof trpc.siren.trigger.useMutation = /*#__PURE__*/ alias(() => trpc.siren.trigger.useMutation)
 
@@ -3619,6 +3622,12 @@ export const useStreamSignalsListSignals: typeof trpc.streamSignals.listSignals.
 
 /** Generated alias around `trpc.switch.setState.useMutation`. */
 export const useSwitchSetState: typeof trpc.switch.setState.useMutation = /*#__PURE__*/ alias(() => trpc.switch.setState.useMutation)
+
+/** Generated alias around `trpc.switch.getOptions.useQuery`. */
+export const useSwitchGetOptions: typeof trpc.switch.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.switch.getOptions.useQuery)
+
+/** Generated alias around `trpc.switch.powerCycle.useMutation`. */
+export const useSwitchPowerCycle: typeof trpc.switch.powerCycle.useMutation = /*#__PURE__*/ alias(() => trpc.switch.powerCycle.useMutation)
 
 /** Generated alias around `trpc.switch.toggle.useMutation`. */
 export const useSwitchToggle: typeof trpc.switch.toggle.useMutation = /*#__PURE__*/ alias(() => trpc.switch.toggle.useMutation)
@@ -3976,6 +3985,30 @@ export const useWebrtcSessionApplyDownlinkProbe: typeof trpc.webrtcSession.apply
 
 /** Generated alias around `trpc.webrtcSession.getSessionDebug.useQuery`. */
 export const useWebrtcSessionGetSessionDebug: typeof trpc.webrtcSession.getSessionDebug.useQuery = /*#__PURE__*/ alias(() => trpc.webrtcSession.getSessionDebug.useQuery)
+
+/** Generated alias around `trpc.workload.start.useMutation`. */
+export const useWorkloadStart: typeof trpc.workload.start.useMutation = /*#__PURE__*/ alias(() => trpc.workload.start.useMutation)
+
+/** Generated alias around `trpc.workload.stop.useMutation`. */
+export const useWorkloadStop: typeof trpc.workload.stop.useMutation = /*#__PURE__*/ alias(() => trpc.workload.stop.useMutation)
+
+/** Generated alias around `trpc.workload.restart.useMutation`. */
+export const useWorkloadRestart: typeof trpc.workload.restart.useMutation = /*#__PURE__*/ alias(() => trpc.workload.restart.useMutation)
+
+/** Generated alias around `trpc.workload.pause.useMutation`. */
+export const useWorkloadPause: typeof trpc.workload.pause.useMutation = /*#__PURE__*/ alias(() => trpc.workload.pause.useMutation)
+
+/** Generated alias around `trpc.workload.resume.useMutation`. */
+export const useWorkloadResume: typeof trpc.workload.resume.useMutation = /*#__PURE__*/ alias(() => trpc.workload.resume.useMutation)
+
+/** Generated alias around `trpc.workload.forceStop.useMutation`. */
+export const useWorkloadForceStop: typeof trpc.workload.forceStop.useMutation = /*#__PURE__*/ alias(() => trpc.workload.forceStop.useMutation)
+
+/** Generated alias around `trpc.workload.getOptions.useQuery`. */
+export const useWorkloadGetOptions: typeof trpc.workload.getOptions.useQuery = /*#__PURE__*/ alias(() => trpc.workload.getOptions.useQuery)
+
+/** Generated alias around `trpc.workload.getStatus.useQuery`. */
+export const useWorkloadGetStatus: typeof trpc.workload.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.workload.getStatus.useQuery)
 
 /** Generated alias around `trpc.zoneAnalytics.getCurrentSnapshot.useQuery`. */
 export const useZoneAnalyticsGetCurrentSnapshot: typeof trpc.zoneAnalytics.getCurrentSnapshot.useQuery = /*#__PURE__*/ alias(() => trpc.zoneAnalytics.getCurrentSnapshot.useQuery)

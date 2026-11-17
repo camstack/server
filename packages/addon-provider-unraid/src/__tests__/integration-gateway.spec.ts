@@ -1,5 +1,5 @@
 /**
- * A new Unraid integration produces the server's Gateway and its instance Container as
+ * A new Unraid integration produces the server's Gateway and the server workload host as
  * SIBLINGS, with the connection (and the API key, a keychain secret) on the integration.
  * The device context is the one boundary a spec fakes; everything else is the real code.
  */
@@ -28,7 +28,11 @@ import {
   unraidConnectionsEntryKind,
   unraidRecordKinds,
 } from '../unraid-instances.js'
-import type { UnraidClientLike, UnraidSnapshot } from '../unraid-client-contract.js'
+import type {
+  UnraidArrayDiskInfo,
+  UnraidClientLike,
+  UnraidSnapshot,
+} from '../unraid-client-contract.js'
 import { buildUnraidDeviceAdopter } from '../unraid-device-adopter.js'
 import { UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
 import { reconcileInstanceEntities } from '../unraid-entity-reconcile.js'
@@ -46,25 +50,40 @@ const quiet: IScopedLogger = {
   withTags: () => quiet,
 }
 
-/** A snapshot with one docker container carrying a marked name. */
+/** An array disk carrying a marked name. */
+const MARKED_DISK: UnraidArrayDiskInfo = {
+  id: 'srv:d1',
+  name: 'marker-disk',
+  fsSizeBytes: 1000,
+  fsUsedBytes: 400,
+  fsFreeBytes: 600,
+  tempC: 30,
+  healthy: true,
+}
+
+/** A snapshot with one marked disk and one docker container. */
 const SNAPSHOT: UnraidSnapshot = {
   array: {
     state: 'STARTED',
     capacityKb: { total: 1000, used: 400, free: 600 },
     parityCheck: null,
-    disks: [],
+    disks: [MARKED_DISK],
   },
   cpu: { percent: 12, tempC: null, powerW: null },
-  disks: [],
+  disks: [MARKED_DISK],
   dockers: [
     {
       id: 'c1',
       name: 'marker-plex',
-      running: true,
+      state: 'running',
+      image: null,
+      autostart: null,
+      updateAvailable: null,
       cpuPercent: 1,
       memPercent: 2,
     },
   ],
+  vms: [],
   notifications: { activeCount: 0, latest: null },
 }
 
@@ -134,6 +153,7 @@ function adoptionHarness() {
       })
       return out
     },
+    adoptWorkload: async (input) => adopter.adoptWorkload(input),
     childDeviceIds: async () => [],
     removeDevice: async () => undefined,
     findDeviceConfig: async () => null,
@@ -159,6 +179,7 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     const keys: readonly string[] = Object.keys(classes)
     expect(keys).not.toContain('hub')
     expect(classes[DeviceType.Gateway]).toBe(UnraidGatewayDevice)
+    // A server row adopted before the workload host keeps its class.
     expect(classes[DeviceType.Container]).toBe(UnraidInstanceDevice)
   })
 
@@ -192,12 +213,12 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
       [`unraid:${INT}:gateway`, UnraidGatewayDevice, null],
       [`unraid:${INT}:instance`, UnraidInstanceDevice, null],
     ])
-    expect(h.created.map((c) => c.meta?.type)).toEqual([DeviceType.Gateway, DeviceType.Container])
+    expect(h.created.map((c) => c.meta?.type)).toEqual([DeviceType.Gateway, DeviceType.Workload])
     expect(h.created.every((c) => c.meta?.integrationId === INT)).toBe(true)
     expect(out.adopted.map((a) => a.childNativeId)).toEqual([UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID])
-    // The marked docker container reaches the instance's entity list.
+    // The marked disk reaches the instance's entity list.
     const entities = h.created[1]?.config['entities']
-    expect(JSON.stringify(entities)).toContain('c1')
+    expect(JSON.stringify(entities)).toContain('marker-disk')
     expect(h.created[1]?.config['integrationId']).toBe(INT)
     expect(h.created[1]?.config['instanceId']).toBe(INT)
   })
@@ -215,7 +236,7 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     expect(h.created).toHaveLength(1)
   })
 
-  it('lists the Gateway and the Container as siblings: neither nests the other', async () => {
+  it('lists the Gateway, the server and each container as siblings: none nests another', async () => {
     const h = adoptionHarness()
     const page = await h.provider.listCandidates({
       integrationId: INT,
@@ -224,7 +245,8 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     })
     expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
       [UNRAID_GATEWAY_ID, DeviceType.Gateway],
-      [UNRAID_INSTANCE_ID, DeviceType.Container],
+      [UNRAID_INSTANCE_ID, DeviceType.Workload],
+      ['docker:marker-plex', DeviceType.Workload],
     ])
     expect(page.candidates.every((c) => c.children === undefined)).toBe(true)
   })
@@ -269,9 +291,20 @@ describe('Unraid integration: the API key', () => {
         parity: { start: async () => undefined, cancel: async () => undefined },
       },
       docker: {
-        list: async () => SNAPSHOT.dockers,
+        list: async () => SNAPSHOT.dockers ?? [],
         start: async () => undefined,
         stop: async () => undefined,
+        pause: async () => undefined,
+        unpause: async () => undefined,
+      },
+      vms: {
+        list: async () => [],
+        start: async () => undefined,
+        stop: async () => undefined,
+        pause: async () => undefined,
+        resume: async () => undefined,
+        forceStop: async () => undefined,
+        reboot: async () => undefined,
       },
       system: { cpu: async () => SNAPSHOT.cpu },
       notifications: { active: async () => SNAPSHOT.notifications },
@@ -341,7 +374,7 @@ describe('Unraid integration: devices follow the integration', () => {
     expect(apply).not.toHaveBeenCalled()
     expect(await reconcileInstanceEntities({ ...base, snapshot: SNAPSHOT })).toBe(1)
     expect(apply).toHaveBeenCalledTimes(1)
-    expect(JSON.stringify(apply.mock.calls[0])).toContain('c1')
+    expect(JSON.stringify(apply.mock.calls[0])).toContain('marker-disk')
   })
 })
 

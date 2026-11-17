@@ -1,4 +1,4 @@
-import { type DeviceManagerApi, DeviceType } from '@camstack/types'
+import type { DeviceManagerApi, InitialDeviceMeta } from '@camstack/types'
 import { UNIFI_SYSTEM } from './config.js'
 import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
 import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
@@ -9,6 +9,7 @@ import {
   UNIFI_GATEWAY_ID,
   unifiStableId,
 } from './unifi-discovery.js'
+import { type UnifiCandidateKind, unifiDeviceTarget } from './unifi-device-kind.js'
 import { buildInfraFeatures } from './unifi-mapping.js'
 import { unifiControllers } from './unifi-node-resolver.js'
 
@@ -17,9 +18,24 @@ export interface UnifiAdoptInput {
   readonly name: string
 }
 
+/** The create meta of a candidate: type and role from the one table (`unifiDeviceTarget`). */
+function adoptMeta(
+  kind: UnifiCandidateKind,
+  name: string,
+  integrationId: string,
+): InitialDeviceMeta {
+  const target = unifiDeviceTarget(kind)
+  return {
+    type: target.type,
+    name,
+    integrationId,
+    ...(target.role !== null ? { role: target.role } : {}),
+  }
+}
+
 /**
- * Creates the top-level devices of a UniFi integration. The Gateway, every infra Container
- * and every client Presence are SIBLINGS (`parentDeviceId` null); the integration, not a
+ * Creates the top-level devices of a UniFi integration. The Gateway, every infra device and
+ * every client Presence are SIBLINGS (`parentDeviceId` null); the integration, not a
  * device, owns the connection, so each device only carries the `integrationId` it follows.
  */
 export function buildUnifiDeviceAdopter(input: {
@@ -42,7 +58,7 @@ export function buildUnifiDeviceAdopter(input: {
         UnifiGatewayDevice,
         config,
         null,
-        { type: DeviceType.Gateway, name, integrationId },
+        adoptMeta('controller', name, integrationId),
       )
       return { deviceId: device.id }
     },
@@ -64,7 +80,7 @@ export function buildUnifiDeviceAdopter(input: {
         UnifiInfraDevice,
         config,
         null,
-        { type: DeviceType.Container, name, integrationId },
+        adoptMeta(infra.kind, name, integrationId),
       )
       const children = await devices.getChildren(device.id)
       return { deviceId: device.id, accessoryDeviceIds: children.map((c) => c.id) }
@@ -79,7 +95,7 @@ export function buildUnifiDeviceAdopter(input: {
         UnifiFeatureDevice,
         config,
         null,
-        { type: DeviceType.Presence, name, integrationId },
+        adoptMeta('client', name, integrationId),
       )
       return { deviceId: device.id }
     },

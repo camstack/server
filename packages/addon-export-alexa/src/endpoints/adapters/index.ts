@@ -4,7 +4,7 @@
  * Adding a cap to Alexa is adding its adapter here — in order: the first
  * adapter with a category decides the endpoint's display category.
  */
-import { applianceExport, type AddonApi } from '@camstack/types'
+import { applianceExport, type AddonApi, type IScopedLogger } from '@camstack/types'
 import type { AlexaCapability, AlexaDisplayCategory } from '../types.js'
 import { climateAdapter } from './climate.js'
 import { contactAdapter } from './contact.js'
@@ -88,10 +88,11 @@ export async function discoveryExtrasFor(
   api: AddonApi,
   deviceId: number,
   capNames: readonly string[],
+  logger: IScopedLogger,
 ): Promise<Readonly<Record<string, unknown>>> {
   const parts = await Promise.all(
     GENERIC_ADAPTERS.filter((a) => capNames.includes(a.cap)).map((a) =>
-      a.discoveryExtras === undefined ? {} : a.discoveryExtras(api, deviceId),
+      a.discoveryExtras === undefined ? {} : a.discoveryExtras(api, deviceId, logger),
     ),
   )
   return Object.assign({}, ...parts)

@@ -171,8 +171,54 @@ describe('the two power slots are never merged', () => {
       method: 'setState',
       args: { on: false },
     })
-    expect(model.powerSupply?.powerOff.call.cap).toBe('power-source')
+    expect(model.powerSupply?.powerOff?.call.cap).toBe('power-source')
     expect(model.powerSupply?.restart.call.method).toBe('forceRestart')
+  })
+
+  it('a switch that only reports (supportsSetState: false) shows its state, offers no on/off', () => {
+    const model = buildHeroModel({
+      device: { id: 7, type: DeviceType.Switch, role: null, name: 'Port 3', online: true },
+      caps: ['switch'],
+      features: [],
+      slices: { switch: { on: true, lastChangedAt: 1 } },
+      now: 1,
+      remoteCommands: null,
+      access: { canActuate: true },
+      switchOptions: { supportsSetState: false, supportsPowerCycle: true },
+    })
+    expect(model.ownPower).toBeNull()
+  })
+
+  it('a supply whose linked switch only reports offers no power on / off, keeps the restart', () => {
+    const input = (powerSupplySettable?: boolean | null): HeroModelInput => ({
+      device: {
+        id: 7,
+        type: DeviceType.Camera,
+        role: null,
+        name: 'Cam',
+        online: true,
+      },
+      caps: ['power-source'],
+      features: [],
+      slices: {
+        'power-source': { switchOn: true, offSeconds: 10, lastFetchedAt: 1 },
+      },
+      now: 1,
+      remoteCommands: null,
+      access: { canActuate: true },
+      ...(powerSupplySettable === undefined ? {} : { powerSupplySettable }),
+    })
+    const refused = buildHeroModel(input(false)).powerSupply
+    expect(refused?.powerOn).toBeNull()
+    expect(refused?.powerOff).toBeNull()
+    expect(refused?.restart.call.method).toBe('forceRestart')
+    expect(refused?.on).toBe(true)
+    // Settable, unknown (a failed read) or not asked: on / off stay (D315).
+    for (const settable of [true, null, undefined]) {
+      const supply = buildHeroModel(input(settable)).powerSupply
+      expect(supply?.powerOn?.call.method).toBe('powerOn')
+      expect(supply?.powerOff?.call.method).toBe('powerOff')
+    }
   })
 
   it('a power-source alone is NOT the own power', () => {
@@ -201,7 +247,7 @@ describe('the two power slots are never merged', () => {
       'running-state': { ...RUNNING, running: false },
     })
     expect(running.powerSupply?.confirmOffWhileRunning).toBe(true)
-    expect(running.powerSupply?.powerOff.confirm).toBe('off-while-running')
+    expect(running.powerSupply?.powerOff?.confirm).toBe('off-while-running')
     expect(idle.powerSupply?.confirmOffWhileRunning).toBe(false)
   })
 
@@ -550,7 +596,8 @@ describe('icons', () => {
       model.powerSupply?.powerOff,
       model.powerSupply?.restart,
     ]
-    for (const a of actions) if (a !== undefined) expect(icons.has(a.icon), a.id).toBe(true)
+    for (const a of actions)
+      if (a !== undefined && a !== null) expect(icons.has(a.icon), a.id).toBe(true)
     for (const row of model.rows) {
       for (const c of row.controls) {
         const as =

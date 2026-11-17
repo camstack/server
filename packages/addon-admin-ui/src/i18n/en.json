@@ -9488,7 +9488,8 @@
         "heater": "Heater",
         "heatPump": "Heat pump",
         "energySystem": "Energy system",
-        "weatherStation": "Weather station"
+        "weatherStation": "Weather station",
+        "workload": "Workload"
       },
       "role": {
         "siren": "Siren",
@@ -9557,7 +9558,13 @@
         "climateRadiator": "Radiator",
         "climateHeater": "Heater",
         "climateHeatPumpCircuit": "Heat pump circuit",
-        "switchLight": "On/off light"
+        "switchLight": "On/off light",
+        "vm": "Virtual machine",
+        "appContainer": "Container",
+        "lxc": "LXC container",
+        "app": "App",
+        "host": "Host",
+        "poePort": "PoE port"
       },
       "noun": {
         "role": {

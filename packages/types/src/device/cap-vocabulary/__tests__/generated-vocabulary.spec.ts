@@ -71,6 +71,7 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   'error',
   'tags',
   'siren',
+  'workload',
 ]
 
 function actionsOf(entry: unknown): readonly JsonRecord[] {
@@ -83,8 +84,46 @@ function excusesOf(entry: unknown): JsonRecord {
   return isRecord(excuses) ? excuses : {}
 }
 
+/** Role overrides (`overrides.byRole`) added after the snapshot, by cap. */
+const ADDED_ROLE_OVERRIDES: Readonly<Record<string, readonly string[]>> = {
+  switch: ['poe-port'],
+}
+
+function roleOverridesOf(entry: unknown): JsonRecord {
+  const overrides = isRecord(entry) ? entry['overrides'] : undefined
+  const byRole = isRecord(overrides) ? overrides['byRole'] : undefined
+  return isRecord(byRole) ? byRole : {}
+}
+
+/** The entry with the listed role overrides taken out. */
+function withoutAddedRoles(cap: string, entry: unknown): unknown {
+  const roles = ADDED_ROLE_OVERRIDES[cap]
+  if (roles === undefined || !isRecord(entry) || !isRecord(entry['overrides'])) return entry
+  const byRole = Object.fromEntries(
+    Object.entries(roleOverridesOf(entry)).filter(([role]) => !roles.includes(role)),
+  )
+  return { ...entry, overrides: { ...entry['overrides'], byRole } }
+}
+
+/** Methods declared after the snapshot with an excuse (`notOperatorFacing`), by cap. */
+const ADDED_EXCUSES: Readonly<Record<string, readonly string[]>> = {
+  switch: ['powerCycle'],
+}
+
+/** The entry with the listed method excuses taken out. */
+function withoutAddedExcuses(cap: string, entry: unknown): unknown {
+  const methods = ADDED_EXCUSES[cap]
+  if (methods === undefined || !isRecord(entry)) return entry
+  const excuses = Object.fromEntries(
+    Object.entries(excusesOf(entry)).filter(([method]) => !methods.includes(method)),
+  )
+  const { notOperatorFacing: _n, ...rest } = entry
+  return { ...rest, ...(Object.keys(excuses).length > 0 ? { notOperatorFacing: excuses } : {}) }
+}
+
 /** The current entry with #524's additions taken out, and their excuses put back. */
-function withoutAdditions(cap: string, entry: unknown, before: unknown): unknown {
+function withoutAdditions(cap: string, current: unknown, before: unknown): unknown {
+  const entry = withoutAddedExcuses(cap, withoutAddedRoles(cap, current))
   const added = ADDED_ACTIONS[cap]
   if (added === undefined || !isRecord(entry)) return entry
   const kept = actionsOf(entry).filter((a) => !(String(a['id']) in added))
@@ -136,6 +175,13 @@ describe('the generated cap vocabulary', () => {
           excuse: undefined,
         })
       }
+    }
+  })
+
+  it('carries every listed role override', () => {
+    for (const [cap, roles] of Object.entries(ADDED_ROLE_OVERRIDES)) {
+      for (const role of roles)
+        expect(roleOverridesOf(now[cap])[role], `${cap} ${role}`).toBeDefined()
     }
   })
 

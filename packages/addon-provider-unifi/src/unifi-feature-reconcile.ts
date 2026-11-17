@@ -1,34 +1,18 @@
 import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/types'
-import { UNIFI_SYSTEM } from './config.js'
-import { buildInfraFeatures, featuresEqual } from './unifi-mapping.js'
+import {
+  UNIFI_SYSTEM,
+  type UnifiFeatureDescriptor,
+  unifiFeatureDescriptorSchema,
+} from './config.js'
+import { buildInfraFeatures, featuresEqual, mergeInfraFeatures } from './unifi-mapping.js'
 import { unifiControllers } from './unifi-node-resolver.js'
 
-/** Narrow a persisted `features[]` blob to descriptors for the equality check. */
-function readDescriptors(raw: readonly unknown[]): Parameters<typeof featuresEqual>[0] {
-  const out: Array<Parameters<typeof featuresEqual>[0][number]> = []
+/** Narrow a persisted `features[]` blob to descriptors; an entry that does not parse is skipped. */
+function readDescriptors(raw: readonly unknown[]): UnifiFeatureDescriptor[] {
+  const out: UnifiFeatureDescriptor[] = []
   for (const entry of raw) {
-    if (typeof entry !== 'object' || entry === null) continue
-    const rec: Record<string, unknown> = Object.fromEntries(Object.entries(entry))
-    const kind = rec['kind']
-    if (kind !== 'switch' && kind !== 'button' && kind !== 'sensor') continue
-    const metric = rec['metric']
-    out.push({
-      kind,
-      ...(rec['switchFeature'] === 'poe' || rec['switchFeature'] === 'led'
-        ? { switchFeature: rec['switchFeature'] }
-        : {}),
-      ...(rec['buttonAction'] === 'restart' || rec['buttonAction'] === 'power-cycle'
-        ? { buttonAction: rec['buttonAction'] }
-        : {}),
-      ...(typeof rec['portIdx'] === 'number' ? { portIdx: rec['portIdx'] } : {}),
-      ...(metric === 'cpu_utilization' ||
-      metric === 'cpu_temperature' ||
-      metric === 'clients' ||
-      metric === 'state' ||
-      metric === 'uptime'
-        ? { metric }
-        : {}),
-    })
+    const parsed = unifiFeatureDescriptorSchema.safeParse(entry)
+    if (parsed.success) out.push(parsed.data)
   }
   return out
 }
@@ -36,8 +20,9 @@ function readDescriptors(raw: readonly unknown[]): Parameters<typeof featuresEqu
 /**
  * Re-derive every adopted infra Container's `features[]` of this integration from the live
  * snapshot and re-persist via `applyDerivedSpec` when it changed, so new ports and sensors
- * appear without re-adoption. Best-effort per device; returns how many changed. A device
- * the controller no longer lists is left alone (never pruned on a failed read).
+ * appear without re-adoption. Best-effort per device; returns how many changed. Additive
+ * (`mergeInfraFeatures`): a port or sensor missing from one poll is a read that did not answer,
+ * never a child to prune; a device the controller no longer lists is left alone.
  */
 export async function reconcileInfraFeatures(input: {
   readonly reg: {
@@ -61,9 +46,9 @@ export async function reconcileInfraFeatures(input: {
     if (typeof infraId !== 'string') continue
     const infra = unifiControllers.getInfra(integrationId, infraId)
     if (infra === null) continue
-    const next = buildInfraFeatures(infra)
-    const current = Array.isArray(cfg['features']) ? cfg['features'] : []
-    if (featuresEqual(readDescriptors(current), next)) continue
+    const current = readDescriptors(Array.isArray(cfg['features']) ? cfg['features'] : [])
+    const next = mergeInfraFeatures(current, buildInfraFeatures(infra))
+    if (featuresEqual(current, next)) continue
     try {
       await devices.applyDerivedSpec(d.id, { config: { features: next } })
       changed += 1

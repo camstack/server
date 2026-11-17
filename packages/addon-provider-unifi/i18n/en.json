@@ -7,7 +7,7 @@
   "controller.s_connection.allowSelfSigned.label": "Accept self-signed certificate",
   "controller.s_connection.pollIntervalMs.label": "Poll interval (ms)",
   "controller.s_signin.title": "Sign-in",
-  "controller.s_signin.description": "The API key is used to sign in. Username and password are not used yet: the client signs in with the API key only.",
+  "controller.s_signin.description": "Either credential is enough. The API key reads the controller; the username and password of a LOCAL account of the console (not a UI.com account, without two-factor sign-in) are needed to switch PoE ports on and off. With both, the API key does everything else.",
   "controller.s_signin.apiKey.label": "API key",
   "controller.s_signin.username.label": "Username",
   "controller.s_signin.password.label": "Password"

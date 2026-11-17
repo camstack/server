@@ -7,7 +7,7 @@
  * Discovery, ReportState, ChangeReport, the reconcile and the directive router
  * all iterate the one registry in `index.ts`; none of them names a cap.
  */
-import type { AddonApi } from '@camstack/types'
+import type { AddonApi, IScopedLogger } from '@camstack/types'
 import type { DirectiveRouterDeps, VerifiedDirectiveIdentity } from '../../directive-router.js'
 import type { DirectiveHeader } from '../../handlers/types.js'
 import type { AlexaCapability, AlexaDisplayCategory } from '../types.js'
@@ -95,6 +95,7 @@ export interface GenericAdapter {
   readonly discoveryExtras?: (
     api: AddonApi,
     deviceId: number,
+    logger: IScopedLogger,
   ) => Promise<Readonly<Record<string, unknown>>>
   /** What the device becomes through this adapter, or null (not applicable). */
   readonly describe: (device: AdapterDevice) => AdapterDescription | null

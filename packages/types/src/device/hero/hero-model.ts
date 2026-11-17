@@ -385,8 +385,12 @@ export const HeroPowerSupplySlotSchema = z.object({
   /** Off asks for a confirmation while the device runs. */
   confirmOffWhileRunning: z.boolean(),
   running: z.boolean().nullable(),
-  powerOn: HeroActionSchema,
-  powerOff: HeroActionSchema,
+  /**
+   * `null` when the linked switch ANSWERED it only reports (a PoE port seen through an
+   * API key): power on / off would always be refused. The restart stays (D1058).
+   */
+  powerOn: HeroActionSchema.nullable(),
+  powerOff: HeroActionSchema.nullable(),
   restart: HeroActionSchema,
 })
 export type HeroPowerSupplySlot = z.infer<typeof HeroPowerSupplySlotSchema>

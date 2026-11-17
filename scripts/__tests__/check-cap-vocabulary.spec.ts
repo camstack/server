@@ -54,6 +54,7 @@ const switchDef = {
       on: z.boolean(),
       level: z.number(),
       mode: z.enum(['eco', 'boost']),
+      resources: z.object({ cpuPercent: z.number().nullable(), image: z.string() }).nullable(),
     }),
     kind: 'push',
   },
@@ -346,6 +347,35 @@ describe('checkCapVocabulary', () => {
     expect(problemsOf({ ...sw, state })).toEqual([
       "switch state 'level': phrased as boolean but the field is number",
       "switch state 'mode': value 'turbo' is not one the field takes",
+    ])
+  })
+
+  it('accepts a numeric threshold on a number nested in the status, by its dotted path', () => {
+    const sw = goodSwitch()
+    const nested = {
+      kind: 'numeric' as const,
+      field: 'resources.cpuPercent',
+      quantity: L,
+      label: L,
+      icon: 'gauge' as const,
+    }
+    expect(problemsOf({ ...sw, state: [...(sw.state ?? []), nested] })).toEqual([])
+  })
+
+  it('refuses a nested path the status does not declare, or one that is not a number', () => {
+    const sw = goodSwitch()
+    const numeric = (field: string) => ({
+      kind: 'numeric' as const,
+      field,
+      quantity: L,
+      label: L,
+      icon: 'gauge' as const,
+    })
+    expect(
+      problemsOf({ ...sw, state: [numeric('resources.memory'), numeric('resources.image')] }),
+    ).toEqual([
+      "switch state 'resources.memory': switch declares no status field 'resources.memory'",
+      "switch state 'resources.image': phrased as numeric but the field is string",
     ])
   })
 

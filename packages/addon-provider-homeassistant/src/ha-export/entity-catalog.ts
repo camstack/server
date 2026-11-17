@@ -2362,6 +2362,14 @@ export const CAPS_NOT_EXPORTED: readonly UnexportedCap[] = [
       'mapping as the status, which the export does not have yet (D1026).',
   },
   {
+    cap: 'workload',
+    reason:
+      'Its on / off is already exported: a workload with start and stop registers ' +
+      '`switch` from its power hint (#462), and that switch is the entity. The state, ' +
+      'resources and the other controls wait for the first provider, so the mapping is ' +
+      'written against real values (#585).',
+  },
+  {
     cap: 'energy-system',
     reason:
       'An aggregate of readings the system already publishes one by one: every value ' +

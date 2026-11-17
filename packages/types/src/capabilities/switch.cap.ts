@@ -27,6 +27,43 @@ export const SwitchStatusSchema = z.object({
 
 export type SwitchStatus = z.infer<typeof SwitchStatusSchema>
 
+/**
+ * What a switch can do, from its provider (`getOptions`). A provider that writes no
+ * `getOptions` is a plain on/off switch: the defaults are the old contract.
+ *
+ * - `supportsSetState: false` — the switch reports its state but cannot be set (a PoE port seen only
+ *   through an API key). Its provider refuses `setState`; these surfaces withdraw on/off once the
+ *   device ANSWERED this (`switchRefusesSetState`): the device hero, the automation action picker
+ *   (`offeredWhen` on `switch.on` / `switch.off` / `switch.toggle`), the default `toggle`, the
+ *   HomeKit, Alexa and Google exporters, and `power-source` on a device the switch powers
+ *   (`getStatus().switchSettable`, `offeredWhen` on `powerSource.on` / `.off`, `not-settable`). A
+ *   read that failed or is pending changes nothing (D315).
+ * - `supportsPowerCycle: true` — the device behind the switch can cut and restore its own output in
+ *   one native call (a PoE port's power cycle). It has no control of its own: a linked
+ *   `power-source.forceRestart` uses it instead of off / wait / on.
+ */
+export const SwitchOptionsSchema = z.object({
+  supportsSetState: z.boolean().default(true),
+  supportsPowerCycle: z.boolean().default(false),
+})
+export type SwitchOptions = z.infer<typeof SwitchOptionsSchema>
+
+/** The options of a provider that did not answer `getOptions`: a plain on/off switch. */
+export const SWITCH_DEFAULT_OPTIONS: SwitchOptions = SwitchOptionsSchema.parse({})
+
+/** The read that decides whether a switch is offered on/off (`offeredWhen` of its actions). */
+export const SWITCH_SETTABLE_GATE = { method: 'getOptions', field: 'supportsSetState' } as const
+
+/**
+ * The predicate the on/off surfaces apply to a raw answer: true only when `answer` — what the switch's
+ * `getOptions` returned — says `supportsSetState: false`. `undefined` (no provider method, a
+ * failed or pending read) and any other shape are false: unknown keeps on/off (D315).
+ */
+export function switchRefusesSetState(answer: unknown): boolean {
+  if (typeof answer !== 'object' || answer === null) return false
+  return Reflect.get(answer, SWITCH_SETTABLE_GATE.field) === false
+}
+
 export const switchCapability = {
   name: 'switch',
   scope: 'device',
@@ -47,6 +84,7 @@ export const switchCapability = {
           icon: 'power',
           effect: { field: 'on', value: true },
           args: { on: true },
+          offeredWhen: SWITCH_SETTABLE_GATE,
         },
         {
           id: 'switch.off',
@@ -55,8 +93,22 @@ export const switchCapability = {
           icon: 'power-off',
           effect: { field: 'on', value: false },
           args: { on: false },
+          offeredWhen: SWITCH_SETTABLE_GATE,
         },
       ],
+    }),
+    // What the switch can do; absent = a plain on/off switch (SWITCH_DEFAULT_OPTIONS).
+    getOptions: optionalMethod(z.object({ deviceId: z.number() }), SwitchOptionsSchema, {
+      auth: 'protected',
+    }),
+    // A native power cycle, declared by `getOptions().supportsPowerCycle`. No action of its own (no
+    // button): `power-source.forceRestart` on a device this switch powers calls it. Same tier
+    // as `setState` — it is actuation of the same output.
+    powerCycle: optionalMethod(z.object({ deviceId: z.number() }), z.void(), {
+      kind: 'mutation',
+      auth: 'protected',
+      notOperatorFacing:
+        'a power cycle is the forced restart of the device the switch powers (power-source), never a step of its own',
     }),
     // Optional on the provider type: the one default is installed at
     // native-cap registration (`withDefaultSwitchToggle`) for a driver
@@ -71,6 +123,7 @@ export const switchCapability = {
           label: t('Toggle', 'Commuta'),
           phrase: t('Toggle {device}', 'Commuta {device}'),
           icon: 'toggle-right',
+          offeredWhen: SWITCH_SETTABLE_GATE,
         },
       ],
     }),
@@ -95,6 +148,12 @@ export const switchCapability = {
    * not need to re-query the provider after a setState mutation.
    */
   runtimeState: SwitchStatusSchema,
+  // A composed switch is a plain on/off switch (its on/off is forwarded): it declares no
+  // native power cycle, so a linked forced restart is off / wait / on.
+  composedMethods: {
+    getOptions: { kind: 'answer', value: SWITCH_DEFAULT_OPTIONS },
+    powerCycle: { kind: 'refuse', reason: 'a composed switch has no native power cycle' },
+  },
 
   /**
    * Runtime-state durability: **restored** — device state an operator reads as authoritative; 55 devices, transition-driven.
@@ -296,6 +355,28 @@ export const switchCapability = {
             'switch.off': { icon: 'plug' },
           },
           state: { on: { icon: 'plug-zap' } },
+        },
+        [DeviceRole.PoePort]: {
+          actions: {
+            'switch.on': {
+              label: t('Power on', 'Alimenta'),
+              phrase: t('Power on {device}', 'Alimenta {device}'),
+              icon: 'plug-zap',
+            },
+            'switch.off': {
+              label: t('Power off', 'Togli alimentazione'),
+              phrase: t('Power off {device}', 'Togli alimentazione a {device}'),
+              icon: 'unplug',
+            },
+          },
+          state: {
+            on: {
+              label: t('Powered', 'Alimentata'),
+              whenTrue: t('When {device} is powered', 'Quando {device} viene alimentata'),
+              whenFalse: t('When {device} loses power', 'Quando {device} perde l’alimentazione'),
+              icon: 'plug-zap',
+            },
+          },
         },
       },
     },

@@ -1,9 +1,10 @@
-import { composedDeviceRef, CompositionSchema } from '@camstack/types'
+import { composedDeviceRef, CompositionSchema, type SwitchOptions } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   PowerSourceService,
   type PowerSourceDevices,
   type PowerSourceScheduler,
+  SwitchOptionsUnreadableError,
 } from '../power-source-service.js'
 import { recordingLogger } from './fixtures.js'
 
@@ -100,9 +101,14 @@ function world(
     offSeconds?: number
     appliance?: boolean
     plugIsActuator?: boolean
+    /** The switch's native cycle: absent = the provider wires none, 'fails' = the call throws. */
+    nativeCycle?: 'declared' | 'not-declared' | 'fails'
+    /** What the switch's options read answers: absent = the wiring reads none, 'fails' = it throws. */
+    options?: SwitchOptions | 'fails'
   } = {},
 ) {
   const calls: { id: number; on: boolean }[] = []
+  const cycles: number[] = []
   const state = {
     online: opts.online ?? true,
     on: opts.on === undefined ? true : opts.on,
@@ -122,6 +128,26 @@ function world(
       calls.push({ id, on })
       state.on = on
     },
+    ...(opts.options === undefined
+      ? {}
+      : {
+          options: async (id: number): Promise<SwitchOptions> => {
+            if (opts.options === 'fails')
+              throw new SwitchOptionsUnreadableError(id, new Error('request timed out'))
+            if (opts.options === undefined) throw new Error('unreachable')
+            return opts.options
+          },
+        }),
+    ...(opts.nativeCycle === undefined
+      ? {}
+      : {
+          cycle: async (id: number) => {
+            if (opts.nativeCycle === 'fails') throw new Error('POWER_CYCLE refused')
+            if (opts.nativeCycle === 'not-declared') return false
+            cycles.push(id)
+            return true
+          },
+        }),
   }
   const log = recordingLogger()
   const timers = fakeScheduler()
@@ -135,7 +161,7 @@ function world(
     scheduler: timers.scheduler,
     logger: log.logger,
   })
-  return { service, calls, state, log, timers }
+  return { service, calls, cycles, state, log, timers }
 }
 
 describe('forceRestart', () => {
@@ -154,6 +180,37 @@ describe('forceRestart', () => {
       { id: PLUG_ID, on: false },
       { id: PLUG_ID, on: true },
     ])
+  })
+
+  it('uses the switch’s native power cycle once when it declares one, and never switches off/on', async () => {
+    const w = world({ nativeCycle: 'declared' })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({ accepted: true })
+    expect(w.cycles).toEqual([PLUG_ID])
+    expect(w.calls).toEqual([])
+    expect(w.timers.pending).toHaveLength(0)
+    // The native cycle is one call: the restart slot is free again at once.
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({ accepted: true })
+    expect(w.cycles).toEqual([PLUG_ID, PLUG_ID])
+  })
+
+  it('switches off and on when the switch declares no native cycle', async () => {
+    const w = world({ nativeCycle: 'not-declared' })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({ accepted: true })
+    expect(w.cycles).toEqual([])
+    expect(w.calls).toEqual([{ id: PLUG_ID, on: false }])
+    expect(w.timers.pending).toHaveLength(1)
+  })
+
+  it('is refused, with the reason, when the native cycle fails, and switches nothing', async () => {
+    const w = world({ nativeCycle: 'fails' })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toMatchObject({
+      accepted: false,
+      reason: 'switch-call-failed',
+    })
+    expect(w.calls).toEqual([])
+    expect(w.timers.pending).toHaveLength(0)
+    const warn = w.log.lines.find((l) => l.level === 'warn')
+    expect(warn?.extras?.tags).toEqual({ deviceId: GATEWAY_ID })
   })
 
   it('cuts the plug of a composed appliance (a new-target composition)', async () => {
@@ -274,9 +331,70 @@ describe('powerOn / powerOff / getStatus', () => {
       switchName: 'Gateway plug',
       switchOn: null,
       switchOnline: true,
+      switchSettable: true,
       restartInProgress: false,
       offSeconds: 20,
     })
     expect((await w.service.getStatus({ deviceId: 123 })).linked).toBe(false)
+  })
+})
+
+describe('a linked switch that only reports (D1058)', () => {
+  const REPORTS_ONLY: SwitchOptions = {
+    supportsSetState: false,
+    supportsPowerCycle: true,
+  }
+
+  it('power on / off are refused as not-settable before the switch is called, logged with the device', async () => {
+    const w = world({ options: REPORTS_ONLY })
+    for (const result of [
+      await w.service.powerOn({ deviceId: GATEWAY_ID }),
+      await w.service.powerOff({ deviceId: GATEWAY_ID }),
+    ]) {
+      expect(result).toMatchObject({ accepted: false, reason: 'not-settable' })
+      expect(result.accepted ? '' : result.message).toContain('Gateway plug')
+    }
+    expect(w.calls).toEqual([])
+    const warn = w.log.lines.filter((l) => l.level === 'warn')
+    expect(warn).toHaveLength(2)
+    expect(warn[0]?.extras?.tags).toEqual({ deviceId: GATEWAY_ID })
+  })
+
+  it('a FAILED options read changes nothing: power on / off still reach the switch (D315)', async () => {
+    const w = world({ options: 'fails' })
+    expect(await w.service.powerOff({ deviceId: GATEWAY_ID })).toEqual({
+      accepted: true,
+    })
+    expect(w.calls).toEqual([{ id: PLUG_ID, on: false }])
+  })
+
+  it('getStatus says whether the linked switch can be set: false, true, or null when unread', async () => {
+    const settable = async (options?: SwitchOptions | 'fails') =>
+      (
+        await world({
+          ...(options === undefined ? {} : { options }),
+        }).service.getStatus({
+          deviceId: GATEWAY_ID,
+        })
+      ).switchSettable
+    expect(await settable(REPORTS_ONLY)).toBe(false)
+    expect(await settable({ supportsSetState: true, supportsPowerCycle: false })).toBe(true)
+    expect(await settable('fails')).toBeNull()
+    expect(await settable()).toBe(true)
+    expect(
+      (
+        await world({ options: REPORTS_ONLY }).service.getStatus({
+          deviceId: 123,
+        })
+      ).switchSettable,
+    ).toBeNull()
+  })
+
+  it('the forced restart is unchanged: a reports-only port with a native cycle restarts', async () => {
+    const w = world({ options: REPORTS_ONLY, nativeCycle: 'declared' })
+    expect(await w.service.forceRestart({ deviceId: GATEWAY_ID })).toEqual({
+      accepted: true,
+    })
+    expect(w.cycles).toEqual([PLUG_ID])
   })
 })

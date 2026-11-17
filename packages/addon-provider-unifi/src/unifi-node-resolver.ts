@@ -46,6 +46,16 @@ export class UnifiControllerResolver {
     return this.#managers.get(integrationId)?.getInfra(id) ?? null
   }
 
+  /**
+   * One infra snapshot as the controller reports it NOW: null when the manager is gone or its
+   * last read failed (the snapshot it keeps is then stale, D315), or the device is not listed.
+   */
+  getLiveInfra(integrationId: string, id: string): UnifiInfraSnapshot | null {
+    const manager = this.#managers.get(integrationId)
+    if (manager === undefined || manager.error !== null) return null
+    return manager.getInfra(id)
+  }
+
   /** All client snapshots for a controller id, or [] when unknown. */
   getClientList(integrationId: string): readonly UnifiClientSnapshot[] {
     return this.#managers.get(integrationId)?.getClientList() ?? []

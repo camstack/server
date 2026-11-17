@@ -32,6 +32,10 @@ export function buildHikvisionSirenOptions(input: {
       step: HIKVISION_SIREN_STEP_SECONDS,
     },
     defaultSeconds,
+    // Real seconds under our control: the camera counts no plays (#589).
+    allowedPlays: null,
+    rangePlays: null,
+    defaultPlays: null,
     unit: SirenDurationUnit.Seconds,
     secondsPerPlay: null,
     source: input.portConfirmedByCamera ? SirenOptionsSource.Camera : SirenOptionsSource.Fallback,

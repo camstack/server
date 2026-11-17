@@ -48,7 +48,7 @@ export {
   capForMetric,
 } from './unifi-mapping.js'
 export { UnifiIntegrationManager } from './unifi-integration-manager.js'
-export { liveUnifiClientFactory } from './unifi-client-factory.js'
+export { makeUnifiClientFactory } from './unifi-client-factory.js'
 export {
   classifyUnifiError,
   testUnifiConnection,

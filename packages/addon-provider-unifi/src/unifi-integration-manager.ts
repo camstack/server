@@ -1,12 +1,20 @@
 import { errMsg, type IntegrationInstanceStatus, type IScopedLogger } from '@camstack/types'
 import type { UnifiConnectionConfig } from './config.js'
+import { unifiCredentialOf } from './unifi-client-factory.js'
 import { classifyUnifiError } from './unifi-connection-test.js'
 import type {
   UnifiClientSnapshot,
   UnifiControllerClient,
   UnifiControllerClientFactory,
   UnifiInfraSnapshot,
+  UnifiLiveChange,
 } from './unifi-client-contract.js'
+
+/**
+ * While the client's event stream is up, the poll only reconciles what a lost frame could have
+ * missed: at most every this many ms (never faster than the configured interval).
+ */
+export const UNIFI_RECONCILE_POLL_MS = 300_000
 
 /** Status of a single UniFi controller connection. */
 export type UnifiControllerStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
@@ -22,15 +30,17 @@ export interface UnifiIntegrationManagerOptions {
   /** Fired after every poll cycle so the controller device fans the fresh
    *  snapshot out to its infra + client children. */
   readonly onPolled: (integrationId: string) => void
-  /** Builds the API-key client for the connection (`liveUnifiClientFactory` in production). */
+  /** Builds the client for the connection (`makeUnifiClientFactory` in production). */
   readonly makeClient: UnifiControllerClientFactory
 }
 
 /**
  * Wraps exactly one {@link UnifiControllerClient} (= one UniFi Network
- * controller). The controller is POLLED (no push channel targeted): on `start()`
- * it connects, lists infra + clients once, and then periodically re-lists them,
- * firing `onPolled` after every cycle. Mirrors the Velux / Rademacher
+ * controller). On `start()` it connects, lists infra + clients once, and then
+ * periodically re-lists them, firing `onPolled` after every cycle. A client with
+ * an event stream (a local account: the aiounifi websocket) pushes its tables
+ * between polls — `onPolled` fires for those too — and while that stream is up
+ * the poll slows to a reconcile ({@link UNIFI_RECONCILE_POLL_MS}). Mirrors the Velux / Rademacher
  * integration manager, with the same fresh-client-on-reconnect discipline.
  */
 export class UnifiIntegrationManager {
@@ -47,7 +57,11 @@ export class UnifiIntegrationManager {
   #infra: Map<string, UnifiInfraSnapshot> = new Map()
   #clients: Map<string, UnifiClientSnapshot> = new Map()
   #status: UnifiControllerStatus = 'disconnected'
-  #pollTimer: ReturnType<typeof setInterval> | null = null
+  #pollTimer: ReturnType<typeof setTimeout> | null = null
+  #streamUp = false
+  #unsubscribeLive: (() => void) | null = null
+  /** The last failure of the client's secondary half (the local account), logged on change. */
+  #degraded: string | null = null
   #error: string | null = null
 
   constructor(options: UnifiIntegrationManagerOptions) {
@@ -92,12 +106,27 @@ export class UnifiIntegrationManager {
     if (this.#error !== null) return { state: 'error', label: 'Offline', detail: this.#error }
     switch (this.#status) {
       case 'connected':
-        return { state: 'ok', label: 'Connected', detail: 'Signed in with the API key' }
+        return { state: 'ok', label: 'Connected', detail: this.#signedInWith() }
       case 'connecting':
         return { state: 'unknown', label: 'Connecting' }
       case 'error':
       case 'disconnected':
         return { state: 'off', label: 'Disconnected' }
+    }
+  }
+
+  /** Which credential signed in; a local account that stopped answering is named as such. */
+  #signedInWith(): string {
+    switch (unifiCredentialOf(this.#connection)) {
+      case 'local-account':
+        return 'Signed in with the local account'
+      case 'both':
+        return this.#degraded === null
+          ? 'Signed in with the API key and the local account'
+          : 'Signed in with the API key; the local account does not answer (PoE on/off unavailable)'
+      case 'api-key':
+      case null:
+        return 'Signed in with the API key'
     }
   }
 
@@ -148,9 +177,11 @@ export class UnifiIntegrationManager {
     try {
       const client = this.#makeClient(this.#connection)
       this.#client = client
+      this.#unsubscribeLive = client.onLiveChange((change) => this.#onLiveChange(client, change))
       await client.connect()
       this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
+      this.#noteDegraded(client)
     } catch (err) {
       // The reason stays on the manager (the integration's status word) after the caller stops it.
       this.#status = 'error'
@@ -174,9 +205,12 @@ export class UnifiIntegrationManager {
   /** Stop the poll loop and drop the client + snapshots. */
   async stop(): Promise<void> {
     if (this.#pollTimer !== null) {
-      clearInterval(this.#pollTimer)
+      clearTimeout(this.#pollTimer)
       this.#pollTimer = null
     }
+    this.#unsubscribeLive?.()
+    this.#unsubscribeLive = null
+    this.#streamUp = false
     const client = this.#client
     this.#client = null
     this.#infra = new Map()
@@ -211,6 +245,7 @@ export class UnifiIntegrationManager {
       this.#infra = indexBy(await client.listInfraDevices(), (d) => d.id)
       this.#clients = indexBy(await client.listClients(), (c) => c.mac)
       this.#error = null
+      this.#noteDegraded(client)
     } catch (err) {
       this.#error = classifyUnifiError(err).reason
       this.#logger.debug('UnifiIntegrationManager: poll failed', {
@@ -221,16 +256,75 @@ export class UnifiIntegrationManager {
     this.#onPolled(this.#id)
   }
 
+  /**
+   * Log when the local account of a two-credential client stops (or starts again) answering: the
+   * API key keeps the integration online, so without this line PoE on/off would fail silently.
+   */
+  #noteDegraded(client: UnifiControllerClient): void {
+    const err = client.degradedError()
+    const reason = err === null ? null : classifyUnifiError(err).reason
+    if (reason === this.#degraded) return
+    this.#degraded = reason
+    if (reason === null) {
+      this.#logger.info('UniFi: the local account answers again — PoE on/off available', {
+        tags: { integrationId: this.#id },
+      })
+      return
+    }
+    this.#logger.warn(
+      'UniFi: the local account does not answer — PoE on/off unavailable: ' + reason,
+      {
+        tags: { integrationId: this.#id },
+      },
+    )
+  }
+
+  /** The interval to the next poll: a reconcile while the event stream is up. */
+  pollDelayMs(): number {
+    const configured = this.#connection.pollIntervalMs
+    return this.#streamUp ? Math.max(configured, UNIFI_RECONCILE_POLL_MS) : configured
+  }
+
+  #onLiveChange(client: UnifiControllerClient, change: UnifiLiveChange): void {
+    if (this.#client !== client) return
+    if (change.kind === 'stream') {
+      if (change.up === this.#streamUp) return
+      this.#streamUp = change.up
+      this.#logger.info(
+        change.up
+          ? 'UniFi: the event stream is up — live changes, reconcile poll'
+          : 'UniFi: the event stream is down — polling at the configured interval',
+        { tags: { integrationId: this.#id }, meta: { reason: change.reason } },
+      )
+      // Re-arm so a stream that went down is not left on the slow reconcile delay.
+      if (this.#pollTimer !== null) this.#armPoll()
+      return
+    }
+    this.#infra = indexBy(change.infra, (d) => d.id)
+    this.#clients = indexBy(change.clients, (c) => c.mac)
+    this.#error = null
+    this.#onPolled(this.#id)
+  }
+
   #startPollLoop(): void {
     if (this.#pollTimer !== null) return
-    this.#pollTimer = setInterval(() => {
-      void this.poll().catch((err) => {
-        this.#logger.warn('UnifiIntegrationManager: poll cycle failed', {
-          tags: { integrationId: this.#id },
-          meta: { error: errMsg(err) },
+    this.#armPoll()
+  }
+
+  #armPoll(): void {
+    if (this.#pollTimer !== null) clearTimeout(this.#pollTimer)
+    this.#pollTimer = setTimeout(() => {
+      void this.poll()
+        .catch((err) => {
+          this.#logger.warn('UnifiIntegrationManager: poll cycle failed', {
+            tags: { integrationId: this.#id },
+            meta: { error: errMsg(err) },
+          })
         })
-      })
-    }, this.#connection.pollIntervalMs)
+        .finally(() => {
+          if (this.#client !== null) this.#armPoll()
+        })
+    }, this.pollDelayMs())
     // Do not keep the event loop alive solely for polling.
     this.#pollTimer.unref?.()
   }

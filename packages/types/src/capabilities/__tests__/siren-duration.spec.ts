@@ -6,6 +6,9 @@ const base: SirenOptions = {
   allowedSeconds: null,
   rangeSeconds: null,
   defaultSeconds: 10,
+  allowedPlays: null,
+  rangePlays: null,
+  defaultPlays: null,
   unit: 'seconds',
   secondsPerPlay: null,
   source: 'camera',
@@ -37,6 +40,8 @@ describe('siren status', () => {
       active: true,
       activeUntil: 8_500,
       durationSeconds: 7.5,
+      plays: null,
+      activeUntilEstimated: false,
       lastTriggeredAt: 1_000,
     })
   })
@@ -47,6 +52,8 @@ describe('siren status', () => {
       active: false,
       activeUntil: null,
       durationSeconds: 5,
+      plays: null,
+      activeUntilEstimated: false,
       lastTriggeredAt: 1_000,
     })
   })

@@ -42,6 +42,19 @@ export const NetworkLinkStatusSchema = z.object({
   rssi: z.number().optional().meta(readingMeta('signal-level')),
   /** Network name of a wireless link, when the firmware reports it. */
   ssid: z.string().optional(),
+  /**
+   * Negotiated link speed of a wired port, the `bitrate` quantity in its base
+   * unit, kbit/s (a gigabit port is 1 000 000); the display picks the unit.
+   * `null` = the port is down or the speed is not known; absent = the provider
+   * never reports one.
+   */
+  speedKbps: z.number().nonnegative().nullable().optional().meta(readingMeta('bitrate')),
+  /**
+   * Whether the link is up. `type` names the medium, not its state, so a wired
+   * port that lost its link is `ethernet` + `linkUp: false`. `null` = not known;
+   * absent = the provider never reports it.
+   */
+  linkUp: z.boolean().nullable().optional(),
   /** Ms epoch of the last observation. Lets consumers reason about freshness. */
   lastUpdated: z.number().meta(readingMeta('none')),
 })

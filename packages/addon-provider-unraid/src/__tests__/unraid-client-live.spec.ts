@@ -83,13 +83,42 @@ function fakeApi(over: Partial<UnraidApiSource> = {}): UnraidApiSource {
           id: 'c1',
           names: ['/plex'],
           state: 'RUNNING',
+          image: 'plexinc/pms-docker:latest',
+          autoStart: true,
+          isUpdateAvailable: false,
         },
-        { id: 'c2', names: ['/sonarr'], state: 'EXITED' },
+        {
+          id: 'c2',
+          names: ['/sonarr'],
+          state: 'EXITED',
+          image: 'linuxserver/sonarr',
+          autoStart: false,
+          isUpdateAvailable: null,
+        },
+        {
+          id: 'c3',
+          names: ['/radarr'],
+          state: 'PAUSED',
+          image: '',
+          autoStart: false,
+          isUpdateAvailable: true,
+        },
       ],
       start: vi.fn(async () => ({})),
       stop: vi.fn(async () => ({})),
+      pause: vi.fn(async () => ({})),
+      unpause: vi.fn(async () => ({})),
       stats$: () =>
         once({ id: 'c1', cpuPercent: 12, memUsage: '1', memPercent: 7, netIO: '', blockIO: '' }),
+    },
+    vms: {
+      list: async () => [],
+      start: vi.fn(async () => true),
+      stop: vi.fn(async () => true),
+      pause: vi.fn(async () => true),
+      resume: vi.fn(async () => true),
+      forceStop: vi.fn(async () => true),
+      reboot: vi.fn(async () => true),
     },
     system: {
       versions: async () => ({}),
@@ -140,9 +169,46 @@ describe('createLiveUnraidClient', () => {
   it('maps docker with stats, stripping the leading slash', async () => {
     const list = await createLiveUnraidClient(fakeApi()).docker.list()
     expect(list).toEqual([
-      { id: 'c1', name: 'plex', running: true, cpuPercent: 12, memPercent: 7 },
-      { id: 'c2', name: 'sonarr', running: false, cpuPercent: null, memPercent: null },
+      {
+        id: 'c1',
+        name: 'plex',
+        state: 'running',
+        image: 'plexinc/pms-docker:latest',
+        autostart: true,
+        updateAvailable: false,
+        cpuPercent: 12,
+        memPercent: 7,
+      },
+      {
+        id: 'c2',
+        name: 'sonarr',
+        state: 'exited',
+        image: 'linuxserver/sonarr',
+        autostart: false,
+        updateAvailable: null,
+        cpuPercent: null,
+        memPercent: null,
+      },
+      {
+        id: 'c3',
+        name: 'radarr',
+        state: 'paused',
+        image: null,
+        autostart: false,
+        updateAvailable: true,
+        cpuPercent: null,
+        memPercent: null,
+      },
     ])
+  })
+
+  it('pauses and unpauses a container through the API', async () => {
+    const api = fakeApi()
+    const client = createLiveUnraidClient(api)
+    await client.docker.pause('c1')
+    await client.docker.unpause('c1')
+    expect(api.docker.pause).toHaveBeenCalledWith('c1')
+    expect(api.docker.unpause).toHaveBeenCalledWith('c1')
   })
 
   it('lists containers even when the stats subscription fails', async () => {
@@ -156,7 +222,7 @@ describe('createLiveUnraidClient', () => {
         },
       },
     })
-    expect(await client.docker.list()).toHaveLength(2)
+    expect(await client.docker.list()).toHaveLength(3)
   })
 
   it('maps cpu and notifications (latest by timestamp)', async () => {
@@ -228,13 +294,15 @@ describe('createLiveUnraidClient', () => {
       cpu: await client.system.cpu(),
       disks: array.disks,
       dockers: await client.docker.list(),
+      vms: await client.vms.list(),
       notifications: await client.notifications.active(),
     })
-    const values = descriptors
-      .filter((d) => d.key === 'cpu_usage' || d.key.endsWith('_cpu') || d.key.endsWith('_memory'))
-      .map((d) => d.numeric?.value)
-    expect(values.length).toBe(5)
-    expect(values.every((v) => v === null)).toBe(true)
+    const values = descriptors.filter((d) => d.key === 'cpu_usage').map((d) => d.numeric?.value)
+    expect(values).toEqual([null])
+    // A container whose stats sample failed reads as unknown, never 0.
+    const containers = await client.docker.list()
+    expect(containers.length).toBe(3)
+    expect(containers.every((c) => c.cpuPercent === null && c.memPercent === null)).toBe(true)
   })
 })
 

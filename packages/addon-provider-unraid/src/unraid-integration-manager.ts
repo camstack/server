@@ -125,7 +125,7 @@ export class UnraidIntegrationManager {
     this.#client = client
 
     await client.connect()
-    this.#snapshot = await fetchSnapshot(client)
+    this.#snapshot = await fetchSnapshot(client, this.#sectionFailed)
 
     this.#status = 'connected'
     this.#onConnected(this.#id)
@@ -133,7 +133,11 @@ export class UnraidIntegrationManager {
     this.#startPollLoop()
     this.#logger.info('UnraidIntegrationManager: started', {
       tags: { instanceId: this.#id },
-      meta: { dockerCount: this.#snapshot.dockers.length, diskCount: this.#snapshot.disks.length },
+      meta: {
+        dockerCount: this.#snapshot.dockers?.length ?? null,
+        vmCount: this.#snapshot.vms?.length ?? null,
+        diskCount: this.#snapshot.disks.length,
+      },
     })
   }
 
@@ -172,7 +176,7 @@ export class UnraidIntegrationManager {
     const client = this.#client
     if (client === null) return
     try {
-      this.#snapshot = await fetchSnapshot(client)
+      this.#snapshot = await fetchSnapshot(client, this.#sectionFailed)
       this.#error = null
     } catch (err) {
       this.#error = errMsg(err)
@@ -183,6 +187,16 @@ export class UnraidIntegrationManager {
     }
     this.#onPolled(this.#id)
   }
+
+  /** A list section that failed is unknown this poll; say so, it changes what is shown. */
+  readonly #sectionFailed =
+    (section: UnraidSnapshotSection) =>
+    (error: string): void => {
+      this.#logger.warn('UnraidIntegrationManager: section read failed — kept as unknown', {
+        tags: { instanceId: this.#id },
+        meta: { section, error },
+      })
+    }
 
   #startPollLoop(): void {
     if (this.#pollTimer !== null) return
@@ -199,12 +213,19 @@ export class UnraidIntegrationManager {
   }
 }
 
+/** A list section of the snapshot that may read as unknown on its own. */
+type UnraidSnapshotSection = 'dockers' | 'vms'
+
 /** Aggregate one snapshot from the client's domain namespaces. */
-async function fetchSnapshot(client: UnraidClientLike): Promise<UnraidSnapshot> {
-  const [array, cpu, dockers, notifications, hostname] = await Promise.all([
+async function fetchSnapshot(
+  client: UnraidClientLike,
+  onSectionFailed: (section: UnraidSnapshotSection) => (error: string) => void,
+): Promise<UnraidSnapshot> {
+  const [array, cpu, dockers, vms, notifications, hostname] = await Promise.all([
     client.array.get(),
     client.system.cpu(),
-    client.docker.list(),
+    readSection(() => client.docker.list(), onSectionFailed('dockers')),
+    readSection(() => client.vms.list(), onSectionFailed('vms')),
     client.notifications.active(),
     readHostname(client),
   ])
@@ -213,8 +234,26 @@ async function fetchSnapshot(client: UnraidClientLike): Promise<UnraidSnapshot> 
     cpu,
     disks: array.disks,
     dockers,
+    vms,
     notifications,
     ...(hostname !== null ? { hostname } : {}),
+  }
+}
+
+/**
+ * Read one optional list section of the snapshot. A failure is `null` (unknown), never an
+ * empty list, and it never fails the whole poll: a host with the VM or Docker service off
+ * still reports its array.
+ */
+async function readSection<T>(
+  read: () => Promise<readonly T[]>,
+  onFailed: (error: string) => void,
+): Promise<readonly T[] | null> {
+  try {
+    return await read()
+  } catch (err) {
+    onFailed(errMsg(err))
+    return null
   }
 }
 

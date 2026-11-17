@@ -2,6 +2,7 @@
  * What ONE capability adds to a hero (D1023), and the context it reads.
  * Contributions return a fragment; `buildHeroModel` merges the fragments.
  */
+import type { SwitchOptions } from '../../capabilities/switch.cap.js'
 import type { ReadingQuantity } from '../../units/quantity.js'
 import type {
   HeroBadge,
@@ -87,6 +88,16 @@ export interface HeroContext {
   readonly caps: readonly string[]
   /** What a numeric-sensor measures (stored at adopt); `null`/absent = unknown, the number shows bare. */
   readonly quantity?: ReadingQuantity | null
+  /**
+   * The `switch` provider's `getOptions` answer. Absent = not asked: a plain on/off switch.
+   * `supportsSetState: false` (a switch that only reports) offers no on/off.
+   */
+  readonly switchOptions?: SwitchOptions
+  /**
+   * Whether the switch that powers the device can be set (`power-source.getStatus().switchSettable`).
+   * Absent or `null` = not known, on / off stay; `false` withdraws power on / off (D1058).
+   */
+  readonly powerSupplySettable?: boolean | null
 }
 
 export interface HeroFragment {

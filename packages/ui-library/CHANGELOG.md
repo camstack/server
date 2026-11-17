@@ -10,6 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The camera grid layout editor is available to the block editor.
+### Added
+
+- Workload devices get their type and role names and icons
+- PoE port devices get their role name and an ethernet-port icon
+
+### Changed
+
+- Siren play-choices hook from the regenerated capability hooks
+- Generated hooks for switch getOptions and powerCycle.
+- The hero power menu offers only the restart when the supply's switch only reports (D1058)
 
 ## [1.2.463] - 2026-11-16
 

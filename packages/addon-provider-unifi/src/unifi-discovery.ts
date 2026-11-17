@@ -1,11 +1,20 @@
 import {
   deviceAdminLinkCapability,
-  DeviceType,
   type DiscoveredChildDevice,
   gatewayDeviceName,
   presenceCapability,
 } from '@camstack/types'
 import type { UnifiClientSnapshot, UnifiInfraSnapshot } from './unifi-client-contract.js'
+import { unifiDeviceTarget } from './unifi-device-kind.js'
+import {
+  buildInfraFeatures,
+  capsForDescriptor,
+  deviceTypeForDescriptor,
+  featureLabel,
+  featureSuffix,
+  portClientNamerOf,
+  type UnifiPortClientNamer,
+} from './unifi-mapping.js'
 
 /** The `childNativeId` of the controller's own Gateway candidate. */
 export const UNIFI_GATEWAY_ID = 'gateway'
@@ -36,7 +45,9 @@ export type ParsedNativeId =
 export function parseNativeId(childNativeId: string): ParsedNativeId {
   if (childNativeId === UNIFI_GATEWAY_ID) return { kind: 'gateway' }
   if (childNativeId.startsWith('infra:')) {
-    return { kind: 'infra', id: childNativeId.slice('infra:'.length) }
+    const id = childNativeId.slice('infra:'.length)
+    // `infra:<id>:poe-<n>` is a port under its infra device, adopted with it, never alone.
+    return id.includes(':') ? null : { kind: 'infra', id }
   }
   if (childNativeId.startsWith('client:')) {
     return { kind: 'client', mac: childNativeId.slice('client:'.length) }
@@ -44,14 +55,38 @@ export function parseNativeId(childNativeId: string): ParsedNativeId {
   return null
 }
 
-/** A console (UDM, UXG, Cloud Key, …). Switches and access points are not the gateway. */
-const CONSOLE_MODEL = /^(UDM|UXG|UCG|UCK|USG|UDR|UDW)/
-
 /** The console model in an infra list, or null when the controller reported none. */
 export function unifiConsoleModel(infra: readonly UnifiInfraSnapshot[]): string | null {
-  const match = infra.find((device) => CONSOLE_MODEL.test(device.model))
+  const match = infra.find((device) => device.kind === 'console')
   return match === undefined ? null : match.model
 }
+
+/** The PoE ports of an infra device, proposed under it: the port devices its adoption spawns. */
+function poePortCandidates(
+  device: UnifiInfraSnapshot,
+  status: DiscoveredChildDevice['status'],
+  portClientName: UnifiPortClientNamer,
+): readonly DiscoveredChildDevice[] {
+  const parentNativeId = infraNativeId(device.id)
+  return buildInfraFeatures(device)
+    .filter((f) => f.kind === 'port')
+    .map((feature) => ({
+      childNativeId: `${parentNativeId}:${featureSuffix(feature)}`,
+      name: featureLabel(
+        feature,
+        feature.portIdx === undefined
+          ? null
+          : portClientName({ infraId: device.id, portIdx: feature.portIdx }),
+      ),
+      type: deviceTypeForDescriptor(feature),
+      status,
+      metadata: { manufacturer: 'Ubiquiti', integration: 'unifi' },
+      alreadyAdopted: false,
+      adoptedDeviceId: null,
+      capabilities: [...capsForDescriptor(feature)],
+    }))
+}
+
 export interface BuildDiscoveryCandidatesInput {
   readonly controllerName: string
   /** Whether the controller answered its last poll. */
@@ -60,24 +95,28 @@ export interface BuildDiscoveryCandidatesInput {
   readonly clients: readonly UnifiClientSnapshot[]
   /** Adopted device id per `childNativeId`. */
   readonly adopted: ReadonlyMap<string, number>
+  /** Names a PoE port after its client (planning#583); default: the client on the snapshot. */
+  readonly portClientName?: UnifiPortClientNamer
 }
 
 /**
- * Build the candidates of one integration: the controller's {@link DeviceType.Gateway},
- * one {@link DeviceType.Container} per infra device and one {@link DeviceType.Presence}
- * per network client. All are top-level siblings; none nests another. Pure, no I/O.
+ * Build the candidates of one integration: the controller's Gateway, one candidate per infra
+ * device and one per network client, each typed by `unifiDeviceTarget` (the one table). All are
+ * top-level siblings; an infra device nests only its PoE ports, the switch children its adoption
+ * spawns. Pure, no I/O.
  */
 export function buildDiscoveryCandidates(
   input: BuildDiscoveryCandidatesInput,
 ): readonly DiscoveredChildDevice[] {
   const adoptedOf = (nativeId: string): number | null => input.adopted.get(nativeId) ?? null
+  const portClientName = input.portClientName ?? portClientNamerOf(input.infra)
 
   const gatewayAdopted = adoptedOf(UNIFI_GATEWAY_ID)
   const consoleModel = unifiConsoleModel(input.infra)
   const gateway: DiscoveredChildDevice = {
     childNativeId: UNIFI_GATEWAY_ID,
     name: gatewayDeviceName('UniFi', consoleModel),
-    type: DeviceType.Gateway,
+    type: unifiDeviceTarget('controller').type,
     status: input.controllerOnline ? 'online' : 'offline',
     metadata: {
       manufacturer: 'Ubiquiti',
@@ -92,14 +131,21 @@ export function buildDiscoveryCandidates(
   const infraCandidates: DiscoveredChildDevice[] = input.infra.map((device) => {
     const nativeId = infraNativeId(device.id)
     const adoptedDeviceId = adoptedOf(nativeId)
+    const status = device.online ? 'online' : 'offline'
+    const ports = poePortCandidates(device, status, portClientName)
     return {
       childNativeId: nativeId,
       name: device.name.length > 0 ? device.name : `${input.controllerName} — ${device.model}`,
-      type: DeviceType.Container,
-      status: device.online ? 'online' : 'offline',
-      metadata: { model: device.model, manufacturer: 'Ubiquiti', integration: 'unifi' },
+      type: unifiDeviceTarget(device.kind).type,
+      status,
+      metadata: {
+        model: device.model,
+        manufacturer: 'Ubiquiti',
+        integration: 'unifi',
+      },
       alreadyAdopted: adoptedDeviceId !== null,
       adoptedDeviceId,
+      ...(ports.length > 0 ? { children: ports } : {}),
     } satisfies DiscoveredChildDevice
   })
 
@@ -109,9 +155,13 @@ export function buildDiscoveryCandidates(
     return {
       childNativeId: nativeId,
       name: client.hostname.length > 0 ? client.hostname : client.mac,
-      type: DeviceType.Presence,
+      type: unifiDeviceTarget('client').type,
       status: client.connected ? 'online' : 'offline',
-      metadata: { uid: client.mac, manufacturer: 'Ubiquiti', integration: 'unifi' },
+      metadata: {
+        uid: client.mac,
+        manufacturer: 'Ubiquiti',
+        integration: 'unifi',
+      },
       alreadyAdopted: adoptedDeviceId !== null,
       adoptedDeviceId,
       capabilities: [presenceCapability.name],

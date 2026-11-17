@@ -1,9 +1,12 @@
 import {
+  type AddonApi,
+  type IScopedLogger,
   BrightnessStatusSchema,
   isOutlet,
   isSwitchFan,
   isSwitchLight,
   SwitchStatusSchema,
+  switchRefusesSetState,
 } from '@camstack/types'
 import { handleSetBrightness } from '../../handlers/brightness-controller.js'
 import { handlePower } from '../../handlers/power-controller.js'
@@ -50,15 +53,51 @@ function switchCategory(device: AdapterDevice): AlexaDisplayCategory {
   return 'SWITCH'
 }
 
+/** The discovery key holding what the switch's `getOptions` answered. */
+export const SWITCH_OPTIONS_KEY = 'switch.getOptions'
+
+/**
+ * What the switch can do, read at discovery. No `getOptions` on the provider,
+ * or a read that failed, leaves the key out: unknown keeps the switch (D315),
+ * and the line says which.
+ */
+async function switchOptions(
+  api: AddonApi,
+  deviceId: number,
+  logger: IScopedLogger,
+): Promise<Readonly<Record<string, unknown>>> {
+  try {
+    return {
+      [SWITCH_OPTIONS_KEY]: await api.switch.getOptions.query({ deviceId }),
+    }
+  } catch (err: unknown) {
+    logger.warn('alexa discovery: switch options unread — exported as a plain on/off switch', {
+      tags: { deviceId },
+      meta: { error: err instanceof Error ? err.message : String(err) },
+    })
+    return {}
+  }
+}
+
 /**
  * `switch` → `Alexa.PowerController` (SWITCH, LIGHT when it dims or the device
  * IS a light); with the `brightness` cap bound, `Alexa.BrightnessController`.
+ * A switch that ANSWERED it cannot be set (`supportsSetState: false`, a PoE
+ * port seen only through an API key — D1058) is skipped: a PowerController
+ * whose every TurnOn/TurnOff fails is a lie.
  */
 export const switchAdapter: GenericAdapter = {
   cap: 'switch',
   stateCaps: ['switch', 'brightness'],
   discoveryReads: [],
+  discoveryExtras: switchOptions,
   describe: (device) => {
+    if (switchRefusesSetState(device.slices[SWITCH_OPTIONS_KEY])) {
+      return {
+        kind: 'skip',
+        reason: 'the switch only reports its state; it cannot be turned on or off',
+      }
+    }
     const dimmable = device.capNames.includes('brightness')
     return {
       kind: 'publish',
