@@ -899,6 +899,9 @@ export const useDeviceManagerSetMetadata: typeof trpc.deviceManager.setMetadata.
 /** Generated alias around `trpc.deviceManager.setIdentifiers.useMutation`. */
 export const useDeviceManagerSetIdentifiers: typeof trpc.deviceManager.setIdentifiers.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setIdentifiers.useMutation)
 
+/** Generated alias around `trpc.deviceManager.listIdentityCandidates.useQuery`. */
+export const useDeviceManagerListIdentityCandidates: typeof trpc.deviceManager.listIdentityCandidates.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listIdentityCandidates.useQuery)
+
 /** Generated alias around `trpc.deviceManager.listLocations.useQuery`. */
 export const useDeviceManagerListLocations: typeof trpc.deviceManager.listLocations.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listLocations.useQuery)
 

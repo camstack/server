@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**211 capabilities · 1519 methods.**
+**211 capabilities · 1520 methods.**
 
 ## Method index
 
@@ -341,6 +341,7 @@
 | `deviceManager.applyInitialMeta` | mutation | admin | device-manager |
 | `deviceManager.setMetadata` | mutation | admin | device-manager |
 | `deviceManager.setIdentifiers` | mutation | admin | device-manager |
+| `deviceManager.listIdentityCandidates` | query | admin | device-manager |
 | `deviceManager.listLocations` | query | protected | device-manager |
 | `deviceManager.addLocation` | mutation | admin | device-manager |
 | `deviceManager.removeLocation` | mutation | admin | device-manager |
@@ -2434,7 +2435,7 @@
 
 ### `device-manager` → `deviceManager.*`
 
-- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:549`
+- **Source:** `packages/types/src/capabilities/device-manager.cap.ts:550`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** —
 - **Provider interface:** `IDeviceManagerProvider`
@@ -2469,6 +2470,7 @@
 | applyInitialMeta | `deviceManager.applyInitialMeta` | mutation | admin | `{ deviceId: number; name?: string; location?: string \| null; tags?: string[]; type?: "camera" \| "light" \| "siren" \| "switch" \| "sensor" \| "climate" \| "button" \| "event-emitter" \| "update" \| "generic" \| "notifier" \| "script" \| "automation" \| "lock" \| "cover" \| "valve" \| "humidifier" \| "water-heater" \| "fan" \| "media-player" \| "alarm-panel" \| "control" \| "presence" \| "weather" \| "weather-station" \| "vacuum" \| "lawn-mower" \| "container" \| "image" \| "pet-feeder" \| "pet-fountain" \| "dishwasher" \| "washer" \| "dryer" \| "gateway" \| "heat-pump" \| "energy-system" \| "workload"; integrationId?: string; linkDeviceId?: number \| null; role?: string \| null }` | `void` |
 | setMetadata | `deviceManager.setMetadata` | mutation | admin | `{ deviceId: number; patch: Record<string, unknown> }` | `void` |
 | setIdentifiers | `deviceManager.setIdentifiers` | mutation | admin | `{ deviceId: number; identifiers: { mac?: ({ value: string; origin: "read" \| "derived"; readAt: number })[]; serial?: { value: string; origin: "read" \| "derived"; readAt: number }; machine-uuid?: { value: string; origin: "read" \| "derived"; readAt: number }; vendor-uid?: { value: string; origin: "read" \| "derived"; readAt: number }; hostname?: { value: string; origin: "read" \| "derived"; readAt: number }; ip?: { value: string(ipv4) \| string(ipv6); origin: "read" \| "derived"; readAt: number } } \| null; unread?: ("mac" \| "serial" \| "machine-uuid" \| "vendor-uid" \| "hostname" \| "ip")[] }` | `void` |
+| listIdentityCandidates | `deviceManager.listIdentityCandidates` | query | admin | `{}` | `{ status: "unknown"; reason: string } \| { status: "answered"; pairs: ({ a: { deviceId: number; addonId: string; integrationId: string \| null }; b: { deviceId: number; addonId: string; integrationId: string \| null }; keys: ({ key: "mac" \| "serial" \| "machine-uuid" \| "vendor-uid" \| "hostname" \| "ip"; value: string })[]; confidence: "auto" \| "proposal" })[]; undeclaredDeviceIds: number[] }` |
 | listLocations | `deviceManager.listLocations` | query | protected | `void` | `string[]` |
 | addLocation | `deviceManager.addLocation` | mutation | admin | `{ name: string }` | `void` |
 | removeLocation | `deviceManager.removeLocation` | mutation | admin | `{ name: string; cascade?: boolean }` | `void` |

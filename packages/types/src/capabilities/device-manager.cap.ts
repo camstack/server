@@ -37,6 +37,7 @@ import {
 import { SiteZoneSchema } from '../device/site-zone.js'
 import { SourceInfoSchema } from '../device/source-info.js'
 import { DeviceIdentifierKeySchema, DeviceIdentifiersSchema } from '../device/device-identifiers.js'
+import { IdentityCandidatesSchema } from '../device/device-identity-candidates.js'
 import { TagsFieldSchema } from '../tags/tag.js'
 import { ReadingQuantitySchema } from '../units/quantity.js'
 import { DeviceSearchInputSchema, DeviceSearchResultSchema } from './device-search.js'
@@ -981,6 +982,19 @@ export const deviceManagerCapability = {
       z.void(),
       { kind: 'mutation', auth: 'admin' },
     ),
+
+    /** Cross-integration identity candidates (planning#593) — READ-ONLY, links
+     *  nothing. Every pair of devices from DIFFERENT integrations that share a
+     *  strong identifier, with the keys they share and a confidence: `auto` (two
+     *  strong kinds, or `mac` + `ip`), `proposal` (one strong kind). Weak keys
+     *  alone never pair; a same-integration match is no candidate. Answered from
+     *  the device-manager's identifier index, never a fleet scan. `unknown`
+     *  until the index has loaded (never an empty list); `undeclaredDeviceIds`
+     *  are the devices whose identity is unknown, never "no match". */
+    listIdentityCandidates: method(z.object({}), IdentityCandidatesSchema, {
+      kind: 'query',
+      auth: 'admin',
+    }),
 
     /** Operator-curated location registry. Returns the union of:
      *  (1) labels persisted in the registry via `addLocation`, and
