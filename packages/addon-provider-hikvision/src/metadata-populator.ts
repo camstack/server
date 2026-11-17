@@ -45,9 +45,11 @@ export async function populateHikvisionMetadata(
   }
 
   let net: Awaited<ReturnType<HikvisionIsapiClient['getNetworkInterfaceInfo']>> | null = null
+  let netReadFailed = false
   try {
     net = await isapi.getNetworkInterfaceInfo()
   } catch (err) {
+    netReadFailed = true
     target.ctx.logger.debug(
       'populateHikvisionMetadata: getNetworkInterfaceInfo failed (non-fatal)',
       {
@@ -103,7 +105,8 @@ export async function populateHikvisionMetadata(
   }
 
   // ── 1b. provider-declared identifiers (D1059) — the matchable identity,
-  // typed and normalised; the metadata keys above stay for display.
+  // typed and normalised, duplicated from the metadata keys above (which stay
+  // for display). A network read that failed keeps the stored MAC and IP.
   await declareDeviceIdentifiers(
     {
       deviceId: target.id,
@@ -115,6 +118,7 @@ export async function populateHikvisionMetadata(
       serial: info.serialNumber ? { manufacturer: 'Hikvision', serial: info.serialNumber } : null,
       ip: net?.ip ?? null,
     },
+    netReadFailed ? { unread: ['mac', 'ip'] } : {},
   )
 
   // ── 2. deviceCache config blob (durable identifiers for stableId)

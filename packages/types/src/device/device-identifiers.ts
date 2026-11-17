@@ -58,7 +58,8 @@ function entrySchema<T extends z.ZodType<string>>(value: T) {
     .object({
       value,
       origin: DeviceIdentifierOriginSchema,
-      /** Epoch ms of the read that produced this value. */
+      /** Epoch ms of the FIRST read that produced this value (and origin). A later
+       *  read of the same value does not move it — see {@link mergeIdentifiers}. */
       readAt: z.number().int().nonnegative(),
     })
     .strict()
@@ -323,4 +324,86 @@ export function normaliseIdentifiers(
     ...(ip !== undefined ? { ip } : {}),
   }
   return { identifiers, rejected: refused }
+}
+
+// ── Merging a declaration into what is stored ──────────────────────────────
+
+function sameEntry(a: DeviceIdentifierEntry, b: DeviceIdentifierEntry): boolean {
+  return a.value === b.value && a.origin === b.origin
+}
+
+/** `next`, but with the stored entry wherever value and origin are unchanged. */
+function keepStoredEntry(
+  next: DeviceIdentifierEntry,
+  stored: DeviceIdentifierEntry | undefined,
+): DeviceIdentifierEntry {
+  return stored !== undefined && sameEntry(next, stored) ? stored : next
+}
+
+/**
+ * The declaration to store when the owning provider declares `next` over
+ * `stored` (D1059).
+ *
+ * - A kind in `unread` — the provider TRIED to read it and the read failed —
+ *   keeps its stored entry: a failed read changes nothing (D49).
+ * - Every other kind is what `next` says: a kind absent from `next` was read and
+ *   found absent, so it is removed.
+ * - An entry whose value and origin are unchanged keeps its stored `readAt`:
+ *   `readAt` is when that value was FIRST read, so a provider re-declaring on every
+ *   boot writes nothing and emits nothing.
+ *
+ * Returns `null` when nothing is left.
+ */
+export function mergeIdentifiers(
+  stored: DeviceIdentifiers | null | undefined,
+  next: DeviceIdentifiers | null,
+  unread: readonly DeviceIdentifierKey[] = [],
+): DeviceIdentifiers | null {
+  const before: DeviceIdentifiers = stored ?? {}
+  const after: DeviceIdentifiers = next ?? {}
+  const failed: ReadonlySet<DeviceIdentifierKey> = new Set(unread)
+  const macs = failed.has('mac')
+    ? before.mac
+    : after.mac?.map((m) =>
+        keepStoredEntry(
+          m,
+          before.mac?.find((s) => sameEntry(s, m)),
+        ),
+      )
+  const single = (key: Exclude<DeviceIdentifierKey, 'mac'>): DeviceIdentifierEntry | undefined => {
+    if (failed.has(key)) return before[key]
+    const entry = after[key]
+    return entry === undefined ? undefined : keepStoredEntry(entry, before[key])
+  }
+  const serial = single('serial')
+  const machineUuid = single('machine-uuid')
+  const vendorUid = single('vendor-uid')
+  const hostname = single('hostname')
+  const ip = single('ip')
+  const merged: DeviceIdentifiers = {
+    ...(macs !== undefined && macs.length > 0 ? { mac: macs } : {}),
+    ...(serial !== undefined ? { serial } : {}),
+    ...(machineUuid !== undefined ? { 'machine-uuid': machineUuid } : {}),
+    ...(vendorUid !== undefined ? { 'vendor-uid': vendorUid } : {}),
+    ...(hostname !== undefined ? { hostname } : {}),
+    ...(ip !== undefined ? { ip } : {}),
+  }
+  return isEmptyIdentifiers(merged) ? null : merged
+}
+
+/** True when two declarations hold the same entries, `readAt` included (key order ignored). */
+export function sameIdentifiers(
+  a: DeviceIdentifiers | null | undefined,
+  b: DeviceIdentifiers | null | undefined,
+): boolean {
+  const canonical = (v: DeviceIdentifiers | null | undefined): string =>
+    v === null || v === undefined || isEmptyIdentifiers(v)
+      ? ''
+      : JSON.stringify(
+          DEVICE_IDENTIFIER_KEYS.map((key) => [key, v[key] ?? null] as const).map(([key, e]) => [
+            key,
+            e === null ? null : [e].flat().map((x) => [x.value, x.origin, x.readAt]),
+          ]),
+        )
+  return canonical(a) === canonical(b)
 }

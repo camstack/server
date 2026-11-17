@@ -9,9 +9,13 @@
  * no stamp and is refused; so is another addon. The operator reads identifiers, it
  * never edits them: the free-form, editable blob is `metadata`.
  *
- * The value REPLACES the whole declaration (the provider states everything it
- * knows each time); `null` clears it. A write equal to what is stored changes
- * nothing and emits nothing — providers declare on every boot.
+ * The stored value is `mergeIdentifiers(stored, declared, unread)`: each kind the
+ * declaration carries replaces the stored one, each kind it lacks is removed,
+ * except the kinds in `unread` (the provider's read FAILED), which keep what was
+ * stored — a failed read never erases a fact (D49). An entry whose value and
+ * origin are unchanged keeps its stored `readAt` (when that value was first read),
+ * so a provider re-declaring the same values on every boot writes nothing and
+ * emits nothing. `null` clears every kind not in `unread`.
  */
 
 import { randomUUID } from 'node:crypto'
@@ -19,7 +23,8 @@ import {
   DeviceIdentifiersSchema,
   EventCategory,
   isEmptyIdentifiers,
-  type DeviceIdentifiers,
+  mergeIdentifiers,
+  sameIdentifiers,
   type IDeviceManagerProvider,
 } from '@camstack/types'
 import type { ProviderContext } from './device-provider-context.js'
@@ -41,15 +46,6 @@ export class SetIdentifiersRefusedError extends Error {
 function stampedCaller(input: unknown): string | null {
   const raw: unknown = Reflect.get(Object(input), 'callerAddonId')
   return typeof raw === 'string' && raw.length > 0 ? raw : null
-}
-
-/** Stable comparison of two declarations (key order of a JSON column is not guaranteed). */
-function sameIdentifiers(a: DeviceIdentifiers | undefined, b: DeviceIdentifiers | null): boolean {
-  const canonical = (v: DeviceIdentifiers | null | undefined): string =>
-    v === null || v === undefined || isEmptyIdentifiers(v)
-      ? ''
-      : JSON.stringify(Object.entries(v).sort(([x], [y]) => x.localeCompare(y)))
-  return canonical(a) === canonical(b)
 }
 
 export async function setIdentifiers(
@@ -78,9 +74,11 @@ export async function setIdentifiers(
     if (caller === null || caller !== persisted.addonId) {
       return { kind: 'not-owner' as const, owner: persisted.addonId }
     }
-    if (sameIdentifiers(persisted.meta.identifiers, next)) return { kind: 'unchanged' as const }
-    await pctx.metaStore.rows.patch(deviceId, { identifiers: next })
-    return { kind: 'written' as const }
+    const stored = persisted.meta.identifiers ?? null
+    const merged = mergeIdentifiers(stored, next, input.unread ?? [])
+    if (sameIdentifiers(stored, merged)) return { kind: 'unchanged' as const }
+    await pctx.metaStore.rows.patch(deviceId, { identifiers: merged })
+    return { kind: 'written' as const, value: merged }
   })
 
   if (outcome.kind === 'unknown-device') {
@@ -106,6 +104,6 @@ export async function setIdentifiers(
     timestamp: new Date(),
     source: { type: 'device', id: deviceId },
     category: EventCategory.DeviceMetaChanged,
-    data: { deviceId, field: 'identifiers', value: next },
+    data: { deviceId, field: 'identifiers', value: outcome.value },
   })
 }

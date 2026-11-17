@@ -2,7 +2,11 @@
  * `device-manager.setIdentifiers` (D1059) on the REAL SQLite settings backend:
  *   - the owning provider (transport stamp = row addonId) writes, getDevice projects it
  *   - an unstamped (operator) call and another addon's call are refused, row untouched
- *   - re-registration preserves it; `null` clears it; a repeat write emits nothing
+ *   - re-registration preserves it; `null` clears it
+ *   - a later boot re-reading the same values (production normalisation, a fresh
+ *     `readAt`) writes and emits nothing and keeps the first `readAt`
+ *   - a kind the provider could not read this time (`unread`) keeps its stored
+ *     value; a kind it read and found absent is removed
  *   - a row written BEFORE the `identifiers` column existed survives the additive
  *     column (marked fields read back) and can then be declared on
  */
@@ -16,7 +20,8 @@ import type {
   IScopedLogger,
   ProviderRegistration,
 } from '@camstack/types'
-import { describe, expect, it, vi } from 'vitest'
+import { normaliseIdentifiers } from '@camstack/types'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { makeRecordsAccessForOwner } from '../../sqlite-storage/__tests__/support/records-world.js'
 import { DeviceRegistry } from '../../../kernel/device-registry.js'
 import { DeviceManagerAddon } from '../device-manager.addon.js'
@@ -34,6 +39,8 @@ const DECLARED: DeviceIdentifiers = {
   mac: [{ value: 'aa:bb:cc:dd:ee:ff', origin: 'read', readAt: 1 }],
   serial: { value: 'acme:sn123', origin: 'read', readAt: 1 },
 }
+
+const SERIAL_ONLY = { value: 'acme:sn123', origin: 'read', readAt: 1 } as const
 
 let fakeIdSeq = 700
 
@@ -197,12 +204,10 @@ describe('setIdentifiers', () => {
     ).rejects.toMatchObject({ reason: 'invalid' })
   })
 
-  it('survives a re-registration, clears on null, and a repeat write emits nothing', async () => {
+  it('survives a re-registration and clears on null', async () => {
     const world = await setup()
     const dev = await registered(world, 'cam-5')
     await world.provider.setIdentifiers(stamped({ deviceId: dev.id, identifiers: DECLARED }, OWNER))
-    await world.provider.setIdentifiers(stamped({ deviceId: dev.id, identifiers: DECLARED }, OWNER))
-    expect(identifiersEvents(world.emit)).toHaveLength(1)
 
     await world.provider.registerDevice({
       addonId: OWNER,
@@ -218,6 +223,84 @@ describe('setIdentifiers', () => {
     await world.provider.setIdentifiers(stamped({ deviceId: dev.id, identifiers: null }, OWNER))
     expect((await readDeviceRow(world.store, dev.id)).identifiers).toBeNull()
     expect((await world.provider.getDevice({ deviceId: dev.id }))?.identifiers).toBeUndefined()
+  })
+})
+
+describe('setIdentifiers across boots', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  /** What a provider sends on a boot: production normalisation, the clock as it is. */
+  function bootRead(mac: string | null, serial: string) {
+    return normaliseIdentifiers({ mac, serial: { manufacturer: 'acme', serial } }).identifiers
+  }
+
+  it('a later boot re-reading the same values writes nothing, emits nothing, keeps the first readAt', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const world = await setup()
+    const dev = await registered(world, 'cam-boot-1')
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: bootRead('AA:BB:CC:DD:EE:FF', 'SN1') }, OWNER),
+    )
+    vi.setSystemTime(90_000)
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: bootRead('aa-bb-cc-dd-ee-ff', 'sn1') }, OWNER),
+    )
+    expect(identifiersEvents(world.emit)).toHaveLength(1)
+    const row = (await readDeviceRow(world.store, dev.id)).identifiers
+    expect(row).toEqual({
+      mac: [{ value: 'aa:bb:cc:dd:ee:ff', origin: 'read', readAt: 1_000 }],
+      serial: { value: 'acme:sn1', origin: 'read', readAt: 1_000 },
+    })
+  })
+
+  it('a changed value is written with the new readAt; unchanged kinds keep theirs', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(1_000)
+    const world = await setup()
+    const dev = await registered(world, 'cam-boot-2')
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: bootRead('AA:BB:CC:DD:EE:FF', 'SN1') }, OWNER),
+    )
+    vi.setSystemTime(90_000)
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: bootRead('AA:BB:CC:DD:EE:01', 'SN1') }, OWNER),
+    )
+    expect(identifiersEvents(world.emit)).toHaveLength(2)
+    expect((await readDeviceRow(world.store, dev.id)).identifiers).toEqual({
+      mac: [{ value: 'aa:bb:cc:dd:ee:01', origin: 'read', readAt: 90_000 }],
+      serial: { value: 'acme:sn1', origin: 'read', readAt: 1_000 },
+    })
+  })
+
+  it('keeps the stored MAC when this boot could not read it (unread)', async () => {
+    const world = await setup()
+    const dev = await registered(world, 'cam-boot-3')
+    await world.provider.setIdentifiers(stamped({ deviceId: dev.id, identifiers: DECLARED }, OWNER))
+    await world.provider.setIdentifiers(
+      stamped(
+        {
+          deviceId: dev.id,
+          identifiers: { serial: { value: 'acme:sn123', origin: 'read', readAt: 2 } },
+          unread: ['mac', 'ip'],
+        },
+        OWNER,
+      ),
+    )
+    expect((await readDeviceRow(world.store, dev.id)).identifiers).toEqual(DECLARED)
+    expect(identifiersEvents(world.emit)).toHaveLength(1)
+  })
+
+  it('removes a kind the provider read and found absent', async () => {
+    const world = await setup()
+    const dev = await registered(world, 'cam-boot-4')
+    await world.provider.setIdentifiers(stamped({ deviceId: dev.id, identifiers: DECLARED }, OWNER))
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: { serial: SERIAL_ONLY } }, OWNER),
+    )
+    expect((await readDeviceRow(world.store, dev.id)).identifiers).toEqual({ serial: SERIAL_ONLY })
   })
 })
 

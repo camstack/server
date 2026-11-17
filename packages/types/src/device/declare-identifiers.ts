@@ -13,6 +13,7 @@ import type { IScopedLogger } from '../interfaces/logging.js'
 import { errMsg } from '../utils/err-msg.js'
 import {
   isEmptyIdentifiers,
+  type DeviceIdentifierKey,
   normaliseIdentifiers,
   type DeviceIdentifiers,
   type NormaliseIdentifiersOptions,
@@ -23,6 +24,8 @@ import {
 export interface SetIdentifiersInput {
   readonly deviceId: number
   readonly identifiers: DeviceIdentifiers | null
+  /** Kinds whose read FAILED this time: the stored value is kept. */
+  readonly unread?: readonly DeviceIdentifierKey[]
 }
 
 /** The slice of the generated `ctx.api.deviceManager.setIdentifiers` this helper uses. */
@@ -51,17 +54,29 @@ export interface DeclareIdentifiersResult {
   readonly identifiers: DeviceIdentifiers
 }
 
+export interface DeclareIdentifiersOptions extends NormaliseIdentifiersOptions {
+  /**
+   * Kinds the provider TRIED to read and could not (a probe threw, a session has
+   * not answered yet). Their stored values are kept; every other kind is replaced
+   * by this declaration, and a kind absent from it is removed. Never list a kind
+   * that was read and found absent — that is what removes a stale value.
+   */
+  readonly unread?: readonly DeviceIdentifierKey[]
+}
+
 /**
- * Normalise `raw` and declare it as the device's WHOLE identifier set (it replaces
- * the previous declaration — pass everything the provider knows in one call).
+ * Normalise `raw` and declare it: every kind it carries replaces the stored one,
+ * every kind it lacks is removed, except the kinds in `options.unread` (a failed
+ * read keeps what was stored) — pass everything the provider read in one call.
  */
 export async function declareDeviceIdentifiers(
   deps: DeclareIdentifiersDeps,
   raw: RawDeviceIdentifiers,
-  options: NormaliseIdentifiersOptions = {},
+  options: DeclareIdentifiersOptions = {},
 ): Promise<DeclareIdentifiersResult> {
   const { deviceId, logger, writer } = deps
-  const { identifiers, rejected } = normaliseIdentifiers(raw, options)
+  const { unread, ...normaliseOptions } = options
+  const { identifiers, rejected } = normaliseIdentifiers(raw, normaliseOptions)
   for (const r of rejected) {
     logger.warn('identifier refused — not declared', {
       tags: { deviceId },
@@ -77,7 +92,11 @@ export async function declareDeviceIdentifiers(
     return { outcome: 'unavailable', identifiers }
   }
   try {
-    await writer.mutate({ deviceId, identifiers })
+    await writer.mutate({
+      deviceId,
+      identifiers,
+      ...(unread !== undefined && unread.length > 0 ? { unread } : {}),
+    })
     return { outcome: 'declared', identifiers }
   } catch (err) {
     logger.warn('identifiers not declared — setIdentifiers failed', {

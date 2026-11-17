@@ -39,6 +39,32 @@ describe('declareDeviceIdentifiers', () => {
     )
   })
 
+  it('sends the kinds whose read failed as unread, and omits an empty list', async () => {
+    const sent: SetIdentifiersInput[] = []
+    const writer = { mutate: async (input: SetIdentifiersInput) => void sent.push(input) }
+    const deps = { deviceId: 9, logger: makeLogger(), writer }
+    await declareDeviceIdentifiers(
+      deps,
+      { serial: { manufacturer: 'acme', serial: 'SN1' } },
+      {
+        readAt: 5,
+        unread: ['mac', 'ip'],
+      },
+    )
+    await declareDeviceIdentifiers(
+      deps,
+      { serial: { manufacturer: 'acme', serial: 'SN1' } },
+      {
+        readAt: 5,
+        unread: [],
+      },
+    )
+    expect(sent.map((s) => s.unread)).toEqual([['mac', 'ip'], undefined])
+    expect(sent[0]?.identifiers).toEqual({
+      serial: { value: 'acme:sn1', origin: 'read', readAt: 5 },
+    })
+  })
+
   it('writes nothing when no value survives, so an empty probe never erases a declaration', async () => {
     const mutate = vi.fn(async () => {})
     const result = await declareDeviceIdentifiers(

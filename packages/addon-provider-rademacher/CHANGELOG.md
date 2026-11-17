@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- The HomePilot gateway declares its MAC and address as device identifiers.
+- The HomePilot gateway also declares its MAC and address as device identifiers (the metadata is unchanged); before the box answers, the MAC declared before is kept.
 
 ## [0.2.166] - 2026-11-12
 

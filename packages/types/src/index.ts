@@ -1343,7 +1343,9 @@ export {
   DeviceIdentifiersSchema,
   identifierStrength,
   isEmptyIdentifiers,
+  mergeIdentifiers,
   normaliseIdentifiers,
+  sameIdentifiers,
   normaliseMac,
 } from './device/device-identifiers.js'
 export type {
@@ -1365,6 +1367,7 @@ export type {
 export { declareDeviceIdentifiers } from './device/declare-identifiers.js'
 export type {
   DeclareIdentifiersDeps,
+  DeclareIdentifiersOptions,
   DeclareIdentifiersOutcome,
   DeclareIdentifiersResult,
   IdentifiersWriter,

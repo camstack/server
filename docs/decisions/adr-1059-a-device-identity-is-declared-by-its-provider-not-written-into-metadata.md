@@ -39,18 +39,27 @@ There is one writer: the provider that owns the device, through
 or `declareDeviceIdentifiers`. The device-manager compares the transport's
 caller stamp with the row's `addonId` and refuses anyone else, an operator
 session included. The operator reads identifiers in Device Info → Hardware and
-never edits them. A declaration replaces the previous one; an empty one is
-not sent, so a probe that learned nothing never erases what an earlier probe
-declared.
+never edits them.
+
+A declaration is merged into what is stored, kind by kind
+(`mergeIdentifiers`): a kind it carries replaces the stored one, a kind it
+lacks was read and found absent and is removed, and a kind the provider lists
+in `unread` — it tried to read it and the read FAILED — keeps its stored
+value, so a failed read never erases a fact (D49). An empty declaration is not
+sent at all. An entry whose value and origin are unchanged keeps its stored
+`readAt`, which is therefore when that value was FIRST read; a provider
+re-declaring the same values on every boot writes nothing and emits nothing.
 
 ## Consequences
 
-- `metadata` keeps the keys providers already write (display), but it is no
-  longer where identity is read from.
+- Providers DUPLICATE their identity into `identifiers`; nothing moved out of
+  `metadata`, which keeps the keys providers already write (display), but it is
+  no longer where identity is read from.
+- A populator whose probe can fail partway (a camera's network read) must list
+  the kinds that read would have produced in `unread`; otherwise its next boot
+  erases them.
 - The row gains a nullable JSON column `identifiers` — an additive change;
   rows written before it read as "nothing declared".
-- A declaration equal to the stored one emits nothing, so providers may
-  declare on every connect.
 - Providers still to migrate: unifi and unraid (being rewritten elsewhere),
   the providers that know an identity only on a discovery candidate
   (matter-broker, bosch shc/homecom, ecowitt, dreame, dreo, petkit, tuya), and

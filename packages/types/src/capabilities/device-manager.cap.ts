@@ -36,7 +36,7 @@ import {
 } from '../device/location-icon.js'
 import { SiteZoneSchema } from '../device/site-zone.js'
 import { SourceInfoSchema } from '../device/source-info.js'
-import { DeviceIdentifiersSchema } from '../device/device-identifiers.js'
+import { DeviceIdentifierKeySchema, DeviceIdentifiersSchema } from '../device/device-identifiers.js'
 import { TagsFieldSchema } from '../tags/tag.js'
 import { ReadingQuantitySchema } from '../units/quantity.js'
 import { DeviceSearchInputSchema, DeviceSearchResultSchema } from './device-search.js'
@@ -962,8 +962,11 @@ export const deviceManagerCapability = {
 
     /** Declare the device's identifiers (D1059) — the typed, normalised keys
      *  (`mac`, `serial`, `machine-uuid`, `vendor-uid`, `hostname`, `ip`) a later
-     *  step matches across integrations. REPLACES the whole declaration; `null`
-     *  clears it. Accepted only from the provider that OWNS the device: the
+     *  step matches across integrations. Each kind is REPLACED by what this call
+     *  says (absent = read and found absent, removed) EXCEPT the kinds listed in
+     *  `unread` — the reads that FAILED this time — which keep their stored value.
+     *  An unchanged value keeps its first `readAt`; a call that changes nothing
+     *  writes and emits nothing. `null` clears every read kind. Accepted only from the provider that OWNS the device: the
      *  caller stamp the transport sets (`callerAddonId`) must equal the row's
      *  `addonId`, so an operator session — which carries no stamp — is refused.
      *  Build the value with `normaliseIdentifiers` (`@camstack/types`); a device
@@ -972,6 +975,8 @@ export const deviceManagerCapability = {
       z.object({
         deviceId: z.number(),
         identifiers: DeviceIdentifiersSchema.nullable(),
+        /** Kinds the provider tried to read and could not: their stored value is kept. */
+        unread: z.array(DeviceIdentifierKeySchema).optional(),
       }),
       z.void(),
       { kind: 'mutation', auth: 'admin' },

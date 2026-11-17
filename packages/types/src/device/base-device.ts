@@ -25,8 +25,12 @@ import {
   type SourceInfo,
 } from './source-info.js'
 import { createEvent } from '../interfaces/event-bus.js'
-import { declareDeviceIdentifiers, type DeclareIdentifiersResult } from './declare-identifiers.js'
-import type { NormaliseIdentifiersOptions, RawDeviceIdentifiers } from './device-identifiers.js'
+import {
+  declareDeviceIdentifiers,
+  type DeclareIdentifiersOptions,
+  type DeclareIdentifiersResult,
+} from './declare-identifiers.js'
+import type { RawDeviceIdentifiers } from './device-identifiers.js'
 import { ERROR_STATUS_COLD, errorCapability, type ErrorStatus } from '../capabilities/error.cap.js'
 import { errMsg } from '../utils/err-msg.js'
 import {
@@ -446,13 +450,15 @@ export abstract class BaseDevice<
    * machine uuid, hostname, IP — what a later step matches across integrations.
    * Normalises `raw` (`normaliseIdentifiers`), logs every refused value, and
    * writes the result through `device-manager.setIdentifiers`, which accepts it
-   * only from the provider that owns this device. The declaration REPLACES the
-   * previous one, so pass everything known in one call; a call where nothing
-   * survives normalisation writes nothing. Best-effort: never throws.
+   * only from the provider that owns this device. Each kind it carries replaces
+   * the stored one and each kind it lacks is removed — except the kinds listed in
+   * `options.unread` (reads that FAILED), which keep their stored value. Pass
+   * everything read in one call; a call where nothing survives normalisation
+   * writes nothing. Best-effort: never throws.
    */
   protected async declareIdentifiers(
     raw: RawDeviceIdentifiers,
-    options?: NormaliseIdentifiersOptions,
+    options?: DeclareIdentifiersOptions,
   ): Promise<DeclareIdentifiersResult> {
     return declareDeviceIdentifiers(
       {

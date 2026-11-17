@@ -178,7 +178,9 @@ export async function populateReolinkMetadata(
   }
 
   // ── 1b. provider-declared identifiers (D1059) — the matchable identity,
-  // typed and normalised; the metadata keys above stay for display.
+  // typed and normalised, duplicated from the metadata keys above (which stay
+  // for display). A network read that threw or answered nothing keeps the
+  // stored MAC and IP.
   await declareDeviceIdentifiers(
     {
       deviceId: target.id,
@@ -191,6 +193,7 @@ export async function populateReolinkMetadata(
       vendorUid: target.uid ? { vendor: 'reolink', id: target.uid } : null,
       ip: ip ?? null,
     },
+    net === undefined ? { unread: ['mac', 'ip'] } : {},
   )
 
   // ── 2. deviceCache config blob (durable identifiers for stableId)
