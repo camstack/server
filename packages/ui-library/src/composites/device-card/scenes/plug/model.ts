@@ -8,8 +8,12 @@ export interface PlugCardModel {
   readonly since: string | null
   /** Null when the switch declares no timed run. */
   readonly timer: SwitchTimerModel | null
+  /** The switch's provider declares a native power cycle (`getOptions().supportsPowerCycle`). */
+  readonly powerCycle: boolean
 }
 
 export interface PlugCardActions extends CardCommonActions, SwitchTimerActions {
   readonly onPower: (on: boolean) => void
+  /** Cuts and restores the output in one call (`switch.powerCycle`). */
+  readonly onPowerCycle: () => void
 }

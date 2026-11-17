@@ -190,7 +190,12 @@ describe('shared parts', () => {
     render(
       <PlugCard
         model={model}
-        actions={{ onPower: vi.fn(), onTimerStart: vi.fn(), onTimerStop: vi.fn() }}
+        actions={{
+          onPower: vi.fn(),
+          onTimerStart: vi.fn(),
+          onTimerStop: vi.fn(),
+          onPowerCycle: vi.fn(),
+        }}
       />,
     )
     expect(screen.getByTestId('dc-plug-timer-start').textContent).toContain('1 h')

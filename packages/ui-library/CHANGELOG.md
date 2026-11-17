@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Generated hooks follow the new low-power-sleep and resync capabilities
+- The plug card shows a two-step Restart button when its switch can power-cycle the device it feeds (a PoE port).
 
 ## [1.2.466] - 2026-11-17
 

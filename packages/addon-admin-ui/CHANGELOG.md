@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The unused vacuum and mower Map badges are gone
+- Adds the Restart / Riavvia label for the plug card's power-cycle button.
 
 ## [1.2.694] - 2026-11-17
 

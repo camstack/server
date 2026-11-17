@@ -3,6 +3,7 @@ import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { PlugIllustration } from '../../illustrations/PlugIllustration'
 import { rowTimer } from '../../shell/bottom-rows'
+import { columnArmedButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
 import { SCENE_DRAWING_CLASS } from '../../shell/scene-layout'
@@ -17,7 +18,10 @@ export interface PlugCardProps {
   readonly showName?: boolean
 }
 
-/** The plug: on / off, the switch's timed run, and what the shell shows for any device. */
+/**
+ * The plug: on / off, the switch's timed run, a two-step restart when the switch
+ * declares a native power cycle, and what the shell shows for any device.
+ */
 export function PlugCard({
   model,
   actions,
@@ -42,6 +46,18 @@ export function PlugCard({
       activity={on ? 'on' : 'off'}
       state={{ label, since: model.since, tone: on ? 'primary' : 'muted' }}
       scene={{
+        columns: {
+          right: model.powerCycle
+            ? [
+                columnArmedButton('restart', {
+                  glyph: 'restart',
+                  label: t('uiLibrary.deviceCard.plug.restart', 'Restart'),
+                  testId: 'dc-plug-restart',
+                  onConfirm: actions.onPowerCycle,
+                }),
+              ]
+            : [],
+        },
         image: (
           <ScenePower
             on={on}

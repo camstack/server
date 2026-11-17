@@ -10244,7 +10244,8 @@
         "startAria": "Turn on for {{duration}}, then off",
         "stop": "Stop",
         "stopAria": "Stop the timed run and turn off",
-        "hours": "{{h}} h"
+        "hours": "{{h}} h",
+        "restart": "Restart"
       },
       "climate": {
         "cooling": "Cooling",
