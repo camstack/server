@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**253 units · 8973 source files · 246 units claimed by at least one document (8942 files).**
+**253 units · 8974 source files · 246 units claimed by at least one document (8943 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -40,9 +40,9 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/types/src/composition` | 69 | `automations` | `architecture/device-model.md`, `decisions/adr-0659-a-composed-device-is-a-composition-block-run-by-the-shared-composer-and-every-field-owns-its-availability.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, +21 more | 2026-11-08 |
 | `packages/addon-admin-ui/src/lib` | 65 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +20 more, 1 ADR | 2026-11-12 |
 | `packages/addon-provider-reolink` | 64 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +22 more, 2 ADRs | 2026-11-08 |
+| `packages/addon-pipeline/src/detection-pipeline` | 63 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `decisions/adr-1013-one-instance-model.md`, +53 more, 5 ADRs | 2026-10-24 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
-| `packages/addon-pipeline/src/detection-pipeline` | 62 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `decisions/adr-1013-one-instance-model.md`, +52 more, 5 ADRs | 2026-10-24 |
-| `packages/addon-pipeline/src/pipeline-runner` | 59 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +43 more, 14 ADRs | 2026-10-24 |
+| `packages/addon-pipeline/src/pipeline-runner` | 59 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +44 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +3 more, 1 ADR | 2026-10-14 |
 | `packages/addon-ai` | 55 | `ai` | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 |
 | `packages/addon-provider-dreame` | 54 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, +5 more, 2 ADRs | 2026-11-08 |

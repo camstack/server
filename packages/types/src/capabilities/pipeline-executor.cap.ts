@@ -7,30 +7,42 @@ import type {
 import type { AudioResult } from '../types/detection.js'
 import {
   PipelineRunResultBridge,
-  PipelineStepInputSchema,
   type PipelineStepInputOutput,
+  PipelineStepInputSchema,
 } from './pipeline-step-input.js'
 
+export type { PipelineStepInputOutput }
 // The step-input schema and the run-result bridge live in a schema-light module
 // (`addon-dist-footprint`, D28) so an addon can reach them without evaluating
 // this file's graph. Re-exported here: the barrel surface is unchanged.
 export { PipelineRunResultBridge, PipelineStepInputSchema }
-export type { PipelineStepInputOutput }
+
+import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 import {
   ModelProviderIdSchema,
-  RootStepSupplySchema,
   ModelVariantGroupSchema,
   PipelineModelFormatStatusSchema,
+  RootStepSupplySchema,
 } from '../types/models.js'
 import { type CapabilityDefinition, type InferProvider, method } from './capability-definition.js'
 import { FrameInputSchema } from './schemas/detection-shared.js'
 import { FrameHandleSchema } from './schemas/streaming-shared.js'
-import { NOT_A_DEVICE } from '../device/cap-vocabulary/system-reasons.js'
 
 /**
  * A root model's boxes standing in for one crop-kind step's own inference
  * (D730) — see `runPipeline.suppliedRoot`.
  */
+/**
+ * A rectangle as a fraction of a frame, `[0, 1]` on both axes — the wire shape
+ * of `NormalizedRect` (which is derived from it).
+ */
+export const NormalizedRectSchema = z.object({
+  x: z.number(),
+  y: z.number(),
+  w: z.number(),
+  h: z.number(),
+})
+
 export const SuppliedRootOutputSchema = z.object({
   stepId: z.string(),
   /** The root model that drew the boxes — stamped on the result. */
@@ -727,16 +739,7 @@ export const pipelineExecutorCapability = {
          * on the live `frame` plane with a `frameRef`. Absent or empty ⇒ no
          * motion known ⇒ full frame.
          */
-        motionRegions: z
-          .array(
-            z.object({
-              x: z.number(),
-              y: z.number(),
-              w: z.number(),
-              h: z.number(),
-            }),
-          )
-          .optional(),
+        motionRegions: z.array(NormalizedRectSchema).optional(),
       }),
       PipelineRunResultBridge,
       { kind: 'mutation' },

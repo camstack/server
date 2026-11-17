@@ -289,6 +289,10 @@ inference count does not change.
 | shape | expanded to the root model's input aspect, shifted inside the frame |
 | minimum long side | the larger of 0.45x the frame's long side (`ROI_MIN_FRAME_FRACTION`) and 2x the model input (`ROI_MIN_DOWNSCALE`) |
 | full frame instead | crop long side above 0.6x the frame's (`ROI_MAX_FRAME_FRACTION`); no motion and no recent box; a forced full frame at least every 1 s per camera (`ROI_FORCED_FULL_INTERVAL_MS`) |
+| subject-scale bound | a recent root box whose long side would exceed 150 px in the model input once the crop is scaled into it (`MAX_SUBJECT_INPUT_PX`) runs the full frame instead (`subject-too-large`): a near subject is never magnified into the scale the model fails at |
+| crop miss | a crop that found nothing where the root had recent boxes keeps those boxes and sends the next frame to the full frame (`roi-missed`); a subject that grew past the crop is not locked out |
+| shed root | a frame whose root the pool shed (`FrameResult.shed`, no inference ran) leaves the recent boxes as they were |
+| idle camera | a camera with no frame for 60 s is forgotten (`ROI_IDLE_FORGET_MS`); the provider has no per-camera teardown |
 
 The minimum is deliberately large: the int8 detector scores a person about
 300 px tall in its input at 0.09 and the same person at about 75 px at 0.65, so
@@ -301,7 +305,8 @@ through the view geometry, exactly as a `crop-zone` root's are.
 Precedence: a `crop-zone` root (`package-detection`) always runs on its package
 zones and never on the motion crop. Each frame's choice rides the camera's
 `pipeline.trace` event as `rootSource` (`source: roi | full`, `reason:
-motion | no-motion | roi-too-large | forced-full | no-geometry`, and the crop).
+motion | no-motion | roi-too-large | subject-too-large | roi-missed | forced-full |
+no-geometry`, and the crop).
 
 ### The second detector pass, and WHICH regions it runs on
 

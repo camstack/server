@@ -59,19 +59,19 @@
  * offline accuracy evaluation (`addon-benchmark`) plan the SAME crops: one
  * module, two callers, no copy to drift.
  */
+
+import type { z } from 'zod'
+import type {
+  NormalizedRectSchema,
+  PipelineStepInputOutput,
+} from '../../capabilities/pipeline-executor.cap.js'
 import type { ObjectDetection } from '../../types/detection.js'
-import type { PipelineStepInputOutput } from '../../capabilities/pipeline-executor.cap.js'
 
 /** The object-detection step id — the first-level detector both recipes run. */
 export const OBJECT_DETECTION_STEP_ID = 'object-detection'
 
-/** Fraction of a frame, `[0, 1]` on both axes. */
-export interface NormalizedRect {
-  readonly x: number
-  readonly y: number
-  readonly w: number
-  readonly h: number
-}
+/** Fraction of a frame, `[0, 1]` on both axes. Derived from its wire schema. */
+export type NormalizedRect = z.infer<typeof NormalizedRectSchema>
 
 export interface FrameDims {
   readonly width: number

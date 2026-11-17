@@ -16,7 +16,6 @@ import {
   isModelDownloaded,
 } from '@camstack/server/system/addon-utils'
 import type {
-  CoralInfo,
   AddonCapabilityInfo,
   AddonContext,
   AudioChunkInput,
@@ -24,7 +23,10 @@ import type {
   BackendInfo,
   ConfigUISchema,
   ConfigUISchemaWithValues,
+  CoralInfo,
   DeviceProxy,
+  EffectiveTuning,
+  EffectiveTuningInput,
   FrameHandle,
   FrameInput,
   FrameResult,
@@ -34,16 +36,13 @@ import type {
   IPipelineExecutorProvider,
   IScopedLogger,
   KernelInferenceHardware,
+  LoadContribution,
   ModelAvailability,
   ModelCatalogEntry,
   ModelFormat,
   ModelFormatStatus,
-  EffectiveTuning,
-  EffectiveTuningInput,
   NativeCropRef,
   PipelineDefaultStep,
-  RootStepSupply,
-  StepDefinition,
   PipelineEngineChoice,
   PipelineExecutionPlane,
   PipelineRunInput,
@@ -53,6 +52,8 @@ import type {
   PipelineValidationResult,
   PythonBackendInfo,
   RawFrameFormat,
+  RootStepSupply,
+  StepDefinition,
 } from '@camstack/types'
 import {
   APPLE_SA_TO_MACRO,
@@ -62,28 +63,23 @@ import {
   errMsg,
   type IEventBus,
   nodePin,
+  rootSuppliesOf,
   sleep,
   YAMNET_TO_MACRO,
 } from '@camstack/types'
-import type { LoadContribution } from '@camstack/types'
-import { rootSuppliesOf } from '@camstack/types'
 import { readProcessCost } from '@camstack/types/node'
-import { formatPrecision, modelOnDiskState } from './model-format-facts.js'
+import { buildSubtreeCanRun } from '../pipeline-runner/device-jump.js'
 import { localFrameRegistry } from '../session-decode/local-frame-registry.js'
 import { ClusterModelSource } from '../shared/cluster-model-source.js'
+import { CustomModelCatalog } from '../shared/custom-model-catalog.js'
+import { getSharp } from '../shared/lazy-sharp.js'
+import { type ClusterModelRefusal } from './cluster-model-resolution.js'
 import {
   ClusterModelSwitchLog,
   ClusterUnknownRefusalLog,
   unknownStepsNamed,
 } from './cluster-model-switch-log.js'
-import { getSharp } from '../shared/lazy-sharp.js'
-import { type ClusterModelRefusal } from './cluster-model-resolution.js'
 import { resolveDefaultDetectionModel } from './default-detection-model.js'
-import { BACKEND_TO_POOL_RUNTIME, EngineFactory } from './engine/engine-factory.js'
-import type { PoolCompileFinishedLate } from './engine/shared-inference-pool.js'
-import { ModelLoadGovernor, type ModelLoadVerdict } from './engine/model-load-governor.js'
-import { StepVariantLoadError } from './engine/pipeline-model-manager.js'
-import { IdlePoolReaper } from './engine/idle-pool-reaper.js'
 import {
   BenchmarkPools,
   benchmarkKeyOf,
@@ -91,40 +87,45 @@ import {
   isBenchmarkRun,
 } from './engine/benchmark-pools.js'
 import { placedModelsOf } from './engine/coral-cocompiled-set.js'
+import { BACKEND_TO_POOL_RUNTIME, EngineFactory } from './engine/engine-factory.js'
+import { FrameReelectionNotes, routeLiveFrameDevice } from './engine/frame-device-reelection.js'
+import { IdlePoolReaper } from './engine/idle-pool-reaper.js'
 import {
-  type InferenceDeviceUnhealthy,
   InferenceDeviceLivenessSupervisor,
+  type InferenceDeviceUnhealthy,
   InferenceDeviceUnusableError,
 } from './engine/inference-device-liveness.js'
-import { FrameReelectionNotes, routeLiveFrameDevice } from './engine/frame-device-reelection.js'
-import { createDetectionPoolMemoryGuard, type GuardedPool } from './engine/pool-memory-guard.js'
 import {
   closureVersionFromRunnerPath,
   createInferenceTimeoutGuard,
 } from './engine/inference-timeout-guard.js'
+import { ModelLoadGovernor, type ModelLoadVerdict } from './engine/model-load-governor.js'
+import { StepVariantLoadError } from './engine/pipeline-model-manager.js'
+import { createDetectionPoolMemoryGuard, type GuardedPool } from './engine/pool-memory-guard.js'
 import {
   type PoolProvisioningOverride,
   resolvePoolProvisioning,
 } from './engine/pool-provisioning.js'
 import { deviceKeyOf, resolveDeviceEngine } from './engine/resolve-device-engine.js'
-import { buildSubtreeCanRun } from '../pipeline-runner/device-jump.js'
-import { CustomModelCatalog } from '../shared/custom-model-catalog.js'
+import type { PoolCompileFinishedLate } from './engine/shared-inference-pool.js'
 import {
   collectFramePlaneSteps,
   flattenEnabledVideoSteps,
   pruneUnrunnableDetailSteps,
 } from './engine/step-utils.js'
-import { checkReplayPin, resolveTreeRoot } from './model-pin.js'
-import {
-  MOTION_ROI_ROOT_STEP_ID,
-  MotionRootRoiGovernor,
-  normalizedFirstLevelBoxes,
-} from './motion-root-roi.js'
 import { EngineProvisioner, type EngineProvisioningState } from './engine-provisioner.js'
 import {
   createRootFrameViewResolver,
   type RootFrameViewResolver,
 } from './frame-ref-view-provider.js'
+import { formatPrecision, modelOnDiskState } from './model-format-facts.js'
+import { checkReplayPin, resolveTreeRoot } from './model-pin.js'
+import {
+  MotionRootRoiGovernor,
+  motionRoiModelInput,
+  rootRunOf,
+  withRootSource,
+} from './motion-root-roi.js'
 import type { AbsoluteBbox } from './pipeline/crop-utils.js'
 import { resolvePackageCropBbox } from './pipeline/crop-zone.js'
 import { PipelineExecutor, type RootInputViewProvider } from './pipeline/executor.js'
@@ -132,6 +133,7 @@ import type { NativeFaceCropProvider } from './pipeline/face-align.js'
 import { composeCropRoiToFrameNorm } from './pipeline/native-crop-compose.js'
 import { buildExecutableTree } from './pipeline/tree-builder.js'
 import { mergeCustomModels } from './registry/custom-models.js'
+import { resolveModelDefaultConfidence } from './registry/effective-confidence.js'
 import {
   annotateConfigSchemaForModels,
   withRootSuppliedLabelDefaults,
@@ -142,7 +144,6 @@ import {
   getStepDefinition,
   resolveModelForFormat,
 } from './registry/step-definitions.js'
-import { resolveModelDefaultConfidence } from './registry/effective-confidence.js'
 import {
   defaultDeviceFor,
   envToHardwareInfo,
@@ -2828,27 +2829,22 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     // Motion-guided root crop (D1060): which pixels the object-detection root
     // runs on for THIS frame. Live frame plane only, with a frame view to cut
     // from; a replay, a benchmark or a supplied root keep the full frame.
-    const motionRoiRoot =
-      runtimeFrameRef &&
-      input.plane === 'frame' &&
-      input.replay !== true &&
-      input.suppliedRoot === undefined &&
-      effectiveDeviceId > 0
-        ? effectiveTree.roots.find(
-            (r) => r.stepId === MOTION_ROI_ROOT_STEP_ID && r.definition.extractMode !== 'crop-zone',
-          )
-        : undefined
-    const motionRoiModel = motionRoiRoot?.definition.models.find(
-      (m) => m.id === motionRoiRoot.modelId,
-    )
+    const motionRoiInput = motionRoiModelInput({
+      hasFrameRef: Boolean(runtimeFrameRef),
+      plane: input.plane,
+      replay: input.replay === true,
+      hasSuppliedRoot: input.suppliedRoot !== undefined,
+      deviceId: effectiveDeviceId,
+      roots: effectiveTree.roots,
+    })
     const rootInputSource =
-      motionRoiModel !== undefined
+      motionRoiInput !== undefined
         ? this.motionRootRoi.decide({
             deviceId: effectiveDeviceId,
             now: Date.now(),
             motion: input.motionRegions ?? [],
             frame: { width: imageWidth, height: imageHeight },
-            modelInput: motionRoiModel.inputSize,
+            modelInput: motionRoiInput,
           })
         : undefined
     let executionSucceeded = false
@@ -2878,14 +2874,16 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     }
     const { result } = execution
     if (rootInputSource !== undefined) {
-      // The root's own boxes stand in for the live tracks on the next frames.
-      this.motionRootRoi.noteBoxes(effectiveDeviceId, normalizedFirstLevelBoxes(result), Date.now())
+      // The root's own boxes stand in for the live tracks on the next frames;
+      // a shed root (no inference ran) leaves them alone.
+      this.motionRootRoi.noteRootRun(
+        effectiveDeviceId,
+        rootRunOf(rootInputSource, result),
+        Date.now(),
+      )
     }
     // The per-camera trace says which pixels the root ran on (D1060).
-    const trace =
-      execution.trace && rootInputSource !== undefined
-        ? { ...execution.trace, rootSource: rootInputSource }
-        : execution.trace
+    const trace = withRootSource(execution.trace, rootInputSource)
 
     if (isRuntime) {
       // Runtime path mirrors the legacy `runFrame` behaviour: emit a

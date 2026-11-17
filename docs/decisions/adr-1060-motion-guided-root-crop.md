@@ -45,8 +45,15 @@ merged subjects (D394) and the root's own boxes from its recent frames, plus a
 15% margin, expanded to the model aspect, grown to at least the larger of 0.45x
 the frame's long side and 2x the model input (never a native 1:1 crop), and
 shifted inside the frame. The full frame runs when there is neither motion nor
-a recent box, when the crop's long side would exceed 0.6x the frame's, and on a
-forced full frame at least once a second per camera. The crop REPLACES the full
+a recent box, when the crop's long side would exceed 0.6x the frame's, when a
+recent root box would exceed 150 px (long side) in the model input once the
+crop is scaled into it (`MAX_SUBJECT_INPUT_PX`, reason `subject-too-large` —
+the crop must not magnify a near subject into the scale the model fails at),
+on the frame after a crop that found nothing where the root had recent boxes
+(`roi-missed`; the crop miss keeps those boxes, so a subject that grew past
+the crop keeps getting the full frame), and on a forced full frame at least
+once a second per camera. A shed root (no inference ran) leaves the recent
+boxes untouched. The crop REPLACES the full
 frame; it never adds an inference. It is automatic for every camera with no
 setting. A `crop-zone` root always keeps its package-zone crop: the motion crop
 never applies to it, whatever the decision names. Each frame's choice and reason
@@ -88,7 +95,10 @@ Rejected:
 ## Enforcement
 
 `motion-root-roi.spec.ts` pins the geometry (minimum side, maximum fallback,
-edge clamping, aspect) and the forced-full cadence;
-`executor-motion-root-roi.spec.ts` pins the re-projection to frame
-coordinates and the `crop-zone` precedence. Live: the `rootSource` field on a
+edge clamping, aspect), the subject-scale bound, the crop-miss and shed rules,
+the forced-full cadence, the idle forget, and which runs the provider lets the
+motion ROI decide (no replay, no supplied root); `executor-motion-root-roi.spec.ts`
+pins the re-projection to frame coordinates through the real view geometry
+(`resolveRootFrameViewSpec`, `resolveFrameViewGeometry`) and the `crop-zone`
+precedence. Live: the `rootSource` field on a
 camera's `pipeline.trace` events.

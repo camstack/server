@@ -14,7 +14,13 @@
  * boxes the root reported on its recent frames, plus a margin, expanded to the
  * model's aspect, never smaller than a floor that keeps subjects small enough
  * for the model, and clamped inside the frame. Above a ceiling it is not worth
- * cropping and the full frame runs, exactly as before. A forced full frame
+ * cropping and the full frame runs, exactly as before. A subject the root
+ * already saw large is never magnified: when its recent box would exceed
+ * {@link MAX_SUBJECT_INPUT_PX} in the model input once cropped, the full frame
+ * runs (`subject-too-large`). A crop that found nothing where the root had
+ * boxes keeps those boxes and hands the next frame to the full frame
+ * (`roi-missed`), so a subject that grew past the crop is not locked out. A
+ * shed root (no inference ran) changes nothing. A forced full frame
  * about once a second keeps entries outside the motion area and the parked
  * subjects (D683) in view.
  *
@@ -29,10 +35,13 @@
  */
 import type {
   FrameResult,
+  FrameViewCrop,
   NormalizedRect,
+  PipelineExecutionPlane,
   RootInputSource,
   RootInputSourceReason,
 } from '@camstack/types'
+import type { ExecutableStep } from './pipeline/tree-builder.js'
 
 /**
  * The root the motion ROI drives. Its floor ({@link ROI_MIN_FRAME_FRACTION},
@@ -91,13 +100,22 @@ export const ROI_FORCED_FULL_INTERVAL_MS = 1_000
  */
 export const ROI_LIVE_BOX_MAX_AGE_MS = 2_000
 
-/** A pixel rectangle in frame space. */
-export interface RoiPixelRect {
-  readonly left: number
-  readonly top: number
-  readonly width: number
-  readonly height: number
-}
+/**
+ * The largest subject, long side in MODEL-INPUT pixels, the ROI may hand the
+ * root. Same replay evidence as {@link ROI_MIN_FRAME_FRACTION}: the int8 model
+ * wants subjects of roughly 40-150 px in its input and scored a ~300 px person
+ * at 0.09. Measured on the root's own recent boxes once the crop is scaled
+ * into the input; above it the full frame runs (`subject-too-large`).
+ */
+export const MAX_SUBJECT_INPUT_PX = 150
+
+/**
+ * A camera whose frames stopped this long ago is forgotten by the governor.
+ * The detection-pipeline provider has no per-camera teardown (a camera that
+ * leaves simply stops sending frames), so the governor bounds its own state.
+ * A camera that comes back starts with a forced full frame, as on first sight.
+ */
+export const ROI_IDLE_FORGET_MS = 60_000
 
 export interface RoiPlanInput {
   /** Merged motion subjects (D394), normalised to the frame. */
@@ -110,10 +128,13 @@ export interface RoiPlanInput {
 }
 
 export type RoiPlan =
-  | { readonly source: 'roi'; readonly crop: RoiPixelRect }
-  | { readonly source: 'full'; readonly reason: Exclude<RootInputSourceReason, 'motion'> }
+  | { readonly source: 'roi'; readonly crop: FrameViewCrop }
+  | {
+      readonly source: 'full'
+      readonly reason: Exclude<RootInputSourceReason, 'motion' | 'forced-full' | 'roi-missed'>
+    }
 
-function unionPx(rects: readonly NormalizedRect[], fw: number, fh: number): RoiPixelRect | null {
+function unionPx(rects: readonly NormalizedRect[], fw: number, fh: number): FrameViewCrop | null {
   let x1 = Number.POSITIVE_INFINITY
   let y1 = Number.POSITIVE_INFINITY
   let x2 = Number.NEGATIVE_INFINITY
@@ -137,7 +158,7 @@ function placeInside(
   h: number,
   fw: number,
   fh: number,
-): RoiPixelRect {
+): FrameViewCrop {
   const width = Math.min(w, fw)
   const height = Math.min(h, fh)
   const left = Math.min(Math.max(0, cx - width / 2), fw - width)
@@ -185,7 +206,29 @@ export function planMotionRootRoi(input: RoiPlanInput): RoiPlan {
   if (Math.max(crop.width, crop.height) > ROI_MAX_FRAME_FRACTION * frameLong) {
     return { source: 'full', reason: 'roi-too-large' }
   }
+  if (largestSubjectInputPx(input.liveBoxes, crop, fw, fh, mw, mh) > MAX_SUBJECT_INPUT_PX) {
+    return { source: 'full', reason: 'subject-too-large' }
+  }
   return { source: 'roi', crop }
+}
+
+/**
+ * The long side, in model-input pixels, of the largest root box once `crop` is
+ * letterboxed into the model input. Only the root's own boxes count: a motion
+ * blob is not a subject the model sized.
+ */
+function largestSubjectInputPx(
+  boxes: readonly NormalizedRect[],
+  crop: FrameViewCrop,
+  fw: number,
+  fh: number,
+  mw: number,
+  mh: number,
+): number {
+  const scale = Math.min(mw / crop.width, mh / crop.height)
+  let largest = 0
+  for (const b of boxes) largest = Math.max(largest, b.w * fw, b.h * fh)
+  return largest * scale
 }
 
 /** A frame result's first-level boxes, normalised to its frame — the governor's live boxes. */
@@ -206,6 +249,64 @@ interface LiveBoxEntry {
   readonly boxes: readonly NormalizedRect[]
 }
 
+/** What one root run left behind, as the governor needs it. */
+export interface RootRun {
+  /** The pixels the root was asked to run on. */
+  readonly source: RootInputSource['source']
+  /** The pool shed the root: no inference ran, the empty box list means nothing. */
+  readonly shed: boolean
+  /** The root's first-level boxes, normalised to the frame. */
+  readonly boxes: readonly NormalizedRect[]
+}
+
+/** The {@link RootRun} of a frame the root ran under `decision`. */
+export function rootRunOf(decision: RootInputSource, result: FrameResult): RootRun {
+  return {
+    source: decision.source,
+    shed: result.shed === true,
+    boxes: normalizedFirstLevelBoxes(result),
+  }
+}
+
+/** The root candidate the motion ROI may drive, and the run it is asked about. */
+export interface MotionRoiEligibility {
+  /** A live frame reference the root can cut a view from. */
+  readonly hasFrameRef: boolean
+  readonly plane: PipelineExecutionPlane | undefined
+  readonly replay: boolean
+  readonly hasSuppliedRoot: boolean
+  readonly deviceId: number
+  readonly roots: readonly ExecutableStep[]
+}
+
+/**
+ * The input size of the root the motion ROI drives on this run, or `undefined`
+ * when the run keeps the full frame: only a live `frame`-plane run with a
+ * frame reference, on a camera, with no supplied root, and never a replay or a
+ * `crop-zone` root.
+ */
+export function motionRoiModelInput(
+  run: MotionRoiEligibility,
+): { readonly width: number; readonly height: number } | undefined {
+  if (!run.hasFrameRef || run.plane !== 'frame' || run.replay || run.hasSuppliedRoot) {
+    return undefined
+  }
+  if (!(run.deviceId > 0)) return undefined
+  const root = run.roots.find(
+    (r) => r.stepId === MOTION_ROI_ROOT_STEP_ID && r.definition.extractMode !== 'crop-zone',
+  )
+  return root?.definition.models.find((m) => m.id === root.modelId)?.inputSize
+}
+
+/** The trace with the root input decision stamped on it (D1060). */
+export function withRootSource<T extends object>(
+  trace: T | null | undefined,
+  decision: RootInputSource | undefined,
+): T | null | undefined {
+  if (trace == null || decision === undefined) return trace
+  return { ...trace, rootSource: decision }
+}
+
 export interface RoiDecideInput {
   readonly deviceId: number
   readonly now: number
@@ -215,14 +316,25 @@ export interface RoiDecideInput {
 }
 
 /**
- * Per-camera state around {@link planMotionRootRoi}: the forced-full cadence
- * and the recent root boxes. One instance per detection-pipeline provider.
+ * Per-camera state around {@link planMotionRootRoi}: the forced-full cadence,
+ * the recent root boxes and a pending crop miss. One instance per
+ * detection-pipeline provider; an idle camera is forgotten after
+ * {@link ROI_IDLE_FORGET_MS}.
  */
 export class MotionRootRoiGovernor {
   private readonly lastFullAt = new Map<number, number>()
   private readonly liveBoxes = new Map<number, LiveBoxEntry>()
+  private readonly lastSeenAt = new Map<number, number>()
+  private readonly roiMissed = new Set<number>()
+  private lastSweepAt = 0
 
   decide(input: RoiDecideInput): RootInputSource {
+    this.sweepIdle(input.now)
+    this.lastSeenAt.set(input.deviceId, input.now)
+    if (this.roiMissed.delete(input.deviceId)) {
+      this.lastFullAt.set(input.deviceId, input.now)
+      return { stepId: MOTION_ROI_ROOT_STEP_ID, source: 'full', reason: 'roi-missed' }
+    }
     const last = this.lastFullAt.get(input.deviceId)
     if (last === undefined || input.now - last >= ROI_FORCED_FULL_INTERVAL_MS) {
       this.lastFullAt.set(input.deviceId, input.now)
@@ -244,13 +356,46 @@ export class MotionRootRoiGovernor {
     return { stepId: MOTION_ROI_ROOT_STEP_ID, source: 'full', reason: plan.reason }
   }
 
-  /** The root's first-level boxes on a frame it just ran, normalised. An empty list replaces the previous one. */
-  noteBoxes(deviceId: number, boxes: readonly NormalizedRect[], now: number): void {
-    this.liveBoxes.set(deviceId, { at: now, boxes })
+  /**
+   * What the root's run on a frame left behind. A shed root changes nothing.
+   * Boxes replace the previous ones; an empty full frame clears them. An empty
+   * CROP where the root had recent boxes keeps them (they age out on their
+   * own) and sends the next frame to the full frame: the subject may have
+   * grown past what the crop can score.
+   */
+  noteRootRun(deviceId: number, run: RootRun, now: number): void {
+    if (run.shed) return
+    if (run.boxes.length === 0 && run.source === 'roi') {
+      const entry = this.liveBoxes.get(deviceId)
+      if (
+        entry !== undefined &&
+        entry.boxes.length > 0 &&
+        now - entry.at <= ROI_LIVE_BOX_MAX_AGE_MS
+      ) {
+        this.roiMissed.add(deviceId)
+        return
+      }
+    }
+    this.liveBoxes.set(deviceId, { at: now, boxes: run.boxes })
   }
 
   forget(deviceId: number): void {
     this.lastFullAt.delete(deviceId)
     this.liveBoxes.delete(deviceId)
+    this.lastSeenAt.delete(deviceId)
+    this.roiMissed.delete(deviceId)
+  }
+
+  /** How many cameras the governor holds state for. */
+  trackedCameraCount(): number {
+    return this.lastSeenAt.size
+  }
+
+  private sweepIdle(now: number): void {
+    if (now - this.lastSweepAt < ROI_IDLE_FORGET_MS) return
+    this.lastSweepAt = now
+    for (const [deviceId, seenAt] of this.lastSeenAt) {
+      if (now - seenAt > ROI_IDLE_FORGET_MS) this.forget(deviceId)
+    }
   }
 }

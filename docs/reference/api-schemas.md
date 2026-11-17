@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1104 shared schemas.**
+**1105 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -4977,6 +4977,13 @@ Enum: `"shared" \| "per-class"`
 ### `NodeRemovedResultSchema`
 
 - `counts`: `Record<string, number>`
+
+### `NormalizedRectSchema`
+
+- `x`: `number`
+- `y`: `number`
+- `w`: `number`
+- `h`: `number`
 
 ### `NotificationActionIconSchema`
 

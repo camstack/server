@@ -3,15 +3,17 @@
  * provider decided, re-projects its boxes into frame space, and never lets the
  * motion ROI touch a `crop-zone` root (package detection keeps its zones).
  */
-import { describe, expect, it, vi } from 'vitest'
+
 import type {
   EngineOutput,
-  FrameViewGeometry,
   IInferenceEngine,
   ModelCatalogEntry,
   RootInputSource,
   StepDefinition,
 } from '@camstack/types'
+import { describe, expect, it, vi } from 'vitest'
+import { resolveFrameViewGeometry } from '../../../session-decode/frame-view-geometry.js'
+import { resolveRootFrameViewSpec } from '../../root-frame-view.js'
 import type { AbsoluteBbox } from '../crop-utils.js'
 import { PipelineExecutor, type RootInputViewProvider } from '../executor.js'
 import type { ExecutableStep, ExecutableTree } from '../tree-builder.js'
@@ -73,26 +75,31 @@ function step(def: StepDefinition, eng: IInferenceEngine): ExecutableStep {
   }
 }
 
-/** A view provider that records the crop it was asked for and returns its geometry. */
+/**
+ * A view provider that records the crop it was asked for and returns the
+ * geometry the decode worker would: the provider's own spec derivation
+ * (`resolveRootFrameViewSpec`) and the worker's geometry
+ * (`resolveFrameViewGeometry`), so re-projection is checked against the real
+ * view math, not a hand-made scale.
+ */
 function viewProvider(seen: Map<string, AbsoluteBbox | undefined>): RootInputViewProvider {
   return async (root, crop) => {
     seen.set(root.stepId, crop)
-    const left = crop?.[0] ?? 0
-    const top = crop?.[1] ?? 0
-    const cw = crop ? crop[2] - crop[0] : W
-    const ch = crop ? crop[3] - crop[1] : H
-    const scale = Math.min(640 / cw, 640 / ch)
-    const geometry: FrameViewGeometry = {
-      source: { width: W, height: H },
-      sourceCrop: { left, top, width: cw, height: ch },
-      output: { width: Math.round(cw * scale), height: Math.round(ch * scale) },
-      scale: { x: scale, y: scale },
-    }
+    const rootModel =
+      root.definition.models.find((m) => m.id === root.modelId) ?? model(root.stepId)
+    const spec = resolveRootFrameViewSpec(
+      rootModel,
+      { width: W, height: H },
+      crop
+        ? { left: crop[0], top: crop[1], width: crop[2] - crop[0], height: crop[3] - crop[1] }
+        : undefined,
+    )
+    const geometry = resolveFrameViewGeometry(W, H, spec)
     return {
       input: { kind: 'jpeg', data: JPEG },
       jpegProvider: async () => JPEG,
-      width: 640,
-      height: 640,
+      width: geometry.output.width,
+      height: geometry.output.height,
       geometry,
     }
   }
@@ -128,14 +135,15 @@ async function run(
 
 describe('PipelineExecutor — motion-guided root crop (D1060)', () => {
   it('runs the object-detection root on the ROI and re-projects its boxes to the frame', async () => {
-    // 1920 px wide crop into 640 → scale 1/3. View box (100, 200) → frame (1100+300, 0+600).
+    // 1920x1888 crop letterboxed into 640 → a 640x629 view (x scale 1/3, y
+    // scale 629/1888). View box (100, 200) → frame (1100+300, 0+~600.3).
     const tree: ExecutableTree = {
       roots: [step(definition('object-detection', 'full-frame'), engine([100, 200, 130, 300]))],
     }
     const { seen, boxes } = await run(tree, ROI)
     expect(seen.get('object-detection')).toEqual([1100, 0, 3020, 1888])
     expect(boxes[0]?.x).toBeCloseTo(1400, 5)
-    expect(boxes[0]?.y).toBeCloseTo(600, 5)
+    expect(boxes[0]?.y).toBeCloseTo(200 / (629 / 1888), 5)
   })
 
   it('a full decision keeps the full frame', async () => {

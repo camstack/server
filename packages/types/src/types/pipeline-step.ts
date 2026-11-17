@@ -1,9 +1,10 @@
+import type { SuppliedRootOutput } from '../capabilities/pipeline-executor.cap.js'
 import type { ConfigField } from '../interfaces/config-ui.js'
 import type { StepModelScope } from '../pipeline/cluster-model-scope.js'
+import type { FrameViewCrop } from './frame-view.js'
 import type { ClassMapDefinition } from './labels.js'
 import type { ModelCatalogEntry } from './models.js'
 import type { PipelineSlot } from './pipeline.js'
-import type { SuppliedRootOutput } from '../capabilities/pipeline-executor.cap.js'
 
 // ---------------------------------------------------------------------------
 // IPipelineStep — class contract for pipeline steps (future addon extraction)
@@ -458,6 +459,10 @@ export type RootInputSourceReason =
   | 'no-motion'
   /** The crop would exceed the ceiling fraction of the frame — too little magnification. */
   | 'roi-too-large'
+  /** A recent root box would exceed the model's subject-scale bound once cropped: the crop would magnify it into the scale the model fails at. */
+  | 'subject-too-large'
+  /** The previous crop found nothing where the root had recent boxes; this frame checks on the full frame. */
+  | 'roi-missed'
   /** The per-camera periodic full frame. */
   | 'forced-full'
   /** Frame or model geometry unknown. */
@@ -469,12 +474,7 @@ export interface RootInputSource {
   readonly source: 'roi' | 'full'
   readonly reason: RootInputSourceReason
   /** Frame-space pixel crop, present iff `source === 'roi'`. */
-  readonly crop?: {
-    readonly left: number
-    readonly top: number
-    readonly width: number
-    readonly height: number
-  }
+  readonly crop?: FrameViewCrop
 }
 
 export interface StepTrace {

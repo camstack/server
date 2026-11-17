@@ -38,6 +38,7 @@ export const PIPELINE_OWNER_CAPABILITY_NAMES: readonly string[] = [
   'pipeline-runner',
 ]
 
+export { addonCatalogHref } from './addon-catalog-href.js'
 export type { IAddonPagesAggregatorProvider } from './addon-pages.cap.js'
 export { AddonPageInfoSchema, addonPagesCapability } from './addon-pages.cap.js'
 export type { IAddonPagesSourceProvider } from './addon-pages-source.cap.js'
@@ -126,6 +127,15 @@ export {
   type IBackupProvider,
   LocationStatSchema,
 } from './backup.cap.js'
+export type {
+  BoardKeyBoard,
+  BoardKeyFailureReason,
+  BoardKeyListResult,
+  BoardKeyResult,
+  BoardKeySource,
+  IBoardKeySourceProvider,
+} from './board-key-source.cap.js'
+export { BoardKeyFailureReasonSchema, boardKeySourceCapability } from './board-key-source.cap.js'
 // The `broker` cap: the pub/sub bus of a connection. Creating, listing and testing a broker is
 // `integration-instances` (D1013).
 export {
@@ -140,6 +150,7 @@ export {
   brokerCapability,
   type IBrokerProvider,
 } from './broker.cap.js'
+export { CALLER_STAMPED_CAPABILITIES, withoutCallerStamp } from './caller-stamp.js'
 export {
   cameraPipelineConfigCapability,
   type ICameraPipelineConfigProvider,
@@ -156,6 +167,7 @@ export {
   type StreamCodec,
   StreamCodecSchema,
 } from './camera-streams.cap.js'
+export { CAP_METHOD_NOT_IMPLEMENTED, isCapMethodAbsent } from './cap-method-absent.js'
 export {
   emitsCollectionSelector,
   extractNestedAddonId,
@@ -174,6 +186,10 @@ export {
 export type {
   CapabilityDefinition,
   CapabilityEventSchema,
+  CapabilityHistory,
+  CapabilityHistoryField,
+  CapabilityHistoryItems,
+  CapabilityHistoryPrimary,
   CapabilityMethodAuth,
   CapabilityMethodCaller,
   CapabilityMethodKind,
@@ -181,6 +197,7 @@ export type {
   CapabilityMethodSchema,
   CapabilityMountHint,
   CapabilityMountKind,
+  CapabilityPowerHint,
   CapabilityStatusItemArray,
   CapabilityStatusKind,
   CapabilityStatusSchema,
@@ -190,21 +207,16 @@ export type {
   DeviceConfigUiSpec,
   DeviceConfigWidgetUi,
   DeviceSettingsContribution,
+  HistoryUnit,
   InferDeviceProxyCap,
   InferEvents,
   InferName,
   InferNativeProvider,
   InferProvider,
   InferRuntimeState,
-  CapabilityHistory,
-  CapabilityHistoryField,
-  CapabilityPowerHint,
   PowerHintField,
   PowerHintMethods,
   PowerHintMode,
-  CapabilityHistoryItems,
-  CapabilityHistoryPrimary,
-  HistoryUnit,
   ProviderKind,
   RuntimeStateDurability,
   UiContribution,
@@ -213,19 +225,43 @@ export type {
 } from './capability-definition.js'
 export {
   DEFAULT_RUNTIME_STATE_DURABILITY,
-  HISTORY_DEFAULT_MIN_INTERVAL_MS,
-  HISTORY_UNIT_LABELS,
-  historyItemFieldPath,
   DEVICE_SETTINGS_CONTRIBUTION_METHODS,
   DEVICE_STATUS_METHOD,
   event,
   expandCapMethods,
+  HISTORY_DEFAULT_MIN_INTERVAL_MS,
+  HISTORY_UNIT_LABELS,
+  historyItemFieldPath,
   isDeviceConfigCap,
   method,
   optionalMethod,
   PROVIDER_PIN_FIELD,
   resolveCapMount,
 } from './capability-definition.js'
+export {
+  type ClusterUpdateBlocker,
+  ClusterUpdateBlockerSchema,
+  type ClusterUpdateFailureReason,
+  ClusterUpdateFailureReasonSchema,
+  type ClusterUpdateJob,
+  ClusterUpdateJobSchema,
+  type ClusterUpdateJobState,
+  ClusterUpdateJobStateSchema,
+  type ClusterUpdateOptions,
+  ClusterUpdateOptionsSchema,
+  type ClusterUpdatePlan,
+  ClusterUpdatePlanSchema,
+  type ClusterUpdateStep,
+  type ClusterUpdateStepKind,
+  ClusterUpdateStepKindSchema,
+  ClusterUpdateStepSchema,
+  type ClusterUpdateStepStatus,
+  ClusterUpdateStepStatusSchema,
+  clusterUpdateCapability,
+  type IClusterUpdateProvider,
+  type StartClusterUpdateResult,
+  StartClusterUpdateResultSchema,
+} from './cluster-update.cap.js'
 export {
   COMPOSER_RUNNER_ID,
   type ComposerApplyInput,
@@ -328,217 +364,6 @@ export {
   databaseSnapshotCapability,
   type IDatabaseSnapshotProvider,
 } from './database-snapshot.cap.js'
-export { migrationsCapability, type IMigrationsProvider } from './migrations.cap.js'
-export { CALLER_STAMPED_CAPABILITIES, withoutCallerStamp } from './caller-stamp.js'
-export { CAP_METHOD_NOT_IMPLEMENTED, isCapMethodAbsent } from './cap-method-absent.js'
-export {
-  type IStorageAdminProvider,
-  type StaleDataReport,
-  StaleDataReportSchema,
-  type StaleKindFinding,
-  StaleKindFindingSchema,
-  type StaleSettingsKeyFinding,
-  StaleSettingsKeyFindingSchema,
-  type StorageKind,
-  StorageKindSchema,
-  type StorageTable,
-  StorageTableSchema,
-  storageAdminCapability,
-} from './storage-admin.cap.js'
-export {
-  type DeclareKindResult,
-  DeclareKindResultSchema,
-  type IRecordsProvider,
-  type RecordInput,
-  RecordInputSchema,
-  type RecordQueryInput,
-  RecordQueryInputSchema,
-  type RecordQueryResult,
-  RecordQueryResultSchema,
-  type RecordView,
-  RecordViewSchema,
-  type RecordWhere,
-  RecordWhereSchema,
-  type RecordWhereValue,
-  RecordIdSchema,
-  RecordBodySchema,
-  RecordSecretRefsSchema,
-  type RecordTransactOp,
-  RecordTransactOpSchema,
-  recordsCapability,
-} from './records.cap.js'
-export {
-  type EntryKindInfo,
-  EntryKindInfoSchema,
-  type EntryView,
-  EntryViewSchema,
-  type IRecordEntriesProvider,
-  recordEntriesCapability,
-} from './record-entries.cap.js'
-export {
-  type IKeychainProvider,
-  KEYCHAIN_MAX_REFS_PER_CALL,
-  type KeychainResolveEntry,
-  KeychainResolveEntrySchema,
-  type KeychainResolveResult,
-  KeychainResolveResultSchema,
-  type KeychainSecretMeta,
-  KeychainSecretMetaSchema,
-  type KeychainState,
-  KeychainStateSchema,
-  type KeychainUnavailableReason,
-  KeychainUnavailableReasonSchema,
-  keychainCapability,
-} from './keychain.cap.js'
-export {
-  DEVICE_HISTORY_ENERGY_KEY,
-  DEVICE_HISTORY_QUERY_MANY_MAX_ITEMS,
-  DEVICE_HISTORY_ORPHAN_DELETE_MAX,
-  DEVICE_HISTORY_ORPHAN_LIST_MAX,
-  type DeviceHistoryOrphanDeleteEntry,
-  DeviceHistoryOrphanDeleteRefusalSchema,
-  type DeviceHistoryOrphanList,
-  type DeviceHistoryOrphanReason,
-  DeviceHistoryOrphanReasonSchema,
-  type DeviceHistoryOrphanSeries,
-  type DeviceHistoryTierRows,
-  type DeviceHistoryStatus,
-  DeviceHistoryStatusSchema,
-  type DeviceHistoryIngestResult,
-  type DeviceHistoryRangeDeleteRefusal,
-  DeviceHistoryRangeDeleteRefusalSchema,
-  type DeviceHistoryRangeDeleteResult,
-  type DeviceHistoryKind,
-  DeviceHistoryKindSchema,
-  type DeviceHistoryProducerKind,
-  DeviceHistoryProducerKindSchema,
-  type DeviceHistoryQueryManyEntry,
-  type DeviceHistoryQueryManyItem,
-  type DeviceHistoryQueryResult,
-  type DeviceHistoryQueryPoint,
-  type DeviceHistoryRefusalReason,
-  DeviceHistoryRefusalReasonSchema,
-  type DeviceHistoryResolution,
-  DeviceHistoryResolutionSchema,
-  type DeviceHistorySeriesInfo,
-  type DeviceHistorySubject,
-  DeviceHistorySubjectSchema,
-  type IDeviceHistoryProvider,
-  deviceHistoryCapability,
-} from './device-history.cap.js'
-export {
-  type ApplianceRunDetail,
-  ApplianceRunDetailSchema,
-  DEVICE_RUNS_MAX_PAGE,
-  type DeviceRun,
-  type DeviceRunDetail,
-  DeviceRunDetailSchema,
-  type DeviceRunEnergyMethod,
-  DeviceRunEnergyMethodSchema,
-  type DeviceRunKind,
-  DeviceRunKindSchema,
-  type DeviceRunOutcome,
-  DeviceRunOutcomeSchema,
-  type DeviceRunPhase,
-  DeviceRunPhaseSchema,
-  DeviceRunSchema,
-  type DeviceRunSource,
-  DeviceRunSourceSchema,
-  type DeviceRunState,
-  DeviceRunStateSchema,
-  type IDeviceRunsProvider,
-  deviceRunsCapability,
-} from './device-runs.cap.js'
-export {
-  DEVICE_TRANSITIONS_MAX_PAGE,
-  DEVICE_TRANSITIONS_RECORD_BATCH_MAX,
-  deviceTransitionsCapability,
-  type IDeviceTransitionsProvider,
-  type TransitionRecordResult,
-  TransitionRecordResultSchema,
-  type TransitionRefusalReason,
-  TransitionRefusalReasonSchema,
-  type TransitionsStatus,
-  TransitionsStatusSchema,
-} from './device-transitions.cap.js'
-export {
-  type DoNotDisturbStatus,
-  DoNotDisturbStatusSchema,
-  doNotDisturbCapability,
-  type IDoNotDisturbProvider,
-} from './do-not-disturb.cap.js'
-export {
-  type ITimedRunProvider,
-  TIMED_RUN_DEVICE_TYPES,
-  TIMED_RUN_DEVICE_ROLES,
-  TIMED_RUN_HEATER_LIMIT,
-  TIMED_RUN_PET_FOUNTAIN_LIMIT,
-  type TimedRunActuator,
-  TimedRunActuatorSchema,
-  type TimedRunLimit,
-  type TimedRunOptions,
-  TimedRunOptionsSchema,
-  type TimedRunQuickRun,
-  TimedRunQuickRunSchema,
-  type TimedRunRefusal,
-  TimedRunRefusalSchema,
-  type TimedRunResult,
-  TimedRunResultSchema,
-  type TimedRunSettingsPatch,
-  TimedRunSettingsPatchSchema,
-  type TimedRunStatus,
-  TimedRunStatusSchema,
-  type TimedRunUnit,
-  TimedRunUnitSchema,
-  timedRunCapability,
-  timedRunLimitOf,
-  timedRunMaxIn,
-  timedRunQuickRun,
-  timedRunRemaining,
-  timedRunSeconds,
-} from './timed-run.cap.js'
-export {
-  type DeviceCaStatus,
-  DeviceCaStatusSchema,
-  type DeviceCertificateSettings,
-  DeviceCertificateSettingsSchema,
-  deviceCredentialsCapability,
-  type IDeviceCredentialsProvider,
-} from './device-credentials.cap.js'
-export {
-  type HttpsLeafInfo,
-  HttpsLeafInfoSchema,
-  type INodeCertificatesProvider,
-  type MeshLeafInfo,
-  MeshLeafInfoSchema,
-  type NodeHttpsState,
-  NodeHttpsStateSchema,
-  nodeCertificatesCapability,
-} from './node-certificates.cap.js'
-export {
-  type IKeychainAdminProvider,
-  KEYCHAIN_RESET_CONFIRMATION,
-  type KeychainAdminSecret,
-  KeychainAdminSecretSchema,
-  type KeychainAuditAction,
-  KeychainAuditActionSchema,
-  type KeychainAuditEntry,
-  KeychainAuditEntrySchema,
-  type KeychainKeySource,
-  type KeychainKeySourceKind,
-  KeychainKeySourceKindSchema,
-  KeychainKeySourceSchema,
-  KEYCHAIN_RESET_TRIGGER_ACTOR,
-  type KeychainResetRecord,
-  KeychainResetRecordSchema,
-  type KeychainSecretUsage,
-  KeychainSecretUsageSchema,
-  type KeychainStatus,
-  KeychainStatusSchema,
-  keychainAdminCapability,
-  type SystemHeldSecretName,
-  SystemHeldSecretNameSchema,
-} from './keychain-admin.cap.js'
 export type {
   DecoderHwAccelConfig,
   HwAccelChoice,
@@ -581,17 +406,25 @@ export {
   AdoptionStatusSchema,
   AdoptResultSchema as AdoptionAdoptResultSchema,
   CandidateQueryFilterSchema,
-  deviceAdoptionCapability,
   type DiscoveredChildDevice,
   DiscoveredChildDeviceSchema,
   type DiscoveredChildStatus,
   DiscoveredChildStatusSchema,
+  deviceAdoptionCapability,
   GetCandidateInputSchema as AdoptionGetCandidateInputSchema,
   type IDeviceAdoptionProvider,
   ListCandidatesInputSchema as AdoptionListCandidatesInputSchema,
   ListCandidatesOutputSchema as AdoptionListCandidatesOutputSchema,
   ReleaseInputSchema as AdoptionReleaseInputSchema,
 } from './device-adoption.cap.js'
+export {
+  type DeviceCaStatus,
+  DeviceCaStatusSchema,
+  type DeviceCertificateSettings,
+  DeviceCertificateSettingsSchema,
+  deviceCredentialsCapability,
+  type IDeviceCredentialsProvider,
+} from './device-credentials.cap.js'
 export type {
   ExportEntityKind,
   ExportEntityRef,
@@ -603,25 +436,25 @@ export type {
 export {
   assertOwnExportInstance,
   DeviceExportStatusSchema,
+  deviceExportCapability,
   EXPORT_INSTANCE_UNKNOWN,
   EXPORT_NAME_REFUSED,
-  ExportNameRefusedError,
-  SetExposedNameInputSchema as DeviceExportSetExposedNameInputSchema,
-  ExportInstanceSchema,
-  ExportInstanceUnknownError,
-  statusInstanceOf,
-  statusInstanceOf as deviceExportStatusInstanceOf,
-  InstancePinSchema as DeviceExportInstancePinSchema,
-  deviceExportCapability,
   ExportEntityKindSchema,
   ExportEntityRefSchema,
-  ExposedEntitySchema,
-  ExposeEntityInputSchema,
-  UnexposeEntityInputSchema,
+  ExportInstanceSchema,
+  ExportInstanceUnknownError,
+  ExportNameRefusedError,
   ExportSetupFieldSchema,
   ExportSetupSchema,
   ExposedDeviceSchema,
+  ExposedEntitySchema,
+  ExposeEntityInputSchema,
   ExposeInputSchema as DeviceExportExposeInputSchema,
+  InstancePinSchema as DeviceExportInstancePinSchema,
+  SetExposedNameInputSchema as DeviceExportSetExposedNameInputSchema,
+  statusInstanceOf,
+  statusInstanceOf as deviceExportStatusInstanceOf,
+  UnexposeEntityInputSchema,
   UnexposeInputSchema as DeviceExportUnexposeInputSchema,
 } from './device-export.cap.js'
 export type {
@@ -659,6 +492,42 @@ export {
   ExtensionSourceSchema,
   unreachableExtensionSlotRow,
 } from './device-extension.cap.js'
+export {
+  DEVICE_HISTORY_ENERGY_KEY,
+  DEVICE_HISTORY_ORPHAN_DELETE_MAX,
+  DEVICE_HISTORY_ORPHAN_LIST_MAX,
+  DEVICE_HISTORY_QUERY_MANY_MAX_ITEMS,
+  type DeviceHistoryIngestResult,
+  type DeviceHistoryKind,
+  DeviceHistoryKindSchema,
+  type DeviceHistoryOrphanDeleteEntry,
+  DeviceHistoryOrphanDeleteRefusalSchema,
+  type DeviceHistoryOrphanList,
+  type DeviceHistoryOrphanReason,
+  DeviceHistoryOrphanReasonSchema,
+  type DeviceHistoryOrphanSeries,
+  type DeviceHistoryProducerKind,
+  DeviceHistoryProducerKindSchema,
+  type DeviceHistoryQueryManyEntry,
+  type DeviceHistoryQueryManyItem,
+  type DeviceHistoryQueryPoint,
+  type DeviceHistoryQueryResult,
+  type DeviceHistoryRangeDeleteRefusal,
+  DeviceHistoryRangeDeleteRefusalSchema,
+  type DeviceHistoryRangeDeleteResult,
+  type DeviceHistoryRefusalReason,
+  DeviceHistoryRefusalReasonSchema,
+  type DeviceHistoryResolution,
+  DeviceHistoryResolutionSchema,
+  type DeviceHistorySeriesInfo,
+  type DeviceHistoryStatus,
+  DeviceHistoryStatusSchema,
+  type DeviceHistorySubject,
+  DeviceHistorySubjectSchema,
+  type DeviceHistoryTierRows,
+  deviceHistoryCapability,
+  type IDeviceHistoryProvider,
+} from './device-history.cap.js'
 export type {
   CleanupDeletedDevicesResult,
   DeviceInfo,
@@ -673,7 +542,6 @@ export {
   DEVICE_TOMBSTONE_RETENTION_MS,
   DeviceInfoSchema,
   DeviceTombstoneSchema,
-  OrphanDeviceDataSchema,
   deviceManagerCapability,
   type IDeviceManagerProvider,
   LINKED_DEVICES_SLOT,
@@ -689,9 +557,55 @@ export {
   MigrateSwitchOutcomeSchema,
   type MigrateSwitchReport,
   MigrateSwitchReportSchema,
+  OrphanDeviceDataSchema,
   type WrapperActivationRead,
   WrapperActivationReadSchema,
 } from './device-manager.cap.js'
+// ── Providers & Integrations ─────────────────────────────────────────
+export {
+  DiscoveredDeviceSchema,
+  type DiscoveryHit,
+  DiscoveryHitSchema,
+  type DiscoveryMode,
+  DiscoveryModeSchema,
+  deviceProviderCapability,
+  ProviderStatusSchema,
+} from './device-provider.cap.js'
+export type {
+  DeviceDataEntry,
+  DeviceRemovedInput,
+  DeviceRemovedResult,
+  IDeviceRemovalHookProvider,
+} from './device-removal-hook.cap.js'
+export {
+  DeviceDataEntrySchema,
+  DeviceRemovedInputSchema,
+  DeviceRemovedResultSchema,
+  deviceRemovalHookCapability,
+} from './device-removal-hook.cap.js'
+export {
+  type ApplianceRunDetail,
+  ApplianceRunDetailSchema,
+  DEVICE_RUNS_MAX_PAGE,
+  type DeviceRun,
+  type DeviceRunDetail,
+  DeviceRunDetailSchema,
+  type DeviceRunEnergyMethod,
+  DeviceRunEnergyMethodSchema,
+  type DeviceRunKind,
+  DeviceRunKindSchema,
+  type DeviceRunOutcome,
+  DeviceRunOutcomeSchema,
+  type DeviceRunPhase,
+  DeviceRunPhaseSchema,
+  DeviceRunSchema,
+  type DeviceRunSource,
+  DeviceRunSourceSchema,
+  type DeviceRunState,
+  DeviceRunStateSchema,
+  deviceRunsCapability,
+  type IDeviceRunsProvider,
+} from './device-runs.cap.js'
 export {
   DEVICE_SEARCH_DEFAULT_LIMIT,
   DEVICE_SEARCH_MAX_LIMIT,
@@ -714,16 +628,6 @@ export {
   type DeviceValueOption,
   DeviceValueOptionSchema,
 } from './device-search.js'
-// ── Providers & Integrations ─────────────────────────────────────────
-export {
-  DiscoveredDeviceSchema,
-  type DiscoveryHit,
-  DiscoveryHitSchema,
-  type DiscoveryMode,
-  DiscoveryModeSchema,
-  deviceProviderCapability,
-  ProviderStatusSchema,
-} from './device-provider.cap.js'
 export {
   type ClaimOutcome,
   ClaimOutcomeSchema,
@@ -735,6 +639,24 @@ export {
   FieldClaimModeSchema,
   FieldClaimSchema,
 } from './device-state.cap.js'
+export {
+  DEVICE_TRANSITIONS_MAX_PAGE,
+  DEVICE_TRANSITIONS_RECORD_BATCH_MAX,
+  deviceTransitionsCapability,
+  type IDeviceTransitionsProvider,
+  type TransitionRecordResult,
+  TransitionRecordResultSchema,
+  type TransitionRefusalReason,
+  TransitionRefusalReasonSchema,
+  type TransitionsStatus,
+  TransitionsStatusSchema,
+} from './device-transitions.cap.js'
+export {
+  type DoNotDisturbStatus,
+  DoNotDisturbStatusSchema,
+  doNotDisturbCapability,
+  type IDoNotDisturbProvider,
+} from './do-not-disturb.cap.js'
 export type {
   EmbeddingFailedModel,
   EmbeddingFailedRequirement,
@@ -763,28 +685,6 @@ export {
   isEmbeddingModelFailed,
 } from './embedding-encoder.cap.js'
 export type {
-  INodeRemovalHookProvider,
-  NodeRemovedInput,
-  NodeRemovedResult,
-} from './node-removal-hook.cap.js'
-export {
-  NodeRemovedInputSchema,
-  NodeRemovedResultSchema,
-  nodeRemovalHookCapability,
-} from './node-removal-hook.cap.js'
-export type {
-  DeviceDataEntry,
-  DeviceRemovedInput,
-  DeviceRemovedResult,
-  IDeviceRemovalHookProvider,
-} from './device-removal-hook.cap.js'
-export {
-  DeviceDataEntrySchema,
-  DeviceRemovedInputSchema,
-  DeviceRemovedResultSchema,
-  deviceRemovalHookCapability,
-} from './device-removal-hook.cap.js'
-export type {
   FailureContribution,
   IFailureContributionProvider,
 } from './failure-contribution.cap.js'
@@ -798,9 +698,17 @@ export {
   type IFilesystemBrowseProvider,
 } from './filesystem-browse.cap.js'
 export {
+  AGENT_MDNS_QUERY_NAME,
+  AGENT_MDNS_SERVICE_TYPE,
+  AGENT_MDNS_TXT_KEYS,
   AUTOMATIC_HUB_ADDRESS_FLAGS,
   checkRoleAddress,
   HUB_ADDRESS_ROLES,
+  HUB_ID_PATTERN,
+  HUB_MDNS_QUERY_NAME,
+  HUB_MDNS_ROLE,
+  HUB_MDNS_SERVICE_TYPE,
+  HUB_MDNS_TXT_KEYS,
   type HubAddressCheck,
   type HubAddressFlags,
   type HubAddressRole,
@@ -808,17 +716,9 @@ export {
   type HubAddressRoles,
   type HubAddressSource,
   type HubAppConnectionsResolution,
-  HUB_MDNS_QUERY_NAME,
-  HUB_MDNS_ROLE,
-  HUB_MDNS_SERVICE_TYPE,
-  HUB_MDNS_TXT_KEYS,
-  HUB_ID_PATTERN,
-  isHubId,
-  AGENT_MDNS_QUERY_NAME,
-  AGENT_MDNS_SERVICE_TYPE,
-  AGENT_MDNS_TXT_KEYS,
   hubAddressHostname,
   isDefaultAppConnectionEndpoint,
+  isHubId,
   isSingleHubAddressRole,
   PUBLIC_ENDPOINT_HTTP_REASON,
   resolveAppConnections,
@@ -831,16 +731,77 @@ export {
   selectAppConnectionEndpoints,
   validateCustomAddress,
 } from './hub-address.js'
-export { addonCatalogHref } from './addon-catalog-href.js'
+export {
+  type IIntegrationInstancesProvider,
+  type IntegrationInstance,
+  type IntegrationInstanceDescription,
+  IntegrationInstanceDescriptionSchema,
+  type IntegrationInstanceDiscovery,
+  IntegrationInstanceDiscoverySchema,
+  IntegrationInstanceIdSchema,
+  type IntegrationInstanceKind,
+  IntegrationInstanceKindSchema,
+  type IntegrationInstanceLink,
+  IntegrationInstanceLinkSchema,
+  type IntegrationInstanceMode,
+  IntegrationInstanceModeSchema,
+  type IntegrationInstancePatch,
+  IntegrationInstancePatchSchema,
+  type IntegrationInstanceRole,
+  IntegrationInstanceRoleSchema,
+  IntegrationInstanceSchema,
+  type IntegrationInstanceStatus,
+  IntegrationInstanceStatusSchema,
+  integrationInstancesCapability,
+} from './integration-instances.cap.js'
+export {
+  type IKeychainProvider,
+  KEYCHAIN_MAX_REFS_PER_CALL,
+  type KeychainResolveEntry,
+  KeychainResolveEntrySchema,
+  type KeychainResolveResult,
+  KeychainResolveResultSchema,
+  type KeychainSecretMeta,
+  KeychainSecretMetaSchema,
+  type KeychainState,
+  KeychainStateSchema,
+  type KeychainUnavailableReason,
+  KeychainUnavailableReasonSchema,
+  keychainCapability,
+} from './keychain.cap.js'
+export {
+  type IKeychainAdminProvider,
+  KEYCHAIN_RESET_CONFIRMATION,
+  KEYCHAIN_RESET_TRIGGER_ACTOR,
+  type KeychainAdminSecret,
+  KeychainAdminSecretSchema,
+  type KeychainAuditAction,
+  KeychainAuditActionSchema,
+  type KeychainAuditEntry,
+  KeychainAuditEntrySchema,
+  type KeychainKeySource,
+  type KeychainKeySourceKind,
+  KeychainKeySourceKindSchema,
+  KeychainKeySourceSchema,
+  type KeychainResetRecord,
+  KeychainResetRecordSchema,
+  type KeychainSecretUsage,
+  KeychainSecretUsageSchema,
+  type KeychainStatus,
+  KeychainStatusSchema,
+  keychainAdminCapability,
+  type SystemHeldSecretName,
+  SystemHeldSecretNameSchema,
+} from './keychain-admin.cap.js'
 export {
   type HfModelResolution,
   HfModelResolutionSchema,
   type ILlmProvider,
+  LLM_PROFILE_KIND_PATTERN,
   type LlmDefault,
   LlmDefaultSchema,
   type LlmDefaultSelector,
   LlmDefaultSelectorSchema,
-  LLM_PROFILE_KIND_PATTERN,
   type LlmListModelsErrorCode,
   LlmListModelsErrorCodeSchema,
   type LlmListModelsInput,
@@ -871,12 +832,6 @@ export {
   type ManagedModelCatalogEntry,
   ManagedModelCatalogEntrySchema,
 } from './llm.cap.js'
-export {
-  type RawSecretMigrationInput,
-  RawSecretMigrationInputSchema,
-  type RawSecretMigrationReport,
-  RawSecretMigrationReportSchema,
-} from './raw-secret-migration.js'
 export {
   type AppleFmAvailability,
   AppleFmAvailabilitySchema,
@@ -940,20 +895,20 @@ export {
 } from './load-contribution.cap.js'
 export type { ILogChannelsProvider, LogChannelApplyResult } from './log-channels.cap.js'
 export { LogChannelApplyResultSchema, logChannelsCapability } from './log-channels.cap.js'
+export type {
+  LogReadCapabilities,
+  LogReadEntry,
+  LogReadQuery,
+  LogReadResult,
+} from './log-destination.cap.js'
 export {
   LogEntrySchema,
   LogLevelSchema,
-  LogReadQuerySchema,
-  LogReadEntrySchema,
-  LogReadResultSchema,
   LogReadCapabilitiesSchema,
+  LogReadEntrySchema,
+  LogReadQuerySchema,
+  LogReadResultSchema,
   logDestinationCapability,
-} from './log-destination.cap.js'
-export type {
-  LogReadQuery,
-  LogReadEntry,
-  LogReadResult,
-  LogReadCapabilities,
 } from './log-destination.cap.js'
 export type {
   ILoginMethodProvider,
@@ -976,6 +931,7 @@ export {
   metricsProviderCapability,
   SystemMetricsSchema,
 } from './metrics-provider.cap.js'
+export { type IMigrationsProvider, migrationsCapability } from './migrations.cap.js'
 export type {
   IModelConvertProvider,
   ModelConvertInput,
@@ -1020,15 +976,6 @@ export {
   StartEmbeddedInputSchema,
 } from './mqtt-broker.cap.js'
 export type {
-  BoardKeyBoard,
-  BoardKeyFailureReason,
-  BoardKeyListResult,
-  BoardKeyResult,
-  BoardKeySource,
-  IBoardKeySourceProvider,
-} from './board-key-source.cap.js'
-export { BoardKeyFailureReasonSchema, boardKeySourceCapability } from './board-key-source.cap.js'
-export type {
   NetworkAccessStatus,
   NetworkEndpoint,
   NetworkTunnelStartedData,
@@ -1039,6 +986,26 @@ export {
   NetworkTunnelStartedDataSchema,
   networkAccessCapability,
 } from './network-access.cap.js'
+export {
+  type HttpsLeafInfo,
+  HttpsLeafInfoSchema,
+  type INodeCertificatesProvider,
+  type MeshLeafInfo,
+  MeshLeafInfoSchema,
+  type NodeHttpsState,
+  NodeHttpsStateSchema,
+  nodeCertificatesCapability,
+} from './node-certificates.cap.js'
+export type {
+  INodeRemovalHookProvider,
+  NodeRemovedInput,
+  NodeRemovedResult,
+} from './node-removal-hook.cap.js'
+export {
+  NodeRemovedInputSchema,
+  NodeRemovedResultSchema,
+  nodeRemovalHookCapability,
+} from './node-removal-hook.cap.js'
 export {
   type Attachment,
   type AttachmentMediaType,
@@ -1091,11 +1058,12 @@ export {
   NC_ALARM_TRIGGERED_MAX_SEC,
   NC_AUDIO_DBFS_FLOOR,
   NC_AUTHORABLE_SYSTEM_EVENT_KINDS,
-  NC_LEGACY_SYSTEM_EVENT_KINDS,
   NC_BATTERY_CONSUMABLE_SYSTEM_EVENT_KINDS,
   NC_CLIP_POST_ROLL_DEFAULT_SEC,
   NC_CLIP_PRE_ROLL_DEFAULT_SEC,
   NC_CLIP_RETENTION_MAX_SEC,
+  NC_COMMAND_ACTOR_KINDS,
+  NC_COMMAND_OUTCOMES,
   NC_CONDITION_CATALOG,
   NC_CONFIRM_DEFAULT_MAX_IMAGE_PX,
   NC_CONFIRM_DEFAULT_TIMEOUT_MS,
@@ -1105,18 +1073,22 @@ export {
   NC_CONSUMABLE_LOW_PERCENT_MAX,
   NC_CONSUMABLE_SYSTEM_EVENT_KINDS,
   NC_DEFAULT_SNOOZE_MINUTES,
-  NC_GROUPING_DEFAULT_SEC,
-  NC_GROUPING_MAX_SEC,
-  NC_GROUPING_MIN_SEC,
   NC_GROUP_WITHIN_MAX_SEC,
   NC_GROUP_WITHIN_OTHER_DEFAULT_SEC,
   NC_GROUP_WITHIN_SYSTEM_DEFAULT_SEC,
+  NC_GROUPING_DEFAULT_SEC,
+  NC_GROUPING_MAX_SEC,
+  NC_GROUPING_MIN_SEC,
   NC_HISTORY_LIMIT_DEFAULT,
   NC_HISTORY_LIMIT_MAX,
+  NC_LEGACY_SYSTEM_EVENT_KINDS,
   NC_MAX_PER_TRACK_IMMEDIATE,
   NC_RULE_CLEARABLE_KEYS,
   NC_RULE_RETIRED_CLEAR_KEYS,
   NC_SNOOZE_MAX_MINUTES,
+  NC_STATE_SUMMARY_SECTION_IDS,
+  NC_TEMPLATE_TITLE_MAX_CHARS,
+  NcActionIdSchema,
   type NcAlarmBlocking,
   type NcAlarmBlockingEdit,
   NcAlarmBlockingEditSchema,
@@ -1197,6 +1169,8 @@ export {
   NcHistoryStatusSchema,
   type NcHistorySubject,
   NcHistorySubjectSchema,
+  type NcHookActionIds,
+  NcHookActionIdsSchema,
   type NcLinkedCameraMode,
   NcLinkedCameraModeSchema,
   type NcMediaFrame,
@@ -1212,17 +1186,10 @@ export {
   type NcRule,
   type NcRuleActions,
   NcRuleActionsSchema,
-  NcActionIdSchema,
-  type NcHookActionIds,
-  NcHookActionIdsSchema,
   type NcRuleClearableKey,
   NcRuleClearableKeySchema,
   type NcRuleInput,
   NcRuleInputSchema,
-  type NcRuleTagsEntry,
-  NcRuleTagsEntrySchema,
-  type NcTaggedRuleKind,
-  NcTaggedRuleKindSchema,
   NcRuleKindSchema,
   type NcRuleLastRun,
   NcRuleLastRunSchema,
@@ -1233,15 +1200,10 @@ export {
   type NcRulePatch,
   NcRulePatchSchema,
   NcRuleSchema,
+  type NcRuleTagsEntry,
+  NcRuleTagsEntrySchema,
   type NcRuleTarget,
   NcRuleTargetSchema,
-  type NcTargetAttachment,
-  NcTargetAttachmentSchema,
-  type NcTargetOverride,
-  NcTargetOverrideSchema,
-  NC_TEMPLATE_TITLE_MAX_CHARS,
-  type NcTargetOverrides,
-  NcTargetOverridesSchema,
   type NcRuleUpdateInput,
   NcRuleUpdateInputSchema,
   type NcSceneCondition,
@@ -1267,7 +1229,6 @@ export {
   type NcStateSummaryPreviewSection,
   NcStateSummaryPreviewSectionSchema,
   type NcStateSummarySectionId,
-  NC_STATE_SUMMARY_SECTION_IDS,
   NcStateSummarySectionIdSchema,
   type NcStateSummarySplit,
   NcStateSummarySplitSchema,
@@ -1276,14 +1237,20 @@ export {
   type NcSystemEventDelivery,
   type NcSystemEventDeliveryMode,
   NcSystemEventDeliveryModeSchema,
+  NcSystemEventDeliverySchema,
   type NcSystemEventDeliveryToggle,
   NcSystemEventDeliveryToggleSchema,
-  type NcSystemEventModesDelivery,
-  NcSystemEventDeliverySchema,
   type NcSystemEventKind,
   NcSystemEventKindSchema,
-  NC_COMMAND_ACTOR_KINDS,
-  NC_COMMAND_OUTCOMES,
+  type NcSystemEventModesDelivery,
+  type NcTaggedRuleKind,
+  NcTaggedRuleKindSchema,
+  type NcTargetAttachment,
+  NcTargetAttachmentSchema,
+  type NcTargetOverride,
+  NcTargetOverrideSchema,
+  type NcTargetOverrides,
+  NcTargetOverridesSchema,
   type NcTemplateDefault,
   NcTemplateDefaultSchema,
   type NcTemplateFamily,
@@ -1318,35 +1285,14 @@ export {
   OauthIntegrationDescriptorSchema,
   oauthIntegrationCapability,
 } from './oauth-integration.cap.js'
-export {
-  type IIntegrationInstancesProvider,
-  type IntegrationInstance,
-  type IntegrationInstanceDescription,
-  IntegrationInstanceDescriptionSchema,
-  type IntegrationInstanceDiscovery,
-  IntegrationInstanceDiscoverySchema,
-  IntegrationInstanceIdSchema,
-  type IntegrationInstanceKind,
-  type IntegrationInstanceLink,
-  IntegrationInstanceLinkSchema,
-  IntegrationInstanceKindSchema,
-  type IntegrationInstanceMode,
-  IntegrationInstanceModeSchema,
-  type IntegrationInstancePatch,
-  IntegrationInstancePatchSchema,
-  type IntegrationInstanceRole,
-  IntegrationInstanceRoleSchema,
-  IntegrationInstanceSchema,
-  type IntegrationInstanceStatus,
-  IntegrationInstanceStatusSchema,
-  integrationInstancesCapability,
-} from './integration-instances.cap.js'
 // analysis-pipeline + analysis-data-persistence caps removed in P12b —
 // addon-pipeline-analytics owns post-detection refinement end-to-end
 // (Track + per-kind events + media) via its own single cap. See
 // pipeline-analytics.cap.ts. track-trail cap removed in P12a — trails
 // are `track.positions[]` on the Track schema.
 export {
+  type AddRetrainFrameFromRecordingResult,
+  AddRetrainFrameFromRecordingResultSchema,
   AnalyticsLtsSeriesSchema,
   type AudioEvent,
   type AudioEventDraft,
@@ -1409,16 +1355,6 @@ export {
   RecentTracksPageSchema,
   type RecentTracksQuery,
   RecentTracksQueryInput,
-  type RetrainBoxReview,
-  RetrainBoxReviewSchema,
-  type RetrainDismissed,
-  RetrainDismissedSchema,
-  type RetrainFrameReview,
-  RetrainFrameReviewSchema,
-  type RetrainOrigin,
-  RetrainOriginSchema,
-  type RetrainReviewStatus,
-  RetrainReviewStatusSchema,
   type RetrainAnnotation,
   type RetrainAnnotationDraft,
   RetrainAnnotationDraftSchema,
@@ -1430,50 +1366,42 @@ export {
   RetrainArchiveResultSchema,
   type RetrainArchiveTarget,
   RetrainArchiveTargetSchema,
+  type RetrainAssistProfile,
+  RetrainAssistProfileSchema,
   type RetrainAssistResult,
   RetrainAssistResultSchema,
   RetrainAssistSubjectSchema,
-  RetrainCopyRefusalSchema,
-  type RetrainExportFilter,
-  RetrainExportFilterSchema,
-  type RetrainExportLayout,
-  RetrainExportLayoutSchema,
-  type AddRetrainFrameFromRecordingResult,
-  AddRetrainFrameFromRecordingResultSchema,
-  type RetrainDatasetSelection,
-  RetrainDatasetSelectionSchema,
-  type RetrainDatasetStats,
-  RetrainDatasetStatsSchema,
-  type RetrainDatasetVersion,
-  RetrainDatasetVersionSchema,
-  type RetrainTrainingCorpusResolveResult,
-  RetrainTrainingCorpusResolveResultSchema,
-  type RetrainTrainingCorpusSelection,
-  RetrainTrainingCorpusSelectionSchema,
-  type RetrainAssistProfile,
-  RetrainAssistProfileSchema,
-  type RetrainLlmAssistResult,
-  RetrainLlmAssistResultSchema,
-  type RetrainLlmProposal,
-  RetrainLlmProposalSchema,
-  type RetrainLlmReview,
-  RetrainLlmReviewSchema,
+  type RetrainBoxReview,
+  RetrainBoxReviewSchema,
   type RetrainCollection,
   type RetrainCollectionCreateResult,
   RetrainCollectionCreateResultSchema,
   type RetrainCollectionRenameResult,
   RetrainCollectionRenameResultSchema,
   RetrainCollectionSchema,
+  RetrainCopyRefusalSchema,
   type RetrainCorpusFilter,
   RetrainCorpusFilterSchema,
   type RetrainCorpusKpi,
-  RetrainCorpusKpiSchema,
   type RetrainCorpusKpiCameraRow,
   RetrainCorpusKpiCameraRowSchema,
+  RetrainCorpusKpiSchema,
   type RetrainCorpusPage,
-  RetrainCorpusPageSchema,
   type RetrainCorpusPageFrame,
   RetrainCorpusPageFrameSchema,
+  RetrainCorpusPageSchema,
+  type RetrainDatasetSelection,
+  RetrainDatasetSelectionSchema,
+  type RetrainDatasetStats,
+  RetrainDatasetStatsSchema,
+  type RetrainDatasetVersion,
+  RetrainDatasetVersionSchema,
+  type RetrainDismissed,
+  RetrainDismissedSchema,
+  type RetrainExportFilter,
+  RetrainExportFilterSchema,
+  type RetrainExportLayout,
+  RetrainExportLayoutSchema,
   type RetrainFrame,
   type RetrainFrameCandidate,
   RetrainFrameCandidateSchema,
@@ -1481,19 +1409,35 @@ export {
   RetrainFrameListSchema,
   type RetrainFrameOrigin,
   RetrainFrameOriginSchema,
+  type RetrainFrameReview,
+  RetrainFrameReviewSchema,
   RetrainFrameSchema,
   type RetrainFrameSelection,
   RetrainFrameSelectionSchema,
   type RetrainFrameWorkState,
   RetrainFrameWorkStateSchema,
+  type RetrainLlmAssistResult,
+  RetrainLlmAssistResultSchema,
+  type RetrainLlmProposal,
+  RetrainLlmProposalSchema,
+  type RetrainLlmReview,
+  RetrainLlmReviewSchema,
   type RetrainMacroClass,
   RetrainMacroClassSchema,
+  type RetrainOrigin,
+  RetrainOriginSchema,
   type RetrainPipelineBox,
   RetrainPipelineBoxSchema,
+  type RetrainReviewStatus,
+  RetrainReviewStatusSchema,
   type RetrainStatus,
   RetrainStatusSchema,
   type RetrainTrack,
   RetrainTrackSchema,
+  type RetrainTrainingCorpusResolveResult,
+  RetrainTrainingCorpusResolveResultSchema,
+  type RetrainTrainingCorpusSelection,
+  RetrainTrainingCorpusSelectionSchema,
   type RetrainTransitionResult,
   RetrainTransitionResultSchema,
   type RetrainVerdict,
@@ -1549,6 +1493,7 @@ export {
   EffectiveTuningSchema,
   ModelSubstitutionSchema,
   NativeCropRefSchema,
+  NormalizedRectSchema,
   PipelineDefaultStepSchema,
   PipelineEngineChoiceSchema,
   PipelineRunResultBridge,
@@ -1567,12 +1512,12 @@ export type {
   CameraDetectionPhase,
   CameraDetectionProvisioning,
   CameraDetectionProvisioningState,
+  CameraDetectionSource,
   CameraDetectionStatus,
   CameraMotionStatus,
   CameraRecordingMode,
   CameraRecordingStatus,
   CameraSourceStatus,
-  CameraDetectionSource,
   CameraSourceStream,
   CameraStatus,
   CameraStatusDegradation,
@@ -1597,10 +1542,10 @@ export {
   CameraBrokerProfileSchema,
   CameraBrokerStatusSchema,
   CameraDecoderStatusSchema,
-  CameraDetectionSourceSchema,
   CameraDetectionPhaseSchema,
   CameraDetectionProvisioningSchema,
   CameraDetectionProvisioningStateSchema,
+  CameraDetectionSourceSchema,
   CameraDetectionStatusSchema,
   CameraMotionStatusSchema,
   CameraRecordingModeSchema,
@@ -1656,8 +1601,8 @@ export {
   MotionSourcesSchema,
   motionSourceLabel,
   type NativeCropBbox,
-  type NativeCropCapResult,
   NativeCropBboxSchema,
+  type NativeCropCapResult,
   NativeCropResultSchema,
   OccupancyBurstRefusalSchema,
   ParkedFrameKindSchema,
@@ -1676,6 +1621,42 @@ export {
   type SessionTrigger,
   SessionTriggerSchema,
 } from './pipeline-runner.cap.js'
+export {
+  type RawSecretMigrationInput,
+  RawSecretMigrationInputSchema,
+  type RawSecretMigrationReport,
+  RawSecretMigrationReportSchema,
+} from './raw-secret-migration.js'
+export {
+  type EntryKindInfo,
+  EntryKindInfoSchema,
+  type EntryView,
+  EntryViewSchema,
+  type IRecordEntriesProvider,
+  recordEntriesCapability,
+} from './record-entries.cap.js'
+export {
+  type DeclareKindResult,
+  DeclareKindResultSchema,
+  type IRecordsProvider,
+  RecordBodySchema,
+  RecordIdSchema,
+  type RecordInput,
+  RecordInputSchema,
+  type RecordQueryInput,
+  RecordQueryInputSchema,
+  type RecordQueryResult,
+  RecordQueryResultSchema,
+  RecordSecretRefsSchema,
+  type RecordTransactOp,
+  RecordTransactOpSchema,
+  type RecordView,
+  RecordViewSchema,
+  type RecordWhere,
+  RecordWhereSchema,
+  type RecordWhereValue,
+  recordsCapability,
+} from './records.cap.js'
 export type {
   AudioClassifyOutcome,
   AudioNotClassifiedReason,
@@ -1739,35 +1720,18 @@ export {
   type SensorEventKindDescriptor,
 } from './sensor-event-kinds.js'
 export {
-  type ClusterUpdateBlocker,
-  ClusterUpdateBlockerSchema,
-  clusterUpdateCapability,
-  type ClusterUpdateFailureReason,
-  ClusterUpdateFailureReasonSchema,
-  type ClusterUpdateJob,
-  ClusterUpdateJobSchema,
-  type ClusterUpdateJobState,
-  ClusterUpdateJobStateSchema,
-  type ClusterUpdateOptions,
-  ClusterUpdateOptionsSchema,
-  type ClusterUpdatePlan,
-  ClusterUpdatePlanSchema,
-  type ClusterUpdateStep,
-  type ClusterUpdateStepKind,
-  ClusterUpdateStepKindSchema,
-  ClusterUpdateStepSchema,
-  type ClusterUpdateStepStatus,
-  ClusterUpdateStepStatusSchema,
-  type IClusterUpdateProvider,
-  type StartClusterUpdateResult,
-  StartClusterUpdateResultSchema,
-} from './cluster-update.cap.js'
-export {
+  type DesktopAppStatus,
+  DesktopAppStatusSchema,
   type ImageContract,
   ImageContractSchema,
   type ImageContractState,
   ImageContractStateSchema,
+  type InstallDesktopUpdateReason,
+  InstallDesktopUpdateReasonSchema,
+  type InstallDesktopUpdateResult,
+  InstallDesktopUpdateResultSchema,
   type IServerManagementProvider,
+  type LaunchOverrides,
   type RunnerBootCheck,
   RunnerBootCheckSchema,
   type RunnerRefusal,
@@ -1778,9 +1742,6 @@ export {
   ServerPackageStatusSchema,
   type ServerRollbackInfo,
   ServerRollbackInfoSchema,
-  type LaunchOverrides,
-  type SetLaunchOverridesInput,
-  type SetLaunchOverridesResult,
   type ServerUpdateActionResult,
   ServerUpdateActionResultSchema,
   type ServerUpdateCheckResult,
@@ -1789,15 +1750,11 @@ export {
   ServerUpdateOutcomeSchema,
   type ServerUpdateState,
   ServerUpdateStateSchema,
+  type SetLaunchOverridesInput,
+  type SetLaunchOverridesResult,
   serverManagementCapability,
   type UpdateBlocker,
   UpdateBlockerSchema,
-  type DesktopAppStatus,
-  DesktopAppStatusSchema,
-  type InstallDesktopUpdateReason,
-  InstallDesktopUpdateReasonSchema,
-  type InstallDesktopUpdateResult,
-  InstallDesktopUpdateResultSchema,
   type WrapperEvidence,
   WrapperEvidenceSchema,
   type WrapperIdentity,
@@ -1846,6 +1803,20 @@ export {
   storageCapability,
 } from './storage.cap.js'
 export {
+  type IStorageAdminProvider,
+  type StaleDataReport,
+  StaleDataReportSchema,
+  type StaleKindFinding,
+  StaleKindFindingSchema,
+  type StaleSettingsKeyFinding,
+  StaleSettingsKeyFindingSchema,
+  type StorageKind,
+  StorageKindSchema,
+  type StorageTable,
+  StorageTableSchema,
+  storageAdminCapability,
+} from './storage-admin.cap.js'
+export {
   type EvictableUsage,
   type EvictResult,
   type IStorageEvictableProvider,
@@ -1880,12 +1851,12 @@ export type {
   AudioCodecTarget,
   BrokerAudioClient,
   BrokerClients,
-  LiveViewerCount,
   BrokerConsumerAttribution,
   BrokerConsumerKind,
   BrokerEncodedClient,
   BrokerRtspClient,
   GetStreamWithCodecInput,
+  LiveViewerCount,
   PlaceholderReason,
   RtpSource,
   VideoCodecTarget,
@@ -1894,7 +1865,6 @@ export type {
 export {
   BrokerAudioClientSchema,
   BrokerClientsSchema,
-  LiveViewerCountSchema,
   BrokerConsumerAttributionSchema,
   BrokerConsumerKindSchema,
   BrokerEncodedClientSchema,
@@ -1916,6 +1886,7 @@ export {
   type EventMediaProduction,
   EventMediaProductionSchema,
   GetStreamWithCodecInputSchema,
+  LiveViewerCountSchema,
   PlaceholderReasonSchema,
   RtpSourceSchema,
   RtspRestreamEntrySchema,
@@ -1944,6 +1915,36 @@ export {
   TerminalSessionInfoSchema,
   terminalSessionCapability,
 } from './terminal-session.cap.js'
+export {
+  type ITimedRunProvider,
+  TIMED_RUN_DEVICE_ROLES,
+  TIMED_RUN_DEVICE_TYPES,
+  TIMED_RUN_HEATER_LIMIT,
+  TIMED_RUN_PET_FOUNTAIN_LIMIT,
+  type TimedRunActuator,
+  TimedRunActuatorSchema,
+  type TimedRunLimit,
+  type TimedRunOptions,
+  TimedRunOptionsSchema,
+  type TimedRunQuickRun,
+  TimedRunQuickRunSchema,
+  type TimedRunRefusal,
+  TimedRunRefusalSchema,
+  type TimedRunResult,
+  TimedRunResultSchema,
+  type TimedRunSettingsPatch,
+  TimedRunSettingsPatchSchema,
+  type TimedRunStatus,
+  TimedRunStatusSchema,
+  type TimedRunUnit,
+  TimedRunUnitSchema,
+  timedRunCapability,
+  timedRunLimitOf,
+  timedRunMaxIn,
+  timedRunQuickRun,
+  timedRunRemaining,
+  timedRunSeconds,
+} from './timed-run.cap.js'
 export type { ITurnProvider } from './turn-provider.cap.js'
 export { TurnServerSchema, turnProviderCapability } from './turn-provider.cap.js'
 export type { IUserPasskeysProvider, PasskeySummary } from './user-passkeys.cap.js'
@@ -2073,8 +2074,25 @@ export {
   type IAccessoriesProvider,
 } from './accessories.cap.js'
 export {
+  actionSourceCapability,
+  type IActionSourceProvider,
+} from './action-source.cap.js'
+export {
+  type ActionLinks,
+  ActionLinksSchema,
+  actionsCapability,
+  type IActionsProvider,
+} from './actions.cap.js'
+export {
+  ACTION_RUN_MAX_MS,
+  ACTION_RUN_TIMEOUT_MS,
+  ACTION_RUN_TRANSPORT_MARGIN_MS,
+  actionWaitTotalMs,
+} from './actions-timeouts.js'
+export {
   AddonAutoUpdateSchema,
   AddonListItemSchema,
+  type AddonSearchResult,
   AutoUpdateSettingsSchema,
   addonsCapability,
   type BulkUpdateItem,
@@ -2085,7 +2103,6 @@ export {
   type IAddonsProvider,
   InstalledPackageSchema,
   LogStreamEntrySchema,
-  type AddonSearchResult,
   type PackageInstallation,
   PackageInstallationSchema,
   type PackageInstallations,
@@ -2135,23 +2152,6 @@ export {
   type IAudioMetricsProvider,
 } from './audio-metrics.cap.js'
 export {
-  actionSourceCapability,
-  type IActionSourceProvider,
-} from './action-source.cap.js'
-export { type ISchedulersProvider, schedulersCapability } from './schedulers.cap.js'
-export {
-  ACTION_RUN_MAX_MS,
-  ACTION_RUN_TIMEOUT_MS,
-  ACTION_RUN_TRANSPORT_MARGIN_MS,
-  actionWaitTotalMs,
-} from './actions-timeouts.js'
-export {
-  type ActionLinks,
-  ActionLinksSchema,
-  actionsCapability,
-  type IActionsProvider,
-} from './actions.cap.js'
-export {
   type AutomationControlStatus,
   AutomationControlStatusSchema,
   automationControlCapability,
@@ -2164,17 +2164,6 @@ export {
   type IBatteryProvider,
 } from './battery.cap.js'
 export {
-  type DeviceErrorSeverity,
-  DeviceErrorSeveritySchema,
-  type DeviceFault,
-  DeviceFaultSchema,
-  ERROR_STATUS_COLD,
-  type ErrorStatus,
-  ErrorStatusSchema,
-  errorCapability,
-  type IErrorProvider,
-} from './error.cap.js'
-export {
   type BinaryStatus,
   BinaryStatusSchema,
   binaryCapability,
@@ -2186,120 +2175,8 @@ export {
   brightnessCapability,
   type IBrightnessProvider,
 } from './brightness.cap.js'
-export {
-  FAN_CAPTURE_FIELDS,
-  FAN_PRESETS_MAX,
-  FAN_PRESETS_REFUSALS,
-  type FanCaptureField,
-  FanCaptureFieldSchema,
-  type FanCaptureOmission,
-  FanCaptureOmissionSchema,
-  type FanPreset,
-  type FanPresetApplyResult,
-  FanPresetApplyResultSchema,
-  type FanPresetAxis,
-  FanPresetAxisSchema,
-  type FanPresetCaptureResult,
-  FanPresetCaptureResultSchema,
-  type FanPresetFieldResult,
-  FanPresetFieldResultSchema,
-  FanPresetSchema,
-  type FanPresetState,
-  FanPresetStateSchema,
-  type FanPresetsRefusal,
-  FanPresetsRefusalSchema,
-  type FanPresetsSetResult,
-  FanPresetsSetResultSchema,
-  type IFanPresetsProvider,
-  fanPresetsCapability,
-} from './fan-presets.cap.js'
-// Infrared: the command map (remote); the transport (ir-transmitter) is exported below
-export {
-  type IRemoteProvider,
-  REMOTE_CONFIG_REFUSALS,
-  REMOTE_MAX_REPEAT,
-  REMOTE_MEDIA_COMMANDS,
-  REMOTE_REFUSAL_REASONS,
-  type RemoteBoundCommand,
-  type RemoteCommandList,
-  RemoteCommandListSchema,
-  RemoteBoundCommandSchema,
-  type RemoteMediaCommand,
-  type RemoteMediaCommandResult,
-  RemoteMediaCommandResultSchema,
-  RemoteMediaCommandSchema,
-  type RemoteRefusalReason,
-  RemoteRefusalReasonSchema,
-  type RemoteSendResult,
-  RemoteSendResultSchema,
-  type RemoteSetConfigResult,
-  RemoteSetConfigResultSchema,
-  remoteCapability,
-} from './remote.cap.js'
-export {
-  HERO_ROW_MODELS_MAX,
-  heroLayoutCapability,
-  type HeroLayoutRows,
-  HeroLayoutRowsSchema,
-  type IHeroLayoutProvider,
-} from './hero-layout.cap.js'
-export {
-  type ITemplateProvider,
-  TEMPLATE_WRITE_REFUSALS,
-  type TemplateAutomationUser,
-  TemplateAutomationUserSchema,
-  type TemplateDeleteResult,
-  TemplateDeleteResultSchema,
-  type TemplateRecord,
-  TemplateRecordSchema,
-  type TemplateUser,
-  TemplateUserSchema,
-  type TemplateWriteResult,
-  TemplateWriteResultSchema,
-  templateCapability,
-} from './template.cap.js'
-export {
-  type ITagsProvider,
-  type TagEntry,
-  TagEntrySchema,
-  type TagListCounts,
-  TagListCountsSchema,
-  type TagUsageCounts,
-  TagUsageCountsSchema,
-  tagsCapability,
-} from './tags.cap.js'
-export {
-  type IRemoteLayoutComponentsProvider,
-  remoteLayoutComponentsCapability,
-} from './remote-layout-components.cap.js'
 // HA-targeted actuator caps (Phase C4 — fire-only button)
 export { buttonCapability, type IButtonProvider } from './button.cap.js'
-export {
-  irTransmitterCapability,
-  TransmitSettingKeySchema,
-  IrMediumSchema,
-  IrSendResultSchema,
-  IrTransmitterInfoSchema,
-  type IIrTransmitterProvider,
-  type TransmitSettingKey,
-  type IrMedium,
-  type IrSendResult,
-  type IrTransmitterInfo,
-  IrLearnResultSchema,
-  type IrLearnResult,
-  IrTransmitterAttemptSchema,
-  IrTransmitterSendRecordSchema,
-  IrTransmitterRuntimeStateSchema,
-  type IrTransmitterAttempt,
-  type IrTransmitterSendRecord,
-  type IrTransmitterRuntimeState,
-  type IrTransmitterStateUpdate,
-  irTransmitterStateAfter,
-  irTransmitterRecordsUpdate,
-  irTransmitterErrorCode,
-  IR_LEARN_TIMEOUT_DEFAULT_MS,
-  IR_LEARN_TIMEOUT_MAX_MS,
-} from './ir-transmitter.cap.js'
 export type {
   CalendarEvent,
   CalendarInfo,
@@ -2373,12 +2250,12 @@ export {
 export {
   type ColorHsvTriplet,
   type ColorInput,
-  parseColorInput,
   type ColorRgbTriplet,
   type ColorStatus,
   ColorStatusSchema,
   colorCapability,
   type IColorProvider,
+  parseColorInput,
 } from './color.cap.js'
 export {
   type ConnectivityStatus,
@@ -2387,24 +2264,24 @@ export {
   type IConnectivityProvider,
 } from './connectivity.cap.js'
 export {
-  type ConsumableItem,
-  ConsumableItemSchema,
   type ConsumableForm,
   ConsumableFormSchema,
-  consumableFormOf,
+  type ConsumableItem,
+  ConsumableItemSchema,
   type ConsumableKind,
   ConsumableKindSchema,
   type ConsumableLevel,
   ConsumableLevelSchema,
-  type ConsumableStatus,
-  ConsumableStatusSchema,
-  consumableKindOf,
   type ConsumableRemaining,
-  ConsumableRemainingSchema,
   type ConsumableRemainingKind,
   ConsumableRemainingKindSchema,
+  ConsumableRemainingSchema,
+  type ConsumableStatus,
+  ConsumableStatusSchema,
   type ConsumablesStatus,
   ConsumablesStatusSchema,
+  consumableFormOf,
+  consumableKindOf,
   consumablesCapability,
   type IConsumablesProvider,
 } from './consumables.cap.js'
@@ -2427,8 +2304,8 @@ export {
 } from './control.cap.js'
 export {
   resolveSelectStep,
-  selectNavigationMethods,
   type SelectStepDirection,
+  selectNavigationMethods,
 } from './control-select-navigation.js'
 // HA-targeted actuator caps (Phase C2)
 export {
@@ -2459,10 +2336,6 @@ export {
   RawStateResultSchema,
 } from './device-ops.cap.js'
 export {
-  displayPaletteCapability,
-  type IDisplayPaletteProvider,
-} from './display-palette.cap.js'
-export {
   type DeviceStatus,
   DeviceStatusSchema,
   deviceStatusCapability,
@@ -2491,6 +2364,10 @@ export {
   type IDishwasherProvider,
 } from './dishwasher.cap.js'
 export {
+  displayPaletteCapability,
+  type IDisplayPaletteProvider,
+} from './display-palette.cap.js'
+export {
   DOORBELL_RISE_DEBOUNCE_MS,
   type DoorbellPressEvent,
   DoorbellPressEventSchema,
@@ -2500,6 +2377,21 @@ export {
   type IDoorbellProvider,
 } from './doorbell.cap.js'
 export {
+  type EnergyConsumer,
+  EnergyConsumerSchema,
+  type EnergyGrid,
+  EnergyGridSchema,
+  type EnergySolar,
+  EnergySolarSchema,
+  type EnergyStorage,
+  EnergyStorageSchema,
+  type EnergySystemStatus,
+  EnergySystemStatusSchema,
+  energySystemCapability,
+  energySystemSelfConsumptionPct,
+  type IEnergySystemProvider,
+} from './energy-system.cap.js'
+export {
   type EnumSensorDateTimeFormat,
   EnumSensorDateTimeFormatSchema,
   type EnumSensorStatus,
@@ -2507,6 +2399,17 @@ export {
   enumSensorCapability,
   type IEnumSensorProvider,
 } from './enum-sensor.cap.js'
+export {
+  type DeviceErrorSeverity,
+  DeviceErrorSeveritySchema,
+  type DeviceFault,
+  DeviceFaultSchema,
+  ERROR_STATUS_COLD,
+  type ErrorStatus,
+  ErrorStatusSchema,
+  errorCapability,
+  type IErrorProvider,
+} from './error.cap.js'
 export {
   type EventEmitterStatus,
   EventEmitterStatusSchema,
@@ -2516,6 +2419,7 @@ export {
   type IEventEmitterProvider,
 } from './event-emitter.cap.js'
 export {
+  conventionalEventVocabulary,
   EVENT_VOCABULARY_KINDS,
   type EventVocabularyCarrier,
   type EventVocabularyEntry,
@@ -2526,7 +2430,6 @@ export {
   EventVocabularyKindSchema,
   type EventVocabularySource,
   EventVocabularySourceSchema,
-  conventionalEventVocabulary,
   eventTypesOfVocabulary,
   findVocabularyEntry,
   plainEventVocabulary,
@@ -2552,7 +2455,6 @@ export {
   FAN_OSCILLATION_AXIS_LIMITS,
   FAN_OSCILLATION_AXIS_REFUSALS,
   FAN_OSCILLATION_AXIS_SETTABLE,
-  fanAxisPath,
   type FanControlStatus,
   FanControlStatusSchema,
   type FanDirection,
@@ -2570,11 +2472,39 @@ export {
   type FanOscillationAxisResult,
   FanOscillationAxisResultSchema,
   FanOscillationAxisSchema,
+  fanAxisPath,
   fanControlCapability,
   type IFanControlProvider,
   type SetOscillationAxisInput,
   SetOscillationAxisInputSchema,
 } from './fan-control.cap.js'
+export {
+  FAN_CAPTURE_FIELDS,
+  FAN_PRESETS_MAX,
+  FAN_PRESETS_REFUSALS,
+  type FanCaptureField,
+  FanCaptureFieldSchema,
+  type FanCaptureOmission,
+  FanCaptureOmissionSchema,
+  type FanPreset,
+  type FanPresetApplyResult,
+  FanPresetApplyResultSchema,
+  type FanPresetAxis,
+  FanPresetAxisSchema,
+  type FanPresetCaptureResult,
+  FanPresetCaptureResultSchema,
+  type FanPresetFieldResult,
+  FanPresetFieldResultSchema,
+  FanPresetSchema,
+  type FanPresetState,
+  FanPresetStateSchema,
+  type FanPresetsRefusal,
+  FanPresetsRefusalSchema,
+  type FanPresetsSetResult,
+  FanPresetsSetResultSchema,
+  fanPresetsCapability,
+  type IFanPresetsProvider,
+} from './fan-presets.cap.js'
 export {
   type FeatureProbeStatus,
   FeatureProbeStatusSchema,
@@ -2589,6 +2519,12 @@ export {
 } from './flood.cap.js'
 export { type GasStatus, GasStatusSchema, gasCapability, type IGasProvider } from './gas.cap.js'
 export {
+  type GroupActive,
+  GroupActiveSchema,
+  groupActiveCapability,
+  type IGroupActiveProvider,
+} from './group-active.cap.js'
+export {
   type GroupCommandResult,
   GroupCommandResultSchema,
   type GroupCommands,
@@ -2597,96 +2533,52 @@ export {
   type IGroupCommandsProvider,
 } from './group-commands.cap.js'
 export {
-  type GroupActive,
-  GroupActiveSchema,
-  groupActiveCapability,
-  type IGroupActiveProvider,
-} from './group-active.cap.js'
-export {
   type GroupStatus,
   GroupStatusSchema,
   groupStatusCapability,
   type IGroupStatusProvider,
 } from './group-status.cap.js'
 export {
-  type EnergyConsumer,
-  type EnergyGrid,
-  type EnergySolar,
-  type EnergyStorage,
-  type EnergySystemStatus,
-  type IEnergySystemProvider,
-  EnergyConsumerSchema,
-  EnergyGridSchema,
-  EnergySolarSchema,
-  EnergyStorageSchema,
-  EnergySystemStatusSchema,
-  energySystemCapability,
-  energySystemSelfConsumptionPct,
-} from './energy-system.cap.js'
+  heatPumpControlCapability,
+  type IHeatPumpControlProvider,
+} from './heat-pump-control.cap.js'
 export {
-  type IWorkloadProvider,
-  type WorkloadAction,
-  type WorkloadControl,
-  type WorkloadControls,
-  type WorkloadOptions,
-  type WorkloadPort,
-  type WorkloadPortProtocol,
-  type WorkloadResources,
-  type WorkloadSections,
-  type WorkloadSettledState,
-  type WorkloadState,
-  type WorkloadStatus,
-  type WorkloadTransitionEventData,
-  type WorkloadTransitionKind,
-  WORKLOAD_ACTIONS,
-  WORKLOAD_ROLES,
-  WORKLOAD_STATES,
-  WORKLOAD_TRANSITION_CATEGORY,
-  WorkloadOptionsSchema,
-  WorkloadPortProtocolSchema,
-  WorkloadPortSchema,
-  WorkloadResourcesSchema,
-  WorkloadStateSchema,
-  WorkloadStatusSchema,
-  deriveWorkloadControls,
-  isWorkloadSettled,
-  workloadCapability,
-  workloadTransition,
-} from './workload.cap.js'
-export {
+  HEAT_PUMP_CIRCUIT_KINDS,
   type HeatPumpCircuit,
   type HeatPumpCircuitKind,
-  type HeatPumpEnergy,
-  type HeatPumpOptionSetting,
-  type HeatPumpPower,
-  type HeatPumpRangeSetting,
-  type HeatPumpStatus,
-  type HeatPumpSystem,
-  type HeatPumpTemperatures,
-  type IHeatPumpStatusProvider,
-  HEAT_PUMP_CIRCUIT_KINDS,
   HeatPumpCircuitKindSchema,
   HeatPumpCircuitSchema,
+  type HeatPumpEnergy,
   HeatPumpEnergySchema,
+  type HeatPumpOptionSetting,
   HeatPumpOptionSettingSchema,
+  type HeatPumpPower,
   HeatPumpPowerSchema,
+  type HeatPumpRangeSetting,
   HeatPumpRangeSettingSchema,
+  type HeatPumpStatus,
   HeatPumpStatusSchema,
+  type HeatPumpSystem,
   HeatPumpSystemSchema,
+  type HeatPumpTemperatures,
   HeatPumpTemperaturesSchema,
   heatPumpInstantCop,
   heatPumpStatusCapability,
+  type IHeatPumpStatusProvider,
 } from './heat-pump-status.cap.js'
-export {
-  type IHeatPumpControlProvider,
-  heatPumpControlCapability,
-} from './heat-pump-control.cap.js'
 export {
   type HeatingValveStatus,
   HeatingValveStatusSchema,
   heatingValveCapability,
   type IHeatingValveProvider,
 } from './heating-valve.cap.js'
+export {
+  HERO_ROW_MODELS_MAX,
+  type HeroLayoutRows,
+  HeroLayoutRowsSchema,
+  heroLayoutCapability,
+  type IHeroLayoutProvider,
+} from './hero-layout.cap.js'
 export {
   type HumidifierStatus,
   HumidifierStatusSchema,
@@ -2745,6 +2637,32 @@ export {
   intercomCapability,
 } from './intercom.cap.js'
 export {
+  type IIrTransmitterProvider,
+  IR_LEARN_TIMEOUT_DEFAULT_MS,
+  IR_LEARN_TIMEOUT_MAX_MS,
+  type IrLearnResult,
+  IrLearnResultSchema,
+  type IrMedium,
+  IrMediumSchema,
+  type IrSendResult,
+  IrSendResultSchema,
+  type IrTransmitterAttempt,
+  IrTransmitterAttemptSchema,
+  type IrTransmitterInfo,
+  IrTransmitterInfoSchema,
+  type IrTransmitterRuntimeState,
+  IrTransmitterRuntimeStateSchema,
+  type IrTransmitterSendRecord,
+  IrTransmitterSendRecordSchema,
+  type IrTransmitterStateUpdate,
+  irTransmitterCapability,
+  irTransmitterErrorCode,
+  irTransmitterRecordsUpdate,
+  irTransmitterStateAfter,
+  type TransmitSettingKey,
+  TransmitSettingKeySchema,
+} from './ir-transmitter.cap.js'
+export {
   type DeviceCodeSeverity,
   DeviceCodeSeveritySchema,
   type ILawnMowerControlProvider,
@@ -2780,20 +2698,11 @@ export {
   lockControlCapability,
 } from './lock-control.cap.js'
 export {
-  POWER_SOURCE_OFF_SECONDS_DEFAULT,
-  POWER_SOURCE_OFF_SECONDS_MAX,
-  POWER_SOURCE_OFF_SECONDS_MIN,
-  type IPowerSourceProvider,
-  type PowerSourceActionResult,
-  PowerSourceActionResultSchema,
-  type PowerSourceInfo,
-  PowerSourceInfoSchema,
-  type PowerSourceRefusalReason,
-  PowerSourceRefusalReasonSchema,
-  type PowerSourceState,
-  PowerSourceStateSchema,
-  powerSourceCapability,
-} from './power-source.cap.js'
+  type ILowPowerSleepProvider,
+  type LowPowerSleepStatus,
+  LowPowerSleepStatusSchema,
+  lowPowerSleepCapability,
+} from './low-power-sleep.cap.js'
 export {
   type MaskGridDims,
   MaskGridDimsSchema,
@@ -2815,26 +2724,20 @@ export {
   MaskShapeSchema,
 } from './mask-shape.js'
 export {
-  type MeterStatus,
-  MeterStatusSchema,
-  meterCapability,
-  type IMeterProvider,
-} from './meter.cap.js'
-export {
   type IMediaPlayerProvider,
+  MEDIA_PLAYER_MAX_STEPS,
   type MediaInfo,
+  type MediaPlayerAssumedField,
+  MediaPlayerAssumedFieldSchema,
   type MediaPlayerRepeat,
   MediaPlayerRepeatSchema,
   type MediaPlayerState,
   MediaPlayerStateSchema,
   type MediaPlayerStateSource,
   MediaPlayerStateSourceSchema,
-  MediaPlayerAssumedFieldSchema,
-  type MediaPlayerAssumedField,
   type MediaPlayerStatus,
   MediaPlayerStatusSchema,
   mediaPlayerCapability,
-  MEDIA_PLAYER_MAX_STEPS,
 } from './media-player.cap.js'
 // ── Mesh networks (Tailscale / Headscale / ZeroTier) ────────────────
 //
@@ -2851,6 +2754,12 @@ export {
   meshNetworkCapability,
 } from './mesh-network.cap.js'
 export {
+  type IMeterProvider,
+  type MeterStatus,
+  MeterStatusSchema,
+  meterCapability,
+} from './meter.cap.js'
+export {
   type IMotionProvider,
   MOTION_CLOSE_AFTER_MS,
   MOTION_SPAN_TIMEOUT_MS,
@@ -2860,37 +2769,6 @@ export {
   MotionStatusSchema,
   motionCapability,
 } from './motion.cap.js'
-export {
-  planSirenTrigger,
-  resolveSirenPlays,
-  resolveSirenSeconds,
-  sirenIdleStatus,
-  sirenPlayChoices,
-  sirenTriggeredStatus,
-} from './siren-duration.js'
-export type {
-  SirenPlaysActivation,
-  SirenTriggerPlan,
-  SirenTriggerRequest,
-} from './siren-duration.js'
-export {
-  type ISirenProvider,
-  type SirenDurationRange,
-  SirenDurationRangeSchema,
-  SirenDurationUnit,
-  type SirenDurationUnitValue,
-  type SirenOptions,
-  SirenOptionsSchema,
-  SirenOptionsSource,
-  type SirenOptionsSourceValue,
-  type SirenRuntimeState,
-  SirenRuntimeStateSchema,
-  type SirenStatus,
-  SirenStatusSchema,
-  type SirenTriggerInput,
-  SirenTriggerInputSchema,
-  sirenCapability,
-} from './siren.cap.js'
 export {
   type IMotionTriggerProvider,
   type MotionTriggerRuntimeState,
@@ -3019,6 +2897,7 @@ export {
 } from './osd.cap.js'
 export {
   type IOsdManagerProvider,
+  OSD_TEMPLATE_TEXT_MAX,
   type OsdNamedTemplate,
   OsdNamedTemplateSchema,
   type OsdRenderOutcome,
@@ -3031,7 +2910,6 @@ export {
   OsdSlotViewSchema,
   type OsdSource,
   OsdSourceSchema,
-  OSD_TEMPLATE_TEXT_MAX,
   type OsdTemplatePreview,
   OsdTemplatePreviewSchema,
   osdManagerCapability,
@@ -3052,12 +2930,6 @@ export {
   petFountainCapability,
   petFountainWaterItem,
 } from './pet-fountain.cap.js'
-export {
-  type IPumpCycleProvider,
-  type PumpCycleStatus,
-  PumpCycleStatusSchema,
-  pumpCycleCapability,
-} from './pump-cycle.cap.js'
 export {
   type IPlateGalleryProvider,
   type PlateInfo,
@@ -3082,6 +2954,21 @@ export {
   PowerMeterStatusSchema,
   powerMeterCapability,
 } from './power-meter.cap.js'
+export {
+  type IPowerSourceProvider,
+  POWER_SOURCE_OFF_SECONDS_DEFAULT,
+  POWER_SOURCE_OFF_SECONDS_MAX,
+  POWER_SOURCE_OFF_SECONDS_MIN,
+  type PowerSourceActionResult,
+  PowerSourceActionResultSchema,
+  type PowerSourceInfo,
+  PowerSourceInfoSchema,
+  type PowerSourceRefusalReason,
+  PowerSourceRefusalReasonSchema,
+  type PowerSourceState,
+  PowerSourceStateSchema,
+  powerSourceCapability,
+} from './power-source.cap.js'
 export {
   type GpsLocation,
   type IPresenceProvider,
@@ -3142,21 +3029,12 @@ export {
   ptzAutotrackCapability,
 } from './ptz-autotrack.cap.js'
 export {
-  type IRunningStateProvider,
-  type RunningStateSource,
-  RunningStateSourceSchema,
-  type RunningStateStatus,
-  RunningStateStatusSchema,
-  runningStateCapability,
-} from './running-state.cap.js'
+  type IPumpCycleProvider,
+  type PumpCycleStatus,
+  PumpCycleStatusSchema,
+  pumpCycleCapability,
+} from './pump-cycle.cap.js'
 export { type IRebootProvider, rebootCapability } from './reboot.cap.js'
-export {
-  type ILowPowerSleepProvider,
-  type LowPowerSleepStatus,
-  LowPowerSleepStatusSchema,
-  lowPowerSleepCapability,
-} from './low-power-sleep.cap.js'
-export { type IResyncProvider, ResyncDeviceInputSchema, resyncCapability } from './resync.cap.js'
 export {
   type IRecordingProvider,
   RECORDING_SOURCE_CAMSTACK,
@@ -3300,11 +3178,47 @@ export {
   RecordingSignalStatusSchema,
   recordingSignalCapability,
 } from './recording-signal.cap.js'
+// Infrared: the command map (remote); the transport (ir-transmitter) is exported below
+export {
+  type IRemoteProvider,
+  REMOTE_CONFIG_REFUSALS,
+  REMOTE_MAX_REPEAT,
+  REMOTE_MEDIA_COMMANDS,
+  REMOTE_REFUSAL_REASONS,
+  type RemoteBoundCommand,
+  RemoteBoundCommandSchema,
+  type RemoteCommandList,
+  RemoteCommandListSchema,
+  type RemoteMediaCommand,
+  type RemoteMediaCommandResult,
+  RemoteMediaCommandResultSchema,
+  RemoteMediaCommandSchema,
+  type RemoteRefusalReason,
+  RemoteRefusalReasonSchema,
+  type RemoteSendResult,
+  RemoteSendResultSchema,
+  type RemoteSetConfigResult,
+  RemoteSetConfigResultSchema,
+  remoteCapability,
+} from './remote.cap.js'
+export {
+  type IRemoteLayoutComponentsProvider,
+  remoteLayoutComponentsCapability,
+} from './remote-layout-components.cap.js'
 export {
   RESERVED_COLLECTION_SOURCES,
   type ReservedCollectionSource,
   reservedSourceOwner,
 } from './reserved-collection-sources.js'
+export { type IResyncProvider, ResyncDeviceInputSchema, resyncCapability } from './resync.cap.js'
+export {
+  type IRunningStateProvider,
+  type RunningStateSource,
+  RunningStateSourceSchema,
+  type RunningStateStatus,
+  RunningStateStatusSchema,
+  runningStateCapability,
+} from './running-state.cap.js'
 export {
   type ISceneMonitorProvider,
   SCENE_CONDITIONS,
@@ -3341,6 +3255,7 @@ export {
   SceneVerdictSchema,
   sceneMonitorCapability,
 } from './scene-monitor.cap.js'
+export { type ISchedulersProvider, schedulersCapability } from './schedulers.cap.js'
 export {
   type DiscoveryObservation,
   DiscoveryObservationSchema,
@@ -3367,6 +3282,37 @@ export {
   ScriptRunnerStatusSchema,
   scriptRunnerCapability,
 } from './script-runner.cap.js'
+export {
+  type ISirenProvider,
+  type SirenDurationRange,
+  SirenDurationRangeSchema,
+  SirenDurationUnit,
+  type SirenDurationUnitValue,
+  type SirenOptions,
+  SirenOptionsSchema,
+  SirenOptionsSource,
+  type SirenOptionsSourceValue,
+  type SirenRuntimeState,
+  SirenRuntimeStateSchema,
+  type SirenStatus,
+  SirenStatusSchema,
+  type SirenTriggerInput,
+  SirenTriggerInputSchema,
+  sirenCapability,
+} from './siren.cap.js'
+export type {
+  SirenPlaysActivation,
+  SirenTriggerPlan,
+  SirenTriggerRequest,
+} from './siren-duration.js'
+export {
+  planSirenTrigger,
+  resolveSirenPlays,
+  resolveSirenSeconds,
+  sirenIdleStatus,
+  sirenPlayChoices,
+  sirenTriggeredStatus,
+} from './siren-duration.js'
 export {
   type ISmokeProvider,
   type SmokeStatus,
@@ -3404,15 +3350,17 @@ export {
   type ISwitchProvider,
   SWITCH_DEFAULT_OPTIONS,
   SWITCH_SETTABLE_GATE,
-  switchRefusesSetState,
   type SwitchOptions,
   SwitchOptionsSchema,
   type SwitchStatus,
   SwitchStatusSchema,
   switchCapability,
+  switchRefusesSetState,
 } from './switch.cap.js'
 // ── Core/Server Caps (Phase E — formerly hand-written core routers) ─
 export {
+  type DebugWatchInput,
+  type DebugWatchResult,
   type DiagnosticId,
   DiagnosticIdSchema,
   type DiagnosticWindow,
@@ -3455,8 +3403,6 @@ export {
   RequestCensusSnapshotSchema,
   type RequestCensusStatus,
   RequestCensusStatusSchema,
-  type DebugWatchInput,
-  type DebugWatchResult,
   type SetLoggingSettingsInput,
   SetLoggingSettingsInputSchema,
   type SetSiteLocationInput,
@@ -3474,6 +3420,16 @@ export {
   TransportPlaneSchema,
 } from './system.cap.js'
 export {
+  type ITagsProvider,
+  type TagEntry,
+  TagEntrySchema,
+  type TagListCounts,
+  TagListCountsSchema,
+  type TagUsageCounts,
+  TagUsageCountsSchema,
+  tagsCapability,
+} from './tags.cap.js'
+export {
   type ITamperProvider,
   type TamperStatus,
   TamperStatusSchema,
@@ -3486,7 +3442,82 @@ export {
   TemperatureSensorStatusSchema,
   temperatureSensorCapability,
 } from './temperature-sensor.cap.js'
+export {
+  type ITemplateProvider,
+  TEMPLATE_WRITE_REFUSALS,
+  type TemplateAutomationUser,
+  TemplateAutomationUserSchema,
+  type TemplateDeleteResult,
+  TemplateDeleteResultSchema,
+  type TemplateRecord,
+  TemplateRecordSchema,
+  type TemplateUser,
+  TemplateUserSchema,
+  type TemplateWriteResult,
+  TemplateWriteResultSchema,
+  templateCapability,
+} from './template.cap.js'
 export { type IToastProvider, ToastSchema, toastCapability } from './toast.cap.js'
+export type {
+  ITrainingOrchestrator,
+  TrainingAcceleratorRef,
+  TrainingBaseModel,
+  TrainingCanary,
+  TrainingCanaryTarget,
+  TrainingCorpusSelection,
+  TrainingFailureReason,
+  TrainingJob,
+  TrainingJobPlan,
+  TrainingJobRequest,
+  TrainingJobState,
+  TrainingPreset,
+  TrainingProgressPoint,
+  TrainingRefusalReason,
+  TrainingSplitPlan,
+} from './training.cap.js'
+export {
+  TrainingAcceleratorRefSchema,
+  TrainingBaseModelSchema,
+  TrainingCanarySchema,
+  TrainingCanaryTargetSchema,
+  TrainingCorpusSelectionSchema,
+  TrainingFailureReasonSchema,
+  TrainingJobPlanSchema,
+  TrainingJobRequestSchema,
+  TrainingJobSchema,
+  TrainingJobStateSchema,
+  TrainingPresetSchema,
+  TrainingProgressPointSchema,
+  TrainingRefusalReasonSchema,
+  TrainingSplitPlanSchema,
+  trainingCapability,
+} from './training.cap.js'
+export type {
+  ITrainingCloudProvider,
+  ProviderJobState,
+  ProviderJobStatus,
+  TrainerSourceRef,
+  TrainingGpuOption,
+  TrainingLogLine,
+  TrainingProviderDefaults,
+  TrainingProviderDescriptor,
+  TrainingProviderEntry,
+  TrainingProviderType,
+  TrainingRegionOption,
+} from './training-provider.cap.js'
+export {
+  ProviderJobStateSchema,
+  ProviderJobStatusSchema,
+  TrainerSourceRefSchema,
+  TrainingGpuOptionSchema,
+  TrainingLogLineSchema,
+  TrainingProviderDefaultsSchema,
+  TrainingProviderDescriptorSchema,
+  TrainingProviderEntrySchema,
+  TrainingProviderTypeSchema,
+  TrainingRegionOptionSchema,
+  trainingProviderCapability,
+} from './training-provider.cap.js'
 export {
   type IUpdateProvider,
   type UpdateStatus,
@@ -3545,6 +3576,36 @@ export {
   weatherStationCapability,
 } from './weather-station.cap.js'
 export {
+  deriveWorkloadControls,
+  type IWorkloadProvider,
+  isWorkloadSettled,
+  WORKLOAD_ACTIONS,
+  WORKLOAD_ROLES,
+  WORKLOAD_STATES,
+  WORKLOAD_TRANSITION_CATEGORY,
+  type WorkloadAction,
+  type WorkloadControl,
+  type WorkloadControls,
+  type WorkloadOptions,
+  WorkloadOptionsSchema,
+  type WorkloadPort,
+  type WorkloadPortProtocol,
+  WorkloadPortProtocolSchema,
+  WorkloadPortSchema,
+  type WorkloadResources,
+  WorkloadResourcesSchema,
+  type WorkloadSections,
+  type WorkloadSettledState,
+  type WorkloadState,
+  WorkloadStateSchema,
+  type WorkloadStatus,
+  WorkloadStatusSchema,
+  type WorkloadTransitionEventData,
+  type WorkloadTransitionKind,
+  workloadCapability,
+  workloadTransition,
+} from './workload.cap.js'
+export {
   type CameraOccupancySnapshot,
   type CameraOccupancySnapshotForDevice,
   CameraOccupancySnapshotForDeviceSchema,
@@ -3578,69 +3639,10 @@ export {
   zonesCapability,
 } from './zones.cap.js'
 
-export type {
-  ITrainingCloudProvider,
-  ProviderJobState,
-  ProviderJobStatus,
-  TrainerSourceRef,
-  TrainingGpuOption,
-  TrainingLogLine,
-  TrainingProviderDefaults,
-  TrainingProviderDescriptor,
-  TrainingProviderEntry,
-  TrainingProviderType,
-  TrainingRegionOption,
-} from './training-provider.cap.js'
-export {
-  ProviderJobStateSchema,
-  ProviderJobStatusSchema,
-  TrainerSourceRefSchema,
-  TrainingGpuOptionSchema,
-  TrainingLogLineSchema,
-  TrainingProviderDefaultsSchema,
-  TrainingProviderDescriptorSchema,
-  TrainingProviderEntrySchema,
-  TrainingProviderTypeSchema,
-  TrainingRegionOptionSchema,
-  trainingProviderCapability,
-} from './training-provider.cap.js'
-export type {
-  ITrainingOrchestrator,
-  TrainingAcceleratorRef,
-  TrainingBaseModel,
-  TrainingCanary,
-  TrainingCanaryTarget,
-  TrainingCorpusSelection,
-  TrainingFailureReason,
-  TrainingJob,
-  TrainingJobPlan,
-  TrainingJobRequest,
-  TrainingJobState,
-  TrainingPreset,
-  TrainingProgressPoint,
-  TrainingRefusalReason,
-  TrainingSplitPlan,
-} from './training.cap.js'
-export {
-  TrainingAcceleratorRefSchema,
-  TrainingBaseModelSchema,
-  TrainingCanarySchema,
-  TrainingCanaryTargetSchema,
-  TrainingCorpusSelectionSchema,
-  TrainingFailureReasonSchema,
-  TrainingJobPlanSchema,
-  TrainingJobRequestSchema,
-  TrainingJobSchema,
-  TrainingJobStateSchema,
-  TrainingPresetSchema,
-  TrainingProgressPointSchema,
-  TrainingRefusalReasonSchema,
-  TrainingSplitPlanSchema,
-  trainingCapability,
-} from './training.cap.js'
-
 import type { IReadinessRegistry } from '../interfaces/readiness.js'
 import type { accessoriesCapability } from './accessories.cap.js'
+import type { actionSourceCapability } from './action-source.cap.js'
+import type { actionsCapability } from './actions.cap.js'
 import type { addonPagesCapability } from './addon-pages.cap.js'
 import type { addonPagesSourceCapability } from './addon-pages-source.cap.js'
 import type { addonRoutesCapability } from './addon-routes.cap.js'
@@ -3664,24 +3666,14 @@ import type { audioAnalyzerCapability } from './audio-analyzer.cap.js'
 import type { audioCodecCapability } from './audio-codec.cap.js'
 import type { audioMetricsCapability } from './audio-metrics.cap.js'
 import type { authProviderCapability } from './auth-provider.cap.js'
-import type { actionSourceCapability } from './action-source.cap.js'
-import type { actionsCapability } from './actions.cap.js'
-import type { schedulersCapability } from './schedulers.cap.js'
 import type { automationControlCapability } from './automation-control.cap.js'
 import type { backupCapability } from './backup.cap.js'
 import type { batteryCapability } from './battery.cap.js'
-import type { errorCapability } from './error.cap.js'
 import type { binaryCapability } from './binary.cap.js'
+import type { boardKeySourceCapability } from './board-key-source.cap.js'
 import type { brightnessCapability } from './brightness.cap.js'
 import type { brokerCapability } from './broker.cap.js'
 import type { buttonCapability } from './button.cap.js'
-import type { irTransmitterCapability } from './ir-transmitter.cap.js'
-import type { remoteCapability } from './remote.cap.js'
-import type { heroLayoutCapability } from './hero-layout.cap.js'
-import type { fanPresetsCapability } from './fan-presets.cap.js'
-import type { templateCapability } from './template.cap.js'
-import type { tagsCapability } from './tags.cap.js'
-import type { remoteLayoutComponentsCapability } from './remote-layout-components.cap.js'
 import type { calendarSourceCapability } from './calendar-source.cap.js'
 import type { calendarsCapability } from './calendars.cap.js'
 import type { cameraCredentialsCapability } from './camera-credentials.cap.js'
@@ -3690,6 +3682,7 @@ import type { cameraPipelineConfigCapability } from './camera-pipeline-config.ca
 import type { cameraStreamsCapability } from './camera-streams.cap.js'
 import type { carbonMonoxideCapability } from './carbon-monoxide.cap.js'
 import type { climateControlCapability } from './climate-control.cap.js'
+import type { clusterUpdateCapability } from './cluster-update.cap.js'
 import type { colorCapability } from './color.cap.js'
 import type { composerCapability } from './composer.cap.js'
 import type { connectivityCapability } from './connectivity.cap.js'
@@ -3701,42 +3694,36 @@ import type { coverCapability } from './cover.cap.js'
 import type { customModelRegistryCapability } from './custom-model-registry.cap.js'
 import type { dataStoreProviderCapability } from './data-store-provider.cap.js'
 import type { databaseSnapshotCapability } from './database-snapshot.cap.js'
-import type { migrationsCapability } from './migrations.cap.js'
-import type { storageAdminCapability } from './storage-admin.cap.js'
-import type { recordsCapability } from './records.cap.js'
-import type { recordEntriesCapability } from './record-entries.cap.js'
-import type { deviceHistoryCapability } from './device-history.cap.js'
-import type { deviceRunsCapability } from './device-runs.cap.js'
-import type { deviceTransitionsCapability } from './device-transitions.cap.js'
-import type { timedRunCapability } from './timed-run.cap.js'
-import type { doNotDisturbCapability } from './do-not-disturb.cap.js'
-import type { keychainCapability } from './keychain.cap.js'
-import type { keychainAdminCapability } from './keychain-admin.cap.js'
-import type { deviceCredentialsCapability } from './device-credentials.cap.js'
-import type { nodeCertificatesCapability } from './node-certificates.cap.js'
 import type { dayNightCapability } from './day-night.cap.js'
 import type { decoderCapability } from './decoder.cap.js'
 import type { detectionPipelineCapability } from './detection-pipeline.cap.js'
 import type { deviceAdminLinkCapability } from './device-admin-link.cap.js'
 import type { deviceAdoptionCapability } from './device-adoption.cap.js'
+import type { deviceCredentialsCapability } from './device-credentials.cap.js'
 import type { deviceExportCapability } from './device-export.cap.js'
 import type { deviceExtensionCapability } from './device-extension.cap.js'
+import type { deviceHistoryCapability } from './device-history.cap.js'
 import type { deviceManagerCapability } from './device-manager.cap.js'
 import type { deviceOpsCapability } from './device-ops.cap.js'
-import type { displayPaletteCapability } from './display-palette.cap.js'
 import type { deviceProviderCapability } from './device-provider.cap.js'
+import type { deviceRemovalHookCapability } from './device-removal-hook.cap.js'
+import type { deviceRunsCapability } from './device-runs.cap.js'
 import type { deviceStateCapability } from './device-state.cap.js'
 import type { deviceStatusCapability } from './device-status.cap.js'
-import type { deviceRemovalHookCapability } from './device-removal-hook.cap.js'
-import type { nodeRemovalHookCapability } from './node-removal-hook.cap.js'
+import type { deviceTransitionsCapability } from './device-transitions.cap.js'
 import type { dishwasherCapability } from './dishwasher.cap.js'
+import type { displayPaletteCapability } from './display-palette.cap.js'
+import type { doNotDisturbCapability } from './do-not-disturb.cap.js'
 import type { doorbellCapability } from './doorbell.cap.js'
 import type { embeddingEncoderCapability } from './embedding-encoder.cap.js'
+import type { energySystemCapability } from './energy-system.cap.js'
 import type { enumSensorCapability } from './enum-sensor.cap.js'
+import type { errorCapability } from './error.cap.js'
 import type { eventEmitterCapability } from './event-emitter.cap.js'
 import type { faceGalleryCapability } from './face-gallery.cap.js'
 import type { failureContributionCapability } from './failure-contribution.cap.js'
 import type { fanControlCapability } from './fan-control.cap.js'
+import type { fanPresetsCapability } from './fan-presets.cap.js'
 import type { featureProbeCapability } from './feature-probe.cap.js'
 import type { filesystemBrowseCapability } from './filesystem-browse.cap.js'
 import type { floodCapability } from './flood.cap.js'
@@ -3744,57 +3731,59 @@ import type { gasCapability } from './gas.cap.js'
 import type { groupActiveCapability } from './group-active.cap.js'
 import type { groupCommandsCapability } from './group-commands.cap.js'
 import type { groupStatusCapability } from './group-status.cap.js'
-import type { heatingValveCapability } from './heating-valve.cap.js'
-import type { heatPumpStatusCapability } from './heat-pump-status.cap.js'
-import type { energySystemCapability } from './energy-system.cap.js'
-import type { workloadCapability } from './workload.cap.js'
 import type { heatPumpControlCapability } from './heat-pump-control.cap.js'
+import type { heatPumpStatusCapability } from './heat-pump-status.cap.js'
+import type { heatingValveCapability } from './heating-valve.cap.js'
+import type { heroLayoutCapability } from './hero-layout.cap.js'
 import type { humidifierCapability } from './humidifier.cap.js'
 import type { humiditySensorCapability } from './humidity-sensor.cap.js'
 import type { imageCapability } from './image.cap.js'
 import type { imageSettingsCapability } from './image-settings.cap.js'
+import type { integrationInstancesCapability } from './integration-instances.cap.js'
 import type { integrationsCapability } from './integrations.cap.js'
 import type { intercomCapability } from './intercom.cap.js'
+import type { irTransmitterCapability } from './ir-transmitter.cap.js'
+import type { keychainCapability } from './keychain.cap.js'
+import type { keychainAdminCapability } from './keychain-admin.cap.js'
 import type { lawnMowerControlCapability } from './lawn-mower-control.cap.js'
 import type { llmCapability } from './llm.cap.js'
 import type { llmRuntimeCapability } from './llm-runtime.cap.js'
 import type { loadContributionCapability } from './load-contribution.cap.js'
 import type { localNetworkCapability } from './local-network.cap.js'
 import type { lockControlCapability } from './lock-control.cap.js'
-import type { powerSourceCapability } from './power-source.cap.js'
 import type { logChannelsCapability } from './log-channels.cap.js'
 import type { logDestinationCapability } from './log-destination.cap.js'
 import type { loginMethodCapability } from './login-method.cap.js'
+import type { lowPowerSleepCapability } from './low-power-sleep.cap.js'
 import type { mediaPlayerCapability } from './media-player.cap.js'
-import type { meterCapability } from './meter.cap.js'
 import type { meshNetworkCapability } from './mesh-network.cap.js'
+import type { meterCapability } from './meter.cap.js'
 import type { metricsProviderCapability } from './metrics-provider.cap.js'
+import type { migrationsCapability } from './migrations.cap.js'
 import type { modelConvertCapability } from './model-convert.cap.js'
 import type { modelDistributorCapability } from './model-distributor.cap.js'
 import type { motionCapability } from './motion.cap.js'
 import type { motionDetectionCapability } from './motion-detection.cap.js'
 import type { motionTriggerCapability } from './motion-trigger.cap.js'
-import type { sirenCapability } from './siren.cap.js'
 import type { motionZonesCapability } from './motion-zones.cap.js'
 import type { mqttBrokerCapability } from './mqtt-broker.cap.js'
 import type { nativeObjectDetectionCapability } from './native-object-detection.cap.js'
 import type { navigationCapability } from './navigation.cap.js'
-import type { boardKeySourceCapability } from './board-key-source.cap.js'
 import type { networkAccessCapability } from './network-access.cap.js'
 import type { networkLinkCapability } from './network-link.cap.js'
 import type { networkQualityCapability } from './network-quality.cap.js'
+import type { nodeCertificatesCapability } from './node-certificates.cap.js'
+import type { nodeRemovalHookCapability } from './node-removal-hook.cap.js'
 import type { nodesCapability } from './nodes.cap.js'
 import type { notificationOutputCapability } from './notification-output.cap.js'
 import type { notificationRulesCapability } from './notification-rules.cap.js'
 import type { notifierCapability } from './notifier.cap.js'
 import type { numericSensorCapability } from './numeric-sensor.cap.js'
 import type { oauthIntegrationCapability } from './oauth-integration.cap.js'
-import type { integrationInstancesCapability } from './integration-instances.cap.js'
 import type { osdCapability } from './osd.cap.js'
 import type { osdManagerCapability } from './osd-manager.cap.js'
 import type { petFeederCapability } from './pet-feeder.cap.js'
 import type { petFountainCapability } from './pet-fountain.cap.js'
-import type { pumpCycleCapability } from './pump-cycle.cap.js'
 import type { pipelineAnalyticsCapability } from './pipeline-analytics.cap.js'
 import type { pipelineExecutorCapability } from './pipeline-executor.cap.js'
 import type { pipelineOrchestratorCapability } from './pipeline-orchestrator.cap.js'
@@ -3802,30 +3791,37 @@ import type { pipelineRunnerCapability } from './pipeline-runner.cap.js'
 import type { plateGalleryCapability } from './plate-gallery.cap.js'
 import type { platformProbeCapability } from './platform-probe.cap.js'
 import type { powerMeterCapability } from './power-meter.cap.js'
+import type { powerSourceCapability } from './power-source.cap.js'
 import type { presenceCapability } from './presence.cap.js'
 import type { pressureSensorCapability } from './pressure-sensor.cap.js'
 import type { privacyMaskCapability } from './privacy-mask.cap.js'
 import type { ptzCapability } from './ptz.cap.js'
 import type { ptzAutotrackCapability } from './ptz-autotrack.cap.js'
-import type { runningStateCapability } from './running-state.cap.js'
+import type { pumpCycleCapability } from './pump-cycle.cap.js'
 import type { rebootCapability } from './reboot.cap.js'
-import type { lowPowerSleepCapability } from './low-power-sleep.cap.js'
-import type { resyncCapability } from './resync.cap.js'
+import type { recordEntriesCapability } from './record-entries.cap.js'
 import type { recordingCapability } from './recording.cap.js'
 import type { recordingArchiveCapability } from './recording-archive.cap.js'
 import type { recordingExportCapability } from './recording-export.cap.js'
 import type { recordingOnboardCapability } from './recording-onboard.cap.js'
 import type { recordingSignalCapability } from './recording-signal.cap.js'
+import type { recordsCapability } from './records.cap.js'
+import type { remoteCapability } from './remote.cap.js'
+import type { remoteLayoutComponentsCapability } from './remote-layout-components.cap.js'
+import type { resyncCapability } from './resync.cap.js'
+import type { runningStateCapability } from './running-state.cap.js'
 import type { sceneMonitorCapability } from './scene-monitor.cap.js'
+import type { schedulersCapability } from './schedulers.cap.js'
 import type { scriptRunnerCapability } from './script-runner.cap.js'
 import type { serverManagementCapability } from './server-management.cap.js'
-import type { clusterUpdateCapability } from './cluster-update.cap.js'
 import type { settingsStoreCapability } from './settings-store.cap.js'
+import type { sirenCapability } from './siren.cap.js'
 import type { smokeCapability } from './smoke.cap.js'
 import type { smtpProviderCapability } from './smtp-provider.cap.js'
 import type { snapshotCapability } from './snapshot.cap.js'
 import type { ssoBridgeCapability } from './sso-bridge.cap.js'
 import type { storageCapability } from './storage.cap.js'
+import type { storageAdminCapability } from './storage-admin.cap.js'
 import type { storageEvictableCapability } from './storage-evictable.cap.js'
 import type { storageMigrationCapability } from './storage-migration.cap.js'
 import type { storageOccupancyCapability } from './storage-occupancy.cap.js'
@@ -3836,10 +3832,15 @@ import type { streamParamsCapability } from './stream-params.cap.js'
 import type { streamSignalsCapability } from './stream-signals.cap.js'
 import type { switchCapability } from './switch.cap.js'
 import type { systemCapability } from './system.cap.js'
+import type { tagsCapability } from './tags.cap.js'
 import type { tamperCapability } from './tamper.cap.js'
 import type { temperatureSensorCapability } from './temperature-sensor.cap.js'
+import type { templateCapability } from './template.cap.js'
 import type { terminalSessionCapability } from './terminal-session.cap.js'
+import type { timedRunCapability } from './timed-run.cap.js'
 import type { toastCapability } from './toast.cap.js'
+import type { trainingCapability } from './training.cap.js'
+import type { trainingProviderCapability } from './training-provider.cap.js'
 import type { turnProviderCapability } from './turn-provider.cap.js'
 import type { updateCapability } from './update.cap.js'
 import type { userManagementCapability } from './user-management.cap.js'
@@ -3854,8 +3855,7 @@ import type { waterHeaterCapability } from './water-heater.cap.js'
 import type { weatherCapability } from './weather.cap.js'
 import type { weatherStationCapability } from './weather-station.cap.js'
 import type { webrtcSessionCapability } from './webrtc-session.cap.js'
-import type { trainingCapability } from './training.cap.js'
-import type { trainingProviderCapability } from './training-provider.cap.js'
+import type { workloadCapability } from './workload.cap.js'
 import type { zoneAnalyticsCapability } from './zone-analytics.cap.js'
 import type { zoneRulesCapability } from './zone-rules.cap.js'
 import type { zonesCapability } from './zones.cap.js'
