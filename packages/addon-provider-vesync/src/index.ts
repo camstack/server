@@ -3,6 +3,7 @@ export {
   vesyncConnectionSchema,
   vesyncGatewaySchema,
   vesyncPurifierSchema,
+  vesyncHumidifierSchema,
   vesyncToggleSchema,
   vesyncSensorSchema,
   VeSyncToggleKindSchema,
@@ -18,6 +19,7 @@ export type {
   VeSyncConnectionConfig,
   VeSyncGatewayConfig,
   VeSyncPurifierConfig,
+  VeSyncHumidifierConfig,
   VeSyncToggleConfig,
   VeSyncToggleKind,
   VeSyncSensorConfig,
@@ -27,10 +29,15 @@ export type {
   VeSyncClient,
   VeSyncClientFactory,
   VeSyncPurifierSnapshot,
+  VeSyncHumidifierSnapshot,
+  VeSyncDeviceSnapshot,
   VeSyncRegion,
 } from './vesync-client-contract.js'
 export {
   buildPurifierCandidates,
+  buildHumidifierCandidates,
+  humidifierNativeId,
+  parseHumidifierNativeId,
   buildVeSyncCandidates,
   purifierNativeId,
   parsePurifierNativeId,
@@ -48,5 +55,6 @@ export { testVeSyncConnection } from './vesync-connection-test.js'
 export { VeSyncAccountResolver, vesyncAccounts } from './vesync-account-resolver.js'
 export { VeSyncGatewayDevice } from './devices/vesync-gateway-device.js'
 export { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'
+export { VeSyncHumidifierDevice } from './devices/vesync-humidifier-device.js'
 export { VeSyncToggleDevice } from './devices/vesync-toggle-device.js'
 export { VeSyncSensorDevice } from './devices/vesync-sensor-device.js'

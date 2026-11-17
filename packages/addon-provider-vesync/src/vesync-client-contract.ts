@@ -9,6 +9,8 @@
  *   - `setMode(mode)`           → device `setMode('sleep' | 'manual' | 'auto')`
  *   - `setChildLock(on)`        → device `setChildLock(on)`
  *   - `setDisplay(on)`          → device `setDisplay(on)`
+ *   - `setTargetHumidity(pct)`  → humidifier `setHumidity(pct)`
+ *   - `refreshDevice(id)`       → that one device's `getDetails()` (after a command)
  *   - (`nightLight` — tsvesync `setNightLight(mode)` — is deferred; it maps to the
  *      HA `night_light_level` select and needs a new `select-control` cap first)
  *
@@ -30,6 +32,7 @@
  *   - `filterLifePercent`→ a `numeric-sensor` (unit `%`) accessory Sensor child
  */
 export interface VeSyncPurifierSnapshot {
+  readonly kind: 'purifier'
   /** VeSync device `cid` — stable across reboots; the purifier native id. */
   readonly nativeId: string
   /** Operator-assigned device name from the VeSync account. */
@@ -63,6 +66,44 @@ export interface VeSyncPurifierSnapshot {
   /** Whether the device is currently reachable through the VeSync cloud. */
   readonly online: boolean
 }
+
+/**
+ * Immutable snapshot of one VeSync humidifier (the tsvesync `VeSyncHumidifier`,
+ * `VeSyncHumid200S`, `VeSyncWarmHumidifier`, `VeSyncHumid1000S` and
+ * `VeSyncSuperior6000S` classes). The device layer maps it onto:
+ *   - `power` / `currentHumidity` / `targetHumidity` / `mode` / `availableModes` /
+ *     `minHumidity` / `maxHumidity` → `humidifier` on the Humidifier device
+ *   - `display`         → a `DeviceType.Switch` accessory child (`switch`)
+ *   - `currentHumidity` → a `humidity-sensor` accessory Sensor child
+ *   - `waterLacks`      → a `binary` accessory Sensor child (tank empty)
+ */
+export interface VeSyncHumidifierSnapshot {
+  readonly kind: 'humidifier'
+  /** VeSync device `cid`. */
+  readonly nativeId: string
+  readonly name: string
+  readonly model?: string
+  readonly mac?: string
+  readonly power: boolean
+  /** Measured relative humidity 0..100; null when the device did not report one. */
+  readonly currentHumidity: number | null
+  /** Humidity setpoint 0..100; null when the device did not report one. */
+  readonly targetHumidity: number | null
+  /** Active mode (`auto` / `manual` / `sleep` / …); empty when not reported. */
+  readonly mode: string
+  readonly availableModes: readonly string[]
+  /** The setpoint range the library accepts; null when it does not say. */
+  readonly minHumidity: number | null
+  readonly maxHumidity: number | null
+  /** Front-panel display state. */
+  readonly display: boolean
+  /** Whether the water tank is empty; null when the model does not report it. */
+  readonly waterLacks: boolean | null
+  readonly online: boolean
+}
+
+/** Any VeSync device the integration drives, discriminated on `kind`. */
+export type VeSyncDeviceSnapshot = VeSyncPurifierSnapshot | VeSyncHumidifierSnapshot
 
 /**
  * A VeSync cloud session — what a sign-in mints. `token` is a credential: it is kept in the
@@ -109,20 +150,27 @@ export interface VeSyncClient {
   restoreSession(session: VeSyncSession): void
   /** Drop the session / tokens. */
   logout(): Promise<void>
-  /** Enumerate all air-purifier devices on the account. */
-  listDevices(): Promise<readonly VeSyncPurifierSnapshot[]>
-  /** Resolve one purifier by its native id from the last-known list, or null. */
-  getDevice(nativeId: string): VeSyncPurifierSnapshot | null
-  /** Turn a purifier on / off (tsvesync `turnOn()` / `turnOff()`). */
+  /** Enumerate the account's purifiers and humidifiers, each refreshed. */
+  listDevices(): Promise<readonly VeSyncDeviceSnapshot[]>
+  /**
+   * Re-read ONE device (its `getDetails()`), nothing else, and answer its fresh snapshot — null
+   * when it is not on the last device list. A refused read throws.
+   */
+  refreshDevice(nativeId: string): Promise<VeSyncDeviceSnapshot | null>
+  /** Resolve one device by its native id from the last-known list, or null. */
+  getDevice(nativeId: string): VeSyncDeviceSnapshot | null
+  /** Turn a purifier or humidifier on / off (tsvesync `turnOn()` / `turnOff()`). */
   setPower(nativeId: string, on: boolean): Promise<void>
   /** Drive a purifier fan speed (0..100 percent → tsvesync `changeFanSpeed`). */
   setFanSpeed(nativeId: string, percent: number): Promise<void>
-  /** Select a preset mode (`sleep`, … → tsvesync `setMode`). */
+  /** Select a mode (`manual`, `sleep`, `auto`, … → tsvesync `setMode`). */
   setMode(nativeId: string, mode: string): Promise<void>
   /** Toggle the physical child lock (tsvesync `setChildLock`). */
   setChildLock(nativeId: string, on: boolean): Promise<void>
   /** Toggle the front-panel display (tsvesync `setDisplay`). */
   setDisplay(nativeId: string, on: boolean): Promise<void>
+  /** Set a humidifier's humidity setpoint, percent (tsvesync `setHumidity`). */
+  setTargetHumidity(nativeId: string, percent: number): Promise<void>
 }
 
 /** Region the VeSync account is homed in — drives the API endpoint. */

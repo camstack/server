@@ -1,4 +1,8 @@
-import type { VeSyncPurifierSnapshot } from './vesync-client-contract.js'
+import type {
+  VeSyncDeviceSnapshot,
+  VeSyncHumidifierSnapshot,
+  VeSyncPurifierSnapshot,
+} from './vesync-client-contract.js'
 import type { VeSyncIntegrationManager } from './vesync-integration-manager.js'
 
 /**
@@ -44,6 +48,21 @@ export class VeSyncAccountResolver {
   /** All purifier snapshots for an account id, or [] when unknown. */
   getPurifiers(accountId: string): readonly VeSyncPurifierSnapshot[] {
     return this.#managers.get(accountId)?.getPurifiers() ?? []
+  }
+
+  /** Every device snapshot (purifiers and humidifiers) for an account id, or []. */
+  getDevices(accountId: string): readonly VeSyncDeviceSnapshot[] {
+    return this.#managers.get(accountId)?.getDevices() ?? []
+  }
+
+  /** Resolve one device snapshot (any kind) by native id for an account, or null. */
+  getDevice(accountId: string, nativeId: string): VeSyncDeviceSnapshot | null {
+    return this.#managers.get(accountId)?.getDevice(nativeId) ?? null
+  }
+
+  /** Resolve a single humidifier snapshot by native id for an account, or null. */
+  getHumidifier(accountId: string, nativeId: string): VeSyncHumidifierSnapshot | null {
+    return this.#managers.get(accountId)?.getHumidifier(nativeId) ?? null
   }
 
   /** Resolve a single purifier snapshot by native id for an account, or null. */

@@ -40,7 +40,7 @@
         "category": "providers",
         "name": "VeSync",
         "version": "0.1.0",
-        "description": "Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors)",
+        "description": "Sign in to a VeSync cloud account and adopt its air purifiers as Fan devices (speed, preset, child-lock, display + air-quality / filter-life sensors) and its humidifiers as Humidifier devices (target humidity, mode, display + humidity / water-tank sensors)",
         "entry": "./dist/addon.js",
         "icon": "assets/icon.png",
         "color": "#4a8cff",
