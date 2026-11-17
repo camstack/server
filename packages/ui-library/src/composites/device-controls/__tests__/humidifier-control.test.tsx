@@ -103,6 +103,7 @@ describe('HumidifierHeroCard', () => {
     fireEvent.change(screen.getByLabelText('Target humidity'), {
       target: { value: '70' },
     })
+    fireEvent.pointerUp(screen.getByLabelText('Target humidity'))
     expect(setTargetHumidity).toHaveBeenCalledWith({ humidity: 70 })
   })
 

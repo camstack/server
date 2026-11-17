@@ -23,6 +23,13 @@ export type {
 export { useDeviceCapability } from './use-device-capability'
 export type { RunDeviceCommand } from './use-device-command'
 export { useDeviceCommand } from './use-device-command'
+export type {
+  DragSliderProps,
+  DragValue,
+  DragValueOptions,
+  RangeChange,
+} from './use-drag-value'
+export { DRAG_SETTLE_MS, useDragValue } from './use-drag-value'
 export {
   useLockDoorSensor,
   type LockDoorSensor,

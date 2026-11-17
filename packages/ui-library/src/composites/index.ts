@@ -656,6 +656,7 @@ export {
   type TimelineSliderProps,
   type TimelineTone,
 } from './timeline-slider'
+export { CommandSlider, type CommandSliderProps } from './command-slider'
 export * from './device-value-field/index.js'
 export * from './resizable-columns/index.js'
 export * from './device-value-picker/index.js'

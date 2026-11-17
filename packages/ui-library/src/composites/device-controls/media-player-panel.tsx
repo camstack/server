@@ -1,4 +1,4 @@
-import { Slider } from '../../primitives/slider'
+import { CommandSlider } from '../command-slider'
 import { Select } from '../../primitives/select'
 import { useUiText, type UiTextFn } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
@@ -172,21 +172,22 @@ export function MediaPlayerPanel({
           {(declared.volume === 'slider' || display.volumeLevel !== null) && (
             <label className="flex items-center gap-2 text-xs text-foreground-subtle">
               <span>{t('uiLibrary.mediaPlayerPanel.vol', 'Vol')}</span>
-              <Slider
+              <CommandSlider
                 aria-label={t('uiLibrary.mediaPlayerPanel.volume', 'Volume')}
                 min={0}
                 max={100}
                 step={1}
                 value={display.volumeLevel ?? 0}
                 disabled={busy}
-                onChange={(e) => {
-                  const volumeLevel = Number(e.target.value)
+                onCommit={(volumeLevel) => {
                   if (!busy) runCommand(() => cap?.setVolume({ volumeLevel }))
                 }}
+                valueLabel={(shown) => (
+                  <span className="tabular-nums w-8 text-right">
+                    {display.volumeLevel === null && shown === 0 ? '—' : `${shown}%`}
+                  </span>
+                )}
               />
-              <span className="tabular-nums w-8 text-right">
-                {display.volumeLevel === null ? '—' : `${display.volumeLevel}%`}
-              </span>
             </label>
           )}
 

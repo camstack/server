@@ -33,6 +33,7 @@ describe('FanPanel', () => {
     const slider = screen.getByLabelText('Fan speed') as HTMLInputElement
     expect(slider.value).toBe('50')
     fireEvent.change(slider, { target: { value: '80' } })
+    fireEvent.pointerUp(slider)
     expect(setPercentage).toHaveBeenCalledWith({ speed: 80 })
   })
   it('shows preset picker only with fan-preset feature', () => {
@@ -100,6 +101,7 @@ describe('FanPanel', () => {
     render(<FanPanel trpc={trpc} deviceId={1} features={['fan-speed']} layout="full" />)
     const slider = screen.getByLabelText('Fan speed') as HTMLInputElement
     fireEvent.change(slider, { target: { value: '60' } })
+    fireEvent.pointerUp(slider)
     // Math.round(60 / 25) * 25 = Math.round(2.4) * 25 = 2 * 25 = 50
     expect(setPercentage).toHaveBeenCalledWith({ speed: 50 })
   })

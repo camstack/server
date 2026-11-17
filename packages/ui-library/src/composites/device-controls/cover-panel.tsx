@@ -1,7 +1,8 @@
-import { Slider } from '../../primitives/slider'
+import { CommandSlider } from '../command-slider'
 import type { ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
+import { useDeviceCommand } from '../../hooks/use-device-command'
 import { cn } from '../../lib/cn'
 import { useUiText } from '../../contexts/ui-text'
 import type { ControlPanelProps } from './types'
@@ -14,6 +15,7 @@ export function CoverPanel({ trpc, deviceId, features, layout }: ControlPanelPro
     cap: (d) => d.cover,
     slice: (d) => d.state.cover,
   })
+  const runCommand = useDeviceCommand()
   // Gate on the slice/availability, NOT just `cap` (the proxy facade is always
   // present). A device without the cover cap bound has no slice → render nothing.
   if (slice === undefined) return null
@@ -24,7 +26,7 @@ export function CoverPanel({ trpc, deviceId, features, layout }: ControlPanelPro
 
   const press = (fn?: (input: Record<string, never>) => Promise<void>): void => {
     if (busy || !fn) return
-    void fn({})
+    runCommand(() => fn({}))
   }
 
   return (
@@ -60,18 +62,22 @@ export function CoverPanel({ trpc, deviceId, features, layout }: ControlPanelPro
       {positionable && layout === 'full' && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span>{t('uiLibrary.coverPanel.position', 'Position')}</span>
-          <Slider
+          <CommandSlider
             aria-label={t('uiLibrary.coverPanel.position', 'Position')}
             min={0}
             max={100}
             step={1}
             value={position ?? 0}
             disabled={busy}
-            onChange={(e) => {
-              if (!busy) void cap?.setPosition({ position: Number(e.target.value) })
+            onCommit={(next) => {
+              if (!busy) runCommand(() => cap?.setPosition({ position: next }))
             }}
+            valueLabel={(shown) => (
+              <span className="tabular-nums w-8 text-right">
+                {position === null && shown === 0 ? '—' : shown}%
+              </span>
+            )}
           />
-          <span className="tabular-nums w-8 text-right">{position ?? '—'}%</span>
         </label>
       )}
     </div>

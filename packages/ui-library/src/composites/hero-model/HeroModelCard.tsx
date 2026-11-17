@@ -11,6 +11,7 @@ import {
 import { Minus, Plus } from 'lucide-react'
 import { Fragment, type ReactNode, useEffect, useState } from 'react'
 import { useUnitPreferences } from '../../contexts/unit-preferences'
+import { useDragValue } from '../../hooks/use-drag-value'
 import { formatNumeric } from '../../lib/format-numeric'
 import { Badge } from '../../primitives/badge'
 import { Button } from '../../primitives/button'
@@ -127,22 +128,21 @@ function SliderControl({
   readonly host: HeroCardHost
 }): ReactNode {
   const scale = useSliderScale()
-  const [draft, setDraft] = useState<number | null>(null)
   const base = control.value
-  const shown = draft ?? scale.toShown(base ?? control.min)
   const unit = scale.unit ?? control.unit
-  const commit = (): void => {
-    if (draft === null) return
-    const snapped = snapToGrid(scale.toBase(draft), control.min, control.max, control.step)
-    host.run(
-      {
-        ...control.call,
-        args: heroArgsWithValue(control.call.args, control.valueArg, snapped),
-      },
-      null,
-    )
-    setDraft(null)
-  }
+  const drag = useDragValue({
+    served: scale.toShown(base ?? control.min),
+    onCommit: (value) => {
+      const snapped = snapToGrid(scale.toBase(value), control.min, control.max, control.step)
+      host.run(
+        {
+          ...control.call,
+          args: heroArgsWithValue(control.call.args, control.valueArg, snapped),
+        },
+        null,
+      )
+    },
+  })
   return (
     <div className="flex items-center gap-2">
       <Slider
@@ -151,17 +151,11 @@ function SliderControl({
         min={scale.toShown(control.min)}
         max={scale.toShown(control.max)}
         step={shownStep(scale, control.step)}
-        value={shown}
         disabled={host.busy || base === null}
-        onChange={(e) => setDraft(Number(e.target.value))}
-        onPointerUp={commit}
-        onKeyUp={commit}
-        onBlur={commit}
+        {...drag.sliderProps}
       />
       <span className="w-12 text-right text-xs tabular-nums text-foreground-muted">
-        {base === null
-          ? '–'
-          : `${formatNumeric(draft ?? scale.toShown(base), scale.precision)}${unit}`}
+        {base === null ? '–' : `${formatNumeric(drag.shown, scale.precision)}${unit}`}
       </span>
     </div>
   )

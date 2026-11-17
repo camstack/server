@@ -1,3 +1,4 @@
+import { CommandSlider } from '../command-slider'
 import { Slider } from '../../primitives/slider'
 import { useRef, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
 import { ChevronUp, ChevronDown, Square } from 'lucide-react'
@@ -412,7 +413,7 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
       {positionable && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-12 shrink-0">{t('uiLibrary.coverHeroCard.position', 'Position')}</span>
-          <Slider
+          <CommandSlider
             aria-label={t('uiLibrary.coverHeroCard.position', 'Position')}
             min={0}
             max={100}
@@ -420,11 +421,13 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
             value={position ?? 0}
             disabled={busy}
             className="flex-1"
-            onChange={(e) => {
-              handleSetPosition(Number(e.target.value))
-            }}
+            onCommit={handleSetPosition}
+            valueLabel={(shown) => (
+              <span className="w-8 text-right tabular-nums">
+                {position === null && shown === 0 ? '—' : shown}%
+              </span>
+            )}
           />
-          <span className="w-8 text-right tabular-nums">{position ?? '—'}%</span>
         </label>
       )}
 
@@ -450,7 +453,7 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
       {tiltable && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span className="w-12 shrink-0">{t('uiLibrary.coverHeroCard.tilt', 'Tilt')}</span>
-          <Slider
+          <CommandSlider
             aria-label={t('uiLibrary.coverHeroCard.tiltPosition', 'Tilt position')}
             min={0}
             max={100}
@@ -458,12 +461,15 @@ export function CoverHeroCard({ trpc, deviceId, features }: DeviceControlProps):
             value={display?.tiltPosition ?? 0}
             disabled={busy}
             className="flex-1"
-            onChange={(e) => {
-              const tp = Number(e.target.value)
+            onCommit={(tp) => {
               if (!busy) runCommand(() => cap?.setTiltPosition({ tiltPosition: tp }))
             }}
+            valueLabel={(shown) => (
+              <span className="w-8 text-right tabular-nums">
+                {display?.tiltPosition == null && shown === 0 ? '—' : shown}%
+              </span>
+            )}
           />
-          <span className="w-8 text-right tabular-nums">{display?.tiltPosition ?? '—'}%</span>
         </label>
       )}
     </div>

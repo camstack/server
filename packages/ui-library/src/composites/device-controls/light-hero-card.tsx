@@ -1,4 +1,4 @@
-import { Slider } from '../../primitives/slider'
+import { CommandSlider } from '../command-slider'
 import type { ReactNode } from 'react'
 import { Lightbulb, Thermometer } from 'lucide-react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
@@ -128,7 +128,7 @@ export function LightHeroCard({ trpc, deviceId, features }: DeviceControlProps):
         {bright.cap !== undefined && (
           <label className="flex w-full items-center gap-2 text-xs text-foreground-subtle">
             <span className="w-16">{t('uiLibrary.lightHeroCard.brightness', 'Brightness')}</span>
-            <Slider
+            <CommandSlider
               aria-label={t('uiLibrary.lightHeroCard.brightness', 'Brightness')}
               min={0}
               max={100}
@@ -136,12 +136,11 @@ export function LightHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               className="flex-1"
               value={percentage}
               disabled={brightBusy || !on}
-              onChange={(e) => {
-                const pct = Number(e.target.value)
+              onCommit={(pct) => {
                 if (!brightBusy) runCommand(() => bright.cap?.setBrightness({ level: pct }))
               }}
+              valueLabel={(shown) => <span className="tabular-nums w-9 text-right">{shown}%</span>}
             />
-            <span className="tabular-nums w-9 text-right">{percentage}%</span>
           </label>
         )}
       </div>
@@ -162,7 +161,7 @@ export function LightHeroCard({ trpc, deviceId, features }: DeviceControlProps):
             <span className="sr-only">
               {t('uiLibrary.lightHeroCard.colourTemperature', 'Colour temperature')}
             </span>
-            <Slider
+            <CommandSlider
               aria-label={t('uiLibrary.lightHeroCard.colourTemperature', 'Colour temperature')}
               min={CT_COOL_MIREDS}
               max={CT_WARM_MIREDS}
@@ -170,8 +169,7 @@ export function LightHeroCard({ trpc, deviceId, features }: DeviceControlProps):
               className="w-full"
               value={ctMireds ?? CT_WARM_MIREDS}
               disabled={ctBusy || !on}
-              onChange={(e) => {
-                const mireds = Number(e.target.value)
+              onCommit={(mireds) => {
                 if (!ctBusy)
                   runCommand(() =>
                     color.cap?.setColor({
@@ -179,13 +177,15 @@ export function LightHeroCard({ trpc, deviceId, features }: DeviceControlProps):
                     }),
                   )
               }}
+              valueLabel={(shown) => (
+                <div className="pointer-events-none mt-1">
+                  <GripTrack
+                    fraction={ctMireds !== undefined ? ctFraction(shown) : 0.5}
+                    color={CT_STRIP_GRADIENT}
+                  />
+                </div>
+              )}
             />
-            <div className="pointer-events-none mt-1">
-              <GripTrack
-                fraction={ctMireds !== undefined ? ctFraction(ctMireds) : 0.5}
-                color={CT_STRIP_GRADIENT}
-              />
-            </div>
           </label>
         </div>
       )}

@@ -418,6 +418,7 @@ describe('ClimatePanel', () => {
       fireEvent.change(screen.getByLabelText('Target humidity'), {
         target: { value: '60' },
       })
+      fireEvent.pointerUp(screen.getByLabelText('Target humidity'))
       expect(setTargetHumidity).toHaveBeenCalledWith({ targetHumidity: 60 })
     })
 

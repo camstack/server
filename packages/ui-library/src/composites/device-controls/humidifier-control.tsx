@@ -15,7 +15,7 @@
  * `useDeviceCommand` pattern so the row and hero never diverge.
  * Controls are gated on `available`. The decorative SVG is aria-hidden.
  */
-import { Slider } from '../../primitives/slider'
+import { CommandSlider } from '../command-slider'
 import { Select } from '../../primitives/select'
 import { useUiText } from '../../contexts/ui-text'
 import { useId, type ReactNode } from 'react'
@@ -364,7 +364,7 @@ export function HumidifierHeroCard({ trpc, deviceId }: DeviceControlProps): Reac
       {/* ── Target-humidity slider ─────────────────────────────────────── */}
       <label className="flex items-center gap-2 text-xs text-foreground-subtle">
         <span className="w-12 shrink-0">{t('uiLibrary.humidifier.target', 'Target')}</span>
-        <Slider
+        <CommandSlider
           aria-label={t('uiLibrary.humidifier.targetHumidity', 'Target humidity')}
           min={min}
           max={max}
@@ -372,11 +372,13 @@ export function HumidifierHeroCard({ trpc, deviceId }: DeviceControlProps): Reac
           value={target ?? min}
           disabled={busy}
           className="flex-1"
-          onChange={(e) => {
-            setTarget(Number(e.target.value))
-          }}
+          onCommit={setTarget}
+          valueLabel={(shown) => (
+            <span className="w-8 text-right tabular-nums">
+              {target === null && shown === min ? '—' : shown}%
+            </span>
+          )}
         />
-        <span className="w-8 text-right tabular-nums">{target ?? '—'}%</span>
       </label>
 
       {/* ── Mode select (only when modes are available) ───────────────── */}

@@ -1,4 +1,5 @@
-import { type ReactElement, type ReactNode, useState } from 'react'
+import type { ReactElement, ReactNode } from 'react'
+import { useDragValue } from '../../../hooks/use-drag-value'
 import { cn } from '../../../lib/cn'
 import { Slider } from '../../../primitives/slider'
 import { useCardGating } from '../shell/gating'
@@ -25,20 +26,20 @@ interface Draft {
   readonly commit: () => void
 }
 
-/** The value under the thumb while it moves; committed once, on release. */
+/**
+ * The value under the thumb while it moves, committed once on release; it stays
+ * there until the hub answers the command (`useDragValue`), so the thumb never
+ * snaps back to the old served value in between.
+ */
 function useDraft({ value, onChange, onCommit }: CardSliderProps): Draft {
-  const [draft, setDraft] = useState<number | null>(null)
+  const drag = useDragValue({ served: value, onCommit: (next) => onCommit?.(next) })
   return {
-    shown: draft ?? value,
+    shown: drag.shown,
     move: (next) => {
-      setDraft(next)
+      drag.move(next)
       onChange?.(next)
     },
-    commit: () => {
-      if (draft === null) return
-      setDraft(null)
-      onCommit?.(draft)
-    },
+    commit: drag.commit,
   }
 }
 

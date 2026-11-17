@@ -129,6 +129,7 @@ describe('ValveHeroCard', () => {
   it('calls setPosition on slider change when positionable', () => {
     render(<ValveHeroCard trpc={trpc} deviceId={1} features={[DeviceFeature.ValvePositionable]} />)
     fireEvent.change(screen.getByLabelText('Position'), { target: { value: '75' } })
+    fireEvent.pointerUp(screen.getByLabelText('Position'))
     expect(setPosition).toHaveBeenCalledWith({ position: 75 })
   })
 

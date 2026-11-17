@@ -4,6 +4,7 @@ import { useUiText } from '../../contexts/ui-text'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { useDeviceCommand } from '../../hooks/use-device-command'
+import { useDragValue } from '../../hooks/use-drag-value'
 import { cn } from '../../lib/cn'
 import type { FanControlStatus } from '@camstack/types'
 import type { ControlPanelProps } from './types'
@@ -30,12 +31,19 @@ export function FanPanel({ trpc, deviceId, features, layout }: ControlPanelProps
   })
   const display = slice
   const runCommand = useDeviceCommand()
-  if (display === undefined) return null
   const busy = !available
+  const step = slice?.percentageStep != null && slice.percentageStep > 0 ? slice.percentageStep : 1
+  const speed = useDragValue({
+    served: display?.speed ?? 0,
+    onCommit: (raw) => {
+      const pct = Math.min(100, Math.max(0, Math.round(raw / step) * step))
+      if (!busy) runCommand(() => cap?.setPercentage({ speed: pct }))
+    },
+  })
+  if (display === undefined) return null
   const feats = features ?? []
   const showSpeed = feats.includes('fan-speed')
   const showPreset = feats.includes('fan-preset')
-  const step = slice?.percentageStep != null && slice.percentageStep > 0 ? slice.percentageStep : 1
   return (
     <div
       className={cn(
@@ -50,15 +58,12 @@ export function FanPanel({ trpc, deviceId, features, layout }: ControlPanelProps
             min={0}
             max={100}
             step={step}
-            value={display.speed ?? 0}
             disabled={busy}
-            onChange={(e) => {
-              const raw = Number(e.target.value)
-              const pct = Math.min(100, Math.max(0, Math.round(raw / step) * step))
-              if (!busy) runCommand(() => cap?.setPercentage({ speed: pct }))
-            }}
+            {...speed.sliderProps}
           />
-          <span className="tabular-nums w-8 text-right">{display.speed ?? '—'}%</span>
+          <span className="tabular-nums w-8 text-right">
+            {display.speed === null && speed.shown === 0 ? '—' : speed.shown}%
+          </span>
         </div>
       )}
       {showPreset && display.availablePresets.length > 0 && (

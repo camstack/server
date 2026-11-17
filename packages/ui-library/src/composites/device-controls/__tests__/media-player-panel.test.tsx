@@ -235,6 +235,7 @@ describe('MediaPlayerPanel', () => {
       fireEvent.change(screen.getByLabelText('Volume'), {
         target: { value: '75' },
       })
+      fireEvent.pointerUp(screen.getByLabelText('Volume'))
       expect(setVolume).toHaveBeenCalledWith({ volumeLevel: 75 })
     })
 

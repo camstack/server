@@ -3408,6 +3408,42 @@
       "summary": "One short reading in a side column."
     },
     {
+      "name": "CommandSlider",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/command-slider.tsx",
+      "summary": "CommandSlider — a range input that sends a device command once, on release.",
+      "propsExtends": [
+        "Omit<\n    SliderProps,\n    'value' | 'defaultValue' | 'onChange' | 'onPointerUp' | 'onPointerCancel' | 'onKeyUp' | 'onBlur'\n  >"
+      ],
+      "props": [
+        {
+          "name": "value",
+          "type": "number",
+          "optional": false,
+          "doc": "The value the hub serves."
+        },
+        {
+          "name": "onCommit",
+          "type": "(value: number) => void",
+          "optional": false,
+          "doc": "Sends the command with the released value."
+        },
+        {
+          "name": "valueLabel",
+          "type": "(shown: number) => ReactNode",
+          "optional": true,
+          "doc": "Drawn after the track with the value the thumb shows (the \"45%\" beside it)."
+        },
+        {
+          "name": "settleMs",
+          "type": "number",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "COMMIT_DEDUPE_TOLERANCE_MS",
       "kind": "constant",
       "area": "lib",
@@ -7479,6 +7515,13 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/option-select/option-select-model.ts",
       "summary": "Trimmed non-empty draft from the search box, or null when absent."
+    },
+    {
+      "name": "DRAG_SETTLE_MS",
+      "kind": "constant",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-drag-value.ts",
+      "summary": "How long a released value waits for the hub's answer before the served value is shown."
     },
     {
       "name": "drawnOf",
@@ -20194,6 +20237,13 @@
       "area": "hooks",
       "file": "packages/ui-library/src/hooks/use-doorbell-events.ts",
       "summary": "useDoorbellEvents — subscribe to doorbell.onPressed across the cluster."
+    },
+    {
+      "name": "useDragValue",
+      "kind": "hook",
+      "area": "hooks",
+      "file": "packages/ui-library/src/hooks/use-drag-value.ts",
+      "summary": "useDragValue — input smoothing for a slider that sends a device command."
     },
     {
       "name": "useEventInvalidation",

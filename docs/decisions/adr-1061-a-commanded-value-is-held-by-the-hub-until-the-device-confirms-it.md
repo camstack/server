@@ -12,6 +12,7 @@ applies-to:
   - packages/types/src/device/command-hold.ts
   - packages/types/src/device/cap-vocabulary/**
   - packages/ui-library/src/hooks/use-device-command.ts
+  - packages/ui-library/src/hooks/use-drag-value.ts
   - scripts/check-no-ui-optimism.ts
 ---
 
@@ -95,8 +96,12 @@ the slice after the command, which is the effective slice.
   override registry yet (a broker-mode agent's provider registrations do not
   carry them); its devices get the vocabulary default. No provider sets an
   override today; carrying them is a follow-up.
-- Input smoothing is not optimism: a slider may still debounce its trailing
-  commit before sending.
+- Input smoothing is not optimism. A slider that sends a command keeps a local
+  value only for the gesture and its trailing commit (`useDragValue`,
+  `CommandSlider` in ui-library): the thumb follows the hand, ONE command is
+  sent on release, and the released value stays until the served value equals
+  it, moves away from what it was at release, or 1.5 s pass. A slider that sent
+  on every move and rendered the served value snapped back under the hand.
 - A stored automation the generator wrote before this change is regenerated
   once at boot through its `AUTOMATION_RECIPE` (core-blocks migration
   `2026-11-17-automation-confirmed-view`), so its device reads take the
@@ -113,6 +118,10 @@ the slice after the command, which is the effective slice.
   stale / confirmed-within-step / device-answered, device-removal, shutdown
   and confirmed-view cases), `cap-vocabulary/__tests__/command-catalog.spec.ts`
   (tolerance, `negate`, the effects of each cap), `shared/__tests__/device-state-changed.spec.ts` (the
-  confirmed readers) and the automation codegen specs.
+  confirmed readers), the automation codegen specs and
+  `core-blocks/migrations/__tests__/automation-confirmed-view.spec.ts`.
+- `ui-library/src/hooks/__tests__/use-drag-value.test.tsx` and
+  `device-controls/__tests__/brightness-panel.test.tsx` (one command on
+  release, no snap back during the gesture or before the hub answers).
 - `scripts/check-no-ui-optimism.ts` refuses the old hook and its patch in any
   UI source (ui-library, admin UI, an addon `.tsx`).

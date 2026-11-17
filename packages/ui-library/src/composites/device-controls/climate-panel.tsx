@@ -1,4 +1,4 @@
-import { Slider } from '../../primitives/slider'
+import { CommandSlider } from '../command-slider'
 import { Select } from '../../primitives/select'
 import type { ReactNode } from 'react'
 import { useDeviceCapability } from '../../hooks/use-device-capability.js'
@@ -431,19 +431,18 @@ export function ClimatePanel({
       {display.targetHumidity !== null && (
         <label className="flex items-center gap-2 text-xs text-foreground-subtle">
           <span>{t('uiLibrary.climatePanel.humidity', 'Humidity')}</span>
-          <Slider
+          <CommandSlider
             aria-label={t('uiLibrary.climatePanel.targetHumidity', 'Target humidity')}
             min={0}
             max={100}
             step={1}
             value={display.targetHumidity}
             disabled={busy}
-            onChange={(e) => {
-              const targetHumidity = Number(e.target.value)
+            onCommit={(targetHumidity) => {
               if (!busy) runCommand(() => cap.setTargetHumidity({ targetHumidity }))
             }}
+            valueLabel={(shown) => <span className="tabular-nums w-8 text-right">{shown}%</span>}
           />
-          <span className="tabular-nums w-8 text-right">{display.targetHumidity}%</span>
         </label>
       )}
     </div>
