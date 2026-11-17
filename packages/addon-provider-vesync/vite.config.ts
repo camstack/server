@@ -6,6 +6,6 @@ export default buildLibPreset({
     addon: 'src/addon.ts',
   },
   // Ships self-contained (only @camstack/kernel + node builtins stay
-  // external). Once a VeSync client lib is wired it bundles inline here too.
+  // external); the tsvesync client library bundles inline.
   externals: 'self-contained',
 })

@@ -5,23 +5,10 @@ import type {
   VeSyncClientFactory,
   VeSyncPurifierSnapshot,
 } from './vesync-client-contract.js'
+import { tsVeSyncClientFactory } from './vesync-tsvesync-client.js'
 
 /** Status of a single VeSync account connection. */
 export type VeSyncAccountStatus = 'connected' | 'disconnected' | 'connecting' | 'error'
-
-/**
- * Default client factory — INTENTIONALLY unimplemented. No VeSync client library
- * is wired into this addon yet (see `plan-vesync.md`). Wiring one is the single
- * remaining step to make VeSync live: replace this factory with a real
- * {@link VeSyncClient} implementation. Until then the addon installs and
- * type-checks, but a created account stays offline and logs this error.
- */
-export const defaultVeSyncClientFactory: VeSyncClientFactory = () => {
-  throw new Error(
-    'vesync: no VeSync client library is wired yet — implement VeSyncClient ' +
-      '(see plan-vesync.md) and pass a makeClient factory.',
-  )
-}
 
 /** Constructor options for {@link VeSyncIntegrationManager}. */
 export interface VeSyncIntegrationManagerOptions {
@@ -34,7 +21,7 @@ export interface VeSyncIntegrationManagerOptions {
   /** Fired after every poll cycle so the account device fans the fresh snapshot
    *  out to its purifier children. */
   readonly onPolled: (accountId: string) => void
-  /** Factory seam — defaults to the "not wired" factory above. */
+  /** Factory seam — defaults to the `tsvesync` adapter. */
   readonly makeClient?: VeSyncClientFactory
 }
 
@@ -67,7 +54,7 @@ export class VeSyncIntegrationManager {
     this.#onConnected = options.onConnected
     this.#onDisconnected = options.onDisconnected
     this.#onPolled = options.onPolled
-    this.#makeClient = options.makeClient ?? defaultVeSyncClientFactory
+    this.#makeClient = options.makeClient ?? tsVeSyncClientFactory
   }
 
   /** The integration id this manager serves. */
