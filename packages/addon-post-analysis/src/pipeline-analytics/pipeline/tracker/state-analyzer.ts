@@ -68,8 +68,14 @@ export const DEFAULT_STATE_ANALYZER_CONFIG: StateAnalyzerConfig = {
   stillSpanFraction: DEFAULT_STILL_SPAN_FRACTION,
 }
 
-/** One centroid, and when it was seen. */
-interface CentroidSample {
+/** A subject's box size — the per-axis scale of the still span. */
+export interface SubjectSize {
+  readonly w: number
+  readonly h: number
+}
+
+/** One centroid, the box size it came with, and when it was seen. */
+interface CentroidSample extends SubjectSize {
   readonly x: number
   readonly y: number
   readonly at: number
@@ -80,8 +86,8 @@ interface TrackState {
   stationarySince: number | undefined
   totalDistancePx: number
   lastPosition: { x: number; y: number }
-  /** Shorter side of the last bbox — the still-span scale (D683 §5). */
-  lastShortSide: number
+  /** Size of the last bbox — the still-span scale across a split (D683 §5). */
+  lastSize: SubjectSize
   frameCount: number
   /** Recent centroids, oldest first, trimmed to the still window. */
   recent: CentroidSample[]
@@ -98,8 +104,28 @@ interface ParkedTrackState {
   readonly parkedAt: number
 }
 
-function shortSideOf(bbox: { w: number; h: number }): number {
-  return Math.min(bbox.w, bbox.h)
+/**
+ * THE still rule, per axis: the x-span within `fraction` of the width and the
+ * y-span within `fraction` of the height. A wide, flat box whose width the
+ * detector flips is judged on its width sideways, never on its height; a
+ * subject with no measurable size is never still.
+ */
+export function withinStillSpan(
+  spanX: number,
+  spanY: number,
+  size: SubjectSize,
+  fraction: number,
+): boolean {
+  if (!(size.w > 0) || !(size.h > 0)) return false
+  return spanX <= size.w * fraction && spanY <= size.h * fraction
+}
+
+function median(values: readonly number[]): number {
+  const sorted = [...values].sort((a, b) => a - b)
+  const mid = Math.floor(sorted.length / 2)
+  const hi = sorted[mid] ?? 0
+  if (sorted.length % 2 === 1) return hi
+  return ((sorted[mid - 1] ?? hi) + hi) / 2
 }
 
 export class StateAnalyzer {
@@ -157,7 +183,7 @@ export class StateAnalyzer {
         w: track.bbox.w,
         h: track.bbox.h,
       })
-      const shortSide = shortSideOf(track.bbox)
+      const size: SubjectSize = { w: track.bbox.w, h: track.bbox.h }
 
       if (!ts) {
         ts = {
@@ -165,9 +191,9 @@ export class StateAnalyzer {
           stationarySince: undefined,
           totalDistancePx: 0,
           lastPosition: center,
-          lastShortSide: shortSide,
+          lastSize: size,
           frameCount: 1,
-          recent: [{ x: center.x, y: center.y, at: timestamp }],
+          recent: [{ x: center.x, y: center.y, ...size, at: timestamp }],
         }
         this.states.set(track.trackId, ts)
       } else {
@@ -176,9 +202,9 @@ export class StateAnalyzer {
         const dist = Math.sqrt(dx * dx + dy * dy)
         ts.totalDistancePx += dist
         ts.lastPosition = center
-        ts.lastShortSide = shortSide
+        ts.lastSize = size
         ts.frameCount++
-        ts.recent.push({ x: center.x, y: center.y, at: timestamp })
+        ts.recent.push({ x: center.x, y: center.y, ...size, at: timestamp })
         this.trimRecent(ts, timestamp)
       }
 
@@ -197,8 +223,7 @@ export class StateAnalyzer {
       // `stationarySince`, so it can never mature the ten seconds that would
       // make it still. A gate that shuts itself on every flicker.
       const settled =
-        this.speedSaysSettled(ts, track.bbox, velocity) ||
-        this.windowSaysStill(ts, track.bbox, timestamp)
+        this.speedSaysSettled(ts, track.bbox, velocity) || this.windowSaysStill(ts, timestamp)
 
       let state: ObjectState
       if (ts.frameCount <= this.config.enteringFrames) {
@@ -268,15 +293,20 @@ export class StateAnalyzer {
    * `moving`.
    */
   private mergeContinuation(survivor: TrackState, live: TrackState): TrackState {
-    const gapTravel = Math.hypot(
-      live.lastPosition.x - survivor.lastPosition.x,
-      live.lastPosition.y - survivor.lastPosition.y,
-    )
-    const subject = Math.max(survivor.lastShortSide, live.lastShortSide)
+    // The same per-axis rule as the window: travel across the gap sideways
+    // against the width, vertically against the height, of the larger piece.
+    const subject: SubjectSize = {
+      w: Math.max(survivor.lastSize.w, live.lastSize.w),
+      h: Math.max(survivor.lastSize.h, live.lastSize.h),
+    }
     const stillAcrossGap =
       survivor.stationarySince !== undefined &&
-      subject > 0 &&
-      gapTravel <= subject * this.config.stillSpanFraction
+      withinStillSpan(
+        Math.abs(live.lastPosition.x - survivor.lastPosition.x),
+        Math.abs(live.lastPosition.y - survivor.lastPosition.y),
+        subject,
+        this.config.stillSpanFraction,
+      )
 
     const lastAt = live.recent[live.recent.length - 1]?.at
     if (stillAcrossGap && survivor.stationarySince !== undefined && lastAt !== undefined) {
@@ -285,7 +315,7 @@ export class StateAnalyzer {
       // defend the dwell the survivor already paid.
       const anchorAt = lastAt - this.config.stillWindowMs
       const recent: CentroidSample[] = [
-        { x: live.lastPosition.x, y: live.lastPosition.y, at: anchorAt },
+        { x: live.lastPosition.x, y: live.lastPosition.y, ...live.lastSize, at: anchorAt },
         ...live.recent.filter((s) => s.at > anchorAt),
       ]
       return {
@@ -296,7 +326,7 @@ export class StateAnalyzer {
             : survivor.stationarySince,
         totalDistancePx: survivor.totalDistancePx + live.totalDistancePx,
         lastPosition: live.lastPosition,
-        lastShortSide: live.lastShortSide,
+        lastSize: live.lastSize,
         // Past enteringFrames: the subject is not new, only re-bound.
         frameCount: Math.max(survivor.frameCount + live.frameCount, this.config.enteringFrames + 1),
         recent,
@@ -308,7 +338,7 @@ export class StateAnalyzer {
       stationarySince: live.stationarySince,
       totalDistancePx: survivor.totalDistancePx + live.totalDistancePx,
       lastPosition: live.lastPosition,
-      lastShortSide: live.lastShortSide,
+      lastSize: live.lastSize,
       frameCount: live.frameCount,
       recent: [...live.recent],
     }
@@ -373,18 +403,17 @@ export class StateAnalyzer {
    * The span is measured across the samples themselves (their bounding box),
    * not against any single reference point, so a slow drift is caught as
    * surely as a jump. Each axis is compared to the subject's size on that
-   * axis — x-span to width, y-span to height — so a 461 px car and a 40 px
-   * person get the same rule without a per-camera dial, and a wide flat box
-   * whose width breathes is not judged against its height.
+   * axis ({@link withinStillSpan}) — x-span to width, y-span to height — so a
+   * 461 px car and a 40 px person get the same rule without a per-camera dial,
+   * and a wide flat box whose width breathes is not judged against its height.
+   * The size is the window's MEDIAN box, not the current one: on Retro (1441)
+   * one frame where the box shrank to its narrowest (102 of ~150 px) would
+   * otherwise fail the window and restart a dwell the car had already paid.
    *
    * `false` until the window is actually full — a track three frames old has
    * not yet earned the verdict, and unknown must never read as still.
    */
-  private windowSaysStill(
-    ts: TrackState,
-    bbox: { w: number; h: number },
-    timestamp: number,
-  ): boolean {
+  private windowSaysStill(ts: TrackState, timestamp: number): boolean {
     const oldest = ts.recent[0]
     if (!oldest || timestamp - oldest.at < this.config.stillWindowMs) return false
     let minX = Number.POSITIVE_INFINITY
@@ -397,9 +426,11 @@ export class StateAnalyzer {
       if (s.y < minY) minY = s.y
       if (s.y > maxY) maxY = s.y
     }
-    if (bbox.w <= 0 || bbox.h <= 0) return false
-    const fraction = this.config.stillSpanFraction
-    return maxX - minX <= bbox.w * fraction && maxY - minY <= bbox.h * fraction
+    const size: SubjectSize = {
+      w: median(ts.recent.map((s) => s.w)),
+      h: median(ts.recent.map((s) => s.h)),
+    }
+    return withinStillSpan(maxX - minX, maxY - minY, size, this.config.stillSpanFraction)
   }
 
   reset(): void {

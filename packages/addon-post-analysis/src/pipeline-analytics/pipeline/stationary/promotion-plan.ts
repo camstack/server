@@ -9,11 +9,13 @@
  * "moved" brings D547's parked-car rows back and a false "never moved"
  * deletes a real passage:
  *  - the REFERENCE is the median centre of the first
- *    {@link PROMOTION_EARLY_BOXES} boxes, and the span is
- *    `DEFAULT_STILL_SPAN_FRACTION` × their median SHORT side — the same
- *    subject-scaled stillness the state analyzer uses (D547), so one
- *    truncated first box (startup, night→day, a car cut by the frame edge)
- *    moves neither the reference nor the scale;
+ *    {@link PROMOTION_EARLY_BOXES} boxes, and the span is judged PER AXIS:
+ *    `DEFAULT_STILL_SPAN_FRACTION` × their median WIDTH sideways, × their
+ *    median HEIGHT vertically — the same subject-scaled stillness the state
+ *    analyzer uses (D547, `withinStillSpan`), so one truncated first box
+ *    (startup, night→day, a car cut by the frame edge) moves neither the
+ *    reference nor the scale, and a wide flat car whose width the detector
+ *    flips (Retro 1441, ~150x53) is not judged sideways against its height;
  *  - a move must be SUSTAINED: {@link PROMOTION_SUSTAINED_BOXES} consecutive
  *    boxes beyond the span. One mis-bound or merged box is not a move.
  *
@@ -47,7 +49,10 @@ export function planFromMoved(moved: boolean): PromotionPlan {
 interface MovedReference {
   readonly x: number
   readonly y: number
-  readonly span: number
+  /** Median early box width — the sideways scale. */
+  readonly w: number
+  /** Median early box height — the vertical scale. */
+  readonly h: number
 }
 
 /** The running "has this track moved" judgement. Immutable: every step returns a new probe (or the same one when nothing changed). */
@@ -79,12 +84,20 @@ function referenceOf(boxes: readonly BoundingBox[]): MovedReference {
   return {
     x: median(boxes.map((b) => b.x + b.w / 2)),
     y: median(boxes.map((b) => b.y + b.h / 2)),
-    span: DEFAULT_STILL_SPAN_FRACTION * median(boxes.map((b) => Math.min(b.w, b.h))),
+    w: median(boxes.map((b) => b.w)),
+    h: median(boxes.map((b) => b.h)),
   }
 }
 
+/**
+ * Beyond the span on EITHER axis. Spelled as the complement of
+ * `withinStillSpan` but without its "no size is never still" clause: a
+ * degenerate zero-size reference keeps the old reading (only a real
+ * displacement is a move), because a false "moved" brings D547's rows back.
+ */
 function displaced(ref: MovedReference, b: BoundingBox): boolean {
-  return Math.hypot(b.x + b.w / 2 - ref.x, b.y + b.h / 2 - ref.y) > ref.span
+  const f = DEFAULT_STILL_SPAN_FRACTION
+  return Math.abs(b.x + b.w / 2 - ref.x) > ref.w * f || Math.abs(b.y + b.h / 2 - ref.y) > ref.h * f
 }
 
 function judge(ref: MovedReference, run: number, b: BoundingBox): MovedProbe {
