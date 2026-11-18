@@ -216,7 +216,10 @@ export class VeSyncIntegrationManager {
         this.#devices = indexDevices(await client.listDevices())
         // A session stored before the terminal id was kept: keep the one presented from now on.
         if (decision.session.terminalId === null) {
-          this.#queueSessionSave(fingerprint, { ...decision.session, terminalId })
+          this.#queueSessionSave(fingerprint, {
+            ...decision.session,
+            terminalId,
+          })
         }
       } catch (err) {
         if (!(err instanceof VeSyncSessionRejectedError)) throw err
@@ -237,7 +240,10 @@ export class VeSyncIntegrationManager {
       signInReason === null
         ? 'VeSyncIntegrationManager: session restored'
         : `VeSyncIntegrationManager: signed in (${signInReason})`,
-      { tags: { accountId: this.#id }, meta: { session: signInReason ?? 'restored' } },
+      {
+        tags: { accountId: this.#id },
+        meta: { session: signInReason ?? 'restored' },
+      },
     )
 
     this.#status = 'connected'
@@ -348,7 +354,11 @@ export class VeSyncIntegrationManager {
     } catch (err) {
       this.#logger.warn(`vesync: command ${command.name} failed`, {
         tags,
-        meta: { nativeId: command.nativeId, commandMs: Date.now() - started, error: errMsg(err) },
+        meta: {
+          nativeId: command.nativeId,
+          commandMs: Date.now() - started,
+          error: errMsg(err),
+        },
       })
       throw err
     }
@@ -372,7 +382,17 @@ export class VeSyncIntegrationManager {
       return
     }
     const client = this.#client
-    if (client === null) return
+    if (client === null) {
+      for (const target of targets)
+        this.#logger.debug(
+          'VeSyncIntegrationManager: read skipped — the account is not connected',
+          {
+            tags: { deviceId: target.deviceId },
+            meta: { integrationId: this.#id, reason },
+          },
+        )
+      return
+    }
     const byCid = new Map<string, VeSyncRefreshTarget>()
     for (const target of targets)
       if (!byCid.has(target.nativeId)) byCid.set(target.nativeId, target)
@@ -434,7 +454,15 @@ export class VeSyncIntegrationManager {
    * at a time: a call that lands while a list runs is skipped (the running one answers it).
    */
   async poll(): Promise<void> {
-    if (this.#client === null) return
+    if (this.#client === null) {
+      this.#logger.debug(
+        'VeSyncIntegrationManager: account list skipped — the account is not connected',
+        {
+          meta: { integrationId: this.#id },
+        },
+      )
+      return
+    }
     if (this.#pollInFlight !== null) {
       this.#logger.debug(
         'VeSyncIntegrationManager: poll skipped — the previous one is still running',
