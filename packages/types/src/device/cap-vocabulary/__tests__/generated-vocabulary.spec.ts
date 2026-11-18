@@ -75,6 +75,8 @@ const CAPS_ADDED_SINCE_FIXTURE: readonly string[] = [
   // #459 Q2: sleep and resync left `battery` / the device-type badges.
   'low-power-sleep',
   'resync',
+  // #599 (D1062): the server-driven state refresh a provider implements per device.
+  'device-state-refresh',
 ]
 
 /**
