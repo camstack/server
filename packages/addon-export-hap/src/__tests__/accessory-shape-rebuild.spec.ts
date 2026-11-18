@@ -75,6 +75,8 @@ class TestAddon extends ExportHapAddon {
     probed: true,
   }
   bindings: string[] = ['camera-streams', 'motion-detection', 'snapshot']
+  /** The binding the forked context's cache serves; `null` until the first fetch. */
+  cachedBindings: string[] | null = null
   /** How long one HAP build takes; a slow build is what lets two reconciles overlap. */
   buildMs = 0
   /** The per-device name store fails to answer (a transient settings read). */
@@ -123,9 +125,14 @@ class TestAddon extends ExportHapAddon {
           },
         },
       },
-      fetchDevice: async () => ({
-        binding: { entries: this.bindings.map((capName) => ({ capName })) },
-      }),
+      // Mirrors the forked context: a cached binding is served until a fetch asks `fresh`.
+      fetchDevice: async (_id: number, options?: { readonly fresh?: boolean }) => {
+        if (options?.fresh === true || this.cachedBindings === null) {
+          this.cachedBindings = [...this.bindings]
+        }
+        const served = this.cachedBindings ?? this.bindings
+        return { binding: { entries: served.map((capName) => ({ capName })) } }
+      },
       settings: {
         readDeviceStore: async () => {
           if (this.nameReadFails) throw new Error('settings store unavailable')
@@ -254,6 +261,18 @@ describe('accessory shape — rebuild when an input moves, and only then', () =>
     const line = addon.infos.find((l) => l.msg.includes('rebuilding accessory'))
     expect(line?.tags).toEqual({ deviceId: CAM })
     expect(line?.meta?.['changed']).toBe('caps +doorbell')
+  })
+
+  it('a doorbell grafted after the boot rebuilds even when the context cache still serves the boot binding', async () => {
+    await addon.boot()
+    // The forked context cached the boot binding and the invalidating event was dropped.
+    addon.cachedBindings = [...addon.bindings]
+    addon.bindings = [...addon.bindings, 'doorbell']
+    addon.emit(EventCategory.DeviceBindingsChanged)
+    await settle()
+
+    expect(addon.builds).toHaveLength(2)
+    expect(addon.lastBuild?.caps).toContain('doorbell')
   })
 
   it('a boot that built while the device was still probing rebuilds once the doorbell binds', async () => {

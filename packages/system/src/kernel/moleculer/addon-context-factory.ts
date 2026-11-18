@@ -13,6 +13,7 @@ import type {
   InferProvider,
   DeviceBinding,
   DeviceProxy,
+  FetchDeviceOptions,
   IClusterBroker,
   ReadinessScope,
   StorageLocationDeclaration,
@@ -962,8 +963,11 @@ async function buildAddonContext(
       // not registered — worker consumers can propagate or handle them.
       return buildRemoteNativeProvider<TCap>(api, cap, { nodeId: 'hub', bypassWrapper: true })
     },
-    fetchDevice: async (deviceId: number): Promise<DeviceProxy> => {
-      const cached = bindingCache.get(deviceId)
+    fetchDevice: async (deviceId: number, options?: FetchDeviceOptions): Promise<DeviceProxy> => {
+      // `fresh` re-reads the authoritative binding: the invalidating event is
+      // telemetry and may be dropped, so a caller that compares a shape against
+      // what it built must not trust the cache (D8, D12).
+      const cached = options?.fresh === true ? undefined : bindingCache.get(deviceId)
       if (cached) return createDeviceProxy(api, cached, { stateSource: deviceSliceSource })
       const binding = await api.deviceManager.getBindings.query({ deviceId })
       bindingCache.set(deviceId, binding)

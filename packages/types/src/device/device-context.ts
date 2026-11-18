@@ -12,6 +12,11 @@ import type { DeviceMeta, InitialDeviceMeta } from './device-management.js'
 import type { DeviceType } from './device-type.js'
 import type { NativeCapOptions } from './command-hold.js'
 
+/** Options of `fetchDevice`. `fresh` re-reads the binding instead of serving the per-context cache. */
+export interface FetchDeviceOptions {
+  readonly fresh?: boolean
+}
+
 /** What a device states about the config it persists. */
 export interface DevicePersistConfigOptions {
   /** Dotted paths its schema declares secret (`collectZodSecretPaths`). */
@@ -85,7 +90,7 @@ export interface DeviceContext {
    * Always wired by the production context factory; test ctx
    * fixtures supply a stub.
    */
-  readonly fetchDevice: (deviceId: number) => Promise<DeviceProxy>
+  readonly fetchDevice: (deviceId: number, options?: FetchDeviceOptions) => Promise<DeviceProxy>
   /**
    * Reverse-pointer hook called by `BaseDevice` constructor right
    * after building its `runtimeState`. The kernel context factory

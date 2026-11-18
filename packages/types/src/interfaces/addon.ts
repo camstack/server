@@ -1,4 +1,5 @@
 import type { z } from 'zod'
+import type { FetchDeviceOptions } from '../device/device-context.js'
 import type { PackageRequires } from '../addon/package-requires.js'
 import type { ScopedSettingsDeclaration, ScopedSettingsScope } from '../addon/scoped-settings.js'
 import type { CapabilityDefinition, InferProvider } from '../capabilities/capability-definition.js'
@@ -802,7 +803,10 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
    * via `deviceManager.getBindings.query`, subsequent calls reuse the cache.
    * The cache is invalidated implicitly when the device is removed.
    */
-  fetchDevice(deviceId: number): Promise<import('../generated/device-proxy.js').DeviceProxy>
+  fetchDevice(
+    deviceId: number,
+    options?: FetchDeviceOptions,
+  ): Promise<import('../generated/device-proxy.js').DeviceProxy>
 
   /**
    * HTTP **data-plane** facility — serve files/streams/large payloads through the

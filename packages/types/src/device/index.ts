@@ -68,6 +68,7 @@ export type {
   DeviceContext,
   DeviceManagerApi,
   DevicePersistConfigOptions,
+  FetchDeviceOptions,
   IDeviceRegistry,
   IDeviceRegistryReader,
 } from './device-context.js'

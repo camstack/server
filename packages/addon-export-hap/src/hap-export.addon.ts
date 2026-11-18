@@ -1484,7 +1484,11 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
   }
 
   /** Take one mapper's accessories off the network and dispose it. */
-  private async retireMapper(inst: BridgeInstance, deviceId: string, mapper: Mapper): Promise<void> {
+  private async retireMapper(
+    inst: BridgeInstance,
+    deviceId: string,
+    mapper: Mapper,
+  ): Promise<void> {
     for (const accessory of mapper.accessories) {
       // A BRIDGED accessory has no server of its own: taking it off the bridge
       // is the whole of the teardown, and calling `unpublish` on it would be a
@@ -1567,7 +1571,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
       // A type that no longer maps to a mapper is not a shape to rebuild into.
       const kind = pickMapperKind(device.type)
       if (kind === null) return null
-      const proxy = await this.ctx.fetchDevice(deviceId)
+      // Fresh: the per-context binding cache is cleared by a droppable event, and a
+      // shape compared against a stale binding never sees a cap grafted after boot.
+      const proxy = await this.ctx.fetchDevice(deviceId, { fresh: true })
       const bound = proxy.binding?.entries.map((e) => e.capName) ?? []
       // No bindings at all is "not answered yet", never "every cap is gone":
       // rebuilding on it would strip a live accessory to nothing (D49, D315).
@@ -1935,7 +1941,9 @@ export class ExportHapAddon extends BaseAddon<ExportHapConfig> {
     if (next === entry) return
     await this.setExposedDevices(
       inst,
-      inst.exposure.devices.map((e) => (e.deviceId === entry.deviceId ? { ...e, displayName: name } : e)),
+      inst.exposure.devices.map((e) =>
+        e.deviceId === entry.deviceId ? { ...e, displayName: name } : e,
+      ),
     )
   }
 

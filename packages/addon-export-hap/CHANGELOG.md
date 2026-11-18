@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- HomeKit doorbell: a doorbell added to a camera after the bridge started now turns its accessory into a doorbell without restarting the addon
+
 ## [1.2.207] - 2026-11-18
 
 ### Changed
