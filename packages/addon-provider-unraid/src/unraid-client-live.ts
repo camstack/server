@@ -11,6 +11,7 @@ import {
   type DockerContainerStats,
   type CpuMetrics,
   type Notification,
+  type UpsDevice,
   type VmDomain,
   type VmState,
   type WebSocketImpl,
@@ -27,6 +28,7 @@ import type {
   UnraidNotificationsInfo,
   UnraidServerInfo,
   UnraidSystemInfo,
+  UnraidUpsInfo,
   UnraidVmInfo,
   UnraidVmState,
 } from './unraid-client-contract.js'
@@ -125,6 +127,10 @@ export interface UnraidApiSource {
   }
   readonly notifications: {
     warningsAndAlerts(): Promise<Notification[]>
+  }
+  /** The UPS devices; absent on a source without the `ups` domain. */
+  readonly ups?: {
+    list(): Promise<readonly UpsDevice[]>
   }
   close(): Promise<void>
   /** The resolved `http(s)://host:port/graphql` endpoint, named when it answers 404. */
@@ -283,6 +289,30 @@ function mapVm(vm: Pick<VmDomain, 'id' | 'name' | 'state'>): UnraidVmInfo {
   }
 }
 
+/** A finite reading, or null: an unreported or non-numeric value is unknown, never 0 (D393). */
+function finiteOrNull(value: number | null | undefined): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+/** One node-unraid UPS as the read model: blank strings and non-finite readings are unknown. */
+export function mapUps(ups: UpsDevice): UnraidUpsInfo {
+  const model = blankToNull(ups.model)
+  return {
+    id: ups.id,
+    name: blankToNull(ups.name) ?? model ?? ups.id,
+    model,
+    status: blankToNull(ups.status),
+    chargeLevel: finiteOrNull(ups.battery?.chargeLevel),
+    estimatedRuntimeS: finiteOrNull(ups.battery?.estimatedRuntime),
+    batteryHealth: blankToNull(ups.battery?.health),
+    inputVoltage: finiteOrNull(ups.power?.inputVoltage),
+    outputVoltage: finiteOrNull(ups.power?.outputVoltage),
+    loadPercent: finiteOrNull(ups.power?.loadPercentage),
+    nominalPowerW: finiteOrNull(ups.power?.nominalPower),
+    currentPowerW: finiteOrNull(ups.power?.currentPower),
+  }
+}
+
 function mapNotifications(items: readonly Notification[]): UnraidNotificationsInfo {
   const sorted = [...items].sort(
     (a, b) => (Date.parse(b.timestamp ?? '') || 0) - (Date.parse(a.timestamp ?? '') || 0),
@@ -307,6 +337,7 @@ function mapNotifications(items: readonly Notification[]): UnraidNotificationsIn
 /** Implement {@link UnraidClientLike} over an {@link UnraidApiSource}. Pure polling plus one-shot samples. */
 export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
   const guard = <T>(run: () => Promise<T>): Promise<T> => guardAt(api.endpoint, run)
+  const upsApi = api.ups
   return {
     connect: () => guard(async () => void (await api.system.versions())),
     disconnect: () => guard(() => api.close()),
@@ -355,6 +386,16 @@ export function createLiveUnraidClient(api: UnraidApiSource): UnraidClientLike {
       forceStop: (id) => guard(async () => void (await api.vms.forceStop(id))),
       reboot: (id) => guard(async () => void (await api.vms.reboot(id))),
     },
+    ...(upsApi === undefined
+      ? {}
+      : {
+          ups: {
+            list: () =>
+              guard(
+                async (): Promise<readonly UnraidUpsInfo[]> => (await upsApi.list()).map(mapUps),
+              ),
+          },
+        }),
     system: {
       cpu: () =>
         guard(async (): Promise<UnraidCpuInfo> => {

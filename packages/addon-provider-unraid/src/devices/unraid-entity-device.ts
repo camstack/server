@@ -26,6 +26,8 @@ import {
 } from '@camstack/types'
 import { UNRAID_SYSTEM } from '../config.js'
 import type { UnraidClientLike, UnraidSnapshot } from '../unraid-client-contract.js'
+import { findUps } from '../unraid-discovery.js'
+import { upsEntityDescriptors } from '../unraid-ups.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
 import {
   type UnraidButtonAction,
@@ -50,6 +52,8 @@ export const unraidEntitySchema = z.object({
   capName: z.string().min(1),
   containerId: z.string().optional(),
   action: UnraidButtonActionSchema.optional(),
+  /** The UPS the reading belongs to (the local part of its id); absent on a server entity. */
+  upsLocalId: z.string().optional(),
   integrationId: z.string().min(1).describe('Owning integration'),
   system: z.literal(UNRAID_SYSTEM).optional(),
 })
@@ -91,6 +95,7 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
   private readonly kind: UnraidEntityConfig['kind']
   private readonly containerId: string | undefined
   private readonly action: UnraidButtonAction | undefined
+  private readonly upsLocalId: string | undefined
 
   private snapshotUnsub: (() => void) | null = null
   private eventSeq = 0
@@ -105,6 +110,7 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
     this.kind = cfg.kind
     this.containerId = cfg.containerId
     this.action = cfg.action
+    this.upsLocalId = cfg.upsLocalId
     this.online = unraidInstances.getSnapshot(this.instanceId) !== null
     void this.updateSourceInfo({
       id: `${this.instanceId}:${this.entityKey}`,
@@ -160,6 +166,11 @@ export class UnraidEntityDevice extends BaseDevice<typeof unraidEntitySchema> {
   }
 
   private currentDescriptor(snapshot: UnraidSnapshot): UnraidEntityDescriptor | null {
+    if (this.upsLocalId !== undefined) {
+      // A UPS reading: from the one UPS it belongs to. Unknown while that UPS is not listed.
+      const ups = findUps(snapshot, this.upsLocalId)
+      return ups === null ? null : findDescriptor(upsEntityDescriptors(ups), this.entityKey)
+    }
     return findDescriptor(buildEntityDescriptors(snapshot), this.entityKey)
   }
 

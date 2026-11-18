@@ -151,6 +151,34 @@ export interface UnraidNotificationsInfo {
 }
 
 /**
+ * One UPS read model — the node-unraid `ups` device. Every reading is `null` when the API did
+ * not report it (an unreadable value is never 0, D393).
+ */
+export interface UnraidUpsInfo {
+  /** The UPS id (a PrefixedID whose local part names the device). */
+  readonly id: string
+  /** Display name; the model, then the id, when the API reports none. */
+  readonly name: string
+  readonly model: string | null
+  /** The raw status string the UPS reports (`ONLINE`, `ONBATT`, …). */
+  readonly status: string | null
+  /** Battery charge, percent. */
+  readonly chargeLevel: number | null
+  /** Estimated runtime on battery, SECONDS. */
+  readonly estimatedRuntimeS: number | null
+  /** The battery's health string (`Good`, `Replace`, …). */
+  readonly batteryHealth: string | null
+  readonly inputVoltage: number | null
+  readonly outputVoltage: number | null
+  /** Load, percent of the nominal power. */
+  readonly loadPercent: number | null
+  /** Nominal (rated) power, watts. */
+  readonly nominalPowerW: number | null
+  /** Power drawn now, watts. */
+  readonly currentPowerW: number | null
+}
+
+/**
  * One full poll of an Unraid server — the aggregate the integration manager
  * builds from the domain namespaces and fans out to the entity children. The
  * pure {@link import('./unraid-mapping.js')} mapping turns this into entity
@@ -169,6 +197,12 @@ export interface UnraidSnapshot {
   /** VMs, or `null` when the list could not be read this poll. Same rule as `dockers`. */
   readonly vms: readonly UnraidVmInfo[] | null
   readonly notifications: UnraidNotificationsInfo
+  /**
+   * The UPS devices, or `null` / absent when the list could not be read this poll (a client
+   * without the `ups` domain, an API error). Unknown, never "no UPS": nothing adopted is
+   * removed for it.
+   */
+  readonly ups?: readonly UnraidUpsInfo[] | null
   /** Hostname from `system.info()`, when the client reported one. */
   readonly hostname?: string | null
   /** What the server says it IS (D1059), read each poll; absent from a client that cannot read it. */
@@ -275,6 +309,12 @@ export interface UnraidNotificationsDomainLike {
   active(): Promise<UnraidNotificationsInfo>
 }
 
+/** UPS domain — mirrors the real `UpsDomain` subset. */
+export interface UnraidUpsDomainLike {
+  /** Every connected UPS (empty when the host has none). */
+  list(): Promise<readonly UnraidUpsInfo[]>
+}
+
 /**
  * The live client the addon drives one Unraid server with. Mirrors the real
  * `UnraidClient` domain layout so wiring it means implementing this interface
@@ -291,6 +331,8 @@ export interface UnraidClientLike {
   readonly vms: UnraidVmsDomainLike
   readonly system: UnraidSystemDomainLike
   readonly notifications: UnraidNotificationsDomainLike
+  /** Absent from a client that cannot read UPS devices. */
+  readonly ups?: UnraidUpsDomainLike
   /** Absent from a client that cannot read the server's identity. */
   readonly server?: UnraidServerDomainLike
 }

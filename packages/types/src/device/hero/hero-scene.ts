@@ -191,6 +191,7 @@ export const HERO_SCENE_BY_ROLE = {
   [DeviceRole.Lxc]: 'inherit',
   [DeviceRole.App]: 'inherit',
   [DeviceRole.Host]: 'inherit',
+  [DeviceRole.Ups]: 'inherit',
 } as const satisfies Record<DeviceRole, HeroSceneId | 'inherit'>
 
 function isDeviceType(type: string): type is DeviceType {

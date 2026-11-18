@@ -215,18 +215,23 @@ export class UnraidIntegrationManager {
 }
 
 /** A list section of the snapshot that may read as unknown on its own. */
-type UnraidSnapshotSection = 'dockers' | 'vms'
+type UnraidSnapshotSection = 'dockers' | 'vms' | 'ups'
 
 /** Aggregate one snapshot from the client's domain namespaces. */
 async function fetchSnapshot(
   client: UnraidClientLike,
   onSectionFailed: (section: UnraidSnapshotSection) => (error: string) => void,
 ): Promise<UnraidSnapshot> {
-  const [array, cpu, dockers, vms, notifications, identity] = await Promise.all([
+  const upsDomain = client.ups
+  const [array, cpu, dockers, vms, ups, notifications, identity] = await Promise.all([
     client.array.get(),
     client.system.cpu(),
     readSection(() => client.docker.list(), onSectionFailed('dockers')),
     readSection(() => client.vms.list(), onSectionFailed('vms')),
+    // A client without the UPS domain cannot say: unknown, not "no UPS".
+    upsDomain === undefined
+      ? Promise.resolve(null)
+      : readSection(() => upsDomain.list(), onSectionFailed('ups')),
     client.notifications.active(),
     readIdentity(client),
   ])
@@ -236,6 +241,7 @@ async function fetchSnapshot(
     disks: array.disks,
     dockers,
     vms,
+    ups,
     notifications,
     ...(identity.hostname !== null ? { hostname: identity.hostname } : {}),
     identity,

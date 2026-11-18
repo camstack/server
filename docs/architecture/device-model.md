@@ -1038,7 +1038,7 @@ The cloud-account integrations offer a Gateway the same way and register no acti
 A Gateway exists only when necessary: a bridge box (D976) or an account-only integration whose account has no machine to stand for (VeSync, Wyze).
 A machine the integration itself talks to is a Host — one `DeviceType.Workload` device, role `host` — and carries what a Gateway used to:
 its workload data, its admin link, its identifiers and, when it can restart, `workload.restart`. Unraid adopts one Host per server (WebGUI link,
-identifiers, CPU, temperature and the array capacity as its disk; no restart). UniFi adopts each console as a Host whose `workload.restart`
+identifiers, CPU, temperature and the array capacity as its disk; no restart). A UPS the server reports is NOT a part of the Host: each is its own `DeviceType.Sensor` device, role `ups` (a sibling of the Host), serving `battery` and `power-meter` (absent, never 0, when the API reports no power) with status, runtime, health, load, the voltages and the nominal power as numeric / enum accessory children. UniFi adopts each console as a Host whose `workload.restart`
 calls `restartDevice`; switches and APs stay as they were. Their LAN scans propose the machine as a `Workload` candidate marked
 `setupIntegration`. A Gateway row an older version persisted is retired on restore through the kernel's device removal (tombstone, D865).
 

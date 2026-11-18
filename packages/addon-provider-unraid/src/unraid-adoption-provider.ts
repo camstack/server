@@ -9,11 +9,12 @@ import {
 import { UNRAID_SYSTEM } from './config.js'
 import {
   buildUnraidCandidates,
+  findUps,
   findWorkload,
   parseUnraidNativeId,
   type UnraidWorkloadRef,
 } from './unraid-discovery.js'
-import type { UnraidWorkloadAdoptInput } from './unraid-device-adopter.js'
+import type { UnraidUpsAdoptInput, UnraidWorkloadAdoptInput } from './unraid-device-adopter.js'
 import type { UnraidSnapshot } from './unraid-client-contract.js'
 
 export interface UnraidAdoptionProviderDeps {
@@ -40,6 +41,8 @@ export interface UnraidAdoptionProviderDeps {
   readonly adoptWorkload: (
     input: UnraidWorkloadAdoptInput,
   ) => Promise<{ readonly deviceId: number }>
+  /** Create one top-level UPS device (the kernel spawns its reading children). */
+  readonly adoptUps: (input: UnraidUpsAdoptInput) => Promise<{ readonly deviceId: number }>
   /** The ids of a device's children (empty when it has none). */
   readonly childDeviceIds: (deviceId: number) => Promise<readonly number[]>
   readonly removeDevice: (deviceId: number) => Promise<void>
@@ -85,6 +88,7 @@ export function buildUnraidAdoptionProvider(
       },
       dockers: snapshot?.dockers ?? null,
       vms: snapshot?.vms ?? null,
+      ups: snapshot?.ups ?? null,
       adopted: await adoptedMap(integrationId),
     })
   }
@@ -158,7 +162,9 @@ export function buildUnraidAdoptionProvider(
           const defaultName =
             parsed?.kind === 'workload'
               ? (workloadName(integrationId, parsed.ref) ?? nativeId)
-              : serverName(integrationId)
+              : parsed?.kind === 'ups'
+                ? (findUps(getSnapshot(integrationId), parsed.localId)?.name ?? nativeId)
+                : serverName(integrationId)
           const name = perCandidate?.[nativeId]?.name ?? defaultName
           const existingId = already.get(nativeId)
           if (existingId !== undefined) {
@@ -186,6 +192,13 @@ export function buildUnraidAdoptionProvider(
               childNativeId: nativeId,
               parentDeviceId: deviceId,
               accessoryDeviceIds: [],
+            })
+          } else if (parsed?.kind === 'ups') {
+            const { deviceId } = await deps.adoptUps({ integrationId, name, nativeId })
+            adopted.push({
+              childNativeId: nativeId,
+              parentDeviceId: deviceId,
+              accessoryDeviceIds: await deps.childDeviceIds(deviceId),
             })
           } else {
             logger.warn('unraid adopt: not a candidate of this integration — skipping', {

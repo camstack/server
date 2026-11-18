@@ -1,19 +1,29 @@
 import { type DeviceManagerApi, DeviceRole, DeviceType } from '@camstack/types'
 import { UNRAID_SYSTEM } from './config.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
+import { UnraidUpsDevice } from './devices/unraid-ups-device.js'
 import { UnraidWorkloadDevice } from './devices/unraid-workload-device.js'
 import type { UnraidSnapshot } from './unraid-client-contract.js'
 import {
+  findUps,
   findWorkload,
   parseUnraidNativeId,
   UNRAID_INSTANCE_ID,
   unraidStableId,
 } from './unraid-discovery.js'
 import { identitiesOf } from './unraid-entity-reconcile.js'
+import { upsEntityIdentities } from './unraid-ups.js'
 import { unraidWorkloadRole } from './unraid-workload-state.js'
 
 /** Inputs of one container / VM adoption: its `childNativeId` (`docker:…` / `vm:…`). */
 export interface UnraidWorkloadAdoptInput {
+  readonly integrationId: string
+  readonly name: string
+  readonly nativeId: string
+}
+
+/** Inputs of one UPS adoption: its `childNativeId` (`ups:<local id>`). */
+export interface UnraidUpsAdoptInput {
   readonly integrationId: string
   readonly name: string
   readonly nativeId: string
@@ -34,6 +44,7 @@ export function buildUnraidDeviceAdopter(input: {
     readonly name: string
   }) => Promise<{ readonly deviceId: number; readonly accessoryDeviceIds: readonly number[] }>
   readonly adoptWorkload: (args: UnraidWorkloadAdoptInput) => Promise<{ readonly deviceId: number }>
+  readonly adoptUps: (args: UnraidUpsAdoptInput) => Promise<{ readonly deviceId: number }>
 } {
   const { devices, getSnapshot } = input
   return {
@@ -83,6 +94,31 @@ export function buildUnraidDeviceAdopter(input: {
           name,
           integrationId,
         },
+      )
+      return { deviceId: device.id }
+    },
+    adoptUps: async ({ integrationId, name, nativeId }) => {
+      const parsed = parseUnraidNativeId(nativeId)
+      if (parsed?.kind !== 'ups') throw new Error(`unraid adopt: ${nativeId} is not a UPS`)
+      // Only what the server lists right now is adopted: a stale or mistyped id is refused.
+      const ups = findUps(getSnapshot(integrationId), parsed.localId)
+      if (ups === null) {
+        throw new Error(`unraid adopt: no ${nativeId} on integration ${integrationId}`)
+      }
+      const config = {
+        nativeId,
+        integrationId,
+        upsLocalId: parsed.localId,
+        entities: upsEntityIdentities(ups),
+        system: UNRAID_SYSTEM,
+        name,
+      }
+      const device = await devices.create(
+        unraidStableId(integrationId, nativeId),
+        UnraidUpsDevice,
+        config,
+        null,
+        { type: DeviceType.Sensor, role: DeviceRole.Ups, name, integrationId },
       )
       return { deviceId: device.id }
     },

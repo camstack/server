@@ -507,4 +507,9 @@ export enum DeviceRole {
   /** A machine that runs workloads or is an appliance with its own OS: a
    *  server, a hypervisor, a gateway console, a CCU. */
   Host = 'host',
+
+  // ── Power-protection roles ─
+  /** An uninterruptible power supply: battery charge, mains status and load. A
+   *  `DeviceType.Sensor` device. */
+  Ups = 'ups',
 }

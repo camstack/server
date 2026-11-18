@@ -145,6 +145,7 @@ function adoptionHarness() {
       return out
     },
     adoptWorkload: async (input) => adopter.adoptWorkload(input),
+    adoptUps: async (input) => adopter.adoptUps(input),
     childDeviceIds: async () => [],
     removeDevice: async () => undefined,
     findDeviceConfig: async () => null,

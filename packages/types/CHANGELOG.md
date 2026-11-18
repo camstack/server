@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - An NVIDIA GPU is no longer offered as a cuda inference device unless the node's ONNX Runtime has the CUDA execution provider (it ran on the CPU before).
 - Hardware info reports an NVIDIA GPU in its own slot (present, usable, and why not), so it no longer replaces the Intel or AMD iGPU.
 - power-meter may be served by a Workload device (a PoE switch reports the PoE power it delivers)
+- New device role Ups for an uninterruptible power supply
 
 ### Fixed
 

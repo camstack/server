@@ -9670,7 +9670,8 @@
         "lxc": "LXC container",
         "app": "App",
         "host": "Host",
-        "poePort": "PoE port"
+        "poePort": "PoE port",
+        "ups": "UPS"
       },
       "noun": {
         "role": {

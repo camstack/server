@@ -133,6 +133,7 @@ export const DEVICE_ROLE_ICON = {
   [DeviceRole.Lxc]: 'box',
   [DeviceRole.App]: 'app-window',
   [DeviceRole.Host]: 'server',
+  [DeviceRole.Ups]: 'battery-charging',
 } as const satisfies Record<DeviceRole, IconKey>
 
 /** Every icon a device can be drawn with — a subset of the catalog the glyph tables must cover. */

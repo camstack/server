@@ -554,6 +554,7 @@ export const HERO_LOOK_BY_ROLE = {
   [DeviceRole.Lxc]: 'inherit',
   [DeviceRole.App]: 'inherit',
   [DeviceRole.Host]: 'inherit',
+  [DeviceRole.Ups]: 'inherit',
 } as const satisfies Record<DeviceRole, HeroLook | 'inherit'>
 
 function isDeviceType(type: string): type is DeviceType {

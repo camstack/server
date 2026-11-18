@@ -28,6 +28,7 @@ import {
 import { UNRAID_SYSTEM } from './config.js'
 import { UnraidEntityDevice } from './devices/unraid-entity-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
+import { UnraidUpsDevice } from './devices/unraid-ups-device.js'
 import { UnraidWorkloadDevice } from './devices/unraid-workload-device.js'
 import { buildUnraidAdoptionProvider } from './unraid-adoption-provider.js'
 import { makeLiveUnraidClient } from './unraid-client-live.js'
@@ -75,6 +76,9 @@ const UNRAID_MIGRATIONS_DATE = '2026-11-05'
  * GraphQL endpoint (`unraid-lan-discovery.ts`) and offers it as an integration to set up, host,
  * port and scheme prefilled; the API key is asked at setup.
  */
+/** The stable id of a UPS device: `unraid:<integrationId>:ups:<local id>`. */
+const UPS_STABLE_ID = /:ups:[^:]+$/
+
 export class UnraidProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-unraid'
   protected readonly providerName = 'Unraid'
@@ -90,10 +94,15 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     [DeviceType.EventEmitter]: UnraidEntityDevice,
   }
 
-  /** D1056 — the server and its containers / VMs are all `workload`: rebuild each with its class. */
+  /**
+   * D1056 — the server and its containers / VMs are all `workload`: rebuild each with its class.
+   * A UPS is a `sensor` whose stable id ends `:ups:<id>`; the readings under it carry one more
+   * segment and stay entity children.
+   */
   protected override deviceClassForRow(
     row: DeviceClassRow,
   ): DeviceConstructor<IDevice> | undefined {
+    if (row.type === DeviceType.Sensor && UPS_STABLE_ID.test(row.stableId)) return UnraidUpsDevice
     if (row.type !== DeviceType.Workload) return super.deviceClassForRow(row)
     return row.stableId.endsWith(`:${UNRAID_INSTANCE_ID}`)
       ? UnraidInstanceDevice
@@ -341,6 +350,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
       },
       adoptInstance: async (input) => adopter().adoptInstance(input),
       adoptWorkload: async (input) => adopter().adoptWorkload(input),
+      adoptUps: async (input) => adopter().adoptUps(input),
       childDeviceIds: async (deviceId) => {
         const children = (await this.ctx.kernel.devices?.getChildren(deviceId)) ?? []
         return children.map((c) => c.id)

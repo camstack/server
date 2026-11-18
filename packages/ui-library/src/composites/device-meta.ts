@@ -5,6 +5,7 @@ import {
   AlarmSmoke,
   Bath,
   Battery,
+  BatteryCharging,
   Bell,
   Blinds,
   Bone,
@@ -211,6 +212,7 @@ export const FAST_ICON_GLYPHS: Readonly<
   container: Container,
   'app-window': AppWindow,
   'ethernet-port': EthernetPort,
+  'battery-charging': BatteryCharging,
 }
 
 /** The glyph of a device: its role's icon when the role is known, else its type's (`deviceIconKey`). */
@@ -662,6 +664,10 @@ const DEVICE_ROLE_LABELS: Record<DeviceRole, DeviceMetaLabel> = {
   [DeviceRole.Host]: {
     labelKey: 'uiLibrary.deviceMeta.role.host',
     labelFallback: 'Host',
+  },
+  [DeviceRole.Ups]: {
+    labelKey: 'uiLibrary.deviceMeta.role.ups',
+    labelFallback: 'UPS',
   },
 }
 

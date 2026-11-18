@@ -153,6 +153,7 @@ function adoptionHarness(current: UnraidSnapshot | null) {
     listAdopted: async () => [...adopted].map(([id, config]) => ({ id, config })),
     adoptInstance: async (input) => record(UNRAID_INSTANCE_ID)(await adopter.adoptInstance(input)),
     adoptWorkload: async (input) => record(input.nativeId)(await adopter.adoptWorkload(input)),
+    adoptUps: async (input) => record(input.nativeId)(await adopter.adoptUps(input)),
     childDeviceIds: async () => [],
     removeDevice: async (id) => void removed.push(id),
     findDeviceConfig: async () => null,

@@ -1,11 +1,18 @@
 import {
+  batteryCapability,
   DeviceType,
   type DiscoveredChildDevice,
   deviceAdminLinkCapability,
+  powerMeterCapability,
   workloadCapability,
 } from '@camstack/types'
 import { z } from 'zod'
-import type { UnraidContainerInfo, UnraidSnapshot, UnraidVmInfo } from './unraid-client-contract.js'
+import type {
+  UnraidContainerInfo,
+  UnraidSnapshot,
+  UnraidUpsInfo,
+  UnraidVmInfo,
+} from './unraid-client-contract.js'
 import { localIdOf } from './unraid-mapping.js'
 
 /**
@@ -27,6 +34,7 @@ export const UnraidWorkloadRefSchema = z.discriminatedUnion('kind', [
 ])
 export type UnraidWorkloadRef = z.infer<typeof UnraidWorkloadRefSchema>
 
+const UPS_PREFIX = 'ups:'
 const DOCKER_PREFIX = 'docker:'
 const VM_PREFIX = 'vm:'
 
@@ -45,15 +53,25 @@ export function vmRef(vm: UnraidVmInfo): UnraidWorkloadRef {
   return { kind: 'vm', localId: localIdOf(vm.id) }
 }
 
+/** The `childNativeId` of a UPS candidate: `ups:<local part of its id>`. */
+export function upsNativeId(ups: Pick<UnraidUpsInfo, 'id'>): string {
+  return `${UPS_PREFIX}${localIdOf(ups.id)}`
+}
+
 /** Discriminated result of parsing a `childNativeId`. */
 export type ParsedUnraidNativeId =
   | { readonly kind: 'instance' }
   | { readonly kind: 'workload'; readonly ref: UnraidWorkloadRef }
+  | { readonly kind: 'ups'; readonly localId: string }
   | null
 
 /** Parse a candidate `childNativeId` back into what it names (null: not ours). */
 export function parseUnraidNativeId(childNativeId: string): ParsedUnraidNativeId {
   if (childNativeId === UNRAID_INSTANCE_ID) return { kind: 'instance' }
+  if (childNativeId.startsWith(UPS_PREFIX)) {
+    const localId = childNativeId.slice(UPS_PREFIX.length)
+    return localId.length > 0 ? { kind: 'ups', localId } : null
+  }
   if (childNativeId.startsWith(DOCKER_PREFIX)) {
     const name = childNativeId.slice(DOCKER_PREFIX.length)
     return name.length > 0 ? { kind: 'workload', ref: { kind: 'docker', name } } : null
@@ -87,6 +105,14 @@ export function findWorkload(
   return vm === undefined ? null : { kind: 'vm', vm }
 }
 
+/**
+ * The live UPS a native id names, or null when it is not in the snapshot — including when the
+ * UPS list could not be read (`null` / absent): unknown, not gone.
+ */
+export function findUps(snapshot: UnraidSnapshot | null, localId: string): UnraidUpsInfo | null {
+  return snapshot?.ups?.find((u) => localIdOf(u.id) === localId) ?? null
+}
+
 /** The device `stableId` of an Unraid device: `unraid:<integrationId>:<childNativeId>`. */
 export function unraidStableId(integrationId: string, nativeId: string): string {
   return `unraid:${integrationId}:${nativeId}`
@@ -103,6 +129,8 @@ export interface BuildUnraidCandidatesInput {
   readonly dockers: readonly UnraidContainerInfo[] | null
   /** The server's VMs; `null` when the list could not be read (none proposed). */
   readonly vms: readonly UnraidVmInfo[] | null
+  /** The server's UPS devices; `null` / absent when the list could not be read (none proposed). */
+  readonly ups?: readonly UnraidUpsInfo[] | null
   /** Adopted device id per native id (`instance`, `docker:…`, `vm:…`). */
   readonly adopted: ReadonlyMap<string, number>
 }
@@ -137,6 +165,21 @@ export function buildUnraidCandidates(
     workload(dockerRef(c), c.name, 'Docker container'),
   )
   const vms = (input.vms ?? []).map((v) => workload(vmRef(v), v.name, 'Virtual machine'))
+  // Each UPS is its own Sensor device (role `ups`), a sibling of the Host: never its child.
+  const upsDevices = (input.ups ?? []).map((u): DiscoveredChildDevice => {
+    const childNativeId = upsNativeId(u)
+    const adoptedDeviceId = input.adopted.get(childNativeId) ?? null
+    return {
+      childNativeId,
+      name: u.name,
+      type: DeviceType.Sensor,
+      status,
+      metadata: { ...METADATA, ...(u.model !== null ? { model: u.model } : {}) },
+      alreadyAdopted: adoptedDeviceId !== null,
+      adoptedDeviceId,
+      capabilities: [batteryCapability.name, powerMeterCapability.name],
+    }
+  })
   return [
     {
       childNativeId: UNRAID_INSTANCE_ID,
@@ -150,5 +193,6 @@ export function buildUnraidCandidates(
     },
     ...containers,
     ...vms,
+    ...upsDevices,
   ]
 }
