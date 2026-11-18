@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The Gateway device declares the gateway's MAC and address as its identifiers; the MAC comes from the network scan or is read from the gateway when its client starts, and a MAC read at another host is dropped, never kept beside the new address
+
 ## [0.2.170] - 2026-11-17
 
 ### Changed

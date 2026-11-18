@@ -55,6 +55,10 @@ export const ecowittLocalConfigSchema = z.object({
   ...baseFields,
   /** Model the LAN scan announced. Not a form field; kept so the gateway is named from it. */
   model: z.string().optional(),
+  /** MAC the LAN scan read from the gateway's reply. Not a form field; declared as its identifier (D1059). */
+  mac: z.string().optional(),
+  /** The host `mac` was read at. A MAC read for another host is not this gateway's (D1059). */
+  macHost: z.string().optional(),
 })
 
 export const ecowittListenerConfigSchema = z.object({
@@ -136,6 +140,18 @@ export function connectionFromSettings(
 /** True when two connections would dial the gateway the same way. */
 export function sameConnection(a: EcowittConfig, b: EcowittConfig): boolean {
   return JSON.stringify(a) === JSON.stringify(b)
+}
+
+/** The connection without what was READ of the gateway (its MAC): the fields that dial it. */
+function dialOf(connection: EcowittConfig): EcowittConfig {
+  if (connection.transport !== 'local') return connection
+  const { mac: _mac, macHost: _macHost, ...dial } = connection
+  return dial
+}
+
+/** True when two connections differ at most in what was read of the gateway: no redial needed. */
+export function sameDial(a: EcowittConfig, b: EcowittConfig): boolean {
+  return sameConnection(dialOf(a), dialOf(b))
 }
 
 /**

@@ -9,9 +9,9 @@ import {
   defineEntryKind,
   entryBody,
   type IntegrationTestConnectionResult,
-  type RecordsAccess,
-  RecordIntegrationInstances,
   REDACTED_SECRET,
+  RecordIntegrationInstances,
+  type RecordsAccess,
   type ResolvedInstance,
 } from '@camstack/types'
 import { z } from 'zod'
@@ -29,13 +29,17 @@ export const EcowittConnectionBodySchema = entryBody({
   listenHost: z.string().nullish(),
   stationId: z.string().nullish(),
   model: z.string().nullish(),
+  /** The gateway's MAC as the LAN scan or the connect probe read it, and the host it was read at. */
+  mac: z.string().nullish(),
+  macHost: z.string().nullish(),
 })
 export type EcowittConnectionBody = z.infer<typeof EcowittConnectionBodySchema>
 
 export const ecowittConnectionsEntryKind = defineEntryKind('connections', {
   title: 'Ecowitt gateways',
   schema: EcowittConnectionBodySchema,
-  writeTrigger: 'an operator adds, edits or removes an Ecowitt gateway',
+  writeTrigger:
+    'an operator adds, edits or removes an Ecowitt gateway; the addon writes mac/macHost after reading the MAC on connect',
 })
 
 /** Every kind this addon declares, keyed by its name. */

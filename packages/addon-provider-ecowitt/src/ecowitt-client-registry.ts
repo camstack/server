@@ -1,6 +1,6 @@
 import type { Sensor } from '@apocaliss92/nodewitt'
 import { errMsg, type IScopedLogger } from '@camstack/types'
-import { sameConnection, type EcowittConfig } from './config.js'
+import { sameConnection, sameDial, type EcowittConfig } from './config.js'
 import { ecowittFacades } from './ecowitt-gateway.js'
 import { EcowittIntegrationManager } from './ecowitt-integration-manager.js'
 
@@ -68,6 +68,12 @@ export class EcowittClientRegistry {
       if (existing.gatewayKey === gatewayKey && sameConnection(existing.connection, connection)) {
         return
       }
+      // Only what was READ of the gateway changed (its MAC): no redial.
+      if (existing.gatewayKey === gatewayKey && sameDial(existing.connection, connection)) {
+        this.#entries.set(integrationId, { ...existing, connection })
+        ecowittConnections.set(integrationId, connection)
+        return
+      }
       await this.remove(integrationId)
     }
     const manager = new EcowittIntegrationManager({
@@ -92,6 +98,15 @@ export class EcowittClientRegistry {
         meta: { integrationId, error: errMsg(err) },
       })
     }
+  }
+
+  /** The gateway's MAC was read at `host`: the running connection carries it, without a redial. */
+  noteGatewayMac(integrationId: string, mac: string, host: string): void {
+    const entry = this.#entries.get(integrationId)
+    if (entry === undefined || entry.connection.transport !== 'local') return
+    const connection: EcowittConfig = { ...entry.connection, mac, macHost: host }
+    this.#entries.set(integrationId, { ...entry, connection })
+    ecowittConnections.set(integrationId, connection)
   }
 
   async remove(integrationId: string): Promise<void> {

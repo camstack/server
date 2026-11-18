@@ -8,8 +8,8 @@ import {
 import { slugifyHost } from './config.js'
 
 /** The gateway's `CMD_BROADCAST` probe: header, command 0x12, size 3, checksum. */
-const SCAN_PACKET_HEX = 'ffff120315'
-const SCAN_PORT = 46_000
+export const SCAN_PACKET_HEX = 'ffff120315'
+export const SCAN_PORT = 46_000
 const CMD_BROADCAST = 0x12
 const MIN_REPLY_LENGTH = 18
 const MAC_START = 5
@@ -104,6 +104,8 @@ export function ecowittCandidates(
         prefilledConfig: {
           transport: 'local',
           host: g.ip,
+          mac: g.mac,
+          macHost: g.ip,
           ...(g.model !== undefined && g.model.length > 0 ? { model: g.model } : {}),
         },
         setupIntegration: true,
