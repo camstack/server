@@ -45,6 +45,20 @@ export async function measureEventLoopDuring(work: EventLoopWork): Promise<Event
     setImmediate(resolve)
   })
 
+  return summarizeEventLoopBurst(start, end, stamps)
+}
+
+/**
+ * Pure accounting of one measured window: the pings that landed inside
+ * `[start, end]` become gaps, the longest gap is the pause. Split from the
+ * live probe so a spec can feed it a synthetic ping sequence and grade the
+ * arithmetic without the host scheduler in the loop.
+ */
+export function summarizeEventLoopBurst(
+  start: number,
+  end: number,
+  stamps: readonly number[],
+): EventLoopBurst {
   const inWindow = [start]
   for (const t of stamps) {
     if (t >= start && t <= end) inWindow.push(t)

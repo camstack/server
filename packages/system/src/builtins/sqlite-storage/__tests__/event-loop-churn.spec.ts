@@ -39,7 +39,7 @@ import os from 'node:os'
 import path from 'node:path'
 import { afterEach, describe, expect, it } from 'vitest'
 import { SqliteSettingsBackend } from '../sqlite-settings-backend.js'
-import { measureEventLoopDuring } from './support/event-loop-probe.js'
+import { measureEventLoopDuring, summarizeEventLoopBurst } from './support/event-loop-probe.js'
 
 const CAMERA_COUNT = 32
 const TARGET_BURST_MS = 40
@@ -110,7 +110,27 @@ describe('event-loop probe', () => {
     const reading = JSON.stringify(measured)
     expect(measured.burstMs, reading).toBeGreaterThanOrEqual(CONTROL_WINDOW_MS - 5)
     expect(measured.pingCount, reading).toBeGreaterThan(5)
+  })
+
+  it('grades a yielding sequence of pings as short pauses, below the bar', () => {
+    // Synthetic pings every 2 ms across the control window with one 30 ms
+    // scheduler hiccup: the pause ratio is arithmetic on the sequence, so the
+    // host's load cannot move it (a live window read a 211 ms freeze as the
+    // longest pause under heavy load, grading the scheduler, not the probe).
+    const stamps: number[] = []
+    for (let t = 2; t < CONTROL_WINDOW_MS; t += t === 100 ? 30 : 2) stamps.push(t)
+    const measured = summarizeEventLoopBurst(0, CONTROL_WINDOW_MS, stamps)
+    const reading = JSON.stringify(measured)
+    expect(measured.pingCount, reading).toBeGreaterThan(5)
+    expect(measured.longestPauseMs, reading).toBe(30)
     expect(measured.longestPauseMs, reading).toBeLessThan(
+      measured.burstMs * YIELDING_PAUSE_FRACTION,
+    )
+  })
+
+  it('grades one stall with no pings inside it as a pause at the bar or above', () => {
+    const measured = summarizeEventLoopBurst(0, CONTROL_WINDOW_MS, [1, CONTROL_WINDOW_MS - 1])
+    expect(measured.longestPauseMs).toBeGreaterThanOrEqual(
       measured.burstMs * YIELDING_PAUSE_FRACTION,
     )
   })
