@@ -2,7 +2,7 @@
  * UniFi integrations as `integration-instances` (planning#416, D1007): one `connections` record
  * per integration under its registry id, holding the connection to ONE controller. The API key
  * and the password are declared secrets by type; the records door keeps them in the keychain.
- * The Gateway device is not part of the record: it is a device of the integration.
+ * The console Host is not part of the record: it is a device of the integration.
  */
 import {
   defineEntryKind,

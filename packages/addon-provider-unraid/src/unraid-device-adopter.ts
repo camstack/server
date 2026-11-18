@@ -1,13 +1,11 @@
 import { type DeviceManagerApi, DeviceRole, DeviceType } from '@camstack/types'
 import { UNRAID_SYSTEM } from './config.js'
-import { UnraidGatewayDevice } from './devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
 import { UnraidWorkloadDevice } from './devices/unraid-workload-device.js'
 import type { UnraidSnapshot } from './unraid-client-contract.js'
 import {
   findWorkload,
   parseUnraidNativeId,
-  UNRAID_GATEWAY_ID,
   UNRAID_INSTANCE_ID,
   unraidStableId,
 } from './unraid-discovery.js'
@@ -22,8 +20,8 @@ export interface UnraidWorkloadAdoptInput {
 }
 
 /**
- * Creates the top-level devices of an Unraid integration. The Gateway, the instance
- * Container and every adopted Docker container / VM are SIBLINGS (`parentDeviceId` null);
+ * Creates the top-level devices of an Unraid integration. The server's Host and every adopted
+ * Docker container / VM are SIBLINGS (`parentDeviceId` null); there is no Gateway (D1064);
  * the integration, not a device, owns the connection, so every device only carries the
  * `integrationId` it follows.
  */
@@ -31,10 +29,6 @@ export function buildUnraidDeviceAdopter(input: {
   readonly devices: Pick<DeviceManagerApi, 'create' | 'getChildren'>
   readonly getSnapshot: (integrationId: string) => UnraidSnapshot | null
 }): {
-  readonly adoptGateway: (args: {
-    readonly integrationId: string
-    readonly name: string
-  }) => Promise<{ readonly deviceId: number }>
   readonly adoptInstance: (args: {
     readonly integrationId: string
     readonly name: string
@@ -43,17 +37,6 @@ export function buildUnraidDeviceAdopter(input: {
 } {
   const { devices, getSnapshot } = input
   return {
-    adoptGateway: async ({ integrationId, name }) => {
-      const config = { nativeId: UNRAID_GATEWAY_ID, integrationId, system: UNRAID_SYSTEM }
-      const device = await devices.create(
-        unraidStableId(integrationId, UNRAID_GATEWAY_ID),
-        UnraidGatewayDevice,
-        config,
-        null,
-        { type: DeviceType.Gateway, name, integrationId },
-      )
-      return { deviceId: device.id }
-    },
     adoptInstance: async ({ integrationId, name }) => {
       const config = {
         nativeId: UNRAID_INSTANCE_ID,

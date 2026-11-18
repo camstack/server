@@ -54,7 +54,7 @@ const COLD_PRESENCE: PresenceStatus = {
  *   - `sensor`   → a typed sensor cap chosen from `metric` (numeric / temperature
  *                  / enum); a CHILD of an infra Container.
  *   - `presence` → `presence` cap — a network client tracker; a top-level device,
- *                  a sibling of the controller's Gateway.
+ *                  a sibling of the controller's infra devices.
  *   - `port`     → one PoE port of a switch (a CHILD of it): `power-meter`, `network-link`
  *                  and `switch` — PoE on/off through the local account when `switchable`,
  *                  else only a native power cycle (the API key's POWER_CYCLE). Its name follows the client on the port

@@ -19,7 +19,7 @@ export interface UnifiReconcilerDeps {
   readonly listIntegrations: () => Promise<readonly ReconcilerIntegration[]>
   /** Read the integration's settings and upsert its client; false when they hold no usable connection. */
   readonly applySettings: (integration: ReconcilerIntegration) => Promise<boolean>
-  /** Remove the Container and Gateway devices of an integration (children follow their Container). */
+  /** Remove the infra and client devices of an integration (children follow their parent). */
   readonly removeDevices: (integrationId: string) => Promise<number>
   /** Integration ids that own devices here; absent = no orphan sweep (two concordant reads, see OrphanIntegrationSweep). */
   readonly ownerIntegrationIds?: () => Promise<readonly string[]>

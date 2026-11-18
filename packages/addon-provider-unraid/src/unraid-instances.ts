@@ -1,8 +1,8 @@
 /**
  * Unraid integrations as `integration-instances` (planning#416, D1007): one `connections` record
  * per integration under its registry id, holding the connection to ONE Unraid server. The API key
- * is declared a secret by type; the records door keeps it in the keychain. The Gateway device is
- * not part of the record: it is a device of the integration, adopted from it.
+ * is declared a secret by type; the records door keeps it in the keychain. The server's Host
+ * device is not part of the record: it is a device of the integration, adopted from it.
  */
 import {
   defineEntryKind,

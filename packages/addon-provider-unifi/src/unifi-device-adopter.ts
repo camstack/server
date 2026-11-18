@@ -1,14 +1,8 @@
 import type { DeviceManagerApi, InitialDeviceMeta } from '@camstack/types'
 import { UNIFI_SYSTEM } from './config.js'
 import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
-import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'
-import {
-  clientNativeId,
-  infraNativeId,
-  UNIFI_GATEWAY_ID,
-  unifiStableId,
-} from './unifi-discovery.js'
+import { clientNativeId, infraNativeId, unifiStableId } from './unifi-discovery.js'
 import { type UnifiCandidateKind, unifiDeviceTarget } from './unifi-device-kind.js'
 import { buildInfraFeatures } from './unifi-mapping.js'
 import { unifiControllers } from './unifi-node-resolver.js'
@@ -34,14 +28,13 @@ function adoptMeta(
 }
 
 /**
- * Creates the top-level devices of a UniFi integration. The Gateway, every infra device and
- * every client Presence are SIBLINGS (`parentDeviceId` null); the integration, not a
- * device, owns the connection, so each device only carries the `integrationId` it follows.
+ * Creates the top-level devices of a UniFi integration. Every infra device (a console is the
+ * workload Host; there is no Gateway, D1064) and every client Presence are SIBLINGS
+ * (`parentDeviceId` null); the integration, not a device, owns the connection, so each device only carries the `integrationId` it follows.
  */
 export function buildUnifiDeviceAdopter(input: {
   readonly devices: Pick<DeviceManagerApi, 'create' | 'getChildren'>
 }): {
-  readonly adoptGateway: (args: UnifiAdoptInput) => Promise<{ readonly deviceId: number }>
   readonly adoptInfra: (
     args: UnifiAdoptInput & { readonly infraId: string },
   ) => Promise<{ readonly deviceId: number; readonly accessoryDeviceIds: readonly number[] }>
@@ -51,17 +44,6 @@ export function buildUnifiDeviceAdopter(input: {
 } {
   const { devices } = input
   return {
-    adoptGateway: async ({ integrationId, name }) => {
-      const config = { nativeId: UNIFI_GATEWAY_ID, integrationId, system: UNIFI_SYSTEM }
-      const device = await devices.create(
-        unifiStableId(integrationId, UNIFI_GATEWAY_ID),
-        UnifiGatewayDevice,
-        config,
-        null,
-        adoptMeta('controller', name, integrationId),
-      )
-      return { deviceId: device.id }
-    },
     adoptInfra: async ({ integrationId, name, infraId }) => {
       const infra = unifiControllers.getInfra(integrationId, infraId)
       if (infra === null) {

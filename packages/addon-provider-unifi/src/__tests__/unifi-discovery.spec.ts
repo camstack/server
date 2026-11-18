@@ -38,12 +38,11 @@ describe('buildDiscoveryCandidates', () => {
   it('proposes each kind with the type the mapping gives it', () => {
     const out = buildDiscoveryCandidates(BASE)
     expect(out.map((c) => [c.childNativeId, c.type])).toEqual([
-      ['gateway', DeviceType.Gateway],
       ['infra:udm', DeviceType.Workload],
       ['infra:sw1', DeviceType.Workload],
       ['infra:ap1', DeviceType.Workload],
     ])
-    expect(out[0]?.metadata.model).toBe('UDM-Pro')
+    expect(out[0]?.metadata['model']).toBe('UDM-Pro')
   })
 
   it('proposes every PoE port as a device under its switch, named after its client', () => {

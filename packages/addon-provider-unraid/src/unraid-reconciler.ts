@@ -19,7 +19,7 @@ export interface UnraidReconcilerDeps {
   readonly listIntegrations: () => Promise<readonly ReconcilerIntegration[]>
   /** Read the integration's settings and upsert its client; false when they hold no usable connection. */
   readonly applySettings: (integration: ReconcilerIntegration) => Promise<boolean>
-  /** Remove the Container and Gateway devices of an integration (children follow their Container). */
+  /** Remove the Host, container and VM devices of an integration (entity children follow the Host). */
   readonly removeDevices: (integrationId: string) => Promise<number>
   /** Integration ids that own devices here; absent = no orphan sweep (two concordant reads, see OrphanIntegrationSweep). */
   readonly ownerIntegrationIds?: () => Promise<readonly string[]>

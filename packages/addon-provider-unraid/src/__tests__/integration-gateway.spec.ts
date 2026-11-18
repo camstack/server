@@ -1,10 +1,11 @@
 /**
- * A new Unraid integration produces the server's Gateway and the server workload host as
- * SIBLINGS, with the connection (and the API key, a keychain secret) on the integration.
+ * A new Unraid integration produces the server as its workload Host (no Gateway, D1064), a
+ * SIBLING of its containers and VMs, with the connection (and the API key, a keychain secret) on the integration.
  * The device context is the one boundary a spec fakes; everything else is the real code.
  */
 import {
   type DeviceContext,
+  DeviceRole,
   DeviceType,
   type DeviceConstructor,
   type IDevice,
@@ -19,7 +20,6 @@ import { join } from 'node:path'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { UnraidProviderAddon } from '../addon.js'
 import { buildConnectionFormSchema, connectionFromSettings, UNRAID_SYSTEM } from '../config.js'
-import { UnraidGatewayDevice } from '../devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from '../devices/unraid-instance-device.js'
 import { buildUnraidAdoptionProvider } from '../unraid-adoption-provider.js'
 import { UnraidClientRegistry } from '../unraid-client-registry.js'
@@ -34,7 +34,7 @@ import type {
   UnraidSnapshot,
 } from '../unraid-client-contract.js'
 import { buildUnraidDeviceAdopter } from '../unraid-device-adopter.js'
-import { UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
+import { UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
 import { reconcileInstanceEntities } from '../unraid-entity-reconcile.js'
 import { setIntegrationDevicesOnline } from '../unraid-integration-offline.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
@@ -135,15 +135,6 @@ function adoptionHarness() {
     listIntegrations: () => [INT],
     integrationName: () => 'Tower',
     listAdopted: async () => [...adopted].map(([id, config]) => ({ id, config })),
-    adoptGateway: async (input) => {
-      const out = await adopter.adoptGateway(input)
-      adopted.set(out.deviceId, {
-        system: UNRAID_SYSTEM,
-        integrationId: INT,
-        nativeId: UNRAID_GATEWAY_ID,
-      })
-      return out
-    },
     adoptInstance: async (input) => {
       const out = await adopter.adoptInstance(input)
       adopted.set(out.deviceId, {
@@ -162,7 +153,7 @@ function adoptionHarness() {
   return { provider, created }
 }
 
-describe('Unraid integration: the server is a Gateway, a sibling of its instance', () => {
+describe('Unraid integration: the server is a Host, a sibling of its workloads', () => {
   it('is an account-mode integration with the adoption cap, not a standalone hub', () => {
     const pkg: {
       camstack: {
@@ -174,11 +165,11 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     expect(addon?.capabilities.map((c) => c.name)).toContain('device-adoption')
   })
 
-  it('has no hub device class: the Gateway takes its place', () => {
+  it('has neither a hub nor a Gateway device class: the server is its Host', () => {
     const classes = new InspectableAddon().classes()
     const keys: readonly string[] = Object.keys(classes)
     expect(keys).not.toContain('hub')
-    expect(classes[DeviceType.Gateway]).toBe(UnraidGatewayDevice)
+    expect(classes[DeviceType.Gateway]).toBeUndefined()
     // A server row adopted before the workload host keeps its class.
     expect(classes[DeviceType.Container]).toBe(UnraidInstanceDevice)
   })
@@ -203,40 +194,46 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
     expect(keys).not.toContain('name')
   })
 
-  it('adopting the candidates creates the Gateway and the instance as top-level siblings', async () => {
+  it('adopting the server creates the top-level workload Host, and a Gateway is no candidate', async () => {
     const h = adoptionHarness()
     const out = await h.provider.adopt({
       integrationId: INT,
-      childNativeIds: [UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID],
+      childNativeIds: [UNRAID_INSTANCE_ID],
     })
     expect(h.created.map((c) => [c.stableId, c.cls, c.parentDeviceId])).toEqual([
-      [`unraid:${INT}:gateway`, UnraidGatewayDevice, null],
       [`unraid:${INT}:instance`, UnraidInstanceDevice, null],
     ])
-    expect(h.created.map((c) => c.meta?.type)).toEqual([DeviceType.Gateway, DeviceType.Workload])
+    expect(h.created.map((c) => [c.meta?.type, c.meta?.role])).toEqual([
+      [DeviceType.Workload, DeviceRole.Host],
+    ])
     expect(h.created.every((c) => c.meta?.integrationId === INT)).toBe(true)
-    expect(out.adopted.map((a) => a.childNativeId)).toEqual([UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID])
+    expect(out.adopted.map((a) => a.childNativeId)).toEqual([UNRAID_INSTANCE_ID])
     // The marked disk reaches the instance's entity list.
-    const entities = h.created[1]?.config['entities']
+    const entities = h.created[0]?.config['entities']
     expect(JSON.stringify(entities)).toContain('marker-disk')
-    expect(h.created[1]?.config['integrationId']).toBe(INT)
-    expect(h.created[1]?.config['instanceId']).toBe(INT)
+    expect(h.created[0]?.config['integrationId']).toBe(INT)
+    expect(h.created[0]?.config['instanceId']).toBe(INT)
+    // The old Gateway id is not a candidate any more: nothing is created for it.
+    await expect(
+      h.provider.adopt({ integrationId: INT, childNativeIds: ['gateway'] }),
+    ).rejects.toThrow(/failed/)
+    expect(h.created).toHaveLength(1)
   })
 
-  it('a retried adopt neither duplicates the Gateway nor the instance', async () => {
+  it('a retried adopt does not duplicate the Host', async () => {
     const h = adoptionHarness()
     await h.provider.adopt({
       integrationId: INT,
-      childNativeIds: [UNRAID_GATEWAY_ID],
+      childNativeIds: [UNRAID_INSTANCE_ID],
     })
     await h.provider.adopt({
       integrationId: INT,
-      childNativeIds: [UNRAID_GATEWAY_ID],
+      childNativeIds: [UNRAID_INSTANCE_ID],
     })
     expect(h.created).toHaveLength(1)
   })
 
-  it('lists the Gateway, the server and each container as siblings: none nests another', async () => {
+  it('lists the server Host and each container as siblings: none nests another', async () => {
     const h = adoptionHarness()
     const page = await h.provider.listCandidates({
       integrationId: INT,
@@ -244,7 +241,6 @@ describe('Unraid integration: the server is a Gateway, a sibling of its instance
       pageSize: 50,
     })
     expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
-      [UNRAID_GATEWAY_ID, DeviceType.Gateway],
       [UNRAID_INSTANCE_ID, DeviceType.Workload],
       ['docker:marker-plex', DeviceType.Workload],
     ])
@@ -329,7 +325,7 @@ describe('Unraid integration: the API key', () => {
 })
 
 describe('Unraid integration: devices follow the integration', () => {
-  it('goes offline and online with the integration, Gateway and entities alike', () => {
+  it('goes offline and online with the integration, Host and workloads alike', () => {
     const mk = (nativeId: string, integrationId: string) => {
       const state = { online: true }
       return {
@@ -344,8 +340,8 @@ describe('Unraid integration: devices follow the integration', () => {
         },
       }
     }
-    const mine = [mk(UNRAID_GATEWAY_ID, INT), mk(UNRAID_INSTANCE_ID, INT)]
-    const other = mk(UNRAID_GATEWAY_ID, 'int-2')
+    const mine = [mk(UNRAID_INSTANCE_ID, INT), mk('docker:marker-plex', INT)]
+    const other = mk(UNRAID_INSTANCE_ID, 'int-2')
     expect(setIntegrationDevicesOnline([...mine, other], INT, false)).toBe(2)
     expect(mine.map((d) => d.online)).toEqual([false, false])
     expect(other.online).toBe(true)
@@ -378,7 +374,7 @@ describe('Unraid integration: devices follow the integration', () => {
   })
 })
 
-describe('Unraid devices: the Gateway and the instance on a stub device context', () => {
+describe('Unraid devices: the server Host on a stub device context', () => {
   function rig(
     config: Record<string, unknown>,
     type: DeviceType,
@@ -429,17 +425,18 @@ describe('Unraid devices: the Gateway and the instance on a stub device context'
     return { ctx, providers }
   }
 
-  it('the Gateway is a Gateway carrying the WebGUI link', async () => {
+  it('the Host is a workload carrying the WebGUI link', () => {
     const { ctx, providers } = rig(
       {
-        nativeId: UNRAID_GATEWAY_ID,
+        nativeId: UNRAID_INSTANCE_ID,
+        instanceId: INT,
         integrationId: INT,
         system: UNRAID_SYSTEM,
       },
-      DeviceType.Gateway,
+      DeviceType.Workload,
     )
-    const device = new UnraidGatewayDevice(ctx)
-    expect(device.type).toBe(DeviceType.Gateway)
+    const device = new UnraidInstanceDevice(ctx)
+    expect(device.type).toBe(DeviceType.Workload)
     expect([...providers.keys()]).toContain('device-admin-link')
   })
 

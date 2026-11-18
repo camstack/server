@@ -5,6 +5,7 @@ import {
   type CreateDeviceSpec,
   type DeviceClassRow,
   type DeviceConstructor,
+  type DeviceRestoreReport,
   type DeviceSummary,
   type DiscoveryCandidate,
   type DiscoveryHit,
@@ -19,13 +20,13 @@ import {
   integrationRowsMigration,
   integrationRowsPortsOver,
   type RecordIntegrationInstances,
+  type SavedDevice,
   type SystemEvent,
   collectOwnerIntegrationIds,
   rowsDepsOver,
 } from '@camstack/types'
 import { UNRAID_SYSTEM } from './config.js'
 import { UnraidEntityDevice } from './devices/unraid-entity-device.js'
-import { UnraidGatewayDevice } from './devices/unraid-gateway-device.js'
 import { UnraidInstanceDevice } from './devices/unraid-instance-device.js'
 import { UnraidWorkloadDevice } from './devices/unraid-workload-device.js'
 import { buildUnraidAdoptionProvider } from './unraid-adoption-provider.js'
@@ -40,6 +41,7 @@ import {
   unraidServersFromHits,
 } from './unraid-lan-discovery.js'
 import { reconcileInstanceEntities } from './unraid-entity-reconcile.js'
+import { retireLegacyUnraidGatewayRows } from './unraid-legacy-gateway.js'
 import { UnraidReconciler, type IntegrationLifecycleKind } from './unraid-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './unraid-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './unraid-integration-offline.js'
@@ -59,8 +61,8 @@ const UNRAID_MIGRATIONS_DATE = '2026-11-05'
  * Unraid device-provider addon, `mode: account` and broker-less. An integration is one
  * server: its host, port and ADMIN-role API key (a keychain secret) live on the
  * integration's settings, and the addon polls it with one client per `integrationId`.
- * Discovery offers the server's Gateway ({@link DeviceType.Gateway}, with a link to its
- * WebGUI), the server itself as a {@link DeviceType.Workload} host, and each Docker container
+ * Discovery offers the server itself as the {@link DeviceType.Workload} Host (with the link to
+ * its WebGUI and the server's identifiers; there is no Gateway, D1064), and each Docker container
  * (role `app-container`) and VM (role `vm`) as a workload, all as siblings (D1056); the
  * server device fans array / disk / CPU / notification entities out as accessory children.
  * Rows adopted before the workload type (a Container server, Generic workloads) are rebuilt
@@ -78,7 +80,6 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
   protected readonly providerName = 'Unraid'
   // The entity children are spawned by the Container's accessory specs, not restored here.
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
-    [DeviceType.Gateway]: UnraidGatewayDevice,
     [DeviceType.Container]: UnraidInstanceDevice,
     [DeviceType.Generic]: UnraidWorkloadDevice,
     // A container or VM; the server shares the type and is told apart in deviceClassForRow.
@@ -97,6 +98,25 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     return row.stableId.endsWith(`:${UNRAID_INSTANCE_ID}`)
       ? UnraidInstanceDevice
       : UnraidWorkloadDevice
+  }
+
+  /**
+   * A Gateway row an older version adopted (D1064) has no class: it is retired through the
+   * kernel's removal (tombstone, D865) before the rest is restored.
+   */
+  protected override async onRestoreDevices(
+    savedDevices: readonly SavedDevice[],
+  ): Promise<DeviceRestoreReport | void> {
+    const devices = this.ctx.kernel.devices
+    const rest = await retireLegacyUnraidGatewayRows({
+      saved: savedDevices,
+      remove: async (deviceId) => {
+        if (!devices) throw new Error('kernel.devices unavailable')
+        await devices.remove(deviceId)
+      },
+      logger: this.ctx.logger,
+    })
+    return super.onRestoreDevices(rest)
   }
 
   private integrationReconciler: UnraidReconciler | null = null
@@ -184,7 +204,7 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
     return this.clients
   }
 
-  /** Every Unraid device is `unraid:<integrationId>:<nativeId>` (gateway, instance, docker:…, vm:…). */
+  /** Every Unraid device is `unraid:<integrationId>:<nativeId>` (instance, docker:…, vm:…). */
   protected override generateStableId(_type: DeviceType, config?: Record<string, unknown>): string {
     const integrationId = config?.['integrationId']
     const nativeId = config?.['nativeId']
@@ -319,7 +339,6 @@ export class UnraidProviderAddon extends BaseDeviceProvider {
         }
         return out
       },
-      adoptGateway: async (input) => adopter().adoptGateway(input),
       adoptInstance: async (input) => adopter().adoptInstance(input),
       adoptWorkload: async (input) => adopter().adoptWorkload(input),
       childDeviceIds: async (deviceId) => {

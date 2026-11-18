@@ -3,7 +3,6 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
-  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -13,8 +12,6 @@ import {
   clientNativeId,
   infraNativeId,
   parseNativeId,
-  UNIFI_GATEWAY_ID,
-  unifiConsoleModel,
 } from './unifi-discovery.js'
 import type { UnifiAdoptInput } from './unifi-device-adopter.js'
 import { unifiControllers } from './unifi-node-resolver.js'
@@ -31,7 +28,6 @@ export interface UnifiAdoptionProviderDeps {
       readonly config: Record<string, unknown>
     }>
   >
-  readonly adoptGateway: (input: UnifiAdoptInput) => Promise<{ readonly deviceId: number }>
   readonly adoptInfra: (
     input: UnifiAdoptInput & { readonly infraId: string },
   ) => Promise<{ readonly deviceId: number; readonly accessoryDeviceIds: readonly number[] }>
@@ -53,8 +49,6 @@ const DEVICES_FILTER: AdoptionFilter = {
 
 /** The `childNativeId` a persisted device of this addon was adopted under, or null. */
 function adoptedNativeId(config: Record<string, unknown>): string | null {
-  const gateway = config['nativeId']
-  if (gateway === UNIFI_GATEWAY_ID) return UNIFI_GATEWAY_ID
   const infra = config['infraNativeId']
   if (typeof infra === 'string') return infraNativeId(infra)
   const mac = config['mac']
@@ -63,8 +57,9 @@ function adoptedNativeId(config: Record<string, unknown>): string | null {
 }
 
 /**
- * The UniFi `device-adoption` provider: the controller's Gateway, its infra devices and its
- * network clients are candidates of the integration, adopted as top-level siblings.
+ * The UniFi `device-adoption` provider: the controller's infra devices (a console is the
+ * workload Host; there is no Gateway, D1064) and its network clients are candidates of the
+ * integration, adopted as top-level siblings.
  */
 export function buildUnifiAdoptionProvider(
   deps: UnifiAdoptionProviderDeps,
@@ -168,22 +163,7 @@ export function buildUnifiAdoptionProvider(
           }
           const parsed = parseNativeId(nativeId)
           const name = perCandidate?.[nativeId]?.name
-          if (parsed?.kind === 'gateway') {
-            const { deviceId } = await deps.adoptGateway({
-              integrationId,
-              name:
-                name ??
-                gatewayDeviceName(
-                  'UniFi',
-                  unifiConsoleModel(unifiControllers.getInfraList(integrationId)),
-                ),
-            })
-            adopted.push({
-              childNativeId: nativeId,
-              parentDeviceId: deviceId,
-              accessoryDeviceIds: [],
-            })
-          } else if (parsed?.kind === 'infra') {
+          if (parsed?.kind === 'infra') {
             const infra = unifiControllers.getInfra(integrationId, parsed.id)
             const { deviceId, accessoryDeviceIds } = await deps.adoptInfra({
               integrationId,

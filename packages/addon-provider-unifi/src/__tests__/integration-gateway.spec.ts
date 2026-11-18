@@ -1,12 +1,14 @@
 /**
- * A new UniFi integration produces the controller's Gateway, its infra Containers and its
- * client Presence devices as top-level SIBLINGS, with the connection (and its credentials,
+ * A new UniFi integration produces the controller's infra hosts (a console is the Host the
+ * integration talks to; there is no Gateway, D1064) and its client Presence devices as
+ * top-level SIBLINGS, with the connection (and its credentials,
  * keychain secrets) on the integration. The device context is the one boundary a spec
  * fakes; the registry, resolver, adopter and adoption provider are the real code.
  */
 import {
   type DeviceConstructor,
   type DeviceContext,
+  DeviceFeature,
   DeviceRole,
   DeviceType,
   type IDevice,
@@ -26,7 +28,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { UnifiProviderAddon } from '../addon.js'
 import { buildConnectionFormSchema, connectionFromSettings, UNIFI_SYSTEM } from '../config.js'
 import { UnifiFeatureDevice } from '../devices/unifi-feature-device.js'
-import { UnifiGatewayDevice } from '../devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from '../devices/unifi-infra-device.js'
 import { buildUnifiAdoptionProvider } from '../unifi-adoption-provider.js'
 import { UnifiClientRegistry } from '../unifi-client-registry.js'
@@ -41,7 +42,6 @@ import type {
   UnifiInfraSnapshot,
 } from '../unifi-client-contract.js'
 import { buildUnifiDeviceAdopter } from '../unifi-device-adopter.js'
-import { UNIFI_GATEWAY_ID } from '../unifi-discovery.js'
 import { reconcileInfraFeatures } from '../unifi-feature-reconcile.js'
 import { setIntegrationDevicesOnline } from '../unifi-integration-offline.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
@@ -70,6 +70,12 @@ const SWITCH: UnifiInfraSnapshot = infraSnapshot({
   uptimeSec: 100,
   ports: [port({ idx: 1 })],
   ledOn: true,
+})
+const CONSOLE: UnifiInfraSnapshot = infraSnapshot({
+  id: 'udm',
+  name: 'marker-console',
+  model: 'UDM-Pro',
+  kind: 'console',
 })
 const PHONE: UnifiClientSnapshot = {
   mac: 'aa:bb:cc:dd:ee:ff',
@@ -108,6 +114,14 @@ interface WorkloadOptionsReader {
 
 function isWorkloadProvider(value: unknown): value is WorkloadOptionsReader {
   return typeof value === 'object' && value !== null && 'getOptions' in value
+}
+
+interface RebootProvider {
+  reboot(input: { deviceId: number }): Promise<{ success: true }>
+}
+
+function isRebootProvider(value: unknown): value is RebootProvider {
+  return typeof value === 'object' && value !== null && 'reboot' in value
 }
 
 function isSwitchProvider(value: unknown): value is SwitchProvider {
@@ -172,15 +186,6 @@ async function harness(infra: readonly UnifiInfraSnapshot[] = [SWITCH]) {
     listIntegrations: () => registry.list(),
     integrationName: () => 'Home UDM',
     listAdopted: async () => [...adopted].map(([id, config]) => ({ id, config })),
-    adoptGateway: async (input) => {
-      const out = await adopter.adoptGateway(input)
-      remember(out.deviceId, {
-        system: UNIFI_SYSTEM,
-        integrationId: INT,
-        nativeId: UNIFI_GATEWAY_ID,
-      })
-      return out
-    },
     adoptInfra: async (input) => {
       const out = await adopter.adoptInfra(input)
       remember(out.deviceId, {
@@ -208,7 +213,7 @@ async function harness(infra: readonly UnifiInfraSnapshot[] = [SWITCH]) {
   return { provider, created, registry }
 }
 
-describe('UniFi integration: the controller is a Gateway, a sibling of its devices', () => {
+describe('UniFi integration: the controller has no Gateway, its devices are siblings', () => {
   it('is an account-mode integration with the adoption cap, not a standalone hub', () => {
     const pkg: {
       camstack: {
@@ -220,11 +225,11 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     expect(addon?.capabilities.map((c) => c.name)).toContain('device-adoption')
   })
 
-  it('has no hub device class: the Gateway takes its place', () => {
+  it('has neither a hub nor a Gateway device class', () => {
     const classes = new InspectableAddon().classes()
     const keys: readonly string[] = Object.keys(classes)
     expect(keys).not.toContain('hub')
-    expect(classes[DeviceType.Gateway]).toBe(UnifiGatewayDevice)
+    expect(classes[DeviceType.Gateway]).toBeUndefined()
     expect(classes[DeviceType.Container]).toBe(UnifiInfraDevice)
     expect(classes[DeviceType.Workload]).toBe(UnifiInfraDevice)
   })
@@ -249,46 +254,52 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
     expect(keys).not.toContain('name')
   })
 
-  it('adopting everything creates the Gateway, the infra host and the client as top-level siblings', async () => {
-    const h = await harness()
+  it('adopting everything creates the console Host, the infra host and the client as top-level siblings', async () => {
+    const h = await harness([CONSOLE, SWITCH])
     const out = await h.provider.adopt({
       integrationId: INT,
-      childNativeIds: [UNIFI_GATEWAY_ID, 'infra:sw1', `client:${PHONE.mac}`],
+      childNativeIds: ['infra:udm', 'infra:sw1', `client:${PHONE.mac}`],
     })
     expect(h.created.map((c) => [c.stableId, c.cls, c.parentDeviceId])).toEqual([
-      [`unifi:${INT}:gateway`, UnifiGatewayDevice, null],
+      [`unifi:${INT}:infra:udm`, UnifiInfraDevice, null],
       [`unifi:${INT}:infra:sw1`, UnifiInfraDevice, null],
       [`unifi:${INT}:client:${PHONE.mac}`, UnifiFeatureDevice, null],
     ])
-    expect(h.created.map((c) => c.meta?.type)).toEqual([
-      DeviceType.Gateway,
-      DeviceType.Workload,
-      DeviceType.Presence,
+    expect(h.created.map((c) => [c.meta?.type, c.meta?.role])).toEqual([
+      [DeviceType.Workload, DeviceRole.Host],
+      [DeviceType.Workload, DeviceRole.Host],
+      [DeviceType.Presence, undefined],
     ])
-    expect(h.created[1]?.meta?.role).toBe(DeviceRole.Host)
     expect(h.created.every((c) => c.meta?.integrationId === INT)).toBe(true)
     expect(h.created.every((c) => c.config['integrationId'] === INT)).toBe(true)
     expect(out.adopted).toHaveLength(3)
+    // The console Host carries the model its reboot is decided from.
+    expect(h.created[0]?.config['model']).toBe('UDM-Pro')
     // The marked switch reaches its Container with features derived from the live snapshot.
     expect(JSON.stringify(h.created[1]?.config['features'])).toContain('"kind":"port"')
     expect(h.created[1]?.config['name']).toBe('marker-switch')
     expect(h.created[2]?.config['name']).toBe('marker-phone')
+    // The old Gateway id is not a candidate any more: nothing is created for it.
+    await expect(
+      h.provider.adopt({ integrationId: INT, childNativeIds: ['gateway'] }),
+    ).rejects.toThrow(/failed/)
+    expect(h.created).toHaveLength(3)
   })
 
-  it('a retried adopt neither duplicates the Gateway nor an infra device', async () => {
+  it('a retried adopt does not duplicate an infra device', async () => {
     const h = await harness()
     await h.provider.adopt({
       integrationId: INT,
-      childNativeIds: [UNIFI_GATEWAY_ID, 'infra:sw1'],
+      childNativeIds: ['infra:sw1'],
     })
     await h.provider.adopt({
       integrationId: INT,
-      childNativeIds: [UNIFI_GATEWAY_ID, 'infra:sw1'],
+      childNativeIds: ['infra:sw1'],
     })
-    expect(h.created).toHaveLength(2)
+    expect(h.created).toHaveLength(1)
   })
 
-  it('lists the Gateway first, then the infra and clients, all top-level', async () => {
+  it('lists the infra and clients, all top-level, with no Gateway', async () => {
     const h = await harness()
     const page = await h.provider.listCandidates({
       integrationId: INT,
@@ -296,13 +307,11 @@ describe('UniFi integration: the controller is a Gateway, a sibling of its devic
       pageSize: 50,
     })
     expect(page.candidates.map((c) => [c.childNativeId, c.type])).toEqual([
-      [UNIFI_GATEWAY_ID, DeviceType.Gateway],
       ['infra:sw1', DeviceType.Workload],
       [`client:${PHONE.mac}`, DeviceType.Presence],
     ])
     // Only the switch nests something: its PoE port, proposed as a port device under it.
     expect(page.candidates.map((c) => c.children?.map((p) => p.childNativeId))).toEqual([
-      undefined,
       ['infra:sw1:port-1'],
       undefined,
     ])
@@ -518,14 +527,45 @@ describe('UniFi devices on a stub device context', () => {
     return { ctx, providers }
   }
 
-  it('the Gateway is a Gateway carrying the controller UI link', () => {
+  it('a console Host carries the workload, the controller UI link and a reboot through restartDevice', async () => {
+    await harness([CONSOLE, SWITCH])
+    const client = unifiControllers.getManager(INT)?.client
+    if (client === null || client === undefined) throw new Error('client should run')
+    const restartDevice = vi.spyOn(client, 'restartDevice')
     const { ctx, providers } = rig(
-      { nativeId: UNIFI_GATEWAY_ID, integrationId: INT, system: UNIFI_SYSTEM },
-      DeviceType.Gateway,
+      {
+        integrationId: INT,
+        infraNativeId: 'udm',
+        model: 'UDM-Pro',
+        system: UNIFI_SYSTEM,
+      },
+      DeviceType.Workload,
     )
-    const device = new UnifiGatewayDevice(ctx)
-    expect(device.type).toBe(DeviceType.Gateway)
-    expect([...providers.keys()]).toContain('device-admin-link')
+    const host = new UnifiInfraDevice(ctx)
+    await host.onActivate()
+    expect([...providers.keys()]).toEqual(
+      expect.arrayContaining(['workload', 'device-admin-link', 'reboot']),
+    )
+    expect(host.features).toContain(DeviceFeature.Rebootable)
+    const reboot = providers.get('reboot')
+    if (!isRebootProvider(reboot)) throw new Error('reboot cap missing')
+    expect(await reboot.reboot({ deviceId: 7 })).toEqual({ success: true })
+    expect(restartDevice.mock.calls).toEqual([['udm']])
+  })
+
+  it('a switch Host stays as it was: no reboot of its own', async () => {
+    await harness()
+    const { ctx, providers } = rig(
+      {
+        integrationId: INT,
+        infraNativeId: 'sw1',
+        model: 'USW-Lite-8-PoE',
+        system: UNIFI_SYSTEM,
+      },
+      DeviceType.Workload,
+    )
+    await new UnifiInfraDevice(ctx).onActivate()
+    expect(providers.has('reboot')).toBe(false)
   })
 
   it('the infra Container spawns its features as children linked to it, each following the integration', () => {

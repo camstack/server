@@ -197,10 +197,13 @@ export function answeringSnapshot(reach: UnraidServerReach): UnraidSnapshot | nu
   return reach.kind === 'answering' ? reach.snapshot : null
 }
 
+/** Unraid reports the array capacity in KiB. */
+const KIB = 1024
+
 /**
- * The slice of the server itself: running while it answers the poll, with CPU and
- * temperature; `crashed` once it stops answering (the host's "went down", and a recovery
- * when it answers again); unknown before the first poll.
+ * The slice of the server itself: running while it answers the poll, with CPU, temperature
+ * and the array's used / total capacity as its disk; `crashed` once it stops answering (the
+ * host's "went down", and a recovery when it answers again); unknown before the first poll.
  */
 export function unraidHostWorkloadStatus(reach: UnraidServerReach, now: number): WorkloadStatus {
   const base = unknownWorkloadStatus(null, now)
@@ -215,6 +218,9 @@ export function unraidHostWorkloadStatus(reach: UnraidServerReach, now: number):
       ...emptyResources(),
       cpuPercent: snapshot.cpu.percent,
       temperature: snapshot.cpu.tempC,
+      // The array's capacity, in KiB on the wire. Uptime and RAM are not read by the client.
+      diskUsedBytes: snapshot.array.capacityKb.used * KIB,
+      diskTotalBytes: snapshot.array.capacityKb.total * KIB,
     },
   }
 }

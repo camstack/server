@@ -4,6 +4,7 @@ import {
   type ConfigUISchema,
   type CreateDeviceSpec,
   type DeviceConstructor,
+  type DeviceRestoreReport,
   type DeviceSummary,
   type DiscoveryCandidate,
   type DiscoveryHit,
@@ -18,13 +19,13 @@ import {
   integrationRowsMigration,
   integrationRowsPortsOver,
   type RecordIntegrationInstances,
+  type SavedDevice,
   type SystemEvent,
   collectOwnerIntegrationIds,
   rowsDepsOver,
 } from '@camstack/types'
 import { UNIFI_SYSTEM } from './config.js'
 import { UnifiFeatureDevice } from './devices/unifi-feature-device.js'
-import { UnifiGatewayDevice } from './devices/unifi-gateway-device.js'
 import { UnifiInfraDevice } from './devices/unifi-infra-device.js'
 import { buildUnifiAdoptionProvider } from './unifi-adoption-provider.js'
 import type { UnifiControllerClientFactory } from './unifi-client-contract.js'
@@ -43,6 +44,7 @@ import {
   unifiConsolesFromHits,
 } from './unifi-lan-discovery.js'
 import { reconcileInfraFeatures } from './unifi-feature-reconcile.js'
+import { retireLegacyUnifiGatewayRows } from './unifi-legacy-gateway.js'
 import { UnifiReconciler, type IntegrationLifecycleKind } from './unifi-reconciler.js'
 import { cascadeRemoveDevicesForIntegration } from './unifi-integration-device-cascade.js'
 import { setIntegrationDevicesOnline } from './unifi-integration-offline.js'
@@ -68,10 +70,10 @@ const UNIFI_MIGRATIONS_DATE = '2026-11-05'
  * connection test (`unifi-connection-test.ts`), and a connection that fails names its reason on
  * the integration's status.
  *
- * Discovery offers the controller itself ({@link DeviceType.Gateway}, with a link to its UI),
- * each infra device (a {@link DeviceType.Workload} host, fanning per-port PoE, restart and sensors
- * out as accessory children) and each network client ({@link DeviceType.Presence}), all as
- * siblings. Cameras are not in scope.
+ * Discovery offers each infra device (a {@link DeviceType.Workload} host, fanning per-port PoE,
+ * restart and sensors out as accessory children; a console also serves `reboot` and is the Host
+ * the integration talks to — there is no Gateway, D1064) and each network client
+ * ({@link DeviceType.Presence}), all as siblings. Cameras are not in scope.
  *
  * `instanceMode: multiple` — many controllers may be added. A LAN scan finds a UniFi OS console
  * through the Ubiquiti discovery broadcast (`unifi-lan-discovery.ts`) and offers it as an
@@ -82,13 +84,31 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
   protected readonly addonId = 'provider-unifi'
   protected readonly providerName = 'UniFi Network'
   protected readonly deviceClasses: Partial<Record<DeviceType, DeviceConstructor<IDevice>>> = {
-    [DeviceType.Gateway]: UnifiGatewayDevice,
     [DeviceType.Container]: UnifiInfraDevice,
     [DeviceType.Workload]: UnifiInfraDevice,
     [DeviceType.Switch]: UnifiFeatureDevice,
     [DeviceType.Button]: UnifiFeatureDevice,
     [DeviceType.Sensor]: UnifiFeatureDevice,
     [DeviceType.Presence]: UnifiFeatureDevice,
+  }
+
+  /**
+   * A Gateway row an older version adopted (D1064) has no class: it is retired through the
+   * kernel's removal (tombstone, D865) before the rest is restored.
+   */
+  protected override async onRestoreDevices(
+    savedDevices: readonly SavedDevice[],
+  ): Promise<DeviceRestoreReport | void> {
+    const devices = this.ctx.kernel.devices
+    const rest = await retireLegacyUnifiGatewayRows({
+      saved: savedDevices,
+      remove: async (deviceId) => {
+        if (!devices) throw new Error('kernel.devices unavailable')
+        await devices.remove(deviceId)
+      },
+      logger: this.ctx.logger,
+    })
+    return super.onRestoreDevices(rest)
   }
 
   private integrationReconciler: UnifiReconciler | null = null
@@ -333,7 +353,6 @@ export class UnifiProviderAddon extends BaseDeviceProvider {
         }
         return out
       },
-      adoptGateway: async (input) => adopter().adoptGateway(input),
       adoptInfra: async (input) => adopter().adoptInfra(input),
       adoptClient: async (input) => adopter().adoptClient(input),
       childDeviceIds: async (deviceId) => {

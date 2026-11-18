@@ -2,7 +2,7 @@ import { errMsg, type DeviceManagerApi, type IScopedLogger } from '@camstack/typ
 import { UNIFI_SYSTEM } from './config.js'
 
 /**
- * Remove every top-level device (Gateway, infra Container, client Presence) of an integration that
+ * Remove every top-level device (infra host or Container, client Presence) of an integration that
  * was deleted or disabled; the kernel takes the accessory children with it. Best-effort per
  * device; returns the count removed.
  */

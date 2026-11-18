@@ -3,7 +3,7 @@
  *
  * A UniFi access point or switch has no management page of its own — it is
  * adopted by, and configured from, the controller. So every device this addon
- * owns (the controller Gateway, an infra Container, a port/feature child) resolves
+ * owns (a console Host, an infra host or Container, a port/feature child) resolves
  * to the CONTROLLER's UI, `target: 'integration'`, labelled as such so an
  * operator knows before clicking that he is not landing on the AP.
  *

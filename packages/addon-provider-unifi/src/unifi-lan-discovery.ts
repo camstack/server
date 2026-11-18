@@ -232,8 +232,8 @@ export interface UnifiConsoleProposal {
 }
 
 /**
- * A console is offered as an INTEGRATION to set up (a {@link DeviceType.Gateway} candidate marked
- * `setupIntegration`), with its host prefilled; the API key is still asked at setup. A console
+ * A console is offered as an INTEGRATION to set up (a {@link DeviceType.Workload} candidate — the
+ * Host the integration adopts, D1064 — marked `setupIntegration`), with its host prefilled; the API key is still asked at setup. A console
  * whose host an integration already dials is left out and reported as dropped.
  */
 export function unifiConsoleCandidates(
@@ -252,7 +252,7 @@ export function unifiConsoleCandidates(
     }
     candidates.push({
       stableId: unifiScanKey(found.host),
-      type: DeviceType.Gateway,
+      type: DeviceType.Workload,
       suggestedName: `UniFi - ${found.name}`,
       prefilledConfig: { host: found.host },
       setupIntegration: true,

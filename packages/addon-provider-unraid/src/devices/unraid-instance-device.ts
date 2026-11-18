@@ -46,9 +46,11 @@ export const unraidInstanceSchema = z.object({
 export type UnraidInstanceConfig = z.infer<typeof unraidInstanceSchema>
 
 /**
- * The Unraid server itself: a TOP-LEVEL `workload` host (D1056), sibling of the server's
- * Gateway and of its containers and VMs, which name it as their `hostDeviceId`. It serves the
- * `workload` cap (running while it answers the poll, CPU, temperature; no control) — a row
+ * The Unraid server itself: the TOP-LEVEL `workload` Host (D1056), sibling of its containers
+ * and VMs, which name it as their `hostDeviceId`. There is no Gateway beside it (D1064): the
+ * Host carries the WebGUI link and the server's identifiers. It serves the `workload` cap
+ * (running while it answers the poll, CPU, temperature, array capacity; no control, no reboot:
+ * the API has none) — a row
  * adopted before the workload type stays a Container without it. It declares `getAccessoryChildren()`
  * so the kernel auto-spawns one {@link UnraidEntityDevice} per entity in the LIVE
  * `entities[]` config and reconciles additions/removals when the addon re-persists

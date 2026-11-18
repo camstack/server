@@ -7,7 +7,7 @@ export interface OfflineTarget {
 }
 
 /**
- * Set every UniFi device of `integrationId` (Gateway, infra
+ * Set every UniFi device of `integrationId` (infra hosts and
  * Containers, their features and client Presence devices)
  * to `online`. Churn-free: a device already in that state is left alone. Returns how many
  * changed.

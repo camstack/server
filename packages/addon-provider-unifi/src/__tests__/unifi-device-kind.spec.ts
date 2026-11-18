@@ -47,7 +47,6 @@ describe('classifyUnifiInfra', () => {
 
 describe('unifiDeviceTarget — the one type/role table', () => {
   it.each<[UnifiCandidateKind, DeviceType, string | null]>([
-    ['controller', DeviceType.Gateway, null],
     ['console', DeviceType.Workload, DeviceRole.Host],
     ['switch', DeviceType.Workload, DeviceRole.Host],
     ['access-point', DeviceType.Workload, DeviceRole.Host],

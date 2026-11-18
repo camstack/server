@@ -39,7 +39,6 @@ export {
   clientNativeId,
   parseNativeId,
   unifiStableId,
-  UNIFI_GATEWAY_ID,
 } from './unifi-discovery.js'
 export type { ParsedNativeId } from './unifi-discovery.js'
 export {
@@ -58,9 +57,9 @@ export {
   unifiControllers,
 } from './unifi-node-resolver.js'
 export {
-  UnifiGatewayDevice,
-  unifiGatewaySchema,
-} from './devices/unifi-gateway-device.js'
+  isLegacyUnifiGatewayRow,
+  retireLegacyUnifiGatewayRows,
+} from './unifi-legacy-gateway.js'
 export { UnifiClientRegistry } from './unifi-client-registry.js'
 export { buildUnifiAdoptionProvider } from './unifi-adoption-provider.js'
 export { buildUnifiDeviceAdopter } from './unifi-device-adopter.js'

@@ -4273,7 +4273,7 @@
 ### `reboot` → `reboot.*`
 
 - **Source:** `packages/types/src/capabilities/reboot.cap.ts:20`
-- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, switch, gateway`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native` · deviceTypes: `camera, sensor, switch, gateway, workload`
 - **Archetypes:** —
 - **Provider interface:** `IRebootProvider`
 

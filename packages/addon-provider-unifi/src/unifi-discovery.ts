@@ -1,8 +1,9 @@
 import {
   deviceAdminLinkCapability,
   type DiscoveredChildDevice,
-  gatewayDeviceName,
   presenceCapability,
+  rebootCapability,
+  workloadCapability,
 } from '@camstack/types'
 import type { UnifiClientSnapshot, UnifiInfraSnapshot } from './unifi-client-contract.js'
 import { unifiDeviceTarget } from './unifi-device-kind.js'
@@ -15,9 +16,6 @@ import {
   portClientNamerOf,
   type UnifiPortClientNamer,
 } from './unifi-mapping.js'
-
-/** The `childNativeId` of the controller's own Gateway candidate. */
-export const UNIFI_GATEWAY_ID = 'gateway'
 
 /** The `childNativeId` an infra Container candidate is keyed on. */
 export function infraNativeId(id: string): string {
@@ -36,14 +34,12 @@ export function unifiStableId(integrationId: string, childNativeId: string): str
 
 /** Discriminated result of parsing a `childNativeId`. */
 export type ParsedNativeId =
-  | { readonly kind: 'gateway' }
   | { readonly kind: 'infra'; readonly id: string }
   | { readonly kind: 'client'; readonly mac: string }
   | null
 
 /** Parse a candidate `childNativeId` back into its discriminant + key. */
 export function parseNativeId(childNativeId: string): ParsedNativeId {
-  if (childNativeId === UNIFI_GATEWAY_ID) return { kind: 'gateway' }
   if (childNativeId.startsWith('infra:')) {
     const id = childNativeId.slice('infra:'.length)
     // `infra:<id>:poe-<n>` is a port under its infra device, adopted with it, never alone.
@@ -55,11 +51,16 @@ export function parseNativeId(childNativeId: string): ParsedNativeId {
   return null
 }
 
-/** The console model in an infra list, or null when the controller reported none. */
-export function unifiConsoleModel(infra: readonly UnifiInfraSnapshot[]): string | null {
-  const match = infra.find((device) => device.kind === 'console')
-  return match === undefined ? null : match.model
-}
+/**
+ * What a console Host serves beyond its children: the workload, the reboot (the controller's
+ * `restartDevice`) and the link to the controller UI. A switch or an access point keeps its
+ * restart Button child and is proposed without these hints.
+ */
+const CONSOLE_CAPABILITIES: readonly string[] = [
+  workloadCapability.name,
+  rebootCapability.name,
+  deviceAdminLinkCapability.name,
+]
 
 /** The PoE ports of an infra device, proposed under it: the port devices its adoption spawns. */
 function poePortCandidates(
@@ -100,9 +101,9 @@ export interface BuildDiscoveryCandidatesInput {
 }
 
 /**
- * Build the candidates of one integration: the controller's Gateway, one candidate per infra
- * device and one per network client, each typed by `unifiDeviceTarget` (the one table). All are
- * top-level siblings; an infra device nests only its PoE ports, the switch children its adoption
+ * Build the candidates of one integration: one candidate per infra device (a console is the
+ * workload Host the integration talks to — there is no Gateway, D1064) and one per network
+ * client, each typed by `unifiDeviceTarget` (the one table). All are top-level siblings; an infra device nests only its PoE ports, the switch children its adoption
  * spawns. Pure, no I/O.
  */
 export function buildDiscoveryCandidates(
@@ -110,23 +111,6 @@ export function buildDiscoveryCandidates(
 ): readonly DiscoveredChildDevice[] {
   const adoptedOf = (nativeId: string): number | null => input.adopted.get(nativeId) ?? null
   const portClientName = input.portClientName ?? portClientNamerOf(input.infra)
-
-  const gatewayAdopted = adoptedOf(UNIFI_GATEWAY_ID)
-  const consoleModel = unifiConsoleModel(input.infra)
-  const gateway: DiscoveredChildDevice = {
-    childNativeId: UNIFI_GATEWAY_ID,
-    name: gatewayDeviceName('UniFi', consoleModel),
-    type: unifiDeviceTarget('controller').type,
-    status: input.controllerOnline ? 'online' : 'offline',
-    metadata: {
-      manufacturer: 'Ubiquiti',
-      integration: 'unifi',
-      ...(consoleModel !== null ? { model: consoleModel } : {}),
-    },
-    alreadyAdopted: gatewayAdopted !== null,
-    adoptedDeviceId: gatewayAdopted,
-    capabilities: [deviceAdminLinkCapability.name],
-  }
 
   const infraCandidates: DiscoveredChildDevice[] = input.infra.map((device) => {
     const nativeId = infraNativeId(device.id)
@@ -145,6 +129,7 @@ export function buildDiscoveryCandidates(
       },
       alreadyAdopted: adoptedDeviceId !== null,
       adoptedDeviceId,
+      ...(device.kind === 'console' ? { capabilities: [...CONSOLE_CAPABILITIES] } : {}),
       ...(ports.length > 0 ? { children: ports } : {}),
     } satisfies DiscoveredChildDevice
   })
@@ -168,5 +153,5 @@ export function buildDiscoveryCandidates(
     } satisfies DiscoveredChildDevice
   })
 
-  return [gateway, ...infraCandidates, ...clientCandidates]
+  return [...infraCandidates, ...clientCandidates]
 }

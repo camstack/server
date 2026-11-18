@@ -30,11 +30,7 @@ import type {
   UnraidSnapshot,
 } from '../unraid-client-contract.js'
 import { buildUnraidDeviceAdopter } from '../unraid-device-adopter.js'
-import {
-  buildUnraidCandidates,
-  UNRAID_GATEWAY_ID,
-  UNRAID_INSTANCE_ID,
-} from '../unraid-discovery.js'
+import { buildUnraidCandidates, UNRAID_INSTANCE_ID } from '../unraid-discovery.js'
 import { reconcileInstanceEntities } from '../unraid-entity-reconcile.js'
 import { UnraidIntegrationManager } from '../unraid-integration-manager.js'
 import { unraidInstances } from '../unraid-node-resolver.js'
@@ -82,15 +78,14 @@ function snapshot(over: Partial<UnraidSnapshot> = {}): UnraidSnapshot {
 }
 
 describe('Unraid discovery: the server, each container and each VM', () => {
-  it('lists the Gateway, the server, N containers and M VMs as separate candidates', () => {
+  it('lists the server Host, N containers and M VMs as separate candidates', () => {
     const candidates = buildUnraidCandidates({
-      server: { name: 'Tower', online: true, hostname: 'tower' },
+      server: { name: 'Tower', online: true },
       dockers: snapshot().dockers,
       vms: snapshot().vms,
       adopted: new Map([['docker:plex', 42]]),
     })
     expect(candidates.map((c) => [c.childNativeId, c.name, c.type])).toEqual([
-      [UNRAID_GATEWAY_ID, expect.any(String), DeviceType.Gateway],
       [UNRAID_INSTANCE_ID, 'Tower', DeviceType.Workload],
       ['docker:plex', 'plex', DeviceType.Workload],
       ['docker:sonarr', 'sonarr', DeviceType.Workload],
@@ -107,7 +102,7 @@ describe('Unraid discovery: the server, each container and each VM', () => {
       vms: null,
       adopted: new Map(),
     })
-    expect(candidates.map((c) => c.childNativeId)).toEqual([UNRAID_GATEWAY_ID, UNRAID_INSTANCE_ID])
+    expect(candidates.map((c) => c.childNativeId)).toEqual([UNRAID_INSTANCE_ID])
   })
 
   it('container and VM entities are no longer children of the server', () => {
@@ -156,7 +151,6 @@ function adoptionHarness(current: UnraidSnapshot | null) {
     listIntegrations: () => [INT],
     integrationName: () => 'Tower',
     listAdopted: async () => [...adopted].map(([id, config]) => ({ id, config })),
-    adoptGateway: async (input) => record(UNRAID_GATEWAY_ID)(await adopter.adoptGateway(input)),
     adoptInstance: async (input) => record(UNRAID_INSTANCE_ID)(await adopter.adoptInstance(input)),
     adoptWorkload: async (input) => record(input.nativeId)(await adopter.adoptWorkload(input)),
     childDeviceIds: async () => [],

@@ -87,14 +87,14 @@ describe('unraidServerCandidates', () => {
     expect(unraidServerCandidates(servers, []).candidates).toEqual([
       {
         stableId: 'unraid-server:192.0.2.20',
-        type: DeviceType.Gateway,
+        type: DeviceType.Workload,
         suggestedName: 'Unraid - 192.0.2.20',
         prefilledConfig: { host: '192.0.2.20', port: 80, https: false, allowSelfSigned: false },
         setupIntegration: true,
       },
       {
         stableId: 'unraid-server:192.0.2.21',
-        type: DeviceType.Gateway,
+        type: DeviceType.Workload,
         suggestedName: 'Unraid - 192.0.2.21',
         prefilledConfig: { host: '192.0.2.21', port: 443, https: true, allowSelfSigned: true },
         setupIntegration: true,

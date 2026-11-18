@@ -7,7 +7,7 @@ export interface OfflineTarget {
 }
 
 /**
- * Set every Unraid device of `integrationId` (Gateway, server device and its entities, containers and VMs)
+ * Set every Unraid device of `integrationId` (the server's Host and its entities, containers and VMs)
  * to `online`. Churn-free: a device already in that state is left alone. Returns how many
  * changed.
  */

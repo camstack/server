@@ -7,8 +7,11 @@ import { DeviceRole, DeviceType } from '@camstack/types'
  */
 export type UnifiInfraKind = 'console' | 'switch' | 'access-point' | 'other'
 
-/** Every candidate the integration proposes: the controller itself, an infra kind, a client. */
-export type UnifiCandidateKind = 'controller' | UnifiInfraKind | 'client'
+/**
+ * Every candidate the integration proposes: an infra kind or a client. The controller has no
+ * device of its own: a console is a workload Host, and there is no Gateway (D1064).
+ */
+export type UnifiCandidateKind = UnifiInfraKind | 'client'
 
 /** The device type and role a candidate is proposed and adopted with. */
 export interface UnifiDeviceTarget {
@@ -26,9 +29,14 @@ const CONSOLE_MODEL = /^(UDM|UXG|UCG|UCK|USG|UDR|UDW)/
 const SWITCH_MODEL = /^(USW|USL|USP|USF)/
 const ACCESS_POINT_MODEL = /^(UAP|UAL|U6|U7|UWB|E7)/
 
+/** Is this model a UniFi OS console (UDM, UCG, UXG, Cloud Key, …)? Pure. */
+export function isUnifiConsoleModel(model: string): boolean {
+  return CONSOLE_MODEL.test(model)
+}
+
 /** Classify one infra device. Pure. */
 export function classifyUnifiInfra(input: UnifiInfraClassifyInput): UnifiInfraKind {
-  if (CONSOLE_MODEL.test(input.model)) return 'console'
+  if (isUnifiConsoleModel(input.model)) return 'console'
   if (input.features.includes('accessPoint')) return 'access-point'
   if (input.features.includes('switching')) return 'switch'
   if (SWITCH_MODEL.test(input.model)) return 'switch'
@@ -46,15 +54,18 @@ export const UNIFI_HOST_TARGET: UnifiDeviceTarget = {
   role: DeviceRole.Host,
 }
 
-const CONTROLLER_TARGET: UnifiDeviceTarget = { type: DeviceType.Gateway, role: null }
-const OTHER_TARGET: UnifiDeviceTarget = { type: DeviceType.Container, role: null }
-const CLIENT_TARGET: UnifiDeviceTarget = { type: DeviceType.Presence, role: null }
+const OTHER_TARGET: UnifiDeviceTarget = {
+  type: DeviceType.Container,
+  role: null,
+}
+const CLIENT_TARGET: UnifiDeviceTarget = {
+  type: DeviceType.Presence,
+  role: null,
+}
 
 /** The ONE type/role table: discovery proposes and adoption creates with what this returns. */
 export function unifiDeviceTarget(kind: UnifiCandidateKind): UnifiDeviceTarget {
   switch (kind) {
-    case 'controller':
-      return CONTROLLER_TARGET
     case 'console':
     case 'switch':
     case 'access-point':

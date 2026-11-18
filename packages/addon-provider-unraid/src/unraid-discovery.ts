@@ -2,18 +2,16 @@ import {
   DeviceType,
   type DiscoveredChildDevice,
   deviceAdminLinkCapability,
-  gatewayDeviceName,
+  workloadCapability,
 } from '@camstack/types'
 import { z } from 'zod'
 import type { UnraidContainerInfo, UnraidSnapshot, UnraidVmInfo } from './unraid-client-contract.js'
 import { localIdOf } from './unraid-mapping.js'
 
-/** The `childNativeId` of the server itself (the Gateway), one per integration. */
-export const UNRAID_GATEWAY_ID = 'gateway'
-
 /**
- * The `childNativeId` of the single server device (the workload host), one per integration. The
- * Container fans every array / disk / CPU / notification entity out as accessory
+ * The `childNativeId` of the server itself, the single workload Host, one per integration
+ * (D1064: there is no Gateway device beside it). It carries the WebGUI link and the server's
+ * identifiers, and fans every array / disk / CPU / notification entity out as accessory
  * children. Docker containers and VMs are NOT its children: each is its own candidate.
  */
 export const UNRAID_INSTANCE_ID = 'instance'
@@ -49,14 +47,12 @@ export function vmRef(vm: UnraidVmInfo): UnraidWorkloadRef {
 
 /** Discriminated result of parsing a `childNativeId`. */
 export type ParsedUnraidNativeId =
-  | { readonly kind: 'gateway' }
   | { readonly kind: 'instance' }
   | { readonly kind: 'workload'; readonly ref: UnraidWorkloadRef }
   | null
 
 /** Parse a candidate `childNativeId` back into what it names (null: not ours). */
 export function parseUnraidNativeId(childNativeId: string): ParsedUnraidNativeId {
-  if (childNativeId === UNRAID_GATEWAY_ID) return { kind: 'gateway' }
   if (childNativeId === UNRAID_INSTANCE_ID) return { kind: 'instance' }
   if (childNativeId.startsWith(DOCKER_PREFIX)) {
     const name = childNativeId.slice(DOCKER_PREFIX.length)
@@ -102,31 +98,27 @@ export interface BuildUnraidCandidatesInput {
   readonly server: {
     readonly name: string
     readonly online: boolean
-    /** Hostname the server reported. Absent: the gateway is named "Unraid". */
-    readonly hostname?: string | null
   }
   /** The server's containers; `null` when the list could not be read (none proposed). */
   readonly dockers: readonly UnraidContainerInfo[] | null
   /** The server's VMs; `null` when the list could not be read (none proposed). */
   readonly vms: readonly UnraidVmInfo[] | null
-  /** Adopted device id per native id (`gateway`, `instance`, `docker:…`, `vm:…`). */
+  /** Adopted device id per native id (`instance`, `docker:…`, `vm:…`). */
   readonly adopted: ReadonlyMap<string, number>
 }
 
 const METADATA = { manufacturer: 'Unraid', integration: 'unraid' } as const
 
 /**
- * The server's Gateway ({@link DeviceType.Gateway}, with a link to its WebGUI), the server
- * itself as the SINGLE {@link DeviceType.Workload} host, and one workload candidate per
- * Docker container and per VM — all top-level SIBLINGS, none nests another (the UniFi model: a controller's
- * Gateway beside one candidate per infra device and per client). The array / disk / CPU /
- * notification entities materialise as the instance's accessory children. Pure.
+ * The server itself as the SINGLE {@link DeviceType.Workload} Host (with the link to its
+ * WebGUI), and one workload candidate per Docker container and per VM — all top-level
+ * SIBLINGS, none nests another. There is no Gateway candidate (D1064). The array / disk / CPU /
+ * notification entities materialise as the Host's accessory children. Pure.
  */
 export function buildUnraidCandidates(
   input: BuildUnraidCandidatesInput,
 ): readonly DiscoveredChildDevice[] {
   const status = input.server.online ? 'online' : 'offline'
-  const gatewayAdopted = input.adopted.get(UNRAID_GATEWAY_ID) ?? null
   const instanceAdopted = input.adopted.get(UNRAID_INSTANCE_ID) ?? null
   const workload = (ref: UnraidWorkloadRef, name: string, model: string): DiscoveredChildDevice => {
     const childNativeId = workloadNativeId(ref)
@@ -147,16 +139,6 @@ export function buildUnraidCandidates(
   const vms = (input.vms ?? []).map((v) => workload(vmRef(v), v.name, 'Virtual machine'))
   return [
     {
-      childNativeId: UNRAID_GATEWAY_ID,
-      name: gatewayDeviceName('Unraid', input.server.hostname),
-      type: DeviceType.Gateway,
-      status,
-      metadata: METADATA,
-      alreadyAdopted: gatewayAdopted !== null,
-      adoptedDeviceId: gatewayAdopted,
-      capabilities: [deviceAdminLinkCapability.name],
-    },
-    {
       childNativeId: UNRAID_INSTANCE_ID,
       name: input.server.name,
       type: DeviceType.Workload,
@@ -164,6 +146,7 @@ export function buildUnraidCandidates(
       metadata: METADATA,
       alreadyAdopted: instanceAdopted !== null,
       adoptedDeviceId: instanceAdopted,
+      capabilities: [workloadCapability.name, deviceAdminLinkCapability.name],
     },
     ...containers,
     ...vms,

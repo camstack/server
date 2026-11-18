@@ -261,7 +261,7 @@ async function readSection<T>(
 
 /**
  * The server's identity (D1059). A missing or failed read is `systemRead` / `serverRead`
- * false — its values unknown, and the gateway named "Unraid" — and never fails the poll.
+ * false — its values unknown — and never fails the poll.
  */
 export async function readIdentity(client: UnraidClientLike): Promise<UnraidServerIdentity> {
   const failures: string[] = []

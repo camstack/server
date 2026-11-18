@@ -22,7 +22,14 @@ export const rebootCapability = {
   scope: 'device',
   deviceNative: true,
   mode: 'singleton',
-  deviceTypes: [DeviceType.Camera, DeviceType.Sensor, DeviceType.Switch, DeviceType.Gateway],
+  // A workload Host (a UniFi console, D1064) reboots too; a Host only binds it when it serves it.
+  deviceTypes: [
+    DeviceType.Camera,
+    DeviceType.Sensor,
+    DeviceType.Switch,
+    DeviceType.Gateway,
+    DeviceType.Workload,
+  ],
   methods: {
     reboot: method(
       z.object({ deviceId: z.number().int().nonnegative() }),

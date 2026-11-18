@@ -3,7 +3,6 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
-  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -29,12 +28,7 @@ export interface UnraidAdoptionProviderDeps {
       readonly config: Record<string, unknown>
     }>
   >
-  /** Create the top-level Gateway device of the server. */
-  readonly adoptGateway: (input: {
-    readonly integrationId: string
-    readonly name: string
-  }) => Promise<{ readonly deviceId: number }>
-  /** Create the top-level server device (the workload host); the kernel spawns its entity children. */
+  /** Create the top-level server device (the workload Host); the kernel spawns its entity children. */
   readonly adoptInstance: (input: {
     readonly integrationId: string
     readonly name: string
@@ -60,9 +54,9 @@ const DEVICES_FILTER: AdoptionFilter = {
 }
 
 /**
- * The Unraid `device-adoption` provider: the server's Gateway, its single instance
- * Container, and each Docker container and VM are candidates of the integration, adopted
- * as top-level siblings. Nothing is created until the operator adopts it.
+ * The Unraid `device-adoption` provider: the server itself (the one workload Host, D1064 — no
+ * Gateway) and each Docker container and VM are candidates of the integration, adopted as
+ * top-level siblings. Nothing is created until the operator adopts it.
  */
 export function buildUnraidAdoptionProvider(
   deps: UnraidAdoptionProviderDeps,
@@ -88,7 +82,6 @@ export function buildUnraidAdoptionProvider(
       server: {
         name: serverName(integrationId),
         online: snapshot !== null,
-        hostname: snapshot?.hostname ?? null,
       },
       dockers: snapshot?.dockers ?? null,
       vms: snapshot?.vms ?? null,
@@ -161,14 +154,11 @@ export function buildUnraidAdoptionProvider(
       let failures = 0
       for (const nativeId of childNativeIds) {
         try {
-          const snapshot = getSnapshot(integrationId)
           const parsed = parseUnraidNativeId(nativeId)
           const defaultName =
-            parsed?.kind === 'gateway'
-              ? gatewayDeviceName('Unraid', snapshot?.hostname)
-              : parsed?.kind === 'workload'
-                ? (workloadName(integrationId, parsed.ref) ?? nativeId)
-                : serverName(integrationId)
+            parsed?.kind === 'workload'
+              ? (workloadName(integrationId, parsed.ref) ?? nativeId)
+              : serverName(integrationId)
           const name = perCandidate?.[nativeId]?.name ?? defaultName
           const existingId = already.get(nativeId)
           if (existingId !== undefined) {
@@ -184,14 +174,7 @@ export function buildUnraidAdoptionProvider(
             })
             continue
           }
-          if (parsed?.kind === 'gateway') {
-            const { deviceId } = await deps.adoptGateway({ integrationId, name })
-            adopted.push({
-              childNativeId: nativeId,
-              parentDeviceId: deviceId,
-              accessoryDeviceIds: [],
-            })
-          } else if (parsed?.kind === 'instance') {
+          if (parsed?.kind === 'instance') {
             const { deviceId, accessoryDeviceIds } = await deps.adoptInstance({
               integrationId,
               name,

@@ -154,14 +154,14 @@ describe('unifiConsoleCandidates', () => {
     expect(unifiConsoleCandidates(consoles, []).candidates).toEqual([
       {
         stableId: 'unifi-console:192.0.2.1',
-        type: DeviceType.Gateway,
+        type: DeviceType.Workload,
         suggestedName: 'UniFi - console-example',
         prefilledConfig: { host: '192.0.2.1' },
         setupIntegration: true,
       },
       {
         stableId: 'unifi-console:192.0.2.2',
-        type: DeviceType.Gateway,
+        type: DeviceType.Workload,
         suggestedName: 'UniFi - 192.0.2.2',
         prefilledConfig: { host: '192.0.2.2' },
         setupIntegration: true,

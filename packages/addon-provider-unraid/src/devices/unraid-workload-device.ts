@@ -56,8 +56,8 @@ type WorkloadCommand = (client: UnraidClientLike, id: string) => Promise<void>
 
 /**
  * One Docker container or VM of an Unraid server, adopted on its own: a top-level `workload`
- * device (role `app-container` or `vm`) named after it, a sibling of the server's Gateway and
- * of the server itself (its `hostDeviceId`). It serves the `workload` cap from the poll
+ * device (role `app-container` or `vm`) named after it, a sibling of the server's Host (its
+ * `hostDeviceId`). It serves the `workload` cap from the poll
  * snapshot, with the controls node-unraid has for its kind, and the `switch` its power hint
  * derives. A row adopted before the workload type (a Generic device) serves no cap.
  */

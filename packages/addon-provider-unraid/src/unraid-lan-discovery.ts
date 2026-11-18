@@ -111,9 +111,9 @@ export interface UnraidServerProposal {
 }
 
 /**
- * A server is offered as an INTEGRATION to set up (a {@link DeviceType.Gateway} candidate marked
- * `setupIntegration`), named after its host, with host, port and scheme prefilled. A server whose
- * host an integration already dials is left out and reported as dropped.
+ * A server is offered as an INTEGRATION to set up (a {@link DeviceType.Workload} candidate — the
+ * Host the integration adopts, D1064 — marked `setupIntegration`), named after its host, with
+ * host, port and scheme prefilled. A server whose host an integration already dials is left out and reported as dropped.
  */
 export function unraidServerCandidates(
   servers: readonly UnraidDiscoveredServer[],
@@ -135,7 +135,7 @@ export function unraidServerCandidates(
     }
     candidates.push({
       stableId: unraidScanKey(server.host),
-      type: DeviceType.Gateway,
+      type: DeviceType.Workload,
       suggestedName: `Unraid - ${server.host}`,
       prefilledConfig: {
         host: server.host,
