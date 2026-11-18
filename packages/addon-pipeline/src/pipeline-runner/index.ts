@@ -309,6 +309,7 @@ import {
   remapCropDetections,
   selectRecoveryStep,
 } from './small-subject-recovery.js'
+import { chooseNodeDevice, type NodeDeviceChoice } from './node-device-election.js'
 import { runStatelessStep as runStatelessStepImpl } from './stateless-step.js'
 import type { NodeBenchHost } from './node-bench/node-bench-host.js'
 import { createNodeBenchHost } from './node-bench/node-bench-wiring.js'
@@ -1864,8 +1865,23 @@ export default class PipelineRunnerAddon
     }
   }
 
+  private async benchInputOnEligibleDevice(
+    requested: SyntheticBenchInput,
+    benchNode: string,
+  ): Promise<SyntheticBenchInput> {
+    if (requested.deviceKey) return requested
+    const choice = await this.chooseNodeDevice(benchNode)
+    if (choice.kind === 'none-eligible') {
+      this.ctx.logger.warn('synthetic bench refused — no eligible inference device', {
+        meta: { node: benchNode, reason: 'no-eligible-device', detail: choice.detail },
+      })
+      throw new Error(`runSyntheticBench: no-eligible-device — ${choice.detail}`)
+    }
+    return choice.kind === 'device' ? { ...requested, deviceKey: choice.deviceKey } : requested
+  }
+
   private async runSyntheticBench(
-    input: SyntheticBenchInput,
+    requested: SyntheticBenchInput,
     run: BackgroundRunContext<SyntheticBenchProgress>,
   ): Promise<SyntheticBenchResult> {
     const ctx = this.ctx
@@ -1876,8 +1892,13 @@ export default class PipelineRunnerAddon
     // over to another node mid-run (e.g. after an NPU crash), which both
     // poisons the measurement and silently moves work off the node under test.
     // Defaults to this runner's own node — the bench stays co-located.
-    const benchNode = input.nodeId ?? this.nodeId
+    const benchNode = requested.nodeId ?? this.nodeId
     const pin = nodePin(benchNode)
+    // A bench that names a device is the operator's explicit statement and runs
+    // there, even on a device load balancing has off. One that names NONE would
+    // fall onto the node's default engine — which can be an excluded device —
+    // so it runs on an eligible device, or is refused (#610).
+    const input = await this.benchInputOnEligibleDevice(requested, benchNode)
     ctx.logger.info('runSyntheticBench input', {
       meta: {
         frameId: input.frameId,
@@ -3888,8 +3909,9 @@ export default class PipelineRunnerAddon
         lookupStep: (stepId) => tryGetStepDefinition(stepId),
         executionFormat: () => this.resolveNodeExecutionFormat(),
         resolveCropConvention: () => convention,
-        runPipeline: (steps, imageJpeg, sourceDeviceId) =>
-          this.runStatelessPipeline(steps, imageJpeg, sourceDeviceId),
+        chooseDevice: () => this.chooseNodeDevice(this.nodeId),
+        runPipeline: (steps, imageJpeg, sourceDeviceId, deviceKey) =>
+          this.runStatelessPipeline(steps, imageJpeg, sourceDeviceId, deviceKey),
         logger: this.detailSubtreeLogger(),
       },
       input,
@@ -3978,8 +4000,37 @@ export default class PipelineRunnerAddon
   }
 
   /**
+   * The device unpinned work on `nodeId` runs on, from the orchestrator's view of
+   * the node (#610). A failed read changes nothing (D49): the node default serves.
+   */
+  private async chooseNodeDevice(nodeId: string): Promise<NodeDeviceChoice> {
+    const api = this.ctxIfReady?.api
+    if (!api) return { kind: 'default' }
+    try {
+      const engine = nodeId === this.nodeId ? this.nodeEngine : undefined
+      const defaultKey =
+        engine === undefined
+          ? undefined
+          : engine.device !== undefined
+            ? `${engine.backend}:${engine.device}`
+            : engine.backend
+      return chooseNodeDevice(
+        await api.pipelineOrchestrator.getNodeInferenceDevices.query({ nodeId }),
+        defaultKey,
+      )
+    } catch (err: unknown) {
+      this.ctxIfReady?.logger.warn(
+        'node device election unreadable — unpinned work keeps the node default engine',
+        { meta: { nodeId, error: errMsg(err) } },
+      )
+      return { kind: 'default' }
+    }
+  }
+
+  /**
    * Real `runPipeline` dep for the stateless path: node-local
-   * `pipelineExecutor.runPipeline` on the `'full'` plane with NO `deviceKey`.
+   * `pipelineExecutor.runPipeline` on the `'full'` plane; `deviceKey` is set only
+   * when the node's default engine is not an eligible device (#610).
    *
    * `deviceId` is passed so the executor's own gate/substitution lines are
    * tagged with the source camera. It is a routing hint on other transports,
@@ -3991,6 +4042,7 @@ export default class PipelineRunnerAddon
     steps: readonly PipelineStepInputOutput[],
     imageJpeg: Buffer,
     sourceDeviceId: number,
+    deviceKey?: string,
   ): Promise<FrameResult | null> {
     const api = this.ctxIfReady?.api
     if (!api) return null
@@ -3998,6 +4050,7 @@ export default class PipelineRunnerAddon
       steps: [...steps],
       image: new Uint8Array(imageJpeg),
       deviceId: sourceDeviceId,
+      ...(deviceKey !== undefined ? { deviceKey } : {}),
       plane: 'full',
     })
   }

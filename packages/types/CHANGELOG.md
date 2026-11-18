@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Node inference devices report whether the default engine is excluded; stateless step refusals gain 'no-eligible-device'.
+
 ### Added
 
 - Broker stats carry the effective encode of a derived stream (encoder, fps, GOP, bitrate target and cap, audio mode).
@@ -22,7 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - pipelineExecutor.getInferenceDeviceHealth reports an optional absentReason, and the inference device exclusion reasons gain no-gpu-device
 
 ### Fixed
-
 
 ## [1.2.597] - 2026-11-18
 

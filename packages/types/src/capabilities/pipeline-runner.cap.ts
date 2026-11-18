@@ -265,6 +265,11 @@ const StatelessStepRefusalSchema = z.enum([
   'unreadable-frame',
   /** The step ran and threw / produced no frame result. */
   'execution-failed',
+  /**
+   * Every inference device of this node is turned off in load balancing or not
+   * functional. The default engine would be one of them, so nothing runs (#610).
+   */
+  'no-eligible-device',
 ])
 export type StatelessStepRefusal = z.infer<typeof StatelessStepRefusalSchema>
 

@@ -682,6 +682,14 @@ const NodeInferenceDevicesSchema = z.object({
   /** False when the node's platform-probe was unreachable (no live device set). */
   reachable: z.boolean(),
   devices: z.array(NodeInferenceDeviceSchema).readonly(),
+  /**
+   * The election left NO device and one was excluded because the operator
+   * turned it off or it is not functional (#610): the runner's default pool is
+   * that device, so work with no explicit device (a stateless step, a bench with
+   * no `deviceKey`) is refused rather than run there. Absent = an orchestrator
+   * older than the field, or an unreachable node: nothing is claimed (D315).
+   */
+  defaultPoolExcluded: z.boolean().optional(),
 })
 
 // ── Step switches (D1065) ──────────────────────────────────────────────

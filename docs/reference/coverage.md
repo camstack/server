@@ -14,7 +14,7 @@ claims coverage and arms nothing — D145). A unit claimed only by decision
 records is a real state and is shown as such: a record says what rule holds,
 it never describes how the thing works, and it is never re-verified.
 
-**254 units · 9018 source files · 247 units claimed by at least one document (8987 files).**
+**254 units · 9019 source files · 247 units claimed by at least one document (8988 files).**
 
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
@@ -42,7 +42,7 @@ it never describes how the thing works, and it is never re-verified.
 | `packages/addon-provider-reolink` | 64 | `device-providers` | `addons/addon-provider-reolink.md` _(covers)_, `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +22 more, 2 ADRs | 2026-11-08 |
 | `packages/addon-pipeline/src/detection-pipeline` | 63 | `detection-execution` | `architecture/data-planes.md` _(covers)_, `architecture/detection-execution.md`, `decisions/adr-1013-one-instance-model.md`, +53 more, 5 ADRs | 2026-10-24 |
 | `hf` | 62 | `cloud-training` | `architecture/cloud-training.md` | 2026-10-14 |
-| `packages/addon-pipeline/src/pipeline-runner` | 59 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +45 more, 14 ADRs | 2026-10-24 |
+| `packages/addon-pipeline/src/pipeline-runner` | 60 | `pipeline-orchestration`, `zones` | `architecture/data-planes.md`, `architecture/detection-execution.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, +45 more, 14 ADRs | 2026-10-24 |
 | `packages/addon-training/src/page` | 59 | `cloud-training` | `architecture/cloud-training.md`, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0790-a-machine-proposed-retrain-box-is-a-draft-until-the-operator-confirms-it.md`, +3 more, 1 ADR | 2026-10-14 |
 | `packages/addon-ai` | 55 | `ai` | `addons/addon-ai.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `design/2026-08-28-tts-stt-capabilities.md` _(covers)_, +9 more, 1 ADR | 2026-10-18 |
 | `packages/addon-provider-dreame` | 54 | `device-providers` | `architecture/device-model.md` _(covers)_, `decisions/adr-1013-one-instance-model.md`, `decisions/adr-0424-a-publisher-that-owns-a-feed-reports-its-death-a-dead-session-is-closed-never-re-published.md`, +5 more, 2 ADRs | 2026-11-08 |

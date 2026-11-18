@@ -116,7 +116,7 @@ describe("pickInferenceDevice — second balance() pass over a node's devices", 
     ).toBe('openvino:npu')
   })
 
-  it('a pin to a device that is over its cap does NOT place (falls back to default pool)', () => {
+  it('a pin to a device that is over its cap falls back to an eligible device, over cap — never the default pool', () => {
     const eligible = { 'openvino:npu': 1, 'openvino:gpu': 1 }
     expect(
       pickInferenceDevice({
@@ -125,9 +125,10 @@ describe("pickInferenceDevice — second balance() pass over a node's devices", 
         caps: { 'openvino:npu': 1 },
         pinnedDeviceKey: 'openvino:npu',
       }),
-    ).toEqual({
-      kind: 'default-pool',
-      reason: 'pin-unplaceable',
+    ).toMatchObject({
+      kind: 'selected',
+      deviceKey: 'openvino:gpu',
+      reason: 'over-cap',
       eligibleKeys: ['openvino:gpu', 'openvino:npu'],
     })
   })

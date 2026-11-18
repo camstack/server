@@ -116,6 +116,7 @@ interface HarnessOverrides {
   readonly format?: ModelFormat | null
   readonly convention?: DetailCropConvention
   readonly runPipeline?: StatelessStepDeps['runPipeline']
+  readonly chooseDevice?: StatelessStepDeps['chooseDevice']
 }
 
 interface Harness {
@@ -142,6 +143,7 @@ function makeDeps(overrides: HarnessOverrides = {}): Harness {
       executionFormat: async () => (overrides.format === undefined ? 'onnx' : overrides.format),
       resolveCropConvention: () => overrides.convention ?? DEFAULT_DETAIL_CROP_CONVENTION,
       runPipeline,
+      ...(overrides.chooseDevice !== undefined ? { chooseDevice: overrides.chooseDevice } : {}),
       logger: { warn },
     },
   }
@@ -430,5 +432,36 @@ describe('runStatelessStep reports the model that RAN, never the pin (D658)', ()
     expect(result.kind).toBe('refused')
     expect(result.kind === 'refused' ? result.reason : null).toBe('execution-failed')
     expect(result.kind === 'refused' ? result.detail : '').toMatch(/names no model/)
+  })
+})
+
+describe('runStatelessStep — the default pool is never an excluded device (#610)', () => {
+  it('no eligible device: refused by name, and nothing is dispatched', async () => {
+    const h = makeDeps({
+      chooseDevice: async () => ({ kind: 'none-eligible', detail: 'every device is off' }),
+    })
+    const result = await runStatelessStep(h.deps, await baseInput())
+    expect(result).toMatchObject({ kind: 'refused', reason: 'no-eligible-device' })
+    expect(h.runPipeline).not.toHaveBeenCalled()
+    expect(h.warn).toHaveBeenCalledTimes(1)
+  })
+
+  it('an eligible device that is not the default is named on the dispatch, and its format judges the pin', async () => {
+    // The node default would be `onnx`; the eligible device is openvino. The pin
+    // only has an openvino build, so it is servable ONLY on the named device.
+    const h = makeDeps({
+      definition: makeStepDefinition({ 'mobileclip-s1': ['openvino'] }),
+      format: 'onnx',
+      chooseDevice: async () => ({ kind: 'device', deviceKey: 'openvino:npu', format: 'openvino' }),
+    })
+    const result = await runStatelessStep(h.deps, await baseInput())
+    expect(result.kind).toBe('ran')
+    expect(h.runPipeline.mock.calls[0]?.[3]).toBe('openvino:npu')
+  })
+
+  it('the node default eligible: no device named (unchanged)', async () => {
+    const h = makeDeps({ chooseDevice: async () => ({ kind: 'default' }) })
+    await runStatelessStep(h.deps, await baseInput())
+    expect(h.runPipeline.mock.calls[0]?.[3]).toBeUndefined()
   })
 })

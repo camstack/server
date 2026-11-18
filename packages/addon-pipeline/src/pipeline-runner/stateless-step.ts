@@ -50,6 +50,7 @@ import type {
   StepDefinition,
 } from '@camstack/types'
 import { cutFromFullFrame, toDetailResult } from './detail-subtree.js'
+import type { NodeDeviceChoice } from './node-device-election.js'
 
 export interface StatelessStepDeps {
   /** The cluster node this runner is on — echoed on every answer so a fleet
@@ -64,6 +65,12 @@ export interface StatelessStepDeps {
    * happen.
    */
   executionFormat(): Promise<ModelFormat | null>
+  /**
+   * Which device this node runs unpinned work on (#610): an eligible device,
+   * named explicitly; `none-eligible` when every device is off or down; `default`
+   * when nothing is known to be excluded. Absent = `default`.
+   */
+  chooseDevice?(): Promise<NodeDeviceChoice>
   /** The ONE cluster-wide crop convention (see `crop-convention-source.ts`). */
   resolveCropConvention(): DetailCropConvention
   /**
@@ -77,6 +84,7 @@ export interface StatelessStepDeps {
     steps: readonly PipelineStepInputOutput[],
     imageJpeg: Buffer,
     sourceDeviceId: number,
+    deviceKey?: string,
   ): Promise<FrameResult | null>
   /** Where refusals are announced. Every one of them is logged, tagged with
    *  the source deviceId — a refused piece of work that logs nothing is
@@ -167,7 +175,12 @@ export async function runStatelessStep(
     )
   }
 
-  const format = await deps.executionFormat()
+  const choice: NodeDeviceChoice = (await deps.chooseDevice?.()) ?? { kind: 'default' }
+  if (choice.kind === 'none-eligible') {
+    return refuse(deps, input, 'no-eligible-device', choice.detail)
+  }
+  const deviceKey = choice.kind === 'device' ? choice.deviceKey : undefined
+  const format = choice.kind === 'device' ? choice.format : await deps.executionFormat()
   if (format === null) {
     return refuse(
       deps,
@@ -218,7 +231,7 @@ export async function runStatelessStep(
 
   let result: FrameResult | null
   try {
-    result = await deps.runPipeline(steps, crop.jpeg, input.sourceDeviceId)
+    result = await deps.runPipeline(steps, crop.jpeg, input.sourceDeviceId, deviceKey)
   } catch (err: unknown) {
     return refuse(deps, input, 'execution-failed', errorMessage(err))
   }

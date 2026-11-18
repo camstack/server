@@ -1930,24 +1930,30 @@ export default class PipelineOrchestratorAddon
     // including an accelerator excluded because its Python pool is dead — that
     // exclusion is otherwise invisible, and an invisible terminal state is the
     // silent fault this whole path exists to end.
+    const eligibility = resolveInferenceDeviceEligibility(
+      probed,
+      stored,
+      canRunRoot,
+      (deviceKey) => this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
+      catalog
+        ? makeRootSwitchGuard(catalog, await this.settingsStore!.readClusterStepModes(), node)
+        : undefined,
+      this.absentReasonFor(nodeId),
+    )
     const devices = annotateInferenceDeviceExclusions(
       mergeInferenceDevices(probed, stored),
-      resolveInferenceDeviceEligibility(
-        probed,
-        stored,
-        canRunRoot,
-        (deviceKey) => this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
-        catalog
-          ? makeRootSwitchGuard(catalog, await this.settingsStore!.readClusterStepModes(), node)
-          : undefined,
-        this.absentReasonFor(nodeId),
-      ),
+      eligibility,
     ).map((row) =>
       // A probe that did not answer proves nothing about the hardware: a
       // stored-only row is then UNKNOWN, never absent (D315, D919).
       !reachable && row.presence === 'absent' ? { ...row, presence: 'unknown' as const } : row,
     )
-    return { nodeId, reachable, devices }
+    return {
+      nodeId,
+      reachable,
+      devices,
+      ...(reachable ? { defaultPoolExcluded: isDefaultPoolExcluded(eligibility) } : {}),
+    }
   }
 
   /**

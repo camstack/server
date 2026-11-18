@@ -62,13 +62,13 @@ describe('pickInferenceDevice — share placement (D748)', () => {
     ])
   })
 
-  it('every device capped ⇒ the default pool, named', () => {
+  it('every device capped ⇒ the least-loaded eligible device, over cap — never the default pool', () => {
     const s = pickInferenceDevice({
       eligible,
       policy: 'share',
       loads: idle.map((l) => ({ ...l, attachedCameras: 1 })),
       caps: { 'openvino:npu': 1, 'openvino:gpu': 1 },
     })
-    expect(s).toMatchObject({ kind: 'default-pool', reason: 'all-devices-at-cap' })
+    expect(s).toMatchObject({ kind: 'selected', reason: 'over-cap' })
   })
 })
