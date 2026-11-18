@@ -3010,7 +3010,9 @@
       "fillSkip": "Leave empty",
       "fillApply": "Apply",
       "fixedValue": "Fixed value {{value}}",
-      "formulaOf": "Formula: {{formula}}"
+      "formulaOf": "Formula: {{formula}}",
+      "fromLink": "Added by a device link",
+      "linkActive": "Active"
     },
     "followSwitch": {
       "label": "Follow the device's switch",
@@ -4903,6 +4905,22 @@
       "identifierIp": "IP address",
       "identifierDerived": "(derived)",
       "identifiersDeclared": "Identifiers declared by the provider. Read-only."
+    },
+    "identityLinks": {
+      "header": "Linked devices, matched on the identifiers above.",
+      "unavailable": "Linked devices could not be read.",
+      "notLoaded": "Linked devices are not read yet.",
+      "none": "No linked devices.",
+      "sameDevice": "Same device",
+      "poweredBy": "Powered by",
+      "powers": "Powers",
+      "proposed": "Suggested",
+      "evidenceGone": "No longer matched",
+      "confirm": "Confirm",
+      "dismiss": "Dismiss",
+      "unlink": "Unlink",
+      "unlinkTitle": "Unlink these devices?",
+      "unlinkBody": "The link is removed and not suggested again. Anything it added in Customize is removed with it."
     }
   },
   "shared": {

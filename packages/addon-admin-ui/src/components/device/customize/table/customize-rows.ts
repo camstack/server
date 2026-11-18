@@ -7,6 +7,7 @@
  */
 import {
   CAP_CUSTOMIZE_CATALOG,
+  type CompositionFieldsFeature,
   type CustomizeCardinality,
   type CustomizeCatalog,
   type CustomizeCatalogTarget,
@@ -167,4 +168,37 @@ export function activeSections(active: readonly CustomizeRowPlan[]): readonly Cu
   return CUSTOMIZE_SECTIONS.filter((section) =>
     active.some((plan) => plan.spec.section === section),
   )
+}
+
+/**
+ * The identity link that added this row's feature (D1063), or null when the
+ * operator set it. A stamped row is the operator's to switch off or edit (D62);
+ * its off-switch is the toggle, never a delete — the server refuses to remove
+ * it (`link-contribution-removed`). An edit hands the feature to the operator.
+ */
+export function linkStampOf(feature: CompositionFieldsFeature | null): string | null {
+  return feature?.contributedBy?.linkId ?? null
+}
+
+/** What a scalar row offers besides its edit pencil. */
+export interface ScalarRowOffers {
+  /** The trash button: an operator assignment only. */
+  readonly remove: boolean
+  /** The on/off toggle of a feature a device link added (D1063). */
+  readonly linkToggle: boolean
+}
+
+/** The facts about a scalar row that decide its offers. */
+export interface ScalarRowState {
+  /** The link that stamped the row's feature, or null for an operator assignment. */
+  readonly linkStamp: string | null
+  /** The stored feature is a source link the dialog can edit. */
+  readonly recognized: boolean
+  /** Something is stored for the target but it is another formula (Advanced owns it). */
+  readonly otherFormula: boolean
+}
+
+export function scalarRowOffers(row: ScalarRowState): ScalarRowOffers {
+  const assigned = row.recognized || row.otherFormula
+  return { remove: assigned && row.linkStamp === null, linkToggle: row.linkStamp !== null }
 }

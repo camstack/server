@@ -20,6 +20,8 @@
 
 import { randomUUID } from 'node:crypto'
 import {
+  type DeviceIdentifierKey,
+  type DeviceIdentifiers,
   DeviceIdentifiersSchema,
   EventCategory,
   isEmptyIdentifiers,
@@ -48,22 +50,60 @@ function stampedCaller(input: unknown): string | null {
   return typeof raw === 'string' && raw.length > 0 ? raw : null
 }
 
+/** The two declared-identity columns: the device's own, and its link's far end (D1063). */
+export type DeclaredIdentityColumn = 'identifiers' | 'attachedIdentifiers'
+
+const METHOD_OF: Readonly<Record<DeclaredIdentityColumn, string>> = {
+  identifiers: 'setIdentifiers',
+  attachedIdentifiers: 'setAttachedIdentifiers',
+}
+
 export async function setIdentifiers(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['setIdentifiers']>[0],
 ): ReturnType<IDeviceManagerProvider['setIdentifiers']> {
+  return writeDeclaredIdentity(pctx, input, 'identifiers')
+}
+
+/**
+ * `device-manager.setAttachedIdentifiers` (D1063): the identity of the device at
+ * the far end of this device's physical link. Same owner check, normalisation
+ * and merge as {@link setIdentifiers}, its own column.
+ */
+export async function setAttachedIdentifiers(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['setAttachedIdentifiers']>[0],
+): ReturnType<IDeviceManagerProvider['setAttachedIdentifiers']> {
+  return writeDeclaredIdentity(pctx, input, 'attachedIdentifiers')
+}
+
+/** The unread keys the merged declaration still holds, sorted: kept, not seen now. */
+function retainedKeys(
+  merged: DeviceIdentifiers | null,
+  unread: readonly DeviceIdentifierKey[],
+): readonly DeviceIdentifierKey[] {
+  if (merged === null) return []
+  return [...new Set(unread)].filter((key) => merged[key] !== undefined).sort()
+}
+
+async function writeDeclaredIdentity(
+  pctx: ProviderContext,
+  input: Parameters<IDeviceManagerProvider['setIdentifiers']>[0],
+  column: DeclaredIdentityColumn,
+): Promise<void> {
+  const method = METHOD_OF[column]
   const { deviceId } = input
   const logger = pctx.host.ctx.logger
   const caller = stampedCaller(input)
   const parsed = DeviceIdentifiersSchema.nullable().safeParse(input.identifiers)
   if (!parsed.success) {
-    logger.warn('setIdentifiers refused — the declaration is not in its normalised form', {
+    logger.warn(`${method} refused — the declaration is not in its normalised form`, {
       tags: { deviceId },
       meta: { caller, issues: parsed.error.issues.map((i) => i.path.join('.')) },
     })
     throw new SetIdentifiersRefusedError(
       'invalid',
-      `[device-manager] setIdentifiers: device ${deviceId} — declaration not normalised (use normaliseIdentifiers)`,
+      `[device-manager] ${method}: device ${deviceId} — declaration not normalised (use normaliseIdentifiers)`,
     )
   }
   const next = parsed.data === null || isEmptyIdentifiers(parsed.data) ? null : parsed.data
@@ -74,27 +114,39 @@ export async function setIdentifiers(
     if (caller === null || caller !== persisted.addonId) {
       return { kind: 'not-owner' as const, owner: persisted.addonId }
     }
-    const stored = persisted.meta.identifiers ?? null
+    const stored = persisted.meta[column] ?? null
     const merged = mergeIdentifiers(stored, next, input.unread ?? [])
-    if (sameIdentifiers(stored, merged)) return { kind: 'unchanged' as const }
-    await pctx.metaStore.rows.patch(deviceId, { identifiers: merged })
+    if (column === 'identifiers') {
+      if (sameIdentifiers(stored, merged)) return { kind: 'unchanged' as const }
+      await pctx.metaStore.rows.patch(deviceId, { identifiers: merged })
+      return { kind: 'written' as const, value: merged }
+    }
+    // An attached key kept because it was unread is RETAINED, not seen now (D1063).
+    const retained = retainedKeys(merged, input.unread ?? [])
+    const storedRetained = persisted.meta.attachedRetained ?? []
+    const sameRetained = retained.join(',') === storedRetained.join(',')
+    if (sameIdentifiers(stored, merged) && sameRetained) return { kind: 'unchanged' as const }
+    await pctx.metaStore.rows.patch(deviceId, {
+      attachedIdentifiers: merged,
+      attachedRetained: retained.length === 0 ? null : retained,
+    })
     return { kind: 'written' as const, value: merged }
   })
 
   if (outcome.kind === 'unknown-device') {
     throw new SetIdentifiersRefusedError(
       'unknown-device',
-      `[device-manager] setIdentifiers: unknown device id=${deviceId}`,
+      `[device-manager] ${method}: unknown device id=${deviceId}`,
     )
   }
   if (outcome.kind === 'not-owner') {
-    logger.warn('setIdentifiers refused — only the owning provider declares identifiers', {
+    logger.warn(`${method} refused — only the owning provider declares identifiers`, {
       tags: { deviceId },
       meta: { caller, owner: outcome.owner },
     })
     throw new SetIdentifiersRefusedError(
       'not-owner',
-      `[device-manager] setIdentifiers: device ${deviceId} belongs to ${outcome.owner}; caller ${caller ?? '(unstamped)'} may not declare its identifiers`,
+      `[device-manager] ${method}: device ${deviceId} belongs to ${outcome.owner}; caller ${caller ?? '(unstamped)'} may not declare its identifiers`,
     )
   }
   if (outcome.kind === 'unchanged') return
@@ -104,6 +156,6 @@ export async function setIdentifiers(
     timestamp: new Date(),
     source: { type: 'device', id: deviceId },
     category: EventCategory.DeviceMetaChanged,
-    data: { deviceId, field: 'identifiers', value: outcome.value },
+    data: { deviceId, field: column, value: outcome.value },
   })
 }

@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 645 methods carry a device reference, of which
- * 199 are on SYSTEM-scope caps.
+ * Coverage: 647 methods carry a device reference, of which
+ * 201 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -153,6 +153,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceManager.getWireableFields': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.getWrapperActivation': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.listAll': [{ name: "deviceIds", form: "array", optional: true }] as const,
+  'deviceManager.listIdentityLinks': [{ name: "deviceId", form: "single", optional: true }] as const,
   'deviceManager.loadConfig': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.loadMeta': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.loadRuntimeState': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -163,6 +164,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'deviceManager.removeDevice': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.runDeviceAction': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setAlias': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'deviceManager.setAttachedIdentifiers': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setChildLayout': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setDisabled': [{ name: "deviceId", form: "single", optional: false }] as const,
   'deviceManager.setDisplay': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -726,6 +728,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "deviceManager.getWireableFields",
   "deviceManager.getWrapperActivation",
   "deviceManager.listAll",
+  "deviceManager.listIdentityLinks",
   "deviceManager.loadConfig",
   "deviceManager.loadMeta",
   "deviceManager.loadRuntimeState",
@@ -736,6 +739,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "deviceManager.removeDevice",
   "deviceManager.runDeviceAction",
   "deviceManager.setAlias",
+  "deviceManager.setAttachedIdentifiers",
   "deviceManager.setChildLayout",
   "deviceManager.setDisabled",
   "deviceManager.setDisplay",

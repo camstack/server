@@ -135,3 +135,41 @@ describe('two targets of one cap share one stored feature', () => {
     expect(targetFeature(null, 'power-meter', 'power')).toBeNull()
   })
 })
+
+describe('an operator edit of a link-contributed feature drops the stamp (D1063)', () => {
+  const STAMP = { linkId: 'poe-power:x/port-7|x/plug-1' }
+  const stampedPower = () => ({
+    ...compiled(input('power', WATTS_SENSOR, 'power', 'W')),
+    contributedBy: STAMP,
+  })
+
+  it('assigning ANOTHER target of the stamped feature leaves no stamp — the operator now owns the feature', () => {
+    const operator = compiled(input('energy', KWH_SENSOR, 'energy', 'kWh'))
+    const merged = mergeScalarTarget(stampedPower(), operator, 'power-meter', 'energy')
+    expect(Object.keys(merged.fields)).toEqual(expect.arrayContaining(['power', 'energy']))
+    expect(merged.contributedBy).toBeUndefined()
+  })
+
+  it('re-assigning the stamped target leaves no stamp', () => {
+    const operator = compiled(input('power', KWH_SENSOR, 'power', 'W'))
+    expect(
+      mergeScalarTarget(stampedPower(), operator, 'power-meter', 'power').contributedBy,
+    ).toBeUndefined()
+  })
+
+  it('the link re-stamping its own compile keeps its stamp', () => {
+    const merged = mergeScalarTarget(stampedPower(), stampedPower(), 'power-meter', 'power')
+    expect(merged.contributedBy).toEqual(STAMP)
+  })
+
+  it('removing a target leaves no stamp on what remains', () => {
+    const both = mergeScalarTarget(
+      stampedPower(),
+      { ...compiled(input('energy', KWH_SENSOR, 'energy', 'kWh')), contributedBy: STAMP },
+      'power-meter',
+      'energy',
+    )
+    expect(both.contributedBy).toEqual(STAMP)
+    expect(removeScalarTarget(both, 'power-meter', 'power')?.contributedBy).toBeUndefined()
+  })
+})

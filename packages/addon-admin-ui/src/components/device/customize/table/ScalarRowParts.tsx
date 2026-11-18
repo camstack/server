@@ -9,7 +9,7 @@ import {
   type CustomizeCatalogTarget,
   type DeviceInfo,
 } from '@camstack/types'
-import { Badge, IconButton } from '@camstack/ui-library'
+import { Badge, Checkbox, IconButton } from '@camstack/ui-library'
 import { Pencil, Trash2 } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
@@ -21,6 +21,8 @@ import { useFieldSources } from './use-field-sources'
 import type { CustomizationHandle } from '../use-customization'
 import { FollowSwitchToggle } from '../scalar/FollowSwitchToggle'
 import { currentComposition } from '../customization-read'
+import { featureOf } from '../customization-save'
+import { linkStampOf, scalarRowOffers } from './customize-rows'
 import { isFollowSwitchRow, readFollowSwitch } from '../scalar/follow-switch'
 import { ScalarOverrideDialog } from '../scalar/ScalarOverrideDialog'
 import { type ScalarRowModel, useScalarRow } from '../scalar/use-scalar-row'
@@ -70,6 +72,11 @@ function ScalarSource(props: ScalarRowProps): ReactNode {
             field: row.sourceField,
           })}
         </span>
+        {linkStampOf(featureOf(currentComposition(props.handle.state), props.cap)) !== null && (
+          <span className="text-[11px] text-foreground-subtle">
+            {t('customize.table.fromLink')}
+          </span>
+        )}
         {row.presence === 'unknown' && (
           <span role="alert" className="text-[11px] text-warning">
             {t('customize.scalar.sourceUnreadable')}
@@ -150,6 +157,7 @@ export function ScalarActionsCell(props: ScalarActionsProps): ReactNode {
   const followOffered =
     isFollowSwitchRow(props.cap, props.target.id) &&
     readFollowSwitch(currentComposition(props.handle.state)).offered
+  const offers = scalarRowOffers(row)
   return (
     <span className="flex items-center justify-end gap-1">
       {(row.recognized || followOffered) && (
@@ -174,7 +182,20 @@ export function ScalarActionsCell(props: ScalarActionsProps): ReactNode {
           testId={`scalar-change-${rowKey}`}
         />
       )}
-      {(row.recognized || row.otherFormula) && (
+      {offers.linkToggle && (
+        // A feature a device link added is switched off, never removed: a removed one comes back (D1063).
+        <label className="flex items-center gap-1.5 text-xs text-foreground">
+          <Checkbox
+            aria-label={`${t('customize.table.linkActive')} ${row.title}`}
+            data-testid={`scalar-link-active-${rowKey}`}
+            checked={row.enabled}
+            disabled={row.saving}
+            onChange={(event) => void row.setEnabled(event.target.checked).then(props.onError)}
+          />
+          {t('customize.table.linkActive')}
+        </label>
+      )}
+      {offers.remove && (
         <IconButton
           variant="ghost"
           size="sm"

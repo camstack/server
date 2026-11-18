@@ -234,6 +234,20 @@ export enum EventCategory {
    * dropped) — consumers MUST also gate on the device record's `probed` flag.
    */
   DeviceReady = 'device.ready',
+  /**
+   * An identity link (D1063) became `linked` — auto on strong evidence or
+   * confirmed by the operator — or a confirmed link's evidence came back. Telemetry: the `identity-links` record is the
+   * truth, and core-blocks reconciles its contributions from it as well.
+   * Payload: `IdentityLinkEventPayload`.
+   */
+  IdentityLinkCreated = 'identity-link.created',
+  /**
+   * A `linked` identity link stopped acting: its evidence is gone (an auto link
+   * is deleted; an operator-confirmed one stays `linked`, flagged
+   * `evidenceGone`, and no longer acts), a side was removed, or the operator
+   * unlinked it. Payload: `IdentityLinkEventPayload` with `reason`.
+   */
+  IdentityLinkLost = 'identity-link.lost',
 
   // Integration
   IntegrationEnabled = 'integration.enabled',

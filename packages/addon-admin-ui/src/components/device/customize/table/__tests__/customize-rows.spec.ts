@@ -1,4 +1,4 @@
-import { CAP_CUSTOMIZE_CATALOG, DeviceType } from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type CompositionFieldsFeature, DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import en from '../../../../../i18n/en.json'
 import it_ from '../../../../../i18n/it.json'
@@ -7,7 +7,9 @@ import { scalarRowTitle } from '../../scalar/use-scalar-row'
 import {
   activeSections,
   CUSTOMIZE_SECTIONS,
+  linkStampOf,
   offeredRows,
+  scalarRowOffers,
   planRows,
   splitRows,
 } from '../customize-rows'
@@ -163,5 +165,39 @@ describe('a scalar row title is never a raw state path', () => {
     expect(target).toBeDefined()
     if (target === undefined) return
     expect(scalarRowTitle(fakeT, 'en', 'fan-control', target)).toBe('Fan · Horizontal angle (°)')
+  })
+})
+
+describe('linkStampOf (D1063)', () => {
+  it('a row an identity link added names its link; an operator row names none', () => {
+    const feature: CompositionFieldsFeature = {
+      kind: 'fields',
+      cap: 'power-source',
+      fields: {},
+      contributedBy: { linkId: 'poe-power:port|cam' },
+    }
+    expect(linkStampOf(feature)).toBe('poe-power:port|cam')
+    const { contributedBy: _stamp, ...operator } = feature
+    expect(linkStampOf(operator)).toBeNull()
+    expect(linkStampOf(null)).toBeNull()
+  })
+})
+
+describe('scalarRowOffers (D1063)', () => {
+  it('a row a device link added offers the toggle and no delete', () => {
+    expect(
+      scalarRowOffers({ linkStamp: 'poe-power:port|cam', recognized: true, otherFormula: false }),
+    ).toEqual({ remove: false, linkToggle: true })
+  })
+
+  it('an operator assignment offers the delete and no link toggle', () => {
+    expect(scalarRowOffers({ linkStamp: null, recognized: true, otherFormula: false })).toEqual({
+      remove: true,
+      linkToggle: false,
+    })
+    expect(scalarRowOffers({ linkStamp: null, recognized: false, otherFormula: false })).toEqual({
+      remove: false,
+      linkToggle: false,
+    })
   })
 })

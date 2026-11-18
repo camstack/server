@@ -899,6 +899,21 @@ export const useDeviceManagerSetIdentifiers: typeof trpc.deviceManager.setIdenti
 /** Generated alias around `trpc.deviceManager.listIdentityCandidates.useQuery`. */
 export const useDeviceManagerListIdentityCandidates: typeof trpc.deviceManager.listIdentityCandidates.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listIdentityCandidates.useQuery)
 
+/** Generated alias around `trpc.deviceManager.setAttachedIdentifiers.useMutation`. */
+export const useDeviceManagerSetAttachedIdentifiers: typeof trpc.deviceManager.setAttachedIdentifiers.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.setAttachedIdentifiers.useMutation)
+
+/** Generated alias around `trpc.deviceManager.listIdentityLinks.useQuery`. */
+export const useDeviceManagerListIdentityLinks: typeof trpc.deviceManager.listIdentityLinks.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listIdentityLinks.useQuery)
+
+/** Generated alias around `trpc.deviceManager.confirmIdentityLink.useMutation`. */
+export const useDeviceManagerConfirmIdentityLink: typeof trpc.deviceManager.confirmIdentityLink.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.confirmIdentityLink.useMutation)
+
+/** Generated alias around `trpc.deviceManager.dismissIdentityLink.useMutation`. */
+export const useDeviceManagerDismissIdentityLink: typeof trpc.deviceManager.dismissIdentityLink.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.dismissIdentityLink.useMutation)
+
+/** Generated alias around `trpc.deviceManager.unlinkIdentity.useMutation`. */
+export const useDeviceManagerUnlinkIdentity: typeof trpc.deviceManager.unlinkIdentity.useMutation = /*#__PURE__*/ alias(() => trpc.deviceManager.unlinkIdentity.useMutation)
+
 /** Generated alias around `trpc.deviceManager.listLocations.useQuery`. */
 export const useDeviceManagerListLocations: typeof trpc.deviceManager.listLocations.useQuery = /*#__PURE__*/ alias(() => trpc.deviceManager.listLocations.useQuery)
 

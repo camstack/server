@@ -85,7 +85,9 @@ import { FeatureDeriver, subscribeFeatureDeriver } from './feature-deriver.js'
 import { createDeviceManagerExtensionProvider } from './device-extension-linked-slot.js'
 import { getLinkedDevices, getLinkedDevicesBatch } from './device-linked-devices.js'
 import * as metaActions from './device-meta-actions.js'
-import { setIdentifiers } from './device-identifiers-action.js'
+import { setAttachedIdentifiers, setIdentifiers } from './device-identifiers-action.js'
+import { IdentityLinkReconciler } from './identity-link-reconciler.js'
+import { IdentityLinksStore } from './identity-links-store.js'
 import { DeviceIdentityIndex } from './device-identity-index.js'
 import { runLocationBackfillAtBoot } from './location-alignment.js'
 import { runLinkedDevicesManualBackfillAtBoot } from './linked-devices-manual-backfill.js'
@@ -719,6 +721,23 @@ export class DeviceManagerAddon extends BaseAddon {
     }
     await records.declare(deviceManagerRecordKinds)
     const tombstones = DeviceTombstoneStore.of(records, this.ctx.logger.child('tombstones'))
+    // Identity links (D1063): read once, then kept by the reconciler, which
+    // runs after the seed below and on every identity change the index reports.
+    const identityLinksStore = IdentityLinksStore.of(records)
+    await identityLinksStore.load()
+    const identityLinks = new IdentityLinkReconciler({
+      candidates: () => identityIndex.linkCandidates(),
+      store: identityLinksStore,
+      emit: (category, payload) =>
+        this.ctx.eventBus.emit({
+          id: randomUUID(),
+          timestamp: new Date(),
+          source: { type: 'device', id: payload.bDeviceId },
+          category,
+          data: { ...payload },
+        }),
+      logger: this.ctx.logger.child('identity-links'),
+    })
     const discoveryProposals = new DiscoveryProposalService({
       store: DiscoveryProposalStore.of(records),
       orchestrator: this.discoveryDeps(),
@@ -841,6 +860,12 @@ export class DeviceManagerAddon extends BaseAddon {
     const bootRows = await deviceRows.listAll()
     for (const row of bootRows) idToAddonId.set(row.meta.id, row.meta.addonId)
     identityIndex.seed(bootRows)
+    // A device deleted while a removal step failed leaves its links behind;
+    // the tombstones name it (D865).
+    for (const gone of await tombstones.listSince(0))
+      await identityLinks.removeDevice(gone.deviceId)
+    identityIndex.onIdentityChanged(() => identityLinks.requestPass())
+    identityLinks.requestPass()
 
     // D3 note: The previous pull-based recovery triggers (`$node.connected` →
     // `syncWorkerNativeCaps` and `AddonRestarted` → `syncWorkerNativeCaps`)
@@ -875,6 +900,7 @@ export class DeviceManagerAddon extends BaseAddon {
       removalFence: this.removalFence,
       removalCleanup: this.removalCleanup,
       tombstones,
+      identityLinks,
       removalHooks: {
         api: this.ctx.api,
         logger: this.ctx.logger,
@@ -997,6 +1023,11 @@ export class DeviceManagerAddon extends BaseAddon {
       setDisplay: (input) => metaActions.setDisplay(pctx, input),
       setIdentifiers: (input) => setIdentifiers(pctx, input),
       listIdentityCandidates: async () => identityIndex.candidates(),
+      setAttachedIdentifiers: (input) => setAttachedIdentifiers(pctx, input),
+      listIdentityLinks: async (input) => identityLinks.list(input?.deviceId),
+      confirmIdentityLink: ({ linkId }) => identityLinks.confirm(linkId),
+      dismissIdentityLink: ({ linkId }) => identityLinks.dismiss(linkId),
+      unlinkIdentity: ({ linkId }) => identityLinks.unlink(linkId),
       getRoleDisplayDefaults: (input) => metaActions.getRoleDisplayDefaults(pctx, input),
       setRoleDisplayDefaults: (input) => metaActions.setRoleDisplayDefaults(pctx, input),
       applyInitialMeta: (input) => metaActions.applyInitialMeta(pctx, input),

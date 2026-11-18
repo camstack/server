@@ -238,6 +238,10 @@ export const CompositionItemEntrySchema = z.object({
 })
 export type CompositionItemEntry = z.infer<typeof CompositionItemEntrySchema>
 
+/** Which identity link added a feature (D1063). */
+export const CompositionContributedBySchema = z.object({ linkId: z.string().min(1) })
+export type CompositionContributedBy = z.infer<typeof CompositionContributedBySchema>
+
 export const CompositionFieldsFeatureSchema = z.object({
   kind: z.literal('fields'),
   cap: z.string().min(1),
@@ -259,6 +263,13 @@ export const CompositionFieldsFeatureSchema = z.object({
     .optional(),
   /** Method name → what serves it. Only a BUILT capability takes commands (D967). */
   commands: z.record(z.string().min(1), CompositionCommandTargetSchema).optional(),
+  /**
+   * Provenance only (D1063): the identity link that added this feature. The
+   * source ref stays in `fields`; `enabled` stays the operator's switch. An
+   * operator edit of the source drops the stamp and the feature becomes the
+   * operator's; a lost link removes only stamped features.
+   */
+  contributedBy: CompositionContributedBySchema.optional(),
 })
 export type CompositionFieldsFeature = z.infer<typeof CompositionFieldsFeatureSchema>
 

@@ -18,7 +18,13 @@
  * write that lands while the snapshot is in flight is buffered and replayed over
  * it, so the seed can never roll a newer write back.
  *
- * Read-only: it finds candidates, it links nothing (that is step 3).
+ * It finds candidates and links nothing itself: the `IdentityLinkReconciler`
+ * (D1063) turns {@link linkCandidates} into link records, and is told of every
+ * change that can move a candidate through {@link onIdentityChanged}.
+ *
+ * Beside the same-device pairs it pairs a device's `attachedIdentifiers` — the
+ * far end of its physical link, a PoE port's wired client — with another
+ * device's `identifiers`, graded by the same {@link classifyIdentityMatch}.
  */
 import {
   DEVICE_IDENTIFIER_KEYS,
@@ -29,6 +35,8 @@ import {
   type IdentityCandidatePair,
   type IdentityCandidates,
   type IdentityConfidence,
+  type IdentityLinkKind,
+  type IdentityLinkSide,
   type IdentityMatchedKey,
 } from '@camstack/types'
 import type { PersistedDeviceMeta } from './device-meta-types.js'
@@ -50,9 +58,38 @@ export interface DeviceRowObserver {
 interface IndexedDevice {
   readonly deviceId: number
   readonly addonId: string
+  readonly stableId: string
   readonly integrationId: string | null
+  readonly role: string | null
   readonly identifiers: DeviceIdentifiers | null
+  readonly attachedIdentifiers: DeviceIdentifiers | null
+  /** Attached keys kept from an earlier read, not seen on the latest (D1063). */
+  readonly attachedRetained: readonly DeviceIdentifierKey[]
 }
+
+/** One pair a link could be made of (D1063). For `poe-power`, `a` is the attaching side. */
+export interface IdentityLinkCandidate {
+  readonly kind: IdentityLinkKind
+  readonly a: IdentityLinkSide
+  readonly b: IdentityLinkSide
+  /** The role of `a`, which a kind may require (`poe-power` → `poe-port`). */
+  readonly aRole: string | null
+  readonly keys: readonly IdentityMatchedKey[]
+  readonly confidence: IdentityConfidence
+}
+
+/**
+ * What the reconciler reads: every candidate, plus the device each ref names
+ * right now. `unknown` until the index has loaded (D315).
+ */
+export type IdentityLinkCandidates =
+  | { readonly status: 'unknown' }
+  | {
+      readonly status: 'answered'
+      readonly candidates: readonly IdentityLinkCandidate[]
+      /** The numeric id a device ref names now; null when no row carries it. */
+      readonly deviceIdOf: (addonId: string, stableId: string) => number | null
+    }
 
 type BufferedWrite = (index: DeviceIdentityIndex) => void
 
@@ -93,6 +130,23 @@ function sideOf(d: IndexedDevice): IdentityCandidateDevice {
   return { deviceId: d.deviceId, addonId: d.addonId, integrationId: d.integrationId }
 }
 
+function linkSideOf(d: IndexedDevice): IdentityLinkSide {
+  return { addonId: d.addonId, stableId: d.stableId, deviceId: d.deviceId }
+}
+
+/** The keys both declarations carry, ordered by key then value. */
+function sharedKeys(
+  x: DeviceIdentifiers | null,
+  y: DeviceIdentifiers | null,
+): readonly IdentityMatchedKey[] {
+  const yKeys = new Set(keysOf(y))
+  return keysOf(x)
+    .filter((k) => yKeys.has(k))
+    .map(parseKey)
+    .filter((k): k is IdentityMatchedKey => k !== null)
+    .sort(compareKeys)
+}
+
 function compareKeys(x: IdentityMatchedKey, y: IdentityMatchedKey): number {
   if (x.key !== y.key) return x.key < y.key ? -1 : 1
   return x.value < y.value ? -1 : x.value > y.value ? 1 : 0
@@ -126,6 +180,9 @@ export function classifyIdentityMatch(
 export class DeviceIdentityIndex implements DeviceRowObserver {
   private readonly devices = new Map<number, IndexedDevice>()
   private readonly byKey = new Map<string, Set<number>>()
+  private readonly listeners = new Set<() => void>()
+  /** True while {@link seed} replays rows: one notification follows, not one per row. */
+  private seeding = false
   /** `null` once seeded; until then, the writes to replay over the snapshot. */
   private pending: BufferedWrite[] | null = []
 
@@ -135,8 +192,24 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
     this.pending = null
     this.devices.clear()
     this.byKey.clear()
-    for (const row of rows) this.rowWritten(row.meta)
-    for (const write of buffered) write(this)
+    this.seeding = true
+    try {
+      for (const row of rows) this.rowWritten(row.meta)
+      for (const write of buffered) write(this)
+    } finally {
+      this.seeding = false
+    }
+    this.changed()
+  }
+
+  /**
+   * Called after every change that can move a candidate (identifiers, attached
+   * identifiers, role, integration, a row written or removed) and after the
+   * seed. Synchronous: the listener schedules its own work.
+   */
+  onIdentityChanged(listener: () => void): () => void {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
   }
 
   rowWritten(meta: PersistedDeviceMeta): void {
@@ -144,9 +217,14 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
     this.put({
       deviceId: meta.id,
       addonId: meta.addonId,
+      stableId: meta.stableId,
       integrationId: meta.integrationId ?? null,
+      role: meta.role ?? null,
       identifiers: meta.identifiers ?? null,
+      attachedIdentifiers: meta.attachedIdentifiers ?? null,
+      attachedRetained: meta.attachedRetained ?? [],
     })
+    this.changed()
   }
 
   registrationWritten(row: DeviceRegistrationRow): void {
@@ -155,13 +233,26 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
     this.put({
       deviceId: row.deviceId,
       addonId: row.addonId,
+      stableId: row.stableId,
       integrationId: existing?.integrationId ?? null,
+      role: existing?.role ?? null,
       identifiers: existing?.identifiers ?? null,
+      attachedIdentifiers: existing?.attachedIdentifiers ?? null,
+      attachedRetained: existing?.attachedRetained ?? [],
     })
+    if (existing === undefined || existing.stableId !== row.stableId) this.changed()
   }
 
   rowPatched(deviceId: number, patch: DeviceRowPatch): void {
-    if (patch.identifiers === undefined && patch.integrationId === undefined) return
+    if (
+      patch.identifiers === undefined &&
+      patch.attachedIdentifiers === undefined &&
+      patch.attachedRetained === undefined &&
+      patch.integrationId === undefined &&
+      patch.role === undefined
+    ) {
+      return
+    }
     if (this.buffer((i) => i.rowPatched(deviceId, patch))) return
     const existing = this.devices.get(deviceId)
     // A patch is an UPDATE: a row the index does not know does not exist.
@@ -169,13 +260,113 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
     this.put({
       ...existing,
       ...(patch.identifiers !== undefined ? { identifiers: patch.identifiers } : {}),
+      ...(patch.attachedIdentifiers !== undefined
+        ? { attachedIdentifiers: patch.attachedIdentifiers }
+        : {}),
+      ...(patch.attachedRetained !== undefined
+        ? { attachedRetained: patch.attachedRetained ?? [] }
+        : {}),
       ...(patch.integrationId !== undefined ? { integrationId: patch.integrationId } : {}),
+      ...(patch.role !== undefined ? { role: patch.role } : {}),
     })
+    this.changed()
   }
 
   rowRemoved(deviceId: number): void {
     if (this.buffer((i) => i.rowRemoved(deviceId))) return
     this.drop(deviceId)
+    this.changed()
+  }
+
+  /**
+   * Every pair a link could be made of (D1063): the same-device pairs of
+   * {@link candidates}, plus each device's attached identifiers paired with
+   * another integration's device identifiers (`poe-power`).
+   *
+   * One link per port: when a port's attached keys reach several devices, or a
+   * device is reached by several ports, every one of those attached pairs is
+   * graded a `proposal` at most — the operator picks.
+   *
+   * Freshness first: a pair whose shared keys the port only RETAINS (declared
+   * unread — no client now, D49) is no candidate when another port FRESHLY
+   * reports the same device. A camera moved from port 7 to port 9 is port 9's;
+   * port 7's auto link loses its evidence. Two fresh reports stay proposals.
+   */
+  linkCandidates(): IdentityLinkCandidates {
+    const same = this.candidates()
+    if (same.status !== 'answered') return { status: 'unknown' }
+    const out: IdentityLinkCandidate[] = []
+    for (const pair of same.pairs) {
+      const a = this.devices.get(pair.a.deviceId)
+      const b = this.devices.get(pair.b.deviceId)
+      if (a === undefined || b === undefined) continue
+      out.push({
+        kind: 'same-device',
+        a: linkSideOf(a),
+        b: linkSideOf(b),
+        aRole: a.role,
+        keys: pair.keys,
+        confidence: pair.confidence,
+      })
+    }
+    out.push(...this.attachedPairs())
+    const byRef = new Map<string, number>()
+    for (const d of this.devices.values()) byRef.set(`${d.addonId}/${d.stableId}`, d.deviceId)
+    return {
+      status: 'answered',
+      candidates: out,
+      deviceIdOf: (addonId, stableId) => byRef.get(`${addonId}/${stableId}`) ?? null,
+    }
+  }
+
+  private attachedPairs(): readonly IdentityLinkCandidate[] {
+    const all: { readonly pair: IdentityLinkCandidate; readonly fresh: boolean }[] = []
+    for (const port of this.devices.values()) {
+      if (port.attachedIdentifiers === null) continue
+      const reached = new Set<number>()
+      for (const key of keysOf(port.attachedIdentifiers)) {
+        for (const id of this.byKey.get(key) ?? []) reached.add(id)
+      }
+      for (const id of [...reached].sort((x, y) => x - y)) {
+        const target = this.devices.get(id)
+        if (target === undefined || id === port.deviceId || sameIntegration(port, target)) continue
+        const keys = sharedKeys(port.attachedIdentifiers, target.identifiers)
+        const confidence = classifyIdentityMatch(keys)
+        if (confidence === null) continue
+        const retained = new Set(port.attachedRetained)
+        all.push({
+          pair: {
+            kind: 'poe-power',
+            a: linkSideOf(port),
+            b: linkSideOf(target),
+            aRole: port.role,
+            keys,
+            confidence,
+          },
+          fresh: keys.some((k) => !retained.has(k.key)),
+        })
+      }
+    }
+    const freshlyReached = new Set(all.filter((p) => p.fresh).map((p) => p.pair.b.deviceId))
+    const pairs = all
+      .filter((p) => p.fresh || !freshlyReached.has(p.pair.b.deviceId))
+      .map((p) => p.pair)
+    const perPort = new Map<number, number>()
+    const perTarget = new Map<number, number>()
+    for (const p of pairs) {
+      perPort.set(p.a.deviceId, (perPort.get(p.a.deviceId) ?? 0) + 1)
+      perTarget.set(p.b.deviceId, (perTarget.get(p.b.deviceId) ?? 0) + 1)
+    }
+    return pairs.map((p) =>
+      (perPort.get(p.a.deviceId) ?? 0) > 1 || (perTarget.get(p.b.deviceId) ?? 0) > 1
+        ? { ...p, confidence: 'proposal' }
+        : p,
+    )
+  }
+
+  private changed(): void {
+    if (this.pending !== null || this.seeding) return
+    for (const listener of this.listeners) listener()
   }
 
   /**
@@ -220,12 +411,7 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
     const a = this.devices.get(idA)
     const b = this.devices.get(idB)
     if (a === undefined || b === undefined || sameIntegration(a, b)) return null
-    const bKeys = new Set(keysOf(b.identifiers))
-    const keys = keysOf(a.identifiers)
-      .filter((k) => bKeys.has(k))
-      .map(parseKey)
-      .filter((k): k is IdentityMatchedKey => k !== null)
-      .sort(compareKeys)
+    const keys = sharedKeys(a.identifiers, b.identifiers)
     const confidence = classifyIdentityMatch(keys)
     return confidence === null ? null : { a: sideOf(a), b: sideOf(b), keys, confidence }
   }

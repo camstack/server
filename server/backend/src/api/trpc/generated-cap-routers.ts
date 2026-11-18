@@ -5331,6 +5331,96 @@ export function createCapRouter_deviceManager(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.listIdentityCandidates(methodInput as any)
       }),
+    setAttachedIdentifiers: adminProcedure
+      .input(deviceManagerCapability.methods.setAttachedIdentifiers.input.loose())
+      .output(deviceManagerCapability.methods.setAttachedIdentifiers.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setAttachedIdentifiers(methodInput as any)
+      }),
+    listIdentityLinks: adminProcedure
+      .input(deviceManagerCapability.methods.listIdentityLinks.input.loose())
+      .output(deviceManagerCapability.methods.listIdentityLinks.output)
+      .query(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.listIdentityLinks(methodInput as any)
+      }),
+    confirmIdentityLink: adminProcedure
+      .input(deviceManagerCapability.methods.confirmIdentityLink.input.loose())
+      .output(deviceManagerCapability.methods.confirmIdentityLink.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.confirmIdentityLink(methodInput as any)
+      }),
+    dismissIdentityLink: adminProcedure
+      .input(deviceManagerCapability.methods.dismissIdentityLink.input.loose())
+      .output(deviceManagerCapability.methods.dismissIdentityLink.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.dismissIdentityLink(methodInput as any)
+      }),
+    unlinkIdentity: adminProcedure
+      .input(deviceManagerCapability.methods.unlinkIdentity.input.loose())
+      .output(deviceManagerCapability.methods.unlinkIdentity.output)
+      .mutation(async ({ input, ctx }) => {
+        const parsedInput = ctx.req !== undefined ? withoutCallerStamp(input) : input
+        const { nodeId, ...methodInput } = parsedInput as { nodeId?: string } & Record<
+          string,
+          unknown
+        >
+        const p = resolveProvider(
+          'device-manager',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.unlinkIdentity(methodInput as any)
+      }),
     listLocations: protectedProcedure
       .input(z.object({ nodeId: z.string().optional() }).optional())
       .output(deviceManagerCapability.methods.listLocations.output)

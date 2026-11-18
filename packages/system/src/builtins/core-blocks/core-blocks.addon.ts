@@ -24,6 +24,7 @@ import {
   type ConfigUISchema,
   COMPOSER_ADDON_ID,
   CORE_BLOCKS_ADDON_ID,
+  type CompositionSourceRef,
   type CoreBlock,
   type CoreBlockCompileInput,
   type CoreBlockInput,
@@ -100,7 +101,13 @@ import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
 import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integration.js'
 import { blocksInstanceRecordKinds, buildBlocksInstances } from './blocks-instances.js'
 import { type BlockTranspiler, compileBlock } from './compile-block.js'
-import { buildCompositionApi, type CompositionApi } from './composition-api.js'
+import {
+  buildCompositionApi,
+  type CompositionApi,
+  linkReconcilerCaller,
+  linkContributionDeleteRefusal,
+} from './composition-api.js'
+import { LinkContributionReconciler } from './link-contributions.js'
 import { writeComposedDeviceName } from './sync-composed-device-name.js'
 import { describeCompositionSources } from './composition-sources.js'
 import { CoreBlockStore } from './core-block-store.js'
@@ -158,6 +165,10 @@ export class CoreBlocksAddon extends BaseAddon {
   private powerSource: PowerSourceService | null = null
   /** The timed-run provider (D993); its deadline timer is cancelled on shutdown. */
   private timedRun: TimedRunService | null = null
+  /** ONE composition API per process: its write queue is what keeps two saves from judging each other stale. */
+  private compositionApi: CompositionApi | null = null
+  /** The identity-link contributions (D1063); armed at boot. */
+  private linkContributions: LinkContributionReconciler | null = null
   private disposed = false
   /** Seeds the lock door gate from the hub mirror; run at startup and when a composition changes. */
   private seedLockDoorGate: () => void = () => undefined
@@ -276,6 +287,7 @@ export class CoreBlocksAddon extends BaseAddon {
 
     this.supervisor = this.buildSupervisor()
     this.supervisor?.start(CONVERGE_INTERVAL_MS)
+    this.armLinkContributions()
 
     this.ctx.logger.info('core-blocks ready', {
       meta: {
@@ -368,6 +380,16 @@ export class CoreBlocksAddon extends BaseAddon {
     const service = new PowerSourceService({
       blocks: () => this.store?.list() ?? [],
       devices: this.powerSourceDevices(),
+      links: {
+        read: async () => {
+          const api = this.ctx.api
+          if (!api)
+            throw new Error('core-blocks: no ctx.api on this node — identity links cannot be read')
+          return api.deviceManager.listIdentityLinks.query({})
+        },
+        // Every host is re-derived from the links: the lost host's stamp goes with the pass.
+        lost: () => this.linkContributions?.requestPass(),
+      },
       scheduler: timeoutScheduler,
       logger: this.ctx.logger.child('power-source'),
     })
@@ -899,6 +921,19 @@ export class CoreBlocksAddon extends BaseAddon {
 
       delete: async ({ blockId }) => {
         const existing = this.requireStore().get(blockId)
+        const linkRefusal = linkContributionDeleteRefusal(existing)
+        if (linkRefusal !== null) {
+          const target = existing === null ? null : coreBlockComposition(existing)?.target
+          const deviceId =
+            target?.kind === 'existing'
+              ? await this.deviceIdOfRef(target.device).catch(() => null)
+              : null
+          this.ctx.logger.warn('core block delete refused: it holds device-link contributions', {
+            ...(deviceId === null ? {} : { tags: { deviceId } }),
+            meta: { blockId, reason: linkRefusal },
+          })
+          throw new Error(linkRefusal)
+        }
         const composition = existing !== null && coreBlockComposition(existing) !== null
         await this.requireStore().delete(blockId)
         await this.requirePrefs().delete(blockId)
@@ -1020,8 +1055,77 @@ export class CoreBlocksAddon extends BaseAddon {
 
       ...this.requireActions().runsApi,
 
-      ...this.buildCompositionApi(),
+      ...this.sharedCompositionApi(),
     }
+  }
+
+  private sharedCompositionApi(): CompositionApi {
+    this.compositionApi ??= this.buildCompositionApi()
+    return this.compositionApi
+  }
+
+  /** The device id of a composition target ref; null when no row carries it. */
+  private async deviceIdOfRef(ref: CompositionSourceRef): Promise<number | null> {
+    const api = this.ctx.api
+    if (!api)
+      throw new Error('core-blocks: no ctx.api on this node — the device cannot be resolved')
+    const rows = await api.deviceManager.listAll.query({
+      addonId: ref.addonId,
+      projection: 'slim',
+    })
+    return rows.find((r) => r.stableId === ref.stableId)?.id ?? null
+  }
+
+  /**
+   * The Customize features identity links contribute (D1063). A pass runs on
+   * every `identity-link.created` / `.lost`, once now, and — until a pass has
+   * read the links (device-manager answers only once it has booted) — on each
+   * device registration. No timer.
+   */
+  private armLinkContributions(): void {
+    const requireApi = (): AddonApi => {
+      const api = this.ctx.api
+      if (!api)
+        throw new Error('core-blocks: no ctx.api on this node — identity links cannot be read')
+      return api
+    }
+    const compositions = this.sharedCompositionApi()
+    const store = this.requireStore()
+    const caller = linkReconcilerCaller()
+    const links = new LinkContributionReconciler({
+      listLinks: () => requireApi().deviceManager.listIdentityLinks.query({}),
+      deviceIdOf: (ref) => this.deviceIdOfRef(ref),
+      boundCaps: async (deviceId) =>
+        (await requireApi().deviceManager.getBindings.query({ deviceId })).entries.map(
+          (e) => e.capName,
+        ),
+      blocks: () => (store.isLoaded() ? store.list() : null),
+      create: async (host, features) => {
+        await compositions.createComposition({
+          block: {
+            enabled: true,
+            composition: { target: { kind: 'existing', device: host }, features: [...features] },
+          },
+          caller,
+        })
+      },
+      update: async (block, composition) => {
+        await compositions.updateComposition({
+          blockId: block.id,
+          expectedUpdatedAt: block.updatedAt,
+          block: { composition },
+          caller,
+        })
+      },
+      logger: this.ctx.logger.child('identity-links'),
+    })
+    this.subscribe({ category: EventCategory.IdentityLinkCreated }, () => links.requestPass())
+    this.subscribe({ category: EventCategory.IdentityLinkLost }, () => links.requestPass())
+    this.subscribe({ category: EventCategory.DeviceRegistered }, () => {
+      if (!links.hasAnswered()) links.requestPass()
+    })
+    this.linkContributions = links
+    links.requestPass()
   }
 
   /**
@@ -1080,6 +1184,8 @@ export class CoreBlocksAddon extends BaseAddon {
         this.convergeSoon()
         this.seedLockDoorGate()
       },
+      // An operator write of a customization re-derives the link contributions (D1063).
+      compositionWritten: () => this.linkContributions?.requestPass(),
       convergeForClaims: () => {
         if (this.supervisor === null) {
           return Promise.reject(

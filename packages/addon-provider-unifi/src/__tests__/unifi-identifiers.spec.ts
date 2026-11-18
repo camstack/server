@@ -16,7 +16,7 @@ import { describe, expect, it } from 'vitest'
 import type { UnifiInfraSnapshot } from '../unifi-client-contract.js'
 import { workerDeviceToSnapshot } from '../unifi-client-aiounifi.js'
 import { UnifiLiveClient, type UnifiFetch } from '../unifi-client-live.js'
-import { unifiInfraIdentifiers } from '../unifi-identifiers.js'
+import { unifiInfraIdentifiers, unifiPortAttachedIdentifiers } from '../unifi-identifiers.js'
 import { infraSnapshot } from './unifi-fixtures.js'
 
 const quiet: IScopedLogger = {
@@ -160,5 +160,68 @@ describe('where the identity comes from', () => {
       ports: [],
     })
     expect(snapshot).toMatchObject({ ip: '192.0.2.10', serial: 'F09FC2000001' })
+  })
+})
+
+describe('unifiPortAttachedIdentifiers (D1063)', () => {
+  async function attach(
+    world: StoredWorld,
+    mac: string | null,
+    ip: string | null,
+    current: string | null = mac,
+  ): Promise<void> {
+    const declaration = unifiPortAttachedIdentifiers(mac, current, ip)
+    if (declaration === null) return
+    const writer = {
+      mutate: async (input: SetIdentifiersInput) => {
+        world.writes += 1
+        world.stored = mergeIdentifiers(world.stored, input.identifiers, input.unread ?? [])
+      },
+    }
+    await declareDeviceIdentifiers(
+      { deviceId: 12, logger: quiet, writer },
+      declaration.identifiers,
+      { unread: declaration.unread },
+    )
+  }
+
+  it('declares the wired client MAC and its IP', async () => {
+    const world: StoredWorld = { stored: null, writes: 0 }
+    await attach(world, 'AA:BB:CC:00:11:22', '192.0.2.50')
+    expect(world.stored?.mac?.map((m) => m.value)).toEqual(['aa:bb:cc:00:11:22'])
+    expect(world.stored?.ip?.value).toBe('192.0.2.50')
+  })
+
+  it('a client IP the controller does not know is unread: the stored IP is kept', async () => {
+    const world: StoredWorld = { stored: null, writes: 0 }
+    await attach(world, 'AA:BB:CC:00:11:22', '192.0.2.50')
+    await attach(world, 'AA:BB:CC:00:11:22', null)
+    expect(world.stored?.ip?.value).toBe('192.0.2.50')
+  })
+
+  it('a port whose client left declares the retained MAC as unread, never as a read value', async () => {
+    expect(unifiPortAttachedIdentifiers('AA:BB:CC:00:11:22', null, null)?.unread).toEqual([
+      'mac',
+      'ip',
+    ])
+    const world: StoredWorld = { stored: null, writes: 0 }
+    await attach(world, 'AA:BB:CC:00:11:22', '192.0.2.50')
+    await attach(world, 'AA:BB:CC:00:11:22', null, null)
+    expect(world.stored?.mac?.map((m) => m.value)).toEqual(['aa:bb:cc:00:11:22'])
+    expect(world.stored?.ip?.value).toBe('192.0.2.50')
+  })
+
+  it('a port that never saw a client declares nothing', async () => {
+    const world: StoredWorld = { stored: null, writes: 0 }
+    await attach(world, null, null)
+    expect(world.writes).toBe(0)
+  })
+
+  it('a different client on the port replaces the MAC (absent is not unread)', async () => {
+    const world: StoredWorld = { stored: null, writes: 0 }
+    await attach(world, 'AA:BB:CC:00:11:22', '192.0.2.50')
+    await attach(world, 'AA:BB:CC:00:11:99', '192.0.2.51')
+    expect(world.stored?.mac?.map((m) => m.value)).toEqual(['aa:bb:cc:00:11:99'])
+    expect(world.stored?.ip?.value).toBe('192.0.2.51')
   })
 })

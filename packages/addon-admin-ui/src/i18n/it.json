@@ -3085,7 +3085,9 @@
       "fillSkip": "Lascia vuoto",
       "fillApply": "Applica",
       "fixedValue": "Valore fisso {{value}}",
-      "formulaOf": "Formula: {{formula}}"
+      "formulaOf": "Formula: {{formula}}",
+      "fromLink": "Aggiunto da un collegamento tra dispositivi",
+      "linkActive": "Attivo"
     },
     "followSwitch": {
       "label": "Segui lo switch del dispositivo",
@@ -4978,6 +4980,22 @@
       "identifierIp": "Indirizzo IP",
       "identifierDerived": "(dedotto)",
       "identifiersDeclared": "Identificativi dichiarati dal provider. Sola lettura."
+    },
+    "identityLinks": {
+      "header": "Dispositivi collegati, riconosciuti dagli identificativi qui sopra.",
+      "unavailable": "Impossibile leggere i dispositivi collegati.",
+      "notLoaded": "I dispositivi collegati non sono ancora stati letti.",
+      "none": "Nessun dispositivo collegato.",
+      "sameDevice": "Stesso dispositivo",
+      "poweredBy": "Alimentato da",
+      "powers": "Alimenta",
+      "proposed": "Suggerito",
+      "evidenceGone": "Non più riconosciuto",
+      "confirm": "Conferma",
+      "dismiss": "Ignora",
+      "unlink": "Scollega",
+      "unlinkTitle": "Scollegare questi dispositivi?",
+      "unlinkBody": "Il collegamento viene rimosso e non verrà più suggerito. Quanto aveva aggiunto in Personalizza viene rimosso con esso."
     }
   },
   "shared": {

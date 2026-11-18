@@ -70,6 +70,18 @@ export const PowerSourceRefusalReasonSchema = z.enum([
    * itself): a link stored before save-time validation refused it (#462).
    */
   'switch-is-actuator',
+  /**
+   * The power source was contributed by an identity link (D1063) and that link
+   * is no longer `linked`, its evidence is gone (`evidenceGone`), or it now
+   * names another port: the port may feed another device. Nothing is switched;
+   * the contributions are reconciled.
+   */
+  'link-lost',
+  /**
+   * The power source was contributed by an identity link and the links could not
+   * be read (failed, or not loaded yet): destructive work is refused (D49).
+   */
+  'link-unknown',
 ])
 export type PowerSourceRefusalReason = z.infer<typeof PowerSourceRefusalReasonSchema>
 

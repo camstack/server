@@ -65,6 +65,12 @@ export const CompositionProblemCodeSchema = z.enum([
   'command-input-missing',
   /** The power-source switch is one of the device's own actuators, or the device itself (#462). */
   'power-source-is-actuator',
+  /**
+   * An update drops a feature an identity link contributed (`contributedBy`,
+   * D1063). Its off-switch is `enabled: false`; a removed contribution would come
+   * back on the next link pass. Unlinking the device takes it away.
+   */
+  'link-contribution-removed',
 ])
 export type CompositionProblemCode = z.infer<typeof CompositionProblemCodeSchema>
 

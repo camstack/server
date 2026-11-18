@@ -38,6 +38,7 @@ import { SiteZoneSchema } from '../device/site-zone.js'
 import { SourceInfoSchema } from '../device/source-info.js'
 import { DeviceIdentifierKeySchema, DeviceIdentifiersSchema } from '../device/device-identifiers.js'
 import { IdentityCandidatesSchema } from '../device/device-identity-candidates.js'
+import { IdentityLinkDecisionSchema, IdentityLinksReadSchema } from '../device/identity-links.js'
 import { TagsFieldSchema } from '../tags/tag.js'
 import { ReadingQuantitySchema } from '../units/quantity.js'
 import { DeviceSearchInputSchema, DeviceSearchResultSchema } from './device-search.js'
@@ -174,6 +175,11 @@ export const DeviceInfoSchema = z.object({
    *  the owning provider via `setIdentifiers`; read-only for the operator.
    *  Absent ⇒ the provider declared none. */
   identifiers: DeviceIdentifiersSchema.optional(),
+  /** The identity of the device at the far end of this device's physical
+   *  link (D1059 amended by D1063) — a PoE port's wired client. Written only by
+   *  the owning provider via `setAttachedIdentifiers`; it never makes the two
+   *  devices the same device. Absent ⇒ none declared. */
+  attachedIdentifiers: DeviceIdentifiersSchema.optional(),
   /** Optional upstream-system identity + rendering envelope. See
    *  `SourceInfo` in `packages/types/src/device/source-info.ts`. */
   sourceInfo: SourceInfoSchema.optional(),
@@ -382,6 +388,8 @@ export const DeviceMetaSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).nullable().optional(),
   /** Provider-declared identifiers (D1059). See `DeviceMeta.identifiers`. */
   identifiers: DeviceIdentifiersSchema.optional(),
+  /** The far end of the device's physical link (D1063). See `DeviceMeta.attachedIdentifiers`. */
+  attachedIdentifiers: DeviceIdentifiersSchema.optional(),
   /** Optional upstream-system identity + rendering envelope. See
    *  `SourceInfo`. Present when the device has been persisted with a
    *  non-synthetic source identifier (HA entities, vendor MAC, …);
@@ -993,6 +1001,61 @@ export const deviceManagerCapability = {
      *  are the devices whose identity is unknown, never "no match". */
     listIdentityCandidates: method(z.object({}), IdentityCandidatesSchema, {
       kind: 'query',
+      auth: 'admin',
+    }),
+
+    /** Declare the identity of the device at the FAR END of this device's
+     *  physical link (D1063 amending D1059) — a PoE port's wired client: its MAC,
+     *  its IP. Same owner check, normalisation and merge as `setIdentifiers`
+     *  (`unread` keeps the stored value), its own column. It never makes the two
+     *  devices the same device: it feeds directional identity links only. */
+    setAttachedIdentifiers: method(
+      z.object({
+        deviceId: z.number(),
+        identifiers: DeviceIdentifiersSchema.nullable(),
+        /** Kinds the provider tried to read and could not: their stored value is kept. */
+        unread: z.array(DeviceIdentifierKeySchema).optional(),
+      }),
+      z.void(),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+
+    /** Identity links (D1063): `proposed`, `linked` and `dismissed` relations
+     *  between devices of different integrations, decided from their declared
+     *  identifiers. With `deviceId`, only the links naming that device.
+     *  `not-loaded` until the links have been read — never an empty list. */
+    listIdentityLinks: method(
+      z.object({ deviceId: z.number().int().optional() }),
+      IdentityLinksReadSchema,
+      { kind: 'query', auth: 'admin' },
+    ),
+
+    /** Confirm a `proposed` link: it becomes `linked` by the operator and its
+     *  default contributions are added. Refused by name when the link is unknown
+     *  or not `proposed`. */
+    confirmIdentityLink: method(
+      z.object({ linkId: z.string().min(1) }),
+      IdentityLinkDecisionSchema,
+      {
+        kind: 'mutation',
+        auth: 'admin',
+      },
+    ),
+
+    /** Dismiss a `proposed` link: sticky, never proposed again. */
+    dismissIdentityLink: method(
+      z.object({ linkId: z.string().min(1) }),
+      IdentityLinkDecisionSchema,
+      {
+        kind: 'mutation',
+        auth: 'admin',
+      },
+    ),
+
+    /** Unlink a `linked` link: it becomes `dismissed` (sticky) and its stamped
+     *  contributions are removed. */
+    unlinkIdentity: method(z.object({ linkId: z.string().min(1) }), IdentityLinkDecisionSchema, {
+      kind: 'mutation',
       auth: 'admin',
     }),
 

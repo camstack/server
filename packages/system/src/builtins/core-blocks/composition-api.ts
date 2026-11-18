@@ -11,6 +11,12 @@
  * A customization of an existing device (D663) has no name of its own: the
  * server derives it (`customizationBlockName`), refuses one the client sends,
  * and never lets it move to another device. One per device, by block id (S2).
+ *
+ * A feature an identity link contributed (`contributedBy`, D1063) is switched
+ * off by the operator, never removed: an update that drops one is refused as
+ * `link-contribution-removed`, except the identity-link reconciler's own write
+ * (`linkReconcilerCaller()`), which is how a contribution is withdrawn. Every
+ * other write of a customization asks for a link pass (`compositionWritten`).
  */
 import {
   type CapabilityDefinition,
@@ -20,6 +26,7 @@ import {
   type CompositionBlockPatch,
   type CompositionBlockState,
   type CompositionFieldRead,
+  type CompositionFieldsFeature,
   type CompositionSourceDescription,
   type CompositionSourceRef,
   type CompositionStateRead,
@@ -55,6 +62,71 @@ export interface CompositionStoreView {
   updateComposition(blockId: string, patch: CompositionBlockPatch): Promise<CoreBlock>
 }
 
+/** The `caller.userId` of the identity-link reconciler's own writes (D1063). */
+export const IDENTITY_LINKS_USER_ID = 'identity-links'
+
+/** Who wrote a composition. */
+export interface CompositionWriter {
+  readonly userId: string
+}
+
+/** The caller the identity-link reconciler writes as. */
+export interface LinkReconcilerCaller extends CompositionWriter {
+  readonly isAdmin: boolean
+}
+
+/**
+ * The reconciler's callers, by object identity. The gate is this set, never the
+ * `userId` string: a `caller` that arrived over the wire (a forked addon's
+ * `ctx.api` args reach the provider as sent) is a different object, whatever it
+ * names, so it can never pass as the reconciler.
+ */
+const LINK_RECONCILER_CALLERS = new WeakSet<CompositionWriter>()
+
+/** A caller that IS the identity-link reconciler — mint it in-process only. */
+export function linkReconcilerCaller(): LinkReconcilerCaller {
+  const caller: LinkReconcilerCaller = { userId: IDENTITY_LINKS_USER_ID, isAdmin: true }
+  LINK_RECONCILER_CALLERS.add(caller)
+  return caller
+}
+
+function isLinkReconciler(writer: CompositionWriter | undefined): boolean {
+  return writer !== undefined && LINK_RECONCILER_CALLERS.has(writer)
+}
+
+/** An update named an `updatedAt` the stored block no longer has: reload and re-apply. */
+export class CompositionChangedError extends Error {
+  readonly blockId: string
+
+  constructor(blockId: string, name: string, storedUpdatedAt: number, expectedUpdatedAt: number) {
+    super(
+      `core-blocks: the composition "${name}" changed since you read it: stored updatedAt ${storedUpdatedAt}, yours ${expectedUpdatedAt} — reload and re-apply your edit`,
+    )
+    this.name = 'CompositionChangedError'
+    this.blockId = blockId
+  }
+}
+
+/** The features of a composition an identity link contributed. */
+export function linkContributedFeatures(
+  composition: Composition | null,
+): readonly CompositionFieldsFeature[] {
+  return (composition?.features ?? []).flatMap((f) =>
+    f.kind === 'fields' && f.contributedBy !== undefined ? [f] : [],
+  )
+}
+
+/**
+ * Why a block cannot be deleted: it holds features identity links contributed
+ * (`link-contribution-removed`, D1063). Null when it can.
+ */
+export function linkContributionDeleteRefusal(block: CoreBlock | null): string | null {
+  const stamped = linkContributedFeatures(block === null ? null : coreBlockComposition(block))
+  if (stamped.length === 0) return null
+  const named = stamped.map((f) => `${f.cap} (device link ${f.contributedBy?.linkId ?? ''})`)
+  return `core-blocks: "${block?.name ?? ''}" was not deleted [link-contribution-removed] — ${named.join(', ')} added by a device link; switch it off instead, or unlink the device to take it away`
+}
+
 export interface CompositionApiDeps {
   readonly store: CompositionStoreView
   /** One read of every source and every existing target a save names (`describeCompositionSources`). */
@@ -85,6 +157,12 @@ export interface CompositionApiDeps {
   readonly writeComposedDeviceName?: (blockId: string, name: string) => Promise<void>
   /** Every capability definition — the listing is derived from them, never from the registry's live state. */
   readonly capabilityDefinitions: readonly CapabilityDefinition[]
+  /**
+   * A customization of an existing device was written by someone other than the
+   * identity-link reconciler: its contributions are reconciled (D1063). Absent in
+   * specs that predate it.
+   */
+  readonly compositionWritten?: (target: CompositionSourceRef, writer: CompositionWriter) => void
 }
 
 export type CompositionApi = Pick<
@@ -139,9 +217,103 @@ function refuseIfChanged(
   deps.logger.warn('composition update refused: changed since read', {
     meta: { blockId, storedUpdatedAt: stored.updatedAt, expectedUpdatedAt },
   })
-  throw new Error(
-    `core-blocks: the composition "${stored.name}" changed since you read it: stored updatedAt ${stored.updatedAt}, yours ${expectedUpdatedAt} — reload and re-apply your edit`,
+  throw new CompositionChangedError(blockId, stored.name, stored.updatedAt, expectedUpdatedAt)
+}
+
+/**
+ * An update that drops a link-contributed feature is refused (D1063): the
+ * operator's off-switch is `enabled: false`. The reconciler's own write is how a
+ * contribution is withdrawn, so it passes.
+ */
+function refuseLinkContributionRemoval(
+  deps: CompositionApiDeps,
+  blockId: string,
+  next: Composition | undefined,
+  writer: CompositionWriter | undefined,
+): void {
+  if (next === undefined || isLinkReconciler(writer)) return
+  const stored = deps.store.get(blockId)
+  if (stored === null) return
+  const kept = new Set(next.features.map((f) => f.cap))
+  const removed = linkContributedFeatures(coreBlockComposition(stored)).filter(
+    (f) => !kept.has(f.cap),
   )
+  if (removed.length === 0) return
+  refuse(
+    deps,
+    { name: stored.name, blockId },
+    {
+      ok: false,
+      problems: removed.map((f) => ({
+        code: 'link-contribution-removed',
+        path: `features.${f.cap}`,
+        message: `${f.cap} was added by the device link ${f.contributedBy?.linkId ?? ''} — switch it off instead; unlink the device to take it away`,
+      })),
+      fields: [],
+      features: [],
+      events: [],
+    },
+    [],
+  )
+}
+
+/**
+ * The reconciler taking back what it stamped, and nothing else (D1063): the
+ * composition is unchanged apart from its features (target and helper
+ * included), every stored feature the operator wrote survives verbatim, and
+ * every other kept feature is a stored one or an unstamped remainder of a
+ * stamped one — a subset of its fields, with the same values. Removing features
+ * cannot create a conflict, and a withdrawal must land on a customization whose
+ * host was removed — which the store judge refuses as `target-missing` — so it
+ * is not judged.
+ */
+function isStampWithdrawal(
+  stored: Composition | null,
+  next: Composition,
+  writer: CompositionWriter | undefined,
+): boolean {
+  if (!isLinkReconciler(writer) || stored === null) return false
+  if (JSON.stringify({ ...stored, features: [] }) !== JSON.stringify({ ...next, features: [] })) {
+    return false
+  }
+  const stamped = linkContributedFeatures(stored)
+  if (stamped.length === 0) return false
+  const storedKeys = new Set(stored.features.map((f) => JSON.stringify(f)))
+  const nextKeys = new Set(next.features.map((f) => JSON.stringify(f)))
+  const operatorKept = stored.features.every(
+    (f) =>
+      (f.kind === 'fields' && f.contributedBy !== undefined) || nextKeys.has(JSON.stringify(f)),
+  )
+  const nothingAdded = next.features.every(
+    (f) =>
+      storedKeys.has(JSON.stringify(f)) ||
+      (f.kind === 'fields' &&
+        f.contributedBy === undefined &&
+        stamped.some((from) => isRemainderOf(f, from))),
+  )
+  return operatorKept && nothingAdded && next.features.length <= stored.features.length
+}
+
+/** `kept` is `stamped` without its stamp, cut down to some of its fields, each unchanged. */
+function isRemainderOf(kept: CompositionFieldsFeature, stamped: CompositionFieldsFeature): boolean {
+  const { contributedBy: _stamp, fields: stampedFields, ...stampedRest } = stamped
+  const { fields: keptFields, ...keptRest } = kept
+  if (JSON.stringify(keptRest) !== JSON.stringify(stampedRest)) return false
+  return Object.entries(keptFields).every(
+    ([path, value]) =>
+      Object.hasOwn(stampedFields, path) &&
+      JSON.stringify(stampedFields[path]) === JSON.stringify(value),
+  )
+}
+
+function noteWritten(
+  deps: CompositionApiDeps,
+  composition: Composition | null,
+  writer: CompositionWriter | undefined,
+): void {
+  if (composition === null || composition.target.kind !== 'existing') return
+  if (writer === undefined || isLinkReconciler(writer)) return
+  deps.compositionWritten?.(composition.target.device, writer)
 }
 
 /** The device a composition writes, when it is an EXISTING one; null for a new device. */
@@ -442,6 +614,7 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
         deps.logger.info('composition created', {
           meta: { blockId: created.id, name: created.name, by: caller.userId },
         })
+        noteWritten(deps, block.composition, caller)
         deps.convergeSoon()
         return { block: created }
       }),
@@ -449,8 +622,17 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
     updateComposition: ({ blockId, expectedUpdatedAt, block, caller }) =>
       serialized(async () => {
         refuseIfChanged(deps, blockId, expectedUpdatedAt)
+        refuseLinkContributionRemoval(deps, blockId, block.composition, caller)
         await refuseRetarget(deps, blockId, block)
-        if (block.composition !== undefined) {
+        const previous = deps.store.get(blockId)
+        const withdrawal =
+          block.composition !== undefined &&
+          isStampWithdrawal(
+            previous === null ? null : coreBlockComposition(previous),
+            block.composition,
+            caller,
+          )
+        if (block.composition !== undefined && !withdrawal) {
           const judged = await validateAgainstStore(deps, block.composition, blockId)
           if (!judged.validation.ok && problemsBlockSave(judged.validation.problems)) {
             refuse(
@@ -461,12 +643,12 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
             )
           }
         }
-        const previous = deps.store.get(blockId)
         const updated = await deps.store.updateComposition(blockId, block)
         await followComposedRename(deps, previous, block.name)
         deps.logger.info('composition updated', {
           meta: { blockId, by: caller?.userId ?? 'system' },
         })
+        noteWritten(deps, coreBlockComposition(updated), caller)
         if (block.composition !== undefined) {
           const unreleased = (await deps.convergeForClaims()).filter(
             (claim) => claim.owner === blockId,

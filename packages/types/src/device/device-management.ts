@@ -174,6 +174,10 @@ export interface DeviceMeta {
    *  the owning provider through `device-manager.setIdentifiers`, read-only for
    *  the operator. Absent ⇒ the provider declared none. */
   readonly identifiers?: DeviceIdentifiers
+  /** The identity of the device at the far end of this device's physical link
+   *  (D1063) — a PoE port's wired client. Written only by the owning provider
+   *  through `device-manager.setAttachedIdentifiers`. Absent ⇒ none declared. */
+  readonly attachedIdentifiers?: DeviceIdentifiers
   /** Optional upstream-system identity + rendering envelope. See
    *  `SourceInfo`. Persisted under `metadata.sourceInfo` — this field
    *  is the typed projection callers consume directly. `BaseDevice`

@@ -100,6 +100,7 @@ function rig(options: OptionsAnswer) {
   const service = new PowerSourceService({
     blocks: () => [BLOCK],
     devices: powerSourceDevicesOver(() => api),
+    links: { read: async () => ({ status: 'answered', links: [] }), lost: () => undefined },
     scheduler,
     logger: recorded.logger,
   })

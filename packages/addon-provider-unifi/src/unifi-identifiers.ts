@@ -35,3 +35,27 @@ export function unifiInfraIdentifiers(
     unread,
   }
 }
+
+/**
+ * What a PoE port declares ATTACHED to it (D1063): its wired client's MAC and
+ * IP. A client the port sees NOW is a fresh read. A client that left keeps the
+ * last MAC (one poll without a client is not a different client), but declared
+ * `unread` together with the IP: the stored value is kept (D49) and marked
+ * retained, so a port that freshly reads the same MAC takes the auto link from
+ * this one. An IP the controller does not know right now is `unread` too. A
+ * port that never saw a client declares nothing.
+ */
+export function unifiPortAttachedIdentifiers(
+  lastClientMac: string | null,
+  currentClientMac: string | null,
+  clientIp: string | null,
+): UnifiIdentifierDeclaration | null {
+  if (currentClientMac !== null) {
+    return {
+      identifiers: { mac: currentClientMac, ip: clientIp },
+      unread: clientIp === null ? ['ip'] : [],
+    }
+  }
+  if (lastClientMac === null) return null
+  return { identifiers: { mac: lastClientMac, ip: null }, unread: ['mac', 'ip'] }
+}

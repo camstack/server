@@ -800,6 +800,14 @@ function removalSteps(
       },
     },
     {
+      // The identity links naming the device (D1063): a linked one is lost
+      // (`identity-link.lost`, `device-removed`), so a contribution it fed is
+      // withdrawn by its owner.
+      store: 'identity-links',
+      run: async () =>
+        pctx.identityLinks === undefined ? 0 : pctx.identityLinks.removeDevice(deviceId),
+    },
+    {
       // Delete all per-device config rows so no orphaned settings remain.
       store: 'device-config',
       run: async () => {
@@ -1032,6 +1040,7 @@ export async function loadMeta(
     ...(m.linkDeviceId !== undefined ? { linkDeviceId: m.linkDeviceId } : {}),
     ...(m.role !== undefined ? { role: m.role } : {}),
     ...(m.identifiers !== undefined ? { identifiers: m.identifiers } : {}),
+    ...(m.attachedIdentifiers !== undefined ? { attachedIdentifiers: m.attachedIdentifiers } : {}),
   }
 }
 

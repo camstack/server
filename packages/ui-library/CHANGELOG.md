@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Hooks for listing identity links and confirming, dismissing or unlinking them.
+
+## [1.2.469] - 2026-11-18
+
+### Changed
+
 - Regenerated hooks for the new device-state-refresh capability.
 - The workload card's hero shows a state dot with the uptime, CPU and RAM gauges (a dash when not reported), and only the start, stop and restart actions the device supports; stop asks twice.
 - The siren card is one big Sound button that becomes Stop while it sounds, inside a ring counting down the reported time left; duration, plays and sound-on-motion appear only when the siren offers them.
