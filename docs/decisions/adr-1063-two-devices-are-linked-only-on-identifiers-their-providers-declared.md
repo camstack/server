@@ -10,6 +10,9 @@ applies-to:
   - packages/system/src/builtins/device-manager/identity-link-reconciler.ts
   - packages/system/src/builtins/device-manager/identity-links-store.ts
   - packages/system/src/builtins/core-blocks/link-contributions.ts
+  - packages/system/src/builtins/core-blocks/composition-api.ts
+  - packages/system/src/builtins/core-blocks/power-source-service.ts
+  - packages/types/src/composition/customize/scalar-merge.ts
   - packages/addon-provider-unifi/src/devices/unifi-feature-device.ts
   - packages/addon-admin-ui/src/components/device/overview-adapters/IdentityLinksBlock.tsx
 ---
@@ -67,6 +70,37 @@ serves the cap natively (D944) or the operator already set that target; its
 goes, only stamped features are taken back. Customize stays the one authority
 (D676) — a link is a way of filling it, not a second store.
 
+The operator's off-switch for a stamped feature is `enabled: false` ONLY. The
+Customize row of a stamped feature shows an Active toggle and no delete; an
+API write that drops a stamped feature, or deletes a block that carries one,
+is REFUSED with the problem code `link-contribution-removed` ("switch it off
+instead; unlink the device to take it away"). So the reconciler re-adding an
+absent stamped feature never undoes an operator's choice. Any operator edit
+of a stamped feature's target (merge or remove, on any target of the cap)
+drops the stamp in the Customize compile path: the edited feature is the
+operator's from then on and is never taken back by the link.
+
+A link is re-judged without timers: a pass runs when the identity links change
+(`identity-link.*`), when the reconciler is armed, and whenever another writer
+creates or updates a composition through the composition API. A write that
+meets a stale `expectedUpdatedAt` re-reads the composition and retries, three
+attempts per host, then logs a warn tagged with the host's `deviceId`.
+Because an event may be dropped (D11), the link is also checked at the point
+of use: before `power-source` cycles or switches a camera through a feature
+stamped `contributedBy: { linkId }`, it reads the links over RPC. A link that
+is not `linked`, or names another port, is refused as `link-lost` (logged,
+and a pass of that host is requested); a read that fails or is `not-loaded`
+is refused as `link-unknown` — destructive work never runs on an unread
+link (D49).
+
+Freshness of an attached identifier: a port whose client left keeps the last
+MAC, but declares it `unread`, so the device-manager stores it as RETAINED
+(`attachedRetained`), never as a fresh read. When one port FRESHLY reads a MAC
+another port only retains, the retained side's pair is dropped and the fresh
+side links (`auto` on a strong match); two FRESH reads of the same MAC stay a
+proposal. Case: a camera moved from port 7 to port 9 — port 7 retains the MAC,
+port 9 reads it, so port 7's auto link is lost and port 9 links.
+
 This amends D356: devices are still never linked on a guess, but a match on
 declared identifiers IS evidence, and a strong one links on its own. It amends
 D1059: a device may also declare attached identifiers, which never count as its
@@ -79,8 +113,13 @@ own identity.
   MAC were not readable at the time) is not linked at all; `hosted-on` is not
   built for that reason.
 - A port whose client changes loses its old link (evidence gone) and may gain a
-  new one; a poll that saw no client keeps the last MAC (absence is not a
-  different client).
+  new one; a poll that saw no client keeps the last MAC, retained (absence is
+  not a different client, but a fresh read elsewhere wins).
+- An operator-confirmed link whose evidence is gone stays `linked` (flagged
+  `evidenceGone`), so `power-source` still acts through it: that is the
+  operator's decision, undone by Unlink.
+- A withdrawn contribution is logged with the host's `deviceId`, resolved from
+  the dismissed or lost link still listed, else from the device list.
 - When the last stamped feature on a host is taken back, the host's
   composition block is left with no features rather than deleted.
 - `listIdentityLinks` answers `not-loaded` until the store is read (D315); the
@@ -93,6 +132,11 @@ own identity.
 - Specs: `device-identity-index.spec.ts` (attached pairs, downgrades),
   `identity-link-reconciler.spec.ts` (states, evidence gone, dismissed stays),
   `link-contributions.spec.ts` (native skip, operator wins, `enabled` survives,
-  only stamps are taken back), `unifi-identifiers.spec.ts` and
+  only stamps are taken back, stale-write retry bounded to three),
+  `composition-api.spec.ts` (removal refused, last stamp withdrawn through the
+  real API, an operator write requests a pass),
+  `power-source-service.spec.ts` (`link-lost` / `link-unknown` at the point of
+  use), `power-extension.spec.ts` (an operator edit drops the stamp),
+  `device-identifiers.spec.ts` (port 7 → 9: fresh beats retained), `unifi-identifiers.spec.ts` and
   `integration-gateway.spec.ts` (the port's declaration, deduped per tick),
   `IdentityLinksBlock.spec.tsx` (pending is not "none", decisions).

@@ -1082,6 +1082,7 @@ A strong match is `auto`. A single weak key, a port that reaches two devices or 
 - An `auto` candidate links and emits `identity-link.created`.
 - A proposal waits for Confirm or Dismiss on the device's Hardware tab. A dismissed pair is never proposed again, and Unlink dismisses.
 - An `auto` link whose evidence is gone is lost (`identity-link.lost`). An operator-confirmed link is kept and flagged `evidenceGone`.
+- A port whose client left declares the last MAC `unread`; it is stored as retained (`attachedRetained`). When another port FRESHLY reads that MAC, the retained side's pair is dropped and the fresh side links — a camera moved from port 7 to port 9 follows to port 9. Two fresh reads of one MAC stay a proposal.
 - Deleting either device deletes the link (the `identity-links` removal step) and emits `lost` with reason `device-removed`.
 
 `listIdentityLinks` answers `not-loaded` until the store is read.
@@ -1095,6 +1096,10 @@ A `linked` link contributes the Customize features its kind declares (`IDENTITY_
 - another link already stamped it.
 
 Its `enabled` toggle is the operator's and survives every pass. When the link goes, only stamped features are taken back. Customize says "Added by a device link" on such a row.
+
+In Customize, the off-switch for a stamped feature is `enabled: false` only: the row shows an Active toggle and no delete. A composition write that drops a stamped feature, or a block delete that would, is refused with the problem code `link-contribution-removed` ("switch it off instead; unlink the device to take it away"). An operator edit of a stamped feature's target drops the stamp — the feature is the operator's from then on.
+
+A pass runs on an identity-link change, when the reconciler is armed, and after any other writer's create or update through the composition API — no timer. A stale `expectedUpdatedAt` re-reads and retries, three attempts per host, then a warn tagged `deviceId`. Because `identity-link.*` events may be dropped, `power-source` also checks the link when it acts: a feature stamped by a link that is not `linked`, or that names another port, is refused as `link-lost` (and a pass of that host is requested); a links read that fails or is `not-loaded` is refused as `link-unknown`.
 
 ## Reading further
 
