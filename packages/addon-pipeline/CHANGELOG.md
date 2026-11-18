@@ -7,12 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [1.2.666] - 2026-11-18
-
-### Added
-
-- A detection step switched off on an accelerator is never run there: it moves to another accelerator on the node, or is skipped when none may run it.
-
 ### Changed
 
 - An inference device OpenVINO cannot enumerate (for example an Intel iGPU the compute runtime no longer supports) is now reported down with the reason no-gpu-device instead of failing every load behind a retry backoff
@@ -20,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A derived stream's FPS, bitrate, width and height fields now save on blur or Enter instead of every keystroke, and can be cleared to follow the source
+
+## [1.2.666] - 2026-11-18
+
+### Added
+
+- A detection step switched off on an accelerator is never run there: it moves to another accelerator on the node, or is skipped when none may run it.
 
 ## [1.2.665] - 2026-11-18
 

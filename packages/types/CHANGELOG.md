@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- pipelineExecutor.getInferenceDeviceHealth reports an optional absentReason, and the inference device exclusion reasons gain no-gpu-device
+
 ## [1.2.597] - 2026-11-18
 
 ### Added
@@ -18,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - InferenceDeviceExclusionReason gains 'root-switched-off' (D1065).
 - A host or container card shows its running state instead of a dash.
-- pipelineExecutor.getInferenceDeviceHealth reports an optional absentReason, and the inference device exclusion reasons gain no-gpu-device
 
 ## [1.2.596] - 2026-11-18
 
@@ -53,9 +56,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - New device-state-refresh capability and state-refresh policy types: a provider declares how its devices are read, the hub decides when (D1062).
-
-### Changed
-
 
 ## [1.2.592] - 2026-11-18
 
@@ -303,8 +303,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Notification history can show the title and body that were sent.
 - Email images travel as peerBytes tickets on smtp-provider.sendEmail.
 - A cluster update can name a server install that stalled or hit its time limit.
-### Changed
-
 ## [1.2.562] - 2026-11-13
 
 ### Added

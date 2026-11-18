@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Device quick-detail modal opens on the live device detail and has one Open device page button in its header
+- The device quick-detail modal now shows the same device detail as the viewer app (hero, consumables, History from the card) and no longer has a separate History tab.
+- The node device table and load overview name the no-gpu-device reason when OpenVINO sees no supported GPU
+
 ## [1.2.702] - 2026-11-18
 
 ### Changed
@@ -14,9 +20,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The node's accelerator table shows 'detection off' for a device whose object detection is switched off, with the reason in the load overview (D1065).
 - Add device inside an integration no longer offers new integrations to set up: it lists only that integration's own devices, scans the network only for LAN integrations, and says why when the scan is unavailable
 - Add device inside an integration shows the network scan only when that integration's provider says it finds devices that way
-- Device quick-detail modal opens on the live device detail and has one Open device page button in its header
-- The device quick-detail modal now shows the same device detail as the viewer app (hero, consumables, History from the card) and no longer has a separate History tab.
-- The node device table and load overview name the no-gpu-device reason when OpenVINO sees no supported GPU
 
 ## [1.2.701] - 2026-11-18
 
@@ -190,8 +193,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Rebuilt against updated dependencies.
-### Changed
-
 ## [1.2.679] - 2026-11-15
 
 ### Changed

@@ -7,15 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Clicking a device row opens the quick-detail modal when the host provides one; the cog glyph is gone
+
 ## [1.2.472] - 2026-11-18
 
 ### Added
 
 - Generated hooks for the new pipeline step switch methods.
-### Changed
-
-- Clicking a device row opens the quick-detail modal when the host provides one; the cog glyph is gone
-
 ## [1.2.471] - 2026-11-18
 
 ### Changed
@@ -148,8 +148,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Energy, weather-station and climate cards now show a 24-hour trend of the device's primary series, and a history chart with an unknown unit shows no unit and no unit switch
 
 ## [1.2.454] - 2026-11-15
-### Changed
-
 ### Fixed
 
 - Device history charts in one view now share the same left and right gutter, so the crosshair and selected point line up across charts
@@ -280,8 +278,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - A device card restores a fountain's pump cycle and water volume, a feeder's own battery, a valve position only when the device is positionable, weather in the chosen units, Open door on an unlocked lock, and an unknown pump or siren that is not drawn as off.
-### Changed
-
 ## [1.2.438] - 2026-11-13
 
 ### Changed
