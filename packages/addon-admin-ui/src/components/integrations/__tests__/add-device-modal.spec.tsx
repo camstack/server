@@ -123,6 +123,7 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
 import { AddDeviceModal, type PairingTab } from '../AddDeviceModal'
 
 type ModalProps = {
+  scanFailure?: string
   kind?: 'device-adoption' | 'device-provider'
   canScan?: boolean | null
   integrationId?: string
@@ -137,6 +138,7 @@ function modalTree(props: ModalProps) {
         integrationId={props.integrationId ?? 'int_1'}
         kind={props.kind ?? 'device-provider'}
         canScan={props.canScan === undefined ? true : props.canScan}
+        {...(props.scanFailure !== undefined ? { scanFailure: props.scanFailure } : {})}
         onClose={vi.fn()}
         {...(props.pairing !== undefined ? { pairing: props.pairing } : {})}
       />
@@ -373,6 +375,19 @@ describe('AddDeviceModal', () => {
       expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
       expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
     })
+  })
+
+  it('names why the scan is unavailable instead of spinning, and keeps the adoption list', () => {
+    state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
+    renderModal({ kind: 'device-adoption', canScan: false, scanFailure: 'describe refused' })
+    expect(screen.getByText(/network scan is unavailable.*describe refused/i)).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+    expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
+  })
+
+  it('shows the same reason for a non-adoption integration', () => {
+    renderModal({ kind: 'device-provider', canScan: false, scanFailure: 'describe refused' })
+    expect(screen.getByText(/network scan is unavailable/i)).toBeTruthy()
   })
 
   it('ignores a proposal that belongs to another integration', () => {

@@ -1887,7 +1887,8 @@
       "found_other": "{{count}} dispositivi trovati",
       "alsoAdopted_one": "{{count}} anche nell'elenco di adozione",
       "alsoAdopted_other": "{{count}} anche nell'elenco di adozione",
-      "noCreationType": "Questa integrazione non può creare un dispositivo da questo candidato."
+      "noCreationType": "Questa integrazione non può creare un dispositivo da questo candidato.",
+      "scanUnavailable": "La scansione di rete non è disponibile per questa integrazione: {{reason}}"
     },
     "discoveryProposals": {
       "title": "Trovati in background",

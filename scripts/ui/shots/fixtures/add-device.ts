@@ -81,9 +81,12 @@ export default defineFixtures({
         existingInstances: [{ id: 'int_esp', name: 'ESPHome boards' }],
       },
     ],
+    'addons.listCapabilityProviders': [
+      { addonId: 'provider-esphome', isActive: true, capName: 'integration-instances' },
+    ],
     'integrationInstances.describe': {
       kinds: [],
-      discovery: { mode: 'none', scopedToInstance: false },
+      discovery: { mode: 'lan', scopedToInstance: false },
     },
     'deviceManager.listAll': [],
     'deviceManager.discoveryProviders': {

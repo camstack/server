@@ -15,6 +15,7 @@ import {
   LogStream,
   OptionSelect,
   Switch,
+  useAddonsListCapabilityProviders,
   useAddonsRestartAddon,
   useDeviceManagerDisable,
   useDeviceManagerDiscoveryProviders,
@@ -147,28 +148,49 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     // kind and this keeps their flow working.
     return entry?.kind === 'device-adoption' ? 'device-adoption' : 'device-provider'
   }, [availableTypes, integration?.addonId, typesReady])
-  // Whether Add device may scan INSIDE this integration: only a type whose discovery is scoped to
-  // one instance (`discovery.scopedToInstance`) and whose addon is a discovery provider. The
-  // addon-wide scan finds NEW integrations and lives on the Integrations page, not here.
-  // `null` until the answers are in: the Add device modal draws nothing that depends on it before.
+  // Whether Add device may scan the LAN for devices INSIDE this integration. A provider that holds
+  // an instances description scans only when its discovery mode is `lan`: an `account` or `none`
+  // integration lists its devices through adoption and manual add. A discovery provider without an
+  // instances description (legacy) keeps its scan. A failed description shows no scan and says why.
+  // `canScan` is `null` until the answers are in: the modal draws nothing that depends on it before.
   const { data: discoveryProvidersData, isPending: discoveryPending } =
     useDeviceManagerDiscoveryProviders({})
-  const { data: instancesDescription, isPending: descriptionPending } =
-    useIntegrationInstancesDescribe({ addonId }, { retry: false })
-  const canScan = useMemo(
-    () =>
-      discoveryPending || descriptionPending
-        ? null
-        : instancesDescription?.discovery?.scopedToInstance === true &&
-          (discoveryProvidersData?.providers ?? []).some((p) => p.addonId === integration?.addonId),
-    [
-      discoveryPending,
-      descriptionPending,
-      instancesDescription,
-      discoveryProvidersData,
-      integration?.addonId,
-    ],
+  const { data: instanceHolders, isPending: holdersPending } = useAddonsListCapabilityProviders({
+    capName: 'integration-instances',
+  })
+  const holdsInstances = (instanceHolders ?? []).some((p) => p.addonId === addonId)
+  const description = useIntegrationInstancesDescribe(
+    { addonId },
+    { retry: false, enabled: holdsInstances },
   )
+  const { canScan, scanFailure } = useMemo<{
+    canScan: boolean | null
+    scanFailure: string | null
+  }>(() => {
+    if (discoveryPending || holdersPending || (holdsInstances && description.isPending)) {
+      return { canScan: null, scanFailure: null }
+    }
+    const isProvider = (discoveryProvidersData?.providers ?? []).some(
+      (p) => p.addonId === integration?.addonId,
+    )
+    if (!isProvider) return { canScan: false, scanFailure: null }
+    if (!holdsInstances) return { canScan: true, scanFailure: null }
+    if (description.isError) {
+      const reason = description.error instanceof Error ? description.error.message : ''
+      return { canScan: false, scanFailure: reason.length > 0 ? reason : 'unknown error' }
+    }
+    return { canScan: description.data?.discovery?.mode === 'lan', scanFailure: null }
+  }, [
+    discoveryPending,
+    holdersPending,
+    holdsInstances,
+    description.isPending,
+    description.isError,
+    description.error,
+    description.data,
+    discoveryProvidersData,
+    integration?.addonId,
+  ])
   // The add-device button stays disabled until the kind resolves, so the
   // operator can never open the wrong dialog during the loading window.
   const fabReady = integrationKind !== null
@@ -667,6 +689,7 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           integrationId={integrationId}
           kind={integrationKind}
           canScan={canScan}
+          scanFailure={scanFailure}
           {...(isMatter
             ? {
                 pairing: {

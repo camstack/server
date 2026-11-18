@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  ErrorBox,
   Tabs,
   TabsContent,
   TabsList,
@@ -42,11 +43,13 @@ interface AddDeviceModalProps {
   /** `device-adoption` integrations without a scan list their candidates through the adopt job surface. */
   readonly kind: 'device-adoption' | 'device-provider'
   /**
-   * A scan inside this integration is offered: its type declares a discovery scoped to one
-   * instance. Never the addon-wide "can scan" — that finds NEW integrations, which is the
-   * Integrations page's job. `null` while that is still being asked.
+   * A LAN scan for devices inside this integration is offered: its discovery mode is `lan` (or it
+   * is a legacy discovery provider). An account integration lists devices through adoption and
+   * manual add. `null` while that is still being asked.
    */
   readonly canScan: boolean | null
+  /** Why the scan could not be decided (the integration's description failed); drawn instead of a scan. */
+  readonly scanFailure?: string | null
   readonly onClose: () => void
   /** The integration commissions devices from a pairing code: one more tab. */
   readonly pairing?: PairingTab
@@ -56,18 +59,33 @@ function toTabId(value: string): TabId {
   return value === 'manual' ? 'manual' : value === 'pairing' ? 'pairing' : 'network'
 }
 
+function ScanFailure({ reason }: { readonly reason: string }): ReactElement {
+  const { t } = useTranslation()
+  return (
+    <DialogBody>
+      <ErrorBox
+        message={t('integrations.addDeviceModal.scanUnavailable', {
+          defaultValue: 'The network scan is unavailable for this integration: {{reason}}',
+          reason,
+        })}
+      />
+    </DialogBody>
+  )
+}
+
 export function AddDeviceModal({
   addonId,
   integrationId,
   kind,
   canScan,
+  scanFailure = null,
   onClose,
   pairing,
 }: AddDeviceModalProps): ReactElement {
   const { t } = useTranslation()
   const manual = useManualCreationAvailability(addonId, integrationId)
   const scanPending = kind === 'device-adoption' && canScan === null
-  const hasNetwork = kind === 'device-adoption' || canScan === true
+  const hasNetwork = kind === 'device-adoption' || canScan === true || scanFailure !== null
   const hasManual = manual === 'available'
   const [picked, setPicked] = useState<TabId | null>(null)
   // A pairing integration opens on its pairing tab: that is where its devices come from first.
@@ -85,6 +103,7 @@ export function AddDeviceModal({
     </DialogBody>
   ) : kind === 'device-adoption' ? (
     <>
+      {scanFailure !== null && <ScanFailure reason={scanFailure} />}
       {canScan === true && (
         <NetworkCandidatesPanel
           addonId={addonId}
@@ -95,6 +114,8 @@ export function AddDeviceModal({
       )}
       <AdoptDevicesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
     </>
+  ) : scanFailure !== null ? (
+    <ScanFailure reason={scanFailure} />
   ) : (
     <NetworkCandidatesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
   )

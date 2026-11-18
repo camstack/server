@@ -14,7 +14,10 @@ import { describe, expect, it, vi } from 'vitest'
 
 const scope = vi.hoisted(() => ({
   description: undefined as undefined | Record<string, unknown>,
-  canScanSeen: [] as unknown[],
+  /** The addon holds `integration-instances` (false = a legacy discovery provider). */
+  holder: true,
+  describeError: false,
+  seen: [] as { canScan: boolean | null; scanFailure: string | null }[],
 }))
 const fleetReads = vi.hoisted(() => ({ calls: [] as unknown[][] }))
 const switches = vi.hoisted(() => ({
@@ -80,7 +83,14 @@ vi.mock('@camstack/ui-library', async () => {
       data: { providers: [{ addonId: 'provider-unifi', label: 'UniFi' }] },
       isPending: false,
     }),
-    useIntegrationInstancesDescribe: () => ({ data: scope.description, isPending: false }),
+    useAddonsListCapabilityProviders: () => ({
+      data: scope.holder ? [{ addonId: 'provider-unifi' }] : [],
+      isPending: false,
+    }),
+    useIntegrationInstancesDescribe: () =>
+      scope.describeError
+        ? { data: undefined, isPending: false, isError: true, error: new Error('describe refused') }
+        : { data: scope.description, isPending: false, isError: false, error: null },
     useIntegrationInstancesSetInstanceEnabled: () => ({
       mutate: switches.instance,
       isPending: false,
@@ -115,16 +125,27 @@ vi.mock('../../components/settings/NodeAddonsSettingsPanel', () => ({
 }))
 
 vi.mock('../../components/integrations/AddDeviceModal', () => ({
-  AddDeviceModal: (props: { canScan: boolean | null; onSetupIntegration?: unknown }) => {
-    scope.canScanSeen.push(props.canScan)
-    return (
-      <div
-        data-testid="add-device-modal"
-        data-setup={String(props.onSetupIntegration !== undefined)}
-      />
-    )
+  AddDeviceModal: (props: { canScan: boolean | null; scanFailure?: string | null }) => {
+    scope.seen.push({ canScan: props.canScan, scanFailure: props.scanFailure ?? null })
+    return <div data-testid="add-device-modal" />
   },
 }))
+vi.mock('../../components/integrations/AddDeviceDialog', () => ({
+  AddDeviceDialog: () => null,
+}))
+vi.mock('../../components/integrations/AdoptDevicesModal', () => ({
+  AdoptDevicesModal: () => null,
+}))
+vi.mock('../../components/integrations/IntegrationInstanceEditor', () => ({
+  IntegrationInstanceEditor: () => null,
+}))
+vi.mock('../../components/integrations/ScanNetworkModal', () => ({
+  ScanNetworkModal: () => null,
+}))
+vi.mock('../../components/settings/NodeAddonsSettingsPanel', () => ({
+  NodeAddonsSettingsPanel: () => null,
+}))
+
 vi.mock('../../components/integrations/AddDeviceDialog', () => ({ AddDeviceDialog: () => null }))
 vi.mock('../../components/integrations/AdoptDevicesModal', () => ({
   AdoptDevicesModal: () => null,
@@ -139,8 +160,8 @@ vi.mock('../../components/settings/NodeAddonsSettingsPanel', () => ({
 
 const { IntegrationDetailPage } = await import('../IntegrationDetail')
 
-function openAddDevice(): unknown {
-  scope.canScanSeen.length = 0
+function openAddDevice(): { canScan: boolean | null; scanFailure: string | null } {
+  scope.seen.length = 0
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
     <QueryClientProvider client={client}>
@@ -154,23 +175,40 @@ function openAddDevice(): unknown {
     </QueryClientProvider>,
   )
   fireEvent.click(screen.getByRole('button', { name: /add device/i }))
-  return scope.canScanSeen[scope.canScanSeen.length - 1]
+  const last = scope.seen[scope.seen.length - 1]
+  if (last === undefined) throw new Error('the Add device modal was not drawn')
+  return last
+}
+
+function setup(over: { holder?: boolean; description?: Record<string, unknown>; error?: boolean }) {
+  scope.holder = over.holder ?? true
+  scope.description = over.description
+  scope.describeError = over.error ?? false
 }
 
 describe('IntegrationDetailPage - Add device scan scope', () => {
-  it('does not offer a scan when the addon is a discovery provider but its discovery is not scoped to the instance', () => {
-    scope.description = { kinds: [], discovery: { mode: 'lan', scopedToInstance: false } }
-    expect(openAddDevice()).toBe(false)
-    expect(screen.getByTestId('add-device-modal').getAttribute('data-setup')).toBe('false')
+  it('scans the LAN for a lan-mode integration, scoped or not', () => {
+    setup({ description: { kinds: [], discovery: { mode: 'lan', scopedToInstance: false } } })
+    expect(openAddDevice()).toEqual({ canScan: true, scanFailure: null })
   })
 
-  it('does not offer a scan when the type declares no discovery', () => {
-    scope.description = { kinds: [] }
-    expect(openAddDevice()).toBe(false)
+  it('offers no scan to an account integration although its addon is a discovery provider', () => {
+    setup({ description: { kinds: [], discovery: { mode: 'account', scopedToInstance: true } } })
+    expect(openAddDevice()).toEqual({ canScan: false, scanFailure: null })
   })
 
-  it('offers the scan only when the discovery is scoped to the instance', () => {
-    scope.description = { kinds: [], discovery: { mode: 'account', scopedToInstance: true } }
-    expect(openAddDevice()).toBe(true)
+  it('offers no scan when the discovery mode is none or absent', () => {
+    setup({ description: { kinds: [] } })
+    expect(openAddDevice().canScan).toBe(false)
+  })
+
+  it('keeps the scan of a legacy discovery provider that has no instances description', () => {
+    setup({ holder: false })
+    expect(openAddDevice()).toEqual({ canScan: true, scanFailure: null })
+  })
+
+  it('shows no scan and names the reason when the description failed', () => {
+    setup({ error: true })
+    expect(openAddDevice()).toEqual({ canScan: false, scanFailure: 'describe refused' })
   })
 })
