@@ -75,6 +75,9 @@ export const COMMAND_BURST_TAIL_MS = 2_000
  * before the hold expires. A slow cloud is re-read for the whole hold, not
  * only at the start. Offsets are in ms from now, ascending, all below `holdMs`.
  */
+/** The least gap between the last stepped read and the tail read. */
+export const COMMAND_BURST_MIN_GAP_MS = 1_000
+
 export function commandBurstOffsets(holdMs: number): readonly number[] {
   const out: number[] = COMMAND_BURST_OFFSETS_MS.filter((offset) => offset < holdMs)
   const tail = holdMs - COMMAND_BURST_TAIL_MS
@@ -83,7 +86,9 @@ export function commandBurstOffsets(holdMs: number): readonly number[] {
     out.push(next)
     next += COMMAND_BURST_STEP_MS
   }
-  if (tail > (out[out.length - 1] ?? 0)) out.push(tail)
+  const last = out[out.length - 1]
+  // The tail is a read of its own only when it is not on top of the last stepped read.
+  if (last === undefined ? tail > 0 : tail - last >= COMMAND_BURST_MIN_GAP_MS) out.push(tail)
   return out
 }
 

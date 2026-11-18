@@ -17,4 +17,8 @@ describe('commandBurstOffsets', () => {
     expect(commandBurstOffsets(8_000)).toEqual([3_000, 6_000])
     expect(commandBurstOffsets(0)).toEqual([])
   })
+  it('skips the tail read when it would land within a second of the last stepped read', () => {
+    expect(commandBurstOffsets(22_001)).toEqual([3_000, 10_000, 20_000])
+    expect(commandBurstOffsets(23_000)).toEqual([3_000, 10_000, 20_000, 21_000])
+  })
 })
