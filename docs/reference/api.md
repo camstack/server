@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**213 capabilities · 1522 methods.**
+**214 capabilities · 1524 methods.**
 
 ## Method index
 
@@ -453,6 +453,8 @@
 | `deviceState.releaseClaim` | mutation | admin | device-state |
 | `deviceState.listClaims` | query | admin | device-state |
 | `deviceState.getNativeCapSlice` | query | admin | device-state |
+| `deviceStateRefresh.refresh` | mutation | admin | device-state-refresh |
+| `deviceStateRefresh.resubscribe` | mutation | admin | device-state-refresh |
 | `deviceStatus.getStatus` | query | protected | device-status (auto) |
 | `deviceTransitions.listTransitions` | query | protected | device-transitions |
 | `deviceTransitions.getTransition` | query | protected | device-transitions |
@@ -2635,6 +2637,18 @@
 | releaseClaim | `deviceState.releaseClaim` | mutation | admin | `{ deviceId: number; capName: string; owner: string }` | `ClaimOutcomeSchema` |
 | listClaims | `deviceState.listClaims` | query | admin | `{ ownerPrefix?: string }` | `ClaimsListingSchema` |
 | getNativeCapSlice | `deviceState.getNativeCapSlice` | query | admin | `{ deviceId: number; capName: string }` | `Record<string, unknown> \| null` |
+
+### `device-state-refresh` → `deviceStateRefresh.*`
+
+- **Source:** `packages/types/src/capabilities/device-state-refresh.cap.ts:35`
+- **Meta:** scope: `device` · mode: `singleton` · deviceNative: `true` · mount: `device-native`
+- **Archetypes:** —
+- **Provider interface:** `IDeviceStateRefreshProvider`
+
+| Method | tRPC path | Kind | Auth | Input | Output |
+|---|---|---|---|---|---|
+| refresh | `deviceStateRefresh.refresh` | mutation | admin | `DeviceStateRefreshInputSchema` | `DeviceStateRefreshResultSchema` |
+| resubscribe | `deviceStateRefresh.resubscribe` | mutation | admin | `DeviceStateResubscribeInputSchema` | `DeviceStateRefreshResultSchema` |
 
 ### `device-status` → `deviceStatus.*`
 

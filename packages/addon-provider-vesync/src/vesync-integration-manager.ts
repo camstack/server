@@ -1,4 +1,4 @@
-import { errMsg, type IScopedLogger } from '@camstack/types'
+import { errMsg, type IScopedLogger, type StateRefreshReason } from '@camstack/types'
 import type { VeSyncConnectionConfig } from './config.js'
 import {
   type VeSyncClient,
@@ -34,6 +34,20 @@ export interface VeSyncCommand {
   readonly run: (client: VeSyncClient) => Promise<void>
 }
 
+/** One device the core asks to re-read (D1062). */
+export interface VeSyncRefreshTarget {
+  /** The VeSync `cid` to read. */
+  readonly nativeId: string
+  /** The CamStack device the read is for — the log tag. */
+  readonly deviceId: number
+}
+
+/** The last command sent to a cid, until the read after it lands (for `totalMs`). */
+interface PendingCommand {
+  readonly name: string
+  readonly started: number
+}
+
 /** Constructor options for {@link VeSyncIntegrationManager}. */
 export interface VeSyncIntegrationManagerOptions {
   readonly id: string
@@ -44,8 +58,8 @@ export interface VeSyncIntegrationManagerOptions {
   readonly sessions: VeSyncSessionStore
   readonly onConnected: (accountId: string) => void
   readonly onDisconnected: (accountId: string) => void
-  /** Fired after every poll cycle, and after the refresh that follows a command, so the
-   *  account fans the fresh snapshot out to its devices. */
+  /** Fired after every device list and every single-device read, so the account fans the
+   *  fresh snapshot out to its devices. */
   readonly onPolled: (accountId: string) => void
   /** Factory seam — defaults to the `tsvesync` adapter. */
   readonly makeClient?: VeSyncClientFactory
@@ -53,10 +67,13 @@ export interface VeSyncIntegrationManagerOptions {
 
 /**
  * Wraps exactly one {@link VeSyncClient} (= one VeSync account). VeSync exposes
- * no push channel via the wrapper we target, so the manager owns a poll loop: on
- * `start()` it adopts the stored session (or signs in), lists devices once, and then periodically re-lists them,
- * firing `onPolled` after every cycle. Mirrors the Velux / Rademacher integration
- * manager, with the same fresh-client-on-reconnect discipline.
+ * no push channel via the wrapper we target, so the account is read on demand:
+ * `start()` adopts the stored session (or signs in) and lists devices once; after
+ * that the CORE decides when to read (D1062, the hub's state-refresh scheduler,
+ * through each device's `device-state-refresh` cap) and {@link refresh} does it —
+ * a scheduled tick re-lists the account, a command or its burst re-reads the
+ * commanded device. The manager owns no timer. `onPolled` fires after every read.
+ * Same fresh-client-on-reconnect discipline as the Velux / Rademacher managers.
  */
 export class VeSyncIntegrationManager {
   readonly #id: string
@@ -84,7 +101,8 @@ export class VeSyncIntegrationManager {
    */
   #polling = false
   #status: VeSyncAccountStatus = 'disconnected'
-  #pollTimer: ReturnType<typeof setInterval> | null = null
+  /** Per cid, the command whose confirming read has not landed yet. */
+  #pendingCommands: Map<string, PendingCommand> = new Map()
   #error: string | null = null
   /** Session writes, serialized so a start can wait for the one its sign-in queued. */
   #sessionWrites: Promise<void> = Promise.resolve()
@@ -154,7 +172,7 @@ export class VeSyncIntegrationManager {
   }
 
   /**
-   * Adopt the stored session or sign in, list devices once, and start the poll loop. A failed
+   * Adopt the stored session or sign in and list devices once. A failed
    * sign-in throws (the caller logs and keeps the device — a later `applyConnection` / restart
    * retries). A restored session the cloud refuses gets exactly one fresh sign-in.
    */
@@ -217,23 +235,19 @@ export class VeSyncIntegrationManager {
     this.#status = 'connected'
     this.#onConnected(this.#id)
     this.#onPolled(this.#id)
-    this.#startPollLoop()
     this.#logger.info('VeSyncIntegrationManager: started', {
       tags: { accountId: this.#id },
       meta: { deviceCount: this.#devices.size },
     })
   }
 
-  /** Stop the poll loop and drop the client + snapshots. */
+  /** Drop the client + snapshots. */
   async stop(): Promise<void> {
-    if (this.#pollTimer !== null) {
-      clearInterval(this.#pollTimer)
-      this.#pollTimer = null
-    }
     const client = this.#client
     this.#client = null
     this.#devices = new Map()
     this.#refreshedAt = new Map()
+    this.#pendingCommands = new Map()
     this.#status = 'disconnected'
     if (client) {
       try {
@@ -305,11 +319,10 @@ export class VeSyncIntegrationManager {
   }
 
   /**
-   * Send one command, then re-read THAT device and push its real state at once — the UI should
-   * not wait for the next poll (30 s by default) to see what it asked for. Nothing is invented:
-   * the pushed state is what the device read answered. A refused command is logged, the device
-   * re-read (part of it may have landed), and the failure thrown; a failed read is logged and
-   * leaves the state to the next poll.
+   * Send one command. The re-read that shows its real state is the core's (D1062): the hub
+   * awaits a `device-state-refresh` read before the command returns, then bursts while the
+   * hold is unconfirmed — a refused command is re-read too (part of it may have landed). A
+   * refused command is logged and thrown.
    */
   async runCommand(command: VeSyncCommand): Promise<void> {
     const client = this.#client
@@ -318,6 +331,10 @@ export class VeSyncIntegrationManager {
       throw new Error(`vesync: integration ${this.#id} is not connected — ${command.name} not sent`)
     }
     const started = Date.now()
+    this.#pendingCommands = new Map(this.#pendingCommands).set(command.nativeId, {
+      name: command.name,
+      started,
+    })
     try {
       await command.run(client)
     } catch (err) {
@@ -325,49 +342,81 @@ export class VeSyncIntegrationManager {
         tags,
         meta: { nativeId: command.nativeId, commandMs: Date.now() - started, error: errMsg(err) },
       })
-      // A multi-step command can fail part-way (power on, then a refused mode): what did land
-      // is pushed before the caller hears of the failure.
-      await this.#refreshAfter(client, command, started)
       throw err
     }
     this.#logger.info(`vesync: command ${command.name} acknowledged`, {
       tags,
       meta: { nativeId: command.nativeId, commandMs: Date.now() - started },
     })
-    await this.#refreshAfter(client, command, started)
   }
 
-  /** Re-read the commanded device and push its real state. A failed read is logged, not thrown. */
-  async #refreshAfter(
-    client: VeSyncClient,
-    command: VeSyncCommand,
-    started: number,
+  /**
+   * Read what the core asked for (D1062): a scheduled tick re-lists the account; a command or
+   * burst read re-reads each target's cid once. A failed read is logged, not thrown — the next
+   * tick reads again.
+   */
+  async refresh(
+    reason: StateRefreshReason,
+    targets: readonly VeSyncRefreshTarget[],
   ): Promise<void> {
-    const tags = { deviceId: command.deviceId }
-    const acked = Date.now()
+    if (reason === 'schedule') {
+      await this.poll()
+      return
+    }
+    const client = this.#client
+    if (client === null) return
+    const byCid = new Map<string, VeSyncRefreshTarget>()
+    for (const target of targets)
+      if (!byCid.has(target.nativeId)) byCid.set(target.nativeId, target)
+    for (const target of byCid.values()) await this.#readDevice(client, target, reason)
+  }
+
+  /** Re-read one cid and push its real state. A failed read is logged, not thrown. */
+  async #readDevice(
+    client: VeSyncClient,
+    target: VeSyncRefreshTarget,
+    reason: StateRefreshReason,
+  ): Promise<void> {
+    const tags = { deviceId: target.deviceId }
+    const pending = this.#pendingCommands.get(target.nativeId)
+    const label = pending === undefined ? reason : `${reason} after ${pending.name}`
+    const asked = Date.now()
     try {
-      const fresh = await client.refreshDevice(command.nativeId)
+      const fresh = await client.refreshDevice(target.nativeId)
       if (this.#client !== client) return
       if (fresh === null) {
-        this.#logger.warn(`vesync: refresh after ${command.name} found no such device`, {
+        this.#logger.warn(`vesync: refresh (${label}) found no such device`, {
           tags,
-          meta: { nativeId: command.nativeId },
+          meta: { nativeId: target.nativeId },
         })
         return
       }
       this.#readSeq += 1
-      this.#refreshedAt = new Map(this.#refreshedAt).set(command.nativeId, this.#readSeq)
-      this.#devices = new Map(this.#devices).set(command.nativeId, fresh)
+      this.#refreshedAt = new Map(this.#refreshedAt).set(target.nativeId, this.#readSeq)
+      this.#devices = new Map(this.#devices).set(target.nativeId, fresh)
+      const pendingNow = new Map(this.#pendingCommands)
+      pendingNow.delete(target.nativeId)
+      this.#pendingCommands = pendingNow
       this.#onPolled(this.#id)
       const pushed = Date.now()
-      this.#logger.info(`vesync: state refreshed after ${command.name}`, {
+      this.#logger.info(`vesync: state refreshed (${label})`, {
         tags,
-        meta: { nativeId: command.nativeId, refreshMs: pushed - acked, totalMs: pushed - started },
+        meta: {
+          nativeId: target.nativeId,
+          reason,
+          refreshMs: pushed - asked,
+          ...(pending !== undefined ? { totalMs: pushed - pending.started } : {}),
+        },
       })
     } catch (err) {
-      this.#logger.warn(`vesync: refresh after ${command.name} failed — the next poll updates it`, {
+      this.#logger.warn(`vesync: refresh (${label}) failed — the next read updates it`, {
         tags,
-        meta: { nativeId: command.nativeId, refreshMs: Date.now() - acked, error: errMsg(err) },
+        meta: {
+          nativeId: target.nativeId,
+          reason,
+          refreshMs: Date.now() - asked,
+          error: errMsg(err),
+        },
       })
     }
   }
@@ -423,20 +472,6 @@ export class VeSyncIntegrationManager {
       }
     }
     return merged
-  }
-
-  #startPollLoop(): void {
-    if (this.#pollTimer !== null) return
-    this.#pollTimer = setInterval(() => {
-      void this.poll().catch((err) => {
-        this.#logger.warn('VeSyncIntegrationManager: poll cycle failed', {
-          tags: { accountId: this.#id },
-          meta: { error: errMsg(err) },
-        })
-      })
-    }, this.#connection.pollIntervalMs)
-    // Do not keep the event loop alive solely for polling.
-    this.#pollTimer.unref?.()
   }
 }
 

@@ -17,6 +17,12 @@ import {
 } from './cap-action-census.js'
 import { buildCapChildIndex, type CapChildIndex } from './cap-child-index.js'
 import { liftRoutingHints, type CapRoutingHints } from './cap-routing-hints.js'
+import {
+  commandFollowUpTarget,
+  withCommandFollowUp,
+  type CommandFollowUp,
+  type CommandFollowUpTarget,
+} from '../command-follow-up.js'
 import { extractDeviceId } from './cap-route-resolver.js'
 import { answerClaimedGetStatus, GET_STATUS_METHOD } from './claimed-get-status.js'
 import { answerDeviceCallRedirect, type DeviceCallRedirectHook } from './device-call-redirect.js'
@@ -48,6 +54,11 @@ import {
   childCommandHoldEntries,
   getCommandHoldOverrideRegistry,
 } from '../command-hold-overrides.js'
+import {
+  childRefreshSource,
+  childStateRefreshEntries,
+  getStateRefreshPolicyRegistry,
+} from '../state-refresh-policies.js'
 
 /**
  * How many child `cap-call-out`s this parent forwarded WITHOUT reading their
@@ -359,6 +370,12 @@ export interface LocalChildRegistryOptions {
    * MUST NOT throw; the call site catches anyway.
    */
   readonly commandObserver?: CommandObserver
+  /**
+   * Awaited after a device command a child issued settled, before the child
+   * hears the answer (D1062: the state refresh). Same calls as
+   * {@link commandObserver}; never a gate (`command-follow-up.ts`).
+   */
+  readonly commandFollowUp?: CommandFollowUp
 }
 
 interface ChildEntry {
@@ -430,6 +447,8 @@ export class LocalChildRegistry {
   private readonly capUsageObserver?: (obs: CapUsageCallRecord) => void
   /** See {@link LocalChildRegistryOptions.commandObserver}. */
   private readonly commandObserver?: CommandObserver
+  /** See {@link LocalChildRegistryOptions.commandFollowUp}. */
+  private readonly commandFollowUp?: CommandFollowUp
   /** Tracks capNames already logged as UDS-routed; one INFO line per capName per process. */
   private readonly egressRoutedCaps = new Set<string>()
   /** Per-child event fan-out counters (sent / suppressed). */
@@ -489,6 +508,7 @@ export class LocalChildRegistry {
       this.deviceCallRedirect = opts.deviceCallRedirect
       this.capUsageObserver = opts.capUsageObserver
       this.commandObserver = opts.commandObserver
+      this.commandFollowUp = opts.commandFollowUp
     } else {
       // Positional form: LocalChildRegistry(server, onUnownedCall?)
       this.server = serverOrOptions as LocalTransportServer
@@ -788,6 +808,18 @@ export class LocalChildRegistry {
     } catch {
       // Observation is best-effort and never affects the caller.
     }
+  }
+
+  /**
+   * The device command a child's `cap-call-out` is (D1062), or `null`. Read
+   * from the lifted routing hints, so a raw-forward frame is not decoded.
+   */
+  private childCommandTarget(body: unknown): CommandFollowUpTarget | null {
+    if (this.commandFollowUp === undefined) return null
+    const msg = body as ChildToParentRequest // wire-boundary: trusted local UDS channel
+    if (msg.kind !== 'cap-call-out') return null
+    const hints = msg.hints ?? liftRoutingHints(msg.args)
+    return commandFollowUpTarget(msg.capName, msg.method, msg.deviceId ?? hints.deviceId)
   }
 
   private recordCapUsage(
@@ -1206,7 +1238,7 @@ export class LocalChildRegistry {
       // parent must silently drop a new child's unknown frame, never throw).
     })
 
-    channel.onRequest(async (body, payload) => {
+    const answerRequest = async (body: unknown, payload?: Uint8Array): Promise<unknown> => {
       const msg = body as ChildToParentRequest // wire-boundary: trusted local UDS channel
       if (msg.kind === 'register') {
         if (childId !== null && childId !== msg.childId) {
@@ -1245,6 +1277,11 @@ export class LocalChildRegistry {
         getCommandHoldOverrideRegistry().replaceSource(
           childHoldSource(msg.childId),
           childCommandHoldEntries(msg.caps),
+        )
+        // And their state-refresh policies (D1062).
+        getStateRefreshPolicyRegistry().replaceSource(
+          childRefreshSource(msg.childId),
+          childStateRefreshEntries(msg.childId, msg.caps),
         )
         this.logPatternSet(msg.childId, eventPatterns)
         // A reconnect under the same id is a fresh process with no set yet.
@@ -1476,7 +1513,14 @@ export class LocalChildRegistry {
         return resp
       }
       throw new Error(`unknown child request kind: ${(msg as { kind: string }).kind}`)
-    })
+    }
+    channel.onRequest((body, payload) =>
+      withCommandFollowUp(
+        this.commandFollowUp,
+        childId === null ? null : this.childCommandTarget(body),
+        answerRequest(body, payload),
+      ),
+    )
     channel.onClose(() => {
       if (childId === null) return
       const entry = this.children.get(childId)
@@ -1497,6 +1541,7 @@ export class LocalChildRegistry {
       this.children.delete(childId)
       this.invalidateCapIndex()
       getCommandHoldOverrideRegistry().replaceSource(childHoldSource(childId), [])
+      getStateRefreshPolicyRegistry().replaceSource(childRefreshSource(childId), [])
       this.childEventStats.delete(childId)
       this.lastInterestKey.delete(childId)
       this.refreshEventInterest()

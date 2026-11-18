@@ -4,12 +4,12 @@
 
 # Guards
 
-252 repository guards: 247 in `scripts/`,
+253 repository guards: 248 in `scripts/`,
 5 as tests inside the package they judge. A guard is the only
 durable form of a convention: a rule nothing checks is a rule that has already
 been broken somewhere. Prefer adding one over adding a paragraph.
 
-## Enforced by CI checks (242)
+## Enforced by CI checks (243)
 
 Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.yml`.
 
@@ -163,6 +163,7 @@ Referenced by name in `.github/workflows/checks.yml` (on demand, D704) or `ci.ym
 | `scripts/check-no-native-form-controls.ts` | Admin and addon pages use the library's form controls, never the browser's. |
 | `scripts/check-no-native-select.ts` | A native `<select>` is written NOWHERE in the admin UI or the library: the `Select` primitive (`packages/ui-library/src/primitives/select.tsx`) renders our own list, so a raw `<select>` would bring back the browser's popup. |
 | `scripts/check-no-private-lan-scan.ts` | An addon does not scan the LAN itself (D977). |
+| `scripts/check-no-provider-poll-loops.ts` | A provider migrated to the core state refresh (D1062) owns no poll timer. |
 | `scripts/check-no-raw-secret-read.ts` | Addon code never reads its settings through a MARKER-bearing view (D798). |
 | `scripts/check-no-raw-secrets-in-collections.ts` | A credential never sits in plain text in a persisted row (D879). |
 | `scripts/check-no-retired-fanout-heap-env.ts` | No runtime code reads the retired heap-snapshot or event-fanout mode envs. |

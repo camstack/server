@@ -405,6 +405,8 @@
   "deviceState.patchOwnedFields": "admin",
   "deviceState.releaseClaim": "admin",
   "deviceState.setCapSlice": "protected",
+  "deviceStateRefresh.refresh": "admin",
+  "deviceStateRefresh.resubscribe": "admin",
   "deviceTransitions.getStatus": "admin",
   "deviceTransitions.getTransition": "protected",
   "deviceTransitions.listRecentTransitions": "admin",

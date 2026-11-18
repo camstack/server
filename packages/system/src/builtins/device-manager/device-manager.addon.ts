@@ -104,6 +104,7 @@ import { DeviceRowStore, deviceRowBackendOf } from './device-row-store.js'
 import { createDeviceStateClaimMethods } from './device-state-claims.js'
 import { DeviceStateMirror } from './device-state-mirror.js'
 import { startCommandHolds } from './command-holds-wiring.js'
+import { startStateRefresh } from './state-refresh-wiring.js'
 import {
   startDeviceTransitions,
   type DeviceTransitionsHandle,
@@ -165,6 +166,7 @@ export class DeviceManagerAddon extends BaseAddon {
   private transitions: DeviceTransitionsHandle | null = null
   /** Unsubscribes the command hold (D1061). */
   private stopCommandHolds: (() => void) | null = null
+  private stopStateRefresh: (() => void) | null = null
 
   /**
    * Removes the claimed-status overlay this addon installed on the capability
@@ -764,6 +766,21 @@ export class DeviceManagerAddon extends BaseAddon {
     this.stopCommandHolds = startCommandHolds({
       mirror: stateMirror,
       logger: this.ctx.logger.child('command-holds'),
+    })
+    // The core decides when a migrated provider re-reads a device (D1062).
+    this.stopStateRefresh = startStateRefresh({
+      mirror: stateMirror,
+      logger: this.ctx.logger.child('state-refresh'),
+      refresh: async (deviceId, deviceIds, reason) => {
+        const api = this.ctx.api
+        if (api === undefined) throw new Error('ctx.api not ready')
+        await api.deviceStateRefresh.refresh.mutate({ deviceId, deviceIds: [...deviceIds], reason })
+      },
+      resubscribe: async (deviceId) => {
+        const api = this.ctx.api
+        if (api === undefined) throw new Error('ctx.api not ready')
+        await api.deviceStateRefresh.resubscribe.mutate({ deviceId })
+      },
     })
     this.transitions = startDeviceTransitions({
       mirror: stateMirror,
@@ -1379,6 +1396,8 @@ export class DeviceManagerAddon extends BaseAddon {
     this.templateActions = null
     await this.transitions?.stop()
     this.transitions = null
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     this.stopCommandHolds?.()
     this.stopCommandHolds = null
     this.removalCleanupImpl?.dispose()

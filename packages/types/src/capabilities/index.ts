@@ -3159,6 +3159,14 @@ export {
 } from './low-power-sleep.cap.js'
 export { type IResyncProvider, ResyncDeviceInputSchema, resyncCapability } from './resync.cap.js'
 export {
+  type DeviceStateRefreshInput,
+  DeviceStateRefreshInputSchema,
+  DeviceStateRefreshResultSchema,
+  DeviceStateResubscribeInputSchema,
+  deviceStateRefreshCapability,
+  type IDeviceStateRefreshProvider,
+} from './device-state-refresh.cap.js'
+export {
   type IRecordingProvider,
   RECORDING_SOURCE_CAMSTACK,
   RECORDING_SOURCE_CAMSTACK_ADDON,
@@ -3812,6 +3820,7 @@ import type { runningStateCapability } from './running-state.cap.js'
 import type { rebootCapability } from './reboot.cap.js'
 import type { lowPowerSleepCapability } from './low-power-sleep.cap.js'
 import type { resyncCapability } from './resync.cap.js'
+import type { deviceStateRefreshCapability } from './device-state-refresh.cap.js'
 import type { recordingCapability } from './recording.cap.js'
 import type { recordingArchiveCapability } from './recording-archive.cap.js'
 import type { recordingExportCapability } from './recording-export.cap.js'
@@ -3955,6 +3964,7 @@ type AnyCapability =
   | typeof rebootCapability
   | typeof lowPowerSleepCapability
   | typeof resyncCapability
+  | typeof deviceStateRefreshCapability
   | typeof brightnessCapability
   | typeof colorCapability
   | typeof climateControlCapability

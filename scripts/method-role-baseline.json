@@ -439,6 +439,8 @@
   "deviceState.patchOwnedFields": "admin",
   "deviceState.releaseClaim": "admin",
   "deviceState.setCapSlice": "admin",
+  "deviceStateRefresh.refresh": "admin",
+  "deviceStateRefresh.resubscribe": "admin",
   "deviceStatus.getStatus": "viewer",
   "deviceTransitions.getStatus": "admin",
   "deviceTransitions.getTransition": "viewer",

@@ -12,6 +12,7 @@ import type { AnyRouter } from '@trpc/server'
 import type { AddonApi } from '@camstack/types'
 import {
   commandObserverLink,
+  getCommandFollowUpRegistry,
   getCommandObserverRegistry,
   localProviderLink,
   type CommandObserver,
@@ -48,6 +49,7 @@ export function createHubAddonApi(options: HubAddonApiOptions): AddonApi {
       commandObserverLink({
         callerAddonId: options.callerAddonId,
         sink: options.commandSink ?? ((obs) => getCommandObserverRegistry().observe(obs)),
+        followUp: (target, outcome) => getCommandFollowUpRegistry().run(target, outcome),
       }),
       localProviderLink(options.resolver, observerOpts),
       ...options.links,

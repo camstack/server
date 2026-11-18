@@ -70,6 +70,12 @@ import {
   runObservedCommand,
   type CommandObserver,
 } from './command-observation.js'
+import {
+  commandFollowUpTarget,
+  deviceIdOfArgs,
+  withCommandFollowUp,
+  type CommandFollowUp,
+} from './command-follow-up.js'
 
 /**
  * A tRPC-procedure-like builder. Mirrors the chainable surface the
@@ -219,6 +225,12 @@ export interface CapRouterServices {
    * mount simply reports nothing. Telemetry — it never affects the call.
    */
   readonly commandObserver?: CommandObserver
+  /**
+   * Awaited after every device command this mount reports, before the caller
+   * hears the answer (D1062: the state refresh). Never a gate — see
+   * `command-follow-up.ts`. OPTIONAL like `commandObserver`.
+   */
+  readonly commandFollowUp?: CommandFollowUp
 }
 
 /** A method-schema with the routing flags the builder reads. */
@@ -373,10 +385,15 @@ function invokeObserved(
   }
   const actor = commandActorFromContext(ctx)
   if (actor === null) return invoke()
-  return runObservedCommand(
+  const result = runObservedCommand(
     services.commandObserver,
     { capName: def.name, method: method.name, args: payload, actor },
     invoke,
+  )
+  return withCommandFollowUp(
+    services.commandFollowUp,
+    commandFollowUpTarget(def.name, method.name, deviceIdOfArgs(payload)),
+    result,
   )
 }
 

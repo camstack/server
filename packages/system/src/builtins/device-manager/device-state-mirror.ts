@@ -125,8 +125,12 @@ export type SliceChangeTap = (
   slice: Readonly<Record<string, unknown>>,
 ) => void
 
+/** Told of every native slice a provider reported, changed or not (D1062 push health). */
+export type SliceReportTap = (deviceId: number, capName: string) => void
+
 export class DeviceStateMirror {
   private transitionTap: SliceChangeTap | null = null
+  private reportTap: SliceReportTap | null = null
   /**
    * Hub-side mirror of every device's cap-keyed NATIVE runtime state — what the
    * provider wrote. Key: deviceId. Value: per-cap slice map. Empty by default —
@@ -203,6 +207,11 @@ export class DeviceStateMirror {
     this.transitionTap = tap
   }
 
+  /** Set once by the device-manager: told of every native slice reported, before the no-change check (D1062). */
+  setReportTap(tap: SliceReportTap | null): void {
+    this.reportTap = tap
+  }
+
   // ── Command holds (D1061) ────────────────────────────────────────────────
 
   /**
@@ -217,6 +226,11 @@ export class DeviceStateMirror {
   /** End a command's hold: refused (rolled back at once) or unconfirmed (at the limit). */
   releaseCommand(token: number, reason: HoldRelease): void {
     this.holds.release(token, reason)
+  }
+
+  /** Whether any command hold on the device is still unconfirmed (D1062). */
+  isHoldingDevice(deviceId: number): boolean {
+    return this.holds.isHoldingDevice(deviceId)
   }
 
   /** Stop the hold timers (shutdown). */
@@ -245,6 +259,7 @@ export class DeviceStateMirror {
    *   a SQLite commit.
    */
   applySingleCapUpdate(deviceId: number, capName: string, slice: Record<string, unknown>): boolean {
+    this.reportTap?.(deviceId, capName)
     let perCap = this.stateMirror.get(deviceId)
     if (!perCap) {
       perCap = new Map()

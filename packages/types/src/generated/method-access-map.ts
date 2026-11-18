@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1522 method paths across 213 capabilities.
+ * Coverage: 1524 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -462,6 +462,8 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'deviceState.patchOwnedFields': { capName: "device-state", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceState.releaseClaim': { capName: "device-state", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'deviceState.setCapSlice': { capName: "device-state", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'deviceStateRefresh.refresh': { capName: "device-state-refresh", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
+  'deviceStateRefresh.resubscribe': { capName: "device-state-refresh", capScope: "device", addonId: null, access: "create", role: "admin" } as const,
   'deviceStatus.getStatus': { capName: "device-status", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
   'deviceTransitions.getStatus': { capName: "device-transitions", capScope: "device", addonId: null, access: "view", role: "admin" } as const,
   'deviceTransitions.getTransition': { capName: "device-transitions", capScope: "device", addonId: null, access: "view", role: "viewer" } as const,
@@ -1611,6 +1613,7 @@ export const KNOWN_CAP_NAMES: readonly string[] = [
   "device-removal-hook",
   "device-runs",
   "device-state",
+  "device-state-refresh",
   "device-status",
   "device-transitions",
   "dishwasher",
@@ -1794,6 +1797,7 @@ export const DEVICE_CAP_NAMES: readonly string[] = [
   "device-extension",
   "device-ops",
   "device-runs",
+  "device-state-refresh",
   "device-status",
   "device-transitions",
   "dishwasher",

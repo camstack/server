@@ -418,6 +418,21 @@ export {
 } from './command-observation.js'
 export type { CommandObserver } from './command-observation.js'
 export {
+  CommandFollowUpRegistry,
+  __resetCommandFollowUpRegistryForTests,
+  getCommandFollowUpRegistry,
+} from './command-follow-up.js'
+export type {
+  CommandCallOutcome,
+  CommandFollowUp,
+  CommandFollowUpTarget,
+} from './command-follow-up.js'
+export {
+  StateRefreshPolicyRegistry,
+  getStateRefreshPolicyRegistry,
+  __resetStateRefreshPolicyRegistryForTests,
+} from './state-refresh-policies.js'
+export {
   CapUsageRegistry,
   getCapUsageRegistry,
   PARENT_ROUTED_PROVIDER_ADDON_ID,

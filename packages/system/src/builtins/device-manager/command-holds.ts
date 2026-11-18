@@ -214,6 +214,12 @@ export class CommandHolds {
     return (this.held.get(deviceId)?.get(capName)?.size ?? 0) > 0
   }
 
+  /** Is any field of any cap of the device still held? (D1062: the command burst stops when this is false.) */
+  isHoldingDevice(deviceId: number): boolean {
+    for (const fields of this.held.get(deviceId)?.values() ?? []) if (fields.size > 0) return true
+    return false
+  }
+
   /** Forget a removed device's holds. */
   clearDevice(deviceId: number): void {
     this.held.delete(deviceId)

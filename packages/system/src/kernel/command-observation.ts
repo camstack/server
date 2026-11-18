@@ -17,6 +17,12 @@ import type { AnyRouter } from '@trpc/server'
 import { observable } from '@trpc/server/observable'
 import type { CommandActor, DeviceCommandObservation } from '@camstack/types'
 import { isCommand, readCommandOrigin, type CommandOriginClaim } from '@camstack/types/addon'
+import {
+  commandFollowUpTarget,
+  deviceIdOfArgs,
+  runCommandFollowUp,
+  type CommandFollowUp,
+} from './command-follow-up.js'
 
 export type CommandObserver = (obs: DeviceCommandObservation) => void
 
@@ -182,6 +188,8 @@ function kebab(name: string): string {
 export function commandObserverLink<TRouter extends AnyRouter>(options: {
   readonly callerAddonId: string
   readonly sink: CommandObserver
+  /** Awaited after the command settled, before the caller hears it (D1062). */
+  readonly followUp?: CommandFollowUp
 }): TRPCLink<TRouter> {
   return () =>
     ({ op, next }) => {
@@ -204,18 +212,47 @@ export function commandObserverLink<TRouter extends AnyRouter>(options: {
           actor: addonCommandActor(options.callerAddonId, readCommandOrigin(op.context)),
           outcome,
         })
+        const target = commandFollowUpTarget(capName, method, deviceIdOfArgs(op.input))
+        const followUp = options.followUp
+        if (followUp === undefined || target === null) {
+          const sub = downstream.subscribe({
+            next: (value) => observer.next(value),
+            error: (err) => {
+              settled.reject(err)
+              observer.error(err)
+            },
+            complete: () => {
+              settled.resolve()
+              observer.complete()
+            },
+          })
+          return () => sub.unsubscribe()
+        }
+        // The answer is held until the follow-up ran (D1062): the value, then
+        // completion — or the error — reach the caller only after it.
+        const answered: Array<Parameters<typeof observer.next>[0]> = []
+        let closed = false
         const sub = downstream.subscribe({
-          next: (value) => observer.next(value),
+          next: (value) => void answered.push(value),
           error: (err) => {
             settled.reject(err)
-            observer.error(err)
+            void runCommandFollowUp(followUp, target, 'failed').then(() => {
+              if (!closed) observer.error(err)
+            })
           },
           complete: () => {
             settled.resolve()
-            observer.complete()
+            void runCommandFollowUp(followUp, target, 'ok').then(() => {
+              if (closed) return
+              for (const value of answered) observer.next(value)
+              observer.complete()
+            })
           },
         })
-        return () => sub.unsubscribe()
+        return () => {
+          closed = true
+          sub.unsubscribe()
+        }
       })
     }
 }

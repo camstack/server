@@ -16,6 +16,7 @@ import {
 import { vesyncPurifierSchema, type VeSyncSensorKind, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncPurifierSnapshot } from '../vesync-client-contract.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
+import { registerVeSyncStateRefresh } from './vesync-state-refresh.js'
 import { describeSpeedSteps, planPurifierSpeed, runSpeedSteps } from '../vesync-commands.js'
 import { vesyncIdentifiers } from '../vesync-identifiers.js'
 import { VeSyncSensorDevice } from './vesync-sensor-device.js'
@@ -75,6 +76,8 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
   private readonly integrationId: string
 
   private snapshotUnsub: (() => void) | null = null
+  /** Stops the core state refresh's re-registration (D1062). */
+  private stopStateRefresh: (() => void) | null = null
   /** The last identity declaration that landed (D1059); an unchanged one is not re-sent. */
   private lastIdentityKey: string | null = null
 
@@ -97,11 +100,20 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when this device is re-read (D1062); VeSync only reads.
+    this.stopStateRefresh ??= registerVeSyncStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+      nativeId: this.purifierNativeId,
+    })
     this.attachSnapshotListener()
     this.recomputeSlices()
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     if (this.snapshotUnsub) {
       try {
         this.snapshotUnsub()
@@ -213,7 +225,7 @@ export class VeSyncPurifierDevice extends BaseDevice<typeof vesyncPurifierSchema
     if (result.outcome !== 'declared') this.lastIdentityKey = null
   }
 
-  /** Send one command through the account manager (it refreshes and pushes afterwards). */
+  /** Send one command through the account manager; the core re-reads the device after it (D1062). */
   private async command(name: string, run: (client: VeSyncClient) => Promise<void>): Promise<void> {
     const manager = vesyncAccounts.getManager(this.integrationId)
     if (manager === null) {

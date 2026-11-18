@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1105 shared schemas.**
+**1108 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1832,6 +1832,20 @@ Enum: `"open" \| "closed"`
 - `facets`: `DeviceSearchFacetsSchema`
 - `suggested`: `DeviceSearchItemSchema[]`
 - `missingIds`: `number[]`
+
+### `DeviceStateRefreshInputSchema`
+
+- `deviceId`: `number`
+- `deviceIds`: `number[]`
+- `reason`: `"schedule" \| "command" \| "burst"`
+
+### `DeviceStateRefreshResultSchema`
+
+- `ok`: `true`
+
+### `DeviceStateResubscribeInputSchema`
+
+- `deviceId`: `number`
 
 ### `DeviceStatusSchema`
 

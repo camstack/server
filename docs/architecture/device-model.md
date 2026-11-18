@@ -222,6 +222,42 @@ A control in the UI renders the served slice and runs its command through
 `useDeviceCommand` (ui-library), which only reports a refusal;
 `scripts/check-no-ui-optimism.ts` refuses a client-side patch.
 
+## The core decides when a device is re-read ([D1062](../decisions/adr-1062-the-core-decides-when-a-device-is-re-read-the-provider-only-how.md))
+
+A provider moved to the core state refresh owns no timer. It registers
+`device-state-refresh` (`refresh(deviceIds, reason)`, `resubscribe()`) on each
+device it reads. It declares its policy with the registration
+(`registerNativeCap(cap, provider, { stateRefresh })`, carried to the hub like
+the D1061 hold options):
+
+| Field | Meaning |
+| --- | --- |
+| `integrationId` | The instance the device belongs to; one schedule group per (addon, instance). |
+| `minIntervalMs` | The fastest cadence the provider allows (at least 1 s). |
+| `intervalMs` | The integration's own setting. It can only SLOW the cadence (`effectiveRefreshIntervalMs`). |
+| `batch` | One `refresh` call answers every due device of the group. |
+| `push` | `none` (polled), `partial`, or `full` (never scheduled). |
+| `heartbeatMs` | Push silence after which the core reads, resubscribes and reads again. |
+| `connectionEpoch` | Bumped on a reconnect; a new value means every device of the group is read. |
+
+The hub's device-manager runs `StateRefreshScheduler`
+(`builtins/device-manager/state-refresh-scheduler.ts`):
+
+- **Cadence.** The effective interval applies, with no idle back-off.
+- **Command.** The D1022 seams await the command follow-up (`kernel/command-follow-up.ts`)
+  after the provider's call settles. A polled device is read before the
+  command returns, then again at about 3 s and 10 s while a D1061 hold on it is
+  unconfirmed. A push device waits 2.5 s for its confirming report and is read
+  once if none came.
+- **Never overlapping.** A tick that finds a read in flight is skipped (debug
+  line, `tags: { deviceId }`). A command waits for that read.
+- **Failure.** A failed read is a warn line per device and never fails the command.
+
+VeSync is the first adopter. `scripts/check-no-provider-poll-loops.ts` keeps a
+timer out of every provider on its `MIGRATED` list. Not covered yet: providers
+hosted on an agent, and D847's battery window, which is a policy of the same
+kind and was not migrated.
+
 ## A slice whose authority is elsewhere must be hydrated at boot
 
 Some slices are not written by the device at all: an addon owns the durable

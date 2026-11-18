@@ -10,6 +10,7 @@ import {
 import { vesyncToggleSchema, type VeSyncToggleKind } from '../config.js'
 import type { VeSyncClient, VeSyncDeviceSnapshot } from '../vesync-client-contract.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
+import { registerVeSyncStateRefresh } from './vesync-state-refresh.js'
 
 const SWITCH_CAP = switchCapability.name
 const COLD_START: SwitchStatus = { on: false, lastChangedAt: 0 }
@@ -38,6 +39,8 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
   private readonly integrationId: string
 
   private snapshotUnsub: (() => void) | null = null
+  /** Stops the core state refresh's re-registration (D1062). */
+  private stopStateRefresh: (() => void) | null = null
 
   constructor(ctx: DeviceContext) {
     const cfg = vesyncToggleSchema.parse(ctx.persistedConfig ?? {})
@@ -55,6 +58,13 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
+    // The core decides when this device is re-read (D1062); VeSync only reads.
+    this.stopStateRefresh ??= registerVeSyncStateRefresh({
+      ctx: this.ctx,
+      deviceId: this.id,
+      integrationId: this.integrationId,
+      nativeId: this.purifierNativeId,
+    })
     this.registerSwitchCap()
     this.runtimeState.setCapState(SWITCH_CAP, COLD_START)
     this.attachSnapshotListener()
@@ -62,6 +72,8 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
   }
 
   override async removeDevice(): Promise<void> {
+    this.stopStateRefresh?.()
+    this.stopStateRefresh = null
     if (this.snapshotUnsub) {
       try {
         this.snapshotUnsub()
@@ -101,7 +113,7 @@ export class VeSyncToggleDevice extends BaseDevice<typeof vesyncToggleSchema> {
     return device.kind === 'purifier' ? device.childLock : false
   }
 
-  /** Send one command through the account manager (it refreshes and pushes afterwards). */
+  /** Send one command through the account manager; the core re-reads the device after it (D1062). */
   private async command(name: string, run: (client: VeSyncClient) => Promise<void>): Promise<void> {
     const manager = vesyncAccounts.getManager(this.integrationId)
     if (manager === null) {

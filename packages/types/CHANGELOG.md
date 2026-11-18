@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Media players, pet feeders, pet fountains, pump cycles, scripts and automations declare the state each command leads to, a toggle leads to the opposite of what was shown, and a number set through a slider is confirmed within its step.
 - Lock and alarm commands are held as locking/arming (not the final state); Feed and Run are held as feeding/running for 10 s so a double tap sends one command.
 - A pump run or rest time set in minutes is held as the seconds the device reports, so two quick + taps make two steps.
+- New device-state-refresh capability and state-refresh policy types: a provider declares how its devices are read, the hub decides when (D1062).
 
 ## [1.2.591] - 2026-11-17
 

@@ -22,6 +22,7 @@
 import {
   ALL_CAPABILITY_DEFINITIONS,
   buildCapRouters,
+  getCommandFollowUpRegistry,
   getCommandObserverRegistry,
   type CapabilityRegistry,
   type CapRouterPrimitives,
@@ -671,6 +672,7 @@ export function createCapRouterServices(deps: CapRouterRuntimeDeps): CapRouterSe
     // Device commands served by the hub mount (D1022): the principal is read
     // from the request context; the hub mirror's correlator listens here.
     commandObserver: (obs) => getCommandObserverRegistry().observe(obs),
+    commandFollowUp: (target, outcome) => getCommandFollowUpRegistry().run(target, outcome),
   }
 }
 

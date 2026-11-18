@@ -1229,6 +1229,12 @@ export const useDeviceStateListClaims: typeof trpc.deviceState.listClaims.useQue
 /** Generated alias around `trpc.deviceState.getNativeCapSlice.useQuery`. */
 export const useDeviceStateGetNativeCapSlice: typeof trpc.deviceState.getNativeCapSlice.useQuery = /*#__PURE__*/ alias(() => trpc.deviceState.getNativeCapSlice.useQuery)
 
+/** Generated alias around `trpc.deviceStateRefresh.refresh.useMutation`. */
+export const useDeviceStateRefreshRefresh: typeof trpc.deviceStateRefresh.refresh.useMutation = /*#__PURE__*/ alias(() => trpc.deviceStateRefresh.refresh.useMutation)
+
+/** Generated alias around `trpc.deviceStateRefresh.resubscribe.useMutation`. */
+export const useDeviceStateRefreshResubscribe: typeof trpc.deviceStateRefresh.resubscribe.useMutation = /*#__PURE__*/ alias(() => trpc.deviceStateRefresh.resubscribe.useMutation)
+
 /** Generated alias around `trpc.deviceStatus.getStatus.useQuery`. */
 export const useDeviceStatusGetStatus: typeof trpc.deviceStatus.getStatus.useQuery = /*#__PURE__*/ alias(() => trpc.deviceStatus.getStatus.useQuery)
 

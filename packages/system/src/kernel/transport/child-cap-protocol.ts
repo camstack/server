@@ -6,6 +6,7 @@ import type {
   IReadinessRegistryRecord,
   LogLevel,
   LogTags,
+  StateRefreshPolicy,
   SystemEvent,
 } from '@camstack/types'
 import type { CapRoutingHints } from './cap-routing-hints.js'
@@ -35,6 +36,11 @@ export interface ChildCapDescriptor {
    * per method. OPTIONAL: absent = the core default (and a legacy child).
    */
   readonly commandHolds?: CommandHoldOptions
+  /**
+   * The device's state-refresh policy (D1062), on its `device-state-refresh`
+   * descriptor only. OPTIONAL: absent = the provider keeps its own timing.
+   */
+  readonly stateRefresh?: StateRefreshPolicy
 }
 
 /** First message a child sends after connecting — its complete cap manifest. */

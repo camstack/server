@@ -69,8 +69,9 @@ const COUNTRY_CODE_OPTIONS: readonly ConfigOption[] = [
 /**
  * Operator-supplied credentials for ONE VeSync cloud account. They live on the
  * integration's typed record, not on a device. VeSync is cloud / account and
- * exposes no push channel via the wrapper we target, so the account is POLLED —
- * `pollIntervalMs` drives the device-state refresh cadence.
+ * exposes no push channel via the wrapper we target, so the account is POLLED.
+ * The core's state-refresh scheduler decides when (D1062): `pollIntervalMs` can
+ * only SLOW its cadence, never take it below `VESYNC_MIN_REFRESH_INTERVAL_MS`.
  */
 export const vesyncConnectionSchema = z.object({
   email: z.string().min(1).describe('VeSync account email'),

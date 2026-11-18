@@ -38,6 +38,7 @@ import type { deviceAdminLinkCapability } from '../capabilities/device-admin-lin
 import type { deviceExtensionCapability } from '../capabilities/device-extension.cap.js'
 import type { deviceOpsCapability } from '../capabilities/device-ops.cap.js'
 import type { deviceRunsCapability } from '../capabilities/device-runs.cap.js'
+import type { deviceStateRefreshCapability } from '../capabilities/device-state-refresh.cap.js'
 import type { deviceStatusCapability } from '../capabilities/device-status.cap.js'
 import type { deviceTransitionsCapability } from '../capabilities/device-transitions.cap.js'
 import type { dishwasherCapability } from '../capabilities/dishwasher.cap.js'
@@ -284,6 +285,7 @@ export interface DeviceProxy {
   readonly deviceExtension?: InferDeviceProxyCap<typeof deviceExtensionCapability>
   readonly deviceOps?: InferDeviceProxyCap<typeof deviceOpsCapability>
   readonly deviceRuns?: InferDeviceProxyCap<typeof deviceRunsCapability>
+  readonly deviceStateRefresh?: InferDeviceProxyCap<typeof deviceStateRefreshCapability>
   readonly deviceStatus?: InferDeviceProxyCap<typeof deviceStatusCapability>
   readonly deviceTransitions?: InferDeviceProxyCap<typeof deviceTransitionsCapability>
   readonly dishwasher?: InferDeviceProxyCap<typeof dishwasherCapability>
@@ -636,6 +638,11 @@ export function createDeviceProxy(
     listRuns: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-runs', 'deviceRuns', 'listRuns', 'query', input, undefined, options),
     getRun: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-runs', 'deviceRuns', 'getRun', 'query', input, undefined, options),
     getCurrentRun: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-runs', 'deviceRuns', 'getCurrentRun', 'query', input, undefined, options),
+  }
+
+  const deviceStateRefreshInterface = {
+    refresh: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-state-refresh', 'deviceStateRefresh', 'refresh', 'mutation', input, undefined, options),
+    resubscribe: (input?: unknown, options?: CommandOriginRequestOptions) => dispatch('device-state-refresh', 'deviceStateRefresh', 'resubscribe', 'mutation', input, undefined, options),
   }
 
   const deviceStatusInterface = {
@@ -1601,6 +1608,7 @@ export function createDeviceProxy(
     ...(bound('device-extension') ? { deviceExtension: deviceExtensionInterface } : {}),
     ...(bound('device-ops') ? { deviceOps: deviceOpsInterface } : {}),
     ...(bound('device-runs') ? { deviceRuns: deviceRunsInterface } : {}),
+    ...(bound('device-state-refresh') ? { deviceStateRefresh: deviceStateRefreshInterface } : {}),
     ...(bound('device-status') ? { deviceStatus: deviceStatusInterface } : {}),
     ...(bound('device-transitions') ? { deviceTransitions: deviceTransitionsInterface } : {}),
     ...(bound('dishwasher') ? { dishwasher: dishwasherInterface } : {}),

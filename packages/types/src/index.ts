@@ -2925,6 +2925,19 @@ export {
   resolveCommandHold,
 } from './device/command-hold.js'
 export { ONE_SHOT_HOLD_MS } from './device/cap-vocabulary/hold-limits.js'
+// Server-driven state refresh (D1062): the core owns WHEN, the provider HOW.
+export {
+  COMMAND_BURST_OFFSETS_MS,
+  effectiveRefreshIntervalMs,
+  MIN_STATE_REFRESH_INTERVAL_MS,
+  PUSH_CONFIRM_WINDOW_MS,
+  type StateRefreshPolicy,
+  StateRefreshPolicySchema,
+  type StateRefreshPush,
+  StateRefreshPushSchema,
+  type StateRefreshReason,
+  StateRefreshReasonSchema,
+} from './device/state-refresh.js'
 export type {
   CommandHoldOption,
   CommandHoldOptions,

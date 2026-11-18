@@ -95,6 +95,29 @@ describe('DeviceStateMirror - command hold (D1061)', () => {
     vi.useRealTimers()
   })
 
+  it('says the device is holding until the report confirms the command (D1062 burst gate)', () => {
+    const { h, stop } = rig()
+    h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
+    expect(h.mirror.isHoldingDevice(DEVICE)).toBe(false)
+    command('switch', 'setState', { on: true })
+    expect(h.mirror.isHoldingDevice(DEVICE)).toBe(true)
+    h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
+    expect(h.mirror.isHoldingDevice(DEVICE)).toBe(true)
+    h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: true })
+    expect(h.mirror.isHoldingDevice(DEVICE)).toBe(false)
+    stop()
+  })
+
+  it('tells the report tap of every report, unchanged ones included (D1062 push health)', () => {
+    const { h, stop } = rig()
+    const reports: string[] = []
+    h.mirror.setReportTap((deviceId, capName) => void reports.push(`${deviceId}:${capName}`))
+    h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
+    h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })
+    expect(reports).toEqual([`${DEVICE}:switch`, `${DEVICE}:switch`])
+    stop()
+  })
+
   it('shows the commanded value through 10 s of stale polls; history sees one transition, at confirmation', () => {
     const { h, told, stop } = rig()
     h.mirror.applySingleCapUpdate(DEVICE, 'switch', { on: false })

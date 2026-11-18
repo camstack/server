@@ -19,6 +19,7 @@ import {
   resolveSideEffect,
 } from './cap-vocabulary/command-catalog.js'
 import type { LooseVocabSideEffect } from './cap-vocabulary/types.js'
+import type { StateRefreshPolicy } from './state-refresh.js'
 
 /**
  * How long a command is held when nothing says otherwise. Equal to the
@@ -50,6 +51,11 @@ export type CommandHoldOptions = Readonly<Record<string, CommandHoldOption>>
 /** The options `registerNativeCap` takes, method names checked against the cap. */
 export interface NativeCapOptions<TCap extends CapabilityDefinition = CapabilityDefinition> {
   readonly commands?: Partial<Readonly<Record<keyof TCap['methods'] & string, CommandHoldOption>>>
+  /**
+   * The device's refresh policy (D1062). Read only on the `device-state-refresh`
+   * registration: the core schedules that device's refreshes by it.
+   */
+  readonly stateRefresh?: StateRefreshPolicy
 }
 
 /** What the core holds for one command: the fields and the limit. */

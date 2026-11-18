@@ -28,6 +28,7 @@ import {
   expandCapMethods,
   getBrokerTlsTransporter,
   getCapUsageRegistry,
+  getCommandFollowUpRegistry,
   getCommandObserverRegistry,
   HubNodeRegistry,
   getProcessMeshCertificateRegistry,
@@ -626,6 +627,7 @@ export class MoleculerService {
         // A forked addon's device commands (D1022): the actor is the addon on the
         // socket. The hub mirror's correlator listens on this registry.
         commandObserver: (obs) => getCommandObserverRegistry().observe(obs),
+        commandFollowUp: (target, outcome) => getCommandFollowUpRegistry().run(target, outcome),
         logger: {
           info: (msg, meta) =>
             logger.info(

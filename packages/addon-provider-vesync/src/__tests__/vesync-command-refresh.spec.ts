@@ -1,11 +1,11 @@
 /**
- * After a command the cloud acknowledged, the integration re-reads THAT device and pushes its
- * real state at once — no poll tick (the poll interval is 30 s by default; the UI's optimistic
- * value gives up after 4 s). No value is invented: the pushed state is what the device read
- * answered. A poll that started before the command never overwrites the fresher read.
+ * The core decides when VeSync is read (D1062); the manager only knows how. A command sends the
+ * command and nothing else; the hub's scheduler then asks for a read of THAT device, which pushes
+ * the real state (no value is invented). A scheduled read re-lists the account; a poll that
+ * started before the command never overwrites the fresher read. The manager owns no timer.
  */
 import type { IScopedLogger, LogExtras } from '@camstack/types'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { vesyncConnectionSchema } from '../config.js'
 import type {
   VeSyncClient,
@@ -98,7 +98,6 @@ function world() {
   const manager = new VeSyncIntegrationManager({
     id: 'int_1',
     name: 'Home',
-    // A poll interval no spec waits for: every push seen here is the command's own.
     connection: vesyncConnectionSchema.parse({
       email: 'me@example.com',
       password: 'pw',
@@ -124,62 +123,108 @@ function world() {
   }
 }
 
-describe('VeSyncIntegrationManager — refresh after a command', () => {
-  it('pushes the real refreshed state right after a command, with no poll tick', async () => {
+const TARGET = { nativeId: 'cid-1', deviceId: 5851 }
+
+describe('VeSyncIntegrationManager — the core reads, the manager only knows how (D1062)', () => {
+  it('owns no timer: after start, nothing is scheduled', async () => {
+    vi.useFakeTimers()
+    try {
+      const w = world()
+      await w.manager.start()
+      w.calls.length = 0
+      expect(vi.getTimerCount()).toBe(0)
+      await vi.advanceTimersByTimeAsync(7_200_000)
+      expect(w.calls).toEqual([])
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it("a command sends only the command; the read is the core's", async () => {
+    const w = world()
+    await w.manager.start()
+    w.calls.length = 0
+    await w.manager.runCommand({
+      ...TARGET,
+      name: 'setPower(on)',
+      run: (c) => c.setPower('cid-1', true),
+    })
+    expect(w.calls).toEqual(['setPower:true'])
+  })
+
+  it('a command read re-reads THAT device and pushes its real state', async () => {
     const w = world()
     await w.manager.start()
     const pushesBefore = w.polledCount()
     w.calls.length = 0
-    expect(w.manager.getDevice('cid-1')).toMatchObject({ power: false })
-
     await w.manager.runCommand({
-      nativeId: 'cid-1',
-      deviceId: 5851,
+      ...TARGET,
       name: 'setPower(on)',
-      run: (client) => client.setPower('cid-1', true),
+      run: (c) => c.setPower('cid-1', true),
     })
-
+    await w.manager.refresh('command', [TARGET])
     expect(w.calls).toEqual(['setPower:true', 'refreshDevice:cid-1'])
     expect(w.manager.getDevice('cid-1')).toMatchObject({ power: true })
     expect(w.polledCount()).toBe(pushesBefore + 1)
   })
 
-  it('logs the command and the refresh with timings, tagged with the deviceId', async () => {
+  it('a scheduled read re-lists the account', async () => {
+    const w = world()
+    await w.manager.start()
+    w.calls.length = 0
+    await w.manager.refresh('schedule', [TARGET, { nativeId: 'cid-1', deviceId: 5852 }])
+    expect(w.calls).toEqual(['listDevices'])
+  })
+
+  it('a burst naming one cid twice reads it once', async () => {
+    const w = world()
+    await w.manager.start()
+    w.calls.length = 0
+    await w.manager.refresh('burst', [TARGET, { nativeId: 'cid-1', deviceId: 5852 }])
+    expect(w.calls).toEqual(['refreshDevice:cid-1'])
+  })
+
+  it('logs the command (commandMs) and the read (refreshMs, totalMs), tagged with the deviceId', async () => {
     const w = world()
     await w.manager.start()
     w.lines.length = 0
     await w.manager.runCommand({
-      nativeId: 'cid-1',
-      deviceId: 5851,
+      ...TARGET,
       name: 'setPower(on)',
-      run: (client) => client.setPower('cid-1', true),
+      run: (c) => c.setPower('cid-1', true),
     })
+    await w.manager.refresh('command', [TARGET])
     const ack = w.lines.find((l) => /command .*acknowledged/.test(l.message))
     const refresh = w.lines.find((l) => /refreshed/.test(l.message))
     expect(ack?.meta?.tags).toEqual({ deviceId: 5851 })
     expect(typeof ack?.meta?.meta?.['commandMs']).toBe('number')
     expect(refresh?.meta?.tags).toEqual({ deviceId: 5851 })
+    expect(refresh?.message).toContain('after setPower(on)')
     expect(typeof refresh?.meta?.meta?.['refreshMs']).toBe('number')
+    expect(typeof refresh?.meta?.meta?.['totalMs']).toBe('number')
   })
 
-  it('a refused command is logged, re-read, and rethrown', async () => {
+  it("a refused command is logged and rethrown, and the core's read shows what landed", async () => {
     const w = world()
     await w.manager.start()
     w.calls.length = 0
     w.lines.length = 0
+    // setPower acknowledged, then setMode refused: the device IS on now.
     await expect(
       w.manager.runCommand({
-        nativeId: 'cid-1',
-        deviceId: 5851,
-        name: 'setMode(sleep)',
-        run: async () => {
+        ...TARGET,
+        name: 'setSpeed(50)',
+        run: async (client) => {
+          await client.setPower('cid-1', true)
           throw new Error('vesync: setMode refused')
         },
       }),
-    ).rejects.toThrow(/refused/)
-    expect(w.calls).toEqual(['refreshDevice:cid-1'])
+    ).rejects.toThrow(/setMode refused/)
     const failed = w.lines.find((l) => l.level === 'warn')
     expect(failed?.meta?.tags).toEqual({ deviceId: 5851 })
+    await w.manager.refresh('command', [TARGET])
+    expect(w.calls).toEqual(['setPower:true', 'refreshDevice:cid-1'])
+    expect(w.manager.getDevice('cid-1')).toMatchObject({ power: true })
   })
 
   it('a poll that started before the command does not overwrite the refreshed state', async () => {
@@ -193,36 +238,14 @@ describe('VeSyncIntegrationManager — refresh after a command', () => {
     )
     const poll = w.manager.poll()
     await w.manager.runCommand({
-      nativeId: 'cid-1',
-      deviceId: 5851,
+      ...TARGET,
       name: 'setPower(on)',
-      run: (client) => client.setPower('cid-1', true),
+      run: (c) => c.setPower('cid-1', true),
     })
+    await w.manager.refresh('command', [TARGET])
     release()
     await poll
     expect(w.manager.getDevice('cid-1')).toMatchObject({ power: true })
-  })
-
-  it('a command that fails part-way still pushes the real state before it rethrows', async () => {
-    const w = world()
-    await w.manager.start()
-    const pushesBefore = w.polledCount()
-    w.calls.length = 0
-    // setPower acknowledged, then setMode refused: the device IS on now.
-    await expect(
-      w.manager.runCommand({
-        nativeId: 'cid-1',
-        deviceId: 5851,
-        name: 'setSpeed(50)',
-        run: async (client) => {
-          await client.setPower('cid-1', true)
-          throw new Error('vesync: setMode refused')
-        },
-      }),
-    ).rejects.toThrow(/setMode refused/)
-    expect(w.calls).toEqual(['setPower:true', 'refreshDevice:cid-1'])
-    expect(w.manager.getDevice('cid-1')).toMatchObject({ power: true })
-    expect(w.polledCount()).toBe(pushesBefore + 1)
   })
 })
 

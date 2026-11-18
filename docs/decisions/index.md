@@ -4,7 +4,7 @@
 
 # Decisions
 
-1028 architecture decision records. One file per decision, never
+1029 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1041,6 +1041,7 @@ that rots.
 | D1059 | [A device's identity is declared by its provider as typed identifiers, not written into metadata](adr-1059-a-device-identity-is-declared-by-its-provider-not-written-into-metadata.md) | ✅ accepted | 2026-11-17 |
 | D1060 | [The object-detection root runs on a motion-guided crop, chosen per frame, at the same inference count](adr-1060-motion-guided-root-crop.md) | ✅ accepted | 2026-11-17 |
 | D1061 | [A commanded value is held by the hub until the device confirms it; no client patches what it shows](adr-1061-a-commanded-value-is-held-by-the-hub-until-the-device-confirms-it.md) | ✅ accepted | 2026-11-17 |
+| D1062 | [The core decides WHEN a device's state is re-read; the provider only knows HOW](adr-1062-the-core-decides-when-a-device-is-re-read-the-provider-only-how.md) | ✅ accepted | 2026-11-18 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

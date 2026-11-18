@@ -8,7 +8,7 @@ import { EventCategory } from '../enums/event-category.js'
 
 /**
  * THE cap vocabulary (D920), projected from the declarations of every
- * `*.cap.ts` (D1050): 213 caps (111 device, 102 system).
+ * `*.cap.ts` (D1050): 214 caps (112 device, 102 system).
  * Device caps in their declared picker order, then system caps by name.
  */
 export const CAP_VOCABULARY: CapVocabularyMap = {
@@ -4260,6 +4260,14 @@ export const CAP_VOCABULARY: CapVocabularyMap = {
     noun: { en: 'Re-sync', it: 'Risincronizzazione' },
     notOperatorFacing: {
       resync: 'device adoption — re-aligning a device with its source is an onboarding step, not an automation action',
+    },
+  },
+  'device-state-refresh': {
+    scope: 'device',
+    noun: { en: 'State refresh', it: 'Aggiornamento dello stato' },
+    notOperatorFacing: {
+      refresh: 'the core schedules state refreshes itself; an operator never asks for one',
+      resubscribe: 'the core schedules state refreshes itself; an operator never asks for one',
     },
   },
   'recording': { scope: 'device', noun: { en: 'Recording', it: 'Registrazione' } },

@@ -38,6 +38,7 @@ import type {
   InferProvider,
   IScopedLogger,
   NativeCapOptions,
+  StateRefreshPolicy,
 } from '@camstack/types'
 import {
   addonSliceHandleApi,
@@ -66,6 +67,11 @@ import {
   getCommandHoldOverrideRegistry,
   IN_PROCESS_HOLD_SOURCE,
 } from '../command-hold-overrides.js'
+import {
+  getStateRefreshPolicyRegistry,
+  IN_PROCESS_REFRESH_SOURCE,
+  STATE_REFRESH_CAP,
+} from '../state-refresh-policies.js'
 import { AccessoryShrinkGate, classifyAccessoryRead } from './accessory-prune-gate.js'
 import { loadRuntimeStateOrRefuse, type RuntimeStateLoadPhase } from './runtime-state-load.js'
 
@@ -166,6 +172,21 @@ const workerNativeCapAddonIds = new Map<string, Map<number, string>>()
  * hub's hold reads them; absent = the core default.
  */
 const workerNativeCapHolds = new Map<string, Map<number, CommandHoldOptions>>()
+
+/**
+ * The state-refresh policy a provider stated on a device's
+ * `device-state-refresh` registration (D1062). deviceId → policy. Carried on
+ * the child's cap descriptors so the hub's scheduler reads it.
+ */
+const workerNativeCapRefresh = new Map<number, StateRefreshPolicy>()
+
+/** The policy a registration states, read only on the refresh cap. */
+function stateRefreshOf(
+  capName: string,
+  options: NativeCapOptions | undefined,
+): StateRefreshPolicy | undefined {
+  return capName === STATE_REFRESH_CAP ? options?.stateRefresh : undefined
+}
 
 const mountedNativeCapServices = new Set<string>()
 
@@ -333,6 +354,7 @@ export function getWorkerNativeCap(capName: string, deviceId: number): unknown |
 export function clearWorkerNativeCapsForDevice(deviceId: number): void {
   for (const perCap of workerNativeCaps.values()) perCap.delete(deviceId)
   for (const perCap of workerNativeCapAddonIds.values()) perCap.delete(deviceId)
+  workerNativeCapRefresh.delete(deviceId)
   // A removed device retracts its native-cap bindings — notify so the runner
   // re-sends the (now smaller) descriptor set to the parent registry.
   onWorkerNativeCapsChanged?.()
@@ -358,6 +380,7 @@ export function getWorkerNativeCapSnapshot(): ReadonlyArray<{
   readonly addonId: string
   readonly deviceIds: readonly number[]
   readonly commandHolds?: ReadonlyMap<number, CommandHoldOptions>
+  readonly stateRefresh?: ReadonlyMap<number, StateRefreshPolicy>
 }> {
   // Build a `(capName, addonId) → deviceIds[]` map so that multiple addons
   // in the same group-runner process that register the same cap for different
@@ -377,15 +400,29 @@ export function getWorkerNativeCapSnapshot(): ReadonlyArray<{
     }
   }
   return [...grouped.values()].map((entry) => {
+    const withRefresh = withStateRefresh(entry)
     const holds = workerNativeCapHolds.get(entry.capName)
-    if (holds === undefined) return entry
+    if (holds === undefined) return withRefresh
     const forEntry = new Map<number, CommandHoldOptions>()
     for (const deviceId of entry.deviceIds) {
       const options = holds.get(deviceId)
       if (options !== undefined) forEntry.set(deviceId, options)
     }
-    return forEntry.size === 0 ? entry : { ...entry, commandHolds: forEntry }
+    return forEntry.size === 0 ? withRefresh : { ...withRefresh, commandHolds: forEntry }
   })
+}
+
+/** A refresh-cap snapshot row with the policies its devices stated (D1062). */
+function withStateRefresh<
+  T extends { readonly capName: string; readonly deviceIds: readonly number[] },
+>(entry: T): T & { readonly stateRefresh?: ReadonlyMap<number, StateRefreshPolicy> } {
+  if (entry.capName !== STATE_REFRESH_CAP) return entry
+  const forEntry = new Map<number, StateRefreshPolicy>()
+  for (const deviceId of entry.deviceIds) {
+    const policy = workerNativeCapRefresh.get(deviceId)
+    if (policy !== undefined) forEntry.set(deviceId, policy)
+  }
+  return forEntry.size === 0 ? entry : { ...entry, stateRefresh: forEntry }
 }
 
 export function getWorkerNativeCapsForDevice(deviceId: number): readonly string[] {
@@ -724,6 +761,7 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
         options?: NativeCapOptions<TCap>,
       ): void {
         const commandHolds = commandHoldsOf(options)
+        const stateRefresh = stateRefreshOf(cap.name, options)
         // Auto-install the cap's runtime-state schema onto the
         // device's `runtimeState` (if the cap declares one). Hits
         // through `runtimeStateRef` set during the BaseDevice
@@ -788,6 +826,16 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           } else {
             getCommandHoldOverrideRegistry().delete(IN_PROCESS_HOLD_SOURCE, id, cap.name)
           }
+          // The refresh policy (D1062), by the same road.
+          if (stateRefresh !== undefined) {
+            getStateRefreshPolicyRegistry().set(IN_PROCESS_REFRESH_SOURCE, {
+              deviceId: id,
+              addonId,
+              policy: stateRefresh,
+            })
+          } else if (cap.name === STATE_REFRESH_CAP) {
+            getStateRefreshPolicyRegistry().delete(IN_PROCESS_REFRESH_SOURCE, id)
+          }
         } else if (opts.broker || opts.udsMode) {
           // Worker path (broker-mode or UDS-mode): record the provider in the
           // per-process `workerNativeCaps` map. The UDS dispatch in
@@ -817,6 +865,8 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
           } else {
             workerNativeCapHolds.get(cap.name)?.delete(id)
           }
+          if (stateRefresh !== undefined) workerNativeCapRefresh.set(id, stateRefresh)
+          else if (cap.name === STATE_REFRESH_CAP) workerNativeCapRefresh.delete(id)
           // Broker-mode ONLY mounts the `<addon>.native-provider.<cap>`
           // Moleculer service. A UDS-only child has no broker — the parent
           // dispatches device-scoped native caps over UDS (`callCapOnChild`
@@ -898,10 +948,14 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
         } else if (opts.capabilityRegistry) {
           opts.capabilityRegistry.unregisterNativeProvider(capName, id)
           getCommandHoldOverrideRegistry().delete(IN_PROCESS_HOLD_SOURCE, id, capName)
+          if (capName === STATE_REFRESH_CAP) {
+            getStateRefreshPolicyRegistry().delete(IN_PROCESS_REFRESH_SOURCE, id)
+          }
         } else {
           workerNativeCaps.get(capName)?.delete(id)
           workerNativeCapAddonIds.get(capName)?.delete(id)
           workerNativeCapHolds.get(capName)?.delete(id)
+          if (capName === STATE_REFRESH_CAP) workerNativeCapRefresh.delete(id)
           // The runner re-sends `updateCaps`, so the hub's `LocalChildRegistry`
           // stops routing this (cap, device) to this child.
           onWorkerNativeCapsChanged?.()
@@ -1136,7 +1190,11 @@ export function createBrokerDeviceManagerApi(opts: WorkerDeviceManagerOptions): 
       ? [...opts.capabilityRegistry.getNativeCapsForDevice(deviceId)]
       : [...getWorkerNativeCapsForDevice(deviceId)]
     opts.capabilityRegistry?.unregisterAllNativeForDevice(deviceId)
-    if (!opts.capabilityRegistry) clearWorkerNativeCapsForDevice(deviceId)
+    if (opts.capabilityRegistry) {
+      getStateRefreshPolicyRegistry().delete(IN_PROCESS_REFRESH_SOURCE, deviceId)
+    } else {
+      clearWorkerNativeCapsForDevice(deviceId)
+    }
     for (const capName of capsToUnregister) {
       eventBus.emit({
         id: randomUUID(),
