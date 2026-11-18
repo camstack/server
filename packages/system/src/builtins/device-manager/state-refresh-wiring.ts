@@ -33,6 +33,7 @@ export function startStateRefresh(deps: StateRefreshWiringDeps): () => void {
     policies: deps.policies ?? getStateRefreshPolicyRegistry(),
     logger: deps.logger,
     holdsPending: (deviceId) => deps.mirror.isHoldingDevice(deviceId),
+    holdRemainingMs: (deviceId) => deps.mirror.holdRemainingMs(deviceId),
     refresh: deps.refresh,
     resubscribe: deps.resubscribe,
   })

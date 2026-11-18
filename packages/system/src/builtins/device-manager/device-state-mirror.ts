@@ -233,6 +233,11 @@ export class DeviceStateMirror {
     return this.holds.isHoldingDevice(deviceId)
   }
 
+  /** How long the longest pending hold on the device still runs, ms; 0 when none. */
+  holdRemainingMs(deviceId: number): number {
+    return this.holds.holdRemainingMs(deviceId)
+  }
+
   /** Stop the hold timers (shutdown). */
   disposeHolds(): void {
     this.holds.dispose()

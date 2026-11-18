@@ -59,8 +59,33 @@ export function effectiveRefreshIntervalMs(policy: StateRefreshPolicy): number {
   return Math.max(policy.minIntervalMs, setting)
 }
 
-/** The burst after a command on a read (non-push) device: offsets from the command, in ms. */
+/** The first reads after a command on a read (non-push) device: offsets from the command, in ms. */
 export const COMMAND_BURST_OFFSETS_MS: readonly number[] = [3_000, 10_000]
+
+/** After the first reads, a pending hold is re-read this often. */
+export const COMMAND_BURST_STEP_MS = 10_000
+
+/** The last read of a hold lands this long before it expires. */
+export const COMMAND_BURST_TAIL_MS = 2_000
+
+/**
+ * The reads after a command on a read device, for a hold that lasts `holdMs`
+ * more: {@link COMMAND_BURST_OFFSETS_MS}, then one every
+ * {@link COMMAND_BURST_STEP_MS}, then a last one {@link COMMAND_BURST_TAIL_MS}
+ * before the hold expires. A slow cloud is re-read for the whole hold, not
+ * only at the start. Offsets are in ms from now, ascending, all below `holdMs`.
+ */
+export function commandBurstOffsets(holdMs: number): readonly number[] {
+  const out: number[] = COMMAND_BURST_OFFSETS_MS.filter((offset) => offset < holdMs)
+  const tail = holdMs - COMMAND_BURST_TAIL_MS
+  let next = (out[out.length - 1] ?? 0) + COMMAND_BURST_STEP_MS
+  while (next < tail) {
+    out.push(next)
+    next += COMMAND_BURST_STEP_MS
+  }
+  if (tail > (out[out.length - 1] ?? 0)) out.push(tail)
+  return out
+}
 
 /** How long the core waits for a push device to confirm a command before reading it once. */
 export const PUSH_CONFIRM_WINDOW_MS = 2_500

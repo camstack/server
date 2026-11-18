@@ -202,6 +202,8 @@ describe('VeSyncIntegrationManager — the core reads, the manager only knows ho
     expect(refresh?.message).toContain('after setPower(on)')
     expect(typeof refresh?.meta?.meta?.['refreshMs']).toBe('number')
     expect(typeof refresh?.meta?.meta?.['totalMs']).toBe('number')
+    // The state the read returned is on the line, so a stale read is visible.
+    expect(refresh?.meta?.meta?.['power']).toBe(true)
   })
 
   it("a refused command is logged and rethrown, and the core's read shows what landed", async () => {

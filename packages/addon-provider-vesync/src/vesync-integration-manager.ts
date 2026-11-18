@@ -433,6 +433,7 @@ export class VeSyncIntegrationManager {
           nativeId: target.nativeId,
           reason,
           refreshMs: pushed - asked,
+          power: fresh.power,
           ...(pending !== undefined ? { totalMs: pushed - pending.started } : {}),
         },
       })

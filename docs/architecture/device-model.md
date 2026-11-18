@@ -246,8 +246,10 @@ The hub's device-manager runs `StateRefreshScheduler`
 - **Cadence.** The effective interval applies, with no idle back-off.
 - **Command.** The D1022 seams await the command follow-up (`kernel/command-follow-up.ts`)
   after the provider's call settles. A polled device is read before the
-  command returns, then again at about 3 s and 10 s while a D1061 hold on it is
-  unconfirmed. A push device waits 2.5 s for its confirming report and is read
+  command returns, then again at about 3 s and 10 s, then every 10 s with a
+  last read 2 s before the hold expires (`commandBurstOffsets`: it covers the
+  hold's own limit, 30 s by default, up to 120 s), for as long as a D1061 hold
+  on it is unconfirmed. A push device waits 2.5 s for its confirming report and is read
   once if none came.
 - **Never overlapping.** Reads of one device are serialized: each starts after
   the previous one on that device ended. A tick whose last read still runs is

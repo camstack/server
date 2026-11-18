@@ -39,6 +39,7 @@ interface Arming {
   readonly capName: string
   readonly method: string
   readonly holdMs: number
+  readonly expiresAt: number
   readonly timer: ReturnType<typeof setTimeout>
 }
 
@@ -138,6 +139,7 @@ export class CommandHolds {
         capName: request.capName,
         method: request.method,
         holdMs: request.holdMs,
+        expiresAt: Date.now() + request.holdMs,
         timer,
       })
     }
@@ -218,6 +220,15 @@ export class CommandHolds {
   isHoldingDevice(deviceId: number): boolean {
     for (const fields of this.held.get(deviceId)?.values() ?? []) if (fields.size > 0) return true
     return false
+  }
+
+  /** The longest time any pending hold on the device still has to run, in ms; 0 when none. */
+  holdRemainingMs(deviceId: number): number {
+    let longest = 0
+    for (const arming of this.armings.values()) {
+      if (arming.deviceId === deviceId) longest = Math.max(longest, arming.expiresAt - Date.now())
+    }
+    return longest
   }
 
   /** Forget a removed device's holds. */

@@ -14,7 +14,9 @@
  *   A non-batching integration keeps one schedule per device;
  * - command (`onCommand`, awaited by the D1022 seams): a polled device is read
  *   at once and the command returns after it, then read again at ~3 s and
- *   ~10 s while a D1061 hold on it is still pending; a push device waits
+ *   ~10 s, then every ~10 s with a last read ~2 s before it expires, for as
+ *   long as a D1061 hold on it is still pending (the burst covers the hold's
+ *   own limit, 30 s by default, up to 120 s); a push device waits
  *   `PUSH_CONFIRM_WINDOW_MS` for the confirming push and reads once if none
  *   came. These reads are per device and never move a batched group's schedule;
  * - push health: silence past `heartbeatMs` reads the integration, asks it to
@@ -27,7 +29,7 @@
  * failure is a warn line per device and never fails a command.
  */
 import {
-  COMMAND_BURST_OFFSETS_MS,
+  commandBurstOffsets,
   effectiveRefreshIntervalMs,
   PUSH_CONFIRM_WINDOW_MS,
   type IScopedLogger,
@@ -49,6 +51,8 @@ export interface StateRefreshSchedulerDeps {
   readonly logger: IScopedLogger
   /** Whether a D1061 command hold on the device is still unconfirmed. */
   readonly holdsPending: (deviceId: number) => boolean
+  /** How long the longest pending hold on the device still runs, in ms (0 when none). */
+  readonly holdRemainingMs: (deviceId: number) => number
   /** Ask the provider to re-read `deviceIds`, routed through `routeDeviceId`. */
   readonly refresh: (
     routeDeviceId: number,
@@ -346,7 +350,7 @@ export class StateRefreshScheduler {
     if (!this.deps.holdsPending(deviceId)) return
     const timers: Timer[] = []
     let stopped = false
-    for (const offset of COMMAND_BURST_OFFSETS_MS) {
+    for (const offset of commandBurstOffsets(this.deps.holdRemainingMs(deviceId))) {
       timers.push(
         setTimeout(() => {
           if (stopped || this.disposed) return

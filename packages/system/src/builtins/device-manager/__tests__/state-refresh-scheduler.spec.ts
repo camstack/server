@@ -48,6 +48,8 @@ interface Rig {
   readonly holding: Set<number>
   /** How long each refresh takes. */
   refreshMs: number
+  /** How long a pending hold still runs, ms (the default hold is 30 s). */
+  holdMs: number
   /** When set, a refresh reports this device's state as it lands. */
   readonly reportOnRefresh: boolean
 }
@@ -80,13 +82,14 @@ function rig(options: { reportOnRefresh?: boolean } = {}): Rig {
   const calls: Call[] = []
   const logs: LogLine[] = []
   const holding = new Set<number>()
-  const state = { refreshMs: 0 }
+  const state = { refreshMs: 0, holdMs: 30_000 }
   // eslint-disable-next-line prefer-const -- assigned below, read by the closures
   let scheduler: StateRefreshScheduler
   scheduler = new StateRefreshScheduler({
     policies,
     logger: logger(logs),
     holdsPending: (deviceId) => holding.has(deviceId),
+    holdRemainingMs: (deviceId) => (holding.has(deviceId) ? state.holdMs : 0),
     refresh: async (_route, deviceIds, reason) => {
       calls.push({ kind: 'refresh', deviceIds, reason, at: Date.now() })
       if (state.refreshMs > 0) await new Promise((resolve) => setTimeout(resolve, state.refreshMs))
@@ -107,6 +110,12 @@ function rig(options: { reportOnRefresh?: boolean } = {}): Rig {
     },
     set refreshMs(ms: number) {
       state.refreshMs = ms
+    },
+    get holdMs() {
+      return state.holdMs
+    },
+    set holdMs(ms: number) {
+      state.holdMs = ms
     },
     reportOnRefresh: options.reportOnRefresh === true,
   }
@@ -165,6 +174,7 @@ describe('StateRefreshScheduler (D1062)', () => {
         policies: r.policies,
         logger: logger(logs),
         holdsPending: () => false,
+        holdRemainingMs: () => 0,
         refresh: async () => {
           throw new Error('cloud said 503')
         },
@@ -191,6 +201,27 @@ describe('StateRefreshScheduler (D1062)', () => {
       expect(refreshes(r, 'burst').map((c) => c.at)).toEqual([3_000, 10_000])
     })
 
+    it('keeps reading a slow cloud for the whole 30 s hold, once more before it expires', async () => {
+      r = rig()
+      declare(r, 7)
+      r.holding.add(7)
+      await r.scheduler.onCommand({ deviceId: 7, capName: 'switch', method: 'setState' }, 'ok')
+      await vi.advanceTimersByTimeAsync(29_000)
+      expect(refreshes(r, 'burst').map((c) => c.at)).toEqual([3_000, 10_000, 20_000, 28_000])
+    })
+
+    it('covers a 120 s hold', async () => {
+      r = rig()
+      declare(r, 7)
+      r.holdMs = 120_000
+      r.holding.add(7)
+      await r.scheduler.onCommand({ deviceId: 7, capName: 'switch', method: 'setState' }, 'ok')
+      await vi.advanceTimersByTimeAsync(119_000)
+      const at = refreshes(r, 'burst').map((c) => c.at)
+      expect(at.at(-1)).toBe(118_000)
+      expect(at.filter((t) => t > 10_000 && t < 118_000)).toHaveLength(10)
+    })
+
     it('stops the burst once the holds are confirmed', async () => {
       r = rig()
       declare(r, 7)
@@ -199,7 +230,7 @@ describe('StateRefreshScheduler (D1062)', () => {
       await vi.advanceTimersByTimeAsync(3_000)
       expect(refreshes(r, 'burst')).toHaveLength(1)
       r.holding.delete(7)
-      await vi.advanceTimersByTimeAsync(7_000)
+      await vi.advanceTimersByTimeAsync(40_000)
       expect(refreshes(r, 'burst')).toHaveLength(1)
     })
 

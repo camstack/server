@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Hardware info reports an NVIDIA GPU in its own slot (present, usable, and why not), so it no longer replaces the Intel or AMD iGPU.
 - power-meter may be served by a Workload device (a PoE switch reports the PoE power it delivers)
 
+### Fixed
+
+- A polled device is re-read for the whole time a command is held, not only for its first 10 seconds
+
 ## [1.2.594] - 2026-11-18
 
 ### Changed
