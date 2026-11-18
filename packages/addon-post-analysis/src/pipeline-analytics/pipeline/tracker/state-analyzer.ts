@@ -13,13 +13,19 @@ const DEFAULT_STILL_WINDOW_MS = 6_000
 
 /**
  * The span the centroid may wander inside that window and still count as
- * still, as a fraction of the subject's smaller side.
+ * still, as a fraction of the subject's own size ON THAT AXIS: the x-span
+ * against the box width, the y-span against the box height.
  *
  * Measured on 102: the parked car's centroid band is 105 px on a 461x536 box —
- * 0.23 of the short side. A car crossing the frame covers roughly 1.8 box
- * widths in the same window. 0.35 sits in the gap with room on both sides, and
- * scaling by the subject means one number serves a 40 px person and a 461 px
- * car without a per-camera dial.
+ * 0.23 of its size. A car crossing the frame covers roughly 1.8 box widths in
+ * the same window. 0.35 sits in the gap with room on both sides, and scaling
+ * by the subject means one number serves a 40 px person and a 461 px car
+ * without a per-camera dial.
+ *
+ * Per axis, not the short side: on Retro (1441) a parked car's box is ~150x53
+ * and the detector flips its width between ~105 and ~185 px, so the centre
+ * swings ~20 px sideways — against a short-side bar of 18.5 px. Two windows in
+ * three failed, each failure restarted the dwell, and the car never parked.
  */
 export const DEFAULT_STILL_SPAN_FRACTION = 0.35
 
@@ -366,8 +372,10 @@ export class StateAnalyzer {
    *
    * The span is measured across the samples themselves (their bounding box),
    * not against any single reference point, so a slow drift is caught as
-   * surely as a jump. It is compared to the subject's SHORTER side: a 461 px
-   * car and a 40 px person get the same rule without a per-camera dial.
+   * surely as a jump. Each axis is compared to the subject's size on that
+   * axis — x-span to width, y-span to height — so a 461 px car and a 40 px
+   * person get the same rule without a per-camera dial, and a wide flat box
+   * whose width breathes is not judged against its height.
    *
    * `false` until the window is actually full — a track three frames old has
    * not yet earned the verdict, and unknown must never read as still.
@@ -389,10 +397,9 @@ export class StateAnalyzer {
       if (s.y < minY) minY = s.y
       if (s.y > maxY) maxY = s.y
     }
-    const span = Math.hypot(maxX - minX, maxY - minY)
-    const subject = Math.min(bbox.w, bbox.h)
-    if (subject <= 0) return false
-    return span <= subject * this.config.stillSpanFraction
+    if (bbox.w <= 0 || bbox.h <= 0) return false
+    const fraction = this.config.stillSpanFraction
+    return maxX - minX <= bbox.w * fraction && maxY - minY <= bbox.h * fraction
   }
 
   reset(): void {

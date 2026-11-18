@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A parked car with a wide, flat box now settles as stationary: the still window judges sideways wander against the box width and vertical wander against its height, instead of both against the short side
+
 ## [1.2.715] - 2026-11-18
 
 ### Changed
