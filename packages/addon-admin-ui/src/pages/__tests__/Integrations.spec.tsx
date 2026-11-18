@@ -9,7 +9,7 @@
  * the row → expansion → nested list wiring is exercised end to end.
  */
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter } from 'react-router-dom'
 import type { ReactElement } from 'react'
@@ -94,16 +94,21 @@ vi.mock('../../components/integrations/IntegrationWizard', () => ({
   IntegrationWizard: () => null,
 }))
 
+const refreshProposals = vi.hoisted(() => vi.fn())
+
 // Stubbed: it calls tRPC discovery hooks at render (even when closed) which
 // need a tRPC context this page test does not provide.
 // Stubbed for the same reason: it reads the discovery proposals through tRPC.
 vi.mock('../../components/integrations/DiscoveredProposalsSection', () => ({
-  useDiscoveryProposalCount: () => null,
-  DiscoveryProposalPill: () => null,
+  useDiscoveryProposals: () => ({ count: 3, refresh: refreshProposals }),
+  DiscoveryProposalPill: ({ count }: { count: number | null }) =>
+    count === null ? null : <span data-testid="discovery-pill">{count}</span>,
 }))
 
 vi.mock('../../components/integrations/ScanNetworkModal', () => ({
-  ScanNetworkModal: () => null,
+  ScanNetworkModal: ({ onAdopted }: { onAdopted?: () => void }) => (
+    <button type="button" data-testid="modal-adopted" onClick={onAdopted} />
+  ),
 }))
 
 import { IntegrationsPage } from '../Integrations'
@@ -120,6 +125,15 @@ function renderPage(initialEntry = '/'): ReactElement {
 }
 
 describe('IntegrationsPage', () => {
+  it('shows the background-discovery count on the Scan network button and refreshes it after a scan adoption', () => {
+    render(renderPage())
+    const scan = screen.getByTitle('Scan the local network for devices')
+    expect(within(scan).getByTestId('discovery-pill').textContent).toBe('3')
+    refreshProposals.mockClear()
+    fireEvent.click(screen.getByTestId('modal-adopted'))
+    expect(refreshProposals).toHaveBeenCalledTimes(1)
+  })
+
   it('renders integration rows via the unified table with name, addonId and device count', () => {
     render(renderPage())
     expect(screen.getByText('Reolink')).toBeTruthy()

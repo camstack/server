@@ -41,11 +41,11 @@ vi.mock('@camstack/ui-library', async () => {
 import {
   DiscoveredProposalsSection,
   DiscoveryProposalPill,
-  useDiscoveryProposalCount,
+  useDiscoveryProposals,
 } from '../DiscoveredProposalsSection'
 
 function Pill(): ReactElement {
-  return <DiscoveryProposalPill count={useDiscoveryProposalCount()} />
+  return <DiscoveryProposalPill count={useDiscoveryProposals().count} />
 }
 
 function proposal(n: number, over: Partial<FakeProposal['candidate']> = {}): FakeProposal {

@@ -10,7 +10,7 @@ applies-to:
   - packages/system/src/builtins/device-manager/discovery-proposal-store.ts
   - packages/system/src/builtins/device-manager/record-kinds.ts
   - packages/types/src/capabilities/schemas/discovery-proposals.ts
-  - packages/addon-admin-ui/src/components/integrations/DiscoveryProposalsBanner.tsx
+  - packages/addon-admin-ui/src/components/integrations/DiscoveredProposalsSection.tsx
 ---
 
 ## Context
@@ -62,5 +62,5 @@ Specs: `device-manager/__tests__/discovery-proposals.spec.ts` (real records
 store: persistence across a reopen, dismissed stays dismissed, adopted hidden),
 `local-network/passive/__tests__/discovery-watcher.spec.ts` (fake timers: the
 30-minute bound, one sweep at a time, de-duplication) and
-`addon-admin-ui/.../discovery-proposals-banner.spec.tsx` (the count follows the
-proposals).
+`addon-admin-ui/.../discovered-proposals-section.spec.tsx` (the pill count follows
+the proposals).

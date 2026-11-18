@@ -2,7 +2,7 @@
  * The persisted proposals of passive discovery (D994), shown inside the scan
  * modal — the same source as the scan itself.
  *
- * `useDiscoveryProposalCount` backs the pill on the page's Scan button: it is
+ * `useDiscoveryProposals` backs the pill on the page's Scan button: `count` is
  * `null` until the query has ANSWERED (an unanswered query is not "0"), and `0`
  * means no pill. `DiscoveredProposalsSection` lists the proposals
  * (`deviceManager.listDiscoveryProposals` already hides what was dismissed,
@@ -30,13 +30,21 @@ const PROPOSALS_REFRESH_MS = 60_000
 
 type Proposal = DiscoveryProposal
 
-/** Background-discovered proposals, or `null` while the query has not answered. */
-export function useDiscoveryProposalCount(): number | null {
+interface DiscoveryProposalsState {
+  /** Background-discovered proposals, or `null` while the query has not answered. */
+  readonly count: number | null
+  /** Re-read the list (the section and the pill share one cache entry). */
+  readonly refresh: () => void
+}
+
+export function useDiscoveryProposals(): DiscoveryProposalsState {
   const query = useDeviceManagerListDiscoveryProposals(
     {},
     { refetchInterval: PROPOSALS_REFRESH_MS },
   )
-  return query.data === undefined ? null : query.data.proposals.length
+  const { refetch } = query
+  const refresh = useCallback(() => void refetch(), [refetch])
+  return { count: query.data === undefined ? null : query.data.proposals.length, refresh }
 }
 
 /** The count pill on the Scan button; nothing for an unanswered query or zero. */

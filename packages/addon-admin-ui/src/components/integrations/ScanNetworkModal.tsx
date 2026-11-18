@@ -71,6 +71,8 @@ interface ScanNetworkModalProps {
    * Scan button fills the form it is open on). Default `adopt`.
    */
   readonly pickMode?: 'adopt' | 'fill'
+  /** A scan-list adoption went through: the background proposals list is stale. */
+  readonly onAdopted?: () => void
 }
 
 type AllScanData = NonNullable<ReturnType<typeof useDeviceManagerDiscoverAllProviders>['data']>
@@ -93,6 +95,7 @@ export function ScanNetworkModal({
   scope,
   onSetupIntegration,
   pickMode = 'adopt',
+  onAdopted,
 }: ScanNetworkModalProps): ReactElement {
   const { t } = useTranslation()
   const adopt = useDeviceManagerAdoptDevice()
@@ -119,6 +122,7 @@ export function ScanNetworkModal({
       setAdopting((prev) => new Set(prev).add(candidate.stableId))
       try {
         await adopt.mutateAsync({ addonId, candidate })
+        onAdopted?.()
         setAdopted((prev) => new Set(prev).add(candidate.stableId))
         setSelected((prev) => {
           const next = new Set(prev)
@@ -135,7 +139,7 @@ export function ScanNetworkModal({
         })
       }
     },
-    [adopt],
+    [adopt, onAdopted],
   )
 
   const handlePick = useCallback(

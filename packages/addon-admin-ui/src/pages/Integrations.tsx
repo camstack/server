@@ -71,7 +71,7 @@ import {
 } from '../components/integrations/integration-columns'
 import {
   DiscoveryProposalPill,
-  useDiscoveryProposalCount,
+  useDiscoveryProposals,
 } from '../components/integrations/DiscoveredProposalsSection'
 import { ScanNetworkModal } from '../components/integrations/ScanNetworkModal'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
@@ -126,7 +126,7 @@ export function IntegrationsPage(): ReactNode {
     setWizardOpen(true)
   }, [])
   const [scanOpen, setScanOpen] = useState(false)
-  const proposalCount = useDiscoveryProposalCount()
+  const { count: proposalCount, refresh: refreshProposals } = useDiscoveryProposals()
 
   useEffect(() => {
     const routeSeed = readIntegrationSeed(location.state)
@@ -514,6 +514,7 @@ export function IntegrationsPage(): ReactNode {
         open={scanOpen}
         onClose={handleCloseScan}
         onSetupIntegration={handleSetupIntegration}
+        onAdopted={refreshProposals}
       />
     </AdminPage>
   )

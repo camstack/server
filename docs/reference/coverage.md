@@ -19,7 +19,7 @@ it never describes how the thing works, and it is never re-verified.
 | Unit | Files | Subsystem(s) | Claimed by | Freshest |
 | --- | --- | --- | --- | --- |
 | `packages/addon-waste-collections` | 1031 | — | `addons/addon-waste-collections.md` _(covers)_, `decisions/adr-0827-waste-schedules-use-vendored-hacs-python-core-full-catalog.md`, `decisions/adr-1013-one-instance-model.md`, +2 more | 2026-10-18 |
-| `packages/addon-admin-ui/src/components` | 672 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +85 more, 4 ADRs | 2026-11-11 |
+| `packages/addon-admin-ui/src/components` | 672 | `admin-ui` | `architecture/ui.md`, `decisions/adr-0946-one-device-name.md`, `decisions/adr-1013-one-instance-model.md`, +86 more, 4 ADRs | 2026-11-11 |
 | `packages/ui-library/src/composites` | 671 | `admin-ui`, `secrets` | `architecture/ui.md`, `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `ui/common-components.md` _(covers)_, +56 more, 3 ADRs | 2026-11-11 |
 | `scripts` | 625 | `tooling` | `architecture/benchmark.md` _(covers)_, `architecture/notifications.md`, `architecture/capabilities.md`, +156 more, 14 ADRs | 2026-11-12 |
 | `packages/system/src/builtins` | 517 | `alerts-and-health`, `auth`, `automations`, `device-model`, `device-surfaces`, `logging`, `remote-access`, `secrets`, `storage` | `decisions/adr-0834-isolateddeclarations-for-sdk-ui-library-system-not-types.md`, `decisions/adr-0989-one-published-framework-package-and-every-delivery-declares-the-server-it-needs.md`, `decisions/adr-1054-a-tag-lives-on-the-record-it-labels-and-only-its-style-is-registered.md`, +205 more, 21 ADRs | 2026-11-08 |

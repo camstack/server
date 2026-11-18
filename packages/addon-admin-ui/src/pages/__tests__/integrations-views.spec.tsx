@@ -74,7 +74,7 @@ vi.mock('../../components/integrations/IntegrationWizard', () => ({
 
 // Stubbed for the same reason: it reads the discovery proposals through tRPC.
 vi.mock('../../components/integrations/DiscoveredProposalsSection', () => ({
-  useDiscoveryProposalCount: () => null,
+  useDiscoveryProposals: () => ({ count: null, refresh: vi.fn() }),
   DiscoveryProposalPill: () => null,
 }))
 
