@@ -109,6 +109,7 @@ export { CONNECTION_TEST_TIMEOUT_MS } from './addon/connection-probe.js'
 export type { ConnectionTestOutcome, IConnectionProbe } from './addon/connection-probe.js'
 export {
   RecordIntegrationInstances,
+  defaultAddDeviceMode,
   isInstanceEnabled,
 } from './addon/record-integration-instances.js'
 export {

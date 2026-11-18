@@ -190,6 +190,14 @@ export const IntegrationInstanceStatusSchema = z.object({
   label: z.string().optional(),
 })
 
+/**
+ * What "Add device" inside ONE instance offers, decided per instance by its provider. `scan`: the
+ * LAN scan finds devices this instance holds; `children`: only the instance's own children, via
+ * adoption (a scan would offer other hosts, which are new integrations); `none`: manual add only.
+ */
+export const IntegrationInstanceAddDeviceSchema = z.enum(['scan', 'children', 'none'])
+export type IntegrationInstanceAddDevice = z.infer<typeof IntegrationInstanceAddDeviceSchema>
+
 export const IntegrationInstanceSchema = z.object({
   id: IntegrationInstanceIdSchema,
   name: z.string(),
@@ -208,6 +216,8 @@ export const IntegrationInstanceSchema = z.object({
   status: IntegrationInstanceStatusSchema.optional(),
   /** Epoch ms of the last probe of the remote that produced `status`; absent when never checked. */
   lastCheckedAt: z.number().optional(),
+  /** What "Add device" inside this instance offers; see {@link IntegrationInstanceAddDeviceSchema}. Absent means the caller falls back to its legacy rule. */
+  addDevice: IntegrationInstanceAddDeviceSchema.optional(),
 })
 export type IntegrationInstance = z.infer<typeof IntegrationInstanceSchema>
 

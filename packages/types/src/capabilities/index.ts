@@ -1321,6 +1321,8 @@ export {
 export {
   type IIntegrationInstancesProvider,
   type IntegrationInstance,
+  type IntegrationInstanceAddDevice,
+  IntegrationInstanceAddDeviceSchema,
   type IntegrationInstanceDescription,
   IntegrationInstanceDescriptionSchema,
   type IntegrationInstanceDiscovery,

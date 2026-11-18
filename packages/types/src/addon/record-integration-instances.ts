@@ -14,6 +14,7 @@
 import { z } from 'zod'
 import type {
   IntegrationInstance,
+  IntegrationInstanceAddDevice,
   IntegrationInstanceDescription,
   IntegrationInstanceStatus,
   IIntegrationInstancesProvider,
@@ -47,6 +48,24 @@ export function isInstanceEnabled(body: { readonly enabled?: boolean | undefined
 /** The body key of the switch; only {@link RecordIntegrationInstances.setInstanceEnabled} writes it. */
 export const SWITCH_KEY = 'enabled'
 
+/**
+ * The "Add device" mode an instance gets when its provider states none, from how the provider's
+ * devices are found: `lan` scans, `account` adopts the account's children, anything else is manual.
+ * The one place this default lives.
+ */
+export function defaultAddDeviceMode(
+  description: Pick<IntegrationInstanceDescription, 'discovery'>,
+): IntegrationInstanceAddDevice {
+  switch (description.discovery?.mode) {
+    case 'lan':
+      return 'scan'
+    case 'account':
+      return 'children'
+    default:
+      return 'none'
+  }
+}
+
 /** What the instance went through when `onChanged` runs. */
 export type InstanceChange = 'created' | 'updated' | 'enabled' | 'deleted'
 
@@ -77,6 +96,11 @@ export interface RecordIntegrationInstancesHooks<TBody extends InstanceBody> {
   }
   /** The addon's own rule for "this instance can work". */
   configured(body: TBody): boolean
+  /**
+   * What "Add device" inside this instance offers (`scan`, `children`, `none`). Absent: the default
+   * from `description.discovery` ({@link defaultAddDeviceMode}).
+   */
+  addDevice?(body: TBody): IntegrationInstanceAddDevice
   /**
    * Runs after every create / update / enable / delete, IN the process that serves the instance:
    * the addon re-applies its runtime from the record (`readResolved(id)`), so an edit takes effect
@@ -263,6 +287,8 @@ export class RecordIntegrationInstances<TBody extends InstanceBody> {
       enabled: isInstanceEnabled(record.data),
       formValues: shown,
       kind,
+      addDevice:
+        this.hooks.addDevice?.(record.data) ?? defaultAddDeviceMode(this.hooks.description),
       ...(health?.status !== undefined ? { status: health.status } : {}),
       ...(health?.lastCheckedAt !== undefined ? { lastCheckedAt: health.lastCheckedAt } : {}),
     }
