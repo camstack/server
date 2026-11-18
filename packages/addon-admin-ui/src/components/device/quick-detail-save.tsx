@@ -338,8 +338,7 @@ function QuickDetailSaveFooter({
   return (
     <div className="sticky bottom-0 z-10 mt-auto flex flex-col gap-2 border-t border-border bg-background px-1 pt-3">
       {state.error !== null && <p className="text-xs text-danger">{state.error}</p>}
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <span />
+      <div className="flex flex-wrap items-center justify-end gap-2">
         <div className="flex items-center gap-2">
           <Button
             type="button"

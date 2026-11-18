@@ -19,7 +19,6 @@ import {
   DishwasherOptionsPanel,
   deviceLeadIcon,
   getPhaseVisual,
-  heroLang,
   KebabMenu,
   type KebabMenuItem,
   NetworkLinkBadge,
@@ -56,7 +55,6 @@ import {
   usePowerSourcePowerOn,
   useRebootReboot,
   useSystem,
-  useThemeMode,
   useUiText,
   VodPlaybackProvider,
   ZoneEditingProvider,
@@ -183,8 +181,7 @@ const COMMON_SHORTCUTS: readonly CommonShortcutConfig[] = [
 // ---------------------------------------------------------------------------
 
 export function DeviceDetailPage() {
-  const { t, i18n } = useTranslation()
-  const { resolvedMode } = useThemeMode()
+  const { t } = useTranslation()
   const params = useParams<{ deviceId: string }>()
   const deviceId = Number(params.deviceId)
   const isValidDeviceId = Number.isFinite(deviceId)
@@ -336,7 +333,6 @@ export function DeviceDetailPage() {
 
   const device = deviceData
   const storedName = String(device?.name ?? params.deviceId ?? 'Device')
-  const isOnline = device?.online === true
   // Only an ANSWERED offline is said: reachable is the normal state and the
   // admin never prints "Online", and a device still loading is not offline (D315).
   const isOffline = device?.online === false

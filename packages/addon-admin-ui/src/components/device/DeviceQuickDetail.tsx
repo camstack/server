@@ -7,9 +7,10 @@
  * on a row click from that context — call sites do not wire anything.
  *
  * Opens on the live detail card the device page shows at its top (the
- * default tab), then the Overview device-info facts and the Export form. Name, room
- * and display are edited on the full page's Customize tab. History is its
- * own tab, shown only after listSeries answers with a series.
+ * default tab), then the Overview device-info facts and the Export form; name,
+ * room, role, tags and display are edited there and saved together. History is
+ * its own tab, shown only after listSeries answers with a series. The header's
+ * "Open device page" button is the one way to the full page.
  */
 import {
   Button,

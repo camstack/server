@@ -124,7 +124,9 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
   // The leading checkbox keeps its own `stopPropagation`, so it toggles
   // exactly once via either path.
   const openQuickDetail = useDeviceQuickDetailOpen()
+  // The row is keyboard-activatable when a click does something other than navigate.
   const rowSelects = props.rowClickSelects === true && selection !== undefined
+  const rowActivates = rowSelects || openQuickDetail !== null
   const onRowClick = (): void => {
     if (rowSelects && selection !== undefined) {
       selection.onToggle()
@@ -179,6 +181,7 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
         onToggleExpand={onToggleExpand}
         onRowClick={onRowClick}
         rowSelects={rowSelects}
+        rowActivates={rowActivates}
         rowSelected={selection?.selected ?? false}
         onNavigate={navigate}
         displayStatus={displayStatus}
@@ -221,10 +224,10 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
         <div
           data-testid="device-card-body"
           onClick={onRowClick}
-          {...(rowSelects
+          {...(rowActivates
             ? {
                 role: 'button' as const,
-                'aria-pressed': selection?.selected ?? false,
+                ...(rowSelects ? { 'aria-pressed': selection?.selected ?? false } : {}),
                 tabIndex: 0,
                 onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
                   if (e.key === 'Enter' || e.key === ' ') {
@@ -337,10 +340,10 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
       <div
         data-testid="device-card-body"
         onClick={onRowClick}
-        {...(rowSelects
+        {...(rowActivates
           ? {
               role: 'button' as const,
-              'aria-pressed': selection?.selected ?? false,
+              ...(rowSelects ? { 'aria-pressed': selection?.selected ?? false } : {}),
               tabIndex: 0,
               onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
                 if (e.key === 'Enter' || e.key === ' ') {
@@ -456,6 +459,8 @@ interface DeviceItemTableRowProps {
   readonly onRowClick: () => void
   /** Batch mode is active for this row — row click selects, not navigates. */
   readonly rowSelects: boolean
+  /** The row is keyboard-activatable (selects, or opens the quick detail). */
+  readonly rowActivates: boolean
   /** Current selected state — drives `aria-pressed` when `rowSelects`. */
   readonly rowSelected: boolean
   readonly displayStatus: 'online' | 'offline' | 'disabled'
@@ -508,6 +513,7 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
     onNavigate,
     onRowClick,
     rowSelects,
+    rowActivates,
     rowSelected,
     displayStatus,
     isCamera,
@@ -547,10 +553,10 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
       onClick={pending ? undefined : onRowClick}
       aria-busy={pending ? true : undefined}
       data-row-operation={operation?.kind}
-      {...(rowSelects && !pending
+      {...(rowActivates && !pending
         ? {
             role: 'button' as const,
-            'aria-pressed': rowSelected,
+            ...(rowSelects ? { 'aria-pressed': rowSelected } : {}),
             tabIndex: 0,
             onKeyDown: (e: KeyboardEvent<HTMLTableRowElement>) => {
               if (e.key === 'Enter' || e.key === ' ') {
