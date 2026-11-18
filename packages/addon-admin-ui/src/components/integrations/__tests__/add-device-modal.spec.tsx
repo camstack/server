@@ -366,7 +366,7 @@ describe('AddDeviceModal', () => {
       expect(screen.queryByRole('button', { name: /set up/i })).toBeNull()
     })
 
-    it('shows no scan and no proposal when the instance has no scoped scan', () => {
+    it('shows no scan and no proposal when canScan=false', () => {
       state.scan = [console_]
       state.proposals = [{ id: 'p1', addonId: 'provider-esphome', candidate: console_ }]
       state.adoption = [adoptionEntry('esp-cellar', 'cellar')]

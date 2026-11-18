@@ -130,33 +130,6 @@ vi.mock('../../components/integrations/AddDeviceModal', () => ({
     return <div data-testid="add-device-modal" />
   },
 }))
-vi.mock('../../components/integrations/AddDeviceDialog', () => ({
-  AddDeviceDialog: () => null,
-}))
-vi.mock('../../components/integrations/AdoptDevicesModal', () => ({
-  AdoptDevicesModal: () => null,
-}))
-vi.mock('../../components/integrations/IntegrationInstanceEditor', () => ({
-  IntegrationInstanceEditor: () => null,
-}))
-vi.mock('../../components/integrations/ScanNetworkModal', () => ({
-  ScanNetworkModal: () => null,
-}))
-vi.mock('../../components/settings/NodeAddonsSettingsPanel', () => ({
-  NodeAddonsSettingsPanel: () => null,
-}))
-
-vi.mock('../../components/integrations/AddDeviceDialog', () => ({ AddDeviceDialog: () => null }))
-vi.mock('../../components/integrations/AdoptDevicesModal', () => ({
-  AdoptDevicesModal: () => null,
-}))
-vi.mock('../../components/integrations/IntegrationInstanceEditor', () => ({
-  IntegrationInstanceEditor: () => null,
-}))
-vi.mock('../../components/integrations/ScanNetworkModal', () => ({ ScanNetworkModal: () => null }))
-vi.mock('../../components/settings/NodeAddonsSettingsPanel', () => ({
-  NodeAddonsSettingsPanel: () => null,
-}))
 
 const { IntegrationDetailPage } = await import('../IntegrationDetail')
 
