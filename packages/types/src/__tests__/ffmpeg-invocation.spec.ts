@@ -246,6 +246,18 @@ describe('buildFfmpegArgs — video plan', () => {
     // A CAP never sets a target bitrate — it only bounds the peak.
     expect(twoSecond).toContain('-maxrate 800k -bufsize 1600k')
     expect(twoSecond).not.toContain('-b:v')
+
+    const withTarget = buildFfmpegArgs(
+      baseInvocation({
+        video: {
+          kind: 'encode',
+          encoder: 'libx264',
+          bitrateKbps: 1000,
+          rateControl: { kind: 'cap', vbvSeconds: 2, targetFraction: 0.8 },
+        },
+      }),
+    ).join(' ')
+    expect(withTarget).toContain('-b:v 800k -maxrate 1000k -bufsize 2000k')
   })
 
   it('emits -level and -pix_fmt when asked (a stream must match its own advertisement)', () => {

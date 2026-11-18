@@ -107,6 +107,29 @@ const DERIVED_DEFAULT_TUNE = 'zerolatency'
 const DERIVED_BITRATE_REFERENCE_KBPS = 2500
 const DERIVED_BITRATE_REFERENCE_PIXELS_PER_SECOND = 1280 * 720 * 25
 
+/**
+ * The ABR target as a fraction of the cap. A cap alone leaves x264 in CRF 23,
+ * which wants far more than the cap on a binding tier and crushes the KEYFRAME
+ * (reproduced at 400 kbps on 720p: IDR QP 48–57, PSNR 34 to 23 dB). A target
+ * at 0.8 of the cap measured flat ~35.8 dB across the IDR, 364 kbps average.
+ */
+const DERIVED_ABR_TARGET_FRACTION = 0.8
+
+/**
+ * The lowest bitrate WE accept for a geometry, as a fraction of the reference
+ * density above (so it follows pixels x fps). 720p@20 floors at 800 kbps; the
+ * 400 kbps that blurred it is below. An explicit lower value is raised.
+ */
+const DERIVED_BITRATE_FLOOR_FRACTION = 0.4
+/** Absolute floor, so a tiny geometry never derives a meaningless bitrate. */
+const DERIVED_BITRATE_FLOOR_MIN_KBPS = 150
+
+/**
+ * A requested fps is only clamped when it exceeds the measured source fps by
+ * more than this factor, so a 19.8 fps measurement never "clamps" a 20 request.
+ */
+const DERIVED_FPS_CLAMP_TOLERANCE = 1.05
+
 const DERIVED_AAC_RECODE: AudioEncode = { codec: 'aac', channels: 1 }
 
 /** What the derived carrier decided to do with the SOURCE's audio track. */
@@ -166,6 +189,10 @@ export interface DerivedSourceCadence {
 /** The cadence a derived encode runs at, and the numbers behind it. */
 export interface DerivedCadence {
   readonly fpsMode: 'cfr' | 'passthrough'
+  /** The fps the profile asked for; `null` when it named none. */
+  readonly requestedFps: number | null
+  /** `true` when the request exceeded the source and the source cadence won. */
+  readonly fpsClamped: boolean
   /** Frame rate the GOP is counted in; `null` when nothing names one. */
   readonly outputFps: number | null
   readonly gopFrames: number
@@ -200,7 +227,14 @@ export function resolveDerivedCadence(
   source: DerivedSourceCadence | undefined,
 ): DerivedCadence {
   const sourceFps = positive(source?.fps)
-  const outputFps = video.fps ?? sourceFps
+  const requestedFps = positive(video.fps)
+  // Never upsample: a request above the source would only duplicate frames
+  // (2 of 3 at 60 from 20) and spend the bit budget on them.
+  const fpsClamped =
+    requestedFps !== null &&
+    sourceFps !== null &&
+    requestedFps > sourceFps * DERIVED_FPS_CLAMP_TOLERANCE
+  const outputFps = fpsClamped ? sourceFps : (requestedFps ?? sourceFps)
   const observed = sourceFps !== null
   const idrSeconds = Math.min(
     DERIVED_MAX_IDR_SECONDS,
@@ -213,10 +247,13 @@ export function resolveDerivedCadence(
     video.gopFrames ??
     (observed && outputFps !== null
       ? Math.max(1, Math.round(outputFps * idrSeconds))
-      : (video.fps ?? DERIVED_DEFAULT_GOP_FRAMES))
+      : (requestedFps ?? DERIVED_DEFAULT_GOP_FRAMES))
   const gopSeconds = gopFrames / (outputFps ?? DERIVED_DEFAULT_GOP_FRAMES)
   return {
-    fpsMode: video.fps !== undefined ? 'cfr' : 'passthrough',
+    // A clamped request follows the source cadence (no `-r`), like no request.
+    fpsMode: video.fps !== undefined && !fpsClamped ? 'cfr' : 'passthrough',
+    requestedFps,
+    fpsClamped,
     outputFps,
     gopFrames,
     vbvSeconds: Math.max(DERIVED_MIN_VBV_SECONDS, Math.ceil(gopSeconds * 10) / 10),
@@ -257,6 +294,7 @@ export interface DerivedTranscodeArgs {
   readonly args: string[]
   readonly audio: DerivedAudioPlan
   readonly cadence: DerivedCadence
+  readonly bitrate: DerivedBitrate
 }
 
 /**
@@ -275,19 +313,58 @@ export interface DerivedTranscodeArgs {
  *   own — the MPEG-TS carrier, not the operator, decides whether the source
  *   track can be copied.
  */
-/**
- * The rate ceiling for a geometry, or `undefined` when the profile named no
- * geometry to scale by (there is then nothing to derive a number from, and a
- * guessed cap on an unknown resolution is worse than none).
- */
-function derivedBitrateCeilingKbps(video: VideoEncode): number | undefined {
+/** The bitrate the derived encode runs with, and how it was reached. */
+export interface DerivedBitrate {
+  /** The cap (`-maxrate`), kbps; `null` when no geometry names one. */
+  readonly capKbps: number | null
+  /** The ABR target (`-b:v`), kbps; `null` when there is no cap. */
+  readonly targetKbps: number | null
+  /** The lowest accepted for this geometry x fps; `null` when unknown. */
+  readonly floorKbps: number | null
+  /** The explicit bitrate the profile asked for when it was raised to the floor. */
+  readonly raisedFromKbps: number | null
+}
+
+function pixelsPerSecond(video: VideoEncode, outputFps: number | null): number | null {
   const { width, height } = video
-  if (width === undefined || height === undefined) return undefined
-  const pixelsPerSecond = width * height * (video.fps ?? DERIVED_DEFAULT_GOP_FRAMES)
-  return Math.round(
-    (DERIVED_BITRATE_REFERENCE_KBPS * pixelsPerSecond) /
-      DERIVED_BITRATE_REFERENCE_PIXELS_PER_SECOND,
-  )
+  if (width === undefined || height === undefined) return null
+  return width * height * (outputFps ?? DERIVED_DEFAULT_GOP_FRAMES)
+}
+
+/**
+ * The bitrate WE manage for a geometry: derived from output pixels x fps when
+ * the profile names none, raised to the floor when it names one below it.
+ * Without a geometry there is nothing to scale by, so the profile's own value
+ * (if any) is kept and no floor applies.
+ */
+export function resolveDerivedBitrate(
+  video: VideoEncode,
+  outputFps: number | null,
+): DerivedBitrate {
+  const pps = pixelsPerSecond(video, outputFps)
+  const scaled =
+    pps === null
+      ? null
+      : Math.round(
+          (DERIVED_BITRATE_REFERENCE_KBPS * pps) / DERIVED_BITRATE_REFERENCE_PIXELS_PER_SECOND,
+        )
+  const floorKbps =
+    scaled === null
+      ? null
+      : Math.max(
+          DERIVED_BITRATE_FLOOR_MIN_KBPS,
+          Math.round(scaled * DERIVED_BITRATE_FLOOR_FRACTION),
+        )
+  const requested = video.bitrateKbps ?? null
+  const raised = requested !== null && floorKbps !== null && requested < floorKbps
+  const capKbps = raised ? floorKbps : (requested ?? scaled)
+  return {
+    capKbps,
+    targetKbps:
+      capKbps === null ? null : Math.max(1, Math.round(capKbps * DERIVED_ABR_TARGET_FRACTION)),
+    floorKbps,
+    raisedFromKbps: raised ? requested : null,
+  }
 }
 
 /**
@@ -317,18 +394,27 @@ function derivedBitrateCeilingKbps(video: VideoEncode): number | undefined {
  *   event's timestamp lands ~2 s past the event while the native tier of the
  *   same camera lands on it.
  *
- * - **Bitrate.** A CEILING (`-maxrate`, no `-b:v` — see `buildRateControlArgs`,
- *   whose default rate control is `cap`), because a derived tier is RECORDED
+ * - **Bitrate.** A CEILING (`-maxrate`) plus an ABR target at
+ *   {@link DERIVED_ABR_TARGET_FRACTION} of it (`-b:v`, see `buildRateControlArgs`
+ *   with `targetFraction`), derived from output pixels x fps and never below the
+ *   per-geometry floor ({@link resolveDerivedBitrate}), because a derived tier is RECORDED
  *   and the scrub reads a `low` segment whole only while it is under its
  *   ceiling (D163: 4 MB hard cap today, 1.5 MB when this was measured). Uncapped CRF has no relationship to that ceiling: 1438/low
  *   measured 537–941 kbps at 640x360@25 against 142 kbps for camera 101's
  *   NATIVE low at the identical geometry, peaking at 1.19 MB in a 10 s
  *   segment. Quiet scenes still spend less than the cap.
  */
-function withCarrierDefaults(video: VideoEncode, cadence: DerivedCadence): VideoEncode {
-  const bitrateKbps = video.bitrateKbps ?? derivedBitrateCeilingKbps(video)
+function withCarrierDefaults(
+  video: VideoEncode,
+  cadence: DerivedCadence,
+  bitrate: DerivedBitrate,
+): VideoEncode {
+  const { fps, ...rest } = video
+  const bitrateKbps = bitrate.capKbps ?? undefined
   return {
-    ...video,
+    ...rest,
+    // A clamped request drops the fps: the source cadence passes through.
+    ...(fps !== undefined && !cadence.fpsClamped ? { fps } : {}),
     gopFrames: cadence.gopFrames,
     bf: video.bf ?? DERIVED_DEFAULT_BF,
     preset: video.preset ?? DERIVED_DEFAULT_PRESET,
@@ -340,7 +426,8 @@ function withCarrierDefaults(video: VideoEncode, cadence: DerivedCadence): Video
 export function buildDerivedTranscodeArgs(input: DerivedTranscodeArgsInput): DerivedTranscodeArgs {
   const audio = resolveDerivedAudio(input.profile.audio, input.sourceAudioCodec)
   const cadence = resolveDerivedCadence(input.profile.video, input.sourceCadence)
-  const video = withCarrierDefaults(input.profile.video, cadence)
+  const bitrate = resolveDerivedBitrate(input.profile.video, cadence.outputFps)
+  const video = withCarrierDefaults(input.profile.video, cadence, bitrate)
   const args = buildFfmpegArgs(
     invocationFromEncodeProfile({
       profile: { ...input.profile, video, audio: audio.audio },
@@ -352,8 +439,56 @@ export function buildDerivedTranscodeArgs(input: DerivedTranscodeArgsInput): Der
       sink: { kind: 'stdout', container: 'mpegts' },
       decodeHwAccel: input.decodeHwAccel ?? null,
       fpsMode: cadence.fpsMode,
-      rateControl: { kind: 'cap', vbvSeconds: cadence.vbvSeconds },
+      rateControl: {
+        kind: 'cap',
+        vbvSeconds: cadence.vbvSeconds,
+        targetFraction: DERIVED_ABR_TARGET_FRACTION,
+      },
     }),
   )
-  return { args, audio, cadence }
+  return { args, audio, cadence, bitrate }
+}
+
+/** What the derived feeder's ffmpeg is actually told to do — the read-only "effective encode". */
+export interface DerivedEffectiveEncode {
+  /** `-c:v` of the argv (`libx264`, a hardware encoder, `copy`), `null` when absent. */
+  readonly encoder: string | null
+  /** Output frame rate; `null` when the source cadence passes through unmeasured. */
+  readonly fps: number | null
+  readonly gopFrames: number
+  readonly targetKbps: number | null
+  readonly capKbps: number | null
+  readonly bufsizeKbps: number | null
+  /** `copy` = source audio untouched, `aac` = re-encoded, `profile` = operator's encode. */
+  readonly audio: 'copy' | 'aac' | 'profile'
+}
+
+function argValue(args: readonly string[], flag: string): string | null {
+  const i = args.indexOf(flag)
+  return i === -1 ? null : (args[i + 1] ?? null)
+}
+
+function kbpsOf(value: string | null): number | null {
+  if (value === null) return null
+  const n = Number.parseInt(value, 10)
+  return Number.isFinite(n) ? n : null
+}
+
+/** Read the effective encode off the argv the builder produced (the argv IS what runs). */
+export function describeEffectiveEncode(built: DerivedTranscodeArgs): DerivedEffectiveEncode {
+  const { args, cadence, audio } = built
+  return {
+    encoder: argValue(args, '-c:v'),
+    fps: cadence.outputFps,
+    gopFrames: cadence.gopFrames,
+    targetKbps: kbpsOf(argValue(args, '-b:v')),
+    capKbps: kbpsOf(argValue(args, '-maxrate')),
+    bufsizeKbps: kbpsOf(argValue(args, '-bufsize')),
+    audio:
+      audio.decision.kind === 'copy'
+        ? 'copy'
+        : audio.decision.kind === 'recode-aac'
+          ? 'aac'
+          : 'profile',
+  }
 }

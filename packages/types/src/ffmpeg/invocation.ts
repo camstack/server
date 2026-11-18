@@ -180,7 +180,19 @@ export type FfmpegVideoEncoderId =
  */
 export type FfmpegRateControl =
   | { readonly kind: 'cbr'; readonly vbvSeconds: number }
-  | { readonly kind: 'cap'; readonly vbvSeconds: number }
+  | {
+      readonly kind: 'cap'
+      readonly vbvSeconds: number
+      /**
+       * Also emit an ABR target (`-b:v`) at this fraction of the ceiling (0..1).
+       * Without it a rate-bound encode runs its quality mode (x264 CRF 23) and
+       * the ceiling alone binds on every frame, which starves the KEYFRAME
+       * (measured QP 48–57, PSNR 34 to 23 dB at each IDR at a 400 kbps cap on
+       * 720p). A target a bit under the ceiling makes the encoder budget the
+       * IDR. Absent keeps the ceiling-only behaviour.
+       */
+      readonly targetFraction?: number
+    }
 
 /** Fit-inside (never upscale, even dimensions) vs an exact rescale. */
 export interface FfmpegScalePlan {
@@ -709,7 +721,12 @@ function buildRateControlArgs(video: FfmpegVideoEncodePlan): string[] {
     vbvSeconds: 2,
   }
   const bufsize = Math.max(1, Math.round(kbps * rc.vbvSeconds))
-  const target = rc.kind === 'cbr' ? ['-b:v', `${kbps}k`] : []
+  const target =
+    rc.kind === 'cbr'
+      ? ['-b:v', `${kbps}k`]
+      : rc.targetFraction !== undefined
+        ? ['-b:v', `${Math.max(1, Math.round(kbps * rc.targetFraction))}k`]
+        : []
   return [...target, '-maxrate', `${kbps}k`, '-bufsize', `${bufsize}k`]
 }
 

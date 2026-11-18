@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - pipelineExecutor.getInferenceDeviceHealth reports an optional absentReason, and the inference device exclusion reasons gain no-gpu-device
 
+### Fixed
+
+- FFmpeg rate control accepts an optional ABR target fraction on a capped encode.
+
 ## [1.2.597] - 2026-11-18
 
 ### Added

@@ -101,6 +101,8 @@ import {
 import { DerivedStreamFeeder } from '../derived/derived-stream-feeder.js'
 import {
   buildDerivedTranscodeArgs,
+  type DerivedEffectiveEncode,
+  describeEffectiveEncode,
   type DerivedSourceCadence,
 } from '../derived/derived-transcode-args.js'
 import { fillEmptyProfileSlots } from '../fill-empty-profile-slots.js'
@@ -1082,6 +1084,12 @@ export class StreamBrokerManager {
     string,
     { controller: DerivedFeederController; unsubscribe: () => void }
   >()
+  /**
+   * The encode each derived feeder was last spawned with, keyed like
+   * {@link derivedFeeders}. Read-only source for a later "effective encode"
+   * panel; dropped with the feeder.
+   */
+  private readonly derivedEffectiveEncodes = new Map<string, DerivedEffectiveEncode>()
   private readonly logger: IScopedLogger
   /** Public accessor for same-process callers (e.g. `CameraStreamsProvider.pickStream`)
    *  that want to emit diagnostics through the manager's logger. Internal callers
@@ -8526,11 +8534,17 @@ export class StreamBrokerManager {
     this.derivedFeeders.set(brokerId, { controller, unsubscribe })
   }
 
+  /** The encode a derived broker's feeder was last spawned with; `null` before its first spawn. */
+  getDerivedEffectiveEncode(deviceId: number, camStreamId: string): DerivedEffectiveEncode | null {
+    return this.derivedEffectiveEncodes.get(brokerIdFor(deviceId, camStreamId)) ?? null
+  }
+
   /** Detach + destroy a derived broker's feeder controller. No-op when absent. */
   private detachDerivedFeeder(brokerId: string): void {
     const entry = this.derivedFeeders.get(brokerId)
     if (!entry) return
     this.derivedFeeders.delete(brokerId)
+    this.derivedEffectiveEncodes.delete(brokerId)
     entry.unsubscribe()
     entry.controller.destroy()
   }
@@ -8577,12 +8591,37 @@ export class StreamBrokerManager {
 
     const sourceAudioCodec = this.observedSourceAudioCodec(deviceId, source)
     const sourceCadence = this.observedSourceCadence(deviceId, source)
-    const { args, audio, cadence } = buildDerivedTranscodeArgs({
+    const built = buildDerivedTranscodeArgs({
       profile: encodeProfile,
       loopbackUrl,
       sourceAudioCodec,
       sourceCadence,
     })
+    const { args, audio, cadence, bitrate } = built
+    this.derivedEffectiveEncodes.set(
+      brokerIdFor(deviceId, camStreamId),
+      describeEffectiveEncode(built),
+    )
+    if (cadence.fpsClamped) {
+      this.logger.info('derived fps clamped to the source — never upsampled', {
+        tags: { deviceId },
+        meta: {
+          camStreamId,
+          requestedFps: cadence.requestedFps,
+          sourceFps: sourceCadence.fps,
+        },
+      })
+    }
+    if (bitrate.raisedFromKbps !== null) {
+      this.logger.info('derived bitrate raised to the floor for its geometry', {
+        tags: { deviceId },
+        meta: {
+          camStreamId,
+          requestedKbps: bitrate.raisedFromKbps,
+          floorKbps: bitrate.floorKbps,
+        },
+      })
+    }
     this.logger.info('derived feeder cadence', {
       tags: { deviceId },
       meta: {
@@ -8593,6 +8632,8 @@ export class StreamBrokerManager {
         outputFps: cadence.outputFps,
         gopFrames: cadence.gopFrames,
         vbvSeconds: cadence.vbvSeconds,
+        targetKbps: bitrate.targetKbps,
+        capKbps: bitrate.capKbps,
       },
     })
     if (audio.decision.kind === 'recode-aac') {

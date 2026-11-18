@@ -1909,6 +1909,15 @@ export class StreamBroker implements IStreamBroker {
 
     this.logger?.info('no demand — suspending stream')
 
+    // A push source stops producing the moment demand drops (the derived
+    // feeder is torn down by the edge above) — silence is the expected state,
+    // not a stall. Left armed, the timer reported `push source stalled` 15 s
+    // after every suspend and flipped the status to `error`.
+    if (this.pushStallTimer) {
+      clearTimeout(this.pushStallTimer)
+      this.pushStallTimer = undefined
+    }
+
     this.destroyNativeClient()
     this.destroyRtmpReader()
     this.destroyFfmpegSourceReader()
@@ -4439,7 +4448,7 @@ export class StreamBroker implements IStreamBroker {
     }
     this.pushStallTimer = setTimeout(() => {
       this.pushStallTimer = undefined
-      if (this.stopping || this.manualStop) return
+      if (this.stopping || this.manualStop || this._suspended) return
       if (this.source?.type !== 'push') return
 
       if (this.source?.allowStall) {

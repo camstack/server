@@ -27,6 +27,7 @@ import type { EncodeProfile } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   buildDerivedTranscodeArgs,
+  describeEffectiveEncode,
   resolveDerivedAudio,
 } from '../derived/derived-transcode-args.js'
 
@@ -190,7 +191,10 @@ describe('buildDerivedTranscodeArgs — the GOP is never left to the encoder def
   it('with no fps either, the default assumes the fleet cadence (25)', () => {
     const { video, ...rest } = PROFILE_NO_GOP
     const { args } = buildDerivedTranscodeArgs({
-      profile: { ...rest, video: { codec: 'h264', width: 640, height: 360, bitrateKbps: 600 } },
+      profile: {
+        ...rest,
+        video: { codec: 'h264', width: 640, height: 360, bitrateKbps: 600 },
+      },
       loopbackUrl: 'rtsp://127.0.0.1:8554/tok',
     })
     expect(args[args.indexOf('-g') + 1]).toBe('25')
@@ -221,14 +225,20 @@ describe('buildDerivedTranscodeArgs — the carrier pins the latency shape', () 
   const loopbackUrl = 'rtsp://127.0.0.1:8554/tok'
 
   it('emits no B-frames: the MPEG-TS → demux → broker → RTP carrier gains nothing from reordering', () => {
-    const { args } = buildDerivedTranscodeArgs({ profile: PROFILE_NO_GOP, loopbackUrl })
+    const { args } = buildDerivedTranscodeArgs({
+      profile: PROFILE_NO_GOP,
+      loopbackUrl,
+    })
     const bfIdx = args.indexOf('-bf')
     expect(bfIdx).toBeGreaterThan(-1)
     expect(args[bfIdx + 1]).toBe('0')
   })
 
   it('encodes without lookahead — preset veryfast, tune zerolatency', () => {
-    const { args } = buildDerivedTranscodeArgs({ profile: PROFILE_NO_GOP, loopbackUrl })
+    const { args } = buildDerivedTranscodeArgs({
+      profile: PROFILE_NO_GOP,
+      loopbackUrl,
+    })
     expect(args[args.indexOf('-preset') + 1]).toBe('veryfast')
     expect(args[args.indexOf('-tune') + 1]).toBe('zerolatency')
   })
@@ -237,7 +247,12 @@ describe('buildDerivedTranscodeArgs — the carrier pins the latency shape', () 
     const { args } = buildDerivedTranscodeArgs({
       profile: {
         ...PROFILE_NO_GOP,
-        video: { ...PROFILE_NO_GOP.video, bf: 2, preset: 'medium', tune: 'film' },
+        video: {
+          ...PROFILE_NO_GOP.video,
+          bf: 2,
+          preset: 'medium',
+          tune: 'film',
+        },
       },
       loopbackUrl,
     })
@@ -270,16 +285,22 @@ describe('buildDerivedTranscodeArgs — a recorded derived tier is bounded in by
   it('caps an uncapped profile at the shared egress bit density for its geometry', () => {
     const { video, ...rest } = PROFILE_NO_GOP
     const { args } = buildDerivedTranscodeArgs({
-      profile: { ...rest, video: { codec: 'h264', width: 640, height: 360, fps: 25 } },
+      profile: {
+        ...rest,
+        video: { codec: 'h264', width: 640, height: 360, fps: 25 },
+      },
       loopbackUrl,
     })
-    // A CEILING, not a target: no -b:v.
-    expect(args).not.toContain('-b:v')
+    // A ceiling plus an ABR target at 0.8 of it, so the IDR is budgeted.
+    expect(args[args.indexOf('-b:v') + 1]).toBe('500k')
     expect(args[args.indexOf('-maxrate') + 1]).toBe('625k')
   })
 
   it('an explicit bitrateKbps is honoured verbatim', () => {
-    const { args } = buildDerivedTranscodeArgs({ profile: PROFILE_NO_GOP, loopbackUrl })
+    const { args } = buildDerivedTranscodeArgs({
+      profile: PROFILE_NO_GOP,
+      loopbackUrl,
+    })
     expect(args[args.indexOf('-maxrate') + 1]).toBe('600k')
   })
 
@@ -296,7 +317,7 @@ describe('buildDerivedTranscodeArgs — a recorded derived tier is bounded in by
 describe('buildDerivedTranscodeArgs — the derived encode follows the source cadence', () => {
   const URL = 'rtsp://127.0.0.1:8554/tok'
   const noFps: EncodeProfile = {
-    video: { codec: 'h264', width: 1280, height: 720, bitrateKbps: 400 },
+    video: { codec: 'h264', width: 1280, height: 720, bitrateKbps: 2000 },
     audio: 'passthrough',
   }
   // The reporter's source (camstack/server#15): main at 20 fps, IDR every 4 s.
@@ -350,14 +371,117 @@ describe('buildDerivedTranscodeArgs — the derived encode follows the source ca
       loopbackUrl: URL,
       sourceCadence: source,
     })
-    // 80 frames at 20 fps = 4 s of GOP -> 400 kbps x 4 s.
-    expect(value(args, '-maxrate')).toBe('400k')
-    expect(value(args, '-bufsize')).toBe('1600k')
+    // 80 frames at 20 fps = 4 s of GOP -> 2000 kbps x 4 s.
+    expect(value(args, '-maxrate')).toBe('2000k')
+    expect(value(args, '-bufsize')).toBe('8000k')
   })
 
   it('nothing observed keeps the legacy second-of-frames GOP and 2 s buffer', () => {
-    const { args } = buildDerivedTranscodeArgs({ profile: PROFILE_NO_GOP, loopbackUrl: URL })
+    const { args } = buildDerivedTranscodeArgs({
+      profile: PROFILE_NO_GOP,
+      loopbackUrl: URL,
+    })
     expect(value(args, '-g')).toBe('25')
     expect(value(args, '-bufsize')).toBe('1200k')
+  })
+})
+
+describe('buildDerivedTranscodeArgs — issue 609: rate, fps and floor', () => {
+  const URL = 'rtsp://127.0.0.1:8554/tok'
+  const p720 = (video: Partial<EncodeProfile['video']>): EncodeProfile => ({
+    video: { codec: 'h264', width: 1280, height: 720, ...video },
+    audio: 'passthrough',
+  })
+  const value = (args: readonly string[], flag: string): string | undefined => {
+    const i = args.indexOf(flag)
+    return i === -1 ? undefined : args[i + 1]
+  }
+
+  it('a capped encode also carries an ABR target at 0.8 of the cap (the keyframe is budgeted)', () => {
+    const { args } = buildDerivedTranscodeArgs({
+      profile: p720({ bitrateKbps: 2000 }),
+      loopbackUrl: URL,
+    })
+    expect(value(args, '-maxrate')).toBe('2000k')
+    expect(value(args, '-b:v')).toBe('1600k')
+  })
+
+  it('never upsamples: 60 fps from a 20 fps source follows the source, no -r', () => {
+    const { args, cadence } = buildDerivedTranscodeArgs({
+      profile: p720({ fps: 60, bitrateKbps: 2000 }),
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20, idrIntervalMs: 4000 },
+    })
+    expect(cadence.fpsClamped).toBe(true)
+    expect(cadence.requestedFps).toBe(60)
+    expect(cadence.outputFps).toBe(20)
+    expect(args).not.toContain('-r')
+    expect(value(args, '-fps_mode')).toBe('passthrough')
+    expect(value(args, '-g')).toBe('80')
+  })
+
+  it('a request at or below the source (or within measurement noise) is honoured', () => {
+    const lower = buildDerivedTranscodeArgs({
+      profile: p720({ fps: 10, bitrateKbps: 2000 }),
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20, idrIntervalMs: 2000 },
+    })
+    expect(lower.cadence.fpsClamped).toBe(false)
+    expect(value(lower.args, '-r')).toBe('10')
+    const noise = buildDerivedTranscodeArgs({
+      profile: p720({ fps: 20, bitrateKbps: 2000 }),
+      loopbackUrl: URL,
+      sourceCadence: { fps: 19.8, idrIntervalMs: 2000 },
+    })
+    expect(noise.cadence.fpsClamped).toBe(false)
+    expect(value(noise.args, '-r')).toBe('20')
+  })
+
+  it('no bitrate: derived from output pixels x fps (720p@20 = 2000 kbps)', () => {
+    const { args, bitrate } = buildDerivedTranscodeArgs({
+      profile: p720({}),
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20, idrIntervalMs: 2000 },
+    })
+    expect(value(args, '-maxrate')).toBe('2000k')
+    expect(bitrate.raisedFromKbps).toBeNull()
+  })
+
+  it('an explicit bitrate below the floor is raised to it and reported (400k on 720p@20)', () => {
+    const { args, bitrate } = buildDerivedTranscodeArgs({
+      profile: p720({ bitrateKbps: 400 }),
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20, idrIntervalMs: 2000 },
+    })
+    expect(bitrate.floorKbps).toBe(800)
+    expect(bitrate.raisedFromKbps).toBe(400)
+    expect(value(args, '-maxrate')).toBe('800k')
+  })
+
+  it('an explicit bitrate at or above the floor is untouched', () => {
+    const { args, bitrate } = buildDerivedTranscodeArgs({
+      profile: p720({ bitrateKbps: 1500 }),
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20, idrIntervalMs: 2000 },
+    })
+    expect(bitrate.raisedFromKbps).toBeNull()
+    expect(value(args, '-maxrate')).toBe('1500k')
+  })
+
+  it('describeEffectiveEncode reads the encode off the argv that runs', () => {
+    const built = buildDerivedTranscodeArgs({
+      profile: p720({ bitrateKbps: 2000 }),
+      loopbackUrl: URL,
+      sourceCadence: { fps: 20, idrIntervalMs: 4000 },
+    })
+    expect(describeEffectiveEncode(built)).toEqual({
+      encoder: 'libx264',
+      fps: 20,
+      gopFrames: 80,
+      targetKbps: 1600,
+      capKbps: 2000,
+      bufsizeKbps: 8000,
+      audio: 'aac',
+    })
   })
 })

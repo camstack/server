@@ -239,3 +239,44 @@ describe('StreamBroker', () => {
     })
   })
 })
+
+describe('StreamBroker — push stall watchdog vs suspend (issue 609)', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('a push broker that suspends for lack of demand never reports a stall', async () => {
+    vi.useFakeTimers()
+    const logger = createMockLogger()
+    const broker = new StreamBroker('cam-push', logger)
+    await broker.start({ type: 'push', url: '', videoCodec: 'h264' })
+    const unsub = broker.onEncodedData(vi.fn())
+    broker.pushEncodedPacket(createTestPacket())
+    unsub()
+    // Grace (5 s) elapses -> suspend; then the 15 s stall window passes.
+    await vi.advanceTimersByTimeAsync(5_100)
+    expect(broker.suspended).toBe(true)
+    await vi.advanceTimersByTimeAsync(20_000)
+    expect(logger.warn).not.toHaveBeenCalledWith(
+      'push source stalled — no data received',
+      expect.anything(),
+    )
+    expect(broker.status).not.toBe('error')
+    await broker.stop()
+  })
+
+  it('a push broker that is NOT suspended still reports a stall (the watchdog stays armed)', async () => {
+    vi.useFakeTimers()
+    const logger = createMockLogger()
+    const broker = new StreamBroker('cam-push-2', logger)
+    await broker.start({ type: 'push', url: '', videoCodec: 'h264' })
+    broker.onEncodedData(vi.fn())
+    broker.pushEncodedPacket(createTestPacket())
+    await vi.advanceTimersByTimeAsync(15_100)
+    expect(logger.warn).toHaveBeenCalledWith(
+      'push source stalled — no data received',
+      expect.anything(),
+    )
+    await broker.stop()
+  })
+})
