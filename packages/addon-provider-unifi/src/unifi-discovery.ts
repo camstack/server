@@ -2,7 +2,6 @@ import {
   deviceAdminLinkCapability,
   type DiscoveredChildDevice,
   presenceCapability,
-  rebootCapability,
   workloadCapability,
 } from '@camstack/types'
 import type { UnifiClientSnapshot, UnifiInfraSnapshot } from './unifi-client-contract.js'
@@ -52,13 +51,12 @@ export function parseNativeId(childNativeId: string): ParsedNativeId {
 }
 
 /**
- * What a console Host serves beyond its children: the workload, the reboot (the controller's
+ * What a console Host serves beyond its children: the workload (with `restart`, the controller's
  * `restartDevice`) and the link to the controller UI. A switch or an access point keeps its
  * restart Button child and is proposed without these hints.
  */
 const CONSOLE_CAPABILITIES: readonly string[] = [
   workloadCapability.name,
-  rebootCapability.name,
   deviceAdminLinkCapability.name,
 ]
 

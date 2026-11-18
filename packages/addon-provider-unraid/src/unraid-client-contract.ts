@@ -34,11 +34,14 @@ export type UnraidArrayState =
 /** Desired array state for `array.setState` — mirrors `ArrayStateInputState`. */
 export type UnraidArrayDesiredState = 'START' | 'STOP'
 
-/** Capacity in kilobytes — mirrors the real `array.capacity.kilobytes`. */
+/**
+ * Capacity in kilobytes — mirrors the real `array.capacity.kilobytes`. A figure the API left
+ * out is `null` (unknown), never 0 (D393).
+ */
 export interface UnraidCapacityKb {
-  readonly total: number
-  readonly used: number
-  readonly free: number
+  readonly total: number | null
+  readonly used: number | null
+  readonly free: number | null
 }
 
 /** Current parity-check status — mirrors the real `ParityCheck` fragment subset. */

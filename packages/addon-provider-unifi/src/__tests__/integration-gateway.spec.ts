@@ -8,7 +8,6 @@
 import {
   type DeviceConstructor,
   type DeviceContext,
-  DeviceFeature,
   DeviceRole,
   DeviceType,
   type IDevice,
@@ -44,6 +43,7 @@ import type {
 import { buildUnifiDeviceAdopter } from '../unifi-device-adopter.js'
 import { reconcileInfraFeatures } from '../unifi-feature-reconcile.js'
 import { setIntegrationDevicesOnline } from '../unifi-integration-offline.js'
+import { UnifiControllerNotConnectedError, UnifiDeviceMismatchError } from '../unifi-errors.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 import { infraSnapshot, port } from './unifi-fixtures.js'
 
@@ -116,12 +116,12 @@ function isWorkloadProvider(value: unknown): value is WorkloadOptionsReader {
   return typeof value === 'object' && value !== null && 'getOptions' in value
 }
 
-interface RebootProvider {
-  reboot(input: { deviceId: number }): Promise<{ success: true }>
+interface RestartableWorkload extends WorkloadOptionsReader {
+  restart(input: { deviceId: number }): Promise<void>
 }
 
-function isRebootProvider(value: unknown): value is RebootProvider {
-  return typeof value === 'object' && value !== null && 'reboot' in value
+function isRestartableWorkload(value: unknown): value is RestartableWorkload {
+  return isWorkloadProvider(value) && 'restart' in value
 }
 
 function isSwitchProvider(value: unknown): value is SwitchProvider {
@@ -527,11 +527,10 @@ describe('UniFi devices on a stub device context', () => {
     return { ctx, providers }
   }
 
-  it('a console Host carries the workload, the controller UI link and a reboot through restartDevice', async () => {
-    await harness([CONSOLE, SWITCH])
-    const client = unifiControllers.getManager(INT)?.client
-    if (client === null || client === undefined) throw new Error('client should run')
-    const restartDevice = vi.spyOn(client, 'restartDevice')
+  async function consoleHost(): Promise<{
+    readonly host: UnifiInfraDevice
+    readonly providers: Map<string, unknown>
+  }> {
     const { ctx, providers } = rig(
       {
         integrationId: INT,
@@ -543,17 +542,49 @@ describe('UniFi devices on a stub device context', () => {
     )
     const host = new UnifiInfraDevice(ctx)
     await host.onActivate()
-    expect([...providers.keys()]).toEqual(
-      expect.arrayContaining(['workload', 'device-admin-link', 'reboot']),
-    )
-    expect(host.features).toContain(DeviceFeature.Rebootable)
-    const reboot = providers.get('reboot')
-    if (!isRebootProvider(reboot)) throw new Error('reboot cap missing')
-    expect(await reboot.reboot({ deviceId: 7 })).toEqual({ success: true })
+    return { host, providers }
+  }
+
+  it('a console Host restarts through workload.restart, which calls restartDevice', async () => {
+    await harness([CONSOLE, SWITCH])
+    const client = unifiControllers.getManager(INT)?.client
+    if (client === null || client === undefined) throw new Error('client should run')
+    const restartDevice = vi.spyOn(client, 'restartDevice')
+    const { providers } = await consoleHost()
+    expect([...providers.keys()]).toEqual(expect.arrayContaining(['workload', 'device-admin-link']))
+    // One restart path on the Host: the workload card's, no separate reboot capability.
+    expect(providers.has('reboot')).toBe(false)
+    const workload = providers.get('workload')
+    if (!isRestartableWorkload(workload)) throw new Error('workload.restart missing')
+    expect((await workload.getOptions({ deviceId: 7 })).supportsRestart).toBe(true)
+    await workload.restart({ deviceId: 7 })
     expect(restartDevice.mock.calls).toEqual([['udm']])
   })
 
-  it('a switch Host stays as it was: no reboot of its own', async () => {
+  it('a console restart is refused, typed, when the controller is not connected', async () => {
+    await harness([CONSOLE, SWITCH])
+    const { providers } = await consoleHost()
+    unifiControllers.set(INT, null)
+    const workload = providers.get('workload')
+    if (!isRestartableWorkload(workload)) throw new Error('workload.restart missing')
+    await expect(workload.restart({ deviceId: 7 })).rejects.toBeInstanceOf(
+      UnifiControllerNotConnectedError,
+    )
+  })
+
+  it('a console restart for another deviceId is refused, typed, and restarts nothing', async () => {
+    await harness([CONSOLE, SWITCH])
+    const client = unifiControllers.getManager(INT)?.client
+    if (client === null || client === undefined) throw new Error('client should run')
+    const restartDevice = vi.spyOn(client, 'restartDevice')
+    const { providers } = await consoleHost()
+    const workload = providers.get('workload')
+    if (!isRestartableWorkload(workload)) throw new Error('workload.restart missing')
+    await expect(workload.restart({ deviceId: 8 })).rejects.toBeInstanceOf(UnifiDeviceMismatchError)
+    expect(restartDevice).not.toHaveBeenCalled()
+  })
+
+  it('a switch Host stays as it was: no restart of its own', async () => {
     await harness()
     const { ctx, providers } = rig(
       {
@@ -566,6 +597,10 @@ describe('UniFi devices on a stub device context', () => {
     )
     await new UnifiInfraDevice(ctx).onActivate()
     expect(providers.has('reboot')).toBe(false)
+    const workload = providers.get('workload')
+    if (!isWorkloadProvider(workload)) throw new Error('workload cap missing')
+    expect((await workload.getOptions({ deviceId: 7 })).supportsRestart).toBe(false)
+    expect(isRestartableWorkload(workload)).toBe(false)
   })
 
   it('the infra Container spawns its features as children linked to it, each following the integration', () => {

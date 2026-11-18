@@ -74,3 +74,25 @@ export class UnifiApiError extends Error {
     this.status = status
   }
 }
+
+/** A console action asked of a controller this addon is not connected to — a refusal, not a retry. */
+export class UnifiControllerNotConnectedError extends Error {
+  readonly integrationId: string
+  constructor(integrationId: string) {
+    super('unifi: the controller is not connected, so the console cannot restart')
+    this.name = 'UnifiControllerNotConnectedError'
+    this.integrationId = integrationId
+  }
+}
+
+/** A device-scoped call that reached a device other than the one it names. */
+export class UnifiDeviceMismatchError extends Error {
+  readonly expected: number
+  readonly received: number
+  constructor(expected: number, received: number) {
+    super(`unifi: deviceId mismatch, expected ${expected}, got ${received}`)
+    this.name = 'UnifiDeviceMismatchError'
+    this.expected = expected
+    this.received = received
+  }
+}

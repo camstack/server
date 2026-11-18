@@ -71,9 +71,9 @@ const UNIFI_MIGRATIONS_DATE = '2026-11-05'
  * the integration's status.
  *
  * Discovery offers each infra device (a {@link DeviceType.Workload} host, fanning per-port PoE,
- * restart and sensors out as accessory children; a console also serves `reboot` and is the Host
- * the integration talks to — there is no Gateway, D1064) and each network client
- * ({@link DeviceType.Presence}), all as siblings. Cameras are not in scope.
+ * restart and sensors out as accessory children; a console's workload also serves `restart`,
+ * and the console is the Host the integration talks to — there is no Gateway, D1064) and each
+ * network client ({@link DeviceType.Presence}), all as siblings. Cameras are not in scope.
  *
  * `instanceMode: multiple` — many controllers may be added. A LAN scan finds a UniFi OS console
  * through the Ubiquiti discovery broadcast (`unifi-lan-discovery.ts`) and offers it as an

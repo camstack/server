@@ -202,9 +202,10 @@ function mapArray(info: ArrayInfo): UnraidArrayInfo {
   return {
     state: info.state,
     capacityKb: {
-      total: num(kb.total) ?? 0,
-      used: num(kb.used) ?? 0,
-      free: num(kb.free) ?? 0,
+      // A figure the API left out stays unknown, never 0 (D393).
+      total: num(kb.total),
+      used: num(kb.used),
+      free: num(kb.free),
     },
     parityCheck:
       parity === null ? null : { running: parity.running === true, progress: parity.progress ?? 0 },

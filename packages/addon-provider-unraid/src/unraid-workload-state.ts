@@ -20,6 +20,7 @@ import type {
   UnraidSnapshot,
   UnraidVmState,
 } from './unraid-client-contract.js'
+import { knownArrayCapacityBytes } from './unraid-array-capacity.js'
 import type { UnraidInstanceStatus } from './unraid-integration-manager.js'
 import type { UnraidWorkloadMatch, UnraidWorkloadRef } from './unraid-discovery.js'
 
@@ -197,9 +198,6 @@ export function answeringSnapshot(reach: UnraidServerReach): UnraidSnapshot | nu
   return reach.kind === 'answering' ? reach.snapshot : null
 }
 
-/** Unraid reports the array capacity in KiB. */
-const KIB = 1024
-
 /**
  * The slice of the server itself: running while it answers the poll, with CPU, temperature
  * and the array's used / total capacity as its disk; `crashed` once it stops answering (the
@@ -210,6 +208,7 @@ export function unraidHostWorkloadStatus(reach: UnraidServerReach, now: number):
   if (reach.kind === 'unknown') return base
   if (reach.kind === 'unreachable') return { ...base, state: 'crashed' }
   const { snapshot } = reach
+  const capacity = knownArrayCapacityBytes(snapshot.array.capacityKb)
   return {
     ...base,
     state: 'running',
@@ -218,9 +217,10 @@ export function unraidHostWorkloadStatus(reach: UnraidServerReach, now: number):
       ...emptyResources(),
       cpuPercent: snapshot.cpu.percent,
       temperature: snapshot.cpu.tempC,
-      // The array's capacity, in KiB on the wire. Uptime and RAM are not read by the client.
-      diskUsedBytes: snapshot.array.capacityKb.used * KIB,
-      diskTotalBytes: snapshot.array.capacityKb.total * KIB,
+      // The array's capacity; unknown when the server did not report it or the array is
+      // stopped (D393). Uptime and RAM are not read by the client.
+      diskUsedBytes: capacity?.used ?? null,
+      diskTotalBytes: capacity?.total ?? null,
     },
   }
 }

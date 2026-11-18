@@ -4,14 +4,29 @@
  * more, so it is retired on restore through the normal device removal, which records the
  * tombstone (D865) — never by its absence from a list.
  */
-import { errMsg, type IScopedLogger, type SavedDevice } from '@camstack/types'
+import { DeviceType, errMsg, type IScopedLogger, type SavedDevice } from '@camstack/types'
 
-/** `unifi:<integrationId>:gateway` exactly; an infra or client id always carries its own prefix. */
-const LEGACY_GATEWAY_STABLE_ID = /^unifi:[^:]+:gateway$/
+/** The Gateway's own native id; a container or VM named "gateway" is `docker:gateway` / `vm:gateway`. */
+const LEGACY_GATEWAY_NATIVE_ID = 'gateway'
+const STABLE_ID_PREFIX = 'unifi:'
+const STABLE_ID_SUFFIX = ':gateway'
 
-/** Is this persisted row the Gateway an older version adopted? */
-export function isLegacyUnifiGatewayRow(row: Pick<SavedDevice, 'stableId'>): boolean {
-  return LEGACY_GATEWAY_STABLE_ID.test(row.stableId)
+/**
+ * Is this persisted row the Gateway an older version adopted? Anchored on the stable id's known
+ * prefix and suffix, so an integration id holding a `:` matches too
+ * (`unifi:<integrationId>:gateway`), and on the row itself: its `nativeId` is `gateway`, or
+ * its type is Gateway (this addon has no Gateway class any more; a config that failed to load
+ * reads as empty).
+ */
+export function isLegacyUnifiGatewayRow(
+  row: Pick<SavedDevice, 'stableId' | 'config' | 'type'>,
+): boolean {
+  return (
+    (row.config['nativeId'] === LEGACY_GATEWAY_NATIVE_ID || row.type === DeviceType.Gateway) &&
+    row.stableId.startsWith(STABLE_ID_PREFIX) &&
+    row.stableId.endsWith(STABLE_ID_SUFFIX) &&
+    row.stableId.length > STABLE_ID_PREFIX.length + STABLE_ID_SUFFIX.length
+  )
 }
 
 /** Inputs of {@link retireLegacyUnifiGatewayRows}. */

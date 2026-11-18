@@ -7,7 +7,6 @@ import {
   DeviceType,
   type IDevice,
   type InferNativeProvider,
-  rebootCapability,
   registerPowerSwitch,
   type WorkloadStatus,
   workloadCapability,
@@ -22,7 +21,9 @@ import {
   featureSuffix,
   roleForDescriptor,
 } from '../unifi-mapping.js'
+import { UnifiControllerNotConnectedError, UnifiDeviceMismatchError } from '../unifi-errors.js'
 import {
+  UNIFI_CONSOLE_WORKLOAD_OPTIONS,
   UNIFI_HOST_WORKLOAD_OPTIONS,
   UNIFI_HOST_WORKLOAD_UNKNOWN,
   unifiHostWorkloadStatus,
@@ -37,8 +38,8 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
  * Flex-Mini switch, …) as the device type its adoption stamped: a `workload` host (D1056)
  * that serves the `workload` cap from the live snapshot and EXPOSES its features; one adopted
  * as a Container before that stays a Container without the cap. A console (UDM, UCG, …) is
- * the Host the integration talks to (D1064 — there is no Gateway): it also serves `reboot`
- * through the controller's `restartDevice`. A top-level SIBLING of the controller's other
+ * the Host the integration talks to (D1064 — there is no Gateway): its `workload` also serves
+ * `restart`, through the controller's `restartDevice`. A top-level SIBLING of the controller's other
  * devices; its integration owns the connection. It
  * declares `getAccessoryChildren()` so the kernel auto-spawns
  * one {@link UnifiFeatureDevice} per descriptor in the LIVE `features[]` config
@@ -53,11 +54,11 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
  *   - cpu_utilization / cpu_temperature / clients / state / uptime Sensor children.
  */
 export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
-  readonly features: readonly DeviceFeature[]
+  readonly features: readonly DeviceFeature[] = [DeviceFeature.Resyncable]
 
   private readonly integrationId: string
   private readonly infraNativeId: string
-  /** A UniFi OS console, read from its persisted model: the Host that reboots. */
+  /** A UniFi OS console, read from its persisted model: the Host the controller can restart. */
   private readonly isConsole: boolean
   private snapshotUnsub: (() => void) | null = null
   /** The last identity declaration sent, so an unchanged poll sends nothing. */
@@ -75,10 +76,6 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     this.integrationId = cfg.integrationId
     this.infraNativeId = cfg.infraNativeId
     this.isConsole = cfg.model !== undefined && isUnifiConsoleModel(cfg.model)
-    this.features =
-      this.isConsole && this.type === DeviceType.Workload
-        ? [DeviceFeature.Resyncable, DeviceFeature.Rebootable]
-        : [DeviceFeature.Resyncable]
     registerUnifiAdminLink(ctx, this.id, { integrationId: this.integrationId })
     this.online = unifiControllers.getInfra(this.integrationId, this.infraNativeId)?.online ?? false
     void this.updateSourceInfo({
@@ -97,49 +94,41 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     // The cap is gated to `workload` devices; a legacy Container keeps none.
     if (this.type !== DeviceType.Workload) return
     const provider: InferNativeProvider<typeof workloadCapability> = {
-      getOptions: async () => UNIFI_HOST_WORKLOAD_OPTIONS,
+      getOptions: async () =>
+        this.isConsole ? UNIFI_CONSOLE_WORKLOAD_OPTIONS : UNIFI_HOST_WORKLOAD_OPTIONS,
       getStatus: async () =>
         this.runtimeState.getCapState<WorkloadStatus>(workloadCapability.name) ??
         UNIFI_HOST_WORKLOAD_UNKNOWN,
+      ...(this.isConsole
+        ? {
+            restart: async ({ deviceId }: { readonly deviceId: number }) =>
+              this.restartConsole(deviceId),
+          }
+        : {}),
     }
     this.ctx.registerNativeCap(workloadCapability, provider)
-    // No start / stop is served, so the helper registers no switch (no fake control).
+    // No start / stop is served (a console's restart is not power), so no switch is registered.
     registerPowerSwitch(this, workloadCapability, provider)
     this.runtimeState.setCapState(workloadCapability.name, UNIFI_HOST_WORKLOAD_UNKNOWN)
     this.recomputeWorkload()
-    if (this.isConsole) this.registerReboot()
   }
 
-  /** The console's reboot: the controller's own `restartDevice` of this device. */
-  private registerReboot(): void {
-    const provider: InferNativeProvider<typeof rebootCapability> = {
-      reboot: async ({ deviceId }) => {
-        if (deviceId !== this.id) {
-          throw new Error(`UniFi reboot: deviceId mismatch, expected ${this.id}, got ${deviceId}`)
-        }
-        const client = unifiControllers.getManager(this.integrationId)?.client ?? null
-        if (client === null) {
-          this.ctx.logger.warn('UniFi console reboot refused: the controller is not connected', {
-            tags: { deviceId: this.id },
-            meta: {
-              integrationId: this.integrationId,
-              infraId: this.infraNativeId,
-            },
-          })
-          throw new Error('The UniFi controller is not connected, so the console cannot reboot.')
-        }
-        await client.restartDevice(this.infraNativeId)
-        this.ctx.logger.info('UniFi console reboot requested', {
-          tags: { deviceId: this.id },
-          meta: {
-            integrationId: this.integrationId,
-            infraId: this.infraNativeId,
-          },
-        })
-        return { success: true }
-      },
+  /** The console's restart: the controller's own `restartDevice` of this device. */
+  private async restartConsole(deviceId: number): Promise<void> {
+    if (deviceId !== this.id) throw new UnifiDeviceMismatchError(this.id, deviceId)
+    const client = unifiControllers.getManager(this.integrationId)?.client ?? null
+    if (client === null) {
+      this.ctx.logger.warn('UniFi console restart refused: the controller is not connected', {
+        tags: { deviceId: this.id },
+        meta: { integrationId: this.integrationId, infraId: this.infraNativeId },
+      })
+      throw new UnifiControllerNotConnectedError(this.integrationId)
     }
-    this.ctx.registerNativeCap(rebootCapability, provider)
+    await client.restartDevice(this.infraNativeId)
+    this.ctx.logger.info('UniFi console restart requested', {
+      tags: { deviceId: this.id },
+      meta: { integrationId: this.integrationId, infraId: this.infraNativeId },
+    })
   }
 
   override async removeDevice(): Promise<void> {

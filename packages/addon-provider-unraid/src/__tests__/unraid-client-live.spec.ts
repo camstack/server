@@ -167,6 +167,24 @@ describe('createLiveUnraidClient', () => {
     expect(info.disks[2]?.healthy).toBe(false)
   })
 
+  it('keeps a capacity the API did not report unknown, never 0 (D393)', async () => {
+    const api = fakeApi()
+    const info = await createLiveUnraidClient({
+      ...api,
+      array: {
+        ...api.array,
+        get: async () => ({
+          ...arrayInfo(),
+          capacity: {
+            kilobytes: { total: '', used: '', free: '' },
+            disks: { total: '0', used: '0', free: '0' },
+          },
+        }),
+      },
+    }).array.get()
+    expect(info.capacityKb).toEqual({ total: null, used: null, free: null })
+  })
+
   it('maps docker with stats, stripping the leading slash', async () => {
     const list = await createLiveUnraidClient(fakeApi()).docker.list()
     expect(list).toEqual([

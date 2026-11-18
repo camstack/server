@@ -6,6 +6,7 @@ import {
   type ReadingQuantity,
   StoredDeviceTypeSchema,
 } from '@camstack/types'
+import { knownArrayCapacityBytes } from './unraid-array-capacity.js'
 import type { UnraidArrayDiskInfo, UnraidSnapshot } from './unraid-client-contract.js'
 
 /**
@@ -174,18 +175,13 @@ function pct(value: number | null): number | null {
   return Math.max(0, Math.min(100, value))
 }
 
-/** A byte count. Negative or non-finite input is an empty reading, not a guess. */
-function bytes(value: number): number {
-  if (!Number.isFinite(value) || value < 0) return 0
-  return value
-}
-
 /** Array capacity + parity + CPU + notification-count metric descriptors. */
 function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescriptor[] {
   const { array, cpu, notifications } = snapshot
-  const totalKb = array.capacityKb.total
-  const usedKb = array.capacityKb.used
-  const usagePercent = totalKb > 0 ? pct((usedKb / totalKb) * 100) : 0
+  // Unknown (absent, or a stopped array's zero total) is null on every reading, never 0 (D393).
+  const capacity = knownArrayCapacityBytes(array.capacityKb)
+  const usagePercent =
+    capacity === null || capacity.used === null ? null : pct((capacity.used / capacity.total) * 100)
 
   const out: UnraidEntityDescriptor[] = [
     {
@@ -213,7 +209,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Array total',
       role: DeviceRole.NumericSensor,
-      numeric: { value: bytes(totalKb * 1024), quantity: 'information' },
+      numeric: { value: capacity?.total ?? null, quantity: 'information' },
     },
     {
       key: 'array_used',
@@ -222,7 +218,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Array used',
       role: DeviceRole.NumericSensor,
-      numeric: { value: bytes(usedKb * 1024), quantity: 'information' },
+      numeric: { value: capacity?.used ?? null, quantity: 'information' },
     },
     {
       key: 'array_free',
@@ -231,7 +227,7 @@ function arrayMetricDescriptors(snapshot: UnraidSnapshot): UnraidEntityDescripto
       deviceType: DeviceType.Sensor,
       name: 'Array free',
       role: DeviceRole.NumericSensor,
-      numeric: { value: bytes(array.capacityKb.free * 1024), quantity: 'information' },
+      numeric: { value: capacity?.free ?? null, quantity: 'information' },
     },
     {
       key: 'cpu_usage',
