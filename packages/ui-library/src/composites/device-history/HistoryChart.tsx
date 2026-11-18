@@ -298,12 +298,13 @@ function LinesChart({
       series.map((s) => failure(entryFor(s.key, false))).filter((e): e is string => e !== null),
     ),
   ]
+  const heldUntil = Math.min(window.to, now ?? window.to)
   const defs = useMemo<readonly TimeSeriesDef[]>(() => {
     const out: TimeSeriesDef[] = []
     series.forEach((s, i) => {
       const cur = entryFor(s.key, false)
       const result = cur?.ok ? cur.result : undefined
-      const shaped = linePoints(s, result, window.from)
+      const shaped = linePoints(s, result, window.from, heldUntil)
       const shown = chartUnit.unit !== null && s.unit !== null ? chartUnit.unit : s.unit
       const shownPoints =
         shown !== null && s.unit !== null
@@ -325,7 +326,12 @@ function LinesChart({
         const prev = entryFor(s.key, true)
         const prevResult = prev?.ok ? prev.result : undefined
         if (prevResult) {
-          const prevShaped = linePoints(s, prevResult, window.from - reads.shiftMs)
+          const prevShaped = linePoints(
+            s,
+            prevResult,
+            window.from - reads.shiftMs,
+            heldUntil - reads.shiftMs,
+          )
           const prevPoints =
             shown !== null && s.unit !== null
               ? convertPoints(prevShaped.points, s.unit, shown)
@@ -346,7 +352,18 @@ function LinesChart({
       }
     })
     return out
-  }, [series, entryFor, window.from, compare, reads, labelOf, colorOf, t, chartUnit.unit])
+  }, [
+    series,
+    entryFor,
+    window.from,
+    heldUntil,
+    compare,
+    reads,
+    labelOf,
+    colorOf,
+    t,
+    chartUnit.unit,
+  ])
   const bands = useMemo(
     () => (runs === undefined ? [] : runBands(runs, now ?? window.to, window, t)),
     [runs, now, window, t],

@@ -11599,7 +11599,7 @@
       "kind": "function",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-history/history-model.ts",
-      "summary": "Line points for a gauge or counter. A rolled-up answer carries its min/max (a band). A CAP series is change-only and held, so the window opens on the value in force (`before`); a producer's buckets are not held and an…"
+      "summary": "Line points for a gauge or counter. A rolled-up answer carries its min/max (a band). A CAP series is change-only and held, so the window opens on the value in force (`before`) and its last known sample is carried forw…"
     },
     {
       "name": "LIST_ROW",

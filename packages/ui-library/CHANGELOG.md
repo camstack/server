@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A device's history shows every chart stacked and always visible; the collapsible Single charts group is gone
+- Device history charts hold the last known value as a flat line up to now, and an opened history keeps room for the stacked charts
 
 ## [1.2.470] - 2026-11-18
 

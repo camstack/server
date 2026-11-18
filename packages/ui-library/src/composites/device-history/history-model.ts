@@ -303,13 +303,16 @@ function levelOf(p: DeviceHistoryQueryPoint, kind: DeviceHistorySeriesInfo['kind
 /**
  * Line points for a gauge or counter. A rolled-up answer carries its
  * min/max (a band). A CAP series is change-only and held, so the window
- * opens on the value in force (`before`); a producer's buckets are not held
- * and an absent bucket is a hole.
+ * opens on the value in force (`before`) and its last known sample is carried
+ * forward to `until` (the window end, capped at the present by the caller), so
+ * a value stable for a long time is a flat line, not one dot. A producer's
+ * buckets are not held and an absent bucket is a hole: nothing is invented.
  */
 export function linePoints(
   info: DeviceHistorySeriesInfo,
   result: DeviceHistoryQueryResult | undefined,
   from: number,
+  until?: number,
 ): {
   readonly points: readonly TimePoint[]
   readonly gapMs: number | undefined
@@ -325,6 +328,10 @@ export function linePoints(
   }))
   if (held && s?.before && s.before.value !== null && (points[0]?.t ?? Infinity) > from) {
     points.unshift({ t: from, v: s.before.value })
+  }
+  const last = points[points.length - 1]
+  if (held && until !== undefined && last !== undefined && last.v !== null && last.t < until) {
+    points.push({ t: until, v: last.v })
   }
   const gapMs =
     held || result === undefined

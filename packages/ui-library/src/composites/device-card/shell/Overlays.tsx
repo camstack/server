@@ -42,6 +42,8 @@ interface ShellProps {
   readonly title: ReactNode
   /** Pinned under the bar (the section switch). */
   readonly pinned?: ReactNode
+  /** The overlay needs more room than the scene it replaced (stacked charts). */
+  readonly roomy?: boolean
   readonly children: ReactNode
 }
 
@@ -51,7 +53,14 @@ interface ShellProps {
  * detail it replaced, or fills the host's height, so swapping views never
  * moves the page.
  */
-function OverlayShell({ testId, onBack, title, pinned, children }: ShellProps): ReactElement {
+function OverlayShell({
+  testId,
+  onBack,
+  title,
+  pinned,
+  roomy = false,
+  children,
+}: ShellProps): ReactElement {
   const box = useOverlayBox()
   const locked = !box.fill && box.height !== null && box.height > 0
   return (
@@ -61,6 +70,10 @@ function OverlayShell({ testId, onBack, title, pinned, children }: ShellProps): 
       className={cn(
         'flex min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-background-elevated',
         box.fill && 'flex-1',
+        // History only: the scene's measured height is a floor, not the box,
+        // because stacked charts need room. Capped at 60% of the viewport so a
+        // phone keeps it. Every other overlay keeps the locked height.
+        roomy && !box.fill && 'min-h-[min(28rem,60dvh)]',
       )}
       {...(locked ? { style: { height: box.height ?? undefined } } : {})}
     >
@@ -122,6 +135,7 @@ function HistoryPanes({
   return (
     <OverlayShell
       testId="dc-history"
+      roomy
       onBack={onBack}
       title={
         <>

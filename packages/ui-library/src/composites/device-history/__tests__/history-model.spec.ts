@@ -229,6 +229,41 @@ describe('linePoints', () => {
     })
   })
 
+  it('carries the last sample forward to the window end, flat', () => {
+    const r = result('raw', [{ t: 2 * H, last: 21 }])
+    const out = linePoints(info('cap:x.y'), r, 0, 10 * H)
+    expect(out.points.map((p) => [p.t, p.v])).toEqual([
+      [2 * H, 21],
+      [10 * H, 21],
+    ])
+  })
+
+  it('draws a series with one sample and a value before the window from the window start to the end', () => {
+    const r = result('raw', [], { t: -H, value: 19, state: null })
+    const out = linePoints(info('cap:x.y'), r, 0, 10 * H)
+    expect(out.points.map((p) => [p.t, p.v])).toEqual([
+      [0, 19],
+      [10 * H, 19],
+    ])
+  })
+
+  it('holds a previous-period read to its own shifted end', () => {
+    const shift = 24 * H
+    const r = result('raw', [{ t: -shift + 2 * H, last: 7 }])
+    const out = linePoints(info('cap:x.y'), r, -shift, 10 * H - shift)
+    expect(out.points.map((p) => [p.t, p.v])).toEqual([
+      [-shift + 2 * H, 7],
+      [10 * H - shift, 7],
+    ])
+  })
+
+  it('never holds past the end, and never holds a producer series across a hole', () => {
+    const r = result('raw', [{ t: 5 * H, last: 21 }])
+    expect(linePoints(info('cap:x.y'), r, 0, 5 * H).points).toHaveLength(1)
+    const p = result('5m', [{ t: 0, mean: 2 }])
+    expect(linePoints(info('addon:a/b'), p, 0, 10 * H).points).toHaveLength(1)
+  })
+
   it('answers no point (never a zero) when the read has nothing', () => {
     expect(linePoints(info('cap:x.y'), undefined, 0).points).toEqual([])
   })

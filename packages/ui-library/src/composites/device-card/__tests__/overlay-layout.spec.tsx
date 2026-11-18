@@ -84,6 +84,35 @@ describe('overlay layout', () => {
     expect((overlay as HTMLElement).style.height).toBe('321px')
   })
 
+  it('gives only the history overlay a room floor; another overlay keeps the locked height', () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
+      height: 150,
+      width: 300,
+      top: 0,
+      left: 0,
+      right: 300,
+      bottom: 150,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    })
+    render(
+      <DeviceCard
+        kind="plug"
+        common={{ ...COMMON, remote: ['power'] }}
+        state={{ label: 'On', since: null, tone: 'primary' }}
+        scene={{ image: <span>scene</span> }}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('dc-remote'))
+    const remote = screen.getByTestId('dc-remote-view') as HTMLElement
+    expect(remote.className).not.toContain('28rem')
+    expect(remote.style.height).toBe('150px')
+    fireEvent.click(screen.getByTestId('dc-back'))
+    openHistory()
+    expect(screen.getByTestId('dc-history').className).toContain('min-h-[min(28rem,60dvh)]')
+  })
+
   it('fills the host height when the host sized the card, with no locked height', () => {
     render(
       <DeviceCardFrameProvider frame="bare" fill>
