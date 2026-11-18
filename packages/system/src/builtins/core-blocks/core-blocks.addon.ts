@@ -101,6 +101,7 @@ import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integ
 import { blocksInstanceRecordKinds, buildBlocksInstances } from './blocks-instances.js'
 import { type BlockTranspiler, compileBlock } from './compile-block.js'
 import { buildCompositionApi, type CompositionApi } from './composition-api.js'
+import { LinkContributionReconciler } from './link-contributions.js'
 import { writeComposedDeviceName } from './sync-composed-device-name.js'
 import { describeCompositionSources } from './composition-sources.js'
 import { CoreBlockStore } from './core-block-store.js'
@@ -158,6 +159,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private powerSource: PowerSourceService | null = null
   /** The timed-run provider (D993); its deadline timer is cancelled on shutdown. */
   private timedRun: TimedRunService | null = null
+  /** ONE composition API per process: its write queue is what keeps two saves from judging each other stale. */
+  private compositionApi: CompositionApi | null = null
   private disposed = false
   /** Seeds the lock door gate from the hub mirror; run at startup and when a composition changes. */
   private seedLockDoorGate: () => void = () => undefined
@@ -276,6 +279,7 @@ export class CoreBlocksAddon extends BaseAddon {
 
     this.supervisor = this.buildSupervisor()
     this.supervisor?.start(CONVERGE_INTERVAL_MS)
+    this.armLinkContributions()
 
     this.ctx.logger.info('core-blocks ready', {
       meta: {
@@ -1020,8 +1024,63 @@ export class CoreBlocksAddon extends BaseAddon {
 
       ...this.requireActions().runsApi,
 
-      ...this.buildCompositionApi(),
+      ...this.sharedCompositionApi(),
     }
+  }
+
+  private sharedCompositionApi(): CompositionApi {
+    this.compositionApi ??= this.buildCompositionApi()
+    return this.compositionApi
+  }
+
+  /**
+   * The Customize features identity links contribute (D1063). A pass runs on
+   * every `identity-link.created` / `.lost`, once now, and — until a pass has
+   * read the links (device-manager answers only once it has booted) — on each
+   * device registration. No timer.
+   */
+  private armLinkContributions(): void {
+    const requireApi = (): AddonApi => {
+      const api = this.ctx.api
+      if (!api)
+        throw new Error('core-blocks: no ctx.api on this node — identity links cannot be read')
+      return api
+    }
+    const compositions = this.sharedCompositionApi()
+    const store = this.requireStore()
+    const caller = { userId: 'identity-links', isAdmin: true }
+    const links = new LinkContributionReconciler({
+      listLinks: () => requireApi().deviceManager.listIdentityLinks.query({}),
+      boundCaps: async (deviceId) =>
+        (await requireApi().deviceManager.getBindings.query({ deviceId })).entries.map(
+          (e) => e.capName,
+        ),
+      blocks: () => (store.isLoaded() ? store.list() : null),
+      create: async (host, features) => {
+        await compositions.createComposition({
+          block: {
+            enabled: true,
+            composition: { target: { kind: 'existing', device: host }, features: [...features] },
+          },
+          caller,
+        })
+      },
+      update: async (block, composition) => {
+        await compositions.updateComposition({
+          blockId: block.id,
+          expectedUpdatedAt: block.updatedAt,
+          block: { composition },
+          caller,
+        })
+      },
+      logger: this.ctx.logger.child('identity-links'),
+    })
+    this.subscribe({ category: EventCategory.IdentityLinkCreated }, () => links.requestPass())
+    this.subscribe({ category: EventCategory.IdentityLinkLost }, () => links.requestPass())
+    this.subscribe({ category: EventCategory.DeviceRegistered }, () => {
+      if (!links.hasAnswered()) links.requestPass()
+    })
+    links.requestPass()
   }
 
   /**
