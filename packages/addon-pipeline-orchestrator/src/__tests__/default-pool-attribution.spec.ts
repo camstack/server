@@ -2,9 +2,10 @@
  * The load census credits a single-device node's default-pool sessions to its
  * one eligible device.
  *
- * With exactly one eligible device the balancer leaves `deviceKey` unset
- * (`single-eligible-device`) and the runner's default pool serves the camera —
- * the default pool IS that device (D745). The runner counts per-device sessions
+ * A session that reached the runner's default pool with no `deviceKey` (the
+ * balancer now elects a sole eligible device, `sole-eligible`, but a pin
+ * fallback or an older session still lands there) is served by the node's only
+ * eligible device — the default pool IS that device (D745). The runner counts per-device sessions
  * by `deviceKey`, so it reported `devices: []` and Load balancing → Node load
  * showed the Mac "1/1 attached" but "0 sessions" on its only accelerator.
  */

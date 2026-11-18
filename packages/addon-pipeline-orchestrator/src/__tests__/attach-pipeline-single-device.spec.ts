@@ -1,8 +1,8 @@
 /**
  * A node with exactly ONE eligible accelerator (a Mac's `coreml:all`, an N100
- * with only `openvino:gpu` on) is never given a `deviceKey`: the balancer
- * returns `single-eligible-device` and the runner's default pool serves the
- * camera — the default pool IS that device. Its provisioning must therefore be
+ * with only `openvino:gpu` on) whose attach carries no `deviceKey` (a default-pool
+ * dispatch; the balancer itself now elects a sole device, `sole-eligible`) is
+ * served by the runner's default pool — the default pool IS that device. Its provisioning must therefore be
  * that device's: the node-level model pin and the camera's override stored
  * under that deviceKey. Before D745 the attach read the provisioning of the
  * empty key `''`, which no store ever writes, so a model picked for the Mac's
@@ -44,7 +44,7 @@ function rootModel(outcome: AttachPipelineOutcome): string | undefined {
   return outcome.pipeline.steps.find((s) => s.addonId === 'object-detection')?.modelId
 }
 
-describe('attach on a single-eligible-device node (default pool)', () => {
+describe('attach with no deviceKey on a one-eligible-device node (default pool)', () => {
   it("runs the model pinned on the node's only device", async () => {
     const { store } = makeRealStore(GPU_ONLY_CATALOG)
     await store.writeAgentSettings(NODE, {

@@ -4,9 +4,10 @@
  * The runner counts `RunnerLocalLoad.devices` by each attached camera's
  * `deviceKey`. A camera dispatched with NO `deviceKey` runs on the runner's
  * default pool and is counted against no device. When the node has exactly one
- * eligible device, the balancer leaves `deviceKey` unset on purpose
- * (`single-eligible-device`) and the default pool IS that device — the same
- * equivalence the attach applies to provisioning (D745). So those sessions are
+ * eligible device the default pool IS that device — the same equivalence the
+ * attach applies to provisioning (D745). The balancer elects a sole eligible
+ * device (`sole-eligible`), so this covers sessions that reached the default
+ * pool without a `deviceKey` (and ones started before that election). Those are
  * that device's sessions, and the report says so.
  *
  * With several eligible devices (a default pool reached through

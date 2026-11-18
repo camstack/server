@@ -5950,7 +5950,8 @@ export default class PipelineRunnerAddon
           steps: dispatchSteps.map((s) => s.addonId).join(','),
           // ALWAYS present, so the line can be grouped by inference device.
           // `null` is the truth for a session with no elected selector (a
-          // single-eligible-device node) — the executor used the node's
+          // default-pool dispatch: `pin-unplaceable` / `all-devices-at-cap`;
+          // a sole eligible device IS elected, `sole-eligible`) — the executor used the node's
           // DEFAULT pool, whose identity rides the error message itself
           // (`… on <runtime>:<device> …`, stamped by the pool's rejection).
           deviceKey: camConfig?.deviceKey ?? null,

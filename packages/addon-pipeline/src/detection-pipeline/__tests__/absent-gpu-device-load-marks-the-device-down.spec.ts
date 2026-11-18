@@ -8,7 +8,6 @@
 import type { IScopedLogger, PipelineDefaultStep, PoolModelConfig } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { EngineFactory } from '../engine/engine-factory.js'
-import { MODEL_LOAD_BACKOFF_INITIAL_MS } from '../engine/model-load-governor.js'
 import { PipelineModelManager, type PoolModelSource } from '../engine/pipeline-model-manager.js'
 import { PoolModelLoadError, SharedInferencePool } from '../engine/shared-inference-pool.js'
 import { DetectionPipelineProvider } from '../provider.js'
@@ -54,7 +53,6 @@ function step(addonId: string, modelId: string): PipelineDefaultStep {
 }
 
 const FACE = step('face-detection', 'yunet-2023mar')
-const OBJECTS = step('object-detection', 'yolo26n')
 
 const SOURCE: PoolModelSource = {
   buildConfig: (_stepId, modelId): PoolModelConfig => ({
@@ -96,13 +94,6 @@ function makePool(log: IScopedLogger, deviceKey: string): Pool {
     },
   }
 }
-
-const compileTimeout = (): PoolModelLoadError =>
-  new PoolModelLoadError(
-    'Failed to load model at index 0: compile-timeout: did not return within 120000ms',
-    'compile-timeout',
-    'camstack-yunet-2023mar',
-  )
 
 function makeProvider(lines: LoggedLine[]): DetectionPipelineProvider {
   const provider = new DetectionPipelineProvider(

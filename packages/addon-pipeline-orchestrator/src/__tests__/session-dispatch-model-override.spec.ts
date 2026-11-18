@@ -168,10 +168,10 @@ describe('dispatchDetectionSession — per-device model override', () => {
     expect(steps.find((s) => s.addonId === 'clip-embedding')?.modelId).toBeUndefined()
   })
 
-  it('a default-pool dispatch (no elected deviceKey) still attaches the node step SETTINGS', async () => {
+  it('a sole-eligible-device dispatch still attaches the node step SETTINGS', async () => {
     // 2026-08-21 sheep incident, second leg: a single-eligible-device node
-    // (`pickInferenceDevice` → default-pool, `deviceKey` unset — the macmini
-    // shape) used to skip the per-(node,device) base entirely, so the
+    // (the macmini shape; `pickInferenceDevice` then left `deviceKey` unset and
+    // the session ran on the default pool, now it elects `sole-eligible`) used to skip the per-(node,device) base entirely, so the
     // animal-classifier species allow-list stored on that node never reached
     // the session even though the node's only accelerator carried the copy.
     harness = makeHarness(

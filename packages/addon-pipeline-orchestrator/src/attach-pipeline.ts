@@ -163,9 +163,10 @@ function rootRefusal(
 /**
  * Whose provisioning an attach applies. The elected device when there is one.
  * With NO elected device the runner's default pool serves the camera; when the
- * node has exactly one eligible device the balancer returns
- * `single-eligible-device` and that default pool IS that device (a Mac's
- * `coreml:all`, an N100 with only its iGPU on), so its model pin and the
+ * node has exactly one eligible device (a Mac's `coreml:all`, an N100 with only
+ * its iGPU on) that default pool IS that device. The balancer now elects such a
+ * device itself (`sole-eligible`), so this branch serves a default-pool
+ * dispatch on a one-device node; its model pin and the
  * camera's override stored under its key apply (D745 — before, the empty key
  * was read, which no store writes, and the pin was silently never run).
  * Otherwise `''`: the node's folded settings with no hardware fields.

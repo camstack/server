@@ -7,10 +7,10 @@ import { EventEmitter } from 'node:events'
  * The pool's own timeout log line carries `runtime` + `device` in meta — but
  * the ERROR it rejects with travels up through every consumer that embeds
  * the message, and the runner only stamps a `deviceKey` field when the
- * SESSION had an elected one. A single-eligible-device node (the Mac's
- * coreml, an agent's lone iGPU) elects nothing
- * (`chosen=null reason=single-eligible-device`), so its timeout lines
- * carried `nodeId` and `steps` but no inference device at all — 46 of 1096
+ * SESSION had an elected one. A session dispatched to the runner's default
+ * pool (`chosen=null`, e.g. `pin-unplaceable` / `all-devices-at-cap`; before
+ * `sole-eligible` a node's lone coreml or iGPU was one too) elects nothing, so
+ * its timeout lines carried `nodeId` and `steps` but no inference device at all — 46 of 1096
  * lines in the 2026-09-04 storm could not be grouped by the one dimension
  * the question is asked in ("which accelerator is timing out?").
  *
