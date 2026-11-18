@@ -100,6 +100,38 @@ describe('applyDeviceSettingsPatch — new prefixes', () => {
     expect(internal?.derivedStreams?.['web-720p']?.encodeProfile).toEqual(profile)
   })
 
+  it('derivedProfile:<name> = null clears the stored profile and keeps the rest of the entry', async () => {
+    await manager.applyDeviceSettingsPatch({
+      deviceId: 1,
+      patch: { derivedStreamNames: ['web-720p'] },
+    })
+    await manager.applyDeviceSettingsPatch({
+      deviceId: 1,
+      patch: {
+        'derivedSource:web-720p': 'native:main',
+        'derivedProfile:web-720p': {
+          video: { codec: 'h264' as const, height: 720 },
+          audio: 'passthrough' as const,
+        },
+      },
+    })
+    await manager.applyDeviceSettingsPatch({
+      deviceId: 1,
+      patch: { 'derivedProfile:web-720p': null },
+    })
+    const entry = (
+      manager as unknown as {
+        deviceOverrides: Map<
+          number,
+          { derivedStreams?: Record<string, { source?: unknown; encodeProfile?: unknown }> }
+        >
+      }
+    ).deviceOverrides.get(1)?.derivedStreams?.['web-720p']
+    expect(entry).toBeDefined()
+    expect(entry?.encodeProfile).toBeUndefined()
+    expect(entry?.source).toEqual({ kind: 'camStream', camStreamId: 'native:main' })
+  })
+
   it('removing a name from derivedStreamNames deletes the entry', async () => {
     await manager.applyDeviceSettingsPatch({
       deviceId: 1,

@@ -27,6 +27,7 @@ import {
   withAudioCodec,
   withFps,
   withHeight,
+  withCodecSection,
   withVideoCodec,
   withVideoField,
 } from './encode-sections.js'
@@ -445,18 +446,17 @@ export function FfmpegParamsCore({
   // operator just switched on that has no value yet (a Resize with no height)
   // stays on here without touching the profile.
   const [on, setOn] = useState<SectionState>(() => sectionsOf(value))
-  // A stream that stored nothing and is back to passthrough stores nothing.
-  const neverStored = useRef(value === undefined)
-  const commit = (next: EncodeProfile): void => {
-    onSave(profileToSave(next, neverStored.current))
+  // Passthrough is no profile: back at passthrough, the stored one is cleared.
+  const commit = (next: EncodeProfile, codecOn: boolean = on.codec): void => {
+    onSave(profileToSave(withCodecSection(next, codecOn)))
   }
   const toggleSection = (id: SectionId, next: boolean): void => {
     setOn((prev) => ({ ...prev, [id]: next }))
     const stored = sectionsOf(value)
     if (id === 'resize' && !next && stored.resize) commit(withHeight(value, undefined))
     else if (id === 'fps' && !next && stored.fps) commit(withFps(value, undefined))
-    else if (id === 'codec' && next) commit(withVideoCodec(value, 'h264'))
-    else if (id === 'codec' && !next && stored.codec) commit(withVideoCodec(value, null))
+    else if (id === 'codec' && next) commit(withVideoCodec(value, 'h264'), true)
+    else if (id === 'codec' && !next && stored.codec) commit(withVideoCodec(value, null), false)
     else if (id === 'audio' && next) commit(withAudioCodec(value, 'aac'))
     else if (id === 'audio' && !next && stored.audio) commit(withAudioCodec(value, null))
   }
@@ -630,7 +630,7 @@ export function FfmpegParamsCore({
                   value={videoCodecChoiceOf(value)}
                   onChange={(e) => {
                     const choice = parseVideoCodecChoice(e.target.value)
-                    if (choice !== undefined) commit(withVideoCodec(value, choice))
+                    if (choice !== undefined) commit(withVideoCodec(value, choice), true)
                   }}
                   className="min-w-[120px]"
                 >

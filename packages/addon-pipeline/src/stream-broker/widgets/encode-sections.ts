@@ -57,7 +57,12 @@ export function sectionsOf(profile: EncodeProfile | undefined): SectionState {
   const { video, audio } = profile
   return {
     resize: video.height !== undefined,
-    codec: video.codec === 'h264' || video.codec === 'h265',
+    // `source` is a real re-encode in the source codec. When a resize or a
+    // frame rate already implies it, those sections say so and this one stays off.
+    codec:
+      video.codec === 'h264' ||
+      video.codec === 'h265' ||
+      (video.codec === 'source' && !drivesReEncode(video)),
     fps: video.fps !== undefined,
     audio: audio !== 'passthrough' && audio.codec !== 'copy',
   }
@@ -199,12 +204,19 @@ export function isPassthrough(profile: EncodeProfile): boolean {
 }
 
 /**
- * What an edit saves. A stream that never stored a profile and is back to
- * passthrough saves `undefined` (nothing stored), not an explicit copy profile.
+ * A Video codec section that is ON never lets the profile fall back to `copy`:
+ * "Keep source" is a real re-encode in the source codec, so it stays `source`
+ * even when no resize or frame rate is left to imply it.
  */
-export function profileToSave(
-  next: EncodeProfile,
-  neverStored: boolean,
-): EncodeProfile | undefined {
-  return neverStored && isPassthrough(next) ? undefined : next
+export function withCodecSection(profile: EncodeProfile, codecOn: boolean): EncodeProfile {
+  if (!codecOn || profile.video.codec !== 'copy') return profile
+  return { ...profile, video: { ...profile.video, codec: 'source' } }
+}
+
+/**
+ * What an edit saves. Passthrough is no profile: a stream back at passthrough
+ * saves `undefined` (the writer clears the stored one), never an explicit copy profile.
+ */
+export function profileToSave(next: EncodeProfile): EncodeProfile | undefined {
+  return isPassthrough(next) ? undefined : next
 }

@@ -7360,6 +7360,18 @@ export class StreamBrokerManager {
         overrideDirty = true
         derivedDirty = true
         const next = { ...nextOverride.derivedStreams }
+        // `null` is the editor's "every transform off": passthrough is no
+        // profile, so the stored one is dropped (the cap field is optional).
+        if (value === null) {
+          const current = next[name]
+          if (current !== undefined) {
+            const { encodeProfile: cleared, ...withoutProfile } = current
+            void cleared
+            next[name] = withoutProfile
+            nextOverride.derivedStreams = next
+          }
+          continue
+        }
         if (!next[name]) {
           next[name] = {
             encodeProfile: {

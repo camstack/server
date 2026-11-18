@@ -85,6 +85,12 @@ describe('opening never saves, and switches on exactly the sections the profile 
         ['Resize'],
       ],
       ['codec only', { video: { codec: 'h265' }, audio: 'passthrough' }, ['Video codec']],
+      ['source codec only', { video: { codec: 'source' }, audio: 'passthrough' }, ['Video codec']],
+      [
+        'tuning fields only',
+        { video: { codec: 'h264', level: '3.1', tune: 'film', bf: 2 }, audio: 'passthrough' },
+        ['Video codec'],
+      ],
       ['audio none', { video: { codec: 'copy' }, audio: { codec: 'none' } }, ['Audio']],
       ['fps', { video: { codec: 'source', fps: 10 }, audio: 'passthrough' }, ['Frame rate']],
       [
@@ -221,13 +227,50 @@ describe('sections combine', () => {
     expect(lastSaved(onSave)).toBeUndefined()
   })
 
-  it('every section off on a stored stream saves the explicit passthrough profile', () => {
+  it('every section off on a stored stream saves undefined too: passthrough is no profile', () => {
     const onSave = vi.fn()
     render(
       <Stateful initial={{ video: { codec: 'h264' }, audio: 'passthrough' }} onSave={onSave} />,
     )
     fireEvent.click(switchFor(/^video codec$/i))
-    expect(lastSaved(onSave)).toEqual({ video: { codec: 'copy' }, audio: 'passthrough' })
+    expect(onSave).toHaveBeenCalledTimes(1)
+    expect(lastSaved(onSave)).toBeUndefined()
+  })
+
+  it('a stored source codec opens with Keep source on and survives the next edit', () => {
+    const onSave = vi.fn()
+    render(
+      <Stateful initial={{ video: { codec: 'source' }, audio: 'passthrough' }} onSave={onSave} />,
+    )
+    expect(switchFor(/^video codec$/i)).toHaveAttribute('aria-checked', 'true')
+    fireEvent.click(switchFor(/^audio$/i))
+    expect(lastSaved(onSave)).toEqual({ video: { codec: 'source' }, audio: { codec: 'aac' } })
+  })
+
+  it('picking Keep source with nothing else on saves a source re-encode, not a copy', () => {
+    const onSave = vi.fn()
+    render(<Stateful initial={undefined} onSave={onSave} />)
+    fireEvent.click(switchFor(/^video codec$/i))
+    selectOption(selectTrigger('video-codec'), 'source')
+    expect(lastSaved(onSave)).toEqual({ video: { codec: 'source' }, audio: 'passthrough' })
+  })
+
+  const tuned: ReadonlyArray<readonly [string, EncodeProfile['video']]> = [
+    ['profile', { codec: 'h264', profile: 'baseline' }],
+    ['level', { codec: 'h264', level: '3.1' }],
+    ['preset', { codec: 'h264', preset: 'veryfast' }],
+    ['tune', { codec: 'h264', tune: 'zerolatency' }],
+    ['bf', { codec: 'h264', bf: 0 }],
+  ]
+  it.each(tuned)('a stored %s survives opening and a height edit', (_name, video) => {
+    const onSave = vi.fn()
+    render(<Stateful initial={{ video, audio: 'passthrough' }} onSave={onSave} />)
+    expect(onSave).not.toHaveBeenCalled()
+    fireEvent.click(switchFor(/^resize$/i))
+    const height = screen.getByLabelText(/^output height$/i)
+    fireEvent.change(height, { target: { value: '480' } })
+    fireEvent.blur(height)
+    expect(lastSaved(onSave)).toEqual({ video: { ...video, height: 480 }, audio: 'passthrough' })
   })
 })
 
