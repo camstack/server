@@ -41,6 +41,7 @@ import type {
   RunnerLocalLoad,
 } from '@camstack/types'
 import { errMsg, nodePin } from '@camstack/types'
+import { isDeepStrictEqual } from 'node:util'
 import type { AgentLoadService } from './agent-load-service.js'
 import {
   type AttachPipelineOutcome,
@@ -1288,10 +1289,10 @@ export class PlacementService {
    * A step switch changed (D1065): re-resolve the attach pipeline of every
    * placed camera — on `nodeId`, or on every node when `null` (a cluster
    * switch) — on the device it is already elected onto, through the one owner
-   * of an attach's steps ({@link resolveAttachPipelineOnDevice}), and re-attach
-   * it. A replayed cached config would keep the old steps and roster. One
-   * camera's failure is logged and does not stop the sweep; a refused root
-   * keeps the live attach.
+   * of an attach's steps ({@link resolveAttachPipelineOnDevice}). Only a camera
+   * whose resolved steps, audio, device or roster DIFFERS from its cached
+   * attach is re-attached; the rest are left running untouched. One camera's failure is
+   * logged and does not stop the sweep; a refused root keeps the live attach.
    */
   async reattachForStepSwitch(nodeId: string | null, reason: string): Promise<void> {
     const affected: { readonly deviceId: number; readonly nodeId: string }[] = []
@@ -1301,13 +1302,20 @@ export class PlacementService {
       }
     }
     if (affected.length === 0) return
-    this.deps.ctx().logger.info('step switch changed — re-resolving placed cameras', {
-      ...(nodeId !== null ? { tags: { nodeId } } : {}),
-      meta: { reason, affected: affected.length },
-    })
+    const logger = this.deps.ctx().logger
+    let changed = 0
+    let unchanged = 0
     for (const target of affected) {
+      const tags = { deviceId: target.deviceId, nodeId: target.nodeId }
       const cached = this.deps.ledger.getConfig(target.deviceId)
-      if (!cached) continue
+      if (!cached) {
+        logger.warn('step switch re-attach skipped — no cached config for a placed camera', {
+          tags,
+          meta: { reason },
+        })
+        unchanged++
+        continue
+      }
       try {
         const outcome = await this.resolveAttachPipelineOnDevice({
           deviceId: target.deviceId,
@@ -1315,30 +1323,38 @@ export class PlacementService {
           deviceKey: cached.deviceKey,
         })
         if (outcome.kind === 'root-refused') {
-          this.deps
-            .ctx()
-            .logger.error(
-              'step switch re-attach refused — the elected device cannot run the camera root',
-              {
-                tags: { deviceId: target.deviceId, nodeId: target.nodeId },
-                meta: {
-                  deviceKey: outcome.deviceKey ?? null,
-                  droppedRoots: outcome.droppedRoots.join(','),
-                },
+          logger.error(
+            'step switch re-attach refused — the elected device cannot run the camera root',
+            {
+              tags,
+              meta: {
+                deviceKey: outcome.deviceKey ?? null,
+                droppedRoots: outcome.droppedRoots.join(','),
               },
-            )
+            },
+          )
+          unchanged++
           continue
         }
         const next = withAttachPipeline(cached, outcome.pipeline)
+        if (sameAttachPipeline(cached, next)) {
+          unchanged++
+          continue
+        }
         this.deps.ledger.setConfig(target.deviceId, next)
         await this.attachOn(target.nodeId, next)
+        changed++
       } catch (err: unknown) {
-        this.deps.ctx().logger.warn('step switch re-attach failed', {
-          tags: { deviceId: target.deviceId, nodeId: target.nodeId },
+        logger.warn('step switch re-attach failed', {
+          tags,
           meta: { reason, error: errMsg(err) },
         })
       }
     }
+    logger.info('step switch changed — re-attached the affected cameras', {
+      ...(nodeId !== null ? { tags: { nodeId } } : {}),
+      meta: { reason, changed, unchanged },
+    })
   }
 
   /**
@@ -1502,4 +1518,14 @@ export class PlacementService {
       meta: { reason },
     })
   }
+}
+
+/** Would re-attaching `next` over `current` change anything the runner acts on? */
+function sameAttachPipeline(current: RunnerCameraConfig, next: RunnerCameraConfig): boolean {
+  return (
+    isDeepStrictEqual(current.steps, next.steps) &&
+    isDeepStrictEqual(current.audio, next.audio) &&
+    current.deviceKey === next.deviceKey &&
+    isDeepStrictEqual(current.inferenceDevices, next.inferenceDevices)
+  )
 }
