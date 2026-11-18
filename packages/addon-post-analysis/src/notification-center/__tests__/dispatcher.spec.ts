@@ -393,7 +393,7 @@ describe('NcDispatcher notification composition', () => {
     expect(h.sends[0]!.notification.body).toBe('[][]')
   })
 
-  it('unknown device name falls back to a stable placeholder', async () => {
+  it('unknown device name falls back to the unnamed label, never the id', async () => {
     const h = makeHarness()
     await h.dispatcher.deliver(
       makeEntry(
@@ -401,7 +401,7 @@ describe('NcDispatcher notification composition', () => {
         { deviceId: 7 },
       ),
     )
-    expect(h.sends[0]!.notification.body).toBe('Dog on camera 7')
+    expect(h.sends[0]!.notification.body).toBe('Dog on (unnamed)')
   })
 
   it('per-target params map onto canonical fields; priority is clamped', async () => {

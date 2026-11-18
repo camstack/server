@@ -726,6 +726,8 @@ export interface NcDispatcherDeps {
    * carry its type. Absent in tests that only stub `getDeviceName`.
    */
   readonly deviceIdentity?: (deviceId: number) => NcDeviceIdentity | undefined
+  /** Warm the device directory (bounded) before a notification is worded; never throws. */
+  readonly ensureDeviceNames?: () => Promise<void>
   /**
    * The camera's operator-authored location label (`DeviceInfo.location`),
    * read only for the AI narration pass (`NcRuleAiInput.location`) — WHERE
@@ -2253,7 +2255,13 @@ export class NcDispatcher {
     const systemEvent = subject.systemEvent
     // `{{device}}`, `{{deviceName}}`, the built notification and the AI input all
     // carry the BARE name; only `{{deviceLabel}}` adds the translated type.
-    const deviceName = await notificationDeviceName(entry, this.deps.getDeviceName)
+    await this.deps.ensureDeviceNames?.()
+    const deviceName = await notificationDeviceName(
+      entry,
+      this.deps.getDeviceName,
+      this.texts.language,
+      (id) => this.deps.deviceIdentity?.(id)?.name.trim() || undefined,
+    )
     const displayDeviceId = systemEvent?.deviceId ?? subject.deviceId
     const deviceLabel = presentedDeviceName(
       deviceName,
@@ -3809,11 +3817,14 @@ export const NC_DEVICELESS_CAMERA_NAME = 'system'
  * filler {@link NC_DEVICELESS_CAMERA_NAME}: there is no camera to name, which
  * is why the catalog offers `{{device}}` on a system rule only for the kinds
  * that carry a device (template-vars.ts). Everything else asks the directory,
- * and falls back to `camera <id>` when it cannot answer.
+ * and falls back to the localized unnamed label when it cannot answer — never the id.
  */
 export async function notificationDeviceName(
   entry: NcOutboxEntry,
   getDeviceName: NcDispatcherDeps['getDeviceName'],
+  language: NcLanguage,
+  /** The directory's current name, asked only when `getDeviceName` has none. */
+  directoryName?: (deviceId: number) => string | undefined,
 ): Promise<string> {
   const subject = entry.payload.subject
   const systemEvent = subject.systemEvent
@@ -3821,7 +3832,11 @@ export async function notificationDeviceName(
     return NC_DEVICELESS_CAMERA_NAME
   }
   const displayDeviceId = systemEvent?.deviceId ?? subject.deviceId
-  return (await getDeviceName(displayDeviceId).catch(() => null)) ?? `camera ${displayDeviceId}`
+  return (
+    (await getDeviceName(displayDeviceId).catch(() => null)) ??
+    directoryName?.(displayDeviceId) ??
+    genericDeviceName(language)
+  )
 }
 
 /**
@@ -3834,7 +3849,7 @@ function presentedDeviceName(
   identity: NcDeviceIdentity | undefined,
   language: NcLanguage,
 ): string {
-  if (identity === undefined) return fetched
+  if (identity === undefined || fetched === genericDeviceName(language)) return fetched
   const named = identity.name.trim()
   const name = isBareDeviceFallback(fetched, deviceId) && named.length > 0 ? named : fetched
   if (isBareDeviceFallback(name, deviceId)) return name
@@ -4060,12 +4075,10 @@ export function buildTemplateVars(
     // naming devices froze `{{deviceId}}` and nothing else, and the sentence it
     // will now be rendered with asks for `{{deviceName}}` — a missing var
     // renders EMPTY by design, so that row would drain as "La camera  è
-    // offline". The id is the same last resort the intake uses when a name is
-    // unknown, so an old row degrades to exactly the sentence it was written
-    // for. Overridden below by a row that froze a real name.
-    ...(systemEvent?.deviceId !== undefined
-      ? { deviceName: genericDeviceName(texts.language) }
-      : {}),
+    // offline". The name is the one resolved for this render (the directory's
+    // current name, else the localized unnamed label — never the id).
+    // Overridden below by a row that froze a real name.
+    ...(systemEvent?.deviceId !== undefined ? { deviceName } : {}),
     // Same rescue for a node sentence: rows frozen before `{{nodeName}}`
     // existed carry only the id, which is also the name of last resort.
     ...(systemEvent?.nodeId !== undefined &&
@@ -4086,7 +4099,7 @@ export function buildTemplateVars(
     ...(deviceLabel !== undefined ? { deviceLabel } : {}),
     // After the frozen params: the type word follows the language the catalog
     // is rendering in, while `deviceName` stays the bare name frozen at intake.
-    ...deviceLabelParam(systemEvent, texts.language),
+    ...deviceLabelParam(systemEvent, texts.language, deviceName),
   }
 }
 
@@ -4098,9 +4111,18 @@ export function buildTemplateVars(
 function deviceLabelParam(
   systemEvent: NcSystemEventSubject | undefined,
   language: NcLanguage,
+  /** The name resolved for this render: the directory's, or the generic label. */
+  resolvedName: string,
 ): Readonly<Record<string, string>> {
   const deviceId = systemEvent?.deviceId
   if (deviceId === undefined) return {}
+  // A row's frozen name is its last word; the name resolved now only fills a
+  // row that froze none (or froze the bare id an older intake wrote).
+  const frozen = systemEvent?.textParams?.['deviceName']
+  const frozenUsable =
+    frozen !== undefined && frozen.trim().length > 0 && frozen !== String(deviceId)
+  const currentName =
+    frozenUsable || resolvedName === genericDeviceName(language) ? undefined : resolvedName
   return {
     deviceLabel: frozenDeviceLabel(
       deviceId,
@@ -4108,6 +4130,7 @@ function deviceLabelParam(
       systemEvent?.textParams?.['deviceName'],
       language,
       systemEvent?.textParams?.['deviceParentName'],
+      currentName,
     ),
   }
 }

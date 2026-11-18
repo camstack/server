@@ -278,7 +278,7 @@ async function producedVars(
   zoneLabels: readonly string[],
   cycle?: NcApplianceCycleFacts,
 ): Promise<Readonly<Record<string, string>>> {
-  const deviceName = await notificationDeviceName(entry, getDeviceName)
+  const deviceName = await notificationDeviceName(entry, getDeviceName, 'en')
   return buildTemplateVars(texts, entry, deviceName, zoneLabels, 'UTC', cycle)
 }
 

@@ -22,6 +22,7 @@ import {
   groupWindowRecordId,
   groupWindowSubject,
 } from './group-window-summary.js'
+import type { NcDeviceNameResolver } from './device-directory.js'
 import type { NcOutbox, NcOutboxEnqueueInput, NcOutboxEntry } from './outbox.js'
 import { outboxEntryId } from './outbox-key.js'
 import { NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from './rule-engine.js'
@@ -48,6 +49,10 @@ export interface NcDeliveryGroupWindowDeps {
     subject: NcRuleSubject,
     targetId: string,
   ) => Promise<readonly NcOutboxEnqueueInput[]>
+  /** The directory's CURRENT device name; absent = the frozen names only. */
+  readonly resolveName?: NcDeviceNameResolver
+  /** Warm the directory (bounded) before a window is worded; never throws. */
+  readonly ensureNames?: () => Promise<void>
   /** Load snoozes and drain. Used when a timer flushes between drain ticks. */
   readonly deliverReady: () => Promise<void>
 }
@@ -214,6 +219,22 @@ export class NcDeliveryGroupWindow {
     await this.deps.outbox.releaseGroupHold(entry.id)
   }
 
+  /** A device the summary will word as "unnamed" is said, per device (D391). */
+  private logUnnamed(entries: readonly NcOutboxEntry[]): void {
+    for (const entry of entries) {
+      const deviceId = entry.payload.subject.systemEvent?.deviceId
+      if (deviceId === undefined || this.deps.resolveName?.(deviceId) !== undefined) continue
+      const frozen = entry.payload.subject.systemEvent?.textParams?.['deviceName']
+      if (frozen !== undefined && frozen.trim().length > 0 && frozen !== String(deviceId)) continue
+      this.deps.logger.warn(
+        'group window words a device as unnamed: no directory name, none frozen',
+        {
+          tags: { deviceId },
+        },
+      )
+    }
+  }
+
   private async summarise(entries: readonly NcOutboxEntry[], key: string): Promise<void> {
     const first = entries[0]
     if (first === undefined) return
@@ -223,6 +244,8 @@ export class NcDeliveryGroupWindow {
       return
     }
     const openedAt = first.payload.groupHold?.openedAt ?? this.deps.now()
+    await this.deps.ensureNames?.()
+    this.logUnnamed(entries)
     const subject = groupWindowSubject({
       rule,
       entries,
@@ -230,6 +253,7 @@ export class NcDeliveryGroupWindow {
       nowMs: this.deps.now(),
       openedAt,
       targetId: first.targetId,
+      ...(this.deps.resolveName !== undefined ? { resolveName: this.deps.resolveName } : {}),
     })
     if (subject === null) {
       for (const entry of entries) await this.releaseOne(entry, key)

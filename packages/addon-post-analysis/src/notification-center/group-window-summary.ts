@@ -12,7 +12,7 @@
  */
 
 import { NC_SYSTEM_EVENT_CLASS_SPECS, type NcRule, type NcSystemEventKind } from '@camstack/types'
-import { frozenDeviceLabel } from './device-directory.js'
+import { frozenDeviceLabel, type NcDeviceNameResolver } from './device-directory.js'
 import type { NcOutboxEntry } from './outbox.js'
 import {
   NC_SYSTEM_DEVICE_ID,
@@ -44,6 +44,8 @@ export interface GroupWindowSummaryInput {
   readonly nowMs: number
   readonly openedAt: number
   readonly targetId: string
+  /** The directory's CURRENT name for a device; absent = the frozen names only. */
+  readonly resolveName?: NcDeviceNameResolver
 }
 
 /** `null` when the burst has nothing that can be said — the caller sends each row on its own. */
@@ -123,7 +125,12 @@ function burstText(input: GroupWindowSummaryInput): BurstText | null {
   const words =
     summary.itemCount === 0
       ? null
-      : stateSummaryText({ texts: input.texts, summary, nowMs: input.nowMs })
+      : stateSummaryText({
+          texts: input.texts,
+          summary,
+          nowMs: input.nowMs,
+          ...(input.resolveName !== undefined ? { resolveName: input.resolveName } : {}),
+        })
   const body = words === null ? '' : recoveryOnly(items) ? linesOnly(words) : words.text
   const extra = orphans.join('\n')
   const text = [body, extra].filter((part) => part.length > 0).join('\n')
@@ -193,6 +200,7 @@ function itemsOf(input: GroupWindowSummaryInput): {
                 params['deviceName'],
                 input.texts.language,
                 params['deviceParentName'],
+                input.resolveName?.(system.deviceId),
               ),
             }
       orphans.push(`• ${input.texts.text({ key: lineKey, vars: { ...params, ...label } })}`)

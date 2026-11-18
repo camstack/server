@@ -266,6 +266,13 @@ function withTypeSuffix(name: string, phrase: string, parentName: string | undef
   return `${name.slice(0, -1)}${LABEL_SUFFIX_SEPARATOR}${phrase})`
 }
 
+/**
+ * The name a device has in the directory NOW, or `undefined` when it has none.
+ * Read at render time, so a row frozen while the directory was cold is still
+ * worded with the real name.
+ */
+export type NcDeviceNameResolver = (deviceId: number) => string | undefined
+
 /** What a notification calls a device whose name could not be resolved: never its id. */
 export function genericDeviceName(language: DeviceLabelLanguage): string {
   return language === 'it' ? '(senza nome)' : '(unnamed)'
@@ -291,8 +298,15 @@ export function frozenDeviceLabel(
   frozenName: string | undefined,
   language: DeviceLabelLanguage,
   frozenParentName?: string,
+  /** The directory's name NOW: wins over the frozen one, which may be absent. */
+  currentName?: string,
 ): string {
-  const name = isResolvedFrozenName(frozenName, deviceId) ? frozenName : genericDeviceName(language)
+  const name =
+    currentName !== undefined && currentName.trim().length > 0
+      ? currentName
+      : isResolvedFrozenName(frozenName, deviceId)
+        ? frozenName
+        : genericDeviceName(language)
   if (deviceType === undefined || name === genericDeviceName(language)) return name
   return deviceDisplayLabel(
     {
@@ -364,6 +378,24 @@ export class NcDeviceDirectory {
     const identity = this.get(deviceId)
     if (identity === undefined || identity.name.trim().length === 0) return undefined
     return deviceDisplayName(identity, deviceId)
+  }
+
+  /**
+   * A warm directory, within `timeoutMs`: one refresh when it has never loaded,
+   * awaited but bounded. Never throws. Says whether the directory is warm after.
+   */
+  async ensureWarm(timeoutMs: number): Promise<boolean> {
+    if (this.loadedOnce) return true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<void>((resolve) => {
+      timer = setTimeout(resolve, timeoutMs)
+    })
+    try {
+      await Promise.race([this.refresh(), timeout])
+    } finally {
+      if (timer !== undefined) clearTimeout(timer)
+    }
+    return this.loadedOnce
   }
 
   /** A bound {@link NcDeviceLookup} that always sees the CURRENT snapshot. */

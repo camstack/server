@@ -16,7 +16,7 @@
  */
 import type { NcRule, NcRuleInput } from '@camstack/types'
 import { ncClockText } from '../clock-text.js'
-import { frozenDeviceLabel } from '../device-directory.js'
+import { frozenDeviceLabel, type NcDeviceNameResolver } from '../device-directory.js'
 import { evaluateRule, NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import {
@@ -163,6 +163,8 @@ export interface NcStateSummaryTextInput {
   readonly summary: NcStateSummary
   readonly nowMs: number
   readonly timeZone?: string
+  /** The directory's CURRENT name for a device; absent = the frozen names only. */
+  readonly resolveName?: NcDeviceNameResolver
 }
 
 const DAY_MS = 86_400_000
@@ -194,7 +196,14 @@ function lineOf(input: NcStateSummaryTextInput, item: NcStateItem): string {
   const deviceLabel =
     deviceId === undefined
       ? undefined
-      : frozenDeviceLabel(deviceId, type, name, input.texts.language, parentName)
+      : frozenDeviceLabel(
+          deviceId,
+          type,
+          name,
+          input.texts.language,
+          parentName,
+          input.resolveName?.(deviceId),
+        )
   return input.texts.text({
     key: item.lineKey,
     vars: {

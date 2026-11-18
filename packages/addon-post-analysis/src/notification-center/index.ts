@@ -450,6 +450,9 @@ const NC_DEVICE_ALERT_FALLBACK: NcDeviceAlertSettings = {
 /** The same constant, exported for the guard that pins it to the form. */
 export const NC_DEVICE_ALERT_FALLBACK_FOR_TEST: NcDeviceAlertSettings = NC_DEVICE_ALERT_FALLBACK
 
+/** How long a render waits for a cold device directory before it words "unnamed". */
+const NC_DEVICE_NAMES_WARM_MS = 3_000
+
 export class NotificationCenter implements NcEventConsumer {
   private readonly logger: IScopedLogger
   private readonly rules: NcRuleStore
@@ -1155,6 +1158,8 @@ export class NotificationCenter implements NcEventConsumer {
       liveness: () => (this.liveness.hasAnswered() ? this.liveness.snapshot() : null),
       lookup: (deviceId) => this.deviceDirectory.get(deviceId),
       devicesAnswered: () => this.deviceDirectory.isWarm(),
+      resolveName: (deviceId) => this.deviceDirectory.displayName(deviceId),
+      ensureNames: () => this.warmDeviceNames(),
       ...(deps.readNodeDirectory !== undefined ? { readNodes: deps.readNodeDirectory } : {}),
       ...(deps.readRunnerStates !== undefined ? { readRunners: deps.readRunnerStates } : {}),
       // The instant path's hold-off: a device offline for less than it has not
@@ -1196,6 +1201,7 @@ export class NotificationCenter implements NcEventConsumer {
       logger: this.logger.child('dispatch'),
       texts: this.texts,
       deviceIdentity: (deviceId) => this.deviceDirectory.get(deviceId),
+      ensureDeviceNames: () => this.warmDeviceNames(),
       // The ONE place a synthetic event differs from a real one downstream —
       // and it is a LOOKUP, not a branch in the dispatcher. A synthetic record
       // has no row in the media store, so its live snapshot is served from RAM
@@ -1281,6 +1287,8 @@ export class NotificationCenter implements NcEventConsumer {
       isMuted: (deviceId) => this.deviceMutes.isMuted(deviceId),
       summaryEntries: (rule, subject, targetId) => this.summaryEntries(rule, subject, targetId),
       deliverReady: () => this.deliverGroupWindow(),
+      resolveName: (deviceId) => this.deviceDirectory.displayName(deviceId),
+      ensureNames: () => this.warmDeviceNames(),
     })
     this.timelapseRules = TimelapseStore.of(deps.records, this.logger.child('timelapse'), deps.now)
     const timelapsePorts = deps.timelapse
@@ -2828,6 +2836,10 @@ export class NotificationCenter implements NcEventConsumer {
    * shorter name and never a shorter LIST — understating what a mode arms is
    * the one error this sentence must not make.
    */
+  private async warmDeviceNames(): Promise<void> {
+    await this.deviceDirectory.ensureWarm(NC_DEVICE_NAMES_WARM_MS)
+  }
+
   private deviceNameFromDirectory(): NcDeviceNameLookup {
     return (id: number) => {
       const identity = this.deviceDirectory.get(id)

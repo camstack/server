@@ -13,9 +13,14 @@ import {
 } from '@camstack/types'
 import { z } from 'zod'
 import { describe, expect, it } from 'vitest'
-import { deviceTextParams } from '../device-directory.js'
-import { buildTemplateVars } from '../dispatcher.js'
+import {
+  deviceTextParams,
+  NcDeviceDirectory,
+  type NcDeviceNameResolver,
+} from '../device-directory.js'
+import { buildTemplateVars, notificationDeviceName } from '../dispatcher.js'
 import { groupWindowSubject } from '../group-window-summary.js'
+import { makeSilentLogger } from '../../pipeline-analytics/__tests__/test-helpers.js'
 import type { NcOutboxEntry } from '../outbox.js'
 import { NC_SYSTEM_DEVICE_ID } from '../rule-engine.js'
 import { NcTextCatalog } from '../text-catalog.js'
@@ -23,6 +28,7 @@ import { NcTextCatalog } from '../text-catalog.js'
 const TextsFileSchema = z.record(z.string(), z.unknown())
 
 const IDS = [637, 636, 3830, 617]
+const NAMES = new Map(IDS.map((id) => [id, `Videocamera ${id - 600}x`]))
 
 const RULE = NcRuleSchema.parse({
   ...NcRuleInputSchema.parse({
@@ -79,7 +85,11 @@ function row(
   }
 }
 
-function summarize(entries: readonly NcOutboxEntry[], language: 'en' | 'it'): string {
+function summarize(
+  entries: readonly NcOutboxEntry[],
+  language: 'en' | 'it',
+  resolveName?: NcDeviceNameResolver,
+): string {
   const subject = groupWindowSubject({
     rule: RULE,
     entries,
@@ -87,6 +97,7 @@ function summarize(entries: readonly NcOutboxEntry[], language: 'en' | 'it'): st
     nowMs: 2_000,
     openedAt: 1_000,
     targetId: 't',
+    ...(resolveName !== undefined ? { resolveName } : {}),
   })
   return JSON.stringify(subject?.systemEvent?.textParams ?? {})
 }
@@ -134,5 +145,45 @@ describe('a notification never carries the device id', () => {
       const out = texts.text({ key, vars: buildTemplateVars(texts, entry, 'x', []), count: 1 })
       expect(out, key).not.toContain('637')
     }
+  })
+
+  it('cold at intake, warm at render: the summary lists the real names', () => {
+    const entries = IDS.map((id) => row('stream-offline', id, deviceTextParams(id, undefined)))
+    const text = summarize(entries, 'it', (id) => NAMES.get(id))
+    for (const id of IDS) {
+      expect(text).toContain(NAMES.get(id))
+      expect(text).not.toContain(String(id))
+    }
+    expect(text).not.toContain('senza nome')
+  })
+
+  it('without the lookup the same rows word the unnamed label (the lookup is what names them)', () => {
+    const entries = IDS.map((id) => row('stream-offline', id, deviceTextParams(id, undefined)))
+    expect(summarize(entries, 'it')).toContain('senza nome')
+  })
+
+  it('a cold directory is warmed once, bounded, by ensureWarm', async () => {
+    const calls: number[] = []
+    const directory = new NcDeviceDirectory({
+      logger: makeSilentLogger(),
+      listDevices: async () => {
+        calls.push(1)
+        return [{ deviceId: 637, type: DeviceType.Camera, name: 'Cortile', isCamera: true }]
+      },
+    })
+    expect(directory.displayName(637)).toBeUndefined()
+    expect(await directory.ensureWarm(1_000)).toBe(true)
+    expect(directory.displayName(637)).toBe('Cortile')
+    await directory.ensureWarm(1_000)
+    expect(calls).toHaveLength(1)
+  })
+
+  it('the dispatcher names a device from the directory when its own lookup has none', async () => {
+    const entry = row('stream-offline', 637, deviceTextParams(637, undefined))
+    const none = async (): Promise<null> => null
+    expect(await notificationDeviceName(entry, none, 'en', (id) => NAMES.get(id))).toBe(
+      NAMES.get(637),
+    )
+    expect(await notificationDeviceName(entry, none, 'en')).toBe('(unnamed)')
   })
 })

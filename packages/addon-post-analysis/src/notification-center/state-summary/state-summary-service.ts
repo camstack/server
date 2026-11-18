@@ -8,7 +8,7 @@ import type { IScopedLogger, NcRule, NcRuleInput, NcStateSummaryPreview } from '
 import type { DurableKindDeps } from '../../durable/durable-wiring.js'
 import { systemEventSummarySplitOf } from '@camstack/types'
 import type { NcOpenAlert } from '../alerts/open-alert.js'
-import type { NcDeviceIdentity } from '../device-directory.js'
+import type { NcDeviceIdentity, NcDeviceNameResolver } from '../device-directory.js'
 import { updatePackages } from '../event-intake.js'
 import type { NcLivenessRow } from '../liveness-ledger.js'
 import type { NcRuleSubject, NcSystemEventSubject } from '../rule-engine.js'
@@ -68,6 +68,10 @@ export interface NcStateSummaryServiceDeps extends DurableKindDeps {
   readonly livenessHoldoffMs: number
   readonly isMuted: (deviceId: number) => boolean
   readonly texts: () => NcTextCatalog
+  /** The directory's current device name, read when the summary is worded. */
+  readonly resolveName?: NcDeviceNameResolver
+  /** Warm the directory (bounded) before a summary is worded; never throws. */
+  readonly ensureNames?: () => Promise<void>
   /** Build the rule's outbox rows for this subject and enqueue them. */
   readonly enqueue: (
     rule: NcRule,
@@ -227,6 +231,7 @@ export class NcStateSummaryService {
   async preview(rule: NcRule | NcRuleInput): Promise<NcStateSummaryPreview> {
     const nowMs = this.deps.now()
     const summary = await this.collect(rule, nowMs)
+    await this.deps.ensureNames?.()
     const text = this.word(summary, nowMs)
     const split = systemEventSummarySplitOf(rule)
     const empty = isEmptyStateSummary(summary)
@@ -290,6 +295,7 @@ export class NcStateSummaryService {
       })
       return { recordId, split, nothingToReport: true, sections, rows: [] }
     }
+    await this.deps.ensureNames?.()
     const text = this.word(summary, nowMs)
     const subjects = stateSummarySubjects({
       rule,
@@ -400,7 +406,12 @@ export class NcStateSummaryService {
   }
 
   private word(summary: NcStateSummary, nowMs: number): NcStateSummaryText {
-    return stateSummaryText({ texts: this.deps.texts(), summary, nowMs })
+    return stateSummaryText({
+      texts: this.deps.texts(),
+      summary,
+      nowMs,
+      ...(this.deps.resolveName !== undefined ? { resolveName: this.deps.resolveName } : {}),
+    })
   }
 
   private async deliver(
@@ -410,6 +421,7 @@ export class NcStateSummaryService {
   ): Promise<number> {
     // The window's END is the moment the summary speaks for: "since" is
     // measured from it, like every other word of the row.
+    await this.deps.ensureNames?.()
     const text = this.word(summary, window.endMs)
     const subjects = stateSummarySubjects({
       rule,
