@@ -1,7 +1,6 @@
 export { VeSyncProviderAddon } from './addon.js'
 export {
   vesyncConnectionSchema,
-  vesyncGatewaySchema,
   vesyncPurifierSchema,
   vesyncHumidifierSchema,
   vesyncToggleSchema,
@@ -13,11 +12,9 @@ export {
   connectionFromBody,
   slugifyEmail,
   VESYNC_SYSTEM,
-  VESYNC_GATEWAY_KIND,
 } from './config.js'
 export type {
   VeSyncConnectionConfig,
-  VeSyncGatewayConfig,
   VeSyncPurifierConfig,
   VeSyncHumidifierConfig,
   VeSyncToggleConfig,
@@ -41,8 +38,6 @@ export {
   buildVeSyncCandidates,
   purifierNativeId,
   parsePurifierNativeId,
-  gatewayStableId,
-  VESYNC_GATEWAY_NATIVE_ID,
 } from './vesync-discovery.js'
 export { VeSyncIntegrationManager } from './vesync-integration-manager.js'
 export {
@@ -53,7 +48,6 @@ export {
 export type { VeSyncLoginFailureKind } from './vesync-tsvesync-client.js'
 export { testVeSyncConnection } from './vesync-connection-test.js'
 export { VeSyncAccountResolver, vesyncAccounts } from './vesync-account-resolver.js'
-export { VeSyncGatewayDevice } from './devices/vesync-gateway-device.js'
 export { VeSyncPurifierDevice } from './devices/vesync-purifier-device.js'
 export { VeSyncHumidifierDevice } from './devices/vesync-humidifier-device.js'
 export { VeSyncToggleDevice } from './devices/vesync-toggle-device.js'

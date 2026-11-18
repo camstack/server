@@ -45,8 +45,7 @@ interface AccessoryPlan {
 }
 
 /**
- * One VeSync humidifier as a CamStack {@link DeviceType.Humidifier} device, a sibling of
- * the account Gateway. Registers the `humidifier` cap (power, target humidity, mode, the
+ * One VeSync humidifier as a CamStack {@link DeviceType.Humidifier} device. Registers the `humidifier` cap (power, target humidity, mode, the
  * measured humidity) and fans three accessory children out:
  *   - display   → {@link DeviceType.Switch} ({@link VeSyncToggleDevice})
  *   - humidity  → {@link DeviceType.Sensor} ({@link VeSyncSensorDevice}, humidity-sensor)

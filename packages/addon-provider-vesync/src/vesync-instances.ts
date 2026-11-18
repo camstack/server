@@ -2,7 +2,7 @@
  * VeSync integrations as `integration-instances` (planning#416, D1007): one `connections`
  * record per integration under its registry id, holding the credentials of ONE VeSync
  * account. The password is declared a secret by type; the records door keeps it in the
- * keychain. The Gateway device is not part of the record: it is a device of the integration.
+ * keychain.
  */
 import {
   defineEntryKind,

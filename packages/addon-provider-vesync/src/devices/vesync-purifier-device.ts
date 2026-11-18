@@ -46,8 +46,7 @@ interface AccessoryPlan {
 }
 
 /**
- * One VeSync air purifier as a CamStack {@link DeviceType.Fan} device. A sibling of
- * the account Gateway. Registers TWO caps on itself:
+ * One VeSync air purifier as a CamStack {@link DeviceType.Fan} device. Registers TWO caps on itself:
  *   - `switch`       — the main power on/off (per the `fan-control` cap doc, the
  *                      on/off state lives on `switch`, mirroring the Light pattern).
  *   - `fan-control`  — speed percentage + preset mode.

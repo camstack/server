@@ -3,7 +3,6 @@ import {
   type AdoptionFilter,
   type AdoptionStatus,
   type DiscoveredChildDevice,
-  gatewayDeviceName,
   type IDeviceAdoptionProvider,
   type IScopedLogger,
 } from '@camstack/types'
@@ -13,7 +12,6 @@ import {
   buildVeSyncCandidates,
   parseHumidifierNativeId,
   parsePurifierNativeId,
-  VESYNC_GATEWAY_NATIVE_ID,
 } from './vesync-discovery.js'
 
 export interface VeSyncAdoptionProviderDeps {
@@ -47,11 +45,6 @@ export interface VeSyncAdoptionProviderDeps {
     readonly name: string
     readonly model: string | undefined
   }) => Promise<{ readonly deviceId: number }>
-  /** Create the top-level Gateway device of the account. */
-  readonly adoptGateway: (input: {
-    readonly integrationId: string
-    readonly name: string
-  }) => Promise<{ readonly deviceId: number }>
   readonly removeDevice: (deviceId: number) => Promise<void>
   readonly findDeviceConfig: (deviceId: number) => Promise<Record<string, unknown> | null>
   readonly logger: IScopedLogger
@@ -70,19 +63,16 @@ export function buildVeSyncAdoptionProvider(
     deps.integrationName(integrationId) ?? 'VeSync'
 
   async function adoptedOf(integrationId: string): Promise<{
-    readonly gatewayId: number | null
     readonly byCid: Record<string, number | null>
   }> {
-    let gatewayId: number | null = null
     const byCid: Record<string, number | null> = {}
     for (const device of await deps.listAdopted()) {
       const cfg = device.config
       if (cfg['system'] !== VESYNC_SYSTEM || cfg['integrationId'] !== integrationId) continue
-      if (cfg['kind'] === VESYNC_GATEWAY_NATIVE_ID) gatewayId = device.id
       const cid = cfg['purifierNativeId'] ?? cfg['humidifierNativeId']
       if (typeof cid === 'string') byCid[cid] = device.id
     }
-    return { gatewayId, byCid }
+    return { byCid }
   }
 
   async function candidates(integrationId: string): Promise<readonly DiscoveredChildDevice[]> {
@@ -92,7 +82,6 @@ export function buildVeSyncAdoptionProvider(
       accountName: accountName(integrationId),
       online: deps.integrationOnline(integrationId),
       devices: deps.getDevices(integrationId),
-      adoptedGatewayId: adopted.gatewayId,
       adoptedDeviceIdByCid: adopted.byCid,
     })
   }
@@ -103,7 +92,7 @@ export function buildVeSyncAdoptionProvider(
     return {
       lastDiscoveryAt: Date.now(),
       candidateCount: (await candidates(integrationId)).length,
-      adoptedCount: deviceCount + (adopted.gatewayId === null ? 0 : 1),
+      adoptedCount: deviceCount,
       lastError: null,
     }
   }
@@ -165,18 +154,6 @@ export function buildVeSyncAdoptionProvider(
       let failures = 0
       for (const nativeId of childNativeIds) {
         try {
-          if (nativeId === VESYNC_GATEWAY_NATIVE_ID) {
-            const { deviceId } = await deps.adoptGateway({
-              integrationId,
-              name: perCandidate?.[nativeId]?.name ?? gatewayDeviceName('VeSync'),
-            })
-            adopted.push({
-              childNativeId: nativeId,
-              parentDeviceId: deviceId,
-              accessoryDeviceIds: [],
-            })
-            continue
-          }
           const humidifierCid = parseHumidifierNativeId(nativeId)
           if (humidifierCid !== null) {
             const humidifier = deps

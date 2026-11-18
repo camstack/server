@@ -59,7 +59,6 @@ function rig() {
     },
     adoptPurifier: fail,
     adoptHumidifier: fail,
-    adoptGateway: fail,
     removeDevice: fail,
     findDeviceConfig: async () => null,
     logger: silent,

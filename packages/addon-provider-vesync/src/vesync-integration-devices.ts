@@ -8,7 +8,7 @@ export interface OnlineTarget {
 }
 
 /**
- * Set every VeSync device of an integration (the Gateway, the purifiers and their
+ * Set every VeSync device of an integration (the purifiers, the humidifiers and their
  * accessories) to `online`. They share `integrationId`. A device already in that
  * state is left alone. Returns how many changed.
  */
@@ -29,7 +29,7 @@ export function setIntegrationDevicesOnline(
 
 /**
  * Remove every top-level device of an integration that was deleted or disabled (the
- * Gateway and the purifiers). The kernel takes the accessories with their purifier.
+ * purifiers and humidifiers). The kernel takes the accessories with their purifier.
  */
 export async function cascadeRemoveDevicesForIntegration(input: {
   readonly reg: {

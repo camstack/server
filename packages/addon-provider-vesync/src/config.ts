@@ -4,9 +4,6 @@ import type { ConfigOption, ConfigUISchema, StateRefreshPolicy } from '@camstack
 /** The device-registry `system` tag every VeSync device carries. */
 export const VESYNC_SYSTEM = 'vesync' as const
 
-/** The Gateway device's `kind`: the account's presence, a sibling of its purifiers. */
-export const VESYNC_GATEWAY_KIND = 'account' as const
-
 /** An ISO-3166 alpha-2 country code, upper case. */
 const COUNTRY_CODE_PATTERN = /^[A-Z]{2}$/
 
@@ -95,24 +92,11 @@ export const vesyncConnectionSchema = z.object({
 export type VeSyncConnectionConfig = z.infer<typeof vesyncConnectionSchema>
 
 /**
- * The account as a {@link import('@camstack/types').DeviceType.Gateway}. The
- * credentials live on the integration; this device is only the account's presence
- * in the device list, a sibling of the purifiers (parent null).
- */
-export const vesyncGatewaySchema = z.object({
-  kind: z.literal(VESYNC_GATEWAY_KIND),
-  integrationId: z.string().min(1).describe('Owning integration'),
-  system: z.literal(VESYNC_SYSTEM).optional(),
-})
-
-export type VeSyncGatewayConfig = z.infer<typeof vesyncGatewaySchema>
-
-/**
  * Persisted config every VeSync purifier carries. `purifierNativeId` resolves the
  * live snapshot; `integrationId` selects the account. `accountId` is the legacy hub
  * stableId a migration keeps on the blob and nothing reads. The purifier is a
  * {@link import('@camstack/types').DeviceType.Fan} that registers `switch` +
- * `fan-control` and fans out accessory children. It is a sibling of the Gateway.
+ * `fan-control` and fans out accessory children.
  */
 export const vesyncPurifierSchema = z.object({
   purifierNativeId: z.string().min(1).describe('VeSync device cid'),
@@ -129,8 +113,7 @@ export type VeSyncPurifierConfig = z.infer<typeof vesyncPurifierSchema>
  * Persisted config every VeSync humidifier carries. `humidifierNativeId` resolves the
  * live snapshot; `integrationId` selects the account. A
  * {@link import('@camstack/types').DeviceType.Humidifier} that registers `humidifier`
- * and fans out accessory children (display switch, humidity + water-low sensors). It is
- * a sibling of the Gateway.
+ * and fans out accessory children (display switch, humidity + water-low sensors).
  */
 export const vesyncHumidifierSchema = z.object({
   humidifierNativeId: z.string().min(1).describe('VeSync device cid'),
