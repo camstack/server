@@ -1,4 +1,4 @@
-import { describeNvidia } from '@camstack/types'
+import { describeNvidia } from '@camstack/types/addon'
 import type { IKernelInferenceEngine, KernelInferenceHardware } from '@camstack/types'
 import { type PlatformSignals, probePlatform } from '../hwaccel/hwaccel-resolver.js'
 

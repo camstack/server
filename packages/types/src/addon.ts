@@ -178,3 +178,5 @@ export * from './keychain/index.js'
 export * from './records/index.js'
 // D995 - `ctx.debug`: the emitter and its interest, type-only imports, so the runner closure stays small.
 export { createDebugEmitter } from './logging/debug-watch.js'
+// The runner's inference resolver names the NVIDIA slot; plain functions, no schema graph (D28).
+export { describeNvidia } from './inference/runtime-capabilities.js'
