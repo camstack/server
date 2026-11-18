@@ -309,7 +309,11 @@ import {
   remapCropDetections,
   selectRecoveryStep,
 } from './small-subject-recovery.js'
-import { chooseNodeDevice, type NodeDeviceChoice } from './node-device-election.js'
+import {
+  chooseNodeDevice,
+  probeKeyOfEngine,
+  type NodeDeviceChoice,
+} from './node-device-election.js'
 import { runStatelessStep as runStatelessStepImpl } from './stateless-step.js'
 import type { NodeBenchHost } from './node-bench/node-bench-host.js'
 import { createNodeBenchHost } from './node-bench/node-bench-wiring.js'
@@ -4008,12 +4012,7 @@ export default class PipelineRunnerAddon
     if (!api) return { kind: 'default' }
     try {
       const engine = nodeId === this.nodeId ? this.nodeEngine : undefined
-      const defaultKey =
-        engine === undefined
-          ? undefined
-          : engine.device !== undefined
-            ? `${engine.backend}:${engine.device}`
-            : engine.backend
+      const defaultKey = engine === undefined ? undefined : probeKeyOfEngine(engine)
       return chooseNodeDevice(
         await api.pipelineOrchestrator.getNodeInferenceDevices.query({ nodeId }),
         defaultKey,
@@ -6003,8 +6002,10 @@ export default class PipelineRunnerAddon
           steps: dispatchSteps.map((s) => s.addonId).join(','),
           // ALWAYS present, so the line can be grouped by inference device.
           // `null` is the truth for a session with no elected selector (a
-          // default-pool dispatch: `pin-unplaceable` / `all-devices-at-cap`;
-          // a sole eligible device IS elected, `sole-eligible`) — the executor used the node's
+          // default-pool dispatch: every device at its cap while the default
+          // pool is usable — an excluded default pool never serves, that is
+          // `over-cap` on an eligible device; a sole eligible device IS elected,
+          // `sole-eligible`) — the executor used the node's
           // DEFAULT pool, whose identity rides the error message itself
           // (`… on <runtime>:<device> …`, stamped by the pool's rejection).
           deviceKey: camConfig?.deviceKey ?? null,

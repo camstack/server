@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A camera on a node whose every inference device is turned off in load balancing or not functional is no longer run on the node's default engine: detection is skipped with the named reason no-eligible-device until a device is enabled or recovers
 - When every eligible inference device is at its session cap, a camera is now placed on one of them (over cap, logged) instead of falling back to the default engine, which may be a device you excluded.
+- A camera that overflows every device's session cap goes over the cap on an eligible device only when the node's default engine is excluded; otherwise the cap stays a limit and the default engine serves it.
 
 ## [1.2.705] - 2026-11-18
 

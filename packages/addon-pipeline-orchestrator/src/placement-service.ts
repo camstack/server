@@ -338,8 +338,20 @@ export class PlacementService {
       pinnedDeviceKey,
       currentDeviceKey: input.currentDeviceKey,
       rotation: this.deps.inferenceRotation,
+      defaultPoolExcluded: this.deps.isDefaultPoolExcluded?.(input.nodeId) === true,
     })
     const deviceKey = selectedDeviceKey(selection)
+    if (selection.kind === 'selected' && selection.pinOverridden !== undefined) {
+      this.deps
+        .ctx()
+        .logger.warn(
+          'pinned inference device at cap and the default pool is excluded: placed over cap elsewhere',
+          {
+            tags: { deviceId: input.deviceId, nodeId: input.nodeId },
+            meta: { pin: selection.pinOverridden, chosen: selection.deviceKey },
+          },
+        )
+    }
     this.deps.ctx().logger.info('inference device selection', {
       tags: { deviceId: input.deviceId, nodeId: input.nodeId },
       meta: {

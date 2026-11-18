@@ -629,7 +629,13 @@ const NodeInferenceDeviceSchema = z.object({
   enabled: z.boolean(),
   /** Relative balancer weight for the enabled device (default 1). */
   weight: z.number(),
-  /** Per-device concurrent-session cap; null = unlimited (multi-device C4). */
+  /**
+   * Per-device concurrent-session cap; null = unlimited (multi-device C4). A
+   * limit: a camera no device can take within its cap stays on the node's
+   * default pool — EXCEPT when that default pool is an excluded device
+   * (`defaultPoolExcluded`), where it goes over the cap on the least-loaded
+   * eligible device instead (#610).
+   */
   maxSessions: z.number().nullable(),
   /** Object-detection model the executor defaults to for this deviceKey. */
   defaultModelId: z.string(),
@@ -1214,6 +1220,11 @@ export const pipelineOrchestratorCapability = {
      * `PipelineSettingsStore.buildNodeInferenceDevices` when placing sessions
      * and the per-(node,device) base provisioning via
      * `buildNodeInferenceDeviceSteps`.
+     * `maxSessions` is a LIMIT, with one exception: when the node's default
+     * pool is itself an excluded device (turned off or not functional) a
+     * camera that would overflow every cap is placed over the cap on the
+     * least-loaded eligible device, because the default pool must never serve
+     * it (#610). The overflow is logged, naming any pin it overrode.
      */
     setAgentInferenceDevices: method(
       z.object({

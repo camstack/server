@@ -1279,8 +1279,18 @@ export class SessionDispatchController {
         ? { shareHistory: this.deps.shareHistory, historyScope: targetNodeId }
         : {}),
       previousDeviceKey,
+      defaultPoolExcluded: this.deps.isDefaultPoolExcluded?.(targetNodeId) === true,
     })
     const deviceKey = selectedDeviceKey(selection)
+    if (selection.kind === 'selected' && selection.pinOverridden !== undefined) {
+      log.warn(
+        'pinned inference device at cap and the default pool is excluded: placed over cap elsewhere',
+        {
+          tags: { deviceId, nodeId: targetNodeId },
+          meta: { pin: selection.pinOverridden, chosen: selection.deviceKey },
+        },
+      )
+    }
     // The ONE line that says which accelerators were in play and why this one
     // won. Fires once per session dispatch (never per frame). Without it, an
     // enabled-but-never-chosen device is invisible — see the class-level note

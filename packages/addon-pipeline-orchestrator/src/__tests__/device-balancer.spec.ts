@@ -116,7 +116,7 @@ describe("pickInferenceDevice — second balance() pass over a node's devices", 
     ).toBe('openvino:npu')
   })
 
-  it('a pin to a device that is over its cap falls back to an eligible device, over cap — never the default pool', () => {
+  it('a pin to a device that is over its cap does NOT place (falls back to default pool)', () => {
     const eligible = { 'openvino:npu': 1, 'openvino:gpu': 1 }
     expect(
       pickInferenceDevice({
@@ -125,10 +125,9 @@ describe("pickInferenceDevice — second balance() pass over a node's devices", 
         caps: { 'openvino:npu': 1 },
         pinnedDeviceKey: 'openvino:npu',
       }),
-    ).toMatchObject({
-      kind: 'selected',
-      deviceKey: 'openvino:gpu',
-      reason: 'over-cap',
+    ).toEqual({
+      kind: 'default-pool',
+      reason: 'pin-unplaceable',
       eligibleKeys: ['openvino:gpu', 'openvino:npu'],
     })
   })
@@ -316,5 +315,75 @@ describe('a drowning device stops attracting sessions', () => {
     expect(isDeviceSaturated({ ...base, inFlight: 7 })).toBe(false)
     expect(isDeviceSaturated({ ...base, inFlight: 8 })).toBe(true)
     expect(isDeviceSaturated({ ...base, inFlight: 9 })).toBe(true)
+  })
+
+  describe('the default pool is an excluded device (#610): a cap yields, never to the default pool', () => {
+    const eligible = { 'openvino:npu': 1, 'openvino:gpu': 1 }
+
+    it('every device at cap ⇒ over cap on the least-loaded eligible device', () => {
+      expect(
+        pickInferenceDevice({
+          eligible,
+          loads: loads({ 'openvino:npu': 3, 'openvino:gpu': 2 }),
+          caps: { 'openvino:npu': 1, 'openvino:gpu': 1 },
+          defaultPoolExcluded: true,
+        }),
+      ).toMatchObject({ kind: 'selected', deviceKey: 'openvino:gpu', reason: 'over-cap' })
+    })
+
+    it('a tie in load is broken by key, per weight', () => {
+      expect(
+        pickInferenceDevice({
+          eligible,
+          loads: loads({ 'openvino:npu': 2, 'openvino:gpu': 2 }),
+          caps: { 'openvino:npu': 1, 'openvino:gpu': 1 },
+          defaultPoolExcluded: true,
+        }),
+      ).toMatchObject({ deviceKey: 'openvino:gpu', reason: 'over-cap' })
+      expect(
+        pickInferenceDevice({
+          eligible: { 'openvino:npu': 4, 'openvino:gpu': 1 },
+          loads: loads({ 'openvino:npu': 4, 'openvino:gpu': 2 }),
+          caps: { 'openvino:npu': 1, 'openvino:gpu': 1 },
+          defaultPoolExcluded: true,
+        }),
+      ).toMatchObject({ deviceKey: 'openvino:npu', reason: 'over-cap' })
+    })
+
+    it('a pin at cap is overridden and the override is named', () => {
+      expect(
+        pickInferenceDevice({
+          eligible,
+          loads: loads({ 'openvino:npu': 2, 'openvino:gpu': 0 }),
+          caps: { 'openvino:npu': 1 },
+          pinnedDeviceKey: 'openvino:npu',
+          defaultPoolExcluded: true,
+        }),
+      ).toMatchObject({
+        kind: 'selected',
+        deviceKey: 'openvino:gpu',
+        reason: 'over-cap',
+        pinOverridden: 'openvino:npu',
+      })
+    })
+
+    it('the same input with a usable default pool still yields the default pool', () => {
+      expect(
+        pickInferenceDevice({
+          eligible,
+          loads: loads({ 'openvino:npu': 2, 'openvino:gpu': 2 }),
+          caps: { 'openvino:npu': 1, 'openvino:gpu': 1 },
+          defaultPoolExcluded: false,
+        }),
+      ).toMatchObject({ kind: 'default-pool', reason: 'all-devices-at-cap' })
+    })
+
+    it('no eligible device at all is the named no-eligible-device default (the attach refuses it)', () => {
+      expect(pickInferenceDevice({ eligible: {}, defaultPoolExcluded: true })).toEqual({
+        kind: 'default-pool',
+        reason: 'no-eligible-device',
+        eligibleKeys: [],
+      })
+    })
   })
 })

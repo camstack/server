@@ -5,7 +5,7 @@
  */
 import type { NodeInferenceDevices } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { chooseNodeDevice } from '../node-device-election.js'
+import { chooseNodeDevice, probeKeyOfEngine } from '../node-device-election.js'
 
 type Row = NodeInferenceDevices['devices'][number]
 
@@ -63,11 +63,36 @@ describe('chooseNodeDevice', () => {
     expect(choice).toEqual({ kind: 'default' })
   })
 
-  it('default engine unknown: the heaviest eligible device is named', () => {
+  it('default engine unknown on a healthy node: the default keeps serving, never the heaviest device', () => {
     const choice = chooseNodeDevice(
       view([row('openvino:gpu', null, 1), row('openvino:npu', null, 3)], false),
     )
+    expect(choice).toEqual({ kind: 'default' })
+    expect(
+      chooseNodeDevice(view([row('openvino:gpu', null, 1), row('openvino:npu', null, 3)])),
+    ).toEqual({ kind: 'default' })
+  })
+
+  it('default engine unknown but the orchestrator says it is excluded: the heaviest eligible device is named', () => {
+    const choice = chooseNodeDevice(
+      view([row('openvino:gpu', null, 1), row('openvino:npu', null, 3)], true),
+    )
     expect(choice).toMatchObject({ kind: 'device', deviceKey: 'openvino:npu' })
+  })
+
+  it('probeKeyOfEngine matches the probe key, the bare CPU included', () => {
+    expect(
+      probeKeyOfEngine({ runtime: 'python', backend: 'cpu', format: 'onnx', device: 'cpu' }),
+    ).toBe('cpu')
+    expect(
+      probeKeyOfEngine({
+        runtime: 'python',
+        backend: 'openvino',
+        format: 'openvino',
+        device: 'gpu',
+      }),
+    ).toBe('openvino:gpu')
+    expect(probeKeyOfEngine({ runtime: 'python', backend: 'onnx', format: 'onnx' })).toBe('onnx')
   })
 
   it('an unreadable or unreachable view changes nothing (D49)', () => {

@@ -168,6 +168,14 @@ export interface PickInferenceDeviceInput {
    * camera: once the device is more than a session over its share it moves.
    */
   readonly previousDeviceKey?: string | null
+  /**
+   * The node's default pool is itself an excluded device (the orchestrator's
+   * `isDefaultPoolExcluded`). Absent/false = usable or unknown, and a camera
+   * that no device can take stays on the default pool as before. When true,
+   * the default pool must never serve it: an at-cap camera goes OVER cap on
+   * the least-loaded eligible device instead (`over-cap`, #610).
+   */
+  readonly defaultPoolExcluded?: boolean
 }
 
 /** What the camera's affinity did in a share election (D916). */
@@ -193,10 +201,11 @@ export type InferenceDeviceReason =
    */
   | 'sole-eligible'
   /**
-   * Every eligible device is at its `maxSessions` cap (or the pinned one is).
-   * The camera is still placed on the least-loaded ELIGIBLE device, over its
-   * cap, and the reason says so: the runner's default pool is never the
-   * answer, it can be a device the election excluded (#610).
+   * Every eligible device is at its `maxSessions` cap (or the pinned one is)
+   * AND the node's default pool is itself an excluded device (#610). A cap is a
+   * limit, so while the default pool is usable it serves the overflow
+   * (`all-devices-at-cap` / `pin-unplaceable`); only when it is not, the camera
+   * is placed on the least-loaded ELIGIBLE device, over its cap.
    */
   | 'over-cap'
 
@@ -212,7 +221,11 @@ export type InferenceDeviceTieBreak =
 /** Why NO deviceKey was elected and the runner's default pool serves the camera. */
 export type InferenceDeviceDefaultReason =
   /** The node reported no enabled∧available device that can host a camera root. */
-  'no-eligible-device'
+  | 'no-eligible-device'
+  /** A pin exists but the pinned device is at/over its `maxSessions` cap. */
+  | 'pin-unplaceable'
+  /** Every eligible device is at/over its `maxSessions` cap. */
+  | 'all-devices-at-cap'
 
 /** A deviceKey was elected for this camera. */
 export interface InferenceDeviceSelected {
@@ -227,6 +240,8 @@ export interface InferenceDeviceSelected {
   readonly tiedKeys: readonly string[]
   /** Set by the `share` path only. */
   readonly affinity?: InferenceDeviceAffinity
+  /** `over-cap` only: the operator's pin named a device that was at cap and was overridden. */
+  readonly pinOverridden?: string
 }
 
 /** No deviceKey elected — the runner's default accelerator serves the camera. */
@@ -256,28 +271,39 @@ function deviceAsLoad(deviceKey: string, load?: DeviceLoadInput): RunnerLocalLoa
 }
 
 /**
- * Every eligible device is capped (or the pin's is): place on the least-loaded
- * eligible device anyway — per-weight attached cameras, ties by key. Never the
- * runner's default pool (#610).
+ * Nothing could take the camera within its caps. While the node's default pool
+ * is usable it serves, as it always did. When the default pool is an excluded
+ * device it must not: place on the least-loaded eligible device, over its cap
+ * (per-weight attached cameras, ties by key) and name any pin that was overridden.
  */
-function overCapSelection(
+function atCapSelection(
   eligibleKeys: readonly string[],
   loadByKey: ReadonlyMap<string, DeviceLoadInput>,
   input: PickInferenceDeviceInput,
-): InferenceDeviceSelected {
-  const scored = eligibleKeys.map((key) => ({
-    key,
-    score: (loadByKey.get(key)?.attachedCameras ?? 0) / Math.max(input.eligible[key] ?? 1, 1e-6),
-  }))
-  const best = scored.toSorted((a, b) => a.score - b.score || a.key.localeCompare(b.key))[0]
-  const key = best?.key ?? eligibleKeys[0] ?? ''
+): InferenceDeviceSelection {
+  const pin = input.pinnedDeviceKey ?? null
+  const best = eligibleKeys
+    .map((key) => ({
+      key,
+      score: (loadByKey.get(key)?.attachedCameras ?? 0) / Math.max(input.eligible[key] ?? 1, 1e-6),
+    }))
+    .toSorted((a, b) => a.score - b.score || a.key.localeCompare(b.key))[0]
+  if (input.defaultPoolExcluded !== true || best === undefined) {
+    return {
+      kind: 'default-pool',
+      reason:
+        best === undefined ? 'no-eligible-device' : pin ? 'pin-unplaceable' : 'all-devices-at-cap',
+      eligibleKeys,
+    }
+  }
   return {
     kind: 'selected',
-    deviceKey: key,
+    deviceKey: best.key,
     reason: 'over-cap',
     tieBreak: null,
     eligibleKeys,
-    tiedKeys: [key],
+    tiedKeys: [best.key],
+    ...(pin !== null && pin !== best.key ? { pinOverridden: pin } : {}),
   }
 }
 
@@ -348,7 +374,7 @@ export function pickInferenceDevice(input: PickInferenceDeviceInput): InferenceD
       input.previousDeviceKey ?? null,
     )
     const election = outcome.election
-    if (election.kind === 'none') return overCapSelection(eligibleKeys, loadByKey, input)
+    if (election.kind === 'none') return atCapSelection(eligibleKeys, loadByKey, input)
     history?.noteElected(historyScope, election.key)
     return {
       kind: 'selected',
@@ -379,7 +405,7 @@ export function pickInferenceDevice(input: PickInferenceDeviceInput): InferenceD
     // `balance()` returns `pending` only from its L1 branch (the pinned device
     // is at/over cap) or when every candidate is capped — distinguish the two
     // so the dispatch log names the real reason the accelerator was skipped.
-    return overCapSelection(eligibleKeys, loadByKey, input)
+    return atCapSelection(eligibleKeys, loadByKey, input)
   }
   if (decision.reason === 'manual') {
     return {

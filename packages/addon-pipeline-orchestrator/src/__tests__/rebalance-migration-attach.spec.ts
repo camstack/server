@@ -213,7 +213,7 @@ describe('rebalance migration re-resolves for the target (D650)', () => {
     expect(moved?.inferenceDevices).toBeUndefined()
   })
 
-  it('one pass fills each device to its maxSessions first, then places the overflow on an eligible device — never the default pool', async () => {
+  it('one pass never gives an accelerator more sessions than its maxSessions while the default pool is usable', async () => {
     const booted = await boot(() => CATALOG)
     addon = booted.addon
     await addon.setAgentInferenceDevices({
@@ -225,12 +225,13 @@ describe('rebalance migration re-resolves for the target (D650)', () => {
     })
     await migrateAllToB(addon, [710, 711, 712])
 
-    const keys = [710, 711, 712].map((id) => booted.runnerB.attachedCameras.get(id)?.deviceKey)
+    const perDevice = new Map<string, number>()
+    for (const deviceId of [710, 711, 712]) {
+      const key = booted.runnerB.attachedCameras.get(deviceId)?.deviceKey
+      if (key !== undefined) perDevice.set(key, (perDevice.get(key) ?? 0) + 1)
+    }
     expect(booted.runnerB.attachedCameras.size).toBe(3)
-    // No camera is left on the runner's default pool (an undefined key).
-    expect(keys.every((k) => k === 'edgetpu:usb' || k === 'openvino:npu')).toBe(true)
-    // Both devices got their one capped session before any overflowed.
-    expect(new Set(keys).size).toBe(2)
+    for (const count of perDevice.values()) expect(count).toBeLessThanOrEqual(1)
   })
 })
 
