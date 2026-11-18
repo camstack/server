@@ -131,6 +131,8 @@
     "audioOffHint": "L'audio della sorgente viene inoltrato senza modifiche.",
     "audioAac": "AAC",
     "audioOpus": "Opus",
+    "audioPcmu": "G.711 µ-law (PCMU)",
+    "audioPcma": "G.711 A-law (PCMA)",
     "audioNone": "Nessun audio",
     "sectionFps": "Frame rate",
     "fpsOffHint": "Segue il frame rate della sorgente.",

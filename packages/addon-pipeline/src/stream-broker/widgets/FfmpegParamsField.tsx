@@ -663,10 +663,9 @@ export function FfmpegParamsCore({
                 >
                   <option value="aac">{t('ffmpeg.audioAac')}</option>
                   <option value="opus">{t('ffmpeg.audioOpus')}</option>
+                  <option value="pcmu">{t('ffmpeg.audioPcmu')}</option>
+                  <option value="pcma">{t('ffmpeg.audioPcma')}</option>
                   <option value="none">{t('ffmpeg.audioNone')}</option>
-                  {(audioCodecOf(value) === 'pcmu' || audioCodecOf(value) === 'pcma') && (
-                    <option value={audioCodecOf(value)}>{audioCodecOf(value)}</option>
-                  )}
                 </Select>
               </div>
             </SectionCard>

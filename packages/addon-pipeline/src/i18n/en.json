@@ -131,6 +131,8 @@
     "audioOffHint": "Source audio is forwarded untouched.",
     "audioAac": "AAC",
     "audioOpus": "Opus",
+    "audioPcmu": "G.711 µ-law (PCMU)",
+    "audioPcma": "G.711 A-law (PCMA)",
     "audioNone": "No audio",
     "sectionFps": "Frame rate",
     "fpsOffHint": "Follows the source frame rate.",

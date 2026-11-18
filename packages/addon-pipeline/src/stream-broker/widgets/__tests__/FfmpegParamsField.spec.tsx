@@ -194,6 +194,14 @@ describe('sections combine', () => {
     expect(lastSaved(onSave)).toEqual({ video: { codec: 'copy' }, audio: { codec: 'none' } })
   })
 
+  it('audio PCMU can be picked on a fresh profile', () => {
+    const onSave = vi.fn()
+    render(<Stateful initial={undefined} onSave={onSave} />)
+    fireEvent.click(switchFor(/^audio$/i))
+    selectOption(selectTrigger('audio-codec'), 'pcmu')
+    expect(lastSaved(onSave)).toEqual({ video: { codec: 'copy' }, audio: { codec: 'pcmu' } })
+  })
+
   it('switching a section off removes only its own fields', () => {
     const onSave = vi.fn()
     render(
