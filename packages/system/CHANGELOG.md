@@ -124,6 +124,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - A device shows a command's value at once: the hub holds what a switch, fan, cover or thermostat was told until the device confirms it, the command is refused, or 30 s pass; history and automations still record only what the device reported.
 - A held command ends the moment the device answers otherwise (locking, jammed, arming) instead of hiding that answer for 30 s; a stale report still keeps the commanded value.
 - The hub now schedules device state reads for migrated providers: a command returns after the device was re-read, re-reads follow until it is confirmed, and reads never overlap (D1062).
+- Two devices of different integrations are linked on the identifiers their providers declare; a PoE port's link adds power-source to the camera it powers, which the operator can switch off in Customize.
 
 ### Removed
 

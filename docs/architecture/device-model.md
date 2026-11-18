@@ -1066,6 +1066,36 @@ Diagnostic children (battery, temperature, humidity, illuminance, signal, last-s
 
 `metadata` is free-form display text anyone with `setMetadata` may overwrite. A device's identity — MACs, `<manufacturer>:<serial>`, `<vendor>:<id>`, a machine UUID, a hostname, an IP — is the separate typed field `identifiers` on the device row. Only the provider that owns the device writes it: `this.declareIdentifiers({ mac, serial: { manufacturer, serial }, vendorUid, host })` from a `BaseDevice`, or `declareDeviceIdentifiers(...)` from a populator. Values are normalised by `normaliseIdentifiers` (a malformed or placeholder value is refused and logged with the device tag); each entry records `origin` (`read` | `derived`) and `readAt`; how much a key proves is `identifierStrength(key)`, never stored. Providers DUPLICATE these values from the `metadata` keys they already write (which stay, for display); nothing moved out of `metadata`. A declaration is merged kind by kind (`mergeIdentifiers`): a kind it carries replaces the stored one, a kind it lacks is removed, and a kind listed in `unread` (the read FAILED — e.g. a camera's network probe threw) keeps its stored value. An empty declaration is not sent. An unchanged value keeps its first `readAt`, so re-declaring on every connect writes and emits nothing. The operator sees them in Device Info → Hardware, read-only. `scripts/check-device-identifiers-declared.ts` fails a provider that writes a MAC / serial / uid into metadata without declaring it.
 
+## Identity links ([D1063](../decisions/adr-1063-two-devices-are-linked-only-on-identifiers-their-providers-declared.md))
+
+Two devices of different integrations are linked only on identifiers their providers DECLARED — never on a guess (D356), and never by hand. Besides its own identity, a device may declare what is ATTACHED to it with `this.declareAttachedIdentifiers(...)` (`deviceManager.setAttachedIdentifiers`, its own `attachedIdentifiers` column, the same merge and `unread` rules). A UniFi PoE port declares its last wired client's MAC and IP this way; those never count as the port's own identity.
+
+The identity index in `device-manager` pairs rows into candidates of two kinds:
+
+| Kind | Evidence | Sides |
+| --- | --- | --- |
+| `same-device` | the two devices' own identifiers match | either order |
+| `poe-power` | a port's attached identifiers match another device's own | `a` = the port (role `poe-port`), `b` = the powered device |
+
+A strong match is `auto`. A single weak key, a port that reaches two devices or a device reached by two ports is only a `proposal`. `IdentityLinkReconciler` keeps one `identity-links` record per pair — `proposed`, `linked` or `dismissed`, with origin `auto` or `operator` — on every identity change, coalesced, with no timer:
+
+- An `auto` candidate links and emits `identity-link.created`.
+- A proposal waits for Confirm or Dismiss on the device's Hardware tab. A dismissed pair is never proposed again, and Unlink dismisses.
+- An `auto` link whose evidence is gone is lost (`identity-link.lost`). An operator-confirmed link is kept and flagged `evidenceGone`.
+- Deleting either device deletes the link (the `identity-links` removal step) and emits `lost` with reason `device-removed`.
+
+`listIdentityLinks` answers `not-loaded` until the store is read.
+
+A `linked` link contributes the Customize features its kind declares (`IDENTITY_LINK_KINDS[kind].contributions`). For `poe-power` that is `power-source` on the powered device, sourced from the port's `switch.on`. The camera's restart then power-cycles the port, the same as a hand-made link (§ "A device powered by a smart switch").
+
+`core-blocks`' `LinkContributionReconciler` writes the feature through the ordinary composition API, stamped `contributedBy: { linkId }`. It is skipped when:
+
+- the device serves the cap natively;
+- the operator already set that target;
+- another link already stamped it.
+
+Its `enabled` toggle is the operator's and survives every pass. When the link goes, only stamped features are taken back. Customize says "Added by a device link" on such a row.
+
 ## Reading further
 
 - Aggregation is binding-driven: [D12](../decisions/adr-0012.md)

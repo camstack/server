@@ -79,3 +79,13 @@ MAC / serial / uid key into device metadata and never calls
 non-normalised declaration (`invalid`) and a caller that does not own the
 device (`not-owner`); both are covered by
 `packages/system/src/builtins/device-manager/__tests__/device-identifiers.spec.ts`.
+
+## Amended 2026-11-18 — attached identifiers (D1063)
+
+A device may also declare the identifiers of what is ATTACHED to it — a PoE
+port the MAC and IP of the client wired to it — through
+`setAttachedIdentifiers` (`BaseDevice.declareAttachedIdentifiers`). They are
+stored in their own column (`attachedIdentifiers`), under the same rules as
+`identifiers` (one writer, `unread` keeps the stored value), and never count
+as the device's own identity: they only feed `poe-power` identity links. See
+[D1063](adr-1063-two-devices-are-linked-only-on-identifiers-their-providers-declared.md).
