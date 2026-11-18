@@ -173,6 +173,7 @@ import {
   mergeInferenceDevices,
   type NodeInferenceUsability,
   resolveInferenceDeviceEligibility,
+  defaultEngineKeyOf,
   isDefaultPoolExcluded,
   resolveNodeInferenceUsability,
   validateJumpTargets,
@@ -1952,7 +1953,9 @@ export default class PipelineOrchestratorAddon
       nodeId,
       reachable,
       devices,
-      ...(reachable ? { defaultPoolExcluded: isDefaultPoolExcluded(eligibility) } : {}),
+      ...(reachable
+        ? { defaultPoolExcluded: isDefaultPoolExcluded(eligibility, defaultEngineKeyOf(catalog)) }
+        : {}),
     }
   }
 
@@ -2064,6 +2067,7 @@ export default class PipelineOrchestratorAddon
   forgetInferenceDeviceProbe(nodeId: string): void {
     this.absentInferenceDevices.delete(nodeId)
     this.defaultPoolExcluded.delete(nodeId)
+    this.defaultKeyUnknownLogged.delete(nodeId)
     if (!this.lastInferenceDeviceProbe.delete(nodeId)) return
     this.ctx.logger.info('inference device probe forgotten — the node left', {
       tags: { nodeId },
@@ -2229,7 +2233,17 @@ export default class PipelineOrchestratorAddon
     // An empty probe says nothing about the node (unreachable, or not yet
     // answered): the default pool stays allowed rather than guessed excluded.
     if (probed.length === 0) this.defaultPoolExcluded.delete(nodeId)
-    else this.defaultPoolExcluded.set(nodeId, isDefaultPoolExcluded(eligibility))
+    else {
+      const defaultKey = defaultEngineKeyOf(catalog)
+      if (defaultKey === null && !this.defaultKeyUnknownLogged.has(nodeId)) {
+        this.defaultKeyUnknownLogged.add(nodeId)
+        this.ctx.logger.warn(
+          'default inference engine of the node is unknown: its default pool is treated as not excluded while any device is eligible',
+          { tags: { nodeId }, meta: { nodeId } },
+        )
+      }
+      this.defaultPoolExcluded.set(nodeId, isDefaultPoolExcluded(eligibility, defaultKey))
+    }
     return eligible
   }
 
@@ -2289,6 +2303,7 @@ export default class PipelineOrchestratorAddon
    * Written by the same read the election makes; never by a clock.
    */
   private readonly defaultPoolExcluded = new Map<string, boolean>()
+  private readonly defaultKeyUnknownLogged = new Set<string>()
 
   isDefaultPoolExcluded(nodeId: string): boolean {
     return this.defaultPoolExcluded.get(nodeId) === true

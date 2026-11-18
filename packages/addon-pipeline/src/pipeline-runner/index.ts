@@ -4011,11 +4011,8 @@ export default class PipelineRunnerAddon
     const api = this.ctxIfReady?.api
     if (!api) return { kind: 'default' }
     try {
-      const engine = nodeId === this.nodeId ? this.nodeEngine : undefined
-      const defaultKey = engine === undefined ? undefined : probeKeyOfEngine(engine)
       return chooseNodeDevice(
         await api.pipelineOrchestrator.getNodeInferenceDevices.query({ nodeId }),
-        defaultKey,
       )
     } catch (err: unknown) {
       this.ctxIfReady?.logger.warn(

@@ -5,7 +5,7 @@
  */
 import type { NodeInferenceDevices } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
-import { chooseNodeDevice, probeKeyOfEngine } from '../node-device-election.js'
+import { chooseNodeDevice } from '../node-device-election.js'
 
 type Row = NodeInferenceDevices['devices'][number]
 
@@ -42,57 +42,42 @@ describe('chooseNodeDevice', () => {
   it('GPU disabled + CPU off: nothing eligible, refused by name', () => {
     const choice = chooseNodeDevice(
       view([row('openvino:gpu', 'disabled'), row('cpu', 'disabled')], true),
-      'openvino:gpu',
     )
     expect(choice.kind).toBe('none-eligible')
   })
 
-  it('GPU down + CPU on: the CPU is named explicitly, never the default pool', () => {
+  it('the default-engine GPU is down while the CPU is eligible: the CPU is named, never the default pool', () => {
     const choice = chooseNodeDevice(
-      view([row('openvino:gpu', 'no-gpu-device'), row('cpu', null)], false),
-      'openvino:gpu',
+      view([row('openvino:gpu', 'no-gpu-device'), row('cpu', null)], true),
     )
     expect(choice).toEqual({ kind: 'device', deviceKey: 'cpu', format: 'onnx' })
   })
 
-  it('GPU up and it is the default engine: the default keeps serving (unchanged)', () => {
+  it('the default-engine device is eligible: the default keeps serving (unchanged)', () => {
     const choice = chooseNodeDevice(
       view([row('openvino:gpu', null), row('cpu', 'accelerator-preferred')], false),
-      'openvino:gpu',
     )
     expect(choice).toEqual({ kind: 'default' })
   })
 
-  it('default engine unknown on a healthy node: the default keeps serving, never the heaviest device', () => {
-    const choice = chooseNodeDevice(
-      view([row('openvino:gpu', null, 1), row('openvino:npu', null, 3)], false),
-    )
-    expect(choice).toEqual({ kind: 'default' })
-    expect(
-      chooseNodeDevice(view([row('openvino:gpu', null, 1), row('openvino:npu', null, 3)])),
-    ).toEqual({ kind: 'default' })
+  it('a healthy node (default engine not excluded, flag false or absent) never switches to its heaviest device', () => {
+    const devices = [row('openvino:gpu', null, 1), row('openvino:npu', null, 3)]
+    expect(chooseNodeDevice(view(devices, false))).toEqual({ kind: 'default' })
+    expect(chooseNodeDevice(view(devices))).toEqual({ kind: 'default' })
   })
 
-  it('default engine unknown but the orchestrator says it is excluded: the heaviest eligible device is named', () => {
+  it('the default engine is excluded while other devices are eligible: the heaviest eligible device is named', () => {
     const choice = chooseNodeDevice(
-      view([row('openvino:gpu', null, 1), row('openvino:npu', null, 3)], true),
+      view(
+        [
+          row('openvino:gpu', 'disabled'),
+          row('openvino:npu', null, 3),
+          row('edgetpu:usb', null, 1),
+        ],
+        true,
+      ),
     )
     expect(choice).toMatchObject({ kind: 'device', deviceKey: 'openvino:npu' })
-  })
-
-  it('probeKeyOfEngine matches the probe key, the bare CPU included', () => {
-    expect(
-      probeKeyOfEngine({ runtime: 'python', backend: 'cpu', format: 'onnx', device: 'cpu' }),
-    ).toBe('cpu')
-    expect(
-      probeKeyOfEngine({
-        runtime: 'python',
-        backend: 'openvino',
-        format: 'openvino',
-        device: 'gpu',
-      }),
-    ).toBe('openvino:gpu')
-    expect(probeKeyOfEngine({ runtime: 'python', backend: 'onnx', format: 'onnx' })).toBe('onnx')
   })
 
   it('an unreadable or unreachable view changes nothing (D49)', () => {

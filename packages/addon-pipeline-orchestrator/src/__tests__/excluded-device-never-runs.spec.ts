@@ -149,4 +149,59 @@ describe('an excluded device never runs an inference (#610)', () => {
     expect(eligibility.eligible).toEqual({})
     expect(isDefaultPoolExcluded(eligibility)).toBe(false)
   })
+
+  describe('the default ENGINE is excluded while other devices are eligible', () => {
+    const NPU = 'openvino:npu'
+    const EDGE = 'edgetpu:usb'
+    const PROBE3: readonly InferenceDeviceDescriptor[] = [
+      probed(GPU, 'openvino', 'gpu'),
+      probed(NPU, 'openvino', 'npu'),
+      probed(EDGE, 'edgetpu', 'usb'),
+    ]
+    const loads = (n: number) => [
+      { deviceKey: NPU, attachedCameras: n },
+      { deviceKey: EDGE, attachedCameras: n },
+    ]
+
+    it('GPU (the default engine) disabled, NPU + edgetpu at maxSessions: over cap on an eligible device, never the GPU', () => {
+      const eligibility = resolveInferenceDeviceEligibility(PROBE3, { [GPU]: { enabled: false } })
+      expect(Object.keys(eligibility.eligible).toSorted()).toEqual([EDGE, NPU])
+      const excluded = isDefaultPoolExcluded(eligibility, GPU)
+      expect(excluded).toBe(true)
+      const selection = pickInferenceDevice({
+        eligible: eligibility.eligible,
+        loads: loads(1),
+        caps: { [NPU]: 1, [EDGE]: 1 },
+        defaultPoolExcluded: excluded,
+      })
+      expect(selection).toMatchObject({ kind: 'selected', reason: 'over-cap' })
+      expect([NPU, EDGE]).toContain(selectedDeviceKey(selection))
+    })
+
+    it('one eligible device at its cap with a pin on it: still placed on it, over cap', () => {
+      const eligibility = resolveInferenceDeviceEligibility(
+        [probed(GPU, 'openvino', 'gpu'), probed(NPU, 'openvino', 'npu')],
+        { [GPU]: { enabled: false } },
+      )
+      const selection = pickInferenceDevice({
+        eligible: eligibility.eligible,
+        loads: [{ deviceKey: NPU, attachedCameras: 2 }],
+        caps: { [NPU]: 1 },
+        pinnedDeviceKey: NPU,
+        defaultPoolExcluded: isDefaultPoolExcluded(eligibility, GPU),
+      })
+      expect(selection).toMatchObject({ kind: 'selected', deviceKey: NPU, reason: 'over-cap' })
+    })
+
+    it('the default engine is healthy: a node at cap keeps overflowing to the default pool', () => {
+      const eligibility = resolveInferenceDeviceEligibility(PROBE3, { [GPU]: { enabled: false } })
+      expect(isDefaultPoolExcluded(eligibility, NPU)).toBe(false)
+      expect(isDefaultPoolExcluded(eligibility, null)).toBe(false)
+    })
+
+    it('a CPU-only unconfigured node whose default engine is the CPU stays on the default pool', () => {
+      const eligibility = resolveInferenceDeviceEligibility([probed(CPU, 'cpu', 'cpu')], {})
+      expect(isDefaultPoolExcluded(eligibility, CPU)).toBe(false)
+    })
+  })
 })
