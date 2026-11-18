@@ -1,6 +1,6 @@
 {
   "name": "@camstack/addon-provider-amcrest",
-  "version": "0.2.174",
+  "version": "0.2.175",
   "description": "Amcrest/Dahua camera device provider addon for CamStack — Dahua CGI over HTTP(S) with digest auth (snapshot, RTSP catalog, PTZ, image/day-night config)",
   "keywords": [
     "camstack",
@@ -85,7 +85,7 @@
       "onvif"
     ],
     "requires": {
-      "server": ">=1.2.901"
+      "server": ">=1.2.904"
     }
   },
   "files": [

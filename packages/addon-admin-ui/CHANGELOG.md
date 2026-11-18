@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.702] - 2026-11-18
+
 ### Changed
 
 - The node's accelerator table shows 'detection off' for a device whose object detection is switched off, with the reason in the load overview (D1065).

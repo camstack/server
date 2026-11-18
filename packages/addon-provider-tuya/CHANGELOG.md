@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.162] - 2026-11-18
+
 ### Changed
 
 - Add device inside an integration lists only its own devices, with no network scan

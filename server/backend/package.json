@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.903",
+  "version": "1.2.904",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,10 +66,26 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.701",
-        "@camstack/addon-export-hap": ">=1.2.208",
-        "@camstack/addon-pipeline": ">=1.2.665",
-        "@camstack/addon-pipeline-orchestrator": ">=1.2.704"
+        "@camstack/addon-admin-ui": ">=1.2.702",
+        "@camstack/addon-agent-ui": ">=1.2.411",
+        "@camstack/addon-pipeline": ">=1.2.666",
+        "@camstack/addon-pipeline-orchestrator": ">=1.2.705",
+        "@camstack/addon-provider-amcrest": ">=0.2.175",
+        "@camstack/addon-provider-dreo": ">=0.2.168",
+        "@camstack/addon-provider-ecowitt": ">=0.2.172",
+        "@camstack/addon-provider-enpal": ">=0.1.26",
+        "@camstack/addon-provider-esphome": ">=0.1.26",
+        "@camstack/addon-provider-gree": ">=0.2.163",
+        "@camstack/addon-provider-hikvision": ">=1.2.190",
+        "@camstack/addon-provider-homematic": ">=1.2.207",
+        "@camstack/addon-provider-onvif": ">=1.2.161",
+        "@camstack/addon-provider-reolink": ">=1.2.245",
+        "@camstack/addon-provider-tuya": ">=0.2.162",
+        "@camstack/addon-provider-unifi": ">=0.2.172",
+        "@camstack/addon-provider-unraid": ">=0.2.174",
+        "@camstack/addon-provider-velux": ">=0.2.172",
+        "@camstack/addon-provider-vesync": ">=0.2.169",
+        "@camstack/addon-provider-wyze": ">=0.2.175"
       },
       "wrapper": {
         "desktop": ">=0.0.1",

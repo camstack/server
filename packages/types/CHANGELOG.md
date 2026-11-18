@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.597] - 2026-11-18
+
 ### Added
 
 - Each integration instance now states what Add device offers inside it (scan, children or none), decided by its provider
