@@ -14,13 +14,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- InferenceDeviceExclusionReason gains 'root-switched-off' (D1065).
 - A host or container card shows its running state instead of a dash.
 
 ## [1.2.596] - 2026-11-18
 
 ### Changed
 
-- InferenceDeviceExclusionReason gains 'root-switched-off' (D1065).
 - fetchDevice accepts a fresh option that bypasses the per-context binding cache
 
 ## [1.2.595] - 2026-11-18

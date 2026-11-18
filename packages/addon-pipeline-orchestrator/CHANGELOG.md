@@ -11,19 +11,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A step switched off for the whole cluster, a node or an accelerator is no longer run; a camera can turn on an opt-in step. The pipeline preview now shows what the camera's accelerator actually runs, including steps another accelerator on the node takes over.
 
-## [1.2.704] - 2026-11-18
-
 ### Changed
 
 - A device with object detection switched off (on it, its node or the cluster) is no longer elected to host a camera, and a camera on the default pool obeys the device switches of the device(s) that pool may be (D1065).
-- Serves viewer 1.0.725
-- The per-device default model shown for CPU and CUDA devices is YOLOv9-s @320 instead of YOLO26 nano.
-- The AMD iGPU (WebGPU) column header now names the model the runner actually defaults to (yolov9t-320)
-- Serves viewer 1.0.726
 
 ### Fixed
 
 - A step switch re-attaches only the cameras whose pipeline changed, and a camera whose detection root is switched off on its device is re-elected instead of left running nothing
+
+## [1.2.704] - 2026-11-18
+
+### Changed
+
+- Serves viewer 1.0.725
+- The per-device default model shown for CPU and CUDA devices is YOLOv9-s @320 instead of YOLO26 nano.
+- The AMD iGPU (WebGPU) column header now names the model the runner actually defaults to (yolov9t-320)
+- Serves viewer 1.0.726
 
 ## [1.2.702] - 2026-11-18
 
