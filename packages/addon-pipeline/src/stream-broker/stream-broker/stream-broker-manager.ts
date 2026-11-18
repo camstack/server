@@ -104,6 +104,7 @@ import {
   type DerivedEffectiveEncode,
   describeEffectiveEncode,
   type DerivedSourceCadence,
+  type DerivedSourceResolution,
 } from '../derived/derived-transcode-args.js'
 import { fillEmptyProfileSlots } from '../fill-empty-profile-slots.js'
 import { rankInitialAssignment } from '../initial-assignment.js'
@@ -4845,7 +4846,9 @@ export class StreamBrokerManager {
         audio: null,
       }
     }
-    return broker.getStats()
+    const stats = broker.getStats()
+    const derivedEncode = this.derivedEffectiveEncodes.get(input.brokerId)
+    return derivedEncode !== undefined ? { ...stats, derivedEncode } : stats
   }
 
   async listClients(input: { brokerId: string }): Promise<import('@camstack/types').BrokerClients> {
@@ -8591,11 +8594,13 @@ export class StreamBrokerManager {
 
     const sourceAudioCodec = this.observedSourceAudioCodec(deviceId, source)
     const sourceCadence = this.observedSourceCadence(deviceId, source)
+    const sourceResolution = this.observedSourceResolution(deviceId, source)
     const built = buildDerivedTranscodeArgs({
       profile: encodeProfile,
       loopbackUrl,
       sourceAudioCodec,
       sourceCadence,
+      ...(sourceResolution !== null ? { sourceResolution } : {}),
     })
     const { args, audio, cadence, bitrate } = built
     this.derivedEffectiveEncodes.set(
@@ -8711,11 +8716,27 @@ export class StreamBrokerManager {
     }
   }
 
+  private derivedSourceCamStreamId(deviceId: number, source: DerivedSourceRef): string | null {
+    return source.kind === 'camStream'
+      ? source.camStreamId
+      : (this.assignments.get(deviceId)?.map[source.profile] ?? null)
+  }
+
+  /** The published picture size of the derived stream's source, or `null` when unpublished. */
+  private observedSourceResolution(
+    deviceId: number,
+    source: DerivedSourceRef,
+  ): DerivedSourceResolution | null {
+    const camStreamId = this.derivedSourceCamStreamId(deviceId, source)
+    if (camStreamId === null) return null
+    const resolution = this.cameraStreams.get(deviceId)?.get(camStreamId)?.resolution
+    return resolution !== undefined && resolution.width > 0 && resolution.height > 0
+      ? resolution
+      : null
+  }
+
   private observedSourceStats(deviceId: number, source: DerivedSourceRef): BrokerStats | null {
-    const camStreamId =
-      source.kind === 'camStream'
-        ? source.camStreamId
-        : (this.assignments.get(deviceId)?.map[source.profile] ?? null)
+    const camStreamId = this.derivedSourceCamStreamId(deviceId, source)
     if (camStreamId === null) return null
     const broker = this.brokers.get(brokerIdFor(deviceId, camStreamId))
     return broker?.getStats() ?? null

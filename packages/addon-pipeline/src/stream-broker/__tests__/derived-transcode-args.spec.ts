@@ -484,4 +484,28 @@ describe('buildDerivedTranscodeArgs — issue 609: rate, fps and floor', () => {
       audio: 'aac',
     })
   })
+
+  it('a height-only profile takes the same bitrate and floor as the equivalent width x height', () => {
+    const sourceCadence = { fps: 20, idrIntervalMs: 2000 }
+    const explicit = buildDerivedTranscodeArgs({
+      profile: p720({ bitrateKbps: 400 }),
+      loopbackUrl: URL,
+      sourceCadence,
+    })
+    const heightOnly = buildDerivedTranscodeArgs({
+      profile: { video: { codec: 'h264', height: 720, bitrateKbps: 400 }, audio: 'passthrough' },
+      loopbackUrl: URL,
+      sourceCadence,
+      sourceResolution: { width: 3840, height: 2160 },
+    })
+    expect(heightOnly.bitrate).toEqual(explicit.bitrate)
+    expect(value(heightOnly.args, '-maxrate')).toBe('800k')
+    const derived = buildDerivedTranscodeArgs({
+      profile: { video: { codec: 'h264', height: 720 }, audio: 'passthrough' },
+      loopbackUrl: URL,
+      sourceCadence,
+      sourceResolution: { width: 3840, height: 2160 },
+    })
+    expect(value(derived.args, '-maxrate')).toBe('2000k')
+  })
 })

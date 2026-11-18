@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Broker stats carry the effective encode of a derived stream (encoder, fps, GOP, bitrate target and cap, audio mode).
+
 ## [1.2.598] - 2026-11-18
 
 ### Changed

@@ -1722,6 +1722,8 @@ export {
   AudioStreamPickSchema,
   BrokerStatsSchema,
   BrokerStatusSchema,
+  type DerivedEffectiveEncodeStats,
+  DerivedEffectiveEncodeSchema,
   CAM_PROFILE_ORDER,
   CameraStreamSchema,
   CamProfileSchema,

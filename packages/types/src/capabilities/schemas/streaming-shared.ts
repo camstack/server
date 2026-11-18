@@ -381,6 +381,27 @@ export type SubscribeAudioChunksResult = z.infer<typeof SubscribeAudioChunksResu
 
 export const BrokerStatusSchema = z.enum(['idle', 'connecting', 'streaming', 'error', 'stopped'])
 
+/**
+ * The encode a derived stream's feeder was last spawned with — the read-only
+ * "effective encode". Read off the ffmpeg argv that runs, so it cannot drift
+ * from what the operator's profile and the carrier's rules resolved to.
+ */
+export const DerivedEffectiveEncodeSchema = z.object({
+  /** `-c:v` of the argv (`libx264`, a hardware encoder, `copy`); null when absent. */
+  encoder: z.string().nullable(),
+  /** Output frame rate; null when the source cadence passes through unmeasured. */
+  fps: z.number().nullable(),
+  gopFrames: z.number(),
+  /** ABR target (`-b:v`), kbps. */
+  targetKbps: z.number().nullable(),
+  /** Ceiling (`-maxrate`), kbps. */
+  capKbps: z.number().nullable(),
+  bufsizeKbps: z.number().nullable(),
+  /** `copy` = source audio untouched, `aac` = re-encoded, `profile` = operator's encode. */
+  audio: z.enum(['copy', 'aac', 'profile']),
+})
+export type DerivedEffectiveEncodeStats = z.infer<typeof DerivedEffectiveEncodeSchema>
+
 export const BrokerStatsSchema = z.object({
   status: BrokerStatusSchema,
   inputFps: z.number(),
@@ -426,6 +447,8 @@ export const BrokerStatsSchema = z.object({
    */
   audioMuted: z.boolean().optional(),
   audioMutedDropped: z.number().optional(),
+  /** Present for a derived broker once its feeder has spawned at least once. */
+  derivedEncode: DerivedEffectiveEncodeSchema.optional(),
 })
 
 /**

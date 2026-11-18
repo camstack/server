@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1112 shared schemas.**
+**1113 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -640,6 +640,7 @@ Enum: `"alexa" \| "homekit" \| "webrtc-browser" \| "webrtc-mobile" \| "webrtc-wh
 - `audio?`: `{ codec: string; sampleRate: number; channels: number; supported: boolean } \| null`
 - `audioMuted?`: `boolean`
 - `audioMutedDropped?`: `number`
+- `derivedEncode?`: `DerivedEffectiveEncodeSchema`
 
 ### `BrokerStatusSchema`
 
@@ -1552,6 +1553,16 @@ Enum: `"auto" \| "day" \| "night" \| "schedule"`
 - `string`
 - `number`
 - `boolean`
+
+### `DerivedEffectiveEncodeSchema`
+
+- `encoder`: `string \| null`
+- `fps`: `number \| null`
+- `gopFrames`: `number`
+- `targetKbps`: `number \| null`
+- `capKbps`: `number \| null`
+- `bufsizeKbps`: `number \| null`
+- `audio`: `"copy" \| "aac" \| "profile"`
 
 ### `DesktopAppStatusSchema`
 

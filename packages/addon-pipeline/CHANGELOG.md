@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A derived stream's FPS, bitrate, width and height fields now save on blur or Enter instead of every keystroke, and can be cleared to follow the source
 - Derived streams no longer blur at every keyframe: the encoder now targets 80% of the bitrate cap, never upsamples fps above the source, raises a too-low bitrate to a floor for its resolution, and a suspended derived stream no longer logs a false 'push source stalled'.
+- A derived stream that names only a height now gets the same bitrate and floor as the equivalent width x height, and its effective encode is reported in the broker stats.
 
 ## [1.2.666] - 2026-11-18
 

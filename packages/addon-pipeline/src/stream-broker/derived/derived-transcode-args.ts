@@ -43,6 +43,7 @@
  */
 import {
   type AudioEncode,
+  type DerivedEffectiveEncodeStats,
   buildFfmpegArgs,
   type EncodeProfile,
   invocationFromEncodeProfile,
@@ -264,6 +265,8 @@ export interface DerivedTranscodeArgsInput {
   readonly profile: EncodeProfile
   /** The source broker's measured cadence; absent keeps the legacy defaults. */
   readonly sourceCadence?: DerivedSourceCadence
+  /** The source picture size; lets a height-only profile scale its bitrate and floor. */
+  readonly sourceResolution?: DerivedSourceResolution
   /** The source's broker RTSP loopback — this transcode's `-i`. */
   readonly loopbackUrl: string
   /**
@@ -325,8 +328,30 @@ export interface DerivedBitrate {
   readonly raisedFromKbps: number | null
 }
 
-function pixelsPerSecond(video: VideoEncode, outputFps: number | null): number | null {
-  const { width, height } = video
+/** The source picture size, when the broker knows it. */
+export interface DerivedSourceResolution {
+  readonly width: number
+  readonly height: number
+}
+
+/**
+ * Output pixels per second. A profile naming only a height (Resize mode) or
+ * only a width takes the other side from the source's aspect ratio, so the
+ * bitrate and floor are the same as for the equivalent width x height.
+ */
+function pixelsPerSecond(
+  video: VideoEncode,
+  outputFps: number | null,
+  source: DerivedSourceResolution | undefined,
+): number | null {
+  let { width, height } = video
+  if (source !== undefined && source.width > 0 && source.height > 0) {
+    if (width === undefined && height !== undefined) {
+      width = Math.round((height * source.width) / source.height / 2) * 2
+    } else if (height === undefined && width !== undefined) {
+      height = Math.round((width * source.height) / source.width / 2) * 2
+    }
+  }
   if (width === undefined || height === undefined) return null
   return width * height * (outputFps ?? DERIVED_DEFAULT_GOP_FRAMES)
 }
@@ -340,8 +365,9 @@ function pixelsPerSecond(video: VideoEncode, outputFps: number | null): number |
 export function resolveDerivedBitrate(
   video: VideoEncode,
   outputFps: number | null,
+  sourceResolution?: DerivedSourceResolution,
 ): DerivedBitrate {
-  const pps = pixelsPerSecond(video, outputFps)
+  const pps = pixelsPerSecond(video, outputFps, sourceResolution)
   const scaled =
     pps === null
       ? null
@@ -426,7 +452,11 @@ function withCarrierDefaults(
 export function buildDerivedTranscodeArgs(input: DerivedTranscodeArgsInput): DerivedTranscodeArgs {
   const audio = resolveDerivedAudio(input.profile.audio, input.sourceAudioCodec)
   const cadence = resolveDerivedCadence(input.profile.video, input.sourceCadence)
-  const bitrate = resolveDerivedBitrate(input.profile.video, cadence.outputFps)
+  const bitrate = resolveDerivedBitrate(
+    input.profile.video,
+    cadence.outputFps,
+    input.sourceResolution,
+  )
   const video = withCarrierDefaults(input.profile.video, cadence, bitrate)
   const args = buildFfmpegArgs(
     invocationFromEncodeProfile({
@@ -449,19 +479,8 @@ export function buildDerivedTranscodeArgs(input: DerivedTranscodeArgsInput): Der
   return { args, audio, cadence, bitrate }
 }
 
-/** What the derived feeder's ffmpeg is actually told to do — the read-only "effective encode". */
-export interface DerivedEffectiveEncode {
-  /** `-c:v` of the argv (`libx264`, a hardware encoder, `copy`), `null` when absent. */
-  readonly encoder: string | null
-  /** Output frame rate; `null` when the source cadence passes through unmeasured. */
-  readonly fps: number | null
-  readonly gopFrames: number
-  readonly targetKbps: number | null
-  readonly capKbps: number | null
-  readonly bufsizeKbps: number | null
-  /** `copy` = source audio untouched, `aac` = re-encoded, `profile` = operator's encode. */
-  readonly audio: 'copy' | 'aac' | 'profile'
-}
+/** What the derived feeder's ffmpeg is actually told to do — the schema's type, so the wire and this cannot drift. */
+export type DerivedEffectiveEncode = DerivedEffectiveEncodeStats
 
 function argValue(args: readonly string[], flag: string): string | null {
   const i = args.indexOf(flag)
