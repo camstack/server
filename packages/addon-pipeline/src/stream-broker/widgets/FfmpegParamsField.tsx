@@ -1,16 +1,36 @@
-import type { EncodeProfile } from '@camstack/types'
+import { DerivedSourceRefSchema, type EncodeProfile } from '@camstack/types'
 import type { WidgetProps } from '@camstack/ui-library'
 import {
   useDeviceManagerUpdateDeviceField,
+  useStreamBrokerGetBrokerStats,
+  useStreamBrokerPreviewDerivedEncode,
   Button,
   Input,
+  Switch,
   Textarea,
   Select,
 } from '@camstack/ui-library'
 import { AlertCircle, Check, ChevronDown, ChevronRight, Loader2, Plus } from 'lucide-react'
 import * as React from 'react'
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useT } from '../../i18n/index.js'
+import {
+  audioCodecOf,
+  PASSTHROUGH_PROFILE,
+  parseAudioCodec,
+  parseVideoCodecChoice,
+  profileToSave,
+  type SectionId,
+  type SectionState,
+  sectionsOf,
+  videoCodecChoiceOf,
+  withAudioCodec,
+  withFps,
+  withHeight,
+  withVideoCodec,
+  withVideoField,
+} from './encode-sections.js'
+import { EncodeResultPanel, type ResultView, type RunningView } from './EncodeResultPanel.js'
 import { GeometryBuilder } from './GeometryBuilder.js'
 
 /**
@@ -215,6 +235,17 @@ export interface FfmpegParamsWidgetConfig {
    *  widget is mounted via the form-builder (WidgetProps wrapper). */
   writerCapName?: string
   writerAddonId?: string
+  /**
+   * Broker id (`<deviceId>/derived:<name>`) whose running encode the "Final
+   * result" panel compares with the plan. Absent for a stream with no broker
+   * of its own: no running / idle badge.
+   */
+  statsBrokerId?: string
+  /**
+   * The derived stream's source (a `DerivedSourceRef`), so the plan is computed
+   * against the stream the encode will really read. Validated on read.
+   */
+  previewSource?: unknown
 }
 
 /**
@@ -231,6 +262,10 @@ export interface FfmpegParamsCoreProps {
   readonly onSave: (next: EncodeProfile | undefined) => void
   /** Live autosave status for the header indicator. Omit in tests. */
   readonly saveStatus?: FfmpegSaveStatus
+  /** The server's plan for the profile being edited; absent = nothing asked yet. */
+  readonly result?: ResultView
+  /** The running encode of this stream; absent = no badge. */
+  readonly running?: RunningView
 }
 
 /**
@@ -239,10 +274,7 @@ export interface FfmpegParamsCoreProps {
  * the edited `profile` keeps a stable identity across renders while
  * `value` is undefined (otherwise the textarea-resync guard would loop).
  */
-const PASSTHROUGH_DEFAULT: EncodeProfile = {
-  video: { codec: 'copy' },
-  audio: 'passthrough',
-}
+const PASSTHROUGH_DEFAULT: EncodeProfile = PASSTHROUGH_PROFILE
 
 // ── Tailwind primitives matching StreamBrokerPanel conventions ──────────
 const inputCls =
@@ -262,7 +294,35 @@ const sectionHeaderCls =
   'border-b border-border px-3 py-1.5 flex items-center justify-between bg-surface-hover/30'
 const sectionTitleCls = 'text-[11px] font-semibold text-foreground uppercase tracking-wider'
 
-type VideoNumericKey = 'width' | 'height' | 'fps' | 'bitrateKbps'
+interface SectionCardProps {
+  readonly title: string
+  readonly on: boolean
+  readonly onToggle: (next: boolean) => void
+  /** One line shown while the section is off: what the stream does without it. */
+  readonly offHint: string
+  readonly children: React.ReactNode
+}
+
+/** One independent editor section: a title, its own switch, its controls only while on. */
+function SectionCard({
+  title,
+  on,
+  onToggle,
+  offHint,
+  children,
+}: SectionCardProps): React.ReactElement {
+  return (
+    <div className={sectionCardCls}>
+      <div className={sectionHeaderCls}>
+        <h3 className={sectionTitleCls}>{title}</h3>
+        <Switch checked={on} onCheckedChange={onToggle} aria-label={title} />
+      </div>
+      <div className="px-3 py-2">
+        {on ? children : <p className="text-[11px] text-foreground-subtle italic">{offHint}</p>}
+      </div>
+    </div>
+  )
+}
 
 interface DraftNumberInputProps {
   readonly id: string
@@ -353,6 +413,8 @@ export function FfmpegParamsCore({
   value,
   onSave,
   saveStatus,
+  result,
+  running,
 }: FfmpegParamsCoreProps): React.ReactElement {
   const { t } = useT()
   const [advancedOpen, setAdvancedOpen] = useState(false)
@@ -378,52 +440,48 @@ export function FfmpegParamsCore({
     setOutputArgsText((profile.outputArgs ?? []).join('\n'))
   }
 
-  const updateProfile = (mutator: (p: EncodeProfile) => EncodeProfile): void => {
-    onSave(mutator(profile))
+  // Which sections are switched on. Read from the stored profile ONCE, on
+  // open, and never written back: only an operator edit saves. A section the
+  // operator just switched on that has no value yet (a Resize with no height)
+  // stays on here without touching the profile.
+  const [on, setOn] = useState<SectionState>(() => sectionsOf(value))
+  // A stream that stored nothing and is back to passthrough stores nothing.
+  const neverStored = useRef(value === undefined)
+  const commit = (next: EncodeProfile): void => {
+    onSave(profileToSave(next, neverStored.current))
   }
-
-  const setVideoCodec = (codec: EncodeProfile['video']['codec']): void =>
-    updateProfile((p) => ({ ...p, video: { ...p.video, codec } }))
-  // A numeric video field commits a draft (blur / Enter). `undefined` REMOVES
-  // the key: absent fps follows the source cadence, absent bitrate is the
-  // automatic ceiling, absent width/height is the source size.
-  const setVideoNumber = (key: VideoNumericKey, next: number | undefined): void =>
-    updateProfile((p) => {
-      if (next !== undefined) return { ...p, video: { ...p.video, [key]: next } }
-      const { [key]: _removed, ...rest } = p.video
-      return { ...p, video: rest }
-    })
-  const setAudioPassthrough = (): void =>
-    updateProfile((p) => ({ ...p, audio: 'passthrough' as const }))
-  const setAudioCodec = (codec: 'opus' | 'aac' | 'pcmu' | 'pcma' | 'copy'): void =>
-    updateProfile((p) => ({
-      ...p,
-      audio: typeof p.audio === 'object' ? { ...p.audio, codec } : { codec },
-    }))
+  const toggleSection = (id: SectionId, next: boolean): void => {
+    setOn((prev) => ({ ...prev, [id]: next }))
+    const stored = sectionsOf(value)
+    if (id === 'resize' && !next && stored.resize) commit(withHeight(value, undefined))
+    else if (id === 'fps' && !next && stored.fps) commit(withFps(value, undefined))
+    else if (id === 'codec' && next) commit(withVideoCodec(value, 'h264'))
+    else if (id === 'codec' && !next && stored.codec) commit(withVideoCodec(value, null))
+    else if (id === 'audio' && next) commit(withAudioCodec(value, 'aac'))
+    else if (id === 'audio' && !next && stored.audio) commit(withAudioCodec(value, null))
+  }
   const setAudioBitrate = (bitrateKbps: number): void => {
     if (!Number.isFinite(bitrateKbps) || bitrateKbps <= 0) return
-    updateProfile((p) => ({
-      ...p,
+    commit({
+      ...profile,
       audio:
-        typeof p.audio === 'object' ? { ...p.audio, bitrateKbps } : { codec: 'opus', bitrateKbps },
-    }))
+        typeof profile.audio === 'object'
+          ? { ...profile.audio, bitrateKbps }
+          : { codec: 'opus', bitrateKbps },
+    })
   }
-  const setInputArgs = (lines: string): void =>
-    updateProfile((p) => ({
-      ...p,
-      inputArgs: lines
-        .split('\n')
-        .map((l) => l.trim())
-        .filter((l) => l.length > 0),
-    }))
-  const setOutputArgs = (lines: string): void =>
-    updateProfile((p) => ({
-      ...p,
-      outputArgs: lines
-        .split('\n')
-        .map((l) => l.trim())
-        .filter((l) => l.length > 0),
-    }))
+  // A blur that changed nothing is not a save.
+  const setArgs = (key: 'inputArgs' | 'outputArgs', lines: string): void => {
+    const next = lines
+      .split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l.length > 0)
+    const current = profile[key] ?? []
+    if (next.length === current.length && next.every((line, i) => line === current[i])) return
+    commit({ ...profile, [key]: next })
+  }
+  const setInputArgs = (lines: string): void => setArgs('inputArgs', lines)
+  const setOutputArgs = (lines: string): void => setArgs('outputArgs', lines)
 
   // Picker: append a flag suggestion to either textarea and save immediately.
   const appendFlag = (which: 'input' | 'output', suggestion: FlagSuggestion): void => {
@@ -525,178 +583,127 @@ export function FfmpegParamsCore({
         </div>
       )}
 
-      {/* ── Video + Audio: 2 columns when the widget is wide, stacked when */}
-      {/*    narrow. Container-query threshold (@[480px]) matches the form's */}
-      {/*    section grid — NOT a viewport breakpoint — so the panels track  */}
-      {/*    the widget's own available width like every sibling composition. */}
-      {/*    Hidden entirely in args-only mode (source normalization): there */}
-      {/*    is no transcode, so the codec/geometry/audio controls don't apply. */}
+      {/* ── Sections: independent, each switched on separately and freely   */}
+      {/*    combinable. A section that is off contributes nothing to the    */}
+      {/*    profile. The grid tracks the widget's own width (container      */}
+      {/*    query), like every sibling composition. Hidden in args-only     */}
+      {/*    mode (source normalization), where nothing is transcoded.       */}
       {!argsOnly && (
-        <div className="@container">
-          <div className="grid grid-cols-1 @[480px]:grid-cols-2 gap-3">
-            {/* ── Video panel ─────────────────────────────────────────────────── */}
-            <div className={sectionCardCls}>
-              <div className={sectionHeaderCls}>
-                <h3 className={sectionTitleCls}>{t('ffmpeg.video')}</h3>
+        <div className="@container space-y-3">
+          <div className="grid grid-cols-1 gap-3 @[480px]:grid-cols-2">
+            <SectionCard
+              title={t('ffmpeg.sectionResize')}
+              on={on.resize}
+              onToggle={(next) => toggleSection('resize', next)}
+              offHint={t('ffmpeg.resizeOffHint')}
+            >
+              <div className={labelRowCls}>
+                <label htmlFor={`${config.fieldKey}-resize-height`} className={labelTextCls}>
+                  {t('ffmpeg.outputHeight')}
+                </label>
+                <DraftNumberInput
+                  id={`${config.fieldKey}-resize-height`}
+                  ariaLabel={t('ffmpeg.outputHeight')}
+                  value={profile.video.height}
+                  integer={true}
+                  placeholder={t('ffmpeg.placeholderSource')}
+                  invalidText={t('ffmpeg.invalidNumber')}
+                  onCommit={(next) => commit(withHeight(value, next))}
+                />
               </div>
-              <div className="px-3 py-2 divide-y divide-border/30">
-                <div className={labelRowCls}>
-                  <label htmlFor={`${config.fieldKey}-video-codec`} className={labelTextCls}>
-                    {t('ffmpeg.codec')}
-                  </label>
-                  <Select
-                    wrapperClassName="inline-block w-auto"
-                    id={`${config.fieldKey}-video-codec`}
-                    value={profile.video.codec}
-                    onChange={(e) =>
-                      setVideoCodec(e.target.value as EncodeProfile['video']['codec'])
-                    }
-                    className="min-w-[120px]"
-                  >
-                    <option value="h264">h264</option>
-                    <option value="h265">h265</option>
-                    <option value="copy">{t('ffmpeg.copyPassthrough')}</option>
-                  </Select>
-                </div>
-                {profile.video.codec !== 'copy' && (
-                  <>
-                    <div className={labelRowCls}>
-                      <label htmlFor={`${config.fieldKey}-video-width`} className={labelTextCls}>
-                        {t('ffmpeg.width')}
-                      </label>
-                      <DraftNumberInput
-                        id={`${config.fieldKey}-video-width`}
-                        ariaLabel={t('ffmpeg.width')}
-                        value={profile.video.width}
-                        integer={true}
-                        placeholder={t('ffmpeg.placeholderSource')}
-                        invalidText={t('ffmpeg.invalidNumber')}
-                        onCommit={(next) => setVideoNumber('width', next)}
-                      />
-                    </div>
-                    <div className={labelRowCls}>
-                      <label htmlFor={`${config.fieldKey}-video-height`} className={labelTextCls}>
-                        {t('ffmpeg.height')}
-                      </label>
-                      <DraftNumberInput
-                        id={`${config.fieldKey}-video-height`}
-                        ariaLabel={t('ffmpeg.height')}
-                        value={profile.video.height}
-                        integer={true}
-                        placeholder={t('ffmpeg.placeholderSource')}
-                        invalidText={t('ffmpeg.invalidNumber')}
-                        onCommit={(next) => setVideoNumber('height', next)}
-                      />
-                    </div>
-                    <div className={labelRowCls}>
-                      <label htmlFor={`${config.fieldKey}-video-fps`} className={labelTextCls}>
-                        {t('ffmpeg.fps')}
-                      </label>
-                      <DraftNumberInput
-                        id={`${config.fieldKey}-video-fps`}
-                        ariaLabel={t('ffmpeg.fps')}
-                        value={profile.video.fps}
-                        integer={false}
-                        placeholder={
-                          config.sourceParams?.video.fps !== undefined
-                            ? t('ffmpeg.placeholderFps', {
-                                fps: config.sourceParams.video.fps,
-                              })
-                            : t('ffmpeg.placeholderSource')
-                        }
-                        invalidText={t('ffmpeg.invalidNumber')}
-                        onCommit={(next) => setVideoNumber('fps', next)}
-                      />
-                    </div>
-                    <div className={labelRowCls}>
-                      <label htmlFor={`${config.fieldKey}-video-bitrate`} className={labelTextCls}>
-                        {t('ffmpeg.bitrateKbps')}
-                      </label>
-                      <DraftNumberInput
-                        id={`${config.fieldKey}-video-bitrate`}
-                        ariaLabel={t('ffmpeg.bitrateKbps')}
-                        value={profile.video.bitrateKbps}
-                        integer={true}
-                        placeholder={t('ffmpeg.placeholderAuto')}
-                        invalidText={t('ffmpeg.invalidNumber')}
-                        onCommit={(next) => setVideoNumber('bitrateKbps', next)}
-                      />
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+              <p className="text-[11px] text-foreground-subtle">{t('ffmpeg.resizeOnHint')}</p>
+            </SectionCard>
 
-            {/* ── Audio panel ─────────────────────────────────────────────────── */}
-            <div className={sectionCardCls}>
-              <div className={sectionHeaderCls}>
-                <h3 className={sectionTitleCls}>{t('ffmpeg.audio')}</h3>
+            <SectionCard
+              title={t('ffmpeg.sectionCodec')}
+              on={on.codec}
+              onToggle={(next) => toggleSection('codec', next)}
+              offHint={t('ffmpeg.codecOffHint')}
+            >
+              <div className={labelRowCls}>
+                <label htmlFor={`${config.fieldKey}-video-codec`} className={labelTextCls}>
+                  {t('ffmpeg.sectionCodec')}
+                </label>
+                <Select
+                  wrapperClassName="inline-block w-auto"
+                  id={`${config.fieldKey}-video-codec`}
+                  value={videoCodecChoiceOf(value)}
+                  onChange={(e) => {
+                    const choice = parseVideoCodecChoice(e.target.value)
+                    if (choice !== undefined) commit(withVideoCodec(value, choice))
+                  }}
+                  className="min-w-[120px]"
+                >
+                  <option value="source">{t('ffmpeg.codecKeepSource')}</option>
+                  <option value="h264">{t('ffmpeg.codecH264')}</option>
+                  <option value="h265">{t('ffmpeg.codecH265')}</option>
+                </Select>
               </div>
-              <div className="px-3 py-2">
-                {profile.audio === 'passthrough' ? (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-[11px] text-foreground-subtle italic">
-                      {t('ffmpeg.audioPassthroughNote')}
-                    </span>
-                    <Button
-                      variant="unstyled"
-                      type="button"
-                      onClick={() => setAudioCodec('opus')}
-                      className="rounded-md border border-border bg-surface-hover px-2 py-1 text-[11px] text-foreground hover:bg-surface-hover/70 transition-colors"
-                    >
-                      {t('ffmpeg.switchToCustom')}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-border/30">
-                    <div className={labelRowCls}>
-                      <label htmlFor={`${config.fieldKey}-audio-codec`} className={labelTextCls}>
-                        {t('ffmpeg.codec')}
-                      </label>
-                      <Select
-                        wrapperClassName="inline-block w-auto"
-                        id={`${config.fieldKey}-audio-codec`}
-                        value={profile.audio.codec}
-                        onChange={(e) =>
-                          setAudioCodec(e.target.value as 'opus' | 'aac' | 'pcmu' | 'pcma' | 'copy')
-                        }
-                        className="min-w-[120px]"
-                      >
-                        <option value="opus">opus</option>
-                        <option value="aac">aac</option>
-                        <option value="pcmu">pcmu</option>
-                        <option value="pcma">pcma</option>
-                        <option value="copy">{t('ffmpeg.copyPassthrough')}</option>
-                      </Select>
-                    </div>
-                    <div className={labelRowCls}>
-                      <label htmlFor={`${config.fieldKey}-audio-bitrate`} className={labelTextCls}>
-                        {t('ffmpeg.bitrateKbps')}
-                      </label>
-                      <Input
-                        id={`${config.fieldKey}-audio-bitrate`}
-                        type="number"
-                        value={profile.audio.bitrateKbps ?? ''}
-                        onChange={(e) => setAudioBitrate(Number(e.target.value))}
-                        className={inputCls + ' w-24 text-right'}
-                      />
-                    </div>
-                    <div className="pt-2">
-                      <Button
-                        variant="unstyled"
-                        type="button"
-                        onClick={setAudioPassthrough}
-                        className="text-[11px] text-foreground-subtle hover:text-foreground underline-offset-2 hover:underline"
-                      >
-                        {t('ffmpeg.switchToPassthrough')}
-                      </Button>
-                    </div>
-                  </div>
-                )}
+            </SectionCard>
+
+            <SectionCard
+              title={t('ffmpeg.sectionAudio')}
+              on={on.audio}
+              onToggle={(next) => toggleSection('audio', next)}
+              offHint={t('ffmpeg.audioOffHint')}
+            >
+              <div className={labelRowCls}>
+                <label htmlFor={`${config.fieldKey}-audio-codec`} className={labelTextCls}>
+                  {t('ffmpeg.sectionAudio')}
+                </label>
+                <Select
+                  wrapperClassName="inline-block w-auto"
+                  id={`${config.fieldKey}-audio-codec`}
+                  value={audioCodecOf(value)}
+                  onChange={(e) => {
+                    const codec = parseAudioCodec(e.target.value)
+                    if (codec !== undefined) commit(withAudioCodec(value, codec))
+                  }}
+                  className="min-w-[120px]"
+                >
+                  <option value="aac">{t('ffmpeg.audioAac')}</option>
+                  <option value="opus">{t('ffmpeg.audioOpus')}</option>
+                  <option value="none">{t('ffmpeg.audioNone')}</option>
+                  {(audioCodecOf(value) === 'pcmu' || audioCodecOf(value) === 'pcma') && (
+                    <option value={audioCodecOf(value)}>{audioCodecOf(value)}</option>
+                  )}
+                </Select>
               </div>
-            </div>
+            </SectionCard>
+
+            <SectionCard
+              title={t('ffmpeg.sectionFps')}
+              on={on.fps}
+              onToggle={(next) => toggleSection('fps', next)}
+              offHint={t('ffmpeg.fpsOffHint')}
+            >
+              <div className={labelRowCls}>
+                <label htmlFor={`${config.fieldKey}-video-fps`} className={labelTextCls}>
+                  {t('ffmpeg.fps')}
+                </label>
+                <DraftNumberInput
+                  id={`${config.fieldKey}-video-fps`}
+                  ariaLabel={t('ffmpeg.fps')}
+                  value={profile.video.fps}
+                  integer={false}
+                  placeholder={
+                    config.sourceParams?.video.fps !== undefined
+                      ? t('ffmpeg.placeholderFps', { fps: config.sourceParams.video.fps })
+                      : t('ffmpeg.placeholderSource')
+                  }
+                  invalidText={t('ffmpeg.invalidNumber')}
+                  onCommit={(next) => commit(withFps(value, next))}
+                />
+              </div>
+              <p className="text-[11px] text-foreground-subtle">{t('ffmpeg.fpsOnHint')}</p>
+            </SectionCard>
           </div>
-          {/* end Video+Audio grid */}
+
+          <EncodeResultPanel
+            profile={value}
+            result={result ?? { kind: 'pending' }}
+            {...(running !== undefined ? { running } : {})}
+          />
         </div>
       )}
 
@@ -718,12 +725,13 @@ export function FfmpegParamsCore({
           </div>
         </>
       ) : (
-        /* ── Advanced (collapsible) — full editor's raw ffmpeg args ─────── */
+        /* ── Expert (collapsible, last) — the fields no section owns, and the raw args ── */
         <div className={sectionCardCls}>
           <Button
             variant="unstyled"
             type="button"
             onClick={() => setAdvancedOpen((v) => !v)}
+            aria-expanded={advancedOpen}
             className="w-full px-3 py-1.5 flex items-center justify-between bg-surface-hover/30 hover:bg-surface-hover transition-colors"
           >
             <span className={'inline-flex items-center gap-1.5 ' + sectionTitleCls}>
@@ -742,6 +750,65 @@ export function FfmpegParamsCore({
           </Button>
           {advancedOpen && (
             <div className="px-3 py-2 space-y-3 border-t border-border/50">
+              <p className="text-[11px] text-foreground-subtle">{t('ffmpeg.expertHint')}</p>
+              <div className="divide-y divide-border/30">
+                <div className={labelRowCls}>
+                  <label htmlFor={`${config.fieldKey}-video-width`} className={labelTextCls}>
+                    {t('ffmpeg.width')}
+                  </label>
+                  <DraftNumberInput
+                    id={`${config.fieldKey}-video-width`}
+                    ariaLabel={t('ffmpeg.width')}
+                    value={profile.video.width}
+                    integer={true}
+                    placeholder={t('ffmpeg.placeholderSource')}
+                    invalidText={t('ffmpeg.invalidNumber')}
+                    onCommit={(next) => commit(withVideoField(value, 'width', next))}
+                  />
+                </div>
+                <div className={labelRowCls}>
+                  <label htmlFor={`${config.fieldKey}-video-bitrate`} className={labelTextCls}>
+                    {t('ffmpeg.bitrateKbps')}
+                  </label>
+                  <DraftNumberInput
+                    id={`${config.fieldKey}-video-bitrate`}
+                    ariaLabel={t('ffmpeg.bitrateKbps')}
+                    value={profile.video.bitrateKbps}
+                    integer={true}
+                    placeholder={t('ffmpeg.placeholderAuto')}
+                    invalidText={t('ffmpeg.invalidNumber')}
+                    onCommit={(next) => commit(withVideoField(value, 'bitrateKbps', next))}
+                  />
+                </div>
+                <div className={labelRowCls}>
+                  <label htmlFor={`${config.fieldKey}-video-gop`} className={labelTextCls}>
+                    {t('ffmpeg.gopFrames')}
+                  </label>
+                  <DraftNumberInput
+                    id={`${config.fieldKey}-video-gop`}
+                    ariaLabel={t('ffmpeg.gopFrames')}
+                    value={profile.video.gopFrames}
+                    integer={true}
+                    placeholder={t('ffmpeg.placeholderAuto')}
+                    invalidText={t('ffmpeg.invalidNumber')}
+                    onCommit={(next) => commit(withVideoField(value, 'gopFrames', next))}
+                  />
+                </div>
+                {typeof profile.audio === 'object' && (
+                  <div className={labelRowCls}>
+                    <label htmlFor={`${config.fieldKey}-audio-bitrate`} className={labelTextCls}>
+                      {t('ffmpeg.audioBitrate')}
+                    </label>
+                    <Input
+                      id={`${config.fieldKey}-audio-bitrate`}
+                      type="number"
+                      value={profile.audio.bitrateKbps ?? ''}
+                      onChange={(e) => setAudioBitrate(Number(e.target.value))}
+                      className={inputCls + ' w-24 text-right'}
+                    />
+                  </div>
+                )}
+              </div>
               {inputArgsBlock}
               <GeometryBuilder
                 outputArgs={profile.outputArgs ?? []}
@@ -910,6 +977,48 @@ export function FfmpegParamsField(props: WidgetProps): React.ReactElement | null
   // value hasn't changed; re-syncing would clobber user edits in flight.
   const [value, setValue] = useState<EncodeProfile | undefined>(() => cfg.initialValue)
 
+  // The plan for the profile being edited, computed by the server and asked
+  // for once the operator pauses. The profile is the query key, so a new edit
+  // is a new query; the last answer stays on screen meanwhile.
+  const debouncedProfile = useDebouncedValue(value ?? PASSTHROUGH_PROFILE, PREVIEW_DEBOUNCE_MS)
+  const previewSource = DerivedSourceRefSchema.safeParse(cfg.previewSource)
+  const previewQuery = useStreamBrokerPreviewDerivedEncode(
+    {
+      deviceId: props.deviceId ?? 0,
+      profile: debouncedProfile,
+      ...(previewSource.success ? { source: previewSource.data } : {}),
+    },
+    {
+      enabled: props.deviceId !== undefined && cfg.argsOnly !== true,
+      placeholderData: keepPrevious,
+    },
+  )
+  const result: ResultView = previewQuery.isError
+    ? { kind: 'unavailable' }
+    : previewQuery.data === undefined
+      ? { kind: 'pending' }
+      : previewQuery.data.kind === 'no-source'
+        ? { kind: 'no-source' }
+        : { kind: 'ready', preview: previewQuery.data.preview }
+
+  // The running encode, polled: a broker that is not running answers with the
+  // stats of a stopped one and no `derivedEncode`, which is "not running" — an
+  // unanswered or failed query is `pending` / `unavailable`, never that.
+  const statsQuery = useStreamBrokerGetBrokerStats(
+    { brokerId: cfg.statsBrokerId ?? '' },
+    { enabled: cfg.statsBrokerId !== undefined, refetchInterval: 5_000 },
+  )
+  const running: RunningView | undefined =
+    cfg.statsBrokerId === undefined
+      ? undefined
+      : statsQuery.isError
+        ? { kind: 'unavailable' }
+        : statsQuery.data === undefined
+          ? { kind: 'pending' }
+          : statsQuery.data.derivedEncode !== undefined
+            ? { kind: 'running', encode: statsQuery.data.derivedEncode }
+            : { kind: 'idle' }
+
   const handleSave = useCallback(
     (next: EncodeProfile | undefined): void => {
       setValue(next)
@@ -966,8 +1075,33 @@ export function FfmpegParamsField(props: WidgetProps): React.ReactElement | null
 
   const fullCfg: FfmpegParamsWidgetConfig = { ...cfg, fieldKey }
   return (
-    <FfmpegParamsCore config={fullCfg} value={value} onSave={handleSave} saveStatus={saveStatus} />
+    <FfmpegParamsCore
+      config={fullCfg}
+      value={value}
+      onSave={handleSave}
+      saveStatus={saveStatus}
+      result={result}
+      {...(running !== undefined ? { running } : {})}
+    />
   )
+}
+
+/** How long the operator must pause before the plan is asked for. */
+const PREVIEW_DEBOUNCE_MS = 300
+
+/** react-query `placeholderData`: keep the previous answer while the next one loads. */
+function keepPrevious<T>(previous: T | undefined): T | undefined {
+  return previous
+}
+
+/** `value`, delayed until it has stopped changing for `delayMs`. */
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = useState(value)
+  useEffect(() => {
+    const timer = setTimeout(() => setDebounced(value), delayMs)
+    return () => clearTimeout(timer)
+  }, [value, delayMs])
+  return debounced
 }
 
 // ── Flag picker ──────────────────────────────────────────────────────────

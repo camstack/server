@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Stateless runs and benchmarks without an explicit device no longer use the node's default engine when it is excluded: they run on an eligible device or are refused with 'no-eligible-device'.
 - A derived stream's effective encode can be previewed before it runs, computed by the same function the broker uses to start it; a height-only profile now actually resizes (the other side follows the source aspect).
 - A derived profile or egress asking for the source codec keeps the camera's own codec (H.265 stays H.265).
+- Derived-stream editor: resize, video codec, audio and frame rate are separate switches that combine, bitrate and raw ffmpeg args sit under Expert, and a Final result panel shows the encode the server will run.
 
 ### Fixed
 

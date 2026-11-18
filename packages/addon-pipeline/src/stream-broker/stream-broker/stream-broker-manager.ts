@@ -6862,6 +6862,10 @@ export class StreamBrokerManager {
             initialValue: def.encodeProfile,
             writerCapName: 'stream-broker',
             writerAddonId: 'stream-broker',
+            // The broker whose running encode the result panel compares with
+            // the plan, and the source the plan is computed against.
+            statsBrokerId: brokerIdFor(deviceId, `derived:${name}`),
+            ...(def.source !== undefined ? { previewSource: def.source } : {}),
           },
         },
         // Toggle pair: Pre-buffer + RTSP restream render side by side
