@@ -57,8 +57,9 @@ state (`proposed`, `linked`, `dismissed`) and an origin (`auto`, `operator`):
 an `auto` candidate links and emits `identity-link.created`; a proposal waits
 for the operator's Confirm or Dismiss on the device's Hardware tab; a dismissed
 pair is never proposed again; Unlink dismisses. An `auto` link whose evidence
-is gone is lost (`identity-link.lost`); an operator-confirmed one is kept and
-flagged `evidenceGone`. A link is never re-judged on a side that has no row
+is gone is lost (`identity-link.lost`); an operator-confirmed one is kept,
+flagged `evidenceGone`, and stops acting (`identity-link.lost`, reason
+`evidence-gone`; `identity-link.created` again when the evidence returns). A link is never re-judged on a side that has no row
 right now — removal is the `identity-links` removal step's.
 
 A `linked` link CONTRIBUTES ordinary Customize features (D663) on its host,
@@ -88,7 +89,8 @@ attempts per host, then logs a warn tagged with the host's `deviceId`.
 Because an event may be dropped (D11), the link is also checked at the point
 of use: before `power-source` cycles or switches a camera through a feature
 stamped `contributedBy: { linkId }`, it reads the links over RPC. A link that
-is not `linked`, or names another port, is refused as `link-lost` (logged,
+is not `linked`, is flagged `evidenceGone`, or names another port, is refused
+as `link-lost` (logged,
 and a pass of that host is requested); a read that fails or is `not-loaded`
 is refused as `link-unknown` — destructive work never runs on an unread
 link (D49).
@@ -115,9 +117,19 @@ own identity.
 - A port whose client changes loses its old link (evidence gone) and may gain a
   new one; a poll that saw no client keeps the last MAC, retained (absence is
   not a different client, but a fresh read elsewhere wins).
-- An operator-confirmed link whose evidence is gone stays `linked` (flagged
-  `evidenceGone`), so `power-source` still acts through it: that is the
-  operator's decision, undone by Unlink.
+- An operator-confirmed link whose evidence is gone stays `linked`, flagged
+  `evidenceGone`, and does NOT act. Its contribution is withdrawn, so a fresh
+  link on another port can contribute, and `power-source` refuses through it
+  as `link-lost` — the existing reason, because the danger is the same: the
+  port may now feed another device (the operator confirmed port 7 → camera A;
+  A moved to port 9 and camera B took port 7 — A's restart must never cycle
+  port 7). A dedicated `link-evidence-gone` reason was rejected: a caller acts
+  the same on both, and the message names the case. The Hardware tab shows it
+  as "No longer matched", which is the re-confirmation request: the operator
+  Unlinks it, or it acts again on its own once the same evidence returns (the
+  confirmed pair, read fresh). A contradicting fresh report — the camera read
+  on another port, or another device on that port — is exactly what clears the
+  candidate, so it always lands here and never acts silently.
 - A withdrawn contribution is logged with the host's `deviceId`, resolved from
   the dismissed or lost link still listed, else from the device list.
 - When the last stamped feature on a host is taken back, the host's
@@ -132,11 +144,13 @@ own identity.
 - Specs: `device-identity-index.spec.ts` (attached pairs, downgrades),
   `identity-link-reconciler.spec.ts` (states, evidence gone, dismissed stays),
   `link-contributions.spec.ts` (native skip, operator wins, `enabled` survives,
-  only stamps are taken back, stale-write retry bounded to three),
+  only stamps are taken back, stale-write retry bounded to three, an
+  evidence-gone link yields to the port the camera moved to),
   `composition-api.spec.ts` (removal refused, last stamp withdrawn through the
-  real API, an operator write requests a pass),
+  real API, an orphan's stamp is withdrawn although its host is gone, an
+  operator write requests a pass),
   `power-source-service.spec.ts` (`link-lost` / `link-unknown` at the point of
-  use), `power-extension.spec.ts` (an operator edit drops the stamp),
+  use, `evidenceGone` included), `power-extension.spec.ts` (an operator edit drops the stamp),
   `device-identifiers.spec.ts` (port 7 → 9: fresh beats retained), `unifi-identifiers.spec.ts` and
   `integration-gateway.spec.ts` (the port's declaration, deduped per tick),
   `IdentityLinksBlock.spec.tsx` (pending is not "none", decisions).
