@@ -130,6 +130,13 @@ own identity.
   confirmed pair, read fresh). A contradicting fresh report — the camera read
   on another port, or another device on that port — is exactly what clears the
   candidate, so it always lands here and never acts silently.
+- The reconciler's own writes are recognised by an in-process caller object
+  (`linkReconcilerCaller()`), never by the `identity-links` user id: a forked
+  addon's `ctx.api` args reach the provider as sent, so a string could be
+  forged. Only its writes may remove a stamp, and only a pure withdrawal (the
+  composition otherwise unchanged, each kept remainder a subset of the
+  stamped fields) skips the store judge, so a removed host's `target-missing`
+  cannot pin a stamp.
 - A withdrawn contribution is logged with the host's `deviceId`, resolved from
   the dismissed or lost link still listed, else from the device list.
 - When the last stamped feature on a host is taken back, the host's
@@ -147,7 +154,9 @@ own identity.
   only stamps are taken back, stale-write retry bounded to three, an
   evidence-gone link yields to the port the camera moved to),
   `composition-api.spec.ts` (removal refused, last stamp withdrawn through the
-  real API, an orphan's stamp is withdrawn although its host is gone, an
+  real API, an orphan's stamp is withdrawn although its host is gone while
+  any other write to it — an operator's, a forged `identity-links` caller's,
+  one adding a field or changing the helper — is judged, an
   operator write requests a pass),
   `power-source-service.spec.ts` (`link-lost` / `link-unknown` at the point of
   use, `evidenceGone` included), `power-extension.spec.ts` (an operator edit drops the stamp),

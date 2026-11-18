@@ -104,7 +104,7 @@ import { type BlockTranspiler, compileBlock } from './compile-block.js'
 import {
   buildCompositionApi,
   type CompositionApi,
-  IDENTITY_LINKS_USER_ID,
+  linkReconcilerCaller,
   linkContributionDeleteRefusal,
 } from './composition-api.js'
 import { LinkContributionReconciler } from './link-contributions.js'
@@ -1091,7 +1091,7 @@ export class CoreBlocksAddon extends BaseAddon {
     }
     const compositions = this.sharedCompositionApi()
     const store = this.requireStore()
-    const caller = { userId: IDENTITY_LINKS_USER_ID, isAdmin: true }
+    const caller = linkReconcilerCaller()
     const links = new LinkContributionReconciler({
       listLinks: () => requireApi().deviceManager.listIdentityLinks.query({}),
       deviceIdOf: (ref) => this.deviceIdOfRef(ref),

@@ -6,6 +6,7 @@ import {
   type CompositionListRead,
   type CompositionSourceRef,
   type CompositionView,
+  type CompositionFieldsFeature,
   type CoreBlock,
   CompositionSchema,
   DEFAULT_HISTORY_RETENTION,
@@ -25,6 +26,7 @@ import {
   CompositionChangedError,
   IDENTITY_LINKS_USER_ID,
   linkContributionDeleteRefusal,
+  linkReconcilerCaller,
 } from '../composition-api.js'
 import { LinkContributionReconciler } from '../link-contributions.js'
 import {
@@ -32,6 +34,13 @@ import {
   describeCompositionSources,
   type SourceRowView,
 } from '../composition-sources.js'
+
+type FieldMap = CompositionFieldsFeature['fields']
+
+/** The named fields of `all`, those present only. */
+function pick(all: FieldMap, ...paths: readonly string[]): FieldMap {
+  return Object.fromEntries(Object.entries(all).filter(([path]) => paths.includes(path)))
+}
 
 const ROOM = roomCompositionExample({
   temperatureSources: ROOM_EXAMPLE_TEMPERATURE_SOURCES,
@@ -964,7 +973,7 @@ describe('listComposableCaps (G2, D676)', () => {
 
 describe('a feature an identity link contributed (D1063)', () => {
   const LINK_ID = 'poe-power:x/port-7|ha/feeder'
-  const LINKS_CALLER = { userId: IDENTITY_LINKS_USER_ID, isAdmin: true }
+  const LINKS_CALLER = linkReconcilerCaller()
   const stampedBattery = (enabled?: boolean): Composition => {
     const base = addBattery()
     return {
@@ -1075,20 +1084,106 @@ describe('a feature an identity link contributed (D1063)', () => {
     expect(log.lines.filter((l) => l.level === 'warn')).toEqual([])
   })
 
-  it('any other save to an orphan customization is still judged: target-missing refuses it', async () => {
-    stored = [compositionBlock('b1', addBattery())]
+  /** The stamped battery cut down to some of its fields, unstamped — what a partial withdrawal stores. */
+  const remainder = (
+    fields: (all: FieldMap) => FieldMap,
+    helper?: Composition['helper'],
+  ): Composition => {
+    const base = stampedBattery()
+    return {
+      ...base,
+      ...(helper === undefined ? {} : { helper }),
+      features: base.features.map((f) => {
+        if (f.kind !== 'fields') return f
+        const { contributedBy: _stamp, ...rest } = f
+        return { ...rest, fields: fields(f.fields) }
+      }),
+    }
+  }
+  const orphanHost = (): void => {
     rows.set(
       HA,
       (rows.get(HA) ?? []).filter((r) => r.stableId !== FEEDER.stableId),
     )
+  }
+  const GROUP_HELPER: Composition['helper'] = {
+    kind: 'group',
+    templateId: 'temperature',
+    aggregate: 'mean',
+    members: [{ source: OTHER, cap: 'temperature-sensor', fieldPath: 'temperature' }],
+  }
+
+  it('a partial withdrawal by the reconciler (a subset of the stamped fields, same values) lands on an orphan', async () => {
+    stored = [compositionBlock('b1', stampedBattery())]
+    orphanHost()
+    const next = remainder((all) => pick(all, 'charging', 'sleeping'))
+    await buildCompositionApi(deps()).updateComposition({
+      blockId: 'b1',
+      expectedUpdatedAt: 1,
+      block: { composition: next },
+      caller: linkReconcilerCaller(),
+    })
+    expect(coreBlockFeatures('b1')).toEqual(next.features)
+  })
+
+  it.each([
+    [
+      'adds a field the stamp never had',
+      remainder((all) => ({
+        ...all,
+        ...Object.fromEntries(Object.entries(pick(all, 'charging')).map(([, v]) => ['extra', v])),
+      })),
+    ],
+    [
+      'changes a stamped field’s value',
+      remainder((all) => ({
+        ...all,
+        charging: { kind: 'expression', expr: '"yes"', bindings: {} },
+      })),
+    ],
+    ['changes the helper', remainder((all) => all, GROUP_HELPER)],
+  ] as const)('a reconciler write to an orphan that %s is judged: target-missing refuses it', async (_label, next) => {
+    stored = [compositionBlock('b1', stampedBattery())]
+    orphanHost()
     await expect(
       buildCompositionApi(deps()).updateComposition({
         blockId: 'b1',
         expectedUpdatedAt: 1,
-        block: { composition: { ...addBattery(), features: [] } },
-        caller: LINKS_CALLER,
+        block: { composition: next },
+        caller: linkReconcilerCaller(),
       }),
     ).rejects.toThrow(/target-missing/)
+  })
+
+  it.each([
+    ['an operator', CALLER],
+    [
+      'a caller that only NAMES the reconciler (a wire-supplied identity)',
+      { userId: IDENTITY_LINKS_USER_ID, isAdmin: true },
+    ],
+  ] as const)('the same partial withdrawal from %s is judged: target-missing refuses it', async (_label, caller) => {
+    stored = [compositionBlock('b1', stampedBattery())]
+    orphanHost()
+    await expect(
+      buildCompositionApi(deps()).updateComposition({
+        blockId: 'b1',
+        expectedUpdatedAt: 1,
+        block: { composition: remainder((all) => pick(all, 'charging', 'sleeping')) },
+        caller,
+      }),
+    ).rejects.toThrow(/target-missing/)
+  })
+
+  it('a caller that only NAMES the reconciler cannot remove a stamped feature', async () => {
+    stored = [compositionBlock('b1', stampedBattery())]
+    await expect(
+      buildCompositionApi(deps()).updateComposition({
+        blockId: 'b1',
+        expectedUpdatedAt: 1,
+        block: { composition: { ...stampedBattery(), features: [] } },
+        caller: { userId: IDENTITY_LINKS_USER_ID, isAdmin: true },
+      }),
+    ).rejects.toThrow(/link-contribution-removed/)
   })
 
   it('an operator write of a customization asks for a link reconcile; the reconciler’s own write does not', async () => {

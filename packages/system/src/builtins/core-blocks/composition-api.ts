@@ -15,7 +15,7 @@
  * A feature an identity link contributed (`contributedBy`, D1063) is switched
  * off by the operator, never removed: an update that drops one is refused as
  * `link-contribution-removed`, except the identity-link reconciler's own write
- * (`IDENTITY_LINKS_USER_ID`), which is how a contribution is withdrawn. Every
+ * (`linkReconcilerCaller()`), which is how a contribution is withdrawn. Every
  * other write of a customization asks for a link pass (`compositionWritten`).
  */
 import {
@@ -68,6 +68,30 @@ export const IDENTITY_LINKS_USER_ID = 'identity-links'
 /** Who wrote a composition. */
 export interface CompositionWriter {
   readonly userId: string
+}
+
+/** The caller the identity-link reconciler writes as. */
+export interface LinkReconcilerCaller extends CompositionWriter {
+  readonly isAdmin: boolean
+}
+
+/**
+ * The reconciler's callers, by object identity. The gate is this set, never the
+ * `userId` string: a `caller` that arrived over the wire (a forked addon's
+ * `ctx.api` args reach the provider as sent) is a different object, whatever it
+ * names, so it can never pass as the reconciler.
+ */
+const LINK_RECONCILER_CALLERS = new WeakSet<CompositionWriter>()
+
+/** A caller that IS the identity-link reconciler — mint it in-process only. */
+export function linkReconcilerCaller(): LinkReconcilerCaller {
+  const caller: LinkReconcilerCaller = { userId: IDENTITY_LINKS_USER_ID, isAdmin: true }
+  LINK_RECONCILER_CALLERS.add(caller)
+  return caller
+}
+
+function isLinkReconciler(writer: CompositionWriter | undefined): boolean {
+  return writer !== undefined && LINK_RECONCILER_CALLERS.has(writer)
 }
 
 /** An update named an `updatedAt` the stored block no longer has: reload and re-apply. */
@@ -207,7 +231,7 @@ function refuseLinkContributionRemoval(
   next: Composition | undefined,
   writer: CompositionWriter | undefined,
 ): void {
-  if (next === undefined || writer?.userId === IDENTITY_LINKS_USER_ID) return
+  if (next === undefined || isLinkReconciler(writer)) return
   const stored = deps.store.get(blockId)
   if (stored === null) return
   const kept = new Set(next.features.map((f) => f.cap))
@@ -235,29 +259,25 @@ function refuseLinkContributionRemoval(
 
 /**
  * The reconciler taking back what it stamped, and nothing else (D1063): the
- * target is unchanged, every stored feature the operator wrote survives
- * verbatim, and every other kept feature is a stored one or an unstamped
- * remainder of a stamped one. Removing features cannot create a conflict, and a
- * withdrawal must land on a customization whose host was removed — which the
- * store judge refuses as `target-missing` — so it is not judged.
+ * composition is unchanged apart from its features (target and helper
+ * included), every stored feature the operator wrote survives verbatim, and
+ * every other kept feature is a stored one or an unstamped remainder of a
+ * stamped one — a subset of its fields, with the same values. Removing features
+ * cannot create a conflict, and a withdrawal must land on a customization whose
+ * host was removed — which the store judge refuses as `target-missing` — so it
+ * is not judged.
  */
 function isStampWithdrawal(
   stored: Composition | null,
   next: Composition,
   writer: CompositionWriter | undefined,
 ): boolean {
-  if (writer?.userId !== IDENTITY_LINKS_USER_ID || stored === null) return false
-  const storedTarget = existingTarget(stored)
-  const nextTarget = existingTarget(next)
-  if (
-    storedTarget === null ||
-    nextTarget === null ||
-    compositionSourceKey(storedTarget) !== compositionSourceKey(nextTarget)
-  ) {
+  if (!isLinkReconciler(writer) || stored === null) return false
+  if (JSON.stringify({ ...stored, features: [] }) !== JSON.stringify({ ...next, features: [] })) {
     return false
   }
-  const stampedCaps = new Set(linkContributedFeatures(stored).map((f) => f.cap))
-  if (stampedCaps.size === 0) return false
+  const stamped = linkContributedFeatures(stored)
+  if (stamped.length === 0) return false
   const storedKeys = new Set(stored.features.map((f) => JSON.stringify(f)))
   const nextKeys = new Set(next.features.map((f) => JSON.stringify(f)))
   const operatorKept = stored.features.every(
@@ -267,9 +287,23 @@ function isStampWithdrawal(
   const nothingAdded = next.features.every(
     (f) =>
       storedKeys.has(JSON.stringify(f)) ||
-      (f.kind === 'fields' && f.contributedBy === undefined && stampedCaps.has(f.cap)),
+      (f.kind === 'fields' &&
+        f.contributedBy === undefined &&
+        stamped.some((from) => isRemainderOf(f, from))),
   )
   return operatorKept && nothingAdded && next.features.length <= stored.features.length
+}
+
+/** `kept` is `stamped` without its stamp, cut down to some of its fields, each unchanged. */
+function isRemainderOf(kept: CompositionFieldsFeature, stamped: CompositionFieldsFeature): boolean {
+  const { contributedBy: _stamp, fields: stampedFields, ...stampedRest } = stamped
+  const { fields: keptFields, ...keptRest } = kept
+  if (JSON.stringify(keptRest) !== JSON.stringify(stampedRest)) return false
+  return Object.entries(keptFields).every(
+    ([path, value]) =>
+      Object.hasOwn(stampedFields, path) &&
+      JSON.stringify(stampedFields[path]) === JSON.stringify(value),
+  )
 }
 
 function noteWritten(
@@ -278,7 +312,7 @@ function noteWritten(
   writer: CompositionWriter | undefined,
 ): void {
   if (composition === null || composition.target.kind !== 'existing') return
-  if (writer === undefined || writer.userId === IDENTITY_LINKS_USER_ID) return
+  if (writer === undefined || isLinkReconciler(writer)) return
   deps.compositionWritten?.(composition.target.device, writer)
 }
 
