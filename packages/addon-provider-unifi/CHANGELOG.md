@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.170] - 2026-11-18
+
 ### Changed
 
 - Each UniFi console is now a Host device with workload data, its admin link and a Restart on its workload card; the separate Gateway device is gone and an old one is removed on restart

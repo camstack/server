@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.174] - 2026-11-18
+
 ### Changed
 
 - Dahua cameras without lighting or an SD card no longer lose their settings and clips.

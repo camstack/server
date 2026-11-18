@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.172] - 2026-11-18
+
 ### Changed
 
 - The Unraid server is now its own Host device (WebGUI link, identifiers, CPU, temperature, array as disk); the separate Gateway device is gone and an old one is removed on restart

@@ -1,6 +1,6 @@
 {
   "name": "@camstack/server",
-  "version": "1.2.900",
+  "version": "1.2.901",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -66,10 +66,10 @@
     ],
     "requires": {
       "addons": {
-        "@camstack/addon-admin-ui": ">=1.2.699",
-        "@camstack/addon-agent-ui": ">=1.2.409",
-        "@camstack/addon-post-analysis": ">=1.2.716",
-        "@camstack/addon-provider-unifi": ">=0.2.169"
+        "@camstack/addon-pipeline": ">=1.2.662",
+        "@camstack/addon-provider-amcrest": ">=0.2.174",
+        "@camstack/addon-provider-unifi": ">=0.2.170",
+        "@camstack/addon-provider-unraid": ">=0.2.172"
       },
       "wrapper": {
         "desktop": ">=0.0.1",
