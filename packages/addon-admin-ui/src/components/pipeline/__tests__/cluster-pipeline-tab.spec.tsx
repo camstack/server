@@ -125,4 +125,21 @@ describe('ClusterPipelineTab', () => {
     render(<ClusterPipelineTab />)
     expect(screen.queryByRole('grid')).not.toBeInTheDocument()
   })
+
+  it('names a matrix step the catalog has no row for, instead of dropping it silently', () => {
+    h.matrix = {
+      steps: [
+        ...MATRIX.steps,
+        { ...MATRIX.steps[0], stepId: 'clip-embedding', name: 'CLIP Embedding' },
+      ],
+    }
+    render(<ClusterPipelineTab />)
+    expect(screen.getByTestId('uncontrolled-steps')).toHaveTextContent('CLIP Embedding')
+    expect(screen.getByTestId('uncontrolled-steps')).not.toHaveTextContent('Plate Detection')
+  })
+
+  it('draws no hint when every matrix step is in the tree', () => {
+    render(<ClusterPipelineTab />)
+    expect(screen.queryByTestId('uncontrolled-steps')).not.toBeInTheDocument()
+  })
 })

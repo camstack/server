@@ -3803,7 +3803,8 @@
       "hint": "Off turns a step off for every camera. On runs it unless a camera turns it off. Opt-in runs it only on cameras that turn it on. A node or accelerator switch can still turn it off below that — those are on the node page.",
       "catalogFailed": "The step catalog did not load",
       "noSteps": "The catalog reports no pipeline steps.",
-      "label": "Pipeline steps"
+      "label": "Pipeline steps",
+      "missingSteps": "Not in this tree, so their cluster mode cannot be set here: {{steps}}."
     }
   },
   "assignments": {

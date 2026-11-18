@@ -17,13 +17,29 @@ import {
   TEXT_HINT,
   usePipelineExecutorGetSchema,
 } from '@camstack/ui-library'
+import type { StepTreeNode } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import {
   ClusterStepRowAction,
   stepParents,
   StepSwitchNotices,
 } from '../step-switches/StepSwitchRowActions'
+import type { StepSwitchRow } from '../step-switches/step-switches-model'
 import { useStepSwitches, useStepSwitchWriters } from '../step-switches/use-step-switches'
+
+/** Names of the matrix steps the catalog tree has no row for — their cluster mode has no control here. */
+function stepsOutsideTree(
+  rows: readonly StepSwitchRow[],
+  tree: readonly StepTreeNode[],
+): readonly string[] {
+  const inTree = new Set<string>()
+  const walk = (node: StepTreeNode): void => {
+    inTree.add(node.addonId)
+    node.children.forEach(walk)
+  }
+  tree.forEach(walk)
+  return rows.filter((r) => !inTree.has(r.stepId)).map((r) => r.name)
+}
 
 export function ClusterPipelineTab() {
   const { t } = useTranslation()
@@ -38,6 +54,10 @@ export function ClusterPipelineTab() {
   const schema = schemaQuery.data ?? null
   const tree = useMemo(() => (schema === null ? [] : buildStepTreeFromSchema(schema)), [schema])
   const parents = useMemo(() => stepParents(tree), [tree])
+  const missingSteps = useMemo(
+    () => (view.status === 'ready' && schema !== null ? stepsOutsideTree(view.rows, tree) : []),
+    [view, schema, tree],
+  )
 
   return (
     <div className="space-y-2">
@@ -84,6 +104,15 @@ export function ClusterPipelineTab() {
             />
           )}
         />
+      )}
+      {missingSteps.length > 0 && (
+        <p className={TEXT_HINT} data-testid="uncontrolled-steps">
+          {t(
+            'pipeline.clusterPipelineTab.missingSteps',
+            'Not in this tree, so their cluster mode cannot be set here: {{steps}}.',
+            { steps: missingSteps.join(', ') },
+          )}
+        </p>
       )}
     </div>
   )

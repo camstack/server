@@ -320,6 +320,20 @@ describe('NodeStepInspector — step switches in the tree', () => {
     )
   })
 
+  it('a step switched off, and the child it feeds, draw their accelerator cells muted as off', async () => {
+    await mount('/system/pipeline?node=hub', (s) => {
+      s.switches = SWITCHES
+    })
+    await screen.findByRole('switch', { name: 'Run Face Detection on this node' })
+    const col = 'hub::openvino:npu'
+    // Held off by the node switch: the cell reads off, with no model chip.
+    expect(within(cell('face-detection', col)).getByText('off')).toBeInTheDocument()
+    // A child of the off step runs nothing either, though the matrix has no row for it.
+    expect(within(cell('face-embedding', col)).getByText('off')).toBeInTheDocument()
+    // A step that runs keeps its live cell.
+    expect(within(cell('object-detection', col)).queryByText('off')).toBeNull()
+  })
+
   it('an unanswered matrix draws no switch in the tree', async () => {
     await mount()
     expect(screen.queryByRole('switch')).toBeNull()

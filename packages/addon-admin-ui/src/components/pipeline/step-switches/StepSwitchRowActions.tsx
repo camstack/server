@@ -10,7 +10,13 @@ import type { StepTreeNode } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { ClusterStepModeControl } from './ClusterStepModeControl'
 import { NodeStepSwitchControl } from './NodeStepSwitchControl'
-import { findNode, nodeEffect, type StepSwitchRow } from './step-switches-model'
+import {
+  deviceEffect,
+  findDevice,
+  findNode,
+  nodeEffect,
+  type StepSwitchRow,
+} from './step-switches-model'
 import type { StepSwitchesView, StepSwitchWriters } from './use-step-switches'
 
 /** Step id → the step that feeds it, for every non-root step of the tree. */
@@ -44,6 +50,39 @@ function offAncestor(
     if (row !== undefined) return isOff(row) ? at : null
   }
   return null
+}
+
+/**
+ * True when a switch turns `stepId` off on this accelerator — its own cluster,
+ * node or accelerator switch, an opt-in nobody took, or a switchable ancestor
+ * that is off on the node. A step with no answer is never muted, and a model
+ * that cannot run it ("skip") keeps its own marker.
+ */
+export function stepSwitchedOffOn(
+  view: StepSwitchesView,
+  parents: StepParents,
+  stepId: string,
+  nodeId: string,
+  deviceKey: string,
+): boolean {
+  const row = rowOf(view, stepId)
+  if (
+    row?.effectiveMode === 'off' ||
+    (row !== undefined && findNode(row, nodeId)?.stepEnabled === false)
+  ) {
+    return true
+  }
+  const device = row === undefined ? undefined : findDevice(row, nodeId, deviceKey)
+  if (device !== undefined) {
+    const effect = deviceEffect(device)
+    if (effect.state === 'off' && effect.level !== 'model') return true
+  }
+  return (
+    offAncestor(view, parents, stepId, (r) => {
+      const node = findNode(r, nodeId)
+      return node !== undefined && nodeEffect(node).state === 'off'
+    }) !== null
+  )
 }
 
 function OffWithParent({ parent }: { readonly parent: StepTreeNode }) {

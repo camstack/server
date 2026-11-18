@@ -62,6 +62,7 @@ import { DeviceStepSwitchSection } from '../step-switches/DeviceStepSwitchSectio
 import {
   NodeStepRowAction,
   stepParents,
+  stepSwitchedOffOn,
   StepSwitchNotices,
 } from '../step-switches/StepSwitchRowActions'
 import { useStepSwitches, useStepSwitchWriters } from '../step-switches/use-step-switches'
@@ -269,6 +270,9 @@ export function NodeStepInspector({ nodeId, nodeName, toolbar }: NodeStepInspect
     const root = rootModelOn(schema, acc)
     const settings = nodeSettingsFor(addonId, acc)
     const target = jumpTarget(addon, acc)
+    if (stepSwitchedOffOn(switches, parents, addonId, nodeId, acc.deviceKey)) {
+      return { kind: 'disabled' as const }
+    }
     return cellStateFor({
       addon,
       acc,

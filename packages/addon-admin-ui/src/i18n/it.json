@@ -3878,7 +3878,8 @@
       "hint": "Off spegne un passo per tutte le camere. On lo esegue a meno che una camera lo spenga. Opt-in lo esegue solo sulle camere che lo accendono. Un interruttore di nodo o acceleratore può comunque spegnerlo più in basso: li trovi nella pagina del nodo.",
       "catalogFailed": "Il catalogo dei passi non si è caricato",
       "noSteps": "Il catalogo non riporta passi della pipeline.",
-      "label": "Passi della pipeline"
+      "label": "Passi della pipeline",
+      "missingSteps": "Non sono in questo albero, quindi qui non si può impostare la loro modalità del cluster: {{steps}}."
     }
   },
   "assignments": {

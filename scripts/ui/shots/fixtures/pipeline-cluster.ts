@@ -1,6 +1,8 @@
 /**
- * Pipeline → Cluster (`/system/pipeline`): the Load balancing and Settings tabs.
- * Two nodes with no cameras assigned, equal hardware shares, and the
+ * Pipeline → Cluster (`/system/pipeline`): the Load balancing, Pipeline and
+ * Settings tabs, and the node step tree (`?view=nodes&node=hub&ntab=tree`) with
+ * its step switches. A small step catalog (object detection feeding face and
+ * plate detection, which feed their classifiers) drives both trees. Two nodes with no cameras assigned, equal hardware shares, and the
  * orchestrator's global settings carrying the `load` ("Load balancer") and
  * `failover` sections the two tabs draw.
  */
