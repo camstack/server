@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- A stored-media rebuild pass treats a node with no usable inference device as unfit and moves on to another node
+
 ## [1.2.717] - 2026-11-18
 
 ### Changed

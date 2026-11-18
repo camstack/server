@@ -309,11 +309,7 @@ import {
   remapCropDetections,
   selectRecoveryStep,
 } from './small-subject-recovery.js'
-import {
-  chooseNodeDevice,
-  probeKeyOfEngine,
-  type NodeDeviceChoice,
-} from './node-device-election.js'
+import { chooseNodeDevice, type NodeDeviceChoice } from './node-device-election.js'
 import { runStatelessStep as runStatelessStepImpl } from './stateless-step.js'
 import type { NodeBenchHost } from './node-bench/node-bench-host.js'
 import { createNodeBenchHost } from './node-bench/node-bench-wiring.js'

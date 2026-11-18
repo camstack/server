@@ -109,6 +109,9 @@ export function readRebuildStepOutcome(
     switch (result.reason) {
       case 'unknown-step':
       case 'model-not-servable':
+      // The node has no inference device it may use (all turned off or
+      // down) — another node can still serve the pass.
+      case 'no-eligible-device':
         return { kind: 'node-unfit', reason: `${result.nodeId}: ${result.detail}` }
       case 'unreadable-frame':
         // A property of the STORED MEDIA, not of the engine — another node
