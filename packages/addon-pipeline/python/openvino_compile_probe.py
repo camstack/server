@@ -87,6 +87,13 @@ COMPILE_CONFIG_KEYS = (
     "gpuInferencePrecision",
 )
 PROBED_DEVICE_PREFIXES = ("GPU", "NPU")
+# The verdict for a GPU the plugin cannot enumerate. Not `inconclusive`: it is a
+# fact about the host (the compute runtime does not support this iGPU), and
+# remembering nothing about it is what let every session retry the load forever.
+VERDICT_NO_DEVICE = "no-device"
+# Second, named signature (the up-front `available_devices` check is the first):
+# what the GPU plugin throws when its device query came back empty.
+NO_DEVICE_SIGNATURE = "no supported devices found"
 
 _HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -121,6 +128,29 @@ class OpenvinoLoadCrashed(Exception):
         )
 
 
+class OpenvinoDeviceAbsent(Exception):
+    """OpenVINO sees no device of the requested kind (driver/runtime does not support it)."""
+
+    reason = "no-gpu-device"
+
+    def __init__(self, device: str, detail: str = "") -> None:
+        self.device = device
+        self.detail = detail
+        super().__init__(
+            f"OpenVINO sees no supported {device} (driver/runtime does not support this device)"
+            f"{': ' + detail if detail else ''}"
+        )
+
+
+def require_requested_device_present(candidates: "list[str]", available: "list[str]") -> None:
+    """Raise `OpenvinoDeviceAbsent` when a pinned GPU is not in `core.available_devices`."""
+    for candidate in candidates:
+        if not str(candidate).upper().startswith("GPU"):
+            continue
+        if not any(str(a).upper().startswith("GPU") for a in available):
+            raise OpenvinoDeviceAbsent("GPU")
+
+
 def needs_probe(candidates: "list[str]") -> bool:
     """True when any compile target is a GPU or an NPU (CPU-only loads are never probed)."""
     return any(str(c).upper().startswith(PROBED_DEVICE_PREFIXES) for c in candidates)
@@ -146,6 +176,8 @@ def run_probe(
         return VERDICT_INCONCLUSIVE, f"probe could not start ({exc})"
     marker_seen = any(line.strip() == PROBE_MARKER for line in proc.stdout.splitlines())
     verdict = classify_probe_exit(proc.returncode, marker_seen)
+    if verdict == VERDICT_INCONCLUSIVE and NO_DEVICE_SIGNATURE in proc.stderr:
+        verdict = VERDICT_NO_DEVICE
     tail = " | ".join(proc.stderr.strip().splitlines()[-3:])
     if proc.returncode < 0:
         detail = f"probe child died by signal {-proc.returncode} ({_signal_name(-proc.returncode)})"
@@ -283,6 +315,8 @@ def ensure_openvino_loadable(
             written = sorted(_blob_names(cache_dir) - before)
             _write_verdict(verdict_path, key, verdict, detail, written)
         return
+    if verdict == VERDICT_NO_DEVICE:
+        raise OpenvinoDeviceAbsent("GPU", detail)  # a host fact: remembered nowhere, refused every time
     if verdict != VERDICT_CRASHED:
         return  # inconclusive: remembered nowhere; an earlier suspect stands
     load = (loadavg if loadavg is not None else host_loadavg)()

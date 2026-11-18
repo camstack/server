@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A device with object detection switched off (on it, its node or the cluster) is no longer elected to host a camera, and a camera on the default pool obeys the device switches of the device(s) that pool may be (D1065).
+- A node whose only eligible inference device is the CPU now runs on it (the single eligible device is elected instead of the runner's default), and a GPU OpenVINO cannot see no longer holds the CPU back
 
 ### Fixed
 

@@ -57,6 +57,19 @@ export type InferenceDeviceUnhealthyState =
   /** Under budget, waiting out the backoff before the next rebuild. */
   | 'backoff'
 
+/**
+ * A device the runtime itself says is NOT THERE (as opposed to one that died).
+ * `no-gpu-device`: OpenVINO enumerates no GPU — the compute runtime does not
+ * support this iGPU. The same word the Python worker answers a load with.
+ */
+export type InferenceDeviceAbsentReason = 'no-gpu-device'
+
+export function isInferenceDeviceAbsentReason(
+  value: unknown,
+): value is InferenceDeviceAbsentReason {
+  return value === 'no-gpu-device'
+}
+
 /** One unusable device, as published on the health channel. */
 export interface InferenceDeviceUnhealthy {
   readonly deviceKey: string
@@ -67,6 +80,8 @@ export interface InferenceDeviceUnhealthy {
   readonly deaths: number
   /** The last death's message — what the operator needs to act. */
   readonly lastError: string
+  /** Set when the device is absent rather than dead; the typed, named cause. */
+  readonly absentReason?: InferenceDeviceAbsentReason
 }
 
 /**
@@ -121,6 +136,7 @@ interface DeviceState {
   readonly lastError: string
   /** Epoch ms of the death that produced the current state. */
   readonly since: number
+  readonly absentReason?: InferenceDeviceAbsentReason
 }
 
 export class InferenceDeviceLivenessSupervisor {
@@ -164,6 +180,29 @@ export class InferenceDeviceLivenessSupervisor {
     return { action: 'rebuild', backoffMs, deathsInWindow: recent.length }
   }
 
+  /**
+   * The runtime says this device does not exist here. Terminal at once — there
+   * is nothing to rebuild and no budget to spend — and reported with its typed
+   * reason. Cleared only by {@link rearm} (a driver update) or a runner respawn.
+   */
+  recordAbsent(
+    deviceKey: string,
+    absentReason: InferenceDeviceAbsentReason,
+    error: string,
+    now: number = Date.now(),
+  ): void {
+    const previous = this.state.get(deviceKey)
+    if (previous?.absentReason === absentReason) return
+    this.state.set(deviceKey, {
+      deaths: [],
+      failed: true,
+      retryAtMs: Number.POSITIVE_INFINITY,
+      lastError: error,
+      since: now,
+      absentReason,
+    })
+  }
+
   /** Has the breaker tripped for this device? */
   isFailed(deviceKey: string): boolean {
     return this.state.get(deviceKey)?.failed ?? false
@@ -184,6 +223,7 @@ export class InferenceDeviceLivenessSupervisor {
         since: s.since,
         deaths: s.deaths.length,
         lastError: s.lastError,
+        ...(s.absentReason !== undefined ? { absentReason: s.absentReason } : {}),
       }
     }
     if (now < s.retryAtMs) {

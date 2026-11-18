@@ -166,6 +166,7 @@ import { createDiskReconcileJobRunner } from './disk-reconcile-job.js'
 import {
   annotateInferenceDeviceExclusions,
   type InferenceDeviceExclusion,
+  type InferenceDeviceExclusionReason,
   inferenceDeviceCaps,
   makeRootCapabilityGuard,
   makeRootSwitchGuard,
@@ -331,6 +332,14 @@ export const customActions = pipelineOrchestratorActions
  * not ANSWER — `probed` is then empty because nothing was read, not because
  * the node has no accelerators, and no placement state may change on it.
  */
+/** One answered `getInferenceDeviceHealth` read. */
+interface InferenceDeviceHealthRead {
+  /** Devices whose pool died (the arm/apply mirror judges these). */
+  readonly refused: readonly string[]
+  /** Devices the runtime does not enumerate, with the named reason. */
+  readonly absent: ReadonlyMap<string, InferenceDeviceExclusionReason>
+}
+
 interface InferenceDeviceProbe {
   readonly probed: readonly InferenceDeviceDescriptor[]
   readonly reachable: boolean
@@ -1929,6 +1938,7 @@ export default class PipelineOrchestratorAddon
         catalog
           ? makeRootSwitchGuard(catalog, await this.settingsStore!.readClusterStepModes(), node)
           : undefined,
+        this.absentReasonFor(nodeId),
       ),
     ).map((row) =>
       // A probe that did not answer proves nothing about the hardware: a
@@ -2044,6 +2054,7 @@ export default class PipelineOrchestratorAddon
    * again, not elected against the list it left with.
    */
   forgetInferenceDeviceProbe(nodeId: string): void {
+    this.absentInferenceDevices.delete(nodeId)
     if (!this.lastInferenceDeviceProbe.delete(nodeId)) return
     this.ctx.logger.info('inference device probe forgotten — the node left', {
       tags: { nodeId },
@@ -2137,7 +2148,7 @@ export default class PipelineOrchestratorAddon
   private noteInferenceDeviceProbe(
     nodeId: string,
     probe: InferenceDeviceProbe,
-    poolHealth: readonly string[] | null,
+    poolHealth: InferenceDeviceHealthRead | null,
   ): void {
     if (!probe.reachable) {
       // The probe itself already WARNed, naming the node; this says what the
@@ -2150,9 +2161,10 @@ export default class PipelineOrchestratorAddon
     }
     this.noteInferenceDeviceHealth(
       nodeId,
-      poolHealth,
+      poolHealth === null ? null : poolHealth.refused,
       probe.probed.map((d) => d.key),
     )
+    if (poolHealth !== null) this.noteAbsentInferenceDevices(nodeId, poolHealth.absent)
     const previous = this.lastInferenceDeviceProbe.get(nodeId)
     this.lastInferenceDeviceProbe.set(nodeId, probe.probed)
     // A device plugged in or pulled out changes no stored entry, so nothing
@@ -2200,6 +2212,7 @@ export default class PipelineOrchestratorAddon
       canRunRoot,
       (deviceKey) => this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
       rootSwitchedOn,
+      this.absentReasonFor(nodeId),
     )
     const { eligible, excluded } = eligibility
     this.logInferenceDeviceShrinkage(nodeId, eligible, excluded)
@@ -2288,6 +2301,43 @@ export default class PipelineOrchestratorAddon
   private readonly inferenceDeviceUsability = new InferenceDeviceUsabilityMirror()
 
   /**
+   * Per node, the devices the executor reports the RUNTIME does not enumerate,
+   * with the named reason. Replaced wholesale by each answered health read (an
+   * empty answer clears it — the driver was fixed); a failed read never reaches
+   * it. Read synchronously by the eligibility resolution.
+   */
+  private readonly absentInferenceDevices = new Map<
+    string,
+    ReadonlyMap<string, InferenceDeviceExclusionReason>
+  >()
+
+  private absentReasonFor(
+    nodeId: string,
+  ): (deviceKey: string) => InferenceDeviceExclusionReason | null {
+    return (deviceKey) => this.absentInferenceDevices.get(nodeId)?.get(deviceKey) ?? null
+  }
+
+  private noteAbsentInferenceDevices(
+    nodeId: string,
+    absent: ReadonlyMap<string, InferenceDeviceExclusionReason>,
+  ): void {
+    const before = this.absentInferenceDevices.get(nodeId)
+    const signature = (m: ReadonlyMap<string, string> | undefined): string =>
+      [...(m ?? [])]
+        .map(([k, r]) => `${k}=${r}`)
+        .toSorted()
+        .join(',')
+    if (signature(before) === signature(absent)) return
+    if (absent.size === 0) this.absentInferenceDevices.delete(nodeId)
+    else this.absentInferenceDevices.set(nodeId, absent)
+    this.ctx.logger.warn('inference devices: the runtime reports devices it does not see', {
+      tags: { nodeId },
+      meta: { nodeId, absent: [...absent].map(([deviceKey, reason]) => ({ deviceKey, reason })) },
+    })
+    this.noteShareChange(`devices:${nodeId}`)
+  }
+
+  /**
    * Ask ONE node's detection executor which of its inference devices it is
    * currently refusing.
    *
@@ -2299,14 +2349,28 @@ export default class PipelineOrchestratorAddon
    * two — answering `[]` on error — would make a flaky link look exactly like a
    * healthy node and would silently re-admit a dead accelerator. NEVER throws.
    */
-  private async probeNodeInferenceDeviceHealth(nodeId: string): Promise<readonly string[] | null> {
+  private async probeNodeInferenceDeviceHealth(
+    nodeId: string,
+  ): Promise<InferenceDeviceHealthRead | null> {
     try {
       const api = this.ctx.api
       if (!api) return null
       const health = await api.pipelineExecutor.getInferenceDeviceHealth.query({
         nodeId,
       })
-      return health.unhealthy.map((entry) => entry.deviceKey)
+      const absent = new Map<string, InferenceDeviceExclusionReason>()
+      for (const entry of health.unhealthy) {
+        if (entry.absentReason !== undefined) absent.set(entry.deviceKey, entry.absentReason)
+      }
+      return {
+        // An absent device is a settled fact reported by the runtime, not a flaky
+        // read: it is excluded NOW under its named reason (`absent`), so the
+        // arm/apply mirror only ever judges the devices that merely died.
+        refused: health.unhealthy
+          .filter((e) => e.absentReason === undefined)
+          .map((e) => e.deviceKey),
+        absent,
+      }
     } catch (err: unknown) {
       // WARN, not ERROR, and rate-limited by its own change-gate upstream: a
       // node that is simply offline is already reported by the load path, and
@@ -2760,6 +2824,7 @@ export default class PipelineOrchestratorAddon
         catalog ? makeRootCapabilityGuard(catalog) : undefined,
         (deviceKey) => this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
         catalog ? makeRootSwitchGuard(catalog, clusterModes, blob[nodeId]) : undefined,
+        this.absentReasonFor(nodeId),
       )
       out[nodeId] = annotateInferenceDeviceExclusions(
         mergeInferenceDevices(probed, stored),

@@ -58,6 +58,9 @@ export function deviceRowState(device: NodeInferenceDevice): DeviceRowState {
       return 'disabled'
     case 'unavailable':
       return device.available ? 'backoff' : 'unavailable'
+    case 'no-gpu-device':
+      // The runtime itself enumerates no such device: down, not backing off.
+      return 'unavailable'
     case 'cannot-host-camera-root':
       return 'root-incapable'
     case 'accelerator-preferred':

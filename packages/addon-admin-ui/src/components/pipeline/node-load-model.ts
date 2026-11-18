@@ -110,6 +110,7 @@ export const EXCLUSION_TEXT_KEY: Readonly<Record<InferenceDeviceExclusionReason,
   'cannot-host-camera-root': 'pipeline.nodeLoadOverview.exclusion.cannotHostCameraRoot',
   'accelerator-preferred': 'pipeline.nodeLoadOverview.exclusion.acceleratorPreferred',
   'root-switched-off': 'pipeline.nodeLoadOverview.exclusion.rootSwitchedOff',
+  'no-gpu-device': 'pipeline.nodeLoadOverview.exclusion.noGpuDevice',
 }
 
 function pct(part: number, whole: number): number {

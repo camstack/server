@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A detection step switched off on an accelerator is never run there: it moves to another accelerator on the node, or is skipped when none may run it.
 
+### Changed
+
+- An inference device OpenVINO cannot enumerate (for example an Intel iGPU the compute runtime no longer supports) is now reported down with the reason no-gpu-device instead of failing every load behind a retry backoff
+
 ## [1.2.665] - 2026-11-18
 
 ### Changed

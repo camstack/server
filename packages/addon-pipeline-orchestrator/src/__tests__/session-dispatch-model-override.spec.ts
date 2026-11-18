@@ -188,9 +188,9 @@ describe('dispatchDetectionSession — per-device model override', () => {
 
     expect(harness.attached).toHaveLength(1)
     const cfg: AttachedView = harness.attached[0]!
-    // default pool: no elected device on the attach…
-    expect(cfg.deviceKey).toBeUndefined()
-    // …but the node-scoped settings still provision the step.
+    // the sole eligible device is elected on the attach…
+    expect(cfg.deviceKey).toBe('coreml:all')
+    // …and the node-scoped settings still provision the step.
     const step = (cfg.steps ?? []).find((s) => s.addonId === 'clip-embedding')
     expect(step?.settings).toEqual({ enabledClasses: ['dog'] })
   })

@@ -1209,9 +1209,13 @@ def _load_model(slot: ModelSlot, config: dict) -> None:
         # (`openvino_compile_probe`): a compiler SIGSEGV is refused here with
         # `OpenvinoLoadCrashed` instead of killing this worker, and on success
         # the child has written the blob, so the compile below is a cache hit.
+        # A pinned GPU the plugin cannot enumerate is refused BEFORE the probe or
+        # the compile: typed (`no-gpu-device`), never a Python failure.
+        import openvino_compile_probe
+        openvino_compile_probe.require_requested_device_present(
+            candidates, list(core.available_devices),
+        )
         if _ov_probe_enabled:
-            import openvino_compile_probe
-
             openvino_compile_probe.ensure_openvino_loadable(
                 path, config, candidates,
                 cache_dir=ov_config.get("CACHE_DIR"),

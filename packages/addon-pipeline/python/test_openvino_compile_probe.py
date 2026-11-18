@@ -408,5 +408,89 @@ class ModelCommandReasonTest(unittest.TestCase):
         self.assertEqual(reply["modelId"], "yolov9m-320-int8")
 
 
+NO_DEVICE_STDERR = (
+    "RuntimeError: Exception from src/inference/src/cpp/core.cpp:104: Check "
+    "'!m_device_map.empty()' failed at src/plugins/intel_gpu/src/plugin/plugin.cpp:515: "
+    "[GPU] Can't get PERFORMANCE_HINT property as no supported devices found or an error "
+    "happened during devices query."
+)
+
+
+class _NoGpuCore(_FakeCore):
+    """OpenVINO on a host whose iGPU the compute runtime no longer supports."""
+
+    available_devices = ["CPU"]
+
+
+class NoGpuDeviceTest(unittest.TestCase):
+    """A GPU the plugin cannot enumerate is DOWN with a named reason, not `inconclusive`."""
+
+    def test_pinned_gpu_absent_from_available_devices_raises_typed(self) -> None:
+        with self.assertRaises(probe.OpenvinoDeviceAbsent) as ctx:
+            probe.require_requested_device_present(["GPU"], ["CPU"])
+        self.assertEqual(ctx.exception.reason, "no-gpu-device")
+
+    def test_gpu_present_or_cpu_pinned_is_fine(self) -> None:
+        probe.require_requested_device_present(["GPU"], ["CPU", "GPU"])
+        probe.require_requested_device_present(["GPU.0"], ["CPU", "GPU.0"])
+        probe.require_requested_device_present(["CPU"], ["CPU"])
+
+    def test_child_stderr_with_the_no_device_signature_is_no_device(self) -> None:
+        code = f"import sys; sys.stderr.write({NO_DEVICE_STDERR!r}); sys.exit(1)"
+        verdict, _ = probe.run_probe("/nonexistent.xml", GPU_CONFIG, child_code=code)
+        self.assertEqual(verdict, probe.VERDICT_NO_DEVICE)
+
+    def test_a_plain_python_failure_stays_inconclusive(self) -> None:
+        verdict, _ = probe.run_probe(
+            "/nonexistent.xml", GPU_CONFIG, child_code="raise RuntimeError('bad ir')",
+        )
+        self.assertEqual(verdict, probe.VERDICT_INCONCLUSIVE)
+
+    def test_no_device_verdict_refuses_with_the_typed_error_and_is_not_remembered(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            model = os.path.join(tmp, "m.xml")
+            _write(model, b"<net/>")
+            cache = os.path.join(tmp, ".ov-cache")
+            os.makedirs(cache)
+            with self.assertRaises(probe.OpenvinoDeviceAbsent):
+                probe.ensure_openvino_loadable(
+                    model, GPU_CONFIG, ["GPU"], cache, "2025.4.1",
+                    run=_Runner(probe.VERDICT_NO_DEVICE, NO_DEVICE_STDERR),
+                )
+            self.assertEqual(os.listdir(cache), [])
+
+    def test_load_model_refuses_before_any_probe_or_compile(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            model = os.path.join(tmp, "yolov9m-320-int8.xml")
+            _write(model, b"<net/>")
+            core = _NoGpuCore()
+            runner = _Runner(probe.VERDICT_OK)
+            saved = (ip._runtime, ip._runtime_lib, probe.DEFAULT_RUNNER)
+            try:
+                ip._runtime = "openvino"
+                ip._runtime_lib = core
+                probe.DEFAULT_RUNNER = runner
+                with self.assertRaises(probe.OpenvinoDeviceAbsent):
+                    ip._load_model(ip.ModelSlot(), {"path": model, "device": "gpu"})
+            finally:
+                (ip._runtime, ip._runtime_lib, probe.DEFAULT_RUNNER) = saved
+            self.assertEqual(runner.calls, [])
+            self.assertEqual(core.compile_calls, 0)
+
+    def test_load_reply_carries_no_gpu_device(self) -> None:
+        import asyncio
+
+        def failing_load(_slot, config):
+            raise probe.OpenvinoDeviceAbsent("GPU")
+
+        async def run() -> dict:
+            loader = ip.ModelLoader(timeout_sec=5.0, load_fn=failing_load)
+            cmd = {"cmd": "load", "index": 0, "config": {"path": "/m/yolov9m-320-int8.xml"}}
+            return await ip._handle_model_command([], cmd, loader)
+
+        reply = asyncio.run(run())
+        self.assertEqual(reply["reason"], "no-gpu-device")
+
+
 if __name__ == "__main__":
     unittest.main()

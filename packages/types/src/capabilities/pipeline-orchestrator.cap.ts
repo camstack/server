@@ -591,6 +591,13 @@ const INFERENCE_DEVICE_EXCLUSION_REASONS = [
   'accelerator-preferred',
   /** The camera root step is switched off on it: cluster, node or device (D1065). */
   'root-switched-off',
+  /**
+   * The runtime itself enumerates no such device: OpenVINO sees no supported GPU
+   * (the driver / compute runtime does not support this iGPU). Hardware that is
+   * present but cannot run — it does NOT count as an accelerator serving the
+   * node, so the CPU fallback is not held back for it.
+   */
+  'no-gpu-device',
 ] as const
 
 const InferenceDeviceExclusionReasonSchema = z.enum(INFERENCE_DEVICE_EXCLUSION_REASONS)

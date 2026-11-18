@@ -35,12 +35,15 @@ describe("pickInferenceDevice — second balance() pass over a node's devices", 
     })
   })
 
-  it('elects nothing when exactly one device is eligible and there is no pin', () => {
-    const selection = pickInferenceDevice({ eligible: { 'openvino:npu': 1 } })
-    expect(selection).toEqual({
-      kind: 'default-pool',
-      reason: 'single-eligible-device',
-      eligibleKeys: ['openvino:npu'],
+  it('names the device when exactly one is eligible and there is no pin', () => {
+    // Never `default-pool`: the runner's default is the probe's best device and
+    // ignores a disabled or down one (the CPU-only node kept loading the GPU).
+    const selection = pickInferenceDevice({ eligible: { cpu: 1 } })
+    expect(selection).toMatchObject({
+      kind: 'selected',
+      deviceKey: 'cpu',
+      reason: 'sole-eligible',
+      eligibleKeys: ['cpu'],
     })
   })
 

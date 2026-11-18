@@ -3593,7 +3593,8 @@
         "unavailable": "la sonda del nodo non lo vede (scollegato o ancora in preparazione)",
         "cannotHostCameraRoot": "il formato del suo motore non ha un modello radice di rilevamento oggetti",
         "acceleratorPreferred": "ripiego su CPU — non compete mai mentre un acceleratore è in servizio",
-        "rootSwitchedOff": "il passo di rilevamento oggetti è spento su di esso, sul suo nodo o sul cluster"
+        "rootSwitchedOff": "il passo di rilevamento oggetti è spento su di esso, sul suo nodo o sul cluster",
+        "noGpuDevice": "OpenVINO non vede nessuna GPU supportata (driver/runtime non supporta questa iGPU); lavora la CPU"
       }
     },
     "settingsPanel": {

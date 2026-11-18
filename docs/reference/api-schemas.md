@@ -3061,7 +3061,7 @@ Enum: `"0" \| "90" \| "180" \| "270"`
 
 ### `InferenceDeviceExclusionReasonSchema`
 
-Enum: `"disabled" \| "unavailable" \| "cannot-host-camera-root" \| "accelerator-preferred" \| "root-switched-off"`
+Enum: `"disabled" \| "unavailable" \| "cannot-host-camera-root" \| "accelerator-preferred" \| "root-switched-off" \| "no-gpu-device"`
 
 ### `IngestOwnerSchema`
 

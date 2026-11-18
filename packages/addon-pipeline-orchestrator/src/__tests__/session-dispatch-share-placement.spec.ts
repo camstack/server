@@ -196,9 +196,10 @@ describe('session dispatch — share placement (D748)', () => {
     await motion(w, 3836)
     const said = w.lines.filter((l) => l.message.startsWith('device pin ignored'))
     expect(said).toHaveLength(1)
-    // Ignored ⇒ the single-device node serves it from its default pool.
+    // Ignored ⇒ the single-device node's one eligible device is elected.
     const selections = w.lines.filter((l) => l.message === 'inference device selection')
-    expect(selections.every((l) => l.meta['chosen'] === null)).toBe(true)
+    expect(selections.every((l) => l.meta['reason'] === 'sole-eligible')).toBe(true)
+    expect(selections.every((l) => l.meta['chosen'] !== 'edgetpu:usb')).toBe(true)
   })
 
   it('D916: a camera keeps its node across sessions while the share allows it, and says so', async () => {

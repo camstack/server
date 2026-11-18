@@ -301,7 +301,7 @@ export function inferenceDeviceCaps(
  * operator to deduce it. A local copy would drift the moment one side gains a
  * reason.
  *
- * The four:
+ * The five (`no-gpu-device`: the runtime enumerates no such device):
  *  - `disabled`  — the operator turned it off (CPU/edgetpu are opt-IN).
  *  - `unavailable` — the live probe did not report it (unplugged/provisioning).
  *  - `cannot-host-camera-root` — its engine format can't run the root detector.
@@ -369,6 +369,13 @@ export function resolveInferenceDeviceEligibility(
   canRunRoot?: (format: string) => boolean,
   isPoolUsable?: (deviceKey: string) => boolean,
   isRootSwitchedOn?: (deviceKey: string) => boolean,
+  /**
+   * The executor's own verdict that the RUNTIME enumerates no such device
+   * (`getInferenceDeviceHealth` → `absentReason`). Excluded under that named
+   * reason, and — unlike a dead pool — it is NOT an accelerator serving the
+   * node, so the CPU fallback is not held back for it.
+   */
+  absentReason?: (deviceKey: string) => InferenceDeviceExclusionReason | null,
 ): InferenceDeviceEligibility {
   const eligible: Record<string, number> = {}
   const excluded: InferenceDeviceExclusion[] = []
@@ -393,6 +400,7 @@ export function resolveInferenceDeviceEligibility(
       !isCpuFallback(d) &&
       d.enabled &&
       d.available &&
+      (absentReason?.(d.key) ?? null) === null &&
       (!canRunRoot || canRunRoot(d.format)) &&
       (!isRootSwitchedOn || isRootSwitchedOn(d.key)),
   )
@@ -406,6 +414,13 @@ export function resolveInferenceDeviceEligibility(
     }
     if (!d.available) {
       excluded.push({ key: d.key, reason: 'unavailable', format: d.format })
+      continue
+    }
+    // The executor says the runtime itself enumerates no such device (the driver
+    // does not support this iGPU): named, and never an accelerator "serving".
+    const absent = absentReason?.(d.key) ?? null
+    if (absent !== null) {
+      excluded.push({ key: d.key, reason: absent, format: d.format })
       continue
     }
     // The hardware is there and the operator wants it, but the executor on that

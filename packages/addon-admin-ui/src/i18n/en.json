@@ -3518,7 +3518,8 @@
         "unavailable": "the node probe does not see it (unplugged or still provisioning)",
         "cannotHostCameraRoot": "its engine format has no object-detection root model",
         "acceleratorPreferred": "CPU fallback — it never competes while an accelerator is serving",
-        "rootSwitchedOff": "the object-detection step is switched off on it, its node or the cluster"
+        "rootSwitchedOff": "the object-detection step is switched off on it, its node or the cluster",
+        "noGpuDevice": "OpenVINO sees no supported GPU (the driver/runtime does not support this iGPU); the CPU serves instead"
       }
     },
     "settingsPanel": {

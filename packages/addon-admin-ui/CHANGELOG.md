@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add device inside an integration shows the network scan only when that integration's provider says it finds devices that way
 - Device quick-detail modal opens on the live device detail and has one Open device page button in its header
 - The device quick-detail modal now shows the same device detail as the viewer app (hero, consumables, History from the card) and no longer has a separate History tab.
+- The node device table and load overview name the no-gpu-device reason when OpenVINO sees no supported GPU
 
 ## [1.2.701] - 2026-11-18
 

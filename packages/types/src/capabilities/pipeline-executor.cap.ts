@@ -538,6 +538,12 @@ export const pipelineExecutorCapability = {
               deaths: z.number(),
               /** The last death's message. */
               lastError: z.string(),
+              /**
+               * Present when the device is ABSENT rather than dead: the runtime
+               * itself enumerates no such device (`no-gpu-device` — OpenVINO sees
+               * no supported GPU; driver/runtime does not support this iGPU).
+               */
+              absentReason: z.enum(['no-gpu-device']).optional(),
             }),
           )
           .readonly(),

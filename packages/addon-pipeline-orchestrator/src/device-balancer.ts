@@ -180,7 +180,18 @@ export interface InferenceDeviceAffinity {
 }
 
 /** Why a deviceKey was elected. */
-export type InferenceDeviceReason = 'pin' | 'capacity' | 'tie-break' | 'share'
+export type InferenceDeviceReason =
+  | 'pin'
+  | 'capacity'
+  | 'tie-break'
+  | 'share'
+  /**
+   * Exactly one eligible device and no pin. It is ELECTED, never left to the
+   * runner's default pool: that default is the probe's best device and knows
+   * neither the operator's disable nor a device that is down, so a node whose
+   * only eligible device is the CPU kept loading the disabled GPU.
+   */
+  | 'sole-eligible'
 
 /** How a tie among equally-scored devices was resolved. */
 export type InferenceDeviceTieBreak =
@@ -195,8 +206,6 @@ export type InferenceDeviceTieBreak =
 export type InferenceDeviceDefaultReason =
   /** The node reported no enabled∧available device that can host a camera root. */
   | 'no-eligible-device'
-  /** Exactly one eligible device and no pin — the default pool already IS it. */
-  | 'single-eligible-device'
   /** A pin exists but the pinned device is at/over its `maxSessions` cap. */
   | 'pin-unplaceable'
   /** Every eligible device is at/over its `maxSessions` cap. */
@@ -258,10 +267,20 @@ export function pickInferenceDevice(input: PickInferenceDeviceInput): InferenceD
     return { kind: 'default-pool', reason: 'no-eligible-device', eligibleKeys }
   }
   const pin = input.pinnedDeviceKey ?? null
-  // One eligible accelerator and no explicit device pin ⇒ nothing to balance;
-  // leave `deviceKey` unset so the runner's default pool serves it.
-  if (eligibleKeys.length === 1 && !pin) {
-    return { kind: 'default-pool', reason: 'single-eligible-device', eligibleKeys }
+  // One eligible device and no explicit device pin ⇒ nothing to balance, but it
+  // is still NAMED: the runner's default pool is the probe's best device and
+  // ignores enable/liveness. The runner maps a key equal to its default engine
+  // back onto the default pool, so naming it costs nothing where they agree.
+  const sole = eligibleKeys.length === 1 ? eligibleKeys[0] : undefined
+  if (sole !== undefined && !pin) {
+    return {
+      kind: 'selected',
+      deviceKey: sole,
+      reason: 'sole-eligible',
+      tieBreak: null,
+      eligibleKeys,
+      tiedKeys: eligibleKeys,
+    }
   }
 
   const loadByKey = new Map((input.loads ?? []).map((l) => [l.deviceKey, l]))

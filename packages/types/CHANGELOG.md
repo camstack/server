@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - InferenceDeviceExclusionReason gains 'root-switched-off' (D1065).
 - A host or container card shows its running state instead of a dash.
+- pipelineExecutor.getInferenceDeviceHealth reports an optional absentReason, and the inference device exclusion reasons gain no-gpu-device
 
 ## [1.2.596] - 2026-11-18
 

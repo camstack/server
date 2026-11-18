@@ -207,9 +207,9 @@ describe('rebalance migration re-resolves for the target (D650)', () => {
     const moved = booted.runnerB.attachedCameras.get(701)
     expect(moved).toBeDefined()
     expect(moved?.steps).toEqual([])
-    // Nothing on agent-b can host the root, so no device is elected there —
-    // and agent-a's `openvino:gpu` election and roster must not ride along.
-    expect(moved?.deviceKey).toBeUndefined()
+    // Agent-b's own sole eligible device is named — and agent-a's
+    // `openvino:gpu` election and roster must not ride along.
+    expect(moved?.deviceKey).toBe('openvino:npu')
     expect(moved?.inferenceDevices).toBeUndefined()
   })
 

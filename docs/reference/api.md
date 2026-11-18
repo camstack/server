@@ -3978,7 +3978,7 @@
 | getEngineProvisioning | `pipelineExecutor.getEngineProvisioning` | query | protected | `{ nodeId: string }` | `{ runtimeId: "onnx" \| "openvino" \| "coreml" \| "edgetpu" \| null; device: string \| null; state: "idle" \| "installing" \| "verifying" \| "ready" \| "failed"; progress?: number; error?: string; nextRetryAt?: number; configIssues?: string[] }` |
 | getVideoPipelineSteps | `pipelineExecutor.getVideoPipelineSteps` | query | protected | `void` | `Record<string, { modelId: string; settings: Record<string, unknown> }>` |
 | setVideoPipelineSteps | `pipelineExecutor.setVideoPipelineSteps` | mutation | admin | `{ steps: Record<string, { modelId: string; settings: Record<string, unknown> }> }` | `{ success: true }` |
-| getInferenceDeviceHealth | `pipelineExecutor.getInferenceDeviceHealth` | query | protected | `{ nodeId: string }` | `{ unhealthy: ({ deviceKey: string; state: "failed" \| "backoff"; since: number; deaths: number; lastError: string })[] }` |
+| getInferenceDeviceHealth | `pipelineExecutor.getInferenceDeviceHealth` | query | protected | `{ nodeId: string }` | `{ unhealthy: ({ deviceKey: string; state: "failed" \| "backoff"; since: number; deaths: number; lastError: string; absentReason?: "no-gpu-device" })[] }` |
 | rearmInferenceDevice | `pipelineExecutor.rearmInferenceDevice` | mutation | admin | `{ nodeId: string; deviceKey: string }` | `{ rearmed: boolean }` |
 | getSchema | `pipelineExecutor.getSchema` | query | protected | `void` | `{ availableEngines: ({ engine: PipelineEngineChoiceSchema; devices: ({ id: string; label: string; description?: string })[]; defaultDevice: string })[]; selectedEngine: PipelineEngineChoiceSchema; slots: ({ id: "detector" \| "cropper" \| "classifier" \| "refiner" \| "audio-classifier"; label: string; priority: number; parentSlot: "detector" \| "cropper" \| "classifier" \| "refiner" \| "audio-classifier" \| null; addons: ({ id: string; name: string; slot: "detector" \| "cropper" \| "classifier" \| "refiner" \| "audio-classifier"; inputClasses: string[]; outputClasses: string[]; childSlots: ("detector" \| "cropper" \| "classifier" \| "refiner" \| "audio-classifier")[]; models: ({ id: string; name: string; formats: Record<string, {…}>; group?: {…}; legacy?: boolean; provider?: "camstack" \| "frigate" \| "scrypted" \| "custom"; defaultConfidence?: number; suppliesSteps?: ({…} \| {…} \| {…})[] })[]; defaultModelId: string; defaultModelIdByFormat?: Record<string, string>; enabledByDefault?: boolean; defaultConfidence: number; group?: string; configSchema?: <custom>[] })[] })[] }` |
 | getOrchestratorConfigSchema | `pipelineExecutor.getOrchestratorConfigSchema` | query | protected | `void` | `<custom>` |
@@ -4006,7 +4006,7 @@
 
 ### `pipeline-orchestrator` → `pipelineOrchestrator.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:827`
+- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:834`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `IPipelineOrchestratorProvider`

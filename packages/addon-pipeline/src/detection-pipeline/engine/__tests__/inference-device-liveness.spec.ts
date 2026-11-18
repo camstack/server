@@ -126,3 +126,18 @@ describe('there is a way out', () => {
     expect(new InferenceDeviceLivenessSupervisor(OPTS).rearm('openvino:npu')).toBe(false)
   })
 })
+
+describe('a device the runtime says is absent', () => {
+  it('is terminally failed at once, with its typed reason, and re-armable', () => {
+    const supervisor = new InferenceDeviceLivenessSupervisor(OPTS)
+    supervisor.recordAbsent('openvino:gpu', 'no-gpu-device', 'OpenVINO sees no supported GPU', 1000)
+    expect(supervisor.unusableReason('openvino:gpu', 1000)).toMatchObject({
+      deviceKey: 'openvino:gpu',
+      state: 'failed',
+      absentReason: 'no-gpu-device',
+    })
+    expect(supervisor.unhealthy(1000).map((u) => u.absentReason)).toEqual(['no-gpu-device'])
+    expect(supervisor.rearm('openvino:gpu')).toBe(true)
+    expect(supervisor.unusableReason('openvino:gpu', 1000)).toBeNull()
+  })
+})

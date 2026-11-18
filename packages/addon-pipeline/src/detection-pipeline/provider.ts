@@ -95,6 +95,7 @@ import {
   InferenceDeviceLivenessSupervisor,
   type InferenceDeviceUnhealthy,
   InferenceDeviceUnusableError,
+  isInferenceDeviceAbsentReason,
 } from './engine/inference-device-liveness.js'
 import {
   closureVersionFromRunnerPath,
@@ -3605,6 +3606,19 @@ export class DetectionPipelineProvider implements IPipelineExecutorProvider {
     const named = failedModelOf(err)
     const failedModels = named !== null ? [named] : models
     const compileTimeout = err instanceof StepVariantLoadError && err.reason === 'compile-timeout'
+    if (err instanceof StepVariantLoadError && isInferenceDeviceAbsentReason(err.reason)) {
+      // The runtime does not see this device at all: down with its named reason,
+      // not a model that failed to compile (every retry would fail the same way).
+      this.deviceLiveness.recordAbsent(deviceKey, err.reason, errMsg(err))
+      this.log.error('inference device ABSENT — the runtime enumerates no such device', {
+        meta: {
+          deviceKey,
+          reason: err.reason,
+          error: errMsg(err),
+          rearm: 'pipelineExecutor.rearmInferenceDevice',
+        },
+      })
+    }
     const poolModel = err instanceof StepVariantLoadError ? err.poolModel : null
     let generation = 0
     for (const model of failedModels) {

@@ -258,16 +258,19 @@ describe('on-motion dispatch — the accelerator must not sit idle', () => {
     })
   })
 
-  it('a single eligible device logs the default-pool fallback rather than nothing', async () => {
-    const single = makeHarness({ eligible: { 'openvino:gpu': 1 } })
+  it('a single eligible device is ELECTED and handed to the runner, not left to its default', async () => {
+    // Operator disabled the GPU: eligible = [cpu]. `chosen: null` sent the
+    // session to the runner's default pool (openvino:gpu), which ignores the
+    // disable — 402 `failed to load on openvino:gpu` in two minutes.
+    const single = makeHarness({ eligible: { cpu: 1 } })
     await single.controller.handleSessionMotion(101, true, undefined, 'analyzer', CAMERA_TRIGGER)
 
-    expect(single.attached[0]?.deviceKey).toBeUndefined()
-    expect(selectionLines(single)[0]?.meta).toEqual({
+    expect(single.attached[0]?.deviceKey).toBe('cpu')
+    expect(selectionLines(single)[0]?.meta).toMatchObject({
       path: 'session',
-      eligible: ['openvino:gpu'],
-      chosen: null,
-      reason: 'single-eligible-device',
+      eligible: ['cpu'],
+      chosen: 'cpu',
+      reason: 'sole-eligible',
     })
   })
 
