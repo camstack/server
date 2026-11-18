@@ -1,16 +1,14 @@
 /**
  * The live hero card of one device: the hero-model module with the legacy
- * `DeviceHero` as its fallback (a camera draws its stream panel). The device
- * page and the quick-detail modal both draw it, so the two never describe a
- * device differently.
+ * `DeviceHero` as its fallback. The device page and the quick-detail modal both
+ * draw it (a camera is the device page's own stream panel, never this card), so
+ * the two never describe a device differently.
  */
-import { DeviceFeature, DeviceType } from '@camstack/types'
 import { heroLang, useSystem, useThemeMode } from '@camstack/ui-library'
 import { useQueryClient } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
-import { StreamPanelContent } from '../PanelContent'
 import { useAuth } from '../../../contexts/auth-context'
 import { DeviceDetailModule } from '../../../modules/device-detail'
 import { DeviceHero } from './HeroRegistry'
@@ -34,8 +32,12 @@ export interface DeviceHeroCardProps {
    */
   readonly legacyFallback?: boolean
   readonly onDrawn?: (drawn: boolean) => void
-  /** Called after the card navigated away (the modal closes itself). */
-  readonly onNavigated?: () => void
+  /**
+   * Where every navigation the card starts goes (open device, open camera, a
+   * deep link). Absent: the router. The modal passes its guarded leave, so a
+   * dirty edit is confirmed first.
+   */
+  readonly onNavigate?: (path: string) => void
 }
 
 export function DeviceHeroCard({
@@ -45,7 +47,7 @@ export function DeviceHeroCard({
   defaultHistoryOpen = false,
   legacyFallback = true,
   onDrawn,
-  onNavigated,
+  onNavigate,
 }: DeviceHeroCardProps): ReactNode {
   const { i18n } = useTranslation()
   const { resolvedMode } = useThemeMode()
@@ -55,16 +57,8 @@ export function DeviceHeroCard({
   const { user } = useAuth()
   const features = device?.features ?? []
   const go = (path: string): void => {
-    navigate(path)
-    onNavigated?.()
-  }
-  if (device?.type === DeviceType.Camera) {
-    return (
-      <StreamPanelContent
-        deviceId={deviceId}
-        intercomAvailable={features.includes(DeviceFeature.TwoWayAudio)}
-      />
-    )
+    if (onNavigate === undefined) void navigate(path)
+    else onNavigate(path)
   }
   return (
     <DeviceDetailModule

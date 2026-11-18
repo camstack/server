@@ -13,8 +13,13 @@ import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
 
+interface HeroMockProps {
+  readonly onNavigate?: (path: string) => void
+  readonly onDrawn?: (drawn: boolean) => void
+}
+
 const hero = vi.hoisted(() => ({
-  props: null as Record<string, unknown> | null,
+  props: null as (HeroMockProps & Record<string, unknown>) | null,
 }))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
@@ -48,9 +53,18 @@ vi.mock('../overview-adapters/DeviceInfoAdapter', async () => {
 })
 
 vi.mock('../hero/DeviceHeroCard', () => ({
-  DeviceHeroCard: (props: Record<string, unknown>) => {
+  DeviceHeroCard: (props: HeroMockProps & Record<string, unknown>) => {
     hero.props = props
-    return <div data-testid="hero-card">hero</div>
+    return (
+      <div data-testid="hero-card">
+        <button type="button" onClick={() => props.onNavigate?.('/devices/9')}>
+          hero-open-other
+        </button>
+        <button type="button" onClick={() => props.onDrawn?.(false)}>
+          hero-settled-empty
+        </button>
+      </div>
+    )
   },
 }))
 vi.mock('../tabs/DeviceAggregateSection', () => ({
@@ -145,5 +159,48 @@ describe('DeviceQuickDetail modal', () => {
       expect(screen.getByTestId('loc').textContent).toBe('/devices/7')
     })
     expect(screen.queryByRole('heading', { name: 'Driveway' })).toBeNull()
+  })
+
+  it('confirms a hero navigation over unsaved edits, and navigates nowhere on cancel', async () => {
+    renderModal()
+    openModal()
+    fireEvent.click(screen.getByRole('button', { name: 'edit-name' }))
+    fireEvent.click(screen.getByRole('button', { name: 'hero-open-other' }))
+    const title = await screen.findByText('Discard unsaved changes?')
+    const dialog = title.closest('dialog')
+    if (dialog === null) throw new Error('confirm dialog missing')
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }))
+    expect(screen.getByTestId('loc').textContent).toBe('/devices')
+    expect(screen.getByRole('heading', { name: 'Driveway' })).toBeTruthy()
+
+    fireEvent.click(screen.getByRole('button', { name: 'hero-open-other' }))
+    const again = await screen.findByText('Discard unsaved changes?')
+    const confirmDialog = again.closest('dialog')
+    if (confirmDialog === null) throw new Error('confirm dialog missing')
+    fireEvent.click(within(confirmDialog).getByRole('button', { name: 'Discard' }))
+    await waitFor(() => {
+      expect(screen.getByTestId('loc').textContent).toBe('/devices/9')
+    })
+  })
+
+  it('navigates from the hero at once when nothing is dirty', async () => {
+    renderModal()
+    openModal()
+    fireEvent.click(screen.getByRole('button', { name: 'hero-open-other' }))
+    await waitFor(() => {
+      expect(screen.getByTestId('loc').textContent).toBe('/devices/9')
+    })
+    expect(screen.queryByText('Discard unsaved changes?')).toBeNull()
+  })
+
+  it('opens on Device info, with no Detail tab, when the hero model covers nothing', () => {
+    renderModal()
+    openModal()
+    expect(screen.getByRole('button', { name: 'Detail' })).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'hero-settled-empty' }))
+    expect(screen.queryByRole('button', { name: 'Detail' })).toBeNull()
+    expect(screen.queryByTestId('hero-card')).toBeNull()
+    expect(screen.getByRole('button', { name: 'Device info' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'edit-name' }).closest('.hidden')).toBeNull()
   })
 })

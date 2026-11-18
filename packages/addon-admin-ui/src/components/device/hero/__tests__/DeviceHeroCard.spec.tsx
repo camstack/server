@@ -91,9 +91,13 @@ vi.mock('../../../../contexts/auth-context', () => ({
   useAuth: () => ({ user: { isAdmin: true } }),
 }))
 
+vi.mock('../../PanelContent', () => ({
+  StreamPanelContent: () => <div data-testid="stream-panel">stream</div>,
+}))
+
 import { DeviceHeroCard } from '../DeviceHeroCard'
 
-function mount(): void {
+function mount(type = 'washer'): void {
   render(
     <QueryClientProvider
       client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}
@@ -102,7 +106,7 @@ function mount(): void {
         <MemoryRouter>
           <DeviceHeroCard
             deviceId={7}
-            device={{ type: 'washer' }}
+            device={{ type }}
             deviceName="Washer"
             legacyFallback={false}
           />
@@ -125,5 +129,12 @@ describe('DeviceHeroCard', () => {
     mount()
     await screen.findByTestId('device-detail-module')
     expect(screen.queryByText('Washer')).toBeNull()
+  })
+
+  it('never mounts a stream panel for a camera: the viewer card draws none', async () => {
+    hub.model = null
+    mount('camera')
+    await screen.findByTestId('device-detail-module')
+    expect(screen.queryByTestId('stream-panel')).toBeNull()
   })
 })

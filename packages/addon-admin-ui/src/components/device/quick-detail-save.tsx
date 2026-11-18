@@ -54,6 +54,8 @@ interface QuickDetailSaveApi {
   readonly register: (contribution: QuickDetailContribution) => () => void
   /** Go to the device page (asks first when edits are unsaved), then close the host. */
   readonly openDevicePage: () => void
+  /** Go anywhere from the modal: the same dirty confirm, then close the host. */
+  readonly leaveTo: (path: string) => void
 }
 
 const QuickDetailSaveContext = createContext<QuickDetailSaveApi | null>(null)
@@ -138,24 +140,31 @@ export function QuickDetailSaveProvider({
     { dirty: identityDirty(identity), saving: false, error: null },
     ...contributions,
   ]).dirty
-  const openDevicePage = useCallback((): void => {
-    void (async () => {
-      if (dirty) {
-        const ok = await confirm({
-          title: t('deviceQuickDetail.leaveTitle', 'Discard unsaved changes?'),
-          message: t(
-            'deviceQuickDetail.leaveMessage',
-            'Unsaved edits on this device will be discarded.',
-          ),
-          confirmLabel: t('deviceQuickDetail.discard', 'Discard'),
-          variant: 'warning',
-        })
-        if (!ok) return
-      }
-      navigate(`/devices/${String(deviceId)}`)
-      onClose?.()
-    })()
-  }, [dirty, confirm, t, navigate, deviceId, onClose])
+  const leaveTo = useCallback(
+    (path: string): void => {
+      void (async () => {
+        if (dirty) {
+          const ok = await confirm({
+            title: t('deviceQuickDetail.leaveTitle', 'Discard unsaved changes?'),
+            message: t(
+              'deviceQuickDetail.leaveMessage',
+              'Unsaved edits on this device will be discarded.',
+            ),
+            confirmLabel: t('deviceQuickDetail.discard', 'Discard'),
+            variant: 'warning',
+          })
+          if (!ok) return
+        }
+        navigate(path)
+        onClose?.()
+      })()
+    },
+    [dirty, confirm, t, navigate, onClose],
+  )
+  const openDevicePage = useCallback(
+    (): void => leaveTo(`/devices/${String(deviceId)}`),
+    [leaveTo, deviceId],
+  )
 
   const api = useMemo<QuickDetailSaveApi>(
     () => ({
@@ -179,8 +188,9 @@ export function QuickDetailSaveProvider({
       },
       register,
       openDevicePage,
+      leaveTo,
     }),
-    [identity, register, openDevicePage],
+    [identity, register, openDevicePage, leaveTo],
   )
 
   return (

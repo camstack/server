@@ -29,12 +29,43 @@ import {
 import { useCallback, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { DeviceInfoAdapter } from './overview-adapters/DeviceInfoAdapter'
-import { DeviceHeroCard } from './hero/DeviceHeroCard'
+import { DeviceHeroCard, type DeviceHeroCardDevice } from './hero/DeviceHeroCard'
 import { QuickDetailSaveProvider, useQuickDetailSave } from './quick-detail-save'
 import { DeviceAggregateSection } from './tabs/DeviceAggregateSection'
 import { isDeviceExportSection } from './tabs/device-export-tab'
 
 type QuickTabId = 'detail' | 'info' | 'export'
+
+/**
+ * The device card of the Detail tab. Every navigation the card starts (open
+ * device, open camera, deep link) leaves through the modal's guarded `leaveTo`,
+ * so unsaved edits are confirmed exactly as for "Open device page".
+ */
+function DetailCard({
+  deviceId,
+  device,
+  name,
+  onDrawn,
+}: {
+  readonly deviceId: number
+  readonly device: DeviceHeroCardDevice | null | undefined
+  readonly name: string
+  readonly onDrawn: (drawn: boolean) => void
+}): ReactNode {
+  const save = useQuickDetailSave()
+  return (
+    <DeviceCardFrameProvider frame="bare">
+      <DeviceHeroCard
+        deviceId={deviceId}
+        device={device}
+        deviceName={name}
+        legacyFallback={false}
+        onDrawn={onDrawn}
+        {...(save === null ? {} : { onNavigate: save.leaveTo })}
+      />
+    </DeviceCardFrameProvider>
+  )
+}
 
 /** The one way from the modal to the device page; asks first over unsaved edits. */
 function OpenDevicePageButton(): ReactNode {
@@ -56,7 +87,12 @@ function DeviceQuickDetailModal({
   readonly onClose: () => void
 }): ReactNode {
   const { t } = useTranslation()
-  const [tab, setTab] = useState<QuickTabId>('detail')
+  const [pickedTab, setTab] = useState<QuickTabId>('detail')
+  // Told by the card once it settled: false = the hero model covers nothing (a
+  // camera, a device with no card), which the viewer shows as an empty card.
+  const [drawn, setDrawn] = useState<boolean | null>(null)
+  const detailEmpty = drawn === false
+  const tab: QuickTabId = pickedTab === 'detail' && detailEmpty ? 'info' : pickedTab
   const { data: device } = useDeviceManagerGetDevice({ deviceId }, { enabled: deviceId > 0 })
   const deviceName = typeof device?.name === 'string' ? device.name : ''
   const name = useDeviceLabelById(
@@ -66,7 +102,9 @@ function DeviceQuickDetailModal({
   )
   const deviceLocation = typeof device?.location === 'string' ? device.location : ''
   const tabs: readonly (readonly [QuickTabId, string])[] = [
-    ['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })],
+    ...(detailEmpty
+      ? []
+      : [['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })] as const]),
     ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
     ['export', t('deviceQuickDetail.tabExport', { defaultValue: 'Export' })],
   ]
@@ -116,16 +154,8 @@ function DeviceQuickDetailModal({
             <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
               {/* Kept mounted so an edit on one tab survives a switch to another. */}
               {tab === 'detail' ? (
-                // Mounted only while shown: a camera's stream must not play behind a tab.
-                <DeviceCardFrameProvider frame="bare">
-                  <DeviceHeroCard
-                    deviceId={deviceId}
-                    device={device}
-                    deviceName={name}
-                    legacyFallback={false}
-                    onNavigated={onClose}
-                  />
-                </DeviceCardFrameProvider>
+                // Mounted only while shown, and never a stream: a camera has no card here.
+                <DetailCard deviceId={deviceId} device={device} name={name} onDrawn={setDrawn} />
               ) : null}
               <div className={tab === 'info' ? undefined : 'hidden'}>
                 <DeviceInfoAdapter />
