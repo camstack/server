@@ -99,7 +99,7 @@ describe('overlay layout', () => {
     render(
       <DeviceCard
         kind="plug"
-        common={{ ...COMMON, remote: ['power'] }}
+        common={{ ...COMMON, remote: [{ id: 'power', label: 'Power' }] }}
         state={{ label: 'On', since: null, tone: 'primary' }}
         scene={{ image: <span>scene</span> }}
       />,
