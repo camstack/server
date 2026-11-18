@@ -13,7 +13,8 @@
  * The returned ids are honest catalog ids (verified present):
  *   - `yolov9m-320-int8` — Intel NPU + iGPU (YOLO26 runs on the NPU too, but is
  *                          an operator pick there, not the default)
- *   - `yolov9m-320`      — Apple ANE (CoreML)
+ *   - `yolov9m-640`      — Apple ANE (CoreML)
+ *   - `yolov9t-320`      — AMD iGPU (onnx:webgpu)
  *   - `yolov9s-320-edgetpu` — Coral Edge TPU (tflite; D908)
  *   - `yolov9s-320`      — CPU / CUDA (the object-detection step's CPU default)
  *
@@ -79,7 +80,7 @@ export function parseDeviceKey(deviceKey: string): {
  * fall back to the CPU default (`yolov9s-320`).
  */
 export function defaultModelIdForDevice(deviceKey: string): string {
-  const { backend } = parseDeviceKey(deviceKey)
+  const { backend, device } = parseDeviceKey(deviceKey)
 
   // OpenVINO — NPU/iGPU and the AMD Zen4 CPU pin all take the int8 IR
   // (`yolov9m-320-int8`). `openvino:cpu` is enumerated on AMD only; on Intel
@@ -91,6 +92,10 @@ export function defaultModelIdForDevice(deviceKey: string): string {
   if (backend === 'edgetpu') return 'yolov9s-320-edgetpu'
   // Apple CoreML (ANE) — our CoreML yolov9 @640 (D1053).
   if (backend === 'coreml') return 'yolov9m-640'
+  // AMD iGPU (ONNX on WebGPU) — the runner's `amd-igpu` class (yolov9t-320; m-320
+  // is ~1 fps there). Without this the column header named the CPU default while
+  // the runner ran yolov9t-320.
+  if (backend === 'onnx' && device === 'webgpu') return 'yolov9t-320'
   // onnx / cpu / cuda / anything else → the step's CPU default (yolov9s-320).
   return 'yolov9s-320'
 }

@@ -175,6 +175,9 @@ export function cellStateFor(input: {
   return {
     kind: 'enabled',
     modelId: input.model.modelId ?? 'Auto',
+    // A stored pin is an operator (or Auto tune) choice, not the hardware default:
+    // the cell must SAY so, or a stale pin passes for the elected default.
+    ...(input.model.source === 'node' ? { overridden: true } : {}),
     ...(input.rootName !== undefined ? { suppliedByRoot: input.rootName } : {}),
     ...(input.jumpTo !== undefined ? { jumpTo: input.jumpTo } : {}),
   }
