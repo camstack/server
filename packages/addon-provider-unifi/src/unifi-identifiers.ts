@@ -35,3 +35,21 @@ export function unifiInfraIdentifiers(
     unread,
   }
 }
+
+/**
+ * What a PoE port declares ATTACHED to it (D1063): its wired client's MAC and
+ * IP. The MAC is the last one the port saw (a client that left keeps it: one
+ * poll without a client is not a different client); the IP is the controller's
+ * client record for that MAC. Either one unknown is `unread`, so the stored
+ * value is kept (D49). A port that never saw a client declares nothing.
+ */
+export function unifiPortAttachedIdentifiers(
+  lastClientMac: string | null,
+  clientIp: string | null,
+): UnifiIdentifierDeclaration | null {
+  if (lastClientMac === null) return null
+  return {
+    identifiers: { mac: lastClientMac, ip: clientIp },
+    unread: clientIp === null ? ['ip'] : [],
+  }
+}

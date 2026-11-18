@@ -18,6 +18,7 @@ import {
   makeInMemoryRecords,
   secretTreeFromSchema,
   type SwitchOptions,
+  type SetIdentifiersInput,
 } from '@camstack/types'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -469,6 +470,7 @@ describe('UniFi devices on a stub device context', () => {
   function rig(
     config: Record<string, unknown>,
     type: DeviceType,
+    api: Record<string, unknown> = {},
   ): {
     readonly ctx: DeviceContext
     readonly providers: Map<string, unknown>
@@ -510,7 +512,7 @@ describe('UniFi devices on a stub device context', () => {
           }
         },
       ),
-      api: {},
+      api,
       logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
     } as unknown as DeviceContext
     return { ctx, providers }
@@ -592,6 +594,39 @@ describe('UniFi devices on a stub device context', () => {
       DeviceType.Switch,
     )
   }
+
+  function attachedRig() {
+    const mutate = vi.fn(async (_input: SetIdentifiersInput) => undefined)
+    const { ctx } = rig(
+      { kind: 'port', integrationId: INT, infraNativeId: 'sw1', portIdx: 1, system: UNIFI_SYSTEM },
+      DeviceType.Switch,
+      { deviceManager: { setAttachedIdentifiers: { mutate } } },
+    )
+    return { ctx, mutate }
+  }
+
+  it('a PoE port declares its wired client as ATTACHED once, and not again on an unchanged tick (D1063)', async () => {
+    await harness([{ ...SWITCH, ports: [port({ idx: 1, clientMac: PHONE.mac })] }])
+    const { ctx, mutate } = attachedRig()
+    await new UnifiFeatureDevice(ctx).onActivate()
+    await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
+    expect(mutate.mock.calls[0]?.[0]).toMatchObject({
+      deviceId: 7,
+      identifiers: { mac: [{ value: PHONE.mac }] },
+      unread: ['ip'],
+    })
+    unifiControllers.emitSnapshot(INT)
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(mutate).toHaveBeenCalledTimes(1)
+  })
+
+  it('a PoE port that never saw a client declares nothing attached', async () => {
+    await harness()
+    const { ctx, mutate } = attachedRig()
+    await new UnifiFeatureDevice(ctx).onActivate()
+    await new Promise((resolve) => setImmediate(resolve))
+    expect(mutate).not.toHaveBeenCalled()
+  })
 
   it('a PoE port without a local account is a switch that only power-cycles: no on/off', async () => {
     await harness()

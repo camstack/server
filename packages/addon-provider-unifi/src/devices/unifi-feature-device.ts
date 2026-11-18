@@ -32,6 +32,7 @@ import { capForMetric, portLabel, portNameWrite, unitForMetric } from '../unifi-
 import { portNetworkLinkStatus, portPowerStatus, portSwitchStatus } from '../unifi-port-state.js'
 import { UnifiUnsupportedError } from '../unifi-errors.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
+import { unifiPortAttachedIdentifiers } from '../unifi-identifiers.js'
 
 const COLD_SWITCH: SwitchStatus = { on: false, lastChangedAt: 0 }
 const COLD_POWER: PowerMeterStatus = { lastFetchedAt: 0 }
@@ -78,6 +79,8 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   /** The last client MAC persisted / the last auto name decided, so a tick writes only on change. */
   private lastClientMac: string | undefined
   private lastDesiredName: string | null = null
+  /** The attached identifiers last declared (D1063), so a poll tick writes only on change. */
+  private lastAttachedKey: string | null = null
 
   private snapshotUnsub: (() => void) | null = null
 
@@ -208,6 +211,26 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
   }
 
   /**
+   * Declare the wired client as ATTACHED to this port (D1063) — never as the port's own
+   * identity. The last MAC is kept across a poll that saw no client (absence is not a
+   * different client); an IP the controller does not know right now is unread (D49).
+   */
+  private async declareAttached(): Promise<void> {
+    const mac = this.lastClientMac ?? null
+    const ip =
+      mac === null ? null : (unifiControllers.getClient(this.integrationId, mac)?.ip ?? null)
+    const declaration = unifiPortAttachedIdentifiers(mac, ip)
+    if (declaration === null) return
+    const key = JSON.stringify(declaration)
+    if (key === this.lastAttachedKey) return
+    this.lastAttachedKey = key
+    const result = await this.declareAttachedIdentifiers(declaration.identifiers, {
+      unread: declaration.unread,
+    })
+    if (result.outcome !== 'declared') this.lastAttachedKey = null
+  }
+
+  /**
    * Keep the last client's MAC in config (cross-integration linking, planning#583) and the name
    * on "<client> (port N)" unless the operator renamed the port. A port whose client left keeps
    * the last MAC: absence on one poll is not a different client.
@@ -222,6 +245,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
           meta: { portIdx: port.idx, clientMac: port.clientMac },
         })
       }
+      await this.declareAttached()
       if (port.clientName === null) return
       const desired = portLabel(port.idx, port.clientName)
       if (desired === this.lastDesiredName) return
