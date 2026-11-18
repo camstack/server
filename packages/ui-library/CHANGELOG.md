@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The workload card's hero shows a state dot with the uptime, CPU and RAM gauges (a dash when not reported), and only the start, stop and restart actions the device supports; stop asks twice.
+
 ## [1.2.468] - 2026-11-18
 
 ### Changed

@@ -6,10 +6,10 @@ import { useUiText } from '../../../contexts/ui-text'
 import { useDeviceManagerGetDevice, useWorkloadGetOptions } from '../../../generated/system-hooks'
 import { useDeviceProxy, useDeviceStateSlice } from '../../../hooks/use-device-proxy'
 import { useDeviceCommand } from '../../../hooks/use-device-command'
-import { workloadRoleOf } from '../scenes/workload/model'
+import { useOneShotCommand } from '../../../hooks/use-one-shot-command'
+import { workloadRoleOf, workloadUptime } from '../scenes/workload/model'
 import { WorkloadCard } from '../scenes/workload/WorkloadCard'
 import type { ConnectedCardProps } from './ConnectedPlugCard'
-import { sinceText } from './since-text'
 import { useCardCommon } from './use-card-common'
 import { reportedCommand } from './use-command-notice'
 
@@ -17,7 +17,8 @@ import { reportedCommand } from './use-command-notice'
  * A workload (`workload` cap): the state slice, the controls `getOptions`
  * declares through `deriveWorkloadControls`, and the host it runs on. Until
  * `getOptions` answers no control is drawn — an undeclared action never has
- * a button.
+ * a button. An action is one shot: while it is in flight every action waits,
+ * and the card shows only the state the hub serves (D1061).
  */
 export function ConnectedWorkloadCard({
   deviceId,
@@ -32,6 +33,7 @@ export function ConnectedWorkloadCard({
   const slice = useDeviceStateSlice(dev?.workload === undefined ? undefined : dev.state.workload)
   const display = slice
   const runCommand = useDeviceCommand()
+  const shot = useOneShotCommand()
   const options = useWorkloadGetOptions({ deviceId })
   const hostId = display?.hostDeviceId ?? null
   const hostDevice = useDeviceManagerGetDevice(
@@ -66,7 +68,8 @@ export function ConnectedWorkloadCard({
     }
   }
   const onAction = (action: WorkloadAction): void => {
-    send(() => run(action))
+    const claimed = shot.claim(() => run(action))
+    if (claimed !== null) send(claimed)
   }
   return (
     <WorkloadCard
@@ -76,7 +79,8 @@ export function ConnectedWorkloadCard({
         common: card.common,
         role: workloadRoleOf(card.role),
         state: display.state,
-        since: sinceText(display.since, Date.now(), t) ?? null,
+        uptime: workloadUptime(display.since, Date.now(), t),
+        busy: shot.inFlight,
         controls: derived?.controls ?? [],
         sections: derived?.sections ?? {
           resources: false,
