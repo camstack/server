@@ -585,6 +585,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # with intel-opencl-icd; the IGC it needs installs to /usr/local/lib. Folding it
 # into the `intel` image was therefore possible, but unproven at runtime and it
 # would add ~120 MB (IGC 1.0.17537) to every Intel/Arc image, so it is a variant.
+# gmmlib comes from Intel's apt repo (libigdgmm12 >= 22.7.2, pulled by iHD):
+# the legacy1 debs only require libigdgmm12 >= 22.5.0 and both ship
+# libigdgmm.so.12, so no older gmmlib is installed (it would be a downgrade).
 # Media (VAAPI) is the same iHD pin as `intel`: the iHD driver still serves
 # Gen9+, and the ABI check below refuses a pair that does not load.
 # No NPU driver: Gen8–11 parts have none.
@@ -596,13 +599,11 @@ ARG IHD_VERSION=25.2.4-1146~24.04
 ARG NEO_LEGACY_VERSION=24.35.30872.36
 ARG NEO_LEGACY_ZE_VERSION=1.5.30872.36
 ARG IGC_LEGACY_VERSION=1.0.17537.24
-ARG GMM_LEGACY_VERSION=22.5.0
 ARG NEO_LEGACY_BASE=https://github.com/intel/compute-runtime/releases/download/${NEO_LEGACY_VERSION}
 ARG IGC_LEGACY_BASE=https://github.com/intel/intel-graphics-compiler/releases/download/igc-${IGC_LEGACY_VERSION}
 # sha256 as published in the GitHub release metadata of each asset.
 ARG SHA_NEO_ICD=bbe71e4f414259e06a10cde72c29a2bd78d41b2bb2f6f8463b1806797fe66e85
 ARG SHA_NEO_ZE=40dfbd15ab62de036a00824b304a2aa1fa2d81ad60ef83da09cfe3c5a80c429f
-ARG SHA_GMM=cc29d14df83cff1b3c6a66baa39257f0211b168ab43a99c2dc62a3734431bc23
 ARG SHA_IGC_CORE=c1e1ecdfe2064c047c552651cfdcdafc504f2033afafba65654338b880048b67
 ARG SHA_IGC_OCL=dd016400f87fa2b6a9fa9fbcca7eb4a2629174a29de679709f9bec5cede88b0e
 RUN curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key \
@@ -619,14 +620,13 @@ RUN curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key \
     mkdir -p /tmp/neo-legacy && cd /tmp/neo-legacy && \
     curl -fsSL -o igc-core.deb   "${IGC_LEGACY_BASE}/intel-igc-core_${IGC_LEGACY_VERSION}_amd64.deb" && \
     curl -fsSL -o igc-opencl.deb "${IGC_LEGACY_BASE}/intel-igc-opencl_${IGC_LEGACY_VERSION}_amd64.deb" && \
-    curl -fsSL -o gmmlib.deb     "${NEO_LEGACY_BASE}/libigdgmm12_${GMM_LEGACY_VERSION}_amd64.deb" && \
     curl -fsSL -o neo-icd.deb    "${NEO_LEGACY_BASE}/intel-opencl-icd-legacy1_${NEO_LEGACY_VERSION}_amd64.deb" && \
     curl -fsSL -o neo-ze.deb     "${NEO_LEGACY_BASE}/intel-level-zero-gpu-legacy1_${NEO_LEGACY_ZE_VERSION}_amd64.deb" && \
     echo "${SHA_IGC_CORE}  igc-core.deb"   >  sums && echo "${SHA_IGC_OCL}  igc-opencl.deb" >> sums && \
-    echo "${SHA_GMM}  gmmlib.deb"           >> sums && echo "${SHA_NEO_ICD}  neo-icd.deb"    >> sums && \
+    echo "${SHA_NEO_ICD}  neo-icd.deb"    >> sums && \
     echo "${SHA_NEO_ZE}  neo-ze.deb"        >> sums && sha256sum -c sums && \
     apt-get install -y --no-install-recommends \
-      ./gmmlib.deb ./igc-core.deb ./igc-opencl.deb ./neo-icd.deb ./neo-ze.deb && \
+      ./igc-core.deb ./igc-opencl.deb ./neo-icd.deb ./neo-ze.deb && \
     ldconfig && \
     test -e /etc/OpenCL/vendors/intel_legacy1.icd && \
     test -e /usr/lib/x86_64-linux-gnu/intel-opencl/libigdrcl_legacy1.so && \
