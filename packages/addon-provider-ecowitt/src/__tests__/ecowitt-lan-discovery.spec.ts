@@ -54,7 +54,12 @@ describe('Ecowitt LAN discovery', () => {
         stableId: 'ecowitt:192-0-2-7',
         type: DeviceType.Gateway,
         suggestedName: 'Ecowitt - Home',
-        prefilledConfig: { transport: 'local', host: '192.0.2.7', model: 'GW1100A' },
+        prefilledConfig: {
+          transport: 'local',
+          host: '192.0.2.7',
+          mac: 'de:ad:be:ef:00:01',
+          model: 'GW1100A',
+        },
         setupIntegration: true,
       },
     ])

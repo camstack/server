@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A gateway added from the network scan now keeps its MAC and declares it, with its address, as the Gateway device's identifiers
+
 ## [0.2.170] - 2026-11-17
 
 ### Changed

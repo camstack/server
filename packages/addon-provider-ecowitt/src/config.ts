@@ -55,6 +55,8 @@ export const ecowittLocalConfigSchema = z.object({
   ...baseFields,
   /** Model the LAN scan announced. Not a form field; kept so the gateway is named from it. */
   model: z.string().optional(),
+  /** MAC the LAN scan read from the gateway's reply. Not a form field; declared as its identifier (D1059). */
+  mac: z.string().optional(),
 })
 
 export const ecowittListenerConfigSchema = z.object({

@@ -104,6 +104,7 @@ export function ecowittCandidates(
         prefilledConfig: {
           transport: 'local',
           host: g.ip,
+          mac: g.mac,
           ...(g.model !== undefined && g.model.length > 0 ? { model: g.model } : {}),
         },
         setupIntegration: true,
