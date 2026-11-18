@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest'
-import { supportedRuntimes, scoreRuntimes, defaultDeviceFor } from '../runtime-capabilities.js'
+import {
+  supportedRuntimes,
+  scoreRuntimes,
+  defaultDeviceFor,
+  enumerateInferenceDevices,
+  runtimeDevices,
+} from '../runtime-capabilities.js'
 import type { HardwareInfo } from '../../interfaces/platform.js'
 
 const base = {
@@ -69,9 +75,30 @@ describe('scoreRuntimes', () => {
     expect(best.score).toBe(75)
     expect(best.reason).toBe('ONNX WebGPU (AMD iGPU)')
   })
-  it('nvidia → best cuda 85', () => expect(scoreRuntimes(nvidia).best.backend).toBe('cuda'))
+  it('nvidia without the CUDA execution provider → no cuda, cpu floor', () => {
+    const { scores, best } = scoreRuntimes(nvidia)
+    expect(scores.some((s) => s.backend === 'cuda')).toBe(false)
+    expect(best.backend).toBe('cpu')
+  })
+  it('nvidia whose ONNX Runtime reported only CPU → no cuda', () => {
+    const cpuOnlyOrt: HardwareInfo = { ...nvidia, onnxExecutionProviders: ['CPUExecutionProvider'] }
+    expect(scoreRuntimes(cpuOnlyOrt).scores.some((s) => s.backend === 'cuda')).toBe(false)
+  })
+  it('nvidia whose ONNX Runtime reported the CUDA EP → best cuda 85', () => {
+    const cudaOrt: HardwareInfo = {
+      ...nvidia,
+      onnxExecutionProviders: ['CUDAExecutionProvider', 'CPUExecutionProvider'],
+    }
+    expect(scoreRuntimes(cudaOrt).best.backend).toBe('cuda')
+  })
   it('apple → best coreml 95', () => expect(scoreRuntimes(apple).best.backend).toBe('coreml'))
   it('plain x86 → best cpu 50', () => expect(scoreRuntimes(plainX86).best.backend).toBe('cpu'))
+})
+describe('cuda is offered only when the CUDA EP exists', () => {
+  it('an NVIDIA host without it enumerates no cuda device', () =>
+    expect(enumerateInferenceDevices(nvidia).map((d) => d.key)).toEqual(['cpu']))
+  it('an NVIDIA host without it offers no cuda device on the onnx runtime', () =>
+    expect(runtimeDevices('onnx', nvidia).map((d) => d.value)).toEqual(['cpu']))
 })
 describe('defaultDeviceFor', () => {
   it('openvino → auto', () => expect(defaultDeviceFor('openvino')).toBe('auto'))

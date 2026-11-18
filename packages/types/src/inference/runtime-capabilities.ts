@@ -49,6 +49,17 @@ function coralUnitOption(unit: CoralUnitAddress): DeviceOption {
   return { value: unit.device, label }
 }
 
+const ONNX_CUDA_EP = 'CUDAExecutionProvider'
+
+/**
+ * CUDA is offered only when the node's ONNX Runtime build carries the CUDA EP.
+ * An NVIDIA GPU alone is not enough: without the EP the pool binds the CPU
+ * provider and a `cuda` device would be the CPU under another name.
+ */
+function onnxCudaAvailable(hw: HardwareInfo | null): boolean {
+  return hw?.onnxExecutionProviders?.includes(ONNX_CUDA_EP) === true
+}
+
 interface RuntimeDef {
   readonly id: RuntimeId
   readonly supports: (hw: HardwareInfo | null) => boolean
@@ -62,7 +73,7 @@ const ONNX_DEF: RuntimeDef = {
   devices: (hw) => {
     if (!hw) return [CPU]
     const out: DeviceOption[] = [CPU]
-    if (hw.gpu?.type === 'nvidia') out.push({ value: 'cuda', label: 'CUDA' })
+    if (onnxCudaAvailable(hw)) out.push({ value: 'cuda', label: 'CUDA' })
     // The WebGPU EP package is installed on Linux only; Windows gets it with its own
     // device key after the NPU spike, so it is not offered there yet.
     if (hw.gpu?.type === 'amd' && hw.platform === 'linux')
@@ -181,7 +192,7 @@ interface ScoreRuntimesResult {
  *
  * Rules (hardware-driven only — no Python import probes):
  * - coreml:   score 95, darwin+arm64
- * - cuda:     score 85, nvidia gpu
+ * - cuda:     score 85, only when the ONNX Runtime build reported the CUDA EP
  * - openvino: score 90 if intel-npu present, else 80 if intel gpu
  * - edgetpu:  score 70, a usable Coral unit (USB or PCIe)
  * - cpu:      score 50 (universal floor, always included)
@@ -205,8 +216,8 @@ export function scoreRuntimes(hw: HardwareInfo): ScoreRuntimesResult {
     })
   }
 
-  // NVIDIA CUDA
-  if (hw.gpu?.type === 'nvidia') {
+  // NVIDIA CUDA — gated on the EP, never on the GPU alone (planning#605).
+  if (onnxCudaAvailable(hw)) {
     scores.push({
       runtime: 'python',
       backend: 'cuda',

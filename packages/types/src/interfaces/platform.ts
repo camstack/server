@@ -24,6 +24,15 @@ export interface HardwareInfo {
    * missing, device not accessible) ⇒ the `edgetpu` runtime is withheld too.
    */
   readonly coral?: CoralInfo | null
+  /**
+   * The execution providers the node's ONNX Runtime build reported
+   * (`ort.get_available_providers()`, the signal the inference pool binds on).
+   * Absent / null = not reported, and then no EP beyond the CPU floor is
+   * assumed: an NVIDIA GPU is offered as `cuda` only when this lists
+   * `CUDAExecutionProvider`. Nothing reports it yet — CamStack provisions the
+   * plain `onnxruntime` wheel, which has no CUDA EP (planning#605).
+   */
+  readonly onnxExecutionProviders?: readonly string[] | null
 }
 
 export interface GpuInfo {
