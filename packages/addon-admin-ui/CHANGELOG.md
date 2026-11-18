@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Pipeline step matrix marks a cell whose model is a stored pin (ovr) instead of showing it like the hardware default
 - Add device inside an integration no longer offers new integrations to set up: it lists only that integration's own devices, scans the network only for LAN integrations, and says why when the scan is unavailable
+- Add device inside an integration shows the network scan only when that integration's provider says it finds devices that way
 
 ## [1.2.700] - 2026-11-18
 

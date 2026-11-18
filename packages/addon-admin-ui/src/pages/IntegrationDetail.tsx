@@ -23,6 +23,7 @@ import {
   useDeviceManagerListAll,
   useIntegrationInstancesDeleteInstance,
   useIntegrationInstancesDescribe,
+  useIntegrationInstancesGetInstance,
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
   useIntegrationsDelete,
@@ -148,10 +149,10 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     // kind and this keeps their flow working.
     return entry?.kind === 'device-adoption' ? 'device-adoption' : 'device-provider'
   }, [availableTypes, integration?.addonId, typesReady])
-  // Whether Add device may scan the LAN for devices INSIDE this integration. A provider that holds
-  // an instances description scans only when its discovery mode is `lan`: an `account` or `none`
-  // integration lists its devices through adoption and manual add. A discovery provider without an
-  // instances description (legacy) keeps its scan. A failed description shows no scan and says why.
+  // Whether Add device may scan the LAN for devices INSIDE this integration. The provider decides
+  // per instance (`IntegrationInstance.addDevice`): `scan` scans; `children` (an NVR's own
+  // children, an account's devices) and `none` do not. A discovery provider without an instances
+  // description (legacy) keeps its scan. A failed describe / getInstance shows no scan and says why.
   // `canScan` is `null` until the answers are in: the modal draws nothing that depends on it before.
   const { data: discoveryProvidersData, isPending: discoveryPending } =
     useDeviceManagerDiscoveryProviders({})
@@ -163,11 +164,19 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     { addonId },
     { retry: false, enabled: holdsInstances },
   )
+  const instance = useIntegrationInstancesGetInstance(
+    { addonId, id: integrationId },
+    { retry: false, enabled: holdsInstances && integrationId !== '' },
+  )
   const { canScan, scanFailure } = useMemo<{
     canScan: boolean | null
     scanFailure: string | null
   }>(() => {
-    if (discoveryPending || holdersPending || (holdsInstances && description.isPending)) {
+    if (
+      discoveryPending ||
+      holdersPending ||
+      (holdsInstances && (description.isPending || instance.isPending))
+    ) {
       return { canScan: null, scanFailure: null }
     }
     const isProvider = (discoveryProvidersData?.providers ?? []).some(
@@ -175,11 +184,16 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     )
     if (!isProvider) return { canScan: false, scanFailure: null }
     if (!holdsInstances) return { canScan: true, scanFailure: null }
-    if (description.isError) {
-      const reason = description.error instanceof Error ? description.error.message : ''
+    const failed = description.isError
+      ? description.error
+      : instance.isError
+        ? instance.error
+        : null
+    if (description.isError || instance.isError) {
+      const reason = failed instanceof Error ? failed.message : ''
       return { canScan: false, scanFailure: reason.length > 0 ? reason : 'unknown error' }
     }
-    return { canScan: description.data?.discovery?.mode === 'lan', scanFailure: null }
+    return { canScan: instance.data?.addDevice === 'scan', scanFailure: null }
   }, [
     discoveryPending,
     holdersPending,
@@ -187,7 +201,10 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     description.isPending,
     description.isError,
     description.error,
-    description.data,
+    instance.isPending,
+    instance.isError,
+    instance.error,
+    instance.data,
     discoveryProvidersData,
     integration?.addonId,
   ])

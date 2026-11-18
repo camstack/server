@@ -596,10 +596,16 @@ a creation type and a form), and a single remaining flow is not drawn as a tab.
 The network list is `mergeNetworkCandidates` over the adoption candidates, a
 scan scoped to the integration and the passive proposals: one row per device. A
 row with `needsParams` opens the creation form prefilled before it is adopted.
-Inside an integration the LAN scan is drawn only when the integration's discovery mode is `lan`
-(`describe().discovery.mode`), or when its addon is a legacy discovery provider with no instances
-description; an `account` or `none` integration lists devices through adoption and manual add, and
-a description that failed says so instead of a scan. A candidate that is an integration to set up
+Inside an integration the LAN scan is drawn only when the instance's provider says so: each served
+instance carries `addDevice` (`scan`: the scan finds devices this instance holds; `children`: only its
+own children, via adoption; `none`: manual add only). It is decided per instance, not per provider
+type — a Reolink default integration (no host) holds standalone cameras and scans, an NVR / Home Hub
+integration (host set) adopts its children and a scan there would offer other hosts, which are new
+integrations. A provider that states nothing gets the default from `describe().discovery.mode`
+(`lan` scans, `account` is `children`, else `none`), computed in one place
+(`defaultAddDeviceMode`). The UI reads `instance.addDevice === 'scan'` and never derives it from the
+discovery mode; a legacy discovery provider with no instances description still scans, and a
+describe / getInstance that failed says so instead of a scan. A candidate that is an integration to set up
 (`setupIntegration`) is never listed there — that scan lives on the Integrations page and in the
 wizard.
 Never add a device through an integration's settings form.

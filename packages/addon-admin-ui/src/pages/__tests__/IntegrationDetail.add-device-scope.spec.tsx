@@ -3,7 +3,7 @@
  *
  * The addon being a discovery provider only says it can find NEW integrations (consoles, hosts)
  * on the network; that belongs to the Integrations page. Inside an instance, Add device scans only
- * when the integration's discovery is scoped to that instance.
+ * when the instance's provider says `addDevice: 'scan'` for it.
  */
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -14,6 +14,9 @@ import { describe, expect, it, vi } from 'vitest'
 
 const scope = vi.hoisted(() => ({
   description: undefined as undefined | Record<string, unknown>,
+  /** What the provider states for the selected instance (`IntegrationInstance.addDevice`). */
+  addDevice: undefined as undefined | 'scan' | 'children' | 'none',
+  getInstanceError: false,
   /** The addon holds `integration-instances` (false = a legacy discovery provider). */
   holder: true,
   describeError: false,
@@ -91,6 +94,15 @@ vi.mock('@camstack/ui-library', async () => {
       scope.describeError
         ? { data: undefined, isPending: false, isError: true, error: new Error('describe refused') }
         : { data: scope.description, isPending: false, isError: false, error: null },
+    useIntegrationInstancesGetInstance: () =>
+      scope.getInstanceError
+        ? { data: undefined, isPending: false, isError: true, error: new Error('instance refused') }
+        : {
+            data: { id: 'int_unifi', addDevice: scope.addDevice },
+            isPending: false,
+            isError: false,
+            error: null,
+          },
     useIntegrationInstancesSetInstanceEnabled: () => ({
       mutate: switches.instance,
       isPending: false,
@@ -153,24 +165,40 @@ function openAddDevice(): { canScan: boolean | null; scanFailure: string | null 
   return last
 }
 
-function setup(over: { holder?: boolean; description?: Record<string, unknown>; error?: boolean }) {
+function setup(over: {
+  holder?: boolean
+  description?: Record<string, unknown>
+  error?: boolean
+  addDevice?: 'scan' | 'children' | 'none'
+  instanceError?: boolean
+}) {
   scope.holder = over.holder ?? true
   scope.description = over.description
   scope.describeError = over.error ?? false
+  scope.addDevice = over.addDevice
+  scope.getInstanceError = over.instanceError ?? false
 }
 
-describe('IntegrationDetailPage - Add device scan scope', () => {
-  it('scans the LAN for a lan-mode integration, scoped or not', () => {
-    setup({ description: { kinds: [], discovery: { mode: 'lan', scopedToInstance: false } } })
+describe('IntegrationDetailPage - Add device scan scope (decided per instance by its provider)', () => {
+  it('scans when the instance says scan (a Reolink default integration)', () => {
+    setup({ description: { kinds: [] }, addDevice: 'scan' })
     expect(openAddDevice()).toEqual({ canScan: true, scanFailure: null })
   })
 
-  it('offers no scan to an account integration although its addon is a discovery provider', () => {
-    setup({ description: { kinds: [], discovery: { mode: 'account', scopedToInstance: true } } })
+  it('offers no scan when the instance says children (a Reolink NVR / Home Hub), whatever the discovery mode', () => {
+    setup({
+      description: { kinds: [], discovery: { mode: 'lan', scopedToInstance: false } },
+      addDevice: 'children',
+    })
     expect(openAddDevice()).toEqual({ canScan: false, scanFailure: null })
   })
 
-  it('offers no scan when the discovery mode is none or absent', () => {
+  it('offers no scan when the instance says none', () => {
+    setup({ description: { kinds: [] }, addDevice: 'none' })
+    expect(openAddDevice().canScan).toBe(false)
+  })
+
+  it('offers no scan when the instance states nothing', () => {
     setup({ description: { kinds: [] } })
     expect(openAddDevice().canScan).toBe(false)
   })
@@ -183,5 +211,10 @@ describe('IntegrationDetailPage - Add device scan scope', () => {
   it('shows no scan and names the reason when the description failed', () => {
     setup({ error: true })
     expect(openAddDevice()).toEqual({ canScan: false, scanFailure: 'describe refused' })
+  })
+
+  it('shows no scan and names the reason when the instance read failed', () => {
+    setup({ description: { kinds: [] }, instanceError: true })
+    expect(openAddDevice()).toEqual({ canScan: false, scanFailure: 'instance refused' })
   })
 })

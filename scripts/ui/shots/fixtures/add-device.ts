@@ -57,98 +57,120 @@ const PROPOSALS = [
   },
 ]
 
-export default defineFixtures({
-  area: 'add-device',
-  description: 'Add device modal: network candidates (with a parameter step) and manual form',
-  handlers: {
-    'integrations.get': ESP,
-    'integrations.list': [ESP],
-    'integrations.getAvailableTypes': [
-      {
-        addonId: 'provider-esphome',
-        name: 'ESPHome',
-        description: 'ESPHome boards over the native API',
-        iconUrl: null,
-        color: 'primary',
-        instanceMode: 'multiple',
-        mode: 'standalone',
-        discoveryMode: 'manual',
-        kind: 'device-adoption',
-        brokerKind: null,
-        supportsLocationImport: false,
-        canTest: false,
-        canAdd: true,
-        existingInstances: [{ id: 'int_esp', name: 'ESPHome boards' }],
+/** The instance as its provider serves it: `addDevice` is the provider's per-instance decision. */
+export function addDeviceFixtures(
+  area: string,
+  description: string,
+  addDevice: 'scan' | 'children' | 'none',
+) {
+  return defineFixtures({
+    area,
+    description,
+    handlers: {
+      'integrations.get': ESP,
+      'integrations.list': [ESP],
+      'integrations.getAvailableTypes': [
+        {
+          addonId: 'provider-esphome',
+          name: 'ESPHome',
+          description: 'ESPHome boards over the native API',
+          iconUrl: null,
+          color: 'primary',
+          instanceMode: 'multiple',
+          mode: 'standalone',
+          discoveryMode: 'manual',
+          kind: 'device-adoption',
+          brokerKind: null,
+          supportsLocationImport: false,
+          canTest: false,
+          canAdd: true,
+          existingInstances: [{ id: 'int_esp', name: 'ESPHome boards' }],
+        },
+      ],
+      'addons.listCapabilityProviders': [
+        { addonId: 'provider-esphome', isActive: true, capName: 'integration-instances' },
+      ],
+      'integrationInstances.getInstance': {
+        id: 'int_esp',
+        name: 'ESPHome boards',
+        configured: true,
+        enabled: true,
+        kind: 'connection',
+        formValues: {},
+        addDevice,
       },
-    ],
-    'addons.listCapabilityProviders': [
-      { addonId: 'provider-esphome', isActive: true, capName: 'integration-instances' },
-    ],
-    'integrationInstances.describe': {
-      kinds: [],
-      discovery: { mode: 'lan', scopedToInstance: false },
+      'integrationInstances.describe': {
+        kinds: [],
+        discovery: { mode: 'lan', scopedToInstance: false },
+      },
+      'deviceManager.listAll': [],
+      'deviceManager.discoveryProviders': {
+        providers: [{ addonId: 'provider-esphome', label: 'ESPHome' }],
+      },
+      'deviceManager.listDiscoveryProposals': { proposals: PROPOSALS },
+      'deviceManager.providerDiscoveryParamsSchema': null,
+      'deviceManager.adoptionListCandidates': {
+        candidates: [
+          {
+            childNativeId: 'esphome-porch-light',
+            name: 'porch-light',
+            type: 'container',
+            status: 'online',
+            metadata: {},
+            alreadyAdopted: false,
+            adoptedDeviceId: null,
+            capabilities: [],
+            children: [],
+          },
+          {
+            childNativeId: 'esphome-cellar-fan',
+            name: 'cellar-fan',
+            type: 'container',
+            status: 'online',
+            metadata: {},
+            alreadyAdopted: false,
+            adoptedDeviceId: null,
+            capabilities: [],
+            children: [],
+          },
+        ],
+        totalCount: 2,
+        page: 1,
+        pageSize: 500,
+      },
+      'deviceManager.adoptionListCandidateFilters': { filters: [] },
+      'deviceManager.providerCreationType': { deviceType: 'container' },
+      'deviceManager.getCreationSchema': {
+        sections: [
+          {
+            id: 'board',
+            title: 'Board',
+            columns: 1,
+            fields: [
+              { type: 'text', key: 'host', label: 'Host / IP', required: true },
+              { type: 'number', key: 'port', label: 'API port', default: 6053 },
+              { type: 'text', key: 'name', label: 'Name' },
+              {
+                type: 'password',
+                key: 'encryptionKey',
+                label: 'API encryption key',
+                description:
+                  'Only for an encrypted board. It is in the board YAML under api: encryption: key:.',
+              },
+            ],
+          },
+        ],
+      },
+      'integrationInstances.instanceFormSchema': { sections: [] },
+      'preferences.get': null,
+      'localNetwork.getScanSubnets': { subnets: [] },
+      'auth.listLoginMethods': [],
     },
-    'deviceManager.listAll': [],
-    'deviceManager.discoveryProviders': {
-      providers: [{ addonId: 'provider-esphome', label: 'ESPHome' }],
-    },
-    'deviceManager.listDiscoveryProposals': { proposals: PROPOSALS },
-    'deviceManager.providerDiscoveryParamsSchema': null,
-    'deviceManager.adoptionListCandidates': {
-      candidates: [
-        {
-          childNativeId: 'esphome-porch-light',
-          name: 'porch-light',
-          type: 'container',
-          status: 'online',
-          metadata: {},
-          alreadyAdopted: false,
-          adoptedDeviceId: null,
-          capabilities: [],
-          children: [],
-        },
-        {
-          childNativeId: 'esphome-cellar-fan',
-          name: 'cellar-fan',
-          type: 'container',
-          status: 'online',
-          metadata: {},
-          alreadyAdopted: false,
-          adoptedDeviceId: null,
-          capabilities: [],
-          children: [],
-        },
-      ],
-      totalCount: 2,
-      page: 1,
-      pageSize: 500,
-    },
-    'deviceManager.adoptionListCandidateFilters': { filters: [] },
-    'deviceManager.providerCreationType': { deviceType: 'container' },
-    'deviceManager.getCreationSchema': {
-      sections: [
-        {
-          id: 'board',
-          title: 'Board',
-          columns: 1,
-          fields: [
-            { type: 'text', key: 'host', label: 'Host / IP', required: true },
-            { type: 'number', key: 'port', label: 'API port', default: 6053 },
-            { type: 'text', key: 'name', label: 'Name' },
-            {
-              type: 'password',
-              key: 'encryptionKey',
-              label: 'API encryption key',
-              description:
-                'Only for an encrypted board. It is in the board YAML under api: encryption: key:.',
-            },
-          ],
-        },
-      ],
-    },
-    'integrationInstances.instanceFormSchema': { sections: [] },
-    'preferences.get': null,
-    'localNetwork.getScanSubnets': { subnets: [] },
-    'auth.listLoginMethods': [],
-  },
-})
+  })
+}
+
+export default addDeviceFixtures(
+  'add-device',
+  'Add device modal: network candidates (with a parameter step) and manual form',
+  'scan',
+)
