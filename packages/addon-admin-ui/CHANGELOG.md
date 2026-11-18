@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Pipeline: switch each step off, on or opt-in for the cluster (Cluster → Settings), per node (node Pipeline tab) and per accelerator (accelerator table), with the effective result and the level that turned a step off.
+
 ## [1.2.703] - 2026-11-18
 
 ### Changed

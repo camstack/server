@@ -101,6 +101,114 @@ function devicesOf(nodeId: string): readonly FixtureDevice[] {
   return DEVICES[nodeId] ?? []
 }
 
+type FixtureCell =
+  | { readonly kind: 'on' }
+  | { readonly kind: 'off-cluster' }
+  | { readonly kind: 'off-node' }
+  | { readonly kind: 'off-device' }
+  | { readonly kind: 'opt-in-unused' }
+  | { readonly kind: 'jump'; readonly toDeviceKey: string }
+
+interface FixtureStep {
+  readonly stepId: string
+  readonly name: string
+  readonly slot: string
+  readonly clusterMode: 'off' | 'on' | 'opt-in' | null
+  readonly effectiveMode: 'off' | 'on' | 'opt-in'
+  readonly camerasEnabling: number
+  readonly camerasDisabling: number
+  /** nodeId → stored node switch. */
+  readonly nodeSwitch: Readonly<Record<string, boolean>>
+  /** `${nodeId}/${deviceKey}` → stored device switch. */
+  readonly deviceSwitch: Readonly<Record<string, boolean>>
+}
+
+const STEPS: readonly FixtureStep[] = [
+  {
+    stepId: 'object-detection',
+    name: 'Object detection',
+    slot: 'root',
+    clusterMode: null,
+    effectiveMode: 'on',
+    camerasEnabling: 0,
+    camerasDisabling: 1,
+    nodeSwitch: {},
+    deviceSwitch: { 'hub/cpu': false },
+  },
+  {
+    stepId: 'face-detection',
+    name: 'Face detection',
+    slot: 'detail',
+    clusterMode: 'opt-in',
+    effectiveMode: 'opt-in',
+    camerasEnabling: 2,
+    camerasDisabling: 0,
+    nodeSwitch: { 'garage-nuc': false },
+    deviceSwitch: {},
+  },
+  {
+    stepId: 'plate-recognition',
+    name: 'Plate recognition',
+    slot: 'detail',
+    clusterMode: 'off',
+    effectiveMode: 'off',
+    camerasEnabling: 0,
+    camerasDisabling: 0,
+    nodeSwitch: {},
+    deviceSwitch: {},
+  },
+  {
+    stepId: 'clip-embedding',
+    name: 'Semantic embedding',
+    slot: 'detail',
+    clusterMode: null,
+    effectiveMode: 'on',
+    camerasEnabling: 0,
+    camerasDisabling: 0,
+    nodeSwitch: {},
+    deviceSwitch: { 'hub/openvino:gpu': false },
+  },
+]
+
+function stepCell(step: FixtureStep, nodeId: string, deviceKey: string): FixtureCell {
+  if (step.effectiveMode === 'off') return { kind: 'off-cluster' }
+  if (step.nodeSwitch[nodeId] === false) return { kind: 'off-node' }
+  if (step.deviceSwitch[`${nodeId}/${deviceKey}`] === false) {
+    return step.slot === 'detail' && nodeId === 'hub' && deviceKey === 'openvino:gpu'
+      ? { kind: 'jump', toDeviceKey: 'cpu' }
+      : { kind: 'off-device' }
+  }
+  if (step.effectiveMode === 'opt-in' && step.camerasEnabling === 0)
+    return { kind: 'opt-in-unused' }
+  return { kind: 'on' }
+}
+
+const STEP_SWITCH_MATRIX = {
+  steps: STEPS.map((step) => ({
+    stepId: step.stepId,
+    name: step.name,
+    slot: step.slot,
+    clusterMode: step.clusterMode,
+    effectiveMode: step.effectiveMode,
+    camerasEnabling: step.camerasEnabling,
+    camerasDisabling: step.camerasDisabling,
+    nodes: NODES.map((nodeId) => ({
+      nodeId,
+      reachable: true,
+      stepEnabled: step.nodeSwitch[nodeId] ?? null,
+      devices: devicesOf(nodeId)
+        .filter((d) => d.presence === 'present')
+        .map((d) => ({
+          deviceKey: d.key,
+          format: d.format,
+          stepEnabled: step.deviceSwitch[`${nodeId}/${d.key}`] ?? null,
+          eligible: d.exclusion === null,
+          cell: stepCell(step, nodeId, d.key),
+        })),
+    })),
+  })),
+}
+
 const LOAD_SECTION = {
   id: 'load',
   title: 'Load Balancer',
@@ -239,6 +347,7 @@ export default defineFixtures({
         }
       }),
     }),
+    'pipelineOrchestrator.getStepSwitches': STEP_SWITCH_MATRIX,
     'auth.listLoginMethods': [],
     'pipelineOrchestrator.getAudioAssignments': [],
     'pipelineOrchestrator.getAudioNodeLoad': [],

@@ -3830,6 +3830,51 @@
       "preview": "Segni della timeline",
       "subclasses": "Sottoclassi",
       "sourceUnconfigured": "Preimpostazione CamStack (predefinita del cluster)"
+    },
+    "stepSwitches": {
+      "reason": {
+        "cluster": "Spento per tutto il cluster",
+        "node": "Spento su questo nodo",
+        "device": "Spento su questo acceleratore",
+        "optIn": "Su richiesta: nessuna telecamera lo ha attivato",
+        "model": "Nessuna versione adatta a questo nodo"
+      },
+      "state": {
+        "unknown": "Non ancora noto",
+        "nodeSilent": "Il nodo non risponde",
+        "off": "Spento",
+        "on": "Attivo"
+      },
+      "via": {
+        "jump": "Gira su {{device}}",
+        "root": "Fornito dal modello principale",
+        "zone": "Gira dove è disegnata una zona"
+      },
+      "writeFailed": "La modifica non è stata salvata",
+      "loadFailed": "Gli interruttori dei passi non si sono caricati",
+      "noSteps": "L'orchestratore non segnala passi della pipeline.",
+      "clusterModeFor": "Modalità cluster per {{step}}",
+      "mode": {
+        "off": "Spento",
+        "on": "Attivo",
+        "optIn": "Su richiesta",
+        "default": "Predefinito ({{mode}})"
+      },
+      "cluster": {
+        "hardOff": "Spento ovunque: nessuna telecamera può attivarlo",
+        "cameras": "Telecamere: {{enabling}} lo attivano, {{disabling}} lo disattivano · gira su {{running}} di {{known}} nodi"
+      },
+      "clusterTitle": "Interruttori dei passi",
+      "clusterHint": "Spento disattiva il passo per ogni telecamera. Attivo lo esegue salvo che una telecamera lo disattivi. Su richiesta lo esegue solo sulle telecamere che lo attivano. Un interruttore di nodo o acceleratore può comunque disattivarlo.",
+      "nodeTitle": "Interruttori dei passi",
+      "nodeHint": "Disattiva un passo per saltarlo su ogni telecamera che gira su questo nodo. Anche l'interruttore del cluster e quello dell'acceleratore possono disattivarlo; il risultato mostra quale.",
+      "nodeToggle": "Esegui {{step}} su questo nodo",
+      "deviceToggle": "Esegui {{step}} su questo acceleratore",
+      "deviceNoSteps": "L'orchestratore non ha ancora una risposta sui passi per questo acceleratore.",
+      "colSteps": "Passi",
+      "steps": "Passi",
+      "stepsOff": "Passi · {{n}} spenti",
+      "stepsNotSortable": "Apre gli interruttori dei passi di questo acceleratore."
     }
   },
   "assignments": {

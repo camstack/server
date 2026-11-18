@@ -3755,6 +3755,51 @@
       "preview": "Timeline marks",
       "subclasses": "Subclasses",
       "sourceUnconfigured": "CamStack preset (cluster default)"
+    },
+    "stepSwitches": {
+      "reason": {
+        "cluster": "Off for the whole cluster",
+        "node": "Off on this node",
+        "device": "Off on this accelerator",
+        "optIn": "Opt-in: no camera has turned it on",
+        "model": "No build of it fits this node"
+      },
+      "state": {
+        "unknown": "Not known yet",
+        "nodeSilent": "Node not answering",
+        "off": "Off",
+        "on": "On"
+      },
+      "via": {
+        "jump": "Runs on {{device}}",
+        "root": "Supplied by the root model",
+        "zone": "Runs where a zone is drawn"
+      },
+      "writeFailed": "The change was not saved",
+      "loadFailed": "Step switches did not load",
+      "noSteps": "The orchestrator reports no pipeline steps.",
+      "clusterModeFor": "Cluster mode for {{step}}",
+      "mode": {
+        "off": "Off",
+        "on": "On",
+        "optIn": "Opt-in",
+        "default": "Default ({{mode}})"
+      },
+      "cluster": {
+        "hardOff": "Off everywhere: no camera can turn it on",
+        "cameras": "Cameras: {{enabling}} turn it on, {{disabling}} turn it off · runs on {{running}} of {{known}} nodes"
+      },
+      "clusterTitle": "Step switches",
+      "clusterHint": "Off turns a step off for every camera. On runs it unless a camera turns it off. Opt-in runs it only on cameras that turn it on. A node or accelerator switch can still turn it off below that.",
+      "nodeTitle": "Step switches",
+      "nodeHint": "Turn a step off to skip it for every camera running on this node. The cluster switch above it and the accelerator switch below it can also turn it off; the result shows which.",
+      "nodeToggle": "Run {{step}} on this node",
+      "deviceToggle": "Run {{step}} on this accelerator",
+      "deviceNoSteps": "The orchestrator has no step answer for this accelerator yet.",
+      "colSteps": "Steps",
+      "steps": "Steps",
+      "stepsOff": "Steps · {{n}} off",
+      "stepsNotSortable": "Opens this accelerator's step switches."
     }
   },
   "assignments": {

@@ -1,5 +1,6 @@
 /**
- * Cluster → Settings — the cluster-wide pipeline settings, one titled card per
+ * Cluster → Settings — the per-step cluster switches (off / on / opt-in), then
+ * the cluster-wide pipeline settings, one titled card per
  * subject (`cluster-settings-sections.ts`): faces & recognition, semantic
  * search, the enrichment crop, full-resolution crops, streaming, recording,
  * runner defaults and failover. Full width, like the other cluster tabs.
@@ -16,6 +17,7 @@ import type { LucideIcon } from 'lucide-react'
 import { SECTION_BODY, SectionCard, TEXT_HINT } from '@camstack/ui-library'
 import { NodeAddonsSettingsPanel } from '../../settings/NodeAddonsSettingsPanel'
 import { CLUSTER_SECTION_PARAM } from '../pipeline-links'
+import { ClusterStepModesCard } from '../step-switches/ClusterStepModesCard'
 import {
   CLUSTER_SETTINGS_SECTIONS,
   type ClusterSettingsSection,
@@ -121,6 +123,7 @@ export function ClusterSettingsTab({ refreshToken: _refreshToken }: ClusterSetti
   useScrollToSection(searchParams.get(CLUSTER_SECTION_PARAM))
   return (
     <div className="space-y-3 sm:space-y-4">
+      <ClusterStepModesCard />
       {CLUSTER_SETTINGS_SECTIONS.map((section) => (
         <SettingsCard key={section.id} section={section} />
       ))}

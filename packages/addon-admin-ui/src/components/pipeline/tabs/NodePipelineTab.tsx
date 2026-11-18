@@ -17,6 +17,7 @@ import { useState } from 'react'
 
 import { CameraStatusStrip } from '../CameraStatusStrip'
 import { NodeStepInspector } from '../step-inspector/NodeStepInspector'
+import { NodeStepSwitchesCard } from '../step-switches/NodeStepSwitchesCard'
 import { useTranslation } from 'react-i18next'
 
 interface NodePipelineTabProps {
@@ -70,6 +71,7 @@ export function NodePipelineTab({ nodeId, refreshToken: _refreshToken }: NodePip
   return (
     <div className="space-y-2">
       <CameraStatusStrip nodeId={nodeId} />
+      <NodeStepSwitchesCard nodeId={nodeId} />
       <NodeStepInspector
         nodeId={nodeId}
         nodeName={nodeName}

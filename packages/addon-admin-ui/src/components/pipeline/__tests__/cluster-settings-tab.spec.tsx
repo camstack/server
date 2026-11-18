@@ -36,6 +36,11 @@ interface PanelProps {
   readonly omitFieldKeys?: readonly string[]
 }
 
+// The step switches have their own spec; this one pins the settings cards.
+vi.mock('../step-switches/ClusterStepModesCard', () => ({
+  ClusterStepModesCard: () => <div data-testid="cluster-step-modes" />,
+}))
+
 vi.mock('../../settings/NodeAddonsSettingsPanel', () => ({
   NodeAddonsSettingsPanel: (props: PanelProps) => (
     <div
