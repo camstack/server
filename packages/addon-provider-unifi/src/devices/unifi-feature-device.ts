@@ -28,7 +28,7 @@ import {
 } from '../config.js'
 import type { UnifiControllerClient } from '../unifi-client-contract.js'
 import type { UnifiInfraPort } from '../unifi-client-contract.js'
-import { capForMetric, portLabel, portNameWrite, unitForMetric } from '../unifi-mapping.js'
+import { capForMetric, portLabel, portNameWrite, quantityForMetric } from '../unifi-mapping.js'
 import { portNetworkLinkStatus, portPowerStatus, portSwitchStatus } from '../unifi-port-state.js'
 import { UnifiUnsupportedError } from '../unifi-errors.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
@@ -99,7 +99,13 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
     this.switchable = cfg.switchable === true
     this.lastClientMac = cfg.clientMac
     this.online = false
-    void this.updateSourceInfo({ id: this.identityKey(), system: 'unifi' })
+    // Every construction, so a device adopted before the quantity existed picks it up on restore.
+    const quantity = this.metric === undefined ? undefined : quantityForMetric(this.metric)
+    void this.updateSourceInfo({
+      id: this.identityKey(),
+      system: 'unifi',
+      ...(quantity !== undefined ? { quantity } : {}),
+    })
   }
 
   override async onActivate(): Promise<void> {
@@ -327,12 +333,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         return
       case 'numeric-sensor': {
         const value = this.metric === 'clients' ? infra.clients : this.numericMetricValue(infra)
-        const unit = unitForMetric(this.metric)
-        this.runtimeState.setCapState('numeric-sensor', {
-          value,
-          lastFetchedAt: now,
-          ...(unit !== undefined ? { unit } : {}),
-        })
+        this.runtimeState.setCapState('numeric-sensor', { value, lastFetchedAt: now })
         return
       }
     }
@@ -499,12 +500,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
         return
       }
       case 'numeric-sensor': {
-        const unit = unitForMetric(this.metric)
-        const COLD = {
-          value: 0,
-          lastFetchedAt: 0,
-          ...(unit !== undefined ? { unit } : {}),
-        }
+        const COLD = { value: 0, lastFetchedAt: 0 }
         const provider: InferNativeProvider<typeof numericSensorCapability> = {
           getStatus: async () =>
             this.runtimeState.getCapState<typeof COLD>('numeric-sensor') ?? COLD,

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Add device inside an integration lists only its own devices, with no network scan
+- Uptime and CPU sensors show their unit; uptime reads as a duration.
 
 ## [0.2.171] - 2026-11-18
 

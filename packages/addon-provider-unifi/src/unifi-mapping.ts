@@ -1,4 +1,4 @@
-import { DeviceRole, DeviceType } from '@camstack/types'
+import { DeviceRole, DeviceType, type ReadingQuantity } from '@camstack/types'
 import type { UnifiFeatureDescriptor, UnifiSensorMetric } from './config.js'
 import type { UnifiInfraSnapshot } from './unifi-client-contract.js'
 
@@ -18,13 +18,18 @@ export function capForMetric(metric: UnifiSensorMetric): UnifiSensorCap {
   }
 }
 
-/** The display unit for a numeric sensor metric, or undefined when unitless. */
-export function unitForMetric(metric: UnifiSensorMetric): string | undefined {
+/**
+ * The quantity a numeric sensor metric reads in, declared on `SourceInfo` (D944) so the display
+ * unit and a humanized duration follow from it. Undefined for a metric not on `numeric-sensor`.
+ */
+export function quantityForMetric(metric: UnifiSensorMetric): ReadingQuantity | undefined {
   switch (metric) {
     case 'cpu_utilization':
-      return '%'
+      return 'percentage'
     case 'uptime':
-      return 's'
+      return 'duration'
+    case 'clients':
+      return 'count'
     default:
       return undefined
   }

@@ -4,6 +4,7 @@
  * local account can switch it, and no power-cycle (a restart through PoE is the powered device's
  * `power-source`); the per-port switch + power-cycle button it replaced are retired.
  */
+import { formatReading } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import type { UnifiFeatureDescriptor } from '../config.js'
 import {
@@ -13,6 +14,7 @@ import {
   mergeInfraFeatures,
   portLabel,
   portNameWrite,
+  quantityForMetric,
 } from '../unifi-mapping.js'
 import { infraSnapshot, port } from './unifi-fixtures.js'
 
@@ -122,5 +124,26 @@ describe('port names', () => {
     expect(portNameWrite({ ...base, currentName: 'Garage camera', userNamed: true })).toEqual({
       kind: 'keep',
     })
+  })
+})
+
+describe('quantityForMetric', () => {
+  it('declares the quantity each numeric sensor metric reads in', () => {
+    expect(quantityForMetric('uptime')).toBe('duration')
+    expect(quantityForMetric('cpu_utilization')).toBe('percentage')
+    expect(quantityForMetric('clients')).toBe('count')
+  })
+
+  it('has no quantity for a metric that is not a generic numeric reading', () => {
+    expect(quantityForMetric('state')).toBeUndefined()
+    expect(quantityForMetric('cpu_temperature')).toBeUndefined()
+  })
+
+  it('an uptime in seconds reads as a duration with a unit, never a bare number', () => {
+    const quantity = quantityForMetric('uptime')
+    if (quantity === undefined) throw new Error('uptime has no quantity')
+    const shown = formatReading({ value: 6021838, quantity })
+    expect(shown.unit).not.toBe('')
+    expect(`${shown.text} ${shown.unit}`).not.toBe('6021838')
   })
 })
