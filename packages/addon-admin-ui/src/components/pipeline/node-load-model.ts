@@ -19,9 +19,10 @@
  *  3. **An excluded accelerator stays visible, out of the share, carrying its
  *     REASON.** The reason comes from the server (`NodeInferenceDevice.exclusion`,
  *     computed by the same `resolveInferenceDeviceEligibility` the dispatcher
- *     runs); it is never re-derived here, because two of the four reasons —
- *     `accelerator-preferred` (D215) and `cannot-host-camera-root` — are not
- *     visible in the row's own `enabled`/`available` bits.
+ *     runs); it is never re-derived here, because three of the five reasons —
+ *     `accelerator-preferred` (D215), `cannot-host-camera-root` and
+ *     `root-switched-off` (D1065) — are not visible in the row's own
+ *     `enabled`/`available` bits.
  */
 import type {
   AgentLoadSummary,
@@ -108,6 +109,7 @@ export const EXCLUSION_TEXT_KEY: Readonly<Record<InferenceDeviceExclusionReason,
   unavailable: 'pipeline.nodeLoadOverview.exclusion.unavailable',
   'cannot-host-camera-root': 'pipeline.nodeLoadOverview.exclusion.cannotHostCameraRoot',
   'accelerator-preferred': 'pipeline.nodeLoadOverview.exclusion.acceleratorPreferred',
+  'root-switched-off': 'pipeline.nodeLoadOverview.exclusion.rootSwitchedOff',
 }
 
 function pct(part: number, whole: number): number {

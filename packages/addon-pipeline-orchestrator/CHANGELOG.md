@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A device with object detection switched off (on it, its node or the cluster) is no longer elected to host a camera, and a camera on the default pool obeys the device switches of the device(s) that pool may be (D1065).
 - Serves viewer 1.0.725
 - The per-device default model shown for CPU and CUDA devices is YOLOv9-s @320 instead of YOLO26 nano.
 - The AMD iGPU (WebGPU) column header now names the model the runner actually defaults to (yolov9t-320)

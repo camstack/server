@@ -3592,7 +3592,8 @@
         "disabled": "disattivato — non è una destinazione di assegnazione",
         "unavailable": "la sonda del nodo non lo vede (scollegato o ancora in preparazione)",
         "cannotHostCameraRoot": "il formato del suo motore non ha un modello radice di rilevamento oggetti",
-        "acceleratorPreferred": "ripiego su CPU — non compete mai mentre un acceleratore è in servizio"
+        "acceleratorPreferred": "ripiego su CPU — non compete mai mentre un acceleratore è in servizio",
+        "rootSwitchedOff": "il passo di rilevamento oggetti è spento su di esso, sul suo nodo o sul cluster"
       }
     },
     "settingsPanel": {
@@ -4001,7 +4002,8 @@
         "unavailable": "non disponibile",
         "backoff": "pool fermo",
         "rootIncapable": "nessun modello root",
-        "standby": "riserva"
+        "standby": "riserva",
+        "rootOff": "rilevamento spento"
       },
       "stateHint": {
         "active": "Candidato root della camera: il posizionamento può avviarvi sessioni.",
@@ -4011,7 +4013,8 @@
         "unavailable": "Presente sul nodo, ma il rilevamento lo segnala inutilizzabile.",
         "backoff": "Segnalato dal nodo, ma il suo pool di inferenza è fermo o in attesa.",
         "rootIncapable": "Il suo formato non può eseguire il rilevatore root della camera; serve solo gli step di arricchimento.",
-        "standby": "La CPU di riserva: non riceve sessioni finché un acceleratore serve questo nodo."
+        "standby": "La CPU di riserva: non riceve sessioni finché un acceleratore serve questo nodo.",
+        "rootOff": "Il rilevamento oggetti è spento su questo dispositivo, sul suo nodo o sul cluster: non ospita camere e serve solo gli step di arricchimento."
       }
     },
     "reachableHostInput": {

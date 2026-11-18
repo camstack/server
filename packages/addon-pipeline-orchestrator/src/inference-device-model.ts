@@ -31,7 +31,9 @@ import {
   type PipelineSchema,
   type RunnerInferenceDevice,
 } from '@camstack/types'
-import { addonHasCompatibleModel, OBJECT_DETECTION_STEP_ID } from './pipeline-resolver.js'
+import { deviceDisabledSteps, type NodeStepSource } from './node-step-settings.js'
+import type { ClusterStepModesBlob } from './orchestrator-store-schemas.js'
+import { addonHasCompatibleModel, gateStep, OBJECT_DETECTION_STEP_ID } from './pipeline-resolver.js'
 
 /**
  * Build the camera-root capability predicate for a node from its live catalog:
@@ -55,6 +57,38 @@ export function makeRootCapabilityGuard(catalog: PipelineSchema): (format: strin
     }
   }
   return () => true
+}
+
+/**
+ * The camera-root SWITCH predicate for a node: `deviceKey → is the root on`.
+ * The root ({@link OBJECT_DETECTION_STEP_ID}) is judged by the same
+ * {@link gateStep} the attach path runs — cluster mode, then the node switch —
+ * and then by the device's own step switch (D1065). The camera toggle is not a
+ * layer here: the election picks a device for every camera of the node, and a
+ * camera that turned its root off is refused by the attach itself.
+ *
+ * Fails OPEN when the catalog has no object-detection slot, like
+ * {@link makeRootCapabilityGuard}. Pure.
+ */
+export function makeRootSwitchGuard(
+  catalog: PipelineSchema,
+  clusterModes: ClusterStepModesBlob,
+  node: NodeStepSource | undefined,
+): (deviceKey: string) => boolean {
+  const root = catalog.slots
+    .flatMap((slot) => slot.addons)
+    .find((a) => a.id === OBJECT_DETECTION_STEP_ID)
+  if (root === undefined) return () => true
+  const clusterMode = clusterModes[OBJECT_DETECTION_STEP_ID]
+  const nodeEnabled = node?.stepEnabled?.[OBJECT_DETECTION_STEP_ID]
+  const gate = gateStep(root, {
+    ...(clusterMode !== undefined ? { clusterMode } : {}),
+    ...(nodeEnabled !== undefined ? { nodeEnabled } : {}),
+    cameraToggle: true,
+  })
+  if (gate.kind === 'off') return () => false
+  return (deviceKey: string): boolean =>
+    !deviceDisabledSteps(node, deviceKey).has(OBJECT_DETECTION_STEP_ID)
 }
 
 /** Split a deviceKey (`<backend>:<device>`, or bare `cpu`) into its parts + format.
@@ -334,6 +368,7 @@ export function resolveInferenceDeviceEligibility(
   stored: Readonly<Record<string, StoredInferenceDevice>>,
   canRunRoot?: (format: string) => boolean,
   isPoolUsable?: (deviceKey: string) => boolean,
+  isRootSwitchedOn?: (deviceKey: string) => boolean,
 ): InferenceDeviceEligibility {
   const eligible: Record<string, number> = {}
   const excluded: InferenceDeviceExclusion[] = []
@@ -354,7 +389,12 @@ export function resolveInferenceDeviceEligibility(
   // what tips `resolveNodeInferenceUsability` into "not usable" and moves the
   // cameras. Refusing loudly beats degrading silently.
   const acceleratorServes = merged.some(
-    (d) => !isCpuFallback(d) && d.enabled && d.available && (!canRunRoot || canRunRoot(d.format)),
+    (d) =>
+      !isCpuFallback(d) &&
+      d.enabled &&
+      d.available &&
+      (!canRunRoot || canRunRoot(d.format)) &&
+      (!isRootSwitchedOn || isRootSwitchedOn(d.key)),
   )
   for (const d of merged) {
     // Order matters and is reported first-reason-wins: an operator-disabled
@@ -386,6 +426,13 @@ export function resolveInferenceDeviceEligibility(
     }
     if (canRunRoot && !canRunRoot(d.format)) {
       excluded.push({ key: d.key, reason: 'cannot-host-camera-root', format: d.format })
+      continue
+    }
+    // The operator switched the camera root off on this device (or on its node,
+    // or cluster-wide): it may still run enrichment steps a root elsewhere jumps
+    // onto it, but it never hosts a camera (D1065).
+    if (isRootSwitchedOn && !isRootSwitchedOn(d.key)) {
+      excluded.push({ key: d.key, reason: 'root-switched-off', format: d.format })
       continue
     }
     // Last, and only for the fallback: an enabled CPU stays configured (it is

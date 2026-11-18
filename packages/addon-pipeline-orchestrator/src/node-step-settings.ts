@@ -28,7 +28,10 @@ export interface NodeStepSource {
     Record<
       string,
       {
-        /** Not read: a device's entry configures that device whether or not it is on. */
+        /**
+         * Read only by {@link poolDisabledSteps}; a device's entry configures
+         * that device whether or not it is on.
+         */
         readonly enabled: boolean
         readonly steps?: Readonly<Record<string, DeviceStepConfig>>
       }
@@ -75,4 +78,26 @@ export function deviceDisabledSteps(
       .filter(([, cfg]) => cfg.enabled === false)
       .map(([stepId]) => stepId),
   )
+}
+
+/**
+ * The steps a DEFAULT-POOL attach (no elected device) must not run (D1065):
+ * those switched off on EVERY device the pool may be. The pool is the node's
+ * eligible devices (one eligible device IS the pool, D745); with none
+ * eligible it is any device the node has enabled. A step one of them still
+ * allows is kept — the pool may be that device. No candidate ⇒ nothing.
+ */
+export function poolDisabledSteps(
+  node: NodeStepSource | undefined,
+  eligibleKeys: readonly string[],
+): ReadonlySet<string> {
+  const candidates =
+    eligibleKeys.length > 0
+      ? eligibleKeys
+      : Object.entries(node?.inferenceDevices ?? {})
+          .filter(([, device]) => device.enabled)
+          .map(([key]) => key)
+  const [first, ...rest] = candidates.map((key) => deviceDisabledSteps(node, key))
+  if (first === undefined) return new Set<string>()
+  return new Set([...first].filter((stepId) => rest.every((steps) => steps.has(stepId))))
 }

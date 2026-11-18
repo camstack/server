@@ -16,6 +16,8 @@ import type { EffectiveNodeShare, NodeInferenceDevice, PlacementNodeStats } from
  *  - `unavailable` — on the node but the probe reports it unusable;
  *  - `backoff` — reported usable, but its pool is dead or backing off;
  *  - `root-incapable` — cannot run the camera root detector;
+ *  - `root-off` — the camera root step is switched off on it, its node or
+ *    the cluster (D1065);
  *  - `standby` — the CPU fallback while an accelerator serves (D215).
  */
 export type DeviceRowState =
@@ -26,6 +28,7 @@ export type DeviceRowState =
   | 'unavailable'
   | 'backoff'
   | 'root-incapable'
+  | 'root-off'
   | 'standby'
 
 /** The share the source assigns and the share actually used (%). */
@@ -59,6 +62,8 @@ export function deviceRowState(device: NodeInferenceDevice): DeviceRowState {
       return 'root-incapable'
     case 'accelerator-preferred':
       return 'standby'
+    case 'root-switched-off':
+      return 'root-off'
   }
 }
 
@@ -97,5 +102,6 @@ export const DEVICE_STATE_VARIANT: Readonly<
   unavailable: 'warning',
   backoff: 'warning',
   'root-incapable': 'info',
+  'root-off': 'neutral',
   standby: 'neutral',
 }

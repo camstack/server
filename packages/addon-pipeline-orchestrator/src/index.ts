@@ -168,6 +168,7 @@ import {
   type InferenceDeviceExclusion,
   inferenceDeviceCaps,
   makeRootCapabilityGuard,
+  makeRootSwitchGuard,
   mergeInferenceDevices,
   type NodeInferenceUsability,
   resolveInferenceDeviceEligibility,
@@ -251,6 +252,7 @@ import {
   NodeBindingsSchema,
   type AgentSettingsMapBlob,
   type AutoBenchmarkAttemptsBlob,
+  type ClusterStepModesBlob,
 } from './orchestrator-store-schemas.js'
 import { createNodeRemovalHook, type NodeRemovalDeps } from './node-removal.js'
 import {
@@ -1902,8 +1904,8 @@ export default class PipelineOrchestratorAddon
    */
   async getNodeInferenceDevices(input: { readonly nodeId: string }): Promise<NodeInferenceDevices> {
     const nodeId = input.nodeId
-    const stored =
-      (await this.settingsStore!.readAgentSettingsMap())[nodeId]?.inferenceDevices ?? {}
+    const node = (await this.settingsStore!.readAgentSettingsMap())[nodeId]
+    const stored = node?.inferenceDevices ?? {}
     const { probed, reachable } = await this.probeNodeInferenceDevices(nodeId)
     // Each row carries WHY the dispatcher drops it (`exclusion`), computed by the
     // same `resolveInferenceDeviceEligibility` the dispatcher runs — see
@@ -1919,8 +1921,14 @@ export default class PipelineOrchestratorAddon
     // silent fault this whole path exists to end.
     const devices = annotateInferenceDeviceExclusions(
       mergeInferenceDevices(probed, stored),
-      resolveInferenceDeviceEligibility(probed, stored, canRunRoot, (deviceKey) =>
-        this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
+      resolveInferenceDeviceEligibility(
+        probed,
+        stored,
+        canRunRoot,
+        (deviceKey) => this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
+        catalog
+          ? makeRootSwitchGuard(catalog, await this.settingsStore!.readClusterStepModes(), node)
+          : undefined,
       ),
     ).map((row) =>
       // A probe that did not answer proves nothing about the hardware: a
@@ -2178,12 +2186,20 @@ export default class PipelineOrchestratorAddon
     probed: readonly InferenceDeviceDescriptor[],
     catalog: PipelineSchema | null,
   ): Promise<Record<string, number>> {
-    const stored =
-      (await this.settingsStore!.readAgentSettingsMap())[nodeId]?.inferenceDevices ?? {}
+    const node = (await this.settingsStore!.readAgentSettingsMap())[nodeId]
+    const stored = node?.inferenceDevices ?? {}
     // `null` only when the store was disposed mid-wait: fail open, as before.
     const canRunRoot = catalog ? makeRootCapabilityGuard(catalog) : undefined
-    const eligibility = resolveInferenceDeviceEligibility(probed, stored, canRunRoot, (deviceKey) =>
-      this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
+    // A device the root is switched off on never hosts a camera (D1065).
+    const rootSwitchedOn = catalog
+      ? makeRootSwitchGuard(catalog, await this.settingsStore!.readClusterStepModes(), node)
+      : undefined
+    const eligibility = resolveInferenceDeviceEligibility(
+      probed,
+      stored,
+      canRunRoot,
+      (deviceKey) => this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
+      rootSwitchedOn,
     )
     const { eligible, excluded } = eligibility
     this.logInferenceDeviceShrinkage(nodeId, eligible, excluded)
@@ -2712,7 +2728,8 @@ export default class PipelineOrchestratorAddon
       topologySignature: async () => {
         const nodeIds = [...new Set(['hub', ...this.topology!.collectRunnerNodeIds()])]
         const blob = await store.readAgentSettingsMap()
-        return shareTopologySignature(nodeIds, blob, this.liveDevicesByNode(nodeIds, blob))
+        const live = this.liveDevicesByNode(nodeIds, blob, await store.readClusterStepModes())
+        return shareTopologySignature(nodeIds, blob, live)
       },
       logger: this.ctx.logger,
     })
@@ -2729,6 +2746,7 @@ export default class PipelineOrchestratorAddon
   private liveDevicesByNode(
     nodeIds: readonly string[],
     blob: AgentSettingsMapBlob,
+    clusterModes: ClusterStepModesBlob,
   ): LiveDevicesByNode {
     const out: Record<string, { key: string; available: boolean; exclusion: string | null }[]> = {}
     for (const nodeId of nodeIds) {
@@ -2741,6 +2759,7 @@ export default class PipelineOrchestratorAddon
         stored,
         catalog ? makeRootCapabilityGuard(catalog) : undefined,
         (deviceKey) => this.inferenceDeviceUsability.isUsable(nodeId, deviceKey),
+        catalog ? makeRootSwitchGuard(catalog, clusterModes, blob[nodeId]) : undefined,
       )
       out[nodeId] = annotateInferenceDeviceExclusions(
         mergeInferenceDevices(probed, stored),
@@ -2892,7 +2911,11 @@ export default class PipelineOrchestratorAddon
       readNodes: async () => {
         const online = this.topology!.collectRunnerNodeIds()
         const blob = await this.settingsStore!.readAgentSettingsMap()
-        const live = this.liveDevicesByNode(online, blob)
+        const live = this.liveDevicesByNode(
+          online,
+          blob,
+          await this.settingsStore!.readClusterStepModes(),
+        )
         // A node nobody has probed yet (a fresh install with no camera) is
         // asked here; its answer ticks the scheduler via `onLiveDevicesChanged`.
         return readAutoBenchNodes({

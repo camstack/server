@@ -3517,7 +3517,8 @@
         "disabled": "switched off — not a dispatch target",
         "unavailable": "the node probe does not see it (unplugged or still provisioning)",
         "cannotHostCameraRoot": "its engine format has no object-detection root model",
-        "acceleratorPreferred": "CPU fallback — it never competes while an accelerator is serving"
+        "acceleratorPreferred": "CPU fallback — it never competes while an accelerator is serving",
+        "rootSwitchedOff": "the object-detection step is switched off on it, its node or the cluster"
       }
     },
     "settingsPanel": {
@@ -3926,7 +3927,8 @@
         "unavailable": "unavailable",
         "backoff": "pool down",
         "rootIncapable": "no root model",
-        "standby": "fallback"
+        "standby": "fallback",
+        "rootOff": "detection off"
       },
       "stateHint": {
         "active": "A camera-root candidate: placement may start sessions on it.",
@@ -3936,7 +3938,8 @@
         "unavailable": "On the node, but the probe reports it unusable.",
         "backoff": "Reported by the node, but its inference pool is down or backing off.",
         "rootIncapable": "Its format cannot run the camera root detector; it serves enrichment steps only.",
-        "standby": "The CPU fallback: it takes no sessions while an accelerator is serving this node."
+        "standby": "The CPU fallback: it takes no sessions while an accelerator is serving this node.",
+        "rootOff": "Object detection is switched off on this device, its node or the cluster: it hosts no camera and serves enrichment steps only."
       }
     },
     "reachableHostInput": {

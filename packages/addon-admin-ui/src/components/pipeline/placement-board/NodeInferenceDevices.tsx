@@ -115,6 +115,7 @@ const STATE_TEXT: Readonly<Record<DeviceRowState, readonly [string, string]>> = 
   unavailable: ['placementBoard.nodeInferenceDevices.state.unavailable', 'unavailable'],
   backoff: ['placementBoard.nodeInferenceDevices.state.backoff', 'pool down'],
   'root-incapable': ['placementBoard.nodeInferenceDevices.state.rootIncapable', 'no root model'],
+  'root-off': ['placementBoard.nodeInferenceDevices.state.rootOff', 'detection off'],
   standby: ['placementBoard.nodeInferenceDevices.state.standby', 'fallback'],
 }
 
@@ -147,6 +148,10 @@ const STATE_HINT: Readonly<Record<DeviceRowState, readonly [string, string]>> = 
   'root-incapable': [
     'placementBoard.nodeInferenceDevices.stateHint.rootIncapable',
     'Its format cannot run the camera root detector; it serves enrichment steps only.',
+  ],
+  'root-off': [
+    'placementBoard.nodeInferenceDevices.stateHint.rootOff',
+    'Object detection is switched off on this device, its node or the cluster: it hosts no camera and serves enrichment steps only.',
   ],
   standby: [
     'placementBoard.nodeInferenceDevices.stateHint.standby',

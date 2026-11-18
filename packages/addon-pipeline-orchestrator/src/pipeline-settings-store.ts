@@ -51,7 +51,7 @@ import {
   type StepSwitchContext,
 } from './pipeline-resolver.js'
 import { parseDeviceKey } from './inference-device-model.js'
-import { deviceDisabledSteps, nodeDeviceBase } from './node-step-settings.js'
+import { deviceDisabledSteps, nodeDeviceBase, poolDisabledSteps } from './node-step-settings.js'
 import { KeyedAsyncLock } from './keyed-async-lock.js'
 import {
   type IsRegisteredCustomModel,
@@ -70,6 +70,15 @@ import { DeviceRows, type DeviceRowsPort, NodeRows } from './orchestrator-row-ma
 
 /** How a resolve reads the node's catalog: wait for the executor, or the cache only. */
 type CatalogRead = { readonly kind: 'await' } | { readonly kind: 'cached' }
+
+/**
+ * A DEFAULT-POOL attach (no elected device, D1065): the node's eligible
+ * device keys, so the device switches of the device(s) the pool may be are
+ * obeyed (`poolDisabledSteps`). Absent on a node-level resolve.
+ */
+export interface DefaultPool {
+  readonly eligibleKeys: readonly string[]
+}
 
 /**
  * A resolve that may find no catalog to resolve against (cache-only read).
@@ -828,6 +837,7 @@ export class PipelineSettingsStore {
     agentNodeId: string,
     deviceKey: string | undefined,
     jumpDeviceKeys: readonly string[],
+    defaultPool?: DefaultPool,
   ): Promise<{ readonly config: CameraPipelineConfig; readonly droppedRoots: readonly string[] }> {
     const outcome = await this.resolvePipelineWithCatalog(
       deviceId,
@@ -835,6 +845,7 @@ export class PipelineSettingsStore {
       deviceKey,
       jumpDeviceKeys,
       { kind: 'await' },
+      defaultPool,
     )
     if (outcome.kind === 'resolved') return outcome
     throw new Error(
@@ -856,10 +867,16 @@ export class PipelineSettingsStore {
     agentNodeId: string,
     deviceKey: string | undefined,
     jumpDeviceKeys: readonly string[],
+    defaultPool?: DefaultPool,
   ): Promise<CatalogGatedPipeline> {
-    return this.resolvePipelineWithCatalog(deviceId, agentNodeId, deviceKey, jumpDeviceKeys, {
-      kind: 'cached',
-    })
+    return this.resolvePipelineWithCatalog(
+      deviceId,
+      agentNodeId,
+      deviceKey,
+      jumpDeviceKeys,
+      { kind: 'cached' },
+      defaultPool,
+    )
   }
 
   private async resolvePipelineWithCatalog(
@@ -868,6 +885,7 @@ export class PipelineSettingsStore {
     deviceKey: string | undefined,
     jumpDeviceKeys: readonly string[],
     catalogRead: CatalogRead,
+    defaultPool?: DefaultPool,
   ): Promise<CatalogGatedPipeline> {
     const agentNodeId = agentNodeIdOverride ?? this.deps.getAssignmentNode(deviceId)
     if (!agentNodeId) {
@@ -917,6 +935,8 @@ export class PipelineSettingsStore {
     const jumpFormats = [...new Set(jumpDeviceKeys.map((k) => parseDeviceKey(k).format))]
     // D1065: the cluster, node and device switches, read from the same rows
     // the provisioning reads — the elected device's and every roster entry's.
+    // No elected device: the default pool's (`poolDisabledSteps`); a
+    // node-level resolve (no pool given) reads no device switch.
     const [clusterModes, node] = await Promise.all([
       this.readClusterStepModes(),
       this.agentRows.get(agentNodeId),
@@ -924,7 +944,12 @@ export class PipelineSettingsStore {
     const switches: StepSwitchContext = {
       clusterModes,
       ...(node?.stepEnabled !== undefined ? { nodeStepEnabled: node.stepEnabled } : {}),
-      electedDisabledSteps: deviceDisabledSteps(node, deviceKey ?? ''),
+      electedDisabledSteps:
+        deviceKey !== undefined
+          ? deviceDisabledSteps(node, deviceKey)
+          : defaultPool !== undefined
+            ? poolDisabledSteps(node, defaultPool.eligibleKeys)
+            : deviceDisabledSteps(node, ''),
       jumpTargets: jumpDeviceKeys.map((key) => ({
         deviceKey: key,
         format: parseDeviceKey(key).format,

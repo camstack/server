@@ -4,6 +4,7 @@
  * is what the attach obeys, and the roster tells the runner which device
  * switched which step off.
  */
+import type { PipelineSchema } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import {
   type AttachPipeline,
@@ -13,6 +14,7 @@ import {
 import type { PipelineSettingsStore } from '../pipeline-settings-store.js'
 import {
   CORAL,
+  CORAL_GPU_CATALOG,
   CORAL_GPU_ELIGIBLE,
   GPU,
   NODE,
@@ -105,5 +107,62 @@ describe('step switches through the attach path (D1065)', () => {
       deviceEnabled: true,
     })
     expect(childIds(await attachOn(store, CORAL))).toContain('face-detection')
+  })
+})
+
+/**
+ * No elected device: the runner's default pool serves the camera. The pool is
+ * the node's eligible device(s), or — none eligible — any enabled device, so a
+ * step switched off on EVERY one of them is skipped (D1065).
+ */
+describe('step switches on a default-pool attach (D1065)', () => {
+  /** The node's default engine is openvino, so face-detection builds on the pool. */
+  const OPENVINO_DEFAULT: PipelineSchema = {
+    ...CORAL_GPU_CATALOG,
+    selectedEngine: { runtime: 'python', backend: 'openvino', format: 'openvino' },
+  }
+
+  async function poolAttach(
+    store: PipelineSettingsStore,
+    eligible: Readonly<Record<string, number>>,
+  ): Promise<AttachPipeline> {
+    return attached(
+      await resolveAttachPipeline(
+        { deviceId: DEVICE_ID, nodeId: NODE, deviceKey: undefined, eligible, caps: {} },
+        store,
+      ),
+    )
+  }
+
+  async function switchFaceOff(store: PipelineSettingsStore, deviceKey: string): Promise<void> {
+    await store.writeDeviceStepEnabled({
+      nodeId: NODE,
+      deviceKey,
+      stepId: 'face-detection',
+      enabled: false,
+      deviceEnabled: true,
+    })
+  }
+
+  it('the one eligible device IS the pool: its switch skips the step', async () => {
+    const { store } = makeRealStore(OPENVINO_DEFAULT)
+    await seedCoralGpuNode(store)
+    await store.writeCameraSettings(DEVICE_ID, { stepToggles: { 'face-detection': true } })
+    expect(childIds(await poolAttach(store, { [GPU]: 1 }))).toContain('face-detection')
+
+    await switchFaceOff(store, GPU)
+    expect(childIds(await poolAttach(store, { [GPU]: 1 }))).not.toContain('face-detection')
+  })
+
+  it('none eligible: skipped only when every enabled device switched it off', async () => {
+    const { store } = makeRealStore(OPENVINO_DEFAULT)
+    await seedCoralGpuNode(store)
+    await store.writeCameraSettings(DEVICE_ID, { stepToggles: { 'face-detection': true } })
+    await switchFaceOff(store, GPU)
+    // The Coral still allows it: the pool may be the Coral.
+    expect(childIds(await poolAttach(store, {}))).toContain('face-detection')
+
+    await switchFaceOff(store, CORAL)
+    expect(childIds(await poolAttach(store, {}))).not.toContain('face-detection')
   })
 })

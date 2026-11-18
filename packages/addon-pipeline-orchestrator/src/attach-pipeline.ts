@@ -32,7 +32,7 @@ import type {
 } from '@camstack/types'
 import { applyDeviceProvisioning, provisionDeviceSteps } from './apply-device-provisioning.js'
 import { buildJumpRoster, jumpTargetKeys } from './jump-roster.js'
-import type { PipelineSettingsStore } from './pipeline-settings-store.js'
+import type { DefaultPool, PipelineSettingsStore } from './pipeline-settings-store.js'
 
 /** What an attach runs: the provisioned tree, audio, the elected device and its roster. */
 export interface AttachPipeline {
@@ -107,6 +107,7 @@ export async function resolveAttachPipeline(
     input.nodeId,
     input.deviceKey,
     jumpTargetKeys(roster, input.deviceKey),
+    defaultPoolOf(input),
   )
   if (resolved.droppedRoots.length > 0) return rootRefusal(input, resolved.droppedRoots)
   return {
@@ -137,6 +138,7 @@ export async function resolveAttachPipelineIfCatalogCached(
     input.nodeId,
     input.deviceKey,
     jumpTargetKeys(roster, input.deviceKey),
+    defaultPoolOf(input),
   )
   if (outcome.kind === 'catalog-unavailable') return outcome
   if (outcome.droppedRoots.length > 0) return rootRefusal(input, outcome.droppedRoots)
@@ -144,6 +146,11 @@ export async function resolveAttachPipelineIfCatalogCached(
     kind: 'resolved',
     pipeline: await provisionAttachPipeline(input, roster, outcome.config, store),
   }
+}
+
+/** No elected device ⇒ the runner's default pool, made of the eligible devices (D1065). */
+function defaultPoolOf(input: AttachPipelineInput): DefaultPool | undefined {
+  return input.deviceKey === undefined ? { eligibleKeys: Object.keys(input.eligible) } : undefined
 }
 
 function rootRefusal(

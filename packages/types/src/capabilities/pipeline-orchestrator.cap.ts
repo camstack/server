@@ -589,6 +589,8 @@ const INFERENCE_DEVICE_EXCLUSION_REASONS = [
   'cannot-host-camera-root',
   /** It is the CPU fallback and this node has a real accelerator serving (D215). */
   'accelerator-preferred',
+  /** The camera root step is switched off on it: cluster, node or device (D1065). */
+  'root-switched-off',
 ] as const
 
 const InferenceDeviceExclusionReasonSchema = z.enum(INFERENCE_DEVICE_EXCLUSION_REASONS)

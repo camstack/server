@@ -4006,7 +4006,7 @@
 
 ### `pipeline-orchestrator` → `pipelineOrchestrator.*`
 
-- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:825`
+- **Source:** `packages/types/src/capabilities/pipeline-orchestrator.cap.ts:827`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton` · nodeIdMode: `data`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `IPipelineOrchestratorProvider`

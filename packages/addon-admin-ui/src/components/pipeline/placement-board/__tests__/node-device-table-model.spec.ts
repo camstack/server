@@ -56,6 +56,7 @@ describe('deviceRowState', () => {
     expect(deviceRowState(device({ key: 'cpu', exclusion: 'accelerator-preferred' }))).toBe(
       'standby',
     )
+    expect(deviceRowState(device({ key: 'f', exclusion: 'root-switched-off' }))).toBe('root-off')
   })
 })
 
