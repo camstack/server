@@ -11,18 +11,6 @@ expect.extend(jestDomMatchers)
 
 const mockGetNodeInferenceDevices = vi.fn()
 
-// The accelerator step switches have their own spec.
-vi.mock('../../step-switches/use-step-switches', () => ({
-  useStepSwitches: () => ({ status: 'pending' }),
-  useStepSwitchWriters: () => ({
-    setClusterMode: vi.fn(),
-    setNodeEnabled: vi.fn(),
-    setDeviceEnabled: vi.fn(),
-    isPending: false,
-    error: null,
-  }),
-}))
-
 vi.mock('@tanstack/react-query', async () => ({
   ...(await vi.importActual<Record<string, unknown>>('@tanstack/react-query')),
   useQueryClient: () => ({ invalidateQueries: vi.fn() }),

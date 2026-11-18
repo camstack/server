@@ -47,10 +47,6 @@ vi.mock('@camstack/ui-library', () => ({
   }),
 }))
 
-vi.mock('../step-switches/NodeStepSwitchesCard', () => ({
-  NodeStepSwitchesCard: () => <div data-testid="node-step-switches" />,
-}))
-
 vi.mock('../CameraStatusStrip', () => ({
   CameraStatusStrip: () => <div data-testid="camera-strip" />,
 }))

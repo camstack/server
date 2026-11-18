@@ -58,6 +58,13 @@ import { loadBalancingHref } from '../pipeline-links'
 import { ClusterOwnedSettings } from './ClusterOwnedSettings'
 import { EffectiveModelSummary } from './EffectiveModelSummary'
 import { StepMatrixFrame } from './StepMatrixFrame'
+import { DeviceStepSwitchSection } from '../step-switches/DeviceStepSwitchSection'
+import {
+  NodeStepRowAction,
+  stepParents,
+  StepSwitchNotices,
+} from '../step-switches/StepSwitchRowActions'
+import { useStepSwitches, useStepSwitchWriters } from '../step-switches/use-step-switches'
 import {
   cellStateFor,
   findAddonInSchema,
@@ -208,9 +215,17 @@ export function NodeStepInspector({ nodeId, nodeName, toolbar }: NodeStepInspect
     },
   })
   const [saving, setSaving] = useState(false)
+  // The step switches: ONE query shared with every other surface (same key).
+  const switches = useStepSwitches(
+    t('pipeline.stepSwitches.loadFailed', 'Step switches did not load'),
+  )
+  const switchWriters = useStepSwitchWriters(
+    t('pipeline.stepSwitches.writeFailed', 'The change was not saved'),
+  )
 
   const tree = useMemo(() => (schema ? buildStepTreeFromSchema(schema) : []), [schema])
   const flat = useMemo(() => flattenStepTree(tree), [tree])
+  const parents = useMemo(() => stepParents(tree), [tree])
   const [showDisabled, setShowDisabled] = useState(false)
   // Columns: the enabled accelerators, plus the switched-off ones on request.
   const accelerators = useMemo(
@@ -312,6 +327,12 @@ export function NodeStepInspector({ nodeId, nodeName, toolbar }: NodeStepInspect
       </Link>
     </span>
   )
+  const summaryWithNotices = (
+    <div className="space-y-2">
+      {summary}
+      <StepSwitchNotices view={switches} writers={switchWriters} />
+    </div>
+  )
 
   return (
     <StepMatrixFrame
@@ -329,7 +350,16 @@ export function NodeStepInspector({ nodeId, nodeName, toolbar }: NodeStepInspect
         ) > 0
       }
       onDiscard={() => setDraft(null)}
-      summary={summary}
+      summary={summaryWithNotices}
+      stepAction={(addonId) => (
+        <NodeStepRowAction
+          addonId={addonId}
+          nodeId={nodeId}
+          parents={parents}
+          view={switches}
+          writers={switchWriters}
+        />
+      )}
       {...(toolbar !== undefined ? { toolbar } : {})}
       label={t('stepInspector.nodeStepInspector.detectionSteps', 'Detection steps')}
       renderDetail={({ stepId, accelerator, matchedField, closeButton, onEscape, headingRef }) => {
@@ -537,6 +567,15 @@ export function NodeStepInspector({ nodeId, nodeName, toolbar }: NodeStepInspect
             }}
           >
             <div className="space-y-3">
+              {accelerator !== null && (
+                <DeviceStepSwitchSection
+                  nodeId={nodeId}
+                  deviceKey={accelerator.deviceKey}
+                  stepId={stepId}
+                  view={switches}
+                  writers={switchWriters}
+                />
+              )}
               <section
                 className="space-y-2"
                 aria-label={t('stepInspector.nodeStepInspector.model', 'Model')}

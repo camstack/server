@@ -31,6 +31,7 @@ import { Tabs, TabsList, TabsTrigger } from '@camstack/ui-library'
 import { useSearchParams } from 'react-router-dom'
 import { CLUSTER_SECTION_PARAM, CLUSTER_TAB_PARAM } from './pipeline-links'
 import { ClusterAssignmentsTab } from './tabs/ClusterAssignmentsTab'
+import { ClusterPipelineTab } from './tabs/ClusterPipelineTab'
 import { ClusterAutoTuneTab } from './tabs/ClusterAutoTuneTab'
 import { ClusterLoadBalancingTab } from './tabs/ClusterLoadBalancingTab'
 import { ClusterRolesNodesTab } from './tabs/ClusterRolesNodesTab'
@@ -41,6 +42,7 @@ import { useTranslation } from 'react-i18next'
 
 type ClusterTabId =
   | 'assignments'
+  | 'pipeline'
   | 'load-balancing'
   | 'auto-tune'
   | 'roles-nodes'
@@ -50,6 +52,7 @@ type ClusterTabId =
 
 const TABS: Array<{ id: ClusterTabId; labelKey: string }> = [
   { id: 'assignments', labelKey: 'pipeline.clusterDetail.tabAssignments' },
+  { id: 'pipeline', labelKey: 'pipeline.clusterDetail.tabPipeline' },
   { id: 'load-balancing', labelKey: 'pipeline.clusterDetail.tabLoadBalancing' },
   { id: 'auto-tune', labelKey: 'pipeline.clusterDetail.tabAutoTune' },
   // Tab id stays `roles-nodes` for stable deep links; label is "Roles" only.
@@ -118,6 +121,7 @@ export function ClusterDetail({ refreshToken }: ClusterDetailProps) {
 
       <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 @container/clustertab">
         {tab === 'assignments' && <ClusterAssignmentsTab />}
+        {tab === 'pipeline' && <ClusterPipelineTab />}
         {tab === 'load-balancing' && (
           <ClusterLoadBalancingTab
             refreshToken={refreshToken}

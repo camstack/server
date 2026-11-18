@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Pipeline: switch each step off, on or opt-in for the cluster (Cluster → Settings), per node (node Pipeline tab) and per accelerator (accelerator table), with the effective result and the level that turned a step off.
+- Pipeline: switch each step off, on or opt-in for the cluster (new Cluster → Pipeline tab, which shows the cluster step tree), per node (in the node step tree) and per accelerator (in the step panel of the accelerator), with the effective result and the level that turned a step off; the Load balancing view is unchanged.
 
 ## [1.2.703] - 2026-11-18
 

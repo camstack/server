@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- DeviceStepMatrix takes an optional stepAction slot drawn under each step's name, beside (not inside) the step header button
+
 ## [1.2.473] - 2026-11-18
 
 ### Changed

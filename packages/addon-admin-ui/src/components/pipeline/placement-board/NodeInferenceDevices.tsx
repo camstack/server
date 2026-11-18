@@ -76,9 +76,6 @@ import {
   type DeviceTableRow,
 } from './node-device-table-model'
 import { Trans, useTranslation } from 'react-i18next'
-import { DeviceStepSwitches } from '../step-switches/DeviceStepSwitches'
-import { deviceStepRows, deviceSwitchedOffCount } from '../step-switches/step-switches-model'
-import { useStepSwitches, useStepSwitchWriters } from '../step-switches/use-step-switches'
 
 /** Editable opt-in state for one accelerator (enabled + relative weight + cap +
  *  per-(node,device) BASE step provisioning — the step models are edited on the
@@ -235,14 +232,6 @@ export function NodeInferenceDevices({
     [devices, draft],
   )
 
-  const stepView = useStepSwitches(
-    t('pipeline.stepSwitches.loadFailed', 'Step switches did not load'),
-  )
-  const stepWriters = useStepSwitchWriters(
-    t('pipeline.stepSwitches.writeFailed', 'The change was not saved'),
-  )
-  const [stepsOpenKey, setStepsOpenKey] = useState<string | null>(null)
-
   const [expanded, setExpanded] = useState<boolean | null>(null)
   const isExpanded = expanded ?? true
 
@@ -392,34 +381,6 @@ export function NodeInferenceDevices({
       },
     },
     {
-      key: 'steps',
-      header: t('pipeline.stepSwitches.colSteps', 'Steps'),
-      notSortableReason: t(
-        'pipeline.stepSwitches.stepsNotSortable',
-        'Opens this accelerator’s step switches.',
-      ),
-      render: (row) => {
-        if (row.state === 'absent') return null
-        const open = stepsOpenKey === row.device.key
-        const off =
-          stepView.status === 'ready'
-            ? deviceSwitchedOffCount(deviceStepRows(stepView.rows, nodeId, row.device.key))
-            : 0
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            aria-expanded={open}
-            onClick={() => setStepsOpenKey(open ? null : row.device.key)}
-          >
-            {off > 0
-              ? t('pipeline.stepSwitches.stepsOff', 'Steps · {{n}} off', { n: off })
-              : t('pipeline.stepSwitches.steps', 'Steps')}
-          </Button>
-        )
-      },
-    },
-    {
       key: 'enabled',
       header: t('placementBoard.nodeInferenceDevices.colEnabled', 'Enabled'),
       align: 'right',
@@ -527,18 +488,7 @@ export function NodeInferenceDevices({
               columns={columns}
               rows={rows}
               rowKey={(row) => row.device.key}
-              isExpanded={(row) => stepsOpenKey === row.device.key}
-              renderExpanded={(row) => (
-                <div className="px-3 py-2">
-                  <DeviceStepSwitches
-                    nodeId={nodeId}
-                    deviceKey={row.device.key}
-                    view={stepView}
-                    writers={stepWriters}
-                  />
-                </div>
-              )}
-              minWidthPx={720}
+              minWidthPx={640}
               bordered={false}
               emptyMessage={t(
                 'placementBoard.nodeInferenceDevices.noInferenceDevicesReportedBy',

@@ -67,6 +67,8 @@ export interface StepMatrixFrameProps {
   readonly cellState: (addonId: string, acc: InspectorAccelerator) => CellState
   /** A badge in a step's header (the camera gate). */
   readonly stepBadge?: (addonId: string) => ReactNode
+  /** A control under a step's name (a step switch); never inside the header button. */
+  readonly stepAction?: (addonId: string) => ReactNode
   /** How many accelerators are switched off — the toggle shows when > 0. */
   readonly disabledCount: number
   readonly showDisabled: boolean
@@ -101,6 +103,7 @@ export function StepMatrixFrame({
   accelerators,
   cellState,
   stepBadge,
+  stepAction,
   disabledCount,
   showDisabled,
   onShowDisabledChange,
@@ -294,6 +297,7 @@ export function StepMatrixFrame({
           }
           onStepClick={(addonId, viaKeyboard) => openStep(addonId, undefined, viaKeyboard)}
           {...(stepBadge !== undefined ? { stepBadge } : {})}
+          {...(stepAction !== undefined ? { stepAction } : {})}
           selectedCell={
             isOpen && selection.stepId !== null && selectedAcc !== null
               ? {

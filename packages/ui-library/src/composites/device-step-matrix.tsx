@@ -85,6 +85,11 @@ export interface DeviceStepMatrixProps {
   readonly onStepClick?: (addonId: string, viaKeyboard?: boolean) => void
   /** A badge beside a step's name (the camera's gate). */
   readonly stepBadge?: (addonId: string) => ReactNode
+  /**
+   * An interactive control UNDER a step's name (a switch). It sits beside the
+   * header button, never inside it, so it can be a button or a switch itself.
+   */
+  readonly stepAction?: (addonId: string) => ReactNode
   /** Width a docked panel covers at the viewport's right edge; 0 = none. */
   readonly reserveRightPx?: number
   /** Accessible name of the grid. */
@@ -137,6 +142,7 @@ function StepCell({
   tabbable,
   selected,
   badge,
+  action,
   onClick,
   sticky,
 }: {
@@ -146,13 +152,17 @@ function StepCell({
   readonly tabbable: boolean
   readonly selected: boolean
   readonly badge: ReactNode
+  readonly action: ReactNode
   readonly onClick: ((viaKeyboard: boolean) => void) | undefined
   readonly sticky: boolean
 }) {
   return (
     <div
       role="rowheader"
-      className={cn('min-w-0 border-b border-border bg-surface', sticky && 'sticky left-0 z-10')}
+      className={cn(
+        'flex min-w-0 flex-col border-b border-border bg-surface',
+        sticky && 'sticky left-0 z-10',
+      )}
     >
       <button
         type="button"
@@ -164,7 +174,7 @@ function StepCell({
         aria-current={selected ? 'true' : undefined}
         onClick={onClick ? (e) => onClick(e.detail === 0) : undefined}
         className={cn(
-          'flex h-full w-full min-w-0 items-start gap-2 px-3 py-2 text-left text-xs outline-none',
+          'flex w-full min-w-0 flex-1 items-start gap-2 px-3 py-2 text-left text-xs outline-none',
           'hover:bg-muted/40 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary',
           selected && 'bg-primary/10 shadow-[inset_3px_0_0_var(--color-primary)]',
         )}
@@ -173,6 +183,16 @@ function StepCell({
         <StepLabel node={node} />
         {badge}
       </button>
+      {action !== null && action !== undefined && (
+        <div
+          data-step-action={node.addonId}
+          className="min-w-0 pb-2 pr-3"
+          // ui-check-ok: computed tree-depth indent, same geometry as the step header above
+          style={{ paddingLeft: `${12 + depth * 14}px` }}
+        >
+          {action}
+        </div>
+      )}
     </div>
   )
 }
@@ -243,6 +263,7 @@ interface GridProps {
   readonly onCellClick: (addonId: string, agent: AgentColumn, viaKeyboard?: boolean) => void
   readonly onStepClick: ((addonId: string, viaKeyboard?: boolean) => void) | undefined
   readonly stepBadge: ((addonId: string) => ReactNode) | undefined
+  readonly stepAction: ((addonId: string) => ReactNode) | undefined
   readonly selectedCell: MatrixSelectedCell | null
   /** Single-node (B): a slimmer sticky step column; the columns still scroll inside the box. */
   readonly single: boolean
@@ -258,6 +279,7 @@ const MatrixGrid = forwardRef<DeviceStepMatrixHandle, GridProps>(function Matrix
     onCellClick,
     onStepClick,
     stepBadge,
+    stepAction,
     selectedCell,
     single,
     reserveRightPx,
@@ -408,6 +430,7 @@ const MatrixGrid = forwardRef<DeviceStepMatrixHandle, GridProps>(function Matrix
                 tabbable={tab.r === r && tab.c === 0}
                 selected={selectedCell?.addonId === node.addonId}
                 badge={stepBadge?.(node.addonId)}
+                action={stepAction?.(node.addonId)}
                 onClick={onStepClick ? (kb) => onStepClick(node.addonId, kb) : undefined}
                 sticky={stickySteps}
               />
@@ -479,6 +502,7 @@ export const DeviceStepMatrix: ForwardRefExoticComponent<
     onFallbackNodeChange,
     onStepClick,
     stepBadge,
+    stepAction,
     reserveRightPx = 0,
     label = 'Detection steps',
   },
@@ -544,6 +568,7 @@ export const DeviceStepMatrix: ForwardRefExoticComponent<
         onCellClick={onCellClick}
         onStepClick={onStepClick}
         stepBadge={stepBadge}
+        stepAction={stepAction}
         selectedCell={selectedCell}
         single={single && selectedNode !== null}
         reserveRightPx={reserveRightPx}

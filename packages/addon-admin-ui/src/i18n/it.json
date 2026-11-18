@@ -3495,7 +3495,8 @@
       "tabLoadBalancing": "Bilanciamento del carico",
       "tabAutoTune": "Auto-ottimizzazione",
       "tabRoles": "Ruoli",
-      "tabPalette": "Tavolozza"
+      "tabPalette": "Tavolozza",
+      "tabPipeline": "Pipeline"
     },
     "clusterStepModel": {
       "oneValueForTheWhole": "Un unico valore per tutto il cluster — questo step scrive in un indice vettoriale condiviso, dove due encoder rendono i punteggi di similarità privi di significato.",
@@ -3852,7 +3853,6 @@
       },
       "writeFailed": "La modifica non è stata salvata",
       "loadFailed": "Gli interruttori dei passi non si sono caricati",
-      "noSteps": "L'orchestratore non segnala passi della pipeline.",
       "clusterModeFor": "Modalità cluster per {{step}}",
       "mode": {
         "off": "Spento",
@@ -3864,21 +3864,21 @@
         "hardOff": "Spento ovunque: nessuna telecamera può attivarlo",
         "cameras": "Telecamere: {{enabling}} lo attivano, {{disabling}} lo disattivano · gira su {{running}} di {{known}} nodi"
       },
-      "clusterTitle": "Interruttori dei passi",
-      "clusterHint": "Spento disattiva il passo per ogni telecamera. Attivo lo esegue salvo che una telecamera lo disattivi. Su richiesta lo esegue solo sulle telecamere che lo attivano. Un interruttore di nodo o acceleratore può comunque disattivarlo.",
-      "nodeTitle": "Interruttori dei passi",
-      "nodeHint": "Disattiva un passo per saltarlo su ogni telecamera che gira su questo nodo. Anche l'interruttore del cluster e quello dell'acceleratore possono disattivarlo; il risultato mostra quale.",
       "nodeToggle": "Esegui {{step}} su questo nodo",
       "deviceToggle": "Esegui {{step}} su questo acceleratore",
-      "deviceNoSteps": "L'orchestratore non ha ancora una risposta sui passi per questo acceleratore.",
-      "colSteps": "Passi",
-      "steps": "Passi",
-      "stepsOff": "Passi · {{n}} spenti",
-      "stepsNotSortable": "Apre gli interruttori dei passi di questo acceleratore.",
       "held": {
         "cluster": "Tenuto spento dal cluster — questo interruttore resta com'è",
         "node": "Tenuto spento dal nodo — questo interruttore resta com'è"
-      }
+      },
+      "offWithParent": "Spento con {{parent}}",
+      "deviceSection": "Interruttore dell'acceleratore"
+    },
+    "clusterPipelineTab": {
+      "title": "Passi della pipeline",
+      "hint": "Off spegne un passo per tutte le camere. On lo esegue a meno che una camera lo spenga. Opt-in lo esegue solo sulle camere che lo accendono. Un interruttore di nodo o acceleratore può comunque spegnerlo più in basso: li trovi nella pagina del nodo.",
+      "catalogFailed": "Il catalogo dei passi non si è caricato",
+      "noSteps": "Il catalogo non riporta passi della pipeline.",
+      "label": "Passi della pipeline"
     }
   },
   "assignments": {

@@ -78,24 +78,13 @@ export function findNode(row: StepSwitchRow, nodeId: string): StepSwitchNode | u
   return row.nodes.find((n) => n.nodeId === nodeId)
 }
 
-/** One accelerator of one node, for one step: what the device table needs. */
-export interface DeviceStepRow {
-  readonly stepId: string
-  readonly name: string
-  readonly device: StepSwitchDevice
-}
-
-export function deviceStepRows(
-  matrix: readonly StepSwitchRow[],
+/** One accelerator of a node in a step row, or undefined when the matrix has none. */
+export function findDevice(
+  row: StepSwitchRow,
   nodeId: string,
   deviceKey: string,
-): readonly DeviceStepRow[] {
-  const out: DeviceStepRow[] = []
-  for (const row of matrix) {
-    const device = findNode(row, nodeId)?.devices.find((d) => d.deviceKey === deviceKey)
-    if (device !== undefined) out.push({ stepId: row.stepId, name: row.name, device })
-  }
-  return out
+): StepSwitchDevice | undefined {
+  return findNode(row, nodeId)?.devices.find((d) => d.deviceKey === deviceKey)
 }
 
 /** The control a switch belongs to: it can be held off only by a level above it. */
@@ -110,9 +99,4 @@ export function heldOffBy(
   if (effect.level === 'cluster') return 'cluster'
   if (ownLevel === 'device' && effect.level === 'node') return 'node'
   return null
-}
-
-/** How many steps this device's own switch has turned off (the stored bit, not the effect). */
-export function deviceSwitchedOffCount(rows: readonly DeviceStepRow[]): number {
-  return rows.filter((r) => r.device.stepEnabled === false).length
 }

@@ -6647,6 +6647,12 @@
           "doc": "A badge beside a step's name (the camera's gate)."
         },
         {
+          "name": "stepAction",
+          "type": "(addonId: string) => ReactNode",
+          "optional": true,
+          "doc": "An interactive control UNDER a step's name (a switch). It sits beside the header button, never inside it, so it can be a button or a switch "
+        },
+        {
           "name": "reserveRightPx",
           "type": "number",
           "optional": true,

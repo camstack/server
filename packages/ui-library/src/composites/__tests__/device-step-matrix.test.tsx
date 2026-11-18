@@ -83,6 +83,29 @@ describe('DeviceStepMatrix — step headers carry no gate control (D757)', () =>
   })
 })
 
+describe('DeviceStepMatrix — stepAction', () => {
+  it('draws a control under the step name that is not part of the header button', () => {
+    mockWidth(1200)
+    const onSwitch = vi.fn()
+    renderMatrix({
+      stepAction: (addonId) =>
+        addonId === 'object-detection' ? (
+          <button type="button" onClick={onSwitch}>
+            switch object-detection
+          </button>
+        ) : null,
+    })
+    const control = screen.getByRole('button', { name: 'switch object-detection' })
+    const header = control.closest('[role="rowheader"]')?.querySelector('[data-step]')
+    expect(header).toBeTruthy()
+    expect(header?.contains(control)).toBe(false)
+    fireEvent.click(control)
+    expect(onSwitch).toHaveBeenCalledTimes(1)
+    // A step with no action draws no slot.
+    expect(document.querySelector('[data-step-action="package-detection"]')).toBeNull()
+  })
+})
+
 describe('DeviceStepMatrix — root supply (D730)', () => {
   it('shows a "root" chip on a cell the root model supplies, and only there', () => {
     mockWidth(1200)

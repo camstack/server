@@ -2,8 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { StepSwitchCell } from '@camstack/types'
 import {
   cellEffect,
-  deviceStepRows,
-  deviceSwitchedOffCount,
+  findDevice,
   nodeEffect,
   type StepSwitchDevice,
   type StepSwitchNode,
@@ -76,14 +75,10 @@ describe('step switch model', () => {
     expect(nodeEffect(node([]))).toEqual({ state: 'unknown' })
   })
 
-  it('collects one accelerator across steps and counts its own switch', () => {
-    const rows: readonly StepSwitchRow[] = [
-      row('object-detection', [device('cpu', { kind: 'on' })]),
-      row('face-detection', [device('cpu', { kind: 'off-device' }, false)]),
-    ]
-    const found = deviceStepRows(rows, 'hub', 'cpu')
-    expect(found.map((r) => r.stepId)).toEqual(['object-detection', 'face-detection'])
-    expect(deviceSwitchedOffCount(found)).toBe(1)
-    expect(deviceStepRows(rows, 'hub', 'missing')).toEqual([])
+  it('finds one accelerator of a node in a step row, and none that is missing', () => {
+    const r = row('face-detection', [device('cpu', { kind: 'off-device' }, false)])
+    expect(findDevice(r, 'hub', 'cpu')?.stepEnabled).toBe(false)
+    expect(findDevice(r, 'hub', 'missing')).toBeUndefined()
+    expect(findDevice(r, 'other', 'cpu')).toBeUndefined()
   })
 })

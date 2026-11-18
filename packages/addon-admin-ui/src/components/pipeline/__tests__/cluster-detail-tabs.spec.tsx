@@ -28,6 +28,9 @@ vi.mock('../tabs/ClusterLoadBalancingTab', () => ({
     </button>
   ),
 }))
+vi.mock('../tabs/ClusterPipelineTab', () => ({
+  ClusterPipelineTab: () => <div data-testid="tab-pipeline" />,
+}))
 vi.mock('../tabs/ClusterRolesNodesTab', () => ({
   ClusterRolesNodesTab: () => <div data-testid="tab-roles-nodes" />,
 }))
@@ -54,6 +57,14 @@ describe('ClusterDetail — Assignments / Load balancing / Roles (D748)', () => 
     expect(screen.getByRole('tab', { name: 'Load balancing' })).toBeInTheDocument()
     expect(screen.getByRole('tab', { name: 'Roles' })).toBeInTheDocument()
     expect(screen.queryByRole('tab', { name: 'Balancer' })).not.toBeInTheDocument()
+  })
+
+  it('has a Pipeline tab right after Assignments that renders the cluster step tree', () => {
+    renderAt(<ClusterDetail refreshToken={7} />)
+    const tabs = screen.getAllByRole('tab').map((t) => t.textContent)
+    expect(tabs.slice(0, 3)).toEqual(['Assignments', 'Pipeline', 'Load balancing'])
+    fireEvent.click(screen.getByRole('tab', { name: 'Pipeline' }))
+    expect(screen.getByTestId('tab-pipeline')).toBeInTheDocument()
   })
 
   it('defaults to Assignments, rendered WITHOUT props (load moved out)', () => {

@@ -19,6 +19,7 @@ import { selectOption, selectShowing } from '@camstack/ui-library/testing'
 import * as jestDomMatchers from '@testing-library/jest-dom/matchers'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
+import type { StepSwitchMatrix } from '@camstack/types'
 import { NodeStepInspector } from '../NodeStepInspector'
 import {
   currentSearch,
@@ -230,5 +231,97 @@ describe('NodeStepInspector', () => {
     await waitFor(() =>
       expect(screen.queryByRole('region', { name: /^Face Detection/ })).toBeNull(),
     )
+  })
+})
+
+/** Face detection is switched off on the hub; object detection runs on its NPU. */
+const SWITCHES: StepSwitchMatrix = {
+  steps: [
+    ['object-detection', 'Object Detection', null, { kind: 'on' as const }],
+    ['face-detection', 'Face Detection', false, { kind: 'off-node' as const }],
+  ].map(([stepId, name, stepEnabled, cell]) => ({
+    stepId: String(stepId),
+    name: String(name),
+    slot: 'detail',
+    clusterMode: null,
+    effectiveMode: 'on' as const,
+    camerasEnabling: 0,
+    camerasDisabling: 0,
+    nodes: [
+      {
+        nodeId: 'hub',
+        reachable: true,
+        stepEnabled: stepEnabled === false ? false : null,
+        devices: [
+          {
+            deviceKey: 'openvino:npu',
+            format: 'openvino',
+            stepEnabled: null,
+            eligible: true,
+            cell: cell as StepSwitchMatrix['steps'][number]['nodes'][number]['devices'][number]['cell'],
+          },
+        ],
+      },
+    ],
+  })),
+}
+
+describe('NodeStepInspector — step switches in the tree', () => {
+  it('a switchable step carries its node switch in the row; a child of an off step reads off with it', async () => {
+    const { hub } = await mount('/system/pipeline?node=hub', (s) => {
+      s.switches = SWITCHES
+    })
+    const face = await screen.findByRole('switch', { name: 'Run Face Detection on this node' })
+    expect(face).toHaveAttribute('aria-checked', 'false')
+    // Inside the step's own row header cell, but not inside its button.
+    expect(face.closest('[role="rowheader"]')).toBe(
+      cell('face-detection', '').closest('[role="rowheader"]'),
+    )
+    expect(cell('face-detection', '').contains(face)).toBe(false)
+    // Face Embedding is fed by Face Detection: no switch of its own, muted while it is off.
+    const embeddingRow = cell('face-embedding', '').closest('[role="rowheader"]')
+    expect(embeddingRow).not.toBeNull()
+    expect(
+      within(embeddingRow as HTMLElement).getByText('Off with Face Detection'),
+    ).toBeInTheDocument()
+    expect(within(embeddingRow as HTMLElement).queryByRole('switch')).toBeNull()
+    // A step the matrix does not know draws no switch (plate detection here).
+    expect(screen.queryByRole('switch', { name: /Plate/ })).toBeNull()
+    // On writes null (inherit); off writes false.
+    fireEvent.click(face)
+    await waitFor(() =>
+      expect(hub.calls).toContainEqual({
+        path: 'pipelineOrchestrator.setNodeStepEnabled',
+        input: { agentNodeId: 'hub', stepId: 'face-detection', enabled: null },
+      }),
+    )
+  })
+
+  it('the clicked accelerator cell carries that accelerator switch in its panel', async () => {
+    const { hub } = await mount('/system/pipeline?node=hub', (s) => {
+      s.switches = SWITCHES
+    })
+    fireEvent.click(cell('object-detection', 'hub::openvino:npu'))
+    const region = await screen.findByRole('region', { name: NPU_TITLE })
+    const toggle = await within(region).findByRole('switch', {
+      name: 'Run Object Detection on this accelerator',
+    })
+    fireEvent.click(toggle)
+    await waitFor(() =>
+      expect(hub.calls).toContainEqual({
+        path: 'pipelineOrchestrator.setDeviceStepEnabled',
+        input: {
+          agentNodeId: 'hub',
+          deviceKey: 'openvino:npu',
+          stepId: 'object-detection',
+          enabled: false,
+        },
+      }),
+    )
+  })
+
+  it('an unanswered matrix draws no switch in the tree', async () => {
+    await mount()
+    expect(screen.queryByRole('switch')).toBeNull()
   })
 })

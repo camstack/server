@@ -143,12 +143,12 @@ const STEPS: readonly FixtureStep[] = [
     effectiveMode: 'opt-in',
     camerasEnabling: 2,
     camerasDisabling: 0,
-    nodeSwitch: { 'garage-nuc': false },
+    nodeSwitch: { hub: false },
     deviceSwitch: {},
   },
   {
-    stepId: 'plate-recognition',
-    name: 'Plate recognition',
+    stepId: 'plate-detection',
+    name: 'Plate detection',
     slot: 'detail',
     clusterMode: 'off',
     effectiveMode: 'off',
@@ -181,6 +181,80 @@ function stepCell(step: FixtureStep, nodeId: string, deviceKey: string): Fixture
   if (step.effectiveMode === 'opt-in' && step.camerasEnabling === 0)
     return { kind: 'opt-in-unused' }
   return { kind: 'on' }
+}
+
+/**
+ * The executor catalog behind the step trees (node → Pipeline, cluster →
+ * Pipeline): object detection feeds face and plate detection, which feed their
+ * classifiers; semantic embedding reads the detector's crops. Ids match the
+ * step switch matrix above.
+ */
+const catalogAddon = (
+  id: string,
+  name: string,
+  slot: string,
+  inputClasses: readonly string[],
+  outputClasses: readonly string[],
+) => ({
+  id,
+  name,
+  slot,
+  inputClasses,
+  outputClasses,
+  childSlots: [],
+  models: [{ id: `${id}-n`, name: `${name} nano`, formats: { openvino: { downloaded: true } } }],
+  defaultModelId: `${id}-n`,
+  defaultConfidence: 0.5,
+  configSchema: [],
+})
+
+const CATALOG = {
+  availableEngines: [
+    {
+      engine: { runtime: 'python', backend: 'openvino', format: 'openvino' },
+      devices: [{ id: 'gpu', label: 'GPU' }],
+      defaultDevice: 'gpu',
+    },
+  ],
+  selectedEngine: { runtime: 'python', backend: 'openvino', format: 'openvino', device: 'gpu' },
+  slots: [
+    {
+      id: 'detector',
+      label: 'Detector',
+      priority: 0,
+      parentSlot: null,
+      addons: [
+        catalogAddon(
+          'object-detection',
+          'Object Detection',
+          'detector',
+          [],
+          ['person', 'vehicle', 'animal'],
+        ),
+      ],
+    },
+    {
+      id: 'cropper',
+      label: 'Cropper',
+      priority: 1,
+      parentSlot: 'detector',
+      addons: [
+        catalogAddon('face-detection', 'Face Detection', 'cropper', ['person'], ['face']),
+        catalogAddon('plate-detection', 'Plate Detection', 'cropper', ['vehicle'], ['plate']),
+      ],
+    },
+    {
+      id: 'classifier',
+      label: 'Classifier',
+      priority: 2,
+      parentSlot: 'cropper',
+      addons: [
+        catalogAddon('face-embedding', 'Face Embedding', 'classifier', ['face'], ['identity']),
+        catalogAddon('plate-ocr', 'Plate OCR', 'classifier', ['plate'], ['plate-text']),
+        catalogAddon('clip-embedding', 'CLIP Embedding', 'classifier', ['animal'], ['embedding']),
+      ],
+    },
+  ],
 }
 
 const STEP_SWITCH_MATRIX = {
@@ -348,6 +422,8 @@ export default defineFixtures({
       }),
     }),
     'pipelineOrchestrator.getStepSwitches': STEP_SWITCH_MATRIX,
+    'pipelineExecutor.getSchema': CATALOG,
+    'pipelineOrchestrator.getAgentSettings': { maxCameras: null, stepSettings: {} },
     'auth.listLoginMethods': [],
     'pipelineOrchestrator.getAudioAssignments': [],
     'pipelineOrchestrator.getAudioNodeLoad': [],

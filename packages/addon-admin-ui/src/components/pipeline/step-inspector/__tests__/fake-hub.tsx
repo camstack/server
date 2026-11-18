@@ -16,6 +16,7 @@ import type {
   NodeInferenceDevice,
   PipelineAddonSchema,
   PipelineSchema,
+  StepSwitchMatrix,
 } from '@camstack/types'
 import { ConfirmDialogProvider, SystemProvider, trpc } from '@camstack/ui-library'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
@@ -180,6 +181,8 @@ export interface FakeHubState {
   readGate?: Promise<void>
   /** When set, the write is refused with this message. */
   refuseDetectionSource?: string
+  /** The step switch matrix (`getStepSwitches`); absent = no switchable step. */
+  switches?: StepSwitchMatrix
 }
 
 export function freshState(): FakeHubState {
@@ -294,6 +297,12 @@ export function makeFakeHub(state: FakeHubState) {
         }
         return { success: true }
       }
+      case 'pipelineOrchestrator.getStepSwitches':
+        return state.switches ?? { steps: [] }
+      case 'pipelineOrchestrator.setNodeStepEnabled':
+      case 'pipelineOrchestrator.setDeviceStepEnabled':
+        calls.push({ path, input })
+        return { success: true }
       case 'pipelineOrchestrator.setCameraStepToggle':
         calls.push({ path, input })
         return { success: true }
