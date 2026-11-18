@@ -13,6 +13,7 @@
  */
 
 import type { NcSnooze, NcSnoozeSuppressed } from '@camstack/types'
+import { genericDeviceName } from './device-directory.js'
 import type { NcTextCatalog } from './text-catalog.js'
 
 export interface NcSnoozeDigest {
@@ -45,7 +46,7 @@ function scopeLabel(
     case 'device': {
       const id = snooze.deviceId
       if (id === undefined) return texts.text({ key: 'snooze.scope.anyDevice' })
-      return deviceNames.get(id) ?? `Camera ${id}`
+      return deviceNames.get(id) ?? genericDeviceName(texts.language)
     }
     case 'rule': {
       const named = rows.find((r) => r.ruleId === snooze.ruleId)
@@ -93,7 +94,7 @@ export function buildSnoozeDigest(
         key: 'snooze.digest.line',
         vars: {
           rule: r.ruleName,
-          device: deviceNames.get(r.deviceId) ?? `camera ${r.deviceId}`,
+          device: deviceNames.get(r.deviceId) ?? genericDeviceName(texts.language),
           count: `${r.count}`,
         },
       }),

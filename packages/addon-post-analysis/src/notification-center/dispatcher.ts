@@ -120,7 +120,12 @@ import {
   type NcRuleFireRef,
   type NcSystemEventSubject,
 } from './rule-engine.js'
-import { deviceDisplayLabel, frozenDeviceLabel, type NcDeviceIdentity } from './device-directory.js'
+import {
+  deviceDisplayLabel,
+  frozenDeviceLabel,
+  genericDeviceName,
+  type NcDeviceIdentity,
+} from './device-directory.js'
 import {
   type MosaicRenderRequest,
   type MosaicRenderResult,
@@ -4058,7 +4063,9 @@ export function buildTemplateVars(
     // offline". The id is the same last resort the intake uses when a name is
     // unknown, so an old row degrades to exactly the sentence it was written
     // for. Overridden below by a row that froze a real name.
-    ...(systemEvent?.deviceId !== undefined ? { deviceName: String(systemEvent.deviceId) } : {}),
+    ...(systemEvent?.deviceId !== undefined
+      ? { deviceName: genericDeviceName(texts.language) }
+      : {}),
     // Same rescue for a node sentence: rows frozen before `{{nodeName}}`
     // existed carry only the id, which is also the name of last resort.
     ...(systemEvent?.nodeId !== undefined &&

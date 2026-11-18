@@ -16,7 +16,7 @@
  */
 import type { NcRule, NcRuleInput } from '@camstack/types'
 import { ncClockText } from '../clock-text.js'
-import { deviceDisplayLabel } from '../device-directory.js'
+import { frozenDeviceLabel } from '../device-directory.js'
 import { evaluateRule, NC_SYSTEM_DEVICE_ID, type NcRuleSubject } from '../rule-engine.js'
 import type { NcTextCatalog } from '../text-catalog.js'
 import {
@@ -192,21 +192,9 @@ function lineOf(input: NcStateSummaryTextInput, item: NcStateItem): string {
   const parentName = item.params['deviceParentName']
   const type = item.subject.deviceType
   const deviceLabel =
-    deviceId === undefined || name === undefined
+    deviceId === undefined
       ? undefined
-      : deviceDisplayLabel(
-          type === undefined
-            ? undefined
-            : {
-                deviceId,
-                type,
-                name,
-                isCamera: false,
-                ...(parentName !== undefined ? { parentName } : {}),
-              },
-          deviceId,
-          input.texts.language,
-        )
+      : frozenDeviceLabel(deviceId, type, name, input.texts.language, parentName)
   return input.texts.text({
     key: item.lineKey,
     vars: {

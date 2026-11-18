@@ -552,7 +552,7 @@ export function planRuleTest(input: NcRuleTestPlanInput): NcRuleTestPlan {
             ...systemEventKeys(systemEventKind),
             textParams: {
               deviceId: String(systemScope.deviceId ?? deviceId),
-              deviceName: `camera ${String(systemScope.deviceId ?? deviceId)}`,
+              deviceName: 'Sample camera',
               // `device-command` (D1022): the dispatcher words the action id.
               actionId: 'powerSource.forceRestart',
               actorLabel: 'admin',

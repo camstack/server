@@ -297,7 +297,7 @@ describe('system events', () => {
     // camera-worded keys, and `{{deviceId}}` as its only param. It must still
     // render a whole sentence — the catalog keeps those keys for exactly as
     // long as such a row can exist, and the dispatcher defaults `deviceName`
-    // to the frozen id so the new wording has no hole in it.
+    // to a generic unnamed label so the new wording has no hole in it.
     const sent = await deliver(
       italian(),
       systemEntry({
@@ -312,7 +312,7 @@ describe('system events', () => {
         data: {},
       }),
     )
-    expect(sent.notification.body).toBe('Il dispositivo 101 è offline')
+    expect(sent.notification.body).toBe('Il dispositivo (senza nome) è offline')
   })
 
   it('a row whose key nothing carries falls back to its frozen body', async () => {

@@ -171,9 +171,12 @@ export function deviceTextParams(
   identity: NcDeviceIdentity | undefined,
 ): Readonly<Record<string, string>> {
   const parent = identity?.parentName?.trim() ?? ''
+  const named = (identity?.name.trim() ?? '').length > 0
   return {
     deviceId: String(deviceId),
-    deviceName: deviceDisplayName(identity, deviceId),
+    // Absent when the directory could not name the device: the renderer words
+    // a localized generic label, the id is never a name.
+    ...(named ? { deviceName: deviceDisplayName(identity, deviceId) } : {}),
     ...(parent.length > 0 ? { deviceParentName: parent } : {}),
   }
 }
@@ -263,6 +266,18 @@ function withTypeSuffix(name: string, phrase: string, parentName: string | undef
   return `${name.slice(0, -1)}${LABEL_SUFFIX_SEPARATOR}${phrase})`
 }
 
+/** What a notification calls a device whose name could not be resolved: never its id. */
+export function genericDeviceName(language: DeviceLabelLanguage): string {
+  return language === 'it' ? '(senza nome)' : '(unnamed)'
+}
+
+/** A frozen name counts only when it is real: blank, or the bare id an older intake froze, is not. */
+function isResolvedFrozenName(name: string | undefined, deviceId: number): name is string {
+  if (name === undefined) return false
+  const trimmed = name.trim()
+  return trimmed.length > 0 && trimmed !== String(deviceId)
+}
+
 /**
  * `{{deviceLabel}}` for a row whose words were frozen at intake: the frozen
  * name plus the type, worded in the language the row is RENDERED in. The
@@ -277,8 +292,8 @@ export function frozenDeviceLabel(
   language: DeviceLabelLanguage,
   frozenParentName?: string,
 ): string {
-  const name = frozenName !== undefined && frozenName.length > 0 ? frozenName : String(deviceId)
-  if (deviceType === undefined) return name
+  const name = isResolvedFrozenName(frozenName, deviceId) ? frozenName : genericDeviceName(language)
+  if (deviceType === undefined || name === genericDeviceName(language)) return name
   return deviceDisplayLabel(
     {
       deviceId,

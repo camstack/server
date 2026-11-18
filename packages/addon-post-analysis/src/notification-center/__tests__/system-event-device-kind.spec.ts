@@ -104,18 +104,18 @@ describe('the system-event intake reports a device, not a camera', () => {
     const system = incomingFromSystemEvent(livenessEvent('device.offline', 2018), EMPTY)?.subject
       .systemEvent
     expect(system?.kind).toBe('device-offline')
-    // The id, so the sentence is never a hole; and NO type, so every
-    // type-narrowed rule fails closed on it.
-    expect(system?.textParams).toEqual({ deviceId: '2018', deviceName: '2018' })
+    // NO name (the renderer words a generic label, never the id); and NO type,
+    // so every type-narrowed rule fails closed on it.
+    expect(system?.textParams).toEqual({ deviceId: '2018' })
     expect(system?.deviceType).toBeUndefined()
   })
 
-  it('falls back to the id when a device has no name', () => {
+  it('freezes no name when a device has none (never the id)', () => {
     const lookup = directoryOf(identity(101, DeviceType.Camera, ''))
     expect(
       incomingFromSystemEvent(livenessEvent('device.offline', 101), lookup)?.subject.systemEvent
         ?.textParams,
-    ).toEqual({ deviceId: '101', deviceName: '101' })
+    ).toEqual({ deviceId: '101' })
   })
 
   it('carries the type through the runtime-state route as well', () => {

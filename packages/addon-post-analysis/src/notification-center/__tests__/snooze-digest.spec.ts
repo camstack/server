@@ -111,9 +111,9 @@ describe('buildSnoozeDigest — English, byte-for-byte what it always said', () 
     expect(buildSnoozeDigest(EN, snooze(), [row({ count: 0 })], NAMES)).toBeNull()
   })
 
-  it('falls back to `camera <id>` for an unnamed device', () => {
+  it('falls back to a generic label, never the id, for an unnamed device', () => {
     expect(buildSnoozeDigest(EN, snooze(), [row({ deviceId: 999 })], NAMES)?.body).toContain(
-      '• Person at gate on camera 999 — 3',
+      '• Person at gate on (unnamed) — 3',
     )
   })
 })
