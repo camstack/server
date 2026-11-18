@@ -14,7 +14,7 @@ The single root package every node boots. Hub vs agent is `CAMSTACK_ROLE`, not a
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/server` | `server/backend` | 1.2.898 | the update itself | — |
+| `@camstack/server` | `server/backend` | 1.2.899 | the update itself | — |
 
 ## Framework (4)
 
@@ -24,8 +24,8 @@ Host-provided: addons do NOT bundle these, they resolve them from the running cl
 | --- | --- | --- | --- | --- |
 | `@camstack/develop` | `packages/develop` | 0.1.54 | `@camstack/server` closure | CamStack developer tooling — catalogue, scaffold, validate, and example lookup shared by the CLI and MCP server. |
 | `@camstack/sdk` | `packages/sdk` | 1.2.159 | `@camstack/server` closure | — |
-| `@camstack/types` | `packages/types` | 1.2.592 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
-| `@camstack/ui-library` | `packages/ui-library` | 1.2.468 | `@camstack/server` closure | — |
+| `@camstack/types` | `packages/types` | 1.2.593 | `@camstack/server` closure | Shared types, interfaces, and model catalogs for the CamStack detection ecosystem |
+| `@camstack/ui-library` | `packages/ui-library` | 1.2.469 | `@camstack/server` closure | — |
 
 ## Addons (51)
 
@@ -33,8 +33,8 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 
 | Package | Directory | Version | Reaches a node via | What it is |
 | --- | --- | --- | --- | --- |
-| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.697 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
-| `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.407 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
+| `@camstack/addon-admin-ui` | `packages/addon-admin-ui` | 1.2.698 | addons dir (image-seeded) | Admin UI — Vite frontend build and server-side addon |
+| `@camstack/addon-agent-ui` | `packages/addon-agent-ui` | 1.2.408 | addons dir (image-seeded) | Agent UI — lightweight status dashboard served by every agent node |
 | `@camstack/addon-ai` | `packages/addon-ai` | 0.4.182 | addons dir | AI addon for CamStack — the `llm` collection provider (cloud, LAN, and camstack-managed local llama.cpp profiles) plus the per-node `llm-runtime` managed executor. |
 | `@camstack/addon-auth` | `packages/addon-auth` | 1.2.182 | addons dir (image-seeded) | Authentication bundle — OIDC and WebAuthn/passkey. Multi-entry npm package shipping 2 addons under a single bundle; each addon keeps its own id, capabilities, and runner. |
 | `@camstack/addon-benchmark` | `packages/addon-benchmark` | 1.2.313 | addons dir (image-seeded) | Benchmark page: measure what one node can carry (the orchestrator's node benchmark), inspect one image or one sound |
@@ -74,7 +74,7 @@ Each declares one or more `camstack.addons[]` entries and lives in `<dataDir>/ad
 | `@camstack/addon-provider-unifi` | `packages/addon-provider-unifi` | 0.2.168 | addons dir | UniFi Network controller device-provider addon for CamStack — local-controller infra switches/APs (as containers) + network-client presence. No cameras. |
 | `@camstack/addon-provider-unraid` | `packages/addon-provider-unraid` | 0.2.171 | addons dir | Unraid device-provider addon for CamStack — an adoption creates the server's Gateway, the server as a workload host with its array, disk and notification entities, and one workload device per Docker container and VM |
 | `@camstack/addon-provider-velux` | `packages/addon-provider-velux` | 0.2.171 | addons dir | Velux KLF-200 integration for CamStack — the gateway, local-gateway windows (with rain sensor) and shutter covers (positional, no tilt) |
-| `@camstack/addon-provider-vesync` | `packages/addon-provider-vesync` | 0.2.166 | addons dir | VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors) |
+| `@camstack/addon-provider-vesync` | `packages/addon-provider-vesync` | 0.2.167 | addons dir | VeSync cloud-account device-provider addon for CamStack — Levoit / Cosori air purifiers as Fan devices (power, speed, preset, child-lock, display, air-quality + filter-life sensors) |
 | `@camstack/addon-provider-wyze` | `packages/addon-provider-wyze` | 0.2.174 | addons dir | Wyze camera device-provider addon for CamStack — wraps the @apocaliss92/wyze-bridge-js P2P/DTLS client, feeding the stream-broker via the pull-rfc4571 lazy-publish path (a structural twin of addon-provider-reolink) |
 | `@camstack/addon-remote-storage` | `packages/addon-remote-storage` | 1.2.146 | addons dir | Remote storage providers (SFTP, S3, WebDAV, SMB) — unifies remote backends behind the storage-provider cap |
 | `@camstack/addon-smtp-nodemailer` | `packages/addon-smtp-nodemailer` | 1.2.156 | addons dir | SMTP email provider addon for CamStack — wraps `nodemailer` and registers a `smtp-provider` cap collection entry. Used by notifier addons. |

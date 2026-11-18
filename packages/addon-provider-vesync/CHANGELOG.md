@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.167] - 2026-11-18
+
 ### Changed
 
 - VeSync no longer runs its own poll timer: the hub decides when to read (no faster than every 15 s, slower if the integration's poll interval says so), and re-reads a device after each command until it confirms.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.593] - 2026-11-18
+
 ### Added
 
 - New device-state-refresh capability and state-refresh policy types: a provider declares how its devices are read, the hub decides when (D1062).
