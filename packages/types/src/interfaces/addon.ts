@@ -801,7 +801,10 @@ export interface AddonContext<TConfig = Record<string, unknown>> {
    *
    * Bindings are cached per-addon-context: the first call resolves bindings
    * via `deviceManager.getBindings.query`, subsequent calls reuse the cache.
-   * The cache is invalidated implicitly when the device is removed.
+   * The cache is invalidated implicitly when the device is removed, and by the
+   * droppable `device.bindings-changed` event. A caller that must see a cap
+   * grafted after the first read (a shape comparison) passes `{ fresh: true }`:
+   * the bindings are re-read and the cache refreshed for later callers.
    */
   fetchDevice(
     deviceId: number,

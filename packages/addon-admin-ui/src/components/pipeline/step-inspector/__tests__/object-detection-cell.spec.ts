@@ -25,17 +25,21 @@ const FORMATS_OF: Readonly<Record<string, readonly string[]>> = {
 
 const build = { sizeMB: 1, downloaded: true }
 
-const catalog = {
+const catalog: PipelineAddonSchema = {
   id: 'object-detection',
   name: 'Object detection',
   slot: 'detector',
+  inputClasses: [],
+  outputClasses: [],
+  childSlots: [],
+  defaultConfidence: 0.5,
   defaultModelId: 'yolov9s-320',
   models: Object.entries(FORMATS_OF).map(([id, formats]) => ({
     id,
     name: id,
     formats: Object.fromEntries(formats.map((f) => [f, build])),
   })),
-} as unknown as PipelineAddonSchema
+}
 
 // [deviceKey, backend, device, format, the runner's resolveDefaultDetectionModel result]
 const CLASSES = [
@@ -52,11 +56,11 @@ function accOf(
   key: string,
   backend: string,
   device: string,
-  format: string,
+  format: NodeInferenceDevice['format'],
   defaultModelId: string,
   pin?: string,
 ): InspectorAccelerator {
-  const d = {
+  const d: NodeInferenceDevice = {
     key,
     backend,
     device,
@@ -66,9 +70,10 @@ function accOf(
     enabled: true,
     weight: 1,
     maxSessions: null,
+    exclusion: null,
     defaultModelId,
     ...(pin !== undefined ? { steps: { 'object-detection': { modelId: pin } } } : {}),
-  } as unknown as NodeInferenceDevice
+  }
   const [acc] = nodeAccelerators('n1', 'hub', [d])
   if (acc === undefined) throw new Error('no accelerator')
   return acc
