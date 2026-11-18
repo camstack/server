@@ -7,6 +7,30 @@ import { build, NOW, rowOf } from './hero-test-kit.js'
 
 const MIN = 60_000
 
+describe('a power-meter with only delivered power', () => {
+  const SLICE = { deliveredPower: 5.5, lastFetchedAt: NOW }
+
+  it('a sensor card falls back to the delivered watts', () => {
+    const m = build(DeviceType.Sensor, ['power-meter'], { 'power-meter': SLICE })
+    expect(m.measurement).toMatchObject({ quantity: 'power', reading: { value: 5.5 }, unit: 'W' })
+  })
+
+  it('a switch gets a Delivered fact and tile, and no power consumption', () => {
+    const m = build(DeviceType.Switch, ['power-meter'], { 'power-meter': SLICE })
+    expect(JSON.stringify(m)).toContain('Delivered')
+    expect(m.consumption?.kind === 'power').toBe(false)
+  })
+
+  it('with a total, the card is unchanged: the total, no Delivered text', () => {
+    const slice = { power: 20, lastFetchedAt: NOW }
+    const m = build(DeviceType.Sensor, ['power-meter'], { 'power-meter': slice })
+    expect(m.measurement).toMatchObject({ reading: { value: 20 } })
+    const sw = build(DeviceType.Switch, ['power-meter'], { 'power-meter': slice })
+    expect(sw.consumption).toMatchObject({ kind: 'power', watts: 20 })
+    expect(JSON.stringify(sw)).not.toContain('Delivered')
+  })
+})
+
 describe('a simple sensor is drawn as its ONE measurement', () => {
   it('a hot temperature: value without unit, °C, thermometer, Hot, since the last read', () => {
     const m = build(DeviceType.Sensor, ['temperature-sensor'], {
@@ -36,8 +60,9 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
 
   it('a power: watts, the wire speed follows the power and stops at 0 W', () => {
     const at = (power: number) =>
-      build(DeviceType.Sensor, ['power-meter'], { 'power-meter': { power, lastFetchedAt: NOW } })
-        .measurement
+      build(DeviceType.Sensor, ['power-meter'], {
+        'power-meter': { power, lastFetchedAt: NOW },
+      }).measurement
     expect(at(1221)).toMatchObject({
       quantity: 'power',
       icon: 'zap',
@@ -45,7 +70,11 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
       word: { en: 'Active' },
     })
     expect(at(1221)?.level).toBeCloseTo(1221 / 3000)
-    expect(at(0)).toMatchObject({ level: 0, word: { en: 'Idle' }, tone: 'muted' })
+    expect(at(0)).toMatchObject({
+      level: 0,
+      word: { en: 'Idle' },
+      tone: 'muted',
+    })
     expect(at(9000)?.level).toBe(1)
   })
 
@@ -72,7 +101,11 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
     const h = build(DeviceType.Sensor, ['humidity-sensor'], {
       'humidity-sensor': { humidity: 58, lastFetchedAt: NOW },
     })
-    expect(h.measurement).toMatchObject({ quantity: 'humidity', value: { en: '58' }, unit: '%' })
+    expect(h.measurement).toMatchObject({
+      quantity: 'humidity',
+      value: { en: '58' },
+      unit: '%',
+    })
     const t = build(DeviceType.Sensor, ['enum-sensor'], {
       'enum-sensor': { value: 'Eco', lastFetchedAt: NOW },
     })
@@ -101,7 +134,12 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
   })
 
   it('an offline sensor keeps its measurement with NO value: the normal card draws "—" and never the stale reading (D393)', () => {
-    const slices = { 'temperature-sensor': { temperature: 17.4, lastFetchedAt: NOW - 3_600_000 } }
+    const slices = {
+      'temperature-sensor': {
+        temperature: 17.4,
+        lastFetchedAt: NOW - 3_600_000,
+      },
+    }
     const offline = build(DeviceType.Sensor, ['temperature-sensor'], slices, [], false)
     expect(offline.measurement).toEqual(emptyMeasurement('temperature'))
     expect(offline.measurement?.reading).toBeNull()
@@ -134,11 +172,23 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
   it('an energy, voltage or current sensor never shows the watts its slice also carries', () => {
     const withRole = (role: string) =>
       buildHeroModel({
-        device: { id: 7, type: DeviceType.Sensor, role, name: 'Meter', online: true },
+        device: {
+          id: 7,
+          type: DeviceType.Sensor,
+          role,
+          name: 'Meter',
+          online: true,
+        },
         caps: ['power-meter'],
         features: [],
         slices: {
-          'power-meter': { power: 1221, energy: 42, voltage: 230, current: 5, lastFetchedAt: NOW },
+          'power-meter': {
+            power: 1221,
+            energy: 42,
+            voltage: 230,
+            current: 5,
+            lastFetchedAt: NOW,
+          },
         },
         now: NOW,
         remoteCommands: null,
@@ -147,13 +197,16 @@ describe('a simple sensor is drawn as its ONE measurement', () => {
     expect(withRole('energy-sensor')).toBeUndefined()
     expect(withRole('voltage-sensor')).toBeUndefined()
     expect(withRole('current-sensor')).toBeUndefined()
-    expect(withRole('power-sensor')).toMatchObject({ reading: { value: 1221, quantity: 'power' } })
+    expect(withRole('power-sensor')).toMatchObject({
+      reading: { value: 1221, quantity: 'power' },
+    })
   })
 
   it('a contact or a text carries no number to convert', () => {
     expect(
-      build(DeviceType.Sensor, ['contact'], { contact: { entryOpen: true, lastChangedAt: NOW } })
-        .measurement?.reading,
+      build(DeviceType.Sensor, ['contact'], {
+        contact: { entryOpen: true, lastChangedAt: NOW },
+      }).measurement?.reading,
     ).toBeNull()
   })
 
@@ -178,14 +231,22 @@ describe('a control device edits what the row edits today', () => {
       value: 2.5,
       step: null,
       valueArg: 'control.value',
-      call: { cap: 'control', method: 'setValue', args: { control: { kind: 'numeric' } } },
+      call: {
+        cap: 'control',
+        method: 'setValue',
+        args: { control: { kind: 'numeric' } },
+      },
     })
     const bounded = control({ kind: 'numeric', value: 2, min: 0, max: 10 })
     expect(rowOf(bounded, 'control').controls[0]?.kind).toBe('slider')
   })
 
   it('a choice is a picker, free text a text field, a date read-only', () => {
-    const pick = control({ kind: 'select', value: 'Comfort', options: ['Eco', 'Comfort'] })
+    const pick = control({
+      kind: 'select',
+      value: 'Comfort',
+      options: ['Eco', 'Comfort'],
+    })
     expect(rowOf(pick, 'control').controls[0]?.kind).toBe('picker')
     const text = control({ kind: 'text', value: 'Back on Monday' })
     expect(rowOf(text, 'control').controls[0]).toMatchObject({

@@ -7,13 +7,13 @@
  * (`scripts/check-no-hero-self-drawn-power.ts`).
  *
  * A reading the device never reported is not drawn as a number: no slice, or
- * a slice with neither power nor energy, renders nothing; a missing field
+ * a slice with none of power, delivered power and energy, renders nothing; a missing field
  * (power but no energy, or the reverse) is simply absent, never `0` or `NaN`.
  */
 import { useUiText } from '../../contexts/ui-text'
 import type { JSX } from 'react'
 import { Zap } from 'lucide-react'
-import type { PowerMeterStatus } from '@camstack/types'
+import { netPowerOf, type PowerMeterStatus } from '@camstack/types'
 import { useSystem } from '../../contexts/system-context'
 import { useDeviceCapability } from '../../hooks/use-device-capability'
 import { cn } from '../../lib/cn'
@@ -25,10 +25,21 @@ function known(value: number | undefined | null): number | null {
 }
 
 /** Whole watts below a kilowatt, one decimal above. */
-export function formatPowerWatts(watts: number): { readonly value: string; readonly unit: string } {
+export function formatPowerWatts(watts: number): {
+  readonly value: string
+  readonly unit: string
+} {
   return Math.abs(watts) >= 1000
     ? { value: (watts / 1000).toFixed(1), unit: 'kW' }
     : { value: String(Math.round(watts)), unit: 'W' }
+}
+
+/** Delivered power is small (PoE): one decimal under 10 W, otherwise as `formatPowerWatts`. */
+function formatDeliveredWatts(watts: number): {
+  readonly value: string
+  readonly unit: string
+} {
+  return Math.abs(watts) < 10 ? { value: watts.toFixed(1), unit: 'W' } : formatPowerWatts(watts)
 }
 
 /** Two decimals under 100 kWh, whole kWh above. */
@@ -47,9 +58,17 @@ export function PowerMeterLine({ deviceId }: CapSettingsComponentProps): JSX.Ele
   })
   const power = known(slice?.power)
   const energy = known(slice?.energy)
-  if (power === null && energy === null) return null
-  const drawing = power !== null && power > 0
+  const delivered = known(slice?.deliveredPower)
+  if (power === null && energy === null && delivered === null) return null
+  const drawing = (power ?? delivered ?? 0) > 0
   const shown = power === null ? null : formatPowerWatts(power)
+  const shownDelivered = delivered === null ? null : formatDeliveredWatts(delivered)
+  // The device's own draw is only worth a figure when something is passed on downstream.
+  const netRaw = slice === undefined || delivered === null ? undefined : netPowerOf(slice)
+  const net = known(netRaw)
+  const shownNet = net === null ? null : formatDeliveredWatts(net)
+  const deliveredLabel = t('uiLibrary.powerMeterLine.delivered', 'Delivered')
+  const netLabel = t('uiLibrary.powerMeterLine.net', 'Net')
 
   return (
     <div
@@ -76,6 +95,30 @@ export function PowerMeterLine({ deviceId }: CapSettingsComponentProps): JSX.Ele
         <span data-testid="power-meter-power" className="flex items-baseline gap-1 tabular-nums">
           <span className="text-lg font-semibold text-foreground">{shown.value}</span>
           <span className="text-xs text-foreground-muted">{shown.unit}</span>
+        </span>
+      )}
+      {shownDelivered !== null && (
+        <span
+          data-testid="power-meter-delivered"
+          className="flex items-baseline gap-1 tabular-nums"
+        >
+          <span className="text-xs text-foreground-subtle">{deliveredLabel}</span>
+          <span
+            className={cn(
+              'font-semibold text-foreground',
+              shown === null ? 'text-lg' : 'text-sm text-foreground-muted',
+            )}
+          >
+            {shownDelivered.value}
+          </span>
+          <span className="text-xs text-foreground-muted">{shownDelivered.unit}</span>
+        </span>
+      )}
+      {shownNet !== null && shown !== null && (
+        <span data-testid="power-meter-net" className="flex items-baseline gap-1 tabular-nums">
+          <span className="text-xs text-foreground-subtle">{netLabel}</span>
+          <span className="text-sm text-foreground-muted">{shownNet.value}</span>
+          <span className="text-xs text-foreground-muted">{shownNet.unit}</span>
         </span>
       )}
       {energy !== null && (

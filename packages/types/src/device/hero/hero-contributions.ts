@@ -152,14 +152,23 @@ const runningStateContribution = contribution(
         },
       },
       ...(phase !== null && running === true
-        ? { facts: [fact('phase', 'activity', heroText(phase, phase), 'primary')] }
+        ? {
+            facts: [fact('phase', 'activity', heroText(phase, phase), 'primary')],
+          }
         : {}),
       ...(running === true && (phase !== null || slice?.since != null)
         ? {
             tiles: {
               ...(phase === null
                 ? {}
-                : { left: [{ label: heroText('Phase', 'Fase'), value: heroText(phase, phase) }] }),
+                : {
+                    left: [
+                      {
+                        label: heroText('Phase', 'Fase'),
+                        value: heroText(phase, phase),
+                      },
+                    ],
+                  }),
               ...(slice?.since == null || elapsedText(slice.since, ctx.now) === null
                 ? {}
                 : {
@@ -180,7 +189,30 @@ const runningStateContribution = contribution(
 // ── power-meter ────────────────────────────────────────────────────────────
 
 const powerMeterContribution = contribution('power-meter', PowerMeterStatusSchema, (slice) => {
-  if (slice?.power === undefined) return { measurement: emptyMeasurement('power') }
+  if (slice?.power === undefined) {
+    // Only the delivered power is known (a switch's PoE total): it is the card's value, labelled
+    // as delivered, and it is not the device's own draw so it feeds no consumption slot.
+    if (slice?.deliveredPower === undefined) return { measurement: emptyMeasurement('power') }
+    const delivered = Math.round(slice.deliveredPower)
+    const deliveredText = heroText(`${delivered} W`, `${delivered} W`)
+    return measured(
+      {
+        facts: [
+          fact(
+            'power',
+            'zap',
+            heroText(`Delivered ${delivered} W`, `Erogata ${delivered} W`),
+            delivered > 0 ? 'primary' : 'muted',
+          ),
+        ],
+        tilesFallback: true,
+        tiles: {
+          right: [{ label: heroText('Delivered', 'Erogata'), value: deliveredText }],
+        },
+      },
+      powerMeasurement(slice.deliveredPower, slice.lastFetchedAt),
+    )
+  }
   const detail: HeroDetail[] = []
   if (slice.energy !== undefined) {
     detail.push({
@@ -589,7 +621,13 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
     })
   }
   const cycle = dishwasherCycleControls(slice?.state)
-  if (cycle.length > 0) rows.push({ id: 'cycle', icon: 'activity', status: null, controls: cycle })
+  if (cycle.length > 0)
+    rows.push({
+      id: 'cycle',
+      icon: 'activity',
+      status: null,
+      controls: cycle,
+    })
   // Its PowerState is the appliance's main power, a secondary row action — never the own-power slot.
   if (slice?.powerOn != null) {
     rows.push({
@@ -630,14 +668,21 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
     ...(phase === null ? [] : [{ label: heroText('Phase', 'Fase'), value: phase }]),
     ...(program === null
       ? []
-      : [{ label: heroText('Program', 'Programma'), value: heroText(program, program) }]),
+      : [
+          {
+            label: heroText('Program', 'Programma'),
+            value: heroText(program, program),
+          },
+        ]),
   ]
   return {
     reading: reading('dishwasher', state),
     rows,
     ...(remaining === null
       ? {}
-      : { facts: [fact('remaining', 'timer', minutesLeft(remaining), 'primary')] }),
+      : {
+          facts: [fact('remaining', 'timer', minutesLeft(remaining), 'primary')],
+        }),
     tiles: {
       left,
       ...(remaining === null
@@ -650,7 +695,10 @@ const dishwasherContribution = contribution('dishwasher', DishwasherStatusSchema
                 tone: 'warning' as const,
                 at: ctx.now + remaining * 1000,
               },
-              { label: heroText('Left', 'Restano'), value: durationText(remaining) },
+              {
+                label: heroText('Left', 'Restano'),
+                value: durationText(remaining),
+              },
             ],
           }),
     },
@@ -960,10 +1008,20 @@ const mediaPlayerContribution = contribution(
       left: [
         ...(trackNow === null
           ? []
-          : [{ label: heroText('Track', 'Brano'), value: heroText(trackNow, trackNow) }]),
+          : [
+              {
+                label: heroText('Track', 'Brano'),
+                value: heroText(trackNow, trackNow),
+              },
+            ]),
         ...(sourceNow === null
           ? []
-          : [{ label: heroText('Source', 'Sorgente'), value: heroText(sourceNow, sourceNow) }]),
+          : [
+              {
+                label: heroText('Source', 'Sorgente'),
+                value: heroText(sourceNow, sourceNow),
+              },
+            ]),
       ],
       right:
         volumeNow === null

@@ -10078,7 +10078,9 @@
       "running": "Timed run"
     },
     "powerMeterLine": {
-      "energy": "Energy"
+      "energy": "Energy",
+      "delivered": "Delivered",
+      "net": "Net"
     },
     "deviceValueField": {
       "loading": "Reading the values…",

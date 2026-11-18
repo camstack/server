@@ -58,6 +58,30 @@ describe('PowerMeterLine', () => {
     expect(container.innerHTML).toBe('')
   })
 
+  it('only deliveredPower known: shows Delivered with its figure, no total or net', () => {
+    slice = { deliveredPower: 5.5, lastFetchedAt: 1 }
+    render(<PowerMeterLine deviceId={1} />)
+    expect(screen.getByTestId('power-meter-delivered').textContent).toBe('Delivered5.5W')
+    expect(screen.queryByTestId('power-meter-power')).toBeNull()
+    expect(screen.queryByTestId('power-meter-net')).toBeNull()
+  })
+
+  it('power and deliveredPower known: total, delivered and net', () => {
+    slice = { power: 20, deliveredPower: 5.5, lastFetchedAt: 1 }
+    render(<PowerMeterLine deviceId={1} />)
+    expect(screen.getByTestId('power-meter-power').textContent).toBe('20W')
+    expect(screen.getByTestId('power-meter-delivered').textContent).toBe('Delivered5.5W')
+    expect(screen.getByTestId('power-meter-net').textContent).toBe('Net15W')
+  })
+
+  it('only power known: no delivered or net element (unchanged)', () => {
+    slice = { power: 412.4, lastFetchedAt: 1 }
+    render(<PowerMeterLine deviceId={1} />)
+    expect(screen.getByTestId('power-meter-power').textContent).toBe('412W')
+    expect(screen.queryByTestId('power-meter-delivered')).toBeNull()
+    expect(screen.queryByTestId('power-meter-net')).toBeNull()
+  })
+
   it('formats kilowatts and large energy', () => {
     expect(formatPowerWatts(1500)).toEqual({ value: '1.5', unit: 'kW' })
     expect(formatEnergyKwh(250.4)).toBe('250')

@@ -10100,7 +10100,9 @@
       "running": "Esecuzione a tempo"
     },
     "powerMeterLine": {
-      "energy": "Energia"
+      "energy": "Energia",
+      "delivered": "Erogata",
+      "net": "Netta"
     },
     "deviceValueField": {
       "loading": "Lettura dei valori…",
