@@ -49,6 +49,8 @@ export type PendingReason =
   | `device-health-unavailable:${string}`
   /** The elected device cannot run a gated-on root of the camera (D650). */
   | `root-unrunnable:${string}`
+  /** Every inference device of the node is disabled or not functional (#610). */
+  | `no-eligible-device:${string}`
 
 /** RAII-style guard returned by {@link PlacementLedger.markDispatching}. */
 export interface Disposable {

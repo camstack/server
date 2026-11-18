@@ -129,6 +129,7 @@ describe('resolveAttachPipeline (D650)', () => {
     )
     expect(outcome).toEqual({
       kind: 'root-refused',
+      cause: 'root-unrunnable',
       nodeId: NODE,
       deviceKey: 'coreml:ane',
       droppedRoots: ['object-detection'],

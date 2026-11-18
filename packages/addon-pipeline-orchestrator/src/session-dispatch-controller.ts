@@ -65,7 +65,7 @@ import {
   OccupancyRecheckController,
   type OccupancyRecheckDeps,
 } from './occupancy-recheck-controller.js'
-import { resolveAttachPipeline } from './attach-pipeline.js'
+import { refusalPendingReason, resolveAttachPipeline } from './attach-pipeline.js'
 import { DEFAULT_BALANCER_INPUT_TTL_MS, TtlMemo } from './balancer-input-cache.js'
 import {
   DetectionSessionRegistry,
@@ -301,6 +301,13 @@ export interface SessionDispatchControllerDeps {
   /** Can this node still infer? See `PlacementServiceDeps.isNodeInferenceUsable`
    *  — same mirror, same fail-open contract. */
   readonly isNodeInferenceUsable: (nodeId: string) => boolean
+  /**
+   * The node's election left no device AND an operator-disabled or non-functional
+   * one was excluded (#610): a camera there is refused, never put on the runner's
+   * default pool (the node's selected engine — possibly the excluded device).
+   * Synchronous, off the eligibility read that just ran.
+   */
+  readonly isDefaultPoolExcluded?: (nodeId: string) => boolean
   /** Per-device concurrent-session caps (`deviceKey → maxSessions`) for the device balancer. */
   readonly getInferenceDeviceCaps: (nodeId: string) => Promise<Record<string, number>>
   /** The camera's soft node+device pin (`pipelineDeviceKey`), or null for auto. */
@@ -1306,7 +1313,14 @@ export class SessionDispatchController {
     // tree, each roster entry's provisioning for the steps it may run (D650).
     // One owner for every path that sets steps: `resolveAttachPipeline`.
     const outcome = await resolveAttachPipeline(
-      { deviceId, nodeId: targetNodeId, deviceKey, eligible: enabledDevices, caps: deviceCaps },
+      {
+        deviceId,
+        nodeId: targetNodeId,
+        deviceKey,
+        eligible: enabledDevices,
+        caps: deviceCaps,
+        defaultPoolExcluded: this.deps.isDefaultPoolExcluded?.(targetNodeId) === true,
+      },
       this.deps.settingsStore,
     )
     if (outcome.kind === 'root-refused') {
@@ -1314,20 +1328,28 @@ export class SessionDispatchController {
       // run the camera's root would detect nothing. No attach, no record; the
       // next motion edge re-elects. Said once per change of the refusal, and
       // exposed to the camera status (round 4) — see `sessionRefusals`.
-      const reason: PendingReason = `root-unrunnable:${targetNodeId}/${outcome.deviceKey ?? 'default-pool'}`
+      const reason = refusalPendingReason(outcome)
       // A placement that cannot run the camera root is no placement to stay on.
       this.deps.sessionAffinity?.forget(deviceId)
       if (this.sessionRefusals.get(deviceId) !== reason) {
         this.sessionRefusals.set(deviceId, reason)
-        log.error('detection session refused — the elected device cannot run the camera root', {
-          tags: { deviceId, nodeId: targetNodeId },
-          meta: {
-            reason,
-            deviceKey: outcome.deviceKey ?? null,
-            droppedRoots: outcome.droppedRoots.join(','),
-            hint: 'the root is never jumped: enable a device on this node whose format ships the root model, or disable the device that cannot; said once until the refusal changes',
+        const noDevice = outcome.cause === 'no-eligible-device'
+        log.error(
+          noDevice
+            ? 'detection session refused — no eligible inference device on the node (no default-pool fallback)'
+            : 'detection session refused — the elected device cannot run the camera root',
+          {
+            tags: { deviceId, nodeId: targetNodeId },
+            meta: {
+              reason,
+              deviceKey: outcome.deviceKey ?? null,
+              droppedRoots: outcome.droppedRoots.join(','),
+              hint: noDevice
+                ? 'every inference device of this node is disabled in load balancing or not functional; said once until the refusal changes'
+                : 'the root is never jumped: enable a device on this node whose format ships the root model, or disable the device that cannot; said once until the refusal changes',
+            },
           },
-        })
+        )
       }
       releaseGuard()
       return null

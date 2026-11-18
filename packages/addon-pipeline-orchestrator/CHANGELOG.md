@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - A node whose only eligible inference device is the CPU now runs on it (the single eligible device is elected instead of the runner's default), and a GPU OpenVINO cannot see no longer holds the CPU back
 
+### Fixed
+
+- A camera on a node whose every inference device is turned off in load balancing or not functional is no longer run on the node's default engine: detection is skipped with the named reason no-eligible-device until a device is enabled or recovers
+
 ## [1.2.705] - 2026-11-18
 
 ### Added

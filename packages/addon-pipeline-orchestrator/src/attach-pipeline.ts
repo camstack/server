@@ -31,6 +31,7 @@ import type {
   RunnerInferenceDevice,
 } from '@camstack/types'
 import { applyDeviceProvisioning, provisionDeviceSteps } from './apply-device-provisioning.js'
+import type { PendingReason } from './placement-ledger.js'
 import { buildJumpRoster, jumpTargetKeys } from './jump-roster.js'
 import type { DefaultPool, PipelineSettingsStore } from './pipeline-settings-store.js'
 
@@ -51,6 +52,13 @@ export interface AttachPipelineInput {
   readonly eligible: Readonly<Record<string, number>>
   /** `deviceKey → maxSessions`. */
   readonly caps: Readonly<Record<string, number>>
+  /**
+   * The node's election left NO device and at least one was excluded because the
+   * operator turned it off or it is not functional (#610). Absent / false =
+   * nothing known to be excluded (a node whose probe has not answered, or one
+   * with no accelerator configured): the default pool serves, as before.
+   */
+  readonly defaultPoolExcluded?: boolean
 }
 
 export type AttachPipelineStore = Pick<
@@ -73,6 +81,14 @@ export type AttachPipelineOutcome =
   | { readonly kind: 'resolved'; readonly pipeline: AttachPipeline }
   | {
       readonly kind: 'root-refused'
+      /**
+       * `root-unrunnable`: the elected device cannot run the camera root.
+       * `no-eligible-device`: every device of the node is disabled by the
+       * operator or not functional, so there is nothing to attach on — the
+       * runner's default pool is never a substitute, it can be the very device
+       * that was excluded (#610).
+       */
+      readonly cause: 'root-unrunnable' | 'no-eligible-device'
       readonly nodeId: string
       readonly deviceKey: string | undefined
       readonly droppedRoots: readonly string[]
@@ -97,6 +113,7 @@ export async function resolveAttachPipeline(
   input: AttachPipelineInput,
   store: AttachPipelineStore,
 ): Promise<AttachPipelineOutcome> {
+  if (defaultPoolIsExcluded(input)) return noEligibleDeviceRefusal(input)
   const roster = buildJumpRoster({
     deviceKey: input.deviceKey,
     eligible: input.eligible,
@@ -128,6 +145,7 @@ export async function resolveAttachPipelineIfCatalogCached(
   input: AttachPipelineInput,
   store: AttachPipelineStore,
 ): Promise<AttachPipelineIfCached> {
+  if (defaultPoolIsExcluded(input)) return noEligibleDeviceRefusal(input)
   const roster = buildJumpRoster({
     deviceKey: input.deviceKey,
     eligible: input.eligible,
@@ -157,7 +175,37 @@ function rootRefusal(
   input: AttachPipelineInput,
   droppedRoots: readonly string[],
 ): AttachPipelineOutcome {
-  return { kind: 'root-refused', nodeId: input.nodeId, deviceKey: input.deviceKey, droppedRoots }
+  return {
+    kind: 'root-refused',
+    cause: 'root-unrunnable',
+    nodeId: input.nodeId,
+    deviceKey: input.deviceKey,
+    droppedRoots,
+  }
+}
+
+/** No device elected AND the default pool is an excluded device (#610). */
+function defaultPoolIsExcluded(input: AttachPipelineInput): boolean {
+  return input.deviceKey === undefined && input.defaultPoolExcluded === true
+}
+
+function noEligibleDeviceRefusal(input: AttachPipelineInput): AttachPipelineOutcome {
+  return {
+    kind: 'root-refused',
+    cause: 'no-eligible-device',
+    nodeId: input.nodeId,
+    deviceKey: undefined,
+    droppedRoots: [],
+  }
+}
+
+/** The pending reason a refusal is shown under — on the camera status and the load overview. */
+export function refusalPendingReason(
+  refusal: Extract<AttachPipelineOutcome, { kind: 'root-refused' }>,
+): PendingReason {
+  return refusal.cause === 'no-eligible-device'
+    ? `no-eligible-device:${refusal.nodeId}`
+    : `root-unrunnable:${refusal.nodeId}/${refusal.deviceKey ?? 'default-pool'}`
 }
 
 /**

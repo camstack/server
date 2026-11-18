@@ -193,6 +193,8 @@ export interface OrchestratorBootstrapDeps {
    */
   readonly noteShareTopologyChange: (trigger: string) => void
   readonly isNodeInferenceUsable: (nodeId: string) => boolean
+  /** See `PlacementServiceDeps.isDefaultPoolExcluded`. */
+  readonly isDefaultPoolExcluded: (nodeId: string) => boolean
   readonly getInferenceDeviceCaps: (nodeId: string) => Promise<Record<string, number>>
   readonly readPipelineDevicePin: (deviceId: number) => Promise<string | null>
   readonly subscribeToAudioAnalyzerReadiness: (nodeId: string) => void
@@ -637,6 +639,7 @@ export async function buildOrchestratorControllers(
     getEligibleInferenceDevicesIfCached: (nodeId) =>
       deps.getEligibleInferenceDevicesIfCached(nodeId),
     isNodeInferenceUsable: (nodeId) => deps.isNodeInferenceUsable(nodeId),
+    isDefaultPoolExcluded: (nodeId) => deps.isDefaultPoolExcluded(nodeId),
     getInferenceDeviceCaps: (nodeId) => deps.getInferenceDeviceCaps(nodeId),
     readPipelineDevicePin: (deviceId) => deps.readPipelineDevicePin(deviceId),
     inferenceRotation,
@@ -711,6 +714,7 @@ export async function buildOrchestratorControllers(
     readPipelinePin: (deviceId) => deps.readPipelinePin(deviceId),
     getEligibleInferenceDevices: (nodeId, read) => deps.getEligibleInferenceDevices(nodeId, read),
     isNodeInferenceUsable: (nodeId) => deps.isNodeInferenceUsable(nodeId),
+    isDefaultPoolExcluded: (nodeId) => deps.isDefaultPoolExcluded(nodeId),
     getInferenceDeviceCaps: (nodeId) => deps.getInferenceDeviceCaps(nodeId),
     readPipelineDevicePin: (deviceId) => deps.readPipelineDevicePin(deviceId),
     inferenceRotation,

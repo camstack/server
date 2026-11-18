@@ -173,6 +173,7 @@ import {
   mergeInferenceDevices,
   type NodeInferenceUsability,
   resolveInferenceDeviceEligibility,
+  isDefaultPoolExcluded,
   resolveNodeInferenceUsability,
   validateJumpTargets,
 } from './inference-device-model.js'
@@ -679,6 +680,7 @@ export default class PipelineOrchestratorAddon
       forgetInferenceDeviceProbe: (nodeId) => this.forgetInferenceDeviceProbe(nodeId),
       noteShareTopologyChange: (trigger) => this.noteShareChange(trigger),
       isNodeInferenceUsable: (nodeId) => this.isNodeInferenceUsable(nodeId),
+      isDefaultPoolExcluded: (nodeId) => this.isDefaultPoolExcluded(nodeId),
       getInferenceDeviceCaps: (nodeId) => this.getInferenceDeviceCaps(nodeId),
       readPipelineDevicePin: (deviceId) => this.readPipelineDevicePin(deviceId),
       subscribeToAudioAnalyzerReadiness: (nodeId) => this.subscribeToAudioAnalyzerReadiness(nodeId),
@@ -2055,6 +2057,7 @@ export default class PipelineOrchestratorAddon
    */
   forgetInferenceDeviceProbe(nodeId: string): void {
     this.absentInferenceDevices.delete(nodeId)
+    this.defaultPoolExcluded.delete(nodeId)
     if (!this.lastInferenceDeviceProbe.delete(nodeId)) return
     this.ctx.logger.info('inference device probe forgotten — the node left', {
       tags: { nodeId },
@@ -2217,6 +2220,10 @@ export default class PipelineOrchestratorAddon
     const { eligible, excluded } = eligibility
     this.logInferenceDeviceShrinkage(nodeId, eligible, excluded)
     this.noteNodeInferenceUsability(nodeId, resolveNodeInferenceUsability(eligibility))
+    // An empty probe says nothing about the node (unreachable, or not yet
+    // answered): the default pool stays allowed rather than guessed excluded.
+    if (probed.length === 0) this.defaultPoolExcluded.delete(nodeId)
+    else this.defaultPoolExcluded.set(nodeId, isDefaultPoolExcluded(eligibility))
     return eligible
   }
 
@@ -2267,6 +2274,18 @@ export default class PipelineOrchestratorAddon
       category: EventCategory.PipelineNodeInferenceUnavailable,
       data: { nodeId, unavailableDeviceKeys: usability.unavailableKeys },
     })
+  }
+
+  /**
+   * Nodes whose LAST eligibility read left no eligible device while the
+   * operator had turned one off or it was not functional (#610) — the runner's
+   * default pool would be that device, so a camera there is refused instead.
+   * Written by the same read the election makes; never by a clock.
+   */
+  private readonly defaultPoolExcluded = new Map<string, boolean>()
+
+  isDefaultPoolExcluded(nodeId: string): boolean {
+    return this.defaultPoolExcluded.get(nodeId) === true
   }
 
   /** Can this node be given cameras? Read synchronously by the two dispatch

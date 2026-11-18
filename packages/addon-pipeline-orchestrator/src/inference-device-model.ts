@@ -520,6 +520,25 @@ export interface NodeInferenceUsability {
   readonly eligibleKeys: readonly string[]
 }
 
+/**
+ * Is the runner's default pool (the node's selected engine) a device the
+ * election EXCLUDED? True when NOTHING is eligible and a device was excluded as
+ * non-functional (`unavailable`, `no-gpu-device`) or turned off by the operator
+ * (`disabled`). Exclusions that are not the operator's or the hardware's word
+ * (`cannot-host-camera-root`, `root-switched-off`, `accelerator-preferred`) do
+ * not count — they are handled where they are decided. #610.
+ */
+export function isDefaultPoolExcluded(eligibility: InferenceDeviceEligibility): boolean {
+  if (Object.keys(eligibility.eligible).length > 0) return false
+  return eligibility.excluded.some((e) => {
+    if (e.reason === 'unavailable' || e.reason === 'no-gpu-device') return true
+    // The CPU is opt-IN: its default `disabled` is no operator statement, so a
+    // node with nothing but the CPU keeps serving through its default pool. An
+    // accelerator is opt-OUT: its `disabled` is always the operator's.
+    return e.reason === 'disabled' && !e.key.startsWith('cpu')
+  })
+}
+
 export function resolveNodeInferenceUsability(
   eligibility: InferenceDeviceEligibility,
 ): NodeInferenceUsability {

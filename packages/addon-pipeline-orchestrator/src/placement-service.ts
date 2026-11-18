@@ -45,6 +45,7 @@ import { isDeepStrictEqual } from 'node:util'
 import type { AgentLoadService } from './agent-load-service.js'
 import {
   type AttachPipelineOutcome,
+  refusalPendingReason,
   resolveAttachPipeline,
   resolveAttachPipelineIfCatalogCached,
   withAttachPipeline,
@@ -105,6 +106,13 @@ export interface PlacementServiceDeps {
    * makes. An unknown node answers TRUE — see the mirror's docblock.
    */
   readonly isNodeInferenceUsable: (nodeId: string) => boolean
+  /**
+   * The node's election left no device AND an operator-disabled or non-functional
+   * one was excluded (#610): a camera there is refused, never put on the runner's
+   * default pool (the node's selected engine — possibly the excluded device).
+   * Synchronous, off the eligibility read that just ran.
+   */
+  readonly isDefaultPoolExcluded?: (nodeId: string) => boolean
   /** Per-device concurrent-session caps (`deviceKey → maxSessions`) for the device balancer. */
   readonly getInferenceDeviceCaps: (nodeId: string) => Promise<Record<string, number>>
   /** Operator's per-device pin (`deviceKey`) for a camera, or null. */
@@ -246,6 +254,7 @@ type InferenceDeviceElectionOutcome =
       readonly deviceKey: string | undefined
       readonly eligible: Record<string, number>
       readonly caps: Record<string, number>
+      readonly defaultPoolExcluded: boolean
     }
   | NodeUnanswered
 
@@ -344,7 +353,13 @@ export class PlacementService {
         ...(pinnedDeviceKey ? { pin: pinnedDeviceKey } : {}),
       },
     })
-    return { kind: 'elected', deviceKey, eligible, caps }
+    return {
+      kind: 'elected',
+      deviceKey,
+      eligible,
+      caps,
+      defaultPoolExcluded: this.deps.isDefaultPoolExcluded?.(input.nodeId) === true,
+    }
   }
 
   /**
@@ -368,6 +383,7 @@ export class PlacementService {
       deviceKey: election.deviceKey,
       eligible: election.eligible,
       caps: election.caps,
+      defaultPoolExcluded: election.defaultPoolExcluded,
     }
     if (input.read.kind === 'await-catalog') {
       return resolveAttachPipeline(attachInput, this.deps.settingsStore)
@@ -395,7 +411,15 @@ export class PlacementService {
       this.deps.getEligibleInferenceDevices(input.nodeId),
       this.deps.getInferenceDeviceCaps(input.nodeId),
     ])
-    return resolveAttachPipeline({ ...input, eligible, caps }, this.deps.settingsStore)
+    return resolveAttachPipeline(
+      {
+        ...input,
+        eligible,
+        caps,
+        defaultPoolExcluded: this.deps.isDefaultPoolExcluded?.(input.nodeId) === true,
+      },
+      this.deps.settingsStore,
+    )
   }
 
   /**
@@ -1082,7 +1106,7 @@ export class PlacementService {
       if (placement.kind !== 'resolved') {
         const reason =
           placement.kind === 'root-refused'
-            ? `root-unrunnable:${placement.nodeId}/${placement.deviceKey ?? 'default-pool'}`
+            ? refusalPendingReason(placement)
             : `${placement.what}-unavailable:${placement.nodeId}`
         skipped.push({ deviceId, targetNodeId: decision.agentNodeId, reason })
         if (current) {
@@ -1512,19 +1536,24 @@ export class PlacementService {
     deviceId: number,
     refusal: Extract<AttachPipelineOutcome, { kind: 'root-refused' }>,
   ): void {
-    const reason: PendingReason = `root-unrunnable:${refusal.nodeId}/${refusal.deviceKey ?? 'default-pool'}`
+    const reason = refusalPendingReason(refusal)
     if (!this.setPendingIfChanged(deviceId, reason)) return
+    const noDevice = refusal.cause === 'no-eligible-device'
     this.deps
       .ctx()
       .logger.error(
-        'attach refused — the elected device cannot run the camera root; camera left pending',
+        noDevice
+          ? 'attach refused — no eligible inference device on the node; camera left pending (no default-pool fallback)'
+          : 'attach refused — the elected device cannot run the camera root; camera left pending',
         {
           tags: { deviceId, nodeId: refusal.nodeId },
           meta: {
             reason,
             deviceKey: refusal.deviceKey ?? null,
             droppedRoots: refusal.droppedRoots.join(','),
-            hint: 'the root is never jumped: enable a device on this node whose format ships the root model, or disable the device that cannot',
+            hint: noDevice
+              ? 'every inference device of this node is disabled in load balancing or not functional: enable one (or fix its runtime) and the camera is placed on the next round'
+              : 'the root is never jumped: enable a device on this node whose format ships the root model, or disable the device that cannot',
           },
         },
       )
