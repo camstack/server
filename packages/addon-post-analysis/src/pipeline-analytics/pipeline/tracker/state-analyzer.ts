@@ -13,8 +13,8 @@ const DEFAULT_STILL_WINDOW_MS = 6_000
 
 /**
  * The span the centroid may wander inside that window and still count as
- * still, as a fraction of the subject: the x-span against the box WIDTH, the
- * y-span against its SHORT side.
+ * still, as a fraction of the subject's short side — and, for a flat box
+ * only, of its width sideways (see `withinStillSpan`).
  *
  * Measured on 102: the parked car's centroid band is 105 px on a 461x536 box —
  * 0.23 of its size. A car crossing the frame covers roughly 1.8 box widths in
@@ -22,12 +22,13 @@ const DEFAULT_STILL_WINDOW_MS = 6_000
  * by the subject means one number serves a 40 px person and a 461 px car
  * without a per-camera dial.
  *
- * Sideways against the width: on Retro (1441) a parked car's box is ~150x53
+ * The flat exception: on Retro (1441) a parked car's box is ~150x53
  * and the detector flips its width between ~102 and ~183 px, so the centre
  * swings ~20 px sideways — against a short-side bar of 18.5 px. Two windows in
  * three failed, each failure restarted the dwell, and the car never parked.
- * Vertically the short side stays the bar: judged against the height, a
- * 50x150 person whose centre swings 36 px while fidgeting read as still.
+ * Only flat boxes get it, and only sideways: judged per axis, a 50x150 person
+ * fidgeting 36 px up and down, or wandering 15 px right and 15 px down, read
+ * as still. For a box that is not flat the rule is exactly the circle.
  */
 export const DEFAULT_STILL_SPAN_FRACTION = 0.35
 
@@ -76,13 +77,14 @@ export interface SubjectSize {
   readonly h: number
 }
 
-/**
- * The scale the still span is measured in: the box WIDTH sideways, its SHORT
- * side vertically (see {@link withinStillSpan}).
- */
+/** The scale the still span is measured in (see {@link withinStillSpan}). */
 export interface StillScale {
-  readonly width: number
+  /** The short side the original circle is measured in, sized as it always was. */
   readonly shortSide: number
+  /** Median box width: decides flatness and is the flat box's sideways bar. */
+  readonly medianWidth: number
+  /** Median box height: decides flatness. */
+  readonly medianHeight: number
 }
 
 /** One centroid, the box size it came with, and when it was seen. */
@@ -116,13 +118,20 @@ interface ParkedTrackState {
 }
 
 /**
- * THE still rule: the x-span within `fraction` of the box WIDTH, the y-span
- * within `fraction` of its SHORT side. Only the sideways bar follows the
- * width, because the flicker that broke it is horizontal: a wide, flat car
- * (Retro 1441, ~150x53) whose width the detector flips swings its centre
- * sideways. Vertically nothing changed — a tall person's bars on both axes
- * are the short-side bar they always were, so a fidgeting person is not
- * called still. A subject with no measurable size is never still.
+ * THE still rule, used by the window, the split merge and the promotion's
+ * "moved" check.
+ *
+ * Still is the original circle — the span's hypot within `fraction` of the
+ * short side — OR, only for a FLAT box (median width > median height), the
+ * x-span within `fraction` of the median width with the y-span still within
+ * `fraction` of the short side. The exception exists for the flicker that
+ * broke the circle: a wide, flat car (Retro 1441, ~150x53) whose width the
+ * detector flips swings its centre ~20 px sideways, past 0.35 x 53.
+ *
+ * For a box that is not flat this is EXACTLY the original rule (pinned by
+ * `still-span.spec.ts`): a person wandering diagonally or fidgeting up and
+ * down gets no room the circle did not give. Size guards (a zero short side)
+ * stay with the callers, where the original code had them.
  */
 export function withinStillSpan(
   spanX: number,
@@ -130,8 +139,9 @@ export function withinStillSpan(
   scale: StillScale,
   fraction: number,
 ): boolean {
-  if (!(scale.width > 0) || !(scale.shortSide > 0)) return false
-  return spanX <= scale.width * fraction && spanY <= scale.shortSide * fraction
+  if (Math.hypot(spanX, spanY) <= scale.shortSide * fraction) return true
+  const flat = scale.medianWidth > scale.medianHeight
+  return flat && spanX <= scale.medianWidth * fraction && spanY <= scale.shortSide * fraction
 }
 
 function shortSideOf(size: SubjectSize): number {
@@ -311,14 +321,16 @@ export class StateAnalyzer {
    * `moving`.
    */
   private mergeContinuation(survivor: TrackState, live: TrackState): TrackState {
-    // The same rule as the window: travel across the gap sideways against the
-    // larger piece's width, vertically against its larger short side.
+    // The same rule as the window, sized by the larger of the two pieces: the
+    // original circle on the larger short side, plus the flat exception.
     const subject: StillScale = {
-      width: Math.max(survivor.lastSize.w, live.lastSize.w),
       shortSide: Math.max(shortSideOf(survivor.lastSize), shortSideOf(live.lastSize)),
+      medianWidth: Math.max(survivor.lastSize.w, live.lastSize.w),
+      medianHeight: Math.max(survivor.lastSize.h, live.lastSize.h),
     }
     const stillAcrossGap =
       survivor.stationarySince !== undefined &&
+      subject.shortSide > 0 &&
       withinStillSpan(
         Math.abs(live.lastPosition.x - survivor.lastPosition.x),
         Math.abs(live.lastPosition.y - survivor.lastPosition.y),
@@ -420,13 +432,12 @@ export class StateAnalyzer {
    *
    * The span is measured across the samples themselves (their bounding box),
    * not against any single reference point, so a slow drift is caught as
-   * surely as a jump. The x-span is compared to the subject's width, the
-   * y-span to its short side ({@link withinStillSpan}), so a 461 px car and a
-   * 40 px person get the same rule without a per-camera dial, and a wide flat
-   * box whose width breathes is not judged sideways against its height.
-   * The scale is the window's MEDIAN box, not the current one: on Retro (1441)
-   * one frame where the box shrank to its narrowest (102 of ~150 px) would
-   * otherwise fail the window and restart a dwell the car had already paid.
+   * surely as a jump. It is judged by {@link withinStillSpan}: the original
+   * circle on the CURRENT box's short side (so a 461 px car and a 40 px
+   * person get the same rule without a per-camera dial), plus, for a flat
+   * box, the x-span against the window's MEDIAN width — on Retro (1441) one
+   * frame where the box shrank to its narrowest (102 of ~150 px) must not
+   * fail the window and restart a dwell the car had already paid.
    *
    * `false` until the window is actually full — a track three frames old has
    * not yet earned the verdict, and unknown must never read as still.
@@ -445,9 +456,11 @@ export class StateAnalyzer {
       if (s.y > maxY) maxY = s.y
     }
     const scale: StillScale = {
-      width: median(ts.recent.map((s) => s.w)),
-      shortSide: median(ts.recent.map(shortSideOf)),
+      shortSide: shortSideOf(ts.lastSize),
+      medianWidth: median(ts.recent.map((s) => s.w)),
+      medianHeight: median(ts.recent.map((s) => s.h)),
     }
+    if (scale.shortSide <= 0) return false
     return withinStillSpan(maxX - minX, maxY - minY, scale, this.config.stillSpanFraction)
   }
 

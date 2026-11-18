@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- A parked car with a wide, flat box now settles as stationary and is never taken for one that drove off: stillness (the still window, a split track's continuation, and the moved check at promotion) judges sideways wander against the box width, from the median box rather than one narrow frame; vertical wander is still judged against the short side, so people are unchanged
+- A parked car with a wide, flat box now settles as stationary and is never taken for one that drove off: stillness (the still window, a split track's continuation, and the moved check at promotion) keeps the old rule and adds one exception for a flat box only: sideways wander within 0.35 of its median width is still, as long as vertical wander stays within 0.35 of its short side; any box that is not flat, people included, is judged exactly as before
 
 ## [1.2.715] - 2026-11-18
 

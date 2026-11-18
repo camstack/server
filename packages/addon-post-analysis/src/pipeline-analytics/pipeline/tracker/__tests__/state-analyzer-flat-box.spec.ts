@@ -11,22 +11,23 @@
  * and ~183 px, so the centre swings ~20 px sideways. The still window used to
  * judge that swing against 0.35 of the SHORT side (0.35 x 53 = 18.5 px): about
  * one window in three passed, every failing frame cleared `stationarySince`,
- * and the ten-second dwell restarted forever. With the x-span judged against
- * the WIDTH (the y-span still against the short side, as before) the same car
- * is still, while a car that crosses (about 1.8 widths per window), a walking
- * person and a person fidgeting in place are still `moving`.
+ * and the ten-second dwell restarted forever. The old circle stays the rule;
+ * a FLAT box (median width > median height) is also still when its x-span is
+ * within 0.35 of the median WIDTH and its y-span within 0.35 of the short
+ * side. So the same car is still, while a car that crosses (about 1.8 widths
+ * per window), a walking person, a person fidgeting in place and a person
+ * wandering diagonally are still `moving` (for a box that is not flat the
+ * rule is exactly the circle: `still-span.spec.ts`).
  *
  * Disarms (each alone, restored):
- *  - `windowSaysStill` back on `Math.hypot(spanX, spanY)` against the short
- *    side: the three recorded tracks go RED;
- *  - `windowSaysStill` sized by the CURRENT box instead of the window's median
- *    box: cpt7vv6emv goes RED (one 102 px frame restarts its dwell);
- *  - `mergeContinuation` back on the hypot of the gap travel against the
- *    larger short side: "merges: the width flipped across the gap" goes RED;
- *  - `windowSaysStill` judging the y-span against the median HEIGHT: the
- *    36 px and 20 px fidgeting persons go RED;
- *  - `windowSaysStill` judging the x-span against the median short side: the
- *    three recorded tracks go RED.
+ *  - no flat exception (`flat = false`): the three recorded tracks and
+ *    "merges: the width flipped across the gap" go RED;
+ *  - the flat exception for every box (drop the flatness condition): "a
+ *    person wandering diagonally" goes RED;
+ *  - the window's sideways bar from the CURRENT box width instead of the
+ *    window's median: cpt7vv6emv goes RED (one 102 px frame restarts its dwell);
+ *  - `mergeContinuation` on the circle alone: "merges: the width flipped
+ *    across the gap" goes RED.
  */
 import type { ObjectState } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
@@ -257,6 +258,18 @@ describe('StateAnalyzer — a tall subject keeps the short-side vertical bar', (
 
   it('a swing just over the short-side bar (20 px > 17.5) never settles', () => {
     const steps = replay('fidget-20', 'person', fidget(20))
+    expect(steps.filter((s) => isSettled(s.state))).toEqual([])
+  })
+
+  it('a person wandering diagonally (15 px right and 15 px down) never settles', () => {
+    // Each axis alone is inside 17.5 px; together the wander is 21.2 px. A
+    // tall box is judged on the old circle, so per-axis room cannot add up.
+    const boxes: RecordedBox[] = []
+    for (let at = 0; at <= 40_000; at += FRAME_MS) {
+      const k = Math.floor(at / 700) % 2
+      boxes.push([at, 1000 + 15 * k, 500 + 15 * k, 50, 150])
+    }
+    const steps = replay('diag-person', 'person', boxes)
     expect(steps.filter((s) => isSettled(s.state))).toEqual([])
   })
 

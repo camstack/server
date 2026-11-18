@@ -10,9 +10,9 @@
  * deletes a real passage:
  *  - the REFERENCE is the median centre of the first
  *    {@link PROMOTION_EARLY_BOXES} boxes, and the span is
- *    `DEFAULT_STILL_SPAN_FRACTION` × their median WIDTH sideways and × their
- *    median SHORT side vertically — the same subject-scaled stillness the
- *    state analyzer uses (D547, `withinStillSpan`), so one truncated first box
+ *    `DEFAULT_STILL_SPAN_FRACTION` × their median SHORT side, as a circle —
+ *    with, for a FLAT box only, the median WIDTH as the sideways bar: the same
+ *    rule the state analyzer uses (D547, `withinStillSpan`), so one truncated first box
  *    (startup, night→day, a car cut by the frame edge) moves neither the
  *    reference nor the scale, and a wide flat car whose width the detector
  *    flips (Retro 1441, ~150x53) is not judged sideways against its height;
@@ -26,7 +26,11 @@
  * indistinguishable, on the trail alone, from a truncated first box.
  */
 import type { BoundingBox } from '@camstack/types'
-import { DEFAULT_STILL_SPAN_FRACTION } from '../tracker/state-analyzer.js'
+import {
+  DEFAULT_STILL_SPAN_FRACTION,
+  type StillScale,
+  withinStillSpan,
+} from '../tracker/state-analyzer.js'
 import type { TrackDropReason } from '../tracker-v2/types.js'
 
 /** How many early boxes fix the reference position and scale. */
@@ -49,10 +53,8 @@ export function planFromMoved(moved: boolean): PromotionPlan {
 interface MovedReference {
   readonly x: number
   readonly y: number
-  /** Median early box width — the sideways scale. */
-  readonly width: number
-  /** Median early box short side — the vertical scale. */
-  readonly shortSide: number
+  /** The early boxes' median short side, median width and median height. */
+  readonly scale: StillScale
 }
 
 /** The running "has this track moved" judgement. Immutable: every step returns a new probe (or the same one when nothing changed). */
@@ -84,22 +86,25 @@ function referenceOf(boxes: readonly BoundingBox[]): MovedReference {
   return {
     x: median(boxes.map((b) => b.x + b.w / 2)),
     y: median(boxes.map((b) => b.y + b.h / 2)),
-    width: median(boxes.map((b) => b.w)),
-    shortSide: median(boxes.map((b) => Math.min(b.w, b.h))),
+    scale: {
+      shortSide: median(boxes.map((b) => Math.min(b.w, b.h))),
+      medianWidth: median(boxes.map((b) => b.w)),
+      medianHeight: median(boxes.map((b) => b.h)),
+    },
   }
 }
 
 /**
- * Beyond the span on EITHER axis. Spelled as the complement of
- * `withinStillSpan` but without its "no size is never still" clause: a
- * degenerate zero-size reference keeps the old reading (only a real
- * displacement is a move), because a false "moved" brings D547's rows back.
+ * Displaced = NOT still: outside the circle and, for a flat reference,
+ * outside the flat exception too. No size guard, as before: a degenerate
+ * zero-size reference counts only a real displacement as a move.
  */
 function displaced(ref: MovedReference, b: BoundingBox): boolean {
-  const f = DEFAULT_STILL_SPAN_FRACTION
-  return (
-    Math.abs(b.x + b.w / 2 - ref.x) > ref.width * f ||
-    Math.abs(b.y + b.h / 2 - ref.y) > ref.shortSide * f
+  return !withinStillSpan(
+    Math.abs(b.x + b.w / 2 - ref.x),
+    Math.abs(b.y + b.h / 2 - ref.y),
+    ref.scale,
+    DEFAULT_STILL_SPAN_FRACTION,
   )
 }
 

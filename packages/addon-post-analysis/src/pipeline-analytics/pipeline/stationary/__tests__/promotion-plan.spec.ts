@@ -4,8 +4,9 @@
  * still be linked; one that never moved is D547's disposal, as today.
  *
  * "Moved" (fix round 1, review M1) is judged against a ROBUST reference — the
- * median centre of the first {@link PROMOTION_EARLY_BOXES} boxes, scaled by
- * their median width sideways and their median short side vertically — and
+ * median centre of the first {@link PROMOTION_EARLY_BOXES} boxes, judged by
+ * `withinStillSpan` (the circle on their median short side, plus the median
+ * width sideways for a flat box) — and
  * only a SUSTAINED displacement counts:
  * {@link PROMOTION_SUSTAINED_BOXES} consecutive boxes beyond the span. One
  * truncated first box or one stray box is not a move.
@@ -14,10 +15,8 @@
  *  - make `planPromotion` always answer "moved": "a subject that was standing there from its first box is disposed" fails;
  *  - make it always answer "never moved": "a subject that walked to its seat keeps its track" fails;
  *  - measure the span against a constant 50 px instead of the box: "the stillness span scales with the subject" fails;
- *  - x against the median HEIGHT: "sideways is judged against the WIDTH" fails;
- *  - x against the median SHORT side (the old rule's sideways bar):
- *    "a flat car whose box stays wide for a while never moved" fails;
- *  - y against the median HEIGHT: "down the frame is judged against the SHORT side" fails;
+ *  - no flat exception (the circle alone), or its sideways bar on the median
+ *    HEIGHT: "a flat car whose box stays wide for a while never moved" fails;
  *  - reference = the first box alone (no median): "a parked car whose first box was cut by the frame edge never moved" fails;
  *  - sustain = 1 box: "one stray box is not a move" fails;
  *  - judge the NET displacement (only the final boxes against the reference):
@@ -67,14 +66,14 @@ describe('planPromotion', () => {
     expect(planPromotion(seat)).toEqual(NEVER_MOVED)
   })
 
-  it('sideways is judged against the WIDTH', () => {
+  it('a tall subject stepping sideways is judged against its short side, not its height', () => {
     // A 40×200 standing person who steps 30 px sideways moved: 30 > 0.35 × 40
     // = 14, though 30 < 0.35 × 200 = 70 (the height) would call it jitter.
     const person = [...repeat(box(500, 300, 40, 200), 5), ...repeat(box(530, 300, 40, 200), 5)]
     expect(planPromotion(person)).toEqual(MOVED)
   })
 
-  it('down the frame is judged against the SHORT side', () => {
+  it('a tall subject stepping down is judged against its short side, not its height', () => {
     // The same 40×200 person steps 30 px DOWN: 30 > 0.35 × 40 = 14 moved,
     // though 30 < 0.35 × 200 = 70 (the height) would call it jitter.
     const person = [...repeat(box(500, 300, 40, 200), 5), ...repeat(box(500, 330, 40, 200), 5)]
