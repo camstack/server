@@ -189,7 +189,7 @@ export interface WorkloadGauge {
   readonly percent: number | null
   /** "23%", or the dash when not reported. */
   readonly text: string
-  /** "6.0 GB / 8.0 GB" when both amounts are reported; null otherwise. */
+  /** "6.0 GB / 8.0 GB", or "6.0 GB" when only the amount used is reported; null otherwise. */
   readonly detail: string | null
 }
 
@@ -219,8 +219,13 @@ export function workloadGauges(
       label: t('uiLibrary.deviceCard.workload.ram', 'RAM'),
       percent: memory,
       text: text(memory),
+      // Bytes used without a total is still a reading: shown, never dropped (D393).
       detail:
-        used !== null && total !== null ? `${formatBytes(used)} / ${formatBytes(total)}` : null,
+        used === null
+          ? null
+          : total === null
+            ? formatBytes(used)
+            : `${formatBytes(used)} / ${formatBytes(total)}`,
     },
   ]
 }

@@ -173,6 +173,11 @@ describe('workload model', () => {
     expect(reported).toMatchObject({ percent: 41, text: '41%', detail: null })
   })
 
+  it('keeps the bytes used when no total or percent is reported: a reading, not a dash (D393)', () => {
+    const [, memory] = workloadGauges({ ...NO_RESOURCES, memoryUsedBytes: 6 * 1024 ** 3 }, t)
+    expect(memory).toMatchObject({ percent: null, text: '—', detail: '6.0 GB' })
+  })
+
   it('keeps CPU and memory out of the stats under the gauges', () => {
     const stats = workloadExtraStats(
       { ...NO_RESOURCES, cpuPercent: 5, memoryPercent: 10, vcpus: 4, netRxKbps: 10 },
