@@ -21,6 +21,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The AMD iGPU (WebGPU) column header now names the model the runner actually defaults to (yolov9t-320)
 - Serves viewer 1.0.726
 
+### Fixed
+
+- A step switch re-attaches only the cameras whose pipeline changed, and a camera whose detection root is switched off on its device is re-elected instead of left running nothing
+
 ## [1.2.702] - 2026-11-18
 
 ### Changed

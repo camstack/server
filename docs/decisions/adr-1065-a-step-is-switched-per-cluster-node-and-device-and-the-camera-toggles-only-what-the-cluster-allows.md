@@ -61,14 +61,19 @@ steps on or off, but within what the cluster mode allows.
 
 - A switch change re-resolves every placed camera on the affected node (all
   nodes for a cluster switch) through `resolveAttachPipeline` on its elected
-  device and re-attaches it; a camera whose root would be refused keeps its
-  live attach and logs an error.
+  device, and only the affected cameras re-attach: one whose steps, audio,
+  device or roster differ from its cached attach. The rest keep their live
+  attach, and one summary line gives the counts (changed, unchanged). A camera
+  whose root would be refused keeps its live attach and logs an error.
 - The election never elects a device the camera root (`object-detection`) is
   switched off on — by the cluster, its node or the device itself
   (`makeRootSwitchGuard`, the same `gateStep` plus the device switch). The
   device is reported `root-switched-off` and does not suppress the CPU
-  fallback. A switch change re-resolves placed cameras on their current
-  device; the re-election happens at the next placement.
+  fallback. When a switch takes the root away from the device a camera is
+  elected on, the camera is re-elected right away through the same election
+  (root-off re-elects): it moves to an allowed device, or the default pool.
+  When no device can host the root a warn with the camera's `deviceId` tag
+  names the reason.
 - A default-pool attach (no elected device) obeys the device switches of the
   device(s) the pool may be (`poolDisabledSteps`): the eligible devices, or,
   with none eligible, every enabled device. A step is skipped only when all of
@@ -85,5 +90,7 @@ Specs: `pipeline-resolver.spec.ts` (precedence and reasons),
 path), `step-switch-matrix.spec.ts` (inspector cells, `opt-in-unused`,
 audio never format-gated), `device-jump.spec.ts` and `detail-subtree.spec.ts`
 (the runner never runs a switched-off subtree), `election-root-switch.spec.ts`
-(the election and the device view), `resolve-pipeline-preview.spec.ts` (the
+(the election and the device view), `step-switch-reattach.spec.ts` (the
+three setters through the addon: only affected cameras re-attach, root-off
+re-elects), `resolve-pipeline-preview.spec.ts` (the
 preview goes through placement). No guard.
