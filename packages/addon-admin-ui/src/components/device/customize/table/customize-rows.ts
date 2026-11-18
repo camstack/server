@@ -188,11 +188,17 @@ export interface ScalarRowOffers {
   readonly linkToggle: boolean
 }
 
-export function scalarRowOffers(row: {
+/** The facts about a scalar row that decide its offers. */
+export interface ScalarRowState {
+  /** The link that stamped the row's feature, or null for an operator assignment. */
   readonly linkStamp: string | null
+  /** The stored feature is a source link the dialog can edit. */
   readonly recognized: boolean
+  /** Something is stored for the target but it is another formula (Advanced owns it). */
   readonly otherFormula: boolean
-}): ScalarRowOffers {
+}
+
+export function scalarRowOffers(row: ScalarRowState): ScalarRowOffers {
   const assigned = row.recognized || row.otherFormula
   return { remove: assigned && row.linkStamp === null, linkToggle: row.linkStamp !== null }
 }
