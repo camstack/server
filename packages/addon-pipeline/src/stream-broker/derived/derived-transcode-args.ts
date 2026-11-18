@@ -100,8 +100,9 @@ const DERIVED_DEFAULT_TUNE = 'zerolatency'
  * The bit density a derived tier is capped at, expressed as the shared
  * live-egress profile it is scaled from: `BASE_LIVE_EGRESS_PROFILE` spends
  * 2500 kbps on 1280x720 at 25 fps. Scaling that per pixel-per-second gives
- * 625 kbps at 640x360@25 — and a 10 s segment of 625 kbps is ~780 KB, half of
- * the scrub's 1.5 MB whole-segment ceiling (D163).
+ * 625 kbps at 640x360@25 — and a 10 s segment of 625 kbps is ~780 KB, well
+ * inside the scrub's whole-segment ceiling (D163: 4 MB hard cap,
+ * `scrubWholeSegmentCeilingBytes`; it was 1.5 MB when this was tuned).
  */
 const DERIVED_BITRATE_REFERENCE_KBPS = 2500
 const DERIVED_BITRATE_REFERENCE_PIXELS_PER_SECOND = 1280 * 720 * 25
@@ -318,8 +319,8 @@ function derivedBitrateCeilingKbps(video: VideoEncode): number | undefined {
  *
  * - **Bitrate.** A CEILING (`-maxrate`, no `-b:v` — see `buildRateControlArgs`,
  *   whose default rate control is `cap`), because a derived tier is RECORDED
- *   and the scrub reads a `low` segment whole only while it is under 1.5 MB
- *   (D163). Uncapped CRF has no relationship to that ceiling: 1438/low
+ *   and the scrub reads a `low` segment whole only while it is under its
+ *   ceiling (D163: 4 MB hard cap today, 1.5 MB when this was measured). Uncapped CRF has no relationship to that ceiling: 1438/low
  *   measured 537–941 kbps at 640x360@25 against 142 kbps for camera 101's
  *   NATIVE low at the identical geometry, peaking at 1.19 MB in a 10 s
  *   segment. Quiet scenes still spend less than the cap.

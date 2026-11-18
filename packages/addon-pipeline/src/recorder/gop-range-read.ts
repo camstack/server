@@ -34,7 +34,7 @@ import {
  * {@link GopRangeArgs.maxBytes}.
  *
  * This was the same number as the feeder's whole-segment ceiling (D163,
- * 1.5 MB). That ceiling is now derived from the session cache budget
+ * 1.5 MB). That ceiling is now a 4 MB hard cap, lowered only by a smaller cache budget
  * (`scrubWholeSegmentCeilingBytes`, `stream-broker/recorded/scrub-read-budget.ts`);
  * this one stays a fixed bound on ONE fallback range read, declared here
  * because the recorder must not import the client feeder's graph.

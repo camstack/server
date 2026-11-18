@@ -3,6 +3,7 @@ import { RecordedFeeder } from '../recorded-feeder'
 import { ScrubFragmentCache } from '../scrub-fragment-cache'
 import {
   SCRUB_WHOLE_SEGMENT_HARD_MAX_BYTES,
+  scrubWarmBackwardByteShare,
   scrubWholeSegmentCeilingBytes,
 } from '../scrub-read-budget'
 
@@ -125,6 +126,32 @@ describe('scrub read unit scales with the stream', () => {
     expect(scrubWholeSegmentCeilingBytes(1024 * 1024 * 1024)).toBe(
       SCRUB_WHOLE_SEGMENT_HARD_MAX_BYTES,
     )
+  })
+
+  it('a fat stream warms BOTH sides of the cursor — backward cannot spend the forward share', async () => {
+    const budget = 30 * 1024 * 1024
+    const h = harness(FAT_SEG_BYTES, new ScrubFragmentCache(budget))
+    const feeder = new RecordedFeeder(h.deps)
+    feeder.setRate(0)
+    const T = 3_600_000
+    await feeder.seek(T)
+    await until(() => linesOf(h.logs, 'scrub-feeder:warm-done').length > 0)
+    feeder.dispose()
+
+    const before = h.reads.filter((s) => s < segStart(T)).length
+    const after = h.reads.filter((s) => s > segStart(T)).length
+    // A seek warms ±15 min symmetrically, so the byte budget splits evenly:
+    // each side gets several segments, neither gets all of them.
+    expect(before).toBeGreaterThan(1)
+    expect(after).toBeGreaterThan(1)
+    expect(h.cache.covering('low', T + SEG_MS)).toBeTruthy()
+    expect(h.cache.covering('low', T - SEG_MS)).toBeTruthy()
+  })
+
+  it('the backward walk gets the fill budget in proportion to its span', () => {
+    expect(scrubWarmBackwardByteShare(40, 15, 15)).toBe(20)
+    expect(scrubWarmBackwardByteShare(40, 15, 5)).toBe(30)
+    expect(scrubWarmBackwardByteShare(40, 0, 0)).toBe(0)
   })
 
   it('the warm walk spends at most the cache budget per fill, so memory stays bounded', async () => {

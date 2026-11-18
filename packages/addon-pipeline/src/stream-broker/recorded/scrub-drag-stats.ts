@@ -200,7 +200,7 @@ export type ScrubDragLogFields = {
   readonly leadMsMax: number | null
   /** Reads that had to degrade from the whole-segment unit to a GOP range
    *  because the `low` segment was over the byte ceiling. Non-zero means the
-   *  segment outgrew the budget-derived ceiling — see
+   *  segment outgrew the ceiling (4 MB hard cap) — see
    *  `scrubWholeSegmentCeilingBytes` in `scrub-read-budget.ts`. */
   readonly oversizeSegments: number
   /** The profile this drag actually ran on when it is NOT the scrub profile,

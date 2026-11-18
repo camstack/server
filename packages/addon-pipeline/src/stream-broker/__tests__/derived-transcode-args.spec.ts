@@ -249,7 +249,7 @@ describe('buildDerivedTranscodeArgs — the carrier pins the latency shape', () 
 
 /**
  * A derived tier is RECORDED, and the scrub reads a `low` segment whole only
- * while it is under the scrub read ceiling (1.5 MB then, budget-derived
+ * while it is under the scrub read ceiling (1.5 MB then, a 4 MB hard cap
  * now: `scrubWholeSegmentCeilingBytes` — D163). An
  * uncapped CRF encode has no relationship to that ceiling at all.
  *
