@@ -27,7 +27,10 @@ run-name: "Release ${{ inputs.publish_release && 'publish' || inputs.version_typ
 #   ── Docker image on GHCR (accel-prefixed tags, no bare :latest) ──────
 #     ghcr.io/<owner>/camstack:{intel-X.Y.Z, intel-latest}   (linux/amd64)
 #     ghcr.io/<owner>/camstack:{amd-X.Y.Z, amd-latest}       (linux/amd64)
-#     (`intel` / `amd` are Dockerfile --target names; more accels = matrix rows)
+#     ghcr.io/<owner>/camstack:{intel-legacy-X.Y.Z, intel-legacy-latest}   (Gen8-11 iGPU)
+#     ghcr.io/<owner>/camstack:{nvidia-X.Y.Z, nvidia-latest}               (Turing+ / sm_75+)
+#     ghcr.io/<owner>/camstack:{nvidia-legacy-X.Y.Z, nvidia-legacy-latest} (Pascal/Maxwell)
+#     (`intel` / `amd` / `intel-legacy` / `nvidia` / `nvidia-legacy` are Dockerfile --target names; more accels = matrix rows)
 #     (multi_arch=true workflow_dispatch input adds linux/arm64 via QEMU)
 #
 #   ── Desktop installers ───────────────────────────────────────────────
@@ -280,9 +283,13 @@ jobs:
             echo "docker pull ${IMG}:intel-${VERSION}   # or :intel-latest (moving)"
             echo "# AMD Mesa VA/Vulkan (Proxmox / AMD APU hosts)"
             echo "docker pull ${IMG}:amd-${VERSION}     # or :amd-latest (moving)"
+            echo "# Intel Gen8-Gen11 iGPU (UHD 6xx, Jasper Lake)"
+            echo "docker pull ${IMG}:intel-legacy-${VERSION}"
+            echo "# NVIDIA Turing+ (RTX 20/30/40/50, GTX 16) / Pascal-Maxwell (GTX 10/9) — NVIDIA Container Toolkit required"
+            echo "docker pull ${IMG}:nvidia-${VERSION}   # or :nvidia-legacy-${VERSION}"
             echo '```'
             echo ""
-            echo "Tags are accel-prefixed (\`intel-*\`, \`amd-*\`) — no bare \`:latest\`. linux/amd64 only by default. Re-run with \`multi_arch: true\` for linux/arm64."
+            echo "Tags are accel-prefixed (\`intel-*\`, \`intel-legacy-*\`, \`amd-*\`, \`nvidia-*\`, \`nvidia-legacy-*\`) — no bare \`:latest\`. linux/amd64 only by default. Re-run with \`multi_arch: true\` for linux/arm64."
             echo ""
             echo "### 💻 Desktop installers"
             echo ""
@@ -343,6 +350,27 @@ jobs:
             image: camstack
             title: CamStack (AMD)
             description: CamStack node (AMD Mesa VA/Vulkan) — hub or agent via CAMSTACK_ROLE
+          - accel: intel-legacy
+            runner: ci-release
+            dockerfile: Dockerfile
+            target: intel-legacy
+            image: camstack
+            title: CamStack (Intel legacy)
+            description: CamStack node (Intel Gen8-Gen11 iGPU, legacy compute runtime) — hub or agent via CAMSTACK_ROLE
+          - accel: nvidia
+            runner: ci-release
+            dockerfile: Dockerfile
+            target: nvidia
+            image: camstack
+            title: CamStack (NVIDIA)
+            description: CamStack node (NVIDIA Turing and newer, CUDA 12) — needs the NVIDIA Container Toolkit
+          - accel: nvidia-legacy
+            runner: ci-release
+            dockerfile: Dockerfile
+            target: nvidia-legacy
+            image: camstack
+            title: CamStack (NVIDIA legacy)
+            description: CamStack node (NVIDIA Pascal/Maxwell, CUDA 11.8) — needs the NVIDIA Container Toolkit
     runs-on: [self-hosted, linux, x64, docker, "${{ matrix.runner }}"]
     # docker/build-push-action@v6 uploads a "build summary" record as a GitHub
     # Actions artifact by default. We don't use it (images go to GHCR; the

@@ -571,6 +571,153 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     test -e /usr/lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so && \
     sh /usr/local/bin/camstack-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/radeonsi_drv_video.so
 
+# NOTE: `intel` below stays the LAST stage on purpose — a bare
+# `docker build .` builds the last stage, and that must remain the Intel image.
+# Every new variant goes ABOVE it.
+
+# ── Final: Intel legacy (Gen8–Gen11 iGPU: UHD 6xx, Jasper Lake, Coffee Lake) ──
+# Build: docker build --target intel-legacy -t ghcr.io/camstack/camstack:intel-legacy-local .
+# Intel's current compute runtime (25.x) dropped Gen8–Gen11; those iGPUs are
+# served by the `legacy1` line (24.35, the last to support them), published only
+# as GitHub release assets — Intel's `noble unified` apt repo carries NO legacy1
+# package (checked 2026-11-18). The legacy ICD files are suffixed
+# (`intel_legacy1.icd`, `libigdrcl_legacy1.so`), so it does NOT file-conflict
+# with intel-opencl-icd; the IGC it needs installs to /usr/local/lib. Folding it
+# into the `intel` image was therefore possible, but unproven at runtime and it
+# would add ~120 MB (IGC 1.0.17537) to every Intel/Arc image, so it is a variant.
+# Media (VAAPI) is the same iHD pin as `intel`: the iHD driver still serves
+# Gen9+, and the ABI check below refuses a pair that does not load.
+# No NPU driver: Gen8–11 parts have none.
+FROM runtime-common AS intel-legacy
+LABEL org.opencontainers.image.variant="intel-legacy"
+ARG LIBVA_VERSION=2.22.0.2-96~u24.04
+ARG VAINFO_VERSION=2.22.0.2-1~u24.04
+ARG IHD_VERSION=25.2.4-1146~24.04
+ARG NEO_LEGACY_VERSION=24.35.30872.36
+ARG NEO_LEGACY_ZE_VERSION=1.5.30872.36
+ARG IGC_LEGACY_VERSION=1.0.17537.24
+ARG GMM_LEGACY_VERSION=22.5.0
+ARG NEO_LEGACY_BASE=https://github.com/intel/compute-runtime/releases/download/${NEO_LEGACY_VERSION}
+ARG IGC_LEGACY_BASE=https://github.com/intel/intel-graphics-compiler/releases/download/igc-${IGC_LEGACY_VERSION}
+# sha256 as published in the GitHub release metadata of each asset.
+ARG SHA_NEO_ICD=bbe71e4f414259e06a10cde72c29a2bd78d41b2bb2f6f8463b1806797fe66e85
+ARG SHA_NEO_ZE=40dfbd15ab62de036a00824b304a2aa1fa2d81ad60ef83da09cfe3c5a80c429f
+ARG SHA_GMM=cc29d14df83cff1b3c6a66baa39257f0211b168ab43a99c2dc62a3734431bc23
+ARG SHA_IGC_CORE=c1e1ecdfe2064c047c552651cfdcdafc504f2033afafba65654338b880048b67
+ARG SHA_IGC_OCL=dd016400f87fa2b6a9fa9fbcca7eb4a2629174a29de679709f9bec5cede88b0e
+RUN curl -fsSL https://repositories.intel.com/gpu/intel-graphics.key \
+      | gpg --dearmor -o /usr/share/keyrings/intel-graphics.gpg && \
+    echo "deb [arch=amd64 signed-by=/usr/share/keyrings/intel-graphics.gpg] https://repositories.intel.com/gpu/ubuntu noble unified" \
+      > /etc/apt/sources.list.d/intel-gpu-noble.list && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      "intel-media-va-driver-non-free=${IHD_VERSION}" \
+      "libva2=${LIBVA_VERSION}" "libva-drm2=${LIBVA_VERSION}" \
+      "libva-x11-2=${LIBVA_VERSION}" "libva-wayland2=${LIBVA_VERSION}" \
+      "vainfo=${VAINFO_VERSION}" ocl-icd-libopencl1 && \
+    sh /usr/local/bin/camstack-check-libva-abi.sh /usr/lib/x86_64-linux-gnu/dri/iHD_drv_video.so && \
+    mkdir -p /tmp/neo-legacy && cd /tmp/neo-legacy && \
+    curl -fsSL -o igc-core.deb   "${IGC_LEGACY_BASE}/intel-igc-core_${IGC_LEGACY_VERSION}_amd64.deb" && \
+    curl -fsSL -o igc-opencl.deb "${IGC_LEGACY_BASE}/intel-igc-opencl_${IGC_LEGACY_VERSION}_amd64.deb" && \
+    curl -fsSL -o gmmlib.deb     "${NEO_LEGACY_BASE}/libigdgmm12_${GMM_LEGACY_VERSION}_amd64.deb" && \
+    curl -fsSL -o neo-icd.deb    "${NEO_LEGACY_BASE}/intel-opencl-icd-legacy1_${NEO_LEGACY_VERSION}_amd64.deb" && \
+    curl -fsSL -o neo-ze.deb     "${NEO_LEGACY_BASE}/intel-level-zero-gpu-legacy1_${NEO_LEGACY_ZE_VERSION}_amd64.deb" && \
+    echo "${SHA_IGC_CORE}  igc-core.deb"   >  sums && echo "${SHA_IGC_OCL}  igc-opencl.deb" >> sums && \
+    echo "${SHA_GMM}  gmmlib.deb"           >> sums && echo "${SHA_NEO_ICD}  neo-icd.deb"    >> sums && \
+    echo "${SHA_NEO_ZE}  neo-ze.deb"        >> sums && sha256sum -c sums && \
+    apt-get install -y --no-install-recommends \
+      ./gmmlib.deb ./igc-core.deb ./igc-opencl.deb ./neo-icd.deb ./neo-ze.deb && \
+    ldconfig && \
+    test -e /etc/OpenCL/vendors/intel_legacy1.icd && \
+    test -e /usr/lib/x86_64-linux-gnu/intel-opencl/libigdrcl_legacy1.so && \
+    cd / && rm -rf /tmp/neo-legacy /var/lib/apt/lists/*
+ENV LIBVA_DRIVER_NAME=iHD
+
+# ── Final: NVIDIA (Turing and newer, sm_75+: RTX 20/30/40/50, GTX 16) ─────────
+# Build: docker build --target nvidia -t ghcr.io/camstack/camstack:nvidia-local .
+# Run:   needs the NVIDIA Container Toolkit on the host (`--gpus all` /
+#        `--runtime=nvidia`): the toolkit injects the DRIVER (libcuda,
+#        nvidia-smi) from the host, so the image carries only the CUDA 12.8
+#        runtime libraries and cuDNN 9 that onnxruntime-gpu 1.21–1.26 links
+#        (the CUDA-12.8 wheels; 1.27+ default to CUDA 13). CUDA 12.x runs on any
+#        driver >= 525 by minor-version compatibility; Turing (sm_75) is
+#        supported by every CUDA 12 / cuDNN 9 build.
+# The libraries are the NVIDIA apt repo's runtime packages, not the toolkit:
+# no nvcc, no headers.
+FROM runtime-common AS nvidia
+LABEL org.opencontainers.image.variant="nvidia" \
+      io.camstack.cuda="12.8" io.camstack.cudnn="9" \
+      io.camstack.onnxruntime-gpu=">=1.21,<1.27"
+ARG CUDA_KEYRING_URL=https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb
+RUN curl -fsSL -o /tmp/cuda-keyring.deb "${CUDA_KEYRING_URL}" && \
+    dpkg -i /tmp/cuda-keyring.deb && rm /tmp/cuda-keyring.deb && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      cuda-cudart-12-8 libcublas-12-8 libcufft-12-8 libcurand-12-8 libcudnn9-cuda-12 && \
+    ldconfig && \
+    for l in libcudart.so.12 libcublas.so.12 libcublasLt.so.12 libcufft.so.11 libcurand.so.10 libcudnn.so.9; do \
+      ldconfig -p | grep -q "$l" || { echo "missing $l"; exit 1; }; done && \
+    rm -rf /var/lib/apt/lists/*
+ARG ORT_GPU_SPEC="onnxruntime-gpu>=1.21,<1.27"
+# Wheelhouse, not an install: the pipeline's Python env is a venv created under
+# /data at runtime, so a wheel baked into the system Python would be invisible
+# to it. The wheels (and their pure-Python deps) are downloaded here, offline
+# installable with `pip install --no-index --find-links $CAMSTACK_ORT_WHEELHOUSE`.
+# The build refuses a wheel whose CUDA provider does not link the CUDA major
+# this image ships (libcudart.so.12 / libcudnn.so.9).
+RUN apt-get update && apt-get install -y --no-install-recommends python3-venv && \
+    python3 -m venv /tmp/whvenv && \
+    /tmp/whvenv/bin/pip download --no-cache-dir -q -d /opt/camstack/wheelhouse "${ORT_GPU_SPEC}" && \
+    ls /opt/camstack/wheelhouse | grep -q '^onnxruntime_gpu-' && \
+    mkdir /tmp/ortchk && cd /tmp/ortchk && unzip -q /opt/camstack/wheelhouse/onnxruntime_gpu-*.whl 'onnxruntime/capi/libonnxruntime_providers_cuda.so' && \
+    grep -aq 'libcudart.so.12' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
+    grep -aq 'libcudnn.so.9' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
+    cd / && rm -rf /tmp/whvenv /tmp/ortchk /var/lib/apt/lists/*
+ENV CAMSTACK_ORT_WHEELHOUSE=/opt/camstack/wheelhouse
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+
+# ── Final: NVIDIA legacy (Pascal GTX 10 / Maxwell GTX 9, sm_50–sm_61) ─────────
+# Build: docker build --target nvidia-legacy -t ghcr.io/camstack/camstack:nvidia-legacy-local .
+# CUDA 13 dropped Maxwell/Pascal/Volta offline compilation, and ORT 1.27+
+# defaults to CUDA 13; the CUDA-12.8/cuDNN-9 wheels have been reported to need
+# compute capability 7.0. The last line that is documented for these cards is
+# the CUDA 11.8 / cuDNN 8 build of onnxruntime-gpu (<= 1.18), so this image
+# carries CUDA 11.8 + cuDNN 8.9. NVIDIA publishes 11.8 only in its ubuntu2204
+# repo; the runtime libraries are glibc-only and load on 24.04.
+# UNVERIFIED on hardware: see docs/architecture/deploying.md.
+FROM runtime-common AS nvidia-legacy
+LABEL org.opencontainers.image.variant="nvidia-legacy" \
+      io.camstack.cuda="11.8" io.camstack.cudnn="8" \
+      io.camstack.onnxruntime-gpu="==1.18.*"
+ARG CUDA_KEYRING_URL=https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2204/x86_64/cuda-keyring_1.1-1_all.deb
+RUN curl -fsSL -o /tmp/cuda-keyring.deb "${CUDA_KEYRING_URL}" && \
+    dpkg -i /tmp/cuda-keyring.deb && rm /tmp/cuda-keyring.deb && \
+    apt-get update && apt-get install -y --no-install-recommends \
+      cuda-cudart-11-8 libcublas-11-8 libcufft-11-8 libcurand-11-8 \
+      "libcudnn8=8.9.7.29-1+cuda11.8" && \
+    ldconfig && \
+    for l in libcudart.so.11.0 libcublas.so.11 libcublasLt.so.11 libcufft.so.10 libcurand.so.10 libcudnn.so.8; do \
+      ldconfig -p | grep -q "$l" || { echo "missing $l"; exit 1; }; done && \
+    rm -rf /var/lib/apt/lists/*
+ARG ORT_GPU_SPEC="onnxruntime-gpu==1.18.1"
+# Wheelhouse, not an install: the pipeline's Python env is a venv created under
+# /data at runtime, so a wheel baked into the system Python would be invisible
+# to it. The wheels (and their pure-Python deps) are downloaded here, offline
+# installable with `pip install --no-index --find-links $CAMSTACK_ORT_WHEELHOUSE`.
+# The build refuses a wheel whose CUDA provider does not link the CUDA major
+# this image ships (libcudart.so.11.0 / libcudnn.so.8).
+RUN apt-get update && apt-get install -y --no-install-recommends python3-venv && \
+    python3 -m venv /tmp/whvenv && \
+    /tmp/whvenv/bin/pip download --no-cache-dir -q -d /opt/camstack/wheelhouse 'numpy<2' "${ORT_GPU_SPEC}" && \
+    ls /opt/camstack/wheelhouse | grep -q '^onnxruntime_gpu-' && \
+    mkdir /tmp/ortchk && cd /tmp/ortchk && unzip -q /opt/camstack/wheelhouse/onnxruntime_gpu-*.whl 'onnxruntime/capi/libonnxruntime_providers_cuda.so' && \
+    grep -aq 'libcudart.so.11.0' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
+    grep -aq 'libcudnn.so.8' onnxruntime/capi/libonnxruntime_providers_cuda.so && \
+    cd / && rm -rf /tmp/whvenv /tmp/ortchk /var/lib/apt/lists/*
+ENV CAMSTACK_ORT_WHEELHOUSE=/opt/camstack/wheelhouse
+ENV NVIDIA_VISIBLE_DEVICES=all \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility,video
+
 # ── Final: Intel (default target — last stage) ───────────────────────────────
 # Build: docker build --target intel …  (or omit --target)
 FROM runtime-common AS intel

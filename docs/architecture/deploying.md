@@ -34,9 +34,36 @@ hub plus any number of agents, and an agent exists to put a second machine's
 GPU, NPU or Coral to work.
 
 There is no bare `:latest`. The release workflow publishes accel-prefixed tags
-from one Dockerfile (`--target intel` / `--target amd`): `intel-<version>`,
-`intel-latest`, `amd-<version>`, `amd-latest`. Unraid templates track
-`intel-latest`; Proxmox / AMD APU hosts use `amd-latest`.
+from one Dockerfile (`--target intel` / `amd` / `intel-legacy` / `nvidia` /
+`nvidia-legacy`): `<accel>-<version>` and `<accel>-latest`. Unraid templates
+track `intel-latest`; Proxmox / AMD APU hosts use `amd-latest`.
+
+### Which tag for which GPU
+
+| Your GPU | Tag | Notes |
+| --- | --- | --- |
+| Intel Gen12+ iGPU (Alder Lake, N-series, Core Ultra), Arc, Intel NPU | `intel-*` | current compute runtime (25.x) + NPU driver |
+| Intel Gen8-Gen11 iGPU (UHD 6xx, Coffee Lake, Jasper Lake, Ice Lake) | `intel-legacy-*` | compute runtime 24.35 (`legacy1`, the last to support these); no NPU driver |
+| AMD APU / GPU | `amd-*` | Mesa VA + Vulkan |
+| NVIDIA Turing or newer (RTX 20/30/40/50, GTX 16; compute capability >= 7.5) | `nvidia-*` | CUDA 12.8 + cuDNN 9, `onnxruntime-gpu` 1.21-1.26 wheelhouse |
+| NVIDIA Pascal / Maxwell (GTX 10 / 9; compute capability 5.0-6.1) | `nvidia-legacy-*` | CUDA 11.8 + cuDNN 8, `onnxruntime-gpu` 1.18.1 wheelhouse |
+| None, or a GPU the image's runtime cannot enumerate | any, e.g. `amd-*` | the node reports `no-gpu-device` and the CPU serves |
+
+Both NVIDIA images need the host's NVIDIA driver and the NVIDIA Container
+Toolkit (`--gpus all`, or `--runtime=nvidia`): the toolkit injects `libcuda`
+and `nvidia-smi`; the image carries only the CUDA runtime libraries and cuDNN.
+Wheels are baked as a **wheelhouse** at `$CAMSTACK_ORT_WHEELHOUSE`
+(`/opt/camstack/wheelhouse`), not installed: the pipeline's Python env is a venv
+under `/data` that a system-level install would not reach. The build refuses a
+wheel whose CUDA provider does not link the CUDA major the image ships.
+
+!!! warning "State of the NVIDIA images"
+
+    The images provide the stack; the pipeline does not yet install the wheel
+    or bind the CUDA execution provider (issue #605), and neither NVIDIA image
+    has been run on a card. `nvidia-legacy` rests on third-party reports that
+    CUDA 12 / cuDNN 9 `onnxruntime-gpu` builds need compute capability 7.0;
+    CUDA 13 (`onnxruntime-gpu` 1.27+ default) dropped Maxwell/Pascal/Volta.
 
 ## Docker Compose
 
