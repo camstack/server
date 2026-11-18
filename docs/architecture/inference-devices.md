@@ -740,6 +740,14 @@ and look merely quiet.
   in a `@camstack/server` release. Without that, the node keeps the old file
   while the catalog, the logs and the version all say it was updated. A
   running pool keeps the model it already loaded until it reloads it.
+- **An NVIDIA GPU yields a `cuda:gpu` device that runs on the CPU.**
+  `scoreRuntimes` scores `cuda` whenever the probe sees `gpu.type: 'nvidia'`,
+  but no image ships `onnxruntime-gpu`, so `_resolve_onnx_providers` drops the
+  CUDA provider and the session binds `CPUExecutionProvider`. Since 2026-11-18
+  the pool's `ONNX: execution provider` line says `device=` from the provider
+  the session BOUND (`device=cpu, asked=gpu`), not the configured device; until
+  then it read `device=gpu` on a CPU-only pool. NVIDIA is not supported yet:
+  the install docs and `camstack host-check` say so and point at the Intel iGPU.
 - **`hasGpu` on `RunnerLocalLoad` is literal** — an NPU or a Coral is not a GPU.
   The per-accelerator truth is `RunnerLocalLoad.devices`. It was a hardcoded
   `false` until 2026-07-31 and the admin UI drew a badge from it.

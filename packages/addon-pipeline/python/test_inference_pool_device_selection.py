@@ -48,6 +48,7 @@ from inference_pool import (
     ONNX_COREML_EP,
     ONNX_CPU_EP,
     ONNX_CUDA_EP,
+    _bound_onnx_device,
     _resolve_onnx_providers,
     _resolve_ov_devices,
 )
@@ -272,6 +273,28 @@ class ResolveOnnxProvidersTest(unittest.TestCase):
             _resolve_onnx_providers("coreml", "linux", "x86_64", [ONNX_CPU_EP]),
             [ONNX_CPU_EP],
         )
+
+
+class BoundOnnxDeviceTest(unittest.TestCase):
+    """The device a pool REPORTS follows the execution provider the session
+    actually bound — never the device the config asked for. A plain
+    `onnxruntime` wheel asked for "gpu" binds CPUExecutionProvider and must say
+    cpu (a user's log read `device=gpu` while every frame ran on the CPU)."""
+
+    def test_cpu_only_session_reports_cpu(self) -> None:
+        self.assertEqual(_bound_onnx_device([ONNX_CPU_EP]), "cpu")
+
+    def test_empty_provider_list_reports_cpu(self) -> None:
+        self.assertEqual(_bound_onnx_device([]), "cpu")
+
+    def test_cuda_bound_reports_cuda(self) -> None:
+        self.assertEqual(_bound_onnx_device([ONNX_CUDA_EP, ONNX_CPU_EP]), "cuda")
+
+    def test_coreml_bound_reports_coreml(self) -> None:
+        self.assertEqual(_bound_onnx_device([ONNX_COREML_EP, ONNX_CPU_EP]), "coreml")
+
+    def test_first_non_cpu_provider_wins(self) -> None:
+        self.assertEqual(_bound_onnx_device(["DmlExecutionProvider", ONNX_CPU_EP]), "DmlExecutionProvider")
 
 
 if __name__ == "__main__":

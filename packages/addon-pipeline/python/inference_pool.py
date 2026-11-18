@@ -500,6 +500,27 @@ def _resolve_onnx_providers(
     return providers
 
 
+_ONNX_DEVICE_BY_EP = {
+    ONNX_CUDA_EP: "cuda",
+    ONNX_COREML_EP: "coreml",
+}
+
+
+def _bound_onnx_device(active_providers: list) -> str:
+    """The device a session actually runs on, from the providers it BOUND.
+
+    `session.get_providers()` is in preference order; the first provider that
+    is not the CPU floor is the hardware in use, none means "cpu". The config's
+    `device` is only what was ASKED for: the plain `onnxruntime` wheel asked for
+    "gpu" binds CPUExecutionProvider, and the pool must say cpu, not echo the
+    request.
+    """
+    for provider in active_providers:
+        if provider != ONNX_CPU_EP:
+            return _ONNX_DEVICE_BY_EP.get(provider, provider)
+    return "cpu"
+
+
 # WebGPU: one ORT session per OS process (Dawn/Vulkan SIGSEGVs on a second
 # session in-process — agent-b 2026-10-10). Implementation lives in
 # webgpu_isolated.py; the pool parent never holds a WebGPU session itself.
@@ -1424,12 +1445,13 @@ def _load_model(slot: ModelSlot, config: dict) -> None:
                 ort_device, sys.platform, platform.machine(), available_eps,
             )
             session = ort.InferenceSession(path, providers=providers)
-            _active_eps = [p for p in session.get_providers() if p != ONNX_CPU_EP]
+            _bound = list(session.get_providers())
+            _active_eps = [p for p in _bound if p != ONNX_CPU_EP]
             _requested = [p[0] if isinstance(p, tuple) else p for p in providers]
             sys.stderr.write(
                 f"ONNX: execution provider {', '.join(_active_eps) or ONNX_CPU_EP} "
-                f"(device={ort_device or 'auto'}, requested={_requested}, "
-                f"available={available_eps})\n"
+                f"(device={_bound_onnx_device(_bound)}, asked={ort_device or 'auto'}, "
+                f"requested={_requested}, available={available_eps})\n"
             )
             sys.stderr.flush()
             output_names = [o.name for o in session.get_outputs()]
