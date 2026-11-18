@@ -77,7 +77,14 @@ not migrated here.
   asks for.
 - The follow-up is awaited, so a command now takes as long as one read. That
   is the point: the caller hears the answer after the state is real.
-- An account none of whose devices registered the cap is not read at all.
+- An account none of whose devices registered the cap has no schedule. Its
+  account list (the adoption candidates and their `online` flag) is served and
+  revalidated (D224): `listCandidates` answers from the cached list at once and,
+  when that list is older than the account's interval, starts ONE background
+  re-read (never joining or waiting on one in flight); the adoption `refresh`
+  re-lists the account, joining a read already running, before it answers.
+  Once a device is adopted, the scheduled group read re-lists the account and
+  so refreshes the candidates too.
 - Providers hosted on an agent are not covered yet: the policy road is the
   hub's in-process and UDS registration, the same scope as D1061.
 - A push integration that cannot be read at all has no way to say so yet.

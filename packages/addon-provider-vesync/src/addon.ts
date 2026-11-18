@@ -365,6 +365,12 @@ export class VeSyncProviderAddon extends BaseDeviceProvider {
         vesyncAccounts.getManager(integrationId)?.status === 'connected',
       listIntegrations: () => vesyncAccounts.ids(),
       integrationName: (integrationId) => this.names.get(integrationId) ?? null,
+      revalidate: (integrationId) => {
+        vesyncAccounts.getManager(integrationId)?.revalidate()
+      },
+      relist: async (integrationId) => {
+        await vesyncAccounts.getManager(integrationId)?.relist()
+      },
       listAdopted: async () => {
         const reg = this.ctx.kernel.deviceRegistry
         const devices = this.ctx.kernel.devices

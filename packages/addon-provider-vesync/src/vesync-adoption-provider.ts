@@ -23,6 +23,10 @@ export interface VeSyncAdoptionProviderDeps {
   readonly integrationOnline: (integrationId: string) => boolean
   readonly listIntegrations: () => readonly string[]
   readonly integrationName: (integrationId: string) => string | null
+  /** Start one background re-read of the account when its list is stale (never waits). */
+  readonly revalidate: (integrationId: string) => void
+  /** Re-list the account and resolve once it landed (joins a list already running). */
+  readonly relist: (integrationId: string) => Promise<void>
   readonly listAdopted: () => Promise<
     ReadonlyArray<{
       readonly id: number
@@ -108,6 +112,7 @@ export function buildVeSyncAdoptionProvider(
     listCandidateFilters: async () => ({ filters: [DEVICES_FILTER] }),
 
     listCandidates: async ({ integrationId, page, pageSize }) => {
+      deps.revalidate(integrationId)
       const all = await candidates(integrationId)
       const start = (page - 1) * pageSize
       return {
@@ -143,7 +148,10 @@ export function buildVeSyncAdoptionProvider(
       }
     },
 
-    refresh: async ({ integrationId }) => status(integrationId),
+    refresh: async ({ integrationId }) => {
+      await deps.relist(integrationId)
+      return status(integrationId)
+    },
 
     adopt: async ({ integrationId, childNativeIds, perCandidate }) => {
       if (!deps.hasIntegration(integrationId)) {

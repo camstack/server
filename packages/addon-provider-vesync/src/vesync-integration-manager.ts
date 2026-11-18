@@ -1,5 +1,10 @@
-import { errMsg, type IScopedLogger, type StateRefreshReason } from '@camstack/types'
-import type { VeSyncConnectionConfig } from './config.js'
+import {
+  effectiveRefreshIntervalMs,
+  errMsg,
+  type IScopedLogger,
+  type StateRefreshReason,
+} from '@camstack/types'
+import { vesyncRefreshPolicy, type VeSyncConnectionConfig } from './config.js'
 import {
   type VeSyncClient,
   type VeSyncClientFactory,
@@ -99,7 +104,9 @@ export class VeSyncIntegrationManager {
    * until each is read, so a second list running beside the first could hand it objects it has not
    * read yet. A tick that lands while a poll runs is skipped (the running one answers it).
    */
-  #polling = false
+  #pollInFlight: Promise<void> | null = null
+  /** When the account list last landed (or failed): the age `revalidate` judges. */
+  #lastListAt = 0
   #status: VeSyncAccountStatus = 'disconnected'
   /** Per cid, the command whose confirming read has not landed yet. */
   #pendingCommands: Map<string, PendingCommand> = new Map()
@@ -224,6 +231,7 @@ export class VeSyncIntegrationManager {
       await client.login()
       this.#devices = indexDevices(await client.listDevices())
     }
+    this.#lastListAt = Date.now()
     await this.flushSessionWrites()
     this.#logger.info(
       signInReason === null
@@ -421,11 +429,13 @@ export class VeSyncIntegrationManager {
     }
   }
 
-  /** Re-list devices once, then fan the snapshot out. Best-effort; one at a time. */
+  /**
+   * Re-list devices once, then fan the snapshot out (the core's scheduled read). Best-effort; one
+   * at a time: a call that lands while a list runs is skipped (the running one answers it).
+   */
   async poll(): Promise<void> {
-    const client = this.#client
-    if (client === null) return
-    if (this.#polling) {
+    if (this.#client === null) return
+    if (this.#pollInFlight !== null) {
       this.#logger.debug(
         'VeSyncIntegrationManager: poll skipped — the previous one is still running',
         {
@@ -434,12 +444,50 @@ export class VeSyncIntegrationManager {
       )
       return
     }
-    this.#polling = true
-    try {
-      await this.#pollOnce(client)
-    } finally {
-      this.#polling = false
+    await this.#startList()
+  }
+
+  /**
+   * Re-list the account and return once a list landed: joins the list already running (the
+   * scheduled read included) instead of starting a second one. For a caller that must see
+   * what the account holds NOW (the adoption page's refresh).
+   */
+  async relist(): Promise<void> {
+    if (this.#pollInFlight !== null) {
+      await this.#pollInFlight
+      return
     }
+    await this.#startList()
+  }
+
+  /**
+   * Serve-and-revalidate (D224): when the last list is older than the account's refresh
+   * interval and none runs, start ONE list in the background. Never joins nor waits on a
+   * running one. Returns whether it started a list.
+   */
+  revalidate(now: number = Date.now()): boolean {
+    if (this.#client === null || this.#pollInFlight !== null) return false
+    const intervalMs = effectiveRefreshIntervalMs(
+      vesyncRefreshPolicy(this.#id, this.#connection.pollIntervalMs),
+    )
+    if (now - this.#lastListAt < intervalMs) return false
+    this.#logger.debug('VeSyncIntegrationManager: account list is stale, re-reading', {
+      tags: { accountId: this.#id },
+      meta: { ageMs: now - this.#lastListAt, intervalMs },
+    })
+    void this.#startList()
+    return true
+  }
+
+  #startList(): Promise<void> {
+    const client = this.#client
+    if (client === null) return Promise.resolve()
+    const run = this.#pollOnce(client).finally(() => {
+      this.#lastListAt = Date.now()
+      if (this.#pollInFlight === run) this.#pollInFlight = null
+    })
+    this.#pollInFlight = run
+    return run
   }
 
   async #pollOnce(client: VeSyncClient): Promise<void> {

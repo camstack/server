@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import type { ConfigOption, ConfigUISchema } from '@camstack/types'
+import type { ConfigOption, ConfigUISchema, StateRefreshPolicy } from '@camstack/types'
 
 /** The device-registry `system` tag every VeSync device carries. */
 export const VESYNC_SYSTEM = 'vesync' as const
@@ -320,5 +320,22 @@ export function buildConnectionFormSchema(): ConfigUISchema {
         ],
       },
     ],
+  }
+}
+
+/** The fastest the core may re-read a VeSync account (the cloud rate-limits). */
+export const VESYNC_MIN_REFRESH_INTERVAL_MS = 15_000
+
+/** The policy a VeSync device declares for an integration polled every `pollIntervalMs` (unknown: the minimum). */
+export function vesyncRefreshPolicy(
+  integrationId: string,
+  pollIntervalMs: number | undefined,
+): StateRefreshPolicy {
+  return {
+    integrationId,
+    minIntervalMs: VESYNC_MIN_REFRESH_INTERVAL_MS,
+    ...(pollIntervalMs !== undefined ? { intervalMs: pollIntervalMs } : {}),
+    batch: true,
+    push: 'none',
   }
 }

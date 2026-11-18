@@ -283,3 +283,69 @@ describe('VeSyncIntegrationManager — one poll at a time', () => {
     expect(w.calls.filter((c) => c === 'listDevices')).toHaveLength(2)
   })
 })
+
+describe('VeSyncIntegrationManager — the account list is served, then revalidated (D224, D1062)', () => {
+  const STALE_MS = 3_600_000 + 1
+  const lists = (w: ReturnType<typeof world>): number =>
+    w.calls.filter((c) => c === 'listDevices').length
+
+  it('a stale list starts ONE background re-read and never waits on it', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      const w = world()
+      await w.manager.start()
+      w.calls.length = 0
+      vi.setSystemTime(Date.now() + STALE_MS)
+      let release: () => void = () => undefined
+      w.setPollGate(new Promise<void>((resolve) => (release = resolve)))
+      expect(w.manager.revalidate()).toBe(true)
+      expect(w.manager.revalidate()).toBe(false)
+      expect(lists(w)).toBe(1)
+      release()
+      await w.manager.relist()
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+
+  it('a fresh list starts no re-read', async () => {
+    const w = world()
+    await w.manager.start()
+    w.calls.length = 0
+    expect(w.manager.revalidate()).toBe(false)
+    expect(lists(w)).toBe(0)
+  })
+
+  it('relist re-lists the account and returns after it landed', async () => {
+    const w = world()
+    await w.manager.start()
+    w.calls.length = 0
+    await w.manager.relist()
+    expect(lists(w)).toBe(1)
+  })
+
+  it('never overlaps the scheduled read: relist joins it, revalidate leaves it alone', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    try {
+      const w = world()
+      await w.manager.start()
+      w.calls.length = 0
+      vi.setSystemTime(Date.now() + STALE_MS)
+      let release: () => void = () => undefined
+      w.setPollGate(new Promise<void>((resolve) => (release = resolve)))
+      const scheduled = w.manager.refresh('schedule', [])
+      expect(w.manager.revalidate()).toBe(false)
+      let joined = false
+      const asked = w.manager.relist().then(() => {
+        joined = true
+      })
+      await Promise.resolve()
+      expect(joined).toBe(false)
+      release()
+      await Promise.all([scheduled, asked])
+      expect(lists(w)).toBe(1)
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})

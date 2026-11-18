@@ -16,30 +16,15 @@ import {
   deviceStateRefreshCapability,
   type DeviceContext,
   type InferNativeProvider,
-  type StateRefreshPolicy,
 } from '@camstack/types'
+import { vesyncRefreshPolicy } from '../config.js'
 import { vesyncAccounts } from '../vesync-account-resolver.js'
 import type { VeSyncRefreshTarget } from '../vesync-integration-manager.js'
 
-/** The fastest the core may re-read a VeSync account (the cloud rate-limits). */
-export const VESYNC_MIN_REFRESH_INTERVAL_MS = 15_000
+export { VESYNC_MIN_REFRESH_INTERVAL_MS, vesyncRefreshPolicy } from '../config.js'
 
 /** Every registered device's cid, so a batch read can name the cid of each device asked for. */
 const cidOfDevice = new Map<number, VeSyncRefreshTarget>()
-
-/** The policy a VeSync device declares for an integration polled every `pollIntervalMs` (unknown: the minimum). */
-export function vesyncRefreshPolicy(
-  integrationId: string,
-  pollIntervalMs: number | undefined,
-): StateRefreshPolicy {
-  return {
-    integrationId,
-    minIntervalMs: VESYNC_MIN_REFRESH_INTERVAL_MS,
-    ...(pollIntervalMs !== undefined ? { intervalMs: pollIntervalMs } : {}),
-    batch: true,
-    push: 'none',
-  }
-}
 
 /** The part of a device context the refresh registration uses. */
 export type VeSyncRefreshContext = Pick<DeviceContext, 'registerNativeCap' | 'unregisterNativeCap'>
