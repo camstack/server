@@ -21,6 +21,8 @@ import { useFieldSources } from './use-field-sources'
 import type { CustomizationHandle } from '../use-customization'
 import { FollowSwitchToggle } from '../scalar/FollowSwitchToggle'
 import { currentComposition } from '../customization-read'
+import { featureOf } from '../customization-save'
+import { linkStampOf } from './customize-rows'
 import { isFollowSwitchRow, readFollowSwitch } from '../scalar/follow-switch'
 import { ScalarOverrideDialog } from '../scalar/ScalarOverrideDialog'
 import { type ScalarRowModel, useScalarRow } from '../scalar/use-scalar-row'
@@ -70,6 +72,11 @@ function ScalarSource(props: ScalarRowProps): ReactNode {
             field: row.sourceField,
           })}
         </span>
+        {linkStampOf(featureOf(currentComposition(props.handle.state), props.cap)) !== null && (
+          <span className="text-[11px] text-foreground-subtle">
+            {t('customize.table.fromLink')}
+          </span>
+        )}
         {row.presence === 'unknown' && (
           <span role="alert" className="text-[11px] text-warning">
             {t('customize.scalar.sourceUnreadable')}

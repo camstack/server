@@ -7,6 +7,7 @@
  */
 import {
   CAP_CUSTOMIZE_CATALOG,
+  type CompositionFieldsFeature,
   type CustomizeCardinality,
   type CustomizeCatalog,
   type CustomizeCatalogTarget,
@@ -167,4 +168,13 @@ export function activeSections(active: readonly CustomizeRowPlan[]): readonly Cu
   return CUSTOMIZE_SECTIONS.filter((section) =>
     active.some((plan) => plan.spec.section === section),
   )
+}
+
+/**
+ * The identity link that added this row's feature (D1063), or null when the
+ * operator set it. A stamped row is still the operator's to switch off or
+ * edit (D62); the stamp only says where it came from.
+ */
+export function linkStampOf(feature: CompositionFieldsFeature | null): string | null {
+  return feature?.contributedBy?.linkId ?? null
 }

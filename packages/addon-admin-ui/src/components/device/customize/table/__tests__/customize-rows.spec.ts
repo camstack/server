@@ -1,4 +1,4 @@
-import { CAP_CUSTOMIZE_CATALOG, DeviceType } from '@camstack/types'
+import { CAP_CUSTOMIZE_CATALOG, type CompositionFieldsFeature, DeviceType } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
 import en from '../../../../../i18n/en.json'
 import it_ from '../../../../../i18n/it.json'
@@ -7,6 +7,7 @@ import { scalarRowTitle } from '../../scalar/use-scalar-row'
 import {
   activeSections,
   CUSTOMIZE_SECTIONS,
+  linkStampOf,
   offeredRows,
   planRows,
   splitRows,
@@ -163,5 +164,20 @@ describe('a scalar row title is never a raw state path', () => {
     expect(target).toBeDefined()
     if (target === undefined) return
     expect(scalarRowTitle(fakeT, 'en', 'fan-control', target)).toBe('Fan · Horizontal angle (°)')
+  })
+})
+
+describe('linkStampOf (D1063)', () => {
+  it('a row an identity link added names its link; an operator row names none', () => {
+    const feature: CompositionFieldsFeature = {
+      kind: 'fields',
+      cap: 'power-source',
+      fields: {},
+      contributedBy: { linkId: 'poe-power:port|cam' },
+    }
+    expect(linkStampOf(feature)).toBe('poe-power:port|cam')
+    const { contributedBy: _stamp, ...operator } = feature
+    expect(linkStampOf(operator)).toBeNull()
+    expect(linkStampOf(null)).toBeNull()
   })
 })

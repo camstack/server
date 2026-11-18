@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- A device's Hardware tab lists its linked devices — the PoE port that powers it, or another integration's record of the same device — with Confirm, Dismiss and Unlink; a Customize row a link added says so.
+
 ## [1.2.698] - 2026-11-18
 
 ### Changed

@@ -16,6 +16,8 @@
  *                    Below it, the typed identifiers the provider
  *                    DECLARED (D1059: MAC, serial, vendor uid, …) —
  *                    written only by the owning provider, never edited here.
+ *                    Then its identity links (D1063): the PoE port that
+ *                    powers it, another record of the same device.
  *
  * Reads the cached device snapshot from `useDeviceSnapshot()` when the
  * host page provides one; otherwise falls back to a thin
@@ -28,12 +30,14 @@ import {
   useDeviceId,
   useDeviceManagerGetBindings,
   useDeviceManagerGetDevice,
+  useDeviceManagerListIdentityLinks,
   useDeviceSnapshot,
   Button,
 } from '@camstack/ui-library'
 
 import { CapabilityBadges } from '../../shared/CapabilityBadges'
 import { ProviderIcon } from '../../shared/ProviderIcon'
+import { IdentityLinksBlock, visibleLinks } from './IdentityLinksBlock'
 import { InfoRow } from './shared/overview-primitives'
 import { PrimaryChildRow } from './shared/PrimaryChildRow'
 import { useTranslation } from 'react-i18next'
@@ -75,7 +79,11 @@ export function identifierRows(raw: unknown): readonly IdentifierRow[] {
   const ids = parsed.data
   return IDENTIFIER_KEY_ORDER.flatMap((key): IdentifierRow[] => {
     if (key === 'mac') {
-      return (ids.mac ?? []).map((e) => ({ key, value: e.value, derived: e.origin === 'derived' }))
+      return (ids.mac ?? []).map((e) => ({
+        key,
+        value: e.value,
+        derived: e.origin === 'derived',
+      }))
     }
     const entry = ids[key]
     return entry ? [{ key, value: entry.value, derived: entry.origin === 'derived' }] : []
@@ -112,6 +120,12 @@ export function DeviceInfoAdapter() {
     { deviceId: deviceId ?? 0 },
     { enabled: deviceId !== null },
   )
+  // Shared with the Hardware tab's links block (one query): a device with a link
+  // shows the tab even with no metadata of its own.
+  const { data: links } = useDeviceManagerListIdentityLinks(
+    { deviceId: deviceId ?? 0 },
+    { enabled: deviceId !== null },
+  )
   const device = (fetched as Record<string, unknown> | undefined) ?? cached ?? null
   const [activeSubTab, setActiveSubTab] = useState<SubTabId>('identity')
 
@@ -139,8 +153,9 @@ export function DeviceInfoAdapter() {
   const capabilityList = features.length > 0 ? features : nativeCaps
   const metadata = (device.metadata as Record<string, unknown> | null | undefined) ?? null
   const identifiers = identifierRows(device.identifiers)
+  const hasLinks = links?.status === 'answered' && visibleLinks(links.links).length > 0
   const hasHardware =
-    (metadata !== null && Object.keys(metadata).length > 0) || identifiers.length > 0
+    (metadata !== null && Object.keys(metadata).length > 0) || identifiers.length > 0 || hasLinks
 
   return (
     <div className="rounded-lg border border-border bg-surface overflow-hidden">
@@ -212,7 +227,7 @@ export function DeviceInfoAdapter() {
         </div>
       )}
       {hasHardware && activeSubTab === 'hardware' && (
-        <HardwareInfoBody metadata={metadata ?? {}} identifiers={identifiers} />
+        <HardwareInfoBody deviceId={deviceId} metadata={metadata ?? {}} identifiers={identifiers} />
       )}
     </div>
   )
@@ -244,11 +259,12 @@ function SubTabButton({
 }
 
 interface HardwareInfoBodyProps {
+  readonly deviceId: number
   readonly metadata: Record<string, unknown>
   readonly identifiers: readonly IdentifierRow[]
 }
 
-function HardwareInfoBody({ metadata, identifiers }: HardwareInfoBodyProps) {
+function HardwareInfoBody({ deviceId, metadata, identifiers }: HardwareInfoBodyProps) {
   const { t } = useTranslation()
   const identifierLabel: Record<IdentifierKey, string> = {
     mac: t('overviewAdapters.deviceInfoAdapter.identifierMac', 'MAC address'),
@@ -313,6 +329,7 @@ function HardwareInfoBody({ metadata, identifiers }: HardwareInfoBodyProps) {
           </div>
         </>
       )}
+      <IdentityLinksBlock deviceId={deviceId} />
     </div>
   )
 }
