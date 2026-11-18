@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- CPU-only nodes default to YOLOv9-s @320 for object detection instead of YOLO26 nano.
+
 ## [1.2.663] - 2026-11-18
 
 ### Changed

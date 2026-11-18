@@ -42,9 +42,9 @@ describe('resolveInputSteps — hardware-aware Auto (object-detection)', () => {
     expect(steps[0]?.modelId).toBe('yolov9m-640')
   })
 
-  it('absent modelId + cpu engine resolves the safe nano (yolo26n)', () => {
+  it('absent modelId + cpu engine resolves the CPU default (yolov9s-320)', () => {
     const { steps } = resolveInputSteps([detectionStep()], 'onnx', CPU_FLOOR)
-    expect(steps[0]?.modelId).toBe('yolo26n')
+    expect(steps[0]?.modelId).toBe('yolov9s-320')
   })
 
   it('a PINNED modelId is kept verbatim (never replaced by the hardware default)', () => {

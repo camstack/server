@@ -103,9 +103,9 @@ describe('inference-device-model — pure default model map', () => {
     expect(defaultModelIdForDevice('edgetpu:usb')).toBe('yolov9s-320-edgetpu')
     expect(defaultModelIdForDevice('edgetpu:usb:1')).toBe('yolov9s-320-edgetpu')
     expect(defaultModelIdForDevice('coreml:all')).toBe('yolov9m-640')
-    expect(defaultModelIdForDevice('cpu')).toBe('yolo26n')
-    expect(defaultModelIdForDevice('cuda:gpu')).toBe('yolo26n')
-    expect(defaultModelIdForDevice('mystery:thing')).toBe('yolo26n')
+    expect(defaultModelIdForDevice('cpu')).toBe('yolov9s-320')
+    expect(defaultModelIdForDevice('cuda:gpu')).toBe('yolov9s-320')
+    expect(defaultModelIdForDevice('mystery:thing')).toBe('yolov9s-320')
   })
 
   it('mergeInferenceDevices — accelerators opt-OUT (auto-on), CPU opt-IN (auto-off), explicit wins', () => {
@@ -475,7 +475,7 @@ describe('PipelineOrchestrator — getNodeInferenceDevices', () => {
       available: true,
       enabled: false,
       weight: 1,
-      defaultModelId: 'yolo26n',
+      defaultModelId: 'yolov9s-320',
     })
     // edgetpu — stored-only (probe didn't return it) → surfaced as unavailable.
     expect(byKey['edgetpu:usb']).toMatchObject({

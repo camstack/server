@@ -52,22 +52,22 @@ describe('getDefaultModelForFormat — declared-default resolution order', () =>
     expect(declared).not.toBe(def.defaultModelId)
   })
 
-  it('object-detection coreml/openvino default is the DECLARED defaultModelId (yolo26n), not the smallest model (yolov9t)', () => {
+  it('object-detection coreml/openvino default is the DECLARED defaultModelId (yolov9s-320), not the smallest model (yolov9t)', () => {
     const def = getStepDefinition('object-detection')
-    expect(def.defaultModelId).toBe('yolo26n')
+    expect(def.defaultModelId).toBe('yolov9s-320')
     // No per-format override declared for object-detection — resolution
     // falls to step 2 (plain defaultModelId).
     expect(def.defaultModelIdByFormat?.['coreml']).toBeUndefined()
     expect(def.defaultModelIdByFormat?.['openvino']).toBeUndefined()
 
-    // Both formats have a smaller model than yolo26n — the FP16 YOLOv9 CoreML
+    // Both formats have a smaller model than yolov9s-320 — the FP16 YOLOv9 CoreML
     // packages (D743) and the OpenVINO int8 variants — so the declared default
     // winning is not an accident of size.
-    expect(smallestByFormat('object-detection', 'coreml')).not.toBe('yolo26n')
-    expect(smallestByFormat('object-detection', 'openvino')).not.toBe('yolo26n')
+    expect(smallestByFormat('object-detection', 'coreml')).not.toBe('yolov9s-320')
+    expect(smallestByFormat('object-detection', 'openvino')).not.toBe('yolov9s-320')
 
-    expect(getDefaultModelForFormat('object-detection', 'coreml')).toBe('yolo26n')
-    expect(getDefaultModelForFormat('object-detection', 'openvino')).toBe('yolo26n')
+    expect(getDefaultModelForFormat('object-detection', 'coreml')).toBe('yolov9s-320')
+    expect(getDefaultModelForFormat('object-detection', 'openvino')).toBe('yolov9s-320')
   })
 
   it('face-detection: the declared default is YuNet on every format it ships, never SCRFD (D645, 2026-09-26)', () => {
@@ -117,7 +117,7 @@ describe('getDefaultModelForFormat — declared-default resolution order', () =>
     const def = getStepDefinition('object-detection')
     // Coral integration: object-detection declares a per-format tflite default
     // (YOLOv9-s @320, D908) distinct from its plain
-    // defaultModelId (yolo26n, which has no tflite build). Self-skip if the
+    // defaultModelId (yolov9s-320, which has no tflite build). Self-skip if the
     // declaration is ever removed.
     const declared = def.defaultModelIdByFormat?.['tflite']
     if (declared === undefined) return

@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Serves viewer 1.0.725
+- The per-device default model shown for CPU and CUDA devices is YOLOv9-s @320 instead of YOLO26 nano.
 
 ## [1.2.702] - 2026-11-18
 

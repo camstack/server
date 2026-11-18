@@ -41,7 +41,10 @@ type AcceleratorClass =
 
 /**
  * Balanced default object-detection model per accelerator class. `'cpu'` maps to
- * `null` → the caller substitutes the step's own `defaultModelId` (`yolo26n`).
+ * `yolov9s-320` (operator decision 2026-11-18; the step's own `defaultModelId` is the same).
+ * Measured CPU latency (docs/benchmarks/detector-latency.json, ONNX FP32 @4 threads):
+ * N100 164 ms, AMD Zen4 30 ms, Core Ultra 16 ms; its class floors are in
+ * `model-catalogs.ts`. It ships onnx + coreml + openvino builds.
  * INTEL NPU + iGPU default to the Ultralytics YOLOv9 re-export (int8 @320), which
  * runs on both (~298 fps measured on the NPU). OpenVINO CPU (AMD Zen4 path) uses
  * the same int8 IR. AMD iGPU WebGPU uses the ONNX fp32 @320 build. Apple ANE uses
@@ -56,14 +59,14 @@ type AcceleratorClass =
  * settings (D745) may recommend it, from the measured table and the node's
  * load, and writes it only after the operator confirmed the plan.
  */
-const MODEL_BY_CLASS: Readonly<Record<AcceleratorClass, string | null>> = {
+const MODEL_BY_CLASS: Readonly<Record<AcceleratorClass, string>> = {
   'apple-ane': 'yolov9m-640',
   'intel-npu': 'yolov9m-320-int8',
   'intel-gpu': 'yolov9m-320-int8',
   'openvino-cpu': 'yolov9m-320-int8',
   // Warm ~192 ms on agent-b WebGPU; m-320 is ~1 fps and m-640 sheds.
   'amd-igpu': 'yolov9t-320',
-  cpu: null,
+  cpu: 'yolov9s-320',
 }
 
 /**
@@ -105,7 +108,7 @@ function classifyAccelerator(backend: string, device: string | null): Accelerato
   if (b === 'onnx' && d === 'webgpu') return 'amd-igpu'
   if (b === 'webgpu' || b === 'amd-igpu') return 'amd-igpu'
 
-  // onnx (cpu/cuda), 'cpu', 'cuda', or any unknown backend → CPU-safe nano.
+  // onnx (cpu/cuda), 'cpu', 'cuda', or any unknown backend → CPU default.
   return 'cpu'
 }
 
@@ -136,17 +139,15 @@ export function resolveDefaultDetectionModel(
   try {
     def = getStepDef(OBJECT_DETECTION_STEP_ID)
   } catch {
-    // Step somehow unregistered — the catalog nano is the universal safe id.
-    return 'yolo26n'
+    // Step somehow unregistered — the CPU default is the universal safe id.
+    return MODEL_BY_CLASS.cpu
   }
 
   const candidate = MODEL_BY_CLASS[classifyAccelerator(backend, device)]
-  if (candidate !== null) {
-    // Only return the accelerated candidate when it exists in the catalog AND
-    // has a build for this node's format.
-    const entry = def.models.find((m) => m.id === candidate)
-    if (entry && entry.formats[format] !== undefined) return candidate
-  }
+  // Only return the candidate when it exists in the catalog AND has a build
+  // for this node's format.
+  const entry = def.models.find((m) => m.id === candidate)
+  if (entry && entry.formats[format] !== undefined) return candidate
 
   // The fallback must satisfy the SAME format guarantee as the candidate.
   // Returning the bare `def.defaultModelId` here is exactly the cam-101

@@ -32,17 +32,17 @@ describe('resolveDefaultDetectionModel — real catalog', () => {
     expect(resolveDefaultDetectionModel('openvino', 'cpu', 'openvino')).toBe('yolov9m-320-int8')
   })
 
-  it('generic CPU (onnx) → yolo26n', () => {
-    expect(resolveDefaultDetectionModel('onnx', 'cpu', 'onnx')).toBe('yolo26n')
+  it('generic CPU (onnx) → yolov9s-320', () => {
+    expect(resolveDefaultDetectionModel('onnx', 'cpu', 'onnx')).toBe('yolov9s-320')
   })
 
-  it('ONNX CUDA (nvidia) → yolo26n (unmapped → safe nano)', () => {
-    expect(resolveDefaultDetectionModel('onnx', 'cuda', 'onnx')).toBe('yolo26n')
+  it('ONNX CUDA (nvidia) → yolov9s-320 (unmapped → CPU default)', () => {
+    expect(resolveDefaultDetectionModel('onnx', 'cuda', 'onnx')).toBe('yolov9s-320')
   })
 
-  it('unknown backend → yolo26n', () => {
-    expect(resolveDefaultDetectionModel('quantum-tpu', null, 'onnx')).toBe('yolo26n')
-    expect(resolveDefaultDetectionModel('', null, 'onnx')).toBe('yolo26n')
+  it('unknown backend → yolov9s-320', () => {
+    expect(resolveDefaultDetectionModel('quantum-tpu', null, 'onnx')).toBe('yolov9s-320')
+    expect(resolveDefaultDetectionModel('', null, 'onnx')).toBe('yolov9s-320')
   })
 
   it('never promotes the non-ANE hardware-aware defaults to 640 (pipeline-frame-model-eval)', () => {
@@ -183,10 +183,10 @@ describe('resolveDefaultDetectionModel — missing-catalog-id fallback', () => {
     )
   })
 
-  it('returns the catalog nano when the step lookup throws (never throws itself)', () => {
+  it('returns the CPU default when the step lookup throws (never throws itself)', () => {
     const throwing = (): StepDefinition => {
       throw new Error('step unregistered')
     }
-    expect(resolveDefaultDetectionModel('coreml', 'all', 'coreml', throwing)).toBe('yolo26n')
+    expect(resolveDefaultDetectionModel('coreml', 'all', 'coreml', throwing)).toBe('yolov9s-320')
   })
 })

@@ -156,12 +156,12 @@ class ObjectDetectionStep implements IPipelineStep {
     // under `verbosity: 'full'` as `debug.originalClass`.
     labelTier: 1,
     models: [...OBJECT_DETECTION_MODELS],
-    // Default to YOLO26 Nano — newest-generation architecture, light enough for
-    // the weakest node (N100) and portable across onnx/coreml/openvino. Powerful
-    // nodes can select a larger tier (yolo26s/m/x) or an OpenVINO int8/fp16
-    // variant per-node. Matches the segmentation default (yolo26n-seg).
-    defaultModelId: 'yolo26n',
-    // On the Coral (`tflite` format) the yolo26 lineage has no build — default
+    // Default to YOLOv9-s @320 (operator decision 2026-11-18): the CPU-only
+    // default. It ships onnx + coreml + openvino builds, so every format but
+    // tflite resolves to it directly. Accelerated nodes pick their own tier
+    // through `resolveDefaultDetectionModel`.
+    defaultModelId: 'yolov9s-320',
+    // On the Coral (`tflite` format) the default has no build — default
     // to YOLOv9-s @320 (D908, amends D710): on the same TPU it out-recalls
     // the SSD MobileNet V2 in every measurement (docs/benchmarks/
     // 2026-10-22-coral-pcie-amd-phoenix.md). The SSD and the 512 build stay

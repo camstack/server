@@ -15,8 +15,7 @@
  *                          an operator pick there, not the default)
  *   - `yolov9m-320`      — Apple ANE (CoreML)
  *   - `yolov9s-320-edgetpu` — Coral Edge TPU (tflite; D908)
- *   - `yolo26n`          — CPU / CUDA (the object-detection step's universal
- *                          nano default)
+ *   - `yolov9s-320`      — CPU / CUDA (the object-detection step's CPU default)
  *
  * Do not promote the accelerated ids to 640. The evaluation in
  * `docs/benchmarks/pipeline-frame-model-eval.md` failed the 640 promotion
@@ -77,7 +76,7 @@ export function parseDeviceKey(deviceKey: string): {
  * The object-detection model the executor defaults to for a deviceKey. Mirrors
  * the executor's `MODEL_BY_CLASS` classification (`classifyAccelerator`) plus
  * the tflite `defaultModelIdByFormat` for Coral. Never throws; unknown backends
- * fall back to the universal nano default (`yolo26n`).
+ * fall back to the CPU default (`yolov9s-320`).
  */
 export function defaultModelIdForDevice(deviceKey: string): string {
   const { backend } = parseDeviceKey(deviceKey)
@@ -92,8 +91,8 @@ export function defaultModelIdForDevice(deviceKey: string): string {
   if (backend === 'edgetpu') return 'yolov9s-320-edgetpu'
   // Apple CoreML (ANE) — our CoreML yolov9 @640 (D1053).
   if (backend === 'coreml') return 'yolov9m-640'
-  // onnx / cpu / cuda / anything else → the step's universal nano default.
-  return 'yolo26n'
+  // onnx / cpu / cuda / anything else → the step's CPU default (yolov9s-320).
+  return 'yolov9s-320'
 }
 
 /** A node's stored per-device opt-OUT entry (`inferenceDevices[deviceKey]`). */

@@ -10,13 +10,13 @@ const STEP = 'object-detection'
 
 describe('object-detection format default (legacy curation)', () => {
   // With the whole YOLOv9 family + fp16 dupes marked legacy, the smallest
-  // NON-legacy model on every format is yolo26n — so the auto format-default
+  // NON-legacy model on every format is yolov9s-320 — so the auto format-default
   // finally AGREES with the declared `defaultModelId` (was: yolov9t /
   // yolov9t-int8 silently won the smallest-by-size race).
-  it('picks yolo26n on every format (no legacy yolov9t drift)', () => {
-    expect(getDefaultModelForFormat(STEP, 'onnx')).toBe('yolo26n')
-    expect(getDefaultModelForFormat(STEP, 'coreml')).toBe('yolo26n')
-    expect(getDefaultModelForFormat(STEP, 'openvino')).toBe('yolo26n')
+  it('picks yolov9s-320 on every format (no legacy yolov9t drift)', () => {
+    expect(getDefaultModelForFormat(STEP, 'onnx')).toBe('yolov9s-320')
+    expect(getDefaultModelForFormat(STEP, 'coreml')).toBe('yolov9s-320')
+    expect(getDefaultModelForFormat(STEP, 'openvino')).toBe('yolov9s-320')
   })
 
   it('an EXPLICIT legacy pin falls back to the format default (no longer offered)', () => {
