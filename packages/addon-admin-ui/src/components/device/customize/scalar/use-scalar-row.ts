@@ -20,7 +20,12 @@ import { type DeviceNameFields, useDeviceLabel } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { useCandidateDevices } from '../assignments/use-source-candidates'
 import { currentComposition } from '../customization-read'
-import { featureOf, withoutScalarTarget, withScalarTarget } from '../customization-save'
+import {
+  featureOf,
+  withFeature,
+  withoutScalarTarget,
+  withScalarTarget,
+} from '../customization-save'
 import { candidateFields } from '../source-selector/source-selector-parent-detail'
 import { useConfirmRemove } from '../use-confirm-remove'
 import type { CustomizationHandle } from '../use-customization'
@@ -58,6 +63,14 @@ export interface ScalarRowModel {
   /** Resolves to the refusal reason, or null when the write was saved (or nothing was written). */
   readonly saveFeature: (feature: CompositionFieldsFeature) => Promise<string | null>
   readonly remove: () => Promise<string | null>
+  /**
+   * The identity link that contributed this row's feature (D1063), or null. Its
+   * off-switch is `setEnabled(false)`: a contributed feature is never removed.
+   */
+  readonly linkStamp: string | null
+  /** True unless the stored feature is switched off. */
+  readonly enabled: boolean
+  readonly setEnabled: (on: boolean) => Promise<string | null>
 }
 
 export function storedRead(
@@ -123,6 +136,7 @@ export function useScalarRow(
   const path = target.path ?? target.id
   const title = scalarRowTitle(t, i18n.language, cap, target)
   const current = currentComposition(handle.state)
+  const storedFeature = featureOf(current, cap)
   const stored = storedRead(handle, storedScalarFeature(handle, cap, target.id))
   const decoded =
     stored.kind === 'known' && stored.value !== null
@@ -216,5 +230,11 @@ export function useScalarRow(
     saveFeature: (feature) =>
       save(withScalarTarget(current, handle.target, feature, cap, target.id)),
     remove,
+    linkStamp: storedFeature?.contributedBy?.linkId ?? null,
+    enabled: storedFeature?.enabled !== false,
+    setEnabled: async (on) =>
+      storedFeature === null
+        ? null
+        : save(withFeature(current, handle.target, { ...storedFeature, enabled: on })),
   }
 }

@@ -3086,7 +3086,8 @@
       "fillApply": "Applica",
       "fixedValue": "Valore fisso {{value}}",
       "formulaOf": "Formula: {{formula}}",
-      "fromLink": "Aggiunto da un collegamento tra dispositivi"
+      "fromLink": "Aggiunto da un collegamento tra dispositivi",
+      "linkActive": "Attivo"
     },
     "followSwitch": {
       "label": "Segui lo switch del dispositivo",

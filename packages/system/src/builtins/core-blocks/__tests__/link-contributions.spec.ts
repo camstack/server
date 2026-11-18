@@ -15,7 +15,8 @@ import {
   type IScopedLogger,
 } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
-import { LinkContributionReconciler } from '../link-contributions.js'
+import { CompositionChangedError } from '../composition-api.js'
+import { LinkContributionReconciler, MAX_HOST_ATTEMPTS } from '../link-contributions.js'
 
 const PORT = { addonId: 'provider-unifi', stableId: 'port-7', deviceId: 10 }
 const CAMERA = { addonId: 'provider-hikvision', stableId: 'cam-1', deviceId: 20 }
@@ -72,8 +73,14 @@ interface World {
 }
 
 function world(
-  options: { readonly bound?: readonly string[]; readonly blocks?: CoreBlock[] } = {},
+  options: {
+    readonly bound?: readonly string[]
+    readonly blocks?: CoreBlock[]
+    /** How many updates throw stale before one lands: Infinity = always. */
+    readonly staleUpdates?: number
+  } = {},
 ): World {
+  let staleLeft = options.staleUpdates ?? 0
   const blocks: CoreBlock[] = options.blocks ?? []
   let links: IdentityLinksRead = { status: 'answered', links: [link()] }
   let writes = 0
@@ -81,6 +88,8 @@ function world(
   const log = logger()
   const reconciler = new LinkContributionReconciler({
     listLinks: async () => links,
+    deviceIdOf: async (ref) =>
+      compositionSourceKey(ref) === compositionSourceKey(CAMERA_REF) ? CAMERA.deviceId : null,
     boundCaps: async () => options.bound ?? [],
     blocks: () => blocks,
     create: async (host, features) => {
@@ -94,6 +103,15 @@ function world(
     },
     update: async (stored, composition) => {
       writes += 1
+      if (staleLeft > 0) {
+        staleLeft -= 1
+        throw new CompositionChangedError(
+          stored.id,
+          stored.name,
+          stored.updatedAt + 1,
+          stored.updatedAt,
+        )
+      }
       const i = blocks.findIndex((b) => b.id === stored.id)
       blocks[i] = block(stored.id, composition, stored.updatedAt + 1)
     },
@@ -228,5 +246,54 @@ describe('LinkContributionReconciler', () => {
     await w.reconciler.pass()
     expect(stamped(hostFeatures(w.blocks))).toHaveLength(1)
     expect(w.reconciler.hasAnswered()).toBe(true)
+  })
+  it('a stale write is retried against a fresh read and lands', async () => {
+    const w = world({
+      staleUpdates: 1,
+      blocks: [
+        block('op', {
+          target: { kind: 'existing', device: CAMERA_REF },
+          features: [{ ...OPERATOR_FEATURE, cap: 'battery' }],
+        }),
+      ],
+    })
+    await w.reconciler.pass()
+    expect(stamped(hostFeatures(w.blocks))).toHaveLength(1)
+    expect(w.writes()).toBe(2)
+    expect(w.log.warn).not.toHaveBeenCalled()
+  })
+
+  it(`a block that is stale every time is tried ${MAX_HOST_ATTEMPTS} times, then a warn line tagged with the host`, async () => {
+    const w = world({
+      staleUpdates: Number.POSITIVE_INFINITY,
+      blocks: [
+        block('op', {
+          target: { kind: 'existing', device: CAMERA_REF },
+          features: [{ ...OPERATOR_FEATURE, cap: 'battery' }],
+        }),
+      ],
+    })
+    await w.reconciler.pass()
+    expect(w.writes()).toBe(MAX_HOST_ATTEMPTS)
+    expect(w.log.warn).toHaveBeenCalledTimes(1)
+    expect(w.log.warn).toHaveBeenCalledWith(
+      expect.stringContaining(`changed under ${MAX_HOST_ATTEMPTS} writes`),
+      expect.objectContaining({ tags: { deviceId: CAMERA.deviceId } }),
+    )
+  })
+
+  it.each([
+    ['dismissed, still listed', [link('dismissed')]],
+    ['deleted', []],
+  ] as const)('a withdrawal whose link is %s names the host by its device id, never -1', async (_label, after) => {
+    const w = world()
+    await w.reconciler.pass()
+    w.setLinks({ status: 'answered', links: after })
+    await w.reconciler.pass()
+    expect(stamped(hostFeatures(w.blocks))).toHaveLength(0)
+    expect(w.log.info).toHaveBeenCalledWith(
+      expect.stringContaining('withdrawn'),
+      expect.objectContaining({ tags: { deviceId: CAMERA.deviceId } }),
+    )
   })
 })

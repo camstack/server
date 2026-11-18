@@ -9,6 +9,7 @@ import {
   CUSTOMIZE_SECTIONS,
   linkStampOf,
   offeredRows,
+  scalarRowOffers,
   planRows,
   splitRows,
 } from '../customize-rows'
@@ -179,5 +180,24 @@ describe('linkStampOf (D1063)', () => {
     const { contributedBy: _stamp, ...operator } = feature
     expect(linkStampOf(operator)).toBeNull()
     expect(linkStampOf(null)).toBeNull()
+  })
+})
+
+describe('scalarRowOffers (D1063)', () => {
+  it('a row a device link added offers the toggle and no delete', () => {
+    expect(
+      scalarRowOffers({ linkStamp: 'poe-power:port|cam', recognized: true, otherFormula: false }),
+    ).toEqual({ remove: false, linkToggle: true })
+  })
+
+  it('an operator assignment offers the delete and no link toggle', () => {
+    expect(scalarRowOffers({ linkStamp: null, recognized: true, otherFormula: false })).toEqual({
+      remove: true,
+      linkToggle: false,
+    })
+    expect(scalarRowOffers({ linkStamp: null, recognized: false, otherFormula: false })).toEqual({
+      remove: false,
+      linkToggle: false,
+    })
   })
 })

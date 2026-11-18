@@ -3011,7 +3011,8 @@
       "fillApply": "Apply",
       "fixedValue": "Fixed value {{value}}",
       "formulaOf": "Formula: {{formula}}",
-      "fromLink": "Added by a device link"
+      "fromLink": "Added by a device link",
+      "linkActive": "Active"
     },
     "followSwitch": {
       "label": "Follow the device's switch",

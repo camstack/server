@@ -5,6 +5,11 @@
  * writes. Merging replaces only what the target owns; removing takes only what
  * no other target of the cap still needs (a companion such as the clock is
  * shared and goes last).
+ *
+ * The identity-link stamp (`contributedBy`, D1063) is never inherited: a merge
+ * carries the stamp of `compiled` only (the link re-stamping its own compile),
+ * so any operator edit of a stamped feature — any target, not only the stamped
+ * one — hands the feature to the operator; a removal leaves no stamp.
  */
 import type {
   CustomizeCatalog,
@@ -40,6 +45,12 @@ function find(cap: string, targetId: string): CustomizeCatalogTarget | null {
   return scalarTargets(cap).find((target) => target.id === targetId) ?? null
 }
 
+/** The feature without its identity-link stamp. */
+function unstamped(feature: CompositionFieldsFeature): CompositionFieldsFeature {
+  const { contributedBy, ...rest } = feature
+  return contributedBy === undefined ? feature : rest
+}
+
 function without(fields: FieldMap, paths: ReadonlySet<string>): FieldMap {
   return Object.fromEntries(Object.entries(fields).filter(([path]) => !paths.has(path)))
 }
@@ -57,7 +68,7 @@ export function mergeScalarTarget(
   const target = find(cap, targetId)
   if (current === null || target === null || scalarTargetCount(cap) < 2) return compiled
   const kept = without(current.fields, new Set(ownedPaths(target)))
-  return { ...current, ...compiled, fields: { ...kept, ...compiled.fields } }
+  return { ...unstamped(current), ...compiled, fields: { ...kept, ...compiled.fields } }
 }
 
 /** The cap's feature without `targetId`'s paths; null when no target value is left. */
@@ -74,7 +85,7 @@ export function removeScalarTarget(
   if (stillAssigned.length === 0) return null
   const needed = new Set(stillAssigned.flatMap((row) => ownedPaths(row)))
   const drop = new Set(ownedPaths(target).filter((path) => !needed.has(path)))
-  return { ...current, fields: without(current.fields, drop) }
+  return { ...unstamped(current), fields: without(current.fields, drop) }
 }
 
 /**

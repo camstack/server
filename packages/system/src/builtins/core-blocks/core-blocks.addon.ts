@@ -100,7 +100,12 @@ import { type BlockTypeLib, loadBlockTypeDefs } from './block-type-defs.js'
 import { armBlocksIntegration, reconcileBlocksIntegration } from './blocks-integration.js'
 import { blocksInstanceRecordKinds, buildBlocksInstances } from './blocks-instances.js'
 import { type BlockTranspiler, compileBlock } from './compile-block.js'
-import { buildCompositionApi, type CompositionApi } from './composition-api.js'
+import {
+  buildCompositionApi,
+  type CompositionApi,
+  IDENTITY_LINKS_USER_ID,
+  linkContributionDeleteRefusal,
+} from './composition-api.js'
 import { LinkContributionReconciler } from './link-contributions.js'
 import { writeComposedDeviceName } from './sync-composed-device-name.js'
 import { describeCompositionSources } from './composition-sources.js'
@@ -915,6 +920,13 @@ export class CoreBlocksAddon extends BaseAddon {
 
       delete: async ({ blockId }) => {
         const existing = this.requireStore().get(blockId)
+        const linkRefusal = linkContributionDeleteRefusal(existing)
+        if (linkRefusal !== null) {
+          this.ctx.logger.warn('core block delete refused: it holds device-link contributions', {
+            meta: { blockId, reason: linkRefusal },
+          })
+          throw new Error(linkRefusal)
+        }
         const composition = existing !== null && coreBlockComposition(existing) !== null
         await this.requireStore().delete(blockId)
         await this.requirePrefs().delete(blockId)
@@ -1060,9 +1072,16 @@ export class CoreBlocksAddon extends BaseAddon {
     }
     const compositions = this.sharedCompositionApi()
     const store = this.requireStore()
-    const caller = { userId: 'identity-links', isAdmin: true }
+    const caller = { userId: IDENTITY_LINKS_USER_ID, isAdmin: true }
     const links = new LinkContributionReconciler({
       listLinks: () => requireApi().deviceManager.listIdentityLinks.query({}),
+      deviceIdOf: async (ref) => {
+        const rows = await requireApi().deviceManager.listAll.query({
+          addonId: ref.addonId,
+          projection: 'slim',
+        })
+        return rows.find((r) => r.stableId === ref.stableId)?.id ?? null
+      },
       boundCaps: async (deviceId) =>
         (await requireApi().deviceManager.getBindings.query({ deviceId })).entries.map(
           (e) => e.capName,
@@ -1152,6 +1171,8 @@ export class CoreBlocksAddon extends BaseAddon {
         this.convergeSoon()
         this.seedLockDoorGate()
       },
+      // An operator write of a customization re-derives the link contributions (D1063).
+      compositionWritten: () => this.linkContributions?.requestPass(),
       convergeForClaims: () => {
         if (this.supervisor === null) {
           return Promise.reject(

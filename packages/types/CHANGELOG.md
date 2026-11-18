@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Devices can declare what is attached to them (a PoE port's wired client), and two devices matched on declared identifiers are linked: identity-link records, decisions and events.
 - power-source refusal reasons link-lost and link-unknown
+- An operator edit of a link-contributed Customize feature drops its stamp; new composition problem link-contribution-removed
 
 ## [1.2.593] - 2026-11-18
 

@@ -172,9 +172,27 @@ export function activeSections(active: readonly CustomizeRowPlan[]): readonly Cu
 
 /**
  * The identity link that added this row's feature (D1063), or null when the
- * operator set it. A stamped row is still the operator's to switch off or
- * edit (D62); the stamp only says where it came from.
+ * operator set it. A stamped row is the operator's to switch off or edit (D62);
+ * its off-switch is the toggle, never a delete — the server refuses to remove
+ * it (`link-contribution-removed`). An edit hands the feature to the operator.
  */
 export function linkStampOf(feature: CompositionFieldsFeature | null): string | null {
   return feature?.contributedBy?.linkId ?? null
+}
+
+/** What a scalar row offers besides its edit pencil. */
+export interface ScalarRowOffers {
+  /** The trash button: an operator assignment only. */
+  readonly remove: boolean
+  /** The on/off toggle of a feature a device link added (D1063). */
+  readonly linkToggle: boolean
+}
+
+export function scalarRowOffers(row: {
+  readonly linkStamp: string | null
+  readonly recognized: boolean
+  readonly otherFormula: boolean
+}): ScalarRowOffers {
+  const assigned = row.recognized || row.otherFormula
+  return { remove: assigned && row.linkStamp === null, linkToggle: row.linkStamp !== null }
 }
