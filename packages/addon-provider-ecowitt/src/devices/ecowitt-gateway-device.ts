@@ -5,13 +5,15 @@ import {
   type DeviceFeature,
   DeviceType,
   deviceAdminLinkCapability,
+  errMsg,
   type InferNativeProvider,
 } from '@camstack/types'
 import { z } from 'zod'
 import { ECOWITT_SYSTEM } from '../config.js'
 import { ecowittConnections } from '../ecowitt-client-registry.js'
 import { ecowittFacades } from '../ecowitt-gateway.js'
-import { ecowittGatewayIdentifiers } from '../ecowitt-identifiers.js'
+import { ecowittMacReader } from '../ecowitt-gateway-mac.js'
+import { ecowittGatewayIdentifiers, needsGatewayMacRead } from '../ecowitt-identifiers.js'
 
 /** Marks the Gateway device's blob apart from a group Container's. */
 export const ECOWITT_GATEWAY_DEVICE_KIND = 'gateway-device'
@@ -37,8 +39,12 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
   private readonly integrationId: string
   /** The last declaration sent; an unchanged one is not re-sent. */
   private lastIdentityKey: string | null = null
-  /** The "MAC unknown" reason is logged once per device instance. */
+  /** The "MAC unknown" reason is logged once, until a read succeeds. */
   private macUnknownLogged = false
+  /** `onActivate` ran: before it, an online flip from the constructor does no I/O. */
+  private activated = false
+  /** One MAC read per connect: a second flip while one runs does not start another. */
+  private macReadInFlight = false
 
   constructor(ctx: DeviceContext) {
     const cfg = ecowittGatewayDeviceSchema.parse(ctx.persistedConfig ?? {})
@@ -51,32 +57,62 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
 
   override async onActivate(): Promise<void> {
     await super.onActivate()
-    await this.declareGatewayIdentity()
+    this.activated = true
+    if (this.online) await this.onGatewayConnected()
   }
 
-  /** The gateway's client came up: its connection is current, so declare from it. */
+  /** The gateway's client came up: its connection is current, so read and declare from it. */
   override markOnline(online: boolean): void {
+    const wasOnline = this.online
     super.markOnline(online)
-    if (online) void this.declareGatewayIdentity()
+    if (online && !wasOnline && this.activated) void this.onGatewayConnected()
   }
 
   /**
-   * Declare the MAC the LAN scan carried into the connection and the host it dials (D1059). No
-   * running local connection declares nothing; a MAC never read stays `unread`, logged once.
+   * Declare what the connection knows, then, when its MAC is unknown for the host it dials, read it
+   * with ONE unicast probe, store it on the integration and declare again (D1059). A failed read
+   * leaves the MAC unknown, logged once; the next connect tries again.
    */
+  private async onGatewayConnected(): Promise<void> {
+    await this.declareGatewayIdentity()
+    const connection = ecowittConnections.get(this.integrationId)
+    if (!needsGatewayMacRead(connection)) return
+    const reader = ecowittMacReader.get()
+    if (reader === null || this.macReadInFlight) return
+    this.macReadInFlight = true
+    try {
+      const read = await reader.probe(connection.host)
+      if (!read.ok) {
+        this.logMacUnknown(connection.host, read.reason)
+        return
+      }
+      await reader.persist(this.integrationId, read.mac, connection.host)
+      this.macUnknownLogged = false
+      this.ctx.logger.info('ecowitt gateway MAC read from the gateway', {
+        tags: { deviceId: this.id },
+        meta: { integrationId: this.integrationId, host: connection.host, mac: read.mac },
+      })
+      await this.declareGatewayIdentity()
+    } catch (err) {
+      this.logMacUnknown(connection.host, `store failed: ${errMsg(err)}`)
+    } finally {
+      this.macReadInFlight = false
+    }
+  }
+
+  private logMacUnknown(host: string, reason: string): void {
+    if (this.macUnknownLogged) return
+    this.macUnknownLogged = true
+    this.ctx.logger.warn('ecowitt gateway MAC unknown — not declared', {
+      tags: { deviceId: this.id },
+      meta: { integrationId: this.integrationId, host, reason },
+    })
+  }
+
+  /** Declare the MAC read at the host the connection dials, and that host (D1059). */
   private async declareGatewayIdentity(): Promise<void> {
     const declaration = ecowittGatewayIdentifiers(ecowittConnections.get(this.integrationId))
     if (declaration === null) return
-    if (declaration.unread.includes('mac') && !this.macUnknownLogged) {
-      this.macUnknownLogged = true
-      this.ctx.logger.info(
-        'ecowitt gateway MAC unknown — set up without a LAN scan; not declared',
-        {
-          tags: { deviceId: this.id },
-          meta: { integrationId: this.integrationId },
-        },
-      )
-    }
     const key = JSON.stringify(declaration)
     if (key === this.lastIdentityKey) return
     this.lastIdentityKey = key

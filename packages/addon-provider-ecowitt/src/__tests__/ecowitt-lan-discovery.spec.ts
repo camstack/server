@@ -58,6 +58,7 @@ describe('Ecowitt LAN discovery', () => {
           transport: 'local',
           host: '192.0.2.7',
           mac: 'de:ad:be:ef:00:01',
+          macHost: '192.0.2.7',
           model: 'GW1100A',
         },
         setupIntegration: true,

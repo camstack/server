@@ -37,6 +37,8 @@ import { liveEcowittProbe } from './ecowitt-connection-test.js'
 import { EcowittClientRegistry, ecowittConnections } from './ecowitt-client-registry.js'
 import { gatewayDeviceNativeId } from './ecowitt-discovery.js'
 import { ecowittFacades } from './ecowitt-gateway.js'
+import { ecowittMacReader } from './ecowitt-gateway-mac.js'
+import { probeGatewayMac } from './ecowitt-mac-probe.js'
 import {
   cascadeRemoveDevicesForIntegration,
   findExistingGateway,
@@ -126,6 +128,15 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
       onSensors: (_integrationId, gatewayKey, sensors) =>
         this.handleSensorsChanged(gatewayKey, sensors),
     })
+    // A Gateway device whose MAC is unknown for the host it dials reads it on connect, into the
+    // same record fields the LAN scan fills (D1059).
+    ecowittMacReader.set({
+      probe: (host) => probeGatewayMac(host),
+      persist: async (integrationId, mac, host) => {
+        await records.kind(ecowittConnectionsEntryKind).patch(integrationId, { mac, macHost: host })
+        this.requireClients().noteGatewayMac(integrationId, mac, host)
+      },
+    })
     await this.reconcileIntegrations()
     this.subscribeIntegrationLifecycle()
     return {
@@ -196,6 +207,7 @@ export class EcowittProviderAddon extends BaseDeviceProvider {
     this.clients = null
     ecowittFacades.clear()
     ecowittConnections.clear()
+    ecowittMacReader.set(null)
     await super.onShutdown()
   }
 

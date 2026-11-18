@@ -1,7 +1,8 @@
 /**
- * D1059 through the device class: the Ecowitt Gateway device declares the MAC the
- * scan carried into its integration's connection, on activation and when the
- * gateway's client comes up; a connection without a MAC keeps the stored one.
+ * D1059 through the device class: when the gateway's client comes up and its MAC
+ * is unknown for the host it dials, the Gateway device reads it with one unicast
+ * probe, stores it on the integration and declares it. No answer leaves it
+ * unknown, logged once; a MAC read at another host is never declared.
  */
 import {
   type DeviceContext,
@@ -13,8 +14,10 @@ import {
   type SetIdentifiersInput,
 } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { settingsToEcowittConfig } from '../config.js'
+import { type EcowittConfig, settingsToEcowittConfig } from '../config.js'
 import { ecowittConnections } from '../ecowitt-client-registry.js'
+import { ecowittMacReader } from '../ecowitt-gateway-mac.js'
+import type { GatewayMacProbeResult } from '../ecowitt-mac-probe.js'
 import {
   ECOWITT_GATEWAY_DEVICE_KIND,
   EcowittGatewayDevice,
@@ -79,48 +82,118 @@ function rig(setIdentifiers: object, logger: IScopedLogger): DeviceContext {
   } as unknown as DeviceContext
 }
 
-describe('EcowittGatewayDevice declares its identity (D1059)', () => {
-  afterEach(() => ecowittConnections.clear())
+interface World {
+  stored: DeviceIdentifiers | null
+  readonly probed: string[]
+  readonly persisted: { integrationId: string; mac: string; host: string }[]
+  readonly lines: LogLine[]
+  /** Every declaration the device sent. */
+  readonly inputs: SetIdentifiersInput[]
+}
 
-  it('declares the scanned MAC; a connection without one keeps it and logs the reason once', async () => {
-    const world: { stored: DeviceIdentifiers | null; calls: number } = { stored: null, calls: 0 }
-    const setIdentifiers = {
-      mutate: async (input: SetIdentifiersInput) => {
-        world.calls += 1
-        world.stored = mergeIdentifiers(world.stored, input.identifiers, input.unread ?? [])
-      },
-    }
-    const lines: LogLine[] = []
-    ecowittConnections.set(
-      'e1',
-      settingsToEcowittConfig({ transport: 'local', host: '192.0.2.7', mac: '00:00:5E:00:53:2A' }),
-    )
-    const device = new EcowittGatewayDevice(rig(setIdentifiers, recordingLogger(lines)))
+const MAC = '00:00:5e:00:53:2a'
+const OTHER_MAC = '00:00:5e:00:53:2b'
+
+function local(settings: Record<string, unknown>): EcowittConfig {
+  return settingsToEcowittConfig({ transport: 'local', ...settings })
+}
+
+/** A device wired to a fake probe; `persist` lands where the addon's does: the running connection. */
+function setup(answer: (host: string) => GatewayMacProbeResult): {
+  readonly device: EcowittGatewayDevice
+  readonly world: World
+} {
+  const world: World = { stored: null, probed: [], persisted: [], lines: [], inputs: [] }
+  ecowittMacReader.set({
+    probe: async (host) => {
+      world.probed.push(host)
+      return answer(host)
+    },
+    persist: async (integrationId, mac, host) => {
+      world.persisted.push({ integrationId, mac, host })
+      const current = ecowittConnections.get(integrationId)
+      if (current?.transport === 'local') {
+        ecowittConnections.set(integrationId, { ...current, mac, macHost: host })
+      }
+    },
+  })
+  const setIdentifiers = {
+    mutate: async (input: SetIdentifiersInput) => {
+      world.inputs.push(input)
+      world.stored = mergeIdentifiers(world.stored, input.identifiers, input.unread ?? [])
+    },
+  }
+  const device = new EcowittGatewayDevice(rig(setIdentifiers, recordingLogger(world.lines)))
+  return { device, world }
+}
+
+async function connect(device: EcowittGatewayDevice): Promise<void> {
+  device.markOnline(false)
+  device.markOnline(true)
+  await new Promise((r) => setTimeout(r, 0))
+}
+
+describe('EcowittGatewayDevice reads and declares its MAC on connect (D1059)', () => {
+  afterEach(() => {
+    ecowittConnections.clear()
+    ecowittMacReader.set(null)
+  })
+
+  it('a probe that answers: the MAC is stored for the host and declared', async () => {
+    ecowittConnections.set('e1', local({ host: '192.0.2.7' }))
+    const { device, world } = setup(() => ({ ok: true, mac: '00-00-5E-00-53-2A' }))
     await device.onActivate()
-    await vi.waitFor(() => expect(world.stored?.mac?.[0]?.value).toBe('00:00:5e:00:53:2a'))
+    await connect(device)
+    await vi.waitFor(() => expect(world.stored?.mac?.[0]?.value).toBe(MAC))
+    expect(world.probed).toEqual(['192.0.2.7'])
+    expect(world.persisted).toEqual([
+      { integrationId: 'e1', mac: '00-00-5E-00-53-2A', host: '192.0.2.7' },
+    ])
     expect(world.stored?.ip?.value).toBe('192.0.2.7')
 
-    // The same declaration on reconnect is not re-sent.
-    const before = world.calls
-    device.markOnline(false)
-    device.markOnline(true)
-    await new Promise((r) => setTimeout(r, 0))
-    expect(world.calls).toBe(before)
+    // The MAC is current for the host: the next connect does not probe again.
+    await connect(device)
+    expect(world.probed).toEqual(['192.0.2.7'])
+  })
 
-    // The operator edits the integration by hand: the MAC is no longer known to it.
-    ecowittConnections.set('e1', settingsToEcowittConfig({ transport: 'local', host: '192.0.2.8' }))
-    device.markOnline(false)
-    device.markOnline(true)
-    device.markOnline(false)
-    device.markOnline(true)
-    await vi.waitFor(() => expect(world.stored?.ip?.value).toBe('192.0.2.8'))
-    expect(world.stored?.mac?.[0]?.value).toBe('00:00:5e:00:53:2a')
-    const unknown = lines.filter((l) => l.msg.startsWith('ecowitt gateway MAC unknown'))
-    expect(unknown).toEqual([
-      {
-        msg: 'ecowitt gateway MAC unknown — set up without a LAN scan; not declared',
-        deviceId: 21,
-      },
+  it('no answer: the MAC stays unknown, logged once with the device id; each connect asks once', async () => {
+    ecowittConnections.set('e1', local({ host: '192.0.2.7' }))
+    const { device, world } = setup(() => ({ ok: false, reason: 'no answer within 1500 ms' }))
+    await device.onActivate()
+    await connect(device)
+    await connect(device)
+    await vi.waitFor(() => expect(world.probed).toEqual(['192.0.2.7', '192.0.2.7']))
+    expect(world.persisted).toEqual([])
+    expect(world.stored?.mac).toBeUndefined()
+    expect(world.stored?.ip?.value).toBe('192.0.2.7')
+    expect(world.lines.filter((l) => l.msg.startsWith('ecowitt gateway MAC unknown'))).toEqual([
+      { msg: 'ecowitt gateway MAC unknown — not declared', deviceId: 21 },
     ])
+  })
+
+  it('host change: the old MAC is not declared for the new host, then the re-read is', async () => {
+    ecowittConnections.set('e1', local({ host: '192.0.2.7', mac: MAC, macHost: '192.0.2.7' }))
+    let reachable = false
+    const { device, world } = setup(() =>
+      reachable ? { ok: true, mac: OTHER_MAC } : { ok: false, reason: 'no answer within 1500 ms' },
+    )
+    await device.onActivate()
+    await connect(device)
+    await vi.waitFor(() => expect(world.stored?.mac?.[0]?.value).toBe(MAC))
+    expect(world.probed).toEqual([])
+
+    // The operator points the integration at another gateway; it does not answer yet.
+    ecowittConnections.set('e1', local({ host: '192.0.2.8', mac: MAC, macHost: '192.0.2.7' }))
+    await connect(device)
+    await vi.waitFor(() => expect(world.stored?.ip?.value).toBe('192.0.2.8'))
+    expect(world.probed).toEqual(['192.0.2.8'])
+    const forNewHost = world.inputs.at(-1)
+    expect(forNewHost?.identifiers?.mac).toBeUndefined()
+    expect(forNewHost?.unread).toEqual(['mac'])
+
+    reachable = true
+    await connect(device)
+    await vi.waitFor(() => expect(world.stored?.mac?.[0]?.value).toBe(OTHER_MAC))
+    expect(world.persisted).toEqual([{ integrationId: 'e1', mac: OTHER_MAC, host: '192.0.2.8' }])
   })
 })

@@ -1,9 +1,9 @@
 /**
  * D1059 for an Ecowitt gateway: the MAC the LAN scan read out of the gateway's
  * `CMD_BROADCAST` reply is carried through adoption into the integration's
- * connection, and the Gateway device declares it with the host it dials. A
- * gateway set up by hand (no scan) has no MAC: `mac` is unread, so a value stored
- * earlier is kept and never replaced by "absent" (D49, D393).
+ * connection with the host it was read at, and the Gateway device declares it
+ * with the host it dials. No MAC, or one read at another host, leaves `mac`
+ * unread: a value stored earlier is kept, never replaced by "absent" (D49, D393).
  */
 import {
   type DeviceIdentifiers,
@@ -17,30 +17,15 @@ import { describe, expect, it } from 'vitest'
 import { settingsToEcowittConfig } from '../config.js'
 import { ecowittGatewayIdentifiers } from '../ecowitt-identifiers.js'
 import { ecowittCandidates, ecowittGatewaysFromHits } from '../ecowitt-lan-discovery.js'
-
-/** A `CMD_BROADCAST` reply carrying a MAC from the documentation block (RFC 7042). */
-function reply(mac: readonly number[], ssid: string): string {
-  const body = Buffer.concat([
-    Buffer.from([0xff, 0xff, 0x12, 0x00, 0x00]),
-    Buffer.from(mac),
-    Buffer.from([192, 0, 2, 7]),
-    Buffer.from([0xaf, 0xc8]),
-    Buffer.from([ssid.length]),
-    Buffer.from(ssid, 'ascii'),
-    Buffer.from([0]),
-  ])
-  let sum = 0
-  for (let i = 2; i < body.length - 1; i += 1) sum = (sum + (body[i] ?? 0)) & 0xff
-  body[body.length - 1] = sum
-  return body.toString('hex')
-}
+import { EcowittConnectionBodySchema } from '../ecowitt-instances.js'
+import { gatewayReplyHex } from './support/ecowitt-reply.js'
 
 const DOC_MAC = [0x00, 0x00, 0x5e, 0x00, 0x53, 0x2a] as const
 const HIT: DiscoveryHit = {
   modeIndex: 0,
   host: '192.0.2.7',
   port: 46_000,
-  udp: { payloadHex: reply(DOC_MAC, 'GW2000A-WIFI532A V3.1.5') },
+  udp: { payloadHex: gatewayReplyHex(DOC_MAC, 'GW2000A-WIFI532A V3.1.5') },
 }
 
 describe('Ecowitt gateway identifiers (D1059)', () => {
@@ -53,6 +38,7 @@ describe('Ecowitt gateway identifiers (D1059)', () => {
         host: '192.0.2.7',
         model: 'GW2000A',
         mac: '00:00:5e:00:53:2a',
+        macHost: '192.0.2.7',
       },
     })
   })
@@ -78,6 +64,7 @@ describe('Ecowitt gateway identifiers (D1059)', () => {
       transport: 'local',
       host: 'weather.example',
       mac: '00-00-5E-00-53-2A',
+      macHost: 'weather.example',
     })
     const declaration = ecowittGatewayIdentifiers(connection)
     const { identifiers } = normaliseIdentifiers(declaration?.identifiers ?? {}, { readAt: 1 })
@@ -102,6 +89,29 @@ describe('Ecowitt gateway identifiers (D1059)', () => {
     }
     const merged = mergeIdentifiers(stored, input.identifiers, input.unread ?? [])
     expect(merged?.mac?.[0]?.value).toBe('00:00:5e:00:53:2a')
+  })
+
+  it('a MAC read at another host is not declared: the gateway behind this config may be another', () => {
+    const declaration = ecowittGatewayIdentifiers(
+      settingsToEcowittConfig({
+        transport: 'local',
+        host: '192.0.2.8',
+        mac: '00:00:5e:00:53:2a',
+        macHost: '192.0.2.7',
+      }),
+    )
+    expect(declaration).toEqual({ identifiers: { mac: null, host: '192.0.2.8' }, unread: ['mac'] })
+  })
+
+  it('the integration record keeps the MAC and the host it was read at', () => {
+    const body = EcowittConnectionBodySchema.parse({
+      name: 'Ecowitt',
+      transport: 'local',
+      host: '192.0.2.7',
+      mac: '00:00:5e:00:53:2a',
+      macHost: '192.0.2.7',
+    })
+    expect(body).toMatchObject({ mac: '00:00:5e:00:53:2a', macHost: '192.0.2.7' })
   })
 
   it('a push-listener gateway, or no running connection, declares nothing', () => {
