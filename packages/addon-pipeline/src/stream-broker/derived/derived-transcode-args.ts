@@ -551,6 +551,18 @@ export function describeEffectiveEncode(built: DerivedTranscodeArgs): DerivedEff
   }
 }
 
+/**
+ * `h264` / `h265` from any spelling a publisher or the SDP uses (`H264`,
+ * `H.265`, `hevc`); `null` for anything else or nothing. The one reader of a
+ * codec string for the derived path.
+ */
+export function normalizeVideoCodec(raw: string | null | undefined): 'h264' | 'h265' | null {
+  const codec = raw?.toLowerCase().replace(/[.\s-]/g, '')
+  if (codec === 'h265' || codec === 'hevc') return 'h265'
+  if (codec === 'h264' || codec === 'avc') return 'h264'
+  return null
+}
+
 /** Placeholder `-i` of a preview, which has no loopback to dial. */
 export const PREVIEW_SOURCE_URL = 'rtsp://source.invalid/preview'
 

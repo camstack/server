@@ -105,6 +105,7 @@ import {
   computeDerivedEncode,
   type DerivedEffectiveEncode,
   describeEffectiveEncode,
+  normalizeVideoCodec,
   type DerivedSourceResolution,
 } from '../derived/derived-transcode-args.js'
 import { fillEmptyProfileSlots } from '../fill-empty-profile-slots.js'
@@ -3095,6 +3096,13 @@ export class StreamBrokerManager {
       }
       const order = this.nextOrder(deviceId)
       const deviceFeaturesArr: string[] = input.deviceFeatures ? [...input.deviceFeatures] : []
+      // A record never carries `source`: it is resolved here, against the
+      // source stream's own declared codec, or left absent when unknown.
+      const derivedCodecStamp = this.resolveDerivedCodecStamp(
+        deviceId,
+        derivedSource,
+        encodeProfile.video.codec,
+      )
       const derivedCam: CameraStreamInternal = {
         camStreamId,
         deviceId,
@@ -3102,8 +3110,8 @@ export class StreamBrokerManager {
         ...(label !== undefined ? { label } : {}),
         ...(codec !== undefined
           ? { codec }
-          : encodeProfile.video.codec !== 'copy'
-            ? { codec: encodeProfile.video.codec }
+          : derivedCodecStamp !== null
+            ? { codec: derivedCodecStamp }
             : {}),
         ...(resolution !== undefined
           ? { resolution }
@@ -8693,13 +8701,12 @@ export class StreamBrokerManager {
   private observedSourceProbe(deviceId: number, source: DerivedSourceRef): DerivedSourceProbe {
     const stats = this.observedSourceStats(deviceId, source)
     const resolution = this.observedSourceResolution(deviceId, source)
-    const codec = stats?.codec?.toLowerCase().replace(/[.\s-]/g, '')
     return {
       width: resolution?.width ?? null,
       height: resolution?.height ?? null,
       fps: stats?.inputFps ?? null,
       idrIntervalMs: stats?.idrIntervalMs ?? null,
-      videoCodec: codec === 'h265' || codec === 'hevc' ? 'h265' : codec === 'h264' ? 'h264' : null,
+      videoCodec: normalizeVideoCodec(stats?.codec),
       audioCodec: stats?.audio?.codec ?? null,
     }
   }
@@ -8717,8 +8724,31 @@ export class StreamBrokerManager {
     const source: DerivedSourceRef = input.source ?? { kind: 'profile', profile: 'high' }
     const probe = this.observedSourceProbe(input.deviceId, source)
     const probed = Object.values(probe).some((value) => value !== null && value !== 0)
-    if (!probed) return { kind: 'no-source' }
+    if (!probed) {
+      this.logger.debug('previewDerivedEncode: source not probed yet, no preview', {
+        tags: { deviceId: input.deviceId },
+        meta: { source },
+      })
+      return { kind: 'no-source' }
+    }
     return { kind: 'preview', preview: computeDerivedEncode(input.profile, probe).preview }
+  }
+
+  /**
+   * The concrete codec a derived stream's record advertises: the profile's own
+   * `h264` / `h265`, the source stream's declared codec for `source`, nothing
+   * for `copy` or an unknown source. Never `source`.
+   */
+  private resolveDerivedCodecStamp(
+    deviceId: number,
+    derivedSource: DerivedSourceRef,
+    profileCodec: EncodeProfile['video']['codec'],
+  ): 'h264' | 'h265' | null {
+    if (profileCodec === 'h264' || profileCodec === 'h265') return profileCodec
+    if (profileCodec === 'copy') return null
+    const sourceCamStreamId = this.derivedSourceCamStreamId(deviceId, derivedSource)
+    if (sourceCamStreamId === null) return null
+    return normalizeVideoCodec(this.cameraStreams.get(deviceId)?.get(sourceCamStreamId)?.codec)
   }
 
   private derivedSourceCamStreamId(deviceId: number, source: DerivedSourceRef): string | null {

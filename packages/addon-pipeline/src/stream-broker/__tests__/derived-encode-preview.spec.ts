@@ -1,29 +1,12 @@
 /**
  * `computeDerivedEncode` is THE derived-encode computation: the broker's feeder
  * spawn and `previewDerivedEncode` both call it. This file pins it as a table
- * (profile x probed source -> effective encode) and proves the two callers
- * return the same argv for the same input.
+ * (profile x probed source -> effective encode). The start-path / preview parity
+ * and the real probe read are in `derived-source-codec.spec.ts`.
  */
 import type { DerivedSourceProbe, EncodeProfile } from '@camstack/types'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { computeDerivedEncode } from '../derived/derived-transcode-args.js'
-
-const captured: { args: readonly string[] | null } = { args: null }
-
-vi.mock('../derived/derived-stream-feeder.js', () => ({
-  DerivedStreamFeeder: class {
-    constructor(options: { args: readonly string[] }) {
-      captured.args = options.args
-    }
-    connect(): void {}
-  },
-}))
-vi.mock('../stream-broker/ffmpeg-invocation.js', async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  requireBrokerFfmpeg: () => '/usr/bin/ffmpeg',
-}))
-
-const { StreamBrokerManager } = await import('../stream-broker/stream-broker-manager.js')
 
 const SOURCE_1080P_H264: DerivedSourceProbe = {
   width: 1920,
@@ -128,84 +111,5 @@ describe('computeDerivedEncode', () => {
   it('audio none emits -an', () => {
     const { preview } = computeDerivedEncode(ROWS[4]!.profile, SOURCE_1080P_H264)
     expect(preview.args).toContain('-an')
-  })
-})
-
-describe('the broker start path and the preview share one computation', () => {
-  beforeEach(() => {
-    captured.args = null
-  })
-
-  it('returns identical args for the same profile and source', async () => {
-    const manager = new StreamBrokerManager({
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
-      child() {
-        return this
-      },
-      withTags() {
-        return this
-      },
-    })
-    const profile: EncodeProfile = {
-      video: { codec: 'h264', height: 360, fps: 60, bitrateKbps: 50 },
-      audio: { codec: 'aac' },
-    }
-    const internals = manager as unknown as {
-      observedSourceProbe: () => DerivedSourceProbe
-      rtspProvider: { getInternalEntry: () => { url: string } }
-      spawnDerivedFeeder: (...a: unknown[]) => Promise<unknown>
-    }
-    internals.observedSourceProbe = () => SOURCE_1080P_H264
-    internals.rtspProvider = { getInternalEntry: () => ({ url: 'rtsp://loop/back' }) }
-
-    await internals.spawnDerivedFeeder(
-      7,
-      'derived:x',
-      { kind: 'camStream', camStreamId: 'native:main' },
-      profile,
-      {},
-      () => {},
-    )
-    const preview = await manager.previewDerivedEncode({
-      deviceId: 7,
-      profile,
-      source: { kind: 'camStream', camStreamId: 'native:main' },
-    })
-
-    expect(preview.kind).toBe('preview')
-    if (preview.kind !== 'preview') return
-    const started = captured.args
-    expect(started).not.toBeNull()
-    // Only the `-i` source differs: the preview has no loopback to dial.
-    const swapUrl = (args: readonly string[], url: string): string[] =>
-      args.map((a) => (a === url ? '<src>' : a))
-    expect(swapUrl(preview.preview.args, 'rtsp://source.invalid/preview')).toEqual(
-      swapUrl(started ?? [], 'rtsp://loop/back'),
-    )
-    expect(preview.preview.fpsClampedToSource).toBe(true)
-    expect(preview.preview.raisedToFloor).toBe(true)
-  })
-
-  it('answers no-source before anything is probed', async () => {
-    const manager = new StreamBrokerManager({
-      info: vi.fn(),
-      warn: vi.fn(),
-      error: vi.fn(),
-      debug: vi.fn(),
-      child() {
-        return this
-      },
-      withTags() {
-        return this
-      },
-    })
-    const result = await manager.previewDerivedEncode({
-      deviceId: 404,
-      profile: { video: { codec: 'h264', height: 360 }, audio: 'passthrough' },
-    })
-    expect(result).toEqual({ kind: 'no-source' })
   })
 })

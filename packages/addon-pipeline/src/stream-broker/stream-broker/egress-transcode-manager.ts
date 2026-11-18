@@ -513,7 +513,8 @@ export class EgressTranscodeManager {
    * Acquire an encoded stream matching `request`, sharing an existing child on
    * an EXACT match. The returned `pipelineKey` is the release handle.
    */
-  async acquire(request: EgressTranscodeRequest): Promise<EgressTranscode> {
+  async acquire(raw: EgressTranscodeRequest): Promise<EgressTranscode> {
+    const request = this.withConcreteCodec(raw)
     const delivery = egressTransportFromRequest(request)
     const key = egressTranscodeSharingKey(request, delivery)
     return this.dial(this.share(await this.entryFor(key, request, delivery)), request.hostname)
@@ -534,8 +535,9 @@ export class EgressTranscodeManager {
       transport: 'fragments',
       fragmentMs: request.fragmentMs,
     }
-    const key = egressTranscodeSharingKey(request.encode, delivery)
-    const entry = this.share(await this.entryFor(key, request.encode, delivery))
+    const encode = this.withConcreteCodec(request.encode)
+    const key = egressTranscodeSharingKey(encode, delivery)
+    const entry = this.share(await this.entryFor(key, encode, delivery))
     if (entry.fragments === null) {
       // Unreachable by construction — the transport is in the sharing key, so a
       // `fragments` key can only reach a child built with a plane — and stated
@@ -550,6 +552,23 @@ export class EgressTranscodeManager {
       // `transcoded` is false exactly on the smart-copy branch, where no
       // `-force_key_frames` grid exists and the source's GOP decides.
       fragmentLengthEnforced: entry.handle.transcoded,
+    }
+  }
+
+  /**
+   * `source` ("whatever the source speaks") is an operator-profile codec, not an
+   * egress one. It is resolved HERE, once, against the source stream's declared
+   * codec, so the sharing key, the copy decision, the published record and the
+   * encoder choice only ever see `h264` / `h265` / `copy`. Left alone it read as
+   * "not h265" and turned an H.265 camera into H.264. An undeclared source
+   * codec resolves to `h264`, the same default every other reader of it uses.
+   */
+  private withConcreteCodec(request: EgressTranscodeRequest): EgressTranscodeRequest {
+    if (request.encode.video.codec !== 'source') return request
+    const codec = this.resolveSource(request).codec === 'h265' ? 'h265' : 'h264'
+    return {
+      ...request,
+      encode: { ...request.encode, video: { ...request.encode.video, codec } },
     }
   }
 
