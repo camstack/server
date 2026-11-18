@@ -21,6 +21,7 @@ import {
   useDeviceManagerEnable,
   useDeviceManagerListAll,
   useIntegrationInstancesDeleteInstance,
+  useIntegrationInstancesDescribe,
   useIntegrationsGet,
   useIntegrationsGetAvailableTypes,
   useIntegrationsDelete,
@@ -49,7 +50,6 @@ import { AddDeviceModal } from '../components/integrations/AddDeviceModal'
 import { useAdminDeviceRemoval } from '../hooks/useAdminDeviceRemoval'
 import { MatterPairingPanel } from '../components/integrations/MatterPairingPanel'
 import { IntegrationInstanceEditor } from '../components/integrations/IntegrationInstanceEditor'
-import type { IntegrationFormSeed } from '../components/integrations/integration-setup-seed'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useAddonIconUrl } from '../contexts/addon-icons-context'
 import {
@@ -87,13 +87,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
   const [searchParams, setSearchParams] = useSearchParams()
   const system = useSystem()
   const [showAddDevice, setShowAddDevice] = useState(false)
-  const handleSetupIntegration = useCallback(
-    (seed: IntegrationFormSeed) => {
-      setShowAddDevice(false)
-      navigate('/integrations', { state: { integrationSeed: seed } })
-    },
-    [navigate],
-  )
   const [showConfig, setShowConfig] = useState(false)
   const [showLogs, setShowLogs] = useState(false)
 
@@ -154,17 +147,27 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
     // kind and this keeps their flow working.
     return entry?.kind === 'device-adoption' ? 'device-adoption' : 'device-provider'
   }, [availableTypes, integration?.addonId, typesReady])
-  // Whether THIS integration's provider supports a network scan — gates the
-  // per-integration "Scan network" button (with the extra-param form).
-  // `null` until the answer is in: the Add device modal draws nothing that depends on it before.
+  // Whether Add device may scan INSIDE this integration: only a type whose discovery is scoped to
+  // one instance (`discovery.scopedToInstance`) and whose addon is a discovery provider. The
+  // addon-wide scan finds NEW integrations and lives on the Integrations page, not here.
+  // `null` until the answers are in: the Add device modal draws nothing that depends on it before.
   const { data: discoveryProvidersData, isPending: discoveryPending } =
     useDeviceManagerDiscoveryProviders({})
+  const { data: instancesDescription, isPending: descriptionPending } =
+    useIntegrationInstancesDescribe({ addonId }, { retry: false })
   const canScan = useMemo(
     () =>
-      discoveryPending
+      discoveryPending || descriptionPending
         ? null
-        : (discoveryProvidersData?.providers ?? []).some((p) => p.addonId === integration?.addonId),
-    [discoveryPending, discoveryProvidersData, integration?.addonId],
+        : instancesDescription?.discovery?.scopedToInstance === true &&
+          (discoveryProvidersData?.providers ?? []).some((p) => p.addonId === integration?.addonId),
+    [
+      discoveryPending,
+      descriptionPending,
+      instancesDescription,
+      discoveryProvidersData,
+      integration?.addonId,
+    ],
   )
   // The add-device button stays disabled until the kind resolves, so the
   // operator can never open the wrong dialog during the loading window.
@@ -664,7 +667,6 @@ function AddonIntegrationsView({ addonId }: AddonIntegrationsViewProps): ReactEl
           integrationId={integrationId}
           kind={integrationKind}
           canScan={canScan}
-          onSetupIntegration={handleSetupIntegration}
           {...(isMatter
             ? {
                 pairing: {

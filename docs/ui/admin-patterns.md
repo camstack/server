@@ -596,6 +596,10 @@ a creation type and a form), and a single remaining flow is not drawn as a tab.
 The network list is `mergeNetworkCandidates` over the adoption candidates, a
 scan scoped to the integration and the passive proposals: one row per device. A
 row with `needsParams` opens the creation form prefilled before it is adopted.
+Inside an integration the scan is drawn only when the integration's discovery is scoped to
+the instance (`describe().discovery.scopedToInstance`), never because its addon is a
+discovery provider; a candidate that is an integration to set up (`setupIntegration`) is
+never listed there — that scan lives on the Integrations page and in the wizard.
 Never add a device through an integration's settings form.
 
 ## A collection of connections is one `InstancesTable`

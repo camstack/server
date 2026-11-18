@@ -343,6 +343,38 @@ describe('AddDeviceModal', () => {
     expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
   })
 
+  describe('inside an integration, an integration to set up is never offered', () => {
+    const console_ = hit('unifi-console', '192.0.2.40', { setupIntegration: true })
+    const legacy = hit('unifi-legacy', '192.0.2.41', {
+      prefilledConfig: { host: '192.0.2.41', setupIntegration: true },
+    })
+
+    it('drops a scan hit and a proposal that are integrations to set up, keeps the devices', () => {
+      state.scan = [console_, legacy, hit('cam-lobby', '192.0.2.42')]
+      state.proposals = [
+        { id: 'p1', addonId: 'provider-esphome', candidate: console_ },
+        { id: 'p2', addonId: 'provider-esphome', candidate: hit('cam-yard', '192.0.2.43') },
+      ]
+      renderModal({ kind: 'device-adoption', canScan: true })
+      const rows = screen.getAllByTestId(/^network-row-/)
+      expect(rows.map((r) => r.getAttribute('data-testid')).sort()).toEqual([
+        'network-row-cam-lobby',
+        'network-row-cam-yard',
+      ])
+      expect(screen.queryByRole('button', { name: /set up/i })).toBeNull()
+    })
+
+    it('shows no scan and no proposal when the instance has no scoped scan', () => {
+      state.scan = [console_]
+      state.proposals = [{ id: 'p1', addonId: 'provider-esphome', candidate: console_ }]
+      state.adoption = [adoptionEntry('esp-cellar', 'cellar')]
+      renderModal({ kind: 'device-adoption', canScan: false })
+      expect(screen.queryByRole('button', { name: /scan now/i })).toBeNull()
+      expect(screen.queryAllByTestId(/^network-row-/)).toHaveLength(0)
+      expect(screen.getByPlaceholderText(/search candidates/i)).toBeTruthy()
+    })
+  })
+
   it('ignores a proposal that belongs to another integration', () => {
     state.proposals = [
       {

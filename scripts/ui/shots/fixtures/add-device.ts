@@ -46,6 +46,15 @@ const PROPOSALS = [
       onboardedName: 'Garage door',
     }),
   },
+  // A console on the LAN: an integration to set up. Never offered inside an existing integration.
+  {
+    id: 'p4',
+    addonId: 'provider-esphome',
+    candidate: hit('esphome-hub-console', 'Hub console', '192.0.2.34', {
+      type: 'gateway',
+      setupIntegration: true,
+    }),
+  },
 ]
 
 export default defineFixtures({
@@ -72,6 +81,10 @@ export default defineFixtures({
         existingInstances: [{ id: 'int_esp', name: 'ESPHome boards' }],
       },
     ],
+    'integrationInstances.describe': {
+      kinds: [],
+      discovery: { mode: 'none', scopedToInstance: false },
+    },
     'deviceManager.listAll': [],
     'deviceManager.discoveryProviders': {
       providers: [{ addonId: 'provider-esphome', label: 'ESPHome' }],

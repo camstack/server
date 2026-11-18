@@ -29,7 +29,7 @@ import { type ReactElement, useCallback, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { ConfigUISchema } from '../../types/config-ui'
 import { FormBuilder } from '../form-builder/FormBuilder'
-import { integrationSetupSeed, type IntegrationFormSeed } from './integration-setup-seed'
+import { needsIntegrationSetup } from './integration-setup-seed'
 import { mergeNetworkCandidates, type NetworkCandidate } from './network-candidates'
 import { ScanSubnetEditor } from './ScanSubnetEditor'
 
@@ -40,8 +40,6 @@ interface NetworkCandidatesPanelProps {
   readonly addonId: string
   readonly integrationId: string
   readonly onClose: () => void
-  /** A candidate flagged `setupIntegration` opens the integration form instead. */
-  readonly onSetupIntegration?: (seed: IntegrationFormSeed) => void
   /**
    * The adopt surface is drawn right below this one: only what the scan and
    * passive discovery found is listed here, and a device the adoption list
@@ -75,7 +73,6 @@ export function NetworkCandidatesPanel({
   addonId,
   integrationId,
   onClose,
-  onSetupIntegration,
   alongsideAdoption = false,
 }: NetworkCandidatesPanelProps): ReactElement {
   const { t } = useTranslation()
@@ -107,21 +104,22 @@ export function NetworkCandidatesPanel({
       alreadyAdopted: c.alreadyAdopted,
       parentStableId: c.parentStableId,
     }))
+    // Inside an integration only devices of THIS integration are offered: a candidate that is an
+    // integration to set up (a console, a host) belongs to the Integrations page, never here.
     const proposals = (proposalsQuery.data?.proposals ?? [])
-      .filter((p) => p.addonId === addonId)
+      .filter((p) => p.addonId === addonId && !needsIntegrationSetup(p.candidate))
       .map((p) => ({ id: p.id, candidate: p.candidate }))
     return mergeNetworkCandidates<Hit>({
       adoption,
-      scan: scan.data?.candidates ?? [],
+      scan: (scan.data?.candidates ?? []).filter((c) => !needsIntegrationSetup(c)),
       proposals,
       existingStableIds: new Set((allDevices ?? []).map((d) => d.stableId)),
     })
   }, [adoptionQuery.data, proposalsQuery.data, scan.data, allDevices, addonId])
 
   // Next to the adopt list, a row it already holds is left to it — unless the scan hit
-  // carries what only this block can act on: a parameter to ask for, or an integration to set up.
-  const holdsScanOnlyAction = (r: Row): boolean =>
-    r.hit !== null && (r.needsParams.length > 0 || r.hit.setupIntegration === true)
+  // carries what only this block can act on: a parameter to ask for.
+  const holdsScanOnlyAction = (r: Row): boolean => r.hit !== null && r.needsParams.length > 0
   const visibleRows = useMemo(
     () =>
       alongsideAdoption
@@ -181,12 +179,6 @@ export function NetworkCandidatesPanel({
     async (row: Row, config?: Readonly<Record<string, unknown>>) => {
       const hit = row.hit
       if (hit !== null) {
-        const seed = integrationSetupSeed(addonId, hit)
-        if (seed !== null) {
-          onSetupIntegration?.(seed)
-          onClose()
-          return
-        }
         await withBusy(row.key, async () => {
           await adoptDevice.mutateAsync({
             addonId,
@@ -204,7 +196,7 @@ export function NetworkCandidatesPanel({
         })
       }
     },
-    [adoptDevice, startJob, addonId, integrationId, onClose, onSetupIntegration, withBusy],
+    [adoptDevice, startJob, addonId, integrationId, withBusy],
   )
 
   const pick = useCallback(
@@ -339,7 +331,6 @@ function CandidateRow({
 }): ReactElement {
   const { t } = useTranslation()
   const already = row.alreadyAdded || added
-  const setup = row.hit !== null && integrationSetupSeed('', row.hit) !== null
   const selectable = row.hit?.selectable !== false
   const asks = row.needsParams.length > 0
   return (
@@ -368,20 +359,18 @@ function CandidateRow({
       ) : selectable ? (
         <Button
           size="sm"
-          variant={setup || asks ? 'outline' : 'primary'}
+          variant={asks ? 'outline' : 'primary'}
           onClick={() => onPick(row)}
           disabled={busy}
         >
           {busy ? (
             <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : setup || asks ? null : (
+          ) : asks ? null : (
             <Download className="h-3.5 w-3.5" />
           )}
-          {setup
-            ? t('integrations.scanNetworkModal.setUp', 'Set up')
-            : asks
-              ? t('integrations.addDeviceModal.enterDetails', 'Enter details')
-              : t('common.add', 'Add')}
+          {asks
+            ? t('integrations.addDeviceModal.enterDetails', 'Enter details')
+            : t('common.add', 'Add')}
         </Button>
       ) : null}
     </div>

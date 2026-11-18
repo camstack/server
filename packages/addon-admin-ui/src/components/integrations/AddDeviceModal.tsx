@@ -26,7 +26,6 @@ import { useTranslation } from 'react-i18next'
 import { AddDeviceForm, useManualCreationAvailability } from './AddDeviceDialog'
 import { AdoptDevicesPanel } from './AdoptDevicesModal'
 import { NetworkCandidatesPanel } from './NetworkCandidatesPanel'
-import type { IntegrationFormSeed } from './integration-setup-seed'
 
 type TabId = 'network' | 'manual' | 'pairing'
 
@@ -42,12 +41,15 @@ interface AddDeviceModalProps {
   readonly integrationId: string
   /** `device-adoption` integrations without a scan list their candidates through the adopt job surface. */
   readonly kind: 'device-adoption' | 'device-provider'
-  /** The provider supports a network scan; `null` while that is still being asked. */
+  /**
+   * A scan inside this integration is offered: its type declares a discovery scoped to one
+   * instance. Never the addon-wide "can scan" — that finds NEW integrations, which is the
+   * Integrations page's job. `null` while that is still being asked.
+   */
   readonly canScan: boolean | null
   readonly onClose: () => void
   /** The integration commissions devices from a pairing code: one more tab. */
   readonly pairing?: PairingTab
-  readonly onSetupIntegration?: (seed: IntegrationFormSeed) => void
 }
 
 function toTabId(value: string): TabId {
@@ -61,7 +63,6 @@ export function AddDeviceModal({
   canScan,
   onClose,
   pairing,
-  onSetupIntegration,
 }: AddDeviceModalProps): ReactElement {
   const { t } = useTranslation()
   const manual = useManualCreationAvailability(addonId, integrationId)
@@ -90,18 +91,12 @@ export function AddDeviceModal({
           integrationId={integrationId}
           onClose={onClose}
           alongsideAdoption
-          {...(onSetupIntegration ? { onSetupIntegration } : {})}
         />
       )}
       <AdoptDevicesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
     </>
   ) : (
-    <NetworkCandidatesPanel
-      addonId={addonId}
-      integrationId={integrationId}
-      onClose={onClose}
-      {...(onSetupIntegration ? { onSetupIntegration } : {})}
-    />
+    <NetworkCandidatesPanel addonId={addonId} integrationId={integrationId} onClose={onClose} />
   )
   const form = <AddDeviceForm integrationId={integrationId} addonId={addonId} onClose={onClose} />
 
