@@ -356,6 +356,8 @@ export type NcDirectoryRefreshOutcome = 'answered' | 'empty' | 'failed'
 export class NcDeviceDirectory {
   private devices: ReadonlyMap<number, NcDeviceIdentity> = new Map()
   private loadedOnce = false
+  /** The one refresh a cold directory is warming with, shared by concurrent callers. */
+  private warming: Promise<NcDirectoryRefreshOutcome> | undefined = undefined
   /** How many refreshes have ANSWERED (non-empty, successful). */
   private answered = 0
   /** The ids of the answer before the latest one — `null` until there are two. */
@@ -386,12 +388,18 @@ export class NcDeviceDirectory {
    */
   async ensureWarm(timeoutMs: number): Promise<boolean> {
     if (this.loadedOnce) return true
+    // Concurrent deliveries on a cold directory share ONE refresh.
+    if (this.warming === undefined) {
+      this.warming = this.refresh().finally(() => {
+        this.warming = undefined
+      })
+    }
     let timer: ReturnType<typeof setTimeout> | undefined
     const timeout = new Promise<void>((resolve) => {
       timer = setTimeout(resolve, timeoutMs)
     })
     try {
-      await Promise.race([this.refresh(), timeout])
+      await Promise.race([this.warming, timeout])
     } finally {
       if (timer !== undefined) clearTimeout(timer)
     }

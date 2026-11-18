@@ -2827,6 +2827,11 @@ export class NotificationCenter implements NcEventConsumer {
     return runPressLocalPanel(this.alarmArmHost(), panel, origin)
   }
 
+  /** Loads a never-loaded device directory once, bounded, before a device is worded. */
+  private async warmDeviceNames(): Promise<void> {
+    await this.deviceDirectory.ensureWarm(NC_DEVICE_NAMES_WARM_MS)
+  }
+
   /**
    * Device names from the in-process directory — no I/O, so the arm sentence
    * can be composed on the publish path.
@@ -2836,10 +2841,6 @@ export class NotificationCenter implements NcEventConsumer {
    * shorter name and never a shorter LIST — understating what a mode arms is
    * the one error this sentence must not make.
    */
-  private async warmDeviceNames(): Promise<void> {
-    await this.deviceDirectory.ensureWarm(NC_DEVICE_NAMES_WARM_MS)
-  }
-
   private deviceNameFromDirectory(): NcDeviceNameLookup {
     return (id: number) => {
       const identity = this.deviceDirectory.get(id)

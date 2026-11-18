@@ -178,6 +178,34 @@ describe('a notification never carries the device id', () => {
     expect(calls).toHaveLength(1)
   })
 
+  it('ensureWarm gives up at its bound when the listing never answers', async () => {
+    const directory = new NcDeviceDirectory({
+      logger: makeSilentLogger(),
+      listDevices: () => new Promise(() => {}),
+    })
+    const started = Date.now()
+    expect(await directory.ensureWarm(50)).toBe(false)
+    expect(Date.now() - started).toBeLessThan(1_000)
+  })
+
+  it('concurrent deliveries on a cold directory share one listing', async () => {
+    let calls = 0
+    const directory = new NcDeviceDirectory({
+      logger: makeSilentLogger(),
+      listDevices: async () => {
+        calls += 1
+        await new Promise((r) => setTimeout(r, 20))
+        return [{ deviceId: 637, type: DeviceType.Camera, name: 'Cortile', isCamera: true }]
+      },
+    })
+    await Promise.all([
+      directory.ensureWarm(1_000),
+      directory.ensureWarm(1_000),
+      directory.ensureWarm(1_000),
+    ])
+    expect(calls).toBe(1)
+  })
+
   it('the dispatcher names a device from the directory when its own lookup has none', async () => {
     const entry = row('stream-offline', 637, deviceTextParams(637, undefined))
     const none = async (): Promise<null> => null
