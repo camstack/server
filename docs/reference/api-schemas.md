@@ -5429,7 +5429,7 @@ Enum: `"f32le" \| "s16le"`
 
 ### `PowerSourceRefusalReasonSchema`
 
-Enum: `"no-power-source" \| "switch-missing" \| "switch-offline" \| "switch-unknown" \| "restart-in-progress" \| "switch-call-failed" \| "switch-options-unreadable" \| "not-settable" \| "switch-is-actuator"`
+Enum: `"no-power-source" \| "switch-missing" \| "switch-offline" \| "switch-unknown" \| "restart-in-progress" \| "switch-call-failed" \| "switch-options-unreadable" \| "not-settable" \| "switch-is-actuator" \| "link-lost" \| "link-unknown"`
 
 ### `PowerSourceStateSchema`
 

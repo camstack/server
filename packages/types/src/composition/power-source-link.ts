@@ -28,6 +28,12 @@ export interface PowerSourceLink {
   readonly switch: CompositionSourceRef
   /** How long a forced restart keeps the switch off: an integer within the cap's bounds. */
   readonly offSeconds: number
+  /**
+   * The identity link that contributed this feature (D1063), or absent when the
+   * operator wrote it. A contributed link is re-checked against that link before
+   * any action: a stamp is not proof the port still feeds this device.
+   */
+  readonly contributedBy?: { readonly linkId: string }
 }
 
 /**
@@ -77,6 +83,7 @@ export function powerSourceLinkOfComposition(
     device,
     switch: read.source,
     offSeconds: normalizeOffSeconds(storedOffSeconds(composition)),
+    ...(feature.contributedBy === undefined ? {} : { contributedBy: feature.contributedBy }),
   }
 }
 

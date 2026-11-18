@@ -16,9 +16,21 @@
  * switched on or off: power on / off are refused as `not-settable`, and `getStatus`
  * says so (`switchSettable`) for the surfaces that withdraw them.
  *
+ * A power source an identity link contributed (`contributedBy`, D1063) is
+ * checked against that link at the point of use: the link is read over RPC
+ * before every action, and one that is no longer `linked`, or now names another
+ * port, refuses as `link-lost` and asks core-blocks to reconcile the
+ * contributions. A read that fails, or links not loaded yet, refuse as
+ * `link-unknown` — cutting power is destructive work (D49). A stamp alone is
+ * never proof the port still feeds this device: the event that withdraws it
+ * may have been dropped (D11).
+ *
  * Every refusal is a typed result with its reason, logged with the device tag.
  */
 import {
+  compositionSourceKey,
+  IDENTITY_LINK_KINDS,
+  type IdentityLinksRead,
   type CompositionSourceRef,
   type CoreBlock,
   coreBlockComposition,
@@ -93,9 +105,18 @@ export const timeoutScheduler: PowerSourceScheduler = {
   },
 }
 
+/** The identity links a contributed power source is checked against (D1063). */
+export interface PowerSourceIdentityLinks {
+  /** `device-manager.listIdentityLinks`, read on every action through a contributed link. */
+  readonly read: () => Promise<IdentityLinksRead>
+  /** The contributed link is lost: reconcile the link contributions (the host `deviceId`). */
+  readonly lost: (deviceId: number) => void
+}
+
 export interface PowerSourceServiceDeps {
   readonly blocks: () => readonly Pick<CoreBlock, 'id' | 'source'>[]
   readonly devices: PowerSourceDevices
+  readonly links: PowerSourceIdentityLinks
   readonly scheduler: PowerSourceScheduler
   readonly logger: IScopedLogger
 }
@@ -345,6 +366,10 @@ export class PowerSourceService implements IPowerSourceProvider {
         message: `the linked switch ${link.switch.stableId} is one of this device's own switches, not its supply`,
       }
     }
+    if (link.contributedBy !== undefined) {
+      const refused = await this.checkContributingLink(deviceId, link, link.contributedBy.linkId)
+      if (refused !== null) return refused
+    }
     const switchDevice = await this.deps.devices.find(link.switch).catch(() => null)
     if (switchDevice === null) {
       return {
@@ -369,6 +394,53 @@ export class PowerSourceService implements IPowerSourceProvider {
       }
     }
     return { kind: 'found', resolved: { link, switchDevice } }
+  }
+
+  /**
+   * The identity link that contributed this power source, read now: null when it is
+   * still `linked` and its source side is the switch the feature reads.
+   */
+  private async checkContributingLink(
+    deviceId: number,
+    link: PowerSourceLink,
+    linkId: string,
+  ): Promise<Lookup | null> {
+    let read: IdentityLinksRead
+    try {
+      read = await this.deps.links.read()
+    } catch (err: unknown) {
+      return {
+        kind: 'refused',
+        reason: 'link-unknown',
+        message: `the identity link ${linkId} that contributed this power source could not be read (${errorText(err)})`,
+      }
+    }
+    if (read.status !== 'answered') {
+      return {
+        kind: 'refused',
+        reason: 'link-unknown',
+        message: `the identity links are not loaded yet (${read.reason}); not acting through link ${linkId}`,
+      }
+    }
+    const current = read.links.find((l) => l.id === linkId)
+    const contribution = current
+      ? IDENTITY_LINK_KINDS[current.kind].contributions.find((c) => c.cap === 'power-source')
+      : undefined
+    const feeds =
+      current !== undefined &&
+      current.state === 'linked' &&
+      contribution !== undefined &&
+      compositionSourceKey(current[contribution.source]) === compositionSourceKey(link.switch)
+    if (feeds) return null
+    this.deps.links.lost(deviceId)
+    return {
+      kind: 'refused',
+      reason: 'link-lost',
+      message:
+        current === undefined
+          ? `the identity link ${linkId} that contributed this power source is gone`
+          : `the identity link ${linkId} is ${current.state} and no longer feeds this device from ${link.switch.stableId}`,
+    }
   }
 
   /** The stored link of the device `deviceId`, read from the customizations now. */

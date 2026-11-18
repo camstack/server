@@ -161,6 +161,8 @@ export class CoreBlocksAddon extends BaseAddon {
   private timedRun: TimedRunService | null = null
   /** ONE composition API per process: its write queue is what keeps two saves from judging each other stale. */
   private compositionApi: CompositionApi | null = null
+  /** The identity-link contributions (D1063); armed at boot. */
+  private linkContributions: LinkContributionReconciler | null = null
   private disposed = false
   /** Seeds the lock door gate from the hub mirror; run at startup and when a composition changes. */
   private seedLockDoorGate: () => void = () => undefined
@@ -372,6 +374,16 @@ export class CoreBlocksAddon extends BaseAddon {
     const service = new PowerSourceService({
       blocks: () => this.store?.list() ?? [],
       devices: this.powerSourceDevices(),
+      links: {
+        read: async () => {
+          const api = this.ctx.api
+          if (!api)
+            throw new Error('core-blocks: no ctx.api on this node — identity links cannot be read')
+          return api.deviceManager.listIdentityLinks.query({})
+        },
+        // Every host is re-derived from the links: the lost host's stamp goes with the pass.
+        lost: () => this.linkContributions?.requestPass(),
+      },
       scheduler: timeoutScheduler,
       logger: this.ctx.logger.child('power-source'),
     })
@@ -1080,6 +1092,7 @@ export class CoreBlocksAddon extends BaseAddon {
     this.subscribe({ category: EventCategory.DeviceRegistered }, () => {
       if (!links.hasAnswered()) links.requestPass()
     })
+    this.linkContributions = links
     links.requestPass()
   }
 
