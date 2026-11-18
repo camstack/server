@@ -131,12 +131,12 @@ async function setup(existing?: FakeSettingsStore): Promise<World> {
   return { provider: first.provider as IDeviceManagerProvider, store, registry, emit }
 }
 
-async function registered(world: World, stableId: string): Promise<FakeDevice> {
+async function registered(world: World, stableId: string, owner = OWNER): Promise<FakeDevice> {
   const dev = new FakeDevice(stableId)
-  world.registry.register(OWNER, asDevice(dev))
-  await world.provider.allocateDeviceId({ addonId: OWNER, stableId })
+  world.registry.register(owner, asDevice(dev))
+  await world.provider.allocateDeviceId({ addonId: owner, stableId })
   await world.provider.registerDevice({
-    addonId: OWNER,
+    addonId: owner,
     stableId,
     id: dev.id,
     type: 'sensor',
@@ -347,5 +347,58 @@ describe('the identifiers column on a populated table', () => {
     expect(row.name).toBe('MARKED-old-row')
     expect(row.metadata).toEqual({ mac: 'AA:BB:CC:DD:EE:01', marker: 'kept' })
     expect(row.identifiers).toEqual(DECLARED)
+  })
+})
+
+describe('setAttachedIdentifiers (D1063)', () => {
+  const PORT_OWNER = 'provider-switch'
+  const CLIENT: DeviceIdentifiers = normaliseIdentifiers(
+    { mac: 'AA:BB:CC:DD:EE:FF', ip: '10.0.0.7' },
+    { readAt: 1 },
+  ).identifiers
+
+  it('writes its own column: the device identifiers stay untouched', async () => {
+    const world = await setup()
+    const dev = await registered(world, 'port-1', PORT_OWNER)
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    const row = await readDeviceRow(world.store, dev.id)
+    expect(row.attachedIdentifiers).toEqual(CLIENT)
+    expect(row.identifiers ?? null).toBeNull()
+    expect((await world.provider.getDevice({ deviceId: dev.id }))?.attachedIdentifiers).toEqual(
+      CLIENT,
+    )
+  })
+
+  it('keeps the stored client MAC when this read could not see one (unread)', async () => {
+    const world = await setup()
+    const dev = await registered(world, 'port-2', PORT_OWNER)
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: {}, unread: ['mac', 'ip'] }, PORT_OWNER),
+    )
+    expect((await readDeviceRow(world.store, dev.id)).attachedIdentifiers).toEqual(CLIENT)
+  })
+
+  it('a port whose client is a camera of another integration links them, and the link answers', async () => {
+    const world = await setup()
+    const camera = await registered(world, 'cam-link')
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: camera.id, identifiers: CLIENT }, OWNER),
+    )
+    const port = await registered(world, 'port-3', PORT_OWNER)
+    await world.provider.setRole({ deviceId: port.id, role: 'poe-port' })
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: port.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    await vi.waitFor(async () => {
+      const read = await world.provider.listIdentityLinks({ deviceId: camera.id })
+      expect(read.status === 'answered' ? read.links.map((l) => [l.kind, l.state]) : []).toEqual([
+        ['poe-power', 'linked'],
+      ])
+    })
   })
 })

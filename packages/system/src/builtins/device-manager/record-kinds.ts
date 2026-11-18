@@ -5,9 +5,11 @@ import { z } from 'zod'
 import {
   DeviceTombstoneSchema,
   DiscoveryProposalBodySchema,
+  IdentityLinkBodySchema,
   defineRecordKinds,
   type DefinedRecordKind,
   type DiscoveryProposalBody,
+  type IdentityLinkBody,
 } from '@camstack/types'
 import type { IsolatedRecordKinds } from '../records-isolated.js'
 
@@ -43,11 +45,29 @@ const _deviceManagerRecordKinds = defineRecordKinds({
     indexes: [{ name: 'last_seen_at', fields: ['lastSeenAt'] }],
     retention: { ttlMs: 90 * 24 * 60 * 60 * 1000, from: 'at' },
   },
+  'identity-links': {
+    schema: IdentityLinkBodySchema,
+    class: 'config',
+    writeTrigger:
+      'the identity-link reconciler sees a candidate appear, upgrade or lose its evidence; the operator confirms, dismisses or unlinks (D1063)',
+    // A link names TWO devices, so no single device column: removal is the
+    // `identity-links` step of `removeDevice` (D864), driven by the tombstone.
+    device: 'none',
+    at: 'none',
+    indexes: [
+      { name: 'a_device', fields: ['a.deviceId'] },
+      { name: 'b_device', fields: ['b.deviceId'] },
+    ],
+    retention: {
+      none: 'a link lives as long as both its devices; a dismissal is sticky (operator intent)',
+    },
+  },
 }) satisfies IsolatedRecordKinds
 
 export type DeviceManagerRecordKindsMap = {
   readonly tombstones: DefinedRecordKind<z.ZodType<DeviceTombstoneBody>>
   readonly 'discovery-proposals': DefinedRecordKind<z.ZodType<DiscoveryProposalBody>>
+  readonly 'identity-links': DefinedRecordKind<z.ZodType<IdentityLinkBody>>
 }
 
 export const deviceManagerRecordKinds: DeviceManagerRecordKindsMap = _deviceManagerRecordKinds

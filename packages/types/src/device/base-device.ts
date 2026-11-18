@@ -494,6 +494,28 @@ export abstract class BaseDevice<
   }
 
   /**
+   * Declare the identity of the device at the FAR END of this device's physical
+   * link (D1063): a PoE port's wired client. Same normalisation, `unread`
+   * rule and owner check as {@link declareIdentifiers}, written through
+   * `device-manager.setAttachedIdentifiers`. It never makes the two devices the
+   * same device. Best-effort: never throws.
+   */
+  protected async declareAttachedIdentifiers(
+    raw: RawDeviceIdentifiers,
+    options?: DeclareIdentifiersOptions,
+  ): Promise<DeclareIdentifiersResult> {
+    return declareDeviceIdentifiers(
+      {
+        deviceId: this.id,
+        logger: this.ctx.logger,
+        writer: this.ctx.api.deviceManager?.setAttachedIdentifiers,
+      },
+      raw,
+      options,
+    )
+  }
+
+  /**
    * Re-publish the device's current `features` array to the persisted
    * meta blob. Drivers call this after a probe finishes when the live
    * `features` getter has gained new flags (e.g. `hasIntercom` flips

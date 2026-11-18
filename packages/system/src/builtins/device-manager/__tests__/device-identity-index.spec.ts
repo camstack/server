@@ -39,6 +39,8 @@ interface Fixture {
   readonly addonId: string
   readonly integrationId?: string
   readonly identifiers?: DeviceIdentifiers
+  readonly attachedIdentifiers?: DeviceIdentifiers
+  readonly role?: string
 }
 
 async function makeIndexed(fixtures: readonly Fixture[]): Promise<{
@@ -61,6 +63,10 @@ async function makeIndexed(fixtures: readonly Fixture[]): Promise<{
         parentDeviceId: null,
         ...(f.integrationId !== undefined ? { integrationId: f.integrationId } : {}),
         ...(f.identifiers !== undefined ? { identifiers: f.identifiers } : {}),
+        ...(f.attachedIdentifiers !== undefined
+          ? { attachedIdentifiers: f.attachedIdentifiers }
+          : {}),
+        ...(f.role !== undefined ? { role: f.role } : {}),
       },
       { registered: true },
     )
@@ -277,5 +283,67 @@ describe('DeviceIdentityIndex — maintained from the row writes', () => {
     await rows.patch(2, { identifiers: ids({ mac: MAC }) })
     index.seed(snapshot)
     expect(answered(index).pairs).toHaveLength(1)
+  })
+})
+
+describe('DeviceIdentityIndex — what a device declares ATTACHED to it (D1063)', () => {
+  const IP = '10.0.0.7'
+
+  function attached(index: DeviceIdentityIndex): readonly (readonly [number, number, string])[] {
+    const answer = index.linkCandidates()
+    if (answer.status !== 'answered') throw new Error('expected answered')
+    return answer.candidates
+      .filter((c) => c.kind === 'poe-power')
+      .map((c) => [c.a.deviceId, c.b.deviceId, c.confidence] as const)
+  }
+
+  it("a port whose client MAC and IP are a camera's is an auto poe-power candidate, port first", async () => {
+    const { index } = await makeIndexed([
+      { id: 1, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: MAC, ip: IP }) },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC, ip: IP }) },
+    ])
+    expect(attached(index)).toEqual([[1, 2, 'auto']])
+    const answer = index.linkCandidates()
+    const first = answer.status === 'answered' ? answer.candidates[0] : undefined
+    expect(first?.aRole).toBe('poe-port')
+    expect(first?.a.stableId).toBe('s-1')
+  })
+
+  it('one strong kind alone is a proposal; an attached declaration never matches its own integration', async () => {
+    const { index } = await makeIndexed([
+      { id: 1, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: MAC }) },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC }) },
+      { id: 3, addonId: 'unifi', identifiers: ids({ mac: MAC }) },
+    ])
+    expect(attached(index)).toEqual([[1, 2, 'proposal']])
+  })
+
+  it('two ports reaching one camera are each only a proposal', async () => {
+    const { index } = await makeIndexed([
+      { id: 1, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: MAC, ip: IP }) },
+      { id: 4, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: MAC, ip: IP }) },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC, ip: IP }) },
+    ])
+    expect(attached(index)).toEqual([
+      [1, 2, 'proposal'],
+      [4, 2, 'proposal'],
+    ])
+  })
+
+  it('patching an attached declaration notifies the listener and moves the candidate', async () => {
+    const { index, rows } = await makeIndexed([
+      { id: 1, addonId: 'unifi', role: 'poe-port' },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC, ip: IP }) },
+    ])
+    const changed = vi.fn()
+    index.onIdentityChanged(changed)
+    expect(attached(index)).toEqual([])
+    await rows.patch(1, { attachedIdentifiers: ids({ mac: MAC, ip: IP }) })
+    expect(changed).toHaveBeenCalled()
+    expect(attached(index)).toEqual([[1, 2, 'auto']])
+  })
+
+  it('answers unknown before the seed', () => {
+    expect(new DeviceIdentityIndex().linkCandidates()).toEqual({ status: 'unknown' })
   })
 })

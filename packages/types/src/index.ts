@@ -1433,6 +1433,41 @@ export type {
   IdentityConfidence,
   IdentityMatchedKey,
 } from './device/device-identity-candidates.js'
+// Identity links (planning#594, D1063)
+export {
+  IDENTITY_LINK_KIND_NAMES,
+  IDENTITY_LINK_KINDS,
+  IdentityLinkBodySchema,
+  IdentityLinkDecisionRefusalSchema,
+  IdentityLinkDecisionSchema,
+  IdentityLinkEventPayloadSchema,
+  IdentityLinkKindSchema,
+  IdentityLinkLostReasonSchema,
+  IdentityLinkOriginSchema,
+  IdentityLinkSchema,
+  IdentityLinkSideSchema,
+  IdentityLinkStateSchema,
+  IdentityLinksReadSchema,
+  identityLinkId,
+  identityLinkSidesRefusal,
+} from './device/identity-links.js'
+export type {
+  IdentityLink,
+  IdentityLinkBody,
+  IdentityLinkContribution,
+  IdentityLinkDecision,
+  IdentityLinkDecisionRefusal,
+  IdentityLinkEventPayload,
+  IdentityLinkKind,
+  IdentityLinkKindSpec,
+  IdentityLinkLostReason,
+  IdentityLinkOrigin,
+  IdentityLinkRef,
+  IdentityLinkSide,
+  IdentityLinkSidesRefusal,
+  IdentityLinkState,
+  IdentityLinksRead,
+} from './device/identity-links.js'
 // Device management
 export type {
   ChildLayout,

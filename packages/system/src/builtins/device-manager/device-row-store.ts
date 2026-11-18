@@ -142,6 +142,9 @@ export const DEVICE_ROWS_COLUMNS: readonly CollectionColumn[] = [
   // Provider-declared identifiers (D1059). Nullable JSON, so the column is an
   // additive ALTER TABLE on a populated table — no rebuild, no row lost.
   { name: 'identifiers', type: 'JSON' },
+  // The far end of the device's physical link (D1063) — a PoE port's client.
+  // Nullable JSON: an additive ALTER TABLE, like `identifiers`.
+  { name: 'attachedIdentifiers', type: 'JSON' },
 ]
 
 /**
@@ -263,6 +266,7 @@ export interface DeviceRowPatch {
   readonly role?: string | null
   readonly display?: DeviceDisplayOverride | null
   readonly identifiers?: DeviceIdentifiers | null
+  readonly attachedIdentifiers?: DeviceIdentifiers | null
   readonly metadata?: Record<string, unknown> | null
 }
 
@@ -277,7 +281,7 @@ export interface DeviceRowPatch {
  * required here, and the type is what keeps it that way.
  *
  * Columns NOT listed — `integrationId`, `linkDeviceId`, `primaryChildEntityId`,
- * `childLayout`, `primaryChildPreference`, `role`, `display`, `identifiers`, `metadata` — are not in the statement at
+ * `childLayout`, `primaryChildPreference`, `role`, `display`, `identifiers`, `attachedIdentifiers`, `metadata` — are not in the statement at
  * all, so re-registering preserves them. The blob shape had to re-state each
  * one to avoid clobbering it, and every field added since has been one more
  * spread somebody had to remember.
@@ -388,6 +392,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
   const rawDisplay = data['display']
   const rawMetadata = data['metadata']
   const identifiers = DeviceIdentifiersSchema.safeParse(data['identifiers'])
+  const attachedIdentifiers = DeviceIdentifiersSchema.safeParse(data['attachedIdentifiers'])
 
   // A SQL NULL is the ABSENT form of every optional field. The blob shape
   // distinguished `undefined` (never set) from an explicit `null` on
@@ -418,6 +423,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
     // The writer validated it; a value that no longer parses (a key the schema
     // later tightened) reads as "none declared" until the provider declares again.
     ...(identifiers.success ? { identifiers: identifiers.data } : {}),
+    ...(attachedIdentifiers.success ? { attachedIdentifiers: attachedIdentifiers.data } : {}),
   }
 
   return {
@@ -475,6 +481,7 @@ export function encodeDeviceRow(
     role: meta.role ?? null,
     display: meta.display ?? null,
     identifiers: meta.identifiers ?? null,
+    attachedIdentifiers: meta.attachedIdentifiers ?? null,
   }
   if (extra.metadata !== undefined) row['metadata'] = extra.metadata
   return row

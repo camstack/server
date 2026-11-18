@@ -35,6 +35,7 @@ import type { RemovalFence } from './removal-fence.js'
 import type { SecretConfigPathRegistry } from './secret-config-paths.js'
 import type { SeedMode } from './device-state-mirror.js'
 import type { MirrorWriteHold } from './mirror-row-writer.js'
+import type { IdentityLinkReconciler } from './identity-link-reconciler.js'
 
 type IDeviceProviderCap = InferProvider<typeof deviceProviderCapability>
 
@@ -128,6 +129,8 @@ export interface ProviderContext {
   readonly removalCleanup: RemovalCleanup
   /** The tombstone of every deleted device — the reliable record other addons reconcile from (D865). */
   readonly tombstones: DeviceTombstoneStore
+  /** The identity links (D1063): a removed device's links go with it. Absent in specs that never link. */
+  readonly identityLinks?: Pick<IdentityLinkReconciler, 'removeDevice'>
   /** Tells every `device-removal-hook` implementer a device was deleted (D865). */
   readonly removalHooks: RemovalHookDeps
   /** The secret config paths each device declared at `registerDevice` (D783). */

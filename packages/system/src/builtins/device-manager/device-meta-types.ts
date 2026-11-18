@@ -189,6 +189,9 @@ export interface PersistedDeviceMeta {
    *  owning provider only. Absent ⇒ none declared. Rides the device row like
    *  `display`, so a re-registration never clobbers it. */
   identifiers?: DeviceIdentifiers
+  /** The far end of the device's physical link (D1063), set via
+   *  `setAttachedIdentifiers` by the owning provider only. Absent ⇒ none. */
+  attachedIdentifiers?: DeviceIdentifiers
 }
 
 /**
