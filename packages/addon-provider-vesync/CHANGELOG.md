@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - The humidifier shows its on/off switch.
 - VeSync no longer runs its own poll timer: the hub decides when to read (no faster than every 15 s, slower if the integration's poll interval says so), and re-reads a device after each command until it confirms.
+- The account is read once per interval for all its devices, however many commands were sent, and the poll interval field says its effective minimum is 15 s.
 
 ## [0.2.165] - 2026-11-17
 

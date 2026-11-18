@@ -7,6 +7,7 @@
   "connection.s_connection.region.o_EU.label": "Europe",
   "connection.s_connection.region.o_US.label": "United States",
   "connection.s_connection.pollIntervalMs.label": "Poll interval (ms)",
+  "connection.s_connection.pollIntervalMs.description": "How often the account is re-read. The effective minimum is 15 s: a lower value reads every 15 s.",
   "connection.s_connection.countryCode.label": "Country code",
   "connection.s_connection.countryCode.description": "Country the account was registered in. Set it when sign-in fails with \"auth code expired\".",
   "connection.s_connection.countryCode.o_none.label": "Not set",

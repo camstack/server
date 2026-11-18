@@ -148,6 +148,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Adopting a device that was just removed is no longer refused for the next five minutes
 - A drained storage location that holds only empty folders can be deleted
 - A device's metadata read now includes the identifiers its provider declared (MAC, serial, IP…)
+- A batching integration keeps one state-refresh schedule for all its devices; reads of one device are serialized, and a command waits at most 5 s for a read in flight (D1062).
 
 ## [1.2.537] - 2026-11-01
 

@@ -7,6 +7,7 @@
   "connection.s_connection.region.o_EU.label": "Europa",
   "connection.s_connection.region.o_US.label": "Stati Uniti",
   "connection.s_connection.pollIntervalMs.label": "Intervallo di lettura (ms)",
+  "connection.s_connection.pollIntervalMs.description": "Ogni quanto viene riletto l'account. Il minimo effettivo è 15 s: un valore più basso rilegge ogni 15 s.",
   "connection.s_connection.countryCode.label": "Codice paese",
   "connection.s_connection.countryCode.description": "Paese in cui è stato registrato l'account. Impostalo se l'accesso fallisce con \"auth code expired\".",
   "connection.s_connection.countryCode.o_none.label": "Non impostato",

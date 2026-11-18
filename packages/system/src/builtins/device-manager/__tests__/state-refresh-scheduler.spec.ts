@@ -278,6 +278,93 @@ describe('StateRefreshScheduler (D1062)', () => {
     })
   })
 
+  describe('a batched integration owns one schedule', () => {
+    const command = (r: Rig, deviceId: number): Promise<void> =>
+      r.scheduler.onCommand({ deviceId, capName: 'fan', method: 'setPower' }, 'ok')
+
+    it('commands on several devices never split the schedule (one read per interval, every id)', async () => {
+      r = rig()
+      declare(r, 1)
+      declare(r, 2)
+      declare(r, 3)
+      await vi.advanceTimersByTimeAsync(300)
+      await command(r, 2)
+      await vi.advanceTimersByTimeAsync(300)
+      await command(r, 3)
+      await vi.advanceTimersByTimeAsync(60_000 - 600)
+      const scheduled = refreshes(r, 'schedule')
+      expect(scheduled.map((c) => c.at)).toEqual([15_000, 30_000, 45_000, 60_000])
+      for (const call of scheduled) expect(call.deviceIds).toEqual([1, 2, 3])
+      expect(refreshes(r, 'command').map((c) => c.deviceIds)).toEqual([[2], [3]])
+    })
+
+    it('a device registered later joins the group at its next tick', async () => {
+      r = rig()
+      declare(r, 1)
+      await vi.advanceTimersByTimeAsync(5_000)
+      declare(r, 2)
+      await vi.advanceTimersByTimeAsync(5_000)
+      declare(r, 3)
+      await vi.advanceTimersByTimeAsync(35_000)
+      const scheduled = refreshes(r, 'schedule')
+      expect(scheduled.map((c) => c.at)).toEqual([15_000, 30_000, 45_000])
+      for (const call of scheduled) expect(call.deviceIds).toEqual([1, 2, 3])
+    })
+  })
+
+  describe('reads of one device are serialized', () => {
+    it('quick commands queue their reads instead of running them in parallel', async () => {
+      r = rig()
+      r.refreshMs = 1_000
+      let running = 0
+      let peak = 0
+      const inner = r.calls
+      const push = inner.push.bind(inner)
+      inner.push = (...items: Call[]): number => {
+        running += 1
+        peak = Math.max(peak, running)
+        setTimeout(() => {
+          running -= 1
+        }, 1_000)
+        return push(...items)
+      }
+      declare(r, 7, { batch: false })
+      const commands = [0, 1, 2].map((i) =>
+        r.scheduler.onCommand({ deviceId: 7, capName: 'switch', method: `m${i}` }, 'ok'),
+      )
+      await vi.advanceTimersByTimeAsync(5_000)
+      await Promise.all(commands)
+      expect(refreshes(r, 'command').map((c) => c.at)).toEqual([0, 1_000, 2_000])
+      expect(peak).toBe(1)
+    })
+
+    it('a command waits at most 5 s for a read in flight, then reads its device itself', async () => {
+      r = rig()
+      r.refreshMs = 20_000
+      declare(r, 7)
+      declare(r, 8)
+      await vi.advanceTimersByTimeAsync(15_100)
+      const pending = r.scheduler.onCommand(
+        { deviceId: 7, capName: 'switch', method: 'setState' },
+        'ok',
+      )
+      await vi.advanceTimersByTimeAsync(30_000)
+      await pending
+      expect(refreshes(r).map((c) => [c.reason, c.at, c.deviceIds])).toContainEqual([
+        'command',
+        20_100,
+        [7],
+      ])
+      expect(r.logs).toContainEqual(
+        expect.objectContaining({
+          level: 'debug',
+          message: 'state refresh: stopped waiting for the read in flight',
+          extras: expect.objectContaining({ tags: { deviceId: 7 } }),
+        }),
+      )
+    })
+  })
+
   describe('push integrations', () => {
     it('a push that confirms within the window spares the read', async () => {
       r = rig()

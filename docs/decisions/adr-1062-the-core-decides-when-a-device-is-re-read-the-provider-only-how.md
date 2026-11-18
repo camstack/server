@@ -55,8 +55,13 @@ integration's own setting, which can only slow the cadence), `batch`,
   unconfirmed. A push device waits about 2.5 s for the confirming push and is
   read once if none came. A refresh failure is a warn line tagged
   `{ deviceId }` and never fails the command.
-- refreshes of one device never overlap: a tick that finds one in flight is
-  skipped at debug, and a command waits for it.
+- a batching integration has ONE schedule: one due time and one read of every
+  device of the instance per interval. Command and burst reads are per device
+  and never move it; a device registered later joins the next tick;
+- reads of one device are serialized: each starts after the previous one on
+  that device ended. A tick whose last read still runs is skipped at debug; a
+  command waits for the read in flight at most 5 s, then reads its own device
+  (debug line).
 - push health: silence past `heartbeatMs` triggers a read of the integration,
   then `resubscribe()`, then another read, with a warn line per device. A new
   `connectionEpoch` (a reconnect) triggers a read of every device.

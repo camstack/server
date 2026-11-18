@@ -87,7 +87,9 @@ export const vesyncConnectionSchema = z.object({
       (v) => (v === '' || v === null ? undefined : v),
       z.number().int().min(5000).max(3_600_000).default(30_000),
     )
-    .describe('Device-state poll interval (ms)'),
+    .describe(
+      'Device-state poll interval (ms). The effective minimum is 15 s (VESYNC_MIN_REFRESH_INTERVAL_MS): a lower stored value reads every 15 s.',
+    ),
 })
 
 export type VeSyncConnectionConfig = z.infer<typeof vesyncConnectionSchema>
@@ -308,6 +310,9 @@ export function buildConnectionFormSchema(): ConfigUISchema {
             key: 'pollIntervalMs',
             label: 'Poll interval (ms)',
             labelKey: 'provider-vesync:connection.s_connection.pollIntervalMs.label',
+            description:
+              'How often the account is re-read. The effective minimum is 15 s: a lower value reads every 15 s.',
+            descriptionKey: 'provider-vesync:connection.s_connection.pollIntervalMs.description',
             min: 5000,
             max: 3_600_000,
             default: 30_000,

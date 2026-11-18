@@ -58,6 +58,12 @@ a cache in another addon, which is the shape D62 forbids.
 
 ## Decision
 
+> **Amended by [D1062](./adr-1062-the-core-decides-when-a-device-is-re-read-the-provider-only-how.md), 2026-11-18.** For a provider moved to the
+> core state refresh, WHEN a device is re-read is no longer the provider's: the
+> hub's scheduler calls the provider's `device-state-refresh` on the declared
+> cadence, after every command and when a push channel falls silent. What a read
+> returns, and the freshness of each value, stays with the provider as below.
+
 **A fact that lives on a device is kept fresh in the addon that owns the device,
 and nowhere else.** Consumers read through.
 

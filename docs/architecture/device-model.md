@@ -235,7 +235,7 @@ the D1061 hold options):
 | `integrationId` | The instance the device belongs to; one schedule group per (addon, instance). |
 | `minIntervalMs` | The fastest cadence the provider allows (at least 1 s). |
 | `intervalMs` | The integration's own setting. It can only SLOW the cadence (`effectiveRefreshIntervalMs`). |
-| `batch` | One `refresh` call answers every due device of the group. |
+| `batch` | The group has ONE schedule: one due time, one `refresh` with every device per interval. Command and burst reads stay per device and never move it; a device registered later joins the next tick. |
 | `push` | `none` (polled), `partial`, or `full` (never scheduled). |
 | `heartbeatMs` | Push silence after which the core reads, resubscribes and reads again. |
 | `connectionEpoch` | Bumped on a reconnect; a new value means every device of the group is read. |
@@ -249,8 +249,11 @@ The hub's device-manager runs `StateRefreshScheduler`
   command returns, then again at about 3 s and 10 s while a D1061 hold on it is
   unconfirmed. A push device waits 2.5 s for its confirming report and is read
   once if none came.
-- **Never overlapping.** A tick that finds a read in flight is skipped (debug
-  line, `tags: { deviceId }`). A command waits for that read.
+- **Never overlapping.** Reads of one device are serialized: each starts after
+  the previous one on that device ended. A tick whose last read still runs is
+  skipped (debug line, `tags: { deviceId }`). A command waits for the read in
+  flight at most 5 s (`COMMAND_WAIT_BOUND_MS`), then reads its own device
+  (debug line).
 - **Failure.** A failed read is a warn line per device and never fails the command.
 
 VeSync is the first adopter. `scripts/check-no-provider-poll-loops.ts` keeps a

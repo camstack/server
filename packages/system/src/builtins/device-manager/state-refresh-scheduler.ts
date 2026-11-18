@@ -1,26 +1,30 @@
 /**
- * The state-refresh scheduler (D1062): the core decides WHEN a migrated
- * provider re-reads a device; the provider only knows HOW.
+ * The state-refresh scheduler (D1062, amending D224): the core decides WHEN a
+ * migrated provider re-reads a device; the provider only knows HOW.
  *
- * One schedule per (integration instance, device), grouped per integration so
- * a provider that reads in batch is asked once per tick. The policy each
- * provider declared on its `device-state-refresh` registration
- * (`StateRefreshPolicyRegistry`) drives it:
+ * The policy each provider declared on its `device-state-refresh`
+ * registration (`StateRefreshPolicyRegistry`) drives it. Devices are grouped
+ * per integration instance (`addonId::integrationId`):
  *
  * - cadence: `effectiveRefreshIntervalMs` — the declared minimum, slowed (never
  *   sped up) by the integration's own setting, no idle back-off;
- *   `push: 'full'` is never scheduled;
+ *   `push: 'full'` is never scheduled. A batching integration (`batch: true`)
+ *   has ONE schedule for the group — one due time, one read of every device
+ *   per interval; a device that registers later joins the group's next tick.
+ *   A non-batching integration keeps one schedule per device;
  * - command (`onCommand`, awaited by the D1022 seams): a polled device is read
  *   at once and the command returns after it, then read again at ~3 s and
  *   ~10 s while a D1061 hold on it is still pending; a push device waits
  *   `PUSH_CONFIRM_WINDOW_MS` for the confirming push and reads once if none
- *   came;
+ *   came. These reads are per device and never move a batched group's schedule;
  * - push health: silence past `heartbeatMs` reads the integration, asks it to
  *   resubscribe and reads again; a new `connectionEpoch` reads everything.
  *
- * Refreshes of one device never overlap: a tick that finds one in flight is
- * skipped (debug line), a command waits for it. A refresh failure is a warn
- * line per device and never fails a command.
+ * Reads of one device are serialized: each starts after the previous one on
+ * that device ended. A scheduled tick that finds its last read still running
+ * is skipped (debug line); a command waits for the read in flight at most
+ * `COMMAND_WAIT_BOUND_MS`, then reads its own device (debug line). A refresh
+ * failure is a warn line per device and never fails a command.
  */
 import {
   COMMAND_BURST_OFFSETS_MS,
@@ -57,12 +61,19 @@ export interface StateRefreshSchedulerDeps {
 
 type Timer = ReturnType<typeof setTimeout>
 
+/** The longest a command waits for a read already in flight on its device. */
+export const COMMAND_WAIT_BOUND_MS = 5_000
+
 interface DeviceSchedule {
   entry: StateRefreshPolicyEntry
+  /** The device's own due time (a non-batching integration only). */
   dueAt: number
   lastReportAt: number
   lastCommandAt: number
+  /** The last read queued or running on the device; `null` once it settled. */
   inFlight: Promise<void> | null
+  /** The last scheduled read that included the device, while it runs. */
+  scheduledInFlight: Promise<void> | null
   burst: Timer[]
   pushWindow: Timer | null
 }
@@ -70,6 +81,10 @@ interface DeviceSchedule {
 interface GroupState {
   readonly key: string
   devices: Set<number>
+  /** The group's due time (a batching integration only). */
+  dueAt: number
+  /** The interval `dueAt` was set from, to notice a policy change. */
+  intervalMs: number
   scheduleTimer: Timer | null
   heartbeatTimer: Timer | null
   lastReportAt: number
@@ -109,14 +124,15 @@ export class StateRefreshScheduler {
       this.armPushWindow(target.deviceId, device)
       return
     }
-    if (device.inFlight !== null) await device.inFlight
     this.deps.logger.debug('state refresh after command', {
       tags: { deviceId: target.deviceId },
       meta: { capName: target.capName, method: target.method, outcome },
     })
-    await this.runRefresh([target.deviceId], 'command')
-    device.dueAt = Date.now() + effectiveRefreshIntervalMs(policy)
-    this.armSchedule(groupKeyOf(device.entry))
+    await this.runRefresh([target.deviceId], 'command', COMMAND_WAIT_BOUND_MS)
+    if (!policy.batch) {
+      device.dueAt = Date.now() + effectiveRefreshIntervalMs(policy)
+      this.armSchedule(groupKeyOf(device.entry))
+    }
     this.armBurst(target.deviceId, device)
   }
 
@@ -161,6 +177,7 @@ export class StateRefreshScheduler {
           lastReportAt: now,
           lastCommandAt: 0,
           inFlight: null,
+          scheduledInFlight: null,
           burst: [],
           pushWindow: null,
         })
@@ -209,9 +226,12 @@ export class StateRefreshScheduler {
       const existing = this.groups.get(key)
       if (existing === undefined) {
         const first = this.devices.get([...devices][0] ?? -1)
+        const intervalMs = first === undefined ? 0 : effectiveRefreshIntervalMs(first.entry.policy)
         this.groups.set(key, {
           key,
           devices,
+          dueAt: now + intervalMs,
+          intervalMs,
           scheduleTimer: null,
           heartbeatTimer: null,
           lastReportAt: now,
@@ -219,6 +239,12 @@ export class StateRefreshScheduler {
         })
       } else {
         existing.devices = devices
+        const policy = this.groupPolicy(existing)
+        const intervalMs = policy === undefined ? 0 : effectiveRefreshIntervalMs(policy)
+        if (intervalMs !== existing.intervalMs) {
+          existing.intervalMs = intervalMs
+          existing.dueAt = now + intervalMs
+        }
       }
       this.armSchedule(key)
       this.armHeartbeat(key)
@@ -240,11 +266,15 @@ export class StateRefreshScheduler {
     if (group === undefined || this.disposed) return
     if (group.scheduleTimer !== null) clearTimeout(group.scheduleTimer)
     group.scheduleTimer = null
+    const policy = this.groupPolicy(group)
+    if (policy === undefined || policy.push === 'full') return
     let earliest = Number.POSITIVE_INFINITY
-    for (const deviceId of group.devices) {
-      const device = this.devices.get(deviceId)
-      if (device === undefined || device.entry.policy.push === 'full') continue
-      earliest = Math.min(earliest, device.dueAt)
+    if (policy.batch) earliest = group.dueAt
+    else {
+      for (const deviceId of group.devices) {
+        const device = this.devices.get(deviceId)
+        if (device !== undefined) earliest = Math.min(earliest, device.dueAt)
+      }
     }
     if (!Number.isFinite(earliest)) return
     group.scheduleTimer = setTimeout(() => this.tick(key), Math.max(0, earliest - Date.now()))
@@ -254,23 +284,60 @@ export class StateRefreshScheduler {
     const group = this.groups.get(key)
     if (group === undefined || this.disposed) return
     group.scheduleTimer = null
+    const policy = this.groupPolicy(group)
+    if (policy?.batch === true) this.tickBatched(group, policy)
+    else this.tickPerDevice(group)
+    this.armSchedule(key)
+  }
+
+  /** One read of the whole group per interval, unless the last one still runs. */
+  private tickBatched(group: GroupState, policy: StateRefreshPolicy): void {
+    const now = Date.now()
+    if (group.dueAt > now) return
+    group.dueAt = now + effectiveRefreshIntervalMs(policy)
+    const ids = [...group.devices].filter((id) => this.devices.has(id))
+    const running = ids.filter((id) => (this.devices.get(id)?.scheduledInFlight ?? null) !== null)
+    if (running.length > 0) {
+      for (const deviceId of running) this.logSkippedTick(deviceId)
+      return
+    }
+    if (ids.length > 0) void this.runScheduled(ids)
+  }
+
+  private tickPerDevice(group: GroupState): void {
     const now = Date.now()
     const due: number[] = []
     for (const deviceId of group.devices) {
       const device = this.devices.get(deviceId)
-      if (device === undefined || device.entry.policy.push === 'full' || device.dueAt > now)
-        continue
+      if (device === undefined || device.dueAt > now) continue
       device.dueAt = now + effectiveRefreshIntervalMs(device.entry.policy)
       if (device.inFlight !== null) {
-        this.deps.logger.debug('state refresh skipped: a refresh is still in flight', {
-          tags: { deviceId },
-        })
+        this.logSkippedTick(deviceId)
         continue
       }
       due.push(deviceId)
     }
-    if (due.length > 0) void this.refreshDevices(due, 'schedule')
-    this.armSchedule(key)
+    for (const deviceId of due) void this.runScheduled([deviceId])
+  }
+
+  private logSkippedTick(deviceId: number): void {
+    this.deps.logger.debug('state refresh skipped: a refresh is still in flight', {
+      tags: { deviceId },
+    })
+  }
+
+  /** A scheduled read, remembered on each device until it settles. */
+  private async runScheduled(deviceIds: readonly number[]): Promise<void> {
+    const run = this.runRefresh(deviceIds, 'schedule')
+    for (const deviceId of deviceIds) {
+      const device = this.devices.get(deviceId)
+      if (device !== undefined) device.scheduledInFlight = run
+    }
+    await run
+    for (const deviceId of deviceIds) {
+      const device = this.devices.get(deviceId)
+      if (device !== undefined && device.scheduledInFlight === run) device.scheduledInFlight = null
+    }
   }
 
   // ── command follow-ups ───────────────────────────────────────────
@@ -383,14 +450,8 @@ export class StateRefreshScheduler {
   private async refreshGroup(key: string, reason: StateRefreshReason): Promise<void> {
     const group = this.groups.get(key)
     if (group === undefined) return
-    const idle: number[] = []
-    for (const deviceId of group.devices) {
-      const device = this.devices.get(deviceId)
-      if (device === undefined) continue
-      if (device.inFlight !== null) await device.inFlight
-      idle.push(deviceId)
-    }
-    if (idle.length > 0) await this.refreshDevices(idle, reason)
+    const ids = [...group.devices].filter((id) => this.devices.has(id))
+    if (ids.length > 0) await this.refreshDevices(ids, reason)
   }
 
   /** One call for a batching integration, else one per device. */
@@ -406,31 +467,74 @@ export class StateRefreshScheduler {
     await Promise.all(deviceIds.map((id) => this.runRefresh([id], reason)))
   }
 
+  /**
+   * Read `deviceIds` once every read already queued on them ended — or, with
+   * `waitBoundMs`, once that long passed (a debug line per device that was
+   * still busy). The read becomes the devices' new tail.
+   */
   private async runRefresh(
     deviceIds: readonly number[],
     reason: StateRefreshReason,
+    waitBoundMs?: number,
   ): Promise<void> {
     const route = deviceIds[0]
     if (route === undefined) return
-    const call = this.deps.refresh(route, deviceIds, reason).catch((err: unknown) => {
-      for (const deviceId of deviceIds) {
-        this.deps.logger.warn('state refresh failed', {
-          tags: { deviceId },
-          meta: { reason, error: errorMessage(err) },
-        })
-      }
-    })
-    const settled = call.finally(() => {
-      for (const deviceId of deviceIds) {
-        const device = this.devices.get(deviceId)
-        if (device !== undefined && device.inFlight === settled) device.inFlight = null
-      }
-    })
+    const busy: number[] = []
+    const prior: Promise<void>[] = []
+    for (const deviceId of deviceIds) {
+      const tail = this.devices.get(deviceId)?.inFlight
+      if (tail === null || tail === undefined) continue
+      busy.push(deviceId)
+      prior.push(tail)
+    }
+    const settled = this.afterPrior(prior, busy, waitBoundMs)
+      .then(() => this.deps.refresh(route, deviceIds, reason))
+      .catch((err: unknown) => {
+        for (const deviceId of deviceIds) {
+          this.deps.logger.warn('state refresh failed', {
+            tags: { deviceId },
+            meta: { reason, error: errorMessage(err) },
+          })
+        }
+      })
+      .finally(() => {
+        for (const deviceId of deviceIds) {
+          const device = this.devices.get(deviceId)
+          if (device !== undefined && device.inFlight === settled) device.inFlight = null
+        }
+      })
     for (const deviceId of deviceIds) {
       const device = this.devices.get(deviceId)
       if (device !== undefined) device.inFlight = settled
     }
     await settled
+  }
+
+  /** Resolves when every `prior` read ended, or after `waitBoundMs` (logged per busy device). */
+  private async afterPrior(
+    prior: readonly Promise<void>[],
+    busy: readonly number[],
+    waitBoundMs: number | undefined,
+  ): Promise<void> {
+    if (prior.length === 0) return
+    const all = Promise.all(prior).then(() => true)
+    if (waitBoundMs === undefined) {
+      await all
+      return
+    }
+    let timer: Timer | undefined
+    const bound = new Promise<boolean>((resolve) => {
+      timer = setTimeout(() => resolve(false), waitBoundMs)
+    })
+    const ended = await Promise.race([all, bound])
+    if (timer !== undefined) clearTimeout(timer)
+    if (ended) return
+    for (const deviceId of busy) {
+      this.deps.logger.debug('state refresh: stopped waiting for the read in flight', {
+        tags: { deviceId },
+        meta: { waitedMs: waitBoundMs },
+      })
+    }
   }
 
   private clearGroupTimers(group: GroupState): void {
