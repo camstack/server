@@ -62,6 +62,8 @@ import {
   subscribeAmcrestEvents,
 } from './amcrest-cgi-client.js'
 import { availabilityFromStorage } from './clips/clip-availability.js'
+import { readConfigTables } from './config-table-read.js'
+import { readOnboardStorage } from './onboard-storage-read.js'
 import type { AmcrestClipCamera } from './clips/clip-service.js'
 import {
   amcrestBacklightToCap,
@@ -92,7 +94,6 @@ import {
   buildOnboardWrites,
   describeAmcrestScheduleRefusal,
   findLocalStorageGroup,
-  parseOnboardStorage,
   parseRecordLimits,
   readPostRecordSec,
 } from './recording-onboard-mapping.js'
@@ -265,7 +266,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
    *
    * `readStorage` is the SAME read and the SAME parser the `recording-onboard`
    * cap uses (D614) — `storageDevice.cgi?action=getDeviceAllInfo` through
-   * `parseOnboardStorage` — mapped into the clip cap's own three states. There
+   * `readOnboardStorage` — mapped into the clip cap's own three states. There
    * is one storage reader in this addon and this is a caller of it, not a
    * second one. It is read live rather than taken off the cap's runtime slice
    * because that slice is `unknown` until the cap's first refresh, and
@@ -283,23 +284,12 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       password: this.config.get('password'),
       channel: this.channel,
       client: this.ensureClient(),
-      readStorage: async (): Promise<ClipSourceAvailability | null> => {
-        let table: ReadonlyMap<string, string>
-        try {
-          table = await this.ensureClient().getStorageDeviceAllInfo()
-        } catch (err: unknown) {
-          // A measurement that FAILED is not a measurement (D393). It is
-          // never folded into "there is no card", which would tell the
-          // operator to fit one that is already fitted.
-          return {
-            state: 'unreachable',
-            reason: `The camera did not answer the storage read: ${
-              err instanceof Error ? err.message : String(err)
-            }`,
-          }
-        }
-        return availabilityFromStorage(parseOnboardStorage(table))
-      },
+      // A failed read is `unknown` → `unreachable`, never "no card" (D393);
+      // an HTTP 400 is the camera saying it has no storage (`no-storage`).
+      readStorage: async (): Promise<ClipSourceAvailability | null> =>
+        availabilityFromStorage(
+          await readOnboardStorage(() => this.ensureClient().getStorageDeviceAllInfo()),
+        ),
     }
   }
 
@@ -389,6 +379,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       this.clearPtzAutoStop()
       this.client = null
       this.eventClient = null
+      this.extrasUnsupportedTables = new Set()
       // Rebuild the onboard-motion stream against the new connection —
       // its client reference is now stale. Skipped while disposed/inactive
       // (no controller and this runs post-activate only when a stream was up).
@@ -691,6 +682,28 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
 
   // ── Driver-authored settings (extras + connection) ─────────────────
 
+  /**
+   * Extras tables this camera answered HTTP 400 for. Kept in memory only, so
+   * later refreshes batch just the supported names; cleared when the camera
+   * goes offline or its connection changes, so the next read probes again
+   * (a firmware update can add a table).
+   */
+  private extrasUnsupportedTables: ReadonlySet<string> = new Set()
+
+  /** Remember the unsupported tables and say so ONCE per discovery. */
+  private noteExtrasUnsupportedTables(unsupported: readonly string[]): void {
+    const discovered = unsupported.filter((name) => !this.extrasUnsupportedTables.has(name))
+    if (discovered.length === 0) return
+    this.extrasUnsupportedTables = new Set([...this.extrasUnsupportedTables, ...discovered])
+    this.ctx.logger.info(
+      'amcrest: camera does not have some extras config tables — their settings are hidden',
+      {
+        tags: { deviceId: this.id },
+        meta: { unsupportedTables: [...this.extrasUnsupportedTables] },
+      },
+    )
+  }
+
   /** Single-flight guard for the extras snapshot refresh. */
   private extrasRefreshInFlight: Promise<void> | null = null
   /** Debounce for the serve-and-revalidate kick on form open. */
@@ -707,8 +720,13 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     const promise = (async (): Promise<void> => {
       try {
         const client = this.ensureClient()
-        const table = await client.getConfigs([...AMCREST_EXTRAS_CONFIG_NAMES])
-        const extras = parseExtrasSnapshot(table, Date.now())
+        const read = await readConfigTables(
+          client,
+          AMCREST_EXTRAS_CONFIG_NAMES,
+          this.extrasUnsupportedTables,
+        )
+        this.noteExtrasUnsupportedTables(read.unsupported)
+        const extras = parseExtrasSnapshot(read.table, Date.now(), read.unsupported)
         const cache = this.config.get('deviceCache') ?? {}
         await this.config.setAll({ deviceCache: { ...cache, extras } })
       } catch (err) {
@@ -857,6 +875,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
         return true
       },
       setOnline: (online) => {
+        if (!online) this.extrasUnsupportedTables = new Set()
         this.markOnline(online)
       },
       isEnabled: () => !this.disabled,
@@ -2455,9 +2474,9 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     /** Read every table this cap needs. A table that failed is null, never empty. */
     const readAll = async (): Promise<AmcrestOnboardReads> => {
       const client = this.ensureClient()
-      const [storageTable, record, recordMode, mediaGlobal, storageGroup, motionDetect] =
+      const [storage, record, recordMode, mediaGlobal, storageGroup, motionDetect] =
         await Promise.all([
-          client.getStorageDeviceAllInfo().catch(() => null),
+          readOnboardStorage(() => client.getStorageDeviceAllInfo()),
           client.getConfig('Record').catch(() => null),
           client.getConfig('RecordMode').catch(() => null),
           client.getConfig('MediaGlobal').catch(() => null),
@@ -2466,12 +2485,8 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
         ])
       return {
         // A read that FAILED is `unknown`, never folded into "no card"
-        // (D393) — that is the difference between a camera with no card
-        // and a camera that did not answer.
-        storage:
-          storageTable === null
-            ? { kind: 'unknown', reason: 'The camera did not answer the storage read.' }
-            : parseOnboardStorage(storageTable),
+        // (D393); an HTTP 400 is a model with no card slot (`absent`).
+        storage,
         record,
         recordMode,
         mediaGlobal,

@@ -122,6 +122,28 @@ export interface AmcrestEventHandlers {
 }
 
 /**
+ * A CGI request the camera ANSWERED with a non-2xx status. Distinct from a
+ * network failure or a timeout (a plain `Error` / `AbortError`): a status is
+ * the camera's own statement, and some statuses mean something precise — a
+ * Dahua firmware answers `400` to a `configManager` read naming a table it
+ * does not have, and to a storage query on a model with no card slot.
+ */
+export class AmcrestCgiHttpError extends Error {
+  readonly status: number
+
+  constructor(path: string, status: number, statusText: string) {
+    super(`CGI GET ${path} → HTTP ${String(status)} ${statusText}`)
+    this.name = 'AmcrestCgiHttpError'
+    this.status = status
+  }
+}
+
+/** True when `err` is the camera answering `status` (not a network failure). */
+export function isCgiHttpStatus(err: unknown, status: number): boolean {
+  return err instanceof AmcrestCgiHttpError && err.status === status
+}
+
+/**
  * Thin HTTP-Digest client for the Amcrest/Dahua CGI surface. One instance
  * per camera; the `DigestState` is reused across calls so a warm session
  * avoids the 401 round-trip on every request. All endpoints verified live
@@ -197,7 +219,7 @@ export class AmcrestCgiClient {
    *  a non-2xx status so callers can `.catch()` into a null/skip path. */
   private async getText(path: string, timeoutMs?: number): Promise<string> {
     const res = await this.send(path, timeoutMs)
-    if (!res.ok) throw new Error(`CGI GET ${path} → HTTP ${res.status} ${res.statusText}`)
+    if (!res.ok) throw new AmcrestCgiHttpError(path, res.status, res.statusText)
     return res.text()
   }
 
@@ -207,7 +229,7 @@ export class AmcrestCgiClient {
     timeoutMs?: number,
   ): Promise<{ buffer: Buffer; contentType: string }> {
     const res = await this.send(path, timeoutMs)
-    if (!res.ok) throw new Error(`CGI GET ${path} → HTTP ${res.status} ${res.statusText}`)
+    if (!res.ok) throw new AmcrestCgiHttpError(path, res.status, res.statusText)
     const contentType = res.headers.get('content-type') ?? 'image/jpeg'
     const ab = await res.arrayBuffer()
     return { buffer: Buffer.from(ab), contentType }

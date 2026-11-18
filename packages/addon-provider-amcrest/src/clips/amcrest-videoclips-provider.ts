@@ -347,6 +347,16 @@ export function createAmcrestVideoclipsProvider(deps: AmcrestVideoclipsDeps): IV
       })
       if (outcome.kind === 'refused') {
         health.set(deviceId, outcome.availability)
+        // A camera with no card has no recordings — that IS the answer, and
+        // the source's `no-storage` state says why the list is empty. Every
+        // other refusal is a source that could not answer.
+        if (outcome.availability.state === 'no-storage') {
+          deps.logger.info('videoclips: no onboard storage — nothing to list', {
+            tags,
+            meta: { branch: 'no-storage', reason: outcome.availability.reason ?? null },
+          })
+          return []
+        }
         // An empty list is an answer only when the source could ANSWER.
         // Flattening a refusal into `[]` is "this camera has no recordings",
         // which is the one sentence this line of work exists to prevent.

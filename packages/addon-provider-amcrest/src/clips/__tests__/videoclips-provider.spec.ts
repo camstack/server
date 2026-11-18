@@ -262,6 +262,20 @@ describe('listClips', () => {
     await expect(provider.listClips(window)).rejects.toThrow(/index-empty/)
   })
 
+  it('answers [] for a camera with NO STORAGE, and the source says no-storage', async () => {
+    // A Lite model with no card slot: nothing to list is the answer, not a 500.
+    const { provider } = harness({
+      availability: { state: 'no-storage', reason: 'no onboard storage' },
+      catalog: {
+        kind: 'refused',
+        availability: { state: 'no-storage', reason: 'no onboard storage' },
+      },
+    })
+    expect(await provider.listClips(window)).toEqual([])
+    const sources = await provider.listSources({ deviceId: DEVICE_ID })
+    expect(sources[0]?.availability.state).toBe('no-storage')
+  })
+
   it('narrows to the window it was asked for', async () => {
     const inside = makeRow()
     const outside = makeRow({

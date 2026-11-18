@@ -55,6 +55,10 @@ export const amcrestExtrasSnapshotSchema = z
     autoRebootMinute: z.number(),
     /** Wall-clock ms of the read that produced this snapshot. */
     fetchedAt: z.number(),
+    /** Extras tables this camera answered HTTP 400 for — the model does not
+     *  have them (a Lite model with no `Lighting`). Their fields are left
+     *  out of the form rather than rendered with invented defaults. */
+    unsupportedTables: z.array(z.string()),
   })
   .partial()
 
@@ -68,6 +72,43 @@ export const AMCREST_EXTRAS_CONFIG_NAMES = [
   'NTP',
   'AutoMaintain',
 ] as const
+
+export type AmcrestExtrasConfigName = (typeof AMCREST_EXTRAS_CONFIG_NAMES)[number]
+
+/** Which config table each extras form field reads and writes. */
+const EXTRAS_FIELD_TABLE: Readonly<Record<string, AmcrestExtrasConfigName>> = {
+  irLightMode: 'Lighting',
+  irLightBrightness: 'Lighting',
+  statusLedEnabled: 'LightGlobal',
+  ntpEnabled: 'NTP',
+  ntpServer: 'NTP',
+  ntpPort: 'NTP',
+  ntpUpdatePeriodMin: 'NTP',
+  ntpTimeZoneIndex: 'NTP',
+  autoRebootEnabled: 'AutoMaintain',
+  autoRebootDay: 'AutoMaintain',
+  autoRebootHour: 'AutoMaintain',
+  autoRebootMinute: 'AutoMaintain',
+}
+
+/** Drop every field whose table the camera does not have, then every
+ *  section left with no field. */
+function withoutUnsupportedTables(
+  sections: readonly ConfigSection[],
+  unsupported: readonly string[],
+): readonly ConfigSection[] {
+  if (unsupported.length === 0) return sections
+  const missing = new Set(unsupported)
+  return sections
+    .map((section) => ({
+      ...section,
+      fields: section.fields.filter((field) => {
+        const table = 'key' in field ? EXTRAS_FIELD_TABLE[field.key] : undefined
+        return table === undefined || !missing.has(table)
+      }),
+    }))
+    .filter((section) => section.fields.length > 0)
+}
 
 const IR_LIGHT_MODES = ['Auto', 'Manual', 'Off'] as const
 type IrLightMode = (typeof IR_LIGHT_MODES)[number]
@@ -93,8 +134,12 @@ function boolOrUndefined(raw: string | undefined): boolean | undefined {
 export function parseExtrasSnapshot(
   table: ReadonlyMap<string, string>,
   now: number,
+  unsupportedTables: readonly string[] = [],
 ): AmcrestExtrasSnapshot {
-  const out: AmcrestExtrasSnapshot = { fetchedAt: now }
+  const out: AmcrestExtrasSnapshot = {
+    fetchedAt: now,
+    ...(unsupportedTables.length > 0 ? { unsupportedTables: [...unsupportedTables] } : {}),
+  }
   const modeRaw = table.get('Lighting[0][0].Mode')
   if (modeRaw !== undefined && isIrLightMode(modeRaw)) out.irLightMode = modeRaw
   const light = intOrUndefined(table.get('Lighting[0][0].MiddleLight[0].Light'))
@@ -132,6 +177,10 @@ export function buildExtrasSections(
   snap: AmcrestExtrasSnapshot | undefined,
 ): readonly ConfigSection[] {
   if (snap === undefined) return []
+  return withoutUnsupportedTables(extrasSectionsFor(snap), snap.unsupportedTables ?? [])
+}
+
+function extrasSectionsFor(snap: AmcrestExtrasSnapshot): readonly ConfigSection[] {
   return [
     {
       id: 'ir-lights',
