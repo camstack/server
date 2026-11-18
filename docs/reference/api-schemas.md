@@ -5404,6 +5404,7 @@ Enum: `"f32le" \| "s16le"`
 ### `PowerMeterStatusSchema`
 
 - `power?`: `number`
+- `deliveredPower?`: `number`
 - `energy?`: `number`
 - `voltage?`: `number`
 - `current?`: `number`

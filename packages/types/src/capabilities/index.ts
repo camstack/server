@@ -3081,6 +3081,7 @@ export {
   type IPowerMeterProvider,
   type PowerMeterStatus,
   PowerMeterStatusSchema,
+  netPowerOf,
   powerMeterCapability,
 } from './power-meter.cap.js'
 export {

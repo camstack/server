@@ -21,11 +21,19 @@ import { t } from '../device/cap-vocabulary/l10n.js'
  * in real-world devices.
  */
 export const PowerMeterStatusSchema = z.object({
-  /** Instantaneous power draw (watts). */
+  /** Instantaneous TOTAL power draw of the device (watts), when known. */
   power: z
     .number()
     .optional()
     .meta(readingMeta('power', { label: 'Power' })),
+  /**
+   * Power the device passes on to downstream loads (watts), e.g. the PoE a switch delivers to
+   * its ports. Part of `power`, never added to it: the device's own draw is `netPowerOf`.
+   */
+  deliveredPower: z
+    .number()
+    .optional()
+    .meta(readingMeta('power', { label: 'Delivered' })),
   /** Cumulative energy in kilowatt-hours since the meter was reset. */
   energy: z
     .number()
@@ -52,6 +60,19 @@ export const PowerMeterStatusSchema = z.object({
 export type PowerMeterStatus = z.infer<typeof PowerMeterStatusSchema>
 
 /**
+ * The device's own draw: `power − deliveredPower`. Derived, never stored, and only when the total
+ * is known; with nothing delivered it is `power`. Unknown stays `undefined`, never 0. Every
+ * consumer that adds power across devices counts this, so delivered power is not counted twice
+ * on top of the downstream devices' own meters.
+ */
+export function netPowerOf(
+  status: Pick<PowerMeterStatus, 'power' | 'deliveredPower'>,
+): number | undefined {
+  if (status.power === undefined) return undefined
+  return status.power - (status.deliveredPower ?? 0)
+}
+
+/**
  * Loads that draw metered mains power (D951). The reading is a feature of the
  * device itself — a plug, a lamp, a fan, an air conditioner, a boiler, a
  * vacuum dock — not a separate sensor beside it. A `Sensor` stays: a clamp
@@ -73,7 +94,7 @@ const POWER_METER_DEVICE_TYPES = [
   DeviceType.Vacuum,
   DeviceType.LawnMower,
   DeviceType.PetFeeder,
-  // A PoE switch's card reports the PoE power it delivers; a Workload with no provider shows nothing.
+  // A PoE switch's card reports the PoE power it delivers (`deliveredPower`); a Workload with no provider shows nothing.
   DeviceType.Workload,
 ] as const
 

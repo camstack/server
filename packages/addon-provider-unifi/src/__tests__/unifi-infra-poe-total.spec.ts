@@ -108,12 +108,13 @@ describe('infraPoeTotalStatus', () => {
       port({ idx: 2, poePowerW: 2 }),
       port({ idx: 3, poePowerW: null }),
     ]
-    expect(infraPoeTotalStatus(ports, 5)).toEqual({ power: 5.5, lastFetchedAt: 5 })
+    expect(infraPoeTotalStatus(ports, 5)).toEqual({ deliveredPower: 5.5, lastFetchedAt: 5 })
   })
 
   it('is absent when no port reported (D393)', () => {
     const status = infraPoeTotalStatus([port({ idx: 1 }), port({ idx: 2 })], 5)
     expect(status.power).toBeUndefined()
+    expect(status.deliveredPower).toBeUndefined()
   })
 })
 
@@ -129,7 +130,8 @@ describe('UnifiInfraDevice power-meter', () => {
       }),
     )
     expect(h.registered).toContain('power-meter')
-    expect(h.power()?.power).toBe(5.5)
+    expect(h.power()?.deliveredPower).toBe(5.5)
+    expect(h.power()?.power).toBeUndefined()
     await h.stop()
   })
 
@@ -138,6 +140,7 @@ describe('UnifiInfraDevice power-meter', () => {
       infraSnapshot({ id: 'd1', kind: 'switch', ports: [port({ idx: 1 }), port({ idx: 2 })] }),
     )
     expect(h.registered).toContain('power-meter')
+    expect(h.power()?.deliveredPower).toBeUndefined()
     expect(h.power()?.power).toBeUndefined()
     await h.stop()
   })

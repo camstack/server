@@ -1932,6 +1932,7 @@ export const CAP_RUNTIME_FIELD_UNITS: Readonly<
   },
   'power-meter': {
     power: 'W',
+    deliveredPower: 'W',
     energy: 'kWh',
     voltage: 'V',
     current: 'A',
