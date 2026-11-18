@@ -52,8 +52,8 @@ export function parseNativeId(childNativeId: string): ParsedNativeId {
 
 /**
  * What a console Host serves beyond its children: the workload (with `restart`, the controller's
- * `restartDevice`) and the link to the controller UI. A switch or an access point keeps its
- * restart Button child and is proposed without these hints.
+ * `restartDevice`) and the link to the controller UI. A switch or an access point restarts
+ * through its own workload too, and is proposed without these hints.
  */
 const CONSOLE_CAPABILITIES: readonly string[] = [
   workloadCapability.name,

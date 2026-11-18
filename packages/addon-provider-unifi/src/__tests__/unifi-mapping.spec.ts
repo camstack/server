@@ -37,10 +37,10 @@ describe('buildInfraFeatures', () => {
   it('one port device per PoE-capable port — a non-PoE port is not a device', () => {
     const ports = buildInfraFeatures(SWITCH).filter((f) => f.kind === 'port')
     expect(ports.map((f) => f.portIdx)).toEqual([1, 3])
-    expect(buildInfraFeatures(SWITCH)).toContainEqual({
-      kind: 'button',
-      buttonAction: 'restart',
-    })
+  })
+
+  it("offers no restart button: the restart is the device's own workload.restart", () => {
+    expect(buildInfraFeatures(SWITCH).some((f) => f.kind === 'button')).toBe(false)
   })
 
   it('without a local account a port is still a switch (power cycle only), with its power and link', () => {

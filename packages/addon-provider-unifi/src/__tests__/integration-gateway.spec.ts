@@ -421,7 +421,6 @@ describe('UniFi integration: devices follow the integration', () => {
     await harness([{ ...SWITCH, ports: [] }])
     const apply = vi.fn(async () => undefined)
     const persisted = [
-      { kind: 'button', buttonAction: 'restart' },
       { kind: 'port', portIdx: 1, switchable: false },
       { kind: 'sensor', metric: 'cpu_utilization' },
       { kind: 'sensor', metric: 'cpu_temperature' },

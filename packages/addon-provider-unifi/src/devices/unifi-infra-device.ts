@@ -48,7 +48,7 @@ import { UnifiFeatureDevice } from './unifi-feature-device.js'
  *   - one PoE port device per PoE-capable port: power-meter, network-link and a switch —
  *     PoE on/off when a local account can set it, else only the native power cycle a linked
  *     power-source restart uses (no reboot or power-cycle button of its own),
- *   - a restart Button child (no LED switch),
+ *   - no restart Button child (the restart is `workload.restart`) and no LED switch,
  *   - cpu_utilization / cpu_temperature / clients / state / uptime Sensor children.
  */
 export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {

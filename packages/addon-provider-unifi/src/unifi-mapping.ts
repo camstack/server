@@ -216,15 +216,13 @@ function featureKey(descriptor: UnifiFeatureDescriptor): string {
  *     the client can switch PoE (a local account is set) — without it the port offers no switch,
  *     only the power reading and the link. A restart through PoE is the POWERED device's
  *     `power-source` cap pointed at this port's switch, never a button on the port,
- *   - a device-level restart button (no LED switch: not offered),
+ *   - no device-level button: the restart is the device's own `workload.restart`, and an LED
+ *     switch is not offered,
  *   - cpu / temp / clients / state / uptime sensors.
  * Pure — no I/O. Unit-testable in isolation.
  */
 export function buildInfraFeatures(snapshot: UnifiInfraSnapshot): UnifiFeatureDescriptor[] {
   const features: UnifiFeatureDescriptor[] = []
-
-  // Whole-device controls.
-  features.push({ kind: 'button', buttonAction: 'restart' })
 
   // One device per PoE-capable port.
   for (const port of snapshot.ports) {
