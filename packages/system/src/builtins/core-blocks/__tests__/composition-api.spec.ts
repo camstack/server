@@ -1044,6 +1044,53 @@ describe('a feature an identity link contributed (D1063)', () => {
     expect(withdrawn?.extras).toMatchObject({ tags: { deviceId: FEEDER_ID } })
   })
 
+  it('the reconciler withdraws a stamp from an ORPHAN customization: its host was removed, the target-missing check does not block taking it back', async () => {
+    stored = [compositionBlock('b1', stampedBattery())]
+    rows.set(
+      HA,
+      (rows.get(HA) ?? []).filter((r) => r.stableId !== FEEDER.stableId),
+    )
+    const api = buildCompositionApi(deps())
+    const log = recordingLogger()
+    const reconciler = new LinkContributionReconciler({
+      listLinks: async () => ({ status: 'answered', links: [] }),
+      deviceIdOf: async () => null,
+      boundCaps: async () => [],
+      blocks: () => stored,
+      create: async () => {
+        throw new Error('nothing to create')
+      },
+      update: async (block, composition) => {
+        await api.updateComposition({
+          blockId: block.id,
+          expectedUpdatedAt: block.updatedAt,
+          block: { composition },
+          caller: LINKS_CALLER,
+        })
+      },
+      logger: log.logger,
+    })
+    await reconciler.pass()
+    expect(coreBlockFeatures('b1')).toEqual([])
+    expect(log.lines.filter((l) => l.level === 'warn')).toEqual([])
+  })
+
+  it('any other save to an orphan customization is still judged: target-missing refuses it', async () => {
+    stored = [compositionBlock('b1', addBattery())]
+    rows.set(
+      HA,
+      (rows.get(HA) ?? []).filter((r) => r.stableId !== FEEDER.stableId),
+    )
+    await expect(
+      buildCompositionApi(deps()).updateComposition({
+        blockId: 'b1',
+        expectedUpdatedAt: 1,
+        block: { composition: { ...addBattery(), features: [] } },
+        caller: LINKS_CALLER,
+      }),
+    ).rejects.toThrow(/target-missing/)
+  })
+
   it('an operator write of a customization asks for a link reconcile; the reconciler’s own write does not', async () => {
     const written: string[] = []
     const api = buildCompositionApi(

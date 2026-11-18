@@ -72,8 +72,9 @@ export const PowerSourceRefusalReasonSchema = z.enum([
   'switch-is-actuator',
   /**
    * The power source was contributed by an identity link (D1063) and that link
-   * is no longer `linked`, or now names another port: the port may feed another
-   * device. Nothing is switched; the contributions are reconciled.
+   * is no longer `linked`, its evidence is gone (`evidenceGone`), or it now
+   * names another port: the port may feed another device. Nothing is switched;
+   * the contributions are reconciled.
    */
   'link-lost',
   /**

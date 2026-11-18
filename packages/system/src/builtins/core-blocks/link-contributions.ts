@@ -1,13 +1,14 @@
 /**
  * The Customize features an identity link contributes (D1063).
  *
- * A `linked` link adds, on its host device, each default contribution its kind
- * declares (`IDENTITY_LINK_KINDS[kind].contributions`) — a PoE port's link adds
+ * A `linked` link whose evidence holds adds, on its host device, each default
+ * contribution its kind declares (`IDENTITY_LINK_KINDS[kind].contributions`) — a PoE port's link adds
  * `power-source` to the camera it feeds, sourced from the port's `switch.on`.
  * The feature is an ordinary D663 customization feature stamped
  * `contributedBy: { linkId }`; its `enabled` toggle is the operator's (D62) and
  * survives every pass. A link that is no longer `linked` takes back only the
- * features it stamped.
+ * features it stamped — and so does a `linked` operator link flagged
+ * `evidenceGone`, until its evidence returns.
  *
  * Skipped, with a line in the host's log:
  *  - the host serves the cap natively (D944) — the link never replaces it;
@@ -161,7 +162,9 @@ export class LinkContributionReconciler {
     this.answered = true
     const plans = new Map<string, HostPlan>()
     for (const link of read.links) {
-      if (link.state !== 'linked') continue
+      // An operator-confirmed link whose evidence is gone owes nothing: its port may
+      // feed another device now, and a fresh link elsewhere must be free to contribute.
+      if (link.state !== 'linked' || link.evidenceGone === true) continue
       for (const contribution of IDENTITY_LINK_KINDS[link.kind].contributions) {
         const hostSide = link[contribution.host]
         const host = refOf(hostSide)

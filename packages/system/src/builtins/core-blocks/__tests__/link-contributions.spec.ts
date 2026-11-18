@@ -282,6 +282,39 @@ describe('LinkContributionReconciler', () => {
     )
   })
 
+  it('an operator-confirmed link whose evidence is gone is not owed: its stamp goes and the fresh port contributes', async () => {
+    // Operator confirmed port 7 → camera A; A then moved to port 9, camera B took port 7.
+    const port9 = { addonId: PORT.addonId, stableId: 'port-9', deviceId: 11 }
+    const cameraB = { addonId: CAMERA.addonId, stableId: 'cam-2', deviceId: 21 }
+    const confirmed: IdentityLink = { ...link(), origin: 'operator' }
+    const w = world()
+    w.setLinks({ status: 'answered', links: [confirmed] })
+    await w.reconciler.pass()
+    expect(stamped(hostFeatures(w.blocks))[0]?.contributedBy).toEqual({ linkId: LINK_ID })
+
+    const movedId = 'poe-power:provider-unifi/port-9|provider-hikvision/cam-1'
+    const takenId = 'poe-power:provider-unifi/port-7|provider-hikvision/cam-2'
+    w.setLinks({
+      status: 'answered',
+      links: [
+        { ...confirmed, evidenceGone: true },
+        { ...link(), id: movedId, a: port9 },
+        { ...link(), id: takenId, b: cameraB },
+      ],
+    })
+    await w.reconciler.pass()
+    const onA = stamped(hostFeatures(w.blocks))
+    expect(onA).toHaveLength(1)
+    expect(onA[0]?.contributedBy).toEqual({ linkId: movedId })
+    expect(onA[0]?.fields['switchOn']).toMatchObject({
+      source: { addonId: PORT.addonId, stableId: 'port-9' },
+    })
+    expect(w.log.info).not.toHaveBeenCalledWith(
+      expect.stringContaining('another link'),
+      expect.anything(),
+    )
+  })
+
   it.each([
     ['dismissed, still listed', [link('dismissed')]],
     ['deleted', []],

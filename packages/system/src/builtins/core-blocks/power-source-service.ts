@@ -398,7 +398,9 @@ export class PowerSourceService implements IPowerSourceProvider {
 
   /**
    * The identity link that contributed this power source, read now: null when it is
-   * still `linked` and its source side is the switch the feature reads.
+   * still `linked`, its evidence still holds, and its source side is the switch the
+   * feature reads. An operator-confirmed link whose evidence is gone (`evidenceGone`)
+   * is refused as `link-lost`: the port may now feed another device (D1063).
    */
   private async checkContributingLink(
     deviceId: number,
@@ -429,6 +431,7 @@ export class PowerSourceService implements IPowerSourceProvider {
     const feeds =
       current !== undefined &&
       current.state === 'linked' &&
+      current.evidenceGone !== true &&
       contribution !== undefined &&
       compositionSourceKey(current[contribution.source]) === compositionSourceKey(link.switch)
     if (feeds) return null
@@ -439,7 +442,9 @@ export class PowerSourceService implements IPowerSourceProvider {
       message:
         current === undefined
           ? `the identity link ${linkId} that contributed this power source is gone`
-          : `the identity link ${linkId} is ${current.state} and no longer feeds this device from ${link.switch.stableId}`,
+          : current.state === 'linked' && current.evidenceGone === true
+            ? `the identity link ${linkId} was confirmed by the operator but its evidence is gone — ${link.switch.stableId} may feed another device now; unlink it, or it acts again when the evidence returns`
+            : `the identity link ${linkId} is ${current.state} and no longer feeds this device from ${link.switch.stableId}`,
     }
   }
 

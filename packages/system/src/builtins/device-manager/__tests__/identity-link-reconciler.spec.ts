@@ -185,6 +185,12 @@ describe('IdentityLinkReconciler', () => {
     await r.reconciler.pass()
     expect(r.store.get(id)?.evidenceGone).toBeUndefined()
     expect(r.store.get(id)?.state).toBe('linked')
+    // The flag stops it acting, so core-blocks hears both edges and reconciles its contribution.
+    expect(r.emitted.map((e) => [e.category, e.payload.origin, e.payload.reason])).toEqual([
+      [EventCategory.IdentityLinkCreated, 'operator', undefined],
+      [EventCategory.IdentityLinkLost, 'operator', 'evidence-gone'],
+      [EventCategory.IdentityLinkCreated, 'operator', undefined],
+    ])
   })
 
   it('a side with no row is not evidence: the link stays until the removal step', async () => {

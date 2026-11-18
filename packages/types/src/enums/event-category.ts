@@ -236,15 +236,16 @@ export enum EventCategory {
   DeviceReady = 'device.ready',
   /**
    * An identity link (D1063) became `linked` — auto on strong evidence or
-   * confirmed by the operator. Telemetry: the `identity-links` record is the
+   * confirmed by the operator — or a confirmed link's evidence came back. Telemetry: the `identity-links` record is the
    * truth, and core-blocks reconciles its contributions from it as well.
    * Payload: `IdentityLinkEventPayload`.
    */
   IdentityLinkCreated = 'identity-link.created',
   /**
-   * A `linked` identity link stopped being one: its evidence is gone (auto
-   * links only), a side was removed, or the operator unlinked it. Payload:
-   * `IdentityLinkEventPayload` with `reason`.
+   * A `linked` identity link stopped acting: its evidence is gone (an auto link
+   * is deleted; an operator-confirmed one stays `linked`, flagged
+   * `evidenceGone`, and no longer acts), a side was removed, or the operator
+   * unlinked it. Payload: `IdentityLinkEventPayload` with `reason`.
    */
   IdentityLinkLost = 'identity-link.lost',
 

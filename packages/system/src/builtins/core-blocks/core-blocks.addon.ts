@@ -24,6 +24,7 @@ import {
   type ConfigUISchema,
   COMPOSER_ADDON_ID,
   CORE_BLOCKS_ADDON_ID,
+  type CompositionSourceRef,
   type CoreBlock,
   type CoreBlockCompileInput,
   type CoreBlockInput,
@@ -922,7 +923,13 @@ export class CoreBlocksAddon extends BaseAddon {
         const existing = this.requireStore().get(blockId)
         const linkRefusal = linkContributionDeleteRefusal(existing)
         if (linkRefusal !== null) {
+          const target = existing === null ? null : coreBlockComposition(existing)?.target
+          const deviceId =
+            target?.kind === 'existing'
+              ? await this.deviceIdOfRef(target.device).catch(() => null)
+              : null
           this.ctx.logger.warn('core block delete refused: it holds device-link contributions', {
+            ...(deviceId === null ? {} : { tags: { deviceId } }),
             meta: { blockId, reason: linkRefusal },
           })
           throw new Error(linkRefusal)
@@ -1057,6 +1064,18 @@ export class CoreBlocksAddon extends BaseAddon {
     return this.compositionApi
   }
 
+  /** The device id of a composition target ref; null when no row carries it. */
+  private async deviceIdOfRef(ref: CompositionSourceRef): Promise<number | null> {
+    const api = this.ctx.api
+    if (!api)
+      throw new Error('core-blocks: no ctx.api on this node — the device cannot be resolved')
+    const rows = await api.deviceManager.listAll.query({
+      addonId: ref.addonId,
+      projection: 'slim',
+    })
+    return rows.find((r) => r.stableId === ref.stableId)?.id ?? null
+  }
+
   /**
    * The Customize features identity links contribute (D1063). A pass runs on
    * every `identity-link.created` / `.lost`, once now, and — until a pass has
@@ -1075,13 +1094,7 @@ export class CoreBlocksAddon extends BaseAddon {
     const caller = { userId: IDENTITY_LINKS_USER_ID, isAdmin: true }
     const links = new LinkContributionReconciler({
       listLinks: () => requireApi().deviceManager.listIdentityLinks.query({}),
-      deviceIdOf: async (ref) => {
-        const rows = await requireApi().deviceManager.listAll.query({
-          addonId: ref.addonId,
-          projection: 'slim',
-        })
-        return rows.find((r) => r.stableId === ref.stableId)?.id ?? null
-      },
+      deviceIdOf: (ref) => this.deviceIdOfRef(ref),
       boundCaps: async (deviceId) =>
         (await requireApi().deviceManager.getBindings.query({ deviceId })).entries.map(
           (e) => e.capName,

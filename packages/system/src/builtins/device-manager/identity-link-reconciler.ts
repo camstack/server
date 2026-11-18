@@ -9,12 +9,16 @@
  * | `proposed` row, candidate now `auto`        | `linked` / `auto`, created                     |
  * | `dismissed` row                             | stays dismissed: nothing re-proposes it        |
  * | `linked`/`auto` row, evidence gone          | row deleted, `identity-link.lost` evidence-gone |
- * | `linked`/`operator` row, evidence gone      | kept, flagged `evidenceGone`                   |
+ * | `linked`/`operator` row, evidence gone      | kept, flagged `evidenceGone`, `lost` evidence-gone |
+ * | `linked`/`operator` flagged, evidence back  | flag cleared, `identity-link.created`          |
  * | `proposed` row, evidence gone               | row deleted, no event (it never linked)        |
  *
  * "Evidence gone" is judged from the PERSISTED identifiers, which already keep
  * an unread value (D49): a camera rebooting, a port that read no client this
- * poll, change nothing. A link whose side has no row right now is left alone —
+ * poll, change nothing. A flagged operator link never acts: `power-source`
+ * refuses through it and core-blocks withdraws its contribution, so a fresh link
+ * on another port can contribute. It waits for the operator (Unlink) or for its
+ * evidence to return. A link whose side has no row right now is left alone —
  * a removed device is the `identity-links` removal step's, never a guess here.
  *
  * Runs after the seed and on every identity change the index reports,
@@ -225,6 +229,7 @@ export class IdentityLinkReconciler {
       !sameEvidence(stored.evidence, candidate.keys) ||
       stored.evidenceGone === true
     if (!upgrade && !moved) return
+    const returned = stored.state === 'linked' && stored.evidenceGone === true
     const { evidenceGone: _dropped, ...rest } = stored
     const next: IdentityLink = {
       ...rest,
@@ -236,6 +241,10 @@ export class IdentityLinkReconciler {
     await this.deps.store.put(next)
     if (upgrade) {
       this.log('identity link created — the proposal now has strong evidence', next)
+      this.deps.emit(EventCategory.IdentityLinkCreated, payloadOf(next))
+    }
+    if (returned) {
+      this.log('identity link acts again — the evidence of a confirmed link is back', next)
       this.deps.emit(EventCategory.IdentityLinkCreated, payloadOf(next))
     }
   }
@@ -250,7 +259,11 @@ export class IdentityLinkReconciler {
     if (link.origin === 'operator') {
       if (link.evidenceGone === true) return
       await this.deps.store.put({ ...link, evidenceGone: true })
-      this.log('identity link kept — confirmed by the operator, but its evidence is gone', link)
+      this.warn(
+        'identity link no longer acts — confirmed by the operator, but its evidence is gone; Unlink it, or it acts again when the evidence returns',
+        link,
+      )
+      this.deps.emit(EventCategory.IdentityLinkLost, payloadOf(link, 'evidence-gone'))
       return
     }
     await this.deps.store.delete(link.id)
@@ -288,9 +301,17 @@ export class IdentityLinkReconciler {
 
   /** One line per side, so each camera's log carries it (`tags.deviceId`). */
   private log(message: string, link: IdentityLink, only?: number): void {
+    this.lines('info', message, link, only)
+  }
+
+  private warn(message: string, link: IdentityLink): void {
+    this.lines('warn', message, link)
+  }
+
+  private lines(level: 'info' | 'warn', message: string, link: IdentityLink, only?: number): void {
     for (const side of [link.a, link.b]) {
       if (only !== undefined && side.deviceId === only) continue
-      this.deps.logger.info(message, {
+      this.deps.logger[level](message, {
         tags: { deviceId: side.deviceId },
         meta: {
           linkId: link.id,

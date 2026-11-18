@@ -233,6 +233,45 @@ function refuseLinkContributionRemoval(
   )
 }
 
+/**
+ * The reconciler taking back what it stamped, and nothing else (D1063): the
+ * target is unchanged, every stored feature the operator wrote survives
+ * verbatim, and every other kept feature is a stored one or an unstamped
+ * remainder of a stamped one. Removing features cannot create a conflict, and a
+ * withdrawal must land on a customization whose host was removed — which the
+ * store judge refuses as `target-missing` — so it is not judged.
+ */
+function isStampWithdrawal(
+  stored: Composition | null,
+  next: Composition,
+  writer: CompositionWriter | undefined,
+): boolean {
+  if (writer?.userId !== IDENTITY_LINKS_USER_ID || stored === null) return false
+  const storedTarget = existingTarget(stored)
+  const nextTarget = existingTarget(next)
+  if (
+    storedTarget === null ||
+    nextTarget === null ||
+    compositionSourceKey(storedTarget) !== compositionSourceKey(nextTarget)
+  ) {
+    return false
+  }
+  const stampedCaps = new Set(linkContributedFeatures(stored).map((f) => f.cap))
+  if (stampedCaps.size === 0) return false
+  const storedKeys = new Set(stored.features.map((f) => JSON.stringify(f)))
+  const nextKeys = new Set(next.features.map((f) => JSON.stringify(f)))
+  const operatorKept = stored.features.every(
+    (f) =>
+      (f.kind === 'fields' && f.contributedBy !== undefined) || nextKeys.has(JSON.stringify(f)),
+  )
+  const nothingAdded = next.features.every(
+    (f) =>
+      storedKeys.has(JSON.stringify(f)) ||
+      (f.kind === 'fields' && f.contributedBy === undefined && stampedCaps.has(f.cap)),
+  )
+  return operatorKept && nothingAdded && next.features.length <= stored.features.length
+}
+
 function noteWritten(
   deps: CompositionApiDeps,
   composition: Composition | null,
@@ -551,7 +590,15 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
         refuseIfChanged(deps, blockId, expectedUpdatedAt)
         refuseLinkContributionRemoval(deps, blockId, block.composition, caller)
         await refuseRetarget(deps, blockId, block)
-        if (block.composition !== undefined) {
+        const previous = deps.store.get(blockId)
+        const withdrawal =
+          block.composition !== undefined &&
+          isStampWithdrawal(
+            previous === null ? null : coreBlockComposition(previous),
+            block.composition,
+            caller,
+          )
+        if (block.composition !== undefined && !withdrawal) {
           const judged = await validateAgainstStore(deps, block.composition, blockId)
           if (!judged.validation.ok && problemsBlockSave(judged.validation.problems)) {
             refuse(
@@ -562,7 +609,6 @@ export function buildCompositionApi(deps: CompositionApiDeps): CompositionApi {
             )
           }
         }
-        const previous = deps.store.get(blockId)
         const updated = await deps.store.updateComposition(blockId, block)
         await followComposedRename(deps, previous, block.name)
         deps.logger.info('composition updated', {

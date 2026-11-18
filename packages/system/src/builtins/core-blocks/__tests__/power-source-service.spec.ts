@@ -470,6 +470,17 @@ describe('a power-source contributed by an identity link (D1063): checked at the
     ['proposed', { status: 'answered', links: [poeLink('proposed')] }],
     ['gone', { status: 'answered', links: [] }],
     [
+      'linked by the operator but its evidence is gone',
+      {
+        status: 'answered',
+        // The camera moved to port 9 (auto-linked there); port 7 now feeds another camera.
+        links: [
+          { ...poeLink('linked'), origin: 'operator', evidenceGone: true },
+          { ...poeLink('linked', { addonId: 'ha', stableId: 'port-9' }), id: 'L9' },
+        ],
+      },
+    ],
+    [
       'moved to another port',
       { status: 'answered', links: [poeLink('linked', { addonId: 'ha', stableId: 'port-9' })] },
     ],
