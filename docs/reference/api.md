@@ -7,7 +7,7 @@
 >
 > Methods marked `(auto)` are framework-injected: `getStatus` when the cap declares `status`, and the three `getDeviceSettingsContribution` / `getDeviceLiveContribution` / `applyDeviceSettingsPatch` when it declares `exposesDeviceSettings: true`.
 
-**214 capabilities · 1533 methods.**
+**214 capabilities · 1534 methods.**
 
 ## Method index
 
@@ -1342,6 +1342,7 @@
 | `streamBroker.listAllCameraStreams` | query | protected | stream-broker |
 | `streamBroker.listAllProfileSlots` | query | protected | stream-broker |
 | `streamBroker.getBrokerStats` | query | protected | stream-broker |
+| `streamBroker.previewDerivedEncode` | query | protected | stream-broker |
 | `streamBroker.probeStream` | mutation | admin | stream-broker |
 | `streamBroker.listClients` | query | protected | stream-broker |
 | `streamBroker.getLiveViewerCounts` | query | protected | stream-broker |
@@ -4770,7 +4771,7 @@
 
 ### `stream-broker` → `streamBroker.*`
 
-- **Source:** `packages/types/src/capabilities/stream-broker.cap.ts:471`
+- **Source:** `packages/types/src/capabilities/stream-broker.cap.ts:473`
 - **Meta:** scope: `system` · mode: `singleton` · mount: `singleton`
 - **Archetypes:** exposesDeviceSettings
 - **Provider interface:** `IStreamBrokerProvider`
@@ -4782,7 +4783,7 @@
 | getDeviceLiveContribution _(auto)_ | `streamBroker.getDeviceLiveContribution` | query | protected | `{ deviceId: number }` | `{ tabs?: ({ id: string; label: string; icon: string; order?: number })[]; sections: ({ id: string; title: string; description?: string; style?: "card" \| "accordion"; defaultCollapsed?: boolean; columns?: 1 \| 2 \| 3 \| 4; tab?: string; location?: "settings" \| "top-tab" \| "hero"; order?: number; fields: any[] })[] } \| null` |
 | applyDeviceSettingsPatch _(auto)_ | `streamBroker.applyDeviceSettingsPatch` | mutation | admin | `{ deviceId: number; patch: Record<string, unknown> }` | `{ success: true }` |
 | reportStreamSignal | `streamBroker.reportStreamSignal` | mutation | protected | `{ deviceId: number; code: string; at?: number }` | `{ accepted: boolean; reason: "woke" \| "hold-extended" \| "not-enabled" \| "no-consumer" \| "unknown-code" }` |
-| publishCameraStream | `streamBroker.publishCameraStream` | mutation | admin | `{ deviceId: number; camStreamId: string; kind: CamStreamKindSchema; url?: string; codec?: string; resolution?: CamStreamResolutionSchema; fps?: number; label?: string; deviceFeatures?: string[]; autoEligible?: boolean; profileHint?: CamProfileSchema; metadata?: Record<string, unknown>; sourceCamStreamId?: string; encodeProfile?: { video: { codec: "h264" \| "h265" \| "copy"; profile?: "baseline" \| "main" \| "high"; level?: string; width?: number; height?: number; fps?: number; bitrateKbps?: number; gopFrames?: number; bf?: number; preset?: "ultrafast" \| "superfast" \| "veryfast" \| "faster" \| "fast" \| "medium"; tune?: "zerolatency" \| "film" \| "animation"; singleSlicePerFrame?: boolean }; audio: "passthrough" \| { codec: "opus" \| "aac" \| "pcmu" \| "pcma" \| "copy"; bitrateKbps?: number; sampleRateHz?: number; channels?: 1 \| 2 }; inputArgs?: string[]; outputArgs?: string[] } }` | `{ success: true }` |
+| publishCameraStream | `streamBroker.publishCameraStream` | mutation | admin | `{ deviceId: number; camStreamId: string; kind: CamStreamKindSchema; url?: string; codec?: string; resolution?: CamStreamResolutionSchema; fps?: number; label?: string; deviceFeatures?: string[]; autoEligible?: boolean; profileHint?: CamProfileSchema; metadata?: Record<string, unknown>; sourceCamStreamId?: string; encodeProfile?: { video: { codec: "h264" \| "h265" \| "copy" \| "source"; profile?: "baseline" \| "main" \| "high"; level?: string; width?: number; height?: number; fps?: number; bitrateKbps?: number; gopFrames?: number; bf?: number; preset?: "ultrafast" \| "superfast" \| "veryfast" \| "faster" \| "fast" \| "medium"; tune?: "zerolatency" \| "film" \| "animation"; singleSlicePerFrame?: boolean }; audio: "passthrough" \| { codec: "opus" \| "aac" \| "pcmu" \| "pcma" \| "copy" \| "none"; bitrateKbps?: number; sampleRateHz?: number; channels?: 1 \| 2 }; inputArgs?: string[]; outputArgs?: string[] } }` | `{ success: true }` |
 | retractCameraStream | `streamBroker.retractCameraStream` | mutation | admin | `{ deviceId: number; camStreamId: string }` | `{ success: true }` |
 | assignProfile | `streamBroker.assignProfile` | mutation | admin | `{ deviceId: number; profile: CamProfileSchema; camStreamId: string }` | `{ success: true }` |
 | unassignProfile | `streamBroker.unassignProfile` | mutation | admin | `{ deviceId: number; profile: CamProfileSchema }` | `{ success: true }` |
@@ -4793,6 +4794,7 @@
 | listAllCameraStreams | `streamBroker.listAllCameraStreams` | query | protected | `void` | `CameraStreamSchema[]` |
 | listAllProfileSlots | `streamBroker.listAllProfileSlots` | query | protected | `void` | `ProfileSlotSchema[]` |
 | getBrokerStats | `streamBroker.getBrokerStats` | query | protected | `{ brokerId: string }` | `BrokerStatsSchema` |
+| previewDerivedEncode | `streamBroker.previewDerivedEncode` | query | protected | `{ deviceId: number; profile: { video: { codec: "h264" \| "h265" \| "copy" \| "source"; profile?: "baseline" \| "main" \| "high"; level?: string; width?: number; height?: number; fps?: number; bitrateKbps?: number; gopFrames?: number; bf?: number; preset?: "ultrafast" \| "superfast" \| "veryfast" \| "faster" \| "fast" \| "medium"; tune?: "zerolatency" \| "film" \| "animation"; singleSlicePerFrame?: boolean }; audio: "passthrough" \| { codec: "opus" \| "aac" \| "pcmu" \| "pcma" \| "copy" \| "none"; bitrateKbps?: number; sampleRateHz?: number; channels?: 1 \| 2 }; inputArgs?: string[]; outputArgs?: string[] }; source?: DerivedSourceRefSchema }` | `PreviewDerivedEncodeResultSchema` |
 | probeStream | `streamBroker.probeStream` | mutation | admin | `{ brokerId: string }` | `{ probed: boolean; summary: string }` |
 | listClients | `streamBroker.listClients` | query | protected | `{ brokerId: string }` | `BrokerClientsSchema` |
 | getLiveViewerCounts | `streamBroker.getLiveViewerCounts` | query | protected | `void` | `LiveViewerCountSchema[]` |

@@ -1334,6 +1334,7 @@
   "streamBroker.listAllCameraStreams": "admin",
   "streamBroker.listAllProfileSlots": "admin",
   "streamBroker.listClients": "admin",
+  "streamBroker.previewDerivedEncode": "admin",
   "streamBroker.probeStream": "admin",
   "streamBroker.produceEventMedia": "admin",
   "streamBroker.publishCameraStream": "admin",

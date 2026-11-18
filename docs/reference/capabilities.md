@@ -231,7 +231,7 @@ Singleton or collection providers, addressed without a device.
 | `storage-migration` | 12 | — | — | — | — | `storage-orchestrator` |
 | `storage-occupancy` | 1 | — | — | — | ✓ | `recorder` `pipeline-analytics` |
 | `storage-provider` | 16 | — | — | — | ✓ | `sftp-storage` `s3-storage` `webdav-storage` `smb-storage` `filesystem-storage` |
-| `stream-broker` | 38 | — | — | — | — | `stream-broker` |
+| `stream-broker` | 39 | — | — | — | — | `stream-broker` |
 | `system` | 16 | — | — | — | — | — |
 | `tags` | 4 | — | — | — | — | `core-blocks` |
 | `template` | 5 | — | — | — | — | `core-blocks` |

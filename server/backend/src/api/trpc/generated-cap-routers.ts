@@ -19442,6 +19442,20 @@ export function createCapRouter_streamBroker(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.getBrokerStats(methodInput as any)
       }),
+    previewDerivedEncode: protectedProcedure
+      .input(streamBrokerCapability.methods.previewDerivedEncode.input.loose())
+      .output(streamBrokerCapability.methods.previewDerivedEncode.output)
+      .query(async ({ input, ctx }) => {
+        const { nodeId, ...methodInput } = input as { nodeId?: string } & Record<string, unknown>
+        const p = resolveProvider(
+          'stream-broker',
+          nodeId,
+          () => getProvider(ctx),
+          createRemoteProxy,
+        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.previewDerivedEncode(methodInput as any)
+      }),
     probeStream: adminProcedure
       .input(streamBrokerCapability.methods.probeStream.input.loose())
       .output(streamBrokerCapability.methods.probeStream.output)

@@ -1097,6 +1097,7 @@ export function pickVideoEncoder(
 export function audioPlanFromEncodeProfile(audio: AudioEncode): FfmpegAudioPlan {
   if (audio === 'passthrough') return { kind: 'none' }
   if (audio.codec === 'copy') return { kind: 'copy' }
+  if (audio.codec === 'none') return { kind: 'none' }
   return {
     kind: 'encode',
     codec: audio.codec,
@@ -1182,13 +1183,15 @@ export const RESTREAM_INPUT_PROBE = {
 
 export function invocationFromEncodeProfile(input: EncodeProfileInvocationInput): FfmpegInvocation {
   const v = input.profile.video
+  // `source` names no codec of its own: it is whatever the source speaks.
+  const wanted = v.codec === 'source' ? input.sourceCodec : v.codec
   const shouldCopy =
-    v.codec === 'copy' || (input.forceReencode !== true && v.codec === input.sourceCodec)
+    v.codec === 'copy' || (input.forceReencode !== true && wanted === input.sourceCodec)
   const scale: FfmpegScalePlan | null =
     v.width !== undefined && v.height !== undefined
       ? { mode: 'fit', width: v.width, height: v.height }
       : null
-  const target: 'h264' | 'h265' = v.codec === 'h265' ? 'h265' : 'h264'
+  const target: 'h264' | 'h265' = wanted === 'h265' ? 'h265' : 'h264'
 
   const video: FfmpegVideoPlan = shouldCopy
     ? {

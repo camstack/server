@@ -3569,6 +3569,9 @@ export const useStreamBrokerListAllProfileSlots: typeof trpc.streamBroker.listAl
 /** Generated alias around `trpc.streamBroker.getBrokerStats.useQuery`. */
 export const useStreamBrokerGetBrokerStats: typeof trpc.streamBroker.getBrokerStats.useQuery = /*#__PURE__*/ alias(() => trpc.streamBroker.getBrokerStats.useQuery)
 
+/** Generated alias around `trpc.streamBroker.previewDerivedEncode.useQuery`. */
+export const useStreamBrokerPreviewDerivedEncode: typeof trpc.streamBroker.previewDerivedEncode.useQuery = /*#__PURE__*/ alias(() => trpc.streamBroker.previewDerivedEncode.useQuery)
+
 /** Generated alias around `trpc.streamBroker.probeStream.useMutation`. */
 export const useStreamBrokerProbeStream: typeof trpc.streamBroker.probeStream.useMutation = /*#__PURE__*/ alias(() => trpc.streamBroker.probeStream.useMutation)
 

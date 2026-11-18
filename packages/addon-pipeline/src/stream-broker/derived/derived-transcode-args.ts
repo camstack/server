@@ -44,6 +44,8 @@
 import {
   type AudioEncode,
   type DerivedEffectiveEncodeStats,
+  type DerivedEncodePreview,
+  type DerivedSourceProbe,
   buildFfmpegArgs,
   type EncodeProfile,
   invocationFromEncodeProfile,
@@ -290,6 +292,12 @@ export interface DerivedTranscodeArgsInput {
    * always produces an audible derived stream.
    */
   readonly sourceAudioCodec?: string | null
+  /**
+   * The SOURCE's observed video codec. Only a `source` profile codec reads it
+   * (re-encode in the codec the source speaks); unknown resolves to `h264`,
+   * the legacy default.
+   */
+  readonly sourceVideoCodec?: 'h264' | 'h265' | null
 }
 
 /** The argv, plus the audio decision behind it (for the caller's log line). */
@@ -334,16 +342,23 @@ export interface DerivedSourceResolution {
   readonly height: number
 }
 
+/** The output picture size the profile NAMES; `null` per side when undetermined. */
+export interface DerivedOutputGeometry {
+  readonly width: number | null
+  readonly height: number | null
+}
+
 /**
- * Output pixels per second. A profile naming only a height (Resize mode) or
- * only a width takes the other side from the source's aspect ratio, so the
- * bitrate and floor are the same as for the equivalent width x height.
+ * The output size a profile names. A profile naming only a height (Resize
+ * mode) or only a width takes the other side from the source's aspect ratio
+ * (even numbers). THE one place this is computed: the bitrate, the floor, the
+ * `-vf` scale and the preview all read it. A profile naming neither is
+ * `null`/`null` — the picture is not resized, and no bitrate is derived.
  */
-function pixelsPerSecond(
+export function resolveOutputGeometry(
   video: VideoEncode,
-  outputFps: number | null,
   source: DerivedSourceResolution | undefined,
-): number | null {
+): DerivedOutputGeometry {
   let { width, height } = video
   if (source !== undefined && source.width > 0 && source.height > 0) {
     if (width === undefined && height !== undefined) {
@@ -352,7 +367,17 @@ function pixelsPerSecond(
       height = Math.round((width * source.height) / source.width / 2) * 2
     }
   }
-  if (width === undefined || height === undefined) return null
+  return { width: width ?? null, height: height ?? null }
+}
+
+/** Output pixels per second; `null` when the geometry is not determined. */
+function pixelsPerSecond(
+  video: VideoEncode,
+  outputFps: number | null,
+  source: DerivedSourceResolution | undefined,
+): number | null {
+  const { width, height } = resolveOutputGeometry(video, source)
+  if (width === null || height === null) return null
   return width * height * (outputFps ?? DERIVED_DEFAULT_GOP_FRAMES)
 }
 
@@ -457,13 +482,25 @@ export function buildDerivedTranscodeArgs(input: DerivedTranscodeArgsInput): Der
     cadence.outputFps,
     input.sourceResolution,
   )
-  const video = withCarrierDefaults(input.profile.video, cadence, bitrate)
+  const geometry = resolveOutputGeometry(input.profile.video, input.sourceResolution)
+  const video = withCarrierDefaults(
+    {
+      ...input.profile.video,
+      // A named side with the other derived from the source aspect: the argv
+      // scales to the same picture the bitrate was sized for.
+      ...(geometry.width !== null ? { width: geometry.width } : {}),
+      ...(geometry.height !== null ? { height: geometry.height } : {}),
+    },
+    cadence,
+    bitrate,
+  )
   const args = buildFfmpegArgs(
     invocationFromEncodeProfile({
       profile: { ...input.profile, video, audio: audio.audio },
       // A derived stream forces a re-encode, so the source codec never
-      // short-circuits the encode block; `h264` is inert here.
-      sourceCodec: 'h264',
+      // short-circuits the encode block; it only names what a `source` codec
+      // re-encodes to.
+      sourceCodec: input.sourceVideoCodec ?? 'h264',
       forceReencode: true,
       sourceUrl: input.loopbackUrl,
       sink: { kind: 'stdout', container: 'mpegts' },
@@ -508,6 +545,79 @@ export function describeEffectiveEncode(built: DerivedTranscodeArgs): DerivedEff
         ? 'copy'
         : audio.decision.kind === 'recode-aac'
           ? 'aac'
-          : 'profile',
+          : audio.audio !== 'passthrough' && audio.audio.codec === 'none'
+            ? 'none'
+            : 'profile',
+  }
+}
+
+/** Placeholder `-i` of a preview, which has no loopback to dial. */
+export const PREVIEW_SOURCE_URL = 'rtsp://source.invalid/preview'
+
+export interface ComputeDerivedEncodeOptions {
+  /** The source's broker loopback (`-i`); a preview leaves the placeholder. */
+  readonly loopbackUrl?: string
+  readonly decodeHwAccel?: string | null
+}
+
+export interface DerivedEncodeComputation {
+  /** The builder's output: argv plus the decisions behind it (for the start path's logs). */
+  readonly built: DerivedTranscodeArgs
+  /** The same encode, described for the wire. */
+  readonly preview: DerivedEncodePreview
+}
+
+/**
+ * THE derived-encode computation: operator profile + probed source params →
+ * the effective encode and the final ffmpeg argv. Pure. The broker's start
+ * path and `previewDerivedEncode` both call it, so the preview cannot say
+ * anything the encode will not do.
+ */
+export function computeDerivedEncode(
+  profile: EncodeProfile,
+  source: DerivedSourceProbe,
+  options: ComputeDerivedEncodeOptions = {},
+): DerivedEncodeComputation {
+  const sourceWidth = positive(source.width)
+  const sourceHeight = positive(source.height)
+  const sourceResolution =
+    sourceWidth !== null && sourceHeight !== null
+      ? { width: sourceWidth, height: sourceHeight }
+      : undefined
+  const built = buildDerivedTranscodeArgs({
+    profile,
+    loopbackUrl: options.loopbackUrl ?? PREVIEW_SOURCE_URL,
+    sourceAudioCodec: source.audioCodec,
+    sourceVideoCodec: source.videoCodec,
+    sourceCadence: { fps: source.fps, idrIntervalMs: source.idrIntervalMs },
+    ...(sourceResolution !== undefined ? { sourceResolution } : {}),
+    ...(options.decodeHwAccel !== undefined ? { decodeHwAccel: options.decodeHwAccel } : {}),
+  })
+  const { cadence, bitrate } = built
+  const codec = profile.video.codec
+  const copied = codec === 'copy'
+  // A copy never rescales; a profile naming no size keeps the source picture.
+  const named = copied ? null : resolveOutputGeometry(profile.video, sourceResolution)
+  const videoCodec: DerivedEncodePreview['videoCodec'] = copied
+    ? 'copy'
+    : (codec === 'source' ? source.videoCodec : codec) === 'h265'
+      ? 'h265'
+      : 'h264'
+  return {
+    built,
+    preview: {
+      ...describeEffectiveEncode(built),
+      width: named?.width ?? sourceWidth,
+      height: named?.height ?? sourceHeight,
+      videoCodec,
+      requestedFps: cadence.requestedFps,
+      fpsClampedToSource: cadence.fpsClamped,
+      floorKbps: bitrate.floorKbps,
+      raisedToFloor: bitrate.raisedFromKbps !== null,
+      requestedKbps: bitrate.raisedFromKbps,
+      keyframeIntervalSec:
+        cadence.outputFps !== null ? cadence.gopFrames / cadence.outputFps : null,
+      args: built.args,
+    },
   }
 }

@@ -6,8 +6,8 @@
  * system-scope cap that takes a deviceId was previously never device-filtered
  * — see the generator header).
  *
- * Coverage: 647 methods carry a device reference, of which
- * 201 are on SYSTEM-scope caps.
+ * Coverage: 648 methods carry a device reference, of which
+ * 202 are on SYSTEM-scope caps.
  *
  * Top-level fields, number arrays, and one-level arrays of objects carrying
  * a numeric device field (targets[].deviceId) are all mapped; the matcher
@@ -594,6 +594,7 @@ export const METHOD_DEVICE_SELECTORS: Readonly<Record<string, readonly DeviceRef
   'streamBroker.getDeviceLiveContribution': [{ name: "deviceId", form: "single", optional: false }] as const,
   'streamBroker.getDeviceSettingsContribution': [{ name: "deviceId", form: "single", optional: false }] as const,
   'streamBroker.getStreamWithCodec': [{ name: "deviceId", form: "single", optional: false }] as const,
+  'streamBroker.previewDerivedEncode': [{ name: "deviceId", form: "single", optional: false }] as const,
   'streamBroker.produceEventMedia': [{ name: "deviceId", form: "single", optional: false }] as const,
   'streamBroker.publishCameraStream': [{ name: "deviceId", form: "single", optional: false }] as const,
   'streamBroker.renderPreBufferClip': [{ name: "deviceId", form: "single", optional: false }] as const,
@@ -874,6 +875,7 @@ export const SYSTEM_SCOPE_DEVICE_METHODS: readonly string[] = [
   "streamBroker.getDeviceLiveContribution",
   "streamBroker.getDeviceSettingsContribution",
   "streamBroker.getStreamWithCodec",
+  "streamBroker.previewDerivedEncode",
   "streamBroker.produceEventMedia",
   "streamBroker.publishCameraStream",
   "streamBroker.renderPreBufferClip",

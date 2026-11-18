@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- New stream-broker method previewDerivedEncode (the final geometry, fps, bitrate and ffmpeg args of a derived profile, or no-source); derived profiles can drop audio (none) and keep the source codec (source).
+
 ## [1.2.905] - 2026-11-18
 
 ### Changed

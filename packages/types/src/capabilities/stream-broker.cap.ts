@@ -13,6 +13,8 @@ import {
   CamStreamKindSchema,
   CamStreamResolutionSchema,
   DecodedAudioChunkSchema,
+  DerivedSourceRefSchema,
+  PreviewDerivedEncodeResultSchema,
   ProfileSlotSchema,
   SubscribeAudioChunksInputSchema,
   SubscribeAudioChunksResultSchema,
@@ -741,6 +743,22 @@ export const streamBrokerCapability = {
     listAllCameraStreams: method(z.void(), z.array(CameraStreamSchema).readonly()),
     listAllProfileSlots: method(z.void(), z.array(ProfileSlotSchema).readonly()),
     getBrokerStats: method(z.object({ brokerId: z.string() }), BrokerStatsSchema),
+    /**
+     * The effective encode a derived-stream `profile` WOULD run with, computed
+     * by the same function the broker uses when it starts the encode, against
+     * the source params the broker has already probed for `deviceId`. Lets an
+     * editor show the final geometry, fps, bitrate and ffmpeg argv live while
+     * the operator edits. `source` defaults to the `high` profile slot.
+     * `{ kind: 'no-source' }` when nothing has been probed yet — never a guess.
+     */
+    previewDerivedEncode: method(
+      z.object({
+        deviceId: z.number().int().nonnegative(),
+        profile: EncodeProfileSchema,
+        source: DerivedSourceRefSchema.optional(),
+      }),
+      PreviewDerivedEncodeResultSchema,
+    ),
     /**
      * Force a one-shot probe of a single source stream: transiently dial the
      * broker (a `warmup` consumer), capture a fresh `BrokerStats` snapshot for

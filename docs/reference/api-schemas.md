@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1113 shared schemas.**
+**1116 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -1562,7 +1562,32 @@ Enum: `"auto" \| "day" \| "night" \| "schedule"`
 - `targetKbps`: `number \| null`
 - `capKbps`: `number \| null`
 - `bufsizeKbps`: `number \| null`
-- `audio`: `"copy" \| "aac" \| "profile"`
+- `audio`: `"copy" \| "aac" \| "profile" \| "none"`
+
+### `DerivedEncodePreviewSchema`
+
+- `encoder`: `string \| null`
+- `fps`: `number \| null`
+- `gopFrames`: `number`
+- `targetKbps`: `number \| null`
+- `capKbps`: `number \| null`
+- `bufsizeKbps`: `number \| null`
+- `audio`: `"copy" \| "aac" \| "profile" \| "none"`
+- `width`: `number \| null`
+- `height`: `number \| null`
+- `videoCodec`: `"h264" \| "h265" \| "copy"`
+- `requestedFps`: `number \| null`
+- `fpsClampedToSource`: `boolean`
+- `floorKbps`: `number \| null`
+- `raisedToFloor`: `boolean`
+- `requestedKbps`: `number \| null`
+- `keyframeIntervalSec`: `number \| null`
+- `args`: `string[]`
+
+### `DerivedSourceRefSchema`
+
+- `{ kind: "profile"; profile: "high" \| "mid" \| "low" }`
+- `{ kind: "camStream"; camStreamId: string }`
 
 ### `DesktopAppStatusSchema`
 
@@ -2067,8 +2092,8 @@ Enum: `"idle" \| "running" \| "paused" \| "finished" \| "error" \| "unavailable"
 
 ### `EgressEncodeSchema`
 
-- `video`: `{ codec: "h264" \| "h265" \| "copy"; profile?: "baseline" \| "main" \| "high"; level?: string; width?: number; height?: number; fps?: number; bitrateKbps?: number; gopFrames?: number; bf?: number; preset?: "ultrafast" \| "superfast" \| "veryfast" \| "faster" \| "fast" \| "medium"; tune?: "zerolatency" \| "film" \| "animation"; singleSlicePerFrame?: boolean }`
-- `audio`: `"passthrough" \| { codec: "opus" \| "aac" \| "pcmu" \| "pcma" \| "copy"; bitrateKbps?: number; sampleRateHz?: number; channels?: 1 \| 2 }`
+- `video`: `{ codec: "h264" \| "h265" \| "copy" \| "source"; profile?: "baseline" \| "main" \| "high"; level?: string; width?: number; height?: number; fps?: number; bitrateKbps?: number; gopFrames?: number; bf?: number; preset?: "ultrafast" \| "superfast" \| "veryfast" \| "faster" \| "fast" \| "medium"; tune?: "zerolatency" \| "film" \| "animation"; singleSlicePerFrame?: boolean }`
+- `audio`: `"passthrough" \| { codec: "opus" \| "aac" \| "pcmu" \| "pcma" \| "copy" \| "none"; bitrateKbps?: number; sampleRateHz?: number; channels?: 1 \| 2 }`
 
 ### `EgressRateControlSchema`
 
@@ -5465,6 +5490,11 @@ Enum: `"no-power-source" \| "switch-missing" \| "switch-offline" \| "switch-unkn
 
 - `pressure`: `number \| null`
 - `lastFetchedAt`: `number`
+
+### `PreviewDerivedEncodeResultSchema`
+
+- `{ kind: "preview"; preview: DerivedEncodePreviewSchema }`
+- `{ kind: "no-source" }`
 
 ### `PrivacyMaskOptionsSchema`
 

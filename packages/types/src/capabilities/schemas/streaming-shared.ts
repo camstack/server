@@ -397,10 +397,76 @@ export const DerivedEffectiveEncodeSchema = z.object({
   /** Ceiling (`-maxrate`), kbps. */
   capKbps: z.number().nullable(),
   bufsizeKbps: z.number().nullable(),
-  /** `copy` = source audio untouched, `aac` = re-encoded, `profile` = operator's encode. */
-  audio: z.enum(['copy', 'aac', 'profile']),
+  /**
+   * `copy` = source audio untouched, `aac` = re-encoded, `profile` = operator's
+   * encode, `none` = the operator dropped the track.
+   */
+  audio: z.enum(['copy', 'aac', 'profile', 'none']),
 })
 export type DerivedEffectiveEncodeStats = z.infer<typeof DerivedEffectiveEncodeSchema>
+
+/**
+ * A derived stream's source: a **profile** slot (follows whatever physical
+ * stream that profile is assigned to) or a **camStream** (pinned to one
+ * physical stream regardless of assignment).
+ */
+export const DerivedSourceRefSchema = z.union([
+  z.object({ kind: z.literal('profile'), profile: z.enum(['high', 'mid', 'low']) }),
+  z.object({ kind: z.literal('camStream'), camStreamId: z.string() }),
+])
+
+/**
+ * What the broker knows of a derived stream's SOURCE when it starts the
+ * encode. Every field is `null` when not measured — never `0`, never a guess.
+ */
+export const DerivedSourceProbeSchema = z.object({
+  width: z.number().nullable(),
+  height: z.number().nullable(),
+  fps: z.number().nullable(),
+  idrIntervalMs: z.number().nullable(),
+  /** `h264` / `h265` when observed. */
+  videoCodec: z.enum(['h264', 'h265']).nullable(),
+  /** Upper-cased SDP name (`AAC`, `PCMU`) when the source has an audio track. */
+  audioCodec: z.string().nullable(),
+})
+export type DerivedSourceProbe = z.infer<typeof DerivedSourceProbeSchema>
+
+/**
+ * The full effective encode of a derived-stream profile: the stats the broker
+ * publishes in `getBrokerStats.derivedEncode` plus the resolved geometry, the
+ * flags that say WHY a number differs from the request, and the ffmpeg output
+ * argv. One function (`computeDerivedEncode`) produces it for both the
+ * broker's start path and `previewDerivedEncode`.
+ */
+export const DerivedEncodePreviewSchema = DerivedEffectiveEncodeSchema.extend({
+  /** Final picture size; `null` when neither the profile nor the source names it. */
+  width: z.number().nullable(),
+  height: z.number().nullable(),
+  /** `h264` / `h265` re-encode, `copy` remux; `null` is never returned (the encoder always resolves). */
+  videoCodec: z.enum(['h264', 'h265', 'copy']),
+  requestedFps: z.number().nullable(),
+  /** The requested fps exceeded the source and the source cadence won. */
+  fpsClampedToSource: z.boolean(),
+  /** Lowest bitrate accepted for this geometry x fps; `null` when unknown. */
+  floorKbps: z.number().nullable(),
+  /** The explicit bitrate was below the floor and was raised to it. */
+  raisedToFloor: z.boolean(),
+  /** What the profile asked for when it was raised; `null` otherwise. */
+  requestedKbps: z.number().nullable(),
+  /** Seconds between keyframes; `null` when the output cadence is unknown. */
+  keyframeIntervalSec: z.number().nullable(),
+  /** The ffmpeg argv, with the source loopback URL in `-i`. */
+  args: z.array(z.string()),
+})
+export type DerivedEncodePreview = z.infer<typeof DerivedEncodePreviewSchema>
+
+/** Result of `previewDerivedEncode`: a plan, or the reason there is none. */
+export const PreviewDerivedEncodeResultSchema = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('preview'), preview: DerivedEncodePreviewSchema }),
+  /** The broker has not probed this device's source yet — nothing is guessed. */
+  z.object({ kind: z.literal('no-source') }),
+])
+export type PreviewDerivedEncodeResult = z.infer<typeof PreviewDerivedEncodeResultSchema>
 
 export const BrokerStatsSchema = z.object({
   status: BrokerStatusSchema,

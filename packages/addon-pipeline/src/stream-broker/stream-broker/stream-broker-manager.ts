@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto'
 import type {
   AddonApi,
   BrokerStats,
+  DerivedSourceProbe,
+  PreviewDerivedEncodeResult,
   CameraStream,
   CamProfile,
   CamStreamDescriptor,
@@ -100,10 +102,9 @@ import {
 } from '../derived/derived-source.js'
 import { DerivedStreamFeeder } from '../derived/derived-stream-feeder.js'
 import {
-  buildDerivedTranscodeArgs,
+  computeDerivedEncode,
   type DerivedEffectiveEncode,
   describeEffectiveEncode,
-  type DerivedSourceCadence,
   type DerivedSourceResolution,
 } from '../derived/derived-transcode-args.js'
 import { fillEmptyProfileSlots } from '../fill-empty-profile-slots.js'
@@ -8592,16 +8593,8 @@ export class StreamBrokerManager {
       release = async () => {}
     }
 
-    const sourceAudioCodec = this.observedSourceAudioCodec(deviceId, source)
-    const sourceCadence = this.observedSourceCadence(deviceId, source)
-    const sourceResolution = this.observedSourceResolution(deviceId, source)
-    const built = buildDerivedTranscodeArgs({
-      profile: encodeProfile,
-      loopbackUrl,
-      sourceAudioCodec,
-      sourceCadence,
-      ...(sourceResolution !== null ? { sourceResolution } : {}),
-    })
+    const sourceProbe = this.observedSourceProbe(deviceId, source)
+    const { built } = computeDerivedEncode(encodeProfile, sourceProbe, { loopbackUrl })
     const { args, audio, cadence, bitrate } = built
     this.derivedEffectiveEncodes.set(
       brokerIdFor(deviceId, camStreamId),
@@ -8613,7 +8606,7 @@ export class StreamBrokerManager {
         meta: {
           camStreamId,
           requestedFps: cadence.requestedFps,
-          sourceFps: sourceCadence.fps,
+          sourceFps: sourceProbe.fps,
         },
       })
     }
@@ -8631,8 +8624,8 @@ export class StreamBrokerManager {
       tags: { deviceId },
       meta: {
         camStreamId,
-        sourceFps: sourceCadence.fps,
-        sourceIdrIntervalMs: sourceCadence.idrIntervalMs,
+        sourceFps: sourceProbe.fps,
+        sourceIdrIntervalMs: sourceProbe.idrIntervalMs,
         fpsMode: cadence.fpsMode,
         outputFps: cadence.outputFps,
         gopFrames: cadence.gopFrames,
@@ -8689,31 +8682,43 @@ export class StreamBrokerManager {
   }
 
   /**
-   * The audio codec the derived stream's SOURCE broker has actually observed,
-   * or `null` when there is nothing to read (source not resolved, broker not
-   * created yet, cold dial, no audio track).
+   * What the derived stream's SOURCE broker has measured, every field `null`
+   * when nothing was read (source not resolved, broker not created, cold dial).
+   * The one input of {@link computeDerivedEncode} that is not the profile.
    *
-   * Only ever an input to "can this track be COPIED into the derived MPEG-TS".
-   * `null` resolves to the AAC re-encode, so every failure of this read lands
-   * on the branch that still produces audible audio — the read can never mute
-   * a camera, which is the direction that cost 108 four silent days.
+   * The audio codec is only ever an input to "can this track be COPIED into the
+   * derived MPEG-TS": `null` resolves to the AAC re-encode, so a failed read can
+   * never mute a camera (the direction that cost 108 four silent days).
    */
-  private observedSourceAudioCodec(deviceId: number, source: DerivedSourceRef): string | null {
+  private observedSourceProbe(deviceId: number, source: DerivedSourceRef): DerivedSourceProbe {
     const stats = this.observedSourceStats(deviceId, source)
-    return stats?.audio?.codec ?? null
+    const resolution = this.observedSourceResolution(deviceId, source)
+    const codec = stats?.codec?.toLowerCase().replace(/[.\s-]/g, '')
+    return {
+      width: resolution?.width ?? null,
+      height: resolution?.height ?? null,
+      fps: stats?.inputFps ?? null,
+      idrIntervalMs: stats?.idrIntervalMs ?? null,
+      videoCodec: codec === 'h265' || codec === 'hevc' ? 'h265' : codec === 'h264' ? 'h264' : null,
+      audioCodec: stats?.audio?.codec ?? null,
+    }
   }
 
   /**
-   * The video cadence the derived stream's SOURCE broker has measured. Both
-   * fields are `null` when nothing was read, which leaves the encoder on its
-   * legacy defaults rather than guessing a rate.
+   * The effective encode `profile` would run with against `deviceId`'s probed
+   * source: the SAME {@link computeDerivedEncode} the feeder spawn calls.
+   * `no-source` when the broker has measured nothing yet.
    */
-  private observedSourceCadence(deviceId: number, source: DerivedSourceRef): DerivedSourceCadence {
-    const stats = this.observedSourceStats(deviceId, source)
-    return {
-      fps: stats?.inputFps ?? null,
-      idrIntervalMs: stats?.idrIntervalMs ?? null,
-    }
+  async previewDerivedEncode(input: {
+    deviceId: number
+    profile: EncodeProfile
+    source?: DerivedSourceRef
+  }): Promise<PreviewDerivedEncodeResult> {
+    const source: DerivedSourceRef = input.source ?? { kind: 'profile', profile: 'high' }
+    const probe = this.observedSourceProbe(input.deviceId, source)
+    const probed = Object.values(probe).some((value) => value !== null && value !== 0)
+    if (!probed) return { kind: 'no-source' }
+    return { kind: 'preview', preview: computeDerivedEncode(input.profile, probe).preview }
   }
 
   private derivedSourceCamStreamId(deviceId: number, source: DerivedSourceRef): string | null {

@@ -1230,6 +1230,7 @@
   "streamBroker.listAllCameraStreams": "protected",
   "streamBroker.listAllProfileSlots": "protected",
   "streamBroker.listClients": "protected",
+  "streamBroker.previewDerivedEncode": "protected",
   "streamBroker.probeStream": "admin",
   "streamBroker.produceEventMedia": "admin",
   "streamBroker.publishCameraStream": "admin",

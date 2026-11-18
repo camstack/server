@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1533 method paths across 214 capabilities.
+ * Coverage: 1534 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1357,6 +1357,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'streamBroker.listAllCameraStreams': { capName: "stream-broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'streamBroker.listAllProfileSlots': { capName: "stream-broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'streamBroker.listClients': { capName: "stream-broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'streamBroker.previewDerivedEncode': { capName: "stream-broker", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'streamBroker.probeStream': { capName: "stream-broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'streamBroker.produceEventMedia': { capName: "stream-broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'streamBroker.publishCameraStream': { capName: "stream-broker", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

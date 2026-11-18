@@ -387,7 +387,7 @@ export interface DeviceProxy {
   readonly plateGallery: Pick<InferDeviceProxyCap<typeof plateGalleryCapability>, 'listPlates' | 'getPlateByTrack'>
   readonly recordingArchive: Pick<InferDeviceProxyCap<typeof recordingArchiveCapability>, 'getDeviceConfig' | 'locateSegment' | 'readSegmentBytes' | 'readGopBytes' | 'readWindowBytes' | 'setDeviceConfig' | 'rescanStorage' | 'pruneFootage' | 'deleteFootprint' | 'renderGif' | 'renderClip' | 'getStatus' | 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
   readonly recordingExport: Pick<InferDeviceProxyCap<typeof recordingExportCapability>, 'listExports'>
-  readonly streamBroker: Pick<InferDeviceProxyCap<typeof streamBrokerCapability>, 'reportStreamSignal' | 'publishCameraStream' | 'retractCameraStream' | 'assignProfile' | 'unassignProfile' | 'forgetDeviceHardware' | 'renderPreBufferClip' | 'produceEventMedia' | 'restartProfile' | 'getDeviceAudioMute' | 'setDeviceAudioMute' | 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
+  readonly streamBroker: Pick<InferDeviceProxyCap<typeof streamBrokerCapability>, 'reportStreamSignal' | 'publishCameraStream' | 'retractCameraStream' | 'assignProfile' | 'unassignProfile' | 'forgetDeviceHardware' | 'renderPreBufferClip' | 'produceEventMedia' | 'previewDerivedEncode' | 'restartProfile' | 'getDeviceAudioMute' | 'setDeviceAudioMute' | 'getDeviceSettingsContribution' | 'getDeviceLiveContribution' | 'applyDeviceSettingsPatch'>
 }
 
 /**
@@ -1480,6 +1480,7 @@ export function createDeviceProxy(
     forgetDeviceHardware: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'forgetDeviceHardware', 'mutation', input, undefined, options),
     renderPreBufferClip: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'renderPreBufferClip', 'mutation', input, undefined, options),
     produceEventMedia: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'produceEventMedia', 'mutation', input, undefined, options),
+    previewDerivedEncode: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'previewDerivedEncode', 'query', input, undefined, options),
     restartProfile: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'restartProfile', 'mutation', input, undefined, options),
     getDeviceAudioMute: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'getDeviceAudioMute', 'query', input, undefined, options),
     setDeviceAudioMute: (input?: unknown, options?: CommandOriginRequestOptions) => dispatchSystem('streamBroker', 'setDeviceAudioMute', 'mutation', input, undefined, options),

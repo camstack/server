@@ -14,7 +14,12 @@ import { z } from 'zod'
  */
 
 export const VideoEncodeSchema = z.object({
-  codec: z.enum(['h264', 'h265', 'copy']),
+  /**
+   * `h264` / `h265` re-encode into that codec; `source` re-encodes in whatever
+   * codec the source speaks (a resize that keeps the codec); `copy` remuxes
+   * with no encode at all (so no resize either).
+   */
+  codec: z.enum(['h264', 'h265', 'copy', 'source']),
   profile: z.enum(['baseline', 'main', 'high']).optional(),
   /**
    * `-level`, e.g. `'3.1'`. A consumer that ADVERTISES a level in its SDP
@@ -54,7 +59,8 @@ export type VideoEncode = z.infer<typeof VideoEncodeSchema>
 export const AudioEncodeSchema = z.union([
   z.literal('passthrough'),
   z.object({
-    codec: z.enum(['opus', 'aac', 'pcmu', 'pcma', 'copy']),
+    /** `none` drops the audio track (`-an`); `copy` carries the source's. */
+    codec: z.enum(['opus', 'aac', 'pcmu', 'pcma', 'copy', 'none']),
     bitrateKbps: z.number().int().positive().optional(),
     sampleRateHz: z.number().int().positive().optional(),
     channels: z.union([z.literal(1), z.literal(2)]).optional(),

@@ -1,19 +1,14 @@
-import type { AudioCodecTarget, GetStreamWithCodecInput, VideoCodecTarget } from '@camstack/types'
-import { z } from 'zod'
+import {
+  type AudioCodecTarget,
+  DerivedSourceRefSchema,
+  type GetStreamWithCodecInput,
+  type VideoCodecTarget,
+} from '@camstack/types'
 import type { DerivedSourceRef, ProfileName } from './cycle-check.js'
 
 export type { DerivedSourceRef, ProfileName }
 
-/**
- * Zod validator for a {@link DerivedSourceRef}. A derived stream's source is
- * dual-mode: either a **profile** slot (the derived follows whatever physical
- * stream that profile is assigned to) or a **camStream** (pinned to a specific
- * physical stream regardless of profile assignment).
- */
-export const DerivedSourceRefSchema = z.union([
-  z.object({ kind: z.literal('profile'), profile: z.enum(['high', 'mid', 'low']) }),
-  z.object({ kind: z.literal('camStream'), camStreamId: z.string() }),
-])
+export { DerivedSourceRefSchema }
 
 /**
  * The `getStreamWithCodec` cap input. Reused (not duplicated) from
