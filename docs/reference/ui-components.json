@@ -1539,6 +1539,12 @@
           "type": "string",
           "optional": true,
           "doc": "Added to both buttons (a column passes its compact size)."
+        },
+        {
+          "name": "cancelClassName",
+          "type": "string",
+          "optional": true,
+          "doc": "Added to the Cancel in place of `buttonClassName` (a large face keeps a compact Cancel)."
         }
       ]
     },
@@ -4121,7 +4127,7 @@
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/connected/ConnectedSirenCard.tsx",
-      "summary": "A siren (a `siren` device, or a switch in the siren role): sound and silence through its `switch`. Tone, duration and volume are drawn only when a cap declares them — none does yet."
+      "summary": "A siren (a `siren` device, or a switch in the siren role). With the `siren` cap: Sound is `siren.trigger` (seconds or plays, as the siren declares), Stop is `siren.stop`, and the ring counts the served `activeUntil` d…"
     },
     {
       "name": "ConnectedUpdateCard",
@@ -4528,6 +4534,45 @@
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-list/group.ts",
       "summary": "countableDevices — the subset of `devices` that should be counted in the device-list footer \"Showing N of **M** devices\"."
+    },
+    {
+      "name": "CountdownRing",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/CountdownRing.tsx",
+      "summary": "A control inside the card's arc that counts down: the same 270 degree track as the , filled with what is left of a timed run, pulsing when the run has no known end, empty when nothing runs. Read-only — the control is …",
+      "props": [
+        {
+          "name": "fraction",
+          "type": "number | null",
+          "optional": false,
+          "doc": "Share of the run still to go, 0..1, drawn as the arc's fill. `null` with `busy`: the run has no known length — the whole arc pulses, no fill"
+        },
+        {
+          "name": "busy",
+          "type": "boolean",
+          "optional": false,
+          "doc": "Something runs with no known end: a pulsing ring."
+        },
+        {
+          "name": "tone",
+          "type": "CountdownRingTone",
+          "optional": false,
+          "doc": ""
+        },
+        {
+          "name": "children",
+          "type": "ReactNode",
+          "optional": false,
+          "doc": "The control at the centre (a round button)."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
     },
     {
       "name": "coverageLine",
@@ -17083,11 +17128,25 @@
       "summary": "\"+45°\", \"-30°\", \"0°\"."
     },
     {
+      "name": "sirenActivityOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/siren/model.ts",
+      "summary": "The served state: the siren slice when it answered, else the switch."
+    },
+    {
+      "name": "sirenAdjustableOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/siren/model.ts",
+      "summary": "The chips the siren's own options declare; nothing until they answered."
+    },
+    {
       "name": "SirenCard",
       "kind": "component",
       "area": "composites",
       "file": "packages/ui-library/src/composites/device-card/scenes/siren/SirenCard.tsx",
-      "summary": "A siren: the horn, waves and a red scene while it sounds. Sounding it is armed (a second press confirms); silencing it is one press. An unknown state offers both, because neither sounding nor silent is known.",
+      "summary": "A siren: one big Sound at the centre (armed — a second press confirms), which becomes Stop while it sounds, inside a ring that counts the run down from what the server reports and pulses when the end is unknown. The d…",
       "props": [
         {
           "name": "model",
@@ -17116,6 +17175,13 @@
       ]
     },
     {
+      "name": "sirenCountdownOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/siren/model.ts",
+      "summary": "The ring for a run, `remainingMs` being what `useCountdown(run.endsAt)` reads."
+    },
+    {
       "name": "SirenIllustration",
       "kind": "component",
       "area": "composites",
@@ -17135,6 +17201,20 @@
           "doc": ""
         }
       ]
+    },
+    {
+      "name": "sirenRunOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/siren/model.ts",
+      "summary": "The run the server reports. With the `siren` slice: its end and its length (the reported duration, else the span from the trigger to the end). Without it (a siren that is only a switch): sounding is open-ended."
+    },
+    {
+      "name": "sirenTriggerInputOf",
+      "kind": "function",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/scenes/siren/model.ts",
+      "summary": "A trigger asks seconds OR plays; neither is the camera default."
     },
     {
       "name": "Skeleton",

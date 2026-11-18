@@ -43,6 +43,7 @@ import { compassOf, kmhOf, weatherSkyOf } from '../scenes/weather/model'
 afterEach(cleanup)
 
 const noop = (): void => undefined
+const SIREN_NOOP = { onTrigger: noop, onStop: noop, onMotion: noop }
 
 function fixture<T extends { readonly id: string }>(list: readonly T[], id: string): T {
   const found = list.find((f) => f.id === id)
@@ -55,7 +56,11 @@ interface LockSpies extends LockCardActions {
   readonly onUnlock: Mock<() => void>
   readonly onOpen: Mock<() => void>
 }
-const lockActions = (): LockSpies => ({ onLock: vi.fn(), onUnlock: vi.fn(), onOpen: vi.fn() })
+const lockActions = (): LockSpies => ({
+  onLock: vi.fn(),
+  onUnlock: vi.fn(),
+  onOpen: vi.fn(),
+})
 
 interface AlarmSpies extends AlarmCardActions {
   readonly onArm: Mock<AlarmCardActions['onArm']>
@@ -129,7 +134,10 @@ describe('the lock', () => {
   })
 
   it('offers no latch release the device does not declare', () => {
-    const model: LockCardModel = { ...fixture(lockFixtures(), 'lock-locked').model, canOpen: false }
+    const model: LockCardModel = {
+      ...fixture(lockFixtures(), 'lock-locked').model,
+      canOpen: false,
+    }
     render(<LockCard model={model} actions={lockActions()} />)
     expect(screen.queryByTestId('dc-lock-open')).toBeNull()
   })
@@ -251,30 +259,128 @@ describe('the humidifier, valve and siren', () => {
   })
 
   it('sounds the siren only on the second press, and washes the scene red while it sounds', () => {
-    const onSound = vi.fn()
-    render(
-      <SirenCard model={fixture(sirenFixtures(), 'siren-silent').model} actions={{ onSound }} />,
-    )
-    fireEvent.click(screen.getByTestId('dc-siren-sound'))
-    expect(onSound).not.toHaveBeenCalled()
-    fireEvent.click(screen.getByTestId('dc-siren-sound'))
-    expect(onSound).toHaveBeenCalledWith(true)
-    cleanup()
+    const onTrigger = vi.fn()
     render(
       <SirenCard
-        model={fixture(sirenFixtures(), 'siren-sounding').model}
-        actions={{ onSound: noop }}
+        model={fixture(sirenFixtures(), 'siren-silent').model}
+        actions={{ ...SIREN_NOOP, onTrigger }}
       />,
+    )
+    fireEvent.click(screen.getByTestId('dc-siren-sound'))
+    expect(onTrigger).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId('dc-siren-sound'))
+    expect(onTrigger).toHaveBeenCalledWith(null)
+    cleanup()
+    render(
+      <SirenCard model={fixture(sirenFixtures(), 'siren-sounding').model} actions={SIREN_NOOP} />,
     )
     expect(screen.getByTestId('dc-scene').getAttribute('data-alert')).toBe('true')
   })
 
-  it('offers Silence as well as Sound while the siren state is unknown', () => {
+  it('turns Sound into Stop with the reported time left while it sounds', () => {
+    const onStop = vi.fn()
+    render(
+      <SirenCard
+        model={fixture(sirenFixtures(), 'siren-sounding').model}
+        actions={{ ...SIREN_NOOP, onStop }}
+      />,
+    )
+    expect(screen.queryByTestId('dc-siren-sound')).toBeNull()
+    expect(screen.getByTestId('dc-siren-remaining').textContent).toMatch(/^0:1[78]$/)
+    expect(screen.getByTestId('dc-siren-ring').getAttribute('data-ring')).toBe('timed')
+    fireEvent.click(screen.getByTestId('dc-siren-stop'))
+    expect(onStop).toHaveBeenCalledTimes(1)
+  })
+
+  it('pulses with no count when the end is unknown', () => {
+    render(
+      <SirenCard
+        model={fixture(sirenFixtures(), 'siren-sounding-open').model}
+        actions={SIREN_NOOP}
+      />,
+    )
+    expect(screen.getByTestId('dc-siren-ring').getAttribute('data-ring')).toBe('busy')
+    expect(screen.queryByTestId('dc-siren-remaining')).toBeNull()
+  })
+
+  it('draws the duration and plays chips and the motion toggle only when declared', () => {
+    render(
+      <SirenCard model={fixture(sirenFixtures(), 'siren-silent').model} actions={SIREN_NOOP} />,
+    )
+    // Nothing picked: the trigger sends neither unit, so each chip names the camera default.
+    expect(screen.getByTestId('dc-siren-seconds').textContent).toBe('Default duration')
+    expect(screen.getByTestId('dc-siren-plays').textContent).toBe('Default plays')
+    expect(screen.getByTestId('dc-siren-motion').getAttribute('aria-pressed')).toBe('true')
+    cleanup()
+    render(
+      <SirenCard
+        model={fixture(sirenFixtures(), 'siren-switch-only').model}
+        actions={SIREN_NOOP}
+      />,
+    )
+    expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
+    expect(screen.queryByTestId('dc-siren-plays')).toBeNull()
+    expect(screen.queryByTestId('dc-siren-motion')).toBeNull()
+  })
+
+  it('sends the picked value, and the other unit no longer claims a default', async () => {
+    const onTrigger = vi.fn()
+    render(
+      <SirenCard
+        model={fixture(sirenFixtures(), 'siren-silent').model}
+        actions={{ ...SIREN_NOOP, onTrigger }}
+      />,
+    )
+    fireEvent.pointerDown(screen.getByTestId('dc-siren-seconds'), { button: 0 })
+    fireEvent.click(screen.getByTestId('dc-siren-seconds'))
+    fireEvent.click(await screen.findByRole('menuitemradio', { name: '60 s' }))
+    expect(screen.getByTestId('dc-siren-seconds').textContent).toBe('60 s')
+    expect(screen.getByTestId('dc-siren-plays').textContent).toBe('Plays')
+    fireEvent.click(screen.getByTestId('dc-siren-sound'))
+    fireEvent.click(screen.getByTestId('dc-siren-sound'))
+    expect(onTrigger).toHaveBeenCalledWith({ unit: 'seconds', value: 60 })
+  })
+
+  it('says the options are unavailable when they failed, never "nothing to adjust"', () => {
     const model = {
       ...fixture(sirenFixtures(), 'siren-silent').model,
-      activity: 'unknown' as const,
+      adjustable: { durations: null, plays: null },
+      optionsUnavailable: true,
     }
-    render(<SirenCard model={model} actions={{ onSound: noop }} />)
+    render(<SirenCard model={model} actions={SIREN_NOOP} />)
+    expect(screen.getByTestId('dc-siren-options-unavailable').textContent).toBe(
+      'Options unavailable',
+    )
+    expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
+  })
+
+  it('sends the served motion state flipped, never its own copy', () => {
+    const onMotion = vi.fn()
+    render(
+      <SirenCard
+        model={fixture(sirenFixtures(), 'siren-silent').model}
+        actions={{ ...SIREN_NOOP, onMotion }}
+      />,
+    )
+    fireEvent.click(screen.getByTestId('dc-siren-motion'))
+    expect(onMotion).toHaveBeenCalledWith(false)
+    expect(screen.getByTestId('dc-siren-motion').getAttribute('aria-pressed')).toBe('true')
+  })
+
+  it('holds Sound while a command is in flight', () => {
+    const model = {
+      ...fixture(sirenFixtures(), 'siren-silent').model,
+      commandPending: true,
+    }
+    render(<SirenCard model={model} actions={SIREN_NOOP} />)
+    expect(screen.getByTestId('dc-siren-sound').hasAttribute('disabled')).toBe(true)
+    expect(screen.getByTestId('dc-siren-ring').getAttribute('data-ring')).toBe('busy')
+  })
+
+  it('offers Silence as well as Sound while the siren state is unknown', () => {
+    render(
+      <SirenCard model={fixture(sirenFixtures(), 'siren-unknown').model} actions={SIREN_NOOP} />,
+    )
     expect(screen.getByTestId('dc-siren-silence')).toBeTruthy()
     expect(screen.getByTestId('dc-siren-sound')).toBeTruthy()
   })
@@ -286,10 +392,20 @@ describe('the pet feeder and fountain', () => {
     expect(petFaultOf('')).toBeNull()
     expect(petFaultOf('blocked')).toBe('blocked')
     expect(
-      petFeederActivityOf({ error: 'no_error', feeding: false, eating: false, lowFood: true }),
+      petFeederActivityOf({
+        error: 'no_error',
+        feeding: false,
+        eating: false,
+        lowFood: true,
+      }),
     ).toBe('low')
     expect(
-      petFeederActivityOf({ error: 'jam', feeding: true, eating: false, lowFood: false }),
+      petFeederActivityOf({
+        error: 'jam',
+        feeding: true,
+        eating: false,
+        lowFood: false,
+      }),
     ).toBe('fault')
   })
 
@@ -351,14 +467,19 @@ describe('every Wave-D fixture renders through the shell', () => {
     render(
       <ValveCard
         model={f.model}
-        actions={{ onOpen: noop, onClose: noop, onStop: noop, onPosition: noop }}
+        actions={{
+          onOpen: noop,
+          onClose: noop,
+          onStop: noop,
+          onPosition: noop,
+        }}
         orientation={f.orientation}
       />,
     )
     expect(screen.getByTestId('dc-scene')).toBeTruthy()
   })
   it.each(sirenFixtures().map((f) => [f.id, f] as const))('%s', (_id, f) => {
-    render(<SirenCard model={f.model} actions={{ onSound: noop }} orientation={f.orientation} />)
+    render(<SirenCard model={f.model} actions={SIREN_NOOP} orientation={f.orientation} />)
     expect(screen.getByTestId('dc-scene')).toBeTruthy()
   })
   it.each(petFeederFixtures().map((f) => [f.id, f] as const))('%s', (_id, f) => {
@@ -384,7 +505,12 @@ describe('every Wave-D fixture renders through the shell', () => {
     render(
       <PetFountainCard
         model={f.model}
-        actions={{ onPump: noop, onCycle: noop, onRunMinutes: noop, onRestMinutes: noop }}
+        actions={{
+          onPump: noop,
+          onCycle: noop,
+          onRunMinutes: noop,
+          onRestMinutes: noop,
+        }}
         orientation={f.orientation}
       />,
     )

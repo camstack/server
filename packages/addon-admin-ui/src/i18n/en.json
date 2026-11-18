@@ -10657,7 +10657,19 @@
         "silent": "Silent",
         "sound": "Sound",
         "sounding": "Sounding",
-        "unknown": "State unknown"
+        "unknown": "State unknown",
+        "stop": "Stop",
+        "remainingEstimated": "~{{clock}}",
+        "playCount_one": "{{count}} play",
+        "playCount_other": "{{count}} plays",
+        "seconds": "{{seconds}} s",
+        "playsLabel": "Plays",
+        "durationLabel": "Duration",
+        "soundFor": "Sound for",
+        "onMotion": "Sound on motion",
+        "defaultDuration": "Default duration",
+        "defaultPlays": "Default plays",
+        "optionsUnavailable": "Options unavailable"
       },
       "valve": {
         "closeAction": "Close",

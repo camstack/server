@@ -23,6 +23,8 @@ export interface ArmedButtonProps {
   readonly stacked?: boolean
   /** Added to both buttons (a column passes its compact size). */
   readonly buttonClassName?: string
+  /** Added to the Cancel in place of `buttonClassName` (a large face keeps a compact Cancel). */
+  readonly cancelClassName?: string
 }
 
 /**
@@ -42,6 +44,7 @@ export function ArmedButton({
   label,
   stacked = false,
   buttonClassName,
+  cancelClassName,
 }: ArmedButtonProps): ReactElement {
   const t = useUiText()
   const [armed, setArmed] = useState(false)
@@ -82,7 +85,7 @@ export function ArmedButton({
           glyph="cancel"
           onClick={() => setArmed(false)}
           data-testid="dc-armed-cancel"
-          className={buttonClassName}
+          className={cancelClassName ?? buttonClassName}
         >
           {t('uiLibrary.deviceCard.cancel', 'Cancel')}
         </CardButton>

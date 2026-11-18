@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Translations for the workload card's uptime and RAM gauge.
+- Siren card strings in English and Italian: Stop, Sound for, durations, plays and Sound on motion.
 
 ## [1.2.697] - 2026-11-18
 

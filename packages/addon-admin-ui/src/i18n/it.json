@@ -10679,7 +10679,19 @@
         "silent": "Silenziosa",
         "sound": "Suona",
         "sounding": "Sta suonando",
-        "unknown": "Stato sconosciuto"
+        "unknown": "Stato sconosciuto",
+        "stop": "Ferma",
+        "remainingEstimated": "~{{clock}}",
+        "playCount_one": "{{count}} riproduzione",
+        "playCount_other": "{{count}} riproduzioni",
+        "seconds": "{{seconds}} s",
+        "playsLabel": "Riproduzioni",
+        "durationLabel": "Durata",
+        "soundFor": "Suona per",
+        "onMotion": "Suona al movimento",
+        "defaultDuration": "Durata predefinita",
+        "defaultPlays": "Riproduzioni predefinite",
+        "optionsUnavailable": "Opzioni non disponibili"
       },
       "valve": {
         "closeAction": "Chiudi",
