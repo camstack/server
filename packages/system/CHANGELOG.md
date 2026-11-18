@@ -127,6 +127,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The hub now schedules device state reads for migrated providers: a command returns after the device was re-read, re-reads follow until it is confirmed, and reads never overlap (D1062).
 - A power source added by a device link is checked against that link before every restart or power on/off; a lost or unreadable link refuses instead of cycling a port that may now feed another device
 - A device-link contribution is retried when its customization changed under the write, re-derived after every operator Customize save, and cannot be deleted — switch it off instead
+- A device that only retains a wired client's MAC (its client left) no longer keeps the auto link when another port freshly reads that MAC: the fresh port takes it.
 
 ### Removed
 

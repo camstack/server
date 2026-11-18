@@ -10,6 +10,7 @@
 import type {
   ChildLayout,
   DeviceDisplayOverride,
+  DeviceIdentifierKey,
   DeviceIdentifiers,
   IconKey,
   RoleDisplayDefault,
@@ -192,6 +193,11 @@ export interface PersistedDeviceMeta {
   /** The far end of the device's physical link (D1063), set via
    *  `setAttachedIdentifiers` by the owning provider only. Absent ⇒ none. */
   attachedIdentifiers?: DeviceIdentifiers
+  /** The attached keys the provider last declared UNREAD (D1063): their stored
+   *  value is kept (D49) but was not seen on the latest read — a port with no
+   *  client now retains its last MAC. A fresh read of another port beats it.
+   *  Absent ⇒ every attached key was read fresh. */
+  attachedRetained?: readonly DeviceIdentifierKey[]
 }
 
 /**

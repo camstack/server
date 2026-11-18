@@ -20,6 +20,8 @@
 
 import { randomUUID } from 'node:crypto'
 import {
+  type DeviceIdentifierKey,
+  type DeviceIdentifiers,
   DeviceIdentifiersSchema,
   EventCategory,
   isEmptyIdentifiers,
@@ -75,6 +77,15 @@ export async function setAttachedIdentifiers(
   return writeDeclaredIdentity(pctx, input, 'attachedIdentifiers')
 }
 
+/** The unread keys the merged declaration still holds, sorted: kept, not seen now. */
+function retainedKeys(
+  merged: DeviceIdentifiers | null,
+  unread: readonly DeviceIdentifierKey[],
+): readonly DeviceIdentifierKey[] {
+  if (merged === null) return []
+  return [...new Set(unread)].filter((key) => merged[key] !== undefined).sort()
+}
+
 async function writeDeclaredIdentity(
   pctx: ProviderContext,
   input: Parameters<IDeviceManagerProvider['setIdentifiers']>[0],
@@ -105,11 +116,20 @@ async function writeDeclaredIdentity(
     }
     const stored = persisted.meta[column] ?? null
     const merged = mergeIdentifiers(stored, next, input.unread ?? [])
-    if (sameIdentifiers(stored, merged)) return { kind: 'unchanged' as const }
-    await pctx.metaStore.rows.patch(
-      deviceId,
-      column === 'identifiers' ? { identifiers: merged } : { attachedIdentifiers: merged },
-    )
+    if (column === 'identifiers') {
+      if (sameIdentifiers(stored, merged)) return { kind: 'unchanged' as const }
+      await pctx.metaStore.rows.patch(deviceId, { identifiers: merged })
+      return { kind: 'written' as const, value: merged }
+    }
+    // An attached key kept because it was unread is RETAINED, not seen now (D1063).
+    const retained = retainedKeys(merged, input.unread ?? [])
+    const storedRetained = persisted.meta.attachedRetained ?? []
+    const sameRetained = retained.join(',') === storedRetained.join(',')
+    if (sameIdentifiers(stored, merged) && sameRetained) return { kind: 'unchanged' as const }
+    await pctx.metaStore.rows.patch(deviceId, {
+      attachedIdentifiers: merged,
+      attachedRetained: retained.length === 0 ? null : retained,
+    })
     return { kind: 'written' as const, value: merged }
   })
 

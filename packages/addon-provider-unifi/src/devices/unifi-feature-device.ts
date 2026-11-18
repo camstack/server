@@ -212,14 +212,18 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
 
   /**
    * Declare the wired client as ATTACHED to this port (D1063) — never as the port's own
-   * identity. The last MAC is kept across a poll that saw no client (absence is not a
-   * different client); an IP the controller does not know right now is unread (D49).
+   * identity. The client on the port NOW is a fresh read; a port whose client left declares the
+   * last MAC as unread, so it is kept but retained (absence is not a different client, and a
+   * port that freshly reads it wins the auto link); an IP the controller does not know right
+   * now is unread (D49).
    */
-  private async declareAttached(): Promise<void> {
-    const mac = this.lastClientMac ?? null
+  private async declareAttached(currentClientMac: string | null): Promise<void> {
+    const mac = currentClientMac ?? this.lastClientMac ?? null
     const ip =
-      mac === null ? null : (unifiControllers.getClient(this.integrationId, mac)?.ip ?? null)
-    const declaration = unifiPortAttachedIdentifiers(mac, ip)
+      currentClientMac === null
+        ? null
+        : (unifiControllers.getClient(this.integrationId, currentClientMac)?.ip ?? null)
+    const declaration = unifiPortAttachedIdentifiers(mac, currentClientMac, ip)
     if (declaration === null) return
     const key = JSON.stringify(declaration)
     if (key === this.lastAttachedKey) return
@@ -245,7 +249,7 @@ export class UnifiFeatureDevice extends BaseDevice<typeof unifiFeatureSchema> {
           meta: { portIdx: port.idx, clientMac: port.clientMac },
         })
       }
-      await this.declareAttached()
+      await this.declareAttached(port.clientMac)
       if (port.clientName === null) return
       const desired = portLabel(port.idx, port.clientName)
       if (desired === this.lastDesiredName) return

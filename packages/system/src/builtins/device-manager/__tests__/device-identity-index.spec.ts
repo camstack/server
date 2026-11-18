@@ -8,7 +8,12 @@
  * never a scan per question.
  */
 
-import type { DeviceIdentifiers, IScopedLogger, RawDeviceIdentifiers } from '@camstack/types'
+import type {
+  DeviceIdentifierKey,
+  DeviceIdentifiers,
+  IScopedLogger,
+  RawDeviceIdentifiers,
+} from '@camstack/types'
 import { IdentityCandidatesSchema, normaliseIdentifiers } from '@camstack/types'
 import { describe, expect, it, vi } from 'vitest'
 import { DeviceIdentityIndex } from '../device-identity-index.js'
@@ -40,6 +45,8 @@ interface Fixture {
   readonly integrationId?: string
   readonly identifiers?: DeviceIdentifiers
   readonly attachedIdentifiers?: DeviceIdentifiers
+  /** The attached keys the provider last declared unread: kept, not seen now. */
+  readonly attachedRetained?: readonly DeviceIdentifierKey[]
   readonly role?: string
 }
 
@@ -66,6 +73,7 @@ async function makeIndexed(fixtures: readonly Fixture[]): Promise<{
         ...(f.attachedIdentifiers !== undefined
           ? { attachedIdentifiers: f.attachedIdentifiers }
           : {}),
+        ...(f.attachedRetained !== undefined ? { attachedRetained: f.attachedRetained } : {}),
         ...(f.role !== undefined ? { role: f.role } : {}),
       },
       { registered: true },
@@ -328,6 +336,45 @@ describe('DeviceIdentityIndex — what a device declares ATTACHED to it (D1063)'
       [1, 2, 'proposal'],
       [4, 2, 'proposal'],
     ])
+  })
+
+  it('a port that FRESHLY reports the MAC another port only retains takes the camera; the retained pair is no candidate', async () => {
+    const { index } = await makeIndexed([
+      {
+        id: 1,
+        addonId: 'unifi',
+        role: 'poe-port',
+        attachedIdentifiers: ids({ mac: MAC, ip: IP }),
+        attachedRetained: ['ip', 'mac'],
+      },
+      { id: 4, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: MAC, ip: IP }) },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC, ip: IP }) },
+    ])
+    expect(attached(index)).toEqual([[4, 2, 'auto']])
+  })
+
+  it('a port that only retains its MAC, with no fresh rival, keeps its candidate (D49)', async () => {
+    const { index } = await makeIndexed([
+      {
+        id: 1,
+        addonId: 'unifi',
+        role: 'poe-port',
+        attachedIdentifiers: ids({ mac: MAC, ip: IP }),
+        attachedRetained: ['ip', 'mac'],
+      },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC, ip: IP }) },
+    ])
+    expect(attached(index)).toEqual([[1, 2, 'auto']])
+  })
+
+  it('patching the retained keys moves the candidate', async () => {
+    const { index, rows } = await makeIndexed([
+      { id: 1, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: MAC, ip: IP }) },
+      { id: 4, addonId: 'unifi', role: 'poe-port', attachedIdentifiers: ids({ mac: MAC, ip: IP }) },
+      { id: 2, addonId: 'hik', identifiers: ids({ mac: MAC, ip: IP }) },
+    ])
+    await rows.patch(1, { attachedRetained: ['ip', 'mac'] })
+    expect(attached(index)).toEqual([[4, 2, 'auto']])
   })
 
   it('patching an attached declaration notifies the listener and moves the candidate', async () => {

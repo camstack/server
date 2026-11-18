@@ -63,6 +63,8 @@ interface IndexedDevice {
   readonly role: string | null
   readonly identifiers: DeviceIdentifiers | null
   readonly attachedIdentifiers: DeviceIdentifiers | null
+  /** Attached keys kept from an earlier read, not seen on the latest (D1063). */
+  readonly attachedRetained: readonly DeviceIdentifierKey[]
 }
 
 /** One pair a link could be made of (D1063). For `poe-power`, `a` is the attaching side. */
@@ -220,6 +222,7 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
       role: meta.role ?? null,
       identifiers: meta.identifiers ?? null,
       attachedIdentifiers: meta.attachedIdentifiers ?? null,
+      attachedRetained: meta.attachedRetained ?? [],
     })
     this.changed()
   }
@@ -235,6 +238,7 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
       role: existing?.role ?? null,
       identifiers: existing?.identifiers ?? null,
       attachedIdentifiers: existing?.attachedIdentifiers ?? null,
+      attachedRetained: existing?.attachedRetained ?? [],
     })
     if (existing === undefined || existing.stableId !== row.stableId) this.changed()
   }
@@ -243,6 +247,7 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
     if (
       patch.identifiers === undefined &&
       patch.attachedIdentifiers === undefined &&
+      patch.attachedRetained === undefined &&
       patch.integrationId === undefined &&
       patch.role === undefined
     ) {
@@ -257,6 +262,9 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
       ...(patch.identifiers !== undefined ? { identifiers: patch.identifiers } : {}),
       ...(patch.attachedIdentifiers !== undefined
         ? { attachedIdentifiers: patch.attachedIdentifiers }
+        : {}),
+      ...(patch.attachedRetained !== undefined
+        ? { attachedRetained: patch.attachedRetained ?? [] }
         : {}),
       ...(patch.integrationId !== undefined ? { integrationId: patch.integrationId } : {}),
       ...(patch.role !== undefined ? { role: patch.role } : {}),
@@ -278,6 +286,11 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
    * One link per port: when a port's attached keys reach several devices, or a
    * device is reached by several ports, every one of those attached pairs is
    * graded a `proposal` at most — the operator picks.
+   *
+   * Freshness first: a pair whose shared keys the port only RETAINS (declared
+   * unread — no client now, D49) is no candidate when another port FRESHLY
+   * reports the same device. A camera moved from port 7 to port 9 is port 9's;
+   * port 7's auto link loses its evidence. Two fresh reports stay proposals.
    */
   linkCandidates(): IdentityLinkCandidates {
     const same = this.candidates()
@@ -307,7 +320,7 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
   }
 
   private attachedPairs(): readonly IdentityLinkCandidate[] {
-    const pairs: IdentityLinkCandidate[] = []
+    const all: { readonly pair: IdentityLinkCandidate; readonly fresh: boolean }[] = []
     for (const port of this.devices.values()) {
       if (port.attachedIdentifiers === null) continue
       const reached = new Set<number>()
@@ -320,16 +333,24 @@ export class DeviceIdentityIndex implements DeviceRowObserver {
         const keys = sharedKeys(port.attachedIdentifiers, target.identifiers)
         const confidence = classifyIdentityMatch(keys)
         if (confidence === null) continue
-        pairs.push({
-          kind: 'poe-power',
-          a: linkSideOf(port),
-          b: linkSideOf(target),
-          aRole: port.role,
-          keys,
-          confidence,
+        const retained = new Set(port.attachedRetained)
+        all.push({
+          pair: {
+            kind: 'poe-power',
+            a: linkSideOf(port),
+            b: linkSideOf(target),
+            aRole: port.role,
+            keys,
+            confidence,
+          },
+          fresh: keys.some((k) => !retained.has(k.key)),
         })
       }
     }
+    const freshlyReached = new Set(all.filter((p) => p.fresh).map((p) => p.pair.b.deviceId))
+    const pairs = all
+      .filter((p) => p.fresh || !freshlyReached.has(p.pair.b.deviceId))
+      .map((p) => p.pair)
     const perPort = new Map<number, number>()
     const perTarget = new Map<number, number>()
     for (const p of pairs) {

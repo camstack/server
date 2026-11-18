@@ -164,8 +164,13 @@ describe('where the identity comes from', () => {
 })
 
 describe('unifiPortAttachedIdentifiers (D1063)', () => {
-  async function attach(world: StoredWorld, mac: string | null, ip: string | null): Promise<void> {
-    const declaration = unifiPortAttachedIdentifiers(mac, ip)
+  async function attach(
+    world: StoredWorld,
+    mac: string | null,
+    ip: string | null,
+    current: string | null = mac,
+  ): Promise<void> {
+    const declaration = unifiPortAttachedIdentifiers(mac, current, ip)
     if (declaration === null) return
     const writer = {
       mutate: async (input: SetIdentifiersInput) => {
@@ -191,6 +196,18 @@ describe('unifiPortAttachedIdentifiers (D1063)', () => {
     const world: StoredWorld = { stored: null, writes: 0 }
     await attach(world, 'AA:BB:CC:00:11:22', '192.0.2.50')
     await attach(world, 'AA:BB:CC:00:11:22', null)
+    expect(world.stored?.ip?.value).toBe('192.0.2.50')
+  })
+
+  it('a port whose client left declares the retained MAC as unread, never as a read value', async () => {
+    expect(unifiPortAttachedIdentifiers('AA:BB:CC:00:11:22', null, null)?.unread).toEqual([
+      'mac',
+      'ip',
+    ])
+    const world: StoredWorld = { stored: null, writes: 0 }
+    await attach(world, 'AA:BB:CC:00:11:22', '192.0.2.50')
+    await attach(world, 'AA:BB:CC:00:11:22', null, null)
+    expect(world.stored?.mac?.map((m) => m.value)).toEqual(['aa:bb:cc:00:11:22'])
     expect(world.stored?.ip?.value).toBe('192.0.2.50')
   })
 

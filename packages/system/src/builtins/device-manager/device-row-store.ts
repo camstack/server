@@ -51,12 +51,17 @@
  * either be nullable or carry a `defaultValue`.
  */
 
-import { canonicalStoredDeviceType, DeviceIdentifiersSchema } from '@camstack/types'
+import {
+  canonicalStoredDeviceType,
+  DeviceIdentifierKeySchema,
+  DeviceIdentifiersSchema,
+} from '@camstack/types'
 import type {
   ChildLayout,
   CollectionColumn,
   CollectionIndex,
   DeviceDisplayOverride,
+  DeviceIdentifierKey,
   DeviceIdentifiers,
   IScopedLogger,
   MutationFilter,
@@ -145,6 +150,8 @@ export const DEVICE_ROWS_COLUMNS: readonly CollectionColumn[] = [
   // The far end of the device's physical link (D1063) — a PoE port's client.
   // Nullable JSON: an additive ALTER TABLE, like `identifiers`.
   { name: 'attachedIdentifiers', type: 'JSON' },
+  // The attached keys last declared unread — kept, not seen now (D1063). Additive.
+  { name: 'attachedRetained', type: 'JSON' },
 ]
 
 /**
@@ -267,6 +274,7 @@ export interface DeviceRowPatch {
   readonly display?: DeviceDisplayOverride | null
   readonly identifiers?: DeviceIdentifiers | null
   readonly attachedIdentifiers?: DeviceIdentifiers | null
+  readonly attachedRetained?: readonly DeviceIdentifierKey[] | null
   readonly metadata?: Record<string, unknown> | null
 }
 
@@ -393,6 +401,9 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
   const rawMetadata = data['metadata']
   const identifiers = DeviceIdentifiersSchema.safeParse(data['identifiers'])
   const attachedIdentifiers = DeviceIdentifiersSchema.safeParse(data['attachedIdentifiers'])
+  const attachedRetained = DeviceIdentifierKeySchema.array()
+    .min(1)
+    .safeParse(data['attachedRetained'])
 
   // A SQL NULL is the ABSENT form of every optional field. The blob shape
   // distinguished `undefined` (never set) from an explicit `null` on
@@ -424,6 +435,7 @@ export function decodeDeviceRow(data: Record<string, unknown>): DeviceRow | null
     // later tightened) reads as "none declared" until the provider declares again.
     ...(identifiers.success ? { identifiers: identifiers.data } : {}),
     ...(attachedIdentifiers.success ? { attachedIdentifiers: attachedIdentifiers.data } : {}),
+    ...(attachedRetained.success ? { attachedRetained: attachedRetained.data } : {}),
   }
 
   return {
@@ -482,6 +494,7 @@ export function encodeDeviceRow(
     display: meta.display ?? null,
     identifiers: meta.identifiers ?? null,
     attachedIdentifiers: meta.attachedIdentifiers ?? null,
+    attachedRetained: meta.attachedRetained === undefined ? null : [...meta.attachedRetained],
   }
   if (extra.metadata !== undefined) row['metadata'] = extra.metadata
   return row

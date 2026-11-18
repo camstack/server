@@ -620,6 +620,23 @@ describe('UniFi devices on a stub device context', () => {
     expect(mutate).toHaveBeenCalledTimes(1)
   })
 
+  it('a client that leaves the port keeps the retained MAC, declared UNREAD — never as a fresh read (D1063, D49)', async () => {
+    const infra: UnifiInfraSnapshot[] = [
+      { ...SWITCH, ports: [port({ idx: 1, clientMac: PHONE.mac })] },
+    ]
+    await harness(infra)
+    const { ctx, mutate } = attachedRig()
+    await new UnifiFeatureDevice(ctx).onActivate()
+    await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(1))
+    infra[0] = { ...SWITCH, ports: [port({ idx: 1, clientMac: null })] }
+    await unifiControllers.getManager(INT)?.poll()
+    unifiControllers.emitSnapshot(INT)
+    await vi.waitFor(() => expect(mutate).toHaveBeenCalledTimes(2))
+    const retained = mutate.mock.calls[1]?.[0]
+    expect(retained?.identifiers?.mac?.map((m) => m.value)).toEqual([PHONE.mac])
+    expect([...(retained?.unread ?? [])].sort()).toEqual(['ip', 'mac'])
+  })
+
   it('a PoE port that never saw a client declares nothing attached', async () => {
     await harness()
     const { ctx, mutate } = attachedRig()

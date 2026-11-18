@@ -383,6 +383,82 @@ describe('setAttachedIdentifiers (D1063)', () => {
     expect((await readDeviceRow(world.store, dev.id)).attachedIdentifiers).toEqual(CLIENT)
   })
 
+  it('a kept (unread) client is stored as RETAINED, and a fresh read clears that', async () => {
+    const world = await setup()
+    const dev = await registered(world, 'port-r', PORT_OWNER)
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    expect((await readDeviceRow(world.store, dev.id)).attachedRetained ?? null).toBeNull()
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: {}, unread: ['mac', 'ip'] }, PORT_OWNER),
+    )
+    expect((await readDeviceRow(world.store, dev.id)).attachedRetained).toEqual(['ip', 'mac'])
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: dev.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    expect((await readDeviceRow(world.store, dev.id)).attachedRetained ?? null).toBeNull()
+  })
+
+  it('a camera moved from port 7 to port 9: the port that only RETAINS its MAC loses the link, the fresh port takes it', async () => {
+    const world = await setup()
+    const camera = await registered(world, 'cam-moved')
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: camera.id, identifiers: CLIENT }, OWNER),
+    )
+    const port7 = await registered(world, 'port-7', PORT_OWNER)
+    const port9 = await registered(world, 'port-9', PORT_OWNER)
+    await world.provider.setRole({ deviceId: port7.id, role: 'poe-port' })
+    await world.provider.setRole({ deviceId: port9.id, role: 'poe-port' })
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: port7.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    const linksOf = async () => {
+      const read = await world.provider.listIdentityLinks({ deviceId: camera.id })
+      return read.status === 'answered' ? read.links.map((l) => [l.a.deviceId, l.state]) : []
+    }
+    await vi.waitFor(async () => expect(await linksOf()).toEqual([[port7.id, 'linked']]))
+    // Port 7 has no client now: it keeps the MAC, unread. Port 9 reads it fresh.
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: port7.id, identifiers: {}, unread: ['mac', 'ip'] }, PORT_OWNER),
+    )
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: port9.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    await vi.waitFor(async () => expect(await linksOf()).toEqual([[port9.id, 'linked']]))
+  })
+
+  it('two ports that both FRESHLY report the camera stay a proposal; the first link is kept', async () => {
+    const world = await setup()
+    const camera = await registered(world, 'cam-twice')
+    await world.provider.setIdentifiers(
+      stamped({ deviceId: camera.id, identifiers: CLIENT }, OWNER),
+    )
+    const port7 = await registered(world, 'port-7b', PORT_OWNER)
+    const port9 = await registered(world, 'port-9b', PORT_OWNER)
+    await world.provider.setRole({ deviceId: port7.id, role: 'poe-port' })
+    await world.provider.setRole({ deviceId: port9.id, role: 'poe-port' })
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: port7.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    const linksOf = async () => {
+      const read = await world.provider.listIdentityLinks({ deviceId: camera.id })
+      return read.status === 'answered'
+        ? read.links.map((l) => [l.a.deviceId, l.state]).sort((x, y) => Number(x[0]) - Number(y[0]))
+        : []
+    }
+    await vi.waitFor(async () => expect(await linksOf()).toEqual([[port7.id, 'linked']]))
+    await world.provider.setAttachedIdentifiers(
+      stamped({ deviceId: port9.id, identifiers: CLIENT }, PORT_OWNER),
+    )
+    await vi.waitFor(async () =>
+      expect(await linksOf()).toEqual([
+        [port7.id, 'linked'],
+        [port9.id, 'proposed'],
+      ]),
+    )
+  })
+
   it('a port whose client is a camera of another integration links them, and the link answers', async () => {
     const world = await setup()
     const camera = await registered(world, 'cam-link')

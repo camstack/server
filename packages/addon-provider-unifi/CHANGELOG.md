@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - A PoE port now reports the device wired to it, so CamStack can link the port to the camera it powers.
+- A PoE port whose client left keeps the last MAC as retained, not as a fresh read, so a camera moved to another port follows it.
 
 ## [0.2.168] - 2026-11-17
 
