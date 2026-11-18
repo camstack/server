@@ -13,7 +13,7 @@ import { ToggleLeft } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { StepEffectLabel } from './StepEffectLabel'
 import { StepSwitchesFrame } from './StepSwitchesFrame'
-import { findNode, nodeEffect } from './step-switches-model'
+import { findNode, heldOffBy, nodeEffect } from './step-switches-model'
 import { useStepSwitches, useStepSwitchWriters } from './use-step-switches'
 
 interface NodeStepSwitchesCardProps {
@@ -42,21 +42,29 @@ export function NodeStepSwitchesCard({ nodeId }: NodeStepSwitchesCardProps) {
         <div className="space-y-1">
           {rows.map((row) => {
             const node = findNode(row, nodeId)
+            const effect = node === undefined ? null : nodeEffect(node)
             return (
               <SettingRow key={row.stepId} label={row.name}>
                 <div className="flex flex-wrap items-center gap-3">
-                  <Switch
-                    checked={node === undefined ? false : node.stepEnabled !== false}
-                    disabled={node === undefined || writers.isPending}
-                    onCheckedChange={(on) =>
-                      writers.setNodeEnabled(nodeId, row.stepId, on ? null : false)
-                    }
-                    aria-label={t('pipeline.stepSwitches.nodeToggle', 'Run {{step}} on this node', {
-                      step: row.name,
-                    })}
-                  />
+                  {node !== undefined && (
+                    <Switch
+                      checked={node.stepEnabled !== false}
+                      disabled={heldOffBy(effect, 'node') !== null || writers.isPending}
+                      onCheckedChange={(on) =>
+                        writers.setNodeEnabled(nodeId, row.stepId, on ? null : false)
+                      }
+                      aria-label={t(
+                        'pipeline.stepSwitches.nodeToggle',
+                        'Run {{step}} on this node',
+                        {
+                          step: row.name,
+                        },
+                      )}
+                    />
+                  )}
                   <StepEffectLabel
-                    effect={node === undefined ? null : nodeEffect(node)}
+                    ownLevel="node"
+                    effect={effect}
                     {...(node !== undefined && !node.reachable
                       ? {
                           unknownHint: t(

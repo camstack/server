@@ -3874,7 +3874,11 @@
       "colSteps": "Passi",
       "steps": "Passi",
       "stepsOff": "Passi · {{n}} spenti",
-      "stepsNotSortable": "Apre gli interruttori dei passi di questo acceleratore."
+      "stepsNotSortable": "Apre gli interruttori dei passi di questo acceleratore.",
+      "held": {
+        "cluster": "Tenuto spento dal cluster — questo interruttore resta com'è",
+        "node": "Tenuto spento dal nodo — questo interruttore resta com'è"
+      }
     }
   },
   "assignments": {

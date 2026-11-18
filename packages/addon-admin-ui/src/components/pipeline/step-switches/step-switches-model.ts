@@ -98,6 +98,20 @@ export function deviceStepRows(
   return out
 }
 
+/** The control a switch belongs to: it can be held off only by a level above it. */
+export type OwnLevel = 'node' | 'device'
+
+/** The level above `ownLevel` that holds the step off, or null when none does. */
+export function heldOffBy(
+  effect: StepEffect | null,
+  ownLevel: OwnLevel,
+): 'cluster' | 'node' | null {
+  if (effect === null || effect.state !== 'off') return null
+  if (effect.level === 'cluster') return 'cluster'
+  if (ownLevel === 'device' && effect.level === 'node') return 'node'
+  return null
+}
+
 /** How many steps this device's own switch has turned off (the stored bit, not the effect). */
 export function deviceSwitchedOffCount(rows: readonly DeviceStepRow[]): number {
   return rows.filter((r) => r.device.stepEnabled === false).length

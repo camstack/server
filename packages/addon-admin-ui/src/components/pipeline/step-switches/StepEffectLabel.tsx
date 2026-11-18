@@ -6,7 +6,7 @@
  */
 import { Badge } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
-import type { OffLevel, StepEffect } from './step-switches-model'
+import { heldOffBy, type OffLevel, type OwnLevel, type StepEffect } from './step-switches-model'
 
 const OFF_REASON: Readonly<Record<OffLevel, readonly [string, string]>> = {
   cluster: ['pipeline.stepSwitches.reason.cluster', 'Off for the whole cluster'],
@@ -21,10 +21,22 @@ interface StepEffectLabelProps {
   readonly effect: StepEffect | null
   /** Names the unknown case: the node did not answer vs the query is still loading. */
   readonly unknownHint?: string
+  /** The control this label sits beside; a step held off above it reads as held, not off. */
+  readonly ownLevel?: OwnLevel
 }
 
-export function StepEffectLabel({ effect, unknownHint }: StepEffectLabelProps) {
+export function StepEffectLabel({ effect, unknownHint, ownLevel }: StepEffectLabelProps) {
   const { t } = useTranslation()
+  const held = ownLevel === undefined ? null : heldOffBy(effect, ownLevel)
+  if (held !== null) {
+    return (
+      <span className="text-[11px] text-foreground-muted">
+        {held === 'cluster'
+          ? t('pipeline.stepSwitches.held.cluster', 'Held off by the cluster — this switch is kept')
+          : t('pipeline.stepSwitches.held.node', 'Held off by the node — this switch is kept')}
+      </span>
+    )
+  }
   if (effect === null || effect.state === 'unknown') {
     return (
       <Badge variant="neutral" dashed style="outline" size="sm">

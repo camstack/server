@@ -11,7 +11,7 @@
 import { ErrorBox, Skeleton, Switch, TEXT_HINT } from '@camstack/ui-library'
 import { useTranslation } from 'react-i18next'
 import { StepEffectLabel } from './StepEffectLabel'
-import { deviceEffect, deviceStepRows } from './step-switches-model'
+import { deviceEffect, deviceStepRows, heldOffBy } from './step-switches-model'
 import type { StepSwitchesView, StepSwitchWriters } from './use-step-switches'
 
 interface DeviceStepSwitchesProps {
@@ -56,7 +56,9 @@ export function DeviceStepSwitches({ nodeId, deviceKey, view, writers }: DeviceS
           <li key={step.stepId} className="flex flex-wrap items-center gap-x-3 gap-y-1">
             <Switch
               checked={step.device.stepEnabled !== false}
-              disabled={writers.isPending}
+              disabled={
+                heldOffBy(deviceEffect(step.device), 'device') !== null || writers.isPending
+              }
               onCheckedChange={(on) =>
                 writers.setDeviceEnabled(nodeId, deviceKey, step.stepId, on ? null : false)
               }
@@ -69,7 +71,7 @@ export function DeviceStepSwitches({ nodeId, deviceKey, view, writers }: DeviceS
               )}
             />
             <span className="text-xs text-foreground">{step.name}</span>
-            <StepEffectLabel effect={deviceEffect(step.device)} />
+            <StepEffectLabel ownLevel="device" effect={deviceEffect(step.device)} />
           </li>
         ))}
       </ul>

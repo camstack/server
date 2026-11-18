@@ -3799,7 +3799,11 @@
       "colSteps": "Steps",
       "steps": "Steps",
       "stepsOff": "Steps · {{n}} off",
-      "stepsNotSortable": "Opens this accelerator's step switches."
+      "stepsNotSortable": "Opens this accelerator's step switches.",
+      "held": {
+        "cluster": "Held off by the cluster — this switch is kept",
+        "node": "Held off by the node — this switch is kept"
+      }
     }
   },
   "assignments": {

@@ -114,6 +114,31 @@ const MATRIX: StepSwitchMatrix = {
         },
       ],
     },
+    {
+      stepId: 'clip-embedding',
+      name: 'Semantic embedding',
+      slot: 'detail',
+      clusterMode: null,
+      effectiveMode: 'on',
+      camerasEnabling: 0,
+      camerasDisabling: 0,
+      nodes: [
+        {
+          nodeId: 'hub',
+          reachable: true,
+          stepEnabled: null,
+          devices: [
+            {
+              deviceKey: 'cpu',
+              format: 'onnx',
+              stepEnabled: null,
+              eligible: true,
+              cell: { kind: 'on' },
+            },
+          ],
+        },
+      ],
+    },
   ],
 }
 
@@ -131,8 +156,14 @@ describe('NodeStepSwitchesCard', () => {
     const face = screen.getByRole('switch', { name: 'Run Face detection on this node' })
     expect(face).toHaveAttribute('aria-checked', 'false')
     expect(screen.getByText('Off on this node')).toBeInTheDocument()
-    // The cluster switch outranks the node: the reason names the cluster.
-    expect(screen.getByText('Off for the whole cluster')).toBeInTheDocument()
+  })
+
+  it('a step the cluster holds off keeps its switch, disabled, and says who holds it', () => {
+    render(<NodeStepSwitchesCard nodeId="hub" />)
+    const plate = screen.getByRole('switch', { name: 'Run Plate recognition on this node' })
+    expect(plate).toBeDisabled()
+    expect(screen.getByText('Held off by the cluster — this switch is kept')).toBeInTheDocument()
+    expect(screen.queryByText('Off for the whole cluster')).not.toBeInTheDocument()
   })
 
   it('writes false to turn a step off and null to return to inherit', () => {
@@ -143,10 +174,10 @@ describe('NodeStepSwitchesCard', () => {
       stepId: 'face-detection',
       enabled: null,
     })
-    fireEvent.click(screen.getByRole('switch', { name: 'Run Plate recognition on this node' }))
+    fireEvent.click(screen.getByRole('switch', { name: 'Run Semantic embedding on this node' }))
     expect(h.mutateNode).toHaveBeenLastCalledWith({
       agentNodeId: 'hub',
-      stepId: 'plate-recognition',
+      stepId: 'clip-embedding',
       enabled: false,
     })
   })
@@ -167,8 +198,10 @@ describe('NodeStepSwitchesCard', () => {
 
   it('a node the matrix does not list reads unknown, not off', () => {
     render(<NodeStepSwitchesCard nodeId="garage-nuc" />)
-    expect(screen.getAllByText('Not known yet')).toHaveLength(2)
+    expect(screen.getAllByText('Not known yet')).toHaveLength(3)
     expect(screen.queryByText('Off')).not.toBeInTheDocument()
+    // No stored switch is known for it, so none is drawn (not an unchecked one).
+    expect(screen.queryByRole('switch')).not.toBeInTheDocument()
   })
 
   it('a failed write shows its error', () => {
@@ -204,22 +237,22 @@ describe('DeviceStepSwitches', () => {
     )
   }
 
-  it('toggles one step on one accelerator and names why it is off there', () => {
+  it('toggles a step on one accelerator; one held off above it is disabled and says who', () => {
     render(<Harness nodeId="hub" deviceKey="cpu" />)
     const plate = screen.getByRole('switch', { name: 'Run Plate recognition on this accelerator' })
-    expect(plate).toHaveAttribute('aria-checked', 'false')
-    fireEvent.click(plate)
+    expect(plate).toBeDisabled()
+    expect(screen.getByText('Held off by the cluster — this switch is kept')).toBeInTheDocument()
+    expect(
+      screen.getByRole('switch', { name: 'Run Face detection on this accelerator' }),
+    ).toBeDisabled()
+    expect(screen.getByText('Held off by the node — this switch is kept')).toBeInTheDocument()
+    fireEvent.click(
+      screen.getByRole('switch', { name: 'Run Semantic embedding on this accelerator' }),
+    )
     expect(h.mutateDevice).toHaveBeenCalledWith({
       agentNodeId: 'hub',
       deviceKey: 'cpu',
-      stepId: 'plate-recognition',
-      enabled: null,
-    })
-    fireEvent.click(screen.getByRole('switch', { name: 'Run Face detection on this accelerator' }))
-    expect(h.mutateDevice).toHaveBeenLastCalledWith({
-      agentNodeId: 'hub',
-      deviceKey: 'cpu',
-      stepId: 'face-detection',
+      stepId: 'clip-embedding',
       enabled: false,
     })
   })
