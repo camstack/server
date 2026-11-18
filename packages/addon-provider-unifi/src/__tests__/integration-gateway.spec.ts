@@ -584,8 +584,11 @@ describe('UniFi devices on a stub device context', () => {
     expect(restartDevice).not.toHaveBeenCalled()
   })
 
-  it('a switch Host stays as it was: no restart of its own', async () => {
-    await harness()
+  it('a switch Workload restarts through workload.restart too, which calls restartDevice', async () => {
+    await harness([CONSOLE, SWITCH])
+    const client = unifiControllers.getManager(INT)?.client
+    if (client === null || client === undefined) throw new Error('client should run')
+    const restartDevice = vi.spyOn(client, 'restartDevice')
     const { ctx, providers } = rig(
       {
         integrationId: INT,
@@ -598,9 +601,10 @@ describe('UniFi devices on a stub device context', () => {
     await new UnifiInfraDevice(ctx).onActivate()
     expect(providers.has('reboot')).toBe(false)
     const workload = providers.get('workload')
-    if (!isWorkloadProvider(workload)) throw new Error('workload cap missing')
-    expect((await workload.getOptions({ deviceId: 7 })).supportsRestart).toBe(false)
-    expect(isRestartableWorkload(workload)).toBe(false)
+    if (!isRestartableWorkload(workload)) throw new Error('workload.restart missing')
+    expect((await workload.getOptions({ deviceId: 7 })).supportsRestart).toBe(true)
+    await workload.restart({ deviceId: 7 })
+    expect(restartDevice.mock.calls).toEqual([['sw1']])
   })
 
   it('the infra Container spawns its features as children linked to it, each following the integration', () => {
@@ -642,7 +646,8 @@ describe('UniFi devices on a stub device context', () => {
     if (!isWorkloadProvider(workload)) throw new Error('workload cap missing')
     expect(providers.has('switch')).toBe(false)
     const options = await workload.getOptions({ deviceId: 7 })
-    expect(options.supportsStart || options.supportsStop || options.supportsRestart).toBe(false)
+    expect(options.supportsStart || options.supportsStop).toBe(false)
+    expect(options.supportsRestart).toBe(true)
     const slice = host.runtimeState.getCapState<WorkloadStatus>('workload')
     expect(slice?.state).toBe('running')
     expect(slice?.resources.cpuPercent).toBe(5)

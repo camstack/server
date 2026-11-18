@@ -2,10 +2,9 @@
  * A UniFi console, switch or access point as a `workload` host (D1056): its state, uptime,
  * CPU and temperature from the infra snapshot. Pure.
  *
- * Only what the controller reports is filled; everything else is `null` (D393). A switch or
- * access point declares no control (its restart stays the restart Button child). A console is
- * the Host the integration talks to (D1064) and declares `restart` (the controller's
- * `restartDevice`). There is no start or stop, so no power switch is registered.
+ * Only what the controller reports is filled; everything else is `null` (D393). Every one of
+ * them declares `restart` (the controller's `restartDevice`); a console is also the Host the
+ * integration talks to (D1064). There is no start or stop, so no power switch is registered.
  */
 import type {
   WorkloadOptions,
@@ -15,11 +14,11 @@ import type {
 } from '@camstack/types'
 import type { UnifiInfraSnapshot, UnifiInfraState } from './unifi-client-contract.js'
 
-/** What a UniFi host declares: its resources, nothing it cannot do. */
+/** What a UniFi console, switch or access point declares: its resources and a restart. */
 export const UNIFI_HOST_WORKLOAD_OPTIONS: WorkloadOptions = {
   supportsStart: false,
   supportsStop: false,
-  supportsRestart: false,
+  supportsRestart: true,
   supportsPause: false,
   supportsForceStop: false,
   hasResources: true,
@@ -27,12 +26,6 @@ export const UNIFI_HOST_WORKLOAD_OPTIONS: WorkloadOptions = {
   hasAddresses: false,
   hasAutostart: false,
   hasUpdateCheck: false,
-}
-
-/** What a UniFi console declares: a host that the controller can also restart (D1064). */
-export const UNIFI_CONSOLE_WORKLOAD_OPTIONS: WorkloadOptions = {
-  ...UNIFI_HOST_WORKLOAD_OPTIONS,
-  supportsRestart: true,
 }
 
 /** The slice a host seeds before its first snapshot: nothing is known. */

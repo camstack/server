@@ -75,7 +75,7 @@ describe('UniFi: the console is a Host, there is no Gateway', () => {
     )
     // The console restarts through its workload: no separate reboot capability.
     expect(out[0]?.capabilities ?? []).not.toContain(rebootCapability.name)
-    // A switch stays as it was (its restart is the Button child): no console hints.
+    // A switch is not the Host: no console hints (it restarts through its own workload).
     expect(out[1]?.capabilities).toBeUndefined()
   })
 

@@ -61,10 +61,10 @@ describe('unifiHostWorkloadStatus — a console, switch or AP as a workload host
 })
 
 describe('UNIFI_HOST_WORKLOAD_OPTIONS — no fake controls', () => {
-  it('declares resources only, so the derived UI shows no start / stop / pause', () => {
+  it('declares resources and restart only, so the derived UI shows no start / stop / pause', () => {
     expect(UNIFI_HOST_WORKLOAD_OPTIONS.hasResources).toBe(true)
     const derived = deriveWorkloadControls(UNIFI_HOST_WORKLOAD_OPTIONS, 'running')
-    expect(derived.controls).toEqual([])
+    expect(derived.controls).toEqual([{ action: 'restart', enabled: true }])
     expect(derived.sections.resources).toBe(true)
   })
 })
