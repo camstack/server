@@ -90,6 +90,7 @@ export function ConnectedSirenCard({
         commandPending: shot.inFlight,
         run: sirenRunOf(sirenSlice, activity === 'sounding'),
         adjustable: sirenTriggers ? sirenAdjustableOf(options.data) : sirenAdjustableOf(undefined),
+        optionsUnavailable: sirenTriggers && readsOptions && options.isError,
         onMotion: motionSets && motionSlice !== undefined ? motionSlice.enabled : null,
         onMotionPending: motionShot.inFlight,
       }}

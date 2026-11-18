@@ -186,8 +186,22 @@ describe('ConnectedSirenCard', () => {
   it('sends the picked duration from the options the siren declared', async () => {
     mount()
     const chip = await screen.findByTestId('dc-siren-seconds')
-    expect(chip.textContent).toContain('30 s')
+    expect(chip.textContent).toBe('Default duration')
     expect(screen.queryByTestId('dc-siren-plays')).toBeNull()
+    expect(screen.queryByTestId('dc-siren-options-unavailable')).toBeNull()
+  })
+
+  it('marks the options unavailable when getOptions fails, unlike a siren with one value', async () => {
+    hub.getOptions.mockRejectedValue(new Error('camera unreachable'))
+    mount()
+    expect(await screen.findByTestId('dc-siren-options-unavailable')).toBeTruthy()
+    expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
+    cleanup()
+    hub.getOptions.mockResolvedValue({ ...OPTIONS, allowedSeconds: [30] })
+    mount()
+    await vi.waitFor(() => expect(hub.getOptions).toHaveBeenCalled())
+    expect(screen.queryByTestId('dc-siren-options-unavailable')).toBeNull()
+    expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
   })
 
   it('sounds a switch-only siren through its switch, with no chips and no motion toggle', () => {

@@ -307,8 +307,9 @@ describe('the humidifier, valve and siren', () => {
     render(
       <SirenCard model={fixture(sirenFixtures(), 'siren-silent').model} actions={SIREN_NOOP} />,
     )
-    expect(screen.getByTestId('dc-siren-seconds').textContent).toContain('30 s')
-    expect(screen.getByTestId('dc-siren-plays').textContent).toContain('1 play')
+    // Nothing picked: the trigger sends neither unit, so each chip names the camera default.
+    expect(screen.getByTestId('dc-siren-seconds').textContent).toBe('Default duration')
+    expect(screen.getByTestId('dc-siren-plays').textContent).toBe('Default plays')
     expect(screen.getByTestId('dc-siren-motion').getAttribute('aria-pressed')).toBe('true')
     cleanup()
     render(
@@ -320,6 +321,37 @@ describe('the humidifier, valve and siren', () => {
     expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
     expect(screen.queryByTestId('dc-siren-plays')).toBeNull()
     expect(screen.queryByTestId('dc-siren-motion')).toBeNull()
+  })
+
+  it('sends the picked value, and the other unit no longer claims a default', async () => {
+    const onTrigger = vi.fn()
+    render(
+      <SirenCard
+        model={fixture(sirenFixtures(), 'siren-silent').model}
+        actions={{ ...SIREN_NOOP, onTrigger }}
+      />,
+    )
+    fireEvent.pointerDown(screen.getByTestId('dc-siren-seconds'), { button: 0 })
+    fireEvent.click(screen.getByTestId('dc-siren-seconds'))
+    fireEvent.click(await screen.findByRole('menuitemradio', { name: '60 s' }))
+    expect(screen.getByTestId('dc-siren-seconds').textContent).toBe('60 s')
+    expect(screen.getByTestId('dc-siren-plays').textContent).toBe('Plays')
+    fireEvent.click(screen.getByTestId('dc-siren-sound'))
+    fireEvent.click(screen.getByTestId('dc-siren-sound'))
+    expect(onTrigger).toHaveBeenCalledWith({ unit: 'seconds', value: 60 })
+  })
+
+  it('says the options are unavailable when they failed, never "nothing to adjust"', () => {
+    const model = {
+      ...fixture(sirenFixtures(), 'siren-silent').model,
+      adjustable: { durations: null, plays: null },
+      optionsUnavailable: true,
+    }
+    render(<SirenCard model={model} actions={SIREN_NOOP} />)
+    expect(screen.getByTestId('dc-siren-options-unavailable').textContent).toBe(
+      'Options unavailable',
+    )
+    expect(screen.queryByTestId('dc-siren-seconds')).toBeNull()
   })
 
   it('sends the served motion state flipped, never its own copy', () => {

@@ -29,7 +29,7 @@ const SECONDS_LIST: SirenOptions = {
 describe('what the siren declares adjustable', () => {
   it('offers the listed durations and no plays on a seconds siren', () => {
     expect(sirenAdjustableOf(SECONDS_LIST)).toEqual({
-      durations: { values: [10, 30, 60], defaultValue: 30 },
+      durations: { values: [10, 30, 60] },
       plays: null,
     })
   })
@@ -46,8 +46,8 @@ describe('what the siren declares adjustable', () => {
       defaultPlays: 2,
     }
     expect(sirenAdjustableOf(options)).toEqual({
-      durations: { values: [5, 10, 15, 20], defaultValue: 10 },
-      plays: { values: [1, 2, 3], defaultValue: 2 },
+      durations: { values: [5, 10, 15, 20] },
+      plays: { values: [1, 2, 3] },
     })
   })
 

@@ -15,8 +15,8 @@ const outdoor = () => deviceCommon({ name: 'Sirena esterna', integration: 'Ajax'
 
 /** A camera siren that declares both a duration list and a plays range. */
 const ADJUSTABLE: SirenAdjustable = {
-  durations: { values: [10, 30, 60], defaultValue: 30 },
-  plays: { values: [1, 2, 3, 4, 5], defaultValue: 1 },
+  durations: { values: [10, 30, 60] },
+  plays: { values: [1, 2, 3, 4, 5] },
 }
 
 const NONE: SirenAdjustable = { durations: null, plays: null }
@@ -30,6 +30,7 @@ const base = (): SirenCardModel => ({
   commandPending: false,
   run: null,
   adjustable: ADJUSTABLE,
+  optionsUnavailable: false,
   onMotion: true,
   onMotionPending: false,
 })

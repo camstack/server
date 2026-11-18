@@ -7,7 +7,7 @@ import { CardIcon } from '../../parts/CardIcon'
 import { CountdownRing } from '../../parts/CountdownRing'
 import { MenuButton } from '../../parts/MenuButton'
 import { useCountdown } from '../../parts/use-countdown'
-import { type BottomRow, rowButtons } from '../../shell/bottom-rows'
+import { type BottomRow, rowButtons, rowText } from '../../shell/bottom-rows'
 import { type ColumnItem, columnButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
@@ -67,7 +67,13 @@ interface AmountChipProps {
 
 /** One declared unit's chip: its picked value, its default while none is picked. */
 function amountChip({ unit, choices, pick, onPick, disabled, t }: AmountChipProps): ReactElement {
-  const shown = pick === null ? choices.defaultValue : pick.unit === unit ? pick.value : null
+  // Nothing picked: the trigger sends neither unit and the camera applies its
+  // own default, so the chip says so rather than naming a value it will not send.
+  const picked = pick !== null && pick.unit === unit ? pick.value : null
+  const defaultLabel =
+    unit === 'plays'
+      ? t('uiLibrary.deviceCard.siren.defaultPlays', 'Default plays')
+      : t('uiLibrary.deviceCard.siren.defaultDuration', 'Default duration')
   return (
     <MenuButton
       key={unit}
@@ -82,7 +88,8 @@ function amountChip({ unit, choices, pick, onPick, disabled, t }: AmountChipProp
         id: String(value),
         label: amountLabel(unit, value, t),
       }))}
-      value={shown === null ? null : String(shown)}
+      value={picked === null ? null : String(picked)}
+      {...(pick === null ? { triggerLabel: defaultLabel } : {})}
       onChange={(id) => onPick({ unit, value: Number(id) })}
     />
   )
@@ -97,6 +104,15 @@ function bottomRows(
 ): readonly BottomRow[] {
   const rows: BottomRow[] = []
   const { durations, plays } = model.adjustable
+  if (model.canTrigger && model.optionsUnavailable) {
+    rows.push(
+      rowText('options', {
+        text: t('uiLibrary.deviceCard.siren.optionsUnavailable', 'Options unavailable'),
+        tone: 'muted',
+        testId: 'dc-siren-options-unavailable',
+      }),
+    )
+  }
   if (model.canTrigger && (durations !== null || plays !== null)) {
     const disabled = model.activity === 'sounding' || model.commandPending
     rows.push(

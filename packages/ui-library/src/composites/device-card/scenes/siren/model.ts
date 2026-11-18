@@ -13,10 +13,9 @@ export interface SirenAmount {
   readonly value: number
 }
 
-/** The values the device declares for one unit, and the one it uses when none is asked. */
+/** The values the device declares for one unit. None picked: the trigger asks neither and the camera applies its default. */
 export interface SirenAmountChoices {
   readonly values: readonly number[]
-  readonly defaultValue: number | null
 }
 
 /** What the device declares adjustable; `null` draws no chip for that unit. */
@@ -61,6 +60,8 @@ export interface SirenCardModel {
   /** The sounding run; null while silent. */
   readonly run: SirenRun | null
   readonly adjustable: SirenAdjustable
+  /** The siren's options were asked and failed: the chips are unknown, not absent. */
+  readonly optionsUnavailable: boolean
   /** "Sound on motion" as its authority reports it; null when the device offers none. */
   readonly onMotion: boolean | null
   readonly onMotionPending: boolean
@@ -85,20 +86,19 @@ function rangeValues(range: SirenDurationRange): readonly number[] {
 function choicesOf(
   list: readonly number[] | null,
   range: SirenDurationRange | null,
-  defaultValue: number | null,
 ): SirenAmountChoices | null {
   const declared = list ?? (range === null ? [] : rangeValues(range))
   const values = [...new Set(declared)].sort((a, b) => a - b)
   // One value is not a choice: no chip.
-  return values.length < 2 ? null : { values, defaultValue }
+  return values.length < 2 ? null : { values }
 }
 
 /** The chips the siren's own options declare; nothing until they answered. */
 export function sirenAdjustableOf(options: SirenOptions | undefined): SirenAdjustable {
   if (options === undefined) return NO_ADJUSTABLE
   return {
-    durations: choicesOf(options.allowedSeconds, options.rangeSeconds, options.defaultSeconds),
-    plays: choicesOf(options.allowedPlays, options.rangePlays, options.defaultPlays),
+    durations: choicesOf(options.allowedSeconds, options.rangeSeconds),
+    plays: choicesOf(options.allowedPlays, options.rangePlays),
   }
 }
 
