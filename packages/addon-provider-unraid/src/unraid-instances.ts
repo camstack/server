@@ -68,6 +68,7 @@ export function buildUnraidInstances(
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): UnraidConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) => (body.host ?? '').length > 0 && body.apiKey !== undefined,
     onChanged: () => deps.onChanged(),
     test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {

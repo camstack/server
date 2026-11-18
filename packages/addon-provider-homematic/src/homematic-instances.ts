@@ -100,6 +100,7 @@ export function buildHomematicInstances(
       },
       formSchema: () => buildConnectionFormSchema(),
       initialBody: (name): HomematicConnectionBody => ({ name }),
+      addDevice: () => 'children',
       configured: (body) => (body.host ?? '').trim().length > 0,
       onChanged: () => deps.onChanged(),
       test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {

@@ -38,6 +38,7 @@ export function buildOnvifInstances(
     },
     formSchema: () => ({ sections: [] }),
     initialBody: (name): OnvifConnectionBody => ({ name }),
+    addDevice: () => 'scan',
     configured: () => true,
     // Nothing of a camera is read from the instance: each device owns its connection.
     onChanged: () => undefined,

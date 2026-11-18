@@ -41,6 +41,7 @@ export function buildAmcrestInstances(
       },
       formSchema: () => ({ sections: [] }),
       initialBody: (name): AmcrestConnectionBody => ({ name }),
+      addDevice: () => 'scan',
       configured: () => true,
       // Nothing of a camera is read from the instance: each device owns its connection.
       onChanged: () => undefined,

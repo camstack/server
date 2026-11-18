@@ -49,6 +49,7 @@ export function buildDreoInstances(
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): DreoConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) => (body.email ?? '').length > 0 && body.password !== undefined,
     onChanged: () => deps.onChanged(),
     test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {

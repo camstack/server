@@ -61,6 +61,7 @@ export function buildWyzeInstances(
     },
     formSchema: () => buildSettingsSchema(),
     initialBody: (name): WyzeConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) =>
       (body.email ?? '').length > 0 && body.password !== undefined && body.apiKey !== undefined,
     onChanged: () => deps.onChanged(),

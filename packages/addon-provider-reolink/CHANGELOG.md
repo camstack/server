@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Add device inside a Reolink integration scans the network only for the default integration; an NVR or Home Hub integration adopts its own cameras
+
 ## [1.2.244] - 2026-11-17
 
 ### Changed

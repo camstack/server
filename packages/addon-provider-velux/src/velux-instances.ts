@@ -53,6 +53,7 @@ export function buildVeluxInstances(
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): VeluxConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) => (body.host ?? '').length > 0 && body.password !== undefined,
     onChanged: () => deps.onChanged(),
     test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {

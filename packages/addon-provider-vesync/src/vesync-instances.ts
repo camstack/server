@@ -63,6 +63,7 @@ export function buildVeSyncInstances(
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): VeSyncConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) => (body.email ?? '').length > 0 && body.password !== undefined,
     onChanged: () => deps.onChanged(),
     // The country code is checked at save (the record layer stores what it is handed): a stored

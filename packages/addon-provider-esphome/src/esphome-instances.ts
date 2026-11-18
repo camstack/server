@@ -50,6 +50,7 @@ export function buildEspInstances(
     },
     formSchema: () => buildIntegrationFormSchema(),
     initialBody: (name): EspConnectionsBody => ({ name }),
+    addDevice: () => 'scan',
     configured: (body) => (body.boards ?? []).length > 0,
     onChanged: () => deps.onChanged(),
   })

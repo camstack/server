@@ -112,6 +112,7 @@ export function buildEnpalInstances(
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): EnpalConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) => (body.host ?? '').length > 0,
     onChanged: () => deps.onChanged(),
     test: async ({ values }): Promise<IntegrationTestConnectionResult> => {

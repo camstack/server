@@ -178,6 +178,9 @@ export function buildReolinkInstances(
       },
       formSchema: () => buildHubInstanceSchema(),
       initialBody: (name): ReolinkConnectionBody => ({ name }),
+      // The default integration (no host) holds standalone cameras: a scan adds more of them. An NVR / Home
+      // Hub integration adopts only its own children; a scan there would offer other hosts.
+      addDevice: (body) => ((body.host ?? '').trim().length === 0 ? 'scan' : 'children'),
       configured: (body) => (body.host ?? '').length === 0 || (body.password ?? '').length > 0,
       onChanged: () => deps.onChanged(),
       test: (input) => testReolinkInstance(records, deps, input),

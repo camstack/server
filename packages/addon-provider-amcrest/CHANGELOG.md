@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Add device inside an integration offers the network scan
+
 ## [0.2.174] - 2026-11-18
 
 ### Changed

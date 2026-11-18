@@ -96,6 +96,7 @@ export function buildUnifiInstances(
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): UnifiConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) =>
       (body.host ?? '').length > 0 &&
       (body.apiKey !== undefined || (body.username ?? '').length > 0),

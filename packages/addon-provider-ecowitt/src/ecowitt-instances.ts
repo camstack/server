@@ -143,6 +143,7 @@ export function buildEcowittInstances(
       },
       formSchema: () => buildConnectionFormSchema(),
       initialBody: (name): EcowittConnectionBody => ({ name }),
+      addDevice: () => 'children',
       configured: (body) =>
         body.transport === 'listener' ? true : (body.host ?? '').trim().length > 0,
       onChanged: () => deps.onChanged(),

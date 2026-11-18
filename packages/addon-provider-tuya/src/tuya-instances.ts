@@ -54,6 +54,7 @@ export function buildTuyaInstances(
     },
     formSchema: () => buildConnectionFormSchema(),
     initialBody: (name): TuyaConnectionBody => ({ name }),
+    addDevice: () => 'children',
     configured: (body) => (body.accessId ?? '').length > 0 && body.accessSecret !== undefined,
     onChanged: () => deps.onChanged(),
     test: async ({ id, values }): Promise<IntegrationTestConnectionResult> => {

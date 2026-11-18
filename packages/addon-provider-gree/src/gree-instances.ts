@@ -89,6 +89,7 @@ export function buildGreeInstances(
     },
     formSchema: () => buildGreeInstanceFormSchema(),
     initialBody: (name): GreeConnectionBody => ({ name }),
+    addDevice: () => 'scan',
     configured: () => true,
     // Nothing of an air conditioner is read from the instance: each AC owns its connection.
     onChanged: () => undefined,
