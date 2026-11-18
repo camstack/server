@@ -9,10 +9,10 @@
  * "moved" brings D547's parked-car rows back and a false "never moved"
  * deletes a real passage:
  *  - the REFERENCE is the median centre of the first
- *    {@link PROMOTION_EARLY_BOXES} boxes, and the span is judged PER AXIS:
- *    `DEFAULT_STILL_SPAN_FRACTION` × their median WIDTH sideways, × their
- *    median HEIGHT vertically — the same subject-scaled stillness the state
- *    analyzer uses (D547, `withinStillSpan`), so one truncated first box
+ *    {@link PROMOTION_EARLY_BOXES} boxes, and the span is
+ *    `DEFAULT_STILL_SPAN_FRACTION` × their median WIDTH sideways and × their
+ *    median SHORT side vertically — the same subject-scaled stillness the
+ *    state analyzer uses (D547, `withinStillSpan`), so one truncated first box
  *    (startup, night→day, a car cut by the frame edge) moves neither the
  *    reference nor the scale, and a wide flat car whose width the detector
  *    flips (Retro 1441, ~150x53) is not judged sideways against its height;
@@ -50,9 +50,9 @@ interface MovedReference {
   readonly x: number
   readonly y: number
   /** Median early box width — the sideways scale. */
-  readonly w: number
-  /** Median early box height — the vertical scale. */
-  readonly h: number
+  readonly width: number
+  /** Median early box short side — the vertical scale. */
+  readonly shortSide: number
 }
 
 /** The running "has this track moved" judgement. Immutable: every step returns a new probe (or the same one when nothing changed). */
@@ -84,8 +84,8 @@ function referenceOf(boxes: readonly BoundingBox[]): MovedReference {
   return {
     x: median(boxes.map((b) => b.x + b.w / 2)),
     y: median(boxes.map((b) => b.y + b.h / 2)),
-    w: median(boxes.map((b) => b.w)),
-    h: median(boxes.map((b) => b.h)),
+    width: median(boxes.map((b) => b.w)),
+    shortSide: median(boxes.map((b) => Math.min(b.w, b.h))),
   }
 }
 
@@ -97,7 +97,10 @@ function referenceOf(boxes: readonly BoundingBox[]): MovedReference {
  */
 function displaced(ref: MovedReference, b: BoundingBox): boolean {
   const f = DEFAULT_STILL_SPAN_FRACTION
-  return Math.abs(b.x + b.w / 2 - ref.x) > ref.w * f || Math.abs(b.y + b.h / 2 - ref.y) > ref.h * f
+  return (
+    Math.abs(b.x + b.w / 2 - ref.x) > ref.width * f ||
+    Math.abs(b.y + b.h / 2 - ref.y) > ref.shortSide * f
+  )
 }
 
 function judge(ref: MovedReference, run: number, b: BoundingBox): MovedProbe {

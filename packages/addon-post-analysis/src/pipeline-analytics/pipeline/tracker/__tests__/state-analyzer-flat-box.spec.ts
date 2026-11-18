@@ -7,14 +7,14 @@
  * candidate collected 74 agreeing votes out of 2394, because the tracker
  * called it `moving`.
  *
- * The box is about 150x53 px and the detector flips its WIDTH between ~105
- * and ~185 px, so the centre swings ~20 px sideways. The still window used to
+ * The box is about 150x53 px and the detector flips its WIDTH between ~102
+ * and ~183 px, so the centre swings ~20 px sideways. The still window used to
  * judge that swing against 0.35 of the SHORT side (0.35 x 53 = 18.5 px): about
  * one window in three passed, every failing frame cleared `stationarySince`,
- * and the ten-second dwell restarted forever. Judged per axis — the x-span
- * against the width, the y-span against the height — the same car is still,
- * while a car that crosses (about 1.8 widths per window) and a walking person
- * are still `moving`.
+ * and the ten-second dwell restarted forever. With the x-span judged against
+ * the WIDTH (the y-span still against the short side, as before) the same car
+ * is still, while a car that crosses (about 1.8 widths per window), a walking
+ * person and a person fidgeting in place are still `moving`.
  *
  * Disarms (each alone, restored):
  *  - `windowSaysStill` back on `Math.hypot(spanX, spanY)` against the short
@@ -22,7 +22,11 @@
  *  - `windowSaysStill` sized by the CURRENT box instead of the window's median
  *    box: cpt7vv6emv goes RED (one 102 px frame restarts its dwell);
  *  - `mergeContinuation` back on the hypot of the gap travel against the
- *    larger short side: "merges: the width flipped across the gap" goes RED.
+ *    larger short side: "merges: the width flipped across the gap" goes RED;
+ *  - `windowSaysStill` judging the y-span against the median HEIGHT: the
+ *    36 px and 20 px fidgeting persons go RED;
+ *  - `windowSaysStill` judging the x-span against the median short side: the
+ *    three recorded tracks go RED.
  */
 import type { ObjectState } from '@camstack/types'
 import { describe, expect, it } from 'vitest'
@@ -228,5 +232,36 @@ describe('StateAnalyzer — a flat parked car split by a detection gap', () => {
     a.rename('B', 'A')
     const resumed = piece(a, 'A', after.endMs + STEP_MS, 0.5, 1500, 150)
     expect(resumed.lastState).not.toBe('stationary')
+  })
+})
+
+describe('StateAnalyzer — a tall subject keeps the short-side vertical bar', () => {
+  // Only the SIDEWAYS bar follows the width (the flat car's flicker is
+  // horizontal). Vertically a subject is judged on its short side, as before:
+  // a 50x150 person's y-span may reach 0.35 x 50 = 17.5 px, not 0.35 x 150.
+  const FRAME_MS = 140
+
+  function fidget(swingPx: number): RecordedBox[] {
+    const boxes: RecordedBox[] = []
+    for (let at = 0; at <= 40_000; at += FRAME_MS) {
+      const jitter = ((at / FRAME_MS) % 2) * 4
+      boxes.push([at, 1000 + jitter, 500 + (swingPx / 2) * Math.sin(at / 1500), 50, 150])
+    }
+    return boxes
+  }
+
+  it('a standing person whose centre swings 36 px up and down never settles', () => {
+    const steps = replay('fidget-person', 'person', fidget(36))
+    expect(steps.filter((s) => isSettled(s.state))).toEqual([])
+  })
+
+  it('a swing just over the short-side bar (20 px > 17.5) never settles', () => {
+    const steps = replay('fidget-20', 'person', fidget(20))
+    expect(steps.filter((s) => isSettled(s.state))).toEqual([])
+  })
+
+  it('a swing just under the short-side bar (16 px < 17.5) settles', () => {
+    const steps = replay('fidget-16', 'person', fidget(16))
+    expect(steps.at(-1)?.state).toBe('stationary')
   })
 })

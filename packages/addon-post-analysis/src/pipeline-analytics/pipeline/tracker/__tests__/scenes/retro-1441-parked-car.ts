@@ -5,7 +5,7 @@
  * Trimmed from the stored track records: per position only the time offset
  * from the first one (ms) and the detector box (x, y, w, h) in frame pixels.
  * No image data. The box is wide and flat (~150x53) and the detector flips
- * its WIDTH between ~105 and ~185 px, so the centre swings ~20 px sideways
+ * its WIDTH between ~102 and ~183 px, so the centre swings ~20 px sideways
  * while the car itself never moves.
  */
 export type RecordedBox = readonly [dtMs: number, x: number, y: number, w: number, h: number]
