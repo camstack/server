@@ -2,9 +2,10 @@
  * D1059 through the device class: when the gateway's client comes up and its MAC
  * is unknown for the host it dials, the Gateway device reads it with one unicast
  * probe, stores it on the integration and declares it. No answer leaves it
- * unknown, logged once; a MAC read at another host is never declared.
+ * unknown, logged once; a MAC read at another host is removed.
  */
 import {
+  type CapabilityDefinition,
   type DeviceContext,
   type DeviceIdentifiers,
   DeviceType,
@@ -15,13 +16,13 @@ import {
 } from '@camstack/types'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { type EcowittConfig, settingsToEcowittConfig } from '../config.js'
-import { ecowittConnections } from '../ecowitt-client-registry.js'
-import { ecowittMacReader } from '../ecowitt-gateway-mac.js'
-import type { GatewayMacProbeResult } from '../ecowitt-mac-probe.js'
 import {
   ECOWITT_GATEWAY_DEVICE_KIND,
   EcowittGatewayDevice,
 } from '../devices/ecowitt-gateway-device.js'
+import { ecowittConnections } from '../ecowitt-client-registry.js'
+import { ecowittMacReader } from '../ecowitt-gateway-mac.js'
+import type { GatewayMacProbeResult } from '../ecowitt-mac-probe.js'
 
 interface LogLine {
   readonly msg: string
@@ -45,7 +46,8 @@ function recordingLogger(lines: LogLine[]): IScopedLogger {
 
 function rig(setIdentifiers: object, logger: IScopedLogger): DeviceContext {
   let runtime: IDeviceRuntimeState | null = null
-  // A DeviceContext is the kernel's own object; the spec supplies only what the device reads.
+  // A DeviceContext is the kernel's own object and there is no typed fake of it; the spec supplies
+  // only what the Gateway device reads (the same boundary as the unraid and unifi device specs).
   return {
     id: 21,
     stableId: 'ecowitt:192-0-2-7:gateway',
@@ -69,14 +71,11 @@ function rig(setIdentifiers: object, logger: IScopedLogger): DeviceContext {
     bindRuntimeState: (rs: IDeviceRuntimeState) => {
       runtime = rs
     },
-    registerNativeCap: vi.fn((cap: { name: string; runtimeState?: unknown }) => {
-      if (cap.runtimeState && runtime) {
-        runtime.installCapSchema(
-          cap.name,
-          cap.runtimeState as Parameters<IDeviceRuntimeState['installCapSchema']>[1],
-        )
+    registerNativeCap: (cap: CapabilityDefinition) => {
+      if (cap.runtimeState !== undefined && runtime !== null) {
+        runtime.installCapSchema(cap.name, cap.runtimeState)
       }
-    }),
+    },
     api: { deviceManager: { setIdentifiers } },
     logger,
   } as unknown as DeviceContext
@@ -151,7 +150,7 @@ describe('EcowittGatewayDevice reads and declares its MAC on connect (D1059)', (
     ])
     expect(world.stored?.ip?.value).toBe('192.0.2.7')
 
-    // The MAC is current for the host: the next connect does not probe again.
+    // The MAC is current for the host: the next client start does not probe again.
     await connect(device)
     expect(world.probed).toEqual(['192.0.2.7'])
   })
@@ -187,9 +186,11 @@ describe('EcowittGatewayDevice reads and declares its MAC on connect (D1059)', (
     await connect(device)
     await vi.waitFor(() => expect(world.stored?.ip?.value).toBe('192.0.2.8'))
     expect(world.probed).toEqual(['192.0.2.8'])
+    // The old gateway's MAC is removed, never kept beside the new address.
+    expect(world.stored?.mac).toBeUndefined()
     const forNewHost = world.inputs.at(-1)
     expect(forNewHost?.identifiers?.mac).toBeUndefined()
-    expect(forNewHost?.unread).toEqual(['mac'])
+    expect(forNewHost?.unread ?? []).toEqual([])
 
     reachable = true
     await connect(device)

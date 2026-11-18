@@ -43,7 +43,7 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
   private macUnknownLogged = false
   /** `onActivate` ran: before it, an online flip from the constructor does no I/O. */
   private activated = false
-  /** One MAC read per connect: a second flip while one runs does not start another. */
+  /** One MAC read per client start: a second flip while one runs does not start another. */
   private macReadInFlight = false
 
   constructor(ctx: DeviceContext) {
@@ -58,20 +58,31 @@ export class EcowittGatewayDevice extends BaseDevice<typeof ecowittGatewayDevice
   override async onActivate(): Promise<void> {
     await super.onActivate()
     this.activated = true
-    if (this.online) await this.onGatewayConnected()
+    // Fire-and-forget: the probe may wait 1.5 s, activation does not.
+    if (this.online) this.startGatewayConnected()
   }
 
   /** The gateway's client came up: its connection is current, so read and declare from it. */
   override markOnline(online: boolean): void {
     const wasOnline = this.online
     super.markOnline(online)
-    if (online && !wasOnline && this.activated) void this.onGatewayConnected()
+    if (online && !wasOnline && this.activated) this.startGatewayConnected()
+  }
+
+  private startGatewayConnected(): void {
+    this.onGatewayConnected().catch((err: unknown) => {
+      this.ctx.logger.warn('ecowitt gateway identity on connect failed', {
+        tags: { deviceId: this.id },
+        meta: { integrationId: this.integrationId, error: errMsg(err) },
+      })
+    })
   }
 
   /**
    * Declare what the connection knows, then, when its MAC is unknown for the host it dials, read it
    * with ONE unicast probe, store it on the integration and declare again (D1059). A failed read
-   * leaves the MAC unknown, logged once; the next connect tries again.
+   * leaves the MAC unknown, logged once; it is tried again the next time the gateway's client
+   * starts (addon boot or a connection edit) — no timer, no retry.
    */
   private async onGatewayConnected(): Promise<void> {
     await this.declareGatewayIdentity()

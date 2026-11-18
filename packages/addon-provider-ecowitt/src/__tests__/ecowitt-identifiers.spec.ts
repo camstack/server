@@ -2,8 +2,8 @@
  * D1059 for an Ecowitt gateway: the MAC the LAN scan read out of the gateway's
  * `CMD_BROADCAST` reply is carried through adoption into the integration's
  * connection with the host it was read at, and the Gateway device declares it
- * with the host it dials. No MAC, or one read at another host, leaves `mac`
- * unread: a value stored earlier is kept, never replaced by "absent" (D49, D393).
+ * with the host it dials. A MAC never read leaves `mac` unread (a stored value
+ * is kept, D49, D393); one read at another host is removed.
  */
 import {
   type DeviceIdentifiers,
@@ -16,8 +16,8 @@ import {
 import { describe, expect, it } from 'vitest'
 import { settingsToEcowittConfig } from '../config.js'
 import { ecowittGatewayIdentifiers } from '../ecowitt-identifiers.js'
-import { ecowittCandidates, ecowittGatewaysFromHits } from '../ecowitt-lan-discovery.js'
 import { EcowittConnectionBodySchema } from '../ecowitt-instances.js'
+import { ecowittCandidates, ecowittGatewaysFromHits } from '../ecowitt-lan-discovery.js'
 import { gatewayReplyHex } from './support/ecowitt-reply.js'
 
 const DOC_MAC = [0x00, 0x00, 0x5e, 0x00, 0x53, 0x2a] as const
@@ -91,7 +91,7 @@ describe('Ecowitt gateway identifiers (D1059)', () => {
     expect(merged?.mac?.[0]?.value).toBe('00:00:5e:00:53:2a')
   })
 
-  it('a MAC read at another host is not declared: the gateway behind this config may be another', () => {
+  it('a MAC read at another host is removed: the gateway behind this config may be another', () => {
     const declaration = ecowittGatewayIdentifiers(
       settingsToEcowittConfig({
         transport: 'local',
@@ -100,7 +100,7 @@ describe('Ecowitt gateway identifiers (D1059)', () => {
         macHost: '192.0.2.7',
       }),
     )
-    expect(declaration).toEqual({ identifiers: { mac: null, host: '192.0.2.8' }, unread: ['mac'] })
+    expect(declaration).toEqual({ identifiers: { mac: null, host: '192.0.2.8' }, unread: [] })
   })
 
   it('the integration record keeps the MAC and the host it was read at', () => {

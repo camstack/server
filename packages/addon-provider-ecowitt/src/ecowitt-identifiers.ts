@@ -9,11 +9,13 @@
  * stored on the integration's connection as `mac`, with `macHost`, the host it
  * was read at.
  *
- * A MAC is declared only for the host it was read at. No MAC, or one read at
- * another host (the gateway behind this config may have been swapped), leaves
- * `mac` unread: nothing is claimed, and a value stored earlier is not replaced by
- * "absent" (D49, D393). A push-listener gateway, or one whose client is not
- * running, declares nothing: its address is not known to this addon.
+ * A MAC is declared only for the host it was read at. A MAC read at ANOTHER host
+ * is known not to be this host's (the gateway behind this config may have been
+ * swapped): `mac` is left out of both the identifiers and `unread`, so the stored
+ * value is REMOVED — never kept beside the new address. Only a MAC never read
+ * leaves `mac` unread, so a value stored earlier is kept (D49, D393). A
+ * push-listener gateway, or one whose client is not running, declares nothing:
+ * its address is not known to this addon.
  *
  * Sensors share no hardware identifier with the gateway and declare none.
  */
@@ -48,8 +50,9 @@ export function ecowittGatewayIdentifiers(
 ): EcowittIdentifierDeclaration | null {
   if (connection === null || connection.transport !== 'local') return null
   const mac = currentGatewayMac(connection)
+  const neverRead = (connection.mac?.trim() ?? '').length === 0
   return {
     identifiers: { mac, host: connection.host },
-    unread: mac === null ? ['mac'] : [],
+    unread: neverRead ? ['mac'] : [],
   }
 }

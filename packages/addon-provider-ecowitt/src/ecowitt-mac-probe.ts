@@ -1,8 +1,9 @@
 /**
  * Read a gateway's MAC from the host it is configured at: the LAN scan's own
  * `CMD_BROADCAST` probe, sent UNICAST to that host on UDP 46000, its reply read
- * by the scan's parser. One datagram, one short wait, no retry: the next connect
- * tries again. Never a broadcast — this path only asks the host it was given.
+ * by the scan's parser. One datagram, one short wait, no timer and no retry: it is
+ * tried again the next time the gateway's client starts (addon boot or a
+ * connection edit). Never a broadcast — this path only asks the host it was given.
  */
 import { createSocket } from 'node:dgram'
 import { errMsg } from '@camstack/types'
