@@ -10,7 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - The refresh log line now shows the power state it read, so a stale cloud answer is visible
-- VeSync no longer creates a Gateway device; an existing one can be removed by hand.
+- VeSync no longer creates a Gateway device; an existing one stays inert (skipped at boot) until removed by hand.
 
 ## [0.2.167] - 2026-11-18
 
