@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.715] - 2026-11-18
+
 ### Changed
 
 - Sensor events on the timeline record only what the device reported, never a command still waiting for confirmation.

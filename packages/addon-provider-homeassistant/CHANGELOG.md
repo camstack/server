@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.694] - 2026-11-18
+
 ### Changed
 
 - Home Assistant export publishes only device-confirmed values while a command is in flight.

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.468] - 2026-11-18
+
 ### Changed
 
 - Device controls show the state the hub serves: a command's new value now comes from the hub and is the same on every screen, and a refused command is still reported

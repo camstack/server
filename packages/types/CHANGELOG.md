@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.592] - 2026-11-18
+
 ### Changed
 
 - A command's vocabulary names every field it sets (a fan speed set in a preset also leaves the preset; a thermostat's fan mode, preset and range), and a device provider can say at registration that a command is never held, or held for another time.
