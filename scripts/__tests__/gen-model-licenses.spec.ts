@@ -18,7 +18,8 @@ describe('gen-model-licenses', () => {
   })
 
   it('marks step defaults, and only them', () => {
-    expect(rows.find((r) => r.id === 'yolo26n')?.isDefault).toBe(true)
+    expect(rows.find((r) => r.id === 'yolov9s-320')?.isDefault).toBe(true)
+    expect(rows.find((r) => r.id === 'yolo26n')?.isDefault).toBe(false)
     expect(rows.find((r) => r.id === 'yunet-2023mar')?.isDefault).toBe(true)
     expect(rows.find((r) => r.id === 'yolo26x')?.isDefault).toBe(false)
     expect(rows.find((r) => r.id === 'yolov9s-320-edgetpu')?.isDefault).toBe(true)
