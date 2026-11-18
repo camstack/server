@@ -12,7 +12,7 @@
  * Absent and pending are different screens (D315): device-history not
  * installed, the list not answered yet, and "nothing recorded" each say so.
  */
-import { useCallback, useMemo, useState, type JSX, type ReactNode } from 'react'
+import { useCallback, useMemo, useState, type JSX } from 'react'
 import { EyeOff, History as HistoryIcon, LineChart } from 'lucide-react'
 import type { DeviceHistoryQueryManyEntry, DeviceHistoryQueryManyItem } from '@camstack/types'
 import { useUiText } from '../../contexts/ui-text'
@@ -96,8 +96,6 @@ export function DeviceHistoryView({
     [panels.value.hidden, deviceId],
   )
   const [collapsed, setCollapsed] = useState<ReadonlySet<string>>(new Set())
-  // The per-point charts sit under the lanes, closed until asked for.
-  const [singlesOpen, setSinglesOpen] = useState(false)
 
   const sections = useMemo<readonly HistorySection[]>(
     () => (list.status === 'ok' ? groupDeviceSeries(list.data, humanizeName) : []),
@@ -274,12 +272,7 @@ export function DeviceHistoryView({
           syncKey={syncKey}
         />
       )}
-      <SinglesGroup
-        wrap={fixedWindow === undefined}
-        count={visible.reduce((n, s) => n + s.charts.length, 0)}
-        open={singlesOpen}
-        onOpenChange={setSinglesOpen}
-      >
+      <div className={STACK_GAP}>
         {visible.map((section) => {
           const open = !collapsed.has(section.id)
           return (
@@ -349,42 +342,8 @@ export function DeviceHistoryView({
             </CollapsibleCard>
           )
         })}
-      </SinglesGroup>
+      </div>
     </div>
-  )
-}
-
-interface SinglesGroupProps {
-  /** False (a fixed window): the charts are the view, no group around them. */
-  readonly wrap: boolean
-  readonly count: number
-  readonly open: boolean
-  readonly onOpenChange: (next: boolean) => void
-  readonly children: ReactNode
-}
-
-/** The per-point charts, collapsed by default under "Single charts (n)". */
-function SinglesGroup({
-  wrap,
-  count,
-  open,
-  onOpenChange,
-  children,
-}: SinglesGroupProps): JSX.Element {
-  const t = useUiText()
-  if (!wrap) return <>{children}</>
-  return (
-    <CollapsibleCard
-      expanded={open}
-      onExpandedChange={onOpenChange}
-      header={
-        <span className="text-xs font-semibold text-foreground" data-testid="dc-history-singles">
-          {t('uiLibrary.history.singleCharts', 'Single charts ({{count}})', { count })}
-        </span>
-      }
-    >
-      <div className={STACK_GAP}>{children}</div>
-    </CollapsibleCard>
   )
 }
 

@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * The global History block: one lane per unit (on/off series as bands), the
- * Points selector switching lanes, and the single charts closed under it.
+ * Points selector switching lanes, and the single charts stacked below, always visible.
  */
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -120,24 +120,18 @@ describe('historyLanes', () => {
 })
 
 describe('DeviceHistoryView lanes', () => {
-  it('shows the lanes first and the single charts closed under "Single charts (n)"', () => {
+  it('shows the lanes first and the single charts stacked below, always visible', () => {
     gate.series = SERIES
     render(<DeviceHistoryView deviceId={1} />)
     const ids = lanes().map((l) => l.getAttribute('data-lane'))
     expect(ids).toEqual(expect.arrayContaining(['lane:°C', 'lane:%', 'lane:W', 'bands']))
     expect(lanes().filter((l) => l.getAttribute('data-lane') !== 'bands')).toHaveLength(3)
-    const heading = screen.getByTestId('dc-history-singles')
-    expect(heading.textContent).toContain('Single charts (')
-    // Closed: no single chart is drawn besides the lane charts.
+    expect(screen.queryByTestId('dc-history-singles')).toBeNull()
+    expect(screen.queryByText(/Single charts/)).toBeNull()
     const singles = screen
-      .queryAllByTestId('chart')
-      .filter((c) => !(c.getAttribute('data-id') ?? '').startsWith('lane:'))
-    expect(singles).toHaveLength(0)
-    fireEvent.click(heading)
-    const opened = screen
       .getAllByTestId('chart')
       .filter((c) => !(c.getAttribute('data-id') ?? '').startsWith('lane:'))
-    expect(opened.length).toBeGreaterThan(0)
+    expect(singles.length).toBeGreaterThan(0)
   })
 
   it('the Points selector adds and removes lanes', () => {
