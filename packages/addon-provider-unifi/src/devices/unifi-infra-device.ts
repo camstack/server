@@ -7,6 +7,8 @@ import {
   DeviceType,
   type IDevice,
   type InferNativeProvider,
+  type PowerMeterStatus,
+  powerMeterCapability,
   registerPowerSwitch,
   type WorkloadStatus,
   workloadCapability,
@@ -27,6 +29,7 @@ import {
   UNIFI_HOST_WORKLOAD_UNKNOWN,
   unifiHostWorkloadStatus,
 } from '../unifi-host-workload.js'
+import { hasPoePort, infraPoeTotalStatus } from '../unifi-port-state.js'
 import { unifiInfraIdentifiers } from '../unifi-identifiers.js'
 import { unifiControllers } from '../unifi-node-resolver.js'
 import { UnifiFeatureDevice } from './unifi-feature-device.js'
@@ -59,6 +62,7 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
   private snapshotUnsub: (() => void) | null = null
   /** The last identity declaration sent, so an unchanged poll sends nothing. */
   private lastIdentityKey: string | null = null
+  private poeTotalRegistered = false
 
   constructor(ctx: DeviceContext) {
     const cfg = unifiInfraSchema.parse(ctx.persistedConfig ?? {})
@@ -102,6 +106,21 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
     this.recomputeWorkload()
   }
 
+  /**
+   * `power-meter` only on a device with a PoE-capable port: the total PoE power it delivers to
+   * connected devices (not its own draw).
+   */
+  private registerPoeTotal(): void {
+    const provider: InferNativeProvider<typeof powerMeterCapability> = {
+      getStatus: async () =>
+        this.runtimeState.getCapState<PowerMeterStatus>(powerMeterCapability.name) ?? {
+          lastFetchedAt: 0,
+        },
+    }
+    this.ctx.registerNativeCap(powerMeterCapability, provider)
+    this.poeTotalRegistered = true
+  }
+
   /** A console, switch or access point restart: the controller's own `restartDevice` of it. */
   private async restartInfra(deviceId: number): Promise<void> {
     if (deviceId !== this.id) throw new UnifiDeviceMismatchError(this.id, deviceId)
@@ -132,6 +151,20 @@ export class UnifiInfraDevice extends BaseDevice<typeof unifiInfraSchema> {
    */
   private recomputeWorkload(): void {
     if (this.type !== DeviceType.Workload) return
+    const ports = unifiControllers.getLiveInfra(this.integrationId, this.infraNativeId)?.ports
+    if (ports === undefined) {
+      // A failed read is unknown, never the last total a reachable controller reported.
+      if (this.poeTotalRegistered) {
+        this.runtimeState.setCapState(powerMeterCapability.name, { lastFetchedAt: Date.now() })
+      }
+    } else if (hasPoePort(ports)) {
+      // The snapshot may not be loaded at activation: the cap registers when a PoE port first shows.
+      if (!this.poeTotalRegistered) this.registerPoeTotal()
+      this.runtimeState.setCapState(
+        powerMeterCapability.name,
+        infraPoeTotalStatus(ports, Date.now()),
+      )
+    }
     const previous =
       this.runtimeState.getCapState<WorkloadStatus>(workloadCapability.name) ??
       UNIFI_HOST_WORKLOAD_UNKNOWN

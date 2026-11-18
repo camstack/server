@@ -19,6 +19,27 @@ export function portPowerStatus(port: UnifiInfraPort, now: number): PowerMeterSt
   }
 }
 
+/** Whether an infra device has at least one PoE-capable port (the gate for its own `power-meter`). */
+export function hasPoePort(ports: readonly UnifiInfraPort[]): boolean {
+  return ports.some((port) => port.poeCapable)
+}
+
+/**
+ * `power-meter` of the infra device itself: the PoE power it DELIVERS to connected devices (the
+ * sum of its PoE ports' draw) — NOT the switch's own consumption. The controller's per-device
+ * payload is not forwarded by any client, so the total is the sum of the ports that reported a
+ * reading; a port that did not is unknown, and when none reported the total is absent (D393),
+ * never 0.
+ */
+export function infraPoeTotalStatus(
+  ports: readonly UnifiInfraPort[],
+  now: number,
+): PowerMeterStatus {
+  const readings = ports.flatMap((port) => (port.poePowerW === null ? [] : [port.poePowerW]))
+  if (readings.length === 0) return { lastFetchedAt: now }
+  return { power: readings.reduce((sum, w) => sum + w, 0), lastFetchedAt: now }
+}
+
 const KBPS_PER_MBPS = 1000
 
 /**

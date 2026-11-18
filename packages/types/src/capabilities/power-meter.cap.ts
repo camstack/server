@@ -73,6 +73,8 @@ const POWER_METER_DEVICE_TYPES = [
   DeviceType.Vacuum,
   DeviceType.LawnMower,
   DeviceType.PetFeeder,
+  // A PoE switch's card reports the PoE power it delivers; a Workload with no provider shows nothing.
+  DeviceType.Workload,
 ] as const
 
 /** Everything but a bare `Sensor`: a sensor that takes its reading from another sensor adds nothing. */

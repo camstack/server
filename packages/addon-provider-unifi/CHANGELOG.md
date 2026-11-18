@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - UniFi switches and access points restart from their card, like the console
 - UniFi switches and access points no longer have a separate Restart button device; restart from the card
+- A UniFi switch or access point with PoE ports shows a power-meter on its own card: the total PoE power it delivers
 
 ## [0.2.170] - 2026-11-18
 

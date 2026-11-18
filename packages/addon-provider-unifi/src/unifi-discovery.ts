@@ -1,10 +1,12 @@
 import {
   deviceAdminLinkCapability,
   type DiscoveredChildDevice,
+  powerMeterCapability,
   presenceCapability,
   workloadCapability,
 } from '@camstack/types'
 import type { UnifiClientSnapshot, UnifiInfraSnapshot } from './unifi-client-contract.js'
+import { hasPoePort } from './unifi-port-state.js'
 import { unifiDeviceTarget } from './unifi-device-kind.js'
 import {
   buildInfraFeatures,
@@ -115,6 +117,10 @@ export function buildDiscoveryCandidates(
     const adoptedDeviceId = adoptedOf(nativeId)
     const status = device.online ? 'online' : 'offline'
     const ports = poePortCandidates(device, status, portClientName)
+    const capabilities = [
+      ...(device.kind === 'console' ? CONSOLE_CAPABILITIES : []),
+      ...(hasPoePort(device.ports) ? [powerMeterCapability.name] : []),
+    ]
     return {
       childNativeId: nativeId,
       name: device.name.length > 0 ? device.name : `${input.controllerName} — ${device.model}`,
@@ -127,7 +133,7 @@ export function buildDiscoveryCandidates(
       },
       alreadyAdopted: adoptedDeviceId !== null,
       adoptedDeviceId,
-      ...(device.kind === 'console' ? { capabilities: [...CONSOLE_CAPABILITIES] } : {}),
+      ...(capabilities.length > 0 ? { capabilities } : {}),
       ...(ports.length > 0 ? { children: ports } : {}),
     } satisfies DiscoveredChildDevice
   })
