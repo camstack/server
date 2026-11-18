@@ -28,7 +28,8 @@ export const PowerMeterStatusSchema = z.object({
     .meta(readingMeta('power', { label: 'Power' })),
   /**
    * Power the device passes on to downstream loads (watts), e.g. the PoE a switch delivers to
-   * its ports. Part of `power`, never added to it: the device's own draw is `netPowerOf`.
+   * its ports. When `power` is known it already includes this (the own draw is `netPowerOf`);
+   * a device that reports no total (a UniFi switch) carries this field alone.
    */
   deliveredPower: z
     .number()
@@ -61,15 +62,17 @@ export type PowerMeterStatus = z.infer<typeof PowerMeterStatusSchema>
 
 /**
  * The device's own draw: `power − deliveredPower`. Derived, never stored, and only when the total
- * is known; with nothing delivered it is `power`. Unknown stays `undefined`, never 0. Every
- * consumer that adds power across devices counts this, so delivered power is not counted twice
- * on top of the downstream devices' own meters.
+ * is known; with nothing delivered it is `power`. Unknown stays `undefined`, never 0 — and
+ * so does a delivered figure above the total, which is a reading out of step, not a negative
+ * draw. A consumer that adds power across devices should count this, so delivered power is not
+ * counted twice on top of the downstream devices' own meters.
  */
 export function netPowerOf(
   status: Pick<PowerMeterStatus, 'power' | 'deliveredPower'>,
 ): number | undefined {
   if (status.power === undefined) return undefined
-  return status.power - (status.deliveredPower ?? 0)
+  const net = status.power - (status.deliveredPower ?? 0)
+  return net < 0 ? undefined : net
 }
 
 /**

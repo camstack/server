@@ -15,6 +15,11 @@ describe('netPowerOf', () => {
     expect(netPowerOf({})).toBeUndefined()
   })
 
+  it('is unknown when the delivered figure exceeds the total (readings out of step)', () => {
+    expect(netPowerOf({ power: 5, deliveredPower: 6 })).toBeUndefined()
+    expect(netPowerOf({ power: 6, deliveredPower: 6 })).toBe(0)
+  })
+
   it('declares deliveredPower as an optional field', () => {
     expect(
       PowerMeterStatusSchema.safeParse({ deliveredPower: 5.5, lastFetchedAt: 1 }).success,
