@@ -62,7 +62,7 @@ import {
   subscribeAmcrestEvents,
 } from './amcrest-cgi-client.js'
 import { availabilityFromStorage } from './clips/clip-availability.js'
-import { readConfigTables } from './config-table-read.js'
+import { type ConfigTablesRead, readConfigTables } from './config-table-read.js'
 import { readOnboardStorage } from './onboard-storage-read.js'
 import type { AmcrestClipCamera } from './clips/clip-service.js'
 import {
@@ -144,6 +144,16 @@ export const AMCREST_PULSE_HOLD_MS: number = 5_000
 function motionCodeKey(code: string, index: number | null): string {
   return `${code}:${index ?? ''}`
 }
+
+/** The config tables one image-settings read asks for. */
+const IMAGE_SETTINGS_CONFIG_NAMES = [
+  'VideoColor',
+  'VideoInSharpness',
+  'VideoInOptions',
+  'VideoImageControl',
+  'VideoInExposure',
+  'VideoInBacklight',
+] as const
 
 export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implements ICameraDevice {
   readonly type = DeviceType.Camera as const
@@ -379,7 +389,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       this.clearPtzAutoStop()
       this.client = null
       this.eventClient = null
-      this.extrasUnsupportedTables = new Set()
+      this.unsupportedConfigTables = new Set()
       // Rebuild the onboard-motion stream against the new connection —
       // its client reference is now stale. Skipped while disposed/inactive
       // (no controller and this runs post-activate only when a stream was up).
@@ -683,25 +693,45 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
   // ── Driver-authored settings (extras + connection) ─────────────────
 
   /**
-   * Extras tables this camera answered HTTP 400 for. Kept in memory only, so
-   * later refreshes batch just the supported names; cleared when the camera
-   * goes offline or its connection changes, so the next read probes again
-   * (a firmware update can add a table).
+   * `configManager` tables this camera answered HTTP 400 for (a Lite model
+   * has no `Lighting`, maybe no `VideoInBacklight`). Kept in memory only, so
+   * later multi-name reads batch just the supported names; cleared when the
+   * camera goes offline or its connection changes, so the next read probes
+   * again (a firmware update can add a table).
    */
-  private extrasUnsupportedTables: ReadonlySet<string> = new Set()
+  private unsupportedConfigTables: ReadonlySet<string> = new Set()
 
-  /** Remember the unsupported tables and say so ONCE per discovery. */
-  private noteExtrasUnsupportedTables(unsupported: readonly string[]): void {
-    const discovered = unsupported.filter((name) => !this.extrasUnsupportedTables.has(name))
-    if (discovered.length === 0) return
-    this.extrasUnsupportedTables = new Set([...this.extrasUnsupportedTables, ...discovered])
-    this.ctx.logger.info(
-      'amcrest: camera does not have some extras config tables — their settings are hidden',
-      {
-        tags: { deviceId: this.id },
-        meta: { unsupportedTables: [...this.extrasUnsupportedTables] },
-      },
-    )
+  /**
+   * Read several config tables in one request, tolerating the ones this
+   * model does not have (see {@link readConfigTables}). Records the
+   * unsupported names and says so ONCE per discovery.
+   */
+  private async readCameraConfigTables(names: readonly string[]): Promise<ConfigTablesRead> {
+    const read = await readConfigTables(this.ensureClient(), names, this.unsupportedConfigTables)
+    const discovered = read.unsupported.filter((name) => !this.unsupportedConfigTables.has(name))
+    if (discovered.length > 0) {
+      this.unsupportedConfigTables = new Set([...this.unsupportedConfigTables, ...discovered])
+      this.ctx.logger.info(
+        'amcrest: camera does not have some config tables — their settings are hidden',
+        {
+          tags: { deviceId: this.id },
+          meta: { unsupportedTables: [...this.unsupportedConfigTables] },
+        },
+      )
+    }
+    return read
+  }
+
+  /** Whether the camera answered HTTP 400 for config table `name`. */
+  private configTableUnsupported(name: string): boolean {
+    return this.unsupportedConfigTables.has(name)
+  }
+
+  /** Reachability transition: forget the table probe when the camera drops,
+   *  so it is asked again when it comes back. */
+  private onReachabilityChange(online: boolean): void {
+    if (!online) this.unsupportedConfigTables = new Set()
+    this.markOnline(online)
   }
 
   /** Single-flight guard for the extras snapshot refresh. */
@@ -719,13 +749,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     if (this.extrasRefreshInFlight) return this.extrasRefreshInFlight
     const promise = (async (): Promise<void> => {
       try {
-        const client = this.ensureClient()
-        const read = await readConfigTables(
-          client,
-          AMCREST_EXTRAS_CONFIG_NAMES,
-          this.extrasUnsupportedTables,
-        )
-        this.noteExtrasUnsupportedTables(read.unsupported)
+        const read = await this.readCameraConfigTables(AMCREST_EXTRAS_CONFIG_NAMES)
         const extras = parseExtrasSnapshot(read.table, Date.now(), read.unsupported)
         const cache = this.config.get('deviceCache') ?? {}
         await this.config.setAll({ deviceCache: { ...cache, extras } })
@@ -875,8 +899,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
         return true
       },
       setOnline: (online) => {
-        if (!online) this.extrasUnsupportedTables = new Set()
-        this.markOnline(online)
+        this.onReachabilityChange(online)
       },
       isEnabled: () => !this.disabled,
       logger: this.ctx.logger,
@@ -904,7 +927,12 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       })
       return null
     })
-    const { identifiers, unread } = amcrestIdentifiers({ serialNumber, mac, host, channel })
+    const { identifiers, unread } = amcrestIdentifiers({
+      serialNumber,
+      mac,
+      host,
+      channel,
+    })
     const result = await this.declareIdentifiers(identifiers, { unread })
     if (result.outcome !== 'declared') this.identityDeclared = false
   }
@@ -1083,7 +1111,12 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
           })
           return null
         }
-        return { url: built.url, label: 'Web UI', target: 'device' as const, host }
+        return {
+          url: built.url,
+          label: 'Web UI',
+          target: 'device' as const,
+          host,
+        }
       },
     }
     this.ctx.registerNativeCap(deviceAdminLinkCapability, provider)
@@ -1844,10 +1877,11 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       if (this.privacyMaskRefreshInFlight) return this.privacyMaskRefreshInFlight
       const promise = (async () => {
         try {
-          const client = this.ensureClient()
           // One round-trip for both halves: the mask slots AND the
           // per-profile microphone flags the `audioEnabled` summary needs.
-          const table = await client.getConfigs(['PrivacyMasking', 'Encode'])
+          // A model without `PrivacyMasking` keeps its Encode half.
+          const { table } = await this.readCameraConfigTables(['PrivacyMasking', 'Encode'])
+          const masksUnsupported = this.configTableUnsupported('PrivacyMasking')
           const regions: PrivacyMaskRegion[] = []
           for (let i = 0; i < maxRegions; i++) {
             const prefix = `PrivacyMasking[0][${i}]`
@@ -1878,7 +1912,8 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
           }))
           const next: PrivacyMaskStatus = {
             enabled: regions.length > 0,
-            regions,
+            // No mask table on this model: "no answer", never "no zones".
+            regions: masksUnsupported ? null : regions,
             audioEnabled: summarisePrivacyAudio(audioProfiles),
             lastFetchedAt: Date.now(),
           }
@@ -1936,7 +1971,12 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
           supportsAudioMute: false,
         }
         if (deviceId !== this.id) return cold
-        return { ...cold, supportsAudioMute: true }
+        return {
+          ...(this.configTableUnsupported('PrivacyMasking')
+            ? { maxRegions: 0, supportedShapes: [] }
+            : { maxRegions, supportedShapes: ['rect'] as const }),
+          supportsAudioMute: !this.configTableUnsupported('Encode'),
+        }
       },
       setAudioEnabled: async ({ deviceId, enabled }): Promise<void> => {
         if (deviceId !== this.id) return
@@ -2264,15 +2304,8 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
       if (this.imageSettingsRefreshInFlight) return this.imageSettingsRefreshInFlight
       const promise = (async () => {
         try {
-          const client = this.ensureClient()
-          const table = await client.getConfigs([
-            'VideoColor',
-            'VideoInSharpness',
-            'VideoInOptions',
-            'VideoImageControl',
-            'VideoInExposure',
-            'VideoInBacklight',
-          ])
+          // A model missing one of these tables keeps the others.
+          const { table } = await this.readCameraConfigTables(IMAGE_SETTINGS_CONFIG_NAMES)
           const brightness = parseIntOrUndefined(table.get('VideoColor[0][0].Brightness'))
           const contrast = parseIntOrUndefined(table.get('VideoColor[0][0].Contrast'))
           const saturation = parseIntOrUndefined(table.get('VideoColor[0][0].Saturation'))
@@ -2286,7 +2319,7 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
             parseIntOrUndefined(table.get('VideoInExposure[0][0].Mode')),
           )
           const backlightMode = amcrestBacklightToCap(table.get('VideoInBacklight[0][0].Mode'))
-          if (brightness === undefined && contrast === undefined && saturation === undefined) return
+          if (table.size === 0) return
           const next: ImageSettingsStatus = {
             ...(brightness !== undefined ? { brightness } : {}),
             ...(contrast !== undefined ? { contrast } : {}),
@@ -2342,23 +2375,32 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
           backlightModes: [],
         }
         if (deviceId !== this.id) return cold
+        // A table this model answered 400 for advertises no control — the
+        // derived UI then leaves its fields out.
+        const has = (name: string): boolean => !this.configTableUnsupported(name)
         return {
           ...cold,
-          supportsBrightness: true,
-          brightness: NORMALIZED_RANGE,
-          supportsContrast: true,
-          contrast: NORMALIZED_RANGE,
-          supportsSaturation: true,
-          saturation: NORMALIZED_RANGE,
-          supportsSharpness: true,
-          sharpness: NORMALIZED_RANGE,
-          supportsMirror: true,
-          supportsFlip: true,
+          ...(has('VideoColor')
+            ? {
+                supportsBrightness: true,
+                brightness: NORMALIZED_RANGE,
+                supportsContrast: true,
+                contrast: NORMALIZED_RANGE,
+                supportsSaturation: true,
+                saturation: NORMALIZED_RANGE,
+              }
+            : {}),
+          ...(has('VideoInSharpness')
+            ? { supportsSharpness: true, sharpness: NORMALIZED_RANGE }
+            : {}),
+          ...(has('VideoInOptions') ? { supportsMirror: true, supportsFlip: true } : {}),
           // No '180' — Dahua's Rotate90 has no native 180° (the vendor
           // UI composes mirror+flip for it).
-          rotateOptions: ['0', '90', '270'],
-          exposureModes: ['auto', 'manual'],
-          backlightModes: ['off', 'blc', 'wdr', 'hlc'],
+          ...(has('VideoImageControl') ? { rotateOptions: ['0', '90', '270'] as const } : {}),
+          ...(has('VideoInExposure') ? { exposureModes: ['auto', 'manual'] as const } : {}),
+          ...(has('VideoInBacklight')
+            ? { backlightModes: ['off', 'blc', 'wdr', 'hlc'] as const }
+            : {}),
           // whiteBalanceModes stays [] — see the section doc: the WB
           // table is stored-but-dead on this firmware (functionally
           // disproven with a zero-green-gain snapshot).
@@ -2441,7 +2483,10 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     const configChannel = Math.max(0, this.channel - 1)
 
     const emptyStatus = (): RecordingOnboardStatus => ({
-      storage: { kind: 'unknown', reason: 'CamStack has not read this camera yet.' },
+      storage: {
+        kind: 'unknown',
+        reason: 'CamStack has not read this camera yet.',
+      },
       tracks: [],
       primaryTrackId: null,
       enabled: null,
@@ -2470,6 +2515,8 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
     let lastRecordMode: number | null = null
     /** Which `StorageGroup` row is the local card. */
     let lastStorageGroupIndex: number | null = null
+    /** The last `recordingToNowhere` this cap logged, so it is said once per change. */
+    let lastRecordingToNowhere = false
 
     /** Read every table this cap needs. A table that failed is null, never empty. */
     const readAll = async (): Promise<AmcrestOnboardReads> => {
@@ -2523,14 +2570,27 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
           const next = applyReads(reads)
           this.runtimeState.setCapState(CAP_NAME, next)
 
-          if (next.recordingToNowhere) {
-            this.ctx.logger.warn(
-              'amcrest onboard recording: camera is scheduled to record and has no usable storage',
-              {
-                tags: { deviceId: this.id },
-                meta: { windows: next.windows.length, unreadable: next.unreadableWindows },
-              },
-            )
+          // Said once per state change, not on every refresh: a camera with
+          // no card stays that way, and the slice carries it in between.
+          if (next.recordingToNowhere !== lastRecordingToNowhere) {
+            lastRecordingToNowhere = next.recordingToNowhere
+            if (next.recordingToNowhere) {
+              this.ctx.logger.warn(
+                'amcrest onboard recording: camera is scheduled to record and has no usable storage',
+                {
+                  tags: { deviceId: this.id },
+                  meta: {
+                    windows: next.windows.length,
+                    unreadable: next.unreadableWindows,
+                  },
+                },
+              )
+            } else {
+              this.ctx.logger.info(
+                'amcrest onboard recording: camera no longer records to nowhere',
+                { tags: { deviceId: this.id } },
+              )
+            }
           }
           if (next.unreadableWindows > 0) {
             this.ctx.logger.warn(
@@ -2603,7 +2663,10 @@ export class AmcrestCamera extends BaseDevice<typeof amcrestCameraSchema> implem
         if (refusal !== null) {
           this.ctx.logger.warn(
             'amcrest onboard recording: refusing a write this camera cannot take',
-            { tags: { deviceId: this.id }, meta: { refusal, fields: Object.keys(settings) } },
+            {
+              tags: { deviceId: this.id },
+              meta: { refusal, fields: Object.keys(settings) },
+            },
           )
           throw new Error(`device ${String(this.id)}: ${refusal}`)
         }
