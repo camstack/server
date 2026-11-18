@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.663] - 2026-11-18
+
 ### Changed
 
 - The inference pool log now names the device the ONNX session actually runs on (device=cpu when only the CPU provider bound), not the device it was asked for.

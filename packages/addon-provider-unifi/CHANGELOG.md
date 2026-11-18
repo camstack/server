@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.171] - 2026-11-18
+
 ### Changed
 
 - UniFi switches and access points restart from their card, like the console

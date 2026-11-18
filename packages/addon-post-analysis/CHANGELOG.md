@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.717] - 2026-11-18
+
 ### Changed
 
 - Notifications never show a device's numeric id: a device that could not be named reads as (unnamed) instead.

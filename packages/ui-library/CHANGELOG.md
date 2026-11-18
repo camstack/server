@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.471] - 2026-11-18
+
 ### Changed
 
 - A device's history shows every chart stacked and always visible; the collapsible Single charts group is gone

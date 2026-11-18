@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.700] - 2026-11-18
+
 ### Changed
 
 - The Integrations page shows only a Scan network button with a pill counting devices found in the background; they are reviewed inside the scan modal

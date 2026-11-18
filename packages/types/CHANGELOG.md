@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.595] - 2026-11-18
+
 ### Changed
 
 - An NVIDIA GPU is no longer offered as a cuda inference device unless the node's ONNX Runtime has the CUDA execution provider (it ran on the CPU before).
