@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Broker stats carry the effective encode of a derived stream (encoder, fps, GOP, bitrate target and cap, audio mode).
 
+### Changed
+
+- FFmpeg rate control accepts an optional ABR target fraction on a capped encode.
+
 ## [1.2.598] - 2026-11-18
 
 ### Changed
@@ -19,7 +23,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- FFmpeg rate control accepts an optional ABR target fraction on a capped encode.
 
 ## [1.2.597] - 2026-11-18
 
