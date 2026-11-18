@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.701] - 2026-11-18
+
 ### Changed
 
 - Pipeline step matrix marks a cell whose model is a stored pin (ovr) instead of showing it like the hardware default
