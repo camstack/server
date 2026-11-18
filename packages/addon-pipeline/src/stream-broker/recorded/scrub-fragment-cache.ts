@@ -84,7 +84,7 @@ export class ScrubFragmentCache {
   ) {}
 
   /** The byte budget for a profile — the scrub profile gets the real one. */
-  private budgetFor(profile: string): number {
+  budgetBytes(profile: string): number {
     return profile === SCRUB_CACHE_BUDGET_PROFILE ? this.maxBytes : this.otherMaxBytes
   }
 
@@ -131,7 +131,7 @@ export class ScrubFragmentCache {
     bytes += fragmentBytes(frag)
     this.bytesByProfile.set(profile, bytes)
 
-    const budget = this.budgetFor(profile)
+    const budget = this.budgetBytes(profile)
     const prefix = `${profile}|`
     while (
       (this.bytesByProfile.get(profile) ?? 0) > budget &&

@@ -288,7 +288,8 @@ describe('scrub degradations are reported, never inferred', () => {
     const h = slowReadDeps(10)
     const feeder = new RecordedFeeder({
       ...h.deps,
-      // Above SCRUB_WHOLE_SEGMENT_MAX_BYTES: the read unit degrades from the
+      // Above the whole-segment ceiling (`scrubWholeSegmentCeilingBytes`, hard
+      // bound 4 MB): the read unit degrades from the
       // whole segment to a GOP range, which is the exact break a 10 s → 60 s
       // segment change makes silent.
       locate: async ({ epochMs }: { epochMs: number }) => ({

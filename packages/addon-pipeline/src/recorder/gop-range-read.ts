@@ -33,12 +33,11 @@ import {
  * Byte budget for the `readGopBytes` fallback read, used with
  * {@link GopRangeArgs.maxBytes}.
  *
- * Same conceptual ceiling as `SCRUB_WHOLE_SEGMENT_MAX_BYTES` in
- * `stream-broker/recorded/recorded-feeder.ts` (D163, 1.5 MB) — declared here
- * independently rather than imported, because that module is the CLIENT
- * feeder (a different addon-internal concern; importing its whole dependency
- * graph for one number is the wrong direction). If D163's number moves,
- * this one moves with it.
+ * This was the same number as the feeder's whole-segment ceiling (D163,
+ * 1.5 MB). That ceiling is now derived from the session cache budget
+ * (`scrubWholeSegmentCeilingBytes`, `stream-broker/recorded/scrub-read-budget.ts`);
+ * this one stays a fixed bound on ONE fallback range read, declared here
+ * because the recorder must not import the client feeder's graph.
  */
 export const SCRUB_GOP_BUDGET_MAX_BYTES = 1_500_000
 

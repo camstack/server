@@ -5,6 +5,11 @@ import type { DemuxPathCounts, DemuxPathTally } from './demux-path-tally'
 import { FeedOrigin, MonotonicClock } from './feed-clock'
 import { type ScrubCoverage, ScrubDragStats, type ScrubMapMode } from './scrub-drag-stats'
 import { SCRUB_FRAGMENT_CACHE_MAX_BYTES, ScrubFragmentCache } from './scrub-fragment-cache'
+import {
+  SCRUB_WHOLE_SEGMENT_HARD_MAX_BYTES,
+  scrubWarmFillByteBudget,
+  scrubWholeSegmentCeilingBytes,
+} from './scrub-read-budget'
 import type { AccessUnit } from './segment-demux'
 import { repairSegmentPts } from './segment-pts-repair.js'
 
@@ -323,40 +328,19 @@ const SCRUB_JUMP_TRAVEL_MAX_STILLS = 3
  * careful gesture in.
  */
 const SCRUB_WHOLE_SEGMENT_PROFILE = 'low'
-/**
- * Safety ceiling on ONE scrub read, in bytes.
+/*
+ * The size ceiling on ONE whole-segment scrub read is no longer a constant: it
+ * is derived from the session fragment-cache budget under a hard bound
+ * (`scrubWholeSegmentCeilingBytes`, `scrub-read-budget.ts`), so a ~1.5 Mbps
+ * HEVC `low` (1.5-2.4 MB per segment) is still read whole while a mis-pinned
+ * `high` (~5 MB) still falls back to the GOP range. A segment past it is
+ * COUNTED and LOGGED (`scrub-feeder:oversize-segment`, `oversizeSegments` on
+ * the drag census) with the size, the ceiling and the budget it came from.
  *
- * `low` is ~230 KB per 10 s, so this is ~6× headroom for a camera whose
- * substream is unusually fat — but a segment past it (a mis-pinned `high` at
- * ~5 MB) falls back to the GOP range, because reading 5 MB to push one
- * keyframe is the trade this change exists to avoid, in the other direction.
- *
- * ⚠️ THIS NUMBER IS TIED TO THE SEGMENT DURATION AND THE TIE IS NOT ENFORCED.
- * It was tuned against a 10-second `low` segment. At the 60-second segments
- * the 2026-08-25 teardown proposes, a NATIVE `low` is ~1.4 MB (just inside,
- * and the whole-segment read gets six times better — one seek leaves a minute
- * of access units behind) while a DERIVED `low` is ~4.8 MB (outside, and every
- * scrub read silently degrades to a 3-seek GOP range that leaves nothing
- * behind). Same constant, opposite outcomes, no signal either way — which is
- * why the degradation is now COUNTED and LOGGED
- * (`scrub-feeder:oversize-segment`, `oversizeSegments` on the drag census)
- * instead of being inferred from a falling hit rate.
- *
- * The real fix, for when 60 s segments land, is a read unit that is a BYTE
- * BUDGET over the fragment's own keyframe table — "as many consecutive GOPs
- * as fit in N bytes" — computed from `tfra` offsets alone, no payload read
- * (`fragmentsWithinBudget`, `recorder/mfra-index.ts`). `readGopBytes` now uses
- * exactly this budget on the fallback path below: it no longer reads exactly
- * one GOP, it reads as many CONSECUTIVE fragments as fit this same ceiling, in
- * one range read (`gop-range-read.ts`'s `maxBytes`). The recorder-side handler
- * (`recording-provider.ts`) declares its OWN copy of this number
- * (`SCRUB_GOP_BUDGET_MAX_BYTES` in `gop-range-read.ts`) rather than importing
- * this module — the client feeder is a different addon-internal concern, and
- * pulling its whole dependency graph in for one number is the wrong
- * direction. Exported here so a future caller in THIS process can reuse it;
- * if D163's number moves, move both.
+ * The fallback (`readGopBytes`) reads as many CONSECUTIVE fragments as fit the
+ * recorder's own byte budget (`SCRUB_GOP_BUDGET_MAX_BYTES` in
+ * `gop-range-read.ts`, `fragmentsWithinBudget` in `recorder/mfra-index.ts`).
  */
-export const SCRUB_WHOLE_SEGMENT_MAX_BYTES = 1_500_000
 /**
  * How still the finger must be before the window warm may take the disk back.
  *
@@ -387,6 +371,18 @@ const SCRUB_WARM_AROUND_MS = 15 * 60_000
 const SCRUB_RECENTER_MS = 120_000
 /** Typical demuxed `low` segment; the warm cap is `budget / this`. */
 const SCRUB_WARM_SEGMENT_BYTES = 200_000
+/** What one warm fill has read so far: the two bounds it is held to. */
+interface WarmSpend {
+  readonly segments: number
+  readonly bytes: number
+}
+const NO_WARM_SPEND: WarmSpend = { segments: 0, bytes: 0 }
+/** One warm step: the segment's span, and the bytes read for it (null = cache hit). */
+interface WarmStep {
+  readonly startMs: number
+  readonly durMs: number
+  readonly fetchedBytes: number | null
+}
 /** Hard bound on warm reads, derived from the session RAM budget. */
 const SCRUB_WARM_MAX_SEGMENTS = Math.max(
   1,
@@ -1841,7 +1837,7 @@ export class RecordedFeeder {
         const centre = this.scrubWarmCentreMs
         if (centre === null) return
         const startedAt = performance.now()
-        const fetched = await this.warmScrubWindow(
+        const spend = await this.warmScrubWindow(
           centre,
           dragGen,
           gen,
@@ -1856,7 +1852,9 @@ export class RecordedFeeder {
             dragId: this.scrubDragId,
             fillGen: gen,
             idle: this.idleWarm && !this.scrubbing,
-            fetched,
+            fetched: spend.segments,
+            fetchedBytes: spend.bytes,
+            byteBudget: this.warmFillByteBudget(),
             ms: Math.round(performance.now() - startedAt),
           })
           // An IDLE window that completed is done for good: recorded footage
@@ -1925,36 +1923,57 @@ export class RecordedFeeder {
     fillGen: number,
     backMs: number,
     fwdMs: number,
-  ): Promise<number> {
+  ): Promise<WarmSpend> {
     // Backward FIRST and with the larger span: a drag that starts at the live
     // edge, or on a notification's moment, is looking for what already happened.
-    const spent = await this.warmScrubDirection(centreMs, -1, backMs, 0, dragGen, fillGen)
+    const spent = await this.warmScrubDirection(
+      centreMs,
+      -1,
+      backMs,
+      NO_WARM_SPEND,
+      dragGen,
+      fillGen,
+    )
     return this.warmScrubDirection(centreMs, 1, fwdMs, spent, dragGen, fillGen)
   }
 
   /**
-   * Walk `dir` from `fromMs` until `spanMs` of timeline is warm (or the shared
-   * bound is hit), reading each segment that is not already cached. Returns the
-   * running total of segments read, so the two directions share one budget.
+   * Bytes one warm fill may read: what the session cache can keep for this
+   * profile. A fat stream (2 MB segments) would otherwise read ~150 segments
+   * around the cursor and evict each warm segment with the next one.
+   */
+  private warmFillByteBudget(): number {
+    return scrubWarmFillByteBudget(this.scrubCache.budgetBytes(this.deps.profile))
+  }
+
+  /**
+   * Walk `dir` from `fromMs` until `spanMs` of timeline is warm (or a shared
+   * bound is hit: {@link SCRUB_WARM_MAX_SEGMENTS} reads, or the fill's byte
+   * budget), reading each segment that is not already cached. Returns the
+   * running spend, so the two directions share one budget.
    */
   private async warmScrubDirection(
     fromMs: number,
     dir: 1 | -1,
     spanMs: number,
-    spent: number,
+    spent: WarmSpend,
     dragGen: number,
     fillGen: number,
-  ): Promise<number> {
+  ): Promise<WarmSpend> {
+    const byteBudget = this.warmFillByteBudget()
     let read = spent
     let probeMs = fromMs
     for (let i = 0; i < SCRUB_WARM_MAX_SEGMENTS; i++) {
       if (!this.warmLoopAlive(dragGen)) return read
       if (fillGen !== this.scrubWarmGen) return read
-      if (read >= SCRUB_WARM_MAX_SEGMENTS) return read
+      if (read.segments >= SCRUB_WARM_MAX_SEGMENTS) return read
+      if (read.bytes >= byteBudget) return read
       if (Math.abs(probeMs - fromMs) > spanMs) return read
       const seg = await this.warmOneScrubSegment(probeMs, dragGen, fillGen)
       if (seg === null) return read
-      if (seg.fetched) read += 1
+      if (seg.fetchedBytes !== null) {
+        read = { segments: read.segments + 1, bytes: read.bytes + seg.fetchedBytes }
+      }
       probeMs = dir === -1 ? seg.startMs - 1 : seg.startMs + seg.durMs + 1
       if (probeMs < 0) return read
     }
@@ -1971,10 +1990,10 @@ export class RecordedFeeder {
     probeMs: number,
     dragGen: number,
     fillGen: number,
-  ): Promise<{ startMs: number; durMs: number; fetched: boolean } | null> {
+  ): Promise<WarmStep | null> {
     try {
       const warm = this.scrubCache.covering(this.deps.profile, probeMs)
-      if (warm) return { startMs: warm.startMs, durMs: warm.durMs, fetched: false }
+      if (warm) return { startMs: warm.startMs, durMs: warm.durMs, fetchedBytes: null }
       // A MOVING FINGER OWNS THE DISK.
       //
       // `waitForTickReadIdle` below only avoids OVERLAPPING a tick read already
@@ -2030,7 +2049,7 @@ export class RecordedFeeder {
       if (fillGen !== this.scrubWarmGen) return null
       this.scrubCache.put(this.deps.profile, load.seg)
       this.scrubPrefetched.add(load.seg.startMs)
-      return { startMs: load.seg.startMs, durMs: load.seg.durMs, fetched: true }
+      return { startMs: load.seg.startMs, durMs: load.seg.durMs, fetchedBytes: load.readBytes }
     } catch {
       // Best-effort by construction: a failed warm just means the tick that
       // lands there pays its own read.
@@ -2838,16 +2857,19 @@ export class RecordedFeeder {
 
   /**
    * Whether this located segment is read WHOLE. The scrub profile is, up to a
-   * safety ceiling on the byte size — see {@link SCRUB_WHOLE_SEGMENT_PROFILE}.
+   * ceiling derived from the session cache budget under a hard bound
+   * (`scrubWholeSegmentCeilingBytes`) — see {@link SCRUB_WHOLE_SEGMENT_PROFILE}.
    * A `locate` that does not report a size is trusted for the scrub profile,
    * where the shape is known and small.
    */
   private readsWholeSegment(loc: LocatedSegment): boolean {
     if (this.deps.profile !== SCRUB_WHOLE_SEGMENT_PROFILE) return false
-    if (loc.bytes === undefined || loc.bytes <= SCRUB_WHOLE_SEGMENT_MAX_BYTES) return true
+    const cacheBudgetBytes = this.scrubCache.budgetBytes(this.deps.profile)
+    const ceilingBytes = scrubWholeSegmentCeilingBytes(cacheBudgetBytes)
+    if (loc.bytes === undefined || loc.bytes <= ceilingBytes) return true
     // A `low` segment too big to read whole is the documented degradation of
-    // {@link SCRUB_WHOLE_SEGMENT_MAX_BYTES} — it is exactly the failure that a
-    // segment-duration change makes silent otherwise. It no longer drops all
+    // the ceiling — it is exactly the failure that a segment-duration change
+    // (or a fat substream) makes silent otherwise. It no longer drops all
     // the way to one seek per frame: `readGop` now reads as many CONSECUTIVE
     // fragments as fit the SAME budget (`fragmentsWithinBudget` on the
     // recorder), so a segment that overshoots this pre-check by a little still
@@ -2863,7 +2885,9 @@ export class RecordedFeeder {
         startMs: loc.startMs,
         durMs: loc.durMs,
         bytes: loc.bytes,
-        maxBytes: SCRUB_WHOLE_SEGMENT_MAX_BYTES,
+        ceilingBytes,
+        hardMaxBytes: SCRUB_WHOLE_SEGMENT_HARD_MAX_BYTES,
+        cacheBudgetBytes,
         bytesPerSecond: loc.durMs > 0 ? Math.round(loc.bytes / (loc.durMs / 1000)) : null,
       })
     }

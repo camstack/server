@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Scrubbing recordings of high-bitrate cameras is fast again.
+
 ## [1.2.661] - 2026-11-18
 
 ### Changed
