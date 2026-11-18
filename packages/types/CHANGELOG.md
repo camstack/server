@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.598] - 2026-11-18
+
 ### Changed
 
 - pipelineExecutor.getInferenceDeviceHealth reports an optional absentReason, and the inference device exclusion reasons gain no-gpu-device

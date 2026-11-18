@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.473] - 2026-11-18
+
 ### Changed
 
 - Clicking a device row opens the quick-detail modal when the host provides one; the cog glyph is gone
