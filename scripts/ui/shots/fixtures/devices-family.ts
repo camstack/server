@@ -4,6 +4,8 @@
  * `--fixtures devices-family --route /devices`.
  */
 import { defineFixtures } from './_define'
+import { DEVICE_SERIES, queryResult, seriesInfo } from './_history-data'
+import heroModel from './hero-model'
 import { tagHandlers } from './_tags'
 
 const ENPAL = 'provider-enpal'
@@ -51,7 +53,15 @@ const PORCH = row(8804, 'Porch', 'camera', NVR, 8803, 'home-hub-porch', {
   tags: ['Garden', 'Night'],
 })
 
-const DEVICES = [CONTAINER, ENERGY, GRID, OWN, HUB, PORCH]
+// The washer of `hero-model` (982): its hero model carries consumables, and the
+// series below give its card a History button, so the quick-detail modal shows
+// the same content as the viewer's device card.
+const WASHER = row(982, 'Lavatrice', 'washer', 'provider-appliances', null, 'lavatrice', {
+  features: [],
+})
+const WASHER_SERIES = DEVICE_SERIES[971] ?? []
+
+const DEVICES = [CONTAINER, ENERGY, GRID, OWN, HUB, PORCH, WASHER]
 
 const SLICE = {
   solar: { powerW: 4200, energyKwh: 12000, todayKwh: 18.4 },
@@ -135,5 +145,12 @@ export default defineFixtures({
     },
     'preferences.get': { rows: [] },
     'heroLayout.getRowModels': {},
+    'heroLayout.getHeroModel': heroModel.handlers['heroLayout.getHeroModel'],
+    'deviceHistory.listSeries': (i: { deviceId?: number }) =>
+      seriesInfo(i.deviceId === 982 ? WASHER_SERIES : []),
+    'deviceHistory.query': (i: { key: string; scope?: string; from: number; to: number }) =>
+      queryResult(WASHER_SERIES, i.key, i.scope, i.from, i.to),
+    'deviceHistory.getDeviceEnabled': { enabled: true },
+    'deviceRuns.listRuns': { runs: [], nextCursor: null },
   },
 })

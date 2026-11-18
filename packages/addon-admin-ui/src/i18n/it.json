@@ -7565,12 +7565,10 @@
     "leaveTitle": "Annullare le modifiche non salvate?",
     "nameRequired": "Il nome è obbligatorio",
     "openFull": "Apri il dettaglio completo",
-    "openHistory": "Apri la cronologia completa",
     "save": "Salva",
     "saving": "Salvataggio…",
     "tabDisplay": "Visualizzazione",
     "tabExport": "Esportazione",
-    "tabHistory": "Storico",
     "tabInfo": "Info dispositivo",
     "openPage": "Apri pagina dispositivo",
     "tabDetail": "Dettaglio"

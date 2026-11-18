@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
 /**
- * The quick-detail modal keeps history in its own tab, and only after
- * listSeries has answered with at least one series. Leaving for the full
+ * The quick-detail modal's Detail tab is the viewer's device detail: the hero
+ * card (which carries consumables and the History button) in the bare frame,
+ * with no legacy fallback and no separate History tab. Leaving for the full
  * detail page asks before dropping unsaved edits.
  */
 import { ConfirmDialogProvider, useDeviceQuickDetailOpen } from '@camstack/ui-library'
@@ -11,18 +12,15 @@ import type { ReactNode } from 'react'
 import { MemoryRouter, useLocation } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 import '../../../i18n'
-import { historyTabVisible, type HistoryListSnapshot } from '../history-tab'
 
-const series = vi.hoisted(() => ({
-  presence: 'pending' as 'pending' | 'present' | 'absent' | 'unknown',
-  list: { status: 'pending' } as HistoryListSnapshot,
+const hero = vi.hoisted(() => ({
+  props: null as Record<string, unknown> | null,
 }))
 
 vi.mock('@camstack/ui-library', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@camstack/ui-library')>()
   return {
     ...actual,
-    useDeviceSeriesList: () => series,
     useDeviceManagerGetDevice: () => ({
       data: { id: 7, name: 'Driveway', location: 'Hall' },
     }),
@@ -50,13 +48,13 @@ vi.mock('../overview-adapters/DeviceInfoAdapter', async () => {
 })
 
 vi.mock('../hero/DeviceHeroCard', () => ({
-  DeviceHeroCard: () => <div data-testid="hero-card">hero</div>,
+  DeviceHeroCard: (props: Record<string, unknown>) => {
+    hero.props = props
+    return <div data-testid="hero-card">hero</div>
+  },
 }))
 vi.mock('../tabs/DeviceAggregateSection', () => ({
   DeviceAggregateSection: () => <div>export</div>,
-}))
-vi.mock('../DeviceQuickHistory', () => ({
-  DeviceQuickHistory: () => <div data-testid="history-panel">history-panel</div>,
 }))
 
 import { DeviceQuickDetailHost } from '../DeviceQuickDetail'
@@ -76,7 +74,9 @@ function LocationProbe(): ReactNode {
 }
 
 function renderModal(): ReturnType<typeof render> {
-  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  })
   return render(
     <QueryClientProvider client={client}>
       <ConfirmDialogProvider>
@@ -95,62 +95,19 @@ function openModal(): void {
   fireEvent.click(screen.getByRole('button', { name: 'open-quick' }))
 }
 
-describe('historyTabVisible', () => {
-  it('stays hidden until the series list answers with at least one series', () => {
-    expect(historyTabVisible('pending', { status: 'pending' })).toBe(false)
-    expect(historyTabVisible('unknown', { status: 'pending' })).toBe(false)
-    expect(historyTabVisible('absent', { status: 'pending' })).toBe(false)
-    expect(historyTabVisible('present', { status: 'pending' })).toBe(false)
-    expect(historyTabVisible('present', { status: 'error', error: 'down' })).toBe(false)
-    expect(historyTabVisible('present', { status: 'ok', data: [] })).toBe(false)
-    expect(
-      historyTabVisible('present', {
-        status: 'ok',
-        data: [{ key: 'cap:climate.temperature' }],
-      }),
-    ).toBe(true)
-  })
-})
-
 describe('DeviceQuickDetail modal', () => {
-  it('hides the History tab until series exist, and does not describe the modal', () => {
-    series.presence = 'pending'
-    series.list = { status: 'pending' }
-    const view = renderModal()
-    openModal()
-    expect(screen.queryByRole('button', { name: 'History' })).toBeNull()
-    expect(screen.queryByText(/same surfaces as the detail page/)).toBeNull()
-
-    series.presence = 'present'
-    series.list = { status: 'ok', data: [] }
-    view.rerender(
-      <QueryClientProvider client={new QueryClient()}>
-        <ConfirmDialogProvider>
-          <MemoryRouter initialEntries={['/devices']}>
-            <LocationProbe />
-            <DeviceQuickDetailHost>
-              <Open />
-            </DeviceQuickDetailHost>
-          </MemoryRouter>
-        </ConfirmDialogProvider>
-      </QueryClientProvider>,
-    )
-    openModal()
-    expect(screen.queryByRole('button', { name: 'History' })).toBeNull()
-    view.unmount()
-
-    series.presence = 'present'
-    series.list = { status: 'ok', data: [{ key: 'cap:climate.temperature' }] }
+  it('shows the viewer detail on Detail: the model card alone, in the bare frame, no History tab', () => {
     renderModal()
     openModal()
-    expect(screen.queryByRole('heading', { name: 'History' })).toBeNull()
-    fireEvent.click(screen.getByRole('button', { name: 'History' }))
-    expect(screen.getByTestId('history-panel')).toBeTruthy()
+    expect(screen.getByTestId('hero-card')).toBeTruthy()
+    expect(hero.props).toMatchObject({ deviceId: 7, legacyFallback: false })
+    expect(screen.queryByRole('button', { name: 'History' })).toBeNull()
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual(
+      expect.arrayContaining(['Detail', 'Device info', 'Export']),
+    )
   })
 
   it('opens the device page immediately when nothing is dirty', () => {
-    series.presence = 'absent'
-    series.list = { status: 'pending' }
     renderModal()
     openModal()
     fireEvent.click(screen.getByRole('button', { name: 'Open device page' }))
@@ -160,8 +117,6 @@ describe('DeviceQuickDetail modal', () => {
   })
 
   it('opens on the device detail tab', () => {
-    series.presence = 'absent'
-    series.list = { status: 'pending' }
     renderModal()
     openModal()
     expect(screen.getByTestId('hero-card')).toBeTruthy()
@@ -169,8 +124,6 @@ describe('DeviceQuickDetail modal', () => {
   })
 
   it('asks before leaving unsaved edits, and stays when the operator cancels', async () => {
-    series.presence = 'absent'
-    series.list = { status: 'pending' }
     renderModal()
     openModal()
     fireEvent.click(screen.getByRole('button', { name: 'edit-name' }))

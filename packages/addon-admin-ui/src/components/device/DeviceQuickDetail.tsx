@@ -6,14 +6,16 @@
  * Integration detail, nested Integrations expand, ChildrenList, …) opens it
  * on a row click from that context — call sites do not wire anything.
  *
- * Opens on the live detail card the device page shows at its top (the
- * default tab), then the Overview device-info facts and the Export form; name,
- * room, role, tags and display are edited there and saved together. History is
- * its own tab, shown only after listSeries answers with a series. The header's
- * "Open device page" button is the one way to the full page.
+ * Opens on the SAME device detail the viewer shows (`/embed/device/<id>`: the
+ * `DeviceDetailModule` card in the bare frame — hero, consumables, and History
+ * from the card's own History button), then the Overview device-info facts and
+ * the Export form; name, room, role, tags and display are edited there and
+ * saved together. The header's "Open device page" button is the one way to the
+ * full page.
  */
 import {
   Button,
+  DeviceCardFrameProvider,
   DeviceContextProvider,
   DeviceQuickDetailProvider,
   Dialog,
@@ -23,19 +25,16 @@ import {
   DialogTitle,
   useDeviceLabelById,
   useDeviceManagerGetDevice,
-  useDeviceSeriesList,
 } from '@camstack/ui-library'
 import { useCallback, useState, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
-import { DeviceQuickHistory } from './DeviceQuickHistory'
-import { historyTabVisible } from './history-tab'
 import { DeviceInfoAdapter } from './overview-adapters/DeviceInfoAdapter'
 import { DeviceHeroCard } from './hero/DeviceHeroCard'
 import { QuickDetailSaveProvider, useQuickDetailSave } from './quick-detail-save'
 import { DeviceAggregateSection } from './tabs/DeviceAggregateSection'
 import { isDeviceExportSection } from './tabs/device-export-tab'
 
-type QuickTabId = 'detail' | 'info' | 'export' | 'history'
+type QuickTabId = 'detail' | 'info' | 'export'
 
 /** The one way from the modal to the device page; asks first over unsaved edits. */
 function OpenDevicePageButton(): ReactNode {
@@ -59,9 +58,6 @@ function DeviceQuickDetailModal({
   const { t } = useTranslation()
   const [tab, setTab] = useState<QuickTabId>('detail')
   const { data: device } = useDeviceManagerGetDevice({ deviceId }, { enabled: deviceId > 0 })
-  const series = useDeviceSeriesList(deviceId)
-  const showHistory = historyTabVisible(series.presence, series.list)
-  const visibleTab: QuickTabId = tab === 'history' && !showHistory ? 'detail' : tab
   const deviceName = typeof device?.name === 'string' ? device.name : ''
   const name = useDeviceLabelById(
     deviceId,
@@ -73,9 +69,6 @@ function DeviceQuickDetailModal({
     ['detail', t('deviceQuickDetail.tabDetail', { defaultValue: 'Detail' })],
     ['info', t('deviceQuickDetail.tabInfo', { defaultValue: 'Device info' })],
     ['export', t('deviceQuickDetail.tabExport', { defaultValue: 'Export' })],
-    ...(showHistory
-      ? [['history', t('deviceQuickDetail.tabHistory', { defaultValue: 'History' })] as const]
-      : []),
   ]
 
   return (
@@ -110,7 +103,7 @@ function DeviceQuickDetailModal({
                 type="button"
                 onClick={() => setTab(id)}
                 className={`px-2.5 py-1 rounded text-[11px] font-medium transition-colors ${
-                  visibleTab === id
+                  tab === id
                     ? 'bg-surface text-foreground shadow-sm'
                     : 'text-foreground-subtle hover:text-foreground'
                 }`}
@@ -122,26 +115,24 @@ function DeviceQuickDetailModal({
           <DialogBody className="mt-3">
             <DeviceContextProvider deviceId={deviceId} device={device ?? undefined}>
               {/* Kept mounted so an edit on one tab survives a switch to another. */}
-              {visibleTab === 'detail' ? (
+              {tab === 'detail' ? (
                 // Mounted only while shown: a camera's stream must not play behind a tab.
-                <DeviceHeroCard
-                  deviceId={deviceId}
-                  device={device}
-                  deviceName={name}
-                  onNavigated={onClose}
-                />
+                <DeviceCardFrameProvider frame="bare">
+                  <DeviceHeroCard
+                    deviceId={deviceId}
+                    device={device}
+                    deviceName={name}
+                    legacyFallback={false}
+                    onNavigated={onClose}
+                  />
+                </DeviceCardFrameProvider>
               ) : null}
-              <div className={visibleTab === 'info' ? undefined : 'hidden'}>
+              <div className={tab === 'info' ? undefined : 'hidden'}>
                 <DeviceInfoAdapter />
               </div>
-              <div className={visibleTab === 'export' ? undefined : 'hidden'}>
+              <div className={tab === 'export' ? undefined : 'hidden'}>
                 <DeviceAggregateSection deviceId={deviceId} sectionFilter={isDeviceExportSection} />
               </div>
-              {showHistory ? (
-                <div className={visibleTab === 'history' ? undefined : 'hidden'}>
-                  <DeviceQuickHistory deviceId={deviceId} />
-                </div>
-              ) : null}
             </DeviceContextProvider>
           </DialogBody>
         </QuickDetailSaveProvider>

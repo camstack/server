@@ -28,6 +28,11 @@ export interface DeviceHeroCardProps {
   readonly device: DeviceHeroCardDevice | null | undefined
   readonly deviceName: string
   readonly defaultHistoryOpen?: boolean
+  /**
+   * Draw the legacy per-type hero when the hero model draws nothing. The device
+   * page does; the viewer's card and the quick-detail modal show the model alone.
+   */
+  readonly legacyFallback?: boolean
   readonly onDrawn?: (drawn: boolean) => void
   /** Called after the card navigated away (the modal closes itself). */
   readonly onNavigated?: () => void
@@ -38,6 +43,7 @@ export function DeviceHeroCard({
   device,
   deviceName,
   defaultHistoryOpen = false,
+  legacyFallback = true,
   onDrawn,
   onNavigated,
 }: DeviceHeroCardProps): ReactNode {
@@ -74,17 +80,21 @@ export function DeviceHeroCard({
       onOpenDevice={(id) => go(`/devices/${String(id)}`)}
       onOpenCamera={(id) => go(`/devices/${String(id)}`)}
       onNavigate={go}
-      fallback={
-        <DeviceHero
-          deviceId={deviceId}
-          deviceName={deviceName}
-          deviceType={device?.type ?? 'unknown'}
-          deviceRole={device?.role ?? null}
-          provider={String(device?.addonId ?? 'rtsp')}
-          isOnline={device?.online === true}
-          features={features}
-        />
-      }
+      {...(legacyFallback
+        ? {
+            fallback: (
+              <DeviceHero
+                deviceId={deviceId}
+                deviceName={deviceName}
+                deviceType={device?.type ?? 'unknown'}
+                deviceRole={device?.role ?? null}
+                provider={String(device?.addonId ?? 'rtsp')}
+                isOnline={device?.online === true}
+                features={features}
+              />
+            ),
+          }
+        : {})}
     />
   )
 }
