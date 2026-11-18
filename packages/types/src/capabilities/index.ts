@@ -1592,6 +1592,9 @@ export type {
   OccupancyLookRefusal,
   OccupancyLookRequest,
   SetCameraSensorsInput,
+  StepClusterMode,
+  StepSwitchCell,
+  StepSwitchMatrix,
 } from './pipeline-orchestrator.cap.js'
 export {
   AgentLoadSummarySchema,
@@ -1628,6 +1631,9 @@ export {
   PipelineAssignmentSchema,
   pipelineOrchestratorCapability,
   SetCameraSensorsInputSchema,
+  StepClusterModeSchema,
+  StepSwitchCellSchema,
+  StepSwitchMatrixSchema,
 } from './pipeline-orchestrator.cap.js'
 export type {
   DetailParent,

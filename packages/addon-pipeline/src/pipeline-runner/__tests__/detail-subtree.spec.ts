@@ -293,6 +293,42 @@ describe('runDetailSubtree', () => {
     )
   })
 
+  it('(b4) a subtree switched off on every device that could run it is never dispatched (D1065)', async () => {
+    const stepA = makeStep({ addonId: 'face-detection' })
+    const stepB = makeStep({ addonId: 'plate-detection' })
+    const getNativeCrop = vi.fn().mockResolvedValue({
+      jpeg: Buffer.from('crop'),
+      width: 100,
+      height: 100,
+      frameSpace: { x: 0, y: 0, w: 100, h: 100 },
+      source: 'native' as const,
+    } satisfies CropSource)
+    const runPipeline = vi.fn().mockResolvedValue(makeFrameResult([]))
+    const placeStep = vi.fn(
+      (_deviceId: number, step: PipelineStepInputOutput): DetailStepPlacement =>
+        step.addonId === 'face-detection'
+          ? {
+              deviceKey: 'openvino:npu',
+              step,
+              decision: { kind: 'disabled-on-device', deviceKey: 'openvino:npu' },
+              provisioned: false,
+            }
+          : { deviceKey: undefined, step, decision: null, provisioned: false },
+    )
+    await runDetailSubtree(
+      {
+        ...baseDeps,
+        resolveChildSteps: vi.fn().mockReturnValue([stepA, stepB]),
+        getNativeCrop,
+        runPipeline,
+        placeStep,
+      },
+      { deviceId: DEVICE_ID, frameHandle: makeFrameHandle(), parent: makeParent() },
+    )
+    expect(runPipeline).toHaveBeenCalledTimes(1)
+    expect(runPipeline.mock.calls[0]?.[0]).toEqual([stepB])
+  })
+
   it('(b2) no frameHandle at all — cropJpeg fallback used directly, native never attempted', async () => {
     const sharp = (await import('sharp')).default
     const rawRgb = Buffer.alloc(10 * 10 * 3, 64)

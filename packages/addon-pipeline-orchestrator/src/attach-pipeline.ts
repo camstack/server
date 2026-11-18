@@ -194,9 +194,12 @@ async function provisionAttachPipeline(
   )
   const inferenceDevices = roster?.map((entry): RunnerInferenceDevice => {
     const src = sources.get(entry.deviceKey)
+    const disabledSteps = src?.disabledSteps ?? []
     return {
       ...entry,
       steps: provisionDeviceSteps(resolved.steps, src?.base ?? {}, src?.override ?? {}),
+      // D1065: the runner never runs these here — it jumps them or skips them.
+      ...(disabledSteps.length > 0 ? { disabledSteps } : {}),
     }
   })
   return {

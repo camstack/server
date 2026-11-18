@@ -4269,6 +4269,8 @@ export default class PipelineRunnerAddon
     const decision = placement.decision
     if (decision?.kind === 'no-candidate') {
       this.warnStepHasNoRunnableDevice(deviceId, step.addonId, decision.deviceKey)
+    } else if (decision?.kind === 'disabled-on-device') {
+      this.logStepSwitchedOffOnDevice(deviceId, step.addonId, decision.deviceKey)
     } else if (decision?.kind === 'jumped' && config?.deviceKey) {
       this.logStepJumped(deviceId, config.deviceKey, decision, placement)
     }
@@ -4387,6 +4389,28 @@ export default class PipelineRunnerAddon
 
   /** `${deviceId}:${addonId}` pairs already warned about a no-runnable-device step. */
   private readonly warnedNoJumpDevice = new Set<string>()
+
+  /**
+   * D1065: the operator switched a step of this subtree off on every device
+   * that could run it — the subtree is SKIPPED. Intent, not a fault: info,
+   * once per (camera, step), reset on re-attach like the no-runnable warn.
+   */
+  private logStepSwitchedOffOnDevice(
+    deviceId: number,
+    addonId: string,
+    effectiveDeviceKey: string,
+  ): void {
+    const key = `${deviceId}:${addonId}:disabled-on-device`
+    if (this.warnedNoJumpDevice.has(key)) return
+    this.warnedNoJumpDevice.add(key)
+    this.ctx?.logger.info(
+      'enrichment step skipped — switched off on every device that could run it',
+      {
+        tags: { deviceId },
+        meta: { step: addonId, electedDeviceKey: effectiveDeviceKey, reason: 'disabled-on-device' },
+      },
+    )
+  }
 
   private warnStepHasNoRunnableDevice(
     deviceId: number,

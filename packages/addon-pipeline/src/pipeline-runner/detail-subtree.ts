@@ -689,6 +689,9 @@ export async function runDetailSubtree(
     for (const step of matched) {
       if (step.addonId !== supplied.stepId) continue
       const placement = deps.placeStep?.(input.deviceId, step)
+      // D1065: switched off on every device that could run it — skipped (the
+      // placer logged it once).
+      if (placement?.decision?.kind === 'disabled-on-device') continue
       const refined = await refineRootFace(
         deps,
         input,
@@ -751,6 +754,9 @@ export async function runDetailSubtree(
     // the step as it must run there (a jumped subtree carries the target's
     // provisioning, D650). Absent placer ⇒ the runner's per-camera default.
     const placement = deps.placeStep?.(input.deviceId, step)
+    // D1065: switched off on every device that could run it — skipped (the
+    // placer logged it once).
+    if (placement?.decision?.kind === 'disabled-on-device') continue
     // D730: the root drew this step's boxes — the step is not inferred, its
     // children read the root's boxes instead.
     const suppliedRoot =

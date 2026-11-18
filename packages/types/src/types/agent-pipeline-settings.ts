@@ -41,6 +41,14 @@ export interface DeviceStepConfig {
    * when the effective device's format cannot run the step's model.
    */
   readonly jumpDeviceKey?: string
+  /**
+   * DEVICE switch for this step (D1065). `false` = the step is never
+   * provisioned on this accelerator: a detail step jumps to another enabled
+   * device of the node where it is allowed, else it is skipped
+   * (`disabled-on-device`). Absent = inherit (on). Written by
+   * `setDeviceStepEnabled`.
+   */
+  readonly enabled?: boolean
 }
 
 /**
@@ -116,6 +124,12 @@ export interface AgentPipelineSettings {
   readonly stepSettings?: Readonly<
     Record<string /* stepId */, Readonly<Record<string /* fieldKey */, unknown>>>
   >
+  /**
+   * NODE switch per step (D1065): `stepId → enabled`. `false` = the step never
+   * runs on any camera whose pipeline runs on this node (skip reason
+   * `disabled-on-node`). Absent = inherit. Written by `setNodeStepEnabled`.
+   */
+  readonly stepEnabled?: Readonly<Record<string /* stepId */, boolean>>
   /**
    * Multi-device inference opt-in (Phase 4 multi-device). Maps a device key
    * (`openvino:npu`, `openvino:gpu`, `edgetpu:usb`, `edgetpu:usb:1`, `cpu`, …

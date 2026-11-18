@@ -2720,6 +2720,18 @@ export const usePipelineOrchestratorSetAgentInferenceDevices: typeof trpc.pipeli
 /** Generated alias around `trpc.pipelineOrchestrator.setNodeStepSettings.useMutation`. */
 export const usePipelineOrchestratorSetNodeStepSettings: typeof trpc.pipelineOrchestrator.setNodeStepSettings.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.setNodeStepSettings.useMutation)
 
+/** Generated alias around `trpc.pipelineOrchestrator.setClusterStepMode.useMutation`. */
+export const usePipelineOrchestratorSetClusterStepMode: typeof trpc.pipelineOrchestrator.setClusterStepMode.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.setClusterStepMode.useMutation)
+
+/** Generated alias around `trpc.pipelineOrchestrator.setNodeStepEnabled.useMutation`. */
+export const usePipelineOrchestratorSetNodeStepEnabled: typeof trpc.pipelineOrchestrator.setNodeStepEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.setNodeStepEnabled.useMutation)
+
+/** Generated alias around `trpc.pipelineOrchestrator.setDeviceStepEnabled.useMutation`. */
+export const usePipelineOrchestratorSetDeviceStepEnabled: typeof trpc.pipelineOrchestrator.setDeviceStepEnabled.useMutation = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.setDeviceStepEnabled.useMutation)
+
+/** Generated alias around `trpc.pipelineOrchestrator.getStepSwitches.useQuery`. */
+export const usePipelineOrchestratorGetStepSwitches: typeof trpc.pipelineOrchestrator.getStepSwitches.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.getStepSwitches.useQuery)
+
 /** Generated alias around `trpc.pipelineOrchestrator.getNodeInferenceDevices.useQuery`. */
 export const usePipelineOrchestratorGetNodeInferenceDevices: typeof trpc.pipelineOrchestrator.getNodeInferenceDevices.useQuery = /*#__PURE__*/ alias(() => trpc.pipelineOrchestrator.getNodeInferenceDevices.useQuery)
 

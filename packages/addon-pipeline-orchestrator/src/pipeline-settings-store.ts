@@ -43,9 +43,15 @@ import type {
 import { cameraScopedStepSettings, errMsg, sleep } from '@camstack/types'
 import type { ZodType } from 'zod'
 import type { CameraStepLayer } from './apply-device-provisioning.js'
-import { applyPackageZoneActivation, resolvePipelineWithSkips } from './pipeline-resolver.js'
+import {
+  applyPackageZoneActivation,
+  PACKAGE_DETECTION_STEP_ID,
+  resolvePipelineWithSkips,
+  type SkipReason,
+  type StepSwitchContext,
+} from './pipeline-resolver.js'
 import { parseDeviceKey } from './inference-device-model.js'
-import { nodeDeviceBase } from './node-step-settings.js'
+import { deviceDisabledSteps, nodeDeviceBase } from './node-step-settings.js'
 import { KeyedAsyncLock } from './keyed-async-lock.js'
 import {
   type IsRegisteredCustomModel,
@@ -54,6 +60,8 @@ import {
 } from './removed-model-pin-reset.js'
 import {
   type AgentSettingsMapBlob,
+  type ClusterStepModesBlob,
+  ClusterStepModesSchema,
   StoredAgentPipelineSettingsSchema,
   StoredCameraPipelineSettingsSchema,
   StoredNodeBindingsSchema,
@@ -80,6 +88,11 @@ export type CatalogGatedPipeline =
 export interface DeviceProvisioningSource {
   readonly base: Readonly<Record<string, DeviceStepConfig>>
   readonly override: Readonly<Record<string, CameraStepLayer>>
+  /**
+   * Steps switched off on this device (D1065). Optional so a fake predating
+   * the switch still satisfies the type; absent = none.
+   */
+  readonly disabledSteps?: readonly string[]
 }
 
 /** Injected dependencies for {@link PipelineSettingsStore}. */
@@ -118,6 +131,18 @@ export interface PipelineSettingsStoreDeps {
 }
 
 const PIPELINE_EXECUTOR_CAP = 'pipeline-executor'
+
+/** The addon-store key of the cluster step switches (D1065). */
+export const CLUSTER_STEP_MODES_KEY = 'clusterStepModes'
+
+/** A skip an operator switch caused (D1065), as opposed to a missing build. */
+function isSwitchSkip(reason: SkipReason): boolean {
+  return (
+    reason === 'disabled-on-cluster' ||
+    reason === 'disabled-on-node' ||
+    reason === 'disabled-on-device'
+  )
+}
 
 export class PipelineSettingsStore {
   private static readonly CATALOG_CACHE_TTL_MS = 30_000
@@ -400,6 +425,86 @@ export class PipelineSettingsStore {
       await this.agentRows.set(nodeId, {
         ...rest,
         ...(Object.keys(layer).length > 0 ? { stepSettings: layer } : {}),
+      })
+    })
+  }
+
+  // ── Step switches (D1065) ─────────────────────────────────────────────
+
+  private clusterStepModesState(): DurableState<ClusterStepModesBlob> {
+    return this.deps.state<ClusterStepModesBlob>(CLUSTER_STEP_MODES_KEY, ClusterStepModesSchema, {})
+  }
+
+  /** The stored cluster step modes, `stepId → mode` (absent step = catalog default). */
+  async readClusterStepModes(): Promise<ClusterStepModesBlob> {
+    return await this.clusterStepModesState().get()
+  }
+
+  /** Write one step's cluster mode; `null` removes it (back to the catalog default). */
+  async writeClusterStepMode(
+    stepId: string,
+    mode: ClusterStepModesBlob[string] | null,
+  ): Promise<void> {
+    await this.blobWriteLock.run(CLUSTER_STEP_MODES_KEY, async () => {
+      await this.clusterStepModesState().update((prev) => {
+        const { [stepId]: _drop, ...rest } = prev
+        return mode === null ? rest : { ...rest, [stepId]: mode }
+      })
+    })
+  }
+
+  /**
+   * Write one step's NODE switch under the agent-blob lock; `null` removes it
+   * (inherit). An empty map is pruned. Creates the node's entry when absent.
+   */
+  async writeNodeStepEnabled(
+    nodeId: string,
+    stepId: string,
+    enabled: boolean | null,
+  ): Promise<void> {
+    await this.blobWriteLock.run(PipelineSettingsStore.AGENT_SETTINGS_LOCK_KEY, async () => {
+      const existing = (await this.agentRows.get(nodeId)) ?? { maxCameras: null }
+      const { stepEnabled: prevMap, ...rest } = existing
+      const { [stepId]: _drop, ...others } = prevMap ?? {}
+      const next = enabled === null ? others : { ...others, [stepId]: enabled }
+      await this.agentRows.set(nodeId, {
+        ...rest,
+        ...(Object.keys(next).length > 0 ? { stepEnabled: next } : {}),
+      })
+    })
+  }
+
+  /**
+   * Write one step's DEVICE switch on `(nodeId, deviceKey)` under the
+   * agent-blob lock; `null` removes it (inherit). A step entry left empty is
+   * pruned. A device with no stored entry gets one with `deviceEnabled` — its
+   * current participation, which the caller read from the merged device view,
+   * so writing a step switch never flips whether the device dispatches.
+   */
+  async writeDeviceStepEnabled(input: {
+    readonly nodeId: string
+    readonly deviceKey: string
+    readonly stepId: string
+    readonly enabled: boolean | null
+    readonly deviceEnabled: boolean
+  }): Promise<void> {
+    const { nodeId, deviceKey, stepId, enabled } = input
+    await this.blobWriteLock.run(PipelineSettingsStore.AGENT_SETTINGS_LOCK_KEY, async () => {
+      const existing = (await this.agentRows.get(nodeId)) ?? { maxCameras: null }
+      const devices = existing.inferenceDevices ?? {}
+      const device = devices[deviceKey] ?? { enabled: input.deviceEnabled }
+      const { [stepId]: prevStep, ...otherSteps } = device.steps ?? {}
+      const { enabled: _drop, ...stepRest } = prevStep ?? {}
+      const nextStep = enabled === null ? stepRest : { ...stepRest, enabled }
+      const steps =
+        Object.keys(nextStep).length > 0 ? { ...otherSteps, [stepId]: nextStep } : otherSteps
+      const { steps: _oldSteps, ...deviceRest } = device
+      await this.agentRows.set(nodeId, {
+        ...existing,
+        inferenceDevices: {
+          ...devices,
+          [deviceKey]: { ...deviceRest, ...(Object.keys(steps).length > 0 ? { steps } : {}) },
+        },
       })
     })
   }
@@ -810,11 +915,28 @@ export class PipelineSettingsStore {
     // jump a detail step to — the SAME roster the attach carries (built by
     // `buildJumpRoster`). Empty ⇒ the gate is the elected format alone.
     const jumpFormats = [...new Set(jumpDeviceKeys.map((k) => parseDeviceKey(k).format))]
+    // D1065: the cluster, node and device switches, read from the same rows
+    // the provisioning reads — the elected device's and every roster entry's.
+    const [clusterModes, node] = await Promise.all([
+      this.readClusterStepModes(),
+      this.agentRows.get(agentNodeId),
+    ])
+    const switches: StepSwitchContext = {
+      clusterModes,
+      ...(node?.stepEnabled !== undefined ? { nodeStepEnabled: node.stepEnabled } : {}),
+      electedDisabledSteps: deviceDisabledSteps(node, deviceKey ?? ''),
+      jumpTargets: jumpDeviceKeys.map((key) => ({
+        deviceKey: key,
+        format: parseDeviceKey(key).format,
+        disabledSteps: deviceDisabledSteps(node, key),
+      })),
+    }
     const {
       config: resolvedBase,
       skipped,
       droppedRoots,
-    } = resolvePipelineWithSkips(cam, deviceFormat, catalog, jumpFormats)
+      packageAllowed,
+    } = resolvePipelineWithSkips(cam, deviceFormat, catalog, jumpFormats, switches)
     // D2 SKIP status — surfaced ONLY here, at dispatch/resolve time for the
     // node the camera is ACTUALLY assigned to (this method is the dispatch
     // path). An idle on-motion camera with no standing placement never reaches
@@ -822,13 +944,35 @@ export class PipelineSettingsStore {
     // cameras that aren't running. Gated ON for the camera but NO device of
     // the node it may run on has a build (D650) → dropped and reported here,
     // naming what was asked: the elected device and the jump roster.
-    if (skipped.length > 0) {
+    const formatSkips = skipped.filter((s) => !isSwitchSkip(s.reason))
+    const switchSkips = skipped.filter((s) => isSwitchSkip(s.reason))
+    // A step an operator SWITCHED off (cluster / node / device, D1065) is a
+    // dropped branch too: said with its reason, at info — it is intent, not a
+    // fault. A drawn package zone the switches overrule is named the same way.
+    const packageOverruled = hasPackageZone && !packageAllowed
+    if (switchSkips.length > 0 || packageOverruled) {
+      this.deps.logger.info(
+        `pipeline steps switched off — skipped (node ${agentNodeId}, device ${deviceId})`,
+        {
+          tags: { deviceId, nodeId: agentNodeId },
+          meta: {
+            skipped: [
+              ...switchSkips.map((s) => `${s.addonId}:${s.reason}`),
+              ...(packageOverruled ? [`${PACKAGE_DETECTION_STEP_ID}:switched-off`] : []),
+            ].join(','),
+            electedDeviceKey: deviceKey ?? null,
+            jumpDeviceKeys: jumpDeviceKeys.join(','),
+          },
+        },
+      )
+    }
+    if (formatSkips.length > 0) {
       this.deps.logger.warn(
         `pipeline steps gated on but not provisioned on this node — skipped (node ${agentNodeId}, device ${deviceId})`,
         {
           tags: { deviceId, nodeId: agentNodeId },
           meta: {
-            skipped: skipped.map((s) => `${s.addonId}:${s.reason}`).join(','),
+            skipped: formatSkips.map((s) => `${s.addonId}:${s.reason}`).join(','),
             electedDeviceKey: deviceKey ?? null,
             electedFormat: deviceFormat,
             jumpDeviceKeys: jumpDeviceKeys.join(','),
@@ -839,7 +983,7 @@ export class PipelineSettingsStore {
     }
     const resolved: CameraPipelineConfig = {
       ...resolvedBase,
-      steps: applyPackageZoneActivation(resolvedBase.steps, hasPackageZone),
+      steps: applyPackageZoneActivation(resolvedBase.steps, hasPackageZone && packageAllowed),
     }
     if (resolved.steps.length === 0) {
       // Tree built from the catalog + per-camera stepToggles returned 0 steps =
@@ -1065,6 +1209,7 @@ export class PipelineSettingsStore {
       out.set(deviceKey, {
         base: nodeDeviceBase(node, deviceKey),
         override: cameraLayer,
+        disabledSteps: [...deviceDisabledSteps(node, deviceKey)].toSorted(),
       })
     }
     return out

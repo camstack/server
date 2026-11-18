@@ -4,7 +4,7 @@
 >
 > Named schemas referenced from [`api.md`](./api.md), each defined once. Names are the barrel export names from `@camstack/types` (`packages/types/src/capabilities/index.ts`).
 
-**1109 shared schemas.**
+**1112 shared schemas.**
 
 ### `AccessoriesStatusSchema`
 
@@ -6517,6 +6517,7 @@ Enum: `"correct" \| "wrong" \| "wrong-label"`
 - `weight?`: `number = 1`
 - `maxSessions?`: `number \| null = null`
 - `steps?`: `Record<string, RunnerJumpStepProvisioningSchema>`
+- `disabledSteps?`: `string[]`
 
 ### `RunnerJumpStepProvisioningSchema`
 
@@ -6997,6 +6998,26 @@ Enum: `"operator-set" \| "derived-from-ip"`
 - `lastConfirmedAt`: `number`
 - `label?`: `string`
 - `keyFrameMediaId?`: `number`
+
+### `StepClusterModeSchema`
+
+Enum: `"off" \| "on" \| "opt-in"`
+
+### `StepSwitchCellSchema`
+
+- `{ kind: "on" }`
+- `{ kind: "off-cluster" }`
+- `{ kind: "off-node" }`
+- `{ kind: "off-device" }`
+- `{ kind: "jump"; toDeviceKey: string }`
+- `{ kind: "skip"; reason: "no-compatible-model" \| "root-not-runnable-on-elected-device" }`
+- `{ kind: "zone-driven" }`
+- `{ kind: "supplied-by-root"; rootModelId: string }`
+- `{ kind: "opt-in-unused" }`
+
+### `StepSwitchMatrixSchema`
+
+- `steps`: `({ stepId: string; name: string; slot: string; clusterMode: StepClusterModeSchema \| null; effectiveMode: StepClusterModeSchema; camerasEnabling: number; camerasDisabling: number; nodes: ({ nodeId: string; reachable: boolean; stepEnabled: boolean \| null; devices: ({ deviceKey: string; format: "onnx" \| "coreml" \| "openvino" \| "tflite" \| "pt" \| "gguf"; stepEnabled: boolean \| null; eligible: boolean; cell: StepSwitchCellSchema })[] })[] })[]`
 
 ### `StorageAbortUploadInputSchema`
 

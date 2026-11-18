@@ -14993,6 +14993,38 @@ export function createCapRouter_pipelineOrchestrator(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
         return p.setNodeStepSettings(input as any)
       }),
+    setClusterStepMode: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.setClusterStepMode.input.loose())
+      .output(pipelineOrchestratorCapability.methods.setClusterStepMode.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setClusterStepMode(input as any)
+      }),
+    setNodeStepEnabled: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.setNodeStepEnabled.input.loose())
+      .output(pipelineOrchestratorCapability.methods.setNodeStepEnabled.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setNodeStepEnabled(input as any)
+      }),
+    setDeviceStepEnabled: adminProcedure
+      .input(pipelineOrchestratorCapability.methods.setDeviceStepEnabled.input.loose())
+      .output(pipelineOrchestratorCapability.methods.setDeviceStepEnabled.output)
+      .mutation(async ({ input, ctx }) => {
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-argument
+        return p.setDeviceStepEnabled(input as any)
+      }),
+    getStepSwitches: protectedProcedure
+      .input(z.object({ nodeId: z.string().optional() }).optional())
+      .output(pipelineOrchestratorCapability.methods.getStepSwitches.output)
+      .query(async ({ input, ctx }) => {
+        void input
+        const p = requireCapProvider('pipeline-orchestrator', () => getProvider(ctx))
+        return p.getStepSwitches()
+      }),
     getNodeInferenceDevices: protectedProcedure
       .input(pipelineOrchestratorCapability.methods.getNodeInferenceDevices.input.loose())
       .output(pipelineOrchestratorCapability.methods.getNodeInferenceDevices.output)

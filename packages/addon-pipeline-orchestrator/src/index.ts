@@ -90,6 +90,8 @@ import type {
   PipelinePhaseMode,
   RunnerCameraConfig,
   SetCameraSensorsInput,
+  StepClusterMode,
+  StepSwitchMatrix,
   Unsubscribe,
   DurableState,
   ScopedSettings,
@@ -205,6 +207,7 @@ import {
 } from './orchestrator-types.js'
 import { PipelineSettingsStore } from './pipeline-settings-store.js'
 import { PipelineWatchdog } from './pipeline-watchdog.js'
+import { buildStepSwitchMatrix } from './step-switch-matrix.js'
 import { PlacementLedger } from './placement-ledger.js'
 import {
   PlacementService,
@@ -3246,7 +3249,121 @@ export default class PipelineOrchestratorAddon
     readonly deviceId: number
     readonly agentNodeId?: string
   }): Promise<CameraPipelineConfig> {
-    return this.settingsStore!.resolvePipelineForDevice(input.deviceId, input.agentNodeId)
+    // What an attach WOULD run, through the attach path's own owner — the
+    // elected device's format and the node's jump roster (D1065).
+    const nodeId =
+      input.agentNodeId ??
+      this.placement!.getPipelineAssignment({ deviceId: input.deviceId })?.agentNodeId ??
+      this.localNodeId
+    const outcome = await this.placement!.previewAttachPipeline({
+      deviceId: input.deviceId,
+      nodeId,
+    })
+    // An attach on that device would be refused: nothing would run.
+    if (outcome.kind === 'root-refused') return { steps: [], audio: null }
+    return { steps: outcome.pipeline.steps, audio: outcome.pipeline.audio ?? null }
+  }
+
+  // ── Step switches (D1065) ──────────────────────────────────────────────
+
+  /** Set one step's cluster mode; `null` returns it to the catalog default. */
+  async setClusterStepMode(input: {
+    readonly stepId: string
+    readonly mode: StepClusterMode | null
+  }): Promise<{ success: true }> {
+    await this.settingsStore!.writeClusterStepMode(input.stepId, input.mode)
+    this.ctx.logger.info('cluster step mode written', {
+      meta: { stepId: input.stepId, mode: input.mode ?? 'default' },
+    })
+    await this.placement!.reattachForStepSwitch(null, `cluster:${input.stepId}`)
+    return { success: true as const }
+  }
+
+  /** Set one step's node switch; `null` = inherit. */
+  async setNodeStepEnabled(input: {
+    readonly agentNodeId: string
+    readonly stepId: string
+    readonly enabled: boolean | null
+  }): Promise<{ success: true }> {
+    await this.settingsStore!.writeNodeStepEnabled(input.agentNodeId, input.stepId, input.enabled)
+    this.ctx.logger.info('node step switch written', {
+      tags: { nodeId: input.agentNodeId },
+      meta: { stepId: input.stepId, enabled: input.enabled ?? 'inherit' },
+    })
+    await this.placement!.reattachForStepSwitch(input.agentNodeId, `node:${input.stepId}`)
+    return { success: true as const }
+  }
+
+  /**
+   * Set one step's device switch; `null` = inherit. Refuses a device the node
+   * does not list (neither probed nor stored) — a switch on a key nothing
+   * dispatches to would be silently inert.
+   */
+  async setDeviceStepEnabled(input: {
+    readonly agentNodeId: string
+    readonly deviceKey: string
+    readonly stepId: string
+    readonly enabled: boolean | null
+  }): Promise<{ success: true }> {
+    const view = await this.getNodeInferenceDevices({ nodeId: input.agentNodeId })
+    const device = view.devices.find((d) => d.key === input.deviceKey)
+    if (device === undefined) {
+      throw new Error(
+        `setDeviceStepEnabled: node "${input.agentNodeId}" has no inference device "${input.deviceKey}"`,
+      )
+    }
+    await this.settingsStore!.writeDeviceStepEnabled({
+      nodeId: input.agentNodeId,
+      deviceKey: input.deviceKey,
+      stepId: input.stepId,
+      enabled: input.enabled,
+      deviceEnabled: device.enabled,
+    })
+    this.ctx.logger.info('device step switch written', {
+      tags: { nodeId: input.agentNodeId },
+      meta: {
+        deviceKey: input.deviceKey,
+        stepId: input.stepId,
+        enabled: input.enabled ?? 'inherit',
+      },
+    })
+    await this.placement!.reattachForStepSwitch(input.agentNodeId, `device:${input.stepId}`)
+    return { success: true as const }
+  }
+
+  /**
+   * The step switch matrix — cells computed by the attach path's own gate and
+   * placement (`step-switch-matrix.ts`). A node whose catalog or device probe
+   * does not answer is listed `reachable: false` with no cells.
+   */
+  async getStepSwitches(): Promise<StepSwitchMatrix> {
+    const store = this.settingsStore!
+    const [clusterModes, agentMap, cameraMap] = await Promise.all([
+      store.readClusterStepModes(),
+      store.readAgentSettingsMap(),
+      store.readCameraSettingsMap(),
+    ])
+    const nodes = await Promise.all(
+      Object.keys(agentMap)
+        .toSorted()
+        .map(async (nodeId) => {
+          const [catalog, view] = await Promise.all([
+            store.getCatalogForNode(nodeId).catch(() => null),
+            this.getNodeInferenceDevices({ nodeId }).catch(() => null),
+          ])
+          return {
+            nodeId,
+            catalog,
+            devices: view?.reachable === true ? view.devices : null,
+            settings: agentMap[nodeId],
+          }
+        }),
+    )
+    return buildStepSwitchMatrix({
+      clusterModes,
+      cameraToggles: Object.values(cameraMap).map((c) => c.stepToggles ?? {}),
+      nodes,
+    })
   }
 
   /** Emit `pipeline.camera-updated` carrying the freshly-resolved config. */

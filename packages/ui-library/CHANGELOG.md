@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Generated hooks for the new pipeline step switch methods.
+
 ## [1.2.471] - 2026-11-18
 
 ### Changed

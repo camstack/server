@@ -22,6 +22,8 @@ import type { DeviceStepConfig } from '@camstack/types'
 /** The slice of a node's stored settings the base reads. */
 export interface NodeStepSource {
   readonly stepSettings?: Readonly<Record<string, Readonly<Record<string, unknown>>>>
+  /** The node switches (D1065), `stepId → enabled`. */
+  readonly stepEnabled?: Readonly<Record<string, boolean>>
   readonly inferenceDevices?: Readonly<
     Record<
       string,
@@ -56,4 +58,21 @@ export function nodeDeviceBase(
     }
   }
   return out
+}
+
+/**
+ * The steps switched OFF on `deviceKey` of this node (D1065):
+ * `inferenceDevices[deviceKey].steps[step].enabled === false`. Only that
+ * device's own entry is read; `''` (the default pool) has none.
+ */
+export function deviceDisabledSteps(
+  node: NodeStepSource | undefined,
+  deviceKey: string,
+): ReadonlySet<string> {
+  const steps = node?.inferenceDevices?.[deviceKey]?.steps ?? {}
+  return new Set(
+    Object.entries(steps)
+      .filter(([, cfg]) => cfg.enabled === false)
+      .map(([stepId]) => stepId),
+  )
 }

@@ -599,6 +599,14 @@ export const RunnerInferenceDeviceSchema = z.object({
    * the elected device's provisioning, as before.
    */
   steps: z.record(z.string(), RunnerJumpStepProvisioningSchema).optional(),
+  /**
+   * Steps switched OFF on this device (D1065, `inferenceDevices[key].steps[s]
+   * .enabled === false`). The runner never runs a subtree containing one of
+   * them here: it auto-jumps it to an allowed device, and when none can take
+   * it the subtree is skipped (`disabled-on-device`), never run here anyway.
+   * Absent ⇒ none (an orchestrator that predates D1065).
+   */
+  disabledSteps: z.array(z.string()).readonly().optional(),
 })
 export type RunnerInferenceDevice = z.infer<typeof RunnerInferenceDeviceSchema>
 

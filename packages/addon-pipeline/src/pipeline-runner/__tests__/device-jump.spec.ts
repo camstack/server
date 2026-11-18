@@ -529,3 +529,76 @@ describe('placeDetailStep judges each candidate with its OWN provisioning (D657)
     expect(placement.decision).toEqual({ kind: 'no-jump', deviceKey: GPU })
   })
 })
+
+// ---------------------------------------------------------------------------
+// D1065 — a step switched off on a device: the runner never runs it there. A
+// detail subtree jumps to an allowed sibling (the auto-jump excludes the
+// device), and with no allowed sibling it is skipped, by name.
+// ---------------------------------------------------------------------------
+
+describe('placeDetailStep honours a device step switch (D1065)', () => {
+  const npuOff: RunnerInferenceDevice = {
+    deviceKey: NPU,
+    weight: 50,
+    maxSessions: null,
+    steps: {},
+    disabledSteps: ['face-detection'],
+  }
+  const gpu: RunnerInferenceDevice = { deviceKey: GPU, weight: 50, maxSessions: null, steps: {} }
+
+  it('a subtree switched off on the elected device jumps to the allowed sibling', () => {
+    const placement = placeDetailStep({
+      step: ELECTED_PROVISIONED_FACE,
+      effectiveDeviceKey: NPU,
+      roster: [npuOff, gpu],
+      attachedByKey: new Map(),
+      getStepDef: catalogStepDef,
+    })
+    expect(placement.decision).toEqual({ kind: 'jumped', deviceKey: GPU, reason: 'auto' })
+  })
+
+  it('the auto-jump never lands on a device that switched the step off', () => {
+    const placement = placeDetailStep({
+      step: ELECTED_PROVISIONED_FACE,
+      // The Coral cannot run face; the less-loaded NPU switched it off.
+      effectiveDeviceKey: EDGETPU,
+      roster: [{ deviceKey: EDGETPU, weight: 50, maxSessions: null, steps: {} }, npuOff, gpu],
+      attachedByKey: new Map([[GPU, 5]]),
+      getStepDef: catalogStepDef,
+    })
+    expect(placement.decision).toEqual({ kind: 'jumped', deviceKey: GPU, reason: 'auto' })
+  })
+
+  it('a switched-off child disqualifies the device for the whole subtree (one call, one device)', () => {
+    const placement = placeDetailStep({
+      step: ELECTED_PROVISIONED_FACE,
+      effectiveDeviceKey: NPU,
+      roster: [{ ...npuOff, disabledSteps: ['face-embedding'] }, gpu],
+      attachedByKey: new Map(),
+      getStepDef: catalogStepDef,
+    })
+    expect(placement.decision).toEqual({ kind: 'jumped', deviceKey: GPU, reason: 'auto' })
+  })
+
+  it('with no allowed sibling the subtree is skipped as disabled-on-device, never run on the elected device', () => {
+    const placement = placeDetailStep({
+      step: ELECTED_PROVISIONED_FACE,
+      effectiveDeviceKey: NPU,
+      roster: [npuOff, { ...gpu, disabledSteps: ['face-detection'] }],
+      attachedByKey: new Map(),
+      getStepDef: catalogStepDef,
+    })
+    expect(placement.decision).toEqual({ kind: 'disabled-on-device', deviceKey: NPU })
+  })
+
+  it('a manual jump to a device that switched the step off is not taken', () => {
+    const placement = placeDetailStep({
+      step: { ...ELECTED_PROVISIONED_FACE, jumpDeviceKey: NPU },
+      effectiveDeviceKey: GPU,
+      roster: [npuOff, gpu],
+      attachedByKey: new Map(),
+      getStepDef: catalogStepDef,
+    })
+    expect(placement.decision).toEqual({ kind: 'no-jump', deviceKey: GPU })
+  })
+})

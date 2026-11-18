@@ -81,6 +81,14 @@ const DeviceStepConfigSchema = z.object({
    * auto-jumps only when the effective device's format cannot run the step.
    */
   jumpDeviceKey: z.string().optional(),
+  /**
+   * DEVICE switch for this step (D1065). `false` = the step is never
+   * provisioned on this accelerator: a detail step jumps to another enabled
+   * device of the node where it is allowed, else it is skipped with reason
+   * `disabled-on-device`; a root is skipped. Absent = inherit (on). Written by
+   * `setDeviceStepEnabled`.
+   */
+  enabled: z.boolean().optional(),
 })
 
 // Agent settings: the per-node placement record. The model layer is NO
@@ -138,6 +146,12 @@ const AgentPipelineSettingsSchema = z.object({
    * model or a model-bound threshold. Written by `setNodeStepSettings`.
    */
   stepSettings: z.record(z.string(), z.record(z.string(), z.unknown()).readonly()).optional(),
+  /**
+   * NODE switch per step (D1065): `stepId → enabled`. `false` = the step never
+   * runs on a camera whose pipeline runs on this node (skip reason
+   * `disabled-on-node`). Absent = inherit. Written by `setNodeStepEnabled`.
+   */
+  stepEnabled: z.record(z.string(), z.boolean()).optional(),
   /**
    * Multi-device inference opt-in (Phase 4). Per-node map deviceKey → {enabled,
    * weight, steps}. Absent / all-disabled ⇒ the node's single default
@@ -661,6 +675,87 @@ const NodeInferenceDevicesSchema = z.object({
   devices: z.array(NodeInferenceDeviceSchema).readonly(),
 })
 
+// ── Step switches (D1065) ──────────────────────────────────────────────
+/**
+ * The CLUSTER switch of one pipeline step (D1065):
+ *  - `off`    — hard off: no camera, node or device can turn it on;
+ *  - `on`     — on by default; a camera may turn it off (`stepToggles`);
+ *  - `opt-in` — off by default; a camera turns it on (`stepToggles`).
+ * Absent = the catalog's `enabledByDefault` (`true` → `on`, `false` → `opt-in`).
+ */
+export const StepClusterModeSchema = z.enum(['off', 'on', 'opt-in'])
+export type StepClusterMode = z.infer<typeof StepClusterModeSchema>
+
+/**
+ * What one step does on one (node, device) — computed by the orchestrator with
+ * the SAME placement function the attach path runs (`pipeline-resolver.ts`),
+ * so a client never re-derives it. Precedence: cluster off > camera toggle
+ * (else the cluster default) > node off > device off / jump.
+ */
+export const StepSwitchCellSchema = z.discriminatedUnion('kind', [
+  /** Runs on this device. */
+  z.object({ kind: z.literal('on') }),
+  /** Cluster mode `off`. */
+  z.object({ kind: z.literal('off-cluster') }),
+  /** The node switch is off. */
+  z.object({ kind: z.literal('off-node') }),
+  /** The device switch is off and no other device of the node may take it. */
+  z.object({ kind: z.literal('off-device') }),
+  /** A detail step this device does not run: it jumps to `toDeviceKey` (same node). */
+  z.object({ kind: z.literal('jump'), toDeviceKey: z.string() }),
+  /** No device it may run on ships a build for it. */
+  z.object({
+    kind: z.literal('skip'),
+    reason: z.enum(['no-compatible-model', 'root-not-runnable-on-elected-device']),
+  }),
+  /** `package-detection`: enabled by a drawn package zone, never by a toggle. */
+  z.object({ kind: z.literal('zone-driven') }),
+  /** The root model on this device supplies the step's boxes (D730). */
+  z.object({ kind: z.literal('supplied-by-root'), rootModelId: z.string() }),
+  /** Cluster mode `opt-in` and no camera turned it on. */
+  z.object({ kind: z.literal('opt-in-unused') }),
+])
+export type StepSwitchCell = z.infer<typeof StepSwitchCellSchema>
+
+const StepSwitchDeviceSchema = z.object({
+  deviceKey: z.string(),
+  format: z.enum(MODEL_FORMATS),
+  /** The device switch as stored (`inferenceDevices[key].steps[step].enabled`); `null` = inherit. */
+  stepEnabled: z.boolean().nullable(),
+  /** Whether the device is in the node's dispatch roster (enabled, available, not excluded). */
+  eligible: z.boolean(),
+  cell: StepSwitchCellSchema,
+})
+
+const StepSwitchNodeSchema = z.object({
+  nodeId: z.string(),
+  /** False when the node's catalog or device probe did not answer — no cells are claimed. */
+  reachable: z.boolean(),
+  /** The node switch as stored (`stepEnabled[step]`); `null` = inherit. */
+  stepEnabled: z.boolean().nullable(),
+  devices: z.array(StepSwitchDeviceSchema).readonly(),
+})
+
+const StepSwitchRowSchema = z.object({
+  stepId: z.string(),
+  name: z.string(),
+  slot: z.string(),
+  /** The stored cluster mode; `null` = the catalog default applies. */
+  clusterMode: StepClusterModeSchema.nullable(),
+  /** The mode in force (stored, else derived from `enabledByDefault`). */
+  effectiveMode: StepClusterModeSchema,
+  /** Cameras whose `stepToggles[step]` is `true`. */
+  camerasEnabling: z.number().int().nonnegative(),
+  /** Cameras whose `stepToggles[step]` is `false`. */
+  camerasDisabling: z.number().int().nonnegative(),
+  nodes: z.array(StepSwitchNodeSchema).readonly(),
+})
+
+export const StepSwitchMatrixSchema = z.object({
+  steps: z.array(StepSwitchRowSchema).readonly(),
+})
+export type StepSwitchMatrix = z.infer<typeof StepSwitchMatrixSchema>
+
 /**
  * Pipeline Orchestrator capability — global load balancer + camera dispatcher.
  *
@@ -1135,6 +1230,47 @@ export const pipelineOrchestratorCapability = {
       z.object({ success: z.literal(true) }),
       { kind: 'mutation', auth: 'admin' },
     ),
+    /**
+     * Set one step's CLUSTER switch (D1065): `off` | `on` | `opt-in`, or
+     * `null` to return to the catalog default. Re-resolves every placed
+     * camera's pipeline.
+     */
+    setClusterStepMode: method(
+      z.object({ stepId: z.string(), mode: StepClusterModeSchema.nullable() }),
+      z.object({ success: z.literal(true) }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Set one step's NODE switch (D1065): `false` = the step never runs on a
+     * camera whose pipeline runs on that node; `null` = inherit.
+     */
+    setNodeStepEnabled: method(
+      z.object({ agentNodeId: z.string(), stepId: z.string(), enabled: z.boolean().nullable() }),
+      z.object({ success: z.literal(true) }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * Set one step's DEVICE switch (D1065) on `(node, deviceKey)`: `false` =
+     * the step is not provisioned there (a detail step jumps to an allowed
+     * sibling, else is skipped); `null` = inherit.
+     */
+    setDeviceStepEnabled: method(
+      z.object({
+        agentNodeId: z.string(),
+        deviceKey: z.string(),
+        stepId: z.string(),
+        enabled: z.boolean().nullable(),
+      }),
+      z.object({ success: z.literal(true) }),
+      { kind: 'mutation', auth: 'admin' },
+    ),
+    /**
+     * The step switch matrix (D1065): per step, the cluster mode, how many
+     * cameras turn it on / off, and per node and device the effective cell —
+     * computed by the same placement function the attach path runs. The
+     * inspector renders this; it never derives a cell itself.
+     */
+    getStepSwitches: method(z.void(), StepSwitchMatrixSchema),
     /**
      * DEVICE-AWARE merged view of ONE node's inference accelerators. Joins each
      * physical device the node HAS — probed live via a node-pinned

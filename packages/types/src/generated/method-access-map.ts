@@ -6,7 +6,7 @@
  * scope+access check inside `protectedProcedure` (see
  * `server/backend/src/api/trpc/trpc.middleware.ts`).
  *
- * Coverage: 1529 method paths across 214 capabilities.
+ * Coverage: 1533 method paths across 214 capabilities.
  */
 /* eslint-disable */
 import type { MethodRole } from '../auth/viewer-access.js'
@@ -1022,6 +1022,7 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'pipelineOrchestrator.getPipelineDevicePin': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.getPlacementStats': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.getReconcileFromDiskStatus': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
+  'pipelineOrchestrator.getStepSwitches': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.listAgentSettings': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.listNodeBenchmarkResults': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "view", role: "admin" } as const,
   'pipelineOrchestrator.pauseForStorageMigration': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
@@ -1044,7 +1045,10 @@ export const METHOD_ACCESS_MAP: Readonly<Record<string, MethodAccessRecord>> = O
   'pipelineOrchestrator.setCameraStepToggle': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'pipelineOrchestrator.setCameraSwitch': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'pipelineOrchestrator.setCapabilityBinding': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'pipelineOrchestrator.setClusterStepMode': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'pipelineOrchestrator.setDeviceStepEnabled': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'pipelineOrchestrator.setLoadBalancingShares': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
+  'pipelineOrchestrator.setNodeStepEnabled': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'pipelineOrchestrator.setNodeStepSettings': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'pipelineOrchestrator.setPipelineDevicePin': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,
   'pipelineOrchestrator.setShareSource': { capName: "pipeline-orchestrator", capScope: "system", addonId: null, access: "create", role: "admin" } as const,

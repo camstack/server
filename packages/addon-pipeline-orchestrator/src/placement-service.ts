@@ -397,6 +397,35 @@ export class PlacementService {
   }
 
   /**
+   * What an attach of `deviceId` on `nodeId` WOULD run — the `resolvePipeline`
+   * preview. Same owner as a dispatch ({@link resolveAttachPipeline}), on the
+   * device the camera is elected onto when it is placed on that node; for a
+   * camera placed elsewhere (or nowhere), on the node's highest-weight eligible
+   * device (ties by key), or the default pool when it has none. Before, the
+   * preview resolved on the node's default format with no jump roster, and
+   * reported the detail steps a sibling accelerator runs as dropped.
+   */
+  async previewAttachPipeline(input: {
+    readonly deviceId: number
+    readonly nodeId: string
+  }): Promise<AttachPipelineOutcome> {
+    const [eligible, caps] = await Promise.all([
+      this.deps.getEligibleInferenceDevices(input.nodeId),
+      this.deps.getInferenceDeviceCaps(input.nodeId),
+    ])
+    const placedHere = this.deps.ledger.getAssignment(input.deviceId)?.agentNodeId === input.nodeId
+    const deviceKey = placedHere
+      ? this.deps.ledger.getConfig(input.deviceId)?.deviceKey
+      : Object.entries(eligible).toSorted(
+          ([ka, wa], [kb, wb]) => wb - wa || ka.localeCompare(kb),
+        )[0]?.[0]
+    return resolveAttachPipeline(
+      { deviceId: input.deviceId, nodeId: input.nodeId, deviceKey, eligible, caps },
+      this.deps.settingsStore,
+    )
+  }
+
+  /**
    * FIRST placement of a standing camera: waits for the chosen node's catalog
    * (the resolve reconciles against its executor until it answers). Callers:
    * `startDetection`'s standing path — one camera, nothing to attach instead.
@@ -1252,6 +1281,63 @@ export class PlacementService {
     })
     for (const deviceId of affected) {
       await this.deps.emitResolvedCameraUpdated(deviceId)
+    }
+  }
+
+  /**
+   * A step switch changed (D1065): re-resolve the attach pipeline of every
+   * placed camera — on `nodeId`, or on every node when `null` (a cluster
+   * switch) — on the device it is already elected onto, through the one owner
+   * of an attach's steps ({@link resolveAttachPipelineOnDevice}), and re-attach
+   * it. A replayed cached config would keep the old steps and roster. One
+   * camera's failure is logged and does not stop the sweep; a refused root
+   * keeps the live attach.
+   */
+  async reattachForStepSwitch(nodeId: string | null, reason: string): Promise<void> {
+    const affected: { readonly deviceId: number; readonly nodeId: string }[] = []
+    for (const [deviceId, assignment] of this.deps.ledger.assignmentEntries()) {
+      if (nodeId === null || assignment.agentNodeId === nodeId) {
+        affected.push({ deviceId, nodeId: assignment.agentNodeId })
+      }
+    }
+    if (affected.length === 0) return
+    this.deps.ctx().logger.info('step switch changed — re-resolving placed cameras', {
+      ...(nodeId !== null ? { tags: { nodeId } } : {}),
+      meta: { reason, affected: affected.length },
+    })
+    for (const target of affected) {
+      const cached = this.deps.ledger.getConfig(target.deviceId)
+      if (!cached) continue
+      try {
+        const outcome = await this.resolveAttachPipelineOnDevice({
+          deviceId: target.deviceId,
+          nodeId: target.nodeId,
+          deviceKey: cached.deviceKey,
+        })
+        if (outcome.kind === 'root-refused') {
+          this.deps
+            .ctx()
+            .logger.error(
+              'step switch re-attach refused — the elected device cannot run the camera root',
+              {
+                tags: { deviceId: target.deviceId, nodeId: target.nodeId },
+                meta: {
+                  deviceKey: outcome.deviceKey ?? null,
+                  droppedRoots: outcome.droppedRoots.join(','),
+                },
+              },
+            )
+          continue
+        }
+        const next = withAttachPipeline(cached, outcome.pipeline)
+        this.deps.ledger.setConfig(target.deviceId, next)
+        await this.attachOn(target.nodeId, next)
+      } catch (err: unknown) {
+        this.deps.ctx().logger.warn('step switch re-attach failed', {
+          tags: { deviceId: target.deviceId, nodeId: target.nodeId },
+          meta: { reason, error: errMsg(err) },
+        })
+      }
     }
   }
 

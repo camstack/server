@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- A step switched off for the whole cluster, a node or an accelerator is no longer run; a camera can turn on an opt-in step. The pipeline preview now shows what the camera's accelerator actually runs, including steps another accelerator on the node takes over.
+
 ## [1.2.704] - 2026-11-18
 
 ### Changed

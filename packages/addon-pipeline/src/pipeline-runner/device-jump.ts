@@ -61,6 +61,12 @@ export type ResolveStepDeviceResult =
   | { readonly kind: 'jumped'; readonly deviceKey: string; readonly reason: 'manual' | 'auto' }
   /** No enabled device on the node can run the step — keep the effective device + WARN. */
   | { readonly kind: 'no-candidate'; readonly deviceKey: string }
+  /**
+   * A device could run the step by format, but every such device switched a
+   * step of the subtree OFF (D1065) — the subtree is SKIPPED, never run on the
+   * elected device. Decided by {@link placeDetailStep}, which knows the roster.
+   */
+  | { readonly kind: 'disabled-on-device'; readonly deviceKey: string }
 
 /** The `ModelFormat` of a `<backend>:<device>` key, or `undefined` for an unknown backend. */
 function formatOf(deviceKey: string): ModelFormat | undefined {
@@ -237,6 +243,18 @@ function provisionedFor(
   return provisioning === undefined ? step : provisionSubtreeForDevice(step, provisioning)
 }
 
+/** True when an ENABLED step of the subtree is in the device's switched-off list (D1065). */
+function subtreeSwitchedOff(
+  step: JumpSubtreeStep,
+  disabledSteps: readonly string[] | undefined,
+): boolean {
+  if (disabledSteps === undefined || disabledSteps.length === 0) return false
+  const walk = (s: JumpSubtreeStep): boolean =>
+    s.enabled !== false &&
+    (disabledSteps.includes(s.addonId) || (s.children ?? []).some((c) => walk(c)))
+  return walk(step)
+}
+
 /**
  * Place ONE detail subtree (D650): which same-node device runs it
  * ({@link resolveStepDevice}) and, when it jumps, the provisioning it runs
@@ -254,7 +272,23 @@ export function placeDetailStep(input: PlaceDetailStepInput): DetailStepPlacemen
     return { deviceKey: effectiveDeviceKey, step, decision: null, provisioned: false }
   }
 
-  const decision = resolveStepDevice({
+  // The step AND its enabled children ride the same call (one pool, one
+  // format), so the predicate covers the whole subtree — and each candidate
+  // is judged with the model IT would run (D657): its own roster entry when
+  // it carries one, else the step as sent.
+  const formatRuns = (format: ModelFormat, deviceKey: string): boolean =>
+    buildSubtreeCanRun(
+      provisionedFor(step, deviceKey, effectiveDeviceKey, roster),
+      input.getStepDef,
+    )(format)
+  // D1065: a device that switched any step of the subtree off cannot take it
+  // — not as the elected device, not as an auto or a manual jump target.
+  const switchedOff = (deviceKey: string): boolean =>
+    subtreeSwitchedOff(
+      provisionedFor(step, deviceKey, effectiveDeviceKey, roster),
+      roster.find((d) => d.deviceKey === deviceKey)?.disabledSteps,
+    )
+  const resolved = resolveStepDevice({
     effectiveDeviceKey,
     devices: roster.map((d) => ({
       deviceKey: d.deviceKey,
@@ -263,16 +297,14 @@ export function placeDetailStep(input: PlaceDetailStepInput): DetailStepPlacemen
       attachedCameras: input.attachedByKey.get(d.deviceKey) ?? 0,
     })),
     ...(step.jumpDeviceKey !== undefined ? { manualJumpDeviceKey: step.jumpDeviceKey } : {}),
-    // The step AND its enabled children ride the same call (one pool, one
-    // format), so the predicate covers the whole subtree — and each candidate
-    // is judged with the model IT would run (D657): its own roster entry when
-    // it carries one, else the step as sent.
-    canRun: (format, deviceKey) =>
-      buildSubtreeCanRun(
-        provisionedFor(step, deviceKey, effectiveDeviceKey, roster),
-        input.getStepDef,
-      )(format),
+    canRun: (format, deviceKey) => !switchedOff(deviceKey) && formatRuns(format, deviceKey),
   })
+  // Nothing may run it, but a device COULD by format: a switch took it away.
+  const decision: ResolveStepDeviceResult =
+    resolved.kind === 'no-candidate' &&
+    roster.some((d) => switchedOff(d.deviceKey) && canRunOn(d.deviceKey, formatRuns))
+      ? { kind: 'disabled-on-device', deviceKey: resolved.deviceKey }
+      : resolved
   if (decision.kind !== 'jumped') {
     return { deviceKey: decision.deviceKey, step, decision, provisioned: false }
   }

@@ -61,6 +61,9 @@ runs it. A camera only turns steps on or off.**
 - The reset probe reports the hosting accelerator's `defaultModelId`; the
   benchmark refuses an empty step list instead of running a computed tree.
 
+Amended by D1065: a camera's `stepToggles` act within the step's cluster mode
+(`off` / `on` / `opt-in`), and a node or an accelerator can switch a step off.
+
 ## Consequences
 
 - Testing a model "on one camera" is done by pinning one accelerator (a

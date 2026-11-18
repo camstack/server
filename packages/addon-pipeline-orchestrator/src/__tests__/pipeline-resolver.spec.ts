@@ -255,6 +255,87 @@ describe('per-camera gate + per-device skip', () => {
   })
 })
 
+describe('step switches — cluster, node, device (D1065)', () => {
+  const catalog = makeCatalog()
+  const childIds = (steps: ReturnType<typeof resolvePipeline>['steps']): string[] =>
+    (steps.find((s) => s.addonId === OBJECT_DETECTION_STEP_ID)?.children ?? []).map(
+      (c) => c.addonId,
+    )
+  const NONE: ReadonlySet<string> = new Set()
+
+  it('cluster OFF beats a camera that turned the step on', () => {
+    const { config, skipped } = resolvePipelineWithSkips(
+      { stepToggles: { 'face-detection': true } },
+      'onnx',
+      catalog,
+      [],
+      { clusterModes: { 'face-detection': 'off' } },
+    )
+    expect(childIds(config.steps)).not.toContain('face-detection')
+    expect(skipped).toContainEqual({ addonId: 'face-detection', reason: 'disabled-on-cluster' })
+  })
+
+  it('opt-in: off for a camera that did not turn it on, on for one that did', () => {
+    const switches = { clusterModes: { 'face-detection': 'opt-in' as const } }
+    const silent = resolvePipelineWithSkips(null, 'onnx', catalog, [], switches)
+    expect(childIds(silent.config.steps)).not.toContain('face-detection')
+    // A camera's own default is intent, not a skip.
+    expect(silent.skipped).toEqual([])
+    const opted = resolvePipelineWithSkips(
+      { stepToggles: { 'face-detection': true } },
+      'onnx',
+      catalog,
+      [],
+      switches,
+    )
+    expect(childIds(opted.config.steps)).toContain('face-detection')
+  })
+
+  it('a step switched off on the NODE is skipped with disabled-on-node, even when the camera turned it on', () => {
+    const { config, skipped } = resolvePipelineWithSkips(
+      { stepToggles: { 'face-detection': true } },
+      'onnx',
+      catalog,
+      [],
+      { nodeStepEnabled: { 'face-detection': false } },
+    )
+    expect(childIds(config.steps)).not.toContain('face-detection')
+    expect(skipped).toContainEqual({ addonId: 'face-detection', reason: 'disabled-on-node' })
+  })
+
+  it('a detail step switched off on the elected device stays in the tree when an allowed sibling can run it (the runner jumps)', () => {
+    const { config, skipped } = resolvePipelineWithSkips(null, 'onnx', catalog, [], {
+      electedDisabledSteps: new Set(['face-detection']),
+      jumpTargets: [{ deviceKey: 'coreml:ane', format: 'coreml', disabledSteps: NONE }],
+    })
+    expect(childIds(config.steps)).toContain('face-detection')
+    expect(skipped).toEqual([])
+  })
+
+  it('a detail step switched off on the elected device with NO allowed sibling is skipped with disabled-on-device', () => {
+    const { config, skipped } = resolvePipelineWithSkips(null, 'onnx', catalog, [], {
+      electedDisabledSteps: new Set(['face-detection']),
+      jumpTargets: [
+        { deviceKey: 'coreml:ane', format: 'coreml', disabledSteps: new Set(['face-detection']) },
+      ],
+    })
+    expect(childIds(config.steps)).not.toContain('face-detection')
+    expect(skipped).toContainEqual({ addonId: 'face-detection', reason: 'disabled-on-device' })
+  })
+
+  it('the camera root switched off on the device is skipped, not refused as unrunnable', () => {
+    const { config, skipped, droppedRoots } = resolvePipelineWithSkips(null, 'onnx', catalog, [], {
+      electedDisabledSteps: new Set([OBJECT_DETECTION_STEP_ID]),
+    })
+    expect(config.steps.some((s) => s.addonId === OBJECT_DETECTION_STEP_ID)).toBe(false)
+    expect(skipped).toContainEqual({
+      addonId: OBJECT_DETECTION_STEP_ID,
+      reason: 'disabled-on-device',
+    })
+    expect(droppedRoots).toEqual([])
+  })
+})
+
 describe('buildTreeFromAddons', () => {
   const catalog = makeCatalog()
 

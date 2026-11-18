@@ -5,15 +5,18 @@
  * it attaches NO `modelId` / `settings` — that is a separate provisioning stage
  * ({@link applyDeviceProvisioning}) run at dispatch once the balancer has picked
  * the concrete `(node, deviceKey)`. A step runs for a camera on a device iff it
- * is gated ON (`stepToggles[S]` ?? `addon.enabledByDefault ?? true`) AND a
- * device it may run on has a compatible model in the catalog: the ELECTED
+ * is gated ON ({@link gateStep}: cluster mode, camera toggle, node switch —
+ * D1065) AND a device it may run on, and has not switched it off, has a
+ * compatible model in the catalog: the ELECTED
  * device for a root, the elected device or any device of the node's jump
  * roster for a detail step (D650). `audio-classifier` is gated by enablement
  * only — it does not run on an inference pool.
  *
  * Inputs:
- *   - `cameraSettings.stepToggles`  — the SOLE per-camera enablement gate
- *     (sparse; absent key = the catalog default `enabledByDefault ?? true`).
+ *   - `cameraSettings.stepToggles`  — the per-camera layer (sparse; absent
+ *     key = the cluster mode's default: on for `on`, off for `opt-in`).
+ *   - `switches`                    — the cluster modes, the node switches and
+ *     the device switches (D1065, {@link StepSwitchContext}).
  *   - `deviceFormat`                — the chosen inference device's model format
  *     (`onnx` / `coreml` / `openvino` / `tflite` / …); the per-DEVICE skip check
  *     keys off it (was the single `catalog.selectedEngine.format`).
@@ -34,6 +37,7 @@ import type {
   PipelineAddonSchema,
   PipelineSlotSchema,
   PipelineStepInputOutput,
+  StepClusterMode,
 } from '@camstack/types'
 import { stepModelRunsOnFormat } from '@camstack/types'
 
@@ -112,7 +116,17 @@ export function applyPackageZoneActivation(
  *    on other devices of the node. The root is the elected device's job and is
  *    never jumped, so a roster that could run it does not keep it.
  */
-export type SkipReason = 'no-compatible-model' | 'root-not-runnable-on-elected-device'
+export type FormatSkipReason = 'no-compatible-model' | 'root-not-runnable-on-elected-device'
+/**
+ * Why a step the camera (or the cluster default) wanted was dropped: a format
+ * reason above, or a switch (D1065) — the cluster mode is `off`, the node
+ * switch is off, or the device switch left it no device to run on.
+ */
+export type SkipReason =
+  | FormatSkipReason
+  | 'disabled-on-cluster'
+  | 'disabled-on-node'
+  | 'disabled-on-device'
 export interface SkippedStep {
   readonly addonId: string
   readonly reason: SkipReason
@@ -131,6 +145,12 @@ export interface ResolvedPipeline {
    * list so the refusal names what it lost.
    */
   readonly droppedRoots: readonly string[]
+  /**
+   * Whether the switches let `package-detection` run at all (D1065): false
+   * when its cluster mode is `off`, or the node or the elected device switched
+   * it off. The caller's zone activation adds it only when this is true.
+   */
+  readonly packageAllowed: boolean
 }
 
 /**
@@ -152,33 +172,142 @@ function isVideoRoot(addon: PipelineAddonSchema): boolean {
   return (addon.inputClasses ?? []).length === 0
 }
 
-/**
- * The per-DEVICE provisioning gate (D650). `null` = keep the step.
- *
- *  - `audio-classifier` is NOT gated here at all. It never runs on an
- *    inference pool — the audio-analyzer runs its own backend (YAMNet in an
- *    embedded-Python subprocess, or Apple SoundAnalysis) — so an inference
- *    format says nothing about whether it can run. Only enablement applies.
- *  - A video ROOT needs a build for the ELECTED device's format — the runner
- *    never jumps it, so a sibling accelerator that could run it is irrelevant.
- *  - A detail step is kept when the elected format OR any format of the
- *    node's jump roster (`jumpFormats` — the SAME enabled∧available devices
- *    the runner jumps within) has a build: the runner's step-tree jump
- *    (`pipeline-runner/device-jump.ts`) then places it.
- */
-function unprovisionedReason(
+// ── Step switches (D1065) ──────────────────────────────────────────────
+//
+// ONE gate and ONE placement, shared by the attach path
+// (`resolvePipelineWithSkips`) and the inspector read
+// (`step-switch-matrix.ts`), so the matrix cannot show a cell the attach would
+// not produce. Precedence: cluster off > camera toggle (else the cluster
+// default) > node off > device off / jump.
+
+/** The cluster mode a step runs under when none is stored: the catalog default. */
+export function defaultClusterStepMode(addon: PipelineAddonSchema): StepClusterMode {
+  return addon.enabledByDefault === false ? 'opt-in' : 'on'
+}
+
+/** The cluster mode in force: the stored one, else the catalog default. */
+export function effectiveClusterStepMode(
   addon: PipelineAddonSchema,
-  electedFormat: string,
-  jumpFormats: readonly string[],
-): SkipReason | null {
-  if (addon.slot === 'audio-classifier') return null
-  if (addonHasCompatibleModel(addon, electedFormat)) return null
+  stored: StepClusterMode | undefined,
+): StepClusterMode {
+  return stored ?? defaultClusterStepMode(addon)
+}
+
+/** The switch layers above the device, for one (camera, node, step). */
+export interface StepGateLayers {
+  /** The stored cluster mode; absent = the catalog default. */
+  readonly clusterMode?: StepClusterMode
+  /** The camera's `stepToggles[step]`; absent = the cluster mode's default. */
+  readonly cameraToggle?: boolean
+  /** The node switch (`stepEnabled[step]`); absent = inherit. */
+  readonly nodeEnabled?: boolean
+}
+
+/**
+ * Whether a step is on for a camera on a node, before any device is asked.
+ * `disabled-on-camera` is the operator's per-camera intent and is not a skip;
+ * the other two are (D1065).
+ */
+export type StepGate =
+  | { readonly kind: 'on' }
+  | {
+      readonly kind: 'off'
+      readonly reason: 'disabled-on-cluster' | 'disabled-on-camera' | 'disabled-on-node'
+    }
+
+export function gateStep(addon: PipelineAddonSchema, layers: StepGateLayers): StepGate {
+  const mode = effectiveClusterStepMode(addon, layers.clusterMode)
+  if (mode === 'off') return { kind: 'off', reason: 'disabled-on-cluster' }
+  const cameraOn = layers.cameraToggle ?? mode === 'on'
+  if (!cameraOn) return { kind: 'off', reason: 'disabled-on-camera' }
+  if (layers.nodeEnabled === false) return { kind: 'off', reason: 'disabled-on-node' }
+  return { kind: 'on' }
+}
+
+/** One device a step may run on: its format and the steps switched off on it. */
+export interface StepDeviceSlot {
+  /** Absent for a format-only roster entry (a caller that knows no keys). */
+  readonly deviceKey?: string
+  readonly format: string
+  readonly disabledSteps: ReadonlySet<string>
+}
+
+/**
+ * Where a gated-on step runs, given the elected device and the node's jump
+ * roster (the OTHER enabled∧available devices, D650):
+ *  - `run`  — the elected device runs it. `audio-classifier` always runs: it
+ *    never runs on an inference pool (the audio-analyzer has its own backend),
+ *    so neither an inference format nor a device switch says anything about it.
+ *  - `jump` — a DETAIL step the elected device does not run (no build, or
+ *    switched off there), taken by an allowed roster device. `toDeviceKey` is
+ *    the first such device by key; at runtime the runner's step-tree jump
+ *    (`pipeline-runner/device-jump.ts`) picks the least-loaded one.
+ *  - `skip` — nothing it may run on: `disabled-on-device` when a switch took
+ *    away the devices that had a build, else the format reason.
+ * A ROOT is never jumped: it runs on the elected device or is skipped.
+ */
+export type StepDevicePlacement =
+  | { readonly kind: 'run' }
+  | { readonly kind: 'jump'; readonly toDeviceKey: string | undefined }
+  | { readonly kind: 'skip'; readonly reason: FormatSkipReason | 'disabled-on-device' }
+
+export function placeStepOnDevices(
+  addon: PipelineAddonSchema,
+  elected: StepDeviceSlot,
+  roster: readonly StepDeviceSlot[],
+): StepDevicePlacement {
+  if (addon.slot === 'audio-classifier') return { kind: 'run' }
+  const builds = (slot: StepDeviceSlot): boolean => addonHasCompatibleModel(addon, slot.format)
+  const allowed = (slot: StepDeviceSlot): boolean => !slot.disabledSteps.has(addon.id)
+  const electedBuild = builds(elected)
+  if (electedBuild && allowed(elected)) return { kind: 'run' }
   if (isVideoRoot(addon)) {
-    return jumpFormats.some((f) => addonHasCompatibleModel(addon, f))
-      ? 'root-not-runnable-on-elected-device'
-      : 'no-compatible-model'
+    if (!allowed(elected)) return { kind: 'skip', reason: 'disabled-on-device' }
+    return roster.some(builds)
+      ? { kind: 'skip', reason: 'root-not-runnable-on-elected-device' }
+      : { kind: 'skip', reason: 'no-compatible-model' }
   }
-  return jumpFormats.some((f) => addonHasCompatibleModel(addon, f)) ? null : 'no-compatible-model'
+  const takers = roster
+    .filter((slot) => builds(slot) && allowed(slot))
+    .toSorted((a, b) => slotOrderKey(a).localeCompare(slotOrderKey(b)))
+  const first = takers[0]
+  if (first !== undefined) return { kind: 'jump', toDeviceKey: first.deviceKey }
+  const switchedAway = (electedBuild && !allowed(elected)) || roster.some(builds)
+  return { kind: 'skip', reason: switchedAway ? 'disabled-on-device' : 'no-compatible-model' }
+}
+
+function slotOrderKey(slot: StepDeviceSlot): string {
+  return slot.deviceKey ?? slot.format
+}
+
+/**
+ * The switch context of one resolve (D1065). Every field is optional: an
+ * absent map means nothing is switched, which is the behaviour before D1065.
+ */
+export interface StepSwitchContext {
+  /** The stored cluster modes, `stepId → mode`. */
+  readonly clusterModes?: Readonly<Record<string, StepClusterMode>>
+  /** The node switches of the node the camera runs on, `stepId → enabled`. */
+  readonly nodeStepEnabled?: Readonly<Record<string, boolean>>
+  /** The steps switched off on the ELECTED device. */
+  readonly electedDisabledSteps?: ReadonlySet<string>
+  /**
+   * The jump roster with each device's switched-off steps. When given it
+   * replaces the format-only `jumpFormats` argument.
+   */
+  readonly jumpTargets?: readonly StepDeviceSlot[]
+}
+
+const NO_STEPS: ReadonlySet<string> = new Set<string>()
+
+/** The gate layers of `addonId` read from a switch context (absent entries stay absent). */
+function gateLayersOf(addonId: string, switches: StepSwitchContext): StepGateLayers {
+  const clusterMode = switches.clusterModes?.[addonId]
+  const nodeEnabled = switches.nodeStepEnabled?.[addonId]
+  return {
+    ...(clusterMode !== undefined ? { clusterMode } : {}),
+    ...(nodeEnabled !== undefined ? { nodeEnabled } : {}),
+  }
 }
 
 // `emptyPipeline` helper was removed together with the `disableInference`
@@ -207,14 +336,16 @@ export function resolvePipeline(
  * Device-aware resolver — the SINGLE per-camera gate + per-DEVICE skip check.
  *
  * Step `S` runs for camera `C` on device `D`  ⇔
- *   gate(C, S)          — `stepToggles[S]` ?? `addon.enabledByDefault ?? true`
- *   AND provided(D, S)  — the catalog lists a model with a build for D's FORMAT
+ *   gate(C, N, S)       — {@link gateStep}: cluster not off, the camera toggle
+ *                         (else the cluster default), the node switch (D1065)
+ *   AND provided(D, S)  — {@link placeStepOnDevices}: a device not switched off
+ *                         for S has a build of it — the catalog lists a model with a build for D's FORMAT
  *                         (a ROOT), or for D's format or any `jumpFormats`
  *                         entry (a detail step — the runner jumps it, D650);
  *                         `audio-classifier` is never format-gated (it runs
  *                         on the audio-analyzer's own backend)
  *
- * Enablement is the per-camera `stepToggles` authority ONLY. Provisioning
+ * Provisioning
  * (`modelId` / `settings`) is NOT applied here — the returned tree carries bare
  * `{ addonId, enabled: true, children }` nodes; {@link applyDeviceProvisioning}
  * attaches model + settings at dispatch from the per-(node,device) base and the
@@ -224,8 +355,9 @@ export function resolvePipeline(
  * recorded in `skipped` so the caller can surface a visible "gated on, no model
  * on this node" status at dispatch time.
  *
- * `package-detection` is excluded here — it is zone-driven
- * ({@link applyPackageZoneActivation}, applied by the caller).
+ * `package-detection` is excluded from the tree — it is zone-driven
+ * ({@link applyPackageZoneActivation}, applied by the caller); the cluster,
+ * node and elected-device switches still apply, as `packageAllowed` (D1065).
  *
  * "Inference disabled for this camera" is NOT handled here — the caller
  * (resolvePipelineForDevice) consults the detection-pipeline binding and
@@ -236,11 +368,18 @@ export function resolvePipelineWithSkips(
   deviceFormat: string,
   catalog: PipelineSchema,
   jumpFormats: readonly string[] = [],
+  switches: StepSwitchContext = {},
 ): ResolvedPipeline {
   const cam = cameraSettings ?? {}
 
   const toggles = cam.stepToggles ?? {}
-  const format = deviceFormat
+  const elected: StepDeviceSlot = {
+    format: deviceFormat,
+    disabledSteps: switches.electedDisabledSteps ?? NO_STEPS,
+  }
+  const roster: readonly StepDeviceSlot[] =
+    switches.jumpTargets ?? jumpFormats.map((format) => ({ format, disabledSteps: NO_STEPS }))
+  let packageAllowed = true
 
   // 1. Walk the CATALOG (the authoritative step set). For each step: apply the
   //    single per-camera gate, then the AND-provisioned per-DEVICE skip check.
@@ -250,22 +389,42 @@ export function resolvePipelineWithSkips(
   for (const slot of catalog.slots) {
     for (const addon of slot.addons) {
       const addonId = addon.id
-      // Zone-driven — never gated here; the caller's applyPackageZoneActivation
-      // is the sole authority for package-detection.
-      if (addonId === PACKAGE_DETECTION_STEP_ID) continue
-      // The ONLY enablement gate: per-camera stepToggles, defaulting to the
-      // catalog's enabledByDefault (absent = on).
-      const gated = toggles[addonId] ?? addon.enabledByDefault ?? true
-      if (!gated) continue
-      // AND-provisioned: gated on but no device the step may run on has a
-      // build → SKIP with a recorded status. Never synthesize + auto-resolve.
-      const reason = unprovisionedReason(addon, format, jumpFormats)
-      if (reason !== null) {
+      const layers = gateLayersOf(addonId, switches)
+      // Zone-driven: a drawn zone, not a camera toggle, turns it on (the
+      // caller's applyPackageZoneActivation). The switches still apply — a
+      // cluster, node or elected-device off keeps it off whatever the zones say.
+      if (addonId === PACKAGE_DETECTION_STEP_ID) {
+        const gate = gateStep(addon, { ...layers, cameraToggle: true })
+        packageAllowed = gate.kind === 'on' && !elected.disabledSteps.has(addonId)
+        continue
+      }
+      // The enablement gate (D1065): cluster off beats everything, then the
+      // camera's stepToggles (absent = the cluster mode's default), then the
+      // node switch.
+      const cameraToggle = toggles[addonId]
+      const gate = gateStep(addon, {
+        ...layers,
+        ...(cameraToggle !== undefined ? { cameraToggle } : {}),
+      })
+      if (gate.kind === 'off') {
+        // A camera turning a step off is its intent, not a skip.
+        if (gate.reason !== 'disabled-on-camera') skipped.push({ addonId, reason: gate.reason })
+        continue
+      }
+      // AND-provisioned: gated on but no device the step may run on (a build,
+      // and not switched off there) → SKIP with a recorded status.
+      const placement = placeStepOnDevices(addon, elected, roster)
+      if (placement.kind === 'skip') {
+        const reason = placement.reason
         skipped.push({ addonId, reason })
         // Only the camera root is a REFUSAL — the same root the election
         // guard checks, so the two cannot disagree. Every other dropped root
-        // is the logged skip above (round 4).
-        if (addonId === OBJECT_DETECTION_STEP_ID) droppedRoots.push(addonId)
+        // is the logged skip above (round 4). A root the operator switched off
+        // on this device is intent (D1065), not a device the election got
+        // wrong: it is skipped, never refused.
+        if (addonId === OBJECT_DETECTION_STEP_ID && reason !== 'disabled-on-device') {
+          droppedRoots.push(addonId)
+        }
         continue
       }
       enabled.push({ addonId })
@@ -290,7 +449,7 @@ export function resolvePipelineWithSkips(
   //    (the provisioning stage / node format-default resolves the audio model).
   const audio = audioAddons.length > 0 ? { enabled: true } : null
 
-  return { config: { steps, audio }, skipped, droppedRoots }
+  return { config: { steps, audio }, skipped, droppedRoots, packageAllowed }
 }
 
 interface EnabledAddon {

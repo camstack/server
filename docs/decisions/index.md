@@ -4,7 +4,7 @@
 
 # Decisions
 
-1031 architecture decision records. One file per decision, never
+1032 architecture decision records. One file per decision, never
 edited after acceptance — a decision that turned out wrong gets a NEW record
 that supersedes it, because the reasoning that led there is the part worth
 keeping.
@@ -1044,6 +1044,7 @@ that rots.
 | D1062 | [The core decides WHEN a device's state is re-read; the provider only knows HOW](adr-1062-the-core-decides-when-a-device-is-re-read-the-provider-only-how.md) | ✅ accepted | 2026-11-18 |
 | D1063 | [Two devices are linked only on identifiers their providers declared; a link adds ordinary Customize features the operator can switch off](adr-1063-two-devices-are-linked-only-on-identifiers-their-providers-declared.md) | ✅ accepted | 2026-11-18 |
 | D1064 | [A machine an integration talks to is a Host; a Gateway exists only when necessary](adr-1064-a-machine-an-integration-talks-to-is-a-host-a-gateway-exists-only-when-necessary.md) | ✅ accepted | 2026-11-18 |
+| D1065 | [A pipeline step is switched per cluster, node and device; a camera toggles only what the cluster allows](adr-1065-a-step-is-switched-per-cluster-node-and-device-and-the-camera-toggles-only-what-the-cluster-allows.md) | ✅ accepted | 2026-11-18 |
 | DNNN | [A rule groups system events that arrive within a few seconds into one summary](adr-DNNN-a-rule-groups-system-events-arriving-together.md) | 💭 proposed | 2026-11-12 |
 | DNNN | [A switch toggle is one default method, installed where every native provider is registered](adr-DNNN-a-switch-toggle-is-one-default-method.md) | 💭 proposed | 2026-11-13 |
 

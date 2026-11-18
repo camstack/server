@@ -17,6 +17,7 @@
 
 import { z } from 'zod'
 import { NodeColorIdSchema } from '@camstack/types/node-color'
+import { StepClusterModeSchema } from '@camstack/types'
 
 // ── nodeBindings: Record<nodeId, Record<capName, addonId>> ──────────────
 //
@@ -56,6 +57,9 @@ const StoredDeviceStepConfigSchema = z.object({
   // override: run this step on another enabled same-node device. Persisted so a
   // saved override survives restarts.
   jumpDeviceKey: z.string().optional(),
+  // DEVICE switch (D1065): `false` = the step is not provisioned on this
+  // accelerator. Absent = inherit. Written by `setDeviceStepEnabled`.
+  enabled: z.boolean().optional(),
 })
 
 export const StoredAgentPipelineSettingsSchema = z.object({
@@ -86,6 +90,9 @@ export const StoredAgentPipelineSettingsSchema = z.object({
   // NODE-wide step settings (D927): stepId → { key → value }, under every
   // accelerator's own settings. Never a model or a model-bound threshold.
   stepSettings: z.record(z.string(), z.record(z.string(), z.unknown()).readonly()).optional(),
+  // NODE switch per step (D1065): stepId → enabled; `false` = never on this
+  // node. Absent = inherit. Written by `setNodeStepEnabled`.
+  stepEnabled: z.record(z.string(), z.boolean()).optional(),
   // Multi-device inference opt-in (Phase 4). Per-node map deviceKey → {enabled,
   // weight, steps}. Absent / all-disabled ⇒ single default device (safe
   // default); two+ enabled ⇒ the dispatcher balances sessions across them
@@ -107,6 +114,14 @@ export const StoredAgentPipelineSettingsSchema = z.object({
     )
     .optional(),
 })
+
+// ── clusterStepModes: Record<stepId, 'off' | 'on' | 'opt-in'> ───────────
+//
+// The CLUSTER switch per step (D1065). Absent step = the catalog default
+// (`enabledByDefault` true → on, false → opt-in). Written by
+// `setClusterStepMode`, read by every resolve and the step switch matrix.
+export const ClusterStepModesSchema = z.record(z.string(), StepClusterModeSchema)
+export type ClusterStepModesBlob = z.infer<typeof ClusterStepModesSchema>
 
 export const AgentSettingsMapSchema = z.record(z.string(), StoredAgentPipelineSettingsSchema)
 export type AgentSettingsMapBlob = z.infer<typeof AgentSettingsMapSchema>
