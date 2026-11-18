@@ -62,6 +62,7 @@ import type {
 } from './orchestrator-types.js'
 import { AUTO_REBALANCE_MIN_IMPROVEMENT } from './orchestrator-types.js'
 import { pickMotionRolePlacement } from './dispatch-reconcile.js'
+import { OBJECT_DETECTION_STEP_ID } from './pipeline-resolver.js'
 import type { PipelineSettingsStore } from './pipeline-settings-store.js'
 import type { PipelineWatchdog, WatchdogCamera } from './pipeline-watchdog.js'
 import type { WatchdogAudioSource } from './watchdog-camera.js'
@@ -1291,7 +1292,10 @@ export class PlacementService {
    * switch) — on the device it is already elected onto, through the one owner
    * of an attach's steps ({@link resolveAttachPipelineOnDevice}). Only a camera
    * whose resolved steps, audio, device or roster DIFFERS from its cached
-   * attach is re-attached; the rest are left running untouched. One camera's failure is
+   * attach is re-attached; the rest are left running untouched. A camera whose
+   * root (`object-detection`) the switch took away from its elected device is
+   * RE-ELECTED through the normal placement path ({@link reelectAfterRootSwitch}),
+   * which already excludes a device the root is off on. One camera's failure is
    * logged and does not stop the sweep; a refused root keeps the live attach.
    */
   async reattachForStepSwitch(nodeId: string | null, reason: string): Promise<void> {
@@ -1337,6 +1341,11 @@ export class PlacementService {
           continue
         }
         const next = withAttachPipeline(cached, outcome.pipeline)
+        if (hasCameraRoot(cached.steps) && !hasCameraRoot(next.steps)) {
+          await this.reelectAfterRootSwitch(cached, target.nodeId, reason)
+          changed++
+          continue
+        }
         if (sameAttachPipeline(cached, next)) {
           unchanged++
           continue
@@ -1354,6 +1363,46 @@ export class PlacementService {
     logger.info('step switch changed — re-attached the affected cameras', {
       ...(nodeId !== null ? { tags: { nodeId } } : {}),
       meta: { reason, changed, unchanged },
+    })
+  }
+
+  /**
+   * The switch took the camera root away from the device the camera is
+   * elected on. Re-place the camera through the normal path — its election
+   * already excludes a device the root is off on, so it moves to an allowed
+   * device, or the CPU / default pool when one exists. When nothing can host
+   * the root the camera is left as it is and the reason is named: never silent.
+   */
+  private async reelectAfterRootSwitch(
+    cached: RunnerCameraConfig,
+    nodeId: string,
+    reason: string,
+  ): Promise<void> {
+    const logger = this.deps.ctx().logger
+    const tags = { deviceId: cached.deviceId, nodeId }
+    const result = await this.redispatchCamera(cached)
+    const placedConfig = this.deps.ledger.getConfig(cached.deviceId)
+    if (result.kind === 'assigned' && hasCameraRoot(placedConfig?.steps)) {
+      logger.info('step switch took the camera root off its device — camera re-elected', {
+        tags: { deviceId: cached.deviceId, nodeId: result.agentNodeId },
+        meta: {
+          reason,
+          from: cached.deviceKey ?? 'default-pool',
+          to: placedConfig?.deviceKey ?? 'default-pool',
+        },
+      })
+      return
+    }
+    logger.warn('step switch left no device able to host the camera root', {
+      tags,
+      meta: {
+        reason:
+          result.kind === 'pending'
+            ? (this.deps.ledger.getPendingReason(cached.deviceId) ?? 'pending')
+            : 'root-switched-off-on-every-eligible-device',
+        switch: reason,
+        deviceKey: cached.deviceKey ?? 'default-pool',
+      },
     })
   }
 
@@ -1518,6 +1567,11 @@ export class PlacementService {
       meta: { reason },
     })
   }
+}
+
+/** Does an attach's step tree carry the camera root (`object-detection`)? */
+function hasCameraRoot(steps: RunnerCameraConfig['steps']): boolean {
+  return (steps ?? []).some((step) => step.addonId === OBJECT_DETECTION_STEP_ID)
 }
 
 /** Would re-attaching `next` over `current` change anything the runner acts on? */

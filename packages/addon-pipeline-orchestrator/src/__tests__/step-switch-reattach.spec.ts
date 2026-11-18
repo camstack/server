@@ -17,6 +17,7 @@ import {
   makeFakeBroker,
   makeFakeContext,
   makeFakeRunner,
+  makeSilentLogger,
   wireRunnerToBroker,
 } from './e2e-helpers.js'
 
@@ -52,6 +53,12 @@ function detection(): CameraDetectionConfig {
     preRollInferenceEnabled: true,
     preRollInferenceFrames: 12,
   }
+}
+
+interface WarnLine {
+  readonly message: string
+  readonly deviceId: unknown
+  readonly reason: unknown
 }
 
 describe('step switch re-attach (D1065)', () => {
@@ -191,5 +198,39 @@ describe('step switch re-attach (D1065)', () => {
     })
     expect(attachesSince(101)).toBe(0)
     expect(attachesSince(102)).toBe(0)
+  })
+
+  it('the root switched off on the elected device re-elects the camera off that device', async () => {
+    const { addon: a, runner } = await bootWithCameras()
+
+    await a.setDeviceStepEnabled({
+      agentNodeId: NODE,
+      deviceKey: CORAL,
+      stepId: 'object-detection',
+      enabled: false,
+    })
+
+    // The GPU is the only eligible device left, so the camera rides the node's
+    // default pool — never the Coral — and still carries its root.
+    const moved = runner.attachedCameras.get(101)
+    expect(moved?.deviceKey).not.toBe(CORAL)
+    expect(moved?.steps?.some((s) => s.addonId === 'object-detection')).toBe(true)
+    expect(addon?.getPipelineAssignment({ deviceId: 101 })?.agentNodeId).toBe(NODE)
+  })
+
+  it('a root nothing can host is named with the camera tag, never silent', async () => {
+    const lines: WarnLine[] = []
+    const logger: IScopedLogger = {
+      ...makeSilentLogger(),
+      warn: (message, ctx) =>
+        void lines.push({ message, deviceId: ctx?.tags?.deviceId, reason: ctx?.meta?.['reason'] }),
+    }
+    const { addon: a } = await bootWithCameras(logger)
+
+    await a.setNodeStepEnabled({ agentNodeId: NODE, stepId: 'object-detection', enabled: false })
+
+    const named = lines.filter((l) => l.message.includes('no device able to host the camera root'))
+    expect(named.map((l) => l.deviceId).toSorted()).toEqual([101, 102])
+    expect(named.every((l) => typeof l.reason === 'string' && l.reason.length > 0)).toBe(true)
   })
 })
