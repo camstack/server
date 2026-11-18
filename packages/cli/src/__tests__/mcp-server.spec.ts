@@ -170,6 +170,7 @@ describe('camstack mcp — toolset selection', () => {
         'setup_add_node',
         'setup_connect',
         'setup_discover_hubs',
+        'setup_host_check',
         'setup_install_guide',
         'setup_login',
         'setup_login_wait',
@@ -210,6 +211,15 @@ describe('camstack mcp — hub-less and session behaviour', () => {
     expect(body).toContain('9.9.9')
     expect(body).toContain('2.0.0')
     expect(body).toContain('unraid')
+  })
+
+  it('setup_host_check needs no hub: it inspects this machine and names an image or the native app', async () => {
+    const client = await connect(['setup'], context(NO_SESSION))
+    const res = await client.callTool({ name: 'setup_host_check', arguments: {} })
+    expect(res.isError).not.toBe(true)
+    const body = firstText(res)
+    expect(body).toContain('"passthrough"')
+    expect(body).toMatch(/"imageTag": "(intel|amd)-latest"|"nativeApp": "/)
   })
 
   it('without a session a hub tool answers "run camstack login" as an isError result', async () => {

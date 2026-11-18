@@ -10,6 +10,8 @@ applies-to:
   - packages/cli/src/mcp/report-recipes.ts
 covers:
   - packages/cli/src/mcp/setup-*.ts
+  - packages/cli/src/host-check/**
+  - packages/cli/src/commands/host-check.ts
   - packages/cli/src/mcp/debug-*.ts
   - packages/cli/src/mcp/client-logs.ts
   - packages/cli/src/mcp/report-*.ts
@@ -43,6 +45,7 @@ never `0` or an empty list (D393).
 | Tool | What it does | Ask the assistant |
 | --- | --- | --- |
 | `setup_about` | CLI and server versions, supported hosts | "Which CamStack version is current?" |
+| `setup_host_check` | Inspects the machine the MCP runs on (same report as `camstack host-check`): GPUs by vendor, NPU, Coral, NVIDIA (not supported yet), container or LXC; the image tag and the device flags for docker run, Compose, Unraid and a Proxmox LXC. Read-only, nothing sent | "Which devices should I pass to CamStack on this machine?" |
 | `setup_install_guide` | Interview, then the official template for docker-compose / docker / unraid / proxmox-lxc / macos-desktop | "Help me install CamStack on Unraid." |
 | `setup_discover_hubs` | Hubs on the local network | "Is there a CamStack hub here?" |
 | `setup_connect` | Does the hub answer, is its CA pinned, is there a session | "Connect to my hub." |

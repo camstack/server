@@ -443,6 +443,7 @@ describe('registration through MCP', () => {
       'setup_add_node',
       'setup_connect',
       'setup_discover_hubs',
+      'setup_host_check',
       'setup_install_guide',
       'setup_login',
       'setup_login_wait',

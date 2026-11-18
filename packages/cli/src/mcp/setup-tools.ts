@@ -8,6 +8,8 @@ import { z } from 'zod'
 import type { FetchFn, McpContext, ToolTextResult } from './context.js'
 import { addNodeTool, connectTool, discoverHubsTool, type SetupDeps } from './setup-hubs.js'
 import { installGuide } from './setup-install.js'
+import { hostCheck } from '../host-check/host-check.js'
+import { currentPlatform, nodeHostFs, readNvidiaSmi } from '../host-check/node-host.js'
 import { setupWizard } from './setup-wizard.js'
 import { loginTool, loginWaitTool } from './setup-login.js'
 import {
@@ -75,6 +77,21 @@ export function registerSetupTools(server: McpServer, ctx: McpContext, deps: Set
     'Versions of the camstack CLI (installed and latest on npm), the latest @camstack/server on npm, and the host kinds CamStack supports. Needs no hub and no login.',
     {},
     async (): Promise<ToolTextResult> => text(await about(ctx)),
+  )
+  server.tool(
+    'setup_host_check',
+    'Read-only, no hub, no login, nothing sent anywhere. Inspects THE MACHINE THIS MCP RUNS ON (run it where CamStack will run, before setup_install_guide): GPUs by vendor (Intel, AMD, NVIDIA), Intel / AMD NPU, Coral USB and PCIe, Hailo, whether it is inside a container or LXC. Returns which accelerators CamStack will use, the ones not supported yet (NVIDIA), the image tag, and ready-to-paste docker run flags, Compose devices, Unraid template fields and Proxmox LXC lines, plus hints (an Intel iGPU switched off in the BIOS, a device not passed into this container).',
+    {},
+    async (): Promise<ToolTextResult> => {
+      const platform = currentPlatform()
+      return text(
+        hostCheck({
+          platform,
+          fs: nodeHostFs,
+          nvidiaSmi: platform === 'linux' ? readNvidiaSmi() : null,
+        }),
+      )
+    },
   )
   server.tool(
     'setup_install_guide',

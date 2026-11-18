@@ -25,6 +25,7 @@ import {
   type ResolvedCredentials,
 } from '@camstack/develop'
 import { runDiscover } from './commands/discover.js'
+import { HOST_CHECK_HELP, runHostCheck } from './commands/host-check.js'
 import { runUpdate } from './commands/update.js'
 import { CLUSTER_UPDATE_HELP, runClusterUpdate } from './commands/cluster-update.js'
 import { runDev } from './commands/dev.js'
@@ -177,6 +178,13 @@ function buildCommands(): readonly CommandSpec[] {
           '  -p, --password <pwd>   Password (skips prompt — prefer letting the CLI prompt)',
           `  --token-name <name>    Ignored (kept for scripts); login uses your hub session JWT`,
         ].join('\n'),
+    },
+    {
+      name: 'host-check',
+      summary:
+        'Before installing: which accelerators this machine has and what to pass to CamStack',
+      run: runHostCheck,
+      help: () => HOST_CHECK_HELP,
     },
     {
       name: 'discover',

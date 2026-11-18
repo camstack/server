@@ -76,7 +76,8 @@ const Q_ROLE: Question = {
 }
 const Q_ACCEL: Question = {
   id: 'accelerator',
-  question: 'Which accelerator does this host have?',
+  question:
+    'Which accelerator does this host have? Run `camstack host-check` (or setup_host_check) on that host to find out. An NVIDIA GPU is not supported yet: with an Intel CPU that has an iGPU answer intel, otherwise cpu.',
   options: ['intel', 'amd', 'coral', 'cpu'],
 }
 const Q_PATHS: Question = {
