@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Devices can declare what is attached to them (a PoE port's wired client), and two devices matched on declared identifiers are linked: identity-link records, decisions and events.
+
 ## [1.2.593] - 2026-11-18
 
 ### Added
@@ -15,7 +19,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Devices can declare what is attached to them (a PoE port's wired client), and two devices matched on declared identifiers are linked: identity-link records, decisions and events.
 
 ## [1.2.592] - 2026-11-18
 
