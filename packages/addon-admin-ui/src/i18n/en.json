@@ -1872,14 +1872,6 @@
     "reconnecting": "An integration is restarting. The list will refresh on its own.",
     "saved": "Configuration saved",
     "saveFailed": "Could not save the configuration",
-    "discoveryBanner": {
-      "count_one": "{{count}} new device found",
-      "count_other": "{{count}} new devices found",
-      "review": "Review",
-      "title": "New devices found",
-      "dismiss": "Dismiss",
-      "adopt": "Adopt"
-    },
     "addDeviceModal": {
       "tabNetwork": "Found on the network",
       "tabManual": "Enter parameters",
@@ -1896,6 +1888,11 @@
       "alsoAdopted_one": "{{count}} also in the adoption list",
       "alsoAdopted_other": "{{count}} also in the adoption list",
       "noCreationType": "This integration cannot create a device from this candidate."
+    },
+    "discoveryProposals": {
+      "title": "Found in the background",
+      "dismiss": "Dismiss",
+      "adopt": "Adopt"
     }
   },
   "ai": {
@@ -10025,8 +10022,7 @@
         "noUnit": "Values",
         "title": "All points on one time axis",
         "bands": "On / off"
-      },
-      "singleCharts": "Single charts ({{count}})"
+      }
     },
     "consumableLevel": {
       "ok": "OK",

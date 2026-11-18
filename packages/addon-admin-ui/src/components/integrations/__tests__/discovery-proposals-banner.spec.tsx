@@ -1,9 +1,10 @@
 /**
- * The banner follows the persisted proposals: no proposal, no banner; N
- * proposals, "N new devices found"; Adopt and Dismiss go through the existing
- * adoption mutation and the dismiss mutation.
+ * The scan modal's background proposals: an unanswered query shows no pill (not
+ * "0"), an empty answer none either, N proposals a pill of N; Adopt and Dismiss
+ * go through the existing adoption mutation and the dismiss mutation.
  */
 import { fireEvent, render, screen, within } from '@testing-library/react'
+import type { ReactElement } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 interface FakeProposal {
@@ -37,7 +38,15 @@ vi.mock('@camstack/ui-library', async () => {
   }
 })
 
-import { DiscoveryProposalsBanner } from '../DiscoveryProposalsBanner'
+import {
+  DiscoveredProposalsSection,
+  DiscoveryProposalPill,
+  useDiscoveryProposalCount,
+} from '../DiscoveredProposalsSection'
+
+function Pill(): ReactElement {
+  return <DiscoveryProposalPill count={useDiscoveryProposalCount()} />
+}
 
 function proposal(n: number, over: Partial<FakeProposal['candidate']> = {}): FakeProposal {
   return {
@@ -59,31 +68,38 @@ function at<T>(list: readonly T[], index: number): T {
   return item
 }
 
-describe('DiscoveryProposalsBanner', () => {
-  it('renders nothing while the query has not answered, and nothing for an empty answer', () => {
+describe('discovered proposals', () => {
+  it('shows no pill and no section while unanswered, and none for an empty answer', () => {
     state.proposals = undefined
     const { container, rerender } = render(
-      <DiscoveryProposalsBanner onSetupIntegration={vi.fn()} />,
+      <>
+        <Pill />
+        <DiscoveredProposalsSection onSetupIntegration={vi.fn()} />
+      </>,
     )
     expect(container.textContent).toBe('')
     state.proposals = []
-    rerender(<DiscoveryProposalsBanner onSetupIntegration={vi.fn()} />)
+    rerender(
+      <>
+        <Pill />
+        <DiscoveredProposalsSection onSetupIntegration={vi.fn()} />
+      </>,
+    )
     expect(container.textContent).toBe('')
   })
 
-  it('the count follows the proposals', () => {
+  it('the pill count follows the proposals', () => {
     state.proposals = [proposal(1)]
-    const { rerender } = render(<DiscoveryProposalsBanner onSetupIntegration={vi.fn()} />)
-    expect(screen.getByTestId('discovery-banner').textContent).toContain('1 new device found')
+    const { rerender } = render(<Pill />)
+    expect(screen.getByTestId('discovery-pill').textContent).toBe('1')
     state.proposals = [proposal(1), proposal(2), proposal(3)]
-    rerender(<DiscoveryProposalsBanner onSetupIntegration={vi.fn()} />)
-    expect(screen.getByTestId('discovery-banner').textContent).toContain('3 new devices found')
+    rerender(<Pill />)
+    expect(screen.getByTestId('discovery-pill').textContent).toBe('3')
   })
 
   it('Adopt goes through adoptDevice and Dismiss through dismissDiscoveryProposal', async () => {
     state.proposals = [proposal(1), proposal(2)]
-    render(<DiscoveryProposalsBanner onSetupIntegration={vi.fn()} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Review' }))
+    render(<DiscoveredProposalsSection onSetupIntegration={vi.fn()} />)
     const rows = screen.getAllByTestId('discovery-proposal')
     expect(rows).toHaveLength(2)
 
@@ -106,8 +122,7 @@ describe('DiscoveryProposalsBanner', () => {
     state.proposals = [
       proposal(9, { setupIntegration: true, prefilledConfig: { host: '192.0.2.9' } }),
     ]
-    render(<DiscoveryProposalsBanner onSetupIntegration={onSetup} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Review' }))
+    render(<DiscoveredProposalsSection onSetupIntegration={onSetup} />)
     fireEvent.click(screen.getByRole('button', { name: 'Adopt' }))
     expect(adoptMutate).not.toHaveBeenCalled()
     expect(onSetup).toHaveBeenCalledWith(

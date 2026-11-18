@@ -48,6 +48,7 @@ import {
   flattenCandidateNodes,
   type CandidateNode,
 } from './scan-candidate-tree'
+import { DiscoveredProposalsSection } from './DiscoveredProposalsSection'
 import { ScanSubnetEditor } from './ScanSubnetEditor'
 
 interface ScanScope {
@@ -199,6 +200,14 @@ export function ScanNetworkModal({
         </DialogHeader>
         <DialogBody className="space-y-4">
           <ScanSubnetEditor />
+          {!scope && pickMode === 'adopt' && onSetupIntegration && (
+            <DiscoveredProposalsSection
+              onSetupIntegration={(seed) => {
+                onClose()
+                onSetupIntegration(seed)
+              }}
+            />
+          )}
           {scope ? (
             <ScopedScan scope={scope} row={rowContext} onReset={reset} />
           ) : (

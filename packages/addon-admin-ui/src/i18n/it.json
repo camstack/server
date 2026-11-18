@@ -1872,14 +1872,6 @@
     "reconnecting": "Un'integrazione si sta riavviando. L'elenco si aggiornerà da solo.",
     "saved": "Configurazione salvata",
     "saveFailed": "Impossibile salvare la configurazione",
-    "discoveryBanner": {
-      "count_one": "{{count}} nuovo dispositivo trovato",
-      "count_other": "{{count}} nuovi dispositivi trovati",
-      "review": "Rivedi",
-      "title": "Nuovi dispositivi trovati",
-      "dismiss": "Ignora",
-      "adopt": "Adotta"
-    },
     "addDeviceModal": {
       "tabNetwork": "Trovati in rete",
       "tabManual": "Inserisci i parametri",
@@ -1896,6 +1888,11 @@
       "alsoAdopted_one": "{{count}} anche nell'elenco di adozione",
       "alsoAdopted_other": "{{count}} anche nell'elenco di adozione",
       "noCreationType": "Questa integrazione non può creare un dispositivo da questo candidato."
+    },
+    "discoveryProposals": {
+      "title": "Trovati in background",
+      "dismiss": "Ignora",
+      "adopt": "Adotta"
     }
   },
   "serverManagement": {
@@ -10047,8 +10044,7 @@
         "noUnit": "Valori",
         "title": "Tutti i punti su un unico asse temporale",
         "bands": "Acceso / spento"
-      },
-      "singleCharts": "Grafici singoli ({{count}})"
+      }
     },
     "consumableLevel": {
       "ok": "OK",

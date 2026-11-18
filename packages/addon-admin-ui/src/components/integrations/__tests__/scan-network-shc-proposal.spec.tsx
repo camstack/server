@@ -33,6 +33,8 @@ vi.mock('@camstack/ui-library', async (importOriginal) => {
     useLocalNetworkGetScanSubnets: () => ({ data: { subnets: [] }, refetch: vi.fn() }),
     useLocalNetworkSetScanSubnets: () => ({ mutateAsync: vi.fn(), isPending: false }),
     useDeviceManagerListAll: () => ({ data: [], isLoading: false }),
+    useDeviceManagerListDiscoveryProposals: () => ({ data: { proposals: [] }, refetch: vi.fn() }),
+    useDeviceManagerDismissDiscoveryProposal: () => ({ mutateAsync: vi.fn() }),
     useDeviceManagerDiscoverAllProviders: () => ({
       mutate: vi.fn(),
       isPending: false,

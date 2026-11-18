@@ -69,7 +69,10 @@ import {
   type Integration,
   type IntegrationRowStatus,
 } from '../components/integrations/integration-columns'
-import { DiscoveryProposalsBanner } from '../components/integrations/DiscoveryProposalsBanner'
+import {
+  DiscoveryProposalPill,
+  useDiscoveryProposalCount,
+} from '../components/integrations/DiscoveredProposalsSection'
 import { ScanNetworkModal } from '../components/integrations/ScanNetworkModal'
 import { deviceIntegrationIcon } from '../components/shared/device-integration-icon'
 import { useEventInvalidation } from '../hooks/useEventInvalidation'
@@ -123,6 +126,7 @@ export function IntegrationsPage(): ReactNode {
     setWizardOpen(true)
   }, [])
   const [scanOpen, setScanOpen] = useState(false)
+  const proposalCount = useDiscoveryProposalCount()
 
   useEffect(() => {
     const routeSeed = readIntegrationSeed(location.state)
@@ -421,6 +425,7 @@ export function IntegrationsPage(): ReactNode {
           >
             <Radar className="h-3.5 w-3.5" />
             {t('integrations.scanNetwork', 'Scan network')}
+            <DiscoveryProposalPill count={proposalCount} />
           </Button>
           <Button
             variant="unstyled"
@@ -433,8 +438,6 @@ export function IntegrationsPage(): ReactNode {
         </>
       }
     >
-      <DiscoveryProposalsBanner onSetupIntegration={handleSetupIntegration} />
-
       {listFailed && (
         <ErrorBox
           message={t('integrations.loadFailed', 'Integrations could not be loaded.')}
