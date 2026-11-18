@@ -7571,7 +7571,9 @@
     "tabDisplay": "Visualizzazione",
     "tabExport": "Esportazione",
     "tabHistory": "Storico",
-    "tabInfo": "Info dispositivo"
+    "tabInfo": "Info dispositivo",
+    "openPage": "Apri pagina dispositivo",
+    "tabDetail": "Dettaglio"
   },
   "nodes": {
     "general": {

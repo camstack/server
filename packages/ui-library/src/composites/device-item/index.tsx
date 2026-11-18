@@ -26,6 +26,7 @@ import { useContainerChildren } from './container-children-context'
 import { DeviceDeleteAction } from './device-delete-action'
 import { DeviceItemFeatures } from './features'
 import { DeviceItemHeader } from './header'
+import { useDeviceQuickDetailOpen } from '../../contexts/device-quick-detail'
 import { useDeviceLabel } from '../device-name'
 import {
   type DeviceItemDevice,
@@ -39,7 +40,6 @@ import {
   type VariantDefaults,
 } from './helpers'
 import { DeviceItemPreview } from './preview'
-import { DeviceQuickDetailAction } from './quick-detail-action'
 import { StatusDot } from './status-dot'
 import { TagChipList } from '../tags/tag-chip'
 import { useTagEntries } from '../tags/tag-entries-context'
@@ -123,10 +123,17 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
   // selection instead of navigating. Otherwise the row navigates as usual.
   // The leading checkbox keeps its own `stopPropagation`, so it toggles
   // exactly once via either path.
+  const openQuickDetail = useDeviceQuickDetailOpen()
   const rowSelects = props.rowClickSelects === true && selection !== undefined
   const onRowClick = (): void => {
     if (rowSelects && selection !== undefined) {
       selection.onToggle()
+      return
+    }
+    // A host that mounts the quick-detail modal gets it on a row click; the
+    // device page is one button inside it. Without a host the row navigates.
+    if (openQuickDetail !== null) {
+      openQuickDetail(device.id)
       return
     }
     navigate(device.id)
@@ -279,7 +286,6 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
           />
 
           <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="right" />
-          <DeviceQuickDetailAction deviceId={device.id} />
 
           {renderRowAction && (
             <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
@@ -400,7 +406,6 @@ export function DeviceItem(props: DeviceItemProps): ReactNode {
             showStatusPills
           />
           <DeviceItemActions trpc={trpc} device={device} flags={flags} controlPlacement="right" />
-          <DeviceQuickDetailAction deviceId={device.id} />
           {renderRowAction && (
             <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
           )}
@@ -762,7 +767,6 @@ function DeviceItemTableRow(props: DeviceItemTableRowProps): ReactNode {
               enabled={showSnapshot && isCamera}
               showStatusPills
             />
-            <DeviceQuickDetailAction deviceId={device.id} />
             {renderRowAction && (
               <span onClick={(e) => e.stopPropagation()}>{renderRowAction(device)}</span>
             )}

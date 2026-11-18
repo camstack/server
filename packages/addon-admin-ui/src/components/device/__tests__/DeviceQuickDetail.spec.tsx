@@ -49,6 +49,9 @@ vi.mock('../overview-adapters/DeviceInfoAdapter', async () => {
   }
 })
 
+vi.mock('../hero/DeviceHeroCard', () => ({
+  DeviceHeroCard: () => <div data-testid="hero-card">hero</div>,
+}))
 vi.mock('../tabs/DeviceAggregateSection', () => ({
   DeviceAggregateSection: () => <div>export</div>,
 }))
@@ -145,15 +148,24 @@ describe('DeviceQuickDetail modal', () => {
     expect(screen.getByTestId('history-panel')).toBeTruthy()
   })
 
-  it('opens the full detail immediately when nothing is dirty', () => {
+  it('opens the device page immediately when nothing is dirty', () => {
     series.presence = 'absent'
     series.list = { status: 'pending' }
     renderModal()
     openModal()
-    fireEvent.click(screen.getByRole('button', { name: 'Open full detail' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open device page' }))
     expect(screen.queryByText('Discard unsaved changes?')).toBeNull()
     expect(screen.getByTestId('loc').textContent).toBe('/devices/7')
     expect(screen.queryByRole('heading', { name: 'Driveway' })).toBeNull()
+  })
+
+  it('opens on the device detail tab', () => {
+    series.presence = 'absent'
+    series.list = { status: 'pending' }
+    renderModal()
+    openModal()
+    expect(screen.getByTestId('hero-card')).toBeTruthy()
+    expect(screen.getAllByRole('button', { name: 'Open device page' })).toHaveLength(1)
   })
 
   it('asks before leaving unsaved edits, and stays when the operator cancels', async () => {
@@ -162,7 +174,7 @@ describe('DeviceQuickDetail modal', () => {
     renderModal()
     openModal()
     fireEvent.click(screen.getByRole('button', { name: 'edit-name' }))
-    fireEvent.click(screen.getByRole('button', { name: 'Open full detail' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open device page' }))
     const title = await screen.findByText('Discard unsaved changes?')
     const dialog = title.closest('dialog')
     expect(dialog).toBeTruthy()
@@ -171,7 +183,7 @@ describe('DeviceQuickDetail modal', () => {
     expect(screen.getByTestId('loc').textContent).toBe('/devices')
     expect(screen.getByRole('heading', { name: 'Driveway' })).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open full detail' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Open device page' }))
     const again = await screen.findByText('Discard unsaved changes?')
     const confirmDialog = again.closest('dialog')
     if (confirmDialog === null) throw new Error('confirm dialog missing')

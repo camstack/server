@@ -52,6 +52,8 @@ interface QuickDetailSaveApi {
   readonly setIdentityTags: (tags: readonly string[]) => void
   readonly setIdentityDisplay: (patch: Partial<DisplayForm>) => void
   readonly register: (contribution: QuickDetailContribution) => () => void
+  /** Go to the device page (asks first when edits are unsaved), then close the host. */
+  readonly openDevicePage: () => void
 }
 
 const QuickDetailSaveContext = createContext<QuickDetailSaveApi | null>(null)
@@ -64,8 +66,6 @@ export interface QuickDetailSaveProviderProps {
   readonly deviceId: number
   /** `null` until the device row has loaded. */
   readonly seed: IdentitySeed | null
-  /** The modal offers "Open full detail". The device page does not. */
-  readonly showOpenFull?: boolean
   readonly onClose?: () => void
   readonly children: ReactNode
 }
@@ -73,12 +73,14 @@ export interface QuickDetailSaveProviderProps {
 export function QuickDetailSaveProvider({
   deviceId,
   seed,
-  showOpenFull = false,
   onClose,
   children,
 }: QuickDetailSaveProviderProps): ReactNode {
   const [identity, setIdentity] = useState<IdentityDraft | null>(null)
   const [contributions, setContributions] = useState<readonly QuickDetailContribution[]>([])
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const confirm = useConfirm()
   const fns = useRef(new Map<string, Pick<QuickDetailContribution, 'save' | 'discard'>>())
 
   if (seed !== null) {
@@ -132,6 +134,29 @@ export function QuickDetailSaveProvider({
     }
   }, [])
 
+  const dirty = quickDetailSaveState([
+    { dirty: identityDirty(identity), saving: false, error: null },
+    ...contributions,
+  ]).dirty
+  const openDevicePage = useCallback((): void => {
+    void (async () => {
+      if (dirty) {
+        const ok = await confirm({
+          title: t('deviceQuickDetail.leaveTitle', 'Discard unsaved changes?'),
+          message: t(
+            'deviceQuickDetail.leaveMessage',
+            'Unsaved edits on this device will be discarded.',
+          ),
+          confirmLabel: t('deviceQuickDetail.discard', 'Discard'),
+          variant: 'warning',
+        })
+        if (!ok) return
+      }
+      navigate(`/devices/${String(deviceId)}`)
+      onClose?.()
+    })()
+  }, [dirty, confirm, t, navigate, deviceId, onClose])
+
   const api = useMemo<QuickDetailSaveApi>(
     () => ({
       identity,
@@ -153,8 +178,9 @@ export function QuickDetailSaveProvider({
         )
       },
       register,
+      openDevicePage,
     }),
-    [identity, register],
+    [identity, register, openDevicePage],
   )
 
   return (
@@ -164,8 +190,6 @@ export function QuickDetailSaveProvider({
         identity={identity}
         contributions={contributions}
         onIdentitySaved={(next) => setIdentity(next)}
-        showOpenFull={showOpenFull}
-        onClose={onClose}
       >
         {children}
       </QuickDetailSaveBody>
@@ -178,16 +202,12 @@ function QuickDetailSaveBody({
   identity,
   contributions,
   onIdentitySaved,
-  showOpenFull,
-  onClose,
   children,
 }: {
   readonly deviceId: number
   readonly identity: IdentityDraft | null
   readonly contributions: readonly QuickDetailContribution[]
   readonly onIdentitySaved: (next: IdentityDraft) => void
-  readonly showOpenFull: boolean
-  readonly onClose: (() => void) | undefined
   readonly children: ReactNode
 }): ReactNode {
   return (
@@ -198,8 +218,6 @@ function QuickDetailSaveBody({
         identity={identity}
         contributions={contributions}
         onIdentitySaved={onIdentitySaved}
-        showOpenFull={showOpenFull}
-        onClose={onClose}
       />
     </>
   )
@@ -214,19 +232,13 @@ function QuickDetailSaveFooter({
   identity,
   contributions,
   onIdentitySaved,
-  showOpenFull,
-  onClose,
 }: {
   readonly deviceId: number
   readonly identity: IdentityDraft | null
   readonly contributions: readonly QuickDetailContribution[]
   readonly onIdentitySaved: (next: IdentityDraft) => void
-  readonly showOpenFull: boolean
-  readonly onClose: (() => void) | undefined
 }): ReactNode {
   const { t } = useTranslation()
-  const navigate = useNavigate()
-  const confirm = useConfirm()
   const queryClient = useQueryClient()
   const [localError, setLocalError] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
@@ -320,40 +332,14 @@ function QuickDetailSaveFooter({
     })()
   }
 
-  const onOpenFull = (): void => {
-    void (async () => {
-      if (state.dirty) {
-        const ok = await confirm({
-          title: t('deviceQuickDetail.leaveTitle', 'Discard unsaved changes?'),
-          message: t(
-            'deviceQuickDetail.leaveMessage',
-            'Unsaved edits on this device will be discarded.',
-          ),
-          confirmLabel: t('deviceQuickDetail.discard', 'Discard'),
-          variant: 'warning',
-        })
-        if (!ok) return
-      }
-      navigate(`/devices/${String(deviceId)}?tab=customize`)
-      onClose?.()
-    })()
-  }
-
-  // Nothing to save, discard or report: the footer has no job. The modal keeps
-  // its row for "Open full detail".
-  if (!state.dirty && !state.saving && state.error === null && !showOpenFull) return null
+  // Nothing to save, discard or report: the footer has no job.
+  if (!state.dirty && !state.saving && state.error === null) return null
 
   return (
     <div className="sticky bottom-0 z-10 mt-auto flex flex-col gap-2 border-t border-border bg-background px-1 pt-3">
       {state.error !== null && <p className="text-xs text-danger">{state.error}</p>}
       <div className="flex flex-wrap items-center justify-between gap-2">
-        {showOpenFull ? (
-          <Button type="button" variant="outline" size="sm" onClick={onOpenFull}>
-            {t('deviceQuickDetail.openFull', 'Open full detail')}
-          </Button>
-        ) : (
-          <span />
-        )}
+        <span />
         <div className="flex items-center gap-2">
           <Button
             type="button"

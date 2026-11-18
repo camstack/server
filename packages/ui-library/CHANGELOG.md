@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - Generated hooks for the new pipeline step switch methods.
+### Changed
+
+- Clicking a device row opens the quick-detail modal when the host provides one; the cog glyph is gone
 
 ## [1.2.471] - 2026-11-18
 

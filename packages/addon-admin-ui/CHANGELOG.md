@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The node's accelerator table shows 'detection off' for a device whose object detection is switched off, with the reason in the load overview (D1065).
 - Add device inside an integration no longer offers new integrations to set up: it lists only that integration's own devices, scans the network only for LAN integrations, and says why when the scan is unavailable
 - Add device inside an integration shows the network scan only when that integration's provider says it finds devices that way
+- Device quick-detail modal opens on the live device detail and has one Open device page button in its header
 
 ## [1.2.701] - 2026-11-18
 

@@ -85,7 +85,7 @@ import { ChildrenList } from '../components/device/ChildrenList'
 import { CustomizeTab } from '../components/device/customize/CustomizeTab'
 import { DeviceAdminLinkButton } from '../components/device/DeviceAdminLinkButton'
 import { DeviceHeroWidgets } from '../components/device/hero/DeviceHeroWidgets'
-import { DeviceHero } from '../components/device/hero/HeroRegistry'
+import { DeviceHeroCard } from '../components/device/hero/DeviceHeroCard'
 import { heroDrawnWidgets } from '../components/device/hero/hero-drawn-widgets'
 import { heroWidgets } from '../components/device/hero/hero-widgets'
 import { historyTabVisible } from '../components/device/history-tab'
@@ -117,7 +117,6 @@ import { authedDownload } from '../lib/authed-media.js'
 import { CUSTOMIZE_TAB_ID } from '../lib/customization-routes'
 import { integrationDetailUrl } from '../lib/integration-instance-selection'
 import { STEP_INSPECTOR_PARAMS } from '../lib/step-url-selection'
-import { DeviceDetailModule } from '../modules/device-detail'
 
 // ---------------------------------------------------------------------------
 // Tab definitions
@@ -1395,30 +1394,12 @@ export function DeviceDetailPage() {
                         // `p-2 sm:p-4`, not the card's own padding.
                         <div data-card-frame="bare" className="p-2 sm:p-4">
                           <DeviceCardFrameProvider frame="bare">
-                            <DeviceDetailModule
+                            <DeviceHeroCard
                               deviceId={deviceId}
-                              trpcClient={system.trpcClient}
-                              queryClient={queryClient}
-                              theme={resolvedMode}
-                              locale={heroLang(i18n.language)}
-                              canActuate={isAdmin}
-                              showName={false}
+                              device={device}
+                              deviceName={name}
                               defaultHistoryOpen={searchParams.get('tab') === HISTORY_TAB_ID}
                               onDrawn={setModelDrawn}
-                              onOpenDevice={(id) => navigate(`/devices/${String(id)}`)}
-                              onOpenCamera={(id) => navigate(`/devices/${String(id)}`)}
-                              onNavigate={(path) => navigate(path)}
-                              fallback={
-                                <DeviceHero
-                                  deviceId={deviceId}
-                                  deviceName={name}
-                                  deviceType={deviceTypeStr ?? 'unknown'}
-                                  deviceRole={device?.role ?? null}
-                                  provider={provider}
-                                  isOnline={isOnline}
-                                  features={capabilities}
-                                />
-                              }
                             />
                             {/* What the dishwasher card does not draw (its options,
                               delayed start, events, care reminders) sits under it.

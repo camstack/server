@@ -1,11 +1,10 @@
 /**
  * Optional host-provided "open quick detail for this device id" callback.
  *
- * The devices table (`DeviceItem` / `DeviceList`) draws a discreet quick-
- * detail glyph whenever a host has published a handler — admin-ui mounts
- * ONE provider at the app shell with the modal. Call sites never wire the
- * button themselves; absence of a provider means no glyph (unit tests,
- * embeds that do not host the modal).
+ * `DeviceItem` calls it when its row is clicked (outside selection mode):
+ * admin-ui mounts ONE provider at the app shell with the modal. Call sites
+ * never wire it themselves; without a provider (unit tests, embeds that do
+ * not host the modal) a row click navigates to the device page.
  */
 import { useContext, type ReactNode } from 'react'
 import { createSharedContext } from '../lib/shared-context'

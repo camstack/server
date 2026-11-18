@@ -41,12 +41,12 @@ interface Seed {
 
 const PRISTINE: Seed = { name: 'Pet feeder', location: '', role: null, display: undefined }
 
-function renderWith(seed: Seed, showOpenFull = false): void {
+function renderWith(seed: Seed): void {
   render(
     <QueryClientProvider client={new QueryClient()}>
       <ConfirmDialogProvider>
         <MemoryRouter>
-          <QuickDetailSaveProvider deviceId={5063} seed={seed} showOpenFull={showOpenFull}>
+          <QuickDetailSaveProvider deviceId={5063} seed={seed}>
             <NameEditor />
           </QuickDetailSaveProvider>
         </MemoryRouter>
@@ -73,12 +73,5 @@ describe('the Save / Discard footer', () => {
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Discard' }))
     expect(screen.queryByRole('button', { name: 'Save' })).toBeNull()
-  })
-
-  it('keeps the modal Open full detail button even when pristine, with Save inert', () => {
-    renderWith(PRISTINE, true)
-    expect(screen.getByRole('button', { name: 'Open full detail' })).toBeTruthy()
-    const save = screen.getByRole('button', { name: 'Save' })
-    expect(save).toHaveProperty('disabled', true)
   })
 })

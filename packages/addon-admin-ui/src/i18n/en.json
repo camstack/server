@@ -7496,7 +7496,9 @@
     "tabDisplay": "Display",
     "tabExport": "Export",
     "tabHistory": "History",
-    "tabInfo": "Device info"
+    "tabInfo": "Device info",
+    "openPage": "Open device page",
+    "tabDetail": "Detail"
   },
   "nodes": {
     "general": {
