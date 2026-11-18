@@ -18,14 +18,18 @@ import { defaultUiText } from '../../../contexts/ui-text'
 import { deviceCommon } from '../__fixtures__/wave-d-common'
 import { connectedCardKindOf } from '../connected/ConnectedDeviceCard'
 import {
+  balancedStatRows,
   chunkStats,
+  formatUptime,
   type WorkloadCardModel,
-  workloadColumnControls,
+  workloadControlColumns,
+  workloadExtraStats,
+  workloadGauges,
   workloadPortText,
   workloadResourceStats,
   workloadRoleOf,
-  workloadScenePower,
   workloadStateLabel,
+  workloadUptime,
 } from '../scenes/workload/model'
 import { WorkloadCard } from '../scenes/workload/WorkloadCard'
 
@@ -69,7 +73,8 @@ function model(
     common: deviceCommon({ name: 'Media server', integration: 'Unraid' }),
     role: 'app-container',
     state,
-    since: null,
+    uptime: null,
+    busy: false,
     controls: derived.controls,
     sections: derived.sections,
     resources: NO_RESOURCES,
@@ -107,36 +112,98 @@ describe('workload model', () => {
     expect(workloadStateLabel('running', 'host', t)).toBe('Online')
   })
 
-  it('puts power on the scene only when start and stop are declared and the state is known', () => {
-    const both = deriveWorkloadControls(ALL, 'running').controls
-    expect(workloadScenePower(both, 'running')).toEqual({ on: true, enabled: true })
-    const stopped = deriveWorkloadControls(ALL, 'stopped').controls
-    expect(workloadScenePower(stopped, 'stopped')).toEqual({ on: false, enabled: true })
+  it('draws only the declared lifecycle actions, start or stop by the served state', () => {
+    const actions = (options: WorkloadOptions, state: WorkloadState | null) => {
+      const cols = workloadControlColumns(deriveWorkloadControls(options, state).controls, state)
+      return {
+        lifecycle: cols.lifecycle.map((c) => c.action),
+        more: cols.more.map((c) => c.action),
+      }
+    }
+    expect(actions(ALL, 'running')).toEqual({
+      lifecycle: ['stop', 'restart'],
+      more: ['pause', 'forceStop'],
+    })
+    // Declared but not possible in this state: drawn disabled, never hidden.
+    expect(actions(ALL, 'stopped')).toEqual({
+      lifecycle: ['start', 'restart'],
+      more: ['pause', 'forceStop'],
+    })
+    expect(actions(ALL, 'paused').more).toEqual(['resume', 'forceStop'])
+    // Unknown: both, never a guess at which one applies.
+    expect(actions(ALL, null).lifecycle).toEqual(['start', 'stop', 'restart'])
+    // Undeclared actions have no slot at all.
     expect(
-      workloadScenePower(deriveWorkloadControls(ALL, 'stopping').controls, 'stopping'),
-    ).toEqual({ on: true, enabled: false })
-    expect(workloadScenePower(both, null)).toBeNull()
-    const restartOnly = deriveWorkloadControls(
-      { ...ALL, supportsStart: false, supportsStop: false },
-      'running',
-    ).controls
-    expect(workloadScenePower(restartOnly, 'running')).toBeNull()
+      actions(
+        { ...ALL, supportsStop: false, supportsPause: false, supportsForceStop: false },
+        'running',
+      ),
+    ).toEqual({ lifecycle: ['restart'], more: [] })
+    expect(
+      actions(
+        { ...ALL, supportsStart: false, supportsStop: false, supportsRestart: false },
+        'running',
+      ).lifecycle,
+    ).toEqual([])
   })
 
-  it('keeps start / stop off the column when they are the scene toggle, and shows pause or resume by state', () => {
-    const running = deriveWorkloadControls(ALL, 'running').controls
-    expect(workloadColumnControls(running, true, 'running').map((c) => c.action)).toEqual([
-      'restart',
-      'pause',
-      'forceStop',
-    ])
-    const paused = deriveWorkloadControls(ALL, 'paused').controls
-    expect(workloadColumnControls(paused, true, 'paused').map((c) => c.action)).toEqual([
-      'restart',
-      'resume',
-      'forceStop',
-    ])
-    expect(workloadColumnControls(running, false, null).map((c) => c.action)).toContain('start')
+  it('reads an absent CPU or memory value as a dash, never 0 (D393)', () => {
+    const [cpu, memory] = workloadGauges(NO_RESOURCES, t)
+    expect(cpu).toMatchObject({ id: 'cpu', percent: null, text: '—', detail: null })
+    expect(memory).toMatchObject({ id: 'memory', percent: null, text: '—', detail: null })
+    const [, onlyTotal] = workloadGauges({ ...NO_RESOURCES, memoryLimitBytes: 8 * 1024 ** 3 }, t)
+    expect(onlyTotal?.text).toBe('—')
+    const [zeroCpu] = workloadGauges({ ...NO_RESOURCES, cpuPercent: 0 }, t)
+    expect(zeroCpu).toMatchObject({ percent: 0, text: '0%' })
+  })
+
+  it('labels the gauges with a percent, and RAM with used / total when reported', () => {
+    const [cpu, memory] = workloadGauges(
+      {
+        ...NO_RESOURCES,
+        cpuPercent: 23.4,
+        memoryUsedBytes: 6 * 1024 ** 3,
+        memoryLimitBytes: 8 * 1024 ** 3,
+      },
+      t,
+    )
+    expect(cpu).toMatchObject({ percent: 23.4, text: '23%' })
+    expect(memory).toMatchObject({ percent: 75, text: '75%', detail: '6.0 GB / 8.0 GB' })
+    const [, reported] = workloadGauges({ ...NO_RESOURCES, memoryPercent: 41 }, t)
+    expect(reported).toMatchObject({ percent: 41, text: '41%', detail: null })
+  })
+
+  it('keeps the bytes used when no total or percent is reported: a reading, not a dash (D393)', () => {
+    const [, memory] = workloadGauges({ ...NO_RESOURCES, memoryUsedBytes: 6 * 1024 ** 3 }, t)
+    expect(memory).toMatchObject({ percent: null, text: '—', detail: '6.0 GB' })
+  })
+
+  it('keeps CPU and memory out of the stats under the gauges', () => {
+    const stats = workloadExtraStats(
+      { ...NO_RESOURCES, cpuPercent: 5, memoryPercent: 10, vcpus: 4, netRxKbps: 10 },
+      t,
+    )
+    expect(stats.map((s) => s.id)).toEqual(['vcpus', 'net-rx'])
+  })
+
+  it('writes the uptime compactly, in at most two units', () => {
+    const MIN = 60_000
+    const HOUR = 60 * MIN
+    const DAY = 24 * HOUR
+    expect(formatUptime(3 * DAY + 4 * HOUR + 5 * MIN, t)).toBe('3d 4h')
+    expect(formatUptime(3 * DAY, t)).toBe('3d')
+    expect(formatUptime(5 * HOUR + 12 * MIN, t)).toBe('5h 12m')
+    expect(formatUptime(2 * HOUR, t)).toBe('2h')
+    expect(formatUptime(12 * MIN + 30_000, t)).toBe('12m')
+    expect(formatUptime(20_000, t)).toBe('<1m')
+  })
+
+  it('has no uptime for an unknown, seeded or future instant', () => {
+    const now = Date.UTC(2026, 10, 18)
+    expect(workloadUptime(now - 3_600_000, now, t)).toBe('1h')
+    expect(workloadUptime(null, now, t)).toBeNull()
+    expect(workloadUptime(1, now, t)).toBeNull()
+    expect(workloadUptime(now + 60_000, now, t)).toBeNull()
   })
 
   it('draws only the resources the provider reported', () => {
@@ -180,6 +247,20 @@ describe('workload model', () => {
     const s = (id: string) => ({ id, name: id, value: id })
     expect(chunkStats([s('a'), s('b'), s('c'), s('d')], 3).map((r) => r.length)).toEqual([3, 1])
   })
+
+  it('shares stats evenly across rows of at most three', () => {
+    const s = (id: string) => ({ id, name: id, value: id })
+    const sizes = (n: number) =>
+      balancedStatRows(
+        Array.from({ length: n }, (_, i) => s(String(i))),
+        3,
+      ).map((r) => r.length)
+    expect(sizes(0)).toEqual([])
+    expect(sizes(3)).toEqual([3])
+    expect(sizes(4)).toEqual([2, 2])
+    expect(sizes(5)).toEqual([3, 2])
+    expect(sizes(7)).toEqual([3, 3, 1])
+  })
 })
 
 describe('WorkloadCard', () => {
@@ -193,14 +274,61 @@ describe('WorkloadCard', () => {
     expect(screen.queryByTestId('dc-workload-pause')).toBeNull()
     expect(screen.queryByTestId('dc-workload-forceStop')).toBeNull()
     expect(screen.getByTestId('dc-workload-restart')).toBeTruthy()
-    expect(screen.getByTestId('dc-workload-power')).toBeTruthy()
+    expect(screen.getByTestId('dc-workload-stop')).toBeTruthy()
+    expect(screen.queryByTestId('dc-workload-start')).toBeNull()
   })
 
-  it('toggles power on the scene', () => {
+  it('starts in one tap, and asks twice before a stop', () => {
     const onAction = vi.fn()
-    render(<WorkloadCard model={model('stopped', ALL)} actions={{ onAction }} />)
-    fireEvent.click(screen.getByTestId('dc-workload-power'))
+    const { rerender } = render(
+      <WorkloadCard model={model('stopped', ALL)} actions={{ onAction }} />,
+    )
+    fireEvent.click(screen.getByTestId('dc-workload-start'))
     expect(onAction).toHaveBeenCalledWith('start')
+    onAction.mockClear()
+    rerender(<WorkloadCard model={model('running', ALL)} actions={{ onAction }} />)
+    fireEvent.click(screen.getByTestId('dc-workload-stop'))
+    expect(onAction).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId('dc-workload-stop'))
+    expect(onAction).toHaveBeenCalledWith('stop')
+  })
+
+  it('holds every action while a command is in flight', () => {
+    render(
+      <WorkloadCard
+        model={model('running', ALL, { busy: true })}
+        actions={{ onAction: vi.fn() }}
+      />,
+    )
+    expect(screen.getByTestId('dc-workload-stop').hasAttribute('disabled')).toBe(true)
+    expect(screen.getByTestId('dc-workload-restart').hasAttribute('disabled')).toBe(true)
+  })
+
+  it('draws the state dot with the uptime, and dashes for unreported gauges', () => {
+    render(
+      <WorkloadCard
+        model={model('running', ALL, {
+          uptime: '3d 4h',
+          resources: { ...NO_RESOURCES, cpuPercent: 23.4 },
+        })}
+        actions={{ onAction: vi.fn() }}
+      />,
+    )
+    expect(screen.getByTestId('dc-workload-status').textContent).toContain('3d 4h')
+    expect(screen.getByTestId('dc-workload-dot').getAttribute('data-state')).toBe('running')
+    expect(screen.getByTestId('dc-workload-gauge-cpu').textContent).toContain('23%')
+    expect(screen.getByTestId('dc-workload-gauge-memory').textContent).toContain('—')
+    expect(screen.getByTestId('dc-workload-gauge-memory').textContent).not.toContain('0%')
+  })
+
+  it('draws no gauges when the provider reports no resources', () => {
+    render(
+      <WorkloadCard
+        model={model('running', { ...ALL, hasResources: false })}
+        actions={{ onAction: vi.fn() }}
+      />,
+    )
+    expect(screen.queryByTestId('dc-workload-gauge-cpu')).toBeNull()
   })
 
   it('asks twice before a force stop', () => {

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Translations for the workload card's uptime and RAM gauge.
+
 ## [1.2.697] - 2026-11-18
 
 ### Changed

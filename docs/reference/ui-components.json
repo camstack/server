@@ -1382,6 +1382,45 @@
       ]
     },
     {
+      "name": "ArcGauge",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/ArcGauge.tsx",
+      "summary": "A read-only share on the card's arc: the same 270 degree track as the , filled up to `percent`, with no thumb. Several sit side by side in one scene, so it is smaller than a dial: between 80 px and 128 px.",
+      "props": [
+        {
+          "name": "percent",
+          "type": "number | null",
+          "optional": false,
+          "doc": "0..100; null when not reported: the track alone, never an empty fill read as 0."
+        },
+        {
+          "name": "text",
+          "type": "string",
+          "optional": false,
+          "doc": "The reading in the centre (\"23%\", or \"—\")."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "optional": false,
+          "doc": "What it measures, under the reading (\"CPU\")."
+        },
+        {
+          "name": "tone",
+          "type": "DialTone",
+          "optional": true,
+          "doc": ""
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
+        }
+      ]
+    },
+    {
       "name": "ArcKnob",
       "kind": "component",
       "area": "composites",
@@ -17536,6 +17575,33 @@
           "type": "() => void",
           "optional": true,
           "doc": "Present when the device has history: the corner opens it."
+        }
+      ]
+    },
+    {
+      "name": "StateDot",
+      "kind": "component",
+      "area": "composites",
+      "file": "packages/ui-library/src/composites/device-card/parts/StateDot.tsx",
+      "summary": "A small round mark of a device's state, set before a line of text.",
+      "props": [
+        {
+          "name": "tone",
+          "type": "CardTone | null",
+          "optional": false,
+          "doc": "The state's tone; null is an unknown state, drawn hollow so it never reads as stopped."
+        },
+        {
+          "name": "state",
+          "type": "string",
+          "optional": false,
+          "doc": "A machine-readable state name for tests and styling hooks."
+        },
+        {
+          "name": "testId",
+          "type": "string",
+          "optional": true,
+          "doc": ""
         }
       ]
     },

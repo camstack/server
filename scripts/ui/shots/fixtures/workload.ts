@@ -46,7 +46,7 @@ const NO_RESOURCES = {
 
 const status = (patch: Record<string, unknown>): Record<string, unknown> => ({
   state: 'running',
-  since: Date.now() - 3 * 86_400_000,
+  since: Date.now() - 3 * 86_400_000 - 4 * 3_600_000,
   hostDeviceId: null,
   image: null,
   os: null,

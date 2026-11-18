@@ -3,25 +3,27 @@ import type { ReactElement } from 'react'
 import { useUiText } from '../../../../contexts/ui-text'
 import { cn } from '../../../../lib/cn'
 import type { CardGlyph } from '../../icons'
+import { ArcGauge } from '../../parts/ArcGauge'
 import { CardIcon } from '../../parts/CardIcon'
+import { StateDot } from '../../parts/StateDot'
 import { type BottomRow, rowPills, rowStats, rowText } from '../../shell/bottom-rows'
 import { type ColumnItem, columnArmedButton, columnButton } from '../../shell/column-items'
 import { DeviceCard } from '../../shell/DeviceCard'
 import type { CardOrientation } from '../../shell/model'
-import { ScenePower } from '../../shell/ScenePower'
 import { SCENE_ICON_CLASS } from '../../shell/scene-layout'
 import {
   WORKLOAD_ROLE_GLYPH,
   WORKLOAD_STATE_TONE,
   type WorkloadCardActions,
   type WorkloadCardModel,
-  chunkStats,
+  type WorkloadGauge,
+  balancedStatRows,
   workloadActionLabel,
-  workloadColumnControls,
+  workloadControlColumns,
+  workloadExtraStats,
+  workloadGauges,
   workloadIsOn,
   workloadPortText,
-  workloadResourceStats,
-  workloadScenePower,
   workloadStateLabel,
 } from './model'
 
@@ -41,15 +43,19 @@ const ACTION_GLYPH: Readonly<Record<WorkloadAction, CardGlyph>> = {
   forceStop: 'forceStop',
 }
 
-/** Restart and force stop interrupt what runs: two steps. Force stop is the danger one. */
+/** Stop, restart and force stop interrupt what runs: two steps. Force stop is the danger one. */
+const ARMED: ReadonlySet<WorkloadAction> = new Set(['stop', 'restart', 'forceStop'])
+
+/** While a command is in flight (`busy`) every action waits: none is sent twice. */
 function controlItem(
   control: WorkloadControl,
   actions: WorkloadCardActions,
   label: string,
+  busy: boolean,
 ): ColumnItem {
   const testId = `dc-workload-${control.action}`
-  const disabled = !control.enabled
-  if (control.action === 'restart' || control.action === 'forceStop') {
+  const disabled = !control.enabled || busy
+  if (ARMED.has(control.action)) {
     return columnArmedButton(control.action, {
       glyph: ACTION_GLYPH[control.action],
       label,
@@ -140,11 +146,36 @@ function factRows(model: WorkloadCardModel, t: ReturnType<typeof useUiText>): Bo
   ]
 }
 
+interface GaugeCellProps {
+  readonly gauge: WorkloadGauge
+  readonly on: boolean
+}
+
+function GaugeCell({ gauge, on }: GaugeCellProps): ReactElement {
+  return (
+    <div
+      className="grid w-full justify-items-center gap-0.5"
+      data-testid={`dc-workload-gauge-${gauge.id}`}
+    >
+      <ArcGauge
+        percent={gauge.percent}
+        text={gauge.text}
+        label={gauge.label}
+        tone={on ? 'primary' : 'muted'}
+      />
+      {gauge.detail === null ? null : (
+        <small className="text-xs tabular-nums text-foreground-muted">{gauge.detail}</small>
+      )}
+    </div>
+  )
+}
+
 /**
- * A VM, an app container, an LXC, an app or a host: its state, the controls
- * its provider declared (start and stop as the power toggle on the scene),
- * the resources it reported and where it runs. Nothing the provider did not
- * declare or report is drawn.
+ * A VM, an app container, an LXC, an app or a host. The hero: a state dot with
+ * how long it has been in that state, CPU and RAM as gauges ("—" when not
+ * reported), and only the actions its provider declared — start or stop and
+ * restart on the right, pause or resume and force stop on the left. Every
+ * action shows the served state; nothing is assumed before the hub says so.
  */
 export function WorkloadCard({
   model,
@@ -153,12 +184,37 @@ export function WorkloadCard({
   showName = true,
 }: WorkloadCardProps): ReactElement {
   const t = useUiText()
-  const power = workloadScenePower(model.controls, model.state)
-  const glyph = WORKLOAD_ROLE_GLYPH[model.role]
   const on = workloadIsOn(model.state)
-  const drawing = (
+  const stateLabel = workloadStateLabel(model.state, model.role, t)
+  const columns = workloadControlColumns(model.controls, model.state)
+  const item = (c: WorkloadControl): ColumnItem =>
+    controlItem(c, actions, workloadActionLabel(c.action, model.role, t), model.busy)
+  const status = (
+    <div
+      data-testid="dc-workload-status"
+      className="flex items-center gap-1.5 text-sm text-foreground"
+      title={stateLabel}
+    >
+      <StateDot
+        testId="dc-workload-dot"
+        state={model.state ?? 'unknown'}
+        tone={model.state === null ? null : WORKLOAD_STATE_TONE[model.state]}
+      />
+      {/* The state word is the corner's; the hero adds only how long. */}
+      {model.uptime === null ? null : (
+        <span className="font-semibold tabular-nums">{model.uptime}</span>
+      )}
+    </div>
+  )
+  const drawing = model.sections.resources ? (
+    <div className="grid w-full grid-cols-2 justify-items-center gap-2">
+      {workloadGauges(model.resources, t).map((g) => (
+        <GaugeCell key={g.id} gauge={g} on={on === true} />
+      ))}
+    </div>
+  ) : (
     <CardIcon
-      glyph={glyph}
+      glyph={WORKLOAD_ROLE_GLYPH[model.role]}
       className={cn(
         SCENE_ICON_CLASS,
         model.state === 'crashed'
@@ -169,25 +225,9 @@ export function WorkloadCard({
       )}
     />
   )
-  const image =
-    power === null || !power.enabled ? (
-      drawing
-    ) : (
-      <ScenePower
-        on={power.on}
-        label={workloadActionLabel(power.on ? 'stop' : 'start', model.role, t)}
-        testId="dc-workload-power"
-        onToggle={(next) => actions.onAction(next ? 'start' : 'stop')}
-      >
-        {drawing}
-      </ScenePower>
-    )
-  const right = workloadColumnControls(model.controls, power !== null, model.state).map((c) =>
-    controlItem(c, actions, workloadActionLabel(c.action, model.role, t)),
-  )
   const host = model.host
   const openDevice = actions.onOpenDevice
-  const left =
+  const hostItem =
     host === null || openDevice === undefined
       ? []
       : [
@@ -203,7 +243,7 @@ export function WorkloadCard({
             testId: 'dc-workload-host',
           }),
         ]
-  const resources = model.sections.resources ? workloadResourceStats(model.resources, t) : []
+  const extra = model.sections.resources ? workloadExtraStats(model.resources, t) : []
   return (
     <DeviceCard
       kind="workload"
@@ -213,17 +253,26 @@ export function WorkloadCard({
       showName={showName}
       activity={model.state ?? 'unknown'}
       state={{
-        label: workloadStateLabel(model.state, model.role, t),
-        since: model.since,
+        label: stateLabel,
+        // The duration sits in the hero, next to the state dot.
+        since: null,
         tone: model.state === null ? 'muted' : WORKLOAD_STATE_TONE[model.state],
       }}
       scene={{
         alert: model.state === 'crashed',
-        columns: { left, right },
-        image,
+        columns: {
+          left: [...hostItem, ...columns.more.map(item)],
+          right: columns.lifecycle.map(item),
+        },
+        image: (
+          <div className="grid w-full justify-items-center gap-2">
+            {status}
+            {drawing}
+          </div>
+        ),
         bottom: [
-          // Three per row: "Memory of 8.0 GB" stays on one line on a phone.
-          ...chunkStats(resources, 3).map((stats, i) =>
+          // At most three per row, so a stat name stays on one line on a phone.
+          ...balancedStatRows(extra, 3).map((stats, i) =>
             rowStats(`resources-${i}`, {
               label:
                 i === 0 ? t('uiLibrary.deviceCard.workload.resources', 'Resources') : undefined,

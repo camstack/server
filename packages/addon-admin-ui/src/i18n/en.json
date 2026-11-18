@@ -10831,7 +10831,16 @@
         "temperature": "Temperature",
         "updateAvailable": "An update is available",
         "vcpus": "vCPUs",
-        "version": "Version"
+        "version": "Version",
+        "ram": "RAM",
+        "uptime": {
+          "d": "{{d}}d",
+          "dh": "{{d}}d {{h}}h",
+          "h": "{{h}}h",
+          "hm": "{{h}}h {{m}}m",
+          "m": "{{m}}m",
+          "underMinute": "<1m"
+        }
       }
     },
     "language": "en",

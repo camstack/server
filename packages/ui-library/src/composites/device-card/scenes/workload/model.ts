@@ -15,6 +15,7 @@ import {
   type WorkloadState,
 } from '@camstack/types'
 import type { UiTextFn } from '../../../../contexts/ui-text'
+import { MIN_PLAUSIBLE_TIMESTAMP_MS } from '../../../../lib/format-last-seen'
 import { formatBytes } from '../../../cap-settings/recording-spans'
 import type { CardGlyph } from '../../icons'
 import type { RowStat } from '../../shell/bottom-rows'
@@ -32,8 +33,10 @@ export interface WorkloadCardModel {
   readonly common: CardCommon
   readonly role: WorkloadRole
   readonly state: WorkloadState | null
-  /** "3 d", how long it has been in this state; null when not reported. */
-  readonly since: string | null
+  /** "3d 4h", how long it has been in this state (its uptime while it runs); null when not reported. */
+  readonly uptime: string | null
+  /** A command is in flight: every action waits for it to settle (D1061). */
+  readonly busy: boolean
   readonly controls: readonly WorkloadControl[]
   readonly sections: WorkloadSections
   readonly resources: WorkloadResources
@@ -149,41 +152,112 @@ export function workloadActionLabel(
 }
 
 /**
- * Power on the scene: both start and stop are declared and the state is
- * known. The toggle answers only while the move it would make is allowed.
+ * The hero's actions in two columns, each holding only what the provider
+ * declared. Lifecycle (right): start OR stop — the one the served state calls
+ * for, both while the state is unknown — then restart. More (left): pause OR
+ * resume, then force stop.
  */
-export interface WorkloadScenePower {
-  readonly on: boolean
-  readonly enabled: boolean
+export interface WorkloadControlColumns {
+  readonly lifecycle: readonly WorkloadControl[]
+  readonly more: readonly WorkloadControl[]
 }
 
-export function workloadScenePower(
+export function workloadControlColumns(
   controls: readonly WorkloadControl[],
   state: WorkloadState | null,
-): WorkloadScenePower | null {
+): WorkloadControlColumns {
   const on = workloadIsOn(state)
-  const start = controls.find((c) => c.action === 'start')
-  const stop = controls.find((c) => c.action === 'stop')
-  if (on === null || start === undefined || stop === undefined) return null
-  return { on, enabled: on ? stop.enabled : start.enabled }
+  const pick = (action: WorkloadAction): readonly WorkloadControl[] =>
+    controls.filter((c) => c.action === action)
+  return {
+    lifecycle: [
+      ...(on === true ? [] : pick('start')),
+      ...(on === false ? [] : pick('stop')),
+      ...pick('restart'),
+    ],
+    more: [...pick(state === 'paused' ? 'resume' : 'pause'), ...pick('forceStop')],
+  }
 }
 
-/**
- * The column's controls. Start / stop sit on the scene when it is the power
- * toggle; otherwise each declared one is a button. Pause and resume share one
- * slot: the one the state calls for.
- */
-export function workloadColumnControls(
-  controls: readonly WorkloadControl[],
-  scenePower: boolean,
-  state: WorkloadState | null,
-): readonly WorkloadControl[] {
-  return controls.filter((c) => {
-    if (scenePower && (c.action === 'start' || c.action === 'stop')) return false
-    if (c.action === 'pause') return state !== 'paused'
-    if (c.action === 'resume') return state === 'paused'
-    return true
-  })
+/** What an unreported reading reads as: never 0 (D393). */
+export const WORKLOAD_NO_VALUE = '—'
+
+/** One hero gauge: a share of 0..100, null when not reported. */
+export interface WorkloadGauge {
+  readonly id: 'cpu' | 'memory'
+  readonly label: string
+  readonly percent: number | null
+  /** "23%", or the dash when not reported. */
+  readonly text: string
+  /** "6.0 GB / 8.0 GB", or "6.0 GB" when only the amount used is reported; null otherwise. */
+  readonly detail: string | null
+}
+
+/** CPU and RAM, always both: a value the provider did not report reads "—". */
+export function workloadGauges(
+  resources: WorkloadResources,
+  t: UiTextFn,
+): readonly [WorkloadGauge, WorkloadGauge] {
+  const r = resources
+  const used = r.memoryUsedBytes
+  const total = r.memoryLimitBytes
+  // Optional on the wire: absent is "not reported", the same as null.
+  const memory =
+    r.memoryPercent ?? (used !== null && total !== null && total > 0 ? (used / total) * 100 : null)
+  const text = (value: number | null): string =>
+    value === null ? WORKLOAD_NO_VALUE : percent(value)
+  return [
+    {
+      id: 'cpu',
+      label: t('uiLibrary.deviceCard.workload.cpu', 'CPU'),
+      percent: r.cpuPercent,
+      text: text(r.cpuPercent),
+      detail: null,
+    },
+    {
+      id: 'memory',
+      label: t('uiLibrary.deviceCard.workload.ram', 'RAM'),
+      percent: memory,
+      text: text(memory),
+      // Bytes used without a total is still a reading: shown, never dropped (D393).
+      detail:
+        used === null
+          ? null
+          : total === null
+            ? formatBytes(used)
+            : `${formatBytes(used)} / ${formatBytes(total)}`,
+    },
+  ]
+}
+
+const MINUTE_MS = 60_000
+const HOUR_MS = 60 * MINUTE_MS
+const DAY_MS = 24 * HOUR_MS
+
+/** "3d 4h", "5h 12m", "12m", "<1m": the two largest units, a zero second unit left out. */
+export function formatUptime(ms: number, t: UiTextFn): string {
+  const days = Math.floor(ms / DAY_MS)
+  const hours = Math.floor((ms % DAY_MS) / HOUR_MS)
+  const minutes = Math.floor((ms % HOUR_MS) / MINUTE_MS)
+  if (days > 0) {
+    return hours === 0
+      ? t('uiLibrary.deviceCard.workload.uptime.d', '{{d}}d', { d: days })
+      : t('uiLibrary.deviceCard.workload.uptime.dh', '{{d}}d {{h}}h', { d: days, h: hours })
+  }
+  if (hours > 0) {
+    return minutes === 0
+      ? t('uiLibrary.deviceCard.workload.uptime.h', '{{h}}h', { h: hours })
+      : t('uiLibrary.deviceCard.workload.uptime.hm', '{{h}}h {{m}}m', { h: hours, m: minutes })
+  }
+  if (minutes > 0) return t('uiLibrary.deviceCard.workload.uptime.m', '{{m}}m', { m: minutes })
+  return t('uiLibrary.deviceCard.workload.uptime.underMinute', '<1m')
+}
+
+/** How long since `since` (epoch ms), or null when that is not a real past instant. */
+export function workloadUptime(since: number | null, now: number, t: UiTextFn): string | null {
+  if (since === null || !Number.isFinite(since)) return null
+  if (since < MIN_PLAUSIBLE_TIMESTAMP_MS || since > now) return null
+  return formatUptime(now - since, t)
 }
 
 export function formatKbps(kbps: number): string {
@@ -269,6 +343,11 @@ export function workloadResourceStats(
   return stats.filter((s): s is RowStat => s !== null)
 }
 
+/** The readings under the hero: everything but CPU and memory, which are its gauges. */
+export function workloadExtraStats(resources: WorkloadResources, t: UiTextFn): readonly RowStat[] {
+  return workloadResourceStats(resources, t).filter((s) => s.id !== 'cpu' && s.id !== 'memory')
+}
+
 /** "8096/tcp → 8096", "53/udp": the container port, then where the host publishes it. */
 export function workloadPortText(port: WorkloadPort): string {
   const inner = `${port.port}/${port.protocol}`
@@ -282,4 +361,17 @@ export function chunkStats(stats: readonly RowStat[], size = 4): readonly (reado
   const rows: RowStat[][] = []
   for (let i = 0; i < stats.length; i += size) rows.push(stats.slice(i, i + size))
   return rows
+}
+
+/**
+ * Rows of at most `max` stats that share them evenly: four is two and two,
+ * never three and a lone one stretched across the card.
+ */
+export function balancedStatRows(
+  stats: readonly RowStat[],
+  max = 3,
+): readonly (readonly RowStat[])[] {
+  if (stats.length === 0) return []
+  const rows = Math.ceil(stats.length / max)
+  return chunkStats(stats, Math.ceil(stats.length / rows))
 }
